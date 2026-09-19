@@ -1,6 +1,8 @@
 from collections.abc import Mapping
 from typing import Any
 
+from django.db import transaction
+
 from notas.application.ai_intake.dailyplan_generator import (
     generate_dailyplan_proposal_from_brief_proposal,
 )
@@ -435,6 +437,7 @@ def _generated_dailyplan_response_payload(
     }
 
 
+@transaction.atomic
 def _create_nutrition_engine_dailyplan_proposal_data(
     user,
     nutrition_brief: dict,

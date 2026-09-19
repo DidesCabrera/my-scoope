@@ -48,6 +48,14 @@ class Command(BaseCommand):
             action="store_true",
             help="Keep reviewable proposals/actions created by a live lab run (default: clean them up).",
         )
+        parser.add_argument(
+            "--charge-user-credits",
+            action="store_true",
+            help=(
+                "Charge the selected user's AI quota during --live. By default the internal "
+                "lab records provider usage without consuming that user's credits."
+            ),
+        )
         parser.add_argument("--output", default="", help="Optional JSON report path.")
         parser.add_argument("--json", action="store_true", help="Print the complete JSON report.")
         parser.add_argument(
@@ -75,6 +83,7 @@ class Command(BaseCommand):
                 scenario_keys=options.get("scenarios"),
                 live=bool(options.get("live")),
                 cleanup_review_artifacts=not bool(options.get("keep_artifacts")),
+                charge_user_credits=bool(options.get("charge_user_credits")),
             )
         except Exception as exc:  # pragma: no cover - command boundary
             raise CommandError(str(exc)) from exc
@@ -101,6 +110,7 @@ class Command(BaseCommand):
         self.stdout.write(f"run_id: {report.run_id}")
         self.stdout.write(f"mode: {report.mode}")
         self.stdout.write(f"status: {report.status}")
+        self.stdout.write(f"billing: {json.dumps(dict(report.billing), ensure_ascii=False)}")
         self.stdout.write("")
         libraries = report.ground_truth.get("libraries", {})
         solver = report.ground_truth.get("solver_candidates", {})

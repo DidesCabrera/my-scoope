@@ -21,6 +21,7 @@ from ai_assistant.application.model_routing import (
 )
 from ai_assistant.application.orchestrator_helpers import (
     _coerce_provider_tool_calls,
+    _compact_tool_results_payload,
     _enrich_draft_tool_request_from_context,
     _intent_for_native_tool_requests,
     _intent_requires_human_review,
@@ -66,6 +67,7 @@ from ai_assistant.application.tool_governance import (
 )
 from ai_assistant.application.tool_selection import (
     initial_tool_choice,
+    proposal_fact_capture_required_after_tool_results,
     proposal_ready_after_tool_results,
     select_provider_tools,
 )
@@ -225,6 +227,7 @@ class ExternalLLMOrchestrator:
         request: AssistantTurnRequest,
         continuation_items: Sequence[Mapping[str, Any]],
         tool_results: Sequence[AssistantToolResult],
+        accumulated_tool_results: Sequence[AssistantToolResult] | None = None,
         model_route: AIModelRoute | None = None,
         remaining_tool_iterations: int = 0,
     ) -> LLMProviderRequest:
@@ -245,7 +248,19 @@ class ExternalLLMOrchestrator:
         )
         tools = tuple(base_request.tools or ()) if remaining_tool_iterations > 0 else ()
         tool_choice: str | None = "auto" if tools else None
-        if tools and self._proposal_ready_after_tool_results(request, tool_results):
+        decision_tool_results = tuple(accumulated_tool_results or tool_results)
+        if tools and self._proposal_fact_capture_required_after_tool_results(
+            request,
+            decision_tool_results,
+        ):
+            preference_tool = _provider_tool_by_name(
+                tools,
+                TOOL_UPDATE_PROPOSAL_PREFERENCES,
+            )
+            if preference_tool is not None:
+                tools = (preference_tool,)
+                tool_choice = "required"
+        elif tools and self._proposal_ready_after_tool_results(request, decision_tool_results):
             proposal_tool = _provider_tool_by_name(
                 tools,
                 TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
@@ -321,7 +336,7 @@ class ExternalLLMOrchestrator:
             LLMMessage(role="user", content=bounded_text(request.user_message.content, max_chars=600)),
             LLMMessage(
                 role="assistant",
-                content=json.dumps(first_response.as_dict(), ensure_ascii=False, sort_keys=True),
+                content=bounded_text(first_response.assistant_text, max_chars=800),
             ),
             LLMMessage(
                 role="developer",
@@ -862,6 +877,7 @@ class ExternalLLMOrchestrator:
         latency_ms: int | None = None,
         tool_loop_iterations: int = 0,
         first_provider_response_id: str = "",
+        tool_requests: Sequence[AssistantToolRequest] = (),
     ) -> AssistantStructuredResponse:
         """Return a user-safe response when tool results succeeded but follow-up is too large."""
 
@@ -907,6 +923,7 @@ class ExternalLLMOrchestrator:
             tools_executed=True,
             tool_loop_iterations=tool_loop_iterations,
             first_provider_response_id=first_provider_response_id,
+            tool_requests=tool_requests,
         )
 
 
@@ -1132,20 +1149,11 @@ class ExternalLLMOrchestrator:
     ) -> str:
         """Return the smallest safe post-tool payload for the compact fallback."""
 
-        payload = {
-            "tool_results": [
-                sanitize_provider_context(result.as_dict())
-                for result in tuple(tool_results or ())
-            ],
-            "policy": {
-                "source_of_truth": True,
-                "no_more_tools": True,
-                "cards_are_visible": True,
-                "do_not_echo_fields": True,
-                "explain_consequence_not_payload": True,
-            },
-        }
-        return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+        return json.dumps(
+            _compact_tool_results_payload(tool_results),
+            ensure_ascii=False,
+            sort_keys=True,
+        )
 
     def _history_messages(self, history: Sequence[AssistantMessage]) -> list[LLMMessage]:
         allowed_roles = {
@@ -1241,6 +1249,18 @@ class ExternalLLMOrchestrator:
             product_bindings=get_ai_product_bindings(),
         )
 
+    def _proposal_fact_capture_required_after_tool_results(
+        self,
+        request: AssistantTurnRequest,
+        tool_results: Sequence[AssistantToolResult],
+    ) -> bool:
+        return proposal_fact_capture_required_after_tool_results(
+            request,
+            tool_results,
+            enable_reviewable_proposal_tools=self.config.enable_reviewable_proposal_tools,
+            product_bindings=get_ai_product_bindings(),
+        )
+
     def _developer_prompt(
         self,
         tool_specs: Sequence[Mapping[str, Any]] | None = None,
@@ -1265,6 +1285,8 @@ class ExternalLLMOrchestrator:
                 "proposal_cards_are_rendered_automatically": True,
                 "proposal_requires_user_review": True,
                 "visible_response_is_natural_text": True,
+                "never_claim_requested_object_ready_without_successful_creation_result": True,
+                "capture_all_user_supplied_profile_and_proposal_facts_before_creation": True,
             },
         }
         return json.dumps(payload, ensure_ascii=False, sort_keys=True)

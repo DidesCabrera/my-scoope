@@ -290,6 +290,108 @@ class PreparedProductActionTests(TestCase):
         self.assertEqual(meal_food.food_id, replacement.id)
         self.assertEqual(float(meal_food.quantity), 200)
 
+    def test_workspace_patch_can_replace_food_using_public_meal_and_food_ids(self):
+        original = Food.objects.create(
+            name="Arroz",
+            protein=3,
+            carbs=28,
+            fat=0,
+            created_by=self.user,
+        )
+        replacement = Food.objects.create(
+            name="Papa",
+            protein=2,
+            carbs=20,
+            fat=0,
+            created_by=self.user,
+        )
+        MealFood.objects.create(meal=self.meal, food=original, quantity=100)
+
+        action = prepare_workspace_patch(
+            user=self.user,
+            title="Cambiar acompañamiento",
+            summary="Reemplaza arroz por papa y deja la porción en 200 g.",
+            operations=[
+                {
+                    "operation_id": "remove_rice",
+                    "resource": "meal",
+                    "action": "remove_food",
+                    "target_id": self.meal.id,
+                    "parameters": {"food_id": original.id},
+                },
+                {
+                    "operation_id": "add_potato",
+                    "resource": "meal",
+                    "action": "add_food",
+                    "target_id": self.meal.id,
+                    "parameters": {"food_id": replacement.id, "quantity": 200},
+                },
+            ],
+        )
+
+        self.assertTrue(MealFood.objects.filter(meal=self.meal, food=original).exists())
+        self.assertFalse(MealFood.objects.filter(meal=self.meal, food=replacement).exists())
+
+        commit_prepared_action(user=self.user, public_id=action.public_id)
+
+        self.assertFalse(MealFood.objects.filter(meal=self.meal, food=original).exists())
+        replacement_row = MealFood.objects.get(meal=self.meal, food=replacement)
+        self.assertEqual(float(replacement_row.quantity), 200)
+
+    def test_workspace_patch_prefers_explicit_ids_over_redundant_references(self):
+        original = Food.objects.create(
+            name="Arroz",
+            protein=3,
+            carbs=28,
+            fat=0,
+            created_by=self.user,
+        )
+        replacement = Food.objects.create(
+            name="Papa",
+            protein=2,
+            carbs=20,
+            fat=0,
+            created_by=self.user,
+        )
+        MealFood.objects.create(meal=self.meal, food=original, quantity=100)
+
+        action = prepare_workspace_patch(
+            user=self.user,
+            title="Cambiar acompañamiento",
+            summary="Reemplaza arroz por papa y deja la porción en 200 g.",
+            operations=[
+                {
+                    "operation_id": "remove_rice",
+                    "resource": "meal",
+                    "action": "remove_food",
+                    "target_id": self.meal.id,
+                    "references": {
+                        "target_id": "unused_create",
+                        "food_id": "unused_create",
+                        "meal_id": None,
+                    },
+                    "parameters": {"food_id": original.id},
+                },
+                {
+                    "operation_id": "add_potato",
+                    "resource": "meal",
+                    "action": "add_food",
+                    "target_id": self.meal.id,
+                    "references": {"target_id": "remove_rice", "food_id": "remove_rice"},
+                    "parameters": {"food_id": replacement.id, "quantity": 200},
+                },
+            ],
+        )
+
+        self.assertEqual(action.preview["operations"][0]["references"], {})
+        self.assertEqual(action.preview["operations"][1]["references"], {})
+
+        commit_prepared_action(user=self.user, public_id=action.public_id)
+
+        self.assertFalse(MealFood.objects.filter(meal=self.meal, food=original).exists())
+        replacement_row = MealFood.objects.get(meal=self.meal, food=replacement)
+        self.assertEqual(float(replacement_row.quantity), 200)
+
     def test_workspace_patch_can_add_owned_meal_to_dailyplan(self):
         dailyplan = DailyPlan.objects.create(
             name="Plan semanal",

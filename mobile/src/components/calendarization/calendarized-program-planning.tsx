@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { type Href, useRouter } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramDay, CalendarizedDayDetail, LibraryFoodPanelItem, LibraryWeekPanelItem } from "@/api/types";
+import type { ActiveProgramDay, CalendarizedDayDetail, LibraryFoodPanelItem, LibraryWeekPanelItem, MealCheckInInput, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -124,6 +125,17 @@ export function CalendarizedProgramPlanning({
     }
   }
 
+  async function toggleSelectedMealCompletion(meal: MealPanelItem, completed: boolean) {
+    if (!detail) return;
+    try {
+      const payload: MealCheckInInput = { action: completed ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
+      const today = await apiRequest<TodayData>(`/api/v1/days/${detail.id}/meals/${encodeURIComponent(meal.id)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      setDetail(today.day_id === detail.id ? { ...detail, meal_execution: today.meal_execution } : await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${detail.id}`));
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    }
+  }
+
   const mealEditing: MealPanelEditing | undefined = detail?.has_plan ? {
     onChangeTime: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(detail.id), mealKey: meal.id } } as Href),
     onDelete: async (meal) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" }),
@@ -133,6 +145,7 @@ export function CalendarizedProgramPlanning({
       { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" },
     ),
     onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: detail.id, relationKey: meal.id })),
+    onToggleCompleted: (meal, completed) => void toggleSelectedMealCompletion(meal, completed),
   } : undefined;
 
   const snapshot = detail?.plan_snapshot;

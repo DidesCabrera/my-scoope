@@ -5,6 +5,10 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from typing import Any, Callable
 
+from ai_assistant.application.intake_semantics import (
+    extract_nutrition_intake_semantics,
+    normalize_intake_text,
+)
 from ai_assistant.application.product_ports import AIProductBindings
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
@@ -266,6 +270,131 @@ def proposal_ready_after_tool_results(
     except (TypeError, ValueError):
         return False
     return not product_bindings.required_proposal_fields(brief)
+
+
+def proposal_fact_capture_required_after_tool_results(
+    request: AssistantTurnRequest,
+    tool_results: Sequence[AssistantToolResult],
+    *,
+    enable_reviewable_proposal_tools: bool,
+    product_bindings: AIProductBindings,
+) -> bool:
+    """Require capture when the user already supplied an exact blocking fact.
+
+    This does not persist a heuristic interpretation. It only keeps the model's
+    tool loop open so the model records the stated fact through the typed draft
+    tool instead of claiming the requested proposal already exists.
+    """
+
+    work_progress = _intake_work_progress(request.context)
+    if not _work_progress_has_active_proposal_objective(work_progress):
+        return False
+    if not enable_reviewable_proposal_tools:
+        return False
+    workspace = _intake_workspace(request.context)
+    try:
+        brief = product_bindings.build_nutrition_brief_from_ai_drafts(
+            profile_draft=_latest_draft_for_tool(
+                "profile_draft",
+                context=request.context,
+                prior_tool_results=tool_results,
+            ),
+            preference_draft=_latest_draft_for_tool(
+                "preference_draft",
+                context=request.context,
+                prior_tool_results=tool_results,
+            ),
+            proposal_preferences=_latest_draft_for_tool(
+                "proposal_preferences",
+                context=request.context,
+                prior_tool_results=tool_results,
+            ),
+            current_nutrition_brief=dict(workspace.get("current_nutrition_brief") or {}),
+            raw_prompt=request.user_message.content,
+        )
+    except (TypeError, ValueError):
+        return False
+    stated = _explicit_proposal_values(request.user_message.content)
+    for field_name, expected in stated.items():
+        actual = getattr(brief, field_name, None)
+        if not _brief_value_matches_explicit_value(
+            brief,
+            field_name=field_name,
+            actual=actual,
+            expected=expected,
+        ):
+            return True
+    return False
+
+
+def _brief_value_matches_explicit_value(
+    brief: Any,
+    *,
+    field_name: str,
+    actual: Any,
+    expected: Any,
+) -> bool:
+    if field_name != "macro_distribution":
+        return actual == expected
+
+    actual_distribution = dict(actual or {})
+    if not actual_distribution:
+        calories = float(getattr(brief, "calorie_target", 0) or 0)
+        protein = float(getattr(brief, "protein_target", 0) or 0)
+        carbs = float(getattr(brief, "carb_target", 0) or 0)
+        fat = float(getattr(brief, "fat_target", 0) or 0)
+        if calories > 0 and protein > 0 and carbs > 0 and fat > 0:
+            actual_distribution = {
+                "protein": protein * 4 / calories * 100,
+                "carbs": carbs * 4 / calories * 100,
+                "fat": fat * 9 / calories * 100,
+            }
+    if set(actual_distribution) != {"protein", "carbs", "fat"}:
+        return False
+    return all(
+        abs(float(actual_distribution[key]) - float(expected[key])) <= 0.25
+        for key in ("protein", "carbs", "fat")
+    )
+
+
+def _explicit_proposal_values(user_text: str) -> dict[str, Any]:
+    """Detect exact proposal values only to keep their typed capture pending."""
+
+    values = {
+        key: value
+        for key, value in extract_nutrition_intake_semantics(user_text).as_updates().items()
+        if key in {"goal", "meals_per_day", "complexity_level"}
+    }
+    text = normalize_intake_text(user_text)
+    calorie_match = re.search(r"\b([1-6][0-9]{3})\s*(?:kcal|calorias?)\b", text)
+    if calorie_match:
+        values["calorie_target"] = int(calorie_match.group(1))
+
+    label_patterns = {
+        "protein": r"\b([0-9]{1,2}(?:[.,][0-9]+)?)\s*%?\s*(?:proteina|protein)\b",
+        "carbs": r"\b([0-9]{1,2}(?:[.,][0-9]+)?)\s*%?\s*(?:carbohidratos?|carbos?|carbs?)\b",
+        "fat": r"\b([0-9]{1,2}(?:[.,][0-9]+)?)\s*%?\s*(?:grasas?|fat)\b",
+    }
+    distribution: dict[str, float] = {}
+    for key, pattern in label_patterns.items():
+        match = re.search(pattern, text)
+        if match:
+            distribution[key] = float(match.group(1).replace(",", "."))
+    slash_match = re.search(
+        r"\b([0-9]{1,2})\s*/\s*([0-9]{1,2})\s*/\s*([0-9]{1,2})\b",
+        text,
+    )
+    if slash_match and not distribution:
+        distribution = {
+            "protein": float(slash_match.group(1)),
+            "carbs": float(slash_match.group(2)),
+            "fat": float(slash_match.group(3)),
+        }
+    if set(distribution) == {"protein", "carbs", "fat"} and abs(
+        sum(distribution.values()) - 100
+    ) < 0.01:
+        values["macro_distribution"] = distribution
+    return values
 
 
 def provider_tool_by_name(

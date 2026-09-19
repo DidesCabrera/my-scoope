@@ -9,6 +9,7 @@ from notas.application.ai_tools.proposal_tools import (
     create_nutrition_engine_dailyplan_proposal_from_drafts_tool,
 )
 from notas.application.dto.nutrition_subject_context_dto import SUBJECT_SOURCE_MANUAL_CHAT_DATA
+from notas.domain.models import NutritionProposal
 
 
 class AIProposalFromDraftToolsTests(TestCase):
@@ -107,6 +108,36 @@ class AIProposalFromDraftToolsTests(TestCase):
         self.assertEqual(called_brief["height_cm"], 188)
         self.assertIn("pescado", called_brief["excluded_foods"])
 
+    def test_explicit_calorie_and_macros_create_without_inventing_a_goal(self):
+        with patch(
+            "notas.application.ai_tools.proposal_tools._create_nutrition_engine_dailyplan_proposal_data"
+        ) as create_from_brief:
+            create_from_brief.return_value = {
+                "proposal": {"id": 401, "status": "pending_review", "proposal_type": "dailyplan"},
+                "source_proposal": {"id": 400},
+            }
+
+            result = create_nutrition_engine_dailyplan_proposal_from_drafts_tool(
+                self.user,
+                profile_draft={},
+                proposal_preferences={
+                    "requested_entity": "daily_plan",
+                    "meals_per_day": 4,
+                    "calorie_target": 2400,
+                    "protein_target": 180,
+                    "carb_target": 300,
+                    "fat_target": 53.33,
+                    "macro_distribution": {"protein": 30, "carbs": 50, "fat": 20},
+                },
+                raw_prompt="Crea un plan de 2400 kcal con 30/50/20.",
+            )
+
+        self.assertTrue(result.ok)
+        called_brief = create_from_brief.call_args.kwargs["nutrition_brief"]
+        self.assertIsNone(called_brief["goal"])
+        self.assertEqual(called_brief["calorie_target"], 2400)
+        self.assertEqual(called_brief["macro_distribution"]["carbs"], 50)
+
     def test_create_dailyplan_proposal_from_drafts_blocks_when_minimum_brief_is_incomplete(self):
         result = create_nutrition_engine_dailyplan_proposal_from_drafts_tool(
             self.user,
@@ -116,3 +147,30 @@ class AIProposalFromDraftToolsTests(TestCase):
 
         self.assertFalse(result.ok)
         self.assertEqual(result.error.code, "nutrition_brief_has_pending_questions")
+
+    def test_failed_generation_rolls_back_source_brief_proposal(self):
+        result = create_nutrition_engine_dailyplan_proposal_from_drafts_tool(
+            self.user,
+            profile_draft={
+                "weight_kg": 80,
+                "height_cm": 180,
+                "age_years": 38,
+                "sex": "male",
+                "activity_level": "high",
+                "training_frequency": 4,
+            },
+            proposal_preferences={
+                "goal": "muscle_gain",
+                "requested_entity": "daily_plan",
+                "meals_per_day": 4,
+                "calorie_target": 2400,
+                "protein_target": 150,
+                "carb_target": 300,
+                "fat_target": 53,
+                "macro_distribution": {"protein": 30, "carbs": 50, "fat": 20},
+            },
+        )
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error.code, "nutrition_target_macro_modes_conflict")
+        self.assertEqual(NutritionProposal.objects.filter(created_by=self.user).count(), 0)

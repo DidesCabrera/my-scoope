@@ -143,6 +143,117 @@ def _strict_proposal_preferences_provider_schema() -> dict[str, Any]:
     }
 
 
+def _strict_workspace_patch_provider_schema() -> dict[str, Any]:
+    """Expose the patch vocabulary without allowing the model to invent aliases."""
+
+    nullable_string = {"type": ["string", "null"]}
+    nullable_integer = {"type": ["integer", "null"]}
+    nullable_number = {"type": ["number", "null"]}
+    parameter_properties = {
+        "name": dict(nullable_string),
+        "protein": dict(nullable_number),
+        "carbs": dict(nullable_number),
+        "fat": dict(nullable_number),
+        "food_id": dict(nullable_integer),
+        "quantity": {
+            **nullable_number,
+            "description": "Food quantity in grams. Do not use portion_g.",
+        },
+        "meal_id": dict(nullable_integer),
+        "hour": dict(nullable_string),
+        "note": dict(nullable_string),
+        "duration_weeks": dict(nullable_integer),
+        "week_number": dict(nullable_integer),
+    }
+    reference_properties = {
+        "target_id": dict(nullable_string),
+        "food_id": dict(nullable_string),
+        "meal_id": dict(nullable_string),
+    }
+    operation_properties = {
+        "operation_id": {"type": "string"},
+        "resource": {
+            "type": "string",
+            "enum": [
+                "food",
+                "meal",
+                "dailyplan",
+                "program",
+                "calendarization",
+                "saved_comparison",
+                "proposal",
+            ],
+        },
+        "action": {
+            "type": "string",
+            "enum": [
+                "create",
+                "update",
+                "rename",
+                "delete",
+                "add_food",
+                "update_food",
+                "remove_food",
+                "add_meal",
+                "update_meal",
+                "remove_meal",
+                "add_week",
+                "duplicate_week",
+                "remove_week",
+                "pause",
+                "resume",
+                "cancel",
+                "approve",
+                "reject",
+                "apply",
+            ],
+        },
+        "target_id": dict(nullable_integer),
+        "references": {
+            "type": "object",
+            "description": (
+                "Use only for IDs created by an earlier create operation. When target_id or an "
+                "ID parameter is supplied directly, set the matching reference to null. For an "
+                "existing-meal food replacement, all references are null."
+            ),
+            "properties": reference_properties,
+            "required": list(reference_properties),
+            "additionalProperties": False,
+        },
+        "parameters": {
+            "type": "object",
+            "description": (
+                "Direct action-specific values; do not put database IDs in references. "
+                "For a meal food replacement use the owned meal as target_id, then "
+                "remove_food with the current food_id followed by add_food with the "
+                "replacement food_id and quantity in grams. References are only for "
+                "operation_id values created earlier in this same patch."
+            ),
+            "properties": parameter_properties,
+            "required": list(parameter_properties),
+            "additionalProperties": False,
+        },
+    }
+    return {
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "summary": {"type": "string"},
+            "operations": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 24,
+                "items": {
+                    "type": "object",
+                    "properties": operation_properties,
+                    "required": list(operation_properties),
+                    "additionalProperties": False,
+                },
+            },
+        },
+        "required": ["title", "summary", "operations"],
+        "additionalProperties": False,
+    }
 def list_provider_tool_specs() -> list[dict[str, Any]]:
     provider_specs: list[dict[str, Any]] = []
     for spec in list_allowed_tool_specs():
@@ -153,6 +264,12 @@ def list_provider_tool_specs() -> list[dict[str, Any]]:
             provider_spec = {
                 **provider_spec,
                 "parameters": _strict_proposal_preferences_provider_schema(),
+                "strict": True,
+            }
+        if spec.name == TOOL_PROPOSE_WORKSPACE_PATCH:
+            provider_spec = {
+                **provider_spec,
+                "parameters": _strict_workspace_patch_provider_schema(),
                 "strict": True,
             }
         if spec.name == TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS:
@@ -170,6 +287,20 @@ def list_provider_tool_specs() -> list[dict[str, Any]]:
                     "additionalProperties": False,
                 },
                 "strict": True,
+            }
+        if spec.name == TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL:
+            parameters = dict(provider_spec.get("parameters") or {})
+            properties = dict(parameters.get("properties") or {})
+            properties.pop("search", None)
+            provider_spec = {
+                **provider_spec,
+                "description": (
+                    "Create a reviewable Meal proposal by running the internal Nutrition "
+                    "Solver against the complete solver-ready operational food catalog. "
+                    "Do not invent or narrow the catalog with a free-text search. This never "
+                    "creates or applies a final Meal directly."
+                ),
+                "parameters": {**parameters, "properties": properties},
             }
         provider_specs.append(provider_spec)
     return provider_specs

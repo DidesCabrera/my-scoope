@@ -1,5 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import * as Crypto from "expo-crypto";
+import * as Haptics from "expo-haptics";
 import { Check, Pencil } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
@@ -100,7 +101,16 @@ export type MealAdherenceController = ReturnType<typeof useMealAdherenceCheckIn>
 export function MealCompletionToggleCard({ available = true, completed, error, onToggle, saving = false }: { available?: boolean; completed: boolean; error?: string | null; onToggle(nextCompleted: boolean): void; saving?: boolean }) {
   if (!available) return null;
   return <MealCompletionSurface>
-    <Pressable accessibilityLabel="Comida cumplida" accessibilityRole="checkbox" accessibilityState={{ checked: completed, disabled: saving }} disabled={saving} onPress={() => onToggle(!completed)} style={({ pressed }) => [styles.completionRow, saving && styles.saving, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityLabel="Comida cumplida"
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: completed, disabled: saving }}
+      disabled={saving}
+      onPress={() => {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid).catch(() => undefined);
+        onToggle(!completed);
+      }}
+      style={styles.completionRow}>
       <Text style={styles.completionLabel}>Comida cumplida</Text>
       <View style={[styles.checkbox, completed && styles.checkboxChecked]}>{completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
     </Pressable>
@@ -148,5 +158,5 @@ const styles = StyleSheet.create({
   noteLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   noteText: { color: tokens.color.textMain, fontSize: tokens.type.caption, lineHeight: 21, minHeight: 42 },
   noteTextEmpty: { color: tokens.color.textMuted },
-  pressed: { opacity: 0.65 }, saving: { opacity: 0.75 }, section: { gap: tokens.spacing.sm, minWidth: 0 },
+  pressed: { opacity: 0.65 }, section: { gap: tokens.spacing.sm, minWidth: 0 },
 });

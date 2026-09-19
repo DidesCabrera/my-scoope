@@ -41,6 +41,7 @@ class AIWorkspaceLibraryCoherenceTests(TestCase):
         self.assertTrue(first.ok)
         self.assertEqual(first.data["scope"], "library")
         self.assertEqual(first.data["total_count"], 13)
+        self.assertEqual(first.data["count_for_user_questions"], 13)
         self.assertEqual(first.data["returned_count"], 8)
         self.assertTrue(first.data["has_more"])
         self.assertEqual(first.data["next_offset"], 8)
@@ -73,7 +74,9 @@ class AIWorkspaceLibraryCoherenceTests(TestCase):
 
         self.assertTrue(result.ok)
         self.assertEqual(result.data["total_count"], 32)
+        self.assertEqual(result.data["count_for_user_questions"], 32)
         self.assertEqual(result.data["returned_count"], 8)
+        self.assertIn("returned_count is only this page", result.data["count_semantics"])
         self.assertTrue(result.data["has_more"])
         self.assertNotIn("Snapshot interno", {item["name"] for item in result.data["meals"]})
 

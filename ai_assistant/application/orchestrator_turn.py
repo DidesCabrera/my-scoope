@@ -149,6 +149,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
             request=request,
             continuation_items=continuation_items,
             tool_results=current_tool_results,
+            accumulated_tool_results=all_tool_results,
             model_route=model_route,
             remaining_tool_iterations=remaining_iterations,
         )
@@ -184,6 +185,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
                     latency_ms=latency_ms,
                     tool_loop_iterations=tool_loop_iterations,
                     first_provider_response_id=provider_response.response_id,
+                    tool_requests=all_tool_requests,
                 )
                 return orchestrator._with_usage_observability(
                     request=request,

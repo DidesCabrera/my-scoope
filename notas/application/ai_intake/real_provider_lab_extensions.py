@@ -82,7 +82,7 @@ def build_lab_scenarios() -> dict[str, Any]:
                 "(ID {replacement_food_id}) y deja la porción en 200 g. Prepara el cambio "
                 "para que yo lo revise; no lo apliques todavía.",
             ),
-            required_tool_names=("query_workspace", "propose_workspace_patch"),
+            required_tool_names=("propose_workspace_patch",),
             max_tool_calls=6,
             capability_ids=("M-08",),
             diagnostic_domains=("language_understanding", "tool_routing", "state_mutation"),
@@ -110,7 +110,11 @@ def build_lab_scenarios() -> dict[str, Any]:
                 "weight_kg": 80.0,
                 "meals_per_day": 4,
             },
-            required_tool_names=("update_proposal_preferences",),
+            required_tool_names=(
+                "update_profile_draft",
+                "update_proposal_preferences",
+                "create_nutrition_engine_dailyplan_proposal_from_drafts",
+            ),
             max_tool_calls=8,
             capability_ids=("DP-13",),
             diagnostic_domains=("language_understanding", "guardrail_policy", "solver_feasibility", "state_mutation"),
@@ -270,6 +274,42 @@ def state_mutation_check_values(
         else f"policy={policy}; violations={failures}; deltas={deltas}"
     )
     return not failures, detail, "hard"
+
+
+def tool_contract_check_values(
+    scenario: Any,
+    turns: Sequence[Any],
+) -> tuple[bool, str]:
+    results = [item for turn in turns for item in turn.tool_results]
+    actual_names = {str(item.get("tool_name") or "") for item in results}
+    missing: list[str] = []
+    unsuccessful: list[str] = []
+    for tool_name in scenario.required_tool_names:
+        matching = [item for item in results if item.get("tool_name") == tool_name]
+        if not matching:
+            missing.append(tool_name)
+            continue
+        expected_status = scenario.expected_tool_errors.get(tool_name) or "ok"
+        if not any(item.get("status") == expected_status for item in matching):
+            observed = sorted({str(item.get("status") or "") for item in matching})
+            unsuccessful.append(
+                f"{tool_name}: expected {expected_status!r}, observed {observed}"
+            )
+    error_failures = [
+        f"{tool_name}:{expected_status}"
+        for tool_name, expected_status in scenario.expected_tool_errors.items()
+        if not any(
+            item.get("tool_name") == tool_name and item.get("status") == expected_status
+            for item in results
+        )
+    ]
+    passed = not missing and not unsuccessful and not error_failures
+    if passed:
+        return True, f"{len(actual_names)} distinct tool(s) satisfied the scenario contract"
+    return False, (
+        f"missing tools={missing}; unsuccessful required tools={unsuccessful}; "
+        f"missing expected error result(s)={error_failures}"
+    )
 
 
 def scenario_result_lab_metadata(result: Any) -> dict[str, Any]:

@@ -29,6 +29,7 @@ from notas.application.ai_intake.real_provider_validation import (
     _provider_followup_health_check,
     _response_repetition_check,
     _specialize_scenario_for_user,
+    _tool_contract_check,
     _tool_result_grounding_check,
     _visible_facts_check,
     built_in_real_provider_scenarios,
@@ -593,6 +594,45 @@ class RealProviderValidationTests(TestCase):
 
         self.assertFalse(check.passed)
         self.assertIn("contradicted executed tool result", check.detail)
+
+    def test_tool_contract_requires_success_for_required_tool(self):
+        scenario = RealProviderValidationScenario(
+            key="required-tool-success",
+            description="test",
+            user_messages=("Crea la propuesta.",),
+            required_tool_names=("create_proposal",),
+        )
+        turn = RealProviderValidationTurn(
+            index=1,
+            turn_id="required-tool-success-1",
+            user_message="Crea la propuesta.",
+            assistant_message="No pude crearla.",
+            engine_name="test",
+            brief_snapshot={},
+            semantic_intent="create_proposal",
+            semantic_missing_slots=(),
+            tool_results=({"tool_name": "create_proposal", "status": "error"},),
+            card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            card_deltas={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            fallback=False,
+            fallback_reason="",
+            deterministic_runtime_invoked=False,
+            provider="openai",
+            model="test-real-model",
+            usage_observability={"recorded": True},
+        )
+
+        check = _tool_contract_check(scenario, (turn,))
+
+        self.assertFalse(check.passed)
+        self.assertIn("expected 'ok'", check.detail)
+
+        successful = replace(
+            turn,
+            assistant_message="La propuesta quedó creada para revisión.",
+            tool_results=({"tool_name": "create_proposal", "status": "ok"},),
+        )
+        self.assertTrue(_tool_contract_check(scenario, (successful,)).passed)
 
     def test_provider_followup_health_is_release_blocking_and_names_error(self):
         turn = RealProviderValidationTurn(

@@ -15,6 +15,8 @@ PROPOSAL_PREFERENCE_FIELDS = (
     "protein_target",
     "carb_target",
     "fat_target",
+    "protein_per_kg_target",
+    "macro_distribution",
     "notes",
 )
 
@@ -23,6 +25,8 @@ TARGET_FIELDS = (
     "protein_target",
     "carb_target",
     "fat_target",
+    "protein_per_kg_target",
+    "macro_distribution",
 )
 
 FIELD_LABELS = {
@@ -35,6 +39,8 @@ FIELD_LABELS = {
     "protein_target": "Proteína objetivo",
     "carb_target": "Carbohidratos objetivo",
     "fat_target": "Grasa objetivo",
+    "protein_per_kg_target": "Proteína por kg",
+    "macro_distribution": "Distribución de macros",
     "notes": "Notas de propuesta",
 }
 
@@ -383,6 +389,10 @@ def _normalize_field_value(field_name: str, value: Any) -> Any:
         return _normalize_entity(value)
     if field_name == "meals_per_day":
         return _clean_int(value, min_value=1, max_value=8)
+    if field_name == "protein_per_kg_target":
+        return _clean_float(value, min_value=1.0, max_value=2.5)
+    if field_name == "macro_distribution":
+        return _clean_macro_distribution(value)
     if field_name in TARGET_FIELDS:
         return _clean_int(value, min_value=0, max_value=6000)
     if field_name == "energy_adjustment":
@@ -437,6 +447,30 @@ def _clean_int(value: Any, *, min_value: int, max_value: int) -> int | None:
     if number < min_value or number > max_value:
         return None
     return number
+
+
+def _clean_float(value: Any, *, min_value: float, max_value: float) -> float | None:
+    try:
+        number = float(str(value).replace(",", ".").strip())
+    except (TypeError, ValueError):
+        return None
+    if number < min_value or number > max_value:
+        return None
+    return round(number, 2)
+
+
+def _clean_macro_distribution(value: Any) -> dict[str, float] | None:
+    if not isinstance(value, Mapping):
+        return None
+    cleaned = {
+        key: _clean_float(value.get(key), min_value=0.01, max_value=99.99)
+        for key in ("protein", "carbs", "fat")
+    }
+    if any(item is None for item in cleaned.values()):
+        return None
+    if abs(sum(float(item) for item in cleaned.values()) - 100) > 0.25:
+        return None
+    return {key: float(item) for key, item in cleaned.items()}
 
 
 def _clean_text_list(value: Any) -> list[str]:
@@ -503,6 +537,10 @@ def _format_value(field_name: str, value: Any) -> str:
         return f"{int(value)} kcal"
     if field_name in {"protein_target", "carb_target", "fat_target"}:
         return f"{int(value)} g"
+    if field_name == "protein_per_kg_target":
+        return f"{float(value):g} g/kg"
+    if field_name == "macro_distribution":
+        return "/".join(f"{float(value[key]):g}" for key in ("protein", "carbs", "fat"))
     if field_name == "notes":
         return ", ".join(str(item) for item in list(value or []))
     return str(value)

@@ -17,11 +17,13 @@ from __future__ import annotations
 import re
 import uuid
 from collections import Counter, defaultdict
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from django.conf import settings
+from django.test.utils import override_settings
 
 from ai_assistant.models import AIPreparedAction
 from notas.application.ai_intake.real_provider_validation import (
@@ -81,6 +83,13 @@ _CHECK_DIAGNOSTIC_DOMAIN = {
     "state_mutation_boundary": "state_mutation",
 }
 
+_CREDIT_BLOCK_REASONS = {
+    "account_credit_wallet_limit_exceeded",
+    "credit_quota_hard_blocked",
+    "daily_credit_limit_exceeded",
+    "monthly_credit_limit_exceeded",
+}
+
 
 @dataclass(frozen=True)
 class EvaluationLabReport:
@@ -94,6 +103,7 @@ class EvaluationLabReport:
     live_validation: RealProviderValidationReport | None
     diagnostics: Mapping[str, Any]
     cleanup: Mapping[str, Any]
+    billing: Mapping[str, Any]
 
     @property
     def passed(self) -> bool:
@@ -112,6 +122,7 @@ class EvaluationLabReport:
             "scenario_preflight": [dict(item) for item in self.scenario_preflight],
             "diagnostics": dict(self.diagnostics),
             "cleanup": dict(self.cleanup),
+            "billing": dict(self.billing),
             "live_validation": (
                 self.live_validation.as_dict() if self.live_validation is not None else None
             ),
@@ -126,6 +137,7 @@ def run_evaluation_lab(
     engine: Any | None = None,
     run_id: str | None = None,
     cleanup_review_artifacts: bool = True,
+    charge_user_credits: bool = False,
 ) -> EvaluationLabReport:
     if not getattr(user, "pk", None):
         raise ValueError("AI Assistant evaluation lab requires a persisted authenticated user.")
@@ -161,12 +173,18 @@ def run_evaluation_lab(
     before_artifacts = _review_artifact_ids(user)
     if live and ready_keys:
         try:
-            live_report = run_real_provider_validation(
-                user=user,
-                scenario_keys=ready_keys,
-                engine=engine,
-                run_id=validation_run_id,
+            credit_context = (
+                nullcontext()
+                if charge_user_credits
+                else override_settings(AI_ASSISTANT_CREDITS_ENABLED=False)
             )
+            with credit_context:
+                live_report = run_real_provider_validation(
+                    user=user,
+                    scenario_keys=ready_keys,
+                    engine=engine,
+                    run_id=validation_run_id,
+                )
         finally:
             if cleanup_review_artifacts:
                 cleanup = _cleanup_new_review_artifacts(user=user, before=before_artifacts)
@@ -175,8 +193,11 @@ def run_evaluation_lab(
         preflight=preflight,
         live_report=live_report,
     )
+    credit_blocks = _credit_block_reasons(live_report)
     if not live:
         status = "preflight_ready" if not blocked else "blocked_by_fixture"
+    elif credit_blocks:
+        status = "blocked_by_credit_quota"
     elif live_report is not None and not live_report.passed:
         status = "hard_regression"
     elif blocked or live_report is None:
@@ -195,6 +216,12 @@ def run_evaluation_lab(
         live_validation=live_report,
         diagnostics=diagnostics,
         cleanup=cleanup,
+        billing={
+            "policy": "charge_selected_user" if charge_user_credits else "internal_unmetered",
+            "user_credits_charged": bool(charge_user_credits),
+            "provider_usage_recorded": bool(live),
+            "credit_block_reasons": credit_blocks,
+        },
     )
 
 
@@ -347,6 +374,18 @@ def _build_diagnostics(
 
     if live_report is not None:
         for result in live_report.scenarios:
+            blocked_reasons = _scenario_credit_block_reasons(result)
+            if blocked_reasons:
+                failures_by_domain["credit_quota"].append(
+                    {
+                        "scenario": result.scenario.key,
+                        "check": "credit_preflight",
+                        "detail": ",".join(blocked_reasons),
+                    }
+                )
+                # Missing tools, proposals and captured facts are consequences of
+                # the provider turn never starting, not assistant regressions.
+                continue
             for check in result.checks:
                 if check.passed or check.severity not in {"hard", "diagnostic"}:
                     continue
@@ -393,6 +432,31 @@ def _build_diagnostics(
             else "Failures are grouped by the layer most likely responsible; inspect the transcript and ground truth before changing prompts or tools."
         ),
     }
+
+
+def _scenario_credit_block_reasons(result: Any) -> list[str]:
+    return sorted(
+        {
+            str(turn.usage_observability.get("error_type") or "")
+            for turn in result.turns
+            if str(turn.usage_observability.get("error_type") or "")
+            in _CREDIT_BLOCK_REASONS
+        }
+    )
+
+
+def _credit_block_reasons(
+    live_report: RealProviderValidationReport | None,
+) -> list[str]:
+    if live_report is None:
+        return []
+    return sorted(
+        {
+            reason
+            for result in live_report.scenarios
+            for reason in _scenario_credit_block_reasons(result)
+        }
+    )
 
 
 def _review_artifact_ids(user: Any) -> dict[str, set[int]]:

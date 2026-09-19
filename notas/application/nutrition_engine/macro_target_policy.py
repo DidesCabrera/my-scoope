@@ -17,6 +17,7 @@ MIN_SUPPORTED_FAT_ENERGY_PERCENT = 15.0
 MAX_SUPPORTED_FAT_ENERGY_PERCENT = 35.0
 DEFAULT_FAT_ENERGY_PERCENT = 25.0
 ENERGY_COHERENCE_TOLERANCE = 0.05
+MACRO_DISTRIBUTION_EQUIVALENCE_TOLERANCE = 0.5
 
 
 @dataclass(frozen=True)
@@ -55,13 +56,18 @@ def resolve_daily_macro_targets(
         else _validated_ppk(default_protein_per_kg)
     )
 
-    if distribution and explicit_grams:
-        raise ValueError("nutrition_target_macro_modes_conflict")
-
     if distribution:
         protein = energy * distribution["protein"] / 100 / PROTEIN_KCAL_PER_GRAM
         carbs = energy * distribution["carbs"] / 100 / CARBS_KCAL_PER_GRAM
         fat = energy * distribution["fat"] / 100 / FAT_KCAL_PER_GRAM
+        if explicit_grams:
+            _validate_explicit_grams_match_distribution(
+                total_kcal=energy,
+                distribution=distribution,
+                protein_target=protein_target,
+                carb_target=carb_target,
+                fat_target=fat_target,
+            )
         derived_ppk = protein / weight
         _validate_derived_ppk(derived_ppk)
         if protein_per_kg_target is not None and not _close_protein_targets(
@@ -69,6 +75,13 @@ def resolve_daily_macro_targets(
             weight * requested_ppk,
         ):
             raise ValueError("nutrition_target_ppk_distribution_conflict")
+        notes = ["Distribución energética explícita convertida a gramos por el backend."]
+        if explicit_grams:
+            notes.append(
+                "Los gramos explícitos equivalentes se normalizaron usando la "
+                "distribución solicitada como fuente de verdad."
+            )
+        notes.append(_ppk_range_note(derived_ppk))
         return MacroTargetResolution(
             protein=protein,
             carbs=carbs,
@@ -76,10 +89,7 @@ def resolve_daily_macro_targets(
             protein_per_kg=derived_ppk,
             distribution=distribution,
             source="explicit_macro_distribution",
-            notes=(
-                "Distribución energética explícita convertida a gramos por el backend.",
-                _ppk_range_note(derived_ppk),
-            ),
+            notes=tuple(notes),
         )
 
     inferred_protein = _round_to_step(weight * requested_ppk, 5.0)
@@ -229,6 +239,36 @@ def _ppk_range_note(value: float) -> str:
 def _close_protein_targets(left: float, right: float) -> bool:
     tolerance = max(5.0, abs(right) * ENERGY_COHERENCE_TOLERANCE)
     return abs(left - right) <= tolerance
+
+
+def _validate_explicit_grams_match_distribution(
+    *,
+    total_kcal: float,
+    distribution: Mapping[str, float],
+    protein_target: float | None,
+    carb_target: float | None,
+    fat_target: float | None,
+) -> None:
+    """Allow redundant gram targets only when they express the same request.
+
+    Providers commonly translate a user's percentage request to grams before
+    invoking the tool. Treating that lossless translation as a competing macro
+    mode made valid requests fail. The user's explicit percentage distribution
+    remains authoritative; genuinely contradictory gram targets are rejected.
+    """
+
+    supplied = {
+        "protein": (protein_target, PROTEIN_KCAL_PER_GRAM),
+        "carbs": (carb_target, CARBS_KCAL_PER_GRAM),
+        "fat": (fat_target, FAT_KCAL_PER_GRAM),
+    }
+    for macro, (raw_grams, kcal_per_gram) in supplied.items():
+        if raw_grams is None:
+            continue
+        grams = _positive_float(raw_grams, "nutrition_target_macros_must_be_positive")
+        actual_percent = grams * kcal_per_gram / total_kcal * 100
+        if abs(actual_percent - distribution[macro]) > MACRO_DISTRIBUTION_EQUIVALENCE_TOLERANCE:
+            raise ValueError("nutrition_target_macro_modes_conflict")
 
 
 def _positive_float(value: object, error_code: str) -> float:

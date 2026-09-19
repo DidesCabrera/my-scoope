@@ -39,6 +39,38 @@ class MacroTargetPolicyTests(SimpleTestCase):
                 )
                 self.assertEqual(result.distribution, distribution)
 
+    def test_accepts_equivalent_distribution_and_rounded_gram_targets(self):
+        result = resolve_daily_macro_targets(
+            total_kcal=2400,
+            weight_kg=80,
+            default_protein_per_kg=1.8,
+            protein_target=180,
+            carb_target=300,
+            fat_target=53,
+            macro_distribution={"protein": 30, "carbs": 50, "fat": 20},
+        )
+
+        self.assertEqual(result.protein, 180)
+        self.assertEqual(result.carbs, 300)
+        self.assertAlmostEqual(result.fat, 2400 * 0.2 / 9)
+        self.assertEqual(result.source, "explicit_macro_distribution")
+        self.assertIn("fuente de verdad", result.notes[1])
+
+    def test_rejects_conflicting_distribution_and_gram_targets(self):
+        with self.assertRaisesMessage(
+            ValueError,
+            "nutrition_target_macro_modes_conflict",
+        ):
+            resolve_daily_macro_targets(
+                total_kcal=2400,
+                weight_kg=80,
+                default_protein_per_kg=1.8,
+                protein_target=150,
+                carb_target=300,
+                fat_target=53,
+                macro_distribution={"protein": 30, "carbs": 50, "fat": 20},
+            )
+
     def test_rejects_incoherent_ppk_and_distribution(self):
         with self.assertRaisesMessage(
             ValueError,

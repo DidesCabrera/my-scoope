@@ -88,13 +88,15 @@ test("in-progress plan cards connect meal gestures to their composition mutation
   assert.match(layout, /<NestableScrollContainer/);
 });
 
-test("meal rows reveal a clock action on right swipe and reuse existing time forms", async () => {
+test("current meal rows reveal completion and clock actions on right swipe", async () => {
   const panels = await source("src/components/panels/entity-panels.tsx");
   const calendarizedDay = await source("src/app/program/days/[id].tsx");
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
-
   assert.match(panels, /renderLeftActions = editing\.onChangeTime/);
   assert.match(panels, /label="Cambiar hora"/);
+  assert.match(panels, /tone="meal"><Check color=\{tokens\.color\.entityIconForeground\}/);
+  assert.match(panels, /swipeCurrentMealActions: \{ flexDirection: "row", width: 96 \}/);
+  assert.match(panels, /swipeActionMeal: \{ backgroundColor: tokens\.color\.meal \}/);
   assert.match(panels, /<Clock color=\{tokens\.color\.entityIconForeground\}/);
   assert.match(panels, /swipeAction: \{[^}]*alignSelf: "stretch"[^}]*flex: 1/);
   assert.match(panels, /swipeAction: \{[^}]*backgroundColor: "#515151"/);
@@ -103,8 +105,10 @@ test("meal rows reveal a clock action on right swipe and reuse existing time for
   assert.match(panels, /preparationMarkerChecked: \{ backgroundColor: tokens\.color\.food/);
   assert.match(panels, /onChangeTime: editing\.onChangeTime/);
   assert.match(calendarizedDay, /onChangeTime: setTimeChangeMeal/);
+  assert.match(calendarizedDay, /onToggleCompleted: \(meal, completed\) => void toggleMealCompletion/);
   assert.match(calendarizedDay, /initialAction="change-time"[\s\S]*?method: "PATCH"/);
   assert.match(libraryDetail, /onChangeTime: \(meal: MealPanelItem\)/);
+  assert.match(libraryDetail, /onToggleCompleted: isPinnedPlan/);
   assert.match(libraryDetail, /initialAction="change-time"[\s\S]*?method: "PATCH"/);
 });
 
