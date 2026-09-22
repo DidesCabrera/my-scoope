@@ -9,6 +9,7 @@ from django.test import TestCase, override_settings
 
 from ai_assistant.models import AIUsageEvent
 from notas.application.ai_intake.evaluation_lab import (
+    EVALUATION_LAB_VERSION,
     _build_diagnostics,
     _credit_block_reasons,
     run_evaluation_lab,
@@ -42,6 +43,7 @@ class AIAssistantEvaluationLabTests(TestCase):
         )
 
         self.assertEqual(report.status, "preflight_ready")
+        self.assertEqual(EVALUATION_LAB_VERSION, "ai_assistant.evaluation_lab.v2")
         self.assertTrue(report.passed)
         self.assertEqual(report.ground_truth["libraries"]["foods"], 1)
         self.assertEqual(report.catalog["total_capabilities"], 82)
@@ -50,6 +52,11 @@ class AIAssistantEvaluationLabTests(TestCase):
             ["DP-01", "F-01", "M-01", "PG-01"],
         )
         self.assertIsNone(report.live_validation)
+        self.assertEqual(report.live_validations, ())
+        self.assertEqual(report.quality_evaluation["status"], "not_run")
+        self.assertTrue(report.task_dataset["passed"])
+        self.assertEqual(report.task_dataset["case_count"], 64)
+        self.assertEqual(report.product_feedback["scope"], "selected_user")
         self.assertEqual(AIUsageEvent.objects.count(), 0)
 
     def test_preflight_separates_missing_catalog_data_from_model_behavior(self):

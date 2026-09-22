@@ -90,6 +90,24 @@ class AIAssistantModelEvaluationTests(TestCase):
             password="not-used",
         )
 
+    @staticmethod
+    def _passing_quality_annotations():
+        review = {
+            "criteria": {
+                "helpfulness": "pass",
+                "naturalness": "pass",
+                "clarity": "pass",
+                "appropriate_next_step": "pass",
+            },
+            "reviewer": "test",
+        }
+        return {
+            "candidates": {
+                "luna_low": {"reviews": {"saludo_y_descubrimiento": review}},
+                "terra_low": {"reviews": {"saludo_y_descubrimiento": review}},
+            }
+        }
+
     def test_configured_candidates_skip_sol_benchmark_by_default(self):
         candidates = configured_model_evaluation_candidates()
         codes = [candidate.code for candidate in candidates]
@@ -104,7 +122,7 @@ class AIAssistantModelEvaluationTests(TestCase):
         ]
         self.assertIn("sol_medium", benchmark_codes)
 
-    def test_evaluation_accepts_luna_baseline_when_hard_checks_pass(self):
+    def test_evaluation_accepts_luna_baseline_when_all_quality_gates_pass(self):
         original_model = settings.AI_ASSISTANT_OPENAI_MODEL
         candidates = (
             AIModelEvaluationCandidate(
@@ -131,6 +149,7 @@ class AIAssistantModelEvaluationTests(TestCase):
             scenario_keys=("saludo_y_descubrimiento",),
             run_id="unit-model-eval",
             engine_factory=lambda candidate: ScriptedSimpleValidationEngine(),
+            quality_annotations=self._passing_quality_annotations(),
         )
 
         self.assertTrue(report.passed)
@@ -140,6 +159,31 @@ class AIAssistantModelEvaluationTests(TestCase):
         self.assertEqual(report.results[0].quality_summary["passed_scenarios"], 1)
         self.assertEqual(report.results[0].cost_summary["estimated_cost_usd"], "0.000330")
         self.assertEqual(settings.AI_ASSISTANT_OPENAI_MODEL, original_model)
+
+    def test_evaluation_does_not_accept_candidate_while_quality_review_is_pending(self):
+        candidate = AIModelEvaluationCandidate(
+            code="luna_low",
+            provider="openai",
+            model="gpt-5.6-luna",
+            reasoning_effort="low",
+            max_output_tokens=1800,
+            role="baseline",
+        )
+
+        report = evaluate_ai_assistant_models(
+            user=self.user,
+            candidates=(candidate,),
+            scenario_keys=("saludo_y_descubrimiento",),
+            run_id="pending-quality-eval",
+            engine_factory=lambda selected: ScriptedSimpleValidationEngine(),
+        )
+
+        self.assertFalse(report.passed)
+        self.assertEqual(report.recommendation["decision"], "awaiting_quality_review")
+        self.assertEqual(
+            report.results[0].quality_evaluation["status"],
+            "awaiting_human_review",
+        )
 
     def test_management_command_requires_live_confirmation(self):
         with self.assertRaisesMessage(CommandError, "Model evaluation makes real provider calls"):

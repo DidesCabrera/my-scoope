@@ -9,6 +9,9 @@ from notas.application.ai_intake.evaluation_lab import (
     DEFAULT_LAB_SCENARIOS,
     run_evaluation_lab,
 )
+from notas.application.ai_intake.evaluation_quality import (
+    build_quality_annotation_template,
+)
 from notas.application.ai_intake.real_provider_validation import (
     built_in_real_provider_scenarios,
     get_validation_user,
@@ -56,7 +59,26 @@ class Command(BaseCommand):
                 "lab records provider usage without consuming that user's credits."
             ),
         )
+        parser.add_argument(
+            "--repetitions",
+            type=int,
+            default=1,
+            help="Repeat every ready live scenario 1-10 times to measure reliability.",
+        )
+        parser.add_argument(
+            "--quality-annotations",
+            default="",
+            help=(
+                "Optional JSON file with explicit human quality reviews. "
+                "Without it, a healthy live run remains awaiting_quality_review."
+            ),
+        )
         parser.add_argument("--output", default="", help="Optional JSON report path.")
+        parser.add_argument(
+            "--annotation-template-output",
+            default="",
+            help="Optional JSON path for the explicit human-review worksheet.",
+        )
         parser.add_argument("--json", action="store_true", help="Print the complete JSON report.")
         parser.add_argument(
             "--fail-on-regression",
@@ -70,7 +92,10 @@ class Command(BaseCommand):
             for key in DEFAULT_LAB_SCENARIOS:
                 scenario = catalog[key]
                 capabilities = ", ".join(scenario.capability_ids) or "sin mapeo"
-                self.stdout.write(f"{key} [{capabilities}]: {scenario.description}")
+                self.stdout.write(
+                    f"{key} [{capabilities}] outcome={scenario.expected_outcome}: "
+                    f"{scenario.description}"
+                )
             return
 
         try:
@@ -78,12 +103,17 @@ class Command(BaseCommand):
                 user_id=options.get("user_id"),
                 email=options.get("user_email") or "",
             )
+            quality_annotations = self._read_quality_annotations(
+                options.get("quality_annotations") or ""
+            )
             report = run_evaluation_lab(
                 user=user,
                 scenario_keys=options.get("scenarios"),
                 live=bool(options.get("live")),
                 cleanup_review_artifacts=not bool(options.get("keep_artifacts")),
                 charge_user_credits=bool(options.get("charge_user_credits")),
+                repetitions=int(options.get("repetitions") or 1),
+                quality_annotations=quality_annotations,
             )
         except Exception as exc:  # pragma: no cover - command boundary
             raise CommandError(str(exc)) from exc
@@ -96,6 +126,27 @@ class Command(BaseCommand):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(serialized + "\n", encoding="utf-8")
             self.stdout.write(self.style.SUCCESS(f"Evaluation lab report written: {path}"))
+
+        annotation_path_text = str(
+            options.get("annotation_template_output") or ""
+        ).strip()
+        if annotation_path_text:
+            annotation_path = Path(annotation_path_text)
+            annotation_path.parent.mkdir(parents=True, exist_ok=True)
+            annotation_path.write_text(
+                json.dumps(
+                    build_quality_annotation_template(report.live_validations),
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Quality annotation template written: {annotation_path}"
+                )
+            )
 
         if options["json"]:
             self.stdout.write(serialized)
@@ -111,6 +162,15 @@ class Command(BaseCommand):
         self.stdout.write(f"mode: {report.mode}")
         self.stdout.write(f"status: {report.status}")
         self.stdout.write(f"billing: {json.dumps(dict(report.billing), ensure_ascii=False)}")
+        self.stdout.write(
+            f"quality: {json.dumps(dict(report.quality_evaluation), ensure_ascii=False)}"
+        )
+        self.stdout.write(
+            f"task dataset: {json.dumps(dict(report.task_dataset), ensure_ascii=False)}"
+        )
+        self.stdout.write(
+            f"product feedback: {json.dumps(dict(report.product_feedback), ensure_ascii=False)}"
+        )
         self.stdout.write("")
         libraries = report.ground_truth.get("libraries", {})
         solver = report.ground_truth.get("solver_candidates", {})
@@ -143,3 +203,16 @@ class Command(BaseCommand):
             f"diagnostics: {json.dumps(dict(report.diagnostics), ensure_ascii=False)}"
         )
         self.stdout.write(f"cleanup: {json.dumps(dict(report.cleanup), ensure_ascii=False)}")
+
+    @staticmethod
+    def _read_quality_annotations(path_value):
+        path_text = str(path_value or "").strip()
+        if not path_text:
+            return None
+        path = Path(path_text)
+        if not path.exists():
+            raise ValueError(f"Quality annotations file does not exist: {path}")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("Quality annotations file must contain a JSON object.")
+        return payload

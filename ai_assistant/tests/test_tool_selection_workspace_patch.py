@@ -5,6 +5,8 @@ from ai_assistant.application.tools import (
     TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_PROPOSE_WORKSPACE_PATCH,
     TOOL_QUERY_WORKSPACE,
+    TOOL_READ_USER_PREFERENCE_CONTEXT,
+    TOOL_READ_USER_PROFILE_CONTEXT,
     list_provider_tool_specs,
 )
 from ai_assistant.domain import AssistantMessage, AssistantTurnRequest
@@ -94,6 +96,16 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
         self.assertNotIn("list_user_programs", names)
         self.assertNotIn("list_user_dailyplans", names)
         self.assertEqual(initial_tool_choice(request, selected), "auto")
+
+    def test_intake_indirect_memory_and_reviewed_change_request_exposes_capabilities(self):
+        request, selected, names = self._selected_for_intake(
+            "Ten en cuenta lo que ya sabes de mí y déjalo mejor organizado."
+        )
+
+        self.assertIn(TOOL_READ_USER_PROFILE_CONTEXT, names)
+        self.assertIn(TOOL_READ_USER_PREFERENCE_CONTEXT, names)
+        self.assertIn(TOOL_PROPOSE_WORKSPACE_PATCH, names)
+        self.assertLessEqual(len(selected), 12)
 
     def test_intake_food_and_meal_creation_exposes_workspace_patch(self):
         request, selected, names = self._selected_for_intake(

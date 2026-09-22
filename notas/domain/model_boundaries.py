@@ -127,8 +127,13 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="proposals",
         label="AI Proposals",
-        models=("AiNutritionChat", "NutritionProposal", "NutritionProposalAuditEvent"),
-        responsibility="AI chat state, reviewable nutrition proposals and proposal audit history.",
+        models=(
+            "AiAssistantMessageFeedback",
+            "AiNutritionChat",
+            "NutritionProposal",
+            "NutritionProposalAuditEvent",
+        ),
+        responsibility="AI chat state, message feedback, reviewable proposals and audit history.",
     ),
     DomainModelBoundary(
         slug="sharing",

@@ -47,6 +47,11 @@ from ai_assistant.application.product_context import (
     system_domain_anchor_lines,
 )
 from ai_assistant.application.product_ports import get_ai_product_bindings
+from ai_assistant.application.prompt_contract import (
+    developer_outcome_contract_policy,
+    developer_outcome_contract_rules,
+    system_outcome_contract_lines,
+)
 from ai_assistant.application.provider_parsing import (
     AssistantProviderParseResult,
     _coerce_assistant_message,
@@ -1179,7 +1184,7 @@ class ExternalLLMOrchestrator:
                 "Usa el historial y el workspace actual como memoria. Nunca vuelvas a pedir un dato conocido.",
                 "blocking_fields contiene exactamente lo imprescindible. Si tiene elementos, pregunta solo por el menor bloqueo que no puedas inferir.",
                 "Los campos opcionales nunca bloquean: My Scoope aplica los product_defaults del workspace.",
-                "Si active_objective pide una propuesta y blocking_fields está vacío, créala en este mismo turno con la herramienta disponible. No te limites a decir que ya está lista.",
+                *system_outcome_contract_lines(),
                 "Cuando el usuario entregue o corrija datos operacionales, regístralos con la herramienta tipada antes de confirmarlos.",
                 "Después de resultados de herramientas, continúa hasta completar el objetivo o hasta encontrar un bloqueo real.",
                 "Una propuesta es revisable: nunca afirmes que fue aplicada ni inventes IDs.",
@@ -1267,6 +1272,7 @@ class ExternalLLMOrchestrator:
     ) -> str:
         tool_specs = tuple(self.provider_tool_specs() if tool_specs is None else tool_specs)
         payload = {
+            **developer_outcome_contract_policy(),
             "native_function_tools": True,
             "product_context": developer_product_capability_policy(),
             "response_style_policy": developer_response_style_policy(),
@@ -1275,6 +1281,7 @@ class ExternalLLMOrchestrator:
                 "never_repeat_known_information",
                 "use_at_most_one_blocking_question",
                 "complete_a_ready_active_objective_in_the_same_turn",
+                "stop_when_the_expected_outcome_is_satisfied",
             ],
             "available_operations": [
                 str(spec.get("name") or "") for spec in tool_specs
@@ -1287,6 +1294,7 @@ class ExternalLLMOrchestrator:
                 "visible_response_is_natural_text": True,
                 "never_claim_requested_object_ready_without_successful_creation_result": True,
                 "capture_all_user_supplied_profile_and_proposal_facts_before_creation": True,
+                **developer_outcome_contract_rules(),
             },
         }
         return json.dumps(payload, ensure_ascii=False, sort_keys=True)

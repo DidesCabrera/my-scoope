@@ -91,3 +91,62 @@ def evaluate_tool_result_grounding(turns):
         else f"tool grounding failures: {failures}"
     )
     return not failures, detail
+
+
+def evaluate_expected_outcome(scenario, turns, *, state_before, state_after):
+    """Verify that the trajectory reached the requested product outcome type."""
+
+    expected = str(getattr(scenario, "expected_outcome", "response_only") or "response_only")
+    successful_tools = {
+        str(item.get("tool_name") or "")
+        for turn in turns
+        for item in turn.tool_results
+        if str(item.get("status") or "") == "ok"
+    }
+    final_turn = turns[-1] if turns else None
+    deltas = {
+        key: int(state_after.get(key, 0) or 0) - int(state_before.get(key, 0) or 0)
+        for key in set(state_before).union(state_after)
+    }
+
+    if expected == "nutrition_proposal":
+        passed = deltas.get("nutrition_proposals", 0) > 0
+        detail = "a reviewable nutrition proposal was created"
+    elif expected == "prepared_patch":
+        passed = deltas.get("prepared_actions", 0) > 0
+        detail = "a prepared workspace patch was created"
+    elif expected == "workspace_query":
+        passed = any(
+            name.startswith(("query_", "read_", "list_", "search_", "compare_"))
+            for name in successful_tools
+        )
+        detail = "workspace information was read through a controlled capability"
+    elif expected == "workspace_advanced":
+        passed = any(
+            name.startswith("update_") or name.startswith("share_")
+            for name in successful_tools
+        )
+        detail = "the typed conversational workspace advanced"
+    elif expected == "clarification_required":
+        visible_question = bool(final_turn and "?" in str(final_turn.assistant_message or ""))
+        semantic_missing = bool(final_turn and tuple(final_turn.semantic_missing_slots or ()))
+        no_review_artifact = (
+            deltas.get("nutrition_proposals", 0) <= 0
+            and deltas.get("prepared_actions", 0) <= 0
+        )
+        passed = no_review_artifact and (visible_question or semantic_missing)
+        detail = "the assistant requested clarification without creating a review artifact"
+    else:
+        passed = (
+            deltas.get("nutrition_proposals", 0) <= 0
+            and deltas.get("prepared_actions", 0) <= 0
+        )
+        detail = "the assistant responded without creating an unexpected review artifact"
+
+    if passed:
+        return True, detail
+    return (
+        False,
+        f"expected outcome {expected!r} was not reached; "
+        f"successful_tools={sorted(successful_tools)}, state_deltas={deltas}",
+    )

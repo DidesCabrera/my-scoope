@@ -43,6 +43,7 @@ class RealProviderValidationScenario:
     mutation_policy: str = "read_only"
     ground_truth: Mapping[str, Any] = field(default_factory=dict)
     default_enabled: bool = True
+    expected_outcome: str = "response_only"
 
 
 def build_lab_scenarios() -> dict[str, Any]:
@@ -65,6 +66,7 @@ def build_lab_scenarios() -> dict[str, Any]:
             fixture_requirements=("owned_dailyplan", "solver_450_feasible"),
             mutation_policy="proposal_only",
             default_enabled=False,
+            expected_outcome="nutrition_proposal",
             manual_review_prompts=(
                 "¿La respuesta presenta una propuesta concreta y revisable, en vez de una receta inventada?",
                 "¿Explica la calidad o limitación real del solver sin afirmar que modificó la biblioteca?",
@@ -89,6 +91,7 @@ def build_lab_scenarios() -> dict[str, Any]:
             fixture_requirements=("meal_replacement_fixture",),
             mutation_policy="prepared_action_only",
             default_enabled=False,
+            expected_outcome="prepared_patch",
             manual_review_prompts=(
                 "¿La vista previa identifica la comida y ambos alimentos correctos, con 200 g exactos?",
                 "¿El asistente deja claro que el cambio aún necesita confirmación?",
@@ -121,6 +124,7 @@ def build_lab_scenarios() -> dict[str, Any]:
             fixture_requirements=("solver_candidates",),
             mutation_policy="proposal_only",
             default_enabled=False,
+            expected_outcome="nutrition_proposal",
             manual_review_prompts=(
                 "¿La propuesta conserva 2400 kcal y 30/50/20 sin sustituirlo por una heurística?",
                 "¿Las cantidades y el diagnóstico provienen del motor nutricional y quedan para revisión?",

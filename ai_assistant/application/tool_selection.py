@@ -141,10 +141,30 @@ def select_provider_tools(
             )
             return (proposal_tool,) if proposal_tool is not None else ()
 
+        # Keep a compact core and add only the capabilities required by the
+        # structured active objective or an explicit semantic reference. This
+        # leaves the model room to choose without paying for the full catalog.
         selected_names = set(_AI_NUTRITION_INTAKE_CORE_TOOLS)
-        selected_names.add(TOOL_QUERY_WORKSPACE)
-        selected_names.update(_relevant_intake_memory_tools(user_text))
+        selected_names.update(_requested_intake_presentation_tools(user_text))
+        selected_names.update(_requested_intake_memory_tools(user_text))
+        active_work = dict(work_progress.get("active_work") or {})
+        expected_outcome = str(active_work.get("expected_outcome") or "")
+        resource = str(active_work.get("resource") or "")
+        if expected_outcome == "workspace_query":
+            selected_names.add(TOOL_QUERY_WORKSPACE)
+            if resource == "profile":
+                selected_names.add(TOOL_READ_USER_PROFILE_CONTEXT)
+            elif resource == "preferences":
+                selected_names.add(TOOL_READ_USER_PREFERENCE_CONTEXT)
+        elif expected_outcome == "prepared_patch":
+            selected_names.update({TOOL_QUERY_WORKSPACE, TOOL_PROPOSE_WORKSPACE_PATCH})
+        if (
+            expected_outcome == "nutrition_proposal"
+            and resource == "meal"
+        ):
+            selected_names.update(_MEAL_PROPOSAL_TOOLS)
         if _requests_existing_product_operation(user_text):
+            selected_names.add(TOOL_QUERY_WORKSPACE)
             selected_names.update(
                 str(provider_spec.get("name") or "")
                 for provider_spec in available
@@ -159,6 +179,8 @@ def select_provider_tools(
                     user_text=user_text,
                 )
             )
+        elif _requests_workspace_query(user_text):
+            selected_names.add(TOOL_QUERY_WORKSPACE)
         return tuple(
             provider_spec
             for provider_spec in available
@@ -188,27 +210,53 @@ def select_provider_tools(
     return tuple(selected)
 
 
-def _relevant_intake_memory_tools(user_text: str) -> set[str]:
-    """Expose memory reads/cards only when the user's language makes them relevant."""
+def _requested_intake_presentation_tools(user_text: str) -> set[str]:
+    """Add optional card rendering only when the user explicitly asks to see it."""
 
-    text = f" {str(user_text or '').strip().lower()} "
+    text = _normalized_intent_text(user_text)
+    if not any(marker in text for marker in ("muestra", "revisa", "card", "tarjeta")):
+        return set()
     selected: set[str] = set()
-    if any(marker in text for marker in (" ficha ", " perfil ", " mis datos ", " datos personales ")):
-        selected.update({TOOL_READ_USER_PROFILE_CONTEXT, TOOL_SHARE_PROFILE_DRAFT_CARD})
-    if any(
-        marker in text
-        for marker in (
-            " preferencias guardadas ",
-            " mis preferencias ",
-            " restricciones guardadas ",
-            " mis alergias ",
-            " recuerda que ",
-        )
-    ):
-        selected.update({TOOL_READ_USER_PREFERENCE_CONTEXT, TOOL_SHARE_PREFERENCE_DRAFT_CARD})
-    if any(marker in text for marker in (" muestra ", " revisar ", " revisa ", " card ", " tarjeta ")):
+    if any(marker in text for marker in ("ficha", "perfil", "datos personales")):
+        selected.add(TOOL_SHARE_PROFILE_DRAFT_CARD)
+    if any(marker in text for marker in ("preferencia", "alimentacion", "alergia")):
+        selected.add(TOOL_SHARE_PREFERENCE_DRAFT_CARD)
+    if any(marker in text for marker in ("propuesta", "objetivo", "caloria", "macro")):
         selected.add(TOOL_SHARE_PROPOSAL_PREFERENCES_CARD)
     return selected
+
+
+def _requested_intake_memory_tools(user_text: str) -> set[str]:
+    """Expose persisted memory for explicit or indirect references to known context."""
+
+    text = _normalized_intent_text(user_text)
+    selected: set[str] = set()
+    if any(marker in text for marker in ("ficha", "perfil", "mis datos", "sabes de mi")):
+        selected.add(TOOL_READ_USER_PROFILE_CONTEXT)
+    if any(
+        marker in text
+        for marker in ("preferencia", "alergia", "restriccion", "sabes de mi")
+    ):
+        selected.add(TOOL_READ_USER_PREFERENCE_CONTEXT)
+    if "sabes de mi" in text and any(
+        marker in text for marker in ("organiza", "organizado", "mejora")
+    ):
+        selected.add(TOOL_PROPOSE_WORKSPACE_PATCH)
+    return selected
+
+
+def _requests_workspace_query(user_text: str) -> bool:
+    text = _normalized_intent_text(user_text)
+    resource = re.search(
+        r"\b(?:planes?|dailyplans?|propuestas?|programas?|calendarios?|"
+        r"bibliotecas?|alimentos?|comidas?|foods?|meals?)\b",
+        text,
+    )
+    query = "?" in str(user_text or "") or re.search(
+        r"\b(?:que|cual(?:es)?|cuanto(?:s)?|lista\w*|muestra\w*|busca\w*|dime)\b",
+        text,
+    )
+    return resource is not None and query is not None
 
 
 def initial_tool_choice(

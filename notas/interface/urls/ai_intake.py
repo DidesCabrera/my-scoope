@@ -1,6 +1,7 @@
 from django.urls import path
 
 from notas.interface.views.ai_intake import (
+    ai_assistant_message_feedback,
     ai_nutrition_async_job_status,
     ai_nutrition_brief_edit,
     ai_nutrition_chat_detail,
@@ -22,6 +23,11 @@ urlpatterns = [
     path("ai-nutrition/chats/", ai_nutrition_chat_list, name="ai_nutrition_chat_list"),
     path("ai-nutrition/chats/new/", ai_nutrition_chat_new, name="ai_nutrition_chat_new"),
     path("ai-nutrition/chats/<int:chat_id>/", ai_nutrition_chat_detail, name="ai_nutrition_chat_detail"),
+    path(
+        "ai-nutrition/chats/<int:chat_id>/messages/<int:message_index>/feedback/",
+        ai_assistant_message_feedback,
+        name="ai_assistant_message_feedback",
+    ),
     path(
         "ai-nutrition/actions/<uuid:action_id>/commit/",
         ai_prepared_action_commit,

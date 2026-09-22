@@ -263,6 +263,8 @@ def _safe_usage_metadata(
             {
                 "version": outcome_trace.get("version"),
                 "objective": outcome_trace.get("objective"),
+                "expected_outcome": outcome_trace.get("expected_outcome"),
+                "expected_outcome_met": bool(outcome_trace.get("expected_outcome_met")),
                 "state": outcome_trace.get("state"),
                 "proposal_created": bool(outcome_trace.get("proposal_created")),
                 "blocking_fields_count": len(tuple(outcome_trace.get("blocking_fields") or ())),

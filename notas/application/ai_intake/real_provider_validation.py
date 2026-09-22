@@ -37,6 +37,9 @@ from notas.application.ai_intake.real_provider_lab_extensions import (
     tool_contract_check_values,
     validation_state_snapshot,
 )
+from notas.application.ai_intake.validation_quality_checks import (
+    build_validation_quality_check_specs,
+)
 from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
 
 OUTCOME_FIRST_ACTION_TYPE = "assistant.ai_nutrition_intake.outcome_first_validation"
@@ -268,6 +271,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿La respuesta pide una aclaración breve en vez de adivinar el referente?",
                 "¿Evita afirmar que leyó, cambió o encontró un objeto sin autorización clara?",
             ),
+            expected_outcome="clarification_required",
         ),
         "ficha_conocida_sin_repreguntas": RealProviderValidationScenario(
             key="ficha_conocida_sin_repreguntas",
@@ -309,6 +313,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿El asistente usa cada dato realmente disponible en la ficha sin volver a pedirlo?",
                 "¿La segunda respuesta menciona solo información que verdaderamente sigue pendiente?",
             ),
+            expected_outcome="workspace_advanced",
         ),
         "datos_agrupados_y_cards": RealProviderValidationScenario(
             key="datos_agrupados_y_cards",
@@ -373,6 +378,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿La primera respuesta reconoce varios datos juntos sin repreguntarlos uno por uno?",
                 "¿La card inicial de ficha aparece una sola vez al leerla y las otras cards solo cuando se solicitan?",
             ),
+            expected_outcome="workspace_advanced",
         ),
         "cambio_de_direccion": RealProviderValidationScenario(
             key="cambio_de_direccion",
@@ -400,6 +406,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿El asistente acepta el cambio inmediatamente, sin insistir en el objetivo anterior?",
                 "¿Respeta que el usuario no quiere completar preferencias opcionales todavía?",
             ),
+            expected_outcome="workspace_advanced",
         ),
         "error_de_tool_y_recuperacion": RealProviderValidationScenario(
             key="error_de_tool_y_recuperacion",
@@ -436,6 +443,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿Cada total coincide con la cantidad que muestra la biblioteca web del mismo usuario?",
                 "¿El asistente evita contar borradores y snapshots internos como objetos de biblioteca?",
             ),
+            expected_outcome="workspace_query",
         ),
     }
     catalog.update(build_lab_scenarios())
@@ -748,6 +756,12 @@ def _scenario_checks(
     state_after: Mapping[str, int] | None = None,
 ) -> list[RealProviderValidationCheck]:
     checks: list[RealProviderValidationCheck] = []
+    quality_specs = build_validation_quality_check_specs(
+        scenario,
+        turns,
+        state_before=state_before or {},
+        state_after=state_after or {},
+    )
     visible_blob = "\n".join(turn.assistant_message for turn in turns).lower()
     leaked = [
         marker
@@ -783,7 +797,9 @@ def _scenario_checks(
     checks.append(_tool_contract_check(scenario, turns))
     checks.append(_visible_facts_check(scenario, turns))
     checks.append(_behavioral_surface_check(scenario, turns))
+    checks.append(RealProviderValidationCheck(**quality_specs["expected_outcome"]))
     checks.append(_response_repetition_check(scenario, turns))
+    checks.append(RealProviderValidationCheck(**quality_specs["semantic_repetition"]))
     checks.append(_tool_result_grounding_check(turns))
     checks.append(_provider_followup_health_check(turns))
     checks.append(_post_tool_fallback_pacing_check(turns))
@@ -802,14 +818,7 @@ def _scenario_checks(
             severity=mutation_severity,
         )
     )
-    checks.append(
-        RealProviderValidationCheck(
-            key="manual_ux_review",
-            passed=True,
-            detail=f"{len(scenario.manual_review_prompts)} qualitative prompt(s) require human review",
-            severity="manual",
-        )
-    )
+    checks.append(RealProviderValidationCheck(**quality_specs["manual_review"]))
     return checks
 
 
@@ -1386,6 +1395,7 @@ def _scenario_result_as_dict(result: RealProviderValidationScenarioResult) -> di
     return {
         "key": result.scenario.key,
         "description": result.scenario.description,
+        "expected_outcome": result.scenario.expected_outcome,
         **scenario_result_lab_metadata(result),
         "status": "automated_checks_passed" if result.passed else "hard_regression",
         "conversation_id": result.conversation_id,

@@ -230,6 +230,11 @@ class OutcomeFirstRuntimeTests(SimpleTestCase):
         self.assertEqual(response.metadata["outcome_trace"]["state"], "outcome_created")
         self.assertTrue(response.metadata["outcome_trace"]["proposal_created"])
         self.assertEqual(
+            response.metadata["outcome_trace"]["expected_outcome"],
+            "nutrition_proposal",
+        )
+        self.assertTrue(response.metadata["outcome_trace"]["expected_outcome_met"])
+        self.assertEqual(
             [item["tool_name"] for item in response.metadata["outcome_trace"]["tool_results"]],
             [
                 TOOL_UPDATE_PROFILE_DRAFT,

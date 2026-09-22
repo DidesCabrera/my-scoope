@@ -324,6 +324,11 @@ def _with_outcome_trace(
     workspace = dict((request.context.get("metadata") or {}).get("tool_oriented_intake") or {})
     progress = dict(workspace.get("work_progress") or {})
     objective = str(progress.get("active_objective") or "respond_to_current_message")
+    active_work = dict(progress.get("active_work") or {})
+    expected_outcome = str(
+        active_work.get("expected_outcome")
+        or _expected_outcome_for_objective(objective)
+    )
     blocking_fields = [str(value) for value in tuple(progress.get("blocking_fields") or ())[:12]]
     result_summaries = [
         {
@@ -335,9 +340,14 @@ def _with_outcome_trace(
     ]
     proposal_created = bool(response.proposal_ids)
     any_ok = any(result.ok for result in tuple(tool_results or ()))
+    successful_tool_names = {
+        result.tool_name for result in tuple(tool_results or ()) if result.ok
+    }
     any_blocked = any(result.status == AssistantToolStatus.BLOCKED for result in tuple(tool_results or ()))
     if proposal_created:
         state = "outcome_created"
+    elif successful_tool_names & {"propose_workspace_patch", "prepare_product_action"}:
+        state = "reviewable_change_prepared"
     elif blocking_fields:
         state = "awaiting_blocking_information"
     elif any_blocked:
@@ -347,14 +357,67 @@ def _with_outcome_trace(
     else:
         state = "response_only"
     metadata["outcome_trace"] = {
-        "version": "ai_assistant_outcome_trace.v1",
+        "version": "ai_assistant_outcome_trace.v2",
         "objective": objective,
+        "expected_outcome": expected_outcome,
+        "expected_outcome_met": _expected_outcome_met(
+            expected_outcome,
+            response_text=response.assistant_text,
+            proposal_created=proposal_created,
+            successful_tool_names=successful_tool_names,
+        ),
         "state": state,
         "blocking_fields": blocking_fields,
         "proposal_created": proposal_created,
         "tool_results": result_summaries,
     }
     return replace(response, metadata=metadata)
+
+
+def _expected_outcome_for_objective(objective: str) -> str:
+    if objective in {
+        "create_reviewable_dailyplan_proposal",
+        "create_reviewable_meal_proposal",
+        "create_dailyplan_proposal",
+    }:
+        return "nutrition_proposal"
+    if objective == "prepare_reviewable_workspace_patch":
+        return "prepared_patch"
+    if objective == "query_workspace":
+        return "workspace_query"
+    if objective == "record_conversation_facts":
+        return "workspace_advanced"
+    return "response_only"
+
+
+def _expected_outcome_met(
+    expected_outcome: str,
+    *,
+    response_text: str,
+    proposal_created: bool,
+    successful_tool_names: set[str],
+) -> bool:
+    if expected_outcome == "nutrition_proposal":
+        return proposal_created
+    if expected_outcome == "prepared_patch":
+        return bool(
+            successful_tool_names & {"propose_workspace_patch", "prepare_product_action"}
+        )
+    if expected_outcome == "workspace_query":
+        return any(
+            tool_name.startswith(
+                ("read_", "list_", "search_", "query_", "compare_", "preview_")
+            )
+            for tool_name in successful_tool_names
+        )
+    if expected_outcome == "workspace_advanced":
+        return any(
+            tool_name.startswith(("update_", "share_"))
+            for tool_name in successful_tool_names
+        )
+    if expected_outcome == "clarification_required":
+        return "?" in response_text
+    return bool(response_text.strip())
 
 
 def _provider_response_requires_tool_call_repair(
