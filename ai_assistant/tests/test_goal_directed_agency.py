@@ -216,7 +216,10 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             remaining_tool_iterations=3,
         )
 
-        self.assertEqual(followup.tool_choice, "required")
+        self.assertEqual(
+            followup.tool_choice,
+            {"type": "function", "name": TOOL_UPDATE_PROPOSAL_PREFERENCES},
+        )
         self.assertEqual(
             [tool["name"] for tool in followup.tools],
             [TOOL_UPDATE_PROPOSAL_PREFERENCES],
@@ -293,7 +296,13 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             remaining_tool_iterations=2,
         )
 
-        self.assertEqual(followup.tool_choice, "required")
+        self.assertEqual(
+            followup.tool_choice,
+            {
+                "type": "function",
+                "name": TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            },
+        )
         self.assertEqual(
             [tool["name"] for tool in followup.tools],
             [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],
@@ -347,7 +356,13 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             remaining_tool_iterations=2,
         )
 
-        self.assertEqual(followup.tool_choice, "required")
+        self.assertEqual(
+            followup.tool_choice,
+            {
+                "type": "function",
+                "name": TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            },
+        )
         self.assertEqual(
             [tool["name"] for tool in followup.tools],
             [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],

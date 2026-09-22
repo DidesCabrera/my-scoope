@@ -12,8 +12,10 @@ from ai_assistant.application.intake_semantics import (
 from ai_assistant.application.product_ports import AIProductBindings
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+    TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
     TOOL_PROPOSE_WORKSPACE_PATCH,
     TOOL_QUERY_WORKSPACE,
+    TOOL_READ_PROPOSAL,
     TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_SHARE_PREFERENCE_DRAFT_CARD,
@@ -173,26 +175,43 @@ def _select_intake_provider_tools(
         )
         return (proposal_tool,) if proposal_tool is not None else ()
 
-    # Keep a compact core and add only the capabilities required by the
-    # structured active objective or an explicit semantic reference. This
-    # leaves the model room to choose without paying for the full catalog.
-    selected_names = set(_AI_NUTRITION_INTAKE_CORE_TOOLS)
-    selected_names.update(_requested_intake_presentation_tools(user_text))
-    selected_names.update(_requested_intake_memory_tools(user_text))
     active_work = dict(work_progress.get("active_work") or {})
     expected_outcome = str(active_work.get("expected_outcome") or "")
     resource = str(active_work.get("resource") or "")
+    # Start from the smallest useful surface. Sending every intake tool on
+    # greetings, reads and card-only turns made the provider request exceed the
+    # production 6k guardrail before the model had a chance to answer.
+    selected_names = set(_requested_intake_presentation_tools(user_text))
+    selected_names.update(_requested_intake_memory_tools(user_text))
+    if not expected_outcome:
+        # Lightweight callers and focused unit tests may not carry the full
+        # conversation workspace. Keep the legacy compact core in that case;
+        # real product turns always provide structured work_progress.
+        selected_names.update(_AI_NUTRITION_INTAKE_CORE_TOOLS)
     if expected_outcome == "workspace_query":
         selected_names.add(TOOL_QUERY_WORKSPACE)
+        if _explicitly_names_read_proposal(user_text):
+            selected_names = {TOOL_READ_PROPOSAL}
         if resource == "profile":
             selected_names.add(TOOL_READ_USER_PROFILE_CONTEXT)
         elif resource == "preferences":
             selected_names.add(TOOL_READ_USER_PREFERENCE_CONTEXT)
     elif expected_outcome == "prepared_patch":
         selected_names.update({TOOL_QUERY_WORKSPACE, TOOL_PROPOSE_WORKSPACE_PATCH})
-    if expected_outcome == "nutrition_proposal" and resource == "meal":
-        selected_names.update(_MEAL_PROPOSAL_TOOLS)
-    if _requests_existing_product_operation(user_text):
+    elif expected_outcome == "workspace_advanced":
+        selected_names.update(_intake_fact_capture_tools(user_text))
+        if resource == "preferences":
+            selected_names.add(TOOL_UPDATE_PREFERENCE_DRAFT)
+    elif expected_outcome == "nutrition_proposal":
+        selected_names.update(_intake_fact_capture_tools(user_text))
+        if resource == "meal":
+            selected_names.add(TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL)
+        else:
+            selected_names.add(
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
+            )
+
+    if not expected_outcome and _requests_existing_product_operation(user_text):
         selected_names.add(TOOL_QUERY_WORKSPACE)
         selected_names.update(
             str(provider_spec.get("name") or "")
@@ -226,7 +245,10 @@ def _requested_intake_presentation_tools(user_text: str) -> set[str]:
     """Add optional card rendering only when the user explicitly asks to see it."""
 
     text = _normalized_intent_text(user_text)
-    if not any(marker in text for marker in ("muestra", "revisa", "card", "tarjeta")):
+    if not re.search(
+        r"\b(?:muestra\w*|revisa(?:r|me|mos|lo|la)?|cards?|tarjetas?)\b",
+        text,
+    ):
         return set()
     selected: set[str] = set()
     if any(marker in text for marker in ("ficha", "perfil", "datos personales")):
@@ -257,6 +279,37 @@ def _requested_intake_memory_tools(user_text: str) -> set[str]:
     return selected
 
 
+def _intake_fact_capture_tools(user_text: str) -> set[str]:
+    """Expose only draft writers that can capture facts in this message."""
+
+    text = _normalized_intent_text(user_text)
+    semantics = extract_nutrition_intake_semantics(user_text).as_updates()
+    selected = {TOOL_UPDATE_PROPOSAL_PREFERENCES}
+    if re.search(
+        r"\b(?:\d{2,3}(?:[.,]\d+)?\s*(?:kg|cm)|anos?|hombre|mujer|"
+        r"masculino|femenino|actividad|entreno|entrenamiento|fuerza)\b",
+        text,
+    ):
+        selected.add(TOOL_UPDATE_PROFILE_DRAFT)
+    if any(
+        marker in text
+        for marker in (
+            "alerg",
+            "intoler",
+            "vegetarian",
+            "vegan",
+            "sin gluten",
+            "sin lactosa",
+            "evito",
+            "prefiero",
+        )
+    ):
+        selected.add(TOOL_UPDATE_PREFERENCE_DRAFT)
+    if not semantics and selected == {TOOL_UPDATE_PROPOSAL_PREFERENCES}:
+        selected.add(TOOL_UPDATE_PROFILE_DRAFT)
+    return selected
+
+
 def _requests_workspace_query(user_text: str) -> bool:
     text = _normalized_intent_text(user_text)
     resource = re.search(
@@ -265,19 +318,57 @@ def _requests_workspace_query(user_text: str) -> bool:
         text,
     )
     query = "?" in str(user_text or "") or re.search(
-        r"\b(?:que|cual(?:es)?|cuanto(?:s)?|lista\w*|muestra\w*|busca\w*|dime)\b",
+        r"\b(?:que|cual(?:es)?|cuanto(?:s)?|consulta\w*|lista\w*|muestra\w*|busca\w*|dime)\b",
         text,
     )
     return resource is not None and query is not None
 
 
+def _explicitly_names_read_proposal(user_text: str) -> bool:
+    return bool(
+        re.search(
+            r"\bread[_ ]proposal\b",
+            _normalized_intent_text(user_text),
+        )
+    )
+
+
 def initial_tool_choice(
     request: AssistantTurnRequest,
     tools: Sequence[Mapping[str, Any]],
-) -> str | None:
+) -> str | Mapping[str, str] | None:
     if not tools:
         return None
+    tool_names = {str(tool.get("name") or "") for tool in tools}
+    presentation_tool = next_intake_presentation_tool(request, ())
+    if presentation_tool in tool_names:
+        return _named_tool_choice(presentation_tool)
+
     work_progress = _intake_work_progress(request.context)
+    active_work = dict(work_progress.get("active_work") or {})
+    expected_outcome = str(active_work.get("expected_outcome") or "")
+    resource = str(active_work.get("resource") or "")
+    user_text = _routing_text(request)
+    if TOOL_READ_PROPOSAL in tool_names and _explicitly_names_read_proposal(user_text):
+        return _named_tool_choice(TOOL_READ_PROPOSAL)
+    if expected_outcome == "workspace_query" and TOOL_QUERY_WORKSPACE in tool_names:
+        return _named_tool_choice(TOOL_QUERY_WORKSPACE)
+    if TOOL_QUERY_WORKSPACE in tool_names and _requests_workspace_query(user_text):
+        return _named_tool_choice(TOOL_QUERY_WORKSPACE)
+    if expected_outcome == "prepared_patch" and TOOL_PROPOSE_WORKSPACE_PATCH in tool_names:
+        return _named_tool_choice(TOOL_PROPOSE_WORKSPACE_PATCH)
+    if expected_outcome in {"nutrition_proposal", "workspace_advanced"}:
+        if resource == "meal" and TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL in tool_names:
+            return _named_tool_choice(TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL)
+        if (
+            TOOL_READ_USER_PROFILE_CONTEXT in tool_names
+            and "ficha" in _normalized_intent_text(user_text)
+        ):
+            return _named_tool_choice(TOOL_READ_USER_PROFILE_CONTEXT)
+        if _explicit_profile_values(user_text) and TOOL_UPDATE_PROFILE_DRAFT in tool_names:
+            return _named_tool_choice(TOOL_UPDATE_PROFILE_DRAFT)
+        if _explicit_proposal_values(user_text) and TOOL_UPDATE_PROPOSAL_PREFERENCES in tool_names:
+            return _named_tool_choice(TOOL_UPDATE_PROPOSAL_PREFERENCES)
     if (
         _work_progress_has_active_proposal_objective(work_progress)
         and not tuple(work_progress.get("blocking_fields") or ())
@@ -287,10 +378,36 @@ def initial_tool_choice(
         )
         is not None
     ):
-        return "required"
+        return _named_tool_choice(
+            TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
+        )
     if _requests_existing_product_operation(_routing_text(request)):
         return "required"
     return "auto"
+
+
+def _named_tool_choice(tool_name: str) -> Mapping[str, str]:
+    return {"type": "function", "name": tool_name}
+
+
+def next_intake_presentation_tool(
+    request: AssistantTurnRequest,
+    tool_results: Sequence[AssistantToolResult],
+) -> str | None:
+    requested = _requested_intake_presentation_tools(_routing_text(request))
+    completed = {
+        result.tool_name
+        for result in tuple(tool_results or ())
+        if result.ok
+    }
+    for tool_name in (
+        TOOL_SHARE_PROFILE_DRAFT_CARD,
+        TOOL_SHARE_PREFERENCE_DRAFT_CARD,
+        TOOL_SHARE_PROPOSAL_PREFERENCES_CARD,
+    ):
+        if tool_name in requested and tool_name not in completed:
+            return tool_name
+    return None
 
 
 def proposal_ready_after_tool_results(
@@ -346,11 +463,38 @@ def proposal_fact_capture_required_after_tool_results(
     tool instead of claiming the requested proposal already exists.
     """
 
+    return (
+        fact_capture_tool_after_tool_results(
+            request,
+            tool_results,
+            enable_reviewable_proposal_tools=enable_reviewable_proposal_tools,
+            product_bindings=product_bindings,
+        )
+        is not None
+    )
+
+
+def fact_capture_tool_after_tool_results(
+    request: AssistantTurnRequest,
+    tool_results: Sequence[AssistantToolResult],
+    *,
+    enable_reviewable_proposal_tools: bool,
+    product_bindings: AIProductBindings,
+) -> str | None:
+    """Return the one typed writer still needed for explicit user facts."""
+
     work_progress = _intake_work_progress(request.context)
-    if not _work_progress_has_active_proposal_objective(work_progress):
-        return False
+    active_work = dict(work_progress.get("active_work") or {})
+    expected_outcome = str(active_work.get("expected_outcome") or "")
+    if not expected_outcome and _work_progress_has_active_proposal_objective(work_progress):
+        expected_outcome = "nutrition_proposal"
+    if expected_outcome not in {
+        "nutrition_proposal",
+        "workspace_advanced",
+    }:
+        return None
     if not enable_reviewable_proposal_tools:
-        return False
+        return None
     workspace = _intake_workspace(request.context)
     try:
         brief = product_bindings.build_nutrition_brief_from_ai_drafts(
@@ -373,7 +517,14 @@ def proposal_fact_capture_required_after_tool_results(
             raw_prompt=request.user_message.content,
         )
     except (TypeError, ValueError):
-        return False
+        return None
+
+    for field_name, expected in _explicit_profile_values(
+        request.user_message.content
+    ).items():
+        if getattr(brief, field_name, None) != expected:
+            return TOOL_UPDATE_PROFILE_DRAFT
+
     stated = _explicit_proposal_values(request.user_message.content)
     for field_name, expected in stated.items():
         actual = getattr(brief, field_name, None)
@@ -383,8 +534,33 @@ def proposal_fact_capture_required_after_tool_results(
             actual=actual,
             expected=expected,
         ):
-            return True
-    return False
+            return TOOL_UPDATE_PROPOSAL_PREFERENCES
+    return None
+
+
+def _explicit_profile_values(user_text: str) -> dict[str, Any]:
+    text = normalize_intake_text(user_text)
+    values: dict[str, Any] = {}
+    patterns = {
+        "weight_kg": r"\b([3-9][0-9](?:[.,][0-9]+)?|1[0-9]{2}(?:[.,][0-9]+)?)\s*kg\b",
+        "height_cm": r"\b(1[3-9][0-9]|2[0-2][0-9])\s*cm\b",
+        "age_years": r"\b([1-9][0-9]?)\s*anos?\b",
+    }
+    for field_name, pattern in patterns.items():
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        raw = match.group(1).replace(",", ".")
+        values[field_name] = float(raw) if field_name == "weight_kg" else int(raw)
+    if re.search(r"\b(?:hombre|masculino)\b", text):
+        values["sex"] = "male"
+    elif re.search(r"\b(?:mujer|femenino)\b", text):
+        values["sex"] = "female"
+    semantics = extract_nutrition_intake_semantics(user_text).as_updates()
+    for field_name in ("activity_level", "training_frequency"):
+        if field_name in semantics:
+            values[field_name] = semantics[field_name]
+    return values
 
 
 def _brief_value_matches_explicit_value(
@@ -533,7 +709,7 @@ def _requests_existing_product_operation(user_text: str) -> bool:
     ) is not None
     requests_change_or_lookup = re.search(
         r"\b(?:cambi\w*|ajust\w*|aument\w*|reduc\w*|renombr\w*|elimin\w*|"
-        r"borr\w*|busc\w*|muestr\w*|revis(?:a|ar|ame|alo|ala|en|emos|ando)|"
+        r"borr\w*|busc\w*|consult\w*|muestr\w*|revis(?:a|ar|ame|alo|ala|en|emos|ando)|"
         r"compar\w*|aplic\w*|aprob\w*|"
         r"rechaz\w*|crea\w*|agreg\w*|anad\w*|registr\w*|incorpor\w*|guard\w*|"
         r"list\w*|nombr\w*|dime|decir\w*|tengo|hay|exist\w*|curso|activ\w*)\b",

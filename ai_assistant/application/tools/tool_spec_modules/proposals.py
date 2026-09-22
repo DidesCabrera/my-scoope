@@ -59,7 +59,13 @@ TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL: AssistantToolSpec(
                         "Partial triples and mixed modes are rejected."
                     ),
                 },
-                "search": {"type": "string"},
+                "search": {
+                    "type": "string",
+                    "description": (
+                        "Optional exact food search requested by the user. Omit this field when the user "
+                        "asks to use the available My Scoope foods without naming a specific food."
+                    ),
+                },
                 "limit": {"type": "integer"},
                 "include_extended": {"type": "boolean"},
                 "meal_slot": {"type": "string"},

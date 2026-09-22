@@ -8,6 +8,7 @@ from ai_assistant.application import (
     ExternalLLMOrchestrator,
 )
 from ai_assistant.application.chat_engines import ChatEngineRequest
+from ai_assistant.application.limits import estimate_provider_request_tokens
 from ai_assistant.application.orchestrator import _local_acknowledgement_from_tool_results
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
@@ -257,6 +258,61 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         self.assertNotIn("read_calendarization", tool_names)
         self.assertNotIn("propose_workspace_patch", tool_names)
         self.assertNotIn("read_account_billing_context", tool_names)
+
+    def test_structured_plan_request_fits_staging_guardrail_with_exact_first_tool(self):
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=FakeLLMClient(),
+            config=AssistantOrchestratorConfig(
+                max_input_tokens=6000,
+                max_context_chars=8000,
+                max_output_tokens=900,
+            ),
+        )
+        context = {
+            "surface": "ai_nutrition_intake",
+            "conversation": {"message_count": 0},
+            "metadata": {
+                "tool_oriented_intake": {
+                    "current_drafts": {},
+                    "current_nutrition_brief": {"bounded_noise": "x" * 7000},
+                    "work_progress": {
+                        "active_objective": "create_reviewable_dailyplan_proposal",
+                        "active_work": {
+                            "expected_outcome": "nutrition_proposal",
+                            "resource": "dailyplan",
+                        },
+                        "blocking_fields": ["weight_kg"],
+                    },
+                }
+            },
+        }
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content=(
+                    "Crea ahora un plan diario de 2400 kcal con 30% proteína, "
+                    "50% carbohidratos y 20% grasas para un hombre de 38 años, "
+                    "80 kg, 180 cm, actividad alta, fuerza 4 veces por semana y 4 comidas."
+                ),
+            ),
+            context=context,
+        )
+
+        provider_request = orchestrator.build_provider_request(request)
+
+        self.assertLessEqual(estimate_provider_request_tokens(provider_request), 6000)
+        self.assertEqual(
+            provider_request.tool_choice,
+            {"type": "function", "name": "update_profile_draft"},
+        )
+        self.assertEqual(
+            {tool["name"] for tool in provider_request.tools},
+            {
+                "update_profile_draft",
+                "update_proposal_preferences",
+                "create_nutrition_engine_dailyplan_proposal_from_drafts",
+            },
+        )
 
     def test_intake_exposes_profile_and_preference_reads_when_user_invokes_memory(self):
         orchestrator = ExternalLLMOrchestrator(

@@ -322,7 +322,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "after the user explicitly asks to review them."
             ),
             user_messages=(
-                "Quiero una dieta para ganar músculo para mí. Usa mi ficha personal como base, pero para esta propuesta considera 38 años, hombre, 85 kg, 188 cm, fuerza 3 veces por semana con actividad alta, 4 comidas y algo simple.",
+                "Para un futuro plan diario orientado a ganar músculo, usa mi ficha personal como base y registra en esta conversación: 38 años, hombre, 85 kg, 188 cm, fuerza 3 veces por semana con actividad alta, 4 comidas y algo simple. Por ahora solo deja los datos listos.",
                 "Antes de avanzar, muéstrame las preferencias de alimentación y de propuesta que usarás.",
             ),
             expected_final_brief={
@@ -628,7 +628,8 @@ def _run_scenario(
     engine: ChatEngine,
     run_id: str,
 ) -> RealProviderValidationScenarioResult:
-    conversation_id = f"outcome-{run_id[:20]}-{scenario.key}"[:80]
+    # Preserve the repetition suffix so repeated runs never reuse usage rows.
+    conversation_id = f"outcome-{run_id}-{scenario.key}"[:80]
     existing_payload: Mapping[str, Any] | None = None
     turns: list[RealProviderValidationTurn] = []
     previous_cards = {"profile": 0, "preference": 0, "proposal_preferences": 0}
@@ -1283,7 +1284,7 @@ def _usage_events_for_conversation(conversation_id: str) -> list[dict[str, Any]]
 
 
 def _usage_and_credit_snapshot(*, user: Any, run_id: str) -> dict[str, Any]:
-    conversation_prefix = f"outcome-{run_id[:20]}-"
+    conversation_prefix = f"outcome-{run_id}-"
     events = AIUsageEvent.objects.filter(user=user, conversation_id__startswith=conversation_prefix)
     turn_ids = list(events.exclude(turn_id="").values_list("turn_id", flat=True))
     ledgers = CreditLedger.objects.filter(

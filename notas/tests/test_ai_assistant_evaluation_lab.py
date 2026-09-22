@@ -162,6 +162,41 @@ class AIAssistantEvaluationLabTests(TestCase):
         self.assertEqual(metered.billing["policy"], "charge_selected_user")
         self.assertTrue(metered.billing["user_credits_charged"])
 
+    def test_repeated_live_runs_receive_distinct_run_ids(self):
+        observed_run_ids = []
+
+        def fake_live_report(**kwargs):
+            observed_run_ids.append(kwargs["run_id"])
+            return RealProviderValidationReport(
+                version="test",
+                run_id=kwargs["run_id"],
+                provider="openai",
+                model="test-model",
+                user_id=self.user.id,
+                configured_chat_mode="llm",
+                usage_observability_enabled=True,
+                credits_enabled=False,
+                scenarios=(),
+                usage_summary={},
+                credit_summary={},
+                manual_review_prompts=(),
+            )
+
+        target = "notas.application.ai_intake.evaluation_lab.run_real_provider_validation"
+        with patch(target, side_effect=fake_live_report):
+            run_evaluation_lab(
+                user=self.user,
+                scenario_keys=("bibliotecas_coherentes",),
+                live=True,
+                repetitions=3,
+                run_id="fixed-lab-run",
+            )
+
+        self.assertEqual(
+            observed_run_ids,
+            ["fixed-lab-run-r1", "fixed-lab-run-r2", "fixed-lab-run-r3"],
+        )
+
     def test_credit_block_is_reported_as_infrastructure_not_tool_regressions(self):
         result = SimpleNamespace(
             scenario=SimpleNamespace(key="comida_450_kcal"),

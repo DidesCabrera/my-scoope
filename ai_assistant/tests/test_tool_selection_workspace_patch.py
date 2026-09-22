@@ -5,6 +5,7 @@ from ai_assistant.application.tools import (
     TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_PROPOSE_WORKSPACE_PATCH,
     TOOL_QUERY_WORKSPACE,
+    TOOL_READ_PROPOSAL,
     TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_READ_USER_PROFILE_CONTEXT,
     list_provider_tool_specs,
@@ -59,6 +60,39 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
 
         self.assertNotIn(TOOL_PROPOSE_WORKSPACE_PATCH, {item["name"] for item in selected})
 
+    def test_explicit_proposal_read_uses_the_exact_read_tool(self):
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role="user",
+                content="Usa read_proposal para revisar la propuesta 2147483647.",
+            ),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "work_progress": {
+                            "active_work": {
+                                "expected_outcome": "workspace_query",
+                                "resource": "proposal",
+                            }
+                        }
+                    }
+                },
+            },
+        )
+
+        selected = select_provider_tools(
+            request,
+            available=list_provider_tool_specs(),
+            enable_reviewable_proposal_tools=True,
+        )
+
+        self.assertEqual({item["name"] for item in selected}, {TOOL_READ_PROPOSAL})
+        self.assertEqual(
+            initial_tool_choice(request, selected),
+            {"type": "function", "name": TOOL_READ_PROPOSAL},
+        )
+
     def test_intake_program_status_request_exposes_program_and_calendar_reads(self):
         request, selected, names = self._selected_for_intake(
             "Hola, ¿podrías decirme si tengo algún programa en curso?"
@@ -67,7 +101,10 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
         self.assertIn(TOOL_QUERY_WORKSPACE, names)
         self.assertNotIn("list_user_programs", names)
         self.assertNotIn("read_calendarization", names)
-        self.assertEqual(initial_tool_choice(request, selected), "required")
+        self.assertEqual(
+            initial_tool_choice(request, selected),
+            {"type": "function", "name": TOOL_QUERY_WORKSPACE},
+        )
 
     def test_intake_library_plan_request_exposes_plan_list_and_requires_evidence(self):
         request, selected, names = self._selected_for_intake(
@@ -76,7 +113,10 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
 
         self.assertIn(TOOL_QUERY_WORKSPACE, names)
         self.assertNotIn("list_user_dailyplans", names)
-        self.assertEqual(initial_tool_choice(request, selected), "required")
+        self.assertEqual(
+            initial_tool_choice(request, selected),
+            {"type": "function", "name": TOOL_QUERY_WORKSPACE},
+        )
 
     def test_intake_accentless_library_program_request_requires_program_listing(self):
         request, selected, names = self._selected_for_intake(
@@ -85,7 +125,10 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
 
         self.assertIn(TOOL_QUERY_WORKSPACE, names)
         self.assertNotIn("list_user_programs", names)
-        self.assertEqual(initial_tool_choice(request, selected), "required")
+        self.assertEqual(
+            initial_tool_choice(request, selected),
+            {"type": "function", "name": TOOL_QUERY_WORKSPACE},
+        )
 
     def test_intake_library_reads_remain_discoverable_without_phrase_matching(self):
         request, selected, names = self._selected_for_intake(
@@ -95,7 +138,10 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
         self.assertIn(TOOL_QUERY_WORKSPACE, names)
         self.assertNotIn("list_user_programs", names)
         self.assertNotIn("list_user_dailyplans", names)
-        self.assertEqual(initial_tool_choice(request, selected), "auto")
+        self.assertEqual(
+            initial_tool_choice(request, selected),
+            {"type": "function", "name": TOOL_QUERY_WORKSPACE},
+        )
 
     def test_intake_indirect_memory_and_reviewed_change_request_exposes_capabilities(self):
         request, selected, names = self._selected_for_intake(
@@ -117,7 +163,10 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
         self.assertNotIn("list_user_foods", names)
         self.assertNotIn("list_user_meals", names)
         self.assertIn(TOOL_PROPOSE_WORKSPACE_PATCH, names)
-        self.assertEqual(initial_tool_choice(request, selected), "required")
+        self.assertEqual(
+            initial_tool_choice(request, selected),
+            {"type": "function", "name": TOOL_QUERY_WORKSPACE},
+        )
 
     def test_short_acknowledgement_keeps_tools_from_prior_operational_request(self):
         request = AssistantTurnRequest(

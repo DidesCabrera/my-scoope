@@ -242,7 +242,13 @@ class OutcomeFirstRuntimeTests(SimpleTestCase):
             ],
         )
         self.assertEqual(len(client.requests), 3)
-        self.assertEqual(client.requests[1].tool_choice, "required")
+        self.assertEqual(
+            client.requests[1].tool_choice,
+            {
+                "type": "function",
+                "name": TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            },
+        )
         self.assertEqual(
             [tool["name"] for tool in client.requests[1].tools],
             [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],
