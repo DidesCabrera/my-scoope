@@ -1151,6 +1151,142 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             "tool_followup_LLMProviderRequestError",
         )
 
+    def test_native_final_followup_recovers_once_with_compact_request(self):
+        class RecoveringFollowupClient:
+            provider_name = "openai"
+            model = "gpt-test"
+
+            def __init__(self):
+                self.requests = []
+
+            def generate(self, request):
+                self.requests.append(request)
+                if len(self.requests) == 1:
+                    return LLMProviderResponse(
+                        provider="openai",
+                        model="gpt-test",
+                        text="",
+                        response_id="native-update-1",
+                        tool_calls=(
+                            LLMProviderToolCall(
+                                name=TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                                arguments={
+                                    "updates": {"goal": "fat_loss"},
+                                    "reason": _selection_reason(
+                                        summary="El usuario pidió orientar la propuesta a bajar grasa.",
+                                    ),
+                                },
+                                call_id="call_update_goal",
+                            ),
+                        ),
+                        continuation_items=(
+                            {
+                                "type": "function_call",
+                                "id": "fc_update_goal",
+                                "call_id": "call_update_goal",
+                                "name": TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                                "arguments": '{"updates":{"goal":"fat_loss"}}',
+                                "status": "completed",
+                            },
+                        ),
+                    )
+                if len(self.requests) == 2:
+                    raise LLMProviderRequestError("native continuation rejected")
+                return LLMProviderResponse(
+                    provider="openai",
+                    model="gpt-test",
+                    text=json.dumps(
+                        {
+                            "assistant_message": {
+                                "content": "Listo, orienté la propuesta a bajar grasa."
+                            },
+                            "intent": {
+                                "name": "capture_nutrition_brief",
+                                "confidence": 0.9,
+                            },
+                            "tool_requests": [
+                                {
+                                    "tool_name": TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                                    "arguments": {"updates": {"goal": "muscle_gain"}},
+                                    "request_id": "must_not_execute",
+                                }
+                            ],
+                        }
+                    ),
+                    response_id="compact-final-1",
+                )
+
+        captured_updates = []
+
+        def update_proposal_preferences(
+            user,
+            *,
+            updates,
+            current_preferences=None,
+            field_sources=None,
+        ):
+            captured_updates.append(dict(updates))
+            return tool_success(
+                {
+                    "proposal_preferences": {
+                        "goal": updates["goal"],
+                        "field_sources": {"goal": "chat_draft"},
+                    },
+                    "nutrition_brief_patch": {"goal": updates["goal"]},
+                }
+            )
+
+        client = RecoveringFollowupClient()
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=client,
+            profile_draft_tool_executor=ProfileDraftToolExecutor(
+                dispatch_table={
+                    TOOL_UPDATE_PROPOSAL_PREFERENCES: update_proposal_preferences
+                }
+            ),
+        )
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content="Quiero bajar grasa.",
+            ),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "work_progress": {
+                            "active_work": {
+                                "expected_outcome": "workspace_advanced",
+                            }
+                        }
+                    }
+                },
+            },
+            metadata={"tool_user": "user-1", "debug_ai_assistant": True},
+        )
+
+        response = orchestrator.continue_turn(request)
+
+        self.assertEqual(len(client.requests), 3)
+        self.assertEqual(
+            client.requests[2].metadata["tool_loop"],
+            "controlled_tools.compact_followup.v1",
+        )
+        self.assertEqual(
+            response.assistant_text,
+            "Listo, orienté la propuesta a bajar grasa.",
+        )
+        self.assertTrue(response.metadata["provider_tool_followup_compact_recovery"])
+        self.assertEqual(response.metadata["provider_tool_followup_compact_recovery_count"], 1)
+        self.assertEqual(response.metadata["tool_free_followup_tool_requests_ignored"], 1)
+        self.assertEqual(captured_updates, [{"goal": "fat_loss"}])
+        self.assertEqual(
+            [item.request_id for item in response.tool_requests],
+            ["call_update_goal"],
+        )
+        self.assertFalse(response.metadata.get("provider_tool_followup_failed", False))
+        self.assertEqual(response.metadata["debug_status"], "completed")
+
     def test_orchestrator_bounds_history_sent_to_provider(self):
         client = FakeLLMClient(responses=[json.dumps({"assistant_message": {"content": "Listo."}})])
         orchestrator = ExternalLLMOrchestrator(

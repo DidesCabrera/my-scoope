@@ -47,6 +47,10 @@ humana, evaluación de selección/argumentos de tools y grading de trayectorias:
   aclaración breve y no puede inventar un plan activo.
 - La captura de hechos pendientes ocurre antes de compartir cards, para que una
   presentación opcional no consuma el presupuesto de una operación necesaria.
+- Si el proveedor falla al redactar la respuesta final después de completar el
+  outcome, el runtime intenta una sola redacción compacta, sin tools ni nuevos
+  efectos. Si también falla, conserva el acuse local seguro y registra la
+  degradación.
 
 ## Rejected alternatives
 
