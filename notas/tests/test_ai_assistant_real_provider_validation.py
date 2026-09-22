@@ -193,6 +193,47 @@ class RealProviderValidationTests(TestCase):
 
         self.assertTrue(passed, detail)
 
+    def test_clarification_outcome_accepts_natural_conditional_requests(self):
+        scenario = RealProviderValidationScenario(
+            key="clarification-natural-request",
+            description="test",
+            user_messages=("¿Qué está pasando?",),
+            expected_outcome="clarification_required",
+        )
+        messages = (
+            "Si me dices qué estabas mirando, te ubico enseguida.",
+            "Si me cuentas qué estabas intentando hacer, te digo exactamente qué pasa.",
+        )
+
+        for index, message in enumerate(messages, start=1):
+            with self.subTest(message=message):
+                turn = RealProviderValidationTurn(
+                    index=1,
+                    turn_id=f"clarification-natural-request-{index}",
+                    user_message="¿Qué está pasando?",
+                    assistant_message=message,
+                    engine_name="test",
+                    brief_snapshot={},
+                    semantic_intent="answer_question",
+                    semantic_missing_slots=(),
+                    tool_results=(),
+                    card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+                    card_deltas={"profile": 0, "preference": 0, "proposal_preferences": 0},
+                    fallback=False,
+                    fallback_reason="",
+                    deterministic_runtime_invoked=False,
+                    provider="openai",
+                    model="test-real-model",
+                    usage_observability={"recorded": True},
+                )
+                passed, detail = evaluate_expected_outcome(
+                    scenario,
+                    (turn,),
+                    state_before={"nutrition_proposals": 0, "prepared_actions": 0},
+                    state_after={"nutrition_proposals": 0, "prepared_actions": 0},
+                )
+                self.assertTrue(passed, detail)
+
     def test_grouped_facts_scenario_passes_hard_invariants_with_safe_metadata(self):
         report = run_real_provider_validation(
             user=self.user,

@@ -58,9 +58,10 @@ _PROFILE_FACT_PATTERN = re.compile(
     r"sedentari\w*|actividad|entreno|entrenamiento)\b|\b\d{2,3}(?:[.,]\d+)?\s*(?:kg|cm)\b"
 )
 _PREFERENCE_FACT_PATTERN = re.compile(
-    r"\b(?:prefiero|evito|alerg\w*|intoler\w*|vegetarian\w*|vegan\w*|"
+    r"\b(?:preferencias?|prefiero|evito|alerg\w*|intoler\w*|vegetarian\w*|vegan\w*|"
     r"sin gluten|sin lactosa|presupuesto|cocinar|variedad|simple)\b"
 )
+_MEALS_PER_DAY_FACT_PATTERN = re.compile(r"\b[1-9]\s+comidas?\b")
 
 
 def infer_active_work(
@@ -84,6 +85,8 @@ def infer_active_work(
         _CONTINUATION_PATTERN.fullmatch(normalized_current)
     ) or bool(_PROFILE_FACT_PATTERN.search(normalized_current)) or bool(
         _PREFERENCE_FACT_PATTERN.search(normalized_current)
+    ) or bool(
+        _MEALS_PER_DAY_FACT_PATTERN.search(normalized_current)
     )
     if not should_resume:
         return _response_only_payload()
@@ -136,8 +139,16 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": "update_draft",
         }
 
-    if _PREFERENCE_FACT_PATTERN.search(text) and "?" not in text and (
+    has_preference_fact = bool(
+        _PREFERENCE_FACT_PATTERN.search(text)
+        or _MEALS_PER_DAY_FACT_PATTERN.search(text)
+    )
+    if has_preference_fact and "?" not in text and (
         resource in {"", "preferences"}
+        or (
+            resource == "meal"
+            and not _CREATE_PATTERN.search(text)
+        )
         or re.search(r"\b(?:mas variedad|poco presupuesto|cocinar rapido)\b", text)
     ):
         return {

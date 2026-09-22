@@ -3,12 +3,23 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 _VISIBLE_CLARIFICATION_PATTERN = re.compile(
     r"(?:\?|\b(?:dime|cuentame|aclara(?:me)?|especifica(?:me)?|"
-    r"necesito que me digas|que estas viendo|que te preocupa|que quieres)\b)",
+    r"necesito que me digas|si me (?:dices|cuentas|indicas|aclaras)|"
+    r"que estas viendo|que te preocupa|que quieres)\b)",
     re.IGNORECASE,
 )
+
+
+def _normalized_visible_text(value):
+    decomposed = unicodedata.normalize("NFKD", str(value or "").casefold())
+    return "".join(
+        character
+        for character in decomposed
+        if not unicodedata.combining(character)
+    )
 
 
 def evaluate_visible_facts(scenario, turns):
@@ -139,7 +150,7 @@ def evaluate_expected_outcome(scenario, turns, *, state_before, state_after):
         visible_question = bool(
             final_turn
             and _VISIBLE_CLARIFICATION_PATTERN.search(
-                str(final_turn.assistant_message or "")
+                _normalized_visible_text(final_turn.assistant_message)
             )
         )
         semantic_missing = bool(final_turn and tuple(final_turn.semantic_missing_slots or ()))

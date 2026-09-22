@@ -481,7 +481,13 @@ def fact_capture_tool_after_tool_results(
     enable_reviewable_proposal_tools: bool,
     product_bindings: AIProductBindings,
 ) -> str | None:
-    """Return the one typed writer still needed for explicit user facts."""
+    """Return the typed writer whose result has not captured explicit facts yet.
+
+    The safe context already contains a deterministic interpretation of the
+    current message.  That interpretation is useful to the provider, but it is
+    not evidence that the provider actually recorded the facts through a typed
+    tool.  Only a successful tool result from this turn can close this guard.
+    """
 
     work_progress = _intake_work_progress(request.context)
     active_work = dict(work_progress.get("active_work") or {})
@@ -495,47 +501,52 @@ def fact_capture_tool_after_tool_results(
         return None
     if not enable_reviewable_proposal_tools:
         return None
-    workspace = _intake_workspace(request.context)
-    try:
-        brief = product_bindings.build_nutrition_brief_from_ai_drafts(
-            profile_draft=_latest_draft_for_tool(
-                "profile_draft",
-                context=request.context,
-                prior_tool_results=tool_results,
-            ),
-            preference_draft=_latest_draft_for_tool(
-                "preference_draft",
-                context=request.context,
-                prior_tool_results=tool_results,
-            ),
-            proposal_preferences=_latest_draft_for_tool(
-                "proposal_preferences",
-                context=request.context,
-                prior_tool_results=tool_results,
-            ),
-            current_nutrition_brief=dict(workspace.get("current_nutrition_brief") or {}),
-            raw_prompt=request.user_message.content,
-        )
-    except (TypeError, ValueError):
-        return None
+    del product_bindings  # Kept in the boundary signature for API stability.
 
-    for field_name, expected in _explicit_profile_values(
-        request.user_message.content
-    ).items():
-        if getattr(brief, field_name, None) != expected:
-            return TOOL_UPDATE_PROFILE_DRAFT
+    profile_values = _explicit_profile_values(request.user_message.content)
+    if profile_values and not _successful_tool_result_captures_values(
+        tool_results,
+        tool_name=TOOL_UPDATE_PROFILE_DRAFT,
+        draft_key="profile_draft",
+        expected_values=profile_values,
+    ):
+        return TOOL_UPDATE_PROFILE_DRAFT
 
     stated = _explicit_proposal_values(request.user_message.content)
-    for field_name, expected in stated.items():
-        actual = getattr(brief, field_name, None)
-        if not _brief_value_matches_explicit_value(
-            brief,
-            field_name=field_name,
-            actual=actual,
-            expected=expected,
-        ):
-            return TOOL_UPDATE_PROPOSAL_PREFERENCES
+    if stated and not _successful_tool_result_captures_values(
+        tool_results,
+        tool_name=TOOL_UPDATE_PROPOSAL_PREFERENCES,
+        draft_key="proposal_preferences",
+        expected_values=stated,
+    ):
+        return TOOL_UPDATE_PROPOSAL_PREFERENCES
     return None
+
+
+def _successful_tool_result_captures_values(
+    tool_results: Sequence[AssistantToolResult],
+    *,
+    tool_name: str,
+    draft_key: str,
+    expected_values: Mapping[str, Any],
+) -> bool:
+    for result in reversed(tuple(tool_results or ())):
+        if result.tool_name != tool_name or not result.ok:
+            continue
+        candidate = dict(result.data or {}).get(draft_key)
+        if not isinstance(candidate, Mapping):
+            return False
+        draft = dict(candidate)
+        return all(
+            _brief_value_matches_explicit_value(
+                draft,
+                field_name=field_name,
+                actual=draft.get(field_name),
+                expected=expected,
+            )
+            for field_name, expected in expected_values.items()
+        )
+    return False
 
 
 def _explicit_profile_values(user_text: str) -> dict[str, Any]:
@@ -575,10 +586,11 @@ def _brief_value_matches_explicit_value(
 
     actual_distribution = dict(actual or {})
     if not actual_distribution:
-        calories = float(getattr(brief, "calorie_target", 0) or 0)
-        protein = float(getattr(brief, "protein_target", 0) or 0)
-        carbs = float(getattr(brief, "carb_target", 0) or 0)
-        fat = float(getattr(brief, "fat_target", 0) or 0)
+        get_value = brief.get if isinstance(brief, Mapping) else lambda key, default=None: getattr(brief, key, default)
+        calories = float(get_value("calorie_target", 0) or 0)
+        protein = float(get_value("protein_target", 0) or 0)
+        carbs = float(get_value("carb_target", 0) or 0)
+        fat = float(get_value("fat_target", 0) or 0)
         if calories > 0 and protein > 0 and carbs > 0 and fat > 0:
             actual_distribution = {
                 "protein": protein * 4 / calories * 100,

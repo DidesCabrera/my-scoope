@@ -268,6 +268,29 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         self.assertEqual(active_work["resource"], "program")
         self.assertEqual(active_work["action"], "update_draft")
 
+    def test_meal_count_followup_advances_the_current_draft(self):
+        message = "Déjalo en 3 comidas al día y avancemos sin más preferencias por ahora."
+        state = self._state_with_messages(
+            NutritionConversationMessage(
+                role="user",
+                text="Mejor hagamos un programa semanal para bajar grasa.",
+            ),
+            NutritionConversationMessage(role="assistant", text="De acuerdo."),
+            NutritionConversationMessage(role="user", text=message),
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "record_conversation_facts")
+        self.assertEqual(active_work["expected_outcome"], "workspace_advanced")
+        self.assertEqual(active_work["resource"], "preferences")
+        self.assertEqual(active_work["action"], "update_draft")
+
     def test_meal_request_wins_over_later_plan_context_reference(self):
         message = (
             "Crea ahora una propuesta revisable de comida de 450 kcal usando el "

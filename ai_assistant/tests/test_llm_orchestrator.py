@@ -10,10 +10,13 @@ from ai_assistant.application import (
 from ai_assistant.application.chat_engines import ChatEngineRequest
 from ai_assistant.application.limits import estimate_provider_request_tokens
 from ai_assistant.application.orchestrator import _local_acknowledgement_from_tool_results
+from ai_assistant.application.product_ports import get_ai_product_bindings
+from ai_assistant.application.tool_selection import fact_capture_tool_after_tool_results
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_PROPOSAL,
+    TOOL_UPDATE_PROFILE_DRAFT,
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
     ReadOnlyToolExecutor,
 )
@@ -98,6 +101,47 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             {str(spec.get("name") or "") for spec in provider_request.tools},
         )
         self.assertIn("complete_a_ready_active_objective_in_the_same_turn", developer_payload["success_criteria"])
+
+    def test_grouped_facts_require_each_typed_writer_result(self):
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content=(
+                    "Para un futuro plan diario para ganar músculo registra 38 años, "
+                    "85 kg, 188 cm, 4 comidas y algo simple."
+                ),
+            ),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "work_progress": {
+                            "active_work": {"expected_outcome": "workspace_advanced"}
+                        }
+                    }
+                },
+            },
+        )
+        profile_result = AssistantToolResult(
+            tool_name=TOOL_UPDATE_PROFILE_DRAFT,
+            status=AssistantToolStatus.OK,
+            data={
+                "profile_draft": {
+                    "age_years": 38,
+                    "weight_kg": 85.0,
+                    "height_cm": 188,
+                }
+            },
+        )
+
+        next_tool = fact_capture_tool_after_tool_results(
+            request,
+            (profile_result,),
+            enable_reviewable_proposal_tools=True,
+            product_bindings=get_ai_product_bindings(),
+        )
+
+        self.assertEqual(next_tool, TOOL_UPDATE_PROPOSAL_PREFERENCES)
 
     def test_orchestrator_blocks_non_read_tools_without_executing_writes(self):
         client = FakeLLMClient(
