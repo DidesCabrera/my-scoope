@@ -378,6 +378,24 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         self.assertEqual(active_work["expected_outcome"], "workspace_query")
         self.assertEqual(active_work["resource"], "program")
 
+    def test_ambiguous_reference_requires_clarification_without_guessing_state(self):
+        message = "¿Qué está pasando?"
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text=message)
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "ask_clarification")
+        self.assertEqual(active_work["expected_outcome"], "clarification_required")
+        self.assertEqual(active_work["resource"], "none")
+        self.assertEqual(active_work["action"], "clarify")
+
     def test_review_artifact_closes_an_older_objective(self):
         state = self._state_with_messages(
             NutritionConversationMessage(role="user", text="Crea un plan diario"),

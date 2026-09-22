@@ -62,6 +62,9 @@ _PREFERENCE_FACT_PATTERN = re.compile(
     r"sin gluten|sin lactosa|presupuesto|cocinar|variedad|simple)\b"
 )
 _MEALS_PER_DAY_FACT_PATTERN = re.compile(r"\b[1-9]\s+comidas?\b")
+_AMBIGUOUS_REFERENCE_PATTERN = re.compile(
+    r"^[¿?¡!\s]*(?:que (?:esta pasando|paso)|y eso|por que)[?.!¡¿\s]*$"
+)
 
 
 def infer_active_work(
@@ -116,6 +119,14 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
     text = _normalize(value)
     if not text or _CONTINUATION_PATTERN.fullmatch(text):
         return None
+
+    if _AMBIGUOUS_REFERENCE_PATTERN.fullmatch(text):
+        return {
+            "objective": "ask_clarification",
+            "expected_outcome": "clarification_required",
+            "resource": "none",
+            "action": "clarify",
+        }
 
     resource = _resource(text)
     mutation_action = _mutation_action(text)
