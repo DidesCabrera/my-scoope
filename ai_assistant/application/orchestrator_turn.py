@@ -20,7 +20,11 @@ from ai_assistant.domain import (
     AssistantToolStatus,
     AssistantTurnRequest,
 )
-from ai_assistant.infrastructure.providers import LLMProviderError, LLMProviderResponse
+from ai_assistant.infrastructure.providers import (
+    LLMProviderError,
+    LLMProviderRequest,
+    LLMProviderResponse,
+)
 
 
 def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantStructuredResponse:
@@ -144,6 +148,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
     all_tool_results = orchestrator._resolve_tool_results(request, parse_result.response.tool_requests)
     current_tool_results = all_tool_results
     tool_loop_iterations = 0
+    compact_followup_recovery_count = 0
 
     while _has_tool_results(current_tool_results) and tool_loop_iterations < orchestrator.config.max_tool_loop_iterations:
         remaining_iterations = orchestrator.config.max_tool_loop_iterations - tool_loop_iterations - 1
@@ -199,9 +204,21 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
                     tools_executed=True,
                 )
 
-        try:
-            final_provider_response = turn_llm_client.generate(final_provider_request)
-        except LLMProviderError as exc:
+        (
+            final_provider_request,
+            final_provider_response,
+            followup_error,
+            compact_recovery_count,
+        ) = _generate_tool_followup_with_compact_recovery(
+            orchestrator,
+            turn_llm_client=turn_llm_client,
+            request=request,
+            provider_request=final_provider_request,
+            first_response=parse_result.response,
+            tool_results=all_tool_results,
+            model_route=model_route,
+        )
+        if followup_error is not None:
             # The function call and its controlled result already exist. A
             # provider failure while wording the follow-up must not erase
             # that evidence or turn a safely resolved tool operation into a
@@ -212,7 +229,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
                 provider_response=provider_responses[-1],
                 tool_results=all_tool_results,
                 tool_requests=all_tool_requests,
-                error=exc,
+                error=followup_error,
                 latency_ms=latency_ms,
                 tool_loop_iterations=tool_loop_iterations,
                 first_provider_response_id=provider_responses[0].response_id,
@@ -223,12 +240,19 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
                 provider_responses=tuple(provider_responses),
                 latency_ms=latency_ms,
                 status="degraded",
-                error_type=f"tool_followup_{exc.__class__.__name__}",
+                error_type=f"tool_followup_{followup_error.__class__.__name__}",
                 tools_executed=True,
             )
+        assert final_provider_response is not None
+        compact_followup_recovery_count += compact_recovery_count
+        remaining_iterations = 0 if compact_recovery_count else remaining_iterations
 
         provider_responses.append(final_provider_response)
         parse_result = orchestrator.parse_provider_response(final_provider_response)
+        parse_result = _enforce_tool_free_compact_followup(
+            parse_result,
+            provider_request=final_provider_request,
+        )
         followup_incomplete_reason = _provider_incomplete_reason(final_provider_response)
         if followup_incomplete_reason:
             incomplete_reasons.append(followup_incomplete_reason)
@@ -290,6 +314,16 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
         tool_requests=tuple(all_tool_requests),
         ignored_provider_proposal_ids=tuple(dict.fromkeys(all_ignored_provider_proposal_ids)),
     )
+    response = replace(
+        response,
+        metadata={
+            **dict(response.metadata or {}),
+            "provider_tool_followup_compact_recovery": bool(
+                compact_followup_recovery_count
+            ),
+            "provider_tool_followup_compact_recovery_count": compact_followup_recovery_count,
+        },
+    )
     response = _enforce_required_clarification(response, request=request)
     response = _with_outcome_trace(
         response,
@@ -303,6 +337,82 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
         latency_ms=latency_ms,
         status="completed",
         tools_executed=tools_executed,
+    )
+
+
+def _generate_tool_followup_with_compact_recovery(
+    orchestrator,
+    *,
+    turn_llm_client,
+    request: AssistantTurnRequest,
+    provider_request: LLMProviderRequest,
+    first_response: AssistantStructuredResponse,
+    tool_results: Sequence[AssistantToolResult],
+    model_route,
+) -> tuple[
+    LLMProviderRequest,
+    LLMProviderResponse | None,
+    LLMProviderError | None,
+    int,
+]:
+    """Retry a failed final wording once without tools or new side effects."""
+
+    try:
+        return provider_request, turn_llm_client.generate(provider_request), None, 0
+    except LLMProviderError as error:
+        initial_error = error
+        if (
+            provider_request.tools
+            or str(provider_request.metadata.get("tool_loop") or "")
+            == "controlled_tools.compact_followup.v1"
+        ):
+            return provider_request, None, initial_error, 0
+
+    compact_request = orchestrator.build_compact_tool_followup_provider_request(
+        request=request,
+        first_response=first_response,
+        tool_results=tool_results,
+        model_route=model_route,
+    )
+    if validate_provider_request_limits(
+        compact_request,
+        limits=orchestrator.config.turn_limits,
+    ) is not None:
+        return provider_request, None, initial_error, 0
+
+    try:
+        compact_response = turn_llm_client.generate(compact_request)
+    except LLMProviderError as recovery_error:
+        return compact_request, None, recovery_error, 0
+    return compact_request, compact_response, None, 1
+
+
+def _enforce_tool_free_compact_followup(
+    parse_result: AssistantProviderParseResult,
+    *,
+    provider_request: LLMProviderRequest,
+) -> AssistantProviderParseResult:
+    """Never execute a tool declared in a tool-free compact wording response."""
+
+    tool_requests = tuple(parse_result.response.tool_requests or ())
+    if (
+        str(provider_request.metadata.get("tool_loop") or "")
+        != "controlled_tools.compact_followup.v1"
+        or not tool_requests
+    ):
+        return parse_result
+    response = replace(
+        parse_result.response,
+        tool_requests=(),
+        metadata={
+            **dict(parse_result.response.metadata or {}),
+            "tool_free_followup_tool_requests_ignored": len(tool_requests),
+        },
+    )
+    return replace(
+        parse_result,
+        response=response,
+        declared_tools_required=False,
     )
 
 
