@@ -21,6 +21,12 @@ propuestas/patches revisables y confirmación confiable. Sobre esa base se incor
 - feedback de producto agregado, sin copiar contenido a reportes;
 - selección de modelo posterior al gate funcional y cualitativo.
 
+El runtime permite hasta seis continuaciones de tools por turno. Este valor no
+obliga a ejecutar seis operaciones: es un techo para solicitudes compuestas que
+deben leer memoria, capturar distintos drafts y cerrar con una respuesta. Cada
+continuación reduce el contexto y expone sólo la capability pendiente, manteniendo
+el límite de input y la condición de parada.
+
 La decisión sigue las prácticas oficiales de evaluación task-specific, calibración
 humana, evaluación de selección/argumentos de tools y grading de trayectorias:
 
@@ -37,6 +43,10 @@ humana, evaluación de selección/argumentos de tools y grading de trayectorias:
 - Astra no es dependencia ni candidato de este ciclo.
 - Las consultas no usan Workspace Patch. Las mutaciones usan patch revisable y el
   commit continúa reservado a una acción explícita en UI confiable.
+- Una referencia ambigua no hereda `blocking_fields` de nutrición: exige una
+  aclaración breve y no puede inventar un plan activo.
+- La captura de hechos pendientes ocurre antes de compartir cards, para que una
+  presentación opcional no consuma el presupuesto de una operación necesaria.
 
 ## Rejected alternatives
 

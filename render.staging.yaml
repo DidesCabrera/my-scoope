@@ -61,6 +61,8 @@ services:
         value: 30/h
       - key: AI_ASSISTANT_CREDITS_ENABLED
         value: "true"
+      - key: AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS
+        value: "6"
       - key: AI_ASSISTANT_OPENAI_API_KEY
         sync: false
       - key: FOOD_CATALOG_RELEASE_URL
@@ -113,6 +115,8 @@ services:
         sync: false
       - key: AI_ASSISTANT_CREDITS_ENABLED
         value: "true"
+      - key: AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS
+        value: "6"
       - key: AI_ASSISTANT_ASYNC_ENABLED
         value: "true"
       - key: SENTRY_TRACES_SAMPLE_RATE

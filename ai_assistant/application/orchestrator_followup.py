@@ -18,7 +18,7 @@ from ai_assistant.application.tools import (
     TOOL_READ_PROPOSAL,
 )
 from ai_assistant.domain import AssistantToolResult, AssistantTurnRequest
-from ai_assistant.infrastructure.providers import LLMProviderRequest
+from ai_assistant.infrastructure.providers import LLMMessage, LLMProviderRequest
 
 
 def build_tool_followup_provider_request(
@@ -48,16 +48,16 @@ def build_tool_followup_provider_request(
         request,
         decision_results,
     )
-    if tools and presentation_tool_name:
-        tools, tool_choice = _select_exact_tool(
-            tools,
-            presentation_tool_name,
-            fallback_choice=tool_choice,
-        )
-    elif tools and capture_tool_name:
+    if tools and capture_tool_name:
         tools, tool_choice = _select_exact_tool(
             tools,
             capture_tool_name,
+            fallback_choice=tool_choice,
+        )
+    elif tools and presentation_tool_name:
+        tools, tool_choice = _select_exact_tool(
+            tools,
+            presentation_tool_name,
             fallback_choice=tool_choice,
         )
     elif tools and orchestrator._proposal_ready_after_tool_results(
@@ -77,16 +77,28 @@ def build_tool_followup_provider_request(
         tools = ()
         tool_choice = None
 
+    messages = list(base_request.messages)
+    if len(messages) >= 2:
+        messages[1] = LLMMessage(
+            role="developer",
+            content=orchestrator._developer_prompt(tools),
+        )
+    if request.context and len(messages) >= 3:
+        messages[2] = LLMMessage(
+            role="developer",
+            content=compact_context_prompt(request.context),
+        )
+
     tool_outputs = _provider_tool_outputs(tool_results)
     estimated_request = LLMProviderRequest(
-        messages=base_request.messages,
+        messages=messages,
         max_output_tokens=max_output_tokens,
         tools=tools,
         continuation_items=tuple(continuation_items or ()),
         tool_outputs=tool_outputs,
     )
     return LLMProviderRequest(
-        messages=base_request.messages,
+        messages=messages,
         max_output_tokens=max_output_tokens,
         metadata={
             "engine": orchestrator.config.engine_name,

@@ -388,13 +388,15 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
             conversation_state=state,
         ).as_dict()
 
-        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
-            "active_work"
-        ]
+        progress = context["metadata"]["tool_oriented_intake"]["work_progress"]
+        active_work = progress["active_work"]
         self.assertEqual(active_work["objective"], "ask_clarification")
         self.assertEqual(active_work["expected_outcome"], "clarification_required")
         self.assertEqual(active_work["resource"], "none")
         self.assertEqual(active_work["action"], "clarify")
+        self.assertEqual(progress["blocking_fields"], [])
+        self.assertFalse(progress["required_information_still_missing"])
+        self.assertEqual(progress["proposal_readiness"], "not_established")
 
     def test_review_artifact_closes_an_older_objective(self):
         state = self._state_with_messages(

@@ -12,6 +12,8 @@ from ai_assistant.application.orchestrator_runtime import elapsed_ms as _elapsed
 from ai_assistant.application.provider_parsing import AssistantProviderParseResult
 from ai_assistant.domain import (
     AssistantIntentName,
+    AssistantMessage,
+    AssistantMessageRole,
     AssistantStructuredResponse,
     AssistantToolRequest,
     AssistantToolResult,
@@ -288,6 +290,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
         tool_requests=tuple(all_tool_requests),
         ignored_provider_proposal_ids=tuple(dict.fromkeys(all_ignored_provider_proposal_ids)),
     )
+    response = _enforce_required_clarification(response, request=request)
     response = _with_outcome_trace(
         response,
         request=request,
@@ -301,6 +304,37 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
         status="completed",
         tools_executed=tools_executed,
     )
+
+
+def _enforce_required_clarification(
+    response: AssistantStructuredResponse,
+    *,
+    request: AssistantTurnRequest,
+) -> AssistantStructuredResponse:
+    """Keep an ambiguous turn grounded instead of inventing an active objective."""
+
+    workspace = dict((request.context.get("metadata") or {}).get("tool_oriented_intake") or {})
+    progress = dict(workspace.get("work_progress") or {})
+    active_work = dict(progress.get("active_work") or {})
+    if str(active_work.get("expected_outcome") or "") != "clarification_required":
+        return response
+
+    metadata = {
+        **dict(response.metadata or {}),
+        "clarification_grounding_guard_applied": True,
+    }
+    return replace(
+        response,
+        assistant_message=AssistantMessage(
+            role=AssistantMessageRole.ASSISTANT,
+            content=(
+                "No tengo suficiente contexto para saber a qué situación te refieres. "
+                "¿Qué estabas revisando o intentando hacer en My Scoope?"
+            ),
+        ),
+        metadata=metadata,
+    )
+
 
 def _provider_incomplete_reason(provider_response: LLMProviderResponse) -> str:
     raw = dict(provider_response.raw or {})

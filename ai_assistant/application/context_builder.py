@@ -251,6 +251,10 @@ def _work_progress_context(
     recommended sequence or a backend interpretation of the latest message.
     """
 
+    active_work = infer_active_work(
+        conversation_state,
+        current_user_message=current_user_message,
+    )
     result = getattr(conversation_state, "result", None)
     brief = getattr(result, "brief", None)
     blocking_fields: list[str] = []
@@ -261,6 +265,13 @@ def _work_progress_context(
             get_ai_product_bindings().required_proposal_fields(brief)
         )
     ready_for_proposal = bool(getattr(result, "is_ready_for_proposal", False))
+    if active_work.get("expected_outcome") == "clarification_required":
+        # An ambiguous reference is not an implicit request to complete the
+        # nutrition brief. Exposing unrelated blocking fields here caused the
+        # provider to invent a plan objective instead of asking what the user
+        # meant.
+        blocking_fields = []
+        ready_for_proposal = False
     required_information_missing = bool(blocking_fields)
     if ready_for_proposal:
         proposal_readiness = "ready_for_reviewable_proposal"
@@ -269,10 +280,6 @@ def _work_progress_context(
     else:
         proposal_readiness = "not_established"
 
-    active_work = infer_active_work(
-        conversation_state,
-        current_user_message=current_user_message,
-    )
     return {
         "surface_objective": "reach_a_useful_my_scoope_outcome",
         "active_objective": active_work["objective"],
