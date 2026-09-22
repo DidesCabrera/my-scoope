@@ -34,6 +34,10 @@ _MUTATION_ACTION_PATTERNS: tuple[tuple[str, str], ...] = (
     ("update", r"\b(?:actualiz\w*|cambi\w*|ajust\w*|aument\w*|reduc\w*|modific\w*)\b"),
 )
 
+_NEGATED_MUTATION_PREFIX = re.compile(
+    r"(?:\bno(?:\s+\w+){0,3}\s+|\bsin(?:\s+(?:mi|tu|su|la|el|un|una))?\s*)$"
+)
+
 _CREATE_PATTERN = re.compile(
     r"\b(?:crea\w*|genera\w*|prepara\w*|arm\w*|hagam\w*|dame|quiero|necesito|haz(?:me|lo)?)\b"
 )
@@ -111,13 +115,25 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
         return None
 
     resource = _resource(text)
-    mutation_action = _matched_value(text, _MUTATION_ACTION_PATTERNS)
+    mutation_action = _mutation_action(text)
     if resource and mutation_action:
         return {
             "objective": "prepare_reviewable_workspace_patch",
             "expected_outcome": "prepared_patch",
             "resource": resource,
             "action": mutation_action,
+        }
+
+    if (
+        resource == "program"
+        and "mejor" in text
+        and _NUTRITION_GOAL_PATTERN.search(text)
+    ):
+        return {
+            "objective": "record_conversation_facts",
+            "expected_outcome": "workspace_advanced",
+            "resource": resource,
+            "action": "update_draft",
         }
 
     if _PREFERENCE_FACT_PATTERN.search(text) and "?" not in text and (
@@ -214,7 +230,32 @@ def _response_only_payload() -> dict[str, Any]:
 
 
 def _resource(text: str) -> str:
-    return _matched_value(text, _RESOURCE_PATTERNS)
+    matches = [
+        (match.start(), index, value)
+        for index, (value, pattern) in enumerate(_RESOURCE_PATTERNS)
+        if (match := re.search(pattern, text)) is not None
+    ]
+    concrete_matches = [item for item in matches if item[2] != "proposal"]
+    create_match = _CREATE_PATTERN.search(text)
+    if create_match:
+        created_resource_matches = [
+            item for item in concrete_matches if item[0] >= create_match.end()
+        ]
+        if created_resource_matches:
+            return min(created_resource_matches)[2]
+    if concrete_matches:
+        return min(concrete_matches)[2]
+    return min(matches, default=(0, 0, ""))[2]
+
+
+def _mutation_action(text: str) -> str:
+    for value, pattern in _MUTATION_ACTION_PATTERNS:
+        for match in re.finditer(pattern, text):
+            prefix = text[max(0, match.start() - 48) : match.start()]
+            if _NEGATED_MUTATION_PREFIX.search(prefix):
+                continue
+            return value
+    return ""
 
 
 def _matched_value(text: str, patterns: Sequence[tuple[str, str]]) -> str:

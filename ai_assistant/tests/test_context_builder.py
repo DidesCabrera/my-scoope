@@ -245,6 +245,75 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         self.assertEqual(active_work["resource"], "program")
         self.assertEqual(active_work["source"], "current_message")
 
+    def test_nutrition_direction_change_advances_the_conversation_draft(self):
+        message = "Mejor hagamos un programa semanal para bajar grasa."
+        state = self._state_with_messages(
+            NutritionConversationMessage(
+                role="user",
+                text="Quiero un plan diario para ganar masa muscular.",
+            ),
+            NutritionConversationMessage(role="assistant", text="De acuerdo."),
+            NutritionConversationMessage(role="user", text=message),
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "record_conversation_facts")
+        self.assertEqual(active_work["expected_outcome"], "workspace_advanced")
+        self.assertEqual(active_work["resource"], "program")
+        self.assertEqual(active_work["action"], "update_draft")
+
+    def test_meal_request_wins_over_later_plan_context_reference(self):
+        message = (
+            "Crea ahora una propuesta revisable de comida de 450 kcal usando el "
+            "plan diario de contexto ID 2."
+        )
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text=message)
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(
+            active_work["objective"],
+            "create_reviewable_meal_proposal",
+        )
+        self.assertEqual(active_work["expected_outcome"], "nutrition_proposal")
+        self.assertEqual(active_work["resource"], "meal")
+
+    def test_creation_guardrail_is_not_misread_as_mutation_authority(self):
+        message = (
+            "Crea un plan diario de 2400 kcal con distribución 30/50/20 y cuatro "
+            "comidas. No apliques la propuesta sin mi aprobación."
+        )
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text=message)
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(
+            active_work["objective"],
+            "create_reviewable_dailyplan_proposal",
+        )
+        self.assertEqual(active_work["expected_outcome"], "nutrition_proposal")
+        self.assertEqual(active_work["resource"], "dailyplan")
+
     def test_short_continuation_retains_previous_reviewable_change_objective(self):
         state = self._state_with_messages(
             NutritionConversationMessage(

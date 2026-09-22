@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+import re
+
+_VISIBLE_CLARIFICATION_PATTERN = re.compile(
+    r"(?:\?|\b(?:dime|cuentame|aclara(?:me)?|especifica(?:me)?|"
+    r"necesito que me digas|que estas viendo|que te preocupa|que quieres)\b)",
+    re.IGNORECASE,
+)
+
 
 def evaluate_visible_facts(scenario, turns):
     failures = []
@@ -128,7 +136,12 @@ def evaluate_expected_outcome(scenario, turns, *, state_before, state_after):
         )
         detail = "the typed conversational workspace advanced"
     elif expected == "clarification_required":
-        visible_question = bool(final_turn and "?" in str(final_turn.assistant_message or ""))
+        visible_question = bool(
+            final_turn
+            and _VISIBLE_CLARIFICATION_PATTERN.search(
+                str(final_turn.assistant_message or "")
+            )
+        )
         semantic_missing = bool(final_turn and tuple(final_turn.semantic_missing_slots or ()))
         no_review_artifact = (
             deltas.get("nutrition_proposals", 0) <= 0
