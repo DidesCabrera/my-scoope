@@ -8,6 +8,9 @@ from dataclasses import replace
 from ai_assistant.application.context_builder import sanitize_provider_context
 from ai_assistant.application.limits import validate_provider_request_limits
 from ai_assistant.application.model_routing import resolve_model_route_for_turn
+from ai_assistant.application.orchestrator_followup import (
+    tool_results_complete_nutrition_proposal,
+)
 from ai_assistant.application.orchestrator_runtime import elapsed_ms as _elapsed_ms
 from ai_assistant.application.provider_parsing import AssistantProviderParseResult
 from ai_assistant.domain import (
@@ -361,10 +364,11 @@ def _generate_tool_followup_with_compact_recovery(
         return provider_request, turn_llm_client.generate(provider_request), None, 0
     except LLMProviderError as error:
         initial_error = error
-        if (
+        if str(provider_request.metadata.get("tool_loop") or "") == (
+            "controlled_tools.compact_followup.v1"
+        ) or (
             provider_request.tools
-            or str(provider_request.metadata.get("tool_loop") or "")
-            == "controlled_tools.compact_followup.v1"
+            and not tool_results_complete_nutrition_proposal(tool_results)
         ):
             return provider_request, None, initial_error, 0
 
