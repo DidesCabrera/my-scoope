@@ -6,6 +6,7 @@ from typing import Any, Mapping, Sequence
 from django.conf import settings
 
 from ai_assistant.application.chat_engines import ChatEngineRequest
+from ai_assistant.application.objective_state import infer_active_work
 from ai_assistant.domain.client_memory import (
     CLIENT_MEMORY_CONTRACT_VERSION,
     PREFERENCE_DRAFT_FIELDS,
@@ -268,12 +269,14 @@ def _work_progress_context(
     else:
         proposal_readiness = "not_established"
 
+    active_work = infer_active_work(
+        conversation_state,
+        current_user_message=current_user_message,
+    )
     return {
         "surface_objective": "reach_a_useful_my_scoope_outcome",
-        "active_objective": _active_objective(
-            conversation_state,
-            current_user_message=current_user_message,
-        ),
+        "active_objective": active_work["objective"],
+        "active_work": active_work,
         "proposal_readiness": proposal_readiness,
         "reviewable_proposal_creation_available": bool(proposal_creation_enabled),
         "required_information_still_missing": required_information_missing,
@@ -371,61 +374,14 @@ def _active_objective(
     *,
     current_user_message: str = "",
 ) -> str:
-    """Return an unresolved product outcome, not a backend question order."""
+    """Compatibility projection for callers that still consume one string."""
 
-    messages = list(getattr(conversation_state, "messages", []) or [])
-    if any(
-        isinstance(getattr(message, "proposal_review_card", None), Mapping)
-        for message in messages
-    ):
-        return "respond_to_current_message"
-    if _explicit_dailyplan_proposal_request(current_user_message) or any(
-        getattr(message, "role", "") == "user"
-        and _explicit_dailyplan_proposal_request(getattr(message, "text", ""))
-        for message in messages
-    ):
-        return "create_reviewable_dailyplan_proposal"
-    return "respond_to_current_message"
-
-
-def _explicit_dailyplan_proposal_request(value: Any) -> bool:
-    """Recognize explicit plans and common nutrition outcomes as proposal work."""
-
-    text = " ".join(str(value or "").strip().lower().split())
-    if not text:
-        return False
-    proposal_nouns = ("propuesta", "plan", "dieta", "dailyplan")
-    action_phrases = (
-        "dame",
-        "haz",
-        "hace",
-        "crea",
-        "crear",
-        "genera",
-        "generar",
-        "prepara",
-        "preparar",
-        "quiero",
-        "necesito",
-        "puedes hacer",
-        "puedes crear",
+    return str(
+        infer_active_work(
+            conversation_state,
+            current_user_message=current_user_message,
+        )["objective"]
     )
-    goal_phrases = (
-        "perder grasa",
-        "bajar grasa",
-        "bajar de peso",
-        "perder peso",
-        "ganar masa",
-        "ganar musculo",
-        "ganar músculo",
-        "comer mejor",
-        "mejorar mi alimentacion",
-        "mejorar mi alimentación",
-    )
-    explicitly_requests_plan = any(noun in text for noun in proposal_nouns) and any(
-        phrase in text for phrase in action_phrases
-    )
-    return explicitly_requests_plan or any(phrase in text for phrase in goal_phrases)
 
 
 def _recent_chat_objects(messages: Sequence[Any]) -> list[dict[str, Any]]:

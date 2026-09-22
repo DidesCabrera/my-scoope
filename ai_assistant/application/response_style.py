@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, Sequence
 
-ASSISTANT_RESPONSE_STYLE_VERSION = "ai_assistant_response_style.v3"
+ASSISTANT_RESPONSE_STYLE_VERSION = "ai_assistant_response_style.v4"
 
 _SYSTEM_RESPONSE_STYLE_LINES = (
     "Cuida la legibilidad para un humano lector: buena ortografía, acentos, puntuación y frases claras.",
@@ -11,6 +11,7 @@ _SYSTEM_RESPONSE_STYLE_LINES = (
     "Pregunta solo si aclara algo material; agrupa preguntas relacionadas y evita cuestionarios.",
     "No repitas hechos conocidos. Las cards ya son visibles: orienta sin recitar sus campos.",
     "Tras una tool, explica la consecuencia sin recitar payloads ni datos recién entregados. Evita cierres genéricos.",
+    "Cuando el resultado solicitado ya existe o la consulta ya fue contestada, detente: no abras otro formulario ni agregues una pregunta genérica.",
     "No conviertas datos opcionales en urgencia, conteo pendiente o formulario.",
     "Mantén un tono cercano y competente; evita confirmaciones de plantilla.",
     "Al crear o revisar propuestas, explica qué hará My Scoope y qué requiere revisión.",
@@ -39,6 +40,9 @@ def developer_response_style_policy() -> dict:
             "clarification": "Ask for clarification only when ambiguity materially affects the answer or product action.",
             "human_tone": "Sound calm, collaborative and competent rather than like a form, survey or slot-filling script.",
             "completion": "Explain tool consequences; do not echo inputs or stock acknowledgements.",
+            "stop_condition": (
+                "Stop once active_work.expected_outcome is satisfied; do not add a generic follow-up question."
+            ),
             "closing": "Mention only concrete, available next actions; omit generic questions.",
         },
         "structured_output_note": (

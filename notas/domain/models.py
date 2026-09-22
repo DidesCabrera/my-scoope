@@ -54,6 +54,7 @@ from notas.domain.model_modules.notification_delivery import (
 )
 from notas.domain.model_modules.programs import Program, ProgramDay
 from notas.domain.model_modules.proposals import (
+    AiAssistantMessageFeedback,
     AiNutritionChat,
     NutritionProposal,
     NutritionProposalAuditEvent,
@@ -71,7 +72,7 @@ from notas.domain.model_modules.sharing import (
 )
 
 __all__ = [
-    "AiNutritionChat", "ApplePushSubscription",
+    "AiAssistantMessageFeedback", "AiNutritionChat", "ApplePushSubscription",
     "CalendarizedDay", "CalendarizedMealExecution",
     "CalendarizationMeasurementContext", "CalendarizationReview",
     "CalendarizationRevision", "DailyPlan",
@@ -89,11 +90,8 @@ __all__ = [
     "OAuthDeviceSession", "OAuthRefreshToken",
     "Plan", "Profile", "Program",
     "ProgramCalendarization", "ProgramDay",
-    "ProgramShare",
-    "ShareClaim",
-    "ShareInvitation",
-    "ShareResource",
-    "SavedComparison",
+    "ProgramShare", "ShareClaim", "ShareInvitation",
+    "ShareResource", "SavedComparison",
     "ScheduledNotificationEvent",
     "Subscription",
     "WebPushSubscription",

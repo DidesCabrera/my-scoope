@@ -242,7 +242,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         developer_payload = json.loads(provider_request.messages[1].content)
         self.assertTrue(developer_payload["rules"]["new_facts_require_matching_update_call"])
 
-    def test_provider_request_exposes_reviewable_proposal_tools_when_enabled(self):
+    def test_provider_request_keeps_generic_proposal_surface_compact(self):
         orchestrator = ExternalLLMOrchestrator(
             llm_client=FakeLLMClient(),
             config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=True),
@@ -252,7 +252,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
 
         self.assertIn("create_nutrition_engine_dailyplan_proposal_from_drafts", tool_names)
-        self.assertIn("query_workspace", tool_names)
+        self.assertNotIn("query_workspace", tool_names)
         self.assertNotIn("list_user_programs", tool_names)
         self.assertNotIn("read_calendarization", tool_names)
         self.assertNotIn("propose_workspace_patch", tool_names)
@@ -266,6 +266,22 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
 
         provider_request = orchestrator.build_provider_request(
             self._request("Usa mi ficha y mis preferencias guardadas para crear el plan.")
+        )
+        tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
+
+        self.assertIn("read_user_profile_context", tool_names)
+        self.assertNotIn("share_profile_draft_card", tool_names)
+        self.assertIn("read_user_preference_context", tool_names)
+        self.assertNotIn("share_preference_draft_card", tool_names)
+
+    def test_intake_exposes_cards_only_when_user_requests_presentation(self):
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=FakeLLMClient(),
+            config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=True),
+        )
+
+        provider_request = orchestrator.build_provider_request(
+            self._request("Muéstrame mi ficha y mis preferencias guardadas.")
         )
         tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
 

@@ -66,6 +66,7 @@ MODEL_RETENTION_POLICY = {
     "food_catalog.CatalogRelease": RetentionAction.RETAIN_OPERATIONAL,
     "food_catalog.ExternalFoodReference": RetentionAction.FOLLOW_PARENT,
     "food_catalog.ExternalProviderFetchLog": RetentionAction.RETAIN_OPERATIONAL,
+    "notas.AiAssistantMessageFeedback": RetentionAction.ERASE,
     "notas.AiNutritionChat": RetentionAction.ERASE,
     "notas.ApplePushSubscription": RetentionAction.ERASE,
     "notas.CalendarizedDay": RetentionAction.FOLLOW_PARENT,
