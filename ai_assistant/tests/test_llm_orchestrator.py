@@ -9,7 +9,11 @@ from ai_assistant.application import (
 )
 from ai_assistant.application.chat_engines import ChatEngineRequest
 from ai_assistant.application.limits import estimate_provider_request_tokens
+from ai_assistant.application.model_routing import resolve_model_route_for_turn
 from ai_assistant.application.orchestrator import _local_acknowledgement_from_tool_results
+from ai_assistant.application.orchestrator_turn import (
+    _generate_tool_followup_with_compact_recovery,
+)
 from ai_assistant.application.product_ports import get_ai_product_bindings
 from ai_assistant.application.tool_selection import fact_capture_tool_after_tool_results
 from ai_assistant.application.tools import (
@@ -26,12 +30,15 @@ from ai_assistant.domain import (
     AssistantIntentName,
     AssistantMessage,
     AssistantMessageRole,
+    AssistantStructuredResponse,
     AssistantToolResult,
     AssistantToolStatus,
     AssistantTurnRequest,
 )
 from ai_assistant.infrastructure.providers import (
     FakeLLMClient,
+    LLMMessage,
+    LLMProviderRequest,
     LLMProviderRequestError,
     LLMProviderResponse,
     LLMProviderToolCall,
@@ -1286,6 +1293,71 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         )
         self.assertFalse(response.metadata.get("provider_tool_followup_failed", False))
         self.assertEqual(response.metadata["debug_status"], "completed")
+
+    def test_completed_proposal_recovers_even_when_followup_still_offers_tools(self):
+        class RecoveringClient:
+            provider_name = "openai"
+            model = "gpt-test"
+
+            def __init__(self):
+                self.requests = []
+
+            def generate(self, request):
+                self.requests.append(request)
+                if len(self.requests) == 1:
+                    raise LLMProviderRequestError("native continuation rejected")
+                return LLMProviderResponse(
+                    provider="openai",
+                    model="gpt-test",
+                    text="La propuesta quedó creada y lista para revisión.",
+                )
+
+        client = RecoveringClient()
+        orchestrator = ExternalLLMOrchestrator(llm_client=client)
+        request = self._request("Crea una comida de 450 kcal.")
+        provider_request = LLMProviderRequest(
+            messages=(LLMMessage(role="user", content=request.user_message.content),),
+            metadata={"tool_loop": "native_function_calls.v1"},
+            tools=(
+                {
+                    "name": TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            ),
+        )
+        proposal_result = AssistantToolResult(
+            tool_name="create_nutrition_solver_meal_proposal",
+            status=AssistantToolStatus.OK,
+            data={"proposal_id": 73},
+        )
+        first_response = AssistantStructuredResponse(
+            assistant_message=AssistantMessage(
+                role=AssistantMessageRole.ASSISTANT,
+                content="Estoy creando la propuesta.",
+            )
+        )
+
+        recovered_request, recovered_response, error, recovery_count = (
+            _generate_tool_followup_with_compact_recovery(
+                orchestrator,
+                turn_llm_client=client,
+                request=request,
+                provider_request=provider_request,
+                first_response=first_response,
+                tool_results=(proposal_result,),
+                model_route=resolve_model_route_for_turn(request),
+            )
+        )
+
+        self.assertIsNone(error)
+        self.assertIsNotNone(recovered_response)
+        self.assertEqual(recovery_count, 1)
+        self.assertEqual(len(client.requests), 2)
+        self.assertEqual(tuple(recovered_request.tools), ())
+        self.assertEqual(
+            recovered_request.metadata["tool_loop"],
+            "controlled_tools.compact_followup.v1",
+        )
 
     def test_orchestrator_bounds_history_sent_to_provider(self):
         client = FakeLLMClient(responses=[json.dumps({"assistant_message": {"content": "Listo."}})])

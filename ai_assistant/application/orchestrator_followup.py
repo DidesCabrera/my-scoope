@@ -197,13 +197,26 @@ def _tool_results_satisfy_or_end_objective(
             successful.intersection({"propose_workspace_patch", "prepare_product_action"})
         )
     if expected == "nutrition_proposal":
-        return any(
-            name.startswith(("create_nutrition_", "create_validated_"))
-            for name in successful
-        )
+        return tool_results_complete_nutrition_proposal(results)
     if expected == "workspace_advanced":
         return any(name.startswith(("update_", "share_")) for name in successful)
     return False
 
 
-__all__ = ["build_tool_followup_provider_request", "compact_context_prompt"]
+def tool_results_complete_nutrition_proposal(
+    tool_results: Sequence[AssistantToolResult],
+) -> bool:
+    """Return whether a typed result already created the requested proposal."""
+
+    return any(
+        result.ok
+        and result.tool_name.startswith(("create_nutrition_", "create_validated_"))
+        for result in tuple(tool_results or ())
+    )
+
+
+__all__ = [
+    "build_tool_followup_provider_request",
+    "compact_context_prompt",
+    "tool_results_complete_nutrition_proposal",
+]
