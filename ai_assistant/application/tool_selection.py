@@ -129,67 +129,11 @@ def select_provider_tools(
     available = tuple(available)
     user_text = _routing_text(request)
     if str(request.context.get("surface") or "") == "ai_nutrition_intake":
-        work_progress = _intake_work_progress(request.context)
-        if (
-            enable_reviewable_proposal_tools
-            and _work_progress_has_active_proposal_objective(work_progress)
-            and not tuple(work_progress.get("blocking_fields") or ())
-        ):
-            proposal_tool = provider_tool_by_name(
-                available,
-                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
-            )
-            return (proposal_tool,) if proposal_tool is not None else ()
-
-        # Keep a compact core and add only the capabilities required by the
-        # structured active objective or an explicit semantic reference. This
-        # leaves the model room to choose without paying for the full catalog.
-        selected_names = set(_AI_NUTRITION_INTAKE_CORE_TOOLS)
-        selected_names.update(_requested_intake_presentation_tools(user_text))
-        selected_names.update(_requested_intake_memory_tools(user_text))
-        active_work = dict(work_progress.get("active_work") or {})
-        expected_outcome = str(active_work.get("expected_outcome") or "")
-        resource = str(active_work.get("resource") or "")
-        if expected_outcome == "workspace_query":
-            selected_names.add(TOOL_QUERY_WORKSPACE)
-            if resource == "profile":
-                selected_names.add(TOOL_READ_USER_PROFILE_CONTEXT)
-            elif resource == "preferences":
-                selected_names.add(TOOL_READ_USER_PREFERENCE_CONTEXT)
-        elif expected_outcome == "prepared_patch":
-            selected_names.update({TOOL_QUERY_WORKSPACE, TOOL_PROPOSE_WORKSPACE_PATCH})
-        if (
-            expected_outcome == "nutrition_proposal"
-            and resource == "meal"
-        ):
-            selected_names.update(_MEAL_PROPOSAL_TOOLS)
-        if _requests_existing_product_operation(user_text):
-            selected_names.add(TOOL_QUERY_WORKSPACE)
-            selected_names.update(
-                str(provider_spec.get("name") or "")
-                for provider_spec in available
-                if str(provider_spec.get("name") or "")
-                in _AI_NUTRITION_INTAKE_OPERATIONAL_TOOLS
-                and _expanded_product_tool_relevant(
-                    str(provider_spec.get("name") or ""),
-                    user_text=user_text,
-                )
-                and _reviewable_proposal_tool_relevant(
-                    str(provider_spec.get("name") or ""),
-                    user_text=user_text,
-                )
-            )
-        elif _requests_workspace_query(user_text):
-            selected_names.add(TOOL_QUERY_WORKSPACE)
-        return tuple(
-            provider_spec
-            for provider_spec in available
-            if str(provider_spec.get("name") or "") in selected_names
-            and (
-                enable_reviewable_proposal_tools
-                or str(provider_spec.get("name") or "")
-                != TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
-            )
+        return _select_intake_provider_tools(
+            request,
+            available=available,
+            user_text=user_text,
+            enable_reviewable_proposal_tools=enable_reviewable_proposal_tools,
         )
 
     selected = []
@@ -208,6 +152,74 @@ def select_provider_tools(
                 continue
         selected.append(provider_spec)
     return tuple(selected)
+
+
+def _select_intake_provider_tools(
+    request: AssistantTurnRequest,
+    *,
+    available: Sequence[Mapping[str, Any]],
+    user_text: str,
+    enable_reviewable_proposal_tools: bool,
+) -> tuple[Mapping[str, Any], ...]:
+    work_progress = _intake_work_progress(request.context)
+    if (
+        enable_reviewable_proposal_tools
+        and _work_progress_has_active_proposal_objective(work_progress)
+        and not tuple(work_progress.get("blocking_fields") or ())
+    ):
+        proposal_tool = provider_tool_by_name(
+            available,
+            TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+        )
+        return (proposal_tool,) if proposal_tool is not None else ()
+
+    # Keep a compact core and add only the capabilities required by the
+    # structured active objective or an explicit semantic reference. This
+    # leaves the model room to choose without paying for the full catalog.
+    selected_names = set(_AI_NUTRITION_INTAKE_CORE_TOOLS)
+    selected_names.update(_requested_intake_presentation_tools(user_text))
+    selected_names.update(_requested_intake_memory_tools(user_text))
+    active_work = dict(work_progress.get("active_work") or {})
+    expected_outcome = str(active_work.get("expected_outcome") or "")
+    resource = str(active_work.get("resource") or "")
+    if expected_outcome == "workspace_query":
+        selected_names.add(TOOL_QUERY_WORKSPACE)
+        if resource == "profile":
+            selected_names.add(TOOL_READ_USER_PROFILE_CONTEXT)
+        elif resource == "preferences":
+            selected_names.add(TOOL_READ_USER_PREFERENCE_CONTEXT)
+    elif expected_outcome == "prepared_patch":
+        selected_names.update({TOOL_QUERY_WORKSPACE, TOOL_PROPOSE_WORKSPACE_PATCH})
+    if expected_outcome == "nutrition_proposal" and resource == "meal":
+        selected_names.update(_MEAL_PROPOSAL_TOOLS)
+    if _requests_existing_product_operation(user_text):
+        selected_names.add(TOOL_QUERY_WORKSPACE)
+        selected_names.update(
+            str(provider_spec.get("name") or "")
+            for provider_spec in available
+            if str(provider_spec.get("name") or "")
+            in _AI_NUTRITION_INTAKE_OPERATIONAL_TOOLS
+            and _expanded_product_tool_relevant(
+                str(provider_spec.get("name") or ""),
+                user_text=user_text,
+            )
+            and _reviewable_proposal_tool_relevant(
+                str(provider_spec.get("name") or ""),
+                user_text=user_text,
+            )
+        )
+    elif _requests_workspace_query(user_text):
+        selected_names.add(TOOL_QUERY_WORKSPACE)
+    return tuple(
+        provider_spec
+        for provider_spec in available
+        if str(provider_spec.get("name") or "") in selected_names
+        and (
+            enable_reviewable_proposal_tools
+            or str(provider_spec.get("name") or "")
+            != TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
+        )
+    )
 
 
 def _requested_intake_presentation_tools(user_text: str) -> set[str]:
