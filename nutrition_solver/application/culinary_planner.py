@@ -195,7 +195,10 @@ def _finish_week_model(model, spec, week, previous, family_use, species_use, wee
     model.minimize(sum(objectives))
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = min(max(float(time_limit_seconds), .1), 30)
-    solver.parameters.num_search_workers = 4
+    # Production workers have a bounded memory/CPU budget. Parallel CP-SAT
+    # portfolios duplicate search state; a single worker keeps the weekly
+    # problem reproducible and leaves room for the assistant and ORM.
+    solver.parameters.num_search_workers = 1
     # Portion expressions have large sparse integer domains; full presolve can
     # spend the whole budget enumerating them before searching any solution.
     solver.parameters.cp_model_presolve = False

@@ -229,6 +229,7 @@ def run_evaluation_lab(
                         )
                     )
                     logger.info("lab_provider_done repetition=%s passed=%s", repetition, live_reports[-1].passed)
+                    _log_validation_failures(logger, repetition, live_reports[-1])
         finally:
             if cleanup_review_artifacts:
                 cleanup = _cleanup_new_review_artifacts(user=user, created=created_artifacts)
@@ -287,6 +288,12 @@ def run_evaluation_lab(
             "credit_block_reasons": credit_blocks,
         },
     )
+
+
+def _log_validation_failures(logger, repetition, report):
+    for scenario_result in report.scenarios:
+        for check in scenario_result.hard_failures:
+            logger.info("lab_check_failed repetition=%s check=%s", repetition, check.key)
 
 
 def _build_ground_truth(*, user: Any, scenarios: Mapping[str, Any]) -> dict[str, Any]:

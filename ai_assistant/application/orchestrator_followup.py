@@ -18,6 +18,8 @@ from ai_assistant.application.tool_selection import next_intake_presentation_too
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_READ_PROPOSAL,
+    TOOL_UPDATE_PROFILE_DRAFT,
+    TOOL_UPDATE_PROPOSAL_PREFERENCES,
 )
 from ai_assistant.domain import AssistantToolResult, AssistantTurnRequest
 from ai_assistant.infrastructure.providers import LLMMessage, LLMProviderRequest
@@ -126,7 +128,7 @@ def build_tool_followup_provider_request(
 
 
 def _compact_pending_proposal_followup(orchestrator, followup, results):
-    """Keep the pending creation executable when native history exceeds the budget.
+    """Keep pending typed capture/creation executable when history exceeds budget.
 
     The executor retains all original results and enriches arguments from them.
     Only duplicate transport history is replaced; the user request, policies,
@@ -134,7 +136,9 @@ def _compact_pending_proposal_followup(orchestrator, followup, results):
     The caller still validates the resulting request against the same limit.
     """
     choice = followup.tool_choice
-    if not isinstance(choice, Mapping) or choice.get("name") != TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS:
+    pending_tools = {TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+                     TOOL_UPDATE_PROFILE_DRAFT, TOOL_UPDATE_PROPOSAL_PREFERENCES}
+    if not isinstance(choice, Mapping) or choice.get("name") not in pending_tools:
         return followup
     if estimate_provider_request_tokens(followup) <= orchestrator.config.turn_limits.max_input_tokens:
         return followup
@@ -147,9 +151,12 @@ def _compact_pending_proposal_followup(orchestrator, followup, results):
                     drafts[key] = dict(candidate)
     messages = (*followup.messages, LLMMessage(role="developer", content=json.dumps({
         "latest_typed_drafts": sanitize_provider_context(drafts),
-        "instruction": "Estos son los drafts vigentes capturados por herramientas. La propuesta aún no existe; completa la creación revisable solicitada. No la apliques.",
+        "instruction": "Estos son los drafts vigentes capturados por herramientas. La propuesta aún no existe; completa la captura tipada pendiente y la creación revisable solicitada. No la apliques.",
     }, ensure_ascii=False)))
     compact = replace(followup, messages=messages, continuation_items=(), tool_outputs=())
+    import logging
+
+    logging.getLogger("myscoope.assistant.runtime").info("tool_history_compacted pending=%s", choice.get("name"))
     return replace(compact, metadata={**dict(compact.metadata),
         "tool_loop": "controlled_tools.pending_proposal_followup.v1",
         "estimated_input_tokens": estimate_provider_request_tokens(compact)})

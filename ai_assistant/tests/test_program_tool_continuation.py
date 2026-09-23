@@ -89,6 +89,16 @@ class ProgramToolContinuationTests(SimpleTestCase):
         self.assertEqual(result.tool_choice, {"type": "function", "name": UPDATE})
         self.assertTrue(any("program_specification completo" in message.content for message in result.messages))
 
+    def test_large_history_keeps_pending_weekly_capture_executable(self):
+        self.request = self.weekly_request()
+        profile = AssistantToolResult(tool_name="update_profile_draft", status="ok", data={"profile_draft": {"weight_kg": 80.0}})
+        result = self.followup((profile,), continuation=({"type": "message", "content": "history " * 8000},))
+        self.assertEqual(result.tool_choice, {"type": "function", "name": UPDATE})
+        self.assertEqual([tool["name"] for tool in result.tools], [UPDATE])
+        self.assertEqual(result.continuation_items, ())
+        self.assertLessEqual(estimate_provider_request_tokens(result), 6000)
+        self.assertEqual(json.loads(result.messages[-1].content)["latest_typed_drafts"]["profile_draft"], {"weight_kg": 80.0})
+
     def test_weekly_creation_cannot_fall_back_to_legacy_scalar_path(self):
         self.request = self.weekly_request()
         self.orchestrator._execute_validated_tool_request = Mock()
