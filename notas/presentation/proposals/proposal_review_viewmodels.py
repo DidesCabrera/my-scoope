@@ -761,7 +761,23 @@ def _build_program_review_vm(
                     proposal_id=proposal_id,
                 )
                 card_id = f"proposal-program-{proposal_id or 'new'}-week-{week_number}-day-{day_number}"
-                card.update({"id": card_id, "main_id": card_id, "actions": []})
+                detail_url = reverse(
+                    "proposal_program_dailyplan_detail",
+                    args=[proposal_id, week_number, day_number],
+                ) if proposal_id else ""
+                card.update({
+                    "id": card_id,
+                    "main_id": card_id,
+                    "actions": [{
+                        "key": "open_proposed_dailyplan",
+                        "label": "Explorar plan diario",
+                        "icon": "arrow-right",
+                        "url": detail_url,
+                        "method": "get",
+                        "desktop_position": "inline",
+                        "mobile_position": "inline",
+                    }] if detail_url else [],
+                })
                 meals_count += len(meals)
                 _add_program_totals(week_totals, snapshot)
                 week_source_days.append(source_day)
@@ -776,6 +792,11 @@ def _build_program_review_vm(
                 "program_day": {"id": f"proposal-{week_number}-{day_number}"} if dailyplan else None,
                 "dailyplan": {"id": None, "name": _safe_str(dailyplan.get("name"))} if dailyplan else None,
                 "dailyplan_card": card,
+                "dailyplan_detail": {
+                    "name": _safe_str(dailyplan.get("name")),
+                    "card": card,
+                    "meals": [meal.as_dict() for meal in meals],
+                } if dailyplan else None,
                 "snapshot": snapshot,
                 "reference_weight_kg": reference_weight,
             })

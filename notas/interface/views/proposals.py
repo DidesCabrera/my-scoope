@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -47,7 +47,9 @@ from notas.presentation.config.viewmodel_config import (
 )
 from notas.presentation.proposals.entity_page import (
     ProposalEntityDetailContentVM,
+    ProposalProgramNavigationError,
     build_proposal_entity_content,
+    build_program_proposal_navigation_content,
 )
 from notas.presentation.proposals.list_page import (
     ProposalListContentVM,
@@ -67,6 +69,13 @@ class ProposalDetailContentVM:
     header: object
     proposal: dict
     proposal_review: dict
+
+
+@dataclass
+class ProposalProgramEntityContentVM:
+    header: object
+    proposal: dict
+    navigation: dict
 
 
 @dataclass(frozen=True)
@@ -412,6 +421,77 @@ def proposal_entity_detail(request, proposal_id):
         request,
         "notas/proposals/entity_detail.html",
         base_vm.as_context(),
+    )
+
+
+def _proposal_program_entity_detail(
+    request,
+    *,
+    proposal_id: int,
+    week_number: int,
+    day_number: int,
+    meal_number: int | None = None,
+    food_number: int | None = None,
+):
+    proposal = get_proposal_detail(request.user, proposal_id).as_dict()
+    proposal_review = build_proposal_review_vm(proposal).as_dict()
+    try:
+        navigation = build_program_proposal_navigation_content(
+            proposal_review,
+            proposal_id=proposal_id,
+            week_number=week_number,
+            day_number=day_number,
+            meal_number=meal_number,
+            food_number=food_number,
+        )
+    except ProposalProgramNavigationError as exc:
+        raise Http404("Entidad propuesta no encontrada") from exc
+
+    dailyplan_url = reverse("proposal_program_dailyplan_detail", args=[proposal_id, week_number, day_number])
+    parents = [_proposal_detail_parent(proposal)]
+    if meal_number is not None:
+        parents.append(BreadcrumbParent(label=navigation["dailyplan_name"], url=dailyplan_url))
+    if food_number is not None:
+        parents.append(BreadcrumbParent(
+            label=navigation["meal_name"],
+            url=reverse("proposal_program_meal_detail", args=[proposal_id, week_number, day_number, meal_number]),
+        ))
+
+    base_vm = BaseVM(
+        ui=build_ui_vm(
+            PROPOSAL_VIEWMODE_DETAIL,
+            parents=parents,
+            instance=navigation["entity_name"],
+            back_config={"type": "parent"},
+        ),
+        content=ProposalProgramEntityContentVM(
+            header=build_page_header(title=navigation["entity_name"], actions=[]),
+            proposal=proposal,
+            navigation=navigation,
+        ),
+    )
+    return render(request, "notas/proposals/program_entity_detail.html", base_vm.as_context())
+
+
+@login_required
+def proposal_program_dailyplan_detail(request, proposal_id, week_number, day_number):
+    return _proposal_program_entity_detail(
+        request, proposal_id=proposal_id, week_number=week_number, day_number=day_number,
+    )
+
+
+@login_required
+def proposal_program_meal_detail(request, proposal_id, week_number, day_number, meal_number):
+    return _proposal_program_entity_detail(
+        request, proposal_id=proposal_id, week_number=week_number, day_number=day_number, meal_number=meal_number,
+    )
+
+
+@login_required
+def proposal_program_food_detail(request, proposal_id, week_number, day_number, meal_number, food_number):
+    return _proposal_program_entity_detail(
+        request, proposal_id=proposal_id, week_number=week_number, day_number=day_number,
+        meal_number=meal_number, food_number=food_number,
     )
 
 

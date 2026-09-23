@@ -164,6 +164,32 @@ class ProgramNutritionProposalTests(TestCase):
         result = ProposalDetailData.model_validate(proposal_detail_payload(self.user, proposal.pk))
         self.assertEqual(result.applied_result.kind, "program")
 
+    def test_web_program_proposal_supports_dailyplan_meal_and_food_navigation(self):
+        proposal = self.proposal(2)
+        self.client.force_login(self.user)
+        routes = [
+            reverse("proposal_program_dailyplan_detail", args=[proposal.pk, 2, 7]),
+            reverse("proposal_program_meal_detail", args=[proposal.pk, 2, 7, 1]),
+            reverse("proposal_program_food_detail", args=[proposal.pk, 2, 7, 1, 1]),
+        ]
+
+        with self.settings(NUTRITION_ONBOARDING_GATE_ENABLED=False):
+            proposal_response = self.client.get(reverse("proposal_detail", args=[proposal.pk]))
+            responses = [self.client.get(url) for url in routes]
+            missing_response = self.client.get(
+                reverse("proposal_program_food_detail", args=[proposal.pk, 2, 7, 1, 2])
+            )
+
+        self.assertContains(proposal_response, routes[0])
+        self.assertEqual([response.status_code for response in responses], [200, 200, 200])
+        self.assertContains(responses[0], "Comidas de este plan")
+        self.assertContains(responses[0], routes[1])
+        self.assertContains(responses[1], "Detalle de cada Alimento")
+        self.assertContains(responses[1], routes[2])
+        self.assertContains(responses[2], "Alimento dentro de la propuesta")
+        self.assertContains(responses[2], "Ingrediente")
+        self.assertEqual(missing_response.status_code, 404)
+
     def test_inactive_ingredient_cannot_be_applied(self):
         proposal = self.proposal()
         self.food.is_active = False
