@@ -328,6 +328,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
         },
     )
     response = _enforce_required_clarification(response, request=request)
+    response = _enforce_program_completion(response, request=request, tool_results=all_tool_results)
     response = _with_outcome_trace(
         response,
         request=request,
@@ -458,6 +459,20 @@ def _provider_incomplete_reason(provider_response: LLMProviderResponse) -> str:
     if isinstance(details, Mapping):
         return str(details.get("reason") or "incomplete")[:80]
     return "incomplete"
+
+
+def _enforce_program_completion(response, *, request, tool_results):
+    from ai_assistant.application.program_capture import requires_weekly_specification
+
+    if (not requires_weekly_specification(request) or response.proposal_ids
+            or response.intent.requires_clarification or "?" in response.assistant_text):
+        return response
+    captured = any(result.ok and result.tool_name.startswith("update_") for result in tool_results)
+    text = ("He registrado requisitos, pero todavía no he creado una propuesta revisable. " if captured
+            else "Todavía no he creado una propuesta revisable. ")
+    text += "No se ha aplicado ningún programa. No puedo presentar este intento como terminado."
+    return replace(response, assistant_message=AssistantMessage(role="assistant", content=text),
+                   metadata={**response.metadata, "program_completion_guard_applied": True})
 
 
 def _with_outcome_trace(

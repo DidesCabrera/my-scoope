@@ -165,10 +165,13 @@ def _select_intake_provider_tools(
     enable_reviewable_proposal_tools: bool,
 ) -> tuple[Mapping[str, Any], ...]:
     work_progress = _intake_work_progress(request.context)
+    from ai_assistant.application.program_capture import weekly_specification_missing
+
     if (
         enable_reviewable_proposal_tools
         and _work_progress_has_active_proposal_objective(work_progress)
         and not tuple(work_progress.get("blocking_fields") or ())
+        and not weekly_specification_missing(request, ())
     ):
         proposal_tool = provider_tool_by_name(
             available,
@@ -420,6 +423,10 @@ def proposal_ready_after_tool_results(
     enable_reviewable_proposal_tools: bool,
     product_bindings: AIProductBindings,
 ) -> bool:
+    from ai_assistant.application.program_capture import weekly_specification_missing
+
+    if weekly_specification_missing(request, tool_results):
+        return False
     work_progress = _intake_work_progress(request.context)
     if not _work_progress_has_active_proposal_objective(work_progress):
         return False
@@ -516,6 +523,11 @@ def fact_capture_tool_after_tool_results(
         return TOOL_UPDATE_PROFILE_DRAFT
 
     stated = _explicit_proposal_values(request.user_message.content)
+    from ai_assistant.application.program_capture import weekly_specification_missing
+
+    captures = sum(result.ok and result.tool_name == TOOL_UPDATE_PROPOSAL_PREFERENCES for result in tool_results)
+    if captures < 2 and weekly_specification_missing(request, tool_results):
+        return TOOL_UPDATE_PROPOSAL_PREFERENCES
     if stated and not _successful_tool_result_captures_values(
         tool_results,
         tool_name=TOOL_UPDATE_PROPOSAL_PREFERENCES,

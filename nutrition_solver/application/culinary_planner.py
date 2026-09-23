@@ -95,10 +95,12 @@ def solve_culinary_week(spec: ProgramSpecification, week, slots, candidates, *, 
     daily_energy = []
     for day in range(1, 8):
         totals = {key: [] for key in ("kcal", "protein", "carbs", "fat", "fruit", "vegetable")}
+        lower = {key: [] for key in ("kcal", "protein", "carbs", "fat")}
+        upper = {key: [] for key in lower}
         for slot_index, slot in enumerate(slots):
             position, available = _slot_candidates(candidates, slot, day, slot_index, week, pinned,
                                                    changed_from, avoid_food_ids, candidate_width)
-            slot_selected, slot_energy = [], []
+            slot_selected, slot_energy, slot_lower, slot_upper = [], [], [], []
             for candidate in available:
                 key = (day, slot_index, candidate.variant_id)
                 y = model.new_bool_var(f"v_{day}_{slot_index}_{candidate.variant_id}")
@@ -120,10 +122,15 @@ def solve_culinary_week(spec: ProgramSpecification, week, slots, candidates, *, 
                         model.add(q * round(ingredient.step_g * 1000) == round(amounts[ingredient.food_id] * 1000))
                     component_vars[ingredient.component] = (q, ingredient.step_g)
                     for metric in ("kcal", "protein", "carbs", "fat"):
-                        term = round(getattr(ingredient, metric) * ingredient.step_g * 10) * q
+                        coefficient = getattr(ingredient, metric) * ingredient.step_g * 10
+                        term = round(coefficient) * q
                         totals[metric].append(term)
+                        lower[metric].append(floor(coefficient) * q)
+                        upper[metric].append(ceil(coefficient) * q)
                         if metric == "kcal":
                             slot_energy.append(term)
+                            slot_lower.append(floor(coefficient) * q)
+                            slot_upper.append(ceil(coefficient) * q)
                     if ingredient.group in {"fruit", "vegetable"}:
                         totals[ingredient.group].append(round(ingredient.step_g * 1000) * q)
                         species_use[ingredient.group, ingredient.species].append(y)
@@ -135,27 +142,30 @@ def solve_culinary_week(spec: ProgramSpecification, week, slots, candidates, *, 
             model.add(sum(slot_selected) == 1)
             slot_target = round(week.kcal * slot["allocation"] * 1000)
             # Prevent the optimizer putting virtually all energy in one meal.
-            model.add(sum(slot_energy) >= round(slot_target * .65))
-            model.add(sum(slot_energy) <= round(slot_target * 1.35))
+            model.add(sum(slot_lower) >= ceil(slot_target * .65))
+            model.add(sum(slot_upper) <= floor(slot_target * 1.35))
             deviation = model.new_int_var(0, 8_000_000, f"meal_deviation_{day}_{slot_index}")
             model.add_abs_equality(deviation, sum(slot_energy) - slot_target)
             objectives.append(deviation)
         expressions = {key: sum(items) for key, items in totals.items()}
+        lower = {key: sum(items) for key, items in lower.items()}
+        upper = {key: sum(items) for key, items in upper.items()}
         tolerance = spec.calorie_tolerance_percent / 100
-        model.add(expressions["kcal"] >= ceil(week.kcal * (1 - tolerance) * 1000))
-        model.add(expressions["kcal"] <= floor(week.kcal * (1 + tolerance) * 1000))
-        # Conservative rounding guards; final validation uses unrounded nutrients.
-        model.add(expressions["protein"] >= ceil((week.protein_min_g + .02) * 1000))
-        model.add(expressions["protein"] <= floor((week.protein_max_g - .02) * 1000))
-        model.add(expressions["fat"] * 90000 <= round(spec.fat_max_percent * 100) * expressions["kcal"] - 10000)
+        model.add(lower["kcal"] >= ceil(week.kcal * (1 - tolerance) * 1000))
+        model.add(upper["kcal"] <= floor(week.kcal * (1 + tolerance) * 1000))
+        # Bound each coefficient BEFORE multiplying by the number of portion
+        # steps. A fixed .02g guard cannot bound accumulated rounding error.
+        model.add(lower["protein"] >= ceil(week.protein_min_g * 1000))
+        model.add(upper["protein"] <= floor(week.protein_max_g * 1000))
+        model.add(upper["fat"] * 90000 <= floor(spec.fat_max_percent * 100) * lower["kcal"])
         model.add(expressions["fruit"] >= ceil(spec.fruit_min_g * 1000))
         model.add(expressions["vegetable"] >= ceil(spec.vegetable_min_g * 1000))
         for metric, percent in spec.macro_distribution.items():
             factor = 9 if metric == "fat" else 4
             tolerance = spec.macro_tolerance_percent / 100
-            model.add(expressions[metric] * factor * 10000 >= round(percent * (1 - tolerance) * 100) * expressions["kcal"])
-            model.add(expressions[metric] * factor * 10000 <= round(percent * (1 + tolerance) * 100) * expressions["kcal"])
-        daily_energy.append(expressions["kcal"])
+            model.add(lower[metric] * factor * 10000 >= ceil(percent * (1 - tolerance) * 100) * upper["kcal"])
+            model.add(upper[metric] * factor * 10000 <= floor(percent * (1 + tolerance) * 100) * lower["kcal"])
+        daily_energy.append((lower["kcal"], upper["kcal"]))
         deviation = model.new_int_var(0, 8_000_000, f"day_deviation_{day}")
         model.add_abs_equality(deviation, expressions["kcal"] - round(week.kcal * 1000))
         objectives.append(deviation * 4)
@@ -179,9 +189,9 @@ def _finish_week_model(model, spec, week, previous, family_use, species_use, wee
         prior_week = spec.weeks[week.week - 2]
         prior_total = sum(row["kcal"] for row in previous)
         if week.kcal < prior_week.kcal:
-            model.add(sum(daily_energy) < round(prior_total * 1000))
+            model.add(sum(upper for _, upper in daily_energy) < ceil(prior_total * 1000))
         elif week.kcal > prior_week.kcal:
-            model.add(sum(daily_energy) > round(prior_total * 1000))
+            model.add(sum(lower for lower, _ in daily_energy) > floor(prior_total * 1000))
     model.minimize(sum(objectives))
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = min(max(float(time_limit_seconds), .1), 30)

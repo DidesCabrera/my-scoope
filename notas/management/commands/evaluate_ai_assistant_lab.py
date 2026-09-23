@@ -9,6 +9,7 @@ from notas.application.ai_intake.evaluation_lab import (
     DEFAULT_LAB_SCENARIOS,
     run_evaluation_lab,
 )
+from notas.application.ai_intake.evaluation_progress import evaluation_progress
 from notas.application.ai_intake.evaluation_quality import (
     build_quality_annotation_template,
 )
@@ -82,6 +83,7 @@ class Command(BaseCommand):
             help="Optional JSON path for the explicit human-review worksheet.",
         )
         parser.add_argument("--json", action="store_true", help="Print the complete JSON report.")
+        parser.add_argument("--trace-progress", action="store_true", help="Flush safe runtime stages and stalled stacks to stderr; JSON stays on stdout.")
         parser.add_argument(
             "--fail-on-regression",
             action="store_true",
@@ -111,15 +113,16 @@ class Command(BaseCommand):
             quality_annotations = self._read_quality_annotations(
                 options.get("quality_annotations") or ""
             )
-            report = run_evaluation_lab(
-                user=user,
-                scenario_keys=options.get("scenarios"),
-                live=bool(options.get("live")),
-                cleanup_review_artifacts=not bool(options.get("keep_artifacts")),
-                charge_user_credits=bool(options.get("charge_user_credits")),
-                repetitions=int(options.get("repetitions") or 1),
-                quality_annotations=quality_annotations,
-            )
+            with evaluation_progress(bool(options.get("trace_progress")), self.stderr):
+                report = run_evaluation_lab(
+                    user=user,
+                    scenario_keys=options.get("scenarios"),
+                    live=bool(options.get("live")),
+                    cleanup_review_artifacts=not bool(options.get("keep_artifacts")),
+                    charge_user_credits=bool(options.get("charge_user_credits")),
+                    repetitions=int(options.get("repetitions") or 1),
+                    quality_annotations=quality_annotations,
+                )
         except Exception as exc:  # pragma: no cover - command boundary
             raise CommandError(str(exc)) from exc
 

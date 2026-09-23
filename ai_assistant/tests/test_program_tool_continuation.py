@@ -1,4 +1,6 @@
 import json
+from dataclasses import replace
+from unittest.mock import Mock
 
 from django.test import SimpleTestCase
 
@@ -10,7 +12,13 @@ from ai_assistant.application.tools import (
 from ai_assistant.application.tools import (
     TOOL_UPDATE_PROPOSAL_PREFERENCES as UPDATE,
 )
-from ai_assistant.domain import AssistantMessage, AssistantToolResult, AssistantTurnRequest
+from ai_assistant.domain import (
+    AssistantMessage,
+    AssistantStructuredResponse,
+    AssistantToolRequest,
+    AssistantToolResult,
+    AssistantTurnRequest,
+)
 from ai_assistant.infrastructure.providers import FakeLLMClient
 
 
@@ -68,3 +76,38 @@ class ProgramToolContinuationTests(SimpleTestCase):
         followup = self.followup((self.captured,), remaining=0)
         self.assertEqual(followup.tools, ())
         self.assertIsNone(followup.tool_choice)
+
+    def weekly_request(self):
+        return replace(self.request, user_message=AssistantMessage(role="user", content=
+            "Crea un programa de ocho semanas con peso proyectado de 85 a 80 kg y proteína entre 2 y 2.2 g/kg."))
+
+    def test_weekly_constraints_in_notes_keep_typed_capture_pending(self):
+        self.request = self.weekly_request()
+        # Only the terminal weight has an explicit kg suffix in this fixture.
+        profile = AssistantToolResult(tool_name="update_profile_draft", status="ok", data={"profile_draft": {"weight_kg": 80.0}})
+        result = self.followup((profile, self.captured))
+        self.assertEqual(result.tool_choice, {"type": "function", "name": UPDATE})
+        self.assertTrue(any("program_specification completo" in message.content for message in result.messages))
+
+    def test_weekly_creation_cannot_fall_back_to_legacy_scalar_path(self):
+        self.request = self.weekly_request()
+        self.orchestrator._execute_validated_tool_request = Mock()
+        result = self.orchestrator._resolve_tool_results(self.request, (AssistantToolRequest(tool_name=CREATE),),
+                                                       prior_tool_results=(self.captured,))[0]
+        self.assertEqual(result.error_code, "weekly_program_specification_required")
+        self.orchestrator._execute_validated_tool_request.assert_not_called()
+
+    def test_weekly_typed_spec_unlocks_creation(self):
+        from nutrition_solver.tests.test_program_specification import example_spec
+        self.request = self.weekly_request()
+        profile = AssistantToolResult(tool_name="update_profile_draft", status="ok", data={"profile_draft": {"weight_kg": 80.0}})
+        captured = replace(self.captured, data={"proposal_preferences": {"program_specification": example_spec()}})
+        self.assertEqual(self.followup((profile, captured)).tool_choice, {"type": "function", "name": CREATE})
+
+    def test_false_weekly_completion_is_not_shown_as_success(self):
+        from ai_assistant.application.orchestrator_turn import _enforce_program_completion
+        response = AssistantStructuredResponse(assistant_message=AssistantMessage(role="assistant", content="He preparado tu programa revisable."))
+        guarded = _enforce_program_completion(response, request=self.weekly_request(), tool_results=(self.captured,))
+        self.assertIn("todavía no he creado", guarded.assistant_text)
+        created = replace(response, proposal_ids=(123,))
+        self.assertIs(_enforce_program_completion(created, request=self.weekly_request(), tool_results=()), created)

@@ -13,6 +13,7 @@ from ai_assistant.application.orchestrator_helpers import (
     _provider_tool_by_name,
     _provider_tool_outputs,
 )
+from ai_assistant.application.program_capture import WEEKLY_CAPTURE_INSTRUCTION, weekly_specification_missing
 from ai_assistant.application.tool_selection import next_intake_presentation_tool
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
@@ -91,6 +92,8 @@ def build_tool_followup_provider_request(
         )
 
     tool_outputs = _provider_tool_outputs(tool_results)
+    if weekly_specification_missing(request, decision_results):
+        messages.append(LLMMessage(role="developer", content=WEEKLY_CAPTURE_INSTRUCTION))
     estimated_request = LLMProviderRequest(
         messages=messages,
         max_output_tokens=max_output_tokens,

@@ -14,6 +14,7 @@ assistant runtime. Provider execution is always opt-in at the command boundary.
 
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 from collections import Counter, defaultdict
@@ -183,7 +184,10 @@ def run_evaluation_lab(
         key: _specialize_scenario_for_user(catalog[key], user=user)
         for key in selected_keys
     }
+    logger = logging.getLogger("myscoope.assistant.runtime")
+    logger.info("lab_preflight_start run_id=%s", validation_run_id)
     ground_truth = _build_ground_truth(user=user, scenarios=specialized)
+    logger.info("lab_preflight_done run_id=%s", validation_run_id)
     preflight = tuple(
         _scenario_preflight(scenario, ground_truth=ground_truth)
         for scenario in specialized.values()
@@ -210,6 +214,7 @@ def run_evaluation_lab(
             )
             with credit_context, capture_review_artifacts(user) as created_artifacts:
                 for repetition in range(1, int(repetitions) + 1):
+                    logger.info("lab_provider_start repetition=%s", repetition)
                     repetition_run_id = (
                         validation_run_id
                         if int(repetitions) == 1
@@ -223,6 +228,7 @@ def run_evaluation_lab(
                             run_id=repetition_run_id,
                         )
                     )
+                    logger.info("lab_provider_done repetition=%s passed=%s", repetition, live_reports[-1].passed)
         finally:
             if cleanup_review_artifacts:
                 cleanup = _cleanup_new_review_artifacts(user=user, created=created_artifacts)

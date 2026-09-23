@@ -140,9 +140,16 @@ def simulate_proposal_payload(
     parsed_payload = validate_proposal_payload_or_raise(payload)
 
     if isinstance(parsed_payload, ProposedProgramPayload):
+        food_ids = {item.food_id for day in parsed_payload.days for entry in day.dailyplan.meals
+                    for item in entry.meal.foods}
+        # Resolve visibility once for the entire program, not once per portion
+        # across 56 days. This snapshot is local to this call/user (no cache leak).
+        foods = get_readable_food_queryset(user).in_bulk(food_ids)
+        if food_ids.difference(foods):
+            get_object_or_404(get_readable_food_queryset(user).none())
         return ProposalPayloadSimulationDTO(intent=parsed_payload.intent, program={
             "name": parsed_payload.name, "duration_weeks": parsed_payload.duration_weeks,
-            "days": [{"week_number": day.week_number, "day_number": day.day_number, "dailyplan": simulate_proposed_dailyplan(user, day.dailyplan).as_dict()} for day in parsed_payload.days],
+            "days": [{"week_number": day.week_number, "day_number": day.day_number, "dailyplan": simulate_proposed_dailyplan(user, day.dailyplan, _foods=foods).as_dict()} for day in parsed_payload.days],
         })
 
     if isinstance(parsed_payload, ProposedMealPayloadDTO):
@@ -169,11 +176,13 @@ def simulate_proposal_payload(
 def simulate_proposed_meal(
     user,
     meal: ProposedMealDTO,
+    *, _foods=None,
 ) -> SimulatedMealDTO:
     simulated_foods = [
         _simulate_food_item(
             user=user,
             food_item=food_item,
+            _foods=_foods,
         )
         for food_item in meal.foods
     ]
@@ -191,6 +200,7 @@ def simulate_proposed_meal(
 def simulate_proposed_dailyplan(
     user,
     dailyplan,
+    *, _foods=None,
 ) -> SimulatedDailyPlanDTO:
     simulated_meals = [
         SimulatedDailyPlanMealDTO(
@@ -199,6 +209,7 @@ def simulate_proposed_dailyplan(
             meal=simulate_proposed_meal(
                 user=user,
                 meal=dailyplan_meal.meal,
+                _foods=_foods,
             ),
         )
         for dailyplan_meal in dailyplan.meals
@@ -220,8 +231,9 @@ def simulate_proposed_dailyplan(
 def _simulate_food_item(
     user,
     food_item: ProposedFoodItemDTO,
+    *, _foods=None,
 ) -> SimulatedFoodItemDTO:
-    food = get_object_or_404(
+    food = _foods[food_item.food_id] if _foods is not None else get_object_or_404(
         get_readable_food_queryset(user),
         pk=food_item.food_id,
     )

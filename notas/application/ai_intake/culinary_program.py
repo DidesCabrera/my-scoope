@@ -1,6 +1,8 @@
 """Build a reviewable program from persisted culinary variants, never raw food bags."""
 
+import logging
 from dataclasses import asdict
+from time import monotonic
 
 from django.db import transaction
 
@@ -18,6 +20,7 @@ from nutrition_solver.application.program_specification import parse_program_spe
 
 
 def build_culinary_program(*, user, brief):
+    logger = logging.getLogger("myscoope.assistant.runtime")
     spec = parse_program_specification(brief.program_specification)
     if brief.duration_weeks not in (None, spec.duration_weeks) or brief.meals_per_day not in (None, spec.meals_per_day):
         raise ValueError("program_spec_brief_conflict")
@@ -30,6 +33,8 @@ def build_culinary_program(*, user, brief):
         raise CulinaryPlanningError("culinary_catalog_requires_validated_meals", rejected=rejected)
     slots, weeks = program_slots(spec), []
     for week in spec.weeks:
+        started = monotonic()
+        logger.info("culinary_week_start week=%s candidates=%s", week.week, len(candidates))
         try:
             rows = solve_culinary_week(spec, week, slots, candidates, previous=weeks[-1] if weeks else ())
         except CulinaryPlanningError as exc:
@@ -38,6 +43,8 @@ def build_culinary_program(*, user, brief):
             # Widen only the search portfolio, never relax the user's constraints.
             rows = solve_culinary_week(spec, week, slots, candidates, previous=weeks[-1] if weeks else (), candidate_width=6)
         weeks.append(rows)
+        logger.info("culinary_week_done week=%s seconds=%.3f", week.week, monotonic() - started)
+    logger.info("culinary_validation_start days=%s", 7 * spec.duration_weeks)
     return persist_culinary_program(user=user, brief=brief, spec=spec, slots=slots, candidates=candidates, weeks=weeks)
 
 
@@ -45,6 +52,8 @@ def persist_culinary_program(*, user, brief, spec, slots, candidates, weeks, rev
     validation = validate_culinary_program(spec, weeks, slots, candidates)
     if not validation["valid"]:
         raise CulinaryPlanningError("culinary_independent_validation_failed", errors=validation["errors"])
+    logger = logging.getLogger("myscoope.assistant.runtime")
+    logger.info("culinary_validation_done days=%s", len(validation["days"]))
     days = []
     for target, rows in zip(spec.weeks, weeks):
         for day in range(1, 8):
@@ -55,7 +64,9 @@ def persist_culinary_program(*, user, brief, spec, slots, candidates, weeks, rev
                          "dailyplan": {"name": f"Semana {target.week} · Día {day}", "meals": meals}})
     payload = parse_program_payload({"intent": "create_program", "program": {
         "name": "Programa alimentario personalizado", "duration_weeks": spec.duration_weeks, "days": days}}).as_dict()
+    logger.info("culinary_simulation_start")
     simulation = simulate_proposal_payload(user, payload).as_dict()
+    logger.info("culinary_simulation_done")
     selected = {row["variant_id"] for week in weeks for row in week}
     catalog_evidence = [candidate.as_dict() for candidate in candidates if candidate.variant_id in selected]
     warnings = []
@@ -78,6 +89,7 @@ def persist_culinary_program(*, user, brief, spec, slots, candidates, weeks, rev
             action=NutritionProposalAuditEvent.ACTION_CREATED, status_before="", status_after=proposal.status,
             message="Programa culinario calculado y validado; pendiente de aprobación.",
             metadata={"intent": "create_program", "day_count": 7 * spec.duration_weeks})
+    logger.info("culinary_proposal_saved proposal_id=%s status=%s", proposal.pk, proposal.status)
     return proposal
 
 

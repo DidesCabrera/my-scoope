@@ -194,6 +194,10 @@ class ExternalLLMOrchestrator:
             messages.append(LLMMessage(role="developer", content=self._context_prompt(request.context)))
         messages.extend(self._history_messages(request.history))
         messages.append(LLMMessage(role="user", content=request.user_message.content))
+        from ai_assistant.application.program_capture import WEEKLY_CAPTURE_INSTRUCTION, weekly_specification_missing
+
+        if weekly_specification_missing(request, ()):
+            messages.append(LLMMessage(role="developer", content=WEEKLY_CAPTURE_INSTRUCTION))
 
         model_route = model_route or resolve_model_route_for_turn(request)
         max_output_tokens = _output_tokens_for_request(
@@ -1032,6 +1036,16 @@ class ExternalLLMOrchestrator:
         overflow_tool_requests = normalized_tool_requests[max_tool_requests:]
 
         for raw_tool_request in executable_tool_requests:
+            from ai_assistant.application.program_capture import weekly_specification_missing
+
+            if (raw_tool_request.tool_name == TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
+                    and weekly_specification_missing(request, (*prior_tool_results, *results))):
+                results.append(AssistantToolResult(
+                    tool_name=raw_tool_request.tool_name, request_id=raw_tool_request.request_id,
+                    status=AssistantToolStatus.BLOCKED, error_code="weekly_program_specification_required",
+                    error_message="Captura los requisitos semanales en program_specification antes de crear; no uses el plan escalar ni notes.",
+                ))
+                continue
             tool_request = _enrich_draft_tool_request_from_context(
                 raw_tool_request,
                 context=request.context,
@@ -1053,7 +1067,13 @@ class ExternalLLMOrchestrator:
             if tool_user is None:
                 results.append(_missing_user_tool_result(tool_request))
                 continue
-            results.append(self._execute_validated_tool_request(tool_request, user=tool_user))
+            import logging
+
+            logger = logging.getLogger("myscoope.assistant.runtime")
+            logger.info("tool_start name=%s", tool_request.tool_name)
+            result = self._execute_validated_tool_request(tool_request, user=tool_user)
+            logger.info("tool_done name=%s status=%s code=%s", result.tool_name, result.status.value, result.error_code)
+            results.append(result)
         for tool_request in overflow_tool_requests:
             results.append(_tool_requests_limit_result(tool_request, max_tool_requests=max_tool_requests))
         return tuple(results)
