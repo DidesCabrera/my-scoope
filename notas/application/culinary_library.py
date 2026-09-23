@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from notas.application.queries.solver_food_candidates import get_solver_food_candidate_queryset
-from notas.domain.models import CulinaryVariant
+from notas.domain.models import CulinaryVariant, Meal
 from nutrition_solver.application.culinary_planner import CulinaryCandidate, Ingredient
 
 GROUPS = {"protein", "starch", "fruit", "vegetable", "dairy", "fat", "legume", "other"}
@@ -90,7 +90,11 @@ def _snapshot(variant, foods):
                 "template_preparation": template.preparation, "preparation": variant.preparation,
                 "ingredients": variant.ingredients, "foods": food_evidence}
     digest = hashlib.sha256(json.dumps(evidence, sort_keys=True).encode()).hexdigest()
-    return CulinaryCandidate(variant.pk, template.pk, template.family, variant.name, tuple(template.meal_kinds),
+    # Curated names allow 150 characters, while operational Meal names allow 100.
+    # Bound the name before review, not while applying an already approved payload.
+    name_limit = Meal._meta.get_field("name").max_length
+    meal_name = variant.name if len(variant.name) <= name_limit else variant.name[:name_limit - 1].rstrip() + "…"
+    return CulinaryCandidate(variant.pk, template.pk, template.family, meal_name, tuple(template.meal_kinds),
                              variant.preparation, tuple(ingredients), tuple(ratios), digest, variant.status)
 
 

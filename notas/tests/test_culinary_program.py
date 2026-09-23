@@ -10,7 +10,7 @@ from notas.application.ai_intake.nutrition_brief import NutritionBrief, deserial
 from notas.application.culinary_library import load_culinary_candidates, validate_variant
 from notas.application.culinary_starter import seed_starter_library
 from notas.application.proposals.weekly_program import apply_approved_program_proposal
-from notas.domain.models import CulinaryVariant, Food, NutritionProposal, Program, WeightLog
+from notas.domain.models import CulinaryVariant, Food, Meal, NutritionProposal, Program, WeightLog
 from nutrition_solver.tests.test_program_specification import example_spec
 
 FOODS = (
@@ -51,6 +51,13 @@ class CulinaryProgramTests(TestCase):
         self.assertEqual(load_culinary_candidates(user=self.other)[0], ())
         with self.assertRaises(ValueError):
             validate_variant(user=self.other, variant_id=CulinaryVariant.objects.first().pk)
+
+    def test_candidate_names_fit_operational_meals_before_review(self):
+        candidates, _ = load_culinary_candidates(user=self.user)
+        limit = Meal._meta.get_field("name").max_length
+        self.assertTrue(CulinaryVariant.objects.filter(name__regex=r".{101}").exists())
+        self.assertTrue(all(len(candidate.name) <= limit for candidate in candidates))
+        self.assertTrue(any(candidate.name.endswith("…") for candidate in candidates))
 
     def test_stale_foods_are_not_reused_and_variants_are_immutable(self):
         variant = CulinaryVariant.objects.first()
