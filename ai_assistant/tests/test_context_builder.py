@@ -240,8 +240,8 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
             "active_work"
         ]
-        self.assertEqual(active_work["objective"], "prepare_reviewable_workspace_patch")
-        self.assertEqual(active_work["expected_outcome"], "prepared_patch")
+        self.assertEqual(active_work["objective"], "create_reviewable_program_proposal")
+        self.assertEqual(active_work["expected_outcome"], "nutrition_proposal")
         self.assertEqual(active_work["resource"], "program")
         self.assertEqual(active_work["source"], "current_message")
 

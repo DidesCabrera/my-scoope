@@ -175,6 +175,15 @@ def _proposal_dailyplan_payload(value) -> dict | None:
     }
 
 
+def _proposal_program_payload(value) -> dict | None:
+    if not isinstance(value, dict):
+        return None
+    return {"name": value["name"], "duration_weeks": value["duration_weeks"], "warnings": value.get("warnings", []), "days": [
+        {"week_number": day["week_number"], "day_number": day["day_number"],
+         "dailyplan": _proposal_dailyplan_payload(day["dailyplan"])} for day in value["days"]
+    ]}
+
+
 def proposal_detail_payload(user, proposal_id: int) -> dict | None:
     proposal = get_available_proposal_queryset(user).filter(pk=proposal_id).first()
     if proposal is None:
@@ -199,6 +208,7 @@ def proposal_detail_payload(user, proposal_id: int) -> dict | None:
         "validation_facts": _bounded_facts(dto.get("validation_summary", {}).get("payload_validation", {})),
         "meal": _proposal_meal_payload(review["payload"].get("meal")),
         "dailyplan": _proposal_dailyplan_payload(review["payload"].get("dailyplan")),
+        "program": _proposal_program_payload(review["payload"].get("program")),
         "subject_context_warning": {
             "requires_warning": warning.get("requires_warning", False),
             "source_label": warning.get("source_label", ""),

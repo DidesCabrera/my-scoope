@@ -16,6 +16,7 @@ from notas.application.proposals.contracts import (
     resolve_proposal_intent,
 )
 from notas.application.proposals.subject_context_warnings import proposal_requires_external_subject_ack
+from notas.application.proposals.weekly_program import apply_approved_program_proposal
 from notas.application.queries.proposal_queries import get_available_proposal_queryset
 from notas.application.services.commands.proposal_commands import (
     apply_approved_create_dailyplan_proposal,
@@ -108,14 +109,13 @@ def apply_mobile_proposal(request: Any, proposal_id: int, payload: ProposalApply
     proposal = _owned_proposal(request.auth.user, proposal_id)
     if proposal_requires_external_subject_ack(proposal) and not payload.acknowledge_external_subject:
         raise proposal_error(ValueError("proposal_external_subject_ack_required"))
-    intent = resolve_proposal_intent(proposal.proposed_payload)
     try:
-        if intent == CREATE_MEAL_INTENT:
-            apply_approved_create_meal_proposal(user=request.auth.user, proposal=proposal)
-        elif intent == CREATE_DAILYPLAN_INTENT:
-            apply_approved_create_dailyplan_proposal(user=request.auth.user, proposal=proposal)
-        else:
+        command = {CREATE_MEAL_INTENT: apply_approved_create_meal_proposal,
+                   CREATE_DAILYPLAN_INTENT: apply_approved_create_dailyplan_proposal,
+                   "create_program": apply_approved_program_proposal}.get(resolve_proposal_intent(proposal.proposed_payload))
+        if command is None:
             raise ValueError("proposal_apply_not_supported")
+        command(user=request.auth.user, proposal=proposal)
     except ValueError as exc:
         raise proposal_error(exc) from exc
     return success(proposal_detail_payload(request.auth.user, proposal_id))

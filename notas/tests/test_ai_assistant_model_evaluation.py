@@ -100,11 +100,12 @@ class AIAssistantModelEvaluationTests(TestCase):
                 "appropriate_next_step": "pass",
             },
             "reviewer": "test",
+            "reviewer_kind": "human",
         }
         return {
             "candidates": {
-                "luna_low": {"reviews": {"saludo_y_descubrimiento": review}},
-                "terra_low": {"reviews": {"saludo_y_descubrimiento": review}},
+                code: {"reviews": {f"{'unit-model-eval'[:12]}-{code.replace('_', '-')}/saludo_y_descubrimiento": review}}
+                for code in ("luna_low", "terra_low")
             }
         }
 

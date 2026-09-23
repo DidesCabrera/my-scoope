@@ -8,6 +8,7 @@ from notas.application.ai_tools.runtime import run_ai_tool
 PROPOSAL_PREFERENCE_FIELDS = (
     "goal",
     "requested_entity",
+    "duration_weeks",
     "meals_per_day",
     "energy_adjustment",
     "complexity_level",
@@ -32,6 +33,7 @@ TARGET_FIELDS = (
 FIELD_LABELS = {
     "goal": "Objetivo",
     "requested_entity": "Tipo de propuesta",
+    "duration_weeks": "Duración en semanas",
     "meals_per_day": "Comidas para esta propuesta",
     "energy_adjustment": "Ajuste energético",
     "complexity_level": "Complejidad de la propuesta",
@@ -319,6 +321,7 @@ def _build_proposal_preferences_card(proposal_preferences: Mapping[str, Any]) ->
         for field in (
             "goal",
             "requested_entity",
+            "duration_weeks",
             "meals_per_day",
             "complexity_level",
             "energy_adjustment",
@@ -387,6 +390,10 @@ def _normalize_field_value(field_name: str, value: Any) -> Any:
         return _normalize_goal(value)
     if field_name == "requested_entity":
         return _normalize_entity(value)
+    if field_name == "duration_weeks":
+        if type(value) is not int or not 1 <= value <= 8:
+            raise ValueError("program_proposal_duration_must_be_1_to_8")
+        return value
     if field_name == "meals_per_day":
         return _clean_int(value, min_value=1, max_value=8)
     if field_name == "protein_per_kg_target":

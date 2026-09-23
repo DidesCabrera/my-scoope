@@ -92,11 +92,11 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
                 "Armemos una semana nueva.",
                 "Hazme un programa de alimentación.",
             ),
-            objective="prepare_reviewable_workspace_patch",
-            outcome="prepared_patch",
+            objective="create_reviewable_program_proposal",
+            outcome="nutrition_proposal",
             resource="program",
             action="create",
-            capability="propose_workspace_patch",
+            capability="create_nutrition_engine_dailyplan_proposal_from_drafts",
         )
     )
     mutation_cases = (

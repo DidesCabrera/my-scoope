@@ -28,7 +28,7 @@ class ProposalSummaryData(Schema):
     status: Literal["draft", "pending_review", "approved", "rejected", "cancelled", "applied"]
     status_label: str
     source: str
-    attachment_kind: Literal["meal", "dailyplan", "brief"]
+    attachment_kind: Literal["meal", "dailyplan", "program", "brief"]
     attachment_label: str
     attachment_name: str
     is_reviewable: bool
@@ -64,9 +64,22 @@ class ProposalSubjectWarningData(Schema):
 
 
 class ProposalAppliedResultData(Schema):
-    kind: Literal["meal", "dailyplan"] | None = None
+    kind: Literal["meal", "dailyplan", "program"] | None = None
     object_id: int | None = None
     object_name: str = ""
+
+
+class ProposalProgramDayData(Schema):
+    week_number: int
+    day_number: int
+    dailyplan: ProposalDailyPlanData
+
+
+class ProposalProgramData(Schema):
+    name: str
+    duration_weeks: int
+    warnings: list[str] = Field(default_factory=list)
+    days: list[ProposalProgramDayData]
 
 
 class ProposalDetailData(ProposalSummaryData):
@@ -81,6 +94,7 @@ class ProposalDetailData(ProposalSummaryData):
     validation_facts: list[ProposalFactData] = Field(default_factory=list)
     meal: ProposalMealData | None = None
     dailyplan: ProposalDailyPlanData | None = None
+    program: ProposalProgramData | None = None
     subject_context_warning: ProposalSubjectWarningData
     applied_result: ProposalAppliedResultData | None = None
     applied_at: datetime | None = None

@@ -535,6 +535,11 @@ def proposal_apply(request, proposal_id):
                 f'Propuesta aplicada. Comida creada: "{result.meal.name}".',
             )
 
+        elif intent == "create_program":
+            from notas.application.proposals.weekly_program import apply_approved_program_proposal
+            result = apply_approved_program_proposal(user=request.user, proposal=proposal)
+            messages.success(request, f'Programa semanal creado: "{result.program.name}".')
+
         elif intent == CREATE_DAILYPLAN_INTENT:
             result = apply_approved_create_dailyplan_proposal(
                 user=request.user,

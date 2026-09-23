@@ -12,6 +12,7 @@ from notas.application.ai_intake.evaluation_lab import (
 from notas.application.ai_intake.evaluation_quality import (
     build_quality_annotation_template,
 )
+from notas.application.ai_intake.evaluation_review import review_saved_report, saved_review_template
 from notas.application.ai_intake.real_provider_validation import (
     built_in_real_provider_scenarios,
     get_validation_user,
@@ -74,6 +75,7 @@ class Command(BaseCommand):
             ),
         )
         parser.add_argument("--output", default="", help="Optional JSON report path.")
+        parser.add_argument("--review-report", default="", help="Regrade an existing report offline; never calls the provider.")
         parser.add_argument(
             "--annotation-template-output",
             default="",
@@ -87,6 +89,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if options.get("review_report"):
+            self._review_saved(options)
+            return
         if options["list_scenarios"]:
             catalog = built_in_real_provider_scenarios()
             for key in DEFAULT_LAB_SCENARIOS:
@@ -135,7 +140,7 @@ class Command(BaseCommand):
             annotation_path.parent.mkdir(parents=True, exist_ok=True)
             annotation_path.write_text(
                 json.dumps(
-                    build_quality_annotation_template(report.live_validations),
+                    saved_review_template(payload) if report.live_validations else build_quality_annotation_template(()),
                     ensure_ascii=False,
                     indent=2,
                 )
@@ -216,3 +221,30 @@ class Command(BaseCommand):
         if not isinstance(payload, dict):
             raise ValueError("Quality annotations file must contain a JSON object.")
         return payload
+
+    def _review_saved(self, options):
+        if options.get("live") or options.get("user_id") or options.get("user_email") or options.get("scenarios"):
+            raise CommandError("--review-report cannot be combined with live execution or user/scenario selection.")
+        source = Path(options["review_report"])
+        destination = Path(options["output"]) if options.get("output") else None
+        if destination is not None and destination.resolve() == source.resolve():
+            raise CommandError("Preserve the source evidence: use a different --output path.")
+        try:
+            payload = json.loads(source.read_text(encoding="utf-8"))
+            annotations = self._read_quality_annotations(options.get("quality_annotations") or "")
+            template = saved_review_template(payload)
+            result = review_saved_report(payload, annotations) if annotations is not None else payload
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            raise CommandError(str(exc)) from exc
+        if options.get("annotation_template_output"):
+            path = Path(options["annotation_template_output"])
+            if path.resolve() == source.resolve() or (destination and path.resolve() == destination.resolve()):
+                raise CommandError("The review worksheet must have a separate path.")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(template, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if destination:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        self.stdout.write(json.dumps(result, ensure_ascii=False) if options["json"] else f"Saved report: {result['status']}; provider calls: 0")
+        if options["fail_on_regression"] and not result.get("passed"):
+            raise CommandError(f"AI Assistant evaluation lab status: {result['status']}")

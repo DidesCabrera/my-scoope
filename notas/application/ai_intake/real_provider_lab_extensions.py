@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+import hashlib
+import json
 from typing import Any, Mapping, Sequence
 
 from ai_assistant.models import AIPreparedAction
@@ -12,7 +14,8 @@ from notas.application.queries.library_queries import (
     meal_library_queryset,
     program_library_queryset,
 )
-from notas.domain.models import NutritionProposal
+from notas.domain.models import NutritionProposal, Food, Meal, MealFood, DailyPlan, DailyPlanMeal, Program, ProgramDay
+from notas.application.ai_intake.capability_scenarios import specialize_capability_scenario
 
 
 @dataclass(frozen=True)
@@ -134,6 +137,9 @@ def build_lab_scenarios() -> dict[str, Any]:
 
 
 def specialize_lab_scenario(scenario: Any, *, user: Any) -> Any | None:
+    capability = specialize_capability_scenario(scenario, user=user)
+    if capability is not None:
+        return capability
     if scenario.key == "bibliotecas_coherentes":
         totals = (
             food_library_queryset(user).count(),
@@ -227,7 +233,20 @@ def specialize_lab_scenario(scenario: Any, *, user: Any) -> Any | None:
     return None
 
 
-def validation_state_snapshot(user: Any) -> dict[str, int]:
+def validation_state_snapshot(user: Any) -> dict[str, Any]:
+    # Counts alone cannot detect an unauthorized rename or quantity change.
+    content = {}
+    for key, queryset in (
+        ("foods", Food.objects.filter(created_by=user)),
+        ("meals", Meal.objects.filter(created_by=user)),
+        ("meal_foods", MealFood.objects.filter(meal__created_by=user)),
+        ("dailyplans", DailyPlan.objects.filter(created_by=user)),
+        ("dailyplan_meals", DailyPlanMeal.objects.filter(dailyplan__created_by=user)),
+        ("programs", Program.objects.filter(created_by=user)),
+        ("program_days", ProgramDay.objects.filter(program__created_by=user)),
+    ):
+        fields = [f.attname for f in queryset.model._meta.concrete_fields if not f.name.startswith("summary_cache")]
+        content[key] = list(queryset.order_by("pk").values(*fields))
     return {
         "foods": food_library_queryset(user).count(),
         "meals": meal_library_queryset(user).count(),
@@ -235,6 +254,7 @@ def validation_state_snapshot(user: Any) -> dict[str, int]:
         "programs": program_library_queryset(user).count(),
         "nutrition_proposals": NutritionProposal.objects.filter(created_by=user).count(),
         "prepared_actions": AIPreparedAction.objects.filter(user=user).count(),
+        "product_content_sha256": hashlib.sha256(json.dumps(content, sort_keys=True, default=str).encode()).hexdigest(),
     }
 
 
@@ -253,6 +273,8 @@ def state_mutation_check_values(
         for key in (*library_keys, "nutrition_proposals", "prepared_actions")
     }
     failures = [f"{key} delta={deltas[key]}" for key in library_keys if deltas[key] != 0]
+    if state_before.get("product_content_sha256") != state_after.get("product_content_sha256"):
+        failures.append("persisted product content changed")
     policy = scenario.mutation_policy
     if policy == "read_only":
         failures.extend(
@@ -329,6 +351,8 @@ def scenario_result_lab_metadata(result: Any) -> dict[str, Any]:
             "delta": {
                 key: int(result.state_after.get(key, 0)) - int(result.state_before.get(key, 0))
                 for key in set(result.state_before) | set(result.state_after)
+                if key != "product_content_sha256"
             },
+            "product_content_unchanged": result.state_before.get("product_content_sha256") == result.state_after.get("product_content_sha256"),
         },
     }

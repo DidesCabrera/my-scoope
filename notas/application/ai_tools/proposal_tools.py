@@ -229,6 +229,11 @@ def build_nutrition_brief_from_ai_drafts(
     proposal_sources = _as_mapping(proposal.get("field_sources"))
     preference_sources = _as_mapping(preferences.get("field_sources"))
     field_sources = dict(payload.get("field_sources") or {})
+    for name in ("dietary_pattern", "allergies_or_intolerances", "cooking_time_preference",
+                 "budget_preference", "simplicity_preference", "variety_preference"):
+        if name in preferences and preferences[name] is not None:
+            payload[name] = preferences[name]
+            field_sources[name] = str(preference_sources.get(name) or "chat_draft")
 
     for field_name in ("weight_kg", "height_cm", "age_years", "sex", "activity_level", "training_frequency"):
         if not _missing(profile.get(field_name)):
@@ -246,6 +251,7 @@ def build_nutrition_brief_from_ai_drafts(
     for field_name in (
         "goal",
         "requested_entity",
+        "duration_weeks",
         "meals_per_day",
         "energy_adjustment",
         "calorie_target",
@@ -318,10 +324,15 @@ def _create_nutrition_engine_dailyplan_proposal_from_drafts_data(
     if not is_brief_ready_for_proposal(brief):
         raise ValueError("nutrition_brief_has_pending_questions")
 
-    response = _create_nutrition_engine_dailyplan_proposal_data(
-        user=user,
-        nutrition_brief=serialize_brief(brief),
-    )
+    if brief.requested_entity == "program":
+        from notas.application.ai_intake.program_generator import create_weekly_program_proposal, program_proposal_tool_summary
+        proposal = create_weekly_program_proposal(user=user, brief=brief)
+        response = {"proposal": program_proposal_tool_summary(proposal)}
+    else:
+        response = _create_nutrition_engine_dailyplan_proposal_data(
+            user=user,
+            nutrition_brief=serialize_brief(brief),
+        )
     response["nutrition_brief"] = serialize_brief(brief)
     response["draft_sources"] = {
         "profile_draft_used": True,

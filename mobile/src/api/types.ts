@@ -1,3 +1,5 @@
+import type { ProposalMeal, ProposalDailyPlan, ProposalProgram } from "./proposal-entities";
+
 export type ApiErrorDetail = {
   code: string;
   message: string;
@@ -561,7 +563,7 @@ export type ProposalSummary = {
   status: ProposalStatus;
   status_label: string;
   source: string;
-  attachment_kind: "meal" | "dailyplan" | "brief";
+  attachment_kind: "meal" | "dailyplan" | "program" | "brief";
   attachment_label: string;
   attachment_name: string;
   is_reviewable: boolean;
@@ -578,39 +580,7 @@ export type ProposalFact = {
   value: string;
 };
 
-export type ProposalKpis = {
-  total_kcal: number | null;
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
-  ppk: number | null;
-  alloc_protein: number | null;
-  alloc_carbs: number | null;
-  alloc_fat: number | null;
-};
-
-export type ProposalFood = {
-  food_id: number | null;
-  food_name: string;
-  quantity: number | null;
-  unit: string;
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
-  total_kcal: number | null;
-};
-
-export type ProposalMeal = {
-  name: string;
-  foods: ProposalFood[];
-  kpis: ProposalKpis | null;
-};
-
-export type ProposalDailyPlan = {
-  name: string;
-  meals: { hour: string | null; note: string; meal: ProposalMeal }[];
-  kpis: ProposalKpis | null;
-};
+export type { ProposalKpis, ProposalFood, ProposalMeal, ProposalDailyPlan, ProposalProgram } from "./proposal-entities";
 
 export type ProposalDetail = ProposalSummary & {
   dailyplan_id: number | null;
@@ -624,6 +594,7 @@ export type ProposalDetail = ProposalSummary & {
   validation_facts: ProposalFact[];
   meal: ProposalMeal | null;
   dailyplan: ProposalDailyPlan | null;
+  program?: ProposalProgram | null;
   subject_context_warning: {
     requires_warning: boolean;
     source_label: string;
@@ -632,7 +603,7 @@ export type ProposalDetail = ProposalSummary & {
     message: string;
   };
   applied_result: {
-    kind: "meal" | "dailyplan" | null;
+    kind: "meal" | "dailyplan" | "program" | null;
     object_id: number | null;
     object_name: string;
   } | null;

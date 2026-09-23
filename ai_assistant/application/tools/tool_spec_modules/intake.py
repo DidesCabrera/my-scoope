@@ -167,6 +167,7 @@ TOOL_UPDATE_PROPOSAL_PREFERENCES: AssistantToolSpec(
                             "enum": ["daily_plan", "program"],
                         },
                         "meals_per_day": {"type": "integer", "minimum": 1, "maximum": 8},
+                        "duration_weeks": {"type": "integer", "minimum": 1, "maximum": 8, "description": "Complete program duration, from one to eight weeks."},
                         "complexity_level": {
                             "type": "string",
                             "enum": ["low", "medium", "high"],

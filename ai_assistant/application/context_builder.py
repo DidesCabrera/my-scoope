@@ -41,6 +41,7 @@ NUTRITION_BRIEF_FIELDS = (
     "requires_library_ppk_warning",
     "goal",
     "requested_entity",
+    "duration_weeks",
     "meals_per_day",
     "training_frequency",
     "calorie_target",

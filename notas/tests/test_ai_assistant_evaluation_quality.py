@@ -113,10 +113,11 @@ class AIAssistantEvaluationQualityTests(SimpleTestCase):
                 "appropriate_next_step": "pass",
             },
             "reviewer": "product",
+            "reviewer_kind": "human",
         }
         annotations = {
             "version": QUALITY_ANNOTATIONS_VERSION,
-            "reviews": {"scenario": review},
+            "reviews": {"run-1/scenario": review, "run-2/scenario": review},
         }
 
         grade = grade_validation_reports(

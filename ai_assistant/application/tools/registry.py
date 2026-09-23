@@ -105,6 +105,7 @@ def _strict_proposal_preferences_provider_schema() -> dict[str, Any]:
             "enum": ["daily_plan", "program", None],
         },
         "meals_per_day": {**nullable_integer, "minimum": 1, "maximum": 8},
+        "duration_weeks": {**nullable_integer, "minimum": 1, "maximum": 8},
         "complexity_level": {
             "type": ["string", "null"],
             "enum": ["low", "medium", "high", None],
@@ -276,9 +277,12 @@ def list_provider_tool_specs() -> list[dict[str, Any]]:
             provider_spec = {
                 **provider_spec,
                 "description": (
-                    "Create the requested reviewable DailyPlan proposal from the "
+                    "Create the requested reviewable daily plan or complete program of 1 to 8 weeks from the "
                     "current conversation workspace. My Scoope supplies all known "
-                    "drafts and defaults automatically; never fabricate them."
+                    "drafts and defaults automatically; never fabricate them. Programs include real daily plans and meals. "
+                    "Capture requested_entity=program and duration_weeks in proposal preferences before creating a program. "
+                    "A week has seven days. Never silently shorten the duration; ask when it is ambiguous. "
+                    "Inspect the actual variety and per-day nutritional validation before describing the result."
                 ),
                 "parameters": {
                     "type": "object",

@@ -25,6 +25,8 @@ HUMAN_QUALITY_CRITERIA = (
 )
 
 AUTOMATED_QUALITY_CHECKS = {
+    "prepared_patch_exact": "operation_correctness",
+    "program_proposal_complete": "operation_correctness",
     "expected_outcome": "outcome_completion",
     "tool_contract": "tool_selection_and_arguments",
     "state_mutation_boundary": "state_and_approval_boundary",
@@ -81,8 +83,6 @@ def grade_validation_reports(
             scenario_key = str(getattr(result.scenario, "key", "") or "")
             instance_key = f"{run_id}/{scenario_key}"
             annotation = normalized_annotations.get(instance_key)
-            if annotation is None:
-                annotation = normalized_annotations.get(scenario_key)
             graded = grade_scenario_result(
                 result,
                 run_id=run_id,
@@ -156,6 +156,7 @@ def build_quality_annotation_template(reports: Sequence[Any]) -> dict[str, Any]:
                 ),
                 "criteria": dict.fromkeys(HUMAN_QUALITY_CRITERIA, "pending"),
                 "reviewer": "",
+                "reviewer_kind": "human",
                 "notes": "",
             }
     return {
@@ -241,6 +242,13 @@ def _grade_human_annotation(annotation: Mapping[str, Any] | None) -> dict[str, A
             "notes": "",
         }
 
+    if annotation.get("reviewer_kind") != "human" or not str(annotation.get("reviewer") or "").strip():
+        return {
+            "status": "pending",
+            "criteria": {},
+            "notes": str(annotation.get("notes") or ""),
+            "reason": "named_human_reviewer_required",
+        }
     raw_criteria = annotation.get("criteria")
     criteria = dict(raw_criteria) if isinstance(raw_criteria, Mapping) else {}
     normalized = {

@@ -32,6 +32,8 @@
                 <span class="proposal-type-badge">Nueva comida</span>
               {% elif vm.content.proposal_review.payload.is_create_dailyplan %}
                 <span class="proposal-type-badge">Nuevo DailyPlan</span>
+              {% elif vm.content.proposal_review.payload.is_create_program %}
+                <span class="proposal-type-badge">Nuevo programa semanal</span>
               {% else %}
                 <span class="proposal-type-badge">Sin aplicación automática</span>
               {% endif %}
@@ -149,6 +151,9 @@
         </section>
       {% endif %}
 
+      {% if vm.content.proposal_review.payload.is_create_program %}
+        {% include "notas/proposals/partials/review_create_program.html" %}
+      {% endif %}
       <section class="proposal-review-attachments-section" aria-label="Adjuntos de la propuesta">
         <div class="proposal-review-attachments-heading">
           <i data-lucide="paperclip" class="proposal-review-attachments-heading__icon"></i>

@@ -259,12 +259,16 @@ class ExternalLLMToolLoopTests(SimpleTestCase):
             dispatch_table={TOOL_UPDATE_PROPOSAL_PREFERENCES: update_proposal_preferences}
         )
 
+        from ai_assistant.application.limits import estimate_provider_request_tokens
+        initial = ExternalLLMOrchestrator(llm_client=client).build_provider_request(self._request("Quiero aumennter de muscilo"))
+        initial_budget = estimate_provider_request_tokens(initial) + 25
+
         response = ExternalLLMOrchestrator(
             llm_client=client,
             profile_draft_tool_executor=profile_executor,
             # Keep the initial request below the limit while forcing the larger
             # native post-tool continuation through the compact fallback.
-            config=AssistantOrchestratorConfig(max_input_tokens=3300),
+            config=AssistantOrchestratorConfig(max_input_tokens=initial_budget),
         ).continue_turn(self._request("Quiero aumennter de muscilo"))
 
         self.assertEqual(response.assistant_text, "Perfecto, lo orientamos a ganar masa muscular.")

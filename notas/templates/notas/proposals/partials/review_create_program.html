@@ -1,0 +1,17 @@
+<section class="proposal-review-card" aria-label="Programa semanal propuesto">
+  <h3>{{ vm.content.proposal_review.payload.program.name }}</h3>
+  {% if vm.content.proposal_review.payload.program.warnings %}
+    <p>Advertencias que requieren revisión:</p>
+    <ul>{% for warning in vm.content.proposal_review.payload.program.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+  {% endif %}
+  <p>{{ vm.content.proposal_review.payload.program.duration_weeks }} semanas completas. Revisa todos los días y sus cantidades antes de aprobar. El programa se guardará al aplicar la propuesta; su calendarización se realiza por separado.</p>
+  {% for day in vm.content.proposal_review.payload.program.days %}
+    <details class="proposal-review-card">
+      <summary>Semana {{ day.week_number }} · Día {{ day.day_number }} · {{ day.dailyplan.kpis.total_kcal|floatformat:0 }} kcal · P {{ day.dailyplan.kpis.protein|floatformat:1 }} g · C {{ day.dailyplan.kpis.carbs|floatformat:1 }} g · G {{ day.dailyplan.kpis.fat|floatformat:1 }} g</summary>
+      {% for item in day.dailyplan.meals %}
+        <h4>{{ item.hour|default:"" }} {{ item.meal.name }}</h4>
+        <ul>{% for food in item.meal.foods %}<li>{{ food.food_name }}: {{ food.quantity|floatformat:1 }} g</li>{% endfor %}</ul>
+      {% endfor %}
+    </details>
+  {% endfor %}
+</section>

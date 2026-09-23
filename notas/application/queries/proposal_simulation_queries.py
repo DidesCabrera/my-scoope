@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass
 from typing import Any
+from notas.application.dto.program_proposal import ProposedProgramPayload
 
 from django.shortcuts import get_object_or_404
 
@@ -110,12 +111,14 @@ class ProposalPayloadSimulationDTO:
     intent: str
     meal: SimulatedMealDTO | None = None
     dailyplan: SimulatedDailyPlanDTO | None = None
+    program: dict | None = None
 
     def as_dict(self) -> dict:
         return {
             "intent": self.intent,
             "meal": self.meal.as_dict() if self.meal else None,
             "dailyplan": self.dailyplan.as_dict() if self.dailyplan else None,
+            "program": self.program,
         }
 
 
@@ -135,6 +138,12 @@ def simulate_proposal_payload(
     Solo valida el payload, lee foods visibles para el usuario y calcula KPIs.
     """
     parsed_payload = validate_proposal_payload_or_raise(payload)
+
+    if isinstance(parsed_payload, ProposedProgramPayload):
+        return ProposalPayloadSimulationDTO(intent=parsed_payload.intent, program={
+            "name": parsed_payload.name, "duration_weeks": parsed_payload.duration_weeks,
+            "days": [{"week_number": day.week_number, "day_number": day.day_number, "dailyplan": simulate_proposed_dailyplan(user, day.dailyplan).as_dict()} for day in parsed_payload.days],
+        })
 
     if isinstance(parsed_payload, ProposedMealPayloadDTO):
         return ProposalPayloadSimulationDTO(

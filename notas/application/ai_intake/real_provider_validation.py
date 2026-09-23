@@ -17,6 +17,14 @@ from ai_assistant.application.chat_engines import ChatEngine, ChatEngineRequest
 from ai_assistant.application.llm_chat_engine import ExternalLLMChatEngine
 from ai_assistant.application.orchestrator import AssistantOrchestratorConfig, ExternalLLMOrchestrator
 from ai_assistant.models import AIUsageEvent
+from ai_assistant.models import AIPreparedAction
+from notas.application.ai_intake.capability_scenarios import build_capability_scenarios, prepared_patch_check
+from notas.application.ai_intake.program_scenarios import build_program_scenarios, program_proposal_check
+from notas.domain.models import NutritionProposal
+from notas.application.ai_intake.validation_values import (
+    is_empty as _is_empty, compressed_values as _compressed_values,
+    is_subsequence as _is_subsequence, first_non_empty as _first_non_empty,
+)
 from notas.application.ai_intake.chat_engine import LLMNutritionIntakeChatEngine
 from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
@@ -447,6 +455,8 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
         ),
     }
     catalog.update(build_lab_scenarios())
+    catalog.update(build_capability_scenarios(RealProviderValidationScenario))
+    catalog.update(build_program_scenarios(RealProviderValidationScenario))
     return catalog
 
 
@@ -634,6 +644,8 @@ def _run_scenario(
     turns: list[RealProviderValidationTurn] = []
     previous_cards = {"profile": 0, "preference": 0, "proposal_preferences": 0}
     state_before = validation_state_snapshot(user)
+    previous_action_ids = set(AIPreparedAction.objects.filter(user=user).values_list("pk", flat=True))
+    previous_proposal_ids = set(NutritionProposal.objects.filter(created_by=user).values_list("pk", flat=True))
 
     for index, message in enumerate(scenario.user_messages, start=1):
         turn_id = f"{conversation_id}-{index}"[:80]
@@ -737,6 +749,12 @@ def _run_scenario(
         state_before=state_before,
         state_after=state_after,
     )
+    patch_result = prepared_patch_check(scenario, user=user, previous_ids=previous_action_ids)
+    if patch_result is not None:
+        checks.append(_check("prepared_patch_exact", *patch_result))
+    program_result = program_proposal_check(scenario, user=user, previous_ids=previous_proposal_ids)
+    if program_result is not None:
+        checks.append(_check("program_proposal_complete", *program_result))
     return RealProviderValidationScenarioResult(
         scenario=scenario,
         conversation_id=conversation_id,
@@ -1348,6 +1366,7 @@ def _brief_snapshot(state: NutritionConversationState) -> dict[str, Any]:
     return {
         "goal": brief.goal,
         "requested_entity": brief.requested_entity,
+        "duration_weeks": brief.duration_weeks,
         "subject_source": brief.subject_source,
         "weight_kg": brief.weight_kg,
         "height_cm": brief.height_cm,
@@ -1475,36 +1494,3 @@ def _optional_int(value: Any) -> int | None:
         return int(value) if value is not None and str(value).strip() else None
     except (TypeError, ValueError):
         return None
-
-
-def _is_empty(value: Any) -> bool:
-    if value is None:
-        return True
-    if isinstance(value, str):
-        return not value.strip()
-    if isinstance(value, (list, tuple, set, dict)):
-        return len(value) == 0
-    return False
-
-
-def _compressed_values(values: Iterable[Any]) -> list[Any]:
-    compressed: list[Any] = []
-    for value in values:
-        if _is_empty(value):
-            continue
-        if not compressed or compressed[-1] != value:
-            compressed.append(value)
-    return compressed
-
-
-def _is_subsequence(expected: Sequence[Any], actual: Sequence[Any]) -> bool:
-    iterator = iter(actual)
-    return all(any(candidate == expected_value for candidate in iterator) for expected_value in expected)
-
-
-def _first_non_empty(*values: Any) -> str:
-    for value in values:
-        text = str(value or "").strip()
-        if text:
-            return text
-    return ""

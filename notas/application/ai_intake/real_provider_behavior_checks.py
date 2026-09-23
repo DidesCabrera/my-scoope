@@ -125,7 +125,7 @@ def evaluate_expected_outcome(scenario, turns, *, state_before, state_after):
     final_turn = turns[-1] if turns else None
     deltas = {
         key: int(state_after.get(key, 0) or 0) - int(state_before.get(key, 0) or 0)
-        for key in set(state_before).union(state_after)
+        for key in ("foods", "meals", "dailyplans", "programs", "nutrition_proposals", "prepared_actions")
     }
 
     if expected == "nutrition_proposal":

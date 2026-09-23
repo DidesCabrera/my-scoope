@@ -181,6 +181,7 @@ class ProposalReviewPayloadVM:
             "targets": self.targets,
             "meal": self.meal.as_dict() if self.meal else None,
             "dailyplan": self.dailyplan.as_dict() if self.dailyplan else None,
+            **({"is_create_program": True, "program": (self.simulation or {}).get("program")} if self.intent == "create_program" else {}),
         }
 
 
@@ -249,6 +250,12 @@ def build_proposal_review_vm(
 
     intent = resolve_proposal_intent(proposed_payload)
     simulation = _extract_simulation(validation_summary)
+    if intent == "create_program" and simulation and simulation.get("program"):
+        warnings = list(dict.fromkeys(
+            str(issue.get("message")) for day in validation_summary.get("days", [])
+            for issue in day.get("engine_validation", {}).get("issues", []) if issue.get("message")
+        ))
+        simulation = {**simulation, "program": {**simulation["program"], "warnings": warnings}}
 
     status = _safe_str(proposal.get("status"))
     intent_contract = get_proposal_intent_contract(intent)
@@ -387,6 +394,8 @@ def _build_review_attachments(
     proposal: dict[str, Any],
 ) -> list[dict[str, str]]:
     intent_contract = get_proposal_intent_contract(intent)
+    if intent == "create_program":
+        return [{"kind": "program", "label": "Programa semanal", "name": proposed_payload.get("program", {}).get("name", ""), "icon": "calendar-days"}]
 
     if intent == CREATE_MEAL_INTENT:
         meal = _safe_dict(proposed_payload.get("meal"))
@@ -446,6 +455,10 @@ def _build_applied_result_vm(
         return None
 
     metadata = _extract_applied_metadata(proposal)
+    if intent == "create_program":
+        program_id = _safe_int_or_none(metadata.get("program_id"))
+        return ProposalAppliedResultVM(kind="program", object_id=program_id,
+            object_name=_safe_str(metadata.get("program_name")), detail_url_name="program_detail" if program_id else None)
 
     if intent == CREATE_MEAL_INTENT:
         meal_id = _safe_int_or_none(metadata.get("meal_id"))

@@ -33,13 +33,13 @@ Lab v2 combina capas distintas sin confundir su alcance:
    outcome y disponibilidad de capacidad;
 2. `scenario_preflight`: datos reales, proyecciones canónicas y factibilidad del
    solver para el usuario seleccionado;
-3. `live_validations`: doce trayectorias completas, repetibles entre 1 y 10 veces;
+3. `live_validations`: 32 escenarios disponibles, repetibles entre 1 y 10 veces;
 4. `quality_evaluation`: checks automáticos por dimensión y revisión humana
    obligatoria por trayectoria;
 5. `product_feedback`: señal agregada de respuestas útiles/no útiles del usuario,
    sin incluir contenido ni comentarios en el reporte.
 
-Los 64 casos son un gate determinista de routing, no un sustituto de las doce
+Los 64 casos son un gate determinista de routing, no un sustituto de las
 conversaciones reales. Las pruebas live validan selección/argumentos de tools,
 grounding, continuidad, límites de aprobación y resultado observable.
 
@@ -81,13 +81,12 @@ python manage.py evaluate_ai_assistant_lab \
 
 Una ejecución live técnicamente sana termina en `awaiting_quality_review` hasta
 que cada trayectoria tenga `pass` o `fail` en los cuatro criterios. El template
-se completa y se reutiliza así:
+se completa con nombre de revisor y `reviewer_kind=human`. Luego se evalúa la
+misma evidencia guardada, sin volver a llamar al proveedor:
 
 ```bash
 python manage.py evaluate_ai_assistant_lab \
-  --live \
-  --user-email usuario@example.com \
-  --repetitions 3 \
+  --review-report var/ai-evaluation/latest.json \
   --quality-annotations var/ai-evaluation/review.json \
   --output var/ai-evaluation/final.json \
   --fail-on-regression
@@ -97,6 +96,10 @@ Un candidato de modelo sólo puede aceptarse si todas sus repeticiones pasan los
 checks duros, los checks de calidad automáticos y la revisión humana. Luna es el
 baseline, Terra el escalamiento y Sol el benchmark opcional; Astra no forma parte
 de esta matriz.
+
+Las revisiones están ligadas a `run_id/scenario` y a la huella de la trayectoria.
+No se aceptan aprobaciones genéricas por nombre de escenario ni evidencia
+modificada. Una revisión automatizada no se contabiliza como revisión humana.
 
 Para probar específicamente la integración comercial de créditos se debe optar
 de forma explícita por `--charge-user-credits`. Un bloqueo de cuota se informa
@@ -118,6 +121,8 @@ Puede usarse `--keep-artifacts` cuando se necesite revisar las cards manualmente
 | Consultas | bibliotecas coherentes | `workspace_query` | Sólo lectura |
 | Nutrición | comida 450 kcal y plan 2400 con 30/50/20 | `nutrition_proposal` | Sólo propuesta revisable |
 | Cambio de producto | reemplazo de alimento a 200 g | `prepared_patch` | Patch preparado, nunca aplicado |
+| Operaciones exactas | 18 casos de alimentos, comidas, planes y programas | `prepared_patch` | Compara objetivo, parámetros y cantidad exacta de operaciones persistidas |
+| Programas completos | 1 y 8 semanas, 2400 kcal y 30/50/20 | `nutrition_proposal` | Verifica todos los días, cuatro comidas por día y macros recalculados |
 
 Para listar los escenarios sin acceder a un usuario:
 
@@ -139,9 +144,33 @@ El JSON conserva siete niveles de evidencia:
 6. `product_feedback`: señal agregada de los últimos 30 días;
 7. `diagnostics.by_domain`: clasificación de fallos por capa probable.
 
-Cada escenario registra conteos antes y después. Un escenario de lectura no puede
+Cada escenario registra conteos y huellas del contenido persistido antes y después. Un escenario de lectura no puede
 crear artifacts; uno de propuesta debe crear al menos una propuesta sin alterar
 las bibliotecas; uno de patch debe crear una acción preparada sin aplicarla.
+
+La limpieza captura IDs creados dentro del contexto de esta ejecución; no usa
+solamente diferencias de IDs por usuario que podrían incluir otra sesión.
+
+## Alcance de programas completos
+
+El asistente conserva `requested_entity=program` y `duration_weeks` (1–8) como
+campos tipados. La propuesta contiene cada combinación semana/día, hasta 56
+planes independientes, con comidas y cantidades calculadas. Dieta, alergias,
+exclusiones y preferencias llegan al motor como restricciones explícitas.
+
+Actualmente usa objetivos diarios constantes y una rotación de hasta siete
+menús calculados. Declara el número real de menús distintos y la repetición;
+no promete 56 menús únicos ni periodización automática. Cada candidato se valida
+nutricionalmente; las advertencias se muestran para revisión. Los objetivos
+distintos por día/semana y la optimización global de variedad siguen pendientes.
+
+La aplicación exige aprobación, propietario correcto e ingredientes activos;
+rechaza evidencia nutricional que cambió desde la revisión. Crea todos los planes
+y comidas en una transacción, sin calendarizar, y rechaza la aplicación duplicada.
+Tanto web como móvil permiten revisar los días antes de confirmar.
+
+Agregar un escenario al catálogo no demuestra que haya pasado con el proveedor
+real: cobertura mapeada, pases automáticos y aprobación humana son evidencias distintas.
 
 ## Método de iteración sobre el catálogo vivo
 

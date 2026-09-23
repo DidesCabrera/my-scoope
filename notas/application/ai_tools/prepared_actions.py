@@ -961,6 +961,9 @@ def _dispatch_proposal_commit(*, key: str, user, target) -> dict:
         result = apply_approved_create_meal_proposal(user=user, proposal=target)
     elif intent == "create_dailyplan":
         result = apply_approved_create_dailyplan_proposal(user=user, proposal=target)
+    elif intent == "create_program":
+        from notas.application.proposals.weekly_program import apply_approved_program_proposal
+        result = apply_approved_program_proposal(user=user, proposal=target)
     else:
         result = apply_approved_proposal(user=user, proposal=target)
     return result.as_dict()

@@ -21,6 +21,7 @@ import {
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, EntityCardAction, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { ProposalProgramPreview } from "@/components/proposals/proposal-program-preview";
 
 const confirmationCopy: Record<string, { title: string; message: string; label: string; danger?: boolean }> = {
   approve: { title: "¿Aprobar esta propuesta?", message: "La aprobación confirma tu revisión, pero aún no crea ni modifica ninguna entidad. Después podrás aplicarla en un paso separado.", label: "Aprobar" },
@@ -93,7 +94,7 @@ export default function ProposalDetailScreen() {
   function openAppliedResult() {
     const result = proposal?.applied_result;
     if (!result?.object_id || !result.kind) return;
-    const path = result.kind === "meal" ? `/libraries/meals/${result.object_id}` : `/libraries/daily-plans/${result.object_id}`;
+    const path = result.kind === "program" ? `/libraries/programs/${result.object_id}` : result.kind === "meal" ? `/libraries/meals/${result.object_id}` : `/libraries/daily-plans/${result.object_id}`;
     router.push(path as Href);
   }
 
@@ -125,7 +126,8 @@ export default function ProposalDetailScreen() {
           title={proposal.title}
           typeLabel={proposal.attachment_label}>
           {proposal.subject_context_warning.requires_warning ? <InlineNotice tone="warning">{proposal.subject_context_warning.message}</InlineNotice> : null}
-          {!proposal.meal && !proposal.dailyplan ? <InlineNotice>Esta propuesta conserva su contenido y validación, pero su tipo no genera una entidad aplicable desde móvil.</InlineNotice> : null}
+          {proposal.program ? <ProposalEntitySection entity="program"><ProposalProgramPreview program={proposal.program} onOpenFood={(foodId) => router.push(`/libraries/foods/${foodId}` as Href)} /></ProposalEntitySection> : null}
+          {!proposal.meal && !proposal.dailyplan && !proposal.program ? <InlineNotice>Esta propuesta conserva su contenido y validación, pero su tipo no genera una entidad aplicable desde móvil.</InlineNotice> : null}
 
           <ProposalEvaluationContext current={proposal.current_facts} targets={proposal.target_facts} />
           <ProposalFacts description="Comprobaciones realizadas antes de permitir que la propuesta se aplique." facts={proposal.validation_facts} title="Validación" />

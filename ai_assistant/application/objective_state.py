@@ -170,6 +170,13 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
         }
 
     if resource and _CREATE_PATTERN.search(text):
+        if resource == "program" and not re.search(r"\b(?:vaci[oa]|plantilla|sin (?:planes|comidas)|solo (?:el )?nombre)\b", text):
+            return {
+                "objective": "create_reviewable_program_proposal",
+                "expected_outcome": "nutrition_proposal",
+                "resource": resource,
+                "action": "create",
+            }
         if resource == "dailyplan":
             return {
                 "objective": "create_reviewable_dailyplan_proposal",

@@ -26,6 +26,9 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from ai_assistant.models import AIPreparedAction
+from notas.application.ai_intake.capability_scenarios import PATCH_CASES
+from notas.application.ai_intake.evaluation_artifacts import capture_review_artifacts
+from notas.application.ai_intake.program_scenarios import PROGRAM_SCENARIOS
 from notas.application.ai_intake.evaluation_dataset import evaluate_assistant_task_dataset
 from notas.application.ai_intake.evaluation_quality import grade_validation_reports
 from notas.application.ai_intake.message_feedback import summarize_message_feedback
@@ -64,7 +67,7 @@ DEFAULT_LAB_SCENARIOS = (
     "comida_450_kcal",
     "reemplazo_alimento_200g",
     "plan_2400_distribucion_30_50_20",
-)
+) + tuple(case[0] for case in PATCH_CASES) + PROGRAM_SCENARIOS
 
 _CATALOG_ROW_PATTERN = re.compile(
     r"^\| (?P<id>(?:PR|F|M|DP|PG|C|X|A)-\d{2}) "
@@ -93,6 +96,8 @@ _CHECK_DIAGNOSTIC_DOMAIN = {
     "card_pacing": "guardrail_policy",
     "usage_observability": "observability",
     "state_mutation_boundary": "state_mutation",
+    "prepared_patch_exact": "operation_correctness",
+    "program_proposal_complete": "operation_correctness",
 }
 
 _CREDIT_BLOCK_REASONS = {
@@ -195,7 +200,7 @@ def run_evaluation_lab(
         "prepared_actions_deleted": 0,
         "retained_artifact_ids": [],
     }
-    before_artifacts = _review_artifact_ids(user)
+    created_artifacts = {"nutrition_proposals": set(), "prepared_actions": set()}
     if live and ready_keys:
         try:
             credit_context = (
@@ -203,7 +208,7 @@ def run_evaluation_lab(
                 if charge_user_credits
                 else override_settings(AI_ASSISTANT_CREDITS_ENABLED=False)
             )
-            with credit_context:
+            with credit_context, capture_review_artifacts(user) as created_artifacts:
                 for repetition in range(1, int(repetitions) + 1):
                     repetition_run_id = (
                         validation_run_id
@@ -220,7 +225,7 @@ def run_evaluation_lab(
                     )
         finally:
             if cleanup_review_artifacts:
-                cleanup = _cleanup_new_review_artifacts(user=user, before=before_artifacts)
+                cleanup = _cleanup_new_review_artifacts(user=user, created=created_artifacts)
 
     diagnostics = _build_diagnostics(
         preflight=preflight,
@@ -336,6 +341,8 @@ def _scenario_preflight(scenario: Any, *, ground_truth: Mapping[str, Any]) -> di
     solver_candidates = ground_truth["solver_candidates"]
     scenario_truth = ground_truth["scenarios"].get(scenario.key, {})
     for requirement in scenario.fixture_requirements:
+        if requirement == "capability_fixture" and scenario_truth.get("missing_fixture_fields"):
+            failures.append({"requirement": requirement, "reason": "missing:" + ",".join(scenario_truth["missing_fixture_fields"])})
         if requirement == "owned_dailyplan" and not scenario_truth.get("context_dailyplan_id"):
             failures.append({"requirement": requirement, "reason": "no_owned_dailyplan"})
         elif requirement == "solver_candidates" and not solver_candidates["total_eligible_count"]:
@@ -461,6 +468,8 @@ def _build_diagnostics(
                     status = str(tool_result.get("status") or "")
                     if status in {"", "ok"}:
                         continue
+                    if result.scenario.expected_tool_errors.get(str(tool_result.get("tool_name") or "")) == status:
+                        continue
                     code = " ".join(
                         str(tool_result.get(key) or "")
                         for key in ("error_code", "code", "error_message", "message")
@@ -529,13 +538,9 @@ def _review_artifact_ids(user: Any) -> dict[str, set[int]]:
     }
 
 
-def _cleanup_new_review_artifacts(*, user: Any, before: Mapping[str, set[int]]) -> dict[str, Any]:
-    proposal_ids = set(
-        NutritionProposal.objects.filter(created_by=user).values_list("id", flat=True)
-    ).difference(before.get("nutrition_proposals", set()))
-    action_ids = set(
-        AIPreparedAction.objects.filter(user=user).values_list("id", flat=True)
-    ).difference(before.get("prepared_actions", set()))
+def _cleanup_new_review_artifacts(*, user: Any, created: Mapping[str, set[int]]) -> dict[str, Any]:
+    proposal_ids = created.get("nutrition_proposals", set())
+    action_ids = created.get("prepared_actions", set())
 
     deletable_proposals = NutritionProposal.objects.filter(
         created_by=user,

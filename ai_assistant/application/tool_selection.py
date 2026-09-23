@@ -707,6 +707,7 @@ def _work_progress_has_active_proposal_objective(
     work_progress: Mapping[str, Any],
 ) -> bool:
     return str(work_progress.get("active_objective") or "") in {
+        "create_reviewable_program_proposal",
         "create_reviewable_dailyplan_proposal",
         "create_dailyplan_proposal",
     }

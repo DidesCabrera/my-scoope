@@ -5549,7 +5549,8 @@
               {
                 "enum": [
                   "meal",
-                  "dailyplan"
+                  "dailyplan",
+                  "program"
                 ],
                 "type": "string"
               },
@@ -5683,6 +5684,7 @@
             "enum": [
               "meal",
               "dailyplan",
+              "program",
               "brief"
             ],
             "title": "Attachment Kind",
@@ -5772,6 +5774,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/ProposalMealData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "program": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalProgramData"
               },
               {
                 "type": "null"
@@ -6159,6 +6171,61 @@
         "title": "ProposalMealData",
         "type": "object"
       },
+      "ProposalProgramData": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalProgramDayData"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "duration_weeks": {
+            "title": "Duration Weeks",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "duration_weeks",
+          "days"
+        ],
+        "title": "ProposalProgramData",
+        "type": "object"
+      },
+      "ProposalProgramDayData": {
+        "properties": {
+          "dailyplan": {
+            "$ref": "#/components/schemas/ProposalDailyPlanData"
+          },
+          "day_number": {
+            "title": "Day Number",
+            "type": "integer"
+          },
+          "week_number": {
+            "title": "Week Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "week_number",
+          "day_number",
+          "dailyplan"
+        ],
+        "title": "ProposalProgramDayData",
+        "type": "object"
+      },
       "ProposalSubjectWarningData": {
         "properties": {
           "calculation_weight_label": {
@@ -6205,6 +6272,7 @@
             "enum": [
               "meal",
               "dailyplan",
+              "program",
               "brief"
             ],
             "title": "Attachment Kind",

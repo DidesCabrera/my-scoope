@@ -3,6 +3,17 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
+test("program proposals allow review of every week and day before application", async () => {
+  const program = await source("src/components/proposals/proposal-program-preview.tsx");
+  const detail = await source("src/app/proposals/[id].tsx");
+  assert.match(program, /length: program.duration_weeks/);
+  assert.match(program, /item.week_number === week && item.day_number === dayNumber/);
+  assert.match(program, /<ProposalMealCard/);
+  assert.match(program, /program.warnings/);
+  assert.match(detail, /<ProposalProgramPreview/);
+  assert.match(detail, /libraries\/programs/);
+});
+
 async function source(relativePath: string) {
   return readFile(path.resolve(process.cwd(), relativePath), "utf8");
 }

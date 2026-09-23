@@ -4,6 +4,7 @@ import re
 import unicodedata
 from dataclasses import dataclass, field, replace
 from typing import Iterable
+from notas.application.ai_intake.brief_value_normalization import clean_int as _clean_int, format_number as _format_number
 
 from ai_assistant.application.intake_semantics import (
     detect_activity_level as semantic_detect_activity_level,
@@ -163,6 +164,7 @@ BRIEF_FIELD_SOURCE_FIELDS = {
     "subject_source",
     "goal",
     "requested_entity",
+    "duration_weeks",
     "meals_per_day",
     "training_frequency",
     "calorie_target",
@@ -218,6 +220,7 @@ class NutritionBrief:
     requires_library_ppk_warning: bool = False
     goal: str | None = None
     requested_entity: str = "daily_plan"
+    duration_weeks: int | None = None
     meals_per_day: int | None = None
     training_frequency: int | None = None
     calorie_target: int | None = None
@@ -1388,6 +1391,7 @@ def serialize_brief(brief: NutritionBrief) -> dict:
         "requires_library_ppk_warning": brief.requires_library_ppk_warning,
         "goal": brief.goal,
         "requested_entity": brief.requested_entity,
+        "duration_weeks": brief.duration_weeks,
         "meals_per_day": brief.meals_per_day,
         "training_frequency": brief.training_frequency,
         "calorie_target": brief.calorie_target,
@@ -1424,6 +1428,10 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
     if not payload:
         return None
 
+    duration = payload.get("duration_weeks")
+    if duration is not None and (type(duration) is not int or not 1 <= duration <= 8):
+        raise ValueError("program_proposal_duration_must_be_1_to_8")
+
     return NutritionBrief(
         raw_prompt=str(payload.get("raw_prompt") or ""),
         subject_source=_clean_choice(payload.get("subject_source"), SUBJECT_SOURCE_CHOICES),
@@ -1431,6 +1439,7 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
         requires_library_ppk_warning=bool(payload.get("requires_library_ppk_warning")),
         goal=_clean_choice(payload.get("goal"), GOAL_CHOICES),
         requested_entity=_clean_choice(payload.get("requested_entity"), REQUESTED_ENTITY_CHOICES) or "daily_plan",
+        duration_weeks=duration,
         meals_per_day=_clean_int(payload.get("meals_per_day"), min_value=1, max_value=8),
         training_frequency=_clean_int(payload.get("training_frequency"), min_value=0, max_value=7),
         calorie_target=_clean_int(payload.get("calorie_target"), min_value=800, max_value=6000),
@@ -1500,6 +1509,7 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
         ),
         goal=incoming.goal or existing.goal or inferred.goal,
         requested_entity=requested_entity or "daily_plan",
+        duration_weeks=incoming.duration_weeks if incoming.duration_weeks is not None else existing.duration_weeks,
         meals_per_day=incoming.meals_per_day or existing.meals_per_day or inferred.meals_per_day,
         training_frequency=(
             incoming.training_frequency
@@ -2334,24 +2344,6 @@ def _clean_multi_choice(values: Iterable[object], choices: Iterable[tuple[str, s
         if value in allowed_values and value not in cleaned:
             cleaned.append(value)
     return cleaned
-
-
-def _format_number(value: float | None) -> str:
-    if value is None:
-        return ""
-    if float(value).is_integer():
-        return str(int(value))
-    return f"{value:.1f}"
-
-
-def _clean_int(value: object, *, min_value: int, max_value: int) -> int | None:
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        return None
-    if min_value <= parsed <= max_value:
-        return parsed
-    return None
 
 
 def _split_free_text_list(value: object) -> list[str]:

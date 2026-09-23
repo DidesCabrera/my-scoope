@@ -10,6 +10,20 @@ def parse_float(value: object) -> float | None:
         return None
 
 
+def clean_int(value: object, *, min_value: int, max_value: int) -> int | None:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if min_value <= parsed <= max_value else None
+
+
+def format_number(value: float | None) -> str:
+    if value is None:
+        return ""
+    return str(int(value)) if float(value).is_integer() else f"{value:.1f}"
+
+
 def clean_float(value: object, *, min_value: float, max_value: float) -> float | None:
     parsed = parse_float(value)
     if parsed is None or parsed < min_value or parsed > max_value:
