@@ -1,5 +1,7 @@
 """Assistant input contract for weekly requirements; no opaque instructions in notes."""
 
+from copy import deepcopy
+
 PROGRAM_SPECIFICATION_SCHEMA = {
     "type": "object", "additionalProperties": False,
     "description": "Complete weekly requirements. Ask whether protein uses measured or projected weight. Never infer a weight-loss guarantee. All limits are mandatory. Generate a linear weekly trajectory only with the user's agreement.",
@@ -35,3 +37,14 @@ PROGRAM_SPECIFICATION_SCHEMA = {
         }},
     },
 }
+
+
+def strict_program_specification_schema():
+    """Expose the same weekly contract through OpenAI's strict, nullable transport."""
+    schema = deepcopy(PROGRAM_SPECIFICATION_SCHEMA)
+    schema["type"] = ["object", "null"]
+    schema["required"] = list(schema["properties"])
+    for key in ("macro_distribution", "macro_tolerance_percent"):
+        field = schema["properties"][key]
+        field["type"] = [field["type"], "null"]
+    return schema

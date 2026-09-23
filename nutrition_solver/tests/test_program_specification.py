@@ -35,6 +35,13 @@ class ProgramSpecificationTests(SimpleTestCase):
         self.assertEqual(spec.weeks[-1].protein_min_g, 170)
         self.assertEqual(spec.weeks[-1].projected_weight_kg, 80)
 
+    def test_nullable_optional_provider_fields_preserve_default_contract(self):
+        data = example_spec()
+        data.update(macro_distribution=None, macro_tolerance_percent=None)
+        self.assertEqual(parse_program_specification(data), parse_program_specification(example_spec()))
+        data["macro_tolerance_percent"] = 0
+        self.assertEqual(parse_program_specification(data).macro_tolerance_percent, 0)
+
     def test_unknown_nonfinite_and_incomplete_rejected(self):
         for key, value in (("unknown", 1), ("fat_max_percent", float("nan")), ("protein_min_ppk", 3),
                            ("duration_weeks", True), ("weight_basis", "guess"), ("weeks", [])):

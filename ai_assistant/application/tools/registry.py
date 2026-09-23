@@ -7,6 +7,7 @@ from ai_assistant.application.tools.contracts import (
     AssistantToolRegistryError,
     AssistantToolSpec,
 )
+from ai_assistant.application.tools.program_schema import strict_program_specification_schema
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 from ai_assistant.application.tools.tool_spec_modules.actions import ACTIONS_TOOL_SPECS
 from ai_assistant.application.tools.tool_spec_modules.intake import INTAKE_TOOL_SPECS
@@ -106,6 +107,7 @@ def _strict_proposal_preferences_provider_schema() -> dict[str, Any]:
         },
         "meals_per_day": {**nullable_integer, "minimum": 1, "maximum": 8},
         "duration_weeks": {**nullable_integer, "minimum": 1, "maximum": 8},
+        "program_specification": strict_program_specification_schema(),
         "complexity_level": {
             "type": ["string", "null"],
             "enum": ["low", "medium", "high", None],

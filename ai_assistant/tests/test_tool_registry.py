@@ -140,6 +140,27 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         ):
             get_tool_spec("list_food_catalog")
 
+    def test_provider_receives_complete_strict_weekly_requirements(self):
+        from ai_assistant.application.tools.program_schema import PROGRAM_SPECIFICATION_SCHEMA
+
+        spec = next(item for item in list_provider_tool_specs() if item["name"] == TOOL_UPDATE_PROPOSAL_PREFERENCES)
+        weekly = spec["parameters"]["properties"]["updates"]["properties"]["program_specification"]
+        self.assertEqual(weekly["type"], ["object", "null"])
+        self.assertEqual(set(weekly["properties"]), set(PROGRAM_SPECIFICATION_SCHEMA["properties"]))
+        self.assertEqual(weekly["properties"]["duration_weeks"]["maximum"], 8)
+        self.assertEqual(PROGRAM_SPECIFICATION_SCHEMA["type"], "object")
+
+        def assert_strict(schema):
+            if "properties" in schema:
+                self.assertFalse(schema["additionalProperties"])
+                self.assertEqual(set(schema["required"]), set(schema["properties"]))
+                for child in schema["properties"].values():
+                    assert_strict(child)
+            if "items" in schema:
+                assert_strict(schema["items"])
+
+        assert_strict(spec["parameters"])
+
     def test_tool_spec_contract_requires_review_for_proposal_tools(self):
         with self.assertRaisesMessage(
             AssistantToolRegistryError,

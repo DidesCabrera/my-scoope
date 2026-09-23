@@ -100,7 +100,8 @@ def parse_program_specification(value):
         distribution = {key: number(item, key, .01, 99.99) for key, item in distribution.items()}
         if abs(sum(distribution.values()) - 100) > .01:
             raise ValueError("program_spec_macro_distribution_sum_invalid")
-    macro_tolerance = number(value.get("macro_tolerance_percent", 5), "macro_tolerance_percent", 0, 20)
+    macro_tolerance = value.get("macro_tolerance_percent")
+    macro_tolerance = number(5 if macro_tolerance is None else macro_tolerance, "macro_tolerance_percent", 0, 20)
     if distribution and distribution["fat"] * (1 - macro_tolerance / 100) > floats["fat_max_percent"]:
         raise ValueError("program_spec_macro_distribution_conflicts_fat_cap")
     rows = value.get("weeks")
