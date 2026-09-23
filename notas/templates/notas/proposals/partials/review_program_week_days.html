@@ -1,0 +1,46 @@
+<div class="program-week-child-card__days program-week-days-layout" role="list" aria-label="Días de la semana {{ week.week_number }}">
+  {% for day in week.days %}
+    <article
+      class="program-day-cell{% if day.dailyplan_card %} has-plan{% else %} is-empty{% endif %}"
+      role="listitem"
+      data-week-number="{{ week.week_number }}"
+      data-day-number="{{ day.day_number }}"
+      data-day-label="{{ day.day_label }}"
+      tabindex="0"
+      aria-expanded="false"
+      {% if day.dailyplan_card %}
+        data-slot-card-target="proposal-program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+        aria-controls="proposal-program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+        aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
+      {% else %}
+        aria-label="{{ day.day_label }}: sin plan diario"
+      {% endif %}
+    >
+      <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>
+      {% if day.dailyplan_card %}
+        <div class="program-day-cell__content">
+          <i data-lucide="clipboard-list" class="program-day-cell__icon" aria-hidden="true"></i>
+        </div>
+        <div class="program-day-cell__tooltip" role="tooltip">
+          <i data-lucide="clipboard-list" class="program-day-cell__tooltip-icon" aria-hidden="true"></i>
+          <span>{{ day.dailyplan.name }}</span>
+        </div>
+      {% endif %}
+    </article>
+  {% endfor %}
+</div>
+
+<div class="program-week-child-card__selected-cards js-program-week-selected-cards" aria-live="polite">
+  {% for day in week.days %}
+    {% if day.dailyplan_card %}
+      <section
+        id="proposal-program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+        class="program-day-selected-card js-program-slot-card"
+        hidden
+      >
+        <h4 class="program-day-selected-card__day-title">Semana {{ week.week_number }} ⋅ {{ day.day_label }}</h4>
+        {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_id=day.dailyplan_card.id dailyplan_card_class="program-day-selected-card__dailyplan" default_menu=True %}
+      </section>
+    {% endif %}
+  {% endfor %}
+</div>

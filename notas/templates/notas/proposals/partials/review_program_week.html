@@ -1,0 +1,21 @@
+{% if week.requirement_facts %}
+  <section class="proposal-review-card" aria-label="Objetivos nutricionales de Semana {{ week.week_number }}">
+    <div class="proposal-review-card-header">
+      <div>
+        <p class="proposal-review-eyebrow">Objetivos de Semana {{ week.week_number }}</p>
+        <h3 class="proposal-review-section-title">Referencia usada por el asistente</h3>
+      </div>
+      <i data-lucide="target" aria-hidden="true"></i>
+    </div>
+    <div class="proposal-review-kpis">
+      {% for fact in week.requirement_facts %}
+        <div class="proposal-review-kpi">
+          <span class="proposal-review-kpi-label">{{ fact.label }}</span>
+          <strong>{{ fact.value }}</strong>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% include "components/program_week_child_card.html" with program=program week=week can_edit=False proposal_readonly=True %}

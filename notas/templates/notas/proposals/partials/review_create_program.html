@@ -1,26 +1,115 @@
-<section class="proposal-review-card" aria-label="Programa semanal propuesto">
-  <h3>{{ vm.content.proposal_review.payload.program.name }}</h3>
-  {% with spec=vm.content.proposal_review.payload.program.nutrition_specification %}
-  {% if spec.weeks %}
-    <p>Proteína: {{ spec.protein_min_ppk }}–{{ spec.protein_max_ppk }} g/kg. Grasa máxima: {{ spec.fat_max_percent }}% de las calorías reales de cada día. Peso de referencia: {{ spec.weight_basis }}.</p>
-    <table><caption>Objetivos semanales; pesos proyectados, no mediciones</caption>
-    <thead><tr><th>Semana</th><th>kcal/día</th><th>Peso para proteína</th><th>Proteína diaria</th></tr></thead>
-    <tbody>{% for week in spec.weeks %}<tr><td>{{ week.week }}</td><td>{{ week.kcal|floatformat:0 }}</td><td>{{ week.reference_weight_kg|floatformat:2 }} kg</td><td>{{ week.protein_min_g|floatformat:1 }}–{{ week.protein_max_g|floatformat:1 }} g</td></tr>{% endfor %}</tbody></table>
-  {% endif %}
-  {% endwith %}
-  {% if vm.content.proposal_review.payload.program.warnings %}
-    <p>Advertencias que requieren revisión:</p>
-    <ul>{% for warning in vm.content.proposal_review.payload.program.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
-  {% endif %}
-  <p>{{ vm.content.proposal_review.payload.program.duration_weeks }} semanas completas. Revisa todos los días y sus cantidades antes de aprobar. El programa se guardará al aplicar la propuesta; su calendarización se realiza por separado.</p>
-  {% for day in vm.content.proposal_review.payload.program.days %}
-    <details class="proposal-review-card">
-      <summary>Semana {{ day.week_number }} · Día {{ day.day_number }} · {{ day.dailyplan.kpis.total_kcal|floatformat:0 }} kcal · P {{ day.dailyplan.kpis.protein|floatformat:1 }} g · C {{ day.dailyplan.kpis.carbs|floatformat:1 }} g · G {{ day.dailyplan.kpis.fat|floatformat:1 }} g</summary>
-      {% for item in day.dailyplan.meals %}
-        <h4>{{ item.hour|default:"" }} {{ item.meal.name }}</h4>
-        {% if item.note %}<p>{{ item.note }}</p>{% endif %}
-        <ul>{% for food in item.meal.foods %}<li>{{ food.food_name }}: {{ food.quantity|floatformat:1 }} g</li>{% endfor %}</ul>
+{% with program=vm.content.proposal_review.payload.program %}
+<section
+  class="proposal-program-preview page--program-detail"
+  data-page="program-proposal-review"
+  data-program-dailyplans="[]"
+  aria-label="Programa semanal propuesto"
+>
+  <section class="program-overview-section" aria-labelledby="proposal-program-title">
+    <section class="card-title main program-main-title-card">
+      <div class="card-title-comp">
+        <div class="main-title main-card">
+          <p class="card-title-eyebrow">
+            <i data-lucide="calendar" class="card-title-eyebrow__icon program" aria-hidden="true"></i>
+            <span>Programa propuesto</span>
+          </p>
+          <h2 id="proposal-program-title">{{ program.name }}</h2>
+          <p>Vista previa de solo lectura. Revisa su estructura y nutrición antes de aplicar.</p>
+
+          <div class="entity-indicators structural-indicators" aria-label="Estructura del programa propuesto">
+            <span class="structural-item">
+              <span class="structural-value">{{ program.duration_weeks }}</span>
+              <span class="structural-label program-structural-label">SEMANAS</span>
+            </span>
+            <span class="structural-divider"></span>
+            <span class="structural-item" aria-label="{{ program.filled_days_count }} planes diarios">
+              <span class="structural-value">{{ program.filled_days_count }}</span>
+              <i data-lucide="clipboard-list" class="structural-icon main" aria-hidden="true"></i>
+            </span>
+            <span class="structural-divider"></span>
+            <span class="structural-item" aria-label="{{ program.program_foods_count }} alimentos">
+              <span class="structural-value">{{ program.program_foods_count }}</span>
+              <i data-lucide="carrot" class="structural-icon main" aria-hidden="true"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {% include "components/program_metric_chart_program.html" with chart=program.program_chart modifier="program-chart-panel--detail" %}
+
+    {% if program.weeks|length > 1 %}
+      <section class="program-weeks-summary-section" aria-labelledby="proposal-program-weeks-summary-title">
+        <div class="title-section-panels program-weeks-title-section">
+          <h3 id="proposal-program-weeks-summary-title">Tabla de comparación entre semanas</h3>
+        </div>
+        {% include "components/program_week_panels.html" with panel_id="proposal-review" program=program weeks=program.weeks default_desktop=True default_mobile=True can_edit=False %}
+      </section>
+    {% endif %}
+  </section>
+
+  <hr>
+
+  <section class="program-board-shell" aria-labelledby="proposal-program-board-title">
+    <div class="detail-section-header dailyplan-detail__children-header program-board-header">
+      <div class="detail-section-heading home-section-title detail-dp">
+        <i data-lucide="calendar" class="home-section-header-icon program" aria-hidden="true"></i>
+        <h2 id="proposal-program-board-title">Planificación por semanas</h2>
+      </div>
+      <div class="entity-indicators structural-indicators">
+        <span class="structural-item">
+          <span class="structural-value">{{ program.duration_weeks }}</span>
+          <span class="structural-label program-structural-label">SEMANAS</span>
+        </span>
+      </div>
+    </div>
+
+    {% if program.weeks %}
+      <div class="panel-tabs panel-tabs--scroll program-week-tabs js-program-week-tabs" role="tablist" aria-label="Semanas del programa propuesto">
+        {% for week in program.weeks %}
+          <button
+            type="button"
+            id="proposal-program-week-tab-{{ week.week_number }}"
+            class="panel-tab program-week-tab js-program-week-tab{% if forloop.first %} is-active{% endif %}"
+            role="tab"
+            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+            aria-controls="proposal-program-week-panel-{{ week.week_number }}"
+            tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
+            data-target="proposal-program-week-panel-{{ week.week_number }}"
+          >
+            <span class="program-week-tab__label program-week-tab__label--desktop" aria-hidden="true">Semana {{ week.week_number }}</span>
+            <span class="program-week-tab__label program-week-tab__label--mobile" aria-hidden="true">S{{ week.week_number }}</span>
+          </button>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="program-board program-board--tabbed" aria-label="Detalle semanal del programa propuesto">
+      {% for week in program.weeks %}
+        <section
+          id="proposal-program-week-panel-{{ week.week_number }}"
+          class="program-week-panel js-program-week-panel{% if forloop.first %} is-active{% endif %}"
+          role="tabpanel"
+          aria-labelledby="proposal-program-week-tab-{{ week.week_number }}"
+          {% if not forloop.first %}hidden{% endif %}
+        >
+          {% include "notas/proposals/partials/review_program_week.html" with program=program week=week %}
+        </section>
       {% endfor %}
-    </details>
-  {% endfor %}
+    </div>
+  </section>
+
+  {% if program.warnings %}
+    <section class="proposal-review-card" aria-label="Advertencias del programa">
+      <p class="proposal-review-eyebrow">Advertencias que requieren revisión</p>
+      <ul>
+        {% for warning in program.warnings %}<li>{{ warning }}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <p class="proposal-review-actions-text">
+    Al aplicar, se guardará el programa con sus semanas, días, comidas y cantidades. La calendarización se realiza por separado.
+  </p>
 </section>
+{% endwith %}
