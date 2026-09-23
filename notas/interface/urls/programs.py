@@ -1,5 +1,6 @@
 from django.urls import path
 
+from notas.interface.views.program_nutrition import program_nutrition_settings
 from notas.interface.views.programs import (
     add_dailyplan_to_program,
     configure_program,
@@ -23,6 +24,7 @@ from notas.interface.views.programs import (
 )
 
 urlpatterns = [
+    path("programs/<int:pk>/nutrition/", program_nutrition_settings, name="program_nutrition_settings"),
     path("programs/", program_list, name="program_list"),
     path("programs/reorder/", program_list_reorder, name="program_list_reorder"),
     path("programs/bulk-delete/", program_list_bulk_delete, name="program_list_bulk_delete"),

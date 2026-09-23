@@ -25,6 +25,7 @@
           </p>
 
           <h1 id="program-detail-title">{{ vm.content.program.name }}</h1>
+          {% if vm.content.can_edit %}<a href="{% url 'program_nutrition_settings' vm.content.program.id %}">Configurar objetivos y peso proyectado por semana</a>{% endif %}
 
           <div class="entity-indicators structural-indicators">
             <span class="structural-item">

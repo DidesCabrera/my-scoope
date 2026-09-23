@@ -198,7 +198,8 @@ TOOL_READ_PROPOSAL: AssistantToolSpec(
         description=(
             "Read one NutritionProposal visible to the authenticated user. "
             "When the user explicitly asks to inspect a proposal id or names read_proposal, request this tool; "
-            "do not claim that tools are unavailable when it is present in the allowlist."
+            "do not claim that tools are unavailable when it is present in the allowlist. "
+            "For a program, use week_number and optional day_number to inspect actual meals, quantities and verified requirements in bounded pages."
         ),
         category=AssistantToolCategory.READ,
         risk_level=AssistantToolRiskLevel.LOW,
@@ -214,6 +215,8 @@ TOOL_READ_PROPOSAL: AssistantToolSpec(
                     "type": "integer",
                     "description": "NutritionProposal ID to read.",
                 },
+                "week_number": {"type": "integer", "minimum": 1, "maximum": 8},
+                "day_number": {"type": "integer", "minimum": 1, "maximum": 7},
             },
         },
     ),

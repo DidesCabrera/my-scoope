@@ -124,7 +124,7 @@ def _apply_style_preference_updates(
 
 def apply_proposal_preferences_to_brief(brief: NutritionBrief, proposal_preferences: dict) -> NutritionBrief:
     fields = (
-        "goal", "requested_entity", "duration_weeks", "meals_per_day", "energy_adjustment", "complexity_level",
+        "goal", "requested_entity", "duration_weeks", "program_specification", "meals_per_day", "energy_adjustment", "complexity_level",
         "calorie_target", "protein_target", "carb_target", "fat_target",
         "protein_per_kg_target", "macro_distribution", "notes",
     )
@@ -140,7 +140,7 @@ def apply_proposal_preferences_to_brief(brief: NutritionBrief, proposal_preferen
 
 def apply_nutrition_brief_patch(brief: NutritionBrief, patch: dict, *, default_source: str) -> NutritionBrief:
     allowed_fields = {
-        "subject_source", "ppk_weight_source", "goal", "requested_entity", "duration_weeks", "meals_per_day",
+        "subject_source", "ppk_weight_source", "goal", "requested_entity", "duration_weeks", "program_specification", "meals_per_day",
         "energy_adjustment", "calorie_target", "protein_target", "carb_target", "fat_target",
         "protein_per_kg_target", "macro_distribution", "notes",
     }
@@ -159,6 +159,13 @@ def _replace_brief_fields(
 ) -> NutritionBrief:
     if not updates:
         return brief
+    if updates.get("program_specification"):
+        from nutrition_solver.application.program_specification import parse_program_specification
+        spec = parse_program_specification(updates["program_specification"]).as_dict()
+        updates = {**updates, "program_specification": spec, "duration_weeks": spec["duration_weeks"],
+                   "meals_per_day": spec["meals_per_day"], "requested_entity": "program"}
+        updates.update(calorie_target=None, protein_target=None, carb_target=None, fat_target=None,
+                       protein_per_kg_target=None, macro_distribution={})
     normalized_updates: dict[str, object] = {}
     list_fields = {"notes", "style_preferences", "excluded_foods", "preferred_foods", "allergies_or_intolerances"}
     for field_name, value in updates.items():

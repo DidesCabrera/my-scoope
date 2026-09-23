@@ -284,6 +284,8 @@ def run_evaluation_lab(
 
 
 def _build_ground_truth(*, user: Any, scenarios: Mapping[str, Any]) -> dict[str, Any]:
+    from notas.application.culinary_library import load_culinary_candidates
+    culinary, _ = load_culinary_candidates(user=user)
     candidates = list_solver_food_candidates(user, limit=250)
     role_counts = Counter(candidate.role for candidate in candidates.candidates)
     solver_450 = _solver_450_probe(candidates.candidates)
@@ -292,6 +294,7 @@ def _build_ground_truth(*, user: Any, scenarios: Mapping[str, Any]) -> dict[str,
         for key, scenario in scenarios.items()
     }
     return {
+        "culinary_library": {"variants": len(culinary), "families": len({c.family for c in culinary})},
         "libraries": {
             "foods": food_library_queryset(user).count(),
             "meals": meal_library_queryset(user).count(),
@@ -347,6 +350,8 @@ def _scenario_preflight(scenario: Any, *, ground_truth: Mapping[str, Any]) -> di
             failures.append({"requirement": requirement, "reason": "no_owned_dailyplan"})
         elif requirement == "solver_candidates" and not solver_candidates["total_eligible_count"]:
             failures.append({"requirement": requirement, "reason": "no_solver_enabled_foods"})
+        elif requirement == "culinary_library" and not ground_truth.get("culinary_library", {}).get("variants"):
+            failures.append({"requirement": requirement, "reason": "no_validated_culinary_variants"})
         elif requirement == "solver_450_feasible":
             probe = ground_truth["solver_450_probe"]
             if not probe.get("feasible"):

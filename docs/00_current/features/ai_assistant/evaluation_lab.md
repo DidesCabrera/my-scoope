@@ -3,6 +3,38 @@
 Estado: activo  
 Versión: `ai_assistant.evaluation_lab.v2`
 
+## Escenario culinario progresivo de ocho semanas
+
+`programa_culinario_progresivo_8_semanas` comprueba el contenido persistido de
+56 días, no solamente que el asistente invoque una herramienta. Requiere una
+biblioteca culinaria visible y vigente para la cuenta elegida. Después de aplicar
+las migraciones, se puede preparar una biblioteca privada de inicio con:
+
+```sh
+python manage.py seed_culinary_starter --user-id <cuenta-de-pruebas>
+python manage.py evaluate_ai_assistant_lab --live --user-id <cuenta-de-pruebas> \
+  --scenario programa_culinario_progresivo_8_semanas --keep-artifacts --fail-on-regression
+```
+
+El sembrado es idempotente, usa exclusivamente alimentos existentes y no declara
+validación humana. Las propuestas retenidas permanecen pendientes de aprobación;
+el laboratorio no aplica ni calendariza el programa y no descuenta créditos del
+usuario, aunque las llamadas al proveedor tienen costo de API. El uso de datos de
+la cuenta y el consumo del proveedor requieren autorización.
+
+Este flujo se activa con `program_specification`: objetivos semanales, referencia
+de peso medida o proyectada, intervalo PPK, techo diario de grasa y diversidad.
+Las solicitudes antiguas sin esa especificación conservan el generador anterior;
+este despliegue no significa que todas las solicitudes ya usen el motor culinario.
+Un catálogo insuficiente, evidencia desactualizada o tiempo de búsqueda agotado
+deben quedar como fallos explícitos, sin relajar los límites pedidos.
+
+La revisión exige verificar combinaciones y porciones además de los controles
+numéricos. Un resultado automático correcto no certifica calidad culinaria ni
+preparación para lanzamiento. La configuración avanzada manual de un programa
+guarda supuestos y marca su necesidad de revalidación: no modifica el peso medido
+ni recalcula automáticamente las comidas existentes.
+
 ## Propósito
 
 El laboratorio permite evaluar el asistente sin depender de la interfaz web y

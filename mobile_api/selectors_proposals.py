@@ -178,7 +178,8 @@ def _proposal_dailyplan_payload(value) -> dict | None:
 def _proposal_program_payload(value) -> dict | None:
     if not isinstance(value, dict):
         return None
-    return {"name": value["name"], "duration_weeks": value["duration_weeks"], "warnings": value.get("warnings", []), "days": [
+    return {"name": value["name"], "duration_weeks": value["duration_weeks"], "warnings": value.get("warnings", []),
+            "nutrition_specification": value.get("nutrition_specification") or None, "days": [
         {"week_number": day["week_number"], "day_number": day["day_number"],
          "dailyplan": _proposal_dailyplan_payload(day["dailyplan"])} for day in value["days"]
     ]}

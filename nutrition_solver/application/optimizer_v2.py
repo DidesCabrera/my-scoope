@@ -104,6 +104,8 @@ def solve_optimization_problem(
     *,
     backend: OptimizationBackend | str = OptimizationBackend.HEURISTIC_V2,
 ) -> OptimizationPlanResultV2:
+    from nutrition_solver.application.hard_validation import validate_constraint_contract
+    validate_constraint_contract(problem)
     selected_backend = OptimizationBackend(backend)
     if selected_backend == OptimizationBackend.CP_SAT_V1:
         return _solve_cp_sat(problem, forbidden_selections=())
@@ -117,6 +119,9 @@ def solve_optimization_alternatives(
     backend: OptimizationBackend | str = OptimizationBackend.CP_SAT_V1,
 ) -> OptimizationAlternativesV2:
     """Return distinct selected-food compositions ordered by solver objective."""
+
+    from nutrition_solver.application.hard_validation import validate_constraint_contract
+    validate_constraint_contract(problem)
 
     selected_backend = OptimizationBackend(backend)
     requested = max(1, min(int(count), 10))

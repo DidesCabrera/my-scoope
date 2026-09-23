@@ -197,6 +197,7 @@ class DomainModelBoundaryTests(TestCase):
             DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG,
             {
                 "identity": "notas.domain.model_modules.identity",
+                "culinary_library": "notas.domain.model_modules.culinary",
                 "auth_integration": "notas.domain.model_modules.auth_integration",
                 "sharing": "notas.domain.model_modules.sharing",
                 "comparisons": "notas.domain.model_modules.comparisons",

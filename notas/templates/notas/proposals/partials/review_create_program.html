@@ -1,5 +1,13 @@
 <section class="proposal-review-card" aria-label="Programa semanal propuesto">
   <h3>{{ vm.content.proposal_review.payload.program.name }}</h3>
+  {% with spec=vm.content.proposal_review.payload.program.nutrition_specification %}
+  {% if spec.weeks %}
+    <p>Proteína: {{ spec.protein_min_ppk }}–{{ spec.protein_max_ppk }} g/kg. Grasa máxima: {{ spec.fat_max_percent }}% de las calorías reales de cada día. Peso de referencia: {{ spec.weight_basis }}.</p>
+    <table><caption>Objetivos semanales; pesos proyectados, no mediciones</caption>
+    <thead><tr><th>Semana</th><th>kcal/día</th><th>Peso para proteína</th><th>Proteína diaria</th></tr></thead>
+    <tbody>{% for week in spec.weeks %}<tr><td>{{ week.week }}</td><td>{{ week.kcal|floatformat:0 }}</td><td>{{ week.reference_weight_kg|floatformat:2 }} kg</td><td>{{ week.protein_min_g|floatformat:1 }}–{{ week.protein_max_g|floatformat:1 }} g</td></tr>{% endfor %}</tbody></table>
+  {% endif %}
+  {% endwith %}
   {% if vm.content.proposal_review.payload.program.warnings %}
     <p>Advertencias que requieren revisión:</p>
     <ul>{% for warning in vm.content.proposal_review.payload.program.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
@@ -10,6 +18,7 @@
       <summary>Semana {{ day.week_number }} · Día {{ day.day_number }} · {{ day.dailyplan.kpis.total_kcal|floatformat:0 }} kcal · P {{ day.dailyplan.kpis.protein|floatformat:1 }} g · C {{ day.dailyplan.kpis.carbs|floatformat:1 }} g · G {{ day.dailyplan.kpis.fat|floatformat:1 }} g</summary>
       {% for item in day.dailyplan.meals %}
         <h4>{{ item.hour|default:"" }} {{ item.meal.name }}</h4>
+        {% if item.note %}<p>{{ item.note }}</p>{% endif %}
         <ul>{% for food in item.meal.foods %}<li>{{ food.food_name }}: {{ food.quantity|floatformat:1 }} g</li>{% endfor %}</ul>
       {% endfor %}
     </details>

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from nutrition_solver.application.contracts import OptimizationStatus
+from nutrition_solver.application.hard_validation import hard_constraint_violations
 from nutrition_solver.application.optimizer_v2 import OptimizationPlanResultV2
 from nutrition_solver.application.problem_v2 import OptimizationProblemV2
 
@@ -91,10 +92,11 @@ def assess_optimization_quality(
     if missing_capability_profiles:
         warnings.append(f"profiles_missing_functional_roles:{missing_capability_profiles}")
 
+    violations = hard_constraint_violations(problem, result)
     return OptimizationQualityReport(
         nutritional_score=nutritional_score,
         functional_score=functional_score,
-        hard_constraints_satisfied=True,
+        hard_constraints_satisfied=not violations,
         explanations=tuple(explanations),
-        warnings=tuple(warnings),
+        warnings=tuple(warnings) + violations,
     )

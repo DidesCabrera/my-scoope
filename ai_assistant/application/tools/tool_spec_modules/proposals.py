@@ -8,6 +8,21 @@ from ai_assistant.application.tools.contracts import (
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
 PROPOSALS_TOOL_SPECS = {
+TOOL_REVISE_CULINARY_PROGRAM: AssistantToolSpec(
+    name=TOOL_REVISE_CULINARY_PROGRAM,
+    description="Create a NEW reviewable version of an existing culinary program, changing only the specified weeks and meal positions (one-based). Preserve every other meal and all nutritional requirements. Optional avoid_food_ids applies only to the replacement meals. Never applies changes or modifies the source proposal.",
+    category=AssistantToolCategory.PROPOSAL, risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+    allowed_intents=("iterate_proposal",),
+    input_schema={"type": "object", "additionalProperties": False,
+                  "required": ["proposal_id", "week_numbers", "meal_numbers"], "properties": {
+                      "proposal_id": {"type": "integer", "minimum": 1},
+                      "week_numbers": {"type": "array", "minItems": 1, "maxItems": 8,
+                                       "items": {"type": "integer", "minimum": 1, "maximum": 8}},
+                      "meal_numbers": {"type": "array", "minItems": 1, "maxItems": 6,
+                                       "items": {"type": "integer", "minimum": 1, "maximum": 6}},
+                      "avoid_food_ids": {"type": "array", "items": {"type": "integer", "minimum": 1}},
+                  }},
+),
 TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: AssistantToolSpec(
         name=TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
         description=(
@@ -187,7 +202,10 @@ TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS: AssistantToolSpec(
             "Create a reviewable DailyPlan proposal from the assistant's current draft objects: "
             "profile_draft, preference_draft and proposal_preferences. This tool composes a validated "
             "NutritionBrief internally before running the nutrition engine, so the LLM should prefer it "
-            "when those draft tool results are available. It never applies the proposal directly."
+            "when those draft tool results are available. For programs with progressive weekly targets, protein ranges, "
+            "fat caps or culinary variety, capture the complete program_specification with update_proposal_preferences first. "
+            "Do not store hard requirements only in notes. Program weight projections are assumptions, not measurements. "
+            "It never applies the proposal directly."
         ),
         category=AssistantToolCategory.PROPOSAL,
         risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,

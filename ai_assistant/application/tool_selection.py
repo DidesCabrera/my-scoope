@@ -96,6 +96,7 @@ _MEAL_PROPOSAL_TOOLS = {
     "create_nutrition_solver_meal_proposal",
 }
 _DAILYPLAN_PROPOSAL_TOOLS = {
+    "revise_culinary_program",
     "create_validated_dailyplan_proposal",
     "create_validated_dailyplan_build_proposal",
     "create_nutrition_engine_dailyplan_proposal",
@@ -210,6 +211,8 @@ def _select_intake_provider_tools(
             selected_names.add(
                 TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
             )
+            if resource == "program":
+                selected_names.update({"revise_culinary_program", TOOL_READ_PROPOSAL})
 
     if not expected_outcome and _requests_existing_product_operation(user_text):
         selected_names.add(TOOL_QUERY_WORKSPACE)

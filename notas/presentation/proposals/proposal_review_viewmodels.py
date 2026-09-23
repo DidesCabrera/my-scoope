@@ -255,7 +255,11 @@ def build_proposal_review_vm(
             str(issue.get("message")) for day in validation_summary.get("days", [])
             for issue in day.get("engine_validation", {}).get("issues", []) if issue.get("message")
         ))
-        simulation = {**simulation, "program": {**simulation["program"], "warnings": warnings}}
+        warnings.extend(validation_summary.get("warnings", []))
+        specification = _safe_dict(proposal.get("targets")).get("program_specification", {})
+        simulation = {**simulation, "program": {**simulation["program"], "warnings": warnings,
+                      "nutrition_specification": specification,
+                      "requirement_evidence": validation_summary.get("requirements", {})}}
 
     status = _safe_str(proposal.get("status"))
     intent_contract = get_proposal_intent_contract(intent)

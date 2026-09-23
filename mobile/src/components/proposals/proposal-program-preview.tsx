@@ -10,6 +10,8 @@ export function ProposalProgramPreview({ program, onOpenFood }: { program: Propo
   const [week, setWeek] = useState(1);
   const [dayNumber, setDayNumber] = useState(1);
   const day = program.days.find((item) => item.week_number === week && item.day_number === dayNumber);
+  const specification = program.nutrition_specification;
+  const target = specification?.weeks.find((item) => item.week === week);
   return (
     <View style={{ gap: tokens.spacing.md }}>
       <Card>
@@ -27,10 +29,19 @@ export function ProposalProgramPreview({ program, onOpenFood }: { program: Propo
         </View>
       </Card>
       {program.warnings?.map((warning) => <InlineNotice key={warning} tone="warning">{warning}</InlineNotice>)}
+      {target && specification ? <Card>
+        <Text style={textStyles.strong}>Objetivos de la semana {week}</Text>
+        <Text style={textStyles.body}>{Math.round(target.kcal)} kcal/día · Proteína {target.protein_min_g.toFixed(1)}–{target.protein_max_g.toFixed(1)} g/día</Text>
+        <Text style={textStyles.body}>{specification.protein_min_ppk}–{specification.protein_max_ppk} g/kg · Grasa máxima {specification.fat_max_percent}% de las calorías reales de cada día</Text>
+        <Text style={textStyles.muted}>Peso de referencia: {target.reference_weight_kg} kg ({specification.weight_basis === "projected" ? "proyección, no medición" : "peso medido"}). Una proyección no garantiza un cambio de peso.</Text>
+      </Card> : null}
       {day ? <>
         <ProposalDailyPlanCard dailyplan={day.dailyplan} />
         {day.dailyplan.meals.map((item, index) => (
-          <ProposalMealCard key={index} eyebrow={`Comida ${index + 1}`} meal={item.meal} onOpenFood={onOpenFood} time={item.hour} />
+          <View key={index} style={{ gap: tokens.spacing.sm }}>
+            <ProposalMealCard eyebrow={`Comida ${index + 1}`} meal={item.meal} onOpenFood={onOpenFood} time={item.hour} />
+            {item.note ? <Text style={textStyles.muted}>{item.note}</Text> : null}
+          </View>
         ))}
       </> : null}
     </View>

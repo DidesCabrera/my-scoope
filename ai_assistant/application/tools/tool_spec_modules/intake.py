@@ -5,6 +5,7 @@ from ai_assistant.application.tools.contracts import (
     AssistantToolRiskLevel,
     AssistantToolSpec,
 )
+from ai_assistant.application.tools.program_schema import PROGRAM_SPECIFICATION_SCHEMA
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
 INTAKE_TOOL_SPECS = {
@@ -168,6 +169,7 @@ TOOL_UPDATE_PROPOSAL_PREFERENCES: AssistantToolSpec(
                         },
                         "meals_per_day": {"type": "integer", "minimum": 1, "maximum": 8},
                         "duration_weeks": {"type": "integer", "minimum": 1, "maximum": 8, "description": "Complete program duration, from one to eight weeks."},
+                        "program_specification": PROGRAM_SPECIFICATION_SCHEMA,
                         "complexity_level": {
                             "type": "string",
                             "enum": ["low", "medium", "high"],

@@ -242,6 +242,8 @@ def build_solver_food_profile(
     }
     for value_key, feature_key in feature_map.items():
         value = values.get(value_key)
+        if value_key == "meal_affinities" and isinstance(value, (list, tuple)):
+            value = ["main" if item == "lunch" else item for item in value]
         if value in (None, "", [], ()) or value == "unknown":
             continue
         features.append(
@@ -321,8 +323,6 @@ def _infer_solver_role(food: Food) -> str:
     fat = float(food.fat)
     kcal = float(food.total_kcal)
 
-    if kcal <= 80 and fat <= 3 and protein <= 6:
-        return "vegetable"
     if fat >= protein and fat >= carbs and fat >= 8:
         return "fat"
     if protein >= carbs and protein >= fat:

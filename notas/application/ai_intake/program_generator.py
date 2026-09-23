@@ -20,6 +20,9 @@ from notas.domain.models import NutritionProposal, NutritionProposalAuditEvent
 
 
 def create_weekly_program_proposal(*, user, brief):
+    if brief.program_specification:
+        from notas.application.ai_intake.culinary_program import build_culinary_program
+        return build_culinary_program(user=user, brief=brief)
     duration = brief.duration_weeks
     if type(duration) is not int or not 1 <= duration <= 8:
         raise ValueError("program_proposal_duration_must_be_1_to_8")
@@ -76,6 +79,13 @@ def program_proposal_tool_summary(proposal):
     """Keep 56-day evidence in storage; send the model a bounded, truthful summary."""
     program = proposal.proposed_payload["program"]
     validation = proposal.validation_summary
+    if "requirements" in validation:
+        return {"id": proposal.pk, "title": proposal.title, "summary": proposal.summary,
+                "status": proposal.status, "proposal_type": "program", "targets": proposal.targets,
+                "day_count": len(program["days"]), "variety": validation["variety"],
+                "warnings": validation["warnings"], "all_days_validated": validation["requirements"]["valid"],
+                "weekly_mean_kcal": validation["requirements"]["weekly_mean_kcal"],
+                "applied": False, "full_content_available_in_proposal_review": True}
     warnings = list(dict.fromkeys(str(issue["message"]) for day in validation["days"]
         for issue in day["engine_validation"].get("issues", []) if issue.get("message")))
     totals = [day["dailyplan"]["kpis"] for day in validation["simulation"]["program"]["days"]]

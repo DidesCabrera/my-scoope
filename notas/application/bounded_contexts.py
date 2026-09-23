@@ -303,10 +303,11 @@ APPLICATION_CONTEXT_DEPENDENCY_POLICIES: tuple[ApplicationContextDependencyPolic
     ),
     ApplicationContextDependencyPolicy(
         source_slug="domain_services",
-        allowed_dependency_slugs=("shared_kernel", "read_models", "proposal_review", "sharing"),
+        allowed_dependency_slugs=("shared_kernel", "read_models", "proposal_review", "sharing", "nutrition_engine"),
         rationale=(
             "Commands and services may coordinate shared contracts, optimized "
-            "reads and proposal applicators."
+            "reads and proposal applicators, and reuse pure nutrition-engine structures "
+            "for independent culinary validation without importing chat orchestration."
         ),
     ),
     ApplicationContextDependencyPolicy(

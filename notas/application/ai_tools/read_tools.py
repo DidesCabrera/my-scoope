@@ -396,7 +396,11 @@ def _read_proposal_data(user, proposal_id: int) -> dict:
     }
 
 
-def read_proposal_tool(user, proposal_id: int):
+def read_proposal_tool(user, proposal_id: int, week_number: int | None = None, day_number: int | None = None):
+    if week_number is not None or day_number is not None:
+        from notas.application.ai_tools.program_tools import inspect_program_proposal
+        return run_ai_tool(inspect_program_proposal, user, proposal_id,
+                           week_number=week_number, day_number=day_number, user=user)
     return run_ai_tool(
         _read_proposal_data,
         user,

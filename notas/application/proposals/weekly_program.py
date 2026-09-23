@@ -39,7 +39,15 @@ def apply_approved_program_proposal(*, user, proposal):
     current = simulate_proposal_payload(user, stored.proposed_payload).as_dict()
     if current != stored.validation_summary.get("simulation"):
         raise ValueError("program_proposal_changed_since_review")
+    if "program_specification" in stored.targets:
+        from notas.application.services.nutrition.culinary_validation import revalidate_culinary_proposal
+        revalidate_culinary_proposal(user=user, proposal=stored)
     program = create_weekly_program(user=user, name=parsed.name, duration_weeks=parsed.duration_weeks).program
+    if "program_specification" in stored.targets:
+        program.nutrition_specification = stored.targets["program_specification"]
+        program.culinary_provenance = {"catalog": stored.current_snapshot["culinary_catalog"],
+                                      "weeks": stored.current_snapshot["culinary_weeks"]}
+        program.save(update_fields=["nutrition_specification", "culinary_provenance"])
     for day in parsed.days:
         adapter = NutritionProposal(pk=stored.pk, status=NutritionProposal.STATUS_APPROVED,
             proposed_payload={"intent": "create_dailyplan", "dailyplan": day.dailyplan.as_dict()})

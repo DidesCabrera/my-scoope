@@ -222,6 +222,7 @@ class NutritionBrief:
     goal: str | None = None
     requested_entity: str = "daily_plan"
     duration_weeks: int | None = None
+    program_specification: dict = field(default_factory=dict)
     meals_per_day: int | None = None
     training_frequency: int | None = None
     calorie_target: int | None = None
@@ -1393,6 +1394,7 @@ def serialize_brief(brief: NutritionBrief) -> dict:
         "goal": brief.goal,
         "requested_entity": brief.requested_entity,
         "duration_weeks": brief.duration_weeks,
+        "program_specification": brief.program_specification,
         "meals_per_day": brief.meals_per_day,
         "training_frequency": brief.training_frequency,
         "calorie_target": brief.calorie_target,
@@ -1429,9 +1431,8 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
     if not payload:
         return None
 
-    duration = payload.get("duration_weeks")
-    if duration is not None and (type(duration) is not int or not 1 <= duration <= 8):
-        raise ValueError("program_proposal_duration_must_be_1_to_8")
+    from notas.application.ai_intake.program_brief import deserialize_program_fields
+    duration, program_specification = deserialize_program_fields(payload)
 
     return NutritionBrief(
         raw_prompt=str(payload.get("raw_prompt") or ""),
@@ -1441,6 +1442,7 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
         goal=_clean_choice(payload.get("goal"), GOAL_CHOICES),
         requested_entity=_clean_choice(payload.get("requested_entity"), REQUESTED_ENTITY_CHOICES) or "daily_plan",
         duration_weeks=duration,
+        program_specification=program_specification,
         meals_per_day=_clean_int(payload.get("meals_per_day"), min_value=1, max_value=8),
         training_frequency=_clean_int(payload.get("training_frequency"), min_value=0, max_value=7),
         calorie_target=_clean_int(payload.get("calorie_target"), min_value=800, max_value=6000),
@@ -1511,6 +1513,7 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
         goal=incoming.goal or existing.goal or inferred.goal,
         requested_entity=requested_entity or "daily_plan",
         duration_weeks=incoming.duration_weeks if incoming.duration_weeks is not None else existing.duration_weeks,
+        program_specification=incoming.program_specification or existing.program_specification,
         meals_per_day=incoming.meals_per_day or existing.meals_per_day or inferred.meals_per_day,
         training_frequency=(
             incoming.training_frequency
@@ -1937,6 +1940,10 @@ def required_proposal_fields(brief: NutritionBrief) -> list[str]:
     for.
     """
 
+    if brief.program_specification:
+        from nutrition_solver.application.program_specification import parse_program_specification
+        parse_program_specification(brief.program_specification)
+        return []
     required: list[str] = []
     # Explicit calories must not make the assistant invent an unstated goal.
     if brief.goal is None and brief.calorie_target is None:

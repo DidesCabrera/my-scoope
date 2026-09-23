@@ -200,6 +200,17 @@ def _ensure_user_message_is_valid_for_tool(
         raise ValueError("tool_user_message_required")
 
 
+def _reconcile_program_targets(proposal, payload):
+    if not proposal.get("program_specification"):
+        return
+    spec = proposal["program_specification"]
+    for field in ("calorie_target", "protein_target", "carb_target", "fat_target", "protein_per_kg_target", "macro_distribution"):
+        if not _missing(proposal.get(field)):
+            raise ValueError("program_spec_do_not_mix_weekly_and_scalar_targets")
+        payload.pop(field, None)
+    payload.update(requested_entity="program", duration_weeks=spec["duration_weeks"], meals_per_day=spec["meals_per_day"])
+
+
 def build_nutrition_brief_from_ai_drafts(
     *,
     profile_draft: Mapping[str, Any] | None = None,
@@ -252,6 +263,7 @@ def build_nutrition_brief_from_ai_drafts(
         "goal",
         "requested_entity",
         "duration_weeks",
+        "program_specification",
         "meals_per_day",
         "energy_adjustment",
         "calorie_target",
@@ -266,6 +278,7 @@ def build_nutrition_brief_from_ai_drafts(
 
     if _missing(payload.get("meals_per_day")) and not _missing(preferences.get("preferred_meals_per_day")):
         payload["meals_per_day"] = preferences.get("preferred_meals_per_day")
+    _reconcile_program_targets(proposal, payload)
 
     excluded_foods = _merge_text_lists(payload.get("excluded_foods"), preferences.get("avoided_foods"))
     excluded_foods = _merge_text_lists(excluded_foods, preferences.get("allergies_or_intolerances"))

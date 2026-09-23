@@ -5542,6 +5542,115 @@
         "title": "ProfileEnvelope",
         "type": "object"
       },
+      "ProgramNutritionSpecificationData": {
+        "properties": {
+          "calorie_tolerance_percent": {
+            "title": "Calorie Tolerance Percent",
+            "type": "number"
+          },
+          "duration_weeks": {
+            "title": "Duration Weeks",
+            "type": "integer"
+          },
+          "fat_max_percent": {
+            "title": "Fat Max Percent",
+            "type": "number"
+          },
+          "meals_per_day": {
+            "title": "Meals Per Day",
+            "type": "integer"
+          },
+          "measured_weight_kg": {
+            "title": "Measured Weight Kg",
+            "type": "number"
+          },
+          "protein_max_ppk": {
+            "title": "Protein Max Ppk",
+            "type": "number"
+          },
+          "protein_min_ppk": {
+            "title": "Protein Min Ppk",
+            "type": "number"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/ProgramWeekTargetData"
+            },
+            "title": "Weeks",
+            "type": "array"
+          },
+          "weight_basis": {
+            "enum": [
+              "measured",
+              "projected"
+            ],
+            "title": "Weight Basis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "duration_weeks",
+          "meals_per_day",
+          "weight_basis",
+          "measured_weight_kg",
+          "protein_min_ppk",
+          "protein_max_ppk",
+          "fat_max_percent",
+          "calorie_tolerance_percent",
+          "weeks"
+        ],
+        "title": "ProgramNutritionSpecificationData",
+        "type": "object"
+      },
+      "ProgramWeekTargetData": {
+        "properties": {
+          "kcal": {
+            "title": "Kcal",
+            "type": "number"
+          },
+          "projected_weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Weight Kg"
+          },
+          "protein_max_g": {
+            "title": "Protein Max G",
+            "type": "number"
+          },
+          "protein_min_g": {
+            "title": "Protein Min G",
+            "type": "number"
+          },
+          "reference_weight_kg": {
+            "title": "Reference Weight Kg",
+            "type": "number"
+          },
+          "week": {
+            "title": "Week",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "week",
+          "kcal",
+          "reference_weight_kg",
+          "protein_min_g",
+          "protein_max_g"
+        ],
+        "title": "ProgramWeekTargetData",
+        "type": "object"
+      },
       "ProposalAppliedResultData": {
         "properties": {
           "kind": {
@@ -6187,6 +6296,16 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "nutrition_specification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgramNutritionSpecificationData"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "warnings": {
             "items": {

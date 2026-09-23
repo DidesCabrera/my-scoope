@@ -5,6 +5,7 @@ from typing import Literal
 
 from ninja import Field, Schema
 
+from mobile_api.schema_domains.program_nutrition import ProgramNutritionSpecificationData
 from mobile_api.schema_domains.proposal_entities import (
     ProposalDailyPlanData,
     ProposalDailyPlanMealData,
@@ -80,6 +81,7 @@ class ProposalProgramData(Schema):
     duration_weeks: int
     warnings: list[str] = Field(default_factory=list)
     days: list[ProposalProgramDayData]
+    nutrition_specification: ProgramNutritionSpecificationData | None = None
 
 
 class ProposalDetailData(ProposalSummaryData):

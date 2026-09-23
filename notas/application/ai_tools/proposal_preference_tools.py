@@ -9,6 +9,7 @@ PROPOSAL_PREFERENCE_FIELDS = (
     "goal",
     "requested_entity",
     "duration_weeks",
+    "program_specification",
     "meals_per_day",
     "energy_adjustment",
     "complexity_level",
@@ -34,6 +35,7 @@ FIELD_LABELS = {
     "goal": "Objetivo",
     "requested_entity": "Tipo de propuesta",
     "duration_weeks": "Duración en semanas",
+    "program_specification": "Objetivos y restricciones por semana",
     "meals_per_day": "Comidas para esta propuesta",
     "energy_adjustment": "Ajuste energético",
     "complexity_level": "Complejidad de la propuesta",
@@ -191,6 +193,15 @@ def _update_proposal_preferences_data(
         raise ValueError("proposal_preferences_updates_required")
 
     draft = _normalize_proposal_preferences(current_preferences or {})
+    superseded_fields = []
+    scalar_targets = {"calorie_target", "protein_target", "carb_target", "fat_target", "protein_per_kg_target", "macro_distribution"}
+    if updates.get("program_specification"):
+        if scalar_targets.intersection(updates):
+            raise ValueError("program_spec_do_not_mix_weekly_and_scalar_targets")
+        for key in scalar_targets:
+            if key in draft:
+                superseded_fields.append(key)
+                draft.pop(key)
     incoming_sources = _clean_source_map(field_sources or {})
     changed_fields: list[str] = []
     rejected_fields: dict[str, str] = {}
@@ -209,9 +220,13 @@ def _update_proposal_preferences_data(
         changed_fields.append(field_name)
 
     proposal_preferences = _with_proposal_preferences_metadata(draft)
+    if proposal_preferences.get("program_specification"):
+        spec = proposal_preferences["program_specification"]
+        proposal_preferences.update(requested_entity="program", duration_weeks=spec["duration_weeks"], meals_per_day=spec["meals_per_day"])
     return {
         "proposal_preferences": proposal_preferences,
         "changed_fields": changed_fields,
+        "superseded_scalar_fields": superseded_fields,
         "rejected_fields": rejected_fields,
         "field_definitions": _field_definitions(),
         "nutrition_brief_patch": _build_nutrition_brief_patch(proposal_preferences),
@@ -386,6 +401,9 @@ def _normalize_field_name(value: Any) -> str:
 def _normalize_field_value(field_name: str, value: Any) -> Any:
     if _is_missing(value):
         return None
+    if field_name == "program_specification":
+        from nutrition_solver.application.program_specification import parse_program_specification
+        return parse_program_specification(value).as_dict()
     if field_name == "goal":
         return _normalize_goal(value)
     if field_name == "requested_entity":
