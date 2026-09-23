@@ -656,6 +656,56 @@ def _program_week_requirements(specification: dict[str, Any], week_number: int) 
     ]
 
 
+def _program_objective_groups(specification: dict[str, Any]) -> list[dict[str, Any]]:
+    if not specification:
+        return []
+
+    weeks = [_safe_dict(item) for item in _safe_list(specification.get("weeks")) if isinstance(item, dict)]
+    first_week = weeks[0] if weeks else {}
+    last_week = weeks[-1] if weeks else {}
+    duration_weeks = _safe_int_or_none(specification.get("duration_weeks")) or len(weeks)
+    weight_basis = "Proyectado por semana" if specification.get("weight_basis") == "projected" else "Peso medido"
+
+    planning = [
+        {"label": "Duración", "value": f"{duration_weeks} semanas"},
+        {"label": "Comidas diarias", "value": f"{_safe_number(specification.get('meals_per_day')):.0f}"},
+    ]
+    if first_week and last_week:
+        planning.extend([
+            {
+                "label": "Energía diaria",
+                "value": f"{_safe_number(first_week.get('kcal')):.0f} → {_safe_number(last_week.get('kcal')):.0f} kcal",
+                "hint": "Desde la primera hasta la última semana",
+            },
+            {
+                "label": "Peso de referencia",
+                "value": f"{_safe_number(first_week.get('reference_weight_kg')):.1f} → {_safe_number(last_week.get('reference_weight_kg')):.1f} kg",
+                "hint": weight_basis,
+            },
+        ])
+
+    nutrition = [
+        {
+            "label": "Proteína",
+            "value": f"{_safe_number(specification.get('protein_min_ppk')):.1f}–{_safe_number(specification.get('protein_max_ppk')):.1f} g/kg",
+        },
+        {"label": "Grasa máxima", "value": f"{_safe_number(specification.get('fat_max_percent')):.0f}% de las calorías"},
+        {"label": "Verduras", "value": f"Mín. {_safe_number(specification.get('vegetable_min_g')):.0f} g/día"},
+        {"label": "Frutas", "value": f"Mín. {_safe_number(specification.get('fruit_min_g')):.0f} g/día"},
+    ]
+    validation = [
+        {"label": "Tolerancia calórica", "value": f"±{_safe_number(specification.get('calorie_tolerance_percent')):.0f}%"},
+        {"label": "Tolerancia de macros", "value": f"±{_safe_number(specification.get('macro_tolerance_percent')):.0f}%"},
+        {"label": "Variedad de verduras", "value": f"{_safe_number(specification.get('weekly_vegetable_species')):.0f} especies/semana"},
+        {"label": "Variedad de frutas", "value": f"{_safe_number(specification.get('weekly_fruit_species')):.0f} especies/semana"},
+    ]
+    return [
+        {"title": "Planificación", "icon": "calendar-range", "facts": planning},
+        {"title": "Nutrición diaria", "icon": "activity", "facts": nutrition},
+        {"title": "Criterios de validación", "icon": "badge-check", "facts": validation},
+    ]
+
+
 def _build_program_review_vm(
     *,
     intent: str | None,
@@ -783,6 +833,7 @@ def _build_program_review_vm(
         "program_chart": build_program_metric_chart(weeks),
         "filled_days_count": sum(week["assigned_dailyplans_count"] for week in weeks),
         "program_foods_count": len(unique_program_foods),
+        "objective_groups": _program_objective_groups(specification),
         "warnings": list(dict.fromkeys(_safe_str(warning) for warning in _safe_list(program.get("warnings")) if warning)),
     }
 

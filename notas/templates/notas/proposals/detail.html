@@ -105,7 +105,9 @@
         </section>
       {% endif %}
 
-      {% if vm.content.proposal_review.payload.targets %}
+      {% if vm.content.proposal_review.payload.is_create_program %}
+        {% include "notas/proposals/partials/review_program_objectives.html" with program=vm.content.proposal_review.payload.program %}
+      {% elif vm.content.proposal_review.payload.targets %}
         <section class="proposal-review-card">
           <div class="proposal-review-card-header">
             <div>

@@ -130,7 +130,11 @@ class ProgramNutritionProposalTests(TestCase):
     def test_mobile_contract_and_web_review_expose_last_day(self):
         from mobile_api.schema_domains.proposals import ProposalDetailData
         from mobile_api.selectors_proposals import proposal_detail_payload
+        from nutrition_solver.application.program_specification import parse_program_specification
+        from nutrition_solver.tests.test_program_specification import example_spec
         proposal = self.proposal(8)
+        proposal.targets = {"program_specification": parse_program_specification(example_spec(8)).as_dict()}
+        proposal.save(update_fields=["targets"])
         payload = proposal_detail_payload(self.user, proposal.pk)
         parsed = ProposalDetailData.model_validate(payload)
         self.assertEqual(parsed.attachment_kind, "program")
@@ -147,7 +151,15 @@ class ProgramNutritionProposalTests(TestCase):
         self.assertContains(response, "Tabla de comparación entre planes diarios")
         self.assertContains(response, "program-week-foods-aggregation")
         self.assertContains(response, "proposal-program-week-8-day-7-card")
+        self.assertContains(response, "Parámetros usados para construir y validar la propuesta")
+        self.assertContains(response, "Energía diaria")
+        self.assertContains(response, "2500 → 1700 kcal")
+        self.assertContains(response, "Peso de referencia")
+        self.assertNotContains(response, "program_specification")
+        self.assertNotContains(response, "protein_max_g")
         self.assertNotContains(response, '<details class="proposal-review-card">')
+        proposal.targets = {}
+        proposal.save(update_fields=["targets"])
         apply_approved_program_proposal(user=self.user, proposal=proposal)
         result = ProposalDetailData.model_validate(proposal_detail_payload(self.user, proposal.pk))
         self.assertEqual(result.applied_result.kind, "program")
