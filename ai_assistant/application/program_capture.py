@@ -22,15 +22,51 @@ def requires_weekly_specification(request):
 
 
 def weekly_specification_missing(request, results):
+    """Missing also includes a captured reference contradicting an explicit directive."""
     if not requires_weekly_specification(request):
         return False
     for result in reversed(tuple(results)):
         if result.ok and result.tool_name == "update_proposal_preferences":
             draft = (result.data or {}).get("proposal_preferences") or {}
-            return not isinstance(draft.get("program_specification"), Mapping) or not draft["program_specification"]
+            return _specification_needs_capture(request, draft.get("program_specification"))
     workspace = (request.context.get("metadata") or {}).get("tool_oriented_intake") or {}
     drafts = workspace.get("current_drafts") or {}
-    return not (drafts.get("proposal_preferences") or {}).get("program_specification")
+    return _specification_needs_capture(request, (drafts.get("proposal_preferences") or {}).get("program_specification"))
+
+
+def explicit_protein_weight_basis(request):
+    """Recognize affirmative reference directives only, never infer from a trajectory."""
+    text = unicodedata.normalize("NFKD", request.user_message.content.lower())
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    bases = set()
+    for clause in re.split(r"[!?;\n]|(?<!\d)[.,](?!\d)", text):
+        # Negative, hypothetical and interrogative statements are not instructions.
+        if re.search(r"\b(?:no|nunca|evita|sin|si|debo|deberia|podria)\b|¿", clause):
+            continue
+        match = re.search(
+            r"\b(?:usa|usar|utiliza|utilizar)\s+(?:explicitamente\s+)?(?:el\s+)?peso "
+            r"(proyectado|medido|actual|registrado)\b.{0,100}?"
+            r"(?:como referencia (?:de |para (?:la )?)proteina|para (?:calcular (?:la )?)?(?:proteina|ppk))\b",
+            clause,
+        )
+        if match:
+            bases.add("projected" if match[1] == "proyectado" else "measured")
+    return next(iter(bases)) if len(bases) == 1 else None
+
+
+def _specification_needs_capture(request, specification):
+    if not isinstance(specification, Mapping) or not specification:
+        return True
+    expected = explicit_protein_weight_basis(request)
+    return expected is not None and specification.get("weight_basis") != expected
+
+
+def weekly_capture_instruction(request):
+    expected = explicit_protein_weight_basis(request)
+    suffix = (f" La referencia de proteína solicitada explícitamente exige weight_basis='{expected}'. "
+              "measured_weight_kg es el peso inicial medido, no una elección de la referencia proteica. "
+              "Corrige cualquier contradicción antes de crear la propuesta.") if expected else ""
+    return WEEKLY_CAPTURE_INSTRUCTION + suffix
 
 
 WEEKLY_CAPTURE_INSTRUCTION = (

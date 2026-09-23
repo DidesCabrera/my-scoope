@@ -194,10 +194,10 @@ class ExternalLLMOrchestrator:
             messages.append(LLMMessage(role="developer", content=self._context_prompt(request.context)))
         messages.extend(self._history_messages(request.history))
         messages.append(LLMMessage(role="user", content=request.user_message.content))
-        from ai_assistant.application.program_capture import WEEKLY_CAPTURE_INSTRUCTION, weekly_specification_missing
+        from ai_assistant.application.program_capture import weekly_capture_instruction, weekly_specification_missing
 
         if weekly_specification_missing(request, ()):
-            messages.append(LLMMessage(role="developer", content=WEEKLY_CAPTURE_INSTRUCTION))
+            messages.append(LLMMessage(role="developer", content=weekly_capture_instruction(request)))
 
         model_route = model_route or resolve_model_route_for_turn(request)
         max_output_tokens = _output_tokens_for_request(
@@ -1043,7 +1043,7 @@ class ExternalLLMOrchestrator:
                 results.append(AssistantToolResult(
                     tool_name=raw_tool_request.tool_name, request_id=raw_tool_request.request_id,
                     status=AssistantToolStatus.BLOCKED, error_code="weekly_program_specification_required",
-                    error_message="Captura los requisitos semanales en program_specification antes de crear; no uses el plan escalar ni notes.",
+                    error_message="Captura los requisitos semanales en program_specification sin contradecir la referencia de peso solicitada; no uses el plan escalar ni notes.",
                 ))
                 continue
             tool_request = _enrich_draft_tool_request_from_context(
