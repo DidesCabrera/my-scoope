@@ -75,7 +75,7 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
     fatGrams: item.fat_grams,
     foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })),
     id: item.id,
-    canOpen: true,
+    canOpen: item.detail_id != null,
     detailId: item.detail_id,
     relationId: item.relation_id,
     name: item.name,

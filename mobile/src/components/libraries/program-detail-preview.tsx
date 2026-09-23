@@ -95,7 +95,7 @@ function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return { id: item.id, detailId: item.detail_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
-export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, showHeading = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>; showHeading?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
+export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onOpenFood, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, showHeading = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onOpenFood?: (foodId: number) => void; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>; showHeading?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
   const router = useRouter();
   const liveMetricData = weekData ? programDailyMetricData([weekData]) : undefined;
   const filledDaysCount = weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6;
@@ -151,7 +151,11 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
       {hasPlans ? <>
         <SectionDivider spacing="compact" tone="soft" />
         <SectionHeading detail={`${weekData?.foods_count ?? weekData?.foods?.length ?? 28} alimentos`} title="Alimentos en esta semana" />
-        <FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
+        <FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} onOpenItem={(food) => {
+          if (food.detailId == null) return;
+          if (onOpenFood) onOpenFood(food.detailId);
+          else router.push(`/libraries/foods/${food.detailId}` as Href);
+        }} />
       </> : null}
     </View>
   );
@@ -163,15 +167,17 @@ type ProgramDetailPreviewProps = {
   onAddWeek?: () => void;
   onAssignDailyPlan?: (week: number, day: number) => void;
   onDuplicateWeek?: (week: number) => Promise<void>;
+  onOpenFood?: (foodId: number) => void;
   onRemoveDailyPlan?: (week: number, day: number) => Promise<void>;
   onRemoveWeek?: (week: number) => Promise<void>;
   onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>;
   onReorderWeeks?: (weeks: number[]) => Promise<void>;
   onHeaderVisibilityChange?: (visible: boolean) => void;
+  renderWeekContext?: (week: number) => ReactNode;
   scrollable?: boolean;
 };
 
-export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onHeaderVisibilityChange, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, scrollable = false }: ProgramDetailPreviewProps = {}) {
+export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onHeaderVisibilityChange, onOpenFood, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, renderWeekContext, scrollable = false }: ProgramDetailPreviewProps = {}) {
   const [activeWeek, setActiveWeek] = useState(1);
   const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
   const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : item ? [1] : [1, 2];
@@ -236,7 +242,8 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
         <SectionDivider spacing="wide" />
         <View style={styles.planningHeaderScreen}>{planningHeader}</View>
         {weekTabs}
-        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
+        {renderWeekContext?.(displayedActiveWeek)}
+        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenFood={onOpenFood} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
         {footer ? <View style={styles.footer}>{footer}</View> : null}
       </NestableScrollContainer>
     );
@@ -249,7 +256,9 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
       <View style={styles.planningSection}>
         {planningHeader}
         {weekTabs}
-        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
+        {renderWeekContext?.(displayedActiveWeek)}
+        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenFood={onOpenFood} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
+        {footer ? <View style={styles.footer}>{footer}</View> : null}
       </View>
     </NestableScrollContainer>
   );

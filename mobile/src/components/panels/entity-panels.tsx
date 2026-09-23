@@ -40,7 +40,7 @@ export type FoodPanelItem = NutritionPanelValues & {
 export type MealPanelItem = NutritionPanelValues & {
   canOpen?: boolean;
   completed?: boolean;
-  detailId?: number;
+  detailId?: number | null;
   foods: MealMenuFood[];
   id: string;
   name: string;

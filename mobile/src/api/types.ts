@@ -273,7 +273,7 @@ export type LibraryFoodPanelItem = {
 export type LibraryMealPanelItem = {
   id: string;
   relation_id: number | null;
-  detail_id: number;
+  detail_id: number | null;
   name: string;
   time: string | null;
   note: string;
