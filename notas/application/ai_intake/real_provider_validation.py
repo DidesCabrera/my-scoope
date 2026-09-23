@@ -16,20 +16,14 @@ from accounts.services.ai_credits import (
 from ai_assistant.application.chat_engines import ChatEngine, ChatEngineRequest
 from ai_assistant.application.llm_chat_engine import ExternalLLMChatEngine
 from ai_assistant.application.orchestrator import AssistantOrchestratorConfig, ExternalLLMOrchestrator
-from ai_assistant.models import AIUsageEvent
-from ai_assistant.models import AIPreparedAction
+from ai_assistant.models import AIPreparedAction, AIUsageEvent
 from notas.application.ai_intake.capability_scenarios import build_capability_scenarios, prepared_patch_check
-from notas.application.ai_intake.program_scenarios import build_program_scenarios, program_proposal_check
-from notas.domain.models import NutritionProposal
-from notas.application.ai_intake.validation_values import (
-    is_empty as _is_empty, compressed_values as _compressed_values,
-    is_subsequence as _is_subsequence, first_non_empty as _first_non_empty,
-)
 from notas.application.ai_intake.chat_engine import LLMNutritionIntakeChatEngine
 from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
     serialize_conversation,
 )
+from notas.application.ai_intake.program_scenarios import build_program_scenarios, program_proposal_check
 from notas.application.ai_intake.real_provider_behavior_checks import (
     evaluate_behavioral_surface,
     evaluate_response_repetition,
@@ -48,7 +42,20 @@ from notas.application.ai_intake.real_provider_lab_extensions import (
 from notas.application.ai_intake.validation_quality_checks import (
     build_validation_quality_check_specs,
 )
+from notas.application.ai_intake.validation_values import (
+    compressed_values as _compressed_values,
+)
+from notas.application.ai_intake.validation_values import (
+    first_non_empty as _first_non_empty,
+)
+from notas.application.ai_intake.validation_values import (
+    is_empty as _is_empty,
+)
+from notas.application.ai_intake.validation_values import (
+    is_subsequence as _is_subsequence,
+)
 from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
+from notas.domain.models import NutritionProposal
 
 OUTCOME_FIRST_ACTION_TYPE = "assistant.ai_nutrition_intake.outcome_first_validation"
 OUTCOME_FIRST_VALIDATION_VERSION = "outcome_first.live_validation.v1"

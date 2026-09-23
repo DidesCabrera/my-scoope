@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
 import hashlib
 import json
+from dataclasses import dataclass, field, replace
 from typing import Any, Mapping, Sequence
 
 from ai_assistant.models import AIPreparedAction
+from notas.application.ai_intake.capability_scenarios import specialize_capability_scenario
 from notas.application.queries.library_queries import (
     dailyplan_library_queryset,
     food_library_queryset,
     meal_library_queryset,
     program_library_queryset,
 )
-from notas.domain.models import NutritionProposal, Food, Meal, MealFood, DailyPlan, DailyPlanMeal, Program, ProgramDay
-from notas.application.ai_intake.capability_scenarios import specialize_capability_scenario
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, NutritionProposal, Program, ProgramDay
 
 
 @dataclass(frozen=True)

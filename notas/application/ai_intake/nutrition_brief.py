@@ -4,7 +4,6 @@ import re
 import unicodedata
 from dataclasses import dataclass, field, replace
 from typing import Iterable
-from notas.application.ai_intake.brief_value_normalization import clean_int as _clean_int, format_number as _format_number
 
 from ai_assistant.application.intake_semantics import (
     detect_activity_level as semantic_detect_activity_level,
@@ -34,9 +33,11 @@ from ai_assistant.application.response_style import format_bullet_items, format_
 from notas.application.ai_intake.brief_value_normalization import (
     clean_float as _clean_float,
 )
+from notas.application.ai_intake.brief_value_normalization import clean_int as _clean_int
 from notas.application.ai_intake.brief_value_normalization import (
     clean_macro_distribution as _clean_macro_distribution,
 )
+from notas.application.ai_intake.brief_value_normalization import format_number as _format_number
 from notas.application.ai_intake.brief_value_normalization import (
     parse_float as _parse_float,
 )

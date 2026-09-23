@@ -3,7 +3,12 @@
 from dataclasses import replace
 
 from ai_assistant.models import AIPreparedAction
-from notas.application.queries.library_queries import food_library_queryset, meal_library_queryset, dailyplan_library_queryset, program_library_queryset
+from notas.application.queries.library_queries import (
+    dailyplan_library_queryset,
+    food_library_queryset,
+    meal_library_queryset,
+    program_library_queryset,
+)
 
 
 def operation(action_key, target_id=None, **parameters):

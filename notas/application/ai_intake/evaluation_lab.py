@@ -28,10 +28,10 @@ from django.test.utils import override_settings
 from ai_assistant.models import AIPreparedAction
 from notas.application.ai_intake.capability_scenarios import PATCH_CASES
 from notas.application.ai_intake.evaluation_artifacts import capture_review_artifacts
-from notas.application.ai_intake.program_scenarios import PROGRAM_SCENARIOS
 from notas.application.ai_intake.evaluation_dataset import evaluate_assistant_task_dataset
 from notas.application.ai_intake.evaluation_quality import grade_validation_reports
 from notas.application.ai_intake.message_feedback import summarize_message_feedback
+from notas.application.ai_intake.program_scenarios import PROGRAM_SCENARIOS
 from notas.application.ai_intake.real_provider_validation import (
     RealProviderValidationReport,
     _specialize_scenario_for_user,

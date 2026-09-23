@@ -1,15 +1,17 @@
 """Generate complete nutrition programs for human review."""
 
-from copy import deepcopy
-from dataclasses import asdict, replace
 import hashlib
 import json
+from copy import deepcopy
+from dataclasses import asdict, replace
 
 from django.db import transaction
 
 from notas.application.ai_intake.dailyplan_generator import (
-    _build_dailyplan_payload_with_solver_summary, _build_validation_summary,
-    _build_subject_context_snapshot, build_dailyplan_target_plan,
+    _build_dailyplan_payload_with_solver_summary,
+    _build_subject_context_snapshot,
+    _build_validation_summary,
+    build_dailyplan_target_plan,
 )
 from notas.application.ai_intake.nutrition_brief import apply_subject_context
 from notas.application.dto.program_proposal import parse_program_payload

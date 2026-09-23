@@ -3,11 +3,21 @@
 from typing import Any
 
 from notas.application.dto.meal_plan_payloads import (
-    CREATE_DAILYPLAN_INTENT, CREATE_MEAL_INTENT, DEFAULT_PROPOSED_FOOD_UNIT,
-    MAX_PROPOSED_DAILYPLAN_MEALS, MIN_PROPOSED_DAILYPLAN_MEALS, MIN_PROPOSED_MEAL_FOODS,
-    ProposedDailyPlanDTO, ProposedDailyPlanMealDTO, ProposedDailyPlanPayloadDTO,
-    ProposedFoodItemDTO, ProposedMealDTO, ProposedMealPayloadDTO,
-    parse_proposed_dailyplan_payload, parse_proposed_food_item_payload, parse_proposed_meal_payload,
+    CREATE_DAILYPLAN_INTENT,
+    CREATE_MEAL_INTENT,
+    DEFAULT_PROPOSED_FOOD_UNIT,
+    MAX_PROPOSED_DAILYPLAN_MEALS,
+    MIN_PROPOSED_DAILYPLAN_MEALS,
+    MIN_PROPOSED_MEAL_FOODS,
+    ProposedDailyPlanDTO,
+    ProposedDailyPlanMealDTO,
+    ProposedDailyPlanPayloadDTO,
+    ProposedFoodItemDTO,
+    ProposedMealDTO,
+    ProposedMealPayloadDTO,
+    parse_proposed_dailyplan_payload,
+    parse_proposed_food_item_payload,
+    parse_proposed_meal_payload,
 )
 from notas.application.dto.program_proposal import ProposedProgramPayload, parse_program_payload
 

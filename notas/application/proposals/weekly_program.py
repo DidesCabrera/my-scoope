@@ -8,9 +8,9 @@ from django.utils import timezone
 from notas.application.dto.program_proposal import parse_program_payload
 from notas.application.dto.proposal_apply import build_create_dailyplan_apply_plan
 from notas.application.queries.proposal_simulation_queries import simulate_proposal_payload
-from notas.application.services.commands.proposal_apply_helpers import create_dailyplan_from_apply_plan
-from notas.application.services.commands.program_commands import create_weekly_program
 from notas.application.services.cache.program_summary import refresh_program_summary_cache
+from notas.application.services.commands.program_commands import create_weekly_program
+from notas.application.services.commands.proposal_apply_helpers import create_dailyplan_from_apply_plan
 from notas.domain.models import DailyPlan, Food, NutritionProposal, NutritionProposalAuditEvent, ProgramDay
 
 

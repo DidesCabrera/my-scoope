@@ -281,14 +281,14 @@ def build_nutrition_brief_from_ai_drafts(
         payload["complexity_level"] = "high" if _truthy_preference(preferences.get("variety_preference")) else payload.get("complexity_level")
 
     styles = list(payload.get("style_preferences") or [])
-    if _truthy_preference(preferences.get("cooking_time_preference")) and "low_prep" not in styles:
-        styles.append("low_prep")
-    if _truthy_preference(preferences.get("simplicity_preference")) and "simple" not in styles:
-        styles.append("simple")
-    if _truthy_preference(preferences.get("budget_preference")) and "budget" not in styles:
-        styles.append("budget")
-    if _truthy_preference(preferences.get("variety_preference")) and "varied" not in styles:
-        styles.append("varied")
+    for preference, style in (
+        ("cooking_time_preference", "low_prep"),
+        ("simplicity_preference", "simple"),
+        ("budget_preference", "budget"),
+        ("variety_preference", "varied"),
+    ):
+        if _truthy_preference(preferences.get(preference)) and style not in styles:
+            styles.append(style)
     payload["style_preferences"] = styles
 
     notes = _merge_text_lists(payload.get("notes"), proposal.get("notes"))
@@ -325,7 +325,10 @@ def _create_nutrition_engine_dailyplan_proposal_from_drafts_data(
         raise ValueError("nutrition_brief_has_pending_questions")
 
     if brief.requested_entity == "program":
-        from notas.application.ai_intake.program_generator import create_weekly_program_proposal, program_proposal_tool_summary
+        from notas.application.ai_intake.program_generator import (
+            create_weekly_program_proposal,
+            program_proposal_tool_summary,
+        )
         proposal = create_weekly_program_proposal(user=user, brief=brief)
         response = {"proposal": program_proposal_tool_summary(proposal)}
     else:

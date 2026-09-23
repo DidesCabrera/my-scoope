@@ -5,10 +5,18 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from ai_assistant.models import AIPreparedAction
-from notas.application.ai_intake.capability_scenarios import build_capability_scenarios, prepared_patch_check, specialize_capability_scenario
+from notas.application.ai_intake.capability_scenarios import (
+    build_capability_scenarios,
+    prepared_patch_check,
+    specialize_capability_scenario,
+)
 from notas.application.ai_intake.evaluation_artifacts import capture_review_artifacts
 from notas.application.ai_intake.evaluation_lab import _cleanup_new_review_artifacts
-from notas.application.ai_intake.real_provider_lab_extensions import RealProviderValidationScenario, state_mutation_check_values, validation_state_snapshot
+from notas.application.ai_intake.real_provider_lab_extensions import (
+    RealProviderValidationScenario,
+    state_mutation_check_values,
+    validation_state_snapshot,
+)
 from notas.application.ai_tools.prepared_actions import prepare_workspace_patch
 from notas.domain.models import DailyPlan, Food, Meal, MealFood, NutritionProposal, Program
 

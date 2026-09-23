@@ -6,10 +6,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from notas.application.ai_intake.nutrition_brief import NutritionBrief, deserialize_brief, serialize_brief
+from notas.application.ai_intake.program_generator import create_weekly_program_proposal
 from notas.application.ai_tools.proposal_tools import build_nutrition_brief_from_ai_drafts
 from notas.application.dto.program_proposal import parse_program_payload
 from notas.application.proposals.weekly_program import apply_approved_program_proposal
-from notas.application.ai_intake.program_generator import create_weekly_program_proposal
 from notas.application.queries.proposal_simulation_queries import simulate_proposal_payload
 from notas.domain.models import DailyPlan, Food, Meal, NutritionProposal, Program, ProgramDay
 
@@ -128,8 +128,8 @@ class ProgramNutritionProposalTests(TestCase):
         self.assertEqual(updated.duration_weeks, 8)
 
     def test_mobile_contract_and_web_review_expose_last_day(self):
-        from mobile_api.selectors_proposals import proposal_detail_payload
         from mobile_api.schema_domains.proposals import ProposalDetailData
+        from mobile_api.selectors_proposals import proposal_detail_payload
         proposal = self.proposal(8)
         payload = proposal_detail_payload(self.user, proposal.pk)
         parsed = ProposalDetailData.model_validate(payload)
@@ -177,6 +177,7 @@ class ProgramNutritionProposalTests(TestCase):
 
     def test_provider_summary_is_bounded_without_losing_duration(self):
         import json
+
         from notas.application.ai_intake.program_generator import program_proposal_tool_summary
         proposal = self.proposal(8)
         proposal.validation_summary.update(days=[{"engine_validation": {}}] * 56,

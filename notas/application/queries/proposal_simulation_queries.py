@@ -1,9 +1,9 @@
 from dataclasses import asdict, dataclass
 from typing import Any
-from notas.application.dto.program_proposal import ProposedProgramPayload
 
 from django.shortcuts import get_object_or_404
 
+from notas.application.dto.program_proposal import ProposedProgramPayload
 from notas.application.dto.proposal_payloads import (
     ProposedDailyPlanPayloadDTO,
     ProposedFoodItemDTO,
