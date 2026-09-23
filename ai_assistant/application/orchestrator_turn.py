@@ -524,6 +524,7 @@ def _with_outcome_trace(
 
 def _expected_outcome_for_objective(objective: str) -> str:
     if objective in {
+        "create_reviewable_program_proposal",
         "create_reviewable_dailyplan_proposal",
         "create_reviewable_meal_proposal",
         "create_dailyplan_proposal",

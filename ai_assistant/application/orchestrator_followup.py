@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from typing import Any
 
 from ai_assistant.application.context_builder import sanitize_provider_context
@@ -60,7 +61,7 @@ def build_tool_followup_provider_request(
             presentation_tool_name,
             fallback_choice=tool_choice,
         )
-    elif tools and orchestrator._proposal_ready_after_tool_results(
+    elif tools and not tool_results_complete_nutrition_proposal(decision_results) and orchestrator._proposal_ready_after_tool_results(
         request,
         decision_results,
     ):
@@ -97,7 +98,7 @@ def build_tool_followup_provider_request(
         continuation_items=tuple(continuation_items or ()),
         tool_outputs=tool_outputs,
     )
-    return LLMProviderRequest(
+    followup = LLMProviderRequest(
         messages=messages,
         max_output_tokens=max_output_tokens,
         metadata={
@@ -118,6 +119,37 @@ def build_tool_followup_provider_request(
         continuation_items=tuple(continuation_items or ()),
         tool_outputs=tool_outputs,
     )
+    return _compact_pending_proposal_followup(orchestrator, followup, decision_results)
+
+
+def _compact_pending_proposal_followup(orchestrator, followup, results):
+    """Keep the pending creation executable when native history exceeds the budget.
+
+    The executor retains all original results and enriches arguments from them.
+    Only duplicate transport history is replaced; the user request, policies,
+    exact tool choice, and the latest complete typed drafts remain available.
+    The caller still validates the resulting request against the same limit.
+    """
+    choice = followup.tool_choice
+    if not isinstance(choice, Mapping) or choice.get("name") != TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS:
+        return followup
+    if estimate_provider_request_tokens(followup) <= orchestrator.config.turn_limits.max_input_tokens:
+        return followup
+    drafts = {}
+    for result in results:
+        if result.ok:
+            for key in ("profile_draft", "preference_draft", "proposal_preferences"):
+                candidate = dict(result.data or {}).get(key)
+                if isinstance(candidate, Mapping):
+                    drafts[key] = dict(candidate)
+    messages = (*followup.messages, LLMMessage(role="developer", content=json.dumps({
+        "latest_typed_drafts": sanitize_provider_context(drafts),
+        "instruction": "Estos son los drafts vigentes capturados por herramientas. La propuesta aún no existe; completa la creación revisable solicitada. No la apliques.",
+    }, ensure_ascii=False)))
+    compact = replace(followup, messages=messages, continuation_items=(), tool_outputs=())
+    return replace(compact, metadata={**dict(compact.metadata),
+        "tool_loop": "controlled_tools.pending_proposal_followup.v1",
+        "estimated_input_tokens": estimate_provider_request_tokens(compact)})
 
 
 def compact_context_prompt(context: Mapping[str, Any]) -> str:

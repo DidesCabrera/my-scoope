@@ -227,7 +227,7 @@ def _select_intake_provider_tools(
                 user_text=user_text,
             )
         )
-    elif _requests_workspace_query(user_text):
+    elif expected_outcome != "nutrition_proposal" and _requests_workspace_query(user_text):
         selected_names.add(TOOL_QUERY_WORKSPACE)
     return tuple(
         provider_spec
@@ -353,7 +353,7 @@ def initial_tool_choice(
         return _named_tool_choice(TOOL_READ_PROPOSAL)
     if expected_outcome == "workspace_query" and TOOL_QUERY_WORKSPACE in tool_names:
         return _named_tool_choice(TOOL_QUERY_WORKSPACE)
-    if TOOL_QUERY_WORKSPACE in tool_names and _requests_workspace_query(user_text):
+    if expected_outcome != "nutrition_proposal" and TOOL_QUERY_WORKSPACE in tool_names and _requests_workspace_query(user_text):
         return _named_tool_choice(TOOL_QUERY_WORKSPACE)
     if expected_outcome == "prepared_patch" and TOOL_PROPOSE_WORKSPACE_PATCH in tool_names:
         return _named_tool_choice(TOOL_PROPOSE_WORKSPACE_PATCH)
