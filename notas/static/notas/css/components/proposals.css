@@ -609,46 +609,6 @@ html[data-theme="dark"] .proposal-status-badge--canceled {
   line-height: 1.2;
 }
 
-.proposal-program-objectives {
-  display: grid;
-  gap: 18px;
-}
-
-.proposal-program-objectives > .proposal-review-card-header,
-.proposal-program-objectives > .proposal-review-actions-text,
-.proposal-program-objectives .proposal-review-kpis {
-  margin-bottom: 0;
-}
-
-.proposal-program-objectives__group {
-  display: grid;
-  gap: 10px;
-  padding-top: 16px;
-  border-top: 1px solid var(--panel-row-separator);
-}
-
-.proposal-program-objectives__group-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--text-main);
-  font-size: 0.9rem;
-  font-weight: 800;
-}
-
-.proposal-program-objectives__group-title svg {
-  width: 17px;
-  height: 17px;
-  color: var(--proposal-accent, var(--primary));
-}
-
-.proposal-program-objectives .proposal-review-kpi > span:last-child:not(.proposal-review-kpi-label) {
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  line-height: 1.3;
-}
-
 .proposal-review-kpis--compact {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 14px;
