@@ -48,8 +48,8 @@ from notas.presentation.config.viewmodel_config import (
 from notas.presentation.proposals.entity_page import (
     ProposalEntityDetailContentVM,
     ProposalProgramNavigationError,
-    build_proposal_entity_content,
     build_program_proposal_navigation_content,
+    build_proposal_entity_content,
 )
 from notas.presentation.proposals.list_page import (
     ProposalListContentVM,
