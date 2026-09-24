@@ -10,6 +10,7 @@ test("program proposals allow review of every week and day before application", 
   const program = await source("src/components/proposals/proposal-program-preview.tsx");
   const adapter = await source("src/components/proposals/proposal-program-adapter.ts");
   const detail = await source("src/app/proposals/[id].tsx");
+  const programDetail = await source("src/app/proposals/[id]/program.tsx");
   assert.match(program, /<ProgramDetailPreview/);
   assert.match(program, /proposalProgramLibraryItem\(program\)/);
   assert.match(program, /renderWeekContext/);
@@ -20,7 +21,11 @@ test("program proposals allow review of every week and day before application", 
   assert.match(adapter, /Array\.from\(\{ length: program\.duration_weeks \}/);
   assert.match(adapter, /dayLabels\.map/);
   assert.match(adapter, /aggregateWeekFoods/);
-  assert.match(detail, /<ProposalProgramPreview/);
+  assert.match(detail, /<ProposalProgramCard/);
+  assert.match(detail, /\/proposals\/\$\{proposal\.id\}\/program/);
+  assert.match(programDetail, /<ProposalProgramPreview/);
+  assert.match(programDetail, /onOpenDailyPlan/);
+  assert.match(programDetail, /onOpenMeal/);
   assert.match(detail, /libraries\/programs/);
 });
 
@@ -88,7 +93,8 @@ test("proposal detail uses the proposal and entity UI System contracts", async (
   assert.match(preview, /<NutritionEntityCard/);
   assert.match(detail, /<ProposalEvaluationContext current=\{proposal\.current_facts\} targets=\{proposal\.target_facts\} \/>/);
   assert.match(preview, /<FoodPanels/);
-  assert.match(preview, /onOpenItem=\{onOpenFood \? \(food\) => \{ if \(food\.detailId != null\) onOpenFood\(food\.detailId\); \} : undefined\}/);
+  assert.match(preview, /const index = foods\.findIndex/);
+  assert.match(preview, /onOpenFood\(index\)/);
   assert.match(preview, /<MealPanels/);
   assert.doesNotMatch(preview, /projectedLabel: "Propuest[oa]"/);
   assert.match(preview, /icon: "clock"/);
@@ -102,6 +108,9 @@ test("proposal detail uses the proposal and entity UI System contracts", async (
 test("proposed entities expose progressive detail navigation", async () => {
   const entity = await source("src/app/proposals/[id]/entity.tsx");
   const meal = await source("src/app/proposals/[id]/entity/meals/[mealIndex].tsx");
+  const food = await source("src/components/proposals/proposal-food-detail-route.tsx");
+  const programDay = await source("src/app/proposals/[id]/program/weeks/[weekNumber]/days/[dayNumber].tsx");
+  const programMeal = await source("src/app/proposals/[id]/program/weeks/[weekNumber]/days/[dayNumber]/meals/[mealIndex].tsx");
   const typography = await source("src/components/ui/typography.tsx");
 
   assert.match(entity, /<EntityDetailPage/);
@@ -112,17 +121,21 @@ test("proposed entities expose progressive detail navigation", async () => {
   assert.match(entity, /title="Detalle de cada Comida"/);
   assert.match(entity, /eyebrow=\{`Comida \$\{index \+ 1\}`\}/);
   assert.match(entity, /time=\{item\.hour\}/);
-  assert.match(entity, /onOpenFood=\{\(foodId\) => router\.push\(`\/libraries\/foods\/\$\{foodId\}` as Href\)\}/);
+  assert.match(entity, /onOpenFood=\{\(foodIndex\) => router\.push\(`\/proposals\/\$\{proposal\.id\}\/entity\/meals\/\$\{index\}\/foods\/\$\{foodIndex\}` as Href\)\}/);
   assert.match(entity, /\/proposals\/\$\{proposal\.id\}\/entity\/meals\//);
-  assert.match(entity, /\/libraries\/foods\//);
-  assert.match(entity, /<FoodPanels[\s\S]*?onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/libraries\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);
+  assert.match(entity, /\/proposals\/\$\{proposal\.id\}\/entity\/foods\//);
   assert.match(meal, /<EntityDetailPage/);
   assert.match(meal, /<SectionDivider \/>[\s\S]*title="Detalle de cada Alimento"/);
   assert.match(meal, /title="Detalle de cada Alimento"/);
   assert.match(meal, /icon: "clock"/);
-  assert.match(meal, /\/libraries\/foods\//);
-  assert.match(meal, /<FoodPanels[\s\S]*?onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/libraries\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);
+  assert.match(meal, /\/proposals\/\$\{id\}\/entity\/meals\/\$\{index\}\/foods\//);
   assert.doesNotMatch(meal, /subtitle=\{item\.note/);
+  assert.match(food, /context === "meal"/);
+  assert.match(food, /context === "dailyplan"/);
+  assert.match(food, /context === "program"/);
+  assert.match(food, /Alimento dentro de la propuesta/);
+  assert.match(programDay, /\/program\/weeks\/\$\{week\}\/days\/\$\{day\}\/meals\//);
+  assert.match(programMeal, /\/program\/weeks\/\$\{week\}\/days\/\$\{day\}\/meals\/\$\{index\}\/foods\//);
   assert.match(typography, /normalizedTitle === "composición"/);
 });
 

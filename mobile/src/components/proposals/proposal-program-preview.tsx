@@ -3,6 +3,7 @@ import { View } from "react-native";
 
 import type { ProposalFact, ProposalProgram } from "@/api/types";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
+import { ProgramChildCard, programDailyMetricData } from "@/components/libraries/program-child-card";
 import { InlineNotice } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { proposalProgramLibraryItem } from "./proposal-program-adapter";
@@ -25,7 +26,29 @@ function weekRequirementFacts(program: ProposalProgram, week: number): ProposalF
   ];
 }
 
-export function ProposalProgramPreview({ program, onOpenFood }: { program: ProposalProgram; onOpenFood?(id: number): void }) {
+export function ProposalProgramCard({ onOpen, program }: { onOpen(): void; program: ProposalProgram }) {
+  const item = useMemo(() => proposalProgramLibraryItem(program), [program]);
+  const weeks = item.panel.kind === "weeks" ? item.panel.weeks : [];
+  const indicator = (icon: "week" | "dailyPlan" | "food") => {
+    const value = item.indicators.find((candidate) => candidate.icon === icon)?.value;
+    return typeof value === "number" ? value : Number.parseInt(String(value ?? 0), 10) || 0;
+  };
+  return (
+    <ProgramChildCard
+      axisLabels={weeks.map((week) => `S${week.week_number}`)}
+      filledDaysCount={indicator("dailyPlan")}
+      foodsCount={indicator("food")}
+      metricData={programDailyMetricData(weeks)}
+      onOpen={onOpen}
+      openActionLabel="Explorar programa"
+      owner="Asistente AI"
+      title={item.name}
+      weeksCount={indicator("week")}
+    />
+  );
+}
+
+export function ProposalProgramPreview({ onOpenDailyPlan, onOpenFood, onOpenMeal, program }: { onOpenDailyPlan?(week: number, day: number): void; onOpenFood?(id: number): void; onOpenMeal?(week: number, day: number, mealIndex: number): void; program: ProposalProgram }) {
   const item = useMemo(() => proposalProgramLibraryItem(program), [program]);
   return (
     <ProgramDetailPreview
@@ -36,7 +59,9 @@ export function ProposalProgramPreview({ program, onOpenFood }: { program: Propo
         </View>
       )}
       item={item}
+      onOpenDailyPlan={onOpenDailyPlan}
       onOpenFood={onOpenFood}
+      onOpenMeal={onOpenMeal}
       renderWeekContext={(week) => {
         const facts = weekRequirementFacts(program, week);
         return facts.length ? (

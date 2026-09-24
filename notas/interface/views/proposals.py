@@ -47,9 +47,11 @@ from notas.presentation.config.viewmodel_config import (
 )
 from notas.presentation.proposals.entity_page import (
     ProposalEntityDetailContentVM,
+    ProposalEntityNavigationError,
     ProposalProgramNavigationError,
     build_program_proposal_navigation_content,
     build_proposal_entity_content,
+    build_proposal_entity_navigation_content,
 )
 from notas.presentation.proposals.list_page import (
     ProposalListContentVM,
@@ -374,6 +376,7 @@ def proposal_entity_detail(request, proposal_id):
 
     entity_content = build_proposal_entity_content(
         proposal_review,
+        proposal_id=proposal_id,
     )
 
     if entity_content["entity_kind"] == "unsupported":
@@ -421,6 +424,85 @@ def proposal_entity_detail(request, proposal_id):
         request,
         "notas/proposals/entity_detail.html",
         base_vm.as_context(),
+    )
+
+
+def _proposal_entity_child_detail(
+    request,
+    *,
+    proposal_id: int,
+    meal_number: int | None = None,
+    food_number: int | None = None,
+):
+    proposal = get_proposal_detail(request.user, proposal_id).as_dict()
+    proposal_review = build_proposal_review_vm(proposal).as_dict()
+    try:
+        navigation = build_proposal_entity_navigation_content(
+            proposal_review,
+            proposal_id=proposal_id,
+            meal_number=meal_number,
+            food_number=food_number,
+        )
+    except ProposalEntityNavigationError as exc:
+        raise Http404("Entidad propuesta no encontrada") from exc
+
+    entity_url = reverse("proposal_entity_detail", args=[proposal_id])
+    entity_name = (
+        (proposal_review.get("payload") or {}).get("dailyplan") or {}
+    ).get("name") or (
+        (proposal_review.get("payload") or {}).get("meal") or {}
+    ).get("name") or "Entidad propuesta"
+    parents = [
+        _proposal_detail_parent(proposal),
+        BreadcrumbParent(label=entity_name, url=entity_url),
+    ]
+    if food_number is not None and meal_number is not None:
+        parents.append(BreadcrumbParent(
+            label=navigation["meal_name"],
+            url=reverse("proposal_entity_meal_detail", args=[proposal_id, meal_number]),
+        ))
+
+    base_vm = BaseVM(
+        ui=build_ui_vm(
+            PROPOSAL_VIEWMODE_DETAIL,
+            parents=parents,
+            instance=navigation["entity_name"],
+            back_config={"type": "parent"},
+        ),
+        content=ProposalProgramEntityContentVM(
+            header=build_page_header(title=navigation["entity_name"], actions=[]),
+            proposal=proposal,
+            navigation=navigation,
+        ),
+    )
+    return render(request, "notas/proposals/program_entity_detail.html", base_vm.as_context())
+
+
+@login_required
+def proposal_entity_meal_detail(request, proposal_id, meal_number):
+    return _proposal_entity_child_detail(
+        request,
+        proposal_id=proposal_id,
+        meal_number=meal_number,
+    )
+
+
+@login_required
+def proposal_entity_food_detail(request, proposal_id, food_number):
+    return _proposal_entity_child_detail(
+        request,
+        proposal_id=proposal_id,
+        food_number=food_number,
+    )
+
+
+@login_required
+def proposal_entity_meal_food_detail(request, proposal_id, meal_number, food_number):
+    return _proposal_entity_child_detail(
+        request,
+        proposal_id=proposal_id,
+        meal_number=meal_number,
+        food_number=food_number,
     )
 
 

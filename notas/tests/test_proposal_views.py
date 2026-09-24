@@ -518,11 +518,20 @@ class ProposalViewTests(TestCase):
                 args=[proposal.id],
             )
         )
+        entity_url = reverse("proposal_entity_detail", args=[proposal.id])
+        food_url = reverse("proposal_entity_food_detail", args=[proposal.id, 1])
+        entity_response = self.client.get(entity_url)
+        food_response = self.client.get(food_url)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Comida propuesta")
         self.assertContains(response, "Almuerzo IA")
         self.assertContains(response, "Pechuga pollo")
+        self.assertEqual(entity_response.status_code, 200)
+        self.assertContains(entity_response, food_url)
+        self.assertEqual(food_response.status_code, 200)
+        self.assertContains(food_response, "Alimento dentro de la propuesta")
+        self.assertContains(food_response, "Pechuga pollo")
 
     def test_proposal_detail_renders_create_dailyplan_review_card(self):
         self.client.force_login(self.user)
@@ -606,6 +615,12 @@ class ProposalViewTests(TestCase):
                 args=[proposal.id],
             )
         )
+        entity_url = reverse("proposal_entity_detail", args=[proposal.id])
+        meal_url = reverse("proposal_entity_meal_detail", args=[proposal.id, 1])
+        food_url = reverse("proposal_entity_meal_food_detail", args=[proposal.id, 1, 1])
+        entity_response = self.client.get(entity_url)
+        meal_response = self.client.get(meal_url)
+        food_response = self.client.get(food_url)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "DailyPlan propuesto")
@@ -614,6 +629,14 @@ class ProposalViewTests(TestCase):
         self.assertContains(response, "09:00")
         self.assertContains(response, "Desayuno")
         self.assertContains(response, "a nuevo egg TEST")
+        self.assertEqual(entity_response.status_code, 200)
+        self.assertContains(entity_response, meal_url)
+        self.assertEqual(meal_response.status_code, 200)
+        self.assertContains(meal_response, food_url)
+        self.assertContains(meal_response, "Detalle de cada Alimento")
+        self.assertEqual(food_response.status_code, 200)
+        self.assertContains(food_response, "Alimento dentro de la propuesta")
+        self.assertContains(food_response, "a nuevo egg TEST")
 
     def test_proposal_detail_shows_safe_review_actions_for_reviewable_proposal(self):
         self.client.force_login(self.user)

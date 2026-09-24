@@ -21,6 +21,10 @@ class ProposalProgramNavigationError(ValueError):
     pass
 
 
+class ProposalEntityNavigationError(ValueError):
+    pass
+
+
 def build_program_proposal_navigation_content(
     proposal_review: dict,
     *,
@@ -154,7 +158,7 @@ def _dailyplan_food_count(meals: list[dict]) -> int:
     return sum(len((item.get("meal") or {}).get("foods") or []) for item in meals)
 
 
-def build_proposal_entity_content(proposal_review: dict) -> dict:
+def build_proposal_entity_content(proposal_review: dict, *, proposal_id: int) -> dict:
     payload = proposal_review.get("payload") or {}
     entity_kind = _proposal_entity_kind(proposal_review)
     entity_name = _proposal_entity_name(proposal_review)
@@ -162,12 +166,20 @@ def build_proposal_entity_content(proposal_review: dict) -> dict:
     if entity_kind == "meal":
         meal = payload.get("meal") or {}
         main_card = _strip_proposal_entity_actions(meal.get("card"))
+        child_cards = [
+            _build_proposed_food_card(
+                food,
+                card_id=f"proposal-{proposal_id}-meal-food-{index}",
+                detail_url=reverse("proposal_entity_food_detail", args=[proposal_id, index]),
+            )
+            for index, food in enumerate(meal.get("foods") or [], start=1)
+        ]
         return {
             "entity_kind": entity_kind,
             "entity_name": entity_name,
             "main_card": main_card,
-            "child_cards": [],
-            "structural_indicators": {},
+            "child_cards": child_cards,
+            "structural_indicators": {"foods_count": len(child_cards)},
             "foods_aggregation": [],
         }
 
@@ -176,6 +188,7 @@ def build_proposal_entity_content(proposal_review: dict) -> dict:
         main_card = _strip_proposal_entity_actions(dailyplan.get("card"))
         child_cards = _build_dailyplan_child_cards_for_proposal_entity(
             proposal_review,
+            proposal_id=proposal_id,
         )
         structural_indicators = {
             "meals_count": len(child_cards),
@@ -248,7 +261,11 @@ def _strip_proposal_entity_actions(card: dict | None) -> dict:
     return clean_card
 
 
-def _build_dailyplan_child_cards_for_proposal_entity(proposal_review: dict) -> list[dict]:
+def _build_dailyplan_child_cards_for_proposal_entity(
+    proposal_review: dict,
+    *,
+    proposal_id: int,
+) -> list[dict]:
     payload = proposal_review.get("payload") or {}
     dailyplan = payload.get("dailyplan") or {}
     child_cards = []
@@ -260,8 +277,119 @@ def _build_dailyplan_child_cards_for_proposal_entity(proposal_review: dict) -> l
         if not card:
             continue
 
-        card.setdefault("id", f"proposal-dailyplan-meal-{index}")
-        card.setdefault("main_id", card["id"])
+        card.update({
+            "id": f"proposal-{proposal_id}-dailyplan-meal-{index}",
+            "main_id": f"proposal-{proposal_id}-dailyplan-meal-{index}",
+            "actions": [{
+                "key": "open_proposed_meal",
+                "label": "Explorar comida",
+                "icon": "arrow-right",
+                "url": reverse("proposal_entity_meal_detail", args=[proposal_id, index]),
+                "method": "get",
+                "desktop_position": "inline",
+                "mobile_position": "inline",
+            }],
+        })
+        _set_card_hour(card, item.get("hour") or "")
         child_cards.append(card)
 
     return child_cards
+
+
+def build_proposal_entity_navigation_content(
+    proposal_review: dict,
+    *,
+    proposal_id: int,
+    meal_number: int | None = None,
+    food_number: int | None = None,
+) -> dict:
+    payload = proposal_review.get("payload") or {}
+    entity_kind = _proposal_entity_kind(proposal_review)
+
+    if entity_kind == "meal":
+        meal = payload.get("meal") or {}
+        if meal_number is not None:
+            raise ProposalEntityNavigationError("proposal_meal_number_not_supported")
+        return _proposal_food_navigation_content(
+            meal,
+            proposal_id=proposal_id,
+            food_number=food_number,
+            meal_name=meal.get("name") or "Comida propuesta",
+        )
+
+    if entity_kind != "dailyplan":
+        raise ProposalEntityNavigationError("proposal_entity_not_supported")
+
+    dailyplan = payload.get("dailyplan") or {}
+    meals = dailyplan.get("meals") or []
+    if meal_number is None or meal_number < 1 or meal_number > len(meals):
+        raise ProposalEntityNavigationError("proposal_meal_not_found")
+    item = meals[meal_number - 1]
+    meal = item.get("meal") or {}
+    meal_name = meal.get("name") or f"Comida {meal_number}"
+
+    if food_number is not None:
+        return {
+            **_proposal_food_navigation_content(
+                meal,
+                proposal_id=proposal_id,
+                food_number=food_number,
+                meal_name=meal_name,
+            ),
+            "dailyplan_name": dailyplan.get("name") or "Plan diario propuesto",
+            "meal_number": meal_number,
+        }
+
+    main_card = _card_without_actions(meal.get("card"))
+    _set_card_hour(main_card, item.get("hour") or "")
+    foods = meal.get("foods") or []
+    child_cards = [
+        _build_proposed_food_card(
+            food,
+            card_id=f"proposal-{proposal_id}-meal-{meal_number}-food-{index}",
+            detail_url=reverse(
+                "proposal_entity_meal_food_detail",
+                args=[proposal_id, meal_number, index],
+            ),
+        )
+        for index, food in enumerate(foods, start=1)
+    ]
+    return {
+        "entity_kind": "meal",
+        "entity_name": meal_name,
+        "dailyplan_name": dailyplan.get("name") or "Plan diario propuesto",
+        "meal_name": meal_name,
+        "meal_number": meal_number,
+        "meal_hour": item.get("hour") or "",
+        "meal_note": item.get("note") or "",
+        "main_card": main_card,
+        "child_cards": child_cards,
+        "foods_count": len(child_cards),
+    }
+
+
+def _proposal_food_navigation_content(
+    meal: dict,
+    *,
+    proposal_id: int,
+    food_number: int | None,
+    meal_name: str,
+) -> dict:
+    foods = meal.get("foods") or []
+    if food_number is None or food_number < 1 or food_number > len(foods):
+        raise ProposalEntityNavigationError("proposal_food_not_found")
+    food = foods[food_number - 1]
+    food_name = food.get("food_name") or "Alimento propuesto"
+    return {
+        "entity_kind": "food",
+        "entity_name": food_name,
+        "meal_name": meal_name,
+        "food_number": food_number,
+        "main_card": _build_proposed_food_card(
+            food,
+            card_id=f"proposal-{proposal_id}-food-detail",
+            detail_url="",
+        ),
+        "child_cards": [],
+        "foods_count": 1,
+    }
