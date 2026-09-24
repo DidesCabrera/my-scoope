@@ -424,6 +424,30 @@ def proposal_entity_detail(request, proposal_id):
     )
 
 
+@login_required
+def proposal_program_detail(request, proposal_id):
+    proposal = get_proposal_detail(request.user, proposal_id).as_dict()
+    proposal_review = build_proposal_review_vm(proposal).as_dict()
+    program = (proposal_review.get("payload") or {}).get("program")
+    if not program:
+        raise Http404("Programa propuesto no encontrado")
+
+    base_vm = BaseVM(
+        ui=build_ui_vm(
+            PROPOSAL_VIEWMODE_DETAIL,
+            parents=[_proposal_detail_parent(proposal)],
+            instance=program.get("name") or "Programa propuesto",
+            back_config={"type": "parent"},
+        ),
+        content=ProposalDetailContentVM(
+            header=build_page_header(title=program.get("name") or "Programa propuesto", actions=[]),
+            proposal=proposal,
+            proposal_review=proposal_review,
+        ),
+    )
+    return render(request, "notas/proposals/program_detail.html", base_vm.as_context())
+
+
 def _proposal_program_entity_detail(
     request,
     *,

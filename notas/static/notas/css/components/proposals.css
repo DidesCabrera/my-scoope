@@ -398,30 +398,6 @@ html[data-theme="dark"] .proposal-status-badge--canceled {
   margin-top: 16px;
 }
 
-/* =========================================================
-   Proposal intent and involved entity
-   ========================================================= */
-
-.proposal-review-context-strip {
-  display: grid;
-  gap: 10px;
-}
-
-.proposal-review-intent-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: fit-content;
-  color: var(--text-muted);
-  font-size: 0.84rem;
-  line-height: 1.25;
-}
-
-.proposal-review-intent-line strong {
-  color: var(--text-main);
-  font-weight: 750;
-}
-
 .proposal-review-attachments-section {
   border-top: 1px solid var(--panel-row-separator);
   margin-top: 24px;

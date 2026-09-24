@@ -142,19 +142,26 @@ class ProgramNutritionProposalTests(TestCase):
         self.assertEqual(parsed.program.days[-1].week_number, 8)
         self.assertEqual(parsed.program.days[-1].day_number, 7)
         self.client.force_login(self.user)
+        program_url = reverse("proposal_program_detail", args=[proposal.pk])
         with self.settings(NUTRITION_ONBOARDING_GATE_ENABLED=False):
             response = self.client.get(reverse("proposal_detail", args=[proposal.pk]))
+            program_response = self.client.get(program_url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Semana 8")
-        self.assertContains(response, "program-chart-panel")
-        self.assertContains(response, "program-week-tabs")
-        self.assertContains(response, "Tabla de comparación entre planes diarios")
-        self.assertContains(response, "program-week-foods-aggregation")
-        self.assertContains(response, "proposal-program-week-8-day-7-card")
-        self.assertContains(response, "Parámetros usados para construir y validar la propuesta")
-        self.assertContains(response, "Energía diaria")
-        self.assertContains(response, "2500 → 1700 kcal")
-        self.assertContains(response, "Peso de referencia")
+        self.assertContains(response, program_url)
+        self.assertContains(response, "program-card")
+        self.assertNotContains(response, "program-week-tabs")
+        self.assertNotContains(response, "proposal-review-intent-line")
+        self.assertContains(program_response, "Semana 8")
+        self.assertContains(program_response, "program-chart-panel")
+        self.assertContains(program_response, "program-week-tabs")
+        self.assertContains(program_response, "Tabla de comparación entre planes diarios")
+        self.assertContains(program_response, "program-week-foods-aggregation")
+        self.assertContains(program_response, "proposal-program-week-8-day-7-card")
+        self.assertContains(program_response, "Parámetros usados para construir y validar la propuesta")
+        self.assertContains(program_response, "Energía diaria")
+        self.assertContains(program_response, "2500 → 1700 kcal")
+        self.assertContains(program_response, "Peso de referencia")
+        self.assertContains(program_response, "Ingrediente (100g)")
         self.assertNotContains(response, "program_specification")
         self.assertNotContains(response, "protein_max_g")
         self.assertNotContains(response, '<details class="proposal-review-card">')
@@ -166,7 +173,10 @@ class ProgramNutritionProposalTests(TestCase):
 
     def test_web_program_proposal_supports_dailyplan_meal_and_food_navigation(self):
         proposal = self.proposal(2)
+        proposal.validation_summary["simulation"]["program"]["days"][-1]["dailyplan"]["meals"][0]["note"] = "Nota solo en detalle"
+        proposal.save(update_fields=["validation_summary"])
         self.client.force_login(self.user)
+        program_url = reverse("proposal_program_detail", args=[proposal.pk])
         routes = [
             reverse("proposal_program_dailyplan_detail", args=[proposal.pk, 2, 7]),
             reverse("proposal_program_meal_detail", args=[proposal.pk, 2, 7, 1]),
@@ -175,17 +185,23 @@ class ProgramNutritionProposalTests(TestCase):
 
         with self.settings(NUTRITION_ONBOARDING_GATE_ENABLED=False):
             proposal_response = self.client.get(reverse("proposal_detail", args=[proposal.pk]))
+            program_response = self.client.get(program_url)
             responses = [self.client.get(url) for url in routes]
             missing_response = self.client.get(
                 reverse("proposal_program_food_detail", args=[proposal.pk, 2, 7, 1, 2])
             )
 
-        self.assertContains(proposal_response, routes[0])
+        self.assertContains(proposal_response, program_url)
+        self.assertContains(program_response, routes[0])
         self.assertEqual([response.status_code for response in responses], [200, 200, 200])
         self.assertContains(responses[0], "Comidas de este plan")
         self.assertContains(responses[0], routes[1])
+        self.assertContains(responses[0], "structural-item--time")
+        self.assertContains(responses[0], "13:00")
+        self.assertNotContains(responses[0], "Nota solo en detalle")
         self.assertContains(responses[1], "Detalle de cada Alimento")
         self.assertContains(responses[1], routes[2])
+        self.assertContains(responses[1], "Nota solo en detalle")
         self.assertContains(responses[2], "Alimento dentro de la propuesta")
         self.assertContains(responses[2], "Ingrediente")
         self.assertEqual(missing_response.status_code, 404)

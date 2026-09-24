@@ -432,6 +432,10 @@ class ProposalReviewViewModelTests(SimpleTestCase):
         self.assertEqual(food.food_name, "a nuevo egg TEST")
         self.assertEqual(food.quantity, 200.0)
         self.assertEqual(food.total_kcal, 34.0)
+        self.assertEqual(
+            dailyplan.card["menu"]["meals"][0]["foods"],
+            ["a nuevo egg TEST (200g)"],
+        )
 
         row = dailyplan.card["table"]["items"][0]["rel"]
         self.assertAlmostEqual(row["alloc_protein"], 100)

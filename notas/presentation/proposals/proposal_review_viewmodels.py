@@ -846,14 +846,40 @@ def _build_program_review_vm(
         week["day_nutrition_rows"] = build_week_day_nutrition_rows(week, current_weight=reference_weight)
         weeks.append(week)
 
+    program_name = _safe_str(program.get("name"), default="Programa propuesto")
+    program_chart = build_program_metric_chart(weeks)
+    filled_days_count = sum(week["assigned_dailyplans_count"] for week in weeks)
+    program_foods_count = len(unique_program_foods)
+    detail_url = reverse("proposal_program_detail", args=[proposal_id]) if proposal_id else ""
+    program_card = {
+        "child_id": proposal_id,
+        "title": program_name,
+        "url": detail_url,
+        "weeks_count": duration_weeks,
+        "filled_days_count": filled_days_count,
+        "foods_count": program_foods_count,
+        "chart": program_chart,
+        "metadata": {"owner": "AI", "author": "AI", "fork_from": None},
+        "actions": [{
+            "key": "open_proposed_program",
+            "label": "Explorar programa",
+            "icon": "arrow-right",
+            "url": detail_url,
+            "method": "get",
+            "desktop_position": "inline",
+            "mobile_position": "inline",
+        }] if detail_url else [],
+    }
+
     return {
         **program,
-        "name": _safe_str(program.get("name"), default="Programa propuesto"),
+        "name": program_name,
         "duration_weeks": duration_weeks,
         "weeks": weeks,
-        "program_chart": build_program_metric_chart(weeks),
-        "filled_days_count": sum(week["assigned_dailyplans_count"] for week in weeks),
-        "program_foods_count": len(unique_program_foods),
+        "program_chart": program_chart,
+        "filled_days_count": filled_days_count,
+        "program_foods_count": program_foods_count,
+        "card": program_card,
         "objective_groups": _program_objective_groups(specification),
         "warnings": list(dict.fromkeys(_safe_str(warning) for warning in _safe_list(program.get("warnings")) if warning)),
     }
@@ -1025,7 +1051,7 @@ def _build_dailyplan_card_payload(
                     "meal_name": dailyplan_meal.meal.name,
                     "hour": dailyplan_meal.hour,
                     "foods": [
-                        food.food_name
+                        f"{food.food_name} ({_format_quantity(food.quantity)}{food.unit or 'g'})"
                         for food in dailyplan_meal.meal.foods
                     ],
                 }
@@ -1261,6 +1287,13 @@ def _percentage(value: float, total: float) -> float:
         return 0.0
 
     return round((value / total) * 100, 2)
+
+
+def _format_quantity(value: float | None) -> str:
+    numeric_value = _safe_number(value)
+    if numeric_value.is_integer():
+        return str(int(numeric_value))
+    return f"{numeric_value:.1f}".rstrip("0").rstrip(".")
 
 
 def _safe_number(value: Any) -> float:

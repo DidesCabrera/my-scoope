@@ -8,7 +8,7 @@
             <span>Programa</span>
           </p>
 
-          <a href="{% url 'program_detail' child_card.child_id %}" class="card-title-link" aria-label="Ver detalle de {{ child_card.title }}">
+          <a href="{% if child_card.url %}{{ child_card.url }}{% else %}{% url 'program_detail' child_card.child_id %}{% endif %}" class="card-title-link" aria-label="Ver detalle de {{ child_card.title }}">
             <h3>{{ child_card.title }}</h3>
           </a>
 

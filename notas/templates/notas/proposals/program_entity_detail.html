@@ -6,16 +6,6 @@
 {% block content %}
 {% with nav=vm.content.navigation %}
 <div class="page page--detail has-collapsible-panels proposal-entity-detail-page" data-page="proposal-program-{{ nav.entity_kind }}-detail">
-  <section class="proposal-review-context-strip" aria-label="Ubicación dentro del programa propuesto">
-    <div class="proposal-review-intent-line">
-      <i data-lucide="route" class="metadata-icon" aria-hidden="true"></i>
-      <strong>{{ nav.program_name }}</strong>
-      <span>· Semana {{ nav.week_number }}</span>
-      <span>· {{ nav.day_label }}</span>
-      {% if nav.meal_name %}<span>· {{ nav.meal_name }}</span>{% endif %}
-    </div>
-  </section>
-
   {% if nav.entity_kind == "dailyplan" %}
     {% include "components/card_main_dailyplan.html" with main_card=nav.main_card %}
     <hr>
@@ -32,7 +22,6 @@
       <div class="dailyplan-detail__children-list">
         {% for child in nav.child_cards %}
           <div class="dailyplan-detail__meal-step">
-            {% if child.hour or child.note %}<p class="proposal-review-actions-text">{% if child.hour %}{{ child.hour }}{% endif %}{% if child.note %} · {{ child.note }}{% endif %}</p>{% endif %}
             <div class="dailyplan-detail__child-card">
               {% include "components/card_child_meal.html" with child_card=child.card dpm_meal="dpm_meal" default_nutrition=True meal_number=forloop.counter %}
             </div>
@@ -42,7 +31,7 @@
     </section>
   {% elif nav.entity_kind == "meal" %}
     {% include "components/card_main_meal.html" with main_card=nav.main_card %}
-    {% if nav.meal_hour or nav.meal_note %}<p class="proposal-review-actions-text">{% if nav.meal_hour %}Horario: {{ nav.meal_hour }}.{% endif %} {% if nav.meal_note %}{{ nav.meal_note }}{% endif %}</p>{% endif %}
+    {% if nav.meal_note %}<p class="proposal-review-actions-text">{{ nav.meal_note }}</p>{% endif %}
     {% include "components/food_detail_cards.html" with food_cards=nav.child_cards %}
   {% elif nav.entity_kind == "food" %}
     <section class="proposal-review-card">

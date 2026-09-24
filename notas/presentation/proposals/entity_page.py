@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass
 
 from django.urls import reverse
@@ -56,9 +57,10 @@ def build_program_proposal_navigation_content(
                 card_id=f"proposal-program-{proposal_id}-w{week_number}-d{day_number}-meal-{index}",
                 label="Explorar comida",
                 url=reverse("proposal_program_meal_detail", args=[proposal_id, week_number, day_number, index]),
+                hour=meal.get("hour") or "",
             )
             if card:
-                child_cards.append({"card": card, "hour": meal.get("hour") or "", "note": meal.get("note") or ""})
+                child_cards.append({"card": card})
         return {**context, "entity_kind": "dailyplan", "entity_name": context["dailyplan_name"],
                 "main_card": main_card, "child_cards": child_cards, "foods_count": _dailyplan_food_count(meals)}
 
@@ -72,6 +74,7 @@ def build_program_proposal_navigation_content(
 
     if food_number is None:
         main_card = _card_without_actions(meal.get("card"))
+        _set_card_hour(main_card, context["meal_hour"])
         child_cards = [
             _build_proposed_food_card(
                 food,
@@ -95,12 +98,19 @@ def build_program_proposal_navigation_content(
 def _card_without_actions(card: dict | None) -> dict:
     if not isinstance(card, dict):
         return {}
-    result = dict(card)
+    result = deepcopy(card)
     result["actions"] = []
     return result
 
 
-def _card_with_navigation_action(card: dict | None, *, card_id: str, label: str, url: str) -> dict:
+def _card_with_navigation_action(
+    card: dict | None,
+    *,
+    card_id: str,
+    label: str,
+    url: str,
+    hour: str = "",
+) -> dict:
     result = _card_without_actions(card)
     if not result:
         return {}
@@ -108,7 +118,14 @@ def _card_with_navigation_action(card: dict | None, *, card_id: str, label: str,
         "key": "open_proposed_entity", "label": label, "icon": "arrow-right", "url": url,
         "method": "get", "desktop_position": "inline", "mobile_position": "inline",
     }]})
+    _set_card_hour(result, hour)
     return result
+
+
+def _set_card_hour(card: dict, hour: str) -> None:
+    if not card or not hour:
+        return
+    card.setdefault("titulo", {}).setdefault("structural_indicators", {})["hour"] = hour
 
 
 def _build_proposed_food_card(food: dict, *, card_id: str, detail_url: str) -> dict:
