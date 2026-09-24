@@ -63,6 +63,30 @@
         {% endif %}
       </header>
 
+      {% if vm.content.proposal_review.payload.is_create_program %}
+        {% include "notas/proposals/partials/review_program_objectives.html" with program=vm.content.proposal_review.payload.program %}
+      {% elif vm.content.proposal_review.payload.targets %}
+        <section class="proposal-review-card">
+          <div class="proposal-review-card-header">
+            <div>
+              <p class="proposal-review-eyebrow">Objetivos</p>
+              <h3 class="proposal-review-section-title">
+                Targets usados para validar la propuesta
+              </h3>
+            </div>
+          </div>
+
+          <div class="proposal-review-kpis">
+            {% for key, value in vm.content.proposal_review.payload.targets.items %}
+              <div class="proposal-review-kpi">
+                <span class="proposal-review-kpi-label">{{ key }}</span>
+                <strong>{{ value }}</strong>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
       {% if vm.content.proposal_review.iteration_trace %}
         <section class="proposal-review-card proposal-review-iteration-card" aria-label="Trazabilidad de iteración">
           <div class="proposal-review-card-header">
@@ -97,28 +121,6 @@
         </section>
       {% endif %}
 
-      {% if vm.content.proposal_review.payload.targets and not vm.content.proposal_review.payload.is_create_program %}
-        <section class="proposal-review-card">
-          <div class="proposal-review-card-header">
-            <div>
-              <p class="proposal-review-eyebrow">Objetivos</p>
-              <h3 class="proposal-review-section-title">
-                Targets usados para validar la propuesta
-              </h3>
-            </div>
-          </div>
-
-          <div class="proposal-review-kpis">
-            {% for key, value in vm.content.proposal_review.payload.targets.items %}
-              <div class="proposal-review-kpi">
-                <span class="proposal-review-kpi-label">{{ key }}</span>
-                <strong>{{ value }}</strong>
-              </div>
-            {% endfor %}
-          </div>
-        </section>
-      {% endif %}
-
       {% if vm.content.proposal_review.alternatives %}
         <section class="proposal-review-card" aria-label="Alternativas del optimizador">
           <div class="proposal-review-card-header">
@@ -150,9 +152,6 @@
         </section>
       {% endif %}
 
-      {% if vm.content.proposal_review.payload.is_create_program %}
-        {% include "notas/proposals/partials/review_program_card.html" %}
-      {% endif %}
       <section class="proposal-review-attachments-section" aria-label="Adjuntos de la propuesta">
         <div class="proposal-review-attachments-heading">
           <i data-lucide="paperclip" class="proposal-review-attachments-heading__icon"></i>
@@ -172,6 +171,10 @@
           {% endfor %}
         </div>
       </section>
+
+      {% if vm.content.proposal_review.payload.is_create_program %}
+        {% include "notas/proposals/partials/review_program_card.html" %}
+      {% endif %}
 
       {% if vm.content.proposal_review.payload.intent == "ai_nutrition_brief" %}
         <section class="proposal-review-card">

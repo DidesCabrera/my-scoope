@@ -56,6 +56,25 @@ créditos junto a los tabs permanece visible al hacer scroll. En móvil, cambiar
 entre Chats y Propuestas alterna el contenido dentro de la misma pantalla, sin
 animación de navegación.
 
+### Anatomía canónica del detalle web
+
+El detalle de una propuesta usa la misma jerarquía visual para cualquier entidad
+propuesta (`Meal`, `DailyPlan` o `Program`). El UI-system fija este orden:
+
+1. cabecera de revisión con estado y **Requerimiento**;
+2. objetivos o parámetros de validación, cuando existan;
+3. trazabilidad y alternativas, cuando correspondan;
+4. bloque **Adjuntos de la propuesta** con `.proposal-review-attachment`;
+5. card UI-system de la entidad propuesta inmediatamente después del adjunto;
+6. resultado aplicado y acciones de revisión.
+
+La página de propuesta resume la entidad mediante su card. La navegación desde esa
+card abre una página de detalle de solo lectura que reutiliza los componentes de la
+biblioteca de la entidad. Los objetivos pertenecen al contexto de revisión de la
+propuesta y no deben repetirse dentro del detalle navegable de la entidad. Esta regla
+evita que `Program` tenga una anatomía distinta de `DailyPlan` o `Meal` y mantiene la
+separación entre revisar la decisión y explorar su contenido.
+
 ## Relación con AI Nutrition Onboarding
 
 El flujo de onboarding nutricional asistido por IA debe crear `NutritionProposal` antes de crear entidades finales.
