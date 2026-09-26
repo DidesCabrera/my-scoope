@@ -13,6 +13,7 @@ import { Button, InlineNotice, MutationStatusModal, SectionDivider, SectionHeadi
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
 import { compactDateLabel, compactMonthLabel, preferredCalendarizedDay } from "./current-week";
+import { normalizeCalendarizedDayDetail } from "./runtime-normalization";
 
 function localDate(): string {
   const now = new Date();
@@ -108,7 +109,7 @@ export function CalendarizedProgramPlanning({
     let active = true;
     if (selectedId == null) return () => { active = false; };
     void apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${selectedId}`)
-      .then((nextDetail) => { if (active) setDetail(nextDetail); })
+      .then((nextDetail) => { if (active) setDetail(normalizeCalendarizedDayDetail(nextDetail)); })
       .catch((nextError) => { if (active) { setDetail(null); setError(userFacingError(nextError)); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -118,7 +119,7 @@ export function CalendarizedProgramPlanning({
     if (selectedId == null) return;
     try {
       await apiRequest(path, init);
-      setDetail(await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${selectedId}`));
+      setDetail(normalizeCalendarizedDayDetail(await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${selectedId}`)));
     } catch (nextError) {
       setError(userFacingError(nextError));
       throw nextError;
@@ -130,7 +131,9 @@ export function CalendarizedProgramPlanning({
     try {
       const payload: MealCheckInInput = { action: completed ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
       const today = await apiRequest<TodayData>(`/api/v1/days/${detail.id}/meals/${encodeURIComponent(meal.id)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      setDetail(today.day_id === detail.id ? { ...detail, meal_execution: today.meal_execution } : await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${detail.id}`));
+      setDetail(today.day_id === detail.id
+        ? { ...detail, meal_execution: Array.isArray(today.meal_execution) ? today.meal_execution : [] }
+        : normalizeCalendarizedDayDetail(await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${detail.id}`)));
     } catch (nextError) {
       setError(userFacingError(nextError));
     }

@@ -6,6 +6,7 @@ import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedProgramPlanning } from "@/components/calendarization/calendarized-program-planning";
+import { normalizeActiveProgramData } from "@/components/calendarization/runtime-normalization";
 import { ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
@@ -38,7 +39,7 @@ export default function ProgramScreen() {
     setLoading(true);
     setError(null);
     try {
-      setProgram(await apiRequest<ActiveProgramData>("/api/v1/program/active"));
+      setProgram(normalizeActiveProgramData(await apiRequest<ActiveProgramData>("/api/v1/program/active")));
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -86,7 +87,7 @@ export default function ProgramScreen() {
   async function applyAction(action: "pause" | "resume" | "cancel") {
     if (!calendarization) throw new Error("No hay un programa en curso para actualizar.");
     const nextProgram = await apiRequest<ActiveProgramData>(`/api/v1/program/calendarizations/${calendarization.id}/${action}`, { method: "POST" });
-    setProgram(nextProgram);
+    setProgram(normalizeActiveProgramData(nextProgram));
     try {
       await refreshNativeReminders(apiRequest);
     } catch {
