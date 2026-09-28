@@ -14,6 +14,22 @@ from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPICreditPackBillingTests(AuthenticatedMobileAPITestCase):
+    @override_settings(BILLING_GOOGLE_PLAY_PURCHASES_ENABLED=True)
+    def test_unexpected_google_credit_pack_failure_is_safe_and_diagnostic(self):
+        gateway = SimpleNamespace(verify_product=lambda value: (_ for _ in ()).throw(RuntimeError("test failure")))
+        with patch("mobile_api.routes.google_play_billing.build_google_play_gateway", return_value=gateway):
+            with self.assertLogs("mobile_api.routes.google_play_billing", level="ERROR") as logs:
+                response = self.client.post(
+                    "/api/v1/credit-packs/google-play/purchases",
+                    data={"purchase_token": "test-token-123456789"},
+                    content_type="application/json",
+                )
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["error"]["code"], "google_play_billing_unavailable")
+        self.assertIn("token_length=20", logs.output[0])
+        self.assertNotIn("test-token-123456789", logs.output[0])
+        self.assertFalse(CreditPackPurchase.objects.exists())
+
     @override_settings(BILLING_APPLE_PURCHASES_ENABLED=True)
     def test_credit_packs_are_offered_only_to_paid_accounts(self):
         configure_credit_pack_product(

@@ -47,6 +47,8 @@ services:
         value: "true"
       - key: BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED
         value: "false"
+      - key: BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED
+        value: "false"
       - key: BILLING_PADDLE_API_BASE_URL
         value: https://sandbox-api.paddle.com
       - key: BILLING_PADDLE_TIMEOUT_SECONDS
@@ -143,5 +145,5 @@ services:
     branch: staging
     schedule: "15 4 * * *"
     buildCommand: ./scripts/render_build.sh
-    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30 && python manage.py maintain_sharing_resources --retention-days 30 && python manage.py reconcile_google_play_credit_pack_refunds --apply --if-enabled
+    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30 && python manage.py maintain_sharing_resources --retention-days 30 && bash scripts/run_billing_reconciliation.sh
     envVars: *staging_app_env
