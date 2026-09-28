@@ -57,7 +57,9 @@ export default function SubscriptionScreen() {
       await finishTransaction({ purchase, isConsumable: isCreditPack });
       setOverview(await apiRequest<SubscriptionData>("/api/v1/subscriptions"));
     } catch (nextError) {
-      handledTransactions.current.delete(key);
+      // A failed verification remains pending at the store. Do not replay it
+      // continuously when the purchase list or component state refreshes.
+      // The user can explicitly retry it with Restore purchases.
       setError(userFacingError(nextError));
     } finally {
       setWorking(false);
@@ -191,6 +193,21 @@ export default function SubscriptionScreen() {
         });
       }
     } catch (nextError) {
+      if (purchaseErrorCode(nextError) === ErrorCode.AlreadyOwned) {
+        try {
+          const recovered = await getAvailablePurchases();
+          const matching = recovered.filter((purchase) => purchase.productId === productId);
+          if (matching.length > 0) {
+            for (const purchase of matching) {
+              handledTransactions.current.delete(purchase.id || purchase.purchaseToken || "");
+              await submitPurchase(purchase);
+            }
+            return;
+          }
+        } catch {
+          // Keep the store error below if the pending purchase cannot be read.
+        }
+      }
       setWorking(false);
       if (purchaseErrorCode(nextError) !== ErrorCode.UserCancelled) setError(userFacingError(nextError));
     }
@@ -200,6 +217,9 @@ export default function SubscriptionScreen() {
     setWorking(true);
     setError(null);
     try {
+      handledTransactions.current.clear();
+      const recovered = await getAvailablePurchases();
+      for (const purchase of recovered) await submitPurchase(purchase);
       await restorePurchases();
     } catch (nextError) {
       setError(userFacingError(nextError));

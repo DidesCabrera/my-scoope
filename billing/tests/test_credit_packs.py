@@ -177,6 +177,61 @@ class PaddleCreditPackTests(TestCase):
 
 
 class GooglePlayCreditPackTests(TestCase):
+    def test_opaque_purchase_token_fits_ledger_and_refund_is_idempotent(self):
+        seed_account_plans()
+        user = get_user_model().objects.create_user(username="google-long-token")
+        AccountSubscription.objects.update_or_create(
+            user=user, defaults={"plan": AccountPlan.objects.get(slug="basic")}
+        )
+        configure_credit_pack_product(
+            provider=PaymentProvider.GOOGLE_PLAY, environment="sandbox", offer_code="credits-500",
+            external_product_id="myscoope.credits.500",
+        )
+        token = "g" * 123  # Length observed from an actual Google Play test purchase.
+        evidence = GooglePlayProductEvidence(
+            purchase_token=token, product_id="myscoope.credits.500", status="PURCHASED",
+            obfuscated_account_id=google_play_account_id(user), environment="sandbox", order_id="GPA.123",
+        )
+        settle_google_play_credit_pack(user=user, evidence=evidence)
+        settle_google_play_credit_pack(user=user, evidence=evidence)
+        self.assertEqual(CreditPackPurchase.objects.count(), 1)
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 500)
+        grant = CreditLedger.objects.get(user=user, reference_type="credit_pack_purchase")
+        self.assertLessEqual(len(grant.reference_id), CreditLedger._meta.get_field("reference_id").max_length)
+
+        refund_credit_pack_purchase(provider=PaymentProvider.GOOGLE_PLAY, external_purchase_id=token)
+        refund_credit_pack_purchase(provider=PaymentProvider.GOOGLE_PLAY, external_purchase_id=token)
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 0)
+        refund = CreditLedger.objects.get(user=user, reference_type="credit_pack_refund")
+        self.assertEqual(refund.reference_id, grant.reference_id)
+
+    def test_very_long_google_token_is_digest_stored_and_refundable(self):
+        from unittest.mock import Mock
+
+        seed_account_plans()
+        user = get_user_model().objects.create_user(username="google-very-long-token")
+        AccountSubscription.objects.update_or_create(
+            user=user, defaults={"plan": AccountPlan.objects.get(slug="basic")}
+        )
+        product = configure_credit_pack_product(
+            provider=PaymentProvider.GOOGLE_PLAY, environment="sandbox", offer_code="credits-500",
+            external_product_id="myscoope.credits.500",
+        )
+        token = "g" * 512
+        settle_credit_pack_purchase(
+            user=user, product=product, external_purchase_id=token, evidence={"order_id": "GPA.512"},
+        )
+        settle_credit_pack_purchase(user=user, product=product, external_purchase_id=token)
+        purchase = CreditPackPurchase.objects.get(user=user)
+        self.assertLessEqual(len(purchase.external_purchase_id), 160)
+        self.assertNotIn(token, purchase.external_purchase_id)
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 500)
+        gateway = Mock()
+        gateway.list_voided_products.return_value = [{"purchaseToken": token, "orderId": "GPA.512"}]
+        result = reconcile_google_play_voided_products(gateway=gateway, start_time_ms=1, apply=True)
+        self.assertEqual(result["refunded"], 1)
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 0)
+
     def test_voided_product_reconciliation_is_idempotent_and_order_bound(self):
         from unittest.mock import Mock
 
