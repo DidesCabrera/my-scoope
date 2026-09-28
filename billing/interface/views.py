@@ -113,7 +113,7 @@ def create_credit_pack_mercado_pago_checkout(request: HttpRequest, product_id: i
 
 @login_required
 def checkout_return(request: HttpRequest) -> HttpResponse:
-    messages.info(request, "Estamos confirmando el pago. El estado se actualizará automáticamente.")
+    messages.info(request, "Estamos confirmando el pago. Actualiza esta página en unos segundos para ver el saldo y el historial.")
     return redirect("billing:overview")
 
 
