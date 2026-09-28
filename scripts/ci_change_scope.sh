@@ -35,7 +35,7 @@ while IFS= read -r changed_path; do
         tier=mobile
       fi
       ;;
-    .github/*|*/migrations/*|accounts/*|billing/*|miapp/settings/*|mobile_api/auth*|mobile_api/routes/auth*|mobile_api/security*|*/models.py|*/models/*|requirements*.txt|*/requirements*.txt|package.json|package-lock.json|mobile/package.json|mobile/package-lock.json|mobile/app.json|mobile/app.config.*|mobile/eas.json|mobile/ios/*|Dockerfile*|render*.yaml|pyproject.toml|pytest.ini|scripts/ci_*.sh|scripts/quality_checks.sh)
+    .github/*|*/migrations/*|accounts/*|billing/*|miapp/settings/*|mobile_api/auth*|mobile_api/routes/auth*|mobile_api/security*|mobile/src/auth/*|mobile/src/app/login.tsx|mobile/src/app/oauth/*|*/models.py|*/models/*|requirements*.txt|*/requirements*.txt|package.json|package-lock.json|mobile/package.json|mobile/package-lock.json|mobile/app.json|mobile/app.config.*|mobile/eas.json|mobile/ios/*|Dockerfile*|render*.yaml|pyproject.toml|pytest.ini|scripts/ci_*.sh|scripts/quality_checks.sh)
       tier=full
       break
       ;;

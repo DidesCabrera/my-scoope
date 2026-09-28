@@ -24,6 +24,9 @@ assert_tier staging-fast notas/application/services/example.py mobile/src/app/to
 assert_tier full notas/migrations/0001_initial.py
 assert_tier full accounts/views.py
 assert_tier full billing/services.py
+assert_tier full mobile/src/auth/session-context.tsx
+assert_tier full mobile/src/app/login.tsx
+assert_tier full mobile/src/app/oauth/callback.tsx
 assert_tier full requirements.txt
 assert_tier full mobile/package-lock.json
 assert_tier full .github/workflows/django-ci.yml
