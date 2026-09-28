@@ -14,6 +14,7 @@ ROUTE_DOMAIN_PREFIXES = (
     ("/foods", "food_catalog"),
     ("/food-picker-options", "food_catalog"),
     ("/subscriptions", "billing"),
+    ("/credit-packs", "billing"),
     ("/entitlements", "billing"),
     ("/account", "accounts"),
     ("/onboarding", "accounts"),

@@ -5,32 +5,39 @@ from typing import Any
 
 from .models import AccountPlan
 
-ACCOUNT_PLAN_SEED_VERSION = "ACC04.2026-07-04"
+ACCOUNT_PLAN_SEED_VERSION = "CLC01.2026-09-26"
 
 ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
     {
         "slug": "free",
         "name": "Free",
-        "description": "Plan de entrada para probar My Scoope con créditos y límites comerciales básicos.",
+        "description": "Plan gratuito para construir y conservar una biblioteca nutricional personal.",
         "status": AccountPlan.Status.ACTIVE,
         "display_order": 10,
-        "included_monthly_credits": 25,
-        "daily_credit_limit": 5,
-        "monthly_credit_limit": 25,
+        "included_monthly_credits": 0,
+        "daily_credit_limit": 0,
+        "monthly_credit_limit": 0,
         "entitlements": {
             "ai_assistant": {
-                "enabled": True,
-                "monthly_credit_limit": 25,
-                "daily_credit_limit": 5,
+                "enabled": False,
+                "monthly_credit_limit": 0,
+                "daily_credit_limit": 0,
                 "block_on_exhaustion": True,
             },
             "nutrition_workspace": {
                 "can_create_meal": True,
                 "can_create_dailyplan": True,
-                "can_create_program": False,
+                "can_create_program": True,
                 "can_publish": False,
-                "can_copy": False,
+                "can_copy": True,
                 "can_fork": True,
+                "max_meals": 12,
+                "max_dailyplans": 4,
+                "max_programs": 1,
+                "max_program_duration_days": 14,
+                "max_active_programs": 1,
+                "max_shared_imports_monthly": 1,
+                "max_saved_comparisons": 0,
             },
         },
     },
@@ -41,13 +48,13 @@ ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
         "status": AccountPlan.Status.ACTIVE,
         "display_order": 20,
         "included_monthly_credits": 150,
-        "daily_credit_limit": 30,
+        "daily_credit_limit": 0,
         "monthly_credit_limit": 150,
         "entitlements": {
             "ai_assistant": {
                 "enabled": True,
                 "monthly_credit_limit": 150,
-                "daily_credit_limit": 30,
+                "daily_credit_limit": 0,
                 "block_on_exhaustion": True,
             },
             "nutrition_workspace": {
@@ -57,6 +64,13 @@ ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
                 "can_publish": False,
                 "can_copy": True,
                 "can_fork": True,
+                "max_meals": None,
+                "max_dailyplans": None,
+                "max_programs": None,
+                "max_program_duration_days": 84,
+                "max_active_programs": 1,
+                "max_shared_imports_monthly": None,
+                "max_saved_comparisons": None,
             },
         },
     },
@@ -67,13 +81,13 @@ ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
         "status": AccountPlan.Status.ACTIVE,
         "display_order": 30,
         "included_monthly_credits": 1000,
-        "daily_credit_limit": 150,
+        "daily_credit_limit": 0,
         "monthly_credit_limit": 1000,
         "entitlements": {
             "ai_assistant": {
                 "enabled": True,
                 "monthly_credit_limit": 1000,
-                "daily_credit_limit": 150,
+                "daily_credit_limit": 0,
                 "block_on_exhaustion": True,
             },
             "nutrition_workspace": {
@@ -83,7 +97,13 @@ ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
                 "can_publish": True,
                 "can_copy": True,
                 "can_fork": True,
-                "max_active_subscriptions": None,
+                "max_meals": None,
+                "max_dailyplans": None,
+                "max_programs": None,
+                "max_program_duration_days": 84,
+                "max_active_programs": 1,
+                "max_shared_imports_monthly": None,
+                "max_saved_comparisons": None,
             },
         },
     },

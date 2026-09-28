@@ -8,10 +8,10 @@ from django.conf import settings
 from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 
-from accounts.services.profile import build_account_credit_display
 from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
+from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
-from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
+from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api.errors import MobileAPIError
 from mobile_api.library_actions import library_actions_payload
 from notas.application.queries.calendarization_execution_queries import (
@@ -671,25 +671,12 @@ def profile_payload(user) -> dict:
     }
 
 
-def entitlements_payload(user) -> dict:
-    account = build_account_credit_display(user)
-    return {
-        "plan_name": account.plan_name,
-        "plan_slug": account.plan_slug,
-        "subscription_status": account.subscription_status,
-        "period": account.period,
-        "available_credits": account.available_credits,
-        "reserved_credits": account.reserved_credits,
-        "monthly_credit_limit": account.monthly_credit_limit,
-        "daily_credit_limit": account.daily_credit_limit,
-    }
-
-
 def subscription_payload(user) -> dict:
     profile = getattr(user, "profile", None)
     eligible = str(getattr(profile, "role", "member") or "member").lower() == "member"
+    can_buy_packs = may_buy_credit_packs(user)
     subscription = getattr(user, "account_subscription", None)
-    token = get_or_create_apple_app_account_token(user) if eligible else None
+    token = get_or_create_apple_app_account_token(user) if eligible or can_buy_packs else None
     products = []
     enabled_providers = []
     if settings.BILLING_APPLE_PURCHASES_ENABLED:
@@ -718,14 +705,30 @@ def subscription_payload(user) -> dict:
         .values("provider", "status", "current_period_end")
     )
     metadata = dict(getattr(subscription, "metadata", {}) or {})
+    credit_packs = []
+    if (eligible or can_buy_packs) and enabled_providers:
+        credit_packs = [
+            {
+                "product_id": product.external_product_id,
+                "provider": product.provider,
+                "credits": product.credits_snapshot,
+                "amount_minor": product.amount_minor,
+                "currency": product.currency,
+            }
+            for product in ProviderCreditPack.objects.select_related("offer").filter(
+                provider__in=enabled_providers, active=True, offer__active=True, offer__public=True,
+            ).order_by("offer__display_order")
+        ]
     return {
         "eligible": eligible,
         "purchases_enabled": bool(eligible and products),
         "app_account_token": str(token.token) if token is not None else "",
-        "google_obfuscated_account_id": google_play_account_id(user) if eligible else "",
+        "google_obfuscated_account_id": google_play_account_id(user) if eligible or can_buy_packs else "",
         "plan_name": subscription.plan.name if subscription is not None else "Sin plan",
         "status": subscription.status if subscription is not None else "none",
         "products": products,
+        "credit_packs": credit_packs,
+        "can_buy_credit_packs": can_buy_packs,
         "evidence": [
             {
                 "provider": item["provider"],

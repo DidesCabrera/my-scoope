@@ -49,11 +49,11 @@ class AccountEntitlementResolutionTests(TestCase):
         self.assertFalse(caps.can_copy())
         self.assertIsNone(caps.max_active_subscriptions())
 
-    def test_seeded_subscription_resolves_basic_member_plan(self):
+    def test_seeded_subscription_resolves_free_member_plan(self):
         entitlements = resolve_account_entitlements(self.user)
         caps = get_capabilities(self.user)
 
-        self.assertEqual(entitlements.plan_slug, "basic")
+        self.assertEqual(entitlements.plan_slug, "free")
         self.assertTrue(caps.can_create_dailyplan())
         self.assertTrue(caps.can_create_program())
         self.assertFalse(caps.can_publish())

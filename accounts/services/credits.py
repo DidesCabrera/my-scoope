@@ -11,8 +11,8 @@ from accounts.models import AccountPlan, AccountSubscription, CreditLedger, Cred
 DEFAULT_ACCOUNT_PLAN_SLUG = "free"
 ACCOUNT_PLAN_BY_PROFILE_ROLE = {
     "default": "free",
-    "member": "basic",
-    "nutritionist": "pro",
+    "member": "free",
+    "nutritionist": "free",
 }
 
 
@@ -93,23 +93,83 @@ def get_or_create_current_wallet(*, user: Any, plan: AccountPlan | None = None) 
         "reserved_balance": 0,
         "plan_snapshot_code": str(getattr(plan, "slug", "") or ""),
     }
-    wallet, created = CreditWallet.objects.get_or_create(user=user, defaults=defaults)
-    update_fields: list[str] = []
-    if created:
+    with transaction.atomic():
+        wallet, created = CreditWallet.objects.get_or_create(user=user, defaults=defaults)
+        wallet = CreditWallet.objects.select_for_update().get(pk=wallet.pk)
+        if created:
+            if wallet.balance:
+                _record_wallet_movement(wallet, CreditLedger.Kind.GRANT, wallet.balance, "plan_monthly_grant")
+            return wallet
+        _refresh_wallet_for_plan(wallet, plan=plan, period=period)
         return wallet
-    if wallet.period != period:
-        wallet.period = period
-        wallet.balance = defaults["balance"]
-        wallet.reserved_balance = 0
-        wallet.plan_snapshot_code = defaults["plan_snapshot_code"]
-        update_fields.extend(["period", "balance", "reserved_balance", "plan_snapshot_code"])
-    elif plan is not None and wallet.plan_snapshot_code != plan.slug:
-        wallet.plan_snapshot_code = plan.slug
-        update_fields.append("plan_snapshot_code")
-    if update_fields:
-        update_fields.append("updated_at")
-        wallet.save(update_fields=update_fields)
-    return wallet
+
+
+def _record_wallet_movement(wallet: CreditWallet, kind: str, delta: int, reason: str) -> None:
+    CreditLedger.objects.create(
+        wallet=wallet,
+        user=wallet.user,
+        kind=kind,
+        credits_delta=delta,
+        reserved_delta=0,
+        balance_after=wallet.balance,
+        reserved_balance_after=wallet.reserved_balance,
+        period=wallet.period,
+        plan_snapshot_code=wallet.plan_snapshot_code,
+        reference_type="account_plan_period",
+        reference_id=f"{wallet.period}:{wallet.plan_snapshot_code}",
+        reason=reason,
+        metadata={"credit_source": "monthly"},
+    )
+
+
+def _refresh_wallet_for_plan(wallet: CreditWallet, *, plan: AccountPlan | None, period: str) -> None:
+    if plan is None or (wallet.period == period and wallet.plan_snapshot_code == plan.slug):
+        return
+    # An in-flight reservation must close against its original buckets first.
+    if wallet.reserved_balance:
+        return
+    monthly_remaining = max(wallet.balance - wallet.purchased_balance, 0)
+    if monthly_remaining:
+        wallet.balance -= monthly_remaining
+        wallet.save(update_fields=["balance", "updated_at"])
+        _record_wallet_movement(wallet, CreditLedger.Kind.EXPIRE, -monthly_remaining, "plan_monthly_expire")
+    wallet.period = period
+    wallet.plan_snapshot_code = plan.slug
+    grant = int(plan.included_monthly_credits or 0)
+    wallet.balance += grant
+    wallet.save(update_fields=["period", "plan_snapshot_code", "balance", "updated_at"])
+    if grant:
+        _record_wallet_movement(wallet, CreditLedger.Kind.GRANT, grant, "plan_monthly_grant")
+
+
+def grant_purchased_credits(*, user: Any, credits: int, provider: str, purchase_id: str) -> bool:
+    """Idempotent settlement after verified provider payment evidence."""
+
+    credits = _non_negative_int(credits)
+    if credits <= 0 or not provider or not purchase_id:
+        raise ValueError("A verified purchase identity and positive credit amount are required.")
+    with transaction.atomic():
+        wallet = get_or_create_current_wallet(user=user)
+        wallet = CreditWallet.objects.select_for_update().get(pk=wallet.pk)
+        reference_id = f"{provider}:{purchase_id}"
+        if CreditLedger.objects.filter(
+            wallet=wallet, kind=CreditLedger.Kind.GRANT,
+            reference_type="credit_pack_purchase", reference_id=reference_id,
+        ).exists():
+            return False
+        wallet.balance += credits
+        wallet.purchased_balance += credits
+        wallet.save(update_fields=["balance", "purchased_balance", "updated_at"])
+        CreditLedger.objects.create(
+            wallet=wallet, user=user, kind=CreditLedger.Kind.GRANT,
+            credits_delta=credits, reserved_delta=0,
+            balance_after=wallet.balance, reserved_balance_after=wallet.reserved_balance,
+            period=wallet.period, plan_snapshot_code=wallet.plan_snapshot_code,
+            reference_type="credit_pack_purchase", reference_id=reference_id,
+            reason="verified_credit_pack_purchase",
+            metadata={"credit_source": "purchased", "provider": provider},
+        )
+    return True
 
 
 def reserve_account_credits(
@@ -135,15 +195,13 @@ def reserve_account_credits(
         plan = resolve_account_plan_for_user(user)
         if plan is None:
             return {"reserved": False, "reason": "account_plan_not_found"}
-        wallet = CreditWallet.objects.select_for_update().filter(user=user).first()
-        if wallet is None:
-            wallet = get_or_create_current_wallet(user=user, plan=plan)
-            wallet = CreditWallet.objects.select_for_update().get(pk=wallet.pk)
-        elif wallet.period != current_account_credit_period():
-            wallet.period = current_account_credit_period()
-            wallet.balance = int(plan.included_monthly_credits or 0)
-            wallet.reserved_balance = 0
-            wallet.plan_snapshot_code = plan.slug
+        ai_config = (plan.entitlements or {}).get("ai_assistant") or {}
+        if plan.slug == DEFAULT_ACCOUNT_PLAN_SLUG or not isinstance(ai_config, Mapping) or not ai_config.get("enabled", False):
+            raise InsufficientAccountCredits("The current plan cannot run credit-consuming tasks.")
+        wallet = get_or_create_current_wallet(user=user, plan=plan)
+        wallet = CreditWallet.objects.select_for_update().get(pk=wallet.pk)
+        if wallet.period != current_account_credit_period() or wallet.plan_snapshot_code != plan.slug:
+            raise AccountCreditsFrozen("An earlier credit reservation must finish before the plan changes.")
 
         if wallet.is_frozen:
             raise AccountCreditsFrozen(wallet.frozen_reason or "Account credits are frozen.")
@@ -151,8 +209,11 @@ def reserve_account_credits(
         if wallet.available_credits < credits:
             raise InsufficientAccountCredits("Insufficient account credits available for this reservation.")
 
+        monthly_reserved = min(credits, wallet.available_monthly_credits)
+        purchased_reserved = credits - monthly_reserved
         wallet.reserved_balance = int(wallet.reserved_balance or 0) + credits
-        wallet.save(update_fields=["period", "balance", "reserved_balance", "plan_snapshot_code", "updated_at"])
+        wallet.purchased_reserved_balance += purchased_reserved
+        wallet.save(update_fields=["reserved_balance", "purchased_reserved_balance", "updated_at"])
         ledger = CreditLedger.objects.create(
             wallet=wallet,
             user=user,
@@ -166,7 +227,7 @@ def reserve_account_credits(
             reference_type=reference_type,
             reference_id=reference_id,
             reason=reason or "ai_turn_credit_reservation",
-            metadata=dict(metadata or {}),
+            metadata={**dict(metadata or {}), "monthly_reserved": monthly_reserved, "purchased_reserved": purchased_reserved},
         )
     return _reservation_summary(wallet, ledger, already_reserved=False)
 
@@ -206,9 +267,21 @@ def consume_account_credit_reservation(
         extra_credits = max(0, credits - reserved_to_close)
         if wallet.available_credits < extra_credits:
             raise InsufficientAccountCredits("Insufficient account credits available to consume this turn.")
+        reserved_purchased = int((reservation.metadata or {}).get("purchased_reserved") or 0)
+        reserved_monthly = reserved_to_close - reserved_purchased
+        monthly_to_consume = min(credits, reserved_monthly)
+        remainder = credits - monthly_to_consume
+        purchased_to_consume = min(remainder, reserved_purchased)
+        remainder -= purchased_to_consume
+        if remainder:
+            extra_monthly = min(remainder, wallet.available_monthly_credits)
+            monthly_to_consume += extra_monthly
+            purchased_to_consume += remainder - extra_monthly
         wallet.balance = max(0, int(wallet.balance or 0) - credits)
+        wallet.purchased_balance -= purchased_to_consume
         wallet.reserved_balance = max(0, int(wallet.reserved_balance or 0) - reserved_to_close)
-        wallet.save(update_fields=["balance", "reserved_balance", "updated_at"])
+        wallet.purchased_reserved_balance -= reserved_purchased
+        wallet.save(update_fields=["balance", "purchased_balance", "reserved_balance", "purchased_reserved_balance", "updated_at"])
         ledger = CreditLedger.objects.create(
             wallet=wallet,
             user=user,
@@ -222,7 +295,7 @@ def consume_account_credit_reservation(
             reference_type=reference_type,
             reference_id=reference_id,
             reason=reason or "ai_turn_credit_consumption",
-            metadata=dict(metadata or {}),
+            metadata={**dict(metadata or {}), "monthly_consumed": monthly_to_consume, "purchased_consumed": purchased_to_consume},
         )
     return {"consumed": True, "ledger_id": ledger.pk, "credits": credits, "balance_after": wallet.balance, "reserved_balance_after": wallet.reserved_balance}
 
@@ -247,8 +320,10 @@ def release_account_credit_reservation(
             return {"released": False, "reason": "reservation_already_closed"}
         wallet = CreditWallet.objects.select_for_update().get(pk=reservation.wallet_id)
         reserved_to_close = max(0, int(reservation.reserved_delta or 0))
+        reserved_purchased = int((reservation.metadata or {}).get("purchased_reserved") or 0)
         wallet.reserved_balance = max(0, int(wallet.reserved_balance or 0) - reserved_to_close)
-        wallet.save(update_fields=["reserved_balance", "updated_at"])
+        wallet.purchased_reserved_balance = max(0, wallet.purchased_reserved_balance - reserved_purchased)
+        wallet.save(update_fields=["reserved_balance", "purchased_reserved_balance", "updated_at"])
         ledger = CreditLedger.objects.create(
             wallet=wallet,
             user=user,

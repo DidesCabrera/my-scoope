@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Literal
 
 from ninja import Field, Schema
 
-from mobile_api.schema_domains.store_billing import SubscriptionProductData
+from mobile_api.schema_domains.store_billing import (
+    CreditPackProductData,
+    SubscriptionEvidenceData,
+    SubscriptionProductData,
+)
 
 
 class EntitlementsData(Schema):
@@ -17,18 +20,16 @@ class EntitlementsData(Schema):
     reserved_credits: int
     monthly_credit_limit: int
     daily_credit_limit: int
+    included_monthly_credits: int = 0
+    purchased_credits: int = 0
+    workspace_limits: dict[str, int | None] = {}
+    workspace_usage: dict[str, int] = {}
 
 
 class EntitlementsEnvelope(Schema):
     ok: Literal[True] = True
     data: EntitlementsData
     error: None = None
-
-
-class SubscriptionEvidenceData(Schema):
-    provider: str
-    status: str
-    period_end: datetime | None = None
 
 
 class SubscriptionData(Schema):
@@ -41,6 +42,8 @@ class SubscriptionData(Schema):
     products: list[SubscriptionProductData]
     evidence: list[SubscriptionEvidenceData]
     duplicate_active_providers: bool
+    credit_packs: list[CreditPackProductData] = []
+    can_buy_credit_packs: bool = False
 
 
 class SubscriptionEnvelope(Schema):

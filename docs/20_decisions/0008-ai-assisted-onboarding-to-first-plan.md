@@ -8,6 +8,16 @@ Aceptada.
 
 2026-06-27
 
+## Actualización 2026-09-25
+
+La decisión `0201-commercial-launch-plans-and-owned-library.md` reemplaza parcialmente
+este contrato respecto de la activación inicial del usuario Free. El primer valor Free
+debe orientarse a un Plan diario determinístico y de bajo costo, sin requerir IA ni un
+Programa completo. Esa capacidad se implementará en un ciclo posterior.
+
+Este documento sigue vigente para experiencias asistidas: la IA interpreta y explica,
+My Scoope calcula y valida, y el usuario revisa y aprueba antes de aplicar cambios.
+
 ## Contexto
 
 La experiencia actual de MyScoope permite construir Meals, DailyPlans y Programs con alto control, pero esa potencia puede ser demasiada fricción para un usuario regular.

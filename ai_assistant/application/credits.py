@@ -119,7 +119,9 @@ class DjangoAICreditService:
                 reason="credit_quota_hard_blocked",
             )
 
-        if plan.monthly_is_limited and quota.credits_used + estimated_credits > plan.monthly_credit_limit:
+        monthly_remaining = max(plan.monthly_credit_limit - quota.monthly_credits_used, 0)
+        purchased_needed = max(estimated_credits - monthly_remaining, 0)
+        if plan.monthly_is_limited and purchased_needed > quota.wallet.available_purchased_credits:
             return AICreditCheck(
                 allowed=False,
                 enabled=True,
@@ -387,9 +389,10 @@ def estimate_request_credits(
 
 
 def calculate_event_credits(usage_event: Any) -> int:
+    metadata = dict(getattr(usage_event, "metadata", {}) or {})
     return _credits_from_cost_or_default(
         cost=getattr(usage_event, "estimated_cost_usd", None),
-        action_type=getattr(usage_event, "action_type", ""),
+        action_type=metadata.get("billing_action_type") or getattr(usage_event, "action_type", ""),
     )
 
 
@@ -441,6 +444,15 @@ def user_from_request(request: AssistantTurnRequest) -> Any | None:
 
 
 def _credits_from_cost_or_default(*, cost: Any, action_type: str) -> int:
+    fixed = (getattr(settings, "AI_ASSISTANT_TASK_CREDIT_TARIFFS", {}) or {}).get(action_type)
+    if fixed is not None:
+        try:
+            fixed_credits = int(fixed)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid credit tariff for {action_type}.") from exc
+        if fixed_credits <= 0:
+            raise ValueError(f"Credit tariff for {action_type} must be positive.")
+        return fixed_credits
     base_credits = _default_credits_per_turn()
     decimal_cost = _decimal_or_none(cost)
     credit_value = _usd_per_credit()

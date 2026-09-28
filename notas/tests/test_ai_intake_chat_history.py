@@ -5,7 +5,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import CreditWallet
+from accounts.models import AccountPlan, AccountSubscription, CreditWallet
+from accounts.seed_plans import seed_account_plans
+from accounts.services.credits import current_account_credit_period
 from notas.application.ai_intake.chat_history import AI_NUTRITION_CHAT_SESSION_KEY
 from notas.application.ai_intake.deterministic_chat_engine import (
     DeterministicNutritionIntakeChatEngine,
@@ -19,6 +21,7 @@ from notas.domain.models import AiNutritionChat, Food, NutritionProposal
 
 class AiNutritionChatHistoryTests(TestCase):
     def setUp(self):
+        seed_account_plans()
         self.engine_patcher = patch(
             "notas.interface.views.ai_intake.get_nutrition_intake_chat_engine",
             return_value=DeterministicNutritionIntakeChatEngine(),
@@ -26,11 +29,16 @@ class AiNutritionChatHistoryTests(TestCase):
         self.engine_patcher.start()
         self.addCleanup(self.engine_patcher.stop)
         self.user = User.objects.create_user(username="felipe", password="testpass123")
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="basic")},
+        )
         profile = self.user.profile
         profile.onboarding_completed_at = timezone.now()
         profile.onboarding_version = profile.ONBOARDING_VERSION_NUTRITION_V1
         profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
-        self.wallet = CreditWallet.objects.create(user=self.user, balance=12)
+        self.wallet = CreditWallet.objects.create(
+            user=self.user, balance=12, period=current_account_credit_period(), plan_snapshot_code="basic",
+        )
         self.client.force_login(self.user)
 
     def test_home_uses_compact_ai_composer_without_copy_or_visible_hero(self):

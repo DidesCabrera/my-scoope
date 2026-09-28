@@ -49,8 +49,8 @@ class PublicLegalPagesTests(TestCase):
     def test_landing_discloses_currency_billing_and_legal_navigation(self):
         response = self.client.get(reverse("landing"))
 
-        self.assertContains(response, "CLP 7.990")
-        self.assertContains(response, "CLP 79.900 facturados anualmente")
+        self.assertContains(response, "CLP 3.990")
+        self.assertContains(response, "CLP 34.990 facturados anualmente")
         self.assertContains(response, "150 créditos de asistencia IA al mes")
         self.assertContains(response, "1.000 créditos de asistencia IA al mes")
         self.assertContains(response, 'href="/refund-policy/"')

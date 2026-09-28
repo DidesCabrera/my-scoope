@@ -36,6 +36,10 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `commercial_launch_contract_cycle.md`: ciclo planificado CLC00-CLC09 para alinear
+  planes, límites no destructivos, Compartidos conmigo, créditos, precios, recaudación
+  y comunicación con la decisión comercial 0201, sin desarrollar nuevas funciones
+  premium ni el futuro onboarding Free determinístico.
 - `ai_assistant_lab_v2_cycle.md`: implementación local completada para Lab v2,
   outcomes verificables, continuidad de objetivo, prompt v4, feedback y evaluación
   humana/modelo. Queda la calibración live con tres repeticiones en staging.

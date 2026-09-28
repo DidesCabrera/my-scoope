@@ -10,6 +10,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from core.rate_limits import limit_sharing_create
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.queries.library_queries import program_library_queryset
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.cache.program_summary import refresh_program_summary_cache
@@ -219,6 +220,9 @@ def program_create(request):
                 user=request.user,
                 name=name,
             )
+        except CommercialLimitReached:
+            messages.error(request, "Alcanzaste el límite de programas de tu plan. Tus programas existentes siguen disponibles.")
+            return redirect("program_create")
         except ValueError:
             messages.error(request, "El nombre es obligatorio.")
             return redirect("program_create")
@@ -326,7 +330,11 @@ def program_detail(request, pk):
 @require_POST
 def program_add_week(request, pk):
     program = get_object_or_404(Program, pk=pk, created_by=request.user)
-    add_week_to_program(program=program)
+    try:
+        add_week_to_program(program=program)
+    except CommercialLimitReached:
+        messages.error(request, "La extensión máxima de tu plan fue alcanzada. Las semanas existentes siguen disponibles.")
+        return redirect("program_detail", pk=program.pk)
     messages.success(request, f"Semana {program.normalized_duration_weeks} agregada al programa.")
     return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{program.normalized_duration_weeks}")
 
@@ -362,6 +370,9 @@ def program_duplicate_week(request, pk, week_number):
             week_number=week_number,
             user=request.user,
         )
+    except CommercialLimitReached:
+        messages.error(request, "La extensión máxima de tu plan fue alcanzada. Las semanas existentes siguen disponibles.")
+        return redirect("program_detail", pk=program.pk)
     except ValueError:
         messages.error(request, "La semana seleccionada no es válida.")
         return redirect("program_detail", pk=program.pk)

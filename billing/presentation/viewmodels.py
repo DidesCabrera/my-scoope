@@ -2,14 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.utils import timezone
 
 from billing.application.queries import get_billing_overview_data
+from billing.application.services.credit_packs import public_credit_pack_offers
 from billing.application.services.paddle_checkout import (
     PaddleCheckoutUnavailable,
     build_paddle_checkout_payload,
+    build_paddle_credit_pack_checkout_payload,
 )
-from billing.models import PaymentProvider, ProviderSubscription
+from billing.models import PaymentProvider, ProviderCreditPack, ProviderSubscription
 
 
 @dataclass(frozen=True)
@@ -23,6 +26,18 @@ class BillingProductVM:
     paddle_price_id: str
     paddle_checkout_reference: str
     customer_email: str
+
+
+@dataclass(frozen=True)
+class CreditPackVM:
+    credits: int
+    price: str
+    can_checkout: bool
+    paddle_price_id: str
+    paddle_checkout_reference: str
+    customer_email: str
+    mercado_pago_product_id: int | None
+    mercado_pago_can_checkout: bool
 
 
 @dataclass(frozen=True)
@@ -59,6 +74,7 @@ class BillingOverviewVM:
     paddle_client_token: str
     paddle_success_url: str
     products: tuple[BillingProductVM, ...]
+    credit_packs: tuple[CreditPackVM, ...]
     subscriptions: tuple[BillingSubscriptionVM, ...]
     payments: tuple[BillingPaymentVM, ...]
 
@@ -96,6 +112,40 @@ def build_billing_overview_vm(
             paddle_price_id=paddle_payload.price_id if paddle_payload else "",
             paddle_checkout_reference=paddle_payload.checkout_reference if paddle_payload else "",
             customer_email=paddle_payload.customer_email if paddle_payload else "",
+        ))
+    credit_packs = []
+    paddle_packs = {pack.offer_id: pack for pack in data.credit_packs}
+    mercado_pago_packs = {
+        pack.offer_id: pack
+        for pack in ProviderCreditPack.objects.select_related("offer").filter(
+            provider=PaymentProvider.MERCADO_PAGO,
+            environment=settings.BILLING_MERCADOPAGO_ENVIRONMENT,
+            active=True, offer__active=True, offer__public=True,
+        )
+    }
+    for offer in public_credit_pack_offers(user):
+        pack = paddle_packs.get(offer.pk)
+        mercado_pago_pack = mercado_pago_packs.get(offer.pk)
+        paddle_payload = None
+        if pack is not None and checkout_enabled and provider == PaymentProvider.PADDLE:
+            try:
+                paddle_payload = build_paddle_credit_pack_checkout_payload(
+                    user=user, product=pack, environment=environment,
+                )
+            except PaddleCheckoutUnavailable:
+                pass
+        credit_packs.append(CreditPackVM(
+            credits=offer.credits,
+            price=_money(offer.amount_minor, offer.currency),
+            can_checkout=paddle_payload is not None,
+            paddle_price_id=paddle_payload.price_id if paddle_payload else "",
+            paddle_checkout_reference=paddle_payload.checkout_reference if paddle_payload else "",
+            customer_email=paddle_payload.customer_email if paddle_payload else "",
+            mercado_pago_product_id=mercado_pago_pack.pk if mercado_pago_pack else None,
+            mercado_pago_can_checkout=bool(
+                mercado_pago_pack and settings.BILLING_MERCADOPAGO_CHECKOUT_ENABLED
+                and settings.BILLING_PUBLIC_BASE_URL.startswith("https://") and user.email
+            ),
         ))
     subscriptions = tuple(
         BillingSubscriptionVM(
@@ -149,6 +199,7 @@ def build_billing_overview_vm(
         paddle_client_token=paddle_client_token if provider == PaymentProvider.PADDLE else "",
         paddle_success_url=paddle_success_url if provider == PaymentProvider.PADDLE else "",
         products=tuple(products),
+        credit_packs=tuple(credit_packs),
         subscriptions=subscriptions,
         payments=tuple(payments),
     )

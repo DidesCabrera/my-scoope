@@ -29,6 +29,7 @@ class AccountAICreditAuthorityTests(TestCase):
             included_monthly_credits=20,
             monthly_credit_limit=20,
             daily_credit_limit=10,
+            entitlements={"ai_assistant": {"enabled": True}},
         )
         AccountSubscription.objects.create(user=self.user, plan=self.plan)
         self.wallet = CreditWallet.objects.create(

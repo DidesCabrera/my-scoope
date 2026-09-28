@@ -2651,6 +2651,39 @@
         "title": "CompositionOrderInput",
         "type": "object"
       },
+      "CreditPackProductData": {
+        "properties": {
+          "amount_minor": {
+            "title": "Amount Minor",
+            "type": "integer"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "provider",
+          "credits",
+          "amount_minor",
+          "currency"
+        ],
+        "title": "CreditPackProductData",
+        "type": "object"
+      },
       "DailyPlanMealUpdateInput": {
         "properties": {
           "hour": {
@@ -2740,6 +2773,11 @@
             "title": "Daily Credit Limit",
             "type": "integer"
           },
+          "included_monthly_credits": {
+            "default": 0,
+            "title": "Included Monthly Credits",
+            "type": "integer"
+          },
           "monthly_credit_limit": {
             "title": "Monthly Credit Limit",
             "type": "integer"
@@ -2756,6 +2794,11 @@
             "title": "Plan Slug",
             "type": "string"
           },
+          "purchased_credits": {
+            "default": 0,
+            "title": "Purchased Credits",
+            "type": "integer"
+          },
           "reserved_credits": {
             "title": "Reserved Credits",
             "type": "integer"
@@ -2763,6 +2806,29 @@
           "subscription_status": {
             "title": "Subscription Status",
             "type": "string"
+          },
+          "workspace_limits": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "default": {},
+            "title": "Workspace Limits",
+            "type": "object"
+          },
+          "workspace_usage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "default": {},
+            "title": "Workspace Usage",
+            "type": "object"
           }
         },
         "required": [
@@ -7460,6 +7526,19 @@
             "title": "App Account Token",
             "type": "string"
           },
+          "can_buy_credit_packs": {
+            "default": false,
+            "title": "Can Buy Credit Packs",
+            "type": "boolean"
+          },
+          "credit_packs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/CreditPackProductData"
+            },
+            "title": "Credit Packs",
+            "type": "array"
+          },
           "duplicate_active_providers": {
             "title": "Duplicate Active Providers",
             "type": "boolean"
@@ -8984,6 +9063,154 @@
           }
         ],
         "summary": "Update Mobile Saved Comparison"
+      }
+    },
+    "/api/v1/credit-packs/apple/transactions": {
+      "post": {
+        "operationId": "mobile_api_apple_credit_pack_transaction",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppleTransactionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntitlementsEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Apple Credit Pack Transaction"
+      }
+    },
+    "/api/v1/credit-packs/google-play/purchases": {
+      "post": {
+        "operationId": "mobile_api_google_play_credit_pack_purchase",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GooglePlayPurchaseInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntitlementsEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Google Play Credit Pack Purchase"
       }
     },
     "/api/v1/days/{day_id}/meals/{meal_snapshot_key}/check-ins": {

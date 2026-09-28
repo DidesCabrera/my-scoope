@@ -27,6 +27,7 @@ from mobile_api.selectors import (
     library_meals_payload,
     library_programs_payload,
 )
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.queries.food_picker_queries import (
     build_food_picker_item_dto,
     get_food_picker_queryset,
@@ -180,7 +181,10 @@ def create_library_food(request, payload: FoodCreateInput):
 )
 def create_library_meal(request, payload: NamedLibraryCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    result = create_draft_meal(user=request.auth.user, name=_clean_creation_name(payload.name))
+    try:
+        result = create_draft_meal(user=request.auth.user, name=_clean_creation_name(payload.name))
+    except CommercialLimitReached as exc:
+        raise MobileAPIError(str(exc), "El plan actual no permite crear más comidas.", 403) from exc
     return success(library_item_detail_payload(request.auth.user, "meals", result.meal.id))
 
 
@@ -192,7 +196,10 @@ def create_library_meal(request, payload: NamedLibraryCreateInput):
 )
 def create_library_dailyplan(request, payload: NamedLibraryCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    result = create_draft_dailyplan(user=request.auth.user, name=_clean_creation_name(payload.name))
+    try:
+        result = create_draft_dailyplan(user=request.auth.user, name=_clean_creation_name(payload.name))
+    except CommercialLimitReached as exc:
+        raise MobileAPIError(str(exc), "El plan actual no permite crear más planes diarios.", 403) from exc
     return success(library_item_detail_payload(request.auth.user, "daily-plans", result.dailyplan.id))
 
 
@@ -204,7 +211,10 @@ def create_library_dailyplan(request, payload: NamedLibraryCreateInput):
 )
 def create_library_program(request, payload: NamedLibraryCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    result = create_weekly_program(user=request.auth.user, name=_clean_creation_name(payload.name))
+    try:
+        result = create_weekly_program(user=request.auth.user, name=_clean_creation_name(payload.name))
+    except CommercialLimitReached as exc:
+        raise MobileAPIError(str(exc), "El plan actual no permite crear más programas.", 403) from exc
     return success(library_item_detail_payload(request.auth.user, "programs", result.program.id))
 
 

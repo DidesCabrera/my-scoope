@@ -4,6 +4,7 @@ from typing import Any
 from django.db import transaction
 from django.utils import timezone
 
+from notas.application.commercial.limits import require_new_workspace_item
 from notas.application.services.comparisons.payloads import (
     payload_has_enough_items,
     selected_payload_from_selections,
@@ -81,6 +82,7 @@ def create_saved_comparison(
     comparable_rows,
     include_quantities: bool = False,
 ) -> SavedComparisonCreateResult:
+    require_new_workspace_item(owner, "comparison")
     payload, snapshot_payload = _payload_and_snapshot(
         selections=selections,
         comparable_rows=comparable_rows,

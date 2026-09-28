@@ -532,6 +532,14 @@ export type SubscriptionData = {
     plan_name: string;
     interval: "month" | "year" | string;
   }[];
+  credit_packs: {
+    product_id: string;
+    provider: "apple_app_store" | "google_play" | string;
+    credits: number;
+    amount_minor: number;
+    currency: string;
+  }[];
+  can_buy_credit_packs: boolean;
   evidence: {
     provider: string;
     status: string;

@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from accounts.models import AccountPlan, AccountSubscription
+from accounts.seed_plans import seed_account_plans
 from notas.application.ai_intake.nutrition_brief import NutritionBrief, deserialize_brief, serialize_brief
 from notas.application.ai_intake.program_generator import create_weekly_program_proposal
 from notas.application.ai_tools.proposal_tools import build_nutrition_brief_from_ai_drafts
@@ -16,7 +18,11 @@ from notas.domain.models import DailyPlan, Food, Meal, NutritionProposal, Progra
 
 class ProgramNutritionProposalTests(TestCase):
     def setUp(self):
+        seed_account_plans()
         self.user = User.objects.create_user(username="weekly")
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="basic")},
+        )
         self.other = User.objects.create_user(username="other-weekly")
         self.food = Food.objects.create(name="Ingrediente", created_by=self.user, protein=20, carbs=30, fat=10)
 

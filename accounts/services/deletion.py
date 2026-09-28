@@ -46,6 +46,9 @@ MODEL_RETENTION_POLICY = {
     "billing.BillingEvent": RetentionAction.RETAIN_LEGAL,
     "billing.BillingPayment": RetentionAction.RETAIN_LEGAL,
     "billing.BillingOffer": RetentionAction.RETAIN_SYSTEM,
+    "billing.CreditPackOffer": RetentionAction.RETAIN_SYSTEM,
+    "billing.ProviderCreditPack": RetentionAction.RETAIN_SYSTEM,
+    "billing.CreditPackPurchase": RetentionAction.RETAIN_LEGAL,
     "billing.BillingProduct": RetentionAction.RETAIN_SYSTEM,
     "billing.AppleAppAccountToken": RetentionAction.RETAIN_LEGAL,
     "billing.ProviderSubscription": RetentionAction.RETAIN_LEGAL,
@@ -192,6 +195,7 @@ def delete_user_account(*, user, source: str) -> AccountDeletionResult:
         "billing.ProviderSubscription": ProviderSubscription.objects.filter(user=user).count(),
         "billing.BillingPayment": BillingPayment.objects.filter(user=user).count(),
         "billing.TaxDocument": TaxDocument.objects.filter(payment__user=user).count(),
+        "billing.CreditPackPurchase": _model("billing.CreditPackPurchase").objects.filter(user=user).count(),
     }
 
     for label, fields in {

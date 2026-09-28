@@ -24,7 +24,7 @@ ALLOWED_APP_DEPENDENCIES = {
     "admin_operations": frozenset({"accounts", "ai_assistant", "billing", "core", "food_catalog", "notas"}),
     "ai_assistant": frozenset({"accounts", "billing"}),
     "billing": frozenset({"accounts", "notas"}),
-    "core": frozenset({"food_catalog", "notas"}),
+    "core": frozenset({"billing", "food_catalog", "notas"}),
     "email_delivery": frozenset(),
     "food_catalog": frozenset(),
     "notas": frozenset({"accounts", "ai_assistant", "core", "email_delivery", "food_catalog", "nutrition_solver"}),

@@ -3,6 +3,7 @@ from typing import Optional
 
 from django.db import transaction
 
+from notas.application.commercial.limits import require_new_workspace_item
 from notas.domain.models import Meal, MealFood
 
 # ==================================================
@@ -60,6 +61,9 @@ def create_draft_meal(
 
     if not clean_name:
         raise ValueError("meal_name_required")
+
+    if not pending_dailyplan_id:
+        require_new_workspace_item(user, "meal")
 
     meal = Meal.objects.create(
         name=clean_name,
@@ -132,6 +136,7 @@ def fork_meal(original: Meal, user) -> Meal:
     - snapshot foods
     """
 
+    require_new_workspace_item(user, "meal")
     origin = get_meal_origin(original)
 
     forked = Meal.objects.create(
@@ -174,8 +179,10 @@ def _clone_meal(original: Meal, user) -> Meal:
     return forked
 
 
+@transaction.atomic
 def fork_meal_for_library(original: Meal, user) -> Meal:
 
+    require_new_workspace_item(user, "meal")
     forked = _clone_meal(original, user)
 
     forked.name = f"{original.name} (Copia)"
@@ -201,6 +208,7 @@ def copy_meal(original: Meal, user) -> Meal:
     - original_author=None
     """
 
+    require_new_workspace_item(user, "meal")
     copy = Meal.objects.create(
         name=f"{original.name} (copy)",
         created_by=user,

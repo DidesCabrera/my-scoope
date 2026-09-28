@@ -5,6 +5,11 @@ from dataclasses import dataclass
 from django.db import transaction
 from django.db.models import F, Prefetch
 
+from notas.application.commercial.limits import (
+    require_new_program_week,
+    require_new_workspace_item,
+    require_program_duration,
+)
 from notas.application.services.cache.program_summary import refresh_program_summary_cache
 from notas.application.services.commands.dailyplan_commands import clone_dailyplan_meals
 from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, Program, ProgramDay
@@ -159,6 +164,9 @@ def create_weekly_program(*, user, name: str, duration_weeks=None) -> ProgramCre
     if not clean_name:
         raise ValueError("program_name_required")
 
+    require_new_workspace_item(user, "program")
+    require_program_duration(user, weeks)
+
     program = Program.objects.create(
         name=clean_name,
         created_by=user,
@@ -187,6 +195,7 @@ def rename_program(*, program: Program, name: str) -> Program:
 
 @transaction.atomic
 def add_week_to_program(*, program: Program) -> Program:
+    require_new_program_week(program)
     program.duration_weeks = program.normalized_duration_weeks + 1
 
     if program.is_draft and program.program_dailyplan.exists():
@@ -199,6 +208,7 @@ def add_week_to_program(*, program: Program) -> Program:
 
 @transaction.atomic
 def duplicate_week_in_program(*, program: Program, week_number, user) -> ProgramWeekDuplicateResult:
+    require_new_program_week(program)
     week, _ = validate_program_slot(
         program=program,
         week_number=week_number,
@@ -440,6 +450,8 @@ def delete_program(*, program: Program) -> int:
 
 @transaction.atomic
 def fork_program(original: Program, user) -> Program:
+    require_new_workspace_item(user, "program")
+    require_program_duration(user, original.normalized_duration_weeks)
     origin = get_program_origin(original)
 
     forked = Program.objects.create(
@@ -473,6 +485,8 @@ def fork_program(original: Program, user) -> Program:
 
 @transaction.atomic
 def copy_program(original: Program, user) -> Program:
+    require_new_workspace_item(user, "program")
+    require_program_duration(user, original.normalized_duration_weeks)
     copied = Program.objects.create(
         name=f"{original.name} (copy)",
         created_by=user,
