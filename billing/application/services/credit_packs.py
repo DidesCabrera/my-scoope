@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import hashlib
+
 from django.db import transaction
 
 from accounts.models import CreditLedger, CreditWallet
-from accounts.services.credits import grant_purchased_credits, resolve_account_plan_for_user
+from accounts.services.credits import (
+    credit_pack_ledger_reference_id,
+    grant_purchased_credits,
+    resolve_account_plan_for_user,
+)
 from billing.models import (
     AppleAppAccountToken,
     CreditPackOffer,
@@ -17,6 +23,16 @@ from billing.models import (
 
 class CreditPackUnavailable(ValueError):
     pass
+
+
+def _stored_purchase_id(*, provider: str, purchase_id: str) -> str:
+    """Use a stable digest if a provider's opaque ID exceeds the database field."""
+
+    max_length = CreditPackPurchase._meta.get_field("external_purchase_id").max_length
+    if len(purchase_id) <= max_length:
+        return purchase_id
+    digest = hashlib.sha256(f"{provider}:{purchase_id}".encode("utf-8")).hexdigest()
+    return f"sha256:{digest}"
 
 
 def may_buy_credit_packs(user) -> bool:
@@ -93,6 +109,7 @@ def settle_credit_pack_purchase(
     purchase_id = str(external_purchase_id or "").strip()
     if not purchase_id:
         raise CreditPackUnavailable("credit_pack_purchase_id_missing")
+    purchase_id = _stored_purchase_id(provider=product.provider, purchase_id=purchase_id)
     existing = CreditPackPurchase.objects.select_for_update().filter(
         provider=product.provider, external_purchase_id=purchase_id
     ).first()
@@ -159,8 +176,9 @@ def settle_google_play_credit_pack(*, user, evidence) -> CreditPackPurchase:
 
 @transaction.atomic
 def refund_credit_pack_purchase(*, provider: str, external_purchase_id: str) -> CreditPackPurchase:
+    purchase_id = _stored_purchase_id(provider=provider, purchase_id=external_purchase_id)
     purchase = CreditPackPurchase.objects.select_for_update().get(
-        provider=provider, external_purchase_id=external_purchase_id
+        provider=provider, external_purchase_id=purchase_id
     )
     if purchase.status == CreditPackPurchase.Status.REFUNDED:
         return purchase
@@ -182,7 +200,8 @@ def refund_credit_pack_purchase(*, provider: str, external_purchase_id: str) -> 
         credits_delta=-recoverable, reserved_delta=0,
         balance_after=wallet.balance, reserved_balance_after=wallet.reserved_balance,
         period=wallet.period, plan_snapshot_code=wallet.plan_snapshot_code,
-        reference_type="credit_pack_refund", reference_id=f"{provider}:{external_purchase_id}",
+        reference_type="credit_pack_refund",
+        reference_id=credit_pack_ledger_reference_id(provider=provider, purchase_id=purchase_id),
         reason="verified_credit_pack_refund",
         metadata={"credit_source": "purchased", "unrecovered_credits": deficit},
     )
@@ -209,7 +228,8 @@ def reconcile_google_play_voided_products(*, gateway, start_time_ms: int, apply:
             summary["unknown"] += 1
             continue
         purchase = CreditPackPurchase.objects.filter(
-            provider=PaymentProvider.GOOGLE_PLAY, external_purchase_id=token
+            provider=PaymentProvider.GOOGLE_PLAY,
+            external_purchase_id=_stored_purchase_id(provider=PaymentProvider.GOOGLE_PLAY, purchase_id=token),
         ).first()
         if purchase is None:
             summary["unknown"] += 1

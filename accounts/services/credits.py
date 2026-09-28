@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -22,6 +23,17 @@ class InsufficientAccountCredits(Exception):
 
 class AccountCreditsFrozen(InsufficientAccountCredits):
     """Raised when account credit consumption is operationally frozen."""
+
+
+def credit_pack_ledger_reference_id(*, provider: str, purchase_id: str) -> str:
+    """Represent oversized provider IDs safely in the fixed-width ledger."""
+
+    reference_id = f"{provider}:{purchase_id}"
+    max_length = CreditLedger._meta.get_field("reference_id").max_length
+    if len(reference_id) <= max_length:
+        return reference_id
+    digest = hashlib.sha256(reference_id.encode("utf-8")).hexdigest()
+    return f"sha256:{digest}"
 
 
 @dataclass(frozen=True)
@@ -206,7 +218,7 @@ def grant_purchased_credits(*, user: Any, credits: int, provider: str, purchase_
     with transaction.atomic():
         wallet = get_or_create_current_wallet(user=user)
         wallet = CreditWallet.objects.select_for_update().get(pk=wallet.pk)
-        reference_id = f"{provider}:{purchase_id}"
+        reference_id = credit_pack_ledger_reference_id(provider=provider, purchase_id=purchase_id)
         if CreditLedger.objects.filter(
             wallet=wallet, kind=CreditLedger.Kind.GRANT,
             reference_type="credit_pack_purchase", reference_id=reference_id,
