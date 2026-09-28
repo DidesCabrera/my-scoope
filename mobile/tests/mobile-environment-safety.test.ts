@@ -35,9 +35,13 @@ test("EAS keeps simulator staging separate from TestFlight production", async ()
   assert.equal(eas.build["simulator-staging"].ios.simulator, true);
   assert.equal(eas.build["simulator-staging"].env.EXPO_PUBLIC_API_BASE_URL, "https://myscoope-staging.onrender.com");
   assert.equal(eas.build["testflight-production"].env.EXPO_PUBLIC_API_BASE_URL, "https://www.myscoope.com");
+  assert.equal(eas.build["testflight-staging"].extends, "testflight-production");
+  assert.equal(eas.build["testflight-staging"].env.EXPO_PUBLIC_API_BASE_URL, "https://myscoope-staging.onrender.com");
   assert.equal(eas.build.production.extends, "testflight-production");
   assert.match(packageJson.scripts["start:staging"], /mobile-environment-command\.mjs simulator-staging/);
   assert.match(packageJson.scripts["build:production"], /mobile-environment-command\.mjs testflight-production/);
+  assert.match(packageJson.scripts["build:ios:staging"], /mobile-environment-command\.mjs testflight-staging/);
+  assert.match(packageJson.scripts["submit:ios:staging"], /mobile-environment-command\.mjs testflight-staging/);
   assert.doesNotMatch(packageJson.scripts["build:production"], /auto-submit/);
 
   const verification = execFileSync(
@@ -47,4 +51,5 @@ test("EAS keeps simulator staging separate from TestFlight production", async ()
   );
   assert.match(verification, /simulator-staging: staging -> https:\/\/myscoope-staging\.onrender\.com/);
   assert.match(verification, /testflight-production: production -> https:\/\/www\.myscoope\.com/);
+  assert.match(verification, /testflight-staging: staging -> https:\/\/myscoope-staging\.onrender\.com/);
 });

@@ -23,6 +23,13 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /google_play: "Google Play"/);
   assertSourceMatch(subscription, /paddle: "Paddle"/);
   assertSourceDoesNotMatch(subscription, /mercado_pago: "Mercado Pago"/);
+  assertSourceMatch(subscription, /Precio oficial de \$\{Platform\.OS === "android" \? "Google Play" : "App Store"\}/);
+  assertSourceMatch(subscription, /detail=\{Platform\.OS === "android" \? "Google Play" : "App Store"\}/);
+  assertSourceMatch(subscription, /title="Canales de cobro registrados"/);
+  assertSourceMatch(subscription, /no cambian la tienda de las compras nuevas mostradas arriba/);
+  assertSourceDoesNotMatch(subscription, /detail="Precio oficial de App Store"/);
+  assertSourceMatch(subscription, /productStatusAndroid === "not-found"/);
+  assertSourceMatch(subscription, /androidUnavailable \? "No disponible" : "Consultando…"/);
 });
 
 test("App Store purchases recover a completed StoreKit transaction before reporting failure", async () => {
