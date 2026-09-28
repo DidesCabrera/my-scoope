@@ -111,5 +111,13 @@ also uses `--if-enabled`, so set
 staging purchase and lifecycle test. The separate
 `reconcile_google_play_credit_pack_refunds` command likewise defaults to a dry
 run and must remain disabled in production until a test purchase, void and
-credit reversal have been observed end to end. A failed Google API lookup
-never silently removes an entitlement; it fails the job for investigation.
+credit reversal have been observed end to end. It checks both Google's Voided
+Purchases feed (refunds with revocation and chargebacks) and each still-approved
+credit-pack purchase individually. The latter is necessary because Google omits
+developer refunds made without "revoke" from the Voided Purchases feed. A full
+refund is applied only when the individual purchase has the matching order,
+product, account and environment, a single unit, state `CANCELLED`, and zero
+refundable quantity. Missing or conflicting verification fails the job without
+silently removing credits. Keep the recurring job enabled and monitor its
+runtime as sales volume grows: individual checks use one Google API request per
+still-approved Google credit-pack purchase.

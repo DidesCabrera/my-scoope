@@ -170,7 +170,14 @@ def settle_google_play_credit_pack(*, user, evidence) -> CreditPackPurchase:
         raise CreditPackUnavailable("credit_pack_google_product_unmapped")
     return settle_credit_pack_purchase(
         user=user, product=product, external_purchase_id=evidence.purchase_token,
-        evidence={"source": "google_play_server_api", "product_id": evidence.product_id, "order_id": evidence.order_id},
+        evidence={
+            "source": "google_play_server_api",
+            "product_id": evidence.product_id,
+            "order_id": evidence.order_id,
+            # Preserve tokens that exceed external_purchase_id's database limit
+            # so a later refund without revocation can still be verified.
+            "purchase_token": evidence.purchase_token,
+        },
     )
 
 
@@ -246,4 +253,57 @@ def reconcile_google_play_voided_products(*, gateway, start_time_ms: int, apply:
                 provider=PaymentProvider.GOOGLE_PLAY, external_purchase_id=token
             )
             summary["refunded"] += 1
+    return summary
+
+
+def reconcile_google_play_refunded_products(*, gateway, apply: bool = False) -> dict[str, int]:
+    """Detect full refunds omitted from Google's revoked-purchases feed.
+
+    Google omits developer refunds made without "revoke" from that feed. The
+    individual product endpoint still reports a canceled purchase with zero
+    refundable quantity. Recheck only settled, still-approved purchases and
+    require the verified order, product, account, environment and unit quantity
+    to match before reversing any credits.
+    """
+    from billing.application.services.google_play import google_play_account_id
+
+    summary = {"checked": 0, "would_refund": 0, "refunded": 0}
+    purchases = CreditPackPurchase.objects.select_related("product", "user").filter(
+        provider=PaymentProvider.GOOGLE_PLAY,
+        status=CreditPackPurchase.Status.APPROVED,
+    ).order_by("pk")
+    for purchase in purchases.iterator():
+        stored = purchase.evidence or {}
+        token = str(stored.get("purchase_token") or "")
+        if not token and not purchase.external_purchase_id.startswith("sha256:"):
+            token = purchase.external_purchase_id
+        if not token or _stored_purchase_id(provider=PaymentProvider.GOOGLE_PLAY, purchase_id=token) != purchase.external_purchase_id:
+            raise CreditPackUnavailable("credit_pack_google_reverification_token_missing")
+        verified = gateway.verify_product(token)
+        summary["checked"] += 1
+        if (
+            not stored.get("order_id")
+            or verified.order_id != stored["order_id"]
+            or verified.product_id != purchase.product.external_product_id
+            or verified.obfuscated_account_id != google_play_account_id(purchase.user)
+            or verified.environment != purchase.product.environment
+        ):
+            raise CreditPackUnavailable("credit_pack_google_reverification_mismatch")
+        line_items = (verified.metadata or {}).get("productLineItem") or []
+        if len(line_items) != 1 or not isinstance(line_items[0], dict):
+            raise CreditPackUnavailable("credit_pack_google_reverification_quantity_invalid")
+        offer = line_items[0].get("productOfferDetails") or {}
+        if offer.get("quantity", 1) != 1 or offer.get("refundableQuantity") not in {0, 1}:
+            raise CreditPackUnavailable("credit_pack_google_reverification_quantity_invalid")
+        if offer["refundableQuantity"] == 0:
+            if verified.status != "CANCELLED":
+                raise CreditPackUnavailable("credit_pack_google_reverification_state_inconsistent")
+            summary["would_refund"] += 1
+            if apply:
+                refund_credit_pack_purchase(
+                    provider=PaymentProvider.GOOGLE_PLAY, external_purchase_id=token
+                )
+                summary["refunded"] += 1
+        elif verified.status != "PURCHASED":
+            raise CreditPackUnavailable("credit_pack_google_reverification_state_inconsistent")
     return summary

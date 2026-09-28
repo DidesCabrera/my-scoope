@@ -34,11 +34,13 @@ export default function SubscriptionScreen() {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [restoreNotice, setRestoreNotice] = useState<string | null>(null);
   const handledTransactions = useRef(new Set<string>());
+  const restoring = useRef(false);
 
-  const submitPurchase = useCallback(async (purchase: Purchase) => {
+  const submitPurchase = useCallback(async (purchase: Purchase): Promise<boolean> => {
     const key = purchase.id || purchase.purchaseToken || "";
-    if (!purchase.purchaseToken || !key || handledTransactions.current.has(key)) return;
+    if (!purchase.purchaseToken || !key || handledTransactions.current.has(key)) return false;
     handledTransactions.current.add(key);
     setWorking(true);
     setError(null);
@@ -56,11 +58,13 @@ export default function SubscriptionScreen() {
       });
       await finishTransaction({ purchase, isConsumable: isCreditPack });
       setOverview(await apiRequest<SubscriptionData>("/api/v1/subscriptions"));
+      return true;
     } catch (nextError) {
       // A failed verification remains pending at the store. Do not replay it
       // continuously when the purchase list or component state refreshes.
       // The user can explicitly retry it with Restore purchases.
       setError(userFacingError(nextError));
+      return false;
     } finally {
       setWorking(false);
     }
@@ -112,7 +116,9 @@ export default function SubscriptionScreen() {
 
   useEffect(() => {
     const pending = setTimeout(() => {
-      for (const purchase of availablePurchases) void submitPurchase(purchase);
+      if (!restoring.current) {
+        for (const purchase of availablePurchases) void submitPurchase(purchase);
+      }
     }, 0);
     return () => clearTimeout(pending);
   }, [availablePurchases, submitPurchase]);
@@ -214,16 +220,30 @@ export default function SubscriptionScreen() {
   };
 
   const restore = async () => {
+    if (restoring.current) return;
+    restoring.current = true;
     setWorking(true);
     setError(null);
+    setRestoreNotice(null);
     try {
       handledTransactions.current.clear();
-      const recovered = await getAvailablePurchases();
-      for (const purchase of recovered) await submitPurchase(purchase);
       await restorePurchases();
+      const recovered = await getAvailablePurchases();
+      let restored = 0;
+      for (const purchase of recovered) {
+        if (await submitPurchase(purchase)) restored += 1;
+      }
+      if (recovered.length === 0) {
+        setRestoreNotice("No hay compras pendientes de restaurar. Las bolsas ya acreditadas permanecen en tu saldo.");
+      } else if (restored === recovered.length) {
+        setRestoreNotice("Revisamos tus compras disponibles. Comprueba tu plan y saldo actualizados.");
+      } else {
+        setError("No pudimos verificar todas las compras disponibles. Inténtalo nuevamente más tarde.");
+      }
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
+      restoring.current = false;
       setWorking(false);
     }
   };
@@ -241,6 +261,7 @@ export default function SubscriptionScreen() {
       <AppHeader eyebrow="Cuenta" title="Mi suscripción" />
       <Button label="Volver a hoy" onPress={() => router.back()} variant="secondary" />
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+      {restoreNotice ? <InlineNotice>{restoreNotice}</InlineNotice> : null}
       {overview?.duplicate_active_providers ? (
         <InlineNotice tone="warning">Detectamos más de un canal de cobro activo. El equipo puede revisarlo sin interrumpir tu acceso.</InlineNotice>
       ) : null}

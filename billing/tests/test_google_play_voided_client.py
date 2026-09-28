@@ -2,12 +2,12 @@ from io import StringIO
 from unittest.mock import Mock, patch
 
 from django.core.management import call_command
-from django.test import SimpleTestCase, override_settings
+from django.test import TestCase, override_settings
 
 from billing.infrastructure.providers.google_play import GooglePlayClient, GooglePlayConfigurationError
 
 
-class GooglePlayVoidedClientTests(SimpleTestCase):
+class GooglePlayVoidedClientTests(TestCase):
     @patch.object(GooglePlayClient, "_access_token", return_value="access")
     @patch("billing.infrastructure.providers.google_play.requests.get")
     def test_lists_all_pages_of_in_app_voided_purchases(self, get, _token):

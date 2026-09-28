@@ -16,6 +16,7 @@ from billing.application.contracts import GooglePlayProductEvidence, ProviderPay
 from billing.application.services.credit_packs import (
     configure_credit_pack_product,
     may_buy_credit_packs,
+    reconcile_google_play_refunded_products,
     reconcile_google_play_voided_products,
     refund_credit_pack_purchase,
     settle_credit_pack_purchase,
@@ -177,6 +178,91 @@ class PaddleCreditPackTests(TestCase):
 
 
 class GooglePlayCreditPackTests(TestCase):
+    def test_refund_without_revoke_is_rechecked_against_its_verified_purchase(self):
+        from unittest.mock import Mock
+
+        from billing.application.services.credit_packs import CreditPackUnavailable
+
+        seed_account_plans()
+        user = get_user_model().objects.create_user(username="google-direct-refund")
+        AccountSubscription.objects.update_or_create(
+            user=user, defaults={"plan": AccountPlan.objects.get(slug="basic")}
+        )
+        configure_credit_pack_product(
+            provider=PaymentProvider.GOOGLE_PLAY, environment="sandbox", offer_code="credits-500",
+            external_product_id="myscoope.credits.500",
+        )
+        token = "g" * 512
+        approved = GooglePlayProductEvidence(
+            purchase_token=token, product_id="myscoope.credits.500", status="PURCHASED",
+            obfuscated_account_id=google_play_account_id(user), environment="sandbox", order_id="GPA.512",
+        )
+        purchase = settle_google_play_credit_pack(user=user, evidence=approved)
+        self.assertEqual(purchase.evidence["purchase_token"], token)
+        refunded = GooglePlayProductEvidence(
+            purchase_token=token, product_id=approved.product_id, status="CANCELLED",
+            obfuscated_account_id=approved.obfuscated_account_id, environment="sandbox", order_id="GPA.512",
+            metadata={"productLineItem": [{
+                "productId": approved.product_id,
+                "productOfferDetails": {"quantity": 1, "refundableQuantity": 0},
+            }]},
+        )
+        gateway = Mock()
+        gateway.verify_product.return_value = refunded
+        dry_run = reconcile_google_play_refunded_products(gateway=gateway)
+        self.assertEqual((dry_run["would_refund"], dry_run["refunded"]), (1, 0))
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 500)
+        gateway.verify_product.return_value = GooglePlayProductEvidence(
+            **{**refunded.__dict__, "order_id": "GPA.other"}
+        )
+        with self.assertRaises(CreditPackUnavailable):
+            reconcile_google_play_refunded_products(gateway=gateway, apply=True)
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 500)
+        gateway.verify_product.return_value = refunded
+        applied = reconcile_google_play_refunded_products(gateway=gateway, apply=True)
+        repeated = reconcile_google_play_refunded_products(gateway=gateway, apply=True)
+        self.assertEqual((applied["refunded"], repeated["refunded"]), (1, 0))
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 0)
+        self.assertEqual(CreditLedger.objects.filter(user=user, reference_type="credit_pack_refund").count(), 1)
+
+    def test_direct_recheck_keeps_approved_credits_and_rejects_ambiguous_evidence(self):
+        from unittest.mock import Mock
+
+        from billing.application.services.credit_packs import CreditPackUnavailable
+
+        seed_account_plans()
+        user = get_user_model().objects.create_user(username="google-direct-approved")
+        AccountSubscription.objects.update_or_create(
+            user=user, defaults={"plan": AccountPlan.objects.get(slug="basic")}
+        )
+        configure_credit_pack_product(
+            provider=PaymentProvider.GOOGLE_PLAY, environment="sandbox", offer_code="credits-500",
+            external_product_id="myscoope.credits.500",
+        )
+        approved = GooglePlayProductEvidence(
+            purchase_token="approved-token", product_id="myscoope.credits.500", status="PURCHASED",
+            obfuscated_account_id=google_play_account_id(user), environment="sandbox", order_id="GPA.approved",
+            metadata={"productLineItem": [{
+                "productId": "myscoope.credits.500",
+                "productOfferDetails": {"quantity": 1, "refundableQuantity": 1},
+            }]},
+        )
+        settle_google_play_credit_pack(user=user, evidence=approved)
+        gateway = Mock()
+        gateway.verify_product.return_value = approved
+        result = reconcile_google_play_refunded_products(gateway=gateway, apply=True)
+        self.assertEqual((result["checked"], result["refunded"]), (1, 0))
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 500)
+
+        gateway.verify_product.return_value = GooglePlayProductEvidence(
+            **{**approved.__dict__, "status": "CANCELLED", "metadata": {
+                "productLineItem": [{"productOfferDetails": {"quantity": 1}}],
+            }}
+        )
+        with self.assertRaises(CreditPackUnavailable):
+            reconcile_google_play_refunded_products(gateway=gateway, apply=True)
+        self.assertEqual(CreditWallet.objects.get(user=user).purchased_balance, 500)
+
     def test_opaque_purchase_token_fits_ledger_and_refund_is_idempotent(self):
         seed_account_plans()
         user = get_user_model().objects.create_user(username="google-long-token")
