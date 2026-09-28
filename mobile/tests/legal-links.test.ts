@@ -44,3 +44,15 @@ test("App Store purchases recover a completed StoreKit transaction before report
   assertSourceMatch(subscription, /for \(const purchase of matching\) await submitPurchase\(purchase\)/);
   assertSourceMatch(subscription, /No se realizó ningún cobro/);
 });
+
+test("restore purchases explains when no store transaction is pending and reports incomplete verification", async () => {
+  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
+
+  assertSourceMatch(subscription, /if \(recovered\.length === 0\)/);
+  assertSourceMatch(subscription, /await restorePurchases\(\);\s+const recovered = await getAvailablePurchases\(\)/);
+  assertSourceMatch(subscription, /if \(!restoring\.current\)/);
+  assertSourceMatch(subscription, /No hay compras pendientes de restaurar/);
+  assertSourceMatch(subscription, /if \(await submitPurchase\(purchase\)\) restored \+= 1/);
+  assertSourceMatch(subscription, /restored === recovered\.length/);
+  assertSourceMatch(subscription, /No pudimos verificar todas las compras disponibles/);
+});

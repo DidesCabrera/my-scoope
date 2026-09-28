@@ -6,14 +6,15 @@ from django.utils import timezone
 
 from billing.application.services.credit_packs import (
     CreditPackUnavailable,
+    reconcile_google_play_refunded_products,
     reconcile_google_play_voided_products,
 )
 from billing.infrastructure.gateways import build_google_play_gateway
-from billing.infrastructure.providers.google_play import GooglePlayConfigurationError
+from billing.infrastructure.providers.google_play import GooglePlayConfigurationError, InvalidGooglePlayPurchase
 
 
 class Command(BaseCommand):
-    help = "Reconcile Google Play voided consumables; dry-run unless --apply is supplied."
+    help = "Reconcile Google Play refunded consumables; dry-run unless --apply is supplied."
 
     def add_arguments(self, parser):
         parser.add_argument("--apply", action="store_true")
@@ -29,12 +30,14 @@ class Command(BaseCommand):
             raise CommandError("--days must be between 1 and 29 (Google retains only 30 days).")
         start = timezone.now() - timedelta(days=days)
         try:
-            summary = reconcile_google_play_voided_products(
-                gateway=build_google_play_gateway(),
+            gateway = build_google_play_gateway()
+            voided = reconcile_google_play_voided_products(
+                gateway=gateway,
                 start_time_ms=int(start.timestamp() * 1000),
                 apply=options["apply"],
             )
-        except (CreditPackUnavailable, GooglePlayConfigurationError) as exc:
+            direct = reconcile_google_play_refunded_products(gateway=gateway, apply=options["apply"])
+        except (CreditPackUnavailable, GooglePlayConfigurationError, InvalidGooglePlayPurchase) as exc:
             raise CommandError(str(exc)) from exc
         mode = "applied" if options["apply"] else "dry-run"
-        self.stdout.write(f"Google Play voided consumables ({mode}): {summary}")
+        self.stdout.write(f"Google Play refunded consumables ({mode}): voided={voided} direct={direct}")
