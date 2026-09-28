@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from ninja import Field, Router, Schema
 
@@ -15,6 +17,7 @@ from mobile_api.selectors import subscription_payload
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
 class GooglePlayPurchaseInput(Schema):
@@ -82,4 +85,12 @@ def google_play_credit_pack_purchase(request, payload: GooglePlayPurchaseInput):
         raise MobileAPIError(str(exc), "The credit purchase does not match this account or product.", 409) from exc
     except GooglePlayConfigurationError as exc:
         raise MobileAPIError("google_play_billing_unavailable", "Google Play verification is unavailable.", 503) from exc
+    except Exception as exc:
+        logger.exception(
+            "Unexpected Google Play credit-pack verification failure (token_length=%d)",
+            len(payload.purchase_token),
+        )
+        raise MobileAPIError(
+            "google_play_billing_unavailable", "Google Play verification is temporarily unavailable.", 503
+        ) from exc
     return success(entitlements_payload(request.auth.user))
