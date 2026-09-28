@@ -44,4 +44,13 @@ python manage.py configure_credit_pack_catalog \
 python manage.py configure_credit_pack_catalog \
   --provider apple_app_store --environment sandbox --offer-code credits-2000 \
   --product-id com.myscoope.credits.2000
+python manage.py configure_credit_pack_catalog \
+  --provider google_play --environment sandbox --offer-code credits-500 \
+  --product-id myscoope.credits.500
+python manage.py configure_credit_pack_catalog \
+  --provider google_play --environment sandbox --offer-code credits-1000 \
+  --product-id myscoope.credits.1000
+python manage.py configure_credit_pack_catalog \
+  --provider google_play --environment sandbox --offer-code credits-2000 \
+  --product-id myscoope.credits.2000
 python manage.py check --deploy
