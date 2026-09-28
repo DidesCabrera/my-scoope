@@ -1,52 +1,15 @@
-import { ResponseType, useAuthRequest } from "expo-auth-session";
 import { type Href, Redirect, useLocalSearchParams } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
-import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { Brand, Button, Card, InlineNotice, Screen, textStyles } from "@/components/ui";
-import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
-
-WebBrowser.maybeCompleteAuthSession();
-
-const discovery = {
-  authorizationEndpoint: appConfig.oauthAuthorizationEndpoint,
-  tokenEndpoint: appConfig.oauthTokenEndpoint,
-};
 
 export default function LoginScreen() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const returnHref = internalHref(returnTo);
-  const { status, profile, completeAuthorizationCode } = useSession();
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const handledCode = useRef<string | null>(null);
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: appConfig.oauthClientId,
-      redirectUri: appConfig.oauthRedirectUri,
-      responseType: ResponseType.Code,
-      scopes: [...appConfig.mobileScopes],
-      usePKCE: true,
-    },
-    discovery,
-  );
-
-  useEffect(() => {
-    if (response?.type !== "success" || !request?.codeVerifier) return;
-    const code = response.params.code;
-    if (!code || handledCode.current === code) return;
-    handledCode.current = code;
-    setBusy(true);
-    setError(null);
-    void completeAuthorizationCode(code, request.codeVerifier)
-      .catch((nextError) => setError(userFacingError(nextError)))
-      .finally(() => setBusy(false));
-  }, [completeAuthorizationCode, request?.codeVerifier, response]);
+  const { status, profile, authBusy, authError, authReady, startSignIn } = useSession();
 
   if (status === "authenticated") {
     if (profile?.review_disclosure_required) return <Redirect href={{ pathname: "/disclosures", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
@@ -65,15 +28,12 @@ export default function LoginScreen() {
       <Card accent={tokens.color.program}>
         <Text style={styles.cardTitle}>Continúa con tu cuenta</Text>
         <Text style={textStyles.muted}>Abriremos una ventana segura de My Scoope. PKCE protege el intercambio y tus tokens quedan cifrados en el dispositivo.</Text>
-        {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+        {authError ? <InlineNotice tone="error">{authError}</InlineNotice> : null}
         <Button
-          disabled={!request}
+          disabled={!authReady}
           label="Iniciar sesión o crear cuenta"
-          loading={busy}
-          onPress={() => {
-            setError(null);
-            void promptAsync().catch((nextError) => setError(userFacingError(nextError)));
-          }}
+          loading={authBusy}
+          onPress={() => void startSignIn(returnHref)}
         />
       </Card>
       <Text style={styles.footnote}>Precisión sin ruido. Tus decisiones nutricionales siguen siendo tuyas.</Text>
