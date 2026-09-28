@@ -5,8 +5,9 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 
-from accounts.models import AccountPlan, AccountSubscription
+from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
 from accounts.seed_plans import seed_account_plans
+from accounts.services.credits import current_account_credit_period
 from billing.catalog import seed_billing_offers
 from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
 
@@ -39,6 +40,37 @@ class LaunchPlanReconciliationTests(TestCase):
         call_command("reconcile_launch_account_plans", "--scope=local", "--apply", stdout=StringIO())
         owner.refresh_from_db()
         self.assertEqual(len(owner.metadata["launch_plan_transitions"]), 1)
+
+    @override_settings(DEBUG=True)
+    def test_legacy_wallet_is_rebased_once_without_losing_purchased_credits(self):
+        wallet = CreditWallet.objects.create(
+            user=self.other, balance=102, purchased_balance=20,
+            period=current_account_credit_period(), plan_snapshot_code="pro",
+        )
+        preview = StringIO()
+        call_command("reconcile_launch_account_plans", "--scope=local", stdout=preview)
+        self.assertIn("wallet_rebases=2", preview.getvalue())
+        wallet.refresh_from_db()
+        self.assertEqual(wallet.balance, 102)
+
+        call_command("reconcile_launch_account_plans", "--scope=local", "--apply", stdout=StringIO())
+        wallet.refresh_from_db()
+        self.assertEqual((wallet.balance, wallet.purchased_balance, wallet.plan_snapshot_code), (1020, 20, "pro"))
+        movements = list(CreditLedger.objects.filter(wallet=wallet).order_by("pk").values_list("kind", "credits_delta"))
+        self.assertEqual(movements, [("expire", -82), ("grant", 1000)])
+        call_command("reconcile_launch_account_plans", "--scope=local", "--apply", stdout=StringIO())
+        self.assertEqual(CreditLedger.objects.filter(wallet=wallet).count(), 2)
+
+    @override_settings(DEBUG=True)
+    def test_reserved_legacy_wallet_blocks_all_launch_changes(self):
+        CreditWallet.objects.create(
+            user=self.other, balance=102, reserved_balance=4,
+            period=current_account_credit_period(), plan_snapshot_code="basic",
+        )
+        with self.assertRaises(CommandError):
+            call_command("reconcile_launch_account_plans", "--scope=local", "--apply", stdout=StringIO())
+        self.assertEqual(AccountSubscription.objects.get(user=self.owner).plan.slug, "free")
+        self.assertEqual(AccountSubscription.objects.get(user=self.other).plan.slug, "basic")
 
     @override_settings(DEBUG=False, SENTRY_ENVIRONMENT="my-scoope")
     def test_production_keeps_only_owner_pro_annual(self):
