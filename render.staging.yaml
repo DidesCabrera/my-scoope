@@ -43,6 +43,8 @@ services:
         value: "true"
       - key: BILLING_PADDLE_WEBHOOK_ENABLED
         value: "true"
+      - key: BILLING_GOOGLE_PLAY_PURCHASES_ENABLED
+        value: "true"
       - key: BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED
         value: "false"
       - key: BILLING_PADDLE_API_BASE_URL
