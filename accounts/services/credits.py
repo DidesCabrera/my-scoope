@@ -142,6 +142,61 @@ def _refresh_wallet_for_plan(wallet: CreditWallet, *, plan: AccountPlan | None, 
         _record_wallet_movement(wallet, CreditLedger.Kind.GRANT, grant, "plan_monthly_grant")
 
 
+LAUNCH_CREDIT_REBASE_KEY = "commercial_launch_2026_credit_rebase"
+
+
+def launch_wallet_needs_rebase(*, wallet: CreditWallet | None, plan: AccountPlan, period: str) -> bool:
+    """Detect legacy balances without replacing a valid current-period grant."""
+    if wallet is None:
+        return bool(plan.included_monthly_credits)
+    if (wallet.metadata or {}).get(LAUNCH_CREDIT_REBASE_KEY) == {"period": period, "plan": plan.slug}:
+        return False
+    return not CreditLedger.objects.filter(
+        wallet=wallet,
+        kind=CreditLedger.Kind.GRANT,
+        reference_type="account_plan_period",
+        period=period,
+        plan_snapshot_code=plan.slug,
+        credits_delta=int(plan.included_monthly_credits or 0),
+    ).exists()
+
+
+@transaction.atomic
+def rebase_account_wallet_for_launch(*, user: Any, plan: AccountPlan) -> bool:
+    """Replace only the unspent monthly bucket; keep purchased credits and history."""
+    period = current_account_credit_period()
+    wallet, _ = CreditWallet.objects.get_or_create(
+        user=user,
+        defaults={"period": period, "plan_snapshot_code": plan.slug},
+    )
+    wallet = CreditWallet.objects.select_for_update().get(pk=wallet.pk)
+    if not launch_wallet_needs_rebase(wallet=wallet, plan=plan, period=period):
+        return False
+    if wallet.reserved_balance:
+        raise AccountCreditsFrozen("A pending credit reservation must finish before launch reconciliation.")
+    if wallet.purchased_balance > wallet.balance:
+        raise ValueError("Purchased credit balance exceeds the wallet balance.")
+
+    monthly_remaining = wallet.balance - wallet.purchased_balance
+    if monthly_remaining:
+        wallet.balance -= monthly_remaining
+        wallet.save(update_fields=["balance", "updated_at"])
+        _record_wallet_movement(wallet, CreditLedger.Kind.EXPIRE, -monthly_remaining, "launch_monthly_rebase_expire")
+
+    wallet.period = period
+    wallet.plan_snapshot_code = plan.slug
+    grant = int(plan.included_monthly_credits or 0)
+    wallet.balance += grant
+    wallet.metadata = {
+        **dict(wallet.metadata or {}),
+        LAUNCH_CREDIT_REBASE_KEY: {"period": period, "plan": plan.slug},
+    }
+    wallet.save(update_fields=["period", "plan_snapshot_code", "balance", "metadata", "updated_at"])
+    if grant:
+        _record_wallet_movement(wallet, CreditLedger.Kind.GRANT, grant, "launch_monthly_rebase_grant")
+    return True
+
+
 def grant_purchased_credits(*, user: Any, credits: int, provider: str, purchase_id: str) -> bool:
     """Idempotent settlement after verified provider payment evidence."""
 

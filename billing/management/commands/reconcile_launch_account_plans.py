@@ -6,7 +6,13 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import AccountPlan, AccountSubscription
+from accounts.models import AccountPlan, AccountSubscription, CreditWallet
+from accounts.services.credits import (
+    AccountCreditsFrozen,
+    current_account_credit_period,
+    launch_wallet_needs_rebase,
+    rebase_account_wallet_for_launch,
+)
 from billing.models import ProviderSubscription
 
 
@@ -47,38 +53,57 @@ class Command(BaseCommand):
                 "Reconcile or cancel those agreements before changing entitlements."
             )
         changes = []
+        wallet_rebases = []
+        wallets = {wallet.user_id: wallet for wallet in CreditWallet.objects.all()}
+        period = current_account_credit_period()
         for user in user_model.objects.all().order_by("pk"):
             target = plans["pro" if scope != "production" or user.pk == owner.pk else "free"]
             current = AccountSubscription.objects.select_related("plan").filter(user=user).first()
             if current is None or current.plan_id != target.pk or current.status != AccountSubscription.Status.ACTIVE:
                 changes.append((user, current, target))
+            if launch_wallet_needs_rebase(wallet=wallets.get(user.pk), plan=target, period=period):
+                wallet_rebases.append((user, target))
         self.stdout.write(
             f"Launch plan reconciliation: scope={scope} users={user_model.objects.count()} "
-            f"changes={len(changes)} mode={'apply' if options['apply'] else 'dry-run'}"
+            f"changes={len(changes)} mode={'apply' if options['apply'] else 'dry-run'} "
+            f"wallet_rebases={len(wallet_rebases)}"
         )
         if not options["apply"]:
             return
         with transaction.atomic():
-            for user, current, target in changes:
-                metadata = dict(current.metadata or {}) if current else {}
-                history = list(metadata.get("launch_plan_transitions") or [])
-                history.append({
-                    "at": timezone.now().isoformat(),
-                    "from": current.plan.slug if current else None,
-                    "to": target.slug,
-                    "reason": f"2026_launch_account_rule_{scope}",
-                })
-                metadata["launch_plan_transitions"] = history
-                if scope == "production" and user.pk == owner.pk:
-                    metadata["commercial_cadence"] = "annual"
-                if current is None:
-                    AccountSubscription.objects.create(
-                        user=user, plan=target, status=AccountSubscription.Status.ACTIVE,
-                        source=AccountSubscription.Source.MIGRATION, metadata=metadata,
-                    )
-                else:
-                    current.plan = target
-                    current.status = AccountSubscription.Status.ACTIVE
-                    current.source = AccountSubscription.Source.MIGRATION
-                    current.metadata = metadata
-                    current.save(update_fields=["plan", "status", "source", "metadata", "updated_at"])
+            _apply_subscription_changes(changes, scope=scope, owner=owner)
+            _apply_wallet_rebases(wallet_rebases)
+
+
+def _apply_subscription_changes(changes, *, scope, owner):
+    for user, current, target in changes:
+        metadata = dict(current.metadata or {}) if current else {}
+        history = list(metadata.get("launch_plan_transitions") or [])
+        history.append({
+            "at": timezone.now().isoformat(),
+            "from": current.plan.slug if current else None,
+            "to": target.slug,
+            "reason": f"2026_launch_account_rule_{scope}",
+        })
+        metadata["launch_plan_transitions"] = history
+        if scope == "production" and user.pk == owner.pk:
+            metadata["commercial_cadence"] = "annual"
+        if current is None:
+            AccountSubscription.objects.create(
+                user=user, plan=target, status=AccountSubscription.Status.ACTIVE,
+                source=AccountSubscription.Source.MIGRATION, metadata=metadata,
+            )
+        else:
+            current.plan = target
+            current.status = AccountSubscription.Status.ACTIVE
+            current.source = AccountSubscription.Source.MIGRATION
+            current.metadata = metadata
+            current.save(update_fields=["plan", "status", "source", "metadata", "updated_at"])
+
+
+def _apply_wallet_rebases(wallet_rebases):
+    for user, target in wallet_rebases:
+        try:
+            rebase_account_wallet_for_launch(user=user, plan=target)
+        except (AccountCreditsFrozen, ValueError) as exc:
+            raise CommandError(str(exc)) from exc
