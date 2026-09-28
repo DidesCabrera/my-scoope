@@ -255,12 +255,14 @@ export default function SubscriptionScreen() {
 
       {overview?.purchases_enabled && (Platform.OS === "ios" || Platform.OS === "android") ? (
         <>
-          <SectionTitle detail="Precio oficial de App Store" title="Planes disponibles" />
+          <SectionTitle detail={`Precio oficial de ${Platform.OS === "android" ? "Google Play" : "App Store"}`} title="Planes disponibles" />
           {overview.products.filter((item) => item.provider === (Platform.OS === "android" ? "google_play" : "apple_app_store")).map((configured) => {
             const storeProduct = subscriptions.find((item) => item.id === configured.product_id);
             const androidOffer = storeProduct?.subscriptionOffers?.find(
               (item) => item.basePlanIdAndroid === configured.base_plan_id,
             );
+            const androidUnavailable = storeProduct && "productStatusAndroid" in storeProduct
+              && storeProduct.productStatusAndroid === "not-found";
             return (
               <Card key={configured.product_id} muted>
                 <View style={styles.row}>
@@ -268,7 +270,9 @@ export default function SubscriptionScreen() {
                     <Text style={styles.productName}>{configured.plan_name}</Text>
                     <Text style={textStyles.caption}>{configured.interval === "year" ? "Anual" : "Mensual"}</Text>
                   </View>
-                  <Text style={styles.price}>{Platform.OS === "android" ? androidOffer?.displayPrice ?? "Consultando…" : storeProduct?.displayPrice ?? "Consultando…"}</Text>
+                  <Text style={styles.price}>{Platform.OS === "android"
+                    ? androidOffer?.displayPrice ?? (androidUnavailable ? "No disponible" : "Consultando…")
+                    : storeProduct?.displayPrice ?? "Consultando…"}</Text>
                 </View>
                 <Button
                   disabled={!connected || !storeProduct || (Platform.OS === "android" && !androidOffer)}
@@ -290,7 +294,8 @@ export default function SubscriptionScreen() {
 
       {overview?.can_buy_credit_packs && overview.credit_packs.length ? (
         <>
-          <SectionTitle title="Bolsas de créditos" detail="Compra disponible en Basic y Pro" />
+          <SectionTitle title="Bolsas de créditos" detail={Platform.OS === "android" ? "Google Play" : "App Store"} />
+          <Text style={textStyles.muted}>Compra disponible en Basic y Pro.</Text>
           {overview.credit_packs.filter((item) => item.provider === (Platform.OS === "android" ? "google_play" : "apple_app_store")).map((configured) => {
             const storeProduct = products.find((item) => item.id === configured.product_id);
             return (
@@ -316,7 +321,8 @@ export default function SubscriptionScreen() {
 
       {overview?.evidence.length ? (
         <Card muted>
-          <SectionTitle title="Canales reconocidos" />
+          <SectionTitle title="Canales de cobro registrados" />
+          <Text style={textStyles.muted}>Estos canales corresponden a compras de tu cuenta; no cambian la tienda de las compras nuevas mostradas arriba.</Text>
           {overview.evidence.map((item, index) => (
             <View key={`${item.provider}-${index}`} style={styles.row}>
               <Text style={textStyles.body}>{providerLabels[item.provider] ?? "Proveedor de pago"}</Text>
