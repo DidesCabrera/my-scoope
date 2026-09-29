@@ -9,8 +9,6 @@ import {
   Clock3,
   FileCheck,
   House,
-  Inbox as InboxIcon,
-  LogOut,
   PanelRight,
   Pin,
   MoreHorizontal,
@@ -20,6 +18,7 @@ import {
   Sparkles,
   TrendingUp,
   UserRound,
+  UserPlus,
   WalletCards,
   Weight,
   X,
@@ -68,7 +67,7 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   assistant: Sparkles,
   comparator: Scale,
   home: House,
-  inbox: InboxIcon,
+  inbox: UserPlus,
   program: CalendarClock,
 };
 
@@ -149,8 +148,8 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/review") return { icon: TrendingUp, title: "Revisión de progreso" };
   if (pathname === "/revision") return { icon: ClipboardCheck, title: "Revisar ajuste" };
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };
-  if (pathname === "/inbox") return { icon: InboxIcon, title: "Inbox" };
-  if (pathname.startsWith("/share/")) return { icon: InboxIcon, title: "Plan compartido" };
+  if (pathname === "/inbox") return { icon: UserPlus, title: "Compartidos" };
+  if (pathname.startsWith("/share/")) return { icon: UserPlus, title: "Plan compartido" };
   if (pathname === "/subscription") return { icon: WalletCards, title: "Mi suscripción" };
   if (pathname === "/account") return { icon: UserRound, title: "Mi cuenta" };
   if (pathname === "/onboarding") return { icon: UserRound, title: "Tu ficha" };
@@ -313,9 +312,7 @@ function EntitySidebarEntry({ item }: { item: EntitySidebarItemData }) {
 function AppSidebar() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useAppNavigation();
-  const { session, signOut } = useSession();
   const [translateX] = useState(() => new Animated.Value(-380));
   const [scrimOpacity] = useState(() => new Animated.Value(0));
 
@@ -368,22 +365,6 @@ function AppSidebar() {
                 <FunctionalSidebarEntry item={{ href: "/account", icon: UserRound, label: "Mi cuenta" }} />
               </View>
             </ScrollView>
-            <View style={styles.drawerFooter}>
-              <View style={styles.accountCopy}>
-                <Text numberOfLines={1} style={styles.accountName}>{session?.display_name || session?.username || "My Scoope"}</Text>
-                <Text numberOfLines={1} style={styles.accountEmail}>{session?.email}</Text>
-              </View>
-              <Pressable
-                accessibilityLabel="Cerrar sesión"
-                accessibilityRole="button"
-                onPress={() => {
-                  closeMenu();
-                  void signOut().then(() => router.replace("/login"));
-                }}
-                style={({ pressed }) => [styles.signOutButton, pressed && styles.pressed]}>
-                <LogOut color={tokens.color.textMuted} size={20} />
-              </Pressable>
-            </View>
           </View>
         </Animated.View>
       </View>
@@ -425,9 +406,4 @@ const styles = StyleSheet.create({
   drawerContent: { gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg },
   menuSection: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, gap: tokens.spacing.xs, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
   menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
-  drawerFooter: { alignItems: "center", borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.lg },
-  accountCopy: { flex: 1, gap: 3, minWidth: 0 },
-  accountName: { color: tokens.color.textMain, fontSize: 14, fontWeight: "800" },
-  accountEmail: { color: tokens.color.textSoft, fontSize: 12 },
-  signOutButton: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, height: 42, justifyContent: "center", width: 42 },
 });

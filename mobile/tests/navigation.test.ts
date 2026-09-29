@@ -18,7 +18,7 @@ test("the consumer navigation catalog includes every MCE product area", () => {
 test("only product areas with a functional route are exposed in the sidebar", () => {
   const available = listAvailableProductAreas();
   assert.deepEqual(available.map((area) => area.key), ["home", "program", "assistant", "comparator", "inbox"]);
-  assert.equal(available.find((area) => area.key === "assistant")?.label, "Asistente AI");
+  assert.deepEqual(available.map((area) => area.label), ["Inicio", "Mi programa activo", "Asistente Nutricional", "Comparador", "Compartidos"]);
   assert.ok(available.every((area) => String(area.href).startsWith("/")));
 });
 
@@ -53,7 +53,15 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assert.doesNotMatch(today, /Mi suscripción|Cuenta, privacidad y ayuda|Configurar recordatorios/);
   assert.match(account, /label="Mi suscripción"/);
   assert.match(account, /router\.push\("\/subscription" as Href\)/);
+  assert.match(account, /label="Cerrar sesión"/);
+  assert.match(account, /signOut\(\)\.then\(\(\) => router\.replace\("\/login"\)\)/);
   for (const screen of [proposal, proposalEntity, comparison, program, programDay, programMeal, today]) assert.match(screen, /useFocusEffect/);
+});
+
+test("the native sidebar keeps sign-out inside the account screen", async () => {
+  const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
+  assert.match(navigation, /inbox: UserPlus/);
+  assert.doesNotMatch(navigation, /accessibilityLabel="Cerrar sesión"|signOutButton|drawerFooter/);
 });
 
 test("shared screens use compact scroll identities and only Home keeps the centered logo", async () => {

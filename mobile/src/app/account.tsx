@@ -61,6 +61,11 @@ export default function AccountScreen() {
       {__DEV__ ? (
         <Button label="Abrir galería del sistema UI" onPress={() => router.push("/dev/ui-gallery" as Href)} variant="secondary" />
       ) : null}
+      <Card muted>
+        <SectionTitle title="Sesión" />
+        <Text style={textStyles.muted}>Cierra tu sesión en este dispositivo.</Text>
+        <Button label="Cerrar sesión" onPress={() => void signOut().then(() => router.replace("/login"))} variant="secondary" />
+      </Card>
       <Card accent={tokens.color.danger}>
         <SectionTitle title="Eliminar mi cuenta" />
         <Text style={textStyles.muted}>Esta acción revoca el acceso inmediatamente y elimina o anonimiza tus datos conforme a nuestra política. No se puede deshacer.</Text>

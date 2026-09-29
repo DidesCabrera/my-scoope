@@ -50,13 +50,13 @@ APP_NAVIGATION = (
         groups=(
             NavGroupSpec(
                 key="home",
-                label="Home",
+                label="Inicio",
                 icon="house",
                 page_icon="house",
                 url_name="home_view",
                 nav_root="home",
                 scope="personal",
-                show_in_sidebar=False,
+                show_in_sidebar=True,
             ),
             NavGroupSpec(
                 key="profile",
@@ -67,16 +67,6 @@ APP_NAVIGATION = (
                 scope="personal",
                 page_icon="circle-user-round",
                 show_in_sidebar=False,
-            ),
-            NavGroupSpec(
-                key="chat",
-                label="Asistente AI",
-                icon="sparkles",
-                page_icon="sparkles",
-                page_title="Asistente AI",
-                url_name="ai_nutrition_chat_list",
-                nav_root="chat",
-                scope="personal",
             ),
             NavGroupSpec(
                 key="proposal",
@@ -91,7 +81,7 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="calendarization",
-                label="Calendarizar",
+                label="Mi programa activo",
                 icon="calendar-clock",
                 page_icon="calendar-clock",
                 url_name="calendarization_dashboard",
@@ -99,8 +89,18 @@ APP_NAVIGATION = (
                 scope="personal",
             ),
             NavGroupSpec(
+                key="chat",
+                label="Asistente Nutricional",
+                icon="sparkles",
+                page_icon="sparkles",
+                page_title="Asistente AI",
+                url_name="ai_nutrition_chat_list",
+                nav_root="chat",
+                scope="personal",
+            ),
+            NavGroupSpec(
                 key="comparators",
-                label="Comparar",
+                label="Comparador",
                 icon="scale",
                 page_icon="scale",
                 url_name="comparator_index",
@@ -150,6 +150,7 @@ APP_NAVIGATION = (
                 url_name="dailyplan_explore_list",
                 nav_root="explore",
                 scope="explore",
+                show_in_sidebar=False,
             ),
             NavGroupSpec(
                 key="explore",
@@ -179,8 +180,8 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="inbox",
-                label="Inbox",
-                icon="inbox",
+                label="Compartidos",
+                icon="user-plus",
                 page_icon="inbox",
                 url_name="inbox_list",
                 nav_root="inbox",

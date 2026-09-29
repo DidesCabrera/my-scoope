@@ -82,11 +82,11 @@ class SidebarBuilderTests(TestCase):
         self.assertEqual(
             [group["label"] for group in sidebar[0]["groups"][:5]],
             [
-                "Asistente AI",
-                "Calendarizar",
-                "Comparar",
-                "Explorar",
-                "Inbox",
+                "Inicio",
+                "Mi programa activo",
+                "Asistente Nutricional",
+                "Comparador",
+                "Compartidos",
             ],
         )
         self.assertEqual(
@@ -98,17 +98,15 @@ class SidebarBuilderTests(TestCase):
                 "Mis Alimentos",
             ],
         )
-        explore_group = sidebar[0]["groups"][3]
-        self.assertEqual(explore_group["key"], "explore")
-        self.assertEqual(explore_group["nav_root"], "explore")
-
         tool_groups = {group["key"]: group for group in sidebar[0]["groups"]}
         self.assertNotIn("chat_new", tool_groups)
-        self.assertEqual(tool_groups["chat"]["label"], "Asistente AI")
+        self.assertEqual(tool_groups["chat"]["label"], "Asistente Nutricional")
         self.assertEqual(tool_groups["chat"]["url_name"], "ai_nutrition_chat_list")
         self.assertEqual(tool_groups["chat"]["icon"], "sparkles")
         self.assertNotIn("proposal", tool_groups)
         self.assertEqual(tool_groups["comparators"]["icon"], "scale")
+        self.assertEqual(tool_groups["inbox"]["icon"], "user-plus")
+        self.assertNotIn("explore", tool_groups)
 
     def test_proposals_keep_the_assistant_sidebar_entry_active(self):
         sidebar = build_sidebar_vm(PROPOSAL_VIEWMODE_LIST)

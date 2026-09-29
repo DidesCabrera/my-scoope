@@ -66,7 +66,7 @@ header {
 .sidebar {
   width: var(--sidebar-width);
 
-  background-color: var(--surface-sidebar);
+  background-color: var(--surface-app);
   border-right: 1px solid var(--panel-row-separator);
   color: var(--sidebar-text-active);
 
@@ -228,7 +228,7 @@ header {
 }
 
 .sidebar-divider {
-  border-top: 1px solid var(--sidebar-border);
+  border-top: none;
   margin: 10px 0;
 }
 

@@ -4,7 +4,6 @@
 
     <div class="block-logo-sidebar">
         <a href="{% url 'home_view' %}" class="sidebar-brand-link" aria-label="Ir a inicio">
-            <i data-lucide="house" class="sidebar-brand-home-icon"></i>
             <img src="{% static 'img/logo-white.png' %}" alt="Logo" class="brand-logo">
         </a>
         {% if request.user.is_authenticated %}
@@ -146,8 +145,6 @@
                         <i data-lucide="wallet-cards" class="sidebar-profile-menu__icon"></i>
                         <span>Uso de créditos</span>
                     </a>
-
-                    <div class="sidebar-profile-menu__divider"></div>
 
                     <form method="post" action="{% url 'account_logout' %}" class="sidebar-profile-menu__form">
                         {% csrf_token %}

@@ -14,7 +14,7 @@
     flex: 0 0 auto;
     padding-top: 10px;
     padding-bottom: 20px;
-    border-top: 1px solid var(--sidebar-border);
+    border-top: none;
 }
 
 .sidebar-main-panel,
@@ -210,22 +210,6 @@
 .sidebar-brand-link:hover {
     color: var(--sidebar-text-active);
     text-decoration: none;
-}
-
-.sidebar-brand-home-icon {
-    width: 30px;
-    height: 30px;
-    flex-shrink: 0;
-    padding: 6px;
-    margin-bottom: 1px;
-    border-radius: 9px;
-    color: var(--sidebar-text-active);
-    background-color: var(--sidebar-hover);
-    stroke-width: 1.8;
-}
-
-.sidebar-brand-link:hover .sidebar-brand-home-icon {
-    background-color: rgba(255, 255, 255, 0.12);
 }
 
 .sidebar-profile-menu {
@@ -504,7 +488,6 @@
         width: 100%;
     }
 
-    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-home-icon,
     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-profile-shortcut-icon {
         width: 32px;
         height: 32px;
@@ -523,13 +506,13 @@
         align-items: center;
         gap: 6px;
         padding-top: 12px;
-        border-top: 1px solid var(--sidebar-border);
+        border-top: none;
     }
 
     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-section {
         width: 100%;
         padding-top: 10px;
-        border-top: 1px solid var(--sidebar-border);
+        border-top: none;
     }
 
     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-section:first-child {
@@ -581,12 +564,6 @@
     }
 }
 @media (max-width: 768px) {
-
-    .sidebar-brand-home-icon {
-        width: 32px;
-        height: 32px;
-    }
-
 
     .sidebar .nav-tab {
         padding: 10px 12px;
