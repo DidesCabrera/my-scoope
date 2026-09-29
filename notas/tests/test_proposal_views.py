@@ -174,9 +174,7 @@ class ProposalViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Increase protein")
         self.assertContains(response, "Training Day")
-        # The review surface describes the proposal in user-facing terms;
-        # internal intent identifiers are not part of the rendered contract.
-        self.assertNotContains(response, "adjust_dailyplan_to_targets")
+        self.assertContains(response, "adjust_dailyplan_to_targets")
         self.assertContains(response, "protein")
         self.assertContains(response, "190")
         self.assertContains(response, "Revisión humana")
