@@ -237,3 +237,7 @@ Consequences
 - `0201-commercial-launch-plans-and-owned-library.md`: fija la matriz de lanzamiento
   Free/Basic/Pro, precios, créditos, bolsas, incorporación desde Compartidos conmigo y
   una política de downgrade que conserva íntegro el capital digital del usuario.
+- `0202-onboarding-storyboard-and-cross-platform-flow.md`: define el storyboard
+  inicial compartido semánticamente por Web y Native, incorpora navegación entre
+  paneles, captura `training_frequency` con semántica pendiente y ordena la futura
+  normalización funcional después de la aprobación visual.
