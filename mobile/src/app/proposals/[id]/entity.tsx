@@ -69,7 +69,10 @@ export default function ProposalEntityDetailScreen() {
           <EntityDetailSection detail={`${proposal.meal.foods.length} alimentos`} title="Composición">
             <FoodPanels
               items={proposalPreviewAdapters.foodPanelItems(proposal.meal)}
-              onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
+              onOpenItem={(food) => {
+                const foodIndex = proposalPreviewAdapters.foodPanelItems(proposal.meal!).findIndex((item) => item.id === food.id);
+                if (foodIndex >= 0) router.push(`/proposals/${proposal.id}/entity/foods/${foodIndex}` as Href);
+              }}
             />
           </EntityDetailSection>
           {proposal.meal.foods.length ? (
@@ -78,11 +81,11 @@ export default function ProposalEntityDetailScreen() {
               <EntityDetailSection title="Detalle de cada Alimento">
                 {proposal.meal.foods.map((food, index) => (
                   <ProposalFoodCard
-                    actions={food.food_id ? (
-                      <EntityCardAction label={`Ver detalle de ${food.food_name}`} onPress={() => router.push(`/libraries/foods/${food.food_id}` as Href)} role="link">
+                    actions={(
+                      <EntityCardAction label={`Ver detalle de ${food.food_name}`} onPress={() => router.push(`/proposals/${proposal.id}/entity/foods/${index}` as Href)} role="link">
                         <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                       </EntityCardAction>
-                    ) : undefined}
+                    )}
                     food={food}
                     key={`${food.food_id}-${food.food_name}-${index}`}
                   />
@@ -121,7 +124,7 @@ export default function ProposalEntityDetailScreen() {
                 eyebrow={`Comida ${index + 1}`}
                 key={`${item.hour}-${item.meal.name}-${index}`}
                 meal={item.meal}
-                onOpenFood={(foodId) => router.push(`/libraries/foods/${foodId}` as Href)}
+                onOpenFood={(foodIndex) => router.push(`/proposals/${proposal.id}/entity/meals/${index}/foods/${foodIndex}` as Href)}
                 time={item.hour}
               />
             ))}

@@ -603,7 +603,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programDailyPlan, /day \? \(day\.meals \?\? \[\]\)\.map\(mealPanelItem\) : meals/);
   assertSourceMatch(programDailyPlan, /label=\{`Ir al detalle del plan de \$\{dayLabel\}`\}/);
   assertSourceMatch(programDailyPlan, /router\.push\(`\/libraries\/daily-plans\/\$\{day\.dailyplan_id\}` as Href\)/);
-  assertSourceMatch(programDailyPlan, /\{day\?\.dailyplan_id \? \(/);
+  assertSourceMatch(programDailyPlan, /\{onOpen \? \(/);
+  assertSourceMatch(programDailyPlan, /: day\?\.dailyplan_id \? \(/);
   assertSourceMatch(programDailyPlan, /actions=\{\(/);
   assertSourceDoesNotMatch(programDailyPlan, /accessory=\{\(/);
   assertSourceDoesNotMatch(programDailyPlan, /kpiVariant="nested"|subtitle="Plan diario asignado"|label: "plan asignado"/);

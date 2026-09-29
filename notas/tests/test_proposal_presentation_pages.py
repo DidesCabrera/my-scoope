@@ -81,7 +81,8 @@ class ProposalEntityPageViewModelTests(SimpleTestCase):
                         },
                     },
                 }
-            }
+            },
+            proposal_id=41,
         )
 
         self.assertEqual(content["entity_kind"], "meal")
@@ -128,7 +129,8 @@ class ProposalEntityPageViewModelTests(SimpleTestCase):
                         ],
                     },
                 }
-            }
+            },
+            proposal_id=42,
         )
 
         self.assertEqual(content["entity_kind"], "dailyplan")
@@ -140,4 +142,7 @@ class ProposalEntityPageViewModelTests(SimpleTestCase):
             [food["display_name"] for food in content["foods_aggregation"]],
             ["Pollo", "Arroz"],
         )
-        self.assertEqual(content["child_cards"][0]["actions"], [])
+        self.assertEqual(
+            content["child_cards"][0]["actions"][0]["url"],
+            "/app/proposals/42/entity/meals/1/",
+        )

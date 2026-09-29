@@ -51,7 +51,7 @@ function foodPanelItems(meal: ProposalMeal): FoodPanelItem[] {
     const macroAllocations = allocations(protein, carbs, fat);
     return {
       detailId: food.food_id ?? undefined,
-      id: String(food.food_id ?? `proposed-food-${index}`),
+      id: `proposed-food-${index}`,
       name: food.food_name || "Alimento",
       quantity: number(food.quantity),
       quantityUnit: food.unit || "g",
@@ -96,6 +96,19 @@ function mealPanelItems(dailyplan: ProposalDailyPlan): MealPanelItem[] {
   });
 }
 
+function foodNutrition(food: ProposalFood) {
+  return nutrition({
+    total_kcal: food.total_kcal,
+    protein: food.protein,
+    carbs: food.carbs,
+    fat: food.fat,
+    ppk: null,
+    alloc_protein: null,
+    alloc_carbs: null,
+    alloc_fat: null,
+  });
+}
+
 export function ProposalFacts({ description, title, facts }: { description?: string; title: string; facts: ProposalFact[] }) {
   if (!facts.length) return null;
   return (
@@ -125,7 +138,8 @@ export function ProposalEvaluationContext({ current, targets }: { current: Propo
   );
 }
 
-export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, onOpenFood, time }: { actions?: ReactNode; eyebrow?: string; meal: ProposalMeal; onOpenFood?(foodId: number): void; time?: string | null }) {
+export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, onOpenFood, time }: { actions?: ReactNode; eyebrow?: string; meal: ProposalMeal; onOpenFood?(foodIndex: number): void; time?: string | null }) {
+  const foods = foodPanelItems(meal);
   return (
     <NutritionEntityCard
       actions={actions}
@@ -138,8 +152,11 @@ export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, 
       nutrition={nutrition(meal.kpis)}
       title={meal.name || "Comida"}>
       <FoodPanels
-        items={foodPanelItems(meal)}
-        onOpenItem={onOpenFood ? (food) => { if (food.detailId != null) onOpenFood(food.detailId); } : undefined}
+        items={foods}
+        onOpenItem={onOpenFood ? (food) => {
+          const index = foods.findIndex((item) => item.id === food.id);
+          if (index >= 0) onOpenFood(index);
+        } : undefined}
       />
     </NutritionEntityCard>
   );
@@ -163,29 +180,19 @@ export function ProposalDailyPlanCard({ actions, dailyplan, onOpenMeal }: { acti
 }
 
 export function ProposalFoodCard({ actions, food }: { actions?: ReactNode; food: ProposalFood }) {
-  const kpis: ProposalKpis = {
-    total_kcal: food.total_kcal,
-    protein: food.protein,
-    carbs: food.carbs,
-    fat: food.fat,
-    ppk: null,
-    alloc_protein: null,
-    alloc_carbs: null,
-    alloc_fat: null,
-  };
   return (
     <NutritionEntityCard
       actions={actions}
       entity="food"
       eyebrow="Alimento"
-      nutrition={nutrition(kpis)}
+      nutrition={foodNutrition(food)}
       subtitle={`${number(food.quantity)} ${food.unit || "g"}`}
       title={food.food_name || "Alimento"}
     />
   );
 }
 
-export const proposalPreviewAdapters = { foodPanelItems, mealPanelItems, nutrition };
+export const proposalPreviewAdapters = { foodNutrition, foodPanelItems, mealPanelItems, nutrition };
 
 const styles = StyleSheet.create({
   evaluationContext: { gap: tokens.spacing.sm, minWidth: 0 },

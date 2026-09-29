@@ -1,51 +1,35 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
-import { userFacingError } from "@/api/errors";
-import type { ProposalDetail } from "@/api/types";
-import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
 import { ProposalFoodCard, proposalPreviewAdapters } from "@/components/proposals/proposal-preview";
-import { RecoverableErrorState } from "@/components/ui/screen-states";
+import { useProposalDetail } from "@/components/proposals/use-proposal-detail";
 import { EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 
-export default function ProposedMealDetailScreen() {
+export default function ProposedProgramMealDetailScreen() {
   const router = useRouter();
-  const { id, mealIndex } = useLocalSearchParams<{ id: string; mealIndex: string }>();
-  const { status, apiRequest } = useSession();
+  const { id, weekNumber, dayNumber, mealIndex } = useLocalSearchParams<{ id: string; weekNumber: string; dayNumber: string; mealIndex: string }>();
+  const { error, load, loading, proposal, status } = useProposalDetail(id);
   const setHeaderPresentation = useHeaderPresentation();
-  const [proposal, setProposal] = useState<ProposalDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const week = Number(weekNumber);
+  const day = Number(dayNumber);
+  const index = Number(mealIndex);
+  const programDay = proposal?.program?.days.find((item) => item.week_number === week && item.day_number === day);
+  const item = Number.isInteger(index) ? programDay?.dailyplan.meals[index] : undefined;
+  const fallback = `/proposals/${id}/program/weeks/${weekNumber}/days/${dayNumber}` as Href;
 
-  const load = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    setError(null);
-    try {
-      setProposal(await apiRequest<ProposalDetail>(`/api/v1/proposals/${id}`));
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    } finally {
-      setLoading(false);
-    }
-  }, [apiRequest, id]);
-
-  useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: `/proposals/${id}/entity` as Href, mode: "back", title: "Comida propuesta" });
+    setHeaderPresentation({ fallback, mode: "back", title: "Comida propuesta" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [id, setHeaderPresentation]));
+  }, [fallback, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !proposal) return <LoadingState label="Abriendo la comida propuesta…" />;
-
-  const index = Number(mealIndex);
-  const item = Number.isInteger(index) ? proposal?.dailyplan?.meals[index] : undefined;
 
   return (
     <Screen headerMode="preserve">
@@ -54,7 +38,7 @@ export default function ProposedMealDetailScreen() {
       {item ? (
         <EntityDetailPage
           entity="meal"
-          eyebrow={`Comida ${index + 1}`}
+          eyebrow={`Semana ${week} · Día ${day} · Comida ${index + 1}`}
           indicators={[
             { icon: "food", label: "alimentos", value: item.meal.foods.length },
             ...(item.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: item.hour.slice(0, 5) }] : []),
@@ -66,7 +50,7 @@ export default function ProposedMealDetailScreen() {
               items={proposalPreviewAdapters.foodPanelItems(item.meal)}
               onOpenItem={(food) => {
                 const foodIndex = proposalPreviewAdapters.foodPanelItems(item.meal).findIndex((candidate) => candidate.id === food.id);
-                if (foodIndex >= 0) router.push(`/proposals/${id}/entity/meals/${index}/foods/${foodIndex}` as Href);
+                if (foodIndex >= 0) router.push(`/proposals/${id}/program/weeks/${week}/days/${day}/meals/${index}/foods/${foodIndex}` as Href);
               }}
             />
           </EntityDetailSection>
@@ -75,7 +59,7 @@ export default function ProposedMealDetailScreen() {
             {item.meal.foods.map((food, foodIndex) => (
               <ProposalFoodCard
                 actions={(
-                  <EntityCardAction label={`Ver detalle de ${food.food_name}`} onPress={() => router.push(`/proposals/${id}/entity/meals/${index}/foods/${foodIndex}` as Href)} role="link">
+                  <EntityCardAction label={`Ver detalle de ${food.food_name}`} onPress={() => router.push(`/proposals/${id}/program/weeks/${week}/days/${day}/meals/${index}/foods/${foodIndex}` as Href)} role="link">
                     <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                   </EntityCardAction>
                 )}
