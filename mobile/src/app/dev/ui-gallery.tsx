@@ -26,6 +26,7 @@ import { ProgramDetailPreview } from "@/components/libraries/program-detail-prev
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
+import { OnboardingJourneyView, onboardingJourneySteps, type OnboardingJourneyStep } from "@/components/onboarding";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -198,6 +199,7 @@ const activeProgramDayExamples = [
 export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
   const [tab, setTab] = useState<GalleryTab>("components");
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingJourneyStep>("login");
   const [choice, setChoice] = useState<Choice>("daily");
   const [distributedExample, setDistributedExample] = useState<"chats" | "proposals">("chats");
   const [scrollableExample, setScrollableExample] = useState<"week1" | "week2" | "week3" | "week4">("week1");
@@ -217,6 +219,29 @@ export default function UiGalleryScreen() {
       <View style={[styles.galleryLayout, width >= 700 && styles.galleryLayoutWide]}>
         <GalleryNavigation activeTab={tab} onChange={setTab} wide={width >= 700} />
         <View style={styles.galleryContent}>
+
+      {tab === "onboarding" ? (
+        <>
+          <SectionTitle detail="Storyboard visual · sin sesión, API ni persistencia" title="Flujo inicial" />
+          <ScrollableTabBar<OnboardingJourneyStep>
+            accessibilityLabel="Vistas del onboarding"
+            activeTab={onboardingStep}
+            density="compact"
+            onChange={setOnboardingStep}
+            tabs={onboardingJourneySteps.map((step, index) => ({ key: step.key, label: `${index + 1}. ${step.shortLabel}` }))}
+          />
+          <InlineNotice>Selecciona cualquier vista para revisar contenido, orden y estética con datos fijos.</InlineNotice>
+          {calendarPreviewWidths.map((preview) => (
+            <View key={`onboarding-${preview.width}`} style={[styles.devicePreview, { width: preview.width }]}>
+              <View style={styles.devicePreviewHeader}>
+                <Text style={styles.devicePreviewName}>{preview.label}</Text>
+                <Text style={styles.devicePreviewWidth}>{preview.width} pt</Text>
+              </View>
+              <OnboardingJourneyView step={onboardingStep} />
+            </View>
+          ))}
+        </>
+      ) : null}
 
       {tab === "components" ? (
         <>

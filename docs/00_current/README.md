@@ -25,20 +25,24 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
 19. `../20_decisions/0050-onboarding-nutrition-profile-and-subject-context.md` cuando el trabajo toque onboarding nutricional, ficha personal, sujeto de cálculo o PPK en propuestas externas.
 20. `../10_active_cycles/onboarding_nutrition_profile_cycle.md` para historia y alcance cerrado del ciclo ONB00-ONB09.
 21. `../40_technical/qa/onboarding_nutrition_v1_qa.md` cuando se modifique onboarding, ficha nutricional, subject context, solver o warning de propuestas externas.
-22. `architecture/nutrition_solver_extraction_map.md` cuando el trabajo sea Nutrition Solver.
-23. `../40_technical/qa/ci_stabilization_qa.md` cuando el trabajo toque GitHub Actions, CI, tests desfasados o estabilización de `staging`.
-24. `../40_technical/operations/testing_and_ci_policy.md` antes de abrir/reabrir PRs, cambiar workflows o ajustar tests.
-25. `../40_technical/qa/testing_hygiene_guide.md` antes de crear, relajar o corregir tests después de bugs reales en staging/CI.
-26. `../10_active_cycles/README.md` cuando el trabajo sea planificación de ciclos futuros.
-27. `features/calendarization.md` y
+22. `../20_decisions/0202-onboarding-storyboard-and-cross-platform-flow.md` y
+    `../10_active_cycles/onboarding_flow_normalization_cycle.md` cuando se diseñe o
+    normalice el flujo inicial, sus storyboards Web/Native, contenido, planes o la
+    semántica de `training_frequency`.
+23. `architecture/nutrition_solver_extraction_map.md` cuando el trabajo sea Nutrition Solver.
+24. `../40_technical/qa/ci_stabilization_qa.md` cuando el trabajo toque GitHub Actions, CI, tests desfasados o estabilización de `staging`.
+25. `../40_technical/operations/testing_and_ci_policy.md` antes de abrir/reabrir PRs, cambiar workflows o ajustar tests.
+26. `../40_technical/qa/testing_hygiene_guide.md` antes de crear, relajar o corregir tests después de bugs reales en staging/CI.
+27. `../10_active_cycles/README.md` cuando el trabajo sea planificación de ciclos futuros.
+28. `features/calendarization.md` y
     `../40_technical/operations/calendarization_notifications_runbook.md` cuando el
     trabajo toque agenda, zona horaria, Web Push o el worker de notificaciones.
-28. `features/billing.md`, `../10_active_cycles/billing_payments_tax_documents_cycle.md`
+29. `features/billing.md`, `../10_active_cycles/billing_payments_tax_documents_cycle.md`
     y `../20_decisions/0154-billing-payment-tax-boundary.md` cuando el trabajo toque
     planes pagados, Mercado Pago, OpenFactura, webhooks, conciliación o DTE.
-29. `features/mobile_composition_pickers.md` cuando el trabajo toque los flujos
+30. `features/mobile_composition_pickers.md` cuando el trabajo toque los flujos
     nativos de agregar/reemplazar Food, Meal o DailyPlan y sus proyecciones.
-30. `features/sharing.md` y
+31. `features/sharing.md` y
     `../40_technical/operations/sharing_operations_runbook.md` cuando el trabajo
     toque enlaces compartidos, invitaciones, Inbox o su operación.
 

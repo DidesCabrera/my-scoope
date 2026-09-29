@@ -6,6 +6,7 @@
 {% block feature_css %}
   <link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">
   <link rel="stylesheet" href="{% static 'notas/css/components/ui_system_gallery.css' %}">
+  <link rel="stylesheet" href="{% static 'css/onboarding_storyboard.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -18,11 +19,28 @@
 
   <nav class="ui-system-gallery__nav" aria-label="Secciones del UI System Web">
     <a href="#foundations">Foundations</a>
+    <a href="#onboarding-storyboard">Onboarding</a>
     <a href="#components">Components</a>
     <a href="#patterns">Patterns</a>
     <a href="#program-active-kpis">Programa en curso</a>
     {% if not gallery.embed %}<a href="#mobile-web">Mobile web</a>{% endif %}
   </nav>
+
+  <section class="ui-system-gallery__section" id="onboarding-storyboard">
+    <div class="ui-system-gallery__section-heading">
+      <div><p>Storyboard · Sin sesión, API ni persistencia</p><h2>Flujo inicial multiplataforma</h2></div>
+      <code>accounts/components/onboarding_storyboard_view.html</code>
+    </div>
+    <p class="ui-system-gallery__help">Cada marco representa una vista candidata del recorrido. Sirve para decidir orden, contenido y estética antes de conectar comportamiento.</p>
+    <nav class="onboarding-storyboard__index" aria-label="Vistas del onboarding">
+      {% for story in gallery.onboarding_storyboard %}<a href="#onboarding-{{ story.key }}">{{ forloop.counter }}. {{ story.label }}</a>{% endfor %}
+    </nav>
+    <div class="onboarding-storyboard">
+      {% for story in gallery.onboarding_storyboard %}
+        {% include "accounts/components/onboarding_storyboard_view.html" with story=story %}
+      {% endfor %}
+    </div>
+  </section>
 
   <section class="ui-system-gallery__section" id="foundations">
     <div class="ui-system-gallery__section-heading">

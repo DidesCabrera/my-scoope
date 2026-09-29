@@ -36,6 +36,10 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `onboarding_flow_normalization_cycle.md`: ciclo planificado OFN00-OFN08 para
+  diseñar el recorrido inicial como storyboard en las galerías Web y Native,
+  normalizar contenido y estética, resolver la semántica de `training_frequency` y
+  conectar el flujo productivo solo después de aprobación visual explícita.
 - `commercial_launch_contract_cycle.md`: ciclo planificado CLC00-CLC09 para alinear
   planes, límites no destructivos, Compartidos conmigo, créditos, precios, recaudación
   y comunicación con la decisión comercial 0201, sin desarrollar nuevas funciones
