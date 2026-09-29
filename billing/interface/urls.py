@@ -6,6 +6,7 @@ from billing.interface.views import (
     cancel_subscription,
     checkout_return,
     create_checkout,
+    create_credit_pack_mercado_pago_checkout,
     mercado_pago_webhook,
     paddle_customer_portal,
     paddle_webhook,
@@ -16,6 +17,7 @@ app_name = "billing"
 urlpatterns = [
     path("", billing_overview, name="overview"),
     path("checkout/<int:product_id>/", create_checkout, name="create_checkout"),
+    path("credit-packs/mercado-pago/<int:product_id>/", create_credit_pack_mercado_pago_checkout, name="credit_pack_mercado_pago_checkout"),
     path("checkout/return/", checkout_return, name="checkout_return"),
     path("subscriptions/<int:subscription_id>/cancel/", cancel_subscription, name="cancel_subscription"),
     path("subscriptions/<int:subscription_id>/paddle/", paddle_customer_portal, name="paddle_customer_portal"),

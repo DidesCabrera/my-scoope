@@ -3,13 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from accounts.services.profile import AccountCreditDisplay, build_account_credit_display
-from billing.models import BillingPayment, BillingProduct, PaymentProvider, ProviderSubscription
+from billing.application.services.credit_packs import may_buy_credit_packs
+from billing.models import BillingPayment, BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 
 
 @dataclass(frozen=True)
 class BillingOverviewData:
     account: AccountCreditDisplay
     products: tuple[BillingProduct, ...]
+    credit_packs: tuple[ProviderCreditPack, ...]
     subscriptions: tuple[ProviderSubscription, ...]
     payments: tuple[BillingPayment, ...]
 
@@ -32,6 +34,11 @@ def get_billing_overview_data(
             )
             .order_by("account_plan__display_order", "amount_minor")
         ),
+        credit_packs=tuple(
+            ProviderCreditPack.objects.select_related("offer")
+            .filter(provider=provider, environment=environment, active=True, offer__active=True, offer__public=True)
+            .order_by("offer__display_order")
+        ) if may_buy_credit_packs(user) else (),
         subscriptions=tuple(
             ProviderSubscription.objects.select_related("product", "product__account_plan")
             .filter(user=user)

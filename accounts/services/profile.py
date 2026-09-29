@@ -33,6 +33,7 @@ class AccountCreditDisplay:
     monthly_credit_limit: int
     daily_credit_limit: int
     included_monthly_credits: int
+    purchased_credits: int
     wallet_exists: bool
     wallet_updated_at: str
     plan_source_label: str
@@ -89,10 +90,19 @@ def build_account_credit_display(user: Any) -> AccountCreditDisplay:
         wallet_exists = False
         wallet_updated_at = "Sin wallet creada"
         credit_source_label = "Créditos incluidos del plan"
+        purchased_credits = 0
     else:
-        balance = int(wallet.balance or 0)
-        reserved_credits = int(wallet.reserved_balance or 0)
-        available_credits = int(wallet.available_credits)
+        purchased_credits = int(wallet.available_purchased_credits)
+        if wallet.period != period or wallet.plan_snapshot_code != plan_slug:
+            balance = included_monthly_credits + purchased_credits
+            reserved_credits = 0
+            available_credits = balance
+        else:
+            balance = int(wallet.balance or 0)
+            reserved_credits = int(wallet.reserved_balance or 0)
+            available_credits = int(wallet.available_credits)
+        if plan_slug == DEFAULT_ACCOUNT_PLAN_SLUG:
+            available_credits = 0
         wallet_exists = True
         wallet_updated_at = timezone.localtime(wallet.updated_at).strftime("%Y-%m-%d %H:%M")
         period = wallet.period or period
@@ -110,6 +120,7 @@ def build_account_credit_display(user: Any) -> AccountCreditDisplay:
         monthly_credit_limit=monthly_credit_limit,
         daily_credit_limit=daily_credit_limit,
         included_monthly_credits=included_monthly_credits,
+        purchased_credits=purchased_credits,
         wallet_exists=wallet_exists,
         wallet_updated_at=wallet_updated_at,
         plan_source_label=plan_source_label,

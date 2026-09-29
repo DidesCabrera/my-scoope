@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.services.commands.saved_comparison_commands import (
     SavedComparisonCommandError,
     create_saved_comparison,
@@ -281,6 +282,9 @@ def _save_new_comparison(
         )
     except SavedComparisonCommandError:
         messages.error(request, "Selecciona al menos dos elementos antes de guardar la comparación.")
+        return _redirect_with_params(request, request.path)
+    except CommercialLimitReached:
+        messages.error(request, "Tu plan actual no permite guardar nuevas comparaciones. Las anteriores permanecen disponibles.")
         return _redirect_with_params(request, request.path)
 
     messages.success(request, "Comparación guardada.")

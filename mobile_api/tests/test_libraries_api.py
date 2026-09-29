@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.test import Client, override_settings
 from django.utils import timezone
 
-from mobile_api.tests.base import AuthenticatedMobileAPITestCase
+from mobile_api.tests.base import PaidMobileAPITestCase
 from notas.application.services.mcp_user_tokens import create_mcp_user_token
 from notas.application.services.oauth_device_sessions import (
     MOBILE_SCOPE_READ,
@@ -26,7 +26,7 @@ from notas.domain.models import (
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
-class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
+class MobileAPILibrariesTests(PaidMobileAPITestCase):
     def test_food_search_is_paginated_and_respects_existing_visibility(self):
         personal = Food.objects.create(name="Arroz personal", protein=7, carbs=78, fat=1, created_by=self.user)
         Food.objects.create(name="Arroz global", protein=8, carbs=77, fat=1, created_by=None, is_global=True)

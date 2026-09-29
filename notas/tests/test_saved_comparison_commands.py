@@ -3,6 +3,8 @@ from types import SimpleNamespace
 from django.contrib.auth.models import User
 from django.test import TestCase
 
+from accounts.models import AccountPlan, AccountSubscription
+from accounts.seed_plans import seed_account_plans
 from notas.application.services.commands.saved_comparison_commands import (
     SavedComparisonCommandError,
     create_saved_comparison,
@@ -14,9 +16,13 @@ from notas.domain.models import SavedComparison
 
 class SavedComparisonCommandTests(TestCase):
     def setUp(self):
+        seed_account_plans()
         self.user = User.objects.create_user(
             username="felipe",
             password="pass123",
+        )
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="basic")},
         )
 
     def _food_selection(self, entity_id, name, quantity):

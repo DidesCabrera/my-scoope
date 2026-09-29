@@ -78,6 +78,7 @@ class AICreditCalculationTests(TestCase):
         AI_ASSISTANT_USD_PER_AI_CREDIT="0.001",
         AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN=1,
         AI_ASSISTANT_ACTION_CREDIT_MULTIPLIERS={"assistant.create_dailyplan_proposal": "3"},
+        AI_ASSISTANT_TASK_CREDIT_TARIFFS={},
     )
     def test_calculates_credits_from_cost_and_action_multiplier(self):
         user = User.objects.create_user(username="credit-cost-user")
@@ -93,6 +94,18 @@ class AICreditCalculationTests(TestCase):
 
         self.assertEqual(calculate_event_credits(event), 6)
 
+    @override_settings(AI_ASSISTANT_TASK_CREDIT_TARIFFS={"assistant.ai_nutrition_intake.preview": 10})
+    def test_fixed_tariff_does_not_change_with_provider_cost(self):
+        user = User.objects.create_user(username="fixed-tariff-user")
+        event = AIUsageEvent.objects.create(
+            user=user, period=current_period(), action_type="assistant.ai_nutrition_intake.preview",
+            provider="openai", model_name="gpt-test", estimated_cost_usd="0.008841",
+            status=AIUsageEvent.Status.COMPLETED,
+        )
+        self.assertEqual(calculate_event_credits(event), 10)
+        event.estimated_cost_usd = "0.001708"
+        self.assertEqual(calculate_event_credits(event), 10)
+
 
 class AICreditChargingTests(TestCase):
     @override_settings(
@@ -103,20 +116,22 @@ class AICreditChargingTests(TestCase):
         },
         AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN=1,
         AI_ASSISTANT_ACTION_CREDIT_MULTIPLIERS={},
+        AI_ASSISTANT_TASK_CREDIT_TARIFFS={},
     )
     def test_recorder_charges_completed_usage_event_as_ai_credits(self):
         user = User.objects.create_user(username="credit-charge-user")
         user.profile.role = "member"
         user.profile.save(update_fields=["role"])
         plan = AccountPlan.objects.create(
-            slug="member",
-            name="Member",
+            slug="basic",
+            name="Basic",
             status=AccountPlan.Status.ACTIVE,
             included_monthly_credits=100,
             monthly_credit_limit=100,
             daily_credit_limit=100,
             entitlements={
                 "ai_assistant": {
+                    "enabled": True,
                     "monthly_credit_limit": 100,
                     "daily_credit_limit": 100,
                     "block_on_exhaustion": True,
@@ -150,7 +165,7 @@ class AICreditChargingTests(TestCase):
             reference_type=AI_CREDIT_REFERENCE_TYPE,
         )
         self.assertEqual(event.charged_credits, 1)
-        self.assertEqual(event.credit_plan_code, "member")
+        self.assertEqual(event.credit_plan_code, "basic")
         self.assertEqual(quota.credits_used, 1)
         self.assertEqual(ledger.credits_delta, -1)
         self.assertFalse(AIUserCreditQuota.objects.filter(user=user).exists())

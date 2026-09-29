@@ -11,6 +11,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from core.rate_limits import limit_sharing_create
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.queries.performance.meal_queries import meals_with_kcal
 from notas.application.services.access.access import get_meal_for_user
 from notas.application.services.access.capabilities import get_capabilities
@@ -509,6 +510,9 @@ def meal_create(request):
                 name=name,
                 pending_dailyplan_id=from_dailyplan,
             )
+        except CommercialLimitReached:
+            messages.error(request, "Alcanzaste el límite de comidas de tu plan. Tus comidas existentes siguen disponibles.")
+            return redirect("meal_create")
         except ValueError:
             messages.error(request, "El nombre es obligatorio")
             return redirect("meal_create")

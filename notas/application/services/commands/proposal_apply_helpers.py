@@ -1,5 +1,6 @@
 from datetime import time
 
+from notas.application.commercial.limits import require_new_workspace_item
 from notas.application.queries.read_boundaries import get_readable_food_queryset
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, NutritionProposal
 
@@ -26,6 +27,7 @@ def create_meal_from_apply_plan(
     user,
     apply_plan,
 ) -> Meal:
+    require_new_workspace_item(user, "meal")
     meal = Meal.objects.create(
         name=apply_plan.meal.name,
         created_by=user,
@@ -127,6 +129,7 @@ def create_dailyplan_from_apply_plan(
     proposal: NutritionProposal,
     apply_plan,
 ) -> DailyPlan:
+    require_new_workspace_item(user, "dailyplan")
     dailyplan = DailyPlan.objects.create(
         name=apply_plan.dailyplan.name,
         created_by=user,

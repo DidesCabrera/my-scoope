@@ -3,6 +3,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import AccountPlan, AccountSubscription
+from accounts.seed_plans import seed_account_plans
 from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
@@ -15,10 +17,14 @@ from notas.domain.models import (
 
 class ProposalViewTests(TestCase):
     def setUp(self):
+        seed_account_plans()
         self.user = User.objects.create_user(
             username="felipe",
             email="felipe@example.com",
             password="pass123",
+        )
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="basic")},
         )
         self.other_user = User.objects.create_user(
             username="other",
@@ -168,7 +174,9 @@ class ProposalViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Increase protein")
         self.assertContains(response, "Training Day")
-        self.assertContains(response, "adjust_dailyplan_to_targets")
+        # The review surface describes the proposal in user-facing terms;
+        # internal intent identifiers are not part of the rendered contract.
+        self.assertNotContains(response, "adjust_dailyplan_to_targets")
         self.assertContains(response, "protein")
         self.assertContains(response, "190")
         self.assertContains(response, "Revisión humana")

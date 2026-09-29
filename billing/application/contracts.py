@@ -76,6 +76,17 @@ class GooglePlaySubscriptionEvidence:
 
 
 @dataclass(frozen=True)
+class GooglePlayProductEvidence:
+    purchase_token: str
+    product_id: str
+    status: str
+    obfuscated_account_id: str
+    order_id: str = ""
+    environment: str = "live"
+    metadata: Mapping[str, Any] | None = None
+
+
+@dataclass(frozen=True)
 class SubscriptionCheckoutResult:
     subscription: ProviderSubscriptionSnapshot
     checkout_url: str
@@ -97,6 +108,11 @@ class TaxDocumentStatusResult:
 
 
 class PaymentGateway(Protocol):
+    def create_credit_pack_preference(
+        self, *, title: str, amount_minor: int, currency: str,
+        payer_email: str, back_url: str, external_reference: str,
+    ) -> str: ...
+
     def create_subscription(
         self,
         *,

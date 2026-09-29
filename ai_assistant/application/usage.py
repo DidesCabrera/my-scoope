@@ -248,6 +248,12 @@ def _safe_usage_metadata(
 ) -> dict[str, Any]:
     request_metadata = dict(request.metadata or {})
     metadata = {
+        # Preserve the action priced at preflight. The response may be
+        # classified more specifically for analytics after the call, but that
+        # must not silently raise the commercial charge post-confirmation.
+        "billing_action_type": _normalize_action_type(
+            request_metadata.get("action_type") or request_metadata.get("ai_action_type")
+        ) or ACTION_ASSISTANT_CHAT,
         "chat_engine": str(request_metadata.get("chat_engine") or ""),
         "surface": str(request.context.get("surface") or request_metadata.get("surface") or ""),
         "intent": response.intent.name.value,

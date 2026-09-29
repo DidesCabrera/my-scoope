@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 
-from accounts.models import CreditLedger
+from accounts.models import AccountPlan, AccountSubscription, CreditLedger
 from accounts.seed_plans import seed_account_plans
 from ai_assistant.application.credits import DjangoAICreditService
 from ai_assistant.domain import AssistantMessage, AssistantMessageRole, AssistantTurnRequest
@@ -11,11 +11,12 @@ from ai_assistant.infrastructure.providers import LLMMessage, LLMProviderRequest
 from ai_assistant.models import AIUsageEvent
 
 
-@override_settings(AI_ASSISTANT_CREDITS_ENABLED=True, AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN=1)
+@override_settings(AI_ASSISTANT_CREDITS_ENABLED=True, AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN=1, AI_ASSISTANT_TASK_CREDIT_TARIFFS={})
 class AIAccountCreditIntegrationTests(TestCase):
     def setUp(self):
         seed_account_plans()
         self.user = get_user_model().objects.create_user(username="ai-credit-user", password="x")
+        AccountSubscription.objects.filter(user=self.user).update(plan=AccountPlan.objects.get(slug="basic"))
         self.service = DjangoAICreditService()
 
     def _turn_request(self, turn_id: str) -> AssistantTurnRequest:

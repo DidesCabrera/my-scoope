@@ -27,15 +27,15 @@ def ensure_account_subscription_for_user(
     if user is None or not getattr(user, "pk", None):
         return None, False, False
 
-    plan = _initial_plan_for_user_role(user) or resolve_account_plan_for_user(user)
-    if plan is None:
-        plan = AccountPlan.objects.filter(slug=DEFAULT_ACCOUNT_PLAN_SLUG, status=AccountPlan.Status.ACTIVE).first()
-    if plan is None:
-        return None, False, False
-
     with transaction.atomic():
         subscription = AccountSubscription.objects.select_for_update().filter(user=user).first()
         if subscription is None:
+            # Commercial roles no longer grant a paid plan on registration.
+            plan = AccountPlan.objects.filter(
+                slug=DEFAULT_ACCOUNT_PLAN_SLUG, status=AccountPlan.Status.ACTIVE
+            ).first()
+            if plan is None:
+                return None, False, False
             subscription = AccountSubscription.objects.create(
                 user=user,
                 plan=plan,
@@ -46,6 +46,15 @@ def ensure_account_subscription_for_user(
             return subscription, True, False
 
         if not update_existing:
+            return subscription, False, False
+
+        # Historical and paid subscriptions must never be downgraded by a
+        # generic backfill command. Only an explicit billing transition may do so.
+        if subscription.plan.slug != DEFAULT_ACCOUNT_PLAN_SLUG:
+            return subscription, False, False
+
+        plan = _initial_plan_for_user_role(user) or resolve_account_plan_for_user(user)
+        if plan is None:
             return subscription, False, False
 
         changed = False

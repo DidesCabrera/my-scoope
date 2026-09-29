@@ -27,7 +27,7 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
         self.assertFalse(profile.json()["data"]["onboarding_completed"])
         self.assertTrue(profile.json()["data"]["review_disclosure_required"])
         self.assertEqual(entitlements.status_code, 200)
-        self.assertEqual(entitlements.json()["data"]["plan_slug"], "basic")
+        self.assertEqual(entitlements.json()["data"]["plan_slug"], "free")
 
     def test_onboarding_and_weight_endpoints_reuse_product_services(self):
         onboarding = self.client.post(

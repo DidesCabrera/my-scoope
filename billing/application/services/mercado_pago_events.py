@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from billing.application.contracts import PaymentGateway
 from billing.application.services.events import claim_billing_event, finish_billing_event
+from billing.application.services.mercado_pago_credit_packs import sync_mercado_pago_credit_pack_payment
 from billing.application.services.provider_sync import (
     UnknownBillingResource,
     sync_provider_payment,
@@ -26,7 +27,10 @@ def process_mercado_pago_event(*, event: BillingEvent, gateway: PaymentGateway) 
             sync_provider_subscription(snapshot)
         elif claimed.event_type == "payment":
             snapshot = gateway.get_payment(claimed.resource_id)
-            sync_provider_payment(snapshot)
+            if snapshot.external_subscription_id:
+                sync_provider_payment(snapshot)
+            else:
+                sync_mercado_pago_credit_pack_payment(snapshot)
         elif claimed.event_type == "subscription_authorized_payment":
             snapshot = gateway.get_authorized_payment(claimed.resource_id)
             sync_provider_payment(snapshot)

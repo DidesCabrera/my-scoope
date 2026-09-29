@@ -15,7 +15,7 @@ class AccountSubscriptionSyncTests(TestCase):
     def setUp(self):
         seed_account_plans()
 
-    def test_ensure_subscription_maps_nutritionist_role_to_pro(self):
+    def test_ensure_subscription_does_not_promote_nutritionist_role(self):
         user = get_user_model().objects.create_user(username="sync-pro", password="x")
         user.profile.role = "nutritionist"
         user.profile.save(update_fields=["role"])
@@ -23,15 +23,14 @@ class AccountSubscriptionSyncTests(TestCase):
         subscription, created, updated = ensure_account_subscription_for_user(user, update_existing=True)
 
         self.assertFalse(created)
-        self.assertTrue(updated)
-        self.assertEqual(subscription.plan.slug, "pro")
-        self.assertEqual(subscription.source, AccountSubscription.Source.MIGRATION)
+        self.assertFalse(updated)
+        self.assertEqual(subscription.plan.slug, "free")
 
     def test_user_creation_creates_subscription_when_seeded_plans_exist(self):
         user = get_user_model().objects.create_user(username="new-user-sub", password="x")
 
         subscription = AccountSubscription.objects.get(user=user)
-        self.assertEqual(subscription.plan.slug, "basic")
+        self.assertEqual(subscription.plan.slug, "free")
         self.assertEqual(subscription.source, AccountSubscription.Source.SEED)
 
     def test_sync_command_backfills_missing_subscriptions(self):
@@ -42,7 +41,7 @@ class AccountSubscriptionSyncTests(TestCase):
         call_command("sync_account_subscriptions", stdout=output)
 
         self.assertIn("Account subscriptions synced", output.getvalue())
-        self.assertTrue(AccountSubscription.objects.filter(user=user, plan__slug="basic").exists())
+        self.assertTrue(AccountSubscription.objects.filter(user=user, plan__slug="free").exists())
 
     def test_sync_command_can_update_existing_subscription_when_requested(self):
         user = get_user_model().objects.create_user(username="sync-update", password="x")
@@ -55,8 +54,8 @@ class AccountSubscriptionSyncTests(TestCase):
 
         call_command("sync_account_subscriptions", "--update-existing", stdout=output)
 
-        self.assertIn("updated=1", output.getvalue())
-        self.assertEqual(AccountSubscription.objects.get(user=user).plan.slug, "basic")
+        self.assertIn("updated=0", output.getvalue())
+        self.assertEqual(AccountSubscription.objects.get(user=user).plan.slug, "free")
 
     def test_sync_command_dry_run_does_not_create_rows(self):
         user = get_user_model().objects.create_user(username="dry-run-user", password="x")

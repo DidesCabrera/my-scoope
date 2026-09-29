@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from accounts.models import AccountPlan, AccountSubscription
+from accounts.seed_plans import seed_account_plans
 from notas.application.sharing.entities import (
     EntityShareError,
     build_dailyplanmeal_share_snapshot,
@@ -33,8 +35,12 @@ from notas.domain.models import (
 
 class EntitySharingTests(TestCase):
     def setUp(self):
+        seed_account_plans()
         self.sender = User.objects.create_user("entity-sender", email="sender@example.com")
         self.recipient = User.objects.create_user("entity-recipient", email="recipient@example.com")
+        AccountSubscription.objects.update_or_create(
+            user=self.recipient, defaults={"plan": AccountPlan.objects.get(slug="basic")},
+        )
         self.food = Food.objects.create(
             name="Yogur", protein=8, carbs=12, fat=4, created_by=self.sender
         )

@@ -11,6 +11,7 @@ from billing.infrastructure.providers.apple_app_store import (
 )
 from mobile_api.api_support import require_scope, success
 from mobile_api.auth import mobile_bearer
+from mobile_api.entitlements_selector import entitlements_payload
 from mobile_api.errors import MobileAPIError
 from mobile_api.schema_domains.billing import (
     AppleTransactionInput,
@@ -18,7 +19,7 @@ from mobile_api.schema_domains.billing import (
     SubscriptionEnvelope,
 )
 from mobile_api.schemas import ErrorEnvelope
-from mobile_api.selectors import entitlements_payload, subscription_payload
+from mobile_api.selectors import subscription_payload
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()

@@ -139,9 +139,17 @@ class CreditWallet(models.Model):
         related_name="credit_wallet",
     )
     balance = models.PositiveIntegerField(default=0)
+    purchased_balance = models.PositiveIntegerField(
+        default=0,
+        help_text="Non-expiring purchased credits included in balance.",
+    )
     reserved_balance = models.PositiveIntegerField(
         default=0,
         help_text="Credits temporarily reserved for in-flight operations.",
+    )
+    purchased_reserved_balance = models.PositiveIntegerField(
+        default=0,
+        help_text="Reserved portion drawn from purchased credits.",
     )
     period = models.CharField(
         max_length=7,
@@ -177,6 +185,14 @@ class CreditWallet(models.Model):
     @property
     def available_credits(self) -> int:
         return max(int(self.balance or 0) - int(self.reserved_balance or 0), 0)
+
+    @property
+    def available_purchased_credits(self) -> int:
+        return max(int(self.purchased_balance or 0) - int(self.purchased_reserved_balance or 0), 0)
+
+    @property
+    def available_monthly_credits(self) -> int:
+        return max(self.available_credits - self.available_purchased_credits, 0)
 
     @property
     def has_reserved_credits(self) -> bool:

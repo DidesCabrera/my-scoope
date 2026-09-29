@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django.test import override_settings
 
-from accounts.models import CreditWallet
+from accounts.models import AccountPlan, AccountSubscription, CreditWallet
 from accounts.services.credits import get_or_create_current_wallet
 from ai_assistant.models import AIUsageEvent
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
@@ -48,6 +48,12 @@ def _provider_response(
     RATE_LIMIT_NUTRITION_LABEL_SCAN_USER="1000/h",
 )
 class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
+    def setUp(self):
+        super().setUp()
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="basic")},
+        )
+
     def _analysis_payload(self, key="label-analysis-0001"):
         return {
             "image_base64": base64.b64encode(b"\xff\xd8\xff" + b"image-bytes" * 1200).decode("ascii"),

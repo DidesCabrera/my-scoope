@@ -85,6 +85,89 @@ class BillingOffer(models.Model):
         return f"{self.account_plan.name} · {self.interval_count} {self.get_interval_display()}"
 
 
+class CreditPackOffer(models.Model):
+    """Canonical one-time credit purchase, available to active paid accounts."""
+
+    code = models.SlugField(max_length=80, unique=True)
+    credits = models.PositiveIntegerField()
+    amount_minor = models.PositiveBigIntegerField()
+    currency = models.CharField(max_length=3, default="CLP")
+    active = models.BooleanField(default=True, db_index=True)
+    public = models.BooleanField(default=True, db_index=True)
+    display_order = models.PositiveSmallIntegerField(default=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["display_order", "credits"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(credits__gt=0), name="credit_pack_credits_positive"),
+            models.CheckConstraint(condition=models.Q(amount_minor__gt=0), name="credit_pack_price_positive"),
+        ]
+
+
+class ProviderCreditPack(models.Model):
+    """Versioned provider product mapping for one-time purchases."""
+
+    offer = models.ForeignKey(CreditPackOffer, on_delete=models.PROTECT, related_name="provider_products")
+    provider = models.CharField(max_length=32, choices=PaymentProvider.choices, db_index=True)
+    environment = models.CharField(max_length=16, choices=[("sandbox", "Sandbox"), ("live", "Live")])
+    external_product_id = models.CharField(max_length=160)
+    external_price_id = models.CharField(max_length=160, blank=True)
+    credits_snapshot = models.PositiveIntegerField()
+    amount_minor = models.PositiveBigIntegerField()
+    currency = models.CharField(max_length=3, default="CLP")
+    active = models.BooleanField(default=True, db_index=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "environment", "external_product_id", "external_price_id"],
+                name="pack_product_provider_external_uq",
+            ),
+            models.UniqueConstraint(
+                fields=["provider", "environment", "offer"],
+                condition=models.Q(active=True),
+                name="pack_product_active_offer_uq",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.active and (
+            self.credits_snapshot != self.offer.credits
+            or self.amount_minor != self.offer.amount_minor
+            or self.currency != self.offer.currency
+        ):
+            raise ValidationError("Active provider pack must match its canonical offer.")
+
+
+class CreditPackPurchase(models.Model):
+    """Verified provider evidence; one purchase grants credits at most once."""
+
+    class Status(models.TextChoices):
+        APPROVED = "approved", "Approved"
+        REFUNDED = "refunded", "Refunded"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="credit_pack_purchases")
+    product = models.ForeignKey(ProviderCreditPack, on_delete=models.PROTECT, related_name="purchases")
+    provider = models.CharField(max_length=32, choices=PaymentProvider.choices)
+    external_purchase_id = models.CharField(max_length=160)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.APPROVED)
+    credits_granted = models.PositiveIntegerField()
+    evidence = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["provider", "external_purchase_id"], name="pack_purchase_provider_id_uq"),
+        ]
+
+
 class BillingProduct(models.Model):
     """Immutable provider-catalog mapping for one canonical commercial offer."""
 
@@ -135,7 +218,7 @@ class BillingProduct(models.Model):
                 name="billprod_provider_env_product_uq",
             ),
             models.UniqueConstraint(
-                fields=["provider", "environment", "external_price_id"],
+                fields=["provider", "environment", "external_product_id", "external_price_id"],
                 condition=~models.Q(external_price_id=""),
                 name="billprod_provider_env_price_uq",
             ),

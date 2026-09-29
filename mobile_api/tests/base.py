@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.utils import timezone
 
+from accounts.models import AccountPlan, AccountSubscription
 from accounts.seed_plans import seed_account_plans
 from notas.application.services.mcp_user_tokens import create_mcp_user_token
 from notas.application.services.oauth_device_sessions import (
@@ -50,3 +51,13 @@ class AuthenticatedMobileAPITestCase(TestCase):
         )
         self.raw_token = created.raw_token
         self.client = Client(HTTP_AUTHORIZATION=f"Bearer {self.raw_token}")
+
+
+class PaidMobileAPITestCase(AuthenticatedMobileAPITestCase):
+    """Authenticated fixture with the Basic capabilities needed by paid-only flows."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="basic")},
+        )

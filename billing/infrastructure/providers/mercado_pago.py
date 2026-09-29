@@ -52,6 +52,23 @@ class MercadoPagoClient:
             raise MercadoPagoProviderError("Mercado Pago subscription has no secure checkout URL.")
         return SubscriptionCheckoutResult(subscription=_subscription_snapshot(payload), checkout_url=checkout_url)
 
+    def create_credit_pack_preference(
+        self, *, title: str, amount_minor: int, currency: str,
+        payer_email: str, back_url: str, external_reference: str,
+    ) -> str:
+        if currency != "CLP" or amount_minor <= 0:
+            raise MercadoPagoProviderError("Credit pack price must be positive CLP.")
+        payload = self._request("POST", "/checkout/preferences", json={
+            "items": [{"title": title, "quantity": 1, "currency_id": currency, "unit_price": amount_minor}],
+            "payer": {"email": payer_email},
+            "back_urls": {"success": back_url, "pending": back_url, "failure": back_url},
+            "external_reference": external_reference,
+        })
+        checkout_url = str(payload.get("init_point") or "")
+        if not checkout_url.startswith("https://"):
+            raise MercadoPagoProviderError("Mercado Pago credit pack has no secure checkout URL.")
+        return checkout_url
+
     def cancel_subscription(self, external_subscription_id: str) -> ProviderSubscriptionSnapshot:
         payload = self._request("PUT", f"/preapproval/{external_subscription_id}", json={"status": "canceled"})
         return _subscription_snapshot(payload)
@@ -157,6 +174,7 @@ def _payment_snapshot(payload: Mapping[str, Any]) -> ProviderPaymentSnapshot:
             "raw_status": raw_status,
             "status_detail": str(payload.get("status_detail") or ""),
             "payment_type_id": str(payload.get("payment_type_id") or ""),
+            "external_reference": str(payload.get("external_reference") or ""),
         },
     )
 

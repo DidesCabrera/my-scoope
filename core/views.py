@@ -38,7 +38,12 @@ def android_asset_links(request):
 
 
 def landing(request):
-    return render(request, "core/landing.html")
+    from billing.presentation.public_catalog import build_public_credit_pack_prices, build_public_plan_benefits
+
+    return render(request, "core/landing.html", {
+        "plan_benefits": build_public_plan_benefits(),
+        "credit_packs": build_public_credit_pack_prices(),
+    })
 
 
 @staff_member_required

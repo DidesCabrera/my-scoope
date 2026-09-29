@@ -14,6 +14,29 @@
     </div>
   </section>
 
+  {% if vm.content.credit_packs %}
+  <section class="profile-section-card">
+    <header class="profile-section-card__header"><div class="profile-section-card__title-wrap"><p class="profile-section-card__eyebrow">Créditos adicionales</p><h2>Bolsas de créditos</h2></div></header>
+    <div class="profile-section-card__grid">
+      {% for pack in vm.content.credit_packs %}
+      <article class="profile-section-card__item">
+        <strong>{{ pack.credits }} créditos</strong><small>{{ pack.price }} · compra única</small>
+        {% if pack.paddle_price_id %}
+          <button class="button button--primary" type="button" data-paddle-checkout
+            data-price-id="{{ pack.paddle_price_id }}"
+            data-checkout-reference="{{ pack.paddle_checkout_reference }}"
+            data-customer-email="{{ pack.customer_email }}"
+            {% if not pack.can_checkout %}disabled{% endif %}>Comprar créditos</button>
+        {% endif %}
+        {% if pack.mercado_pago_product_id %}
+          <form method="post" action="{% url 'billing:credit_pack_mercado_pago_checkout' pack.mercado_pago_product_id %}">{% csrf_token %}<button class="button" type="submit" {% if not pack.mercado_pago_can_checkout %}disabled{% endif %}>Comprar con Mercado Pago</button></form>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   <section class="profile-section-card">
     <header class="profile-section-card__header">
       <div class="profile-section-card__title-wrap">

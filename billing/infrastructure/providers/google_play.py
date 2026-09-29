@@ -7,7 +7,7 @@ from urllib.parse import quote
 import jwt
 import requests
 
-from billing.application.contracts import GooglePlaySubscriptionEvidence
+from billing.application.contracts import GooglePlayProductEvidence, GooglePlaySubscriptionEvidence
 
 
 class GooglePlayConfigurationError(RuntimeError):
@@ -63,6 +63,78 @@ class GooglePlayClient:
             auto_renewing=bool((current.get("autoRenewingPlan") or {}).get("autoRenewEnabled")),
             metadata=data,
         )
+
+    def verify_product(self, purchase_token: str) -> GooglePlayProductEvidence:
+        if not self.package_name or not self.service_account:
+            raise GooglePlayConfigurationError("Google Play verification is not configured.")
+        token = purchase_token.strip()
+        if not token:
+            raise InvalidGooglePlayPurchase("A Google Play purchase token is required.")
+        url = (
+            "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/"
+            f"{quote(self.package_name, safe='')}/purchases/productsv2/tokens/{quote(token, safe='')}"
+        )
+        response = requests.get(
+            url, headers={"Authorization": f"Bearer {self._access_token()}"}, timeout=self.timeout_seconds
+        )
+        if response.status_code in {400, 404}:
+            raise InvalidGooglePlayPurchase("Google Play did not recognize the product purchase.")
+        if response.status_code >= 400:
+            raise GooglePlayConfigurationError(f"Google Play verification failed with HTTP {response.status_code}.")
+        data = response.json()
+        items = data.get("productLineItem") or []
+        if len(items) != 1 or not isinstance(items[0], dict):
+            raise InvalidGooglePlayPurchase("A credit purchase must contain one product line item.")
+        state = str((data.get("purchaseStateContext") or {}).get("purchaseState") or "")
+        return GooglePlayProductEvidence(
+            purchase_token=token,
+            product_id=str(items[0].get("productId") or ""),
+            status="PURCHASED" if state == "PURCHASED" else state,
+            obfuscated_account_id=str(data.get("obfuscatedExternalAccountId") or ""),
+            order_id=str(data.get("orderId") or ""),
+            environment="sandbox" if data.get("testPurchaseContext") else "live",
+            metadata=data,
+        )
+
+    def list_voided_products(self, *, start_time_ms: int) -> list[dict[str, Any]]:
+        """Read every page of revoked one-time purchases from Google's server API.
+
+        Google exposes at most 30 days here. Callers must poll more often than
+        that and treat a failed/incomplete scan as a reconciliation failure.
+        """
+        if not self.package_name or not self.service_account:
+            raise GooglePlayConfigurationError("Google Play verification is not configured.")
+        url = (
+            "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/"
+            f"{quote(self.package_name, safe='')}/purchases/voidedpurchases"
+        )
+        params: dict[str, Any] = {
+            "startTime": str(start_time_ms),
+            "type": 0,  # In-app products only; subscription tokens are not unique per renewal.
+            "includeQuantityBasedPartialRefund": "false",
+            "pageSelection.maxResults": 1000,
+        }
+        headers = {"Authorization": f"Bearer {self._access_token()}"}
+        purchases: list[dict[str, Any]] = []
+        seen_pages: set[str] = set()
+        while True:
+            response = requests.get(url, headers=headers, params=params, timeout=self.timeout_seconds)
+            if response.status_code >= 400:
+                raise GooglePlayConfigurationError(
+                    f"Google Play voided purchases query failed with HTTP {response.status_code}."
+                )
+            data = response.json()
+            page = data.get("voidedPurchases") or []
+            if not isinstance(page, list):
+                raise GooglePlayConfigurationError("Google Play returned an invalid voided purchases page.")
+            purchases.extend(item for item in page if isinstance(item, dict))
+            next_page = str((data.get("tokenPagination") or {}).get("nextPageToken") or "")
+            if not next_page:
+                return purchases
+            if next_page in seen_pages:
+                raise GooglePlayConfigurationError("Google Play repeated a voided purchases page token.")
+            seen_pages.add(next_page)
+            params = {"pageSelection.token": next_page}
 
     def _access_token(self) -> str:
         client_email = str(self.service_account.get("client_email") or "")

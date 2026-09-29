@@ -136,6 +136,12 @@ APPLICATION_BOUNDED_CONTEXTS: tuple[ApplicationBoundedContext, ...] = (
             "idempotent claims and delivery into Inbox."
         ),
     ),
+    ApplicationBoundedContext(
+        slug="commercial_contract",
+        label="Commercial Contract",
+        packages=("commercial",),
+        responsibility="Cross-channel plan-limit checks for nutrition library and sharing actions.",
+    ),
 )
 
 
@@ -303,7 +309,7 @@ APPLICATION_CONTEXT_DEPENDENCY_POLICIES: tuple[ApplicationContextDependencyPolic
     ),
     ApplicationContextDependencyPolicy(
         source_slug="domain_services",
-        allowed_dependency_slugs=("shared_kernel", "read_models", "proposal_review", "sharing"),
+        allowed_dependency_slugs=("shared_kernel", "read_models", "proposal_review", "sharing", "commercial_contract"),
         rationale=(
             "Commands and services may coordinate shared contracts, optimized "
             "reads and proposal applicators."
@@ -311,11 +317,16 @@ APPLICATION_CONTEXT_DEPENDENCY_POLICIES: tuple[ApplicationContextDependencyPolic
     ),
     ApplicationContextDependencyPolicy(
         source_slug="sharing",
-        allowed_dependency_slugs=("shared_kernel", "read_models"),
+        allowed_dependency_slugs=("shared_kernel", "read_models", "commercial_contract"),
         rationale=(
             "Sharing owns its lifecycle and may consume stable contracts and read "
             "projections without depending on legacy commands or channel adapters."
         ),
+    ),
+    ApplicationContextDependencyPolicy(
+        source_slug="commercial_contract",
+        allowed_dependency_slugs=("read_models",),
+        rationale="One contract combines account entitlements with personal-library usage across channels.",
     ),
     ApplicationContextDependencyPolicy(
         source_slug="nutrition_engine",

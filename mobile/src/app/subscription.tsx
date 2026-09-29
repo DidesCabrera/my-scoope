@@ -44,27 +44,29 @@ export default function SubscriptionScreen() {
     setError(null);
     try {
       const isGooglePlay = Platform.OS === "android";
-      const next = await apiRequest<SubscriptionData>(isGooglePlay
-        ? "/api/v1/subscriptions/google-play/purchases"
-        : "/api/v1/subscriptions/apple/transactions", {
+      const isCreditPack = overview?.credit_packs.some((pack) => pack.product_id === purchase.productId) ?? false;
+      await apiRequest(isCreditPack
+        ? isGooglePlay ? "/api/v1/credit-packs/google-play/purchases" : "/api/v1/credit-packs/apple/transactions"
+        : isGooglePlay ? "/api/v1/subscriptions/google-play/purchases" : "/api/v1/subscriptions/apple/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(isGooglePlay
           ? { purchase_token: purchase.purchaseToken }
           : { signed_transaction: purchase.purchaseToken }),
       });
-      await finishTransaction({ purchase, isConsumable: false });
-      setOverview(next);
+      await finishTransaction({ purchase, isConsumable: isCreditPack });
+      setOverview(await apiRequest<SubscriptionData>("/api/v1/subscriptions"));
     } catch (nextError) {
       handledTransactions.current.delete(key);
       setError(userFacingError(nextError));
     } finally {
       setWorking(false);
     }
-  }, [apiRequest]);
+  }, [apiRequest, overview]);
 
   const {
     connected,
+    products,
     subscriptions,
     availablePurchases,
     fetchProducts,
@@ -97,6 +99,14 @@ export default function SubscriptionScreen() {
       void fetchProducts({ skus: ids, type: "subs" }).catch((nextError) => setError(userFacingError(nextError)));
     }
   }, [connected, fetchProducts, overview?.products]);
+
+  useEffect(() => {
+    const provider = Platform.OS === "android" ? "google_play" : "apple_app_store";
+    const ids = [...new Set(overview?.credit_packs.filter((item) => item.provider === provider).map((item) => item.product_id) ?? [])];
+    if ((Platform.OS === "ios" || Platform.OS === "android") && connected && ids.length > 0) {
+      void fetchProducts({ skus: ids, type: "in-app" }).catch((nextError) => setError(userFacingError(nextError)));
+    }
+  }, [connected, fetchProducts, overview?.credit_packs]);
 
   useEffect(() => {
     const pending = setTimeout(() => {
@@ -157,6 +167,32 @@ export default function SubscriptionScreen() {
 
       setError(`${Platform.OS === "android" ? "Google Play" : "Apple"} no completó la compra. No se realizó ningún cobro; inténtalo nuevamente o usa Restaurar compras.`);
       setWorking(false);
+    }
+  };
+
+  const buyCreditPack = async (productId: string) => {
+    if (!overview?.credit_packs.some((pack) => pack.product_id === productId)) return;
+    setWorking(true);
+    setError(null);
+    try {
+      if (Platform.OS === "android") {
+        await requestPurchase({
+          request: { google: { skus: [productId], obfuscatedAccountId: overview.google_obfuscated_account_id } },
+          type: "in-app",
+        });
+      } else {
+        await requestPurchase({
+          request: { apple: {
+            sku: productId,
+            appAccountToken: overview.app_account_token,
+            andDangerouslyFinishTransactionAutomatically: false,
+          } },
+          type: "in-app",
+        });
+      }
+    } catch (nextError) {
+      setWorking(false);
+      if (purchaseErrorCode(nextError) !== ErrorCode.UserCancelled) setError(userFacingError(nextError));
     }
   };
 
@@ -249,6 +285,32 @@ export default function SubscriptionScreen() {
             onPress={() => void restore()}
             variant="secondary"
           />
+        </>
+      ) : null}
+
+      {overview?.can_buy_credit_packs && overview.credit_packs.length ? (
+        <>
+          <SectionTitle title="Bolsas de créditos" detail="Compra disponible en Basic y Pro" />
+          {overview.credit_packs.filter((item) => item.provider === (Platform.OS === "android" ? "google_play" : "apple_app_store")).map((configured) => {
+            const storeProduct = products.find((item) => item.id === configured.product_id);
+            return (
+              <Card key={configured.product_id} muted>
+                <View style={styles.row}>
+                  <View style={styles.copy}>
+                    <Text style={styles.productName}>{configured.credits.toLocaleString("es-CL")} créditos</Text>
+                    <Text style={textStyles.caption}>Permanecen en tu cuenta si cambias de plan.</Text>
+                  </View>
+                  <Text style={styles.price}>{storeProduct?.displayPrice ?? "Consultando…"}</Text>
+                </View>
+                <Button
+                  disabled={!connected || !storeProduct}
+                  label={`Comprar ${configured.credits.toLocaleString("es-CL")} créditos`}
+                  loading={working}
+                  onPress={() => void buyCreditPack(configured.product_id)}
+                />
+              </Card>
+            );
+          })}
         </>
       ) : null}
 

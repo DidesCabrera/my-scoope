@@ -8,10 +8,12 @@ from django.db import transaction
 from django.utils.dateparse import parse_datetime
 
 from billing.application.contracts import ProviderPaymentSnapshot
+from billing.application.services.credit_packs import refund_credit_pack_purchase, settle_credit_pack_purchase
 from billing.application.services.events import claim_billing_event, finish_billing_event
 from billing.application.services.paddle_checkout import (
     PaddleCheckoutUnavailable,
     read_paddle_checkout_reference,
+    read_paddle_credit_pack_checkout_reference,
 )
 from billing.application.services.projections import project_provider_subscription
 from billing.application.services.provider_sync import sync_provider_payment
@@ -20,6 +22,7 @@ from billing.models import (
     BillingPayment,
     BillingProduct,
     PaymentProvider,
+    ProviderCreditPack,
     ProviderSubscription,
 )
 
@@ -129,7 +132,7 @@ def sync_paddle_transaction(
     transaction_id = _required_string(data, "id")
     subscription_id = str(data.get("subscription_id") or "").strip()
     if not subscription_id:
-        raise PaddleEventError("A recurring Paddle transaction must include subscription_id.")
+        return sync_paddle_credit_pack_transaction(data, event_type=event_type, environment=environment)
 
     subscription = ProviderSubscription.objects.filter(
         provider=PaymentProvider.PADDLE,
@@ -169,6 +172,51 @@ def sync_paddle_transaction(
             "paddle_invoice_number": str(data.get("invoice_number") or ""),
         },
     ))
+
+
+@transaction.atomic
+def sync_paddle_credit_pack_transaction(
+    data: Mapping[str, Any], *, event_type: str, environment: str,
+) -> BillingPayment | None:
+    if event_type != "transaction.completed" or str(data.get("status") or "").lower() != "completed":
+        return None
+    transaction_id = _required_string(data, "id")
+    product = ProviderCreditPack.objects.filter(
+        provider=PaymentProvider.PADDLE, environment=environment,
+        external_price_id=_price_id(data),
+    ).first()
+    if product is None:
+        raise PaddleEventError("Paddle credit pack price is not mapped.")
+    custom_data = data.get("custom_data") if isinstance(data.get("custom_data"), dict) else {}
+    checkout = read_paddle_credit_pack_checkout_reference(str(custom_data.get("myscoope_checkout_reference") or ""))
+    if checkout.get("pack_product_id") != product.pk or checkout.get("environment") != environment:
+        raise PaddleEventError("Paddle credit pack checkout reference does not match the product.")
+    user = get_user_model().objects.filter(pk=checkout.get("user_id")).first()
+    if user is None:
+        raise PaddleEventError("Paddle credit pack checkout references an unknown account.")
+    details = data.get("details") if isinstance(data.get("details"), dict) else {}
+    totals = details.get("totals") if isinstance(details.get("totals"), dict) else {}
+    try:
+        amount = int(totals.get("total"))
+    except (TypeError, ValueError) as exc:
+        raise PaddleEventError("Paddle credit pack amount is invalid.") from exc
+    currency = _required_string(data, "currency_code").upper()
+    if amount != product.amount_minor or currency != product.currency:
+        raise PaddleEventError("Paddle credit pack payment differs from the canonical price.")
+    purchase = settle_credit_pack_purchase(
+        user=user, product=product, external_purchase_id=transaction_id,
+        evidence={"source": "paddle_webhook", "environment": environment, "price_id": product.external_price_id},
+    )
+    payment, _ = BillingPayment.objects.update_or_create(
+        provider=PaymentProvider.PADDLE, external_payment_id=transaction_id,
+        defaults={
+            "user": user, "subscription": None, "status": BillingPayment.Status.APPROVED,
+            "amount_minor": amount, "currency": currency,
+            "approved_at": _optional_datetime(data.get("billed_at")),
+            "metadata": {"credit_pack_purchase_id": purchase.pk, "paddle_environment": environment},
+        },
+    )
+    return payment
 
 
 @transaction.atomic
@@ -215,6 +263,10 @@ def sync_paddle_adjustment(data: Mapping[str, Any], *, environment: str) -> Bill
         subscription.status = ProviderSubscription.Status.PAST_DUE
         subscription.save(update_fields=["status", "updated_at"])
         project_provider_subscription(subscription)
+    if terminal_status is not None and (payment.metadata or {}).get("credit_pack_purchase_id"):
+        refund_credit_pack_purchase(
+            provider=PaymentProvider.PADDLE, external_purchase_id=transaction_id,
+        )
     return payment
 
 

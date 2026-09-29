@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from accounts.models import AccountPlan, AccountSubscription, CreditWallet
+from accounts.services.credits import current_account_credit_period
 from accounts.services.profile import build_account_credit_display
 
 
@@ -65,7 +66,7 @@ class AccountCreditDisplayTests(TestCase):
             user=self.user,
             balance=120,
             reserved_balance=20,
-            period="2026-07",
+            period=current_account_credit_period(),
             plan_snapshot_code="basic",
         )
 
