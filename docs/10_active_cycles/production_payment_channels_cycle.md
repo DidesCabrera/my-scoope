@@ -59,7 +59,7 @@ commit no son evidencia de una transacción ni de una liquidación.
   Paddle, Apple y Google y muestra el contacto corporativo. Una copia indexada
   anterior estaba obsoleta; no utilizarla como evidencia de despliegue. Sigue
   pendiente la aprobación legal del contenido antes de abrir ventas reales.
-- [x] Comprobar en Render que `my-scoope` producción sigue desplegado desde
+- [x] Comprobar al inicio del ciclo que `my-scoope` producción seguía desplegado desde
   `main` en el commit `165a8435` (anterior al contrato comercial y a las bolsas);
   staging contiene los cambios recientes. No se debe activar Paddle live sobre
   ese binario: primero integrar el commit verificado vía PR a `main` y validar
@@ -74,14 +74,45 @@ commit no son evidencia de una transacción ni de una liquidación.
   de dependencias y exportación web, todos aprobados. La primera ejecución de
   Django detectó una expectativa de prueba de la interfaz de `staging` que no
   correspondía al release aislado; tras ajustarla, la suite completa pasó.
-  Falta el gate remoto `full`, incluida la suite PostgreSQL, sobre el commit
-  exacto de la PR antes de integrar en `main`.
+- [x] Completar el gate remoto `full` de la
+  [PR #60](https://github.com/DidesCabrera/my-scoope/pull/60): diez comprobaciones
+  aprobadas, incluida la suite PostgreSQL. Integrar el release aislado en
+  `main` y verificar el despliegue de producción del commit `684c1e1`: Render
+  informa `Deploy succeeded | Live`, migraciones correctas y `manage.py check`
+  sin errores. La página productiva de Billing muestra los cuatro importes
+  correctos y mantiene los botones de compra deshabilitados.
+- [x] En Paddle **Live**, conservar los dos productos de suscripción existentes,
+  archivar sus cuatro precios antiguos y crear cuatro precios nuevos: Basic
+  mensual/anual CLP 3.990/34.990 y Pro mensual/anual CLP 6.990/59.990.
+  Crear tres productos de bolsa nuevos con precios CLP 2.990/5.990/9.990.
+  Los siete precios figuran `Active` en Paddle. Sembrar el catálogo canónico
+  productivo sin deriva y mapear los cuatro precios y las tres bolsas a sus
+  identificadores Live. No se ejecutó ninguna compra real.
+- [x] Confirmar que Paddle Live tiene `myscoope.com` aprobado, un destino de
+  webhook activo a `/billing/webhooks/paddle/` con 11 eventos y un enlace de
+  pago predeterminado guardado hacia `https://www.myscoope.com/billing/`.
+  Producción usa entorno Paddle `live`, token cliente, clave API y secreto de
+  webhook configurados, y webhook habilitado; **checkout permanece apagado**.
+  La clave API tiene solo permiso para crear sesiones del portal de clientes:
+  una consulta de lectura de precios devuelve 403 por alcance mínimo, no por
+  fallo del webhook ni del checkout. No ampliar permisos sin necesidad.
+- [ ] Completar los datos de payout de Paddle por el titular. El formulario aún
+  pide tipo de empresa, representante y método de recepción; no recopilar esos
+  datos sensibles en el chat ni almacenarlos en el repositorio.
+- [ ] Identificar de forma inequívoca la cuenta productiva que debe conservar
+  Pro anual. No existe usuario `bacardides`: hay `Felipe` asociado al correo
+  principal del titular (Basic vencido) y `DidesProd` asociado a un segundo
+  correo (Pro legado activo). La previsualización protegida
+  detuvo la reconciliación **sin cambios**. Solo consta una suscripción de
+  proveedor App Store vencida, sin cobros de proveedor activos. Esperar la
+  elección expresa de Felipe antes de modificar planes o saldos.
 - [ ] Subir una build Android de staging con las correcciones posteriores a la
   versión interna 7. La red del entorno aislado impidió obtener EAS CLI y el
   acceso ampliado quedó pendiente de autorización específica para subir código
   privado a Expo en una build Android.
-- [ ] Revisar sesiones, contratos y disponibilidad de Paddle live y App Store
-  Connect con el titular. Ningún checkout real ni flag productivo se activó.
+- [ ] Completar acceso y auditoría de App Store Connect y Play Console. Las
+  sesiones actuales requieren que el titular inicie sesión. Ningún checkout
+  real ni flag de compra productiva se activó.
 
 ## Lo que Felipe debe tener o resolver
 
@@ -153,9 +184,9 @@ seguir el procedimiento y consentimiento del titular.
 
 | Canal | Código | Staging integral | Cobro productivo | Conciliación y payout | Estado final |
 |---|---|---|---|---|---|
-| Paddle | Parcialmente implementado | Pendiente | Pendiente | Pendiente | **No realizada** |
-| Google Play | Parcialmente implementado | Pendiente | Pendiente | Pendiente | **No realizada** |
-| App Store | Parcialmente implementado | Pendiente | Pendiente | Pendiente | **No realizada** |
+| Paddle | Desplegado y CI completo | Parcial; falta matriz integral | Catálogo Live listo; checkout apagado | Webhook Live activo; payout pendiente | **No realizada** |
+| Google Play | Desplegado y CI completo | Parcial; falta suscripción y build interna actualizada | Pendiente de aprobación/publicación | Refund validado solo en staging | **No realizada** |
+| App Store | Desplegado y CI completo | Build enviada; TestFlight y compras sin verificar | Pendiente de aprobación/publicación | Pendiente | **No realizada** |
 
 Actualizar esta tabla solo con evidencia identificable. Cambiar `Status` a
 `active` al iniciar PPC00 y a `completed` únicamente cuando PPC00–PPC06 y las
