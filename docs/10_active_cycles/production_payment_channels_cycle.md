@@ -59,6 +59,23 @@ commit no son evidencia de una transacción ni de una liquidación.
   Paddle, Apple y Google y muestra el contacto corporativo. Una copia indexada
   anterior estaba obsoleta; no utilizarla como evidencia de despliegue. Sigue
   pendiente la aprobación legal del contenido antes de abrir ventas reales.
+- [x] Comprobar en Render que `my-scoope` producción sigue desplegado desde
+  `main` en el commit `165a8435` (anterior al contrato comercial y a las bolsas);
+  staging contiene los cambios recientes. No se debe activar Paddle live sobre
+  ese binario: primero integrar el commit verificado vía PR a `main` y validar
+  el nuevo despliegue productivo con checkout aún apagado.
+- [x] Preparar `release/payments-production` desde `origin/main` en un worktree
+  separado: contiene el contrato comercial, cobros, créditos, conciliaciones y
+  requisitos mínimos de autenticación móvil, sin incorporar los 276 archivos
+  del avance general de `staging`. Se preservó la vista de propuestas de `main`
+  para no introducir un cambio de interfaz ajeno a pagos.
+- [x] Ejecutar el gate local del release: 100 verificaciones rápidas Django,
+  2.070 pruebas completas Django, 123 pruebas móviles, lint, tipos, auditoría
+  de dependencias y exportación web, todos aprobados. La primera ejecución de
+  Django detectó una expectativa de prueba de la interfaz de `staging` que no
+  correspondía al release aislado; tras ajustarla, la suite completa pasó.
+  Falta el gate remoto `full`, incluida la suite PostgreSQL, sobre el commit
+  exacto de la PR antes de integrar en `main`.
 - [ ] Subir una build Android de staging con las correcciones posteriores a la
   versión interna 7. La red del entorno aislado impidió obtener EAS CLI y el
   acceso ampliado quedó pendiente de autorización específica para subir código
