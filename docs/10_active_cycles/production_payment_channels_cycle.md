@@ -1,7 +1,7 @@
 # Ciclo de activación productiva de recaudadores
 
-Status: planned
-Date: 2026-09-28
+Status: active (PPC00 en curso; ningún canal completado en producción)
+Date: 2026-09-29
 Cycle code: PPC
 Owner: producto/operación My Scoope
 
@@ -29,14 +29,42 @@ pendiente`, no `completed`.
 
 | Canal | Validado hasta ahora | Brecha principal |
 |---|---|---|
-| Paddle | Catálogo sandbox y una bolsa de 500 créditos comprada y acreditada en staging. | Completar suscripciones y eventos de ciclo de vida; configurar/verificar cuenta y catálogo live; probar cobro real. |
+| Paddle | Catálogo sandbox; bolsa de 500 acreditada en staging; Pro anual de CLP 59.990 registrada como pago aprobado, suscripción autorizada y plan Pro efectivo desde billing. | Completar otras ofertas y eventos de ciclo de vida; configurar/verificar cuenta y catálogo live; probar cobro real. |
 | Google Play | Cuatro precios visibles y botones habilitados en Android; compra de 500 créditos y reembolso conciliado de forma idempotente en staging. | Probar suscripciones y su ciclo de vida; publicar cliente Android actualizado; habilitar reconciliaciones después de la prueba; comprobar compra real. |
-| App Store | Integración de repositorio y compilación iOS de staging preparada; entrega a TestFlight aún no confirmada como disponible. | Completar TestFlight físico, compras/restauración/eventos/reembolsos sandbox, aprobación comercial y compra real. |
+| App Store | Integración de repositorio y compilación iOS de staging preparada; envío de Expo a App Store Connect completado, disponibilidad en TestFlight no verificada. | Completar TestFlight físico, compras/restauración/eventos/reembolsos sandbox, aprobación comercial y compra real. |
 
 Este es un **inventario inicial**, no prueba de estado live. Al comenzar PPC00 se
 vuelve a leer cada consola y el despliegue efectivo; cualquier diferencia se
 registra antes de cambiar catálogo, cuentas o flags. La rama de trabajo y su
 commit no son evidencia de una transacción ni de una liquidación.
+
+### Bitácora PPC00 (2026-09-29)
+
+- [x] Confirmar que Paddle Sandbox registra una transacción de Pro anual por
+  CLP 59.990 y otra de la bolsa de 500 por CLP 2.990. El servidor de staging
+  registra tres pagos Paddle aprobados y dos suscripciones; la operación Pro
+  anual proyectó efectivamente Pro con origen `billing`. Esto **no** prueba los
+  otros precios, renovaciones ni el ciclo completo.
+- [x] Confirmar que la entrega iOS staging
+  [0b6893e2](https://expo.dev/accounts/my-scoope/projects/my-scoope/submissions/0b6893e2-bfc5-4cf2-8310-7d23bd7e344d)
+  aparece como `Succeeded` en Expo. Falta verificar procesamiento/TestFlight.
+- [x] Confirmar que Google Play tiene la prueba interna 7 activa; la app sigue
+  en borrador para producción y el panel muestra 0 de 11 tareas de información
+  de la app/ficha completadas. El perfil de pagos muestra un método de
+  transferencia configurado; su verificación efectiva sigue por confirmar.
+- [x] Repetir 35 pruebas focalizadas de Paddle, créditos, conciliación de
+  suscripciones Google y App Store sobre base de test local: todas pasan. Esto
+  valida código, no compras externas.
+- [x] Verificar directamente la página pública de privacidad: ya describe
+  Paddle, Apple y Google y muestra el contacto corporativo. Una copia indexada
+  anterior estaba obsoleta; no utilizarla como evidencia de despliegue. Sigue
+  pendiente la aprobación legal del contenido antes de abrir ventas reales.
+- [ ] Subir una build Android de staging con las correcciones posteriores a la
+  versión interna 7. La red del entorno aislado impidió obtener EAS CLI y el
+  acceso ampliado quedó pendiente de autorización específica para subir código
+  privado a Expo en una build Android.
+- [ ] Revisar sesiones, contratos y disponibilidad de Paddle live y App Store
+  Connect con el titular. Ningún checkout real ni flag productivo se activó.
 
 ## Lo que Felipe debe tener o resolver
 
