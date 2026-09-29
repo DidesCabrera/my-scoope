@@ -30,6 +30,10 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceDoesNotMatch(subscription, /detail="Precio oficial de App Store"/);
   assertSourceMatch(subscription, /productStatusAndroid === "not-found"/);
   assertSourceMatch(subscription, /androidUnavailable \? "No disponible" : "Consultando…"/);
+  assertSourceMatch(subscription, /getStorefront\(\)/);
+  assertSourceMatch(subscription, /appConfig\.deploymentEnvironment === "staging"/);
+  assertSourceMatch(subscription, /Diagnóstico App Store: tienda/);
+  assertSourceMatch(subscription, /`\$\{product\.id\}: \$\{product\.displayPrice\} \(\$\{product\.currency\}\)`/);
 });
 
 test("App Store purchases recover a completed StoreKit transaction before reporting failure", async () => {

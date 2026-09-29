@@ -4,6 +4,7 @@ import {
   ErrorCode,
   finishTransaction,
   getAvailablePurchases,
+  getStorefront,
   type Purchase,
   useIAP,
 } from "expo-iap";
@@ -14,6 +15,7 @@ import { userFacingError } from "@/api/errors";
 import type { SubscriptionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 
 const providerLabels: Record<string, string> = {
@@ -35,6 +37,7 @@ export default function SubscriptionScreen() {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restoreNotice, setRestoreNotice] = useState<string | null>(null);
+  const [storefront, setStorefront] = useState<string | null>(null);
   const handledTransactions = useRef(new Set<string>());
   const restoring = useRef(false);
 
@@ -113,6 +116,15 @@ export default function SubscriptionScreen() {
       void fetchProducts({ skus: ids, type: "in-app" }).catch((nextError) => setError(userFacingError(nextError)));
     }
   }, [connected, fetchProducts, overview?.credit_packs]);
+
+  useEffect(() => {
+    if (Platform.OS !== "ios" || appConfig.deploymentEnvironment !== "staging" || !connected) return;
+    let active = true;
+    void getStorefront()
+      .then((countryCode) => { if (active) setStorefront(countryCode); })
+      .catch(() => { if (active) setStorefront("No disponible"); });
+    return () => { active = false; };
+  }, [connected]);
 
   useEffect(() => {
     const pending = setTimeout(() => {
@@ -296,6 +308,13 @@ export default function SubscriptionScreen() {
 
       {overview?.purchases_enabled && (Platform.OS === "ios" || Platform.OS === "android") ? (
         <>
+          {Platform.OS === "ios" && appConfig.deploymentEnvironment === "staging" ? (
+            <Text style={textStyles.caption}>
+              Diagnóstico App Store: tienda {storefront ?? "Consultando…"} · productos {[...subscriptions, ...products]
+                .map((product) => `${product.id}: ${product.displayPrice} (${product.currency})`)
+                .join(" · ") || "Consultando…"}
+            </Text>
+          ) : null}
           <SectionTitle detail={`Precio oficial de ${Platform.OS === "android" ? "Google Play" : "App Store"}`} title="Planes disponibles" />
           {overview.products.filter((item) => item.provider === (Platform.OS === "android" ? "google_play" : "apple_app_store")).map((configured) => {
             const storeProduct = subscriptions.find((item) => item.id === configured.product_id);
