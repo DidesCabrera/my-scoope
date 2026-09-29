@@ -310,7 +310,9 @@ export default function SubscriptionScreen() {
         <>
           {Platform.OS === "ios" && appConfig.deploymentEnvironment === "staging" ? (
             <Text style={textStyles.caption}>
-              Diagnóstico App Store: tienda {storefront ?? "Consultando…"} · moneda {products[0]?.currency ?? subscriptions[0]?.currency ?? "Consultando…"}
+              Diagnóstico App Store: tienda {storefront ?? "Consultando…"} · productos {[...subscriptions, ...products]
+                .map((product) => `${product.id}: ${product.displayPrice} (${product.currency})`)
+                .join(" · ") || "Consultando…"}
             </Text>
           ) : null}
           <SectionTitle detail={`Precio oficial de ${Platform.OS === "android" ? "Google Play" : "App Store"}`} title="Planes disponibles" />
