@@ -12,12 +12,17 @@ DEFAULT_NUTRITION_WORKSPACE_ENTITLEMENTS: dict[str, Any] = {
     "can_create_food": True,
     "can_create_meal": True,
     "can_create_dailyplan": True,
-    "can_create_program": False,
+    "can_create_program": True,
     "can_publish": False,
     "can_fork": True,
     "can_copy": False,
-    "max_program_duration_days": None,
-    "max_active_subscriptions": None,
+    "max_meals": 12,
+    "max_dailyplans": 4,
+    "max_programs": 1,
+    "max_program_duration_days": 14,
+    "max_active_programs": 1,
+    "max_shared_imports_monthly": 1,
+    "max_saved_comparisons": 0,
 }
 
 
@@ -41,6 +46,12 @@ class AccountEntitlements:
             return max(int(value), 0)
         except (TypeError, ValueError):
             return None
+
+    def allows_new(self, key: str, *, current_count: int) -> bool:
+        """A plan limit governs the next action; existing content is never revoked."""
+
+        limit = self.limit(key)
+        return limit is None or max(current_count, 0) < limit
 
 
 def resolve_account_entitlements(user: Any | None) -> AccountEntitlements | None:

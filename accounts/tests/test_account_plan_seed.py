@@ -20,7 +20,7 @@ class AccountPlanSeedTests(TestCase):
         self.assertEqual(AccountPlan.objects.get(slug="basic").included_monthly_credits, 150)
         self.assertEqual(
             AccountPlan.objects.get(slug="pro").entitlements["ai_assistant"]["daily_credit_limit"],
-            150,
+            0,
         )
 
     def test_seed_is_idempotent_and_does_not_duplicate_plans(self):

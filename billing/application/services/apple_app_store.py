@@ -15,7 +15,9 @@ from billing.models import (
     AppleAppAccountToken,
     BillingEvent,
     BillingProduct,
+    CreditPackPurchase,
     PaymentProvider,
+    ProviderCreditPack,
     ProviderSubscription,
 )
 
@@ -127,7 +129,31 @@ def process_apple_notification(*, event: BillingEvent, notification: AppleNotifi
     try:
         if notification.transaction is None:
             return finish_billing_event(claimed.pk, status=BillingEvent.Status.IGNORED)
-        sync_apple_transaction(notification.transaction, source="app_store_notification_v2")
+        evidence = notification.transaction
+        is_pack = ProviderCreditPack.objects.filter(
+            provider=PaymentProvider.APPLE_APP_STORE, external_product_id=evidence.product_id
+        ).exists()
+        if is_pack:
+            from billing.application.services.credit_packs import (
+                refund_credit_pack_purchase,
+                settle_apple_credit_pack,
+            )
+            if notification.notification_type == "ONE_TIME_CHARGE":
+                owner = _resolve_owner(evidence.app_account_token, existing=None)
+                settle_apple_credit_pack(user=owner, evidence=evidence)
+            elif notification.notification_type == "REFUND":
+                if CreditPackPurchase.objects.filter(
+                    provider=PaymentProvider.APPLE_APP_STORE,
+                    external_purchase_id=evidence.transaction_id,
+                ).exists():
+                    refund_credit_pack_purchase(
+                        provider=PaymentProvider.APPLE_APP_STORE,
+                        external_purchase_id=evidence.transaction_id,
+                    )
+            else:
+                return finish_billing_event(claimed.pk, status=BillingEvent.Status.IGNORED)
+        else:
+            sync_apple_transaction(evidence, source="app_store_notification_v2")
     except AppleEvidenceError as exc:
         return finish_billing_event(
             claimed.pk,

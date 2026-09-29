@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from billing.models import BillingOffer
+from accounts.models import AccountPlan
+from accounts.seed_plans import ACCOUNT_PLAN_SEEDS
+from billing.models import BillingOffer, CreditPackOffer
 
 
 @dataclass(frozen=True)
@@ -40,6 +42,35 @@ def build_public_plan_prices() -> dict[str, PublicPlanPriceVM]:
             available=available,
         )
     return result
+
+
+def build_public_plan_benefits() -> dict[str, dict[str, int | str | None]]:
+    """Show the effective account-plan benefits on the public landing page."""
+
+    plans = {plan.slug: plan for plan in AccountPlan.objects.filter(slug__in=("free", "basic", "pro"))}
+    benefits = {}
+    for seed in ACCOUNT_PLAN_SEEDS:
+        slug = seed["slug"]
+        plan = plans.get(slug)
+        workspace = (plan.entitlements or {}).get("nutrition_workspace", {}) if plan else seed["entitlements"]["nutrition_workspace"]
+        monthly_credits = plan.included_monthly_credits if plan else seed["included_monthly_credits"]
+        benefits[slug] = {
+            "monthly_credits": monthly_credits,
+            "monthly_credits_label": f"{monthly_credits:,}".replace(",", "."),
+            "max_meals": workspace.get("max_meals"),
+            "max_dailyplans": workspace.get("max_dailyplans"),
+            "max_programs": workspace.get("max_programs"),
+            "max_program_duration_weeks": (workspace.get("max_program_duration_days") or 0) // 7,
+            "max_shared_imports_monthly": workspace.get("max_shared_imports_monthly"),
+        }
+    return benefits
+
+
+def build_public_credit_pack_prices() -> tuple[dict[str, str | int], ...]:
+    return tuple(
+        {"credits": offer.credits, "price": f"${offer.amount_minor:,}".replace(",", ".")}
+        for offer in CreditPackOffer.objects.filter(active=True, public=True).order_by("display_order")
+    )
 
 
 def _money(offer: BillingOffer) -> str:

@@ -78,12 +78,30 @@
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
+    "testflight-staging": {
+      "extends": "testflight-production",
+      "environment": "preview",
+      "env": {
+        "MYSCOOPE_BUILD_TARGET": "staging",
+        "EXPO_PUBLIC_DEPLOYMENT_ENV": "staging",
+        "EXPO_PUBLIC_API_BASE_URL": "https://myscoope-staging.onrender.com",
+        "EXPO_PUBLIC_APNS_ENVIRONMENT": "production",
+        "EXPO_PUBLIC_OAUTH_CLIENT_ID": "myscoope-ios",
+        "EXPO_PUBLIC_OAUTH_REDIRECT_URI": "myscoope://oauth/callback",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      }
+    },
     "production": {
       "extends": "testflight-production"
     }
   },
   "submit": {
     "testflight-production": {
+      "ios": {
+        "ascAppId": "6804048394"
+      }
+    },
+    "testflight-staging": {
       "ios": {
         "ascAppId": "6804048394"
       }

@@ -1,14 +1,16 @@
 # Billing providers runbook
 
 Status: current
-Last updated: 2026-09-11
+Last updated: 2026-09-28
 
 ## Safe default
 
 Keep `BILLING_PADDLE_CHECKOUT_ENABLED`, `BILLING_PADDLE_WEBHOOK_ENABLED`,
 `BILLING_MERCADOPAGO_CHECKOUT_ENABLED`, `BILLING_MERCADOPAGO_WEBHOOK_ENABLED` and
 `BILLING_APPLE_PURCHASES_ENABLED`, `BILLING_APPLE_NOTIFICATIONS_ENABLED` and
-`BILLING_OPENFACTURA_ENABLED` false. This preserves all history while stopping new traffic.
+`BILLING_OPENFACTURA_ENABLED` false. Keep Google Play subscription and credit-pack
+refund reconciliation disabled until their sandbox evidence is complete. This
+preserves all history while stopping new traffic.
 
 ## Paddle sandbox activation
 
@@ -82,6 +84,10 @@ Browser return parameters never grant access. Only verified provider state proje
 - Schedule `reconcile_billing` and alert on command failures.
 - Schedule `reconcile_apple_subscriptions` and alert on command failures when
   Apple is active.
+- The daily housekeeping job invokes `scripts/run_billing_reconciliation.sh`.
+  Its Google Play subscription and credit-pack refund checks run independently;
+  either failure makes the job fail. Both are inert until their separate
+  `BILLING_GOOGLE_PLAY_*_RECONCILIATION_ENABLED` flags are enabled.
 - Investigate failed events, past-due subscriptions, failed/rejected DTEs and `adjustment_required`.
 - A refund or chargeback revokes access and opens tax review; it does not automatically void a boleta or emit a credit note.
 
@@ -90,6 +96,28 @@ Browser return parameters never grant access. Only verified provider state proje
 Disable the provider flags. Do not delete subscriptions, payments, events, Apple
 account tokens or tax documents. Reconcile external state before re-enabling.
 
-## Future Google Play adapter
+## Google Play staging and lifecycle gate
 
-New adapters must produce provider-neutral snapshots and use the same verified projection boundary. Store receipts and notifications must not bypass `billing` or write entitlements directly.
+Keep the existing `myscoope_basic` and `myscoope_pro` subscriptions and their
+monthly/annual base plans, plus the three `myscoope.credits.*` one-time products;
+do not duplicate product IDs. A purchase changes entitlements only after the
+Google Play Developer API verifies its token and account binding.
+
+`reconcile_google_play_subscriptions` reads stored purchase tokens and refreshes
+renewal, grace, hold, cancellation and expiration evidence. It defaults to a
+dry run; `--apply` changes the account projection. The scheduled invocation
+also uses `--if-enabled`, so set
+`BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED=true` only after a
+staging purchase and lifecycle test. The separate
+`reconcile_google_play_credit_pack_refunds` command likewise defaults to a dry
+run and must remain disabled in production until a test purchase, void and
+credit reversal have been observed end to end. It checks both Google's Voided
+Purchases feed (refunds with revocation and chargebacks) and each still-approved
+credit-pack purchase individually. The latter is necessary because Google omits
+developer refunds made without "revoke" from the Voided Purchases feed. A full
+refund is applied only when the individual purchase has the matching order,
+product, account and environment, a single unit, state `CANCELLED`, and zero
+refundable quantity. Missing or conflicting verification fails the job without
+silently removing credits. Keep the recurring job enabled and monitor its
+runtime as sales volume grows: individual checks use one Google API request per
+still-approved Google credit-pack purchase.

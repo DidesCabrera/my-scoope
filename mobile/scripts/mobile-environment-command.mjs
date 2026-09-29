@@ -56,6 +56,14 @@ function verifyProfile(profileName) {
     if (profile.autoIncrement !== true) throw new Error("android-alpha debe incrementar el versionCode");
   }
 
+  if (profileName === "testflight-staging") {
+    if (target.key !== "staging") throw new Error("testflight-staging no apunta a staging");
+    if (profile.developmentClient || profile.distribution === "internal" || profile.ios?.simulator) {
+      throw new Error("testflight-staging debe generar una build de App Store para TestFlight");
+    }
+    if (profile.autoIncrement !== true) throw new Error("testflight-staging debe incrementar el build number");
+  }
+
   if (["testflight-production", "production"].includes(profileName)) {
     if (target.key !== "production") throw new Error(`${profileName} no apunta a producción`);
     if (profile.developmentClient || profile.ios?.simulator) {
@@ -91,7 +99,7 @@ function verifySourcePolicy(profileName, target) {
 function verifyConfiguration() {
   if (easConfig.cli?.requireCommit !== true) throw new Error("EAS debe exigir un commit limpio");
   if (easConfig.build?.testflight) throw new Error("el perfil ambiguo testflight no debe existir");
-  for (const profileName of ["development", "simulator-staging", "preview", "android-alpha", "testflight-production", "production"]) {
+  for (const profileName of ["development", "simulator-staging", "preview", "android-alpha", "testflight-staging", "testflight-production", "production"]) {
     const { target } = verifyProfile(profileName);
     process.stdout.write(`${profileName}: ${target.key} -> ${target.apiBaseUrl}\n`);
   }

@@ -175,6 +175,8 @@ def perform_credit_adjustment(*, user_id: int, actor, credits_delta: str, reason
             return AdminOperationResult(ok=False, message="El ajuste no puede dejar balance negativo.")
         if new_balance < int(wallet.reserved_balance or 0):
             return AdminOperationResult(ok=False, message="El ajuste no puede dejar balance menor que los créditos reservados.")
+        if new_balance < int(wallet.purchased_balance or 0):
+            return AdminOperationResult(ok=False, message="El ajuste no puede eliminar créditos comprados.")
         wallet.balance = new_balance
         wallet.save(update_fields=["balance", "updated_at"])
         ledger = CreditLedger.objects.create(

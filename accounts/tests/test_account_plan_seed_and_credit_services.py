@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from accounts.models import AccountPlan, CreditLedger
+from accounts.models import AccountPlan, AccountSubscription, CreditLedger
 from accounts.seed_plans import seed_account_plans
 from accounts.services.credits import (
     consume_account_credit_reservation,
@@ -34,14 +34,21 @@ class AccountCreditWalletServiceTests(TestCase):
         seed_account_plans()
         self.user = get_user_model().objects.create_user(username="wallet-user", password="x")
 
-    def test_wallet_uses_basic_plan_for_legacy_member_profile(self):
+    def _activate_basic(self):
+        AccountSubscription.objects.update_or_create(
+            user=self.user,
+            defaults={"plan": AccountPlan.objects.get(slug="basic"), "status": AccountSubscription.Status.ACTIVE},
+        )
+
+    def test_wallet_uses_free_plan_for_new_member(self):
         wallet = get_or_create_current_wallet(user=self.user)
 
-        self.assertEqual(wallet.plan_snapshot_code, "basic")
-        self.assertEqual(wallet.balance, 150)
-        self.assertEqual(wallet.available_credits, 150)
+        self.assertEqual(wallet.plan_snapshot_code, "free")
+        self.assertEqual(wallet.balance, 0)
+        self.assertEqual(wallet.available_credits, 0)
 
     def test_reserve_consume_and_release_are_audited(self):
+        self._activate_basic()
         reservation = reserve_account_credits(
             user=self.user,
             credits=3,
@@ -90,9 +97,10 @@ class AccountCreditWalletServiceTests(TestCase):
         self.assertEqual(wallet.reserved_balance, 0)
 
     def test_resolves_plan_snapshot_from_seed(self):
+        self._activate_basic()
         snapshot = resolve_account_credit_plan_snapshot(self.user)
 
         self.assertIsNotNone(snapshot)
         self.assertEqual(snapshot.slug, "basic")
         self.assertEqual(snapshot.monthly_credit_limit, 150)
-        self.assertEqual(snapshot.daily_credit_limit, 30)
+        self.assertEqual(snapshot.daily_credit_limit, 0)

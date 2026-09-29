@@ -435,27 +435,39 @@ AI_ASSISTANT_USD_PER_AI_CREDIT = os.environ.get("AI_ASSISTANT_USD_PER_AI_CREDIT"
 AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN = _env_int("AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN", 1)
 AI_ASSISTANT_CREDIT_PLANS = {
     "free": {
-        "monthly_credit_limit": 25,
-        "daily_credit_limit": 5,
+        "monthly_credit_limit": 0,
+        "daily_credit_limit": 0,
         "block_on_exhaustion": True,
     },
     "basic": {
         "monthly_credit_limit": 150,
-        "daily_credit_limit": 30,
+        "daily_credit_limit": 0,
         "block_on_exhaustion": True,
     },
     "pro": {
         "monthly_credit_limit": 1000,
-        "daily_credit_limit": 150,
+        "daily_credit_limit": 0,
         "block_on_exhaustion": True,
     },
 }
 AI_ASSISTANT_CREDIT_PLAN_ALIASES = {
     "default": "free",
-    "member": "basic",
-    "nutritionist": "pro",
+    "member": "free",
+    "nutritionist": "free",
 }
 AI_ASSISTANT_ACTION_CREDIT_MULTIPLIERS = {}
+
+# Launch tariff v1. Only explicit, known actions use a stable customer-facing
+# price; unclassified actions retain the measured-cost fallback. Program
+# generation has no local cost sample yet, so its initial rate is provisional.
+AI_ASSISTANT_TASK_CREDIT_TARIFFS = {
+    "assistant.chat": 10,
+    "assistant.tool_call": 10,
+    "assistant.create_meal_proposal": 15,
+    "assistant.create_dailyplan_proposal": 20,
+    "assistant.modify_program": 50,
+    "assistant.ai_nutrition_intake.preview": 10,
+}
 
 # Nutrition-label scans have one predictable commercial price. Provider model
 # escalation is an internal quality/cost decision and never changes this charge.
@@ -609,6 +621,7 @@ BILLING_PADDLE_TIMEOUT_SECONDS = _env_int("BILLING_PADDLE_TIMEOUT_SECONDS", 10)
 BILLING_PADDLE_WEBHOOK_TOLERANCE_SECONDS = _env_int("BILLING_PADDLE_WEBHOOK_TOLERANCE_SECONDS", 5)
 BILLING_MERCADOPAGO_WEBHOOK_ENABLED = _env_bool("BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False)
 BILLING_MERCADOPAGO_CHECKOUT_ENABLED = _env_bool("BILLING_MERCADOPAGO_CHECKOUT_ENABLED", False)
+BILLING_MERCADOPAGO_ENVIRONMENT = os.environ.get("BILLING_MERCADOPAGO_ENVIRONMENT", "sandbox").strip().lower()
 BILLING_PUBLIC_BASE_URL = os.environ.get("BILLING_PUBLIC_BASE_URL", "").strip()
 BILLING_MERCADOPAGO_ACCESS_TOKEN = os.environ.get("BILLING_MERCADOPAGO_ACCESS_TOKEN", "").strip()
 BILLING_MERCADOPAGO_WEBHOOK_SECRET = os.environ.get("BILLING_MERCADOPAGO_WEBHOOK_SECRET", "").strip()
@@ -629,6 +642,12 @@ BILLING_APPLE_KEY_ID = os.environ.get("BILLING_APPLE_KEY_ID", "").strip()
 BILLING_APPLE_ISSUER_ID = os.environ.get("BILLING_APPLE_ISSUER_ID", "").strip()
 BILLING_APPLE_ONLINE_CHECKS = _env_bool("BILLING_APPLE_ONLINE_CHECKS", True)
 BILLING_GOOGLE_PLAY_PURCHASES_ENABLED = _env_bool("BILLING_GOOGLE_PLAY_PURCHASES_ENABLED", False)
+BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED = _env_bool(
+    "BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED", False
+)
+BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED = _env_bool(
+    "BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED", False
+)
 BILLING_GOOGLE_PLAY_PACKAGE_NAME = os.environ.get("BILLING_GOOGLE_PLAY_PACKAGE_NAME", "com.myscoope.app").strip()
 BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_FILE = os.environ.get(
     "BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_FILE",

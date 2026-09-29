@@ -14,7 +14,7 @@ services:
     branch: staging
     autoDeployTrigger: checksPass
     buildCommand: ./scripts/render_build.sh
-    preDeployCommand: python manage.py migrate --noinput && python manage.py check --deploy
+    preDeployCommand: bash scripts/render_staging_predeploy.sh
     startCommand: python -m gunicorn miapp.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     healthCheckPath: /healthz/
     envVars: &staging_app_env
@@ -43,6 +43,12 @@ services:
         value: "true"
       - key: BILLING_PADDLE_WEBHOOK_ENABLED
         value: "true"
+      - key: BILLING_GOOGLE_PLAY_PURCHASES_ENABLED
+        value: "true"
+      - key: BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED
+        value: "false"
+      - key: BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED
+        value: "false"
       - key: BILLING_PADDLE_API_BASE_URL
         value: https://sandbox-api.paddle.com
       - key: BILLING_PADDLE_TIMEOUT_SECONDS
@@ -139,5 +145,5 @@ services:
     branch: staging
     schedule: "15 4 * * *"
     buildCommand: ./scripts/render_build.sh
-    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30 && python manage.py maintain_sharing_resources --retention-days 30
+    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30 && python manage.py maintain_sharing_resources --retention-days 30 && bash scripts/run_billing_reconciliation.sh
     envVars: *staging_app_env

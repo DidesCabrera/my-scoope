@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from django.db import transaction
 
+from notas.application.commercial.limits import require_new_workspace_item
 from notas.application.services.cache.dailyplan_summary import (
     refresh_dailyplan_and_related_program_caches,
     refresh_dailyplan_summary_cache,
@@ -153,6 +154,8 @@ def create_draft_dailyplan(
     if not clean_name:
         raise ValueError("dailyplan_name_required")
 
+    require_new_workspace_item(user, "dailyplan")
+
     dailyplan = DailyPlan.objects.create(
         name=clean_name,
         created_by=user,
@@ -233,6 +236,7 @@ def fork_dailyplan(original: DailyPlan, user) -> DailyPlan:
     - snapshot completo de meals
     """
 
+    require_new_workspace_item(user, "dailyplan")
     origin = get_dailyplan_origin(original)
 
     forked = DailyPlan.objects.create(
@@ -263,6 +267,7 @@ def copy_dailyplan(original: DailyPlan, user) -> DailyPlan:
     - original_author = None
     """
 
+    require_new_workspace_item(user, "dailyplan")
     copy = DailyPlan.objects.create(
         name=f"{original.name} (copy)",
         created_by=user,
@@ -532,4 +537,3 @@ def create_pending_meal_for_dailyplan(
         dailyplan=dailyplan,
         meal=meal,
     )
-

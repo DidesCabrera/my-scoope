@@ -3,6 +3,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import AccountPlan, AccountSubscription
+from accounts.seed_plans import seed_account_plans
 from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
@@ -15,10 +17,14 @@ from notas.domain.models import (
 
 class ProposalViewTests(TestCase):
     def setUp(self):
+        seed_account_plans()
         self.user = User.objects.create_user(
             username="felipe",
             email="felipe@example.com",
             password="pass123",
+        )
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="basic")},
         )
         self.other_user = User.objects.create_user(
             username="other",

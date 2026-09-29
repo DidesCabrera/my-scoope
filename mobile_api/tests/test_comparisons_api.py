@@ -6,14 +6,14 @@ from django.contrib.auth.models import User
 from django.test import Client, override_settings
 from django.utils import timezone
 
-from mobile_api.tests.base import AuthenticatedMobileAPITestCase
+from mobile_api.tests.base import PaidMobileAPITestCase
 from notas.application.services.mcp_user_tokens import create_mcp_user_token
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
-class MobileAPIComparisonTests(AuthenticatedMobileAPITestCase):
+class MobileAPIComparisonTests(PaidMobileAPITestCase):
     def test_comparator_exposes_owned_options_and_authoritative_food_metrics(self):
         oats = Food.objects.create(
             name="Avena comparada",

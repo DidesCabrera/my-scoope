@@ -23,6 +23,13 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /google_play: "Google Play"/);
   assertSourceMatch(subscription, /paddle: "Paddle"/);
   assertSourceDoesNotMatch(subscription, /mercado_pago: "Mercado Pago"/);
+  assertSourceMatch(subscription, /Precio oficial de \$\{Platform\.OS === "android" \? "Google Play" : "App Store"\}/);
+  assertSourceMatch(subscription, /detail=\{Platform\.OS === "android" \? "Google Play" : "App Store"\}/);
+  assertSourceMatch(subscription, /title="Canales de cobro registrados"/);
+  assertSourceMatch(subscription, /no cambian la tienda de las compras nuevas mostradas arriba/);
+  assertSourceDoesNotMatch(subscription, /detail="Precio oficial de App Store"/);
+  assertSourceMatch(subscription, /productStatusAndroid === "not-found"/);
+  assertSourceMatch(subscription, /androidUnavailable \? "No disponible" : "Consultando…"/);
 });
 
 test("App Store purchases recover a completed StoreKit transaction before reporting failure", async () => {
@@ -36,4 +43,16 @@ test("App Store purchases recover a completed StoreKit transaction before report
   assertSourceMatch(subscription, /purchase\.productId === productId/);
   assertSourceMatch(subscription, /for \(const purchase of matching\) await submitPurchase\(purchase\)/);
   assertSourceMatch(subscription, /No se realizó ningún cobro/);
+});
+
+test("restore purchases explains when no store transaction is pending and reports incomplete verification", async () => {
+  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
+
+  assertSourceMatch(subscription, /if \(recovered\.length === 0\)/);
+  assertSourceMatch(subscription, /await restorePurchases\(\);\s+const recovered = await getAvailablePurchases\(\)/);
+  assertSourceMatch(subscription, /if \(!restoring\.current\)/);
+  assertSourceMatch(subscription, /No hay compras pendientes de restaurar/);
+  assertSourceMatch(subscription, /if \(await submitPurchase\(purchase\)\) restored \+= 1/);
+  assertSourceMatch(subscription, /restored === recovered\.length/);
+  assertSourceMatch(subscription, /No pudimos verificar todas las compras disponibles/);
 });

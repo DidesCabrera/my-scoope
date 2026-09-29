@@ -1,12 +1,15 @@
+from datetime import timedelta
 from importlib import import_module
 
 from django.apps import apps as django_apps
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from notas.application.sharing.dailyplans import create_dailyplan_share_resource
-from notas.application.sharing.services import claim_share_resource
+from notas.application.sharing.inbox import save_inbox_item
+from notas.application.sharing.services import ShareUnavailable, claim_share_resource
 from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
@@ -89,6 +92,24 @@ class NormalizedSharingInboxTests(TestCase):
         self.assertAlmostEqual(saved_food.food.carbs, 28)
         self.inbox_item.refresh_from_db()
         self.assertEqual(self.inbox_item.saved_object_id, saved.id)
+
+    def test_free_can_receive_many_but_import_only_one_per_month(self):
+        second_plan = DailyPlan.objects.create(name="Otro plan", created_by=self.sender, is_draft=False)
+        second_resource = create_dailyplan_share_resource(
+            sender=self.sender, dailyplan_id=second_plan.pk,
+        ).resource
+        _, second_item = claim_share_resource(
+            resource=second_resource, user=self.recipient, source=ShareClaim.Source.LINK,
+        )
+        save_inbox_item(inbox_item=self.inbox_item, actor=self.recipient)
+        self.assertEqual(self.client.get(reverse("inbox_detail", args=["share", second_item.pk])).status_code, 200)
+        with self.assertRaisesRegex(ShareUnavailable, "max_shared_imports_monthly_reached"):
+            save_inbox_item(inbox_item=second_item, actor=self.recipient)
+        self.assertIsNone(InboxItem.objects.get(pk=second_item.pk).saved_at)
+        previous_month = timezone.now().replace(day=1) - timedelta(days=1)
+        InboxItem.objects.filter(pk=self.inbox_item.pk).update(saved_at=previous_month)
+        save_inbox_item(inbox_item=second_item, actor=self.recipient)
+        self.assertIsNotNone(InboxItem.objects.get(pk=second_item.pk).saved_at)
 
     def test_migrated_legacy_dailyplan_is_not_duplicated_in_dual_read(self):
         legacy = DailyPlanShare.objects.create(

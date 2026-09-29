@@ -29,6 +29,8 @@ class AccountAICreditQuotaSnapshot:
     period: str
     plan_code: str
     credits_used: int
+    monthly_credits_used: int
+    purchased_credits_used: int
     daily_credits_used: int
     monthly_credit_limit: int
     daily_credit_limit: int
@@ -98,11 +100,19 @@ def account_ai_credit_quota_from_wallet(
     )
     monthly_value = consumed.aggregate(total=Sum("credits_delta"))["total"] or 0
     daily_value = consumed.filter(created_at__date=selected_day).aggregate(total=Sum("credits_delta"))["total"] or 0
+    monthly_used = 0
+    purchased_used = 0
+    for entry_metadata, delta in consumed.values_list("metadata", "credits_delta"):
+        purchased = int((entry_metadata or {}).get("purchased_consumed") or 0)
+        purchased_used += purchased
+        monthly_used += int((entry_metadata or {}).get("monthly_consumed") or max(-int(delta), 0) - purchased)
     return AccountAICreditQuotaSnapshot(
         wallet=wallet,
         period=selected_period,
         plan_code=plan_code,
         credits_used=abs(int(monthly_value)),
+        monthly_credits_used=monthly_used,
+        purchased_credits_used=purchased_used,
         daily_credits_used=abs(int(daily_value)),
         monthly_credit_limit=monthly_limit,
         daily_credit_limit=daily_limit,

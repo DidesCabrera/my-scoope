@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 
-from accounts.models import AccountPlan, CreditLedger, CreditWallet
+from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
 from accounts.services.ai_credits import account_ai_credit_quota_for_user
 from accounts.services.credits import reserve_account_credits
 from ai_assistant.application.credits import (
@@ -16,25 +16,28 @@ from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
     AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN=3,
     AI_ASSISTANT_USD_PER_AI_CREDIT="0.001",
     AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS={},
+    AI_ASSISTANT_TASK_CREDIT_TARIFFS={},
 )
 class AIUsageEventAccountCreditOutcomeTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="acc05", password="x")
         self.plan = AccountPlan.objects.create(
-            slug="free",
-            name="Free",
+            slug="basic",
+            name="Basic",
             status=AccountPlan.Status.ACTIVE,
             included_monthly_credits=10,
             monthly_credit_limit=10,
             daily_credit_limit=5,
             entitlements={
                 "ai_assistant": {
+                    "enabled": True,
                     "monthly_credit_limit": 10,
                     "daily_credit_limit": 5,
                     "block_on_exhaustion": True,
                 }
             },
         )
+        AccountSubscription.objects.create(user=self.user, plan=self.plan)
 
     def test_completed_event_consumes_reserved_account_credits_and_records_outcome(self):
         reserve_account_credits(
@@ -63,7 +66,7 @@ class AIUsageEventAccountCreditOutcomeTests(TestCase):
         wallet = CreditWallet.objects.get(user=self.user)
         self.assertEqual(wallet.balance, 7)
         self.assertEqual(wallet.reserved_balance, 0)
-        self.assertEqual(event.credit_plan_code, "free")
+        self.assertEqual(event.credit_plan_code, "basic")
         self.assertEqual(event.charged_credits, 3)
         self.assertEqual(event.metadata["surface"], "test")
         outcome = event.metadata["account_credit_outcome"]
@@ -108,7 +111,7 @@ class AIUsageEventAccountCreditOutcomeTests(TestCase):
         wallet = CreditWallet.objects.get(user=self.user)
         self.assertEqual(wallet.balance, 10)
         self.assertEqual(wallet.reserved_balance, 0)
-        self.assertEqual(event.credit_plan_code, "free")
+        self.assertEqual(event.credit_plan_code, "basic")
         self.assertEqual(event.charged_credits, 0)
         self.assertFalse(event.metadata["account_credit_outcome"]["charged"])
         self.assertEqual(event.metadata["account_credit_outcome"]["account_wallet"]["credits"], 3)

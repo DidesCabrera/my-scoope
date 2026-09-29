@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from core.rate_limits import limit_sharing_create
 from email_delivery.services import deliver_share_invitation
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.services.access.access import get_dailyplan_for_user
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.dailyplan_commands import (
@@ -448,6 +449,9 @@ def dailyplan_create(request):
                 user=request.user,
                 name=name,
             )
+        except CommercialLimitReached:
+            messages.error(request, "Alcanzaste el límite de planes diarios de tu plan. Tus planes existentes siguen disponibles.")
+            return redirect("dailyplan_create")
         except ValueError:
             messages.error(request, "El nombre es obligatorio")
             return redirect("dailyplan_create")

@@ -8,6 +8,12 @@ from dataclasses import dataclass
 from django.db import transaction
 from django.utils import timezone
 
+from notas.application.commercial.limits import (
+    CommercialLimitReached,
+    require_new_workspace_item,
+    require_program_duration,
+    require_shared_import,
+)
 from notas.application.sharing.contracts import SHARE_SNAPSHOT_SCHEMA_VERSION
 from notas.application.sharing.services import ShareUnavailable
 from notas.domain.models import (
@@ -193,6 +199,26 @@ def save_inbox_item(*, inbox_item: InboxItem, actor) -> SavedInboxSubject:
         existing = model.objects.filter(pk=item.saved_object_id, created_by=actor).first()
         if existing is not None:
             return SavedInboxSubject(entity=entity_by_type[item.resource.subject_type], instance=existing)
+
+    actor.__class__.objects.select_for_update().get(pk=actor.pk)
+    try:
+        require_shared_import(actor)
+        kind = {
+            ShareResource.SubjectType.MEAL: "meal",
+            ShareResource.SubjectType.DAILY_PLAN: "dailyplan",
+            ShareResource.SubjectType.PROGRAM: "program",
+        }.get(item.resource.subject_type)
+        if kind is not None:
+            require_new_workspace_item(actor, kind)
+        if kind == "program":
+            summary = item.resource.snapshot.get("summary") or {}
+            try:
+                weeks = int(summary.get("duration_weeks") or 1)
+            except (TypeError, ValueError) as exc:
+                raise ShareUnavailable("share_snapshot_invalid") from exc
+            require_program_duration(actor, weeks)
+    except CommercialLimitReached as exc:
+        raise ShareUnavailable(str(exc)) from exc
 
     snapshot = item.resource.snapshot
     if not isinstance(snapshot, dict):

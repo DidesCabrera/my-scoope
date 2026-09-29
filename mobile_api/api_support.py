@@ -106,6 +106,6 @@ def comparison_error(exc: ValueError) -> MobileAPIError:
     conflicts = {"saved_comparison_kind_mismatch"}
     return MobileAPIError(
         code=code,
-        message="No pudimos completar la comparación.",
-        status_code=404 if code in not_found else 409 if code in conflicts else 422,
+        message="Tu plan actual no permite guardar nuevas comparaciones." if code == "max_saved_comparisons_reached" else "No pudimos completar la comparación.",
+        status_code=403 if code == "max_saved_comparisons_reached" else 404 if code in not_found else 409 if code in conflicts else 422,
     )

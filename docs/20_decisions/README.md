@@ -232,3 +232,8 @@ Consequences
 - `0199-central-food-catalog-authority-and-versioned-delivery.md`: centraliza la
   adquisición y curación del catálogo, y entrega releases inmutables a staging y
   producción sin convertir el servicio central en dependencia de runtime.
+- `0200-ai-assistant-outcome-quality-and-lab-v2.md`: evalúa el asistente por outcomes,
+  continuidad controlada, capacidades mínimas, repeticiones y revisión humana.
+- `0201-commercial-launch-plans-and-owned-library.md`: fija la matriz de lanzamiento
+  Free/Basic/Pro, precios, créditos, bolsas, incorporación desde Compartidos conmigo y
+  una política de downgrade que conserva íntegro el capital digital del usuario.

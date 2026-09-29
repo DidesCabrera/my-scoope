@@ -17,7 +17,9 @@ from billing.application.services.checkout import (
     cancel_user_subscription,
     create_subscription_checkout,
 )
+from billing.application.services.credit_packs import CreditPackUnavailable
 from billing.application.services.events import receive_verified_billing_event
+from billing.application.services.mercado_pago_credit_packs import create_credit_pack_checkout
 from billing.application.services.mercado_pago_events import process_mercado_pago_event
 from billing.application.services.paddle_events import process_paddle_event
 from billing.infrastructure.gateways import (
@@ -33,7 +35,7 @@ from billing.infrastructure.providers.mercado_pago_webhooks import (
 )
 from billing.infrastructure.providers.paddle import PaddleProviderError
 from billing.infrastructure.providers.paddle_webhooks import InvalidPaddleSignature, verify_paddle_signature
-from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
+from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from billing.presentation.viewmodels import build_billing_overview_vm
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import BILLING_VIEWMODE
@@ -87,8 +89,31 @@ def create_checkout(request: HttpRequest, product_id: int) -> HttpResponse:
 
 
 @login_required
+@require_POST
+def create_credit_pack_mercado_pago_checkout(request: HttpRequest, product_id: int) -> HttpResponse:
+    if not settings.BILLING_MERCADOPAGO_CHECKOUT_ENABLED:
+        messages.error(request, "La compra de créditos por Mercado Pago no está habilitada.")
+        return redirect("billing:overview")
+    product = get_object_or_404(
+        ProviderCreditPack.objects.select_related("offer"), pk=product_id,
+        provider=PaymentProvider.MERCADO_PAGO,
+        environment=settings.BILLING_MERCADOPAGO_ENVIRONMENT, active=True,
+    )
+    public_base_url = settings.BILLING_PUBLIC_BASE_URL.rstrip("/")
+    try:
+        checkout_url = create_credit_pack_checkout(
+            user=request.user, product=product, gateway=build_mercado_pago_gateway(),
+            back_url=f"{public_base_url}{reverse('billing:checkout_return')}",
+        )
+    except (CreditPackUnavailable, MercadoPagoProviderError, ValueError):
+        messages.error(request, "No fue posible iniciar la compra de créditos. Inténtalo nuevamente.")
+        return redirect("billing:overview")
+    return redirect(checkout_url)
+
+
+@login_required
 def checkout_return(request: HttpRequest) -> HttpResponse:
-    messages.info(request, "Estamos confirmando tu suscripción. El estado se actualizará automáticamente.")
+    messages.info(request, "Estamos confirmando el pago. Actualiza esta página en unos segundos para ver el saldo y el historial.")
     return redirect("billing:overview")
 
 

@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -134,21 +135,17 @@ print(json.dumps({
                 _env_float("PCF_TEST_FLOAT", 1.0)
 
     def test_json_object_can_be_loaded_from_secret_file(self):
-        secret_path = ROOT / "test-google-play-service-account.json"
-        secret_path.write_text('{"type": "service_account"}', encoding="utf-8")
-        self.addCleanup(secret_path.unlink, missing_ok=True)
-
-        with patch.dict(
-            os.environ,
-            {
-                "PCF_TEST_JSON": "",
-                "PCF_TEST_JSON_FILE": str(secret_path),
-            },
-        ):
-            self.assertEqual(
-                _env_json_object_or_file("PCF_TEST_JSON", "PCF_TEST_JSON_FILE"),
-                {"type": "service_account"},
-            )
+        with tempfile.TemporaryDirectory() as directory:
+            secret_path = Path(directory) / "test-google-play-service-account.json"
+            secret_path.write_text('{"type": "service_account"}', encoding="utf-8")
+            with patch.dict(
+                os.environ,
+                {"PCF_TEST_JSON": "", "PCF_TEST_JSON_FILE": str(secret_path)},
+            ):
+                self.assertEqual(
+                    _env_json_object_or_file("PCF_TEST_JSON", "PCF_TEST_JSON_FILE"),
+                    {"type": "service_account"},
+                )
 
     def test_inline_json_takes_precedence_over_secret_file(self):
         with patch.dict(

@@ -157,11 +157,10 @@ def configure_apple_catalog(
         snapshot = _offer_snapshot(offer)
         if active is not None and active.external_product_id == product_id:
             if not _snapshot_matches(active, snapshot):
-                raise CatalogMappingError(
-                    f"Apple mapping {product_id} conflicts with the current canonical offer; "
-                    "create a new App Store product instead of rewriting it."
-                )
-            summary["reused"] += 1
+                _reprice_unsold_mobile_mapping(active, offer)
+                summary["replaced"] += 1
+            else:
+                summary["reused"] += 1
             continue
 
         historical = (
@@ -174,8 +173,8 @@ def configure_apple_catalog(
             )
             .first()
         )
-        if historical is not None and (historical.offer_id != offer.pk or not _snapshot_matches(historical, snapshot)):
-            raise CatalogMappingError(f"Apple product {product_id} is already mapped to different commercial terms.")
+        if historical is not None and historical.offer_id != offer.pk:
+            raise CatalogMappingError(f"Apple product {product_id} is already mapped to another offer.")
 
         if active is not None:
             active.active = False
@@ -183,6 +182,9 @@ def configure_apple_catalog(
             summary["replaced"] += 1
 
         if historical is not None:
+            if not _snapshot_matches(historical, snapshot):
+                _reprice_unsold_mobile_mapping(historical, offer)
+                summary["replaced"] += 1
             historical.active = True
             historical.save(update_fields=["active", "updated_at"])
             summary["reused"] += 1
@@ -236,29 +238,33 @@ def configure_google_play_catalog(
         snapshot = _offer_snapshot(offer)
         if active is not None and (active.external_product_id, active.external_price_id) == (product_id, base_plan_id):
             if not _snapshot_matches(active, snapshot):
-                raise CatalogMappingError("Google Play mapping conflicts with the current canonical offer.")
-            summary["reused"] += 1
+                _reprice_unsold_mobile_mapping(active, offer)
+                summary["replaced"] += 1
+            else:
+                summary["reused"] += 1
             continue
         historical = (
             BillingProduct.objects.select_for_update()
             .filter(
                 provider=PaymentProvider.GOOGLE_PLAY,
                 environment=environment,
+                external_product_id=product_id,
                 external_price_id=base_plan_id,
             )
             .first()
         )
         if historical is not None and (
             historical.offer_id != offer.pk
-            or historical.external_product_id != product_id
-            or not _snapshot_matches(historical, snapshot)
         ):
-            raise CatalogMappingError("Google Play base plan is already mapped to different commercial terms.")
+            raise CatalogMappingError("Google Play base plan is already mapped to another offer.")
         if active is not None:
             active.active = False
             active.save(update_fields=["active", "updated_at"])
             summary["replaced"] += 1
         if historical is not None:
+            if not _snapshot_matches(historical, snapshot):
+                _reprice_unsold_mobile_mapping(historical, offer)
+                summary["replaced"] += 1
             historical.active = True
             historical.save(update_fields=["active", "updated_at"])
             summary["reused"] += 1
@@ -298,3 +304,30 @@ def _snapshot_matches(product: BillingProduct, snapshot: tuple[int, int, str, st
         product.interval,
         product.interval_count,
     ) == snapshot
+
+
+def _reprice_unsold_mobile_mapping(product: BillingProduct, offer: BillingOffer) -> None:
+    """Keep the store product ID when repricing a prelaunch, unused mobile offer."""
+
+    if product.subscriptions.exists():
+        raise CatalogMappingError(
+            "This mobile product has subscription history; reconcile existing contracts before repricing its mapping."
+        )
+    metadata = dict(product.metadata or {})
+    prior = list(metadata.get("prelaunch_price_history") or [])
+    prior.append({
+        "amount_minor": product.amount_minor,
+        "currency": product.currency,
+        "interval": product.interval,
+        "interval_count": product.interval_count,
+    })
+    metadata["prelaunch_price_history"] = prior
+    product.account_plan = offer.account_plan
+    product.amount_minor = offer.amount_minor
+    product.currency = offer.currency
+    product.interval = offer.interval
+    product.interval_count = offer.interval_count
+    product.metadata = metadata
+    product.save(update_fields=[
+        "account_plan", "amount_minor", "currency", "interval", "interval_count", "metadata", "updated_at"
+    ])

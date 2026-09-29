@@ -217,7 +217,7 @@ services:
     plan: starter
     schedule: "15 4 * * *"
     buildCommand: ./scripts/render_build.sh
-    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30 && python manage.py maintain_sharing_resources --retention-days 30
+    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30 && python manage.py maintain_sharing_resources --retention-days 30 && bash scripts/run_billing_reconciliation.sh
     envVars:
       - fromGroup: myscoope-django-runtime
       - key: DJANGO_SETTINGS_MODULE
@@ -233,3 +233,7 @@ services:
           property: connectionString
       - key: SENTRY_DSN
         sync: false
+      - key: BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED
+        value: "false"
+      - key: BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED
+        value: "false"
