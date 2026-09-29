@@ -324,9 +324,9 @@ function SummaryView({ index }: { index: number }) {
 }
 
 const plans = [
-  { name: "Free", price: "$0", detail: "Empieza con un plan diario y tus bibliotecas esenciales.", tone: tokens.color.textMuted },
+  { name: "Free", price: "$0", detail: "Empieza con un plan diario y tus bibliotecas esenciales.", tone: tokens.color.textMuted, recommended: false },
   { name: "Basic", price: "$3.990", detail: "Bibliotecas ilimitadas y 150 créditos mensuales.", tone: tokens.color.interactivePrimary, recommended: true },
-  { name: "Pro", price: "$6.990", detail: "1.000 créditos para un uso intensivo.", tone: tokens.color.program },
+  { name: "Pro", price: "$6.990", detail: "1.000 créditos para un uso intensivo.", tone: tokens.color.program, recommended: false },
 ] as const;
 
 function PlansView({ index }: { index: number }) {

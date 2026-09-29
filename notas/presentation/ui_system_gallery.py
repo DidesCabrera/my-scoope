@@ -1,6 +1,5 @@
 from notas.presentation.viewmodels.programs import build_program_metric_chart
 
-
 ONBOARDING_STORYBOARD = (
     {"key": "login", "label": "Acceso", "eyebrow": "Acceso", "title": "Inicia sesión para guardar tu progreso", "description": "Usa tu cuenta para continuar el proceso en cualquiera de tus dispositivos.", "icon": "log-in"},
     {"key": "value", "label": "Funciones principales", "eyebrow": "Funciones principales", "title": "Qué puedes hacer con My Scoope", "description": "My Scoope organiza tu objetivo, calcula referencias nutricionales y las convierte en un plan diario que puedes revisar.", "icon": "target"},
