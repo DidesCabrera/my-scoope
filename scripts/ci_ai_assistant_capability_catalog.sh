@@ -17,6 +17,8 @@ export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000
   ai_assistant.tests.test_prepared_actions \
   ai_assistant.tests.test_read_only_tool_executor \
   ai_assistant.tests.test_context_builder \
+  ai_assistant.tests.test_goal_directed_agency \
+  ai_assistant.tests.test_response_quality \
   notas.tests.test_ai_workspace_query_tool \
   notas.tests.test_ai_workspace_library_coherence \
   notas.tests.test_solver_food_candidates_query \
@@ -24,5 +26,9 @@ export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000
   notas.tests.test_nutrition_engine_target_estimator \
   notas.tests.test_nutrition_solver_meal_proposal \
   notas.tests.test_ai_assistant_real_provider_validation \
+  notas.tests.test_ai_assistant_evaluation_dataset \
+  notas.tests.test_ai_assistant_evaluation_quality \
   notas.tests.test_ai_assistant_evaluation_lab \
+  notas.tests.test_ai_assistant_model_evaluation \
+  notas.tests.test_ai_assistant_message_feedback \
   --keepdb

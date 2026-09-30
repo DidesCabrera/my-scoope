@@ -31,6 +31,12 @@ class DomainModelDependencyPolicy:
 
 DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
+        slug="culinary_library",
+        label="Culinary Library",
+        models=("CulinaryTemplate", "CulinaryVariant"),
+        responsibility="Versioned culinary compositions, substitutions and review evidence.",
+    ),
+    DomainModelBoundary(
         slug="identity",
         label="Identity & User State",
         models=(
@@ -127,8 +133,13 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="proposals",
         label="AI Proposals",
-        models=("AiNutritionChat", "NutritionProposal", "NutritionProposalAuditEvent"),
-        responsibility="AI chat state, reviewable nutrition proposals and proposal audit history.",
+        models=(
+            "AiAssistantMessageFeedback",
+            "AiNutritionChat",
+            "NutritionProposal",
+            "NutritionProposalAuditEvent",
+        ),
+        responsibility="AI chat state, message feedback, reviewable proposals and audit history.",
     ),
     DomainModelBoundary(
         slug="sharing",
@@ -159,6 +170,11 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
 
 
 DOMAIN_MODEL_DEPENDENCY_POLICIES: tuple[DomainModelDependencyPolicy, ...] = (
+    DomainModelDependencyPolicy(
+        source_slug="culinary_library",
+        allowed_dependency_slugs=(),
+        rationale="Variants reference their templates; food references are validated operational snapshots.",
+    ),
     DomainModelDependencyPolicy(
         source_slug="identity",
         allowed_dependency_slugs=(),
@@ -225,6 +241,7 @@ DOMAIN_MODEL_DEPENDENCY_POLICIES: tuple[DomainModelDependencyPolicy, ...] = (
 # Physical modules already split out of the legacy compatibility module.
 # Boundaries omitted from this mapping still live directly in ``notas.domain.models``.
 DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG: dict[str, str] = {
+    "culinary_library": "notas.domain.model_modules.culinary",
     "identity": "notas.domain.model_modules.identity",
     "auth_integration": "notas.domain.model_modules.auth_integration",
     "sharing": "notas.domain.model_modules.sharing",

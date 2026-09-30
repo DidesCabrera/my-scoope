@@ -200,6 +200,17 @@ def _ensure_user_message_is_valid_for_tool(
         raise ValueError("tool_user_message_required")
 
 
+def _reconcile_program_targets(proposal, payload):
+    if not proposal.get("program_specification"):
+        return
+    spec = proposal["program_specification"]
+    for field in ("calorie_target", "protein_target", "carb_target", "fat_target", "protein_per_kg_target", "macro_distribution"):
+        if not _missing(proposal.get(field)):
+            raise ValueError("program_spec_do_not_mix_weekly_and_scalar_targets")
+        payload.pop(field, None)
+    payload.update(requested_entity="program", duration_weeks=spec["duration_weeks"], meals_per_day=spec["meals_per_day"])
+
+
 def build_nutrition_brief_from_ai_drafts(
     *,
     profile_draft: Mapping[str, Any] | None = None,
@@ -229,6 +240,11 @@ def build_nutrition_brief_from_ai_drafts(
     proposal_sources = _as_mapping(proposal.get("field_sources"))
     preference_sources = _as_mapping(preferences.get("field_sources"))
     field_sources = dict(payload.get("field_sources") or {})
+    for name in ("dietary_pattern", "allergies_or_intolerances", "cooking_time_preference",
+                 "budget_preference", "simplicity_preference", "variety_preference"):
+        if name in preferences and preferences[name] is not None:
+            payload[name] = preferences[name]
+            field_sources[name] = str(preference_sources.get(name) or "chat_draft")
 
     for field_name in ("weight_kg", "height_cm", "age_years", "sex", "activity_level", "training_frequency"):
         if not _missing(profile.get(field_name)):
@@ -246,6 +262,8 @@ def build_nutrition_brief_from_ai_drafts(
     for field_name in (
         "goal",
         "requested_entity",
+        "duration_weeks",
+        "program_specification",
         "meals_per_day",
         "energy_adjustment",
         "calorie_target",
@@ -260,6 +278,7 @@ def build_nutrition_brief_from_ai_drafts(
 
     if _missing(payload.get("meals_per_day")) and not _missing(preferences.get("preferred_meals_per_day")):
         payload["meals_per_day"] = preferences.get("preferred_meals_per_day")
+    _reconcile_program_targets(proposal, payload)
 
     excluded_foods = _merge_text_lists(payload.get("excluded_foods"), preferences.get("avoided_foods"))
     excluded_foods = _merge_text_lists(excluded_foods, preferences.get("allergies_or_intolerances"))
@@ -275,14 +294,14 @@ def build_nutrition_brief_from_ai_drafts(
         payload["complexity_level"] = "high" if _truthy_preference(preferences.get("variety_preference")) else payload.get("complexity_level")
 
     styles = list(payload.get("style_preferences") or [])
-    if _truthy_preference(preferences.get("cooking_time_preference")) and "low_prep" not in styles:
-        styles.append("low_prep")
-    if _truthy_preference(preferences.get("simplicity_preference")) and "simple" not in styles:
-        styles.append("simple")
-    if _truthy_preference(preferences.get("budget_preference")) and "budget" not in styles:
-        styles.append("budget")
-    if _truthy_preference(preferences.get("variety_preference")) and "varied" not in styles:
-        styles.append("varied")
+    for preference, style in (
+        ("cooking_time_preference", "low_prep"),
+        ("simplicity_preference", "simple"),
+        ("budget_preference", "budget"),
+        ("variety_preference", "varied"),
+    ):
+        if _truthy_preference(preferences.get(preference)) and style not in styles:
+            styles.append(style)
     payload["style_preferences"] = styles
 
     notes = _merge_text_lists(payload.get("notes"), proposal.get("notes"))
@@ -318,10 +337,18 @@ def _create_nutrition_engine_dailyplan_proposal_from_drafts_data(
     if not is_brief_ready_for_proposal(brief):
         raise ValueError("nutrition_brief_has_pending_questions")
 
-    response = _create_nutrition_engine_dailyplan_proposal_data(
-        user=user,
-        nutrition_brief=serialize_brief(brief),
-    )
+    if brief.requested_entity == "program":
+        from notas.application.ai_intake.program_generator import (
+            create_weekly_program_proposal,
+            program_proposal_tool_summary,
+        )
+        proposal = create_weekly_program_proposal(user=user, brief=brief)
+        response = {"proposal": program_proposal_tool_summary(proposal)}
+    else:
+        response = _create_nutrition_engine_dailyplan_proposal_data(
+            user=user,
+            nutrition_brief=serialize_brief(brief),
+        )
     response["nutrition_brief"] = serialize_brief(brief)
     response["draft_sources"] = {
         "profile_draft_used": True,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-ASSISTANT_CONVERSATIONAL_AGENCY_VERSION = "ai_assistant_conversational_agency.v1"
+ASSISTANT_CONVERSATIONAL_AGENCY_VERSION = "ai_assistant_conversational_agency.v2"
 
 
 def developer_goal_directed_agency_policy() -> dict[str, Any]:
@@ -11,6 +11,8 @@ def developer_goal_directed_agency_policy() -> dict[str, Any]:
     return {
         "version": ASSISTANT_CONVERSATIONAL_AGENCY_VERSION,
         "active_objective": True,
+        "structured_active_work": True,
+        "objective_inference_is_not_authorization": True,
         "advance_means_progress": True,
         "ready_work_prefers_proposal": True,
         "blocking_info_only": True,

@@ -1,0 +1,32 @@
+{% extends "notas/base.html" %}
+{% block title %}Objetivos nutricionales · {{ program.name }}{% endblock %}
+{% block content %}
+<main class="page">
+  <h1>Objetivos nutricionales por semana</h1>
+  <p>{{ program.name }} · Configuración avanzada</p>
+  <p>El peso proyectado es un supuesto, no una medición ni una promesa de resultado. Guardar estos objetivos no modifica tu ficha, las comidas ni los registros de peso. Las calorías indicadas manualmente no se recalculan al cambiar el peso.</p>
+  <a href="{% url 'program_detail' program.pk %}">Volver al programa</a>
+  {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+  {% if program.culinary_provenance.needs_revalidation %}<p role="status">Los objetivos cambiaron. Las comidas actuales necesitan una nueva validación antes de afirmar que los cumplen.</p>{% endif %}
+  {% if policy %}
+  <form method="post">
+    {% csrf_token %}
+    <fieldset><legend>Reglas del programa</legend>{{ policy.as_p }}</fieldset>
+    {{ week_forms.management_form }}{{ week_forms.non_form_errors }}
+    {% for form in week_forms %}
+      <fieldset><legend>Semana {{ forloop.counter }}</legend>{{ form.as_p }}</fieldset>
+    {% endfor %}
+    <button type="submit" name="action" value="preview">Previsualizar cálculos</button>
+    <button type="submit" name="action" value="save">Guardar solo objetivos</button>
+  </form>
+  {% endif %}
+  {% if preview.weeks %}
+  <h2>Proyección nutricional</h2>
+  <p>Proteína: {{ preview.protein_min_ppk }}–{{ preview.protein_max_ppk }} g/kg. Grasa: como máximo {{ preview.fat_max_percent }}% de las calorías reales de cada día.</p>
+  <table><caption>Objetivos; no son resultados medidos</caption>
+    <thead><tr><th>Semana</th><th>kcal/día</th><th>Peso proyectado</th><th>Peso para proteína</th><th>Proteína diaria</th></tr></thead>
+    <tbody>{% for week in preview.weeks %}<tr><td>{{ week.week }}</td><td>{{ week.kcal|floatformat:0 }}</td><td>{{ week.projected_weight_kg|default_if_none:"Sin proyección" }}</td><td>{{ week.reference_weight_kg|floatformat:2 }} kg</td><td>{{ week.protein_min_g|floatformat:1 }}–{{ week.protein_max_g|floatformat:1 }} g</td></tr>{% endfor %}</tbody>
+  </table>
+  {% endif %}
+</main>
+{% endblock %}

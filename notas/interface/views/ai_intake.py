@@ -38,6 +38,7 @@ from notas.application.ai_intake.dailyplan_generator import (
     DailyPlanGeneratorError,
     generate_dailyplan_proposal_from_brief_proposal,
 )
+from notas.application.ai_intake.message_feedback import record_message_feedback
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_BRIEF_SESSION_KEY,
     AI_NUTRITION_CONVERSATION_SESSION_KEY,
@@ -129,6 +130,7 @@ def _render_chat_thread_json(request, *, result, conversation, prompt: str = "")
         ui=build_ui_vm(CHAT_VIEWMODE_DETAIL),
         content=content_vm,
     )
+
     return JsonResponse(
         {
             "thread_html": render_to_string(
@@ -805,6 +807,27 @@ def ai_nutrition_chat_detail(request, chat_id):
             **_assistant_credit_context(request.user),
         },
     )
+
+
+@login_required
+@require_http_methods(["POST"])
+def ai_assistant_message_feedback(request, chat_id, message_index):
+    chat = get_object_or_404(AiNutritionChat, id=chat_id, user=request.user)
+    try:
+        record_message_feedback(
+            user=request.user,
+            chat=chat,
+            message_index=message_index,
+            rating=request.POST.get("rating") or "",
+            reason=request.POST.get("reason") or "",
+            comment=request.POST.get("comment") or "",
+        )
+    except ValueError:
+        messages.error(request, "No pude registrar esa evaluación.")
+    else:
+        messages.success(request, "Gracias. Tu evaluación ayudará a mejorar el asistente.")
+    _load_chat_into_session(request, chat)
+    return redirect("ai_nutrition_chat_detail", chat_id=chat.id)
 
 
 @login_required

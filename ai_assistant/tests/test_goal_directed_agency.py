@@ -46,6 +46,8 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             ASSISTANT_CONVERSATIONAL_AGENCY_VERSION,
         )
         self.assertTrue(developer_policy["active_objective"])
+        self.assertTrue(developer_policy["structured_active_work"])
+        self.assertTrue(developer_policy["objective_inference_is_not_authorization"])
         self.assertTrue(developer_policy["advance_means_progress"])
         self.assertTrue(developer_policy["ready_work_prefers_proposal"])
         self.assertTrue(developer_policy["blocking_info_only"])
@@ -136,6 +138,19 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             "complete_a_ready_active_objective_in_the_same_turn",
             developer_payload["success_criteria"],
         )
+        self.assertEqual(
+            developer_payload["prompt_contract_version"],
+            "ai_assistant_prompt.v4",
+        )
+        self.assertIn(
+            "stop_when_the_expected_outcome_is_satisfied",
+            developer_payload["success_criteria"],
+        )
+        self.assertTrue(
+            developer_payload["rules"][
+                "objective_inference_never_grants_write_authority"
+            ]
+        )
         self.assertTrue(developer_payload["rules"]["new_facts_require_matching_update_call"])
         self.assertTrue(developer_payload["rules"]["visible_response_is_natural_text"])
 
@@ -201,7 +216,10 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             remaining_tool_iterations=3,
         )
 
-        self.assertEqual(followup.tool_choice, "required")
+        self.assertEqual(
+            followup.tool_choice,
+            {"type": "function", "name": TOOL_UPDATE_PROPOSAL_PREFERENCES},
+        )
         self.assertEqual(
             [tool["name"] for tool in followup.tools],
             [TOOL_UPDATE_PROPOSAL_PREFERENCES],
@@ -278,7 +296,13 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             remaining_tool_iterations=2,
         )
 
-        self.assertEqual(followup.tool_choice, "required")
+        self.assertEqual(
+            followup.tool_choice,
+            {
+                "type": "function",
+                "name": TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            },
+        )
         self.assertEqual(
             [tool["name"] for tool in followup.tools],
             [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],
@@ -332,7 +356,13 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             remaining_tool_iterations=2,
         )
 
-        self.assertEqual(followup.tool_choice, "required")
+        self.assertEqual(
+            followup.tool_choice,
+            {
+                "type": "function",
+                "name": TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            },
+        )
         self.assertEqual(
             [tool["name"] for tool in followup.tools],
             [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],

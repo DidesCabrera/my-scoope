@@ -9,6 +9,11 @@ from notas.application.ai_intake.evaluation_lab import (
     DEFAULT_LAB_SCENARIOS,
     run_evaluation_lab,
 )
+from notas.application.ai_intake.evaluation_progress import evaluation_progress
+from notas.application.ai_intake.evaluation_quality import (
+    build_quality_annotation_template,
+)
+from notas.application.ai_intake.evaluation_review import review_saved_report, saved_review_template
 from notas.application.ai_intake.real_provider_validation import (
     built_in_real_provider_scenarios,
     get_validation_user,
@@ -56,8 +61,29 @@ class Command(BaseCommand):
                 "lab records provider usage without consuming that user's credits."
             ),
         )
+        parser.add_argument(
+            "--repetitions",
+            type=int,
+            default=1,
+            help="Repeat every ready live scenario 1-10 times to measure reliability.",
+        )
+        parser.add_argument(
+            "--quality-annotations",
+            default="",
+            help=(
+                "Optional JSON file with explicit human quality reviews. "
+                "Without it, a healthy live run remains awaiting_quality_review."
+            ),
+        )
         parser.add_argument("--output", default="", help="Optional JSON report path.")
+        parser.add_argument("--review-report", default="", help="Regrade an existing report offline; never calls the provider.")
+        parser.add_argument(
+            "--annotation-template-output",
+            default="",
+            help="Optional JSON path for the explicit human-review worksheet.",
+        )
         parser.add_argument("--json", action="store_true", help="Print the complete JSON report.")
+        parser.add_argument("--trace-progress", action="store_true", help="Flush safe runtime stages and stalled stacks to stderr; JSON stays on stdout.")
         parser.add_argument(
             "--fail-on-regression",
             action="store_true",
@@ -65,12 +91,18 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if options.get("review_report"):
+            self._review_saved(options)
+            return
         if options["list_scenarios"]:
             catalog = built_in_real_provider_scenarios()
             for key in DEFAULT_LAB_SCENARIOS:
                 scenario = catalog[key]
                 capabilities = ", ".join(scenario.capability_ids) or "sin mapeo"
-                self.stdout.write(f"{key} [{capabilities}]: {scenario.description}")
+                self.stdout.write(
+                    f"{key} [{capabilities}] outcome={scenario.expected_outcome}: "
+                    f"{scenario.description}"
+                )
             return
 
         try:
@@ -78,13 +110,19 @@ class Command(BaseCommand):
                 user_id=options.get("user_id"),
                 email=options.get("user_email") or "",
             )
-            report = run_evaluation_lab(
-                user=user,
-                scenario_keys=options.get("scenarios"),
-                live=bool(options.get("live")),
-                cleanup_review_artifacts=not bool(options.get("keep_artifacts")),
-                charge_user_credits=bool(options.get("charge_user_credits")),
+            quality_annotations = self._read_quality_annotations(
+                options.get("quality_annotations") or ""
             )
+            with evaluation_progress(bool(options.get("trace_progress")), self.stderr):
+                report = run_evaluation_lab(
+                    user=user,
+                    scenario_keys=options.get("scenarios"),
+                    live=bool(options.get("live")),
+                    cleanup_review_artifacts=not bool(options.get("keep_artifacts")),
+                    charge_user_credits=bool(options.get("charge_user_credits")),
+                    repetitions=int(options.get("repetitions") or 1),
+                    quality_annotations=quality_annotations,
+                )
         except Exception as exc:  # pragma: no cover - command boundary
             raise CommandError(str(exc)) from exc
 
@@ -96,6 +134,27 @@ class Command(BaseCommand):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(serialized + "\n", encoding="utf-8")
             self.stdout.write(self.style.SUCCESS(f"Evaluation lab report written: {path}"))
+
+        annotation_path_text = str(
+            options.get("annotation_template_output") or ""
+        ).strip()
+        if annotation_path_text:
+            annotation_path = Path(annotation_path_text)
+            annotation_path.parent.mkdir(parents=True, exist_ok=True)
+            annotation_path.write_text(
+                json.dumps(
+                    saved_review_template(payload) if report.live_validations else build_quality_annotation_template(()),
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Quality annotation template written: {annotation_path}"
+                )
+            )
 
         if options["json"]:
             self.stdout.write(serialized)
@@ -111,6 +170,15 @@ class Command(BaseCommand):
         self.stdout.write(f"mode: {report.mode}")
         self.stdout.write(f"status: {report.status}")
         self.stdout.write(f"billing: {json.dumps(dict(report.billing), ensure_ascii=False)}")
+        self.stdout.write(
+            f"quality: {json.dumps(dict(report.quality_evaluation), ensure_ascii=False)}"
+        )
+        self.stdout.write(
+            f"task dataset: {json.dumps(dict(report.task_dataset), ensure_ascii=False)}"
+        )
+        self.stdout.write(
+            f"product feedback: {json.dumps(dict(report.product_feedback), ensure_ascii=False)}"
+        )
         self.stdout.write("")
         libraries = report.ground_truth.get("libraries", {})
         solver = report.ground_truth.get("solver_candidates", {})
@@ -143,3 +211,43 @@ class Command(BaseCommand):
             f"diagnostics: {json.dumps(dict(report.diagnostics), ensure_ascii=False)}"
         )
         self.stdout.write(f"cleanup: {json.dumps(dict(report.cleanup), ensure_ascii=False)}")
+
+    @staticmethod
+    def _read_quality_annotations(path_value):
+        path_text = str(path_value or "").strip()
+        if not path_text:
+            return None
+        path = Path(path_text)
+        if not path.exists():
+            raise ValueError(f"Quality annotations file does not exist: {path}")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("Quality annotations file must contain a JSON object.")
+        return payload
+
+    def _review_saved(self, options):
+        if options.get("live") or options.get("user_id") or options.get("user_email") or options.get("scenarios"):
+            raise CommandError("--review-report cannot be combined with live execution or user/scenario selection.")
+        source = Path(options["review_report"])
+        destination = Path(options["output"]) if options.get("output") else None
+        if destination is not None and destination.resolve() == source.resolve():
+            raise CommandError("Preserve the source evidence: use a different --output path.")
+        try:
+            payload = json.loads(source.read_text(encoding="utf-8"))
+            annotations = self._read_quality_annotations(options.get("quality_annotations") or "")
+            template = saved_review_template(payload)
+            result = review_saved_report(payload, annotations) if annotations is not None else payload
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            raise CommandError(str(exc)) from exc
+        if options.get("annotation_template_output"):
+            path = Path(options["annotation_template_output"])
+            if path.resolve() == source.resolve() or (destination and path.resolve() == destination.resolve()):
+                raise CommandError("The review worksheet must have a separate path.")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(template, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if destination:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        self.stdout.write(json.dumps(result, ensure_ascii=False) if options["json"] else f"Saved report: {result['status']}; provider calls: 0")
+        if options["fail_on_regression"] and not result.get("passed"):
+            raise CommandError(f"AI Assistant evaluation lab status: {result['status']}")

@@ -19,6 +19,12 @@ from ai_assistant.application.model_routing import (
     resolve_model_route_for_turn,
     route_max_output_tokens,
 )
+from ai_assistant.application.orchestrator_followup import (
+    build_tool_followup_provider_request as _build_tool_followup_provider_request,
+)
+from ai_assistant.application.orchestrator_followup import (
+    compact_context_prompt,
+)
 from ai_assistant.application.orchestrator_helpers import (
     _coerce_provider_tool_calls,
     _compact_tool_results_payload,
@@ -34,8 +40,6 @@ from ai_assistant.application.orchestrator_helpers import (
     _provider_declared_tools_required,
     _provider_followup_error_metadata,
     _provider_incomplete_reason,
-    _provider_tool_by_name,
-    _provider_tool_outputs,
     _tool_requests_limit_result,
     _tool_selection_reason_blocked_result,
     _tool_user_from_request,
@@ -47,6 +51,11 @@ from ai_assistant.application.product_context import (
     system_domain_anchor_lines,
 )
 from ai_assistant.application.product_ports import get_ai_product_bindings
+from ai_assistant.application.prompt_contract import (
+    developer_outcome_contract_policy,
+    developer_outcome_contract_rules,
+    system_outcome_contract_lines,
+)
 from ai_assistant.application.provider_parsing import (
     AssistantProviderParseResult,
     _coerce_assistant_message,
@@ -66,14 +75,13 @@ from ai_assistant.application.tool_governance import (
     tool_selection_reason_error,
 )
 from ai_assistant.application.tool_selection import (
+    fact_capture_tool_after_tool_results,
     initial_tool_choice,
-    proposal_fact_capture_required_after_tool_results,
     proposal_ready_after_tool_results,
     select_provider_tools,
 )
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
-    TOOL_READ_PROPOSAL,
     TOOL_SHARE_PREFERENCE_DRAFT_CARD,
     TOOL_SHARE_PROFILE_DRAFT_CARD,
     TOOL_SHARE_PROPOSAL_PREFERENCES_CARD,
@@ -180,10 +188,16 @@ class ExternalLLMOrchestrator:
             LLMMessage(role="system", content=self._system_prompt()),
             LLMMessage(role="developer", content=self._developer_prompt(tools)),
         ]
+        context_message_index: int | None = None
         if request.context:
+            context_message_index = len(messages)
             messages.append(LLMMessage(role="developer", content=self._context_prompt(request.context)))
         messages.extend(self._history_messages(request.history))
         messages.append(LLMMessage(role="user", content=request.user_message.content))
+        from ai_assistant.application.program_capture import weekly_capture_instruction, weekly_specification_missing
+
+        if weekly_specification_missing(request, ()):
+            messages.append(LLMMessage(role="developer", content=weekly_capture_instruction(request)))
 
         model_route = model_route or resolve_model_route_for_turn(request)
         max_output_tokens = _output_tokens_for_request(
@@ -197,6 +211,20 @@ class ExternalLLMOrchestrator:
             max_output_tokens=max_output_tokens,
             tools=tools,
         )
+        if (
+            context_message_index is not None
+            and estimate_provider_request_tokens(estimated_request)
+            > self.config.turn_limits.max_input_tokens
+        ):
+            messages[context_message_index] = LLMMessage(
+                role="developer",
+                content=compact_context_prompt(request.context),
+            )
+            estimated_request = LLMProviderRequest(
+                messages=messages,
+                max_output_tokens=max_output_tokens,
+                tools=tools,
+            )
         return LLMProviderRequest(
             messages=messages,
             max_output_tokens=max_output_tokens,
@@ -231,71 +259,14 @@ class ExternalLLMOrchestrator:
         model_route: AIModelRoute | None = None,
         remaining_tool_iterations: int = 0,
     ) -> LLMProviderRequest:
-        """Continue a stateless Responses API function-call loop.
-
-        The original bounded prompt is followed by provider output items and
-        typed ``function_call_output`` entries. This preserves reasoning items
-        while ``store=false`` remains enabled and avoids embedding tool results
-        in another assistant-authored JSON envelope.
-        """
-
-        model_route = model_route or resolve_model_route_for_turn(request)
-        base_request = self.build_provider_request(request, model_route=model_route)
-        max_output_tokens = _output_tokens_for_request(
+        return _build_tool_followup_provider_request(
+            self,
             request=request,
-            default_max_output_tokens=self.config.max_output_tokens,
-            route=model_route,
-        )
-        tools = tuple(base_request.tools or ()) if remaining_tool_iterations > 0 else ()
-        tool_choice: str | None = "auto" if tools else None
-        decision_tool_results = tuple(accumulated_tool_results or tool_results)
-        if tools and self._proposal_fact_capture_required_after_tool_results(
-            request,
-            decision_tool_results,
-        ):
-            preference_tool = _provider_tool_by_name(
-                tools,
-                TOOL_UPDATE_PROPOSAL_PREFERENCES,
-            )
-            if preference_tool is not None:
-                tools = (preference_tool,)
-                tool_choice = "required"
-        elif tools and self._proposal_ready_after_tool_results(request, decision_tool_results):
-            proposal_tool = _provider_tool_by_name(
-                tools,
-                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
-            )
-            if proposal_tool is not None:
-                tools = (proposal_tool,)
-                tool_choice = "required"
-        tool_outputs = _provider_tool_outputs(tool_results)
-        estimated_request = LLMProviderRequest(
-            messages=base_request.messages,
-            max_output_tokens=max_output_tokens,
-            tools=tools,
-            continuation_items=tuple(continuation_items or ()),
-            tool_outputs=tool_outputs,
-        )
-        return LLMProviderRequest(
-            messages=base_request.messages,
-            max_output_tokens=max_output_tokens,
-            metadata={
-                "engine": self.config.engine_name,
-                "format": self.config.response_format_version,
-                "tool_loop": "native_function_calls.v1",
-                "tool_results_count": len(tuple(tool_results or ())),
-                "model_route": model_route.as_metadata(),
-                "reasoning_effort": self.config.reasoning_effort,
-                "estimated_input_tokens": estimate_provider_request_tokens(estimated_request),
-            },
-            tools=tools,
-            tool_choice=tool_choice,
-            parallel_tool_calls=False if tools else None,
-            max_tool_calls=(
-                self.config.turn_limits.max_tool_requests_per_turn if tools else None
-            ),
-            continuation_items=tuple(continuation_items or ()),
-            tool_outputs=tool_outputs,
+            continuation_items=continuation_items,
+            tool_results=tool_results,
+            accumulated_tool_results=accumulated_tool_results,
+            model_route=model_route,
+            remaining_tool_iterations=remaining_tool_iterations,
         )
 
 
@@ -1065,6 +1036,16 @@ class ExternalLLMOrchestrator:
         overflow_tool_requests = normalized_tool_requests[max_tool_requests:]
 
         for raw_tool_request in executable_tool_requests:
+            from ai_assistant.application.program_capture import weekly_specification_missing
+
+            if (raw_tool_request.tool_name == TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
+                    and weekly_specification_missing(request, (*prior_tool_results, *results))):
+                results.append(AssistantToolResult(
+                    tool_name=raw_tool_request.tool_name, request_id=raw_tool_request.request_id,
+                    status=AssistantToolStatus.BLOCKED, error_code="weekly_program_specification_required",
+                    error_message="Captura los requisitos semanales en program_specification sin contradecir la referencia de peso solicitada; no uses el plan escalar ni notes.",
+                ))
+                continue
             tool_request = _enrich_draft_tool_request_from_context(
                 raw_tool_request,
                 context=request.context,
@@ -1086,7 +1067,13 @@ class ExternalLLMOrchestrator:
             if tool_user is None:
                 results.append(_missing_user_tool_result(tool_request))
                 continue
-            results.append(self._execute_validated_tool_request(tool_request, user=tool_user))
+            import logging
+
+            logger = logging.getLogger("myscoope.assistant.runtime")
+            logger.info("tool_start name=%s", tool_request.tool_name)
+            result = self._execute_validated_tool_request(tool_request, user=tool_user)
+            logger.info("tool_done name=%s status=%s code=%s", result.tool_name, result.status.value, result.error_code)
+            results.append(result)
         for tool_request in overflow_tool_requests:
             results.append(_tool_requests_limit_result(tool_request, max_tool_requests=max_tool_requests))
         return tuple(results)
@@ -1177,9 +1164,10 @@ class ExternalLLMOrchestrator:
                 *system_domain_anchor_lines(),
                 "Tu trabajo es llevar la conversación a un resultado útil, no ejecutar un cuestionario.",
                 "Usa el historial y el workspace actual como memoria. Nunca vuelvas a pedir un dato conocido.",
+                "Si el mensaje no identifica a qué situación u objeto se refiere, no adivines: pide una aclaración breve antes de describir estado o usar tools.",
                 "blocking_fields contiene exactamente lo imprescindible. Si tiene elementos, pregunta solo por el menor bloqueo que no puedas inferir.",
                 "Los campos opcionales nunca bloquean: My Scoope aplica los product_defaults del workspace.",
-                "Si active_objective pide una propuesta y blocking_fields está vacío, créala en este mismo turno con la herramienta disponible. No te limites a decir que ya está lista.",
+                *system_outcome_contract_lines(),
                 "Cuando el usuario entregue o corrija datos operacionales, regístralos con la herramienta tipada antes de confirmarlos.",
                 "Después de resultados de herramientas, continúa hasta completar el objetivo o hasta encontrar un bloqueo real.",
                 "Una propuesta es revisable: nunca afirmes que fue aplicada ni inventes IDs.",
@@ -1234,7 +1222,7 @@ class ExternalLLMOrchestrator:
         self,
         request: AssistantTurnRequest,
         tools: Sequence[Mapping[str, Any]],
-    ) -> str | None:
+    ) -> str | Mapping[str, str] | None:
         return initial_tool_choice(request, tools)
 
     def _proposal_ready_after_tool_results(
@@ -1249,12 +1237,12 @@ class ExternalLLMOrchestrator:
             product_bindings=get_ai_product_bindings(),
         )
 
-    def _proposal_fact_capture_required_after_tool_results(
+    def _fact_capture_tool_after_tool_results(
         self,
         request: AssistantTurnRequest,
         tool_results: Sequence[AssistantToolResult],
-    ) -> bool:
-        return proposal_fact_capture_required_after_tool_results(
+    ) -> str | None:
+        return fact_capture_tool_after_tool_results(
             request,
             tool_results,
             enable_reviewable_proposal_tools=self.config.enable_reviewable_proposal_tools,
@@ -1267,6 +1255,7 @@ class ExternalLLMOrchestrator:
     ) -> str:
         tool_specs = tuple(self.provider_tool_specs() if tool_specs is None else tool_specs)
         payload = {
+            **developer_outcome_contract_policy(),
             "native_function_tools": True,
             "product_context": developer_product_capability_policy(),
             "response_style_policy": developer_response_style_policy(),
@@ -1275,6 +1264,7 @@ class ExternalLLMOrchestrator:
                 "never_repeat_known_information",
                 "use_at_most_one_blocking_question",
                 "complete_a_ready_active_objective_in_the_same_turn",
+                "stop_when_the_expected_outcome_is_satisfied",
             ],
             "available_operations": [
                 str(spec.get("name") or "") for spec in tool_specs
@@ -1287,6 +1277,7 @@ class ExternalLLMOrchestrator:
                 "visible_response_is_natural_text": True,
                 "never_claim_requested_object_ready_without_successful_creation_result": True,
                 "capture_all_user_supplied_profile_and_proposal_facts_before_creation": True,
+                **developer_outcome_contract_rules(),
             },
         }
         return json.dumps(payload, ensure_ascii=False, sort_keys=True)

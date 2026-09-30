@@ -10,6 +10,26 @@ from notas.domain.models import Food, WeightLog
 
 
 class ProposalSimulationQueryTests(TestCase):
+    def program_payload(self, food_id):
+        return {"intent": "create_program", "program": {"name": "Eight weeks", "duration_weeks": 8,
+            "days": [{"week_number": week, "day_number": day, "dailyplan": {"name": "Day", "meals": [
+                {"hour": "12:00", "note": "", "meal": {"name": "Meal", "foods": [{"food_id": food_id, "quantity": 100, "unit": "g"}]}}
+            ]}} for week in range(1, 9) for day in range(1, 8)]}}
+
+    def test_program_resolves_foods_once_for_all_56_days(self):
+        with self.assertNumQueries(2):  # One visible food snapshot, one measured weight.
+            result = simulate_proposal_payload(self.user, self.program_payload(self.chicken.pk)).as_dict()
+        self.assertEqual(len(result["program"]["days"]), 56)
+        self.assertAlmostEqual(result["program"]["days"][-1]["dailyplan"]["kpis"]["protein"], 31)
+
+    def test_program_batch_preserves_visibility_and_does_not_cache_between_users(self):
+        from django.http import Http404
+        simulate_proposal_payload(self.user, self.program_payload(self.chicken.pk))
+        with self.assertRaises(Http404):
+            simulate_proposal_payload(self.other_user, self.program_payload(self.chicken.pk))
+        with self.assertRaises(Http404):
+            simulate_proposal_payload(self.user, self.program_payload(self.private_other_food.pk))
+
     def setUp(self):
         self.user = User.objects.create_user(
             username="felipe",

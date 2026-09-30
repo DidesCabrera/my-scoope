@@ -389,6 +389,7 @@ def _build_dailyplan_payload_with_solver_summary(
     user,
     brief: NutritionBrief,
     target_plan: DailyPlanTargetPlan | None = None,
+    alternative_count: int | None = None,
 ) -> tuple[dict, dict]:
     target_plan = target_plan or build_dailyplan_target_plan(user=user, brief=brief)
     meals_per_day = _normalize_meals_per_day(brief.meals_per_day)
@@ -396,7 +397,7 @@ def _build_dailyplan_payload_with_solver_summary(
     shadow_enabled = bool(getattr(settings, "NUTRITION_SOLVER_SHADOW_ENABLED", False))
     shadow_backend = str(getattr(settings, "NUTRITION_SOLVER_SHADOW_BACKEND", "cp_sat_v1")).strip().lower()
     time_limit_ms = int(getattr(settings, "NUTRITION_SOLVER_TIME_LIMIT_MS", 1500))
-    alternative_count = int(getattr(settings, "NUTRITION_SOLVER_ALTERNATIVE_COUNT", 3))
+    alternative_count = alternative_count or int(getattr(settings, "NUTRITION_SOLVER_ALTERNATIVE_COUNT", 3))
 
     if backend in {"cp_sat_v1", "portfolio_v1"}:
         try:

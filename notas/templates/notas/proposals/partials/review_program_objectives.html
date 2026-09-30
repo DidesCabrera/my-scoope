@@ -1,0 +1,35 @@
+{% if program.objective_groups %}
+<section class="proposal-review-card proposal-program-objectives" aria-labelledby="proposal-program-objectives-title">
+  <div class="proposal-review-card-header">
+    <div>
+      <p class="proposal-review-eyebrow">Objetivos del programa</p>
+      <h3 id="proposal-program-objectives-title" class="proposal-review-section-title">
+        Parámetros usados para construir y validar la propuesta
+      </h3>
+    </div>
+    <i data-lucide="target" aria-hidden="true"></i>
+  </div>
+
+  <p class="proposal-review-actions-text">
+    Resumen de las reglas nutricionales. La evolución exacta de cada semana se muestra en la comparación del programa.
+  </p>
+
+  {% for group in program.objective_groups %}
+    <section class="proposal-program-objectives__group" aria-labelledby="proposal-program-objectives-group-{{ forloop.counter }}">
+      <h4 id="proposal-program-objectives-group-{{ forloop.counter }}" class="proposal-program-objectives__group-title">
+        <i data-lucide="{{ group.icon }}" aria-hidden="true"></i>
+        {{ group.title }}
+      </h4>
+      <div class="proposal-review-kpis">
+        {% for fact in group.facts %}
+          <div class="proposal-review-kpi">
+            <span class="proposal-review-kpi-label">{{ fact.label }}</span>
+            <strong>{{ fact.value }}</strong>
+            {% if fact.hint %}<span>{{ fact.hint }}</span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+</section>
+{% endif %}

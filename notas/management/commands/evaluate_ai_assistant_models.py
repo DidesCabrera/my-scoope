@@ -43,6 +43,20 @@ class Command(BaseCommand):
             help="Also run benchmark candidates such as sol_medium.",
         )
         parser.add_argument(
+            "--repetitions",
+            type=int,
+            default=1,
+            help="Repeat each candidate/scenario evaluation 1-10 times.",
+        )
+        parser.add_argument(
+            "--quality-annotations",
+            default="",
+            help=(
+                "JSON file with human reviews grouped under candidates.<code>. "
+                "No candidate is accepted while its quality review is pending."
+            ),
+        )
+        parser.add_argument(
             "--scenario",
             action="append",
             dest="scenarios",
@@ -100,6 +114,10 @@ class Command(BaseCommand):
                 candidate_codes=options.get("candidates"),
                 include_benchmarks=bool(options.get("include_benchmarks")),
                 scenario_keys=options.get("scenarios"),
+                repetitions=int(options.get("repetitions") or 1),
+                quality_annotations=self._read_quality_annotations(
+                    options.get("quality_annotations") or ""
+                ),
             )
         except Exception as exc:  # pragma: no cover - command boundary
             raise CommandError(str(exc)) from exc
@@ -167,4 +185,19 @@ class Command(BaseCommand):
                 f"estimated_usd={cost.get('estimated_cost_usd')}"
             )
         self.stdout.write("")
-        self.stdout.write("Manual UX review is still required for any accepted model.")
+        self.stdout.write(
+            "A candidate is accepted only after automated gates and explicit quality review pass."
+        )
+
+    @staticmethod
+    def _read_quality_annotations(path_value):
+        path_text = str(path_value or "").strip()
+        if not path_text:
+            return None
+        path = Path(path_text)
+        if not path.exists():
+            raise ValueError(f"Quality annotations file does not exist: {path}")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("Quality annotations file must contain a JSON object.")
+        return payload

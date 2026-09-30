@@ -64,18 +64,21 @@ export default function ProposedMealDetailScreen() {
           <EntityDetailSection detail={`${item.meal.foods.length} alimentos`} title="Composición">
             <FoodPanels
               items={proposalPreviewAdapters.foodPanelItems(item.meal)}
-              onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
+              onOpenItem={(food) => {
+                const foodIndex = proposalPreviewAdapters.foodPanelItems(item.meal).findIndex((candidate) => candidate.id === food.id);
+                if (foodIndex >= 0) router.push(`/proposals/${id}/entity/meals/${index}/foods/${foodIndex}` as Href);
+              }}
             />
           </EntityDetailSection>
           <SectionDivider />
           <EntityDetailSection title="Detalle de cada Alimento">
             {item.meal.foods.map((food, foodIndex) => (
               <ProposalFoodCard
-                actions={food.food_id ? (
-                  <EntityCardAction label={`Ver detalle de ${food.food_name}`} onPress={() => router.push(`/libraries/foods/${food.food_id}` as Href)} role="link">
+                actions={(
+                  <EntityCardAction label={`Ver detalle de ${food.food_name}`} onPress={() => router.push(`/proposals/${id}/entity/meals/${index}/foods/${foodIndex}` as Href)} role="link">
                     <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                   </EntityCardAction>
-                ) : undefined}
+                )}
                 food={food}
                 key={`${food.food_id}-${food.food_name}-${foodIndex}`}
               />

@@ -5,6 +5,7 @@ from ai_assistant.application.tools.contracts import (
     AssistantToolRiskLevel,
     AssistantToolSpec,
 )
+from ai_assistant.application.tools.program_schema import PROGRAM_SPECIFICATION_SCHEMA
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
 INTAKE_TOOL_SPECS = {
@@ -138,7 +139,11 @@ TOOL_UPDATE_PROPOSAL_PREFERENCES: AssistantToolSpec(
             "Update proposal-scoped preferences for the current nutrition work: "
             "goal, requested entity, meals, complexity, energy adjustment, targets and notes. "
             "Capture an explicit percentage request directly as macro_distribution; do not "
-            "rewrite 30/50/20 as notes. Capture an explicit g/kg request as protein_per_kg_target. "
+            "rewrite 30/50/20 as notes. For a scalar g/kg request use protein_per_kg_target. "
+            "For weekly trajectories, PPK intervals, fat ceilings or culinary diversity, use the complete "
+            "program_specification instead of scalar targets or notes. Once captured, fulfill an explicit "
+            "creation request with create_nutrition_engine_dailyplan_proposal_from_drafts; draft capture "
+            "alone does not create a reviewable program. "
             "Use it before confirming any explicit proposal change. Include complexity_level in the same call "
             "when the user says simple, sencillo, intermedio or elaborado; do not leave it only in prose. "
             "This is not personal profile memory and does not render "
@@ -167,6 +172,8 @@ TOOL_UPDATE_PROPOSAL_PREFERENCES: AssistantToolSpec(
                             "enum": ["daily_plan", "program"],
                         },
                         "meals_per_day": {"type": "integer", "minimum": 1, "maximum": 8},
+                        "duration_weeks": {"type": "integer", "minimum": 1, "maximum": 8, "description": "Complete program duration, from one to eight weeks."},
+                        "program_specification": PROGRAM_SPECIFICATION_SCHEMA,
                         "complexity_level": {
                             "type": "string",
                             "enum": ["low", "medium", "high"],

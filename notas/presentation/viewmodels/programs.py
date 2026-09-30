@@ -196,7 +196,8 @@ def build_program_metric_chart(
             protein = snapshot["protein"]
             carbs = snapshot["carbs"]
             fat = snapshot["fat"]
-            ppk = (protein / current_weight) if (current_weight and protein) else 0
+            reference_weight = day.get("reference_weight_kg") or current_weight
+            ppk = (protein / reference_weight) if (reference_weight and protein) else 0
             alloc = snapshot.get("alloc") or {"protein": 0, "carbs": 0, "fat": 0}
             dailyplan = day.get("dailyplan") or {}
             day_label = FULL_DAY_LABELS.get(day["day_number"], day.get("day_label") or "")

@@ -1,0 +1,5 @@
+{% if vm.content.proposal_review.payload.program.card %}
+  <section class="proposal-review-entity-section proposal-review-entity-section--program" aria-label="Programa propuesto">
+    {% include "components/card_child_program.html" with child_card=vm.content.proposal_review.payload.program.card %}
+  </section>
+{% endif %}

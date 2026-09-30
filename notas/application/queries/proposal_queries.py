@@ -109,6 +109,10 @@ def _get_proposal_attachment(proposal: NutritionProposal) -> dict[str, str]:
 
     intent = _get_proposal_intent(proposal)
 
+    if intent == "create_program":
+        program = payload.get("program") or {}
+        return {"kind": "program", "label": "Programa alimentario", "name": program.get("name") or proposal.title, "icon": "calendar-days"}
+
     if intent == "create_meal":
         meal = payload.get("meal") or {}
         return {

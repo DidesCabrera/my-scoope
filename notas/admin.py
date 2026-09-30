@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from . import admin_culinary  # noqa: F401
 from .admin_food_actions import (
     mark_foods_as_active,
     mark_foods_as_core,

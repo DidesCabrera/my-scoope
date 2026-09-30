@@ -24,6 +24,12 @@ while IFS= read -r changed_path; do
   changed_count=$((changed_count + 1))
 
   case "$changed_path" in
+    notas/application/culinary_*|notas/application/ai_intake/culinary_program.py|notas/application/services/nutrition/culinary_validation.py|nutrition_solver/application/culinary_planner.py|notas/tests/test_culinary_program.py)
+      # Culinary generation must exercise PostgreSQL application, not just SQLite.
+      # Name/field limits and approval persistence are part of the safety contract.
+      tier=full
+      break
+      ;;
     scripts/ci_mobile_iteration.sh)
       if [[ "$tier" == "docs" ]]; then
         tier=mobile

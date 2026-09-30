@@ -35,6 +35,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /export default function UiGalleryScreen/);
   assertSourceMatch(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
   assertSourceMatch(gallery, /Galería del sistema UI/);
+  assertSourceMatch(gallery, /OnboardingJourneyView/);
+  assertSourceMatch(gallery, /Storyboard visual · sin sesión, API ni persistencia/);
   assertSourceMatch(gallery, /Card-child de programa/);
   assertSourceMatch(gallery, /ProgramChildCard/);
   assertSourceMatch(gallery, /Detalle de programa/);
@@ -601,7 +603,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programDailyPlan, /day \? \(day\.meals \?\? \[\]\)\.map\(mealPanelItem\) : meals/);
   assertSourceMatch(programDailyPlan, /label=\{`Ir al detalle del plan de \$\{dayLabel\}`\}/);
   assertSourceMatch(programDailyPlan, /router\.push\(`\/libraries\/daily-plans\/\$\{day\.dailyplan_id\}` as Href\)/);
-  assertSourceMatch(programDailyPlan, /\{day\?\.dailyplan_id \? \(/);
+  assertSourceMatch(programDailyPlan, /\{onOpen \? \(/);
+  assertSourceMatch(programDailyPlan, /: day\?\.dailyplan_id \? \(/);
   assertSourceMatch(programDailyPlan, /actions=\{\(/);
   assertSourceDoesNotMatch(programDailyPlan, /accessory=\{\(/);
   assertSourceDoesNotMatch(programDailyPlan, /kpiVariant="nested"|subtitle="Plan diario asignado"|label: "plan asignado"/);
@@ -745,6 +748,20 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUi, /meal: tokens\.color\.meal/);
   assertSourceMatch(productUi, /dailyPlan: tokens\.color\.dailyPlan/);
   assertSourceDoesNotMatch(productUi, /styles\.structuralDivider/);
+});
+
+test("the onboarding gallery exposes every visual journey view without product side effects", async () => {
+  const navigation = await readTestFile(path.resolve(process.cwd(), "src/components/dev/gallery-navigation.tsx"), "utf8");
+  const journey = await readTestFile(path.resolve(process.cwd(), "src/components/onboarding/onboarding-journey-view.tsx"), "utf8");
+
+  assertSourceMatch(navigation, /\{ key: "onboarding", label: "Onboarding" \}/);
+  for (const step of ["login", "value", "structure", "panels", "control", "progress", "disclosures", "goal", "identity", "measurements", "activity", "summary", "plans", "home"]) {
+    assertSourceMatch(journey, new RegExp(`key: "${step}"`));
+  }
+  assertSourceMatch(journey, /training_frequency/);
+  assertSourceMatch(journey, /Cómo leer los paneles/);
+  assertSourceMatch(journey, /Continuar con Free/);
+  assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
 });
 
 test("the committed mobile contract exposes every route consumed through CML08", async () => {

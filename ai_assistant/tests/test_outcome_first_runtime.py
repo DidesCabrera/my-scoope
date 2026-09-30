@@ -230,6 +230,11 @@ class OutcomeFirstRuntimeTests(SimpleTestCase):
         self.assertEqual(response.metadata["outcome_trace"]["state"], "outcome_created")
         self.assertTrue(response.metadata["outcome_trace"]["proposal_created"])
         self.assertEqual(
+            response.metadata["outcome_trace"]["expected_outcome"],
+            "nutrition_proposal",
+        )
+        self.assertTrue(response.metadata["outcome_trace"]["expected_outcome_met"])
+        self.assertEqual(
             [item["tool_name"] for item in response.metadata["outcome_trace"]["tool_results"]],
             [
                 TOOL_UPDATE_PROFILE_DRAFT,
@@ -237,7 +242,13 @@ class OutcomeFirstRuntimeTests(SimpleTestCase):
             ],
         )
         self.assertEqual(len(client.requests), 3)
-        self.assertEqual(client.requests[1].tool_choice, "required")
+        self.assertEqual(
+            client.requests[1].tool_choice,
+            {
+                "type": "function",
+                "name": TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            },
+        )
         self.assertEqual(
             [tool["name"] for tool in client.requests[1].tools],
             [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],

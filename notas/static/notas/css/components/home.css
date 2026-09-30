@@ -2285,6 +2285,48 @@ body.page-ai-intake-chat::after {
   white-space: pre-line;
 }
 
+.page-ai-intake .ai-chat-feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--text-muted);
+}
+
+.page-ai-intake .ai-chat-feedback span {
+  margin-right: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.page-ai-intake .ai-chat-feedback button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.page-ai-intake .ai-chat-feedback button:hover,
+.page-ai-intake .ai-chat-feedback button:focus-visible {
+  border-color: var(--border-soft);
+  background: var(--interactive-hover);
+  color: var(--interactive-primary);
+}
+
+.page-ai-intake .ai-chat-feedback svg {
+  width: 15px;
+  height: 15px;
+}
+
 
 .page-ai-intake .ai-chat-message--thinking {
   opacity: 0.72;

@@ -6,7 +6,13 @@ from ai_assistant.application.context_builder import (
     merge_safe_context_into_request,
     sanitize_provider_context,
 )
-from notas.application.ai_intake.nutrition_brief import start_or_continue_conversation
+from notas.application.ai_intake.nutrition_brief import (
+    NutritionBrief,
+    NutritionConversationMessage,
+    NutritionConversationState,
+    build_llm_intake_result_from_brief,
+    start_or_continue_conversation,
+)
 
 
 class SafeLLMContextBuilderTests(SimpleTestCase):
@@ -163,6 +169,12 @@ class SafeLLMContextBuilderTests(SimpleTestCase):
 
 
 class ToolOrientedContextBuilderTests(SimpleTestCase):
+    def _state_with_messages(self, *messages):
+        return NutritionConversationState(
+            messages=list(messages),
+            result=build_llm_intake_result_from_brief(NutritionBrief(raw_prompt="")),
+        )
+
     def test_exposes_current_drafts_without_recommended_sequence(self):
         request = ChatEngineRequest(message="quiero una dieta", user_id=123)
         state = start_or_continue_conversation(
@@ -202,6 +214,210 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
             progress["active_objective"],
             "create_reviewable_dailyplan_proposal",
         )
+        self.assertEqual(progress["active_work"]["resource"], "dailyplan")
+        self.assertEqual(
+            progress["active_work"]["expected_outcome"],
+            "nutrition_proposal",
+        )
+        self.assertFalse(
+            progress["active_work"]["inference_grants_write_authority"]
+        )
+
+    def test_latest_explicit_program_request_replaces_an_older_plan_objective(self):
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text="Quiero un plan diario"),
+            NutritionConversationMessage(role="assistant", text="De acuerdo."),
+            NutritionConversationMessage(
+                role="user",
+                text="Mejor hagamos un programa semanal.",
+            ),
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message="Mejor hagamos un programa semanal.", user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "create_reviewable_program_proposal")
+        self.assertEqual(active_work["expected_outcome"], "nutrition_proposal")
+        self.assertEqual(active_work["resource"], "program")
+        self.assertEqual(active_work["source"], "current_message")
+
+    def test_nutrition_direction_change_advances_the_conversation_draft(self):
+        message = "Mejor hagamos un programa semanal para bajar grasa."
+        state = self._state_with_messages(
+            NutritionConversationMessage(
+                role="user",
+                text="Quiero un plan diario para ganar masa muscular.",
+            ),
+            NutritionConversationMessage(role="assistant", text="De acuerdo."),
+            NutritionConversationMessage(role="user", text=message),
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "record_conversation_facts")
+        self.assertEqual(active_work["expected_outcome"], "workspace_advanced")
+        self.assertEqual(active_work["resource"], "program")
+        self.assertEqual(active_work["action"], "update_draft")
+
+    def test_meal_count_followup_advances_the_current_draft(self):
+        message = "Déjalo en 3 comidas al día y avancemos sin más preferencias por ahora."
+        state = self._state_with_messages(
+            NutritionConversationMessage(
+                role="user",
+                text="Mejor hagamos un programa semanal para bajar grasa.",
+            ),
+            NutritionConversationMessage(role="assistant", text="De acuerdo."),
+            NutritionConversationMessage(role="user", text=message),
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "record_conversation_facts")
+        self.assertEqual(active_work["expected_outcome"], "workspace_advanced")
+        self.assertEqual(active_work["resource"], "preferences")
+        self.assertEqual(active_work["action"], "update_draft")
+
+    def test_meal_request_wins_over_later_plan_context_reference(self):
+        message = (
+            "Crea ahora una propuesta revisable de comida de 450 kcal usando el "
+            "plan diario de contexto ID 2."
+        )
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text=message)
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(
+            active_work["objective"],
+            "create_reviewable_meal_proposal",
+        )
+        self.assertEqual(active_work["expected_outcome"], "nutrition_proposal")
+        self.assertEqual(active_work["resource"], "meal")
+
+    def test_creation_guardrail_is_not_misread_as_mutation_authority(self):
+        message = (
+            "Crea un plan diario de 2400 kcal con distribución 30/50/20 y cuatro "
+            "comidas. No apliques la propuesta sin mi aprobación."
+        )
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text=message)
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(
+            active_work["objective"],
+            "create_reviewable_dailyplan_proposal",
+        )
+        self.assertEqual(active_work["expected_outcome"], "nutrition_proposal")
+        self.assertEqual(active_work["resource"], "dailyplan")
+
+    def test_short_continuation_retains_previous_reviewable_change_objective(self):
+        state = self._state_with_messages(
+            NutritionConversationMessage(
+                role="user",
+                text="Renombra mi comida a Almuerzo rápido.",
+            ),
+            NutritionConversationMessage(role="assistant", text="Puedo prepararlo."),
+            NutritionConversationMessage(role="user", text="Hazlo."),
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message="Hazlo.", user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "prepare_reviewable_workspace_patch")
+        self.assertEqual(active_work["resource"], "meal")
+        self.assertEqual(active_work["action"], "rename")
+        self.assertEqual(active_work["source"], "conversation_history")
+
+    def test_workspace_question_becomes_a_query_outcome(self):
+        state = self._state_with_messages(
+            NutritionConversationMessage(
+                role="user",
+                text="¿Qué programas tengo activos?",
+            )
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message="¿Qué programas tengo activos?", user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "query_workspace")
+        self.assertEqual(active_work["expected_outcome"], "workspace_query")
+        self.assertEqual(active_work["resource"], "program")
+
+    def test_ambiguous_reference_requires_clarification_without_guessing_state(self):
+        message = "¿Qué está pasando?"
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text=message)
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        progress = context["metadata"]["tool_oriented_intake"]["work_progress"]
+        active_work = progress["active_work"]
+        self.assertEqual(active_work["objective"], "ask_clarification")
+        self.assertEqual(active_work["expected_outcome"], "clarification_required")
+        self.assertEqual(active_work["resource"], "none")
+        self.assertEqual(active_work["action"], "clarify")
+        self.assertEqual(progress["blocking_fields"], [])
+        self.assertFalse(progress["required_information_still_missing"])
+        self.assertEqual(progress["proposal_readiness"], "not_established")
+
+    def test_review_artifact_closes_an_older_objective(self):
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text="Crea un plan diario"),
+            NutritionConversationMessage(
+                role="assistant",
+                text="",
+                proposal_review_card={"id": "proposal-1"},
+            ),
+            NutritionConversationMessage(role="user", text="Gracias"),
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message="Gracias", user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["status"], "response_only")
+        self.assertEqual(active_work["objective"], "respond_to_current_message")
 
     def test_tool_context_omits_completeness_and_do_not_ask_policies(self):
         request = ChatEngineRequest(message="Completemoslos", user_id=123)

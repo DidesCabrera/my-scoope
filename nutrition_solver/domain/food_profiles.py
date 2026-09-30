@@ -107,7 +107,8 @@ def derive_macro_role_features(food: SolverFood, *, source: str = "macro_role_ru
         "starch_or_carbohydrate": float(food.carbs_per_100g) * 4 / kcal,
         "added_or_dense_fat": float(food.fat_per_100g) * 9 / kcal,
     }
-    ordered = [name for name, ratio in sorted(ratios.items(), key=lambda item: item[1], reverse=True) if ratio >= 0.20]
+    ordered = [name for name, ratio in sorted(ratios.items(), key=lambda item: item[1], reverse=True)
+               if ratio >= 0.20 and (name != "primary_protein" or food.protein_per_100g >= 8)]
     if food.role == "vegetable" and "vegetable" not in ordered:
         ordered.insert(0, "vegetable")
     if not ordered:

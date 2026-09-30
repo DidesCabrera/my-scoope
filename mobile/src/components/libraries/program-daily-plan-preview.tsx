@@ -75,7 +75,7 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
     fatGrams: item.fat_grams,
     foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })),
     id: item.id,
-    canOpen: true,
+    canOpen: item.detail_id != null,
     detailId: item.detail_id,
     relationId: item.relation_id,
     name: item.name,
@@ -86,9 +86,10 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
   };
 }
 
-export function ProgramDailyPlanPreview({ day, dayLabel, onRemove, onReplace, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; onRemove?: () => Promise<void>; onReplace?: () => void; week: number }) {
+export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onRemove, onReplace, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; onOpen?: () => void; onOpenMeal?: (mealIndex: number) => void; onRemove?: () => Promise<void>; onReplace?: () => void; week: number }) {
   const router = useRouter();
   const nutrition = day?.nutrition;
+  const liveMeals = day ? (day.meals ?? []).map(mealPanelItem) : meals;
   const contextualActions: ContextCardAction[] = [
     ...(onReplace ? [{ icon: RefreshCw, key: "replace", label: "Reemplazar plan diario", onPress: onReplace }] : []),
     ...(onRemove ? [{
@@ -109,7 +110,14 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onRemove, onReplace, we
       actions={(
         <>
           <ContextCardActions actions={contextualActions} label={`Más acciones para el plan de ${dayLabel}`} title={day?.plan_name ?? `Plan de ${dayLabel}`} />
-          {day?.dailyplan_id ? (
+          {onOpen ? (
+            <EntityCardAction
+              label={`Ir al detalle del plan de ${dayLabel}`}
+              onPress={onOpen}
+              role="link">
+              <ChevronRight color={tokens.color.textMuted} size={21} />
+            </EntityCardAction>
+          ) : day?.dailyplan_id ? (
             <EntityCardAction
               label={`Ir al detalle del plan de ${dayLabel}`}
               onPress={() => router.push(`/libraries/daily-plans/${day.dailyplan_id}` as Href)}
@@ -138,8 +146,13 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onRemove, onReplace, we
       }}
       title={day?.plan_name ?? "Día de entrenamiento"}>
       <MealPanels
-        items={day ? (day.meals ?? []).map(mealPanelItem) : meals}
+        items={liveMeals}
         onOpenItem={(meal) => {
+          const mealIndex = liveMeals.findIndex((item) => item.id === meal.id);
+          if (onOpenMeal && mealIndex >= 0) {
+            onOpenMeal(mealIndex);
+            return;
+          }
           if (meal.detailId == null) return;
           router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(day?.dailyplan_id ?? ""), dailyPlanMealId: String(meal.relationId ?? ""), id: String(meal.detailId), mealTime: meal.time ?? "" } } as Href);
         }}

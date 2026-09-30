@@ -153,11 +153,19 @@ web o móvil. Las preferencias guardadas no se envían automáticamente al prove
 se consultan mediante `read_user_preference_context` cuando la interacción expresa la
 intención de usarlas.
 
-El tool set del intake mantiene siempre updates de draft y creación revisable, y
-añade lecturas de ficha/preferencias y cards cuando el lenguaje del usuario las hace
-relevantes. Los turnos saludables
-incorporan `ai_assistant_outcome_trace.v1` para distinguir outcome creado, avance de
-workspace, información bloqueante, bloqueo por guardrail y respuesta sin operación.
+El tool set del intake mantiene un núcleo compacto de actualización de drafts y creación
+revisable. `active_work.v1` agrega sólo las capacidades necesarias para el outcome activo;
+las referencias explícitas recuperan lectura de ficha/preferencias, consultas, cards o
+Workspace Patch cuando corresponda. Así se conserva objetivo, recurso, acción y outcome
+entre turnos sin enviar el catálogo completo ni conceder autoridad de escritura. Los
+turnos incorporan `ai_assistant_outcome_trace.v2`, que registra el outcome esperado y si
+fue satisfecho además del estado técnico.
+
+El prompt runtime usa `ai_assistant_prompt.v4`: las consultas usan lectura, las
+mutaciones persistentes preparan patches revisables y el asistente se detiene cuando
+el outcome ya está satisfecho. La calidad se gobierna con Lab v2, 64 casos de routing,
+doce trayectorias live, repeticiones, revisión humana explícita y feedback por respuesta.
+Ver `evaluation_lab.md`.
 
 The CM00-CM24 Client Memory & Profile Objects and LLM-native alignment cycle is closed. The current implementation contract for this area lives in:
 

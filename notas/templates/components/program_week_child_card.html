@@ -83,7 +83,11 @@
       </div>
     </div>
 
-    {% include "components/program_week_days_grid.html" with program=program week=week %}
+    {% if proposal_readonly %}
+      {% include "notas/proposals/partials/review_program_week_days.html" with week=week %}
+    {% else %}
+      {% include "components/program_week_days_grid.html" with program=program week=week %}
+    {% endif %}
   </section>
 
   <hr>

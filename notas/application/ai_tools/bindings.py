@@ -40,6 +40,7 @@ from ai_assistant.application.tools.tool_names import (
     TOOL_READ_SAVED_COMPARISON,
     TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_READ_USER_PROFILE_CONTEXT,
+    TOOL_REVISE_CULINARY_PROGRAM,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
@@ -74,6 +75,7 @@ from notas.application.ai_tools.profile_tools import (
     share_profile_draft_card_tool,
     update_profile_draft_tool,
 )
+from notas.application.ai_tools.program_tools import revise_culinary_program_tool
 from notas.application.ai_tools.proposal_preference_tools import (
     share_proposal_preferences_card_tool,
     update_proposal_preferences_tool,
@@ -209,6 +211,7 @@ def register_product_ai_bindings() -> None:
                 TOOL_COMMIT_PREPARED_ACTION: _commit_prepared_action_tool,
             },
             proposal_tools={
+                TOOL_REVISE_CULINARY_PROGRAM: revise_culinary_program_tool,
                 TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL: create_proportional_dailyplan_calorie_proposal_tool,
                 TOOL_PROPOSE_WORKSPACE_PATCH: _propose_workspace_patch_tool,
                 TOOL_PREPARE_PRODUCT_ACTION: _prepare_product_action_tool,

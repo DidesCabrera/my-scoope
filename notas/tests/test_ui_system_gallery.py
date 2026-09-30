@@ -39,6 +39,12 @@ class UISystemGalleryTests(TestCase):
         self.assertContains(response, 'data-lucide="calendar"')
         self.assertNotContains(response, 'class="list-page-header__eyebrow"')
         self.assertContains(response, "card card--program program-card")
+        self.assertContains(response, "Flujo inicial multiplataforma")
+        self.assertContains(response, 'data-onboarding-story="panels"')
+        self.assertContains(response, "Cómo leer los paneles")
+        self.assertContains(response, "Entrenamientos por semana")
+        self.assertContains(response, "Continuar con Free")
+        self.assertEqual(response.content.count(b'data-onboarding-story="'), 14)
         self.assertContains(response, "?embed=1#components")
         self.assertEqual(response["X-Frame-Options"], "SAMEORIGIN")
 

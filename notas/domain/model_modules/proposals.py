@@ -49,6 +49,66 @@ class AiNutritionChat(models.Model):
         return self.title
 
 
+class AiAssistantMessageFeedback(models.Model):
+    RATING_HELPFUL = "helpful"
+    RATING_NOT_HELPFUL = "not_helpful"
+    RATING_CHOICES = (
+        (RATING_HELPFUL, "Útil"),
+        (RATING_NOT_HELPFUL, "No útil"),
+    )
+
+    REASON_INACCURATE = "inaccurate"
+    REASON_IGNORED_CONTEXT = "ignored_context"
+    REASON_WRONG_ACTION = "wrong_action"
+    REASON_UNCLEAR = "unclear"
+    REASON_TOO_VERBOSE = "too_verbose"
+    REASON_OTHER = "other"
+    REASON_CHOICES = (
+        (REASON_INACCURATE, "Información incorrecta"),
+        (REASON_IGNORED_CONTEXT, "Ignoró el contexto"),
+        (REASON_WRONG_ACTION, "Acción incorrecta"),
+        (REASON_UNCLEAR, "Respuesta poco clara"),
+        (REASON_TOO_VERBOSE, "Respuesta demasiado extensa"),
+        (REASON_OTHER, "Otro"),
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="ai_assistant_message_feedback",
+    )
+    chat = models.ForeignKey(
+        AiNutritionChat,
+        on_delete=models.CASCADE,
+        related_name="message_feedback",
+    )
+    message_index = models.PositiveIntegerField()
+    rating = models.CharField(max_length=20, choices=RATING_CHOICES)
+    reason = models.CharField(max_length=30, choices=REASON_CHOICES, blank=True)
+    comment = models.CharField(max_length=500, blank=True)
+    response_fingerprint = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "chat", "message_index"),
+                name="unique_ai_message_feedback_per_user",
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=("rating", "created_at"),
+                name="ai_feedback_rating_created_idx",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.chat_id}:{self.message_index}:{self.rating}"
+
+
 # ==================================================
 # NUTRITION PROPOSALS
 # ==================================================

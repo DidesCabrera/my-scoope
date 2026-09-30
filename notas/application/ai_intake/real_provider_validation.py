@@ -16,12 +16,14 @@ from accounts.services.ai_credits import (
 from ai_assistant.application.chat_engines import ChatEngine, ChatEngineRequest
 from ai_assistant.application.llm_chat_engine import ExternalLLMChatEngine
 from ai_assistant.application.orchestrator import AssistantOrchestratorConfig, ExternalLLMOrchestrator
-from ai_assistant.models import AIUsageEvent
+from ai_assistant.models import AIPreparedAction, AIUsageEvent
+from notas.application.ai_intake.capability_scenarios import build_capability_scenarios, prepared_patch_check
 from notas.application.ai_intake.chat_engine import LLMNutritionIntakeChatEngine
 from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
     serialize_conversation,
 )
+from notas.application.ai_intake.program_scenarios import build_program_scenarios, program_proposal_check
 from notas.application.ai_intake.real_provider_behavior_checks import (
     evaluate_behavioral_surface,
     evaluate_response_repetition,
@@ -37,7 +39,23 @@ from notas.application.ai_intake.real_provider_lab_extensions import (
     tool_contract_check_values,
     validation_state_snapshot,
 )
+from notas.application.ai_intake.validation_quality_checks import (
+    build_validation_quality_check_specs,
+)
+from notas.application.ai_intake.validation_values import (
+    compressed_values as _compressed_values,
+)
+from notas.application.ai_intake.validation_values import (
+    first_non_empty as _first_non_empty,
+)
+from notas.application.ai_intake.validation_values import (
+    is_empty as _is_empty,
+)
+from notas.application.ai_intake.validation_values import (
+    is_subsequence as _is_subsequence,
+)
 from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
+from notas.domain.models import NutritionProposal
 
 OUTCOME_FIRST_ACTION_TYPE = "assistant.ai_nutrition_intake.outcome_first_validation"
 OUTCOME_FIRST_VALIDATION_VERSION = "outcome_first.live_validation.v1"
@@ -268,6 +286,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿La respuesta pide una aclaración breve en vez de adivinar el referente?",
                 "¿Evita afirmar que leyó, cambió o encontró un objeto sin autorización clara?",
             ),
+            expected_outcome="clarification_required",
         ),
         "ficha_conocida_sin_repreguntas": RealProviderValidationScenario(
             key="ficha_conocida_sin_repreguntas",
@@ -309,6 +328,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿El asistente usa cada dato realmente disponible en la ficha sin volver a pedirlo?",
                 "¿La segunda respuesta menciona solo información que verdaderamente sigue pendiente?",
             ),
+            expected_outcome="workspace_advanced",
         ),
         "datos_agrupados_y_cards": RealProviderValidationScenario(
             key="datos_agrupados_y_cards",
@@ -317,7 +337,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "after the user explicitly asks to review them."
             ),
             user_messages=(
-                "Quiero una dieta para ganar músculo para mí. Usa mi ficha personal como base, pero para esta propuesta considera 38 años, hombre, 85 kg, 188 cm, fuerza 3 veces por semana con actividad alta, 4 comidas y algo simple.",
+                "Para un futuro plan diario orientado a ganar músculo, usa mi ficha personal como base y registra en esta conversación: 38 años, hombre, 85 kg, 188 cm, fuerza 3 veces por semana con actividad alta, 4 comidas y algo simple. Por ahora solo deja los datos listos.",
                 "Antes de avanzar, muéstrame las preferencias de alimentación y de propuesta que usarás.",
             ),
             expected_final_brief={
@@ -373,6 +393,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿La primera respuesta reconoce varios datos juntos sin repreguntarlos uno por uno?",
                 "¿La card inicial de ficha aparece una sola vez al leerla y las otras cards solo cuando se solicitan?",
             ),
+            expected_outcome="workspace_advanced",
         ),
         "cambio_de_direccion": RealProviderValidationScenario(
             key="cambio_de_direccion",
@@ -400,6 +421,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿El asistente acepta el cambio inmediatamente, sin insistir en el objetivo anterior?",
                 "¿Respeta que el usuario no quiere completar preferencias opcionales todavía?",
             ),
+            expected_outcome="workspace_advanced",
         ),
         "error_de_tool_y_recuperacion": RealProviderValidationScenario(
             key="error_de_tool_y_recuperacion",
@@ -436,9 +458,12 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿Cada total coincide con la cantidad que muestra la biblioteca web del mismo usuario?",
                 "¿El asistente evita contar borradores y snapshots internos como objetos de biblioteca?",
             ),
+            expected_outcome="workspace_query",
         ),
     }
     catalog.update(build_lab_scenarios())
+    catalog.update(build_capability_scenarios(RealProviderValidationScenario))
+    catalog.update(build_program_scenarios(RealProviderValidationScenario))
     return catalog
 
 
@@ -620,11 +645,14 @@ def _run_scenario(
     engine: ChatEngine,
     run_id: str,
 ) -> RealProviderValidationScenarioResult:
-    conversation_id = f"outcome-{run_id[:20]}-{scenario.key}"[:80]
+    # Preserve the repetition suffix so repeated runs never reuse usage rows.
+    conversation_id = f"outcome-{run_id}-{scenario.key}"[:80]
     existing_payload: Mapping[str, Any] | None = None
     turns: list[RealProviderValidationTurn] = []
     previous_cards = {"profile": 0, "preference": 0, "proposal_preferences": 0}
     state_before = validation_state_snapshot(user)
+    previous_action_ids = set(AIPreparedAction.objects.filter(user=user).values_list("pk", flat=True))
+    previous_proposal_ids = set(NutritionProposal.objects.filter(created_by=user).values_list("pk", flat=True))
 
     for index, message in enumerate(scenario.user_messages, start=1):
         turn_id = f"{conversation_id}-{index}"[:80]
@@ -728,6 +756,12 @@ def _run_scenario(
         state_before=state_before,
         state_after=state_after,
     )
+    patch_result = prepared_patch_check(scenario, user=user, previous_ids=previous_action_ids)
+    if patch_result is not None:
+        checks.append(_check("prepared_patch_exact", *patch_result))
+    program_result = program_proposal_check(scenario, user=user, previous_ids=previous_proposal_ids)
+    if program_result is not None:
+        checks.append(_check("program_proposal_complete", *program_result))
     return RealProviderValidationScenarioResult(
         scenario=scenario,
         conversation_id=conversation_id,
@@ -748,6 +782,12 @@ def _scenario_checks(
     state_after: Mapping[str, int] | None = None,
 ) -> list[RealProviderValidationCheck]:
     checks: list[RealProviderValidationCheck] = []
+    quality_specs = build_validation_quality_check_specs(
+        scenario,
+        turns,
+        state_before=state_before or {},
+        state_after=state_after or {},
+    )
     visible_blob = "\n".join(turn.assistant_message for turn in turns).lower()
     leaked = [
         marker
@@ -783,7 +823,9 @@ def _scenario_checks(
     checks.append(_tool_contract_check(scenario, turns))
     checks.append(_visible_facts_check(scenario, turns))
     checks.append(_behavioral_surface_check(scenario, turns))
+    checks.append(RealProviderValidationCheck(**quality_specs["expected_outcome"]))
     checks.append(_response_repetition_check(scenario, turns))
+    checks.append(RealProviderValidationCheck(**quality_specs["semantic_repetition"]))
     checks.append(_tool_result_grounding_check(turns))
     checks.append(_provider_followup_health_check(turns))
     checks.append(_post_tool_fallback_pacing_check(turns))
@@ -802,14 +844,7 @@ def _scenario_checks(
             severity=mutation_severity,
         )
     )
-    checks.append(
-        RealProviderValidationCheck(
-            key="manual_ux_review",
-            passed=True,
-            detail=f"{len(scenario.manual_review_prompts)} qualitative prompt(s) require human review",
-            severity="manual",
-        )
-    )
+    checks.append(RealProviderValidationCheck(**quality_specs["manual_review"]))
     return checks
 
 
@@ -1274,7 +1309,7 @@ def _usage_events_for_conversation(conversation_id: str) -> list[dict[str, Any]]
 
 
 def _usage_and_credit_snapshot(*, user: Any, run_id: str) -> dict[str, Any]:
-    conversation_prefix = f"outcome-{run_id[:20]}-"
+    conversation_prefix = f"outcome-{run_id}-"
     events = AIUsageEvent.objects.filter(user=user, conversation_id__startswith=conversation_prefix)
     turn_ids = list(events.exclude(turn_id="").values_list("turn_id", flat=True))
     ledgers = CreditLedger.objects.filter(
@@ -1338,6 +1373,7 @@ def _brief_snapshot(state: NutritionConversationState) -> dict[str, Any]:
     return {
         "goal": brief.goal,
         "requested_entity": brief.requested_entity,
+        "duration_weeks": brief.duration_weeks,
         "subject_source": brief.subject_source,
         "weight_kg": brief.weight_kg,
         "height_cm": brief.height_cm,
@@ -1386,6 +1422,7 @@ def _scenario_result_as_dict(result: RealProviderValidationScenarioResult) -> di
     return {
         "key": result.scenario.key,
         "description": result.scenario.description,
+        "expected_outcome": result.scenario.expected_outcome,
         **scenario_result_lab_metadata(result),
         "status": "automated_checks_passed" if result.passed else "hard_regression",
         "conversation_id": result.conversation_id,
@@ -1464,36 +1501,3 @@ def _optional_int(value: Any) -> int | None:
         return int(value) if value is not None and str(value).strip() else None
     except (TypeError, ValueError):
         return None
-
-
-def _is_empty(value: Any) -> bool:
-    if value is None:
-        return True
-    if isinstance(value, str):
-        return not value.strip()
-    if isinstance(value, (list, tuple, set, dict)):
-        return len(value) == 0
-    return False
-
-
-def _compressed_values(values: Iterable[Any]) -> list[Any]:
-    compressed: list[Any] = []
-    for value in values:
-        if _is_empty(value):
-            continue
-        if not compressed or compressed[-1] != value:
-            compressed.append(value)
-    return compressed
-
-
-def _is_subsequence(expected: Sequence[Any], actual: Sequence[Any]) -> bool:
-    iterator = iter(actual)
-    return all(any(candidate == expected_value for candidate in iterator) for expected_value in expected)
-
-
-def _first_non_empty(*values: Any) -> str:
-    for value in values:
-        text = str(value or "").strip()
-        if text:
-            return text
-    return ""

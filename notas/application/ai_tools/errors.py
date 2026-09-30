@@ -14,6 +14,9 @@ def map_exception_to_tool_error(exc: Exception) -> AIToolResult:
     Esta función evita exponer excepciones crudas de Django hacia futuras
     capas API/MCP/IA.
     """
+    from nutrition_solver.application.culinary_planner import CulinaryPlanningError
+    if isinstance(exc, CulinaryPlanningError):
+        return tool_error(code=exc.code, message="No se creó una propuesta. Revisa el catálogo o las condiciones indicadas; no se relajaron límites.", details=exc.details)
     if isinstance(exc, (Http404, ObjectDoesNotExist)):
         return tool_error(
             code="not_found",

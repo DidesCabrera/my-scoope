@@ -24,6 +24,8 @@ class RetentionAction(StrEnum):
 
 
 MODEL_RETENTION_POLICY = {
+    "notas.CulinaryTemplate": RetentionAction.ERASE,
+    "notas.CulinaryVariant": RetentionAction.FOLLOW_PARENT,
     "account.EmailAddress": RetentionAction.ERASE,
     "account.EmailConfirmation": RetentionAction.ERASE,
     "accounts.AccountDeletionRecord": RetentionAction.RETAIN_OPERATIONAL,
@@ -69,6 +71,7 @@ MODEL_RETENTION_POLICY = {
     "food_catalog.CatalogRelease": RetentionAction.RETAIN_OPERATIONAL,
     "food_catalog.ExternalFoodReference": RetentionAction.FOLLOW_PARENT,
     "food_catalog.ExternalProviderFetchLog": RetentionAction.RETAIN_OPERATIONAL,
+    "notas.AiAssistantMessageFeedback": RetentionAction.ERASE,
     "notas.AiNutritionChat": RetentionAction.ERASE,
     "notas.ApplePushSubscription": RetentionAction.ERASE,
     "notas.CalendarizedDay": RetentionAction.FOLLOW_PARENT,
@@ -160,6 +163,17 @@ def _delete_user_sessions(user_id: int, deleted_counts: dict[str, int]) -> None:
             continue
     if session_keys:
         _delete_queryset(Session.objects.filter(session_key__in=session_keys), deleted_counts)
+
+
+def _delete_private_culinary_library(user, deleted_counts):
+    Template = _model("notas.CulinaryTemplate")
+    Variant = _model("notas.CulinaryVariant")
+    private_variants = Variant.objects.filter(template__owner=user)
+    Variant.objects.filter(reviewed_by=user).update(reviewed_by=None)
+    # Remove lineage links before deleting private compositions protected by FK.
+    Variant.objects.filter(parent__in=private_variants).update(parent=None)
+    _delete_queryset(private_variants, deleted_counts)
+    _delete_queryset(Template.objects.filter(owner=user), deleted_counts)
 
 
 @transaction.atomic
@@ -280,6 +294,7 @@ def delete_user_account(*, user, source: str) -> AccountDeletionResult:
         _delete_queryset(_model(label).objects.filter(filters), deleted_counts)
 
     Food = _model("notas.Food")
+    _delete_private_culinary_library(user, deleted_counts)
     Food.objects.filter(created_by=user, is_global=True).update(created_by=None)
     _delete_queryset(Food.objects.filter(created_by=user, is_global=False), deleted_counts)
 

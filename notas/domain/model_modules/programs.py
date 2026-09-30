@@ -26,6 +26,9 @@ class Program(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     duration_weeks = models.PositiveSmallIntegerField(default=DEFAULT_DURATION_WEEKS)
+    # Versioned planning assumptions, deliberately separate from measured WeightLog.
+    nutrition_specification = models.JSONField(default=dict, blank=True)
+    culinary_provenance = models.JSONField(default=dict, blank=True)
 
     is_public = models.BooleanField(default=False)
     is_forkable = models.BooleanField(default=True)

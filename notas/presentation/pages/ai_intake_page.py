@@ -33,6 +33,7 @@ class AiNutritionIntakeContentVM:
     has_historical_generated_plan_cards: bool = False
     prompt: str = ""
     engine_status: dict | None = None
+    chat_id: int | None = None
 
 
 @dataclass
@@ -90,6 +91,7 @@ def build_intake_content(
         has_historical_generated_plan_cards=conversation_has_generated_plan_cards(conversation),
         prompt=prompt,
         engine_status=build_ai_nutrition_intake_engine_status(),
+        chat_id=getattr(active_chat, "id", None),
     )
 
 

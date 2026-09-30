@@ -9,6 +9,7 @@ from django.test import TestCase, override_settings
 
 from ai_assistant.models import AIUsageEvent
 from notas.application.ai_intake.evaluation_lab import (
+    EVALUATION_LAB_VERSION,
     _build_diagnostics,
     _credit_block_reasons,
     run_evaluation_lab,
@@ -42,6 +43,7 @@ class AIAssistantEvaluationLabTests(TestCase):
         )
 
         self.assertEqual(report.status, "preflight_ready")
+        self.assertEqual(EVALUATION_LAB_VERSION, "ai_assistant.evaluation_lab.v2")
         self.assertTrue(report.passed)
         self.assertEqual(report.ground_truth["libraries"]["foods"], 1)
         self.assertEqual(report.catalog["total_capabilities"], 82)
@@ -50,6 +52,11 @@ class AIAssistantEvaluationLabTests(TestCase):
             ["DP-01", "F-01", "M-01", "PG-01"],
         )
         self.assertIsNone(report.live_validation)
+        self.assertEqual(report.live_validations, ())
+        self.assertEqual(report.quality_evaluation["status"], "not_run")
+        self.assertTrue(report.task_dataset["passed"])
+        self.assertEqual(report.task_dataset["case_count"], 64)
+        self.assertEqual(report.product_feedback["scope"], "selected_user")
         self.assertEqual(AIUsageEvent.objects.count(), 0)
 
     def test_preflight_separates_missing_catalog_data_from_model_behavior(self):
@@ -154,6 +161,41 @@ class AIAssistantEvaluationLabTests(TestCase):
         self.assertFalse(unmetered.billing["user_credits_charged"])
         self.assertEqual(metered.billing["policy"], "charge_selected_user")
         self.assertTrue(metered.billing["user_credits_charged"])
+
+    def test_repeated_live_runs_receive_distinct_run_ids(self):
+        observed_run_ids = []
+
+        def fake_live_report(**kwargs):
+            observed_run_ids.append(kwargs["run_id"])
+            return RealProviderValidationReport(
+                version="test",
+                run_id=kwargs["run_id"],
+                provider="openai",
+                model="test-model",
+                user_id=self.user.id,
+                configured_chat_mode="llm",
+                usage_observability_enabled=True,
+                credits_enabled=False,
+                scenarios=(),
+                usage_summary={},
+                credit_summary={},
+                manual_review_prompts=(),
+            )
+
+        target = "notas.application.ai_intake.evaluation_lab.run_real_provider_validation"
+        with patch(target, side_effect=fake_live_report):
+            run_evaluation_lab(
+                user=self.user,
+                scenario_keys=("bibliotecas_coherentes",),
+                live=True,
+                repetitions=3,
+                run_id="fixed-lab-run",
+            )
+
+        self.assertEqual(
+            observed_run_ids,
+            ["fixed-lab-run-r1", "fixed-lab-run-r2", "fixed-lab-run-r3"],
+        )
 
     def test_credit_block_is_reported_as_infrastructure_not_tool_regressions(self):
         result = SimpleNamespace(

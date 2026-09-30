@@ -21,9 +21,9 @@ export type ProductArea = AvailableProductArea | PlannedProductArea;
 export const productAreas: readonly ProductArea[] = [
   { availability: "available", href: "/today", key: "home", label: "Inicio" },
   { availability: "available", href: "/program" as Href, key: "program", label: "Mi programa activo" },
-  { availability: "available", href: "/assistant" as Href, key: "assistant", label: "Asistente AI" },
+  { availability: "available", href: "/assistant" as Href, key: "assistant", label: "Asistente Nutricional" },
   { availability: "available", href: "/comparator" as Href, key: "comparator", label: "Comparador" },
-  { availability: "available", href: "/inbox" as Href, key: "inbox", label: "Inbox" },
+  { availability: "available", href: "/inbox" as Href, key: "inbox", label: "Compartidos" },
 ];
 
 export function listAvailableProductAreas(): AvailableProductArea[] {

@@ -8,29 +8,42 @@ from ai_assistant.application import (
     ExternalLLMOrchestrator,
 )
 from ai_assistant.application.chat_engines import ChatEngineRequest
+from ai_assistant.application.limits import estimate_provider_request_tokens
+from ai_assistant.application.model_routing import resolve_model_route_for_turn
 from ai_assistant.application.orchestrator import _local_acknowledgement_from_tool_results
+from ai_assistant.application.orchestrator_turn import (
+    _generate_tool_followup_with_compact_recovery,
+)
+from ai_assistant.application.product_ports import get_ai_product_bindings
+from ai_assistant.application.tool_selection import fact_capture_tool_after_tool_results
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_PROPOSAL,
+    TOOL_READ_USER_PROFILE_CONTEXT,
+    TOOL_UPDATE_PROFILE_DRAFT,
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
+    ProfileDraftToolExecutor,
     ReadOnlyToolExecutor,
 )
 from ai_assistant.domain import (
     AssistantIntentName,
     AssistantMessage,
     AssistantMessageRole,
+    AssistantStructuredResponse,
     AssistantToolResult,
     AssistantToolStatus,
     AssistantTurnRequest,
 )
 from ai_assistant.infrastructure.providers import (
     FakeLLMClient,
+    LLMMessage,
+    LLMProviderRequest,
     LLMProviderRequestError,
     LLMProviderResponse,
     LLMProviderToolCall,
 )
-from notas.application.ai_tools.results import tool_error
+from notas.application.ai_tools.results import tool_error, tool_success
 
 
 def _selection_reason(
@@ -97,6 +110,263 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             {str(spec.get("name") or "") for spec in provider_request.tools},
         )
         self.assertIn("complete_a_ready_active_objective_in_the_same_turn", developer_payload["success_criteria"])
+
+    def test_grouped_facts_require_each_typed_writer_result(self):
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content=(
+                    "Para un futuro plan diario para ganar músculo registra 38 años, "
+                    "85 kg, 188 cm, 4 comidas y algo simple."
+                ),
+            ),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "work_progress": {
+                            "active_work": {"expected_outcome": "workspace_advanced"}
+                        }
+                    }
+                },
+            },
+        )
+        profile_result = AssistantToolResult(
+            tool_name=TOOL_UPDATE_PROFILE_DRAFT,
+            status=AssistantToolStatus.OK,
+            data={
+                "profile_draft": {
+                    "age_years": 38,
+                    "weight_kg": 85.0,
+                    "height_cm": 188,
+                }
+            },
+        )
+
+        next_tool = fact_capture_tool_after_tool_results(
+            request,
+            (profile_result,),
+            enable_reviewable_proposal_tools=True,
+            product_bindings=get_ai_product_bindings(),
+        )
+
+        self.assertEqual(next_tool, TOOL_UPDATE_PROPOSAL_PREFERENCES)
+
+    def test_ambiguous_reference_is_grounded_even_if_provider_invents_a_plan(self):
+        client = FakeLLMClient(
+            responses=[
+                json.dumps(
+                    {
+                        "assistant_message": {
+                            "content": "Estoy preparando tu plan diario; todavía faltan datos."
+                        },
+                        "intent": {"name": "answer_question", "confidence": 0.7},
+                        "tool_requests": [],
+                        "requires_human_review": False,
+                    }
+                )
+            ]
+        )
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content="¿Qué está pasando?",
+            ),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "work_progress": {
+                            "active_work": {
+                                "expected_outcome": "clarification_required",
+                                "resource": "none",
+                            },
+                            "blocking_fields": [],
+                        }
+                    }
+                },
+            },
+        )
+
+        response = ExternalLLMOrchestrator(llm_client=client).continue_turn(request)
+
+        self.assertIn("No tengo suficiente contexto", response.assistant_text)
+        self.assertIn("?", response.assistant_text)
+        self.assertNotIn("plan diario", response.assistant_text)
+        self.assertTrue(response.metadata["clarification_grounding_guard_applied"])
+        self.assertTrue(response.metadata["outcome_trace"]["expected_outcome_met"])
+
+    def test_compound_native_turn_captures_all_facts_under_staging_limit(self):
+        class ScriptedNativeClient:
+            provider_name = "openai"
+            model = "gpt-test"
+
+            def __init__(self):
+                self.requests = []
+                self.responses = [
+                    self._tool_response(
+                        TOOL_READ_USER_PROFILE_CONTEXT,
+                        {},
+                        "read_profile",
+                    ),
+                    self._tool_response(
+                        TOOL_UPDATE_PROFILE_DRAFT,
+                        {
+                            "updates": {
+                                "age_years": 38,
+                                "sex": "male",
+                                "weight_kg": 85.0,
+                                "height_cm": 188,
+                                "activity_level": "high",
+                                "training_frequency": 3,
+                            }
+                        },
+                        "update_profile",
+                    ),
+                    self._tool_response(
+                        TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                        {
+                            "updates": {
+                                "goal": "muscle_gain",
+                                "meals_per_day": 4,
+                                "complexity_level": "low",
+                            }
+                        },
+                        "update_preferences",
+                    ),
+                    LLMProviderResponse(
+                        provider="openai",
+                        model="gpt-test",
+                        text=json.dumps(
+                            {
+                                "assistant_message": {
+                                    "content": "Los datos quedaron listos en esta conversación."
+                                },
+                                "intent": {"name": "answer_question", "confidence": 0.9},
+                                "tool_requests": [],
+                                "requires_human_review": False,
+                            }
+                        ),
+                        response_id="final",
+                    ),
+                ]
+
+            @staticmethod
+            def _tool_response(name, arguments, suffix):
+                arguments = {
+                    **arguments,
+                    "reason": "El usuario pidió registrar explícitamente estos datos.",
+                }
+                return LLMProviderResponse(
+                    provider="openai",
+                    model="gpt-test",
+                    text="",
+                    response_id=f"response_{suffix}",
+                    tool_calls=(
+                        LLMProviderToolCall(
+                            name=name,
+                            arguments=arguments,
+                            call_id=f"call_{suffix}",
+                        ),
+                    ),
+                    continuation_items=(
+                        {
+                            "type": "function_call",
+                            "id": f"fc_{suffix}",
+                            "call_id": f"call_{suffix}",
+                            "name": name,
+                            "arguments": json.dumps(arguments),
+                            "status": "completed",
+                        },
+                    ),
+                )
+
+            def generate(self, request):
+                self.requests.append(request)
+                return self.responses.pop(0)
+
+        def read_profile(user):
+            return tool_success({"profile_context": {"source": "persisted_profile"}})
+
+        def update_profile(user, *, updates, current_draft=None, field_sources=None):
+            return tool_success({"profile_draft": dict(updates)})
+
+        def update_preferences(user, *, updates, current_preferences=None, field_sources=None):
+            return tool_success({"proposal_preferences": dict(updates)})
+
+        client = ScriptedNativeClient()
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=client,
+            read_only_tool_executor=ReadOnlyToolExecutor(
+                dispatch_table={TOOL_READ_USER_PROFILE_CONTEXT: read_profile}
+            ),
+            profile_draft_tool_executor=ProfileDraftToolExecutor(
+                dispatch_table={
+                    TOOL_UPDATE_PROFILE_DRAFT: update_profile,
+                    TOOL_UPDATE_PROPOSAL_PREFERENCES: update_preferences,
+                }
+            ),
+            config=AssistantOrchestratorConfig(
+                max_input_tokens=6000,
+                max_context_chars=8000,
+                max_tool_loop_iterations=6,
+            ),
+        )
+        message = (
+            "Para un futuro plan diario orientado a ganar músculo, usa mi ficha "
+            "personal como base y registra en esta conversación: 38 años, hombre, "
+            "85 kg, 188 cm, fuerza 3 veces por semana con actividad alta, 4 comidas "
+            "y algo simple. Por ahora solo deja los datos listos."
+        )
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(role=AssistantMessageRole.USER, content=message),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "current_drafts": {},
+                        "work_progress": {
+                            "active_work": {
+                                "expected_outcome": "workspace_advanced",
+                                "resource": "profile",
+                            },
+                            "blocking_fields": [],
+                        },
+                    }
+                },
+            },
+            metadata={"tool_user": "user-1"},
+        )
+
+        response = orchestrator.continue_turn(request)
+
+        self.assertEqual(
+            [result.tool_name for result in response.tool_results],
+            [
+                TOOL_READ_USER_PROFILE_CONTEXT,
+                TOOL_UPDATE_PROFILE_DRAFT,
+                TOOL_UPDATE_PROPOSAL_PREFERENCES,
+            ],
+        )
+        self.assertEqual(len(client.requests), 4)
+        self.assertEqual(
+            client.requests[1].tool_choice,
+            {"type": "function", "name": TOOL_UPDATE_PROFILE_DRAFT},
+        )
+        self.assertEqual(
+            client.requests[2].tool_choice,
+            {"type": "function", "name": TOOL_UPDATE_PROPOSAL_PREFERENCES},
+        )
+        self.assertTrue(
+            all(
+                estimate_provider_request_tokens(provider_request) <= 6000
+                for provider_request in client.requests
+            )
+        )
+        self.assertEqual(
+            response.assistant_text,
+            "Los datos quedaron listos en esta conversación.",
+        )
 
     def test_orchestrator_blocks_non_read_tools_without_executing_writes(self):
         client = FakeLLMClient(
@@ -242,7 +512,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         developer_payload = json.loads(provider_request.messages[1].content)
         self.assertTrue(developer_payload["rules"]["new_facts_require_matching_update_call"])
 
-    def test_provider_request_exposes_reviewable_proposal_tools_when_enabled(self):
+    def test_provider_request_keeps_generic_proposal_surface_compact(self):
         orchestrator = ExternalLLMOrchestrator(
             llm_client=FakeLLMClient(),
             config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=True),
@@ -252,11 +522,66 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
 
         self.assertIn("create_nutrition_engine_dailyplan_proposal_from_drafts", tool_names)
-        self.assertIn("query_workspace", tool_names)
+        self.assertNotIn("query_workspace", tool_names)
         self.assertNotIn("list_user_programs", tool_names)
         self.assertNotIn("read_calendarization", tool_names)
         self.assertNotIn("propose_workspace_patch", tool_names)
         self.assertNotIn("read_account_billing_context", tool_names)
+
+    def test_structured_plan_request_fits_staging_guardrail_with_exact_first_tool(self):
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=FakeLLMClient(),
+            config=AssistantOrchestratorConfig(
+                max_input_tokens=6000,
+                max_context_chars=8000,
+                max_output_tokens=900,
+            ),
+        )
+        context = {
+            "surface": "ai_nutrition_intake",
+            "conversation": {"message_count": 0},
+            "metadata": {
+                "tool_oriented_intake": {
+                    "current_drafts": {},
+                    "current_nutrition_brief": {"bounded_noise": "x" * 7000},
+                    "work_progress": {
+                        "active_objective": "create_reviewable_dailyplan_proposal",
+                        "active_work": {
+                            "expected_outcome": "nutrition_proposal",
+                            "resource": "dailyplan",
+                        },
+                        "blocking_fields": ["weight_kg"],
+                    },
+                }
+            },
+        }
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content=(
+                    "Crea ahora un plan diario de 2400 kcal con 30% proteína, "
+                    "50% carbohidratos y 20% grasas para un hombre de 38 años, "
+                    "80 kg, 180 cm, actividad alta, fuerza 4 veces por semana y 4 comidas."
+                ),
+            ),
+            context=context,
+        )
+
+        provider_request = orchestrator.build_provider_request(request)
+
+        self.assertLessEqual(estimate_provider_request_tokens(provider_request), 6000)
+        self.assertEqual(
+            provider_request.tool_choice,
+            {"type": "function", "name": "update_profile_draft"},
+        )
+        self.assertEqual(
+            {tool["name"] for tool in provider_request.tools},
+            {
+                "update_profile_draft",
+                "update_proposal_preferences",
+                "create_nutrition_engine_dailyplan_proposal_from_drafts",
+            },
+        )
 
     def test_intake_exposes_profile_and_preference_reads_when_user_invokes_memory(self):
         orchestrator = ExternalLLMOrchestrator(
@@ -266,6 +591,22 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
 
         provider_request = orchestrator.build_provider_request(
             self._request("Usa mi ficha y mis preferencias guardadas para crear el plan.")
+        )
+        tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
+
+        self.assertIn("read_user_profile_context", tool_names)
+        self.assertNotIn("share_profile_draft_card", tool_names)
+        self.assertIn("read_user_preference_context", tool_names)
+        self.assertNotIn("share_preference_draft_card", tool_names)
+
+    def test_intake_exposes_cards_only_when_user_requests_presentation(self):
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=FakeLLMClient(),
+            config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=True),
+        )
+
+        provider_request = orchestrator.build_provider_request(
+            self._request("Muéstrame mi ficha y mis preferencias guardadas.")
         )
         tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
 
@@ -815,6 +1156,207 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         self.assertEqual(
             response.metadata["debug_error_type"],
             "tool_followup_LLMProviderRequestError",
+        )
+
+    def test_native_final_followup_recovers_once_with_compact_request(self):
+        class RecoveringFollowupClient:
+            provider_name = "openai"
+            model = "gpt-test"
+
+            def __init__(self):
+                self.requests = []
+
+            def generate(self, request):
+                self.requests.append(request)
+                if len(self.requests) == 1:
+                    return LLMProviderResponse(
+                        provider="openai",
+                        model="gpt-test",
+                        text="",
+                        response_id="native-update-1",
+                        tool_calls=(
+                            LLMProviderToolCall(
+                                name=TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                                arguments={
+                                    "updates": {"goal": "fat_loss"},
+                                    "reason": _selection_reason(
+                                        summary="El usuario pidió orientar la propuesta a bajar grasa.",
+                                    ),
+                                },
+                                call_id="call_update_goal",
+                            ),
+                        ),
+                        continuation_items=(
+                            {
+                                "type": "function_call",
+                                "id": "fc_update_goal",
+                                "call_id": "call_update_goal",
+                                "name": TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                                "arguments": '{"updates":{"goal":"fat_loss"}}',
+                                "status": "completed",
+                            },
+                        ),
+                    )
+                if len(self.requests) == 2:
+                    raise LLMProviderRequestError("native continuation rejected")
+                return LLMProviderResponse(
+                    provider="openai",
+                    model="gpt-test",
+                    text=json.dumps(
+                        {
+                            "assistant_message": {
+                                "content": "Listo, orienté la propuesta a bajar grasa."
+                            },
+                            "intent": {
+                                "name": "capture_nutrition_brief",
+                                "confidence": 0.9,
+                            },
+                            "tool_requests": [
+                                {
+                                    "tool_name": TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                                    "arguments": {"updates": {"goal": "muscle_gain"}},
+                                    "request_id": "must_not_execute",
+                                }
+                            ],
+                        }
+                    ),
+                    response_id="compact-final-1",
+                )
+
+        captured_updates = []
+
+        def update_proposal_preferences(
+            user,
+            *,
+            updates,
+            current_preferences=None,
+            field_sources=None,
+        ):
+            captured_updates.append(dict(updates))
+            return tool_success(
+                {
+                    "proposal_preferences": {
+                        "goal": updates["goal"],
+                        "field_sources": {"goal": "chat_draft"},
+                    },
+                    "nutrition_brief_patch": {"goal": updates["goal"]},
+                }
+            )
+
+        client = RecoveringFollowupClient()
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=client,
+            profile_draft_tool_executor=ProfileDraftToolExecutor(
+                dispatch_table={
+                    TOOL_UPDATE_PROPOSAL_PREFERENCES: update_proposal_preferences
+                }
+            ),
+        )
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content="Quiero bajar grasa.",
+            ),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "work_progress": {
+                            "active_work": {
+                                "expected_outcome": "workspace_advanced",
+                            }
+                        }
+                    }
+                },
+            },
+            metadata={"tool_user": "user-1", "debug_ai_assistant": True},
+        )
+
+        response = orchestrator.continue_turn(request)
+
+        self.assertEqual(len(client.requests), 3)
+        self.assertEqual(
+            client.requests[2].metadata["tool_loop"],
+            "controlled_tools.compact_followup.v1",
+        )
+        self.assertEqual(
+            response.assistant_text,
+            "Listo, orienté la propuesta a bajar grasa.",
+        )
+        self.assertTrue(response.metadata["provider_tool_followup_compact_recovery"])
+        self.assertEqual(response.metadata["provider_tool_followup_compact_recovery_count"], 1)
+        self.assertEqual(response.metadata["tool_free_followup_tool_requests_ignored"], 1)
+        self.assertEqual(captured_updates, [{"goal": "fat_loss"}])
+        self.assertEqual(
+            [item.request_id for item in response.tool_requests],
+            ["call_update_goal"],
+        )
+        self.assertFalse(response.metadata.get("provider_tool_followup_failed", False))
+        self.assertEqual(response.metadata["debug_status"], "completed")
+
+    def test_completed_proposal_recovers_even_when_followup_still_offers_tools(self):
+        class RecoveringClient:
+            provider_name = "openai"
+            model = "gpt-test"
+
+            def __init__(self):
+                self.requests = []
+
+            def generate(self, request):
+                self.requests.append(request)
+                if len(self.requests) == 1:
+                    raise LLMProviderRequestError("native continuation rejected")
+                return LLMProviderResponse(
+                    provider="openai",
+                    model="gpt-test",
+                    text="La propuesta quedó creada y lista para revisión.",
+                )
+
+        client = RecoveringClient()
+        orchestrator = ExternalLLMOrchestrator(llm_client=client)
+        request = self._request("Crea una comida de 450 kcal.")
+        provider_request = LLMProviderRequest(
+            messages=(LLMMessage(role="user", content=request.user_message.content),),
+            metadata={"tool_loop": "native_function_calls.v1"},
+            tools=(
+                {
+                    "name": TOOL_UPDATE_PROPOSAL_PREFERENCES,
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            ),
+        )
+        proposal_result = AssistantToolResult(
+            tool_name="create_nutrition_solver_meal_proposal",
+            status=AssistantToolStatus.OK,
+            data={"proposal_id": 73},
+        )
+        first_response = AssistantStructuredResponse(
+            assistant_message=AssistantMessage(
+                role=AssistantMessageRole.ASSISTANT,
+                content="Estoy creando la propuesta.",
+            )
+        )
+
+        recovered_request, recovered_response, error, recovery_count = (
+            _generate_tool_followup_with_compact_recovery(
+                orchestrator,
+                turn_llm_client=client,
+                request=request,
+                provider_request=provider_request,
+                first_response=first_response,
+                tool_results=(proposal_result,),
+                model_route=resolve_model_route_for_turn(request),
+            )
+        )
+
+        self.assertIsNone(error)
+        self.assertIsNotNone(recovered_response)
+        self.assertEqual(recovery_count, 1)
+        self.assertEqual(len(client.requests), 2)
+        self.assertEqual(tuple(recovered_request.tools), ())
+        self.assertEqual(
+            recovered_request.metadata["tool_loop"],
+            "controlled_tools.compact_followup.v1",
         )
 
     def test_orchestrator_bounds_history_sent_to_provider(self):

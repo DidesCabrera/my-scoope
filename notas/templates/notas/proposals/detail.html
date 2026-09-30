@@ -1,5 +1,13 @@
 {% extends "notas/base.html" %}
+{% load static %}
 {% block title %}Propuesta{% endblock %}
+{% block feature_css %}
+{% if vm.content.proposal_review.payload.is_create_program %}
+<link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}?v=20260923-1">
+<link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}?v=20260923-1">
+<link rel="stylesheet" href="{% static 'notas/css/components/program_proposal_review.css' %}?v=20260923-1">
+{% endif %}
+{% endblock %}
 
 {% block content %}
 
@@ -32,6 +40,8 @@
                 <span class="proposal-type-badge">Nueva comida</span>
               {% elif vm.content.proposal_review.payload.is_create_dailyplan %}
                 <span class="proposal-type-badge">Nuevo DailyPlan</span>
+              {% elif vm.content.proposal_review.payload.is_create_program %}
+                <span class="proposal-type-badge">Nuevo programa semanal</span>
               {% else %}
                 <span class="proposal-type-badge">Sin aplicación automática</span>
               {% endif %}
@@ -53,11 +63,26 @@
         {% endif %}
       </header>
 
-      {% if vm.content.proposal_review.payload.intent %}
-        <section class="proposal-review-context-strip" aria-label="Intent de la propuesta">
-          <div class="proposal-review-intent-line">
-            <i data-lucide="route" class="metadata-icon"></i>
-            Intent: <strong>{{ vm.content.proposal_review.payload.intent }}</strong>
+      {% if vm.content.proposal_review.payload.is_create_program %}
+        {% include "notas/proposals/partials/review_program_objectives.html" with program=vm.content.proposal_review.payload.program %}
+      {% elif vm.content.proposal_review.payload.targets %}
+        <section class="proposal-review-card">
+          <div class="proposal-review-card-header">
+            <div>
+              <p class="proposal-review-eyebrow">Objetivos</p>
+              <h3 class="proposal-review-section-title">
+                Targets usados para validar la propuesta
+              </h3>
+            </div>
+          </div>
+
+          <div class="proposal-review-kpis">
+            {% for key, value in vm.content.proposal_review.payload.targets.items %}
+              <div class="proposal-review-kpi">
+                <span class="proposal-review-kpi-label">{{ key }}</span>
+                <strong>{{ value }}</strong>
+              </div>
+            {% endfor %}
           </div>
         </section>
       {% endif %}
@@ -93,28 +118,6 @@
               Ver propuesta anterior
             </a>
           {% endif %}
-        </section>
-      {% endif %}
-
-      {% if vm.content.proposal_review.payload.targets %}
-        <section class="proposal-review-card">
-          <div class="proposal-review-card-header">
-            <div>
-              <p class="proposal-review-eyebrow">Objetivos</p>
-              <h3 class="proposal-review-section-title">
-                Targets usados para validar la propuesta
-              </h3>
-            </div>
-          </div>
-
-          <div class="proposal-review-kpis">
-            {% for key, value in vm.content.proposal_review.payload.targets.items %}
-              <div class="proposal-review-kpi">
-                <span class="proposal-review-kpi-label">{{ key }}</span>
-                <strong>{{ value }}</strong>
-              </div>
-            {% endfor %}
-          </div>
         </section>
       {% endif %}
 
@@ -168,6 +171,10 @@
           {% endfor %}
         </div>
       </section>
+
+      {% if vm.content.proposal_review.payload.is_create_program %}
+        {% include "notas/proposals/partials/review_program_card.html" %}
+      {% endif %}
 
       {% if vm.content.proposal_review.payload.intent == "ai_nutrition_brief" %}
         <section class="proposal-review-card">
@@ -262,13 +269,6 @@
         {% endif %}
       </header>
 
-      <section class="proposal-review-context-strip" aria-label="Intent de la propuesta">
-        <div class="proposal-review-intent-line">
-          <i data-lucide="route" class="metadata-icon"></i>
-          Intent: <strong>{{ vm.content.proposal.proposed_payload.intent|default:"Sin intent" }}</strong>
-        </div>
-      </section>
-
       <section class="proposal-review-attachments-section" aria-label="Adjuntos de la propuesta">
         <div class="proposal-review-attachments-heading">
           <i data-lucide="paperclip" class="proposal-review-attachments-heading__icon"></i>
@@ -299,5 +299,11 @@
   {% endif %}
 
 </div>
+
+{% if vm.content.proposal_review.payload.is_create_program %}
+<script src="{% static 'notas/js/program_metric_chart.js' %}?v=20260923-1"></script>
+<script src="{% static 'notas/js/program_week_tabs.js' %}"></script>
+<script type="module" src="{% static 'notas/js/program_slot_picker.js' %}"></script>
+{% endif %}
 
 {% endblock %}

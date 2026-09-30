@@ -1,7 +1,39 @@
 # Laboratorio interno de evaluación del asistente AI
 
 Estado: activo  
-Versión: `ai_assistant.evaluation_lab.v1`
+Versión: `ai_assistant.evaluation_lab.v2`
+
+## Escenario culinario progresivo de ocho semanas
+
+`programa_culinario_progresivo_8_semanas` comprueba el contenido persistido de
+56 días, no solamente que el asistente invoque una herramienta. Requiere una
+biblioteca culinaria visible y vigente para la cuenta elegida. Después de aplicar
+las migraciones, se puede preparar una biblioteca privada de inicio con:
+
+```sh
+python manage.py seed_culinary_starter --user-id <cuenta-de-pruebas>
+python manage.py evaluate_ai_assistant_lab --live --user-id <cuenta-de-pruebas> \
+  --scenario programa_culinario_progresivo_8_semanas --keep-artifacts --fail-on-regression
+```
+
+El sembrado es idempotente, usa exclusivamente alimentos existentes y no declara
+validación humana. Las propuestas retenidas permanecen pendientes de aprobación;
+el laboratorio no aplica ni calendariza el programa y no descuenta créditos del
+usuario, aunque las llamadas al proveedor tienen costo de API. El uso de datos de
+la cuenta y el consumo del proveedor requieren autorización.
+
+Este flujo se activa con `program_specification`: objetivos semanales, referencia
+de peso medida o proyectada, intervalo PPK, techo diario de grasa y diversidad.
+Las solicitudes antiguas sin esa especificación conservan el generador anterior;
+este despliegue no significa que todas las solicitudes ya usen el motor culinario.
+Un catálogo insuficiente, evidencia desactualizada o tiempo de búsqueda agotado
+deben quedar como fallos explícitos, sin relajar los límites pedidos.
+
+La revisión exige verificar combinaciones y porciones además de los controles
+numéricos. Un resultado automático correcto no certifica calidad culinaria ni
+preparación para lanzamiento. La configuración avanzada manual de un programa
+guarda supuestos y marca su necesidad de revalidación: no modifica el peso medido
+ni recalcula automáticamente las comidas existentes.
 
 ## Propósito
 
@@ -21,9 +53,29 @@ las causas posibles de un mal resultado:
 - mutaciones inesperadas de entidades finales.
 
 No entrega una nota única que pueda ocultar una regresión grave. El resultado es
-un gate por escenario y un diagnóstico agrupado por capa responsable.
+un gate por escenario y un diagnóstico agrupado por capa responsable. Un pase
+técnico tampoco equivale a calidad aprobada: utilidad, naturalidad, claridad y
+siguiente paso requieren una anotación humana explícita.
 
-## Dos fases
+## Capas de evidencia de v2
+
+Lab v2 combina capas distintas sin confundir su alcance:
+
+1. `task_dataset`: 64 casos versionados, ocho por familia, para objetivo,
+   outcome y disponibilidad de capacidad;
+2. `scenario_preflight`: datos reales, proyecciones canónicas y factibilidad del
+   solver para el usuario seleccionado;
+3. `live_validations`: 32 escenarios disponibles, repetibles entre 1 y 10 veces;
+4. `quality_evaluation`: checks automáticos por dimensión y revisión humana
+   obligatoria por trayectoria;
+5. `product_feedback`: señal agregada de respuestas útiles/no útiles del usuario,
+   sin incluir contenido ni comentarios en el reporte.
+
+Los 64 casos son un gate determinista de routing, no un sustituto de las
+conversaciones reales. Las pruebas live validan selección/argumentos de tools,
+grounding, continuidad, límites de aprobación y resultado observable.
+
+## Tres fases
 
 ### 1. Preflight determinista
 
@@ -51,9 +103,35 @@ del usuario seleccionado. Sólo ejecuta escenarios cuyo preflight está listo.
 python manage.py evaluate_ai_assistant_lab \
   --live \
   --user-email usuario@example.com \
+  --repetitions 3 \
   --output var/ai-evaluation/latest.json \
+  --annotation-template-output var/ai-evaluation/review.json \
   --fail-on-regression
 ```
+
+### 3. Calibración humana
+
+Una ejecución live técnicamente sana termina en `awaiting_quality_review` hasta
+que cada trayectoria tenga `pass` o `fail` en los cuatro criterios. El template
+se completa con nombre de revisor y `reviewer_kind=human`. Luego se evalúa la
+misma evidencia guardada, sin volver a llamar al proveedor:
+
+```bash
+python manage.py evaluate_ai_assistant_lab \
+  --review-report var/ai-evaluation/latest.json \
+  --quality-annotations var/ai-evaluation/review.json \
+  --output var/ai-evaluation/final.json \
+  --fail-on-regression
+```
+
+Un candidato de modelo sólo puede aceptarse si todas sus repeticiones pasan los
+checks duros, los checks de calidad automáticos y la revisión humana. Luna es el
+baseline, Terra el escalamiento y Sol el benchmark opcional; Astra no forma parte
+de esta matriz.
+
+Las revisiones están ligadas a `run_id/scenario` y a la huella de la trayectoria.
+No se aceptan aprobaciones genéricas por nombre de escenario ni evidencia
+modificada. Una revisión automatizada no se contabiliza como revisión humana.
 
 Para probar específicamente la integración comercial de créditos se debe optar
 de forma explícita por `--charge-user-credits`. Un bloqueo de cuota se informa
@@ -65,14 +143,18 @@ las `AIPreparedAction` no confirmadas que fueron creadas por esa ejecución. Nun
 se eliminan ni restauran automáticamente alimentos, comidas, planes o programas.
 Puede usarse `--keep-artifacts` cuando se necesite revisar las cards manualmente.
 
-## Escenarios iniciales
+## Escenarios live
 
-| Escenario | Catálogo vivo | Verdad esperada | Frontera de escritura |
+| Grupo | Escenarios | Outcome esperado | Frontera de escritura |
 | --- | --- | --- | --- |
-| `bibliotecas_coherentes` | F-01, M-01, DP-01, PG-01 | Totales de proyecciones canónicas | Sólo lectura |
-| `comida_450_kcal` | M-04, A-03 | Solver ejecutable con alimentos operacionales reales | Sólo propuesta revisable |
-| `reemplazo_alimento_200g` | M-08 | Meal, alimento origen, reemplazo y 200 g resueltos desde BBDD | Sólo patch preparado |
-| `plan_2400_distribucion_30_50_20` | DP-13 | 2400 kcal y macros 30/50/20, sin sustituir la solicitud | Sólo propuesta revisable |
+| Conversación | saludo, tema externo, capacidades y referencia ambigua | `response_only` o `clarification_required` | Sin artifacts inesperados |
+| Memoria y continuidad | ficha conocida, datos agrupados/cards y cambio de dirección | `workspace_advanced` | Drafts temporales tipados |
+| Recuperación | error de tool y recuperación | `response_only` | Sin falsa confirmación |
+| Consultas | bibliotecas coherentes | `workspace_query` | Sólo lectura |
+| Nutrición | comida 450 kcal y plan 2400 con 30/50/20 | `nutrition_proposal` | Sólo propuesta revisable |
+| Cambio de producto | reemplazo de alimento a 200 g | `prepared_patch` | Patch preparado, nunca aplicado |
+| Operaciones exactas | 18 casos de alimentos, comidas, planes y programas | `prepared_patch` | Compara objetivo, parámetros y cantidad exacta de operaciones persistidas |
+| Programas completos | 1 y 8 semanas, 2400 kcal y 30/50/20 | `nutrition_proposal` | Verifica todos los días, cuatro comidas por día y macros recalculados |
 
 Para listar los escenarios sin acceder a un usuario:
 
@@ -84,16 +166,43 @@ También se puede repetir `--scenario` para ejecutar un subconjunto.
 
 ## Lectura del reporte
 
-El JSON conserva cuatro niveles de evidencia:
+El JSON conserva siete niveles de evidencia:
 
-1. `ground_truth`: verdad calculada directamente desde BBDD y solver;
-2. `scenario_preflight`: readiness y bloqueos antes de consultar al modelo;
-3. `live_validation`: transcript, tools, estados y checks del proveedor real;
-4. `diagnostics.by_domain`: clasificación de fallos por capa probable.
+1. `task_dataset`: cobertura determinista y fallos de surface/routing;
+2. `ground_truth`: verdad calculada directamente desde BBDD y solver;
+3. `scenario_preflight`: readiness y bloqueos antes de consultar al modelo;
+4. `live_validations`: transcripts, tools, estados y checks por repetición;
+5. `quality_evaluation`: dimensiones automáticas, anotaciones y confiabilidad;
+6. `product_feedback`: señal agregada de los últimos 30 días;
+7. `diagnostics.by_domain`: clasificación de fallos por capa probable.
 
-Cada escenario registra conteos antes y después. Un escenario de lectura no puede
+Cada escenario registra conteos y huellas del contenido persistido antes y después. Un escenario de lectura no puede
 crear artifacts; uno de propuesta debe crear al menos una propuesta sin alterar
 las bibliotecas; uno de patch debe crear una acción preparada sin aplicarla.
+
+La limpieza captura IDs creados dentro del contexto de esta ejecución; no usa
+solamente diferencias de IDs por usuario que podrían incluir otra sesión.
+
+## Alcance de programas completos
+
+El asistente conserva `requested_entity=program` y `duration_weeks` (1–8) como
+campos tipados. La propuesta contiene cada combinación semana/día, hasta 56
+planes independientes, con comidas y cantidades calculadas. Dieta, alergias,
+exclusiones y preferencias llegan al motor como restricciones explícitas.
+
+Actualmente usa objetivos diarios constantes y una rotación de hasta siete
+menús calculados. Declara el número real de menús distintos y la repetición;
+no promete 56 menús únicos ni periodización automática. Cada candidato se valida
+nutricionalmente; las advertencias se muestran para revisión. Los objetivos
+distintos por día/semana y la optimización global de variedad siguen pendientes.
+
+La aplicación exige aprobación, propietario correcto e ingredientes activos;
+rechaza evidencia nutricional que cambió desde la revisión. Crea todos los planes
+y comidas en una transacción, sin calendarizar, y rechaza la aplicación duplicada.
+Tanto web como móvil permiten revisar los días antes de confirmar.
+
+Agregar un escenario al catálogo no demuestra que haya pasado con el proveedor
+real: cobertura mapeada, pases automáticos y aprobación humana son evidencias distintas.
 
 ## Método de iteración sobre el catálogo vivo
 
@@ -114,11 +223,23 @@ El gate local incluye los contratos del laboratorio:
 scripts/ci_ai_assistant_capability_catalog.sh
 ```
 
-La revisión humana sigue siendo obligatoria para naturalidad, utilidad de la
-explicación y calidad visual de las cards. El laboratorio automatiza coherencia,
-grounding, routing, seguridad y estado; no pretende convertir UX en una cifra.
+La revisión humana sigue siendo obligatoria para naturalidad, utilidad, claridad,
+siguiente paso y calidad visual de las cards. Su ausencia produce estado pendiente,
+nunca un pase implícito. El laboratorio automatiza coherencia, grounding, routing,
+seguridad, outcome y estado; no pretende convertir UX en una cifra única.
 
-## Validación real en staging — 18 de septiembre de 2026
+## Feedback de producto
+
+Cada respuesta textual del asistente expone controles de útil/no útil. El registro
+queda ligado al propietario, chat e índice de mensaje, y puede corregirse sin crear
+duplicados. La respuesta se referencia con un fingerprint; el reporte agregado no
+exporta mensajes ni comentarios.
+
+```bash
+python manage.py report_ai_assistant_feedback --days 30
+```
+
+## Validación real histórica de v1 en staging — 18 de septiembre de 2026
 
 La primera iteración completa del laboratorio se cerró contra el servicio Render
 `srv-d964dm28qa3s738apvn0`, con el commit `df9fe47` activo mediante el deploy

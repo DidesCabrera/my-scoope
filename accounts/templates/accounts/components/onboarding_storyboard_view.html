@@ -1,0 +1,101 @@
+<article class="onboarding-story" id="onboarding-{{ story.key }}" data-onboarding-story="{{ story.key }}">
+  <header class="onboarding-story__chrome">
+    <span>{{ forloop.counter|stringformat:"02d" }} / {{ gallery.onboarding_storyboard|length|stringformat:"02d" }}</span>
+    <strong>{{ story.label }}</strong>
+  </header>
+  <div class="onboarding-story__screen">
+    {% if story.key == "login" %}
+      <div class="onboarding-story__brand"><span>M</span><strong>MY SCOOPE</strong></div>
+    {% else %}
+      <div class="onboarding-story__progress"><span style="width: {% widthratio forloop.counter gallery.onboarding_storyboard|length 100 %}%"></span></div>
+    {% endif %}
+
+    <div class="onboarding-story__intro">
+      <div class="onboarding-story__icon" aria-hidden="true"><i data-lucide="{{ story.icon }}"></i></div>
+      <p class="onboarding-story__eyebrow">{{ story.eyebrow }}</p>
+      <h3>{{ story.title }}</h3>
+      <p>{{ story.description }}</p>
+    </div>
+
+    {% if story.key == "login" %}
+      <div class="onboarding-story__card onboarding-story__card--accent">
+        <h4>Accede a tu cuenta</h4>
+        <p>Inicia sesión o crea una cuenta para guardar tu progreso en todos tus dispositivos.</p>
+        <button type="button">Iniciar sesión o crear cuenta</button>
+      </div>
+    {% elif story.key == "value" %}
+      <div class="onboarding-story__stack">
+        <div class="onboarding-story__item"><i data-lucide="circle-check"></i><span><strong>Plan diario</strong><small>Una estructura que puedes revisar y ejecutar.</small></span></div>
+        <div class="onboarding-story__item"><i data-lucide="gauge"></i><span><strong>Referencias nutricionales</strong><small>Calorías, macros y cantidades ordenadas.</small></span></div>
+      </div>
+    {% elif story.key == "structure" %}
+      <ol class="onboarding-story__levels">
+        <li><span>1</span><strong>Alimentos</strong><small>La base nutricional</small></li>
+        <li><span>2</span><strong>Comidas</strong><small>Combinaciones que repites</small></li>
+        <li><span>3</span><strong>Planes diarios</strong><small>La pauta de un día</small></li>
+        <li><span>4</span><strong>Programas</strong><small>Tu estrategia en el tiempo</small></li>
+      </ol>
+    {% elif story.key == "panels" %}
+      <div class="onboarding-story__card">
+        <div class="onboarding-story__entity"><span><small>PLAN DIARIO</small><strong>Día equilibrado</strong></span><b>2.140 kcal</b></div>
+        <div class="onboarding-story__tabs"><strong>Resumen</strong><span>Calorías</span><span>Macros</span><span>Detalle</span></div>
+        <div class="onboarding-story__panel"><strong>155 g</strong><small>proteína para tu objetivo</small><div><i></i><i></i><i></i></div></div>
+        <p class="onboarding-story__hint">Resumen primero. Evidencia y detalle a un toque.</p>
+      </div>
+    {% elif story.key == "control" %}
+      <div class="onboarding-story__stack">
+        <div class="onboarding-story__item"><b>1</b><span><strong>Conversa</strong><small>Explica tu objetivo con tus palabras.</small></span></div>
+        <div class="onboarding-story__item"><b>2</b><span><strong>Calcula</strong><small>My Scoope construye objetivos revisables.</small></span></div>
+        <div class="onboarding-story__item"><b>3</b><span><strong>Aprueba</strong><small>Nada cambia sin tu confirmación.</small></span></div>
+      </div>
+    {% elif story.key == "progress" %}
+      <div class="onboarding-story__card">
+        <div class="onboarding-story__metric"><span>Adherencia semanal</span><strong>86%</strong></div>
+        <div class="onboarding-story__meter"><span></span></div>
+        <div class="onboarding-story__mini-grid"><div><strong>Peso</strong><small>Registro cronológico</small></div><div><strong>Evolución</strong><small>Revisiones explicables</small></div></div>
+      </div>
+    {% elif story.key == "disclosures" %}
+      <div class="onboarding-story__stack">
+        <div class="onboarding-story__item"><i data-lucide="heart-pulse"></i><span><strong>No es atención médica</strong><small>No diagnostica ni reemplaza atención profesional.</small></span></div>
+        <div class="onboarding-story__item"><i data-lucide="eye"></i><span><strong>Revisa antes de aplicar</strong><small>Los cálculos y propuestas pueden contener errores.</small></span></div>
+        <div class="onboarding-story__item"><i data-lucide="lock-keyhole"></i><span><strong>Privacidad y control</strong><small>Tú decides qué compartes y puedes eliminar tu cuenta.</small></span></div>
+      </div>
+    {% elif story.key == "goal" %}
+      <div class="onboarding-story__choices">
+        <button class="is-selected" type="button">Bajar grasa <i data-lucide="check"></i></button><button type="button">Ganar masa muscular</button><button type="button">Mantenerme</button><button type="button">Rendimiento deportivo</button><button type="button">Comer mejor</button>
+      </div>
+    {% elif story.key == "identity" %}
+      <div class="onboarding-story__card onboarding-story__fields">
+        <label>Fecha de nacimiento<input type="text" value="1990-05-10" readonly></label>
+        <fieldset><legend>Sexo usado para el cálculo nutricional</legend><div><button class="is-selected" type="button">Masculino</button><button type="button">Femenino</button></div></fieldset>
+      </div>
+      <p class="onboarding-story__notice">Estos datos se usan para estimaciones nutricionales, no para definir tu identidad.</p>
+    {% elif story.key == "measurements" %}
+      <div class="onboarding-story__card onboarding-story__fields"><div class="onboarding-story__field-grid"><label>Altura (cm)<input type="text" value="178" readonly></label><label>Peso (kg)<input type="text" value="82,5" readonly></label></div><small>El peso inicial será la primera referencia de tu evolución.</small></div>
+    {% elif story.key == "activity" %}
+      <div class="onboarding-story__card onboarding-story__fields">
+        <fieldset><legend>Actividad habitual</legend><div class="onboarding-story__activity"><button type="button">Sedentaria <small>Mayormente sentado</small></button><button class="is-selected" type="button">Ligera <small>Movimiento ocasional</small></button><button type="button">Moderada <small>Movimiento frecuente</small></button></div></fieldset>
+        <fieldset><legend>Entrenamientos por semana</legend><div><button type="button">0–1</button><button class="is-selected" type="button">2–3</button><button type="button">4–5</button><button type="button">6+</button></div></fieldset>
+      </div>
+    {% elif story.key == "summary" %}
+      <div class="onboarding-story__card">
+        <div class="onboarding-story__summary"><strong>2.340</strong><span>kcal de mantenimiento estimado</span></div>
+        <dl class="onboarding-story__facts"><div><dt>Objetivo</dt><dd>Bajar grasa</dd></div><div><dt>Referencia</dt><dd>82,5 kg</dd></div><div><dt>Actividad</dt><dd>Ligera</dd></div><div><dt>Entrenamiento</dt><dd>2–3 días</dd></div></dl>
+      </div>
+      <p class="onboarding-story__notice">La frecuencia de entrenamiento se conserva como contexto mientras afinamos su uso.</p>
+    {% elif story.key == "plans" %}
+      <div class="onboarding-story__plans">
+        <div><span><strong>Free</strong><b>$0<small>/mes</small></b></span><p>Empieza con un plan diario y tus bibliotecas esenciales.</p><button type="button">Continuar con Free</button></div>
+        <div class="is-recommended"><span><strong>Basic <small>RECOMENDADO</small></strong><b>$3.990<small>/mes</small></b></span><p>Bibliotecas ilimitadas y 150 créditos mensuales.</p><button type="button">Elegir Basic</button></div>
+        <div><span><strong>Pro</strong><b>$6.990<small>/mes</small></b></span><p>1.000 créditos para un uso intensivo.</p><button type="button">Elegir Pro</button></div>
+      </div>
+    {% elif story.key == "home" %}
+      <div class="onboarding-story__card onboarding-story__card--accent"><small>SIGUIENTE PASO</small><h4>Crea tu primer plan diario</h4><p>Partiremos de tu objetivo y punto de partida. Revisarás cada alimento y cantidad antes de guardarlo.</p><button type="button">Crear mi primer plan</button></div>
+      <div class="onboarding-story__badges"><span>Ficha completa</span><span>Plan Free</span></div>
+    {% endif %}
+
+    {% if story.key != "login" and story.key != "plans" %}
+      <footer class="onboarding-story__footer"><button type="button">{% if story.key == "disclosures" %}Entiendo y quiero continuar{% elif story.key == "summary" %}Confirmar mi punto de partida{% else %}Continuar{% endif %}</button><span>← Atrás</span></footer>
+    {% endif %}
+  </div>
+</article>

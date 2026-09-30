@@ -8,17 +8,26 @@ from dataclasses import replace
 from ai_assistant.application.context_builder import sanitize_provider_context
 from ai_assistant.application.limits import validate_provider_request_limits
 from ai_assistant.application.model_routing import resolve_model_route_for_turn
+from ai_assistant.application.orchestrator_followup import (
+    tool_results_complete_nutrition_proposal,
+)
 from ai_assistant.application.orchestrator_runtime import elapsed_ms as _elapsed_ms
 from ai_assistant.application.provider_parsing import AssistantProviderParseResult
 from ai_assistant.domain import (
     AssistantIntentName,
+    AssistantMessage,
+    AssistantMessageRole,
     AssistantStructuredResponse,
     AssistantToolRequest,
     AssistantToolResult,
     AssistantToolStatus,
     AssistantTurnRequest,
 )
-from ai_assistant.infrastructure.providers import LLMProviderError, LLMProviderResponse
+from ai_assistant.infrastructure.providers import (
+    LLMProviderError,
+    LLMProviderRequest,
+    LLMProviderResponse,
+)
 
 
 def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantStructuredResponse:
@@ -142,6 +151,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
     all_tool_results = orchestrator._resolve_tool_results(request, parse_result.response.tool_requests)
     current_tool_results = all_tool_results
     tool_loop_iterations = 0
+    compact_followup_recovery_count = 0
 
     while _has_tool_results(current_tool_results) and tool_loop_iterations < orchestrator.config.max_tool_loop_iterations:
         remaining_iterations = orchestrator.config.max_tool_loop_iterations - tool_loop_iterations - 1
@@ -197,9 +207,21 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
                     tools_executed=True,
                 )
 
-        try:
-            final_provider_response = turn_llm_client.generate(final_provider_request)
-        except LLMProviderError as exc:
+        (
+            final_provider_request,
+            final_provider_response,
+            followup_error,
+            compact_recovery_count,
+        ) = _generate_tool_followup_with_compact_recovery(
+            orchestrator,
+            turn_llm_client=turn_llm_client,
+            request=request,
+            provider_request=final_provider_request,
+            first_response=parse_result.response,
+            tool_results=all_tool_results,
+            model_route=model_route,
+        )
+        if followup_error is not None:
             # The function call and its controlled result already exist. A
             # provider failure while wording the follow-up must not erase
             # that evidence or turn a safely resolved tool operation into a
@@ -210,7 +232,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
                 provider_response=provider_responses[-1],
                 tool_results=all_tool_results,
                 tool_requests=all_tool_requests,
-                error=exc,
+                error=followup_error,
                 latency_ms=latency_ms,
                 tool_loop_iterations=tool_loop_iterations,
                 first_provider_response_id=provider_responses[0].response_id,
@@ -221,12 +243,19 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
                 provider_responses=tuple(provider_responses),
                 latency_ms=latency_ms,
                 status="degraded",
-                error_type=f"tool_followup_{exc.__class__.__name__}",
+                error_type=f"tool_followup_{followup_error.__class__.__name__}",
                 tools_executed=True,
             )
+        assert final_provider_response is not None
+        compact_followup_recovery_count += compact_recovery_count
+        remaining_iterations = 0 if compact_recovery_count else remaining_iterations
 
         provider_responses.append(final_provider_response)
         parse_result = orchestrator.parse_provider_response(final_provider_response)
+        parse_result = _enforce_tool_free_compact_followup(
+            parse_result,
+            provider_request=final_provider_request,
+        )
         followup_incomplete_reason = _provider_incomplete_reason(final_provider_response)
         if followup_incomplete_reason:
             incomplete_reasons.append(followup_incomplete_reason)
@@ -288,6 +317,18 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
         tool_requests=tuple(all_tool_requests),
         ignored_provider_proposal_ids=tuple(dict.fromkeys(all_ignored_provider_proposal_ids)),
     )
+    response = replace(
+        response,
+        metadata={
+            **dict(response.metadata or {}),
+            "provider_tool_followup_compact_recovery": bool(
+                compact_followup_recovery_count
+            ),
+            "provider_tool_followup_compact_recovery_count": compact_followup_recovery_count,
+        },
+    )
+    response = _enforce_required_clarification(response, request=request)
+    response = _enforce_program_completion(response, request=request, tool_results=all_tool_results)
     response = _with_outcome_trace(
         response,
         request=request,
@@ -302,6 +343,114 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
         tools_executed=tools_executed,
     )
 
+
+def _generate_tool_followup_with_compact_recovery(
+    orchestrator,
+    *,
+    turn_llm_client,
+    request: AssistantTurnRequest,
+    provider_request: LLMProviderRequest,
+    first_response: AssistantStructuredResponse,
+    tool_results: Sequence[AssistantToolResult],
+    model_route,
+) -> tuple[
+    LLMProviderRequest,
+    LLMProviderResponse | None,
+    LLMProviderError | None,
+    int,
+]:
+    """Retry a failed final wording once without tools or new side effects."""
+
+    try:
+        return provider_request, turn_llm_client.generate(provider_request), None, 0
+    except LLMProviderError as error:
+        initial_error = error
+        if str(provider_request.metadata.get("tool_loop") or "") == (
+            "controlled_tools.compact_followup.v1"
+        ) or (
+            provider_request.tools
+            and not tool_results_complete_nutrition_proposal(tool_results)
+        ):
+            return provider_request, None, initial_error, 0
+
+    compact_request = orchestrator.build_compact_tool_followup_provider_request(
+        request=request,
+        first_response=first_response,
+        tool_results=tool_results,
+        model_route=model_route,
+    )
+    if validate_provider_request_limits(
+        compact_request,
+        limits=orchestrator.config.turn_limits,
+    ) is not None:
+        return provider_request, None, initial_error, 0
+
+    try:
+        compact_response = turn_llm_client.generate(compact_request)
+    except LLMProviderError as recovery_error:
+        return compact_request, None, recovery_error, 0
+    return compact_request, compact_response, None, 1
+
+
+def _enforce_tool_free_compact_followup(
+    parse_result: AssistantProviderParseResult,
+    *,
+    provider_request: LLMProviderRequest,
+) -> AssistantProviderParseResult:
+    """Never execute a tool declared in a tool-free compact wording response."""
+
+    tool_requests = tuple(parse_result.response.tool_requests or ())
+    if (
+        str(provider_request.metadata.get("tool_loop") or "")
+        != "controlled_tools.compact_followup.v1"
+        or not tool_requests
+    ):
+        return parse_result
+    response = replace(
+        parse_result.response,
+        tool_requests=(),
+        metadata={
+            **dict(parse_result.response.metadata or {}),
+            "tool_free_followup_tool_requests_ignored": len(tool_requests),
+        },
+    )
+    return replace(
+        parse_result,
+        response=response,
+        declared_tools_required=False,
+    )
+
+
+def _enforce_required_clarification(
+    response: AssistantStructuredResponse,
+    *,
+    request: AssistantTurnRequest,
+) -> AssistantStructuredResponse:
+    """Keep an ambiguous turn grounded instead of inventing an active objective."""
+
+    workspace = dict((request.context.get("metadata") or {}).get("tool_oriented_intake") or {})
+    progress = dict(workspace.get("work_progress") or {})
+    active_work = dict(progress.get("active_work") or {})
+    if str(active_work.get("expected_outcome") or "") != "clarification_required":
+        return response
+
+    metadata = {
+        **dict(response.metadata or {}),
+        "clarification_grounding_guard_applied": True,
+    }
+    return replace(
+        response,
+        assistant_message=AssistantMessage(
+            role=AssistantMessageRole.ASSISTANT,
+            content=(
+                "No tengo suficiente contexto para saber a qué situación te refieres. "
+                "¿Qué estabas revisando o intentando hacer en My Scoope?"
+            ),
+        ),
+        metadata=metadata,
+    )
+
+
 def _provider_incomplete_reason(provider_response: LLMProviderResponse) -> str:
     raw = dict(provider_response.raw or {})
     if str(raw.get("status") or "").strip().lower() != "incomplete":
@@ -310,6 +459,20 @@ def _provider_incomplete_reason(provider_response: LLMProviderResponse) -> str:
     if isinstance(details, Mapping):
         return str(details.get("reason") or "incomplete")[:80]
     return "incomplete"
+
+
+def _enforce_program_completion(response, *, request, tool_results):
+    from ai_assistant.application.program_capture import requires_weekly_specification
+
+    if (not requires_weekly_specification(request) or response.proposal_ids
+            or response.intent.requires_clarification or "?" in response.assistant_text):
+        return response
+    captured = any(result.ok and result.tool_name.startswith("update_") for result in tool_results)
+    text = ("He registrado requisitos, pero todavía no he creado una propuesta revisable. " if captured
+            else "Todavía no he creado una propuesta revisable. ")
+    text += "No se ha aplicado ningún programa. No puedo presentar este intento como terminado."
+    return replace(response, assistant_message=AssistantMessage(role="assistant", content=text),
+                   metadata={**response.metadata, "program_completion_guard_applied": True})
 
 
 def _with_outcome_trace(
@@ -324,6 +487,11 @@ def _with_outcome_trace(
     workspace = dict((request.context.get("metadata") or {}).get("tool_oriented_intake") or {})
     progress = dict(workspace.get("work_progress") or {})
     objective = str(progress.get("active_objective") or "respond_to_current_message")
+    active_work = dict(progress.get("active_work") or {})
+    expected_outcome = str(
+        active_work.get("expected_outcome")
+        or _expected_outcome_for_objective(objective)
+    )
     blocking_fields = [str(value) for value in tuple(progress.get("blocking_fields") or ())[:12]]
     result_summaries = [
         {
@@ -335,9 +503,14 @@ def _with_outcome_trace(
     ]
     proposal_created = bool(response.proposal_ids)
     any_ok = any(result.ok for result in tuple(tool_results or ()))
+    successful_tool_names = {
+        result.tool_name for result in tuple(tool_results or ()) if result.ok
+    }
     any_blocked = any(result.status == AssistantToolStatus.BLOCKED for result in tuple(tool_results or ()))
     if proposal_created:
         state = "outcome_created"
+    elif successful_tool_names & {"propose_workspace_patch", "prepare_product_action"}:
+        state = "reviewable_change_prepared"
     elif blocking_fields:
         state = "awaiting_blocking_information"
     elif any_blocked:
@@ -347,14 +520,68 @@ def _with_outcome_trace(
     else:
         state = "response_only"
     metadata["outcome_trace"] = {
-        "version": "ai_assistant_outcome_trace.v1",
+        "version": "ai_assistant_outcome_trace.v2",
         "objective": objective,
+        "expected_outcome": expected_outcome,
+        "expected_outcome_met": _expected_outcome_met(
+            expected_outcome,
+            response_text=response.assistant_text,
+            proposal_created=proposal_created,
+            successful_tool_names=successful_tool_names,
+        ),
         "state": state,
         "blocking_fields": blocking_fields,
         "proposal_created": proposal_created,
         "tool_results": result_summaries,
     }
     return replace(response, metadata=metadata)
+
+
+def _expected_outcome_for_objective(objective: str) -> str:
+    if objective in {
+        "create_reviewable_program_proposal",
+        "create_reviewable_dailyplan_proposal",
+        "create_reviewable_meal_proposal",
+        "create_dailyplan_proposal",
+    }:
+        return "nutrition_proposal"
+    if objective == "prepare_reviewable_workspace_patch":
+        return "prepared_patch"
+    if objective == "query_workspace":
+        return "workspace_query"
+    if objective == "record_conversation_facts":
+        return "workspace_advanced"
+    return "response_only"
+
+
+def _expected_outcome_met(
+    expected_outcome: str,
+    *,
+    response_text: str,
+    proposal_created: bool,
+    successful_tool_names: set[str],
+) -> bool:
+    if expected_outcome == "nutrition_proposal":
+        return proposal_created
+    if expected_outcome == "prepared_patch":
+        return bool(
+            successful_tool_names & {"propose_workspace_patch", "prepare_product_action"}
+        )
+    if expected_outcome == "workspace_query":
+        return any(
+            tool_name.startswith(
+                ("read_", "list_", "search_", "query_", "compare_", "preview_")
+            )
+            for tool_name in successful_tool_names
+        )
+    if expected_outcome == "workspace_advanced":
+        return any(
+            tool_name.startswith(("update_", "share_"))
+            for tool_name in successful_tool_names
+        )
+    if expected_outcome == "clarification_required":
+        return "?" in response_text
+    return bool(response_text.strip())
 
 
 def _provider_response_requires_tool_call_repair(

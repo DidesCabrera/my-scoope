@@ -42,6 +42,22 @@ class AccountDeletionViewTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
+    def test_deletion_erases_private_culinary_library_but_not_public_templates(self):
+        from accounts.services.deletion import delete_user_account
+        from notas.domain.models import CulinaryTemplate, CulinaryVariant
+
+        private = CulinaryTemplate.objects.create(key="private", name="Private", owner=self.user)
+        parent = CulinaryVariant.objects.create(template=private, key="base", name="Base")
+        CulinaryVariant.objects.create(template=private, key="swap", name="Swap", parent=parent)
+        public = CulinaryTemplate.objects.create(key="public", name="Public")
+        reviewed = CulinaryVariant.objects.create(template=public, key="public", reviewed_by=self.user)
+        delete_user_account(user=self.user, source="web")
+        self.assertFalse(CulinaryTemplate.objects.filter(pk=private.pk).exists())
+        self.assertFalse(CulinaryVariant.objects.filter(template_id=private.pk).exists())
+        self.assertTrue(CulinaryTemplate.objects.filter(pk=public.pk).exists())
+        reviewed.refresh_from_db()
+        self.assertIsNone(reviewed.reviewed_by_id)
+
     def test_profile_exposes_account_deletion_entry_point(self):
         self.client.force_login(self.user)
 

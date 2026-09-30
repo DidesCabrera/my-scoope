@@ -14,6 +14,7 @@ assistant runtime. Provider execution is always opt-in at the command boundary.
 
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 from collections import Counter, defaultdict
@@ -26,6 +27,12 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from ai_assistant.models import AIPreparedAction
+from notas.application.ai_intake.capability_scenarios import PATCH_CASES
+from notas.application.ai_intake.evaluation_artifacts import capture_review_artifacts
+from notas.application.ai_intake.evaluation_dataset import evaluate_assistant_task_dataset
+from notas.application.ai_intake.evaluation_quality import grade_validation_reports
+from notas.application.ai_intake.message_feedback import summarize_message_feedback
+from notas.application.ai_intake.program_scenarios import PROGRAM_SCENARIOS
 from notas.application.ai_intake.real_provider_validation import (
     RealProviderValidationReport,
     _specialize_scenario_for_user,
@@ -47,13 +54,21 @@ from nutrition_solver.application.contracts import (
 )
 from nutrition_solver.domain.models import MacroTarget
 
-EVALUATION_LAB_VERSION = "ai_assistant.evaluation_lab.v1"
+EVALUATION_LAB_VERSION = "ai_assistant.evaluation_lab.v2"
 DEFAULT_LAB_SCENARIOS = (
+    "saludo_y_descubrimiento",
+    "tema_externo_breve",
+    "capacidades_en_lenguaje_de_producto",
+    "referencia_ambigua_sin_tools",
+    "ficha_conocida_sin_repreguntas",
+    "datos_agrupados_y_cards",
+    "cambio_de_direccion",
+    "error_de_tool_y_recuperacion",
     "bibliotecas_coherentes",
     "comida_450_kcal",
     "reemplazo_alimento_200g",
     "plan_2400_distribucion_30_50_20",
-)
+) + tuple(case[0] for case in PATCH_CASES) + PROGRAM_SCENARIOS
 
 _CATALOG_ROW_PATTERN = re.compile(
     r"^\| (?P<id>(?:PR|F|M|DP|PG|C|X|A)-\d{2}) "
@@ -74,6 +89,7 @@ _CHECK_DIAGNOSTIC_DOMAIN = {
     "tool_contract": "tool_routing",
     "visible_facts": "grounding",
     "behavioral_surface": "guardrail_policy",
+    "expected_outcome": "outcome_completion",
     "response_repetition": "response_quality",
     "tool_result_grounding": "grounding",
     "provider_followup_health": "provider_transport",
@@ -81,6 +97,8 @@ _CHECK_DIAGNOSTIC_DOMAIN = {
     "card_pacing": "guardrail_policy",
     "usage_observability": "observability",
     "state_mutation_boundary": "state_mutation",
+    "prepared_patch_exact": "operation_correctness",
+    "program_proposal_complete": "operation_correctness",
 }
 
 _CREDIT_BLOCK_REASONS = {
@@ -101,6 +119,10 @@ class EvaluationLabReport:
     ground_truth: Mapping[str, Any]
     scenario_preflight: Sequence[Mapping[str, Any]]
     live_validation: RealProviderValidationReport | None
+    live_validations: Sequence[RealProviderValidationReport]
+    quality_evaluation: Mapping[str, Any]
+    task_dataset: Mapping[str, Any]
+    product_feedback: Mapping[str, Any]
     diagnostics: Mapping[str, Any]
     cleanup: Mapping[str, Any]
     billing: Mapping[str, Any]
@@ -120,12 +142,16 @@ class EvaluationLabReport:
             "catalog": dict(self.catalog),
             "ground_truth": dict(self.ground_truth),
             "scenario_preflight": [dict(item) for item in self.scenario_preflight],
+            "quality_evaluation": dict(self.quality_evaluation),
+            "task_dataset": dict(self.task_dataset),
+            "product_feedback": dict(self.product_feedback),
             "diagnostics": dict(self.diagnostics),
             "cleanup": dict(self.cleanup),
             "billing": dict(self.billing),
             "live_validation": (
                 self.live_validation.as_dict() if self.live_validation is not None else None
             ),
+            "live_validations": [report.as_dict() for report in self.live_validations],
         }
 
 
@@ -138,9 +164,13 @@ def run_evaluation_lab(
     run_id: str | None = None,
     cleanup_review_artifacts: bool = True,
     charge_user_credits: bool = False,
+    repetitions: int = 1,
+    quality_annotations: Mapping[str, Any] | None = None,
 ) -> EvaluationLabReport:
     if not getattr(user, "pk", None):
         raise ValueError("AI Assistant evaluation lab requires a persisted authenticated user.")
+    if not 1 <= int(repetitions) <= 10:
+        raise ValueError("AI Assistant evaluation repetitions must be between 1 and 10.")
 
     selected_keys = tuple(scenario_keys or DEFAULT_LAB_SCENARIOS)
     catalog = built_in_real_provider_scenarios()
@@ -149,11 +179,15 @@ def run_evaluation_lab(
         raise ValueError(f"Unknown evaluation lab scenario(s): {', '.join(unknown)}")
 
     validation_run_id = run_id or uuid.uuid4().hex
+    task_dataset = evaluate_assistant_task_dataset()
     specialized = {
         key: _specialize_scenario_for_user(catalog[key], user=user)
         for key in selected_keys
     }
+    logger = logging.getLogger("myscoope.assistant.runtime")
+    logger.info("lab_preflight_start run_id=%s", validation_run_id)
     ground_truth = _build_ground_truth(user=user, scenarios=specialized)
+    logger.info("lab_preflight_done run_id=%s", validation_run_id)
     preflight = tuple(
         _scenario_preflight(scenario, ground_truth=ground_truth)
         for scenario in specialized.values()
@@ -163,14 +197,14 @@ def run_evaluation_lab(
     )
     blocked = tuple(item for item in preflight if item["status"] != "ready")
 
-    live_report = None
+    live_reports: list[RealProviderValidationReport] = []
     cleanup = {
         "enabled": bool(cleanup_review_artifacts),
         "nutrition_proposals_deleted": 0,
         "prepared_actions_deleted": 0,
         "retained_artifact_ids": [],
     }
-    before_artifacts = _review_artifact_ids(user)
+    created_artifacts = {"nutrition_proposals": set(), "prepared_actions": set()}
     if live and ready_keys:
         try:
             credit_context = (
@@ -178,30 +212,57 @@ def run_evaluation_lab(
                 if charge_user_credits
                 else override_settings(AI_ASSISTANT_CREDITS_ENABLED=False)
             )
-            with credit_context:
-                live_report = run_real_provider_validation(
-                    user=user,
-                    scenario_keys=ready_keys,
-                    engine=engine,
-                    run_id=validation_run_id,
-                )
+            with credit_context, capture_review_artifacts(user) as created_artifacts:
+                for repetition in range(1, int(repetitions) + 1):
+                    logger.info("lab_provider_start repetition=%s", repetition)
+                    repetition_run_id = (
+                        validation_run_id
+                        if int(repetitions) == 1
+                        else f"{validation_run_id[:24]}-r{repetition}"
+                    )
+                    live_reports.append(
+                        run_real_provider_validation(
+                            user=user,
+                            scenario_keys=ready_keys,
+                            engine=engine,
+                            run_id=repetition_run_id,
+                        )
+                    )
+                    logger.info("lab_provider_done repetition=%s passed=%s", repetition, live_reports[-1].passed)
+                    _log_validation_failures(logger, repetition, live_reports[-1])
         finally:
             if cleanup_review_artifacts:
-                cleanup = _cleanup_new_review_artifacts(user=user, before=before_artifacts)
+                cleanup = _cleanup_new_review_artifacts(user=user, created=created_artifacts)
 
     diagnostics = _build_diagnostics(
         preflight=preflight,
-        live_report=live_report,
+        live_reports=live_reports,
     )
-    credit_blocks = _credit_block_reasons(live_report)
-    if not live:
+    quality_evaluation = grade_validation_reports(
+        live_reports,
+        annotations=quality_annotations,
+    )
+    credit_blocks = sorted(
+        {
+            reason
+            for live_report in live_reports
+            for reason in _credit_block_reasons(live_report)
+        }
+    )
+    if not task_dataset["passed"]:
+        status = "dataset_regression"
+    elif not live:
         status = "preflight_ready" if not blocked else "blocked_by_fixture"
     elif credit_blocks:
         status = "blocked_by_credit_quota"
-    elif live_report is not None and not live_report.passed:
+    elif any(not live_report.passed for live_report in live_reports):
         status = "hard_regression"
-    elif blocked or live_report is None:
+    elif quality_evaluation["status"] == "quality_regression":
+        status = "quality_regression"
+    elif blocked or not live_reports:
         status = "blocked_by_fixture"
+    elif quality_evaluation["status"] in {"awaiting_human_review", "not_run"}:
+        status = "awaiting_quality_review"
     else:
         status = "passed"
 
@@ -213,7 +274,11 @@ def run_evaluation_lab(
         catalog=_catalog_summary(specialized),
         ground_truth=ground_truth,
         scenario_preflight=preflight,
-        live_validation=live_report,
+        live_validation=live_reports[0] if live_reports else None,
+        live_validations=tuple(live_reports),
+        quality_evaluation=quality_evaluation,
+        task_dataset=task_dataset,
+        product_feedback=summarize_message_feedback(days=30, user=user),
         diagnostics=diagnostics,
         cleanup=cleanup,
         billing={
@@ -225,7 +290,15 @@ def run_evaluation_lab(
     )
 
 
+def _log_validation_failures(logger, repetition, report):
+    for scenario_result in report.scenarios:
+        for check in scenario_result.hard_failures:
+            logger.info("lab_check_failed repetition=%s check=%s", repetition, check.key)
+
+
 def _build_ground_truth(*, user: Any, scenarios: Mapping[str, Any]) -> dict[str, Any]:
+    from notas.application.culinary_library import load_culinary_candidates
+    culinary, _ = load_culinary_candidates(user=user)
     candidates = list_solver_food_candidates(user, limit=250)
     role_counts = Counter(candidate.role for candidate in candidates.candidates)
     solver_450 = _solver_450_probe(candidates.candidates)
@@ -234,6 +307,7 @@ def _build_ground_truth(*, user: Any, scenarios: Mapping[str, Any]) -> dict[str,
         for key, scenario in scenarios.items()
     }
     return {
+        "culinary_library": {"variants": len(culinary), "families": len({c.family for c in culinary})},
         "libraries": {
             "foods": food_library_queryset(user).count(),
             "meals": meal_library_queryset(user).count(),
@@ -283,10 +357,14 @@ def _scenario_preflight(scenario: Any, *, ground_truth: Mapping[str, Any]) -> di
     solver_candidates = ground_truth["solver_candidates"]
     scenario_truth = ground_truth["scenarios"].get(scenario.key, {})
     for requirement in scenario.fixture_requirements:
+        if requirement == "capability_fixture" and scenario_truth.get("missing_fixture_fields"):
+            failures.append({"requirement": requirement, "reason": "missing:" + ",".join(scenario_truth["missing_fixture_fields"])})
         if requirement == "owned_dailyplan" and not scenario_truth.get("context_dailyplan_id"):
             failures.append({"requirement": requirement, "reason": "no_owned_dailyplan"})
         elif requirement == "solver_candidates" and not solver_candidates["total_eligible_count"]:
             failures.append({"requirement": requirement, "reason": "no_solver_enabled_foods"})
+        elif requirement == "culinary_library" and not ground_truth.get("culinary_library", {}).get("variants"):
+            failures.append({"requirement": requirement, "reason": "no_validated_culinary_variants"})
         elif requirement == "solver_450_feasible":
             probe = ground_truth["solver_450_probe"]
             if not probe.get("feasible"):
@@ -313,6 +391,7 @@ def _scenario_preflight(scenario: Any, *, ground_truth: Mapping[str, Any]) -> di
         "capability_ids": list(scenario.capability_ids),
         "diagnostic_domains": list(scenario.diagnostic_domains),
         "mutation_policy": scenario.mutation_policy,
+        "expected_outcome": scenario.expected_outcome,
         "status": "ready" if not failures else "blocked_by_fixture",
         "failures": failures,
         "ground_truth": dict(scenario_truth),
@@ -344,6 +423,9 @@ def _catalog_summary(scenarios: Mapping[str, Any]) -> dict[str, Any]:
         "total_capabilities": len(rows),
         "coverage_states": dict(sorted(Counter(row["coverage"] for row in rows).items())),
         "selected_live_scenarios": len(scenarios),
+        "expected_outcomes": dict(
+            sorted(Counter(scenario.expected_outcome for scenario in scenarios.values()).items())
+        ),
         "mapped_capability_ids": sorted(mapped),
         "mapped_capability_count": len(mapped),
         "unknown_mapped_capability_ids": sorted(mapped.difference(identifiers)),
@@ -354,7 +436,8 @@ def _catalog_summary(scenarios: Mapping[str, Any]) -> dict[str, Any]:
 def _build_diagnostics(
     *,
     preflight: Sequence[Mapping[str, Any]],
-    live_report: RealProviderValidationReport | None,
+    live_report: RealProviderValidationReport | None = None,
+    live_reports: Sequence[RealProviderValidationReport] = (),
 ) -> dict[str, Any]:
     failures_by_domain: dict[str, list[dict[str, str]]] = defaultdict(list)
     for item in preflight:
@@ -372,8 +455,9 @@ def _build_diagnostics(
                 }
             )
 
-    if live_report is not None:
-        for result in live_report.scenarios:
+    reports = tuple(live_reports or ()) or ((live_report,) if live_report is not None else ())
+    for current_live_report in reports:
+        for result in current_live_report.scenarios:
             blocked_reasons = _scenario_credit_block_reasons(result)
             if blocked_reasons:
                 failures_by_domain["credit_quota"].append(
@@ -401,6 +485,8 @@ def _build_diagnostics(
                 for tool_result in turn.tool_results:
                     status = str(tool_result.get("status") or "")
                     if status in {"", "ok"}:
+                        continue
+                    if result.scenario.expected_tool_errors.get(str(tool_result.get("tool_name") or "")) == status:
                         continue
                     code = " ".join(
                         str(tool_result.get(key) or "")
@@ -470,13 +556,9 @@ def _review_artifact_ids(user: Any) -> dict[str, set[int]]:
     }
 
 
-def _cleanup_new_review_artifacts(*, user: Any, before: Mapping[str, set[int]]) -> dict[str, Any]:
-    proposal_ids = set(
-        NutritionProposal.objects.filter(created_by=user).values_list("id", flat=True)
-    ).difference(before.get("nutrition_proposals", set()))
-    action_ids = set(
-        AIPreparedAction.objects.filter(user=user).values_list("id", flat=True)
-    ).difference(before.get("prepared_actions", set()))
+def _cleanup_new_review_artifacts(*, user: Any, created: Mapping[str, set[int]]) -> dict[str, Any]:
+    proposal_ids = created.get("nutrition_proposals", set())
+    action_ids = created.get("prepared_actions", set())
 
     deletable_proposals = NutritionProposal.objects.filter(
         created_by=user,

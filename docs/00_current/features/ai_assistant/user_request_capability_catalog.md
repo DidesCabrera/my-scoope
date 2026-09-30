@@ -165,7 +165,7 @@ Leyenda de cobertura actual:
 | PG-05 | Asignar/quitar/reemplazar un plan en semana y día | Patch determinista | UI | Existe command; decisión 0195 todavía lo deja fuera del patch genérico. |
 | PG-06 | Reordenar semanas o días | Patch determinista | UI | Existen commands, faltan adapters de AI. |
 | PG-07 | Rellenar días vacíos con planes existentes | Patch compuesto o propuesta | Brecha | Determinista si el usuario indica el mapeo; propuesta si AI decide. |
-| PG-08 | Generar/optimizar un programa completo | Propuesta por etapas | Brecha | Necesita objetivos por día/semana, variedad, repetición y límites de escala. |
+| PG-08 | Generar/optimizar un programa completo | Propuesta revisable | Parcial | Genera 1–8 semanas completas con objetivos diarios constantes y rotación explícita de menús. Falta periodización y optimización global de variedad; validar escenarios live de 1 y 8 semanas. |
 | PG-09 | Copiar, guardar o compartir programa | Handoff | UI | Sharing opera sobre snapshots portables. |
 | PG-10 | Activar/calendarizar programa | Handoff confirmable | UI | Requiere fecha, timezone, revisión de días vacíos y posible reemplazo del activo. |
 

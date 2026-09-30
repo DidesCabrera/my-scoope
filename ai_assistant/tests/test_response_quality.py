@@ -24,18 +24,20 @@ class ResponseQualityPolicyTests(SimpleTestCase):
     def setUp(self):
         self.orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient(responses=[]))
 
-    def test_response_style_v3_treats_cards_as_visible_and_avoids_recitation(self):
+    def test_response_style_v4_treats_cards_as_visible_and_avoids_recitation(self):
         system_policy = "\n".join(system_response_style_lines())
         developer_policy = developer_response_style_policy()
         serialized = json.dumps(developer_policy, ensure_ascii=False)
 
-        self.assertEqual(ASSISTANT_RESPONSE_STYLE_VERSION, "ai_assistant_response_style.v3")
+        self.assertEqual(ASSISTANT_RESPONSE_STYLE_VERSION, "ai_assistant_response_style.v5")
         self.assertIn("cards ya son visibles", system_policy)
         self.assertIn("sin recitar sus campos", system_policy)
         self.assertIn("sin recitar payloads ni datos recién entregados", system_policy)
         self.assertIn("visible cards as known", serialized)
         self.assertIn("Explain tool consequences", serialized)
         self.assertIn("do not echo inputs or stock acknowledgements", serialized)
+        self.assertIn("Do not begin consecutive responses", serialized)
+        self.assertIn("No abras respuestas consecutivas", system_policy)
 
     def test_provider_prompt_contains_ba05_without_exact_copy_templates(self):
         system_prompt = self.orchestrator._system_prompt()
@@ -46,7 +48,7 @@ class ResponseQualityPolicyTests(SimpleTestCase):
         self.assertIn("response_style_policy", developer_payload)
         self.assertEqual(
             developer_payload["response_style_policy"]["version"],
-            "ai_assistant_response_style.v3",
+            "ai_assistant_response_style.v5",
         )
         self.assertNotIn("response_templates", serialized)
         self.assertNotIn("exact_phrase", serialized)

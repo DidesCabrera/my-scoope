@@ -31,6 +31,7 @@ PREFERENCE_DRAFT_FIELDS = (
 PROPOSAL_PREFERENCE_FIELDS = (
     "goal",
     "requested_entity",
+    "duration_weeks",
     "meals_per_day",
     "complexity_level",
     "energy_adjustment",

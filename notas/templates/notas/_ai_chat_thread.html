@@ -5,6 +5,23 @@
       {% if message.text %}
         <div class="ai-chat-bubble">
           <div class="ai-chat-bubble__content">{{ message.text|assistant_text }}</div>
+          {% if message.role == "assistant" and vm.content.chat_id %}
+            <form
+              method="post"
+              action="{% url 'ai_assistant_message_feedback' vm.content.chat_id forloop.counter0 %}"
+              class="ai-chat-feedback"
+              aria-label="Evaluar respuesta del asistente"
+            >
+              {% csrf_token %}
+              <span>¿Te sirvió?</span>
+              <button type="submit" name="rating" value="helpful" aria-label="Respuesta útil" title="Útil">
+                <i data-lucide="thumbs-up"></i>
+              </button>
+              <button type="submit" name="rating" value="not_helpful" aria-label="Respuesta no útil" title="No útil">
+                <i data-lucide="thumbs-down"></i>
+              </button>
+            </form>
+          {% endif %}
         </div>
       {% endif %}
 
