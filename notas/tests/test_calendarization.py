@@ -413,7 +413,10 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="home-calendar calendarization-current"')
         self.assertContains(response, 'class="calendarization-current__overview"')
-        self.assertContains(response, 'class="program-active-kpis program-active-kpis--standalone"')
+        self.assertContains(
+            response,
+            'class="program-active-kpis program-active-kpis--standalone program-active-kpis--metric-cards"',
+        )
         self.assertContains(response, "Ir a detalle de programa")
         self.assertContains(response, reverse("program_detail", args=[self.program.id]))
         self.assertContains(response, "calendarization-current__section-divider")
@@ -425,7 +428,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
             'class="program-board-shell calendarization-current__planning"',
         )
         self.assertContains(response, 'class="calendarization-actions"')
-        self.assertContains(response, 'class="card "')
+        self.assertContains(response, 'class="entity-card entity-card--dailyplan card "')
         self.assertContains(response, "card-kpi")
         self.assertContains(response, "Programa en curso")
         self.assertNotContains(response, "Reemplazar calendarización")
@@ -506,7 +509,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, "Día original")
         self.assertContains(response, "card-kpi")
 
-    def test_todays_plan_detail_uses_official_dailyplan_ui_and_embeds_meal_check_in(self):
+    def test_todays_plan_detail_uses_official_dailyplan_ui_with_meal_completion_controls(self):
         meal = Meal.objects.create(name="Almuerzo snapshot", created_by=self.user)
         food = Food.objects.create(
             name="Arroz integral",
@@ -529,17 +532,18 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
             now=datetime.combine(today, time(6), tzinfo=UTC),
         ).calendarization.days.get(day_number=1)
         day_url = reverse("calendarization_day_detail", args=[day.id])
-        meal_key = f"dailyplan_meal:{slot.id}"
-        check_in_url = reverse(
-            "calendarization_meal_check_in",
-            args=[day.id, meal_key],
-        )
-
         response = self.client.get(day_url)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-page="dailyplan-detail"')
         self.assertContains(response, 'class="card-title-comp js-header-meta-sentinel"')
+        self.assertContains(response, "Cumplimiento comidas")
+        self.assertContains(response, "Cumplimiento comidas: 0 de 1 completadas")
+        self.assertContains(
+            response,
+            'class="calendarization-meal-completion-summary__check is-pending"',
+            count=1,
+        )
         self.assertContains(response, 'class="dash-kpi-comp"', count=2)
         self.assertContains(response, "Tabla de comparación entre comidas")
         self.assertContains(response, "Detalle de cada Comida")
@@ -559,37 +563,29 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, 'aria-label="Ver detalle"', count=2)
         self.assertContains(response, 'data-lucide="chevron-right"')
         self.assertContains(response, "Cumplimiento de esta comida", count=1)
+        self.assertContains(response, "Comida cumplida", count=1)
         self.assertContains(response, "data-meal-checkin-status", count=1)
-        self.assertContains(response, f'name="return_to" value="{day_url}"', count=2)
+        self.assertContains(response, "calendarization_meal_checkin.js")
+        self.assertNotContains(response, "Nota de esta comida")
         self.assertNotContains(response, "calendarization-hero")
         self.assertNotContains(response, "calendarization-macros")
-
-        completed = self.client.post(
-            check_in_url,
-            {
-                "action": "completed",
-                "idempotency_key": "web-day-status-0001",
-                "return_to": day_url,
-            },
+        rendered = response.content.decode()
+        self.assertLess(
+            rendered.index('class="page-kpi"'),
+            rendered.index("calendarization-meal-completion-summary"),
         )
-        self.assertRedirects(completed, day_url)
-        noted = self.client.post(
-            check_in_url,
-            {
-                "action": "note",
-                "note": "Todo según lo planificado.",
-                "idempotency_key": "web-day-note-0001",
-                "return_to": day_url,
-            },
+        self.assertLess(
+            rendered.index("calendarization-meal-completion-summary"),
+            rendered.index('class="detail-section dailyplan"'),
         )
-        self.assertRedirects(noted, day_url)
-
-        updated = self.client.get(day_url)
-        self.assertContains(updated, "Todo según lo planificado.")
-        self.assertTrue(updated.context["vm"]["content"]["meal_entries"][0]["checkin"]["completed"])
-        self.assertEqual(
-            CalendarizedMealExecution.objects.filter(calendarized_day=day).count(),
-            2,
+        meal_card = rendered[rendered.index('id="calendarized-meal-step-1"') :]
+        self.assertLess(
+            meal_card.index('class="entity-card__main card-main"'),
+            meal_card.index("calendarization-meal-checkin__status--embedded"),
+        )
+        self.assertLess(
+            meal_card.index("calendarization-meal-checkin__status--embedded"),
+            meal_card.index('class="content-panel card-detail-block"'),
         )
 
     def test_plan_detail_hides_check_in_outside_today_and_external_return_is_rejected(self):
@@ -693,8 +689,19 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertEqual(events.filter(action="note").get().note, "Cumplida sin reemplazos.")
 
         detail = self.client.get(detail_url)
-        self.assertContains(detail, "Cumplimiento de esta comida")
+        self.assertContains(detail, 'class="calendarization-meal-checkin__status"')
         self.assertContains(detail, "Comida cumplida")
+        self.assertContains(detail, "Nota de esta comida")
+        self.assertNotContains(detail, "calendarization-meal-checkin__divider")
+        rendered_detail = detail.content.decode()
+        self.assertLess(
+            rendered_detail.index('class="page-kpi calendarization-meal-detail__kpis"'),
+            rendered_detail.index('class="calendarization-meal-checkin__status"'),
+        )
+        self.assertLess(
+            rendered_detail.index('class="calendarization-meal-checkin__status"'),
+            rendered_detail.index('class="detail-section"'),
+        )
         self.assertContains(detail, "Guardar nota")
         self.assertContains(detail, 'class="structural-item structural-item--time"')
         self.assertContains(detail, 'data-lucide="clock"')
@@ -734,7 +741,8 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         detail_url = reverse("calendarization_meal_detail", args=[day.id, meal_key])
 
         detail = self.client.get(detail_url)
-        self.assertContains(detail, "Cumplimiento de esta comida")
+        self.assertContains(detail, 'class="calendarization-meal-checkin__status"')
+        self.assertContains(detail, "Nota de esta comida")
         response = self.client.post(
             reverse("calendarization_meal_check_in", args=[day.id, meal_key]),
             {

@@ -1,0 +1,21 @@
+<form
+  action="{% url 'calendarization_meal_check_in' checkin.day.id checkin.meal.key %}"
+  method="post"
+  class="calendarization-meal-checkin__status{% if embedded %} calendarization-meal-checkin__status--embedded{% endif %}"
+  aria-label="Cumplimiento de esta comida"
+  data-meal-checkin-status
+>
+  {% csrf_token %}
+  <input type="hidden" name="idempotency_key" value="{{ checkin.status_idempotency_key }}">
+  <input type="hidden" name="action" value="{% if checkin.completed %}skipped{% else %}completed{% endif %}" data-meal-checkin-action>
+  {% if checkin.return_to %}<input type="hidden" name="return_to" value="{{ checkin.return_to }}">{% endif %}
+  <label for="meal-completed-{{ checkin.instance_id }}">
+    <strong>Comida cumplida</strong>
+    <input
+      id="meal-completed-{{ checkin.instance_id }}"
+      type="checkbox"
+      data-meal-checkin-checkbox
+      {% if checkin.completed %}checked{% endif %}
+    >
+  </label>
+</form>

@@ -413,7 +413,7 @@ def _build_review_attachments(
 ) -> list[dict[str, str]]:
     intent_contract = get_proposal_intent_contract(intent)
     if intent == "create_program":
-        return [{"kind": "program", "label": "Programa semanal", "name": proposed_payload.get("program", {}).get("name", ""), "icon": "calendar-days"}]
+        return [{"kind": "program", "label": "Programa semanal", "name": proposed_payload.get("program", {}).get("name", ""), "icon": "calendar"}]
 
     if intent == CREATE_MEAL_INTENT:
         meal = _safe_dict(proposed_payload.get("meal"))

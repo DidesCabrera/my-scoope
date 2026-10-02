@@ -26,8 +26,13 @@
         {% endfor %}
       </div>
     {% endif %}
-    {% if titulo.badges %}
+    {% if titulo.badges or portion_quantity != None %}
       <div class="card-title-badges" aria-label="Características">
+        {% if portion_quantity != None %}
+          <span class="picker-result-badge picker-result-badge--unit">
+            {{ portion_quantity|floatformat:"-2" }}{{ portion_unit|default:"g" }}
+          </span>
+        {% endif %}
         {% for badge in titulo.badges %}
           <span class="picker-result-badge picker-result-badge--{{ badge.modifier }}">
             {{ badge.label }}

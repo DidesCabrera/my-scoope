@@ -33,8 +33,12 @@ class HomeCalendarizationTests(TestCase):
         response = self._get_home()
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Calendarización")
-        self.assertContains(response, "Consulta el plan de hoy")
+        self.assertContains(response, "Tu Plan para hoy, miércoles 15 de jul")
+        self.assertContains(response, "Tu Programa Activo")
+        self.assertContains(response, "Vamos, @home-calendar")
+        self.assertContains(response, "Peso actual:")
+        self.assertContains(response, "home-calendar__weight-chip")
+        self.assertNotContains(response, "home-brand-entities")
         self.assertContains(response, "Mis Librerias")
         self.assertContains(response, "Resume tus programas, planes diarios, comidas y alimentos")
         self.assertContains(response, "Organiza estructuras semanales")
@@ -54,9 +58,11 @@ class HomeCalendarizationTests(TestCase):
         self.assertContains(response, reverse("calendarization_dashboard"))
         self.assertNotContains(response, 'type="button" aria-label="Semana anterior"')
         self.assertNotContains(response, 'type="button" aria-label="Semana siguiente"')
-        self.assertNotContains(response, "home-calendar__week-slider")
+        self.assertContains(response, "home-calendar__week-slider")
+        self.assertContains(response, "program-week-days-layout is-active")
         self.assertNotContains(response, "data-home-calendar-day")
-        self.assertContains(response, "No tienes un programa calendarizado")
+        self.assertContains(response, "Aún no hay programa activo")
+        self.assertContains(response, "No hay un plan nutricional asignado para hoy.")
         calendarization = response.context["vm"]["content"]["calendarization"]
         self.assertEqual(len(calendarization["days"]), 7)
         self.assertEqual(calendarization["days"][0]["iso_date"], "2026-07-13")
@@ -126,18 +132,29 @@ class HomeCalendarizationTests(TestCase):
         response = self._get_home()
 
         self.assertContains(response, "Programa Fuerza")
-        self.assertContains(response, "Programa Calendarizado")
+        self.assertContains(response, "Programa activo")
         self.assertNotContains(response, "program-active-kpis__period")
         self.assertContains(response, "Días transcurridos")
+        self.assertContains(response, "program-active-kpis--metric-cards")
         self.assertContains(response, "Adhesión")
         self.assertContains(response, "3/7")
         self.assertContains(response, "Plan calendarizado")
         self.assertContains(response, "Comida snapshot")
         self.assertContains(response, "Avena snapshot")
         self.assertNotContains(response, "Plan de potencia")
-        self.assertContains(response, 'class="card home-calendar__dailyplan-card"')
+        self.assertContains(
+            response,
+            'class="entity-card entity-card--dailyplan card home-calendar__dailyplan-card"',
+        )
         self.assertNotContains(response, "El programa calendarizado no tiene un plan asignado a esta fecha.")
-        self.assertNotContains(response, "home-calendar__week-slider")
+        self.assertContains(response, "home-calendar__week-slider")
+        self.assertContains(response, "Tu Plan para hoy, miércoles 15 de jul")
+        self.assertContains(response, "Tu Programa Activo")
+        html = response.content.decode()
+        self.assertLess(
+            html.index('class="home-calendar__plan-panel"'),
+            html.index('class="home-active-program"'),
+        )
         self.assertNotContains(response, "Sin plan diario")
         calendarization_vm = response.context["vm"]["content"]["calendarization"]
         self.assertEqual(calendarization_vm["end_label"], "19 jul")
@@ -207,7 +224,7 @@ class HomeCalendarizationTests(TestCase):
 
         response = self._get_home({"calendar_week": "2026-07-20", "calendar_date": "2026-07-27"})
 
-        self.assertNotContains(response, "home-calendar__week-slider")
+        self.assertContains(response, "home-calendar__week-slider")
         self.assertNotContains(response, "data-home-calendar-day-link")
         calendarization_vm = response.context["vm"]["content"]["calendarization"]
         self.assertTrue(calendarization_vm["has_multiple_weeks"])

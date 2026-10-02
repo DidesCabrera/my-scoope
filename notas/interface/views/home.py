@@ -101,7 +101,7 @@ def home_view(request):
             HomeStatVM(
                 label="Programas Semanales",
                 value=programs_count,
-                icon="calendar-days",
+                icon="calendar",
                 url=reverse("program_list"),
             ),
             HomeStatVM(

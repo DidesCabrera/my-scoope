@@ -58,8 +58,9 @@
   </section>
 
   <section class="ui-system-gallery__section" id="program-active-kpis">
-    <div class="ui-system-gallery__section-heading"><div><p>Propuesta · Product component</p><h2>KPI de programa en curso</h2></div><code>components/program_active_kpis.html</code></div>
-    <div class="ui-system-gallery__canvas">{% include "components/program_active_kpis.html" with program_kpis=gallery.program_kpis standalone=True %}</div>
+    <div class="ui-system-gallery__section-heading"><div><p>Product component</p><h2>Días transcurridos y adherencia</h2></div><code>components/program_active_kpis.html · metric_cards</code></div>
+    <p class="ui-system-gallery__help">Indicadores reutilizables del programa activo. Home y Calendarizador consumen esta misma variante.</p>
+    <div class="ui-system-gallery__canvas">{% include "components/program_active_kpis.html" with program_kpis=gallery.program_kpis standalone=True metric_cards=True %}</div>
   </section>
 
   <section class="ui-system-gallery__section" id="components">

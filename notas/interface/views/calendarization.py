@@ -253,6 +253,14 @@ def day_detail(request, day_id):
         )
         execution = meal_execution_state_for_day(day)
         state_by_key = {item["meal_key"]: item for item in execution}
+        completion_items = [
+            {
+                "name": meal["name"],
+                "completed": state_by_key.get(meal["key"], {}).get("status") == "completed",
+            }
+            for meal in detail["calendarized_meals"]
+            if meal["key"]
+        ]
         can_check_in = _can_check_in_today(day)
         return_to = reverse("calendarization_day_detail", args=[day.id])
         meal_entries = []
@@ -286,7 +294,13 @@ def day_detail(request, day_id):
             )
         content.update(detail)
         content["day"] = day
+        content["can_check_in"] = can_check_in
         content["meal_entries"] = meal_entries
+        content["meal_completion"] = {
+            "completed_count": sum(item["completed"] for item in completion_items),
+            "total_count": len(completion_items),
+            "items": completion_items,
+        }
 
     return render(
         request,

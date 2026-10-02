@@ -66,6 +66,7 @@ class HomeCalendarDayVM:
     month_label: str
     iso_date: str
     accessible_date: str
+    home_plan_date_label: str
     date_label: str
     temporal_state: str
     is_today: bool
@@ -138,6 +139,10 @@ def _accessible_date(value: date, *, is_today: bool) -> str:
 
 def _compact_date_label(value: date) -> str:
     return f"{value.day} {MONTH_LABELS[value.month - 1]}"
+
+
+def _home_plan_date_label(value: date) -> str:
+    return f"{WEEKDAY_NAMES[value.weekday()]} {value.day} de {MONTH_LABELS[value.month - 1]}"
 
 
 def _week_start_from_param(value: str | None, fallback: date) -> date:
@@ -371,6 +376,7 @@ def _build_week_vm(
                 month_label=MONTH_LABELS[calendar_date.month - 1],
                 iso_date=calendar_date.isoformat(),
                 accessible_date=_accessible_date(calendar_date, is_today=is_today),
+                home_plan_date_label=_home_plan_date_label(calendar_date),
                 date_label=_compact_date_label(calendar_date),
                 temporal_state=temporal_state,
                 is_today=is_today,

@@ -2,14 +2,18 @@
  
         <div class="card-title main">
             {% include "components/card_main_title.html" with titulo=main_card.titulo %}
-        </div>    
-        
+        </div>
+
         <div class="page-kpi">
 
             <div class="card-kpi main">
                 {% include "components/dash_kpi.html" with kpis=main_card.kpis %}
             </div>
         </div>
+
+        {% if meal_completion %}
+            {% include "components/calendarization_meal_completion_summary.html" with completion=meal_completion %}
+        {% endif %}
 
 
     <!-- TABLE ========================================= -->

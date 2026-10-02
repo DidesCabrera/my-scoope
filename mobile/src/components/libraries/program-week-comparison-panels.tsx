@@ -1,6 +1,6 @@
 import { Copy, GripVertical, Pencil, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { Alert, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { Alert, Pressable, type StyleProp, StyleSheet, Text, type TextStyle, View, type ViewStyle } from "react-native";
 import { NestableDraggableFlatList, ScaleDecorator } from "react-native-draggable-flatlist";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
@@ -36,20 +36,33 @@ function integer(value: number): string {
   return Number.isFinite(value) ? Math.round(value).toLocaleString("es-CL") : "0";
 }
 
+function averagePerPlan(value: number, plans: number): number | null {
+  return plans > 0 ? value / plans : null;
+}
+
 function WeekIdentity({ week }: { week: number }) {
   return (
     <View style={styles.weekIdentity}>
       <EntityIcon entity="program" size="compact" />
-      <Text style={styles.weekName}>S{week}</Text>
+      <Text style={styles.weekName}>Semana {week}</Text>
     </View>
   );
 }
 
-function Header<Key extends string>({ columns, leadingKey, onSort, sort }: { columns: { key: Key; label: string; style?: StyleProp<ViewStyle> }[]; leadingKey: Key; onSort(key: Key): void; sort: PanelSortState<Key> }) {
+function CalorieVariationBadge({ value }: { value: number | null }) {
+  const label = value === null ? "—" : `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+  return (
+    <View accessibilityLabel={`Variación de calorías: ${label}`} accessible style={styles.calorieVariationBadge}>
+      <Text numberOfLines={1} style={styles.calorieVariationBadgeText}>{label}</Text>
+    </View>
+  );
+}
+
+function Header<Key extends string>({ columns, leadingKey, onSort, sort }: { columns: { key: Key; label: string; style?: StyleProp<ViewStyle>; textStyle?: StyleProp<TextStyle> }[]; leadingKey: Key; onSort(key: Key): void; sort: PanelSortState<Key> }) {
   return (
     <View style={[styles.row, styles.header]}>
       <SortablePanelHeaderCell align="left" direction={sort?.key === leadingKey ? sort.direction : undefined} label="Semana" onPress={() => onSort(leadingKey)} style={styles.leadingCell} />
-      {columns.map((column) => <SortablePanelHeaderCell direction={sort?.key === column.key ? sort.direction : undefined} key={`${column.key}-${column.label}`} label={column.label} onPress={() => onSort(column.key)} style={[styles.dataCell, column.style]} />)}
+      {columns.map((column) => <SortablePanelHeaderCell direction={sort?.key === column.key ? sort.direction : undefined} key={`${column.key}-${column.label}`} label={column.label} onPress={() => onSort(column.key)} style={[styles.dataCell, column.style]} textStyle={column.textStyle} />)}
     </View>
   );
 }
@@ -69,23 +82,20 @@ function CaloriesPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks:
     const previous = weeks[index - 1];
     return [week.id, previous ? ((week.averageCalories - previous.averageCalories) / previous.averageCalories) * 100 : null] as const;
   }));
-  const sorting = useTemporaryPanelSort(weeks, { average: (week) => week.averageCalories, calories: (week) => week.calories, delta: (week) => deltas.get(week.id), plans: (week) => week.dailyPlans, week: (item) => item.week });
+  const sorting = useTemporaryPanelSort(weeks, { average: (week) => week.averageCalories, calories: (week) => week.calories, delta: (week) => deltas.get(week.id), week: (item) => item.week });
   const visibleWeeks = sorting.items;
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay datos calóricos." />;
   return (
     <PanelBody>
-      <Header columns={[{ key: "calories", label: "Cal" }, { key: "plans", label: "Planes" }, { key: "average", label: "Prom." }, { key: "delta", label: "Vs. ant." }]} leadingKey="week" {...sorting} />
+      <Header columns={[{ key: "calories", label: "Cal" }, { key: "average", label: "CAL prom", textStyle: styles.mixedCaseHeaderText }, { key: "delta", label: "% var", textStyle: styles.mixedCaseHeaderText }]} leadingKey="week" {...sorting} />
       <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => {
         const delta = deltas.get(week.id) ?? null;
         return (
           <View key={week.id} style={[styles.row, index === visibleWeeks.length - 1 && styles.rowLast]}>
             <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
             <Text style={[styles.cell, styles.dataCell]}>{integer(week.calories)}</Text>
-            <Text style={[styles.cell, styles.dataCell]}>{week.dailyPlans}</Text>
             <Text style={[styles.cell, styles.dataCell]}>{integer(week.averageCalories)}</Text>
-            <Text style={[styles.cell, styles.dataCell]}>
-              {delta === null ? "—" : `${delta > 0 ? "+" : ""}${delta.toFixed(1)}%`}
-            </Text>
+            <View style={[styles.dataCell, styles.calorieVariationCell]}><CalorieVariationBadge value={delta} /></View>
           </View>
         );
       }} />
@@ -94,19 +104,19 @@ function CaloriesPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks:
 }
 
 function MacrosPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
-  const sorting = useTemporaryPanelSort(weeks, { carbs: (week) => week.carbsGrams, fat: (week) => week.fatGrams, ppk: (week) => week.ppk, protein: (week) => week.proteinGrams, week: (item) => item.week });
+  const sorting = useTemporaryPanelSort(weeks, { carbs: (week) => averagePerPlan(week.carbsGrams, week.dailyPlans), fat: (week) => averagePerPlan(week.fatGrams, week.dailyPlans), ppk: (week) => week.ppk, protein: (week) => averagePerPlan(week.proteinGrams, week.dailyPlans), week: (item) => item.week });
   const visibleWeeks = sorting.items;
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay datos de macros." />;
   return (
     <PanelBody>
-      <Header columns={[{ key: "ppk", label: "PpK" }, { key: "protein", label: "P g" }, { key: "carbs", label: "C g" }, { key: "fat", label: "F g" }]} leadingKey="week" {...sorting} />
+      <Header columns={[{ key: "ppk", label: "PpK" }, { key: "protein", label: "Pg", textStyle: styles.mixedCaseHeaderText }, { key: "carbs", label: "Cg", textStyle: styles.mixedCaseHeaderText }, { key: "fat", label: "Fg", textStyle: styles.mixedCaseHeaderText }]} leadingKey="week" {...sorting} />
       <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => (
         <View key={week.id} style={[styles.row, index === visibleWeeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
           <View style={[styles.dataCell, styles.ppkCell]}>{week.ppk == null ? <Text style={styles.emptyValue}>—</Text> : <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={week.ppk} />}</View>
-          <Text style={[styles.cell, styles.dataCell]}>{integer(week.proteinGrams)}</Text>
-          <Text style={[styles.cell, styles.dataCell]}>{integer(week.carbsGrams)}</Text>
-          <Text style={[styles.cell, styles.dataCell]}>{integer(week.fatGrams)}</Text>
+          <Text style={[styles.cell, styles.dataCell]}>{week.dailyPlans > 0 ? integer(week.proteinGrams / week.dailyPlans) : "—"}</Text>
+          <Text style={[styles.cell, styles.dataCell]}>{week.dailyPlans > 0 ? integer(week.carbsGrams / week.dailyPlans) : "—"}</Text>
+          <Text style={[styles.cell, styles.dataCell]}>{week.dailyPlans > 0 ? integer(week.fatGrams / week.dailyPlans) : "—"}</Text>
         </View>
       )} />
     </PanelBody>
@@ -265,10 +275,14 @@ const styles = StyleSheet.create({
   header: { minHeight: 32 },
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, textAlign: "center", textTransform: "uppercase" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, textAlign: "center" },
-  leadingCell: { flexBasis: "25%", flexGrow: 0, flexShrink: 0, minWidth: 0, textAlign: "left" },
+  leadingCell: { flexBasis: "30%", flexGrow: 0, flexShrink: 0, minWidth: 0, textAlign: "left" },
   dataCell: { flex: 1, minWidth: 0 },
   weekIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   weekName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  mixedCaseHeaderText: { textTransform: "none" },
+  calorieVariationCell: { alignItems: "stretch", justifyContent: "center", paddingHorizontal: 2 },
+  calorieVariationBadge: { alignItems: "center", backgroundColor: tokens.color.kcalBorder, borderRadius: 5, justifyContent: "center", minHeight: 22, paddingHorizontal: 3 },
+  calorieVariationBadgeText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0 },
   allocationRow: { gap: tokens.spacing.sm },
   ppkCell: { alignItems: "stretch", justifyContent: "center", paddingHorizontal: 2 },
   ppkBadge: { height: 22, minHeight: 22 },

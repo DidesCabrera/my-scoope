@@ -30,9 +30,9 @@ class UISystemGalleryTests(TestCase):
         self.assertContains(response, 'class="dash-kpi-comp"')
         self.assertContains(
             response,
-            'class="program-active-kpis program-active-kpis--standalone"',
+            'class="program-active-kpis program-active-kpis--standalone program-active-kpis--metric-cards"',
         )
-        self.assertContains(response, "KPI de programa en curso")
+        self.assertContains(response, "Días transcurridos y adherencia")
         self.assertContains(response, "list-page-header--program")
         self.assertContains(response, "list-page-header--library")
         self.assertContains(response, "list-page-header--stacked")

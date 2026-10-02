@@ -143,7 +143,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(programWeekPanels, /<PanelAllocationBar size="compact"/);
   assertSourceMatch(programWeekPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
   assertSourceDoesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.(?:protein|carbs|fat)(?:[,}\]])/);
-  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK" \}, \{ key: "protein", label: "P g" \}, \{ key: "carbs", label: "C g" \}, \{ key: "fat", label: "F g" \}\]\}/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK" \}, \{ key: "protein", label: "Pg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "carbs", label: "Cg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "fat", label: "Fg", textStyle: styles\.mixedCaseHeaderText \}\]\}/);
   assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "F%" \}, \{ key: "protein", label: "P\|C\|F"/);
   assertSourceMatch(programWeekPanels, /SortablePanelHeaderCell/);
   assertSourceMatch(programWeekPanels, /useTemporaryPanelSort/);
