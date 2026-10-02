@@ -84,7 +84,7 @@ export default function InboxScreen() {
       headerMode="preserve"
       onHeaderVisibilityChange={setCompactHeaderVisible}
       refreshControl={<RefreshControl onRefresh={() => void load(true)} refreshing={refreshing} tintColor={tokens.color.interactivePrimary} />}
-      scrollHeader={<SectionPageHeader section="inbox" title="Compartidos" />}
+      scrollHeader={<SectionPageHeader countLabel="elementos" section="inbox" title="Compartidos" />}
       stickyHeader={<DistributedTabBar<SharingScope>
         accessibilityLabel="Tipo de contenido compartido"
         activeTab={activeScope}

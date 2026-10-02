@@ -7,6 +7,7 @@ import {
   applyComparatorSelection,
   initialComparisonSlots,
 } from "../src/components/comparisons/comparison-state";
+import { assertSourceDoesNotMatch, assertSourceMatch } from "./support/source-contract";
 
 test("comparison builder starts with two independent empty slots", () => {
   const slots = initialComparisonSlots();
@@ -20,40 +21,40 @@ test("comparison builder starts with two independent empty slots", () => {
 
 test("saved comparison results omit the explanatory snapshot notice", async () => {
   const source = await readFile(path.resolve(process.cwd(), "src/components/comparisons/comparison-result.tsx"), "utf8");
-  assert.doesNotMatch(source, /fotografía guardada|historical_snapshot|InlineNotice/);
-  assert.match(source, /<SectionHeading title="Resultados comparativos" \/>/);
-  assert.doesNotMatch(source, /SectionTitle/);
+  assertSourceDoesNotMatch(source, /fotografía guardada|historical_snapshot|InlineNotice/);
+  assertSourceMatch(source, /<SectionHeading title="Resultados comparativos" \/>/);
+  assertSourceDoesNotMatch(source, /SectionTitle/);
 });
 
 test("comparison result rows omit numeric position badges", async () => {
   const source = await readFile(path.resolve(process.cwd(), "src/components/comparisons/comparison-result.tsx"), "utf8");
-  assert.doesNotMatch(source, /positionBadge|positionText|>\{bar\.position\}<\/Text>/);
+  assertSourceDoesNotMatch(source, /positionBadge|positionText|>\{bar\.position\}<\/Text>/);
 });
 
 test("comparison percentage bars match the compact progress height", async () => {
   const source = await readFile(path.resolve(process.cwd(), "src/components/comparisons/comparison-result.tsx"), "utf8");
-  assert.match(source, /track: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*height: 10/);
+  assertSourceMatch(source, /track: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*height: 10/);
 });
 
 test("saved comparison detail switches between result cards and entity cards", async () => {
   const source = await readFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
-  assert.match(source, /<DistributedTabBar<DetailTab>/);
-  assert.match(source, /<View style=\{styles\.tabsBleed\}>[\s\S]*<DistributedTabBar<DetailTab>/);
-  assert.match(source, /tabsBleed: \{ alignSelf: "stretch", marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
-  assert.match(source, /scrollHeader=\{<AppHeader/);
-  assert.match(source, /stickyHeader=\{<View style=\{styles\.tabsBleed\}>/);
-  assert.match(source, /onHeaderVisibilityChange=\{setCompactHeaderVisible\}/);
-  assert.match(source, /identityVisible: compactHeaderVisible/);
-  assert.match(source, /`Comparación \$\{entityTabLabels\[comparison\.kind\]\}`/);
-  assert.match(source, /action: comparisonId != null \? \{ icon: "more", label: "Acciones de comparación"/);
-  assert.match(source, /<SavedComparisonActions/);
-  assert.doesNotMatch(source, /<Button[^>]*label="Editar comparación"|Usar en el Asistente|Volver a guardadas/);
-  assert.match(source, /key: "cards", label: "Cards"/);
-  assert.match(source, /label: entityTabLabels\[kind\]/);
-  assert.match(source, /activeTab === "cards" \? <ComparisonResultCards/);
-  assert.match(source, /Promise\.all\(saved\.items\.map\(\(item\) => apiRequest<LibraryItem>/);
-  assert.match(source, /activeTab === "entities" \? entityItems\.map/);
-  assert.match(source, /<LibraryCard apiRequest=\{apiRequest\} interactive=\{false\} item=\{item\}[^>]*navigable/);
+  assertSourceMatch(source, /<DistributedTabBar<DetailTab>/);
+  assertSourceMatch(source, /<View style=\{styles\.tabsBleed\}>[\s\S]*<DistributedTabBar<DetailTab>/);
+  assertSourceMatch(source, /tabsBleed: \{ alignSelf: "stretch", marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
+  assertSourceMatch(source, /scrollHeader=\{<AppHeader/);
+  assertSourceMatch(source, /stickyHeader=\{<View style=\{styles\.tabsBleed\}>/);
+  assertSourceMatch(source, /onHeaderVisibilityChange=\{setCompactHeaderVisible\}/);
+  assertSourceMatch(source, /identityVisible: compactHeaderVisible/);
+  assertSourceMatch(source, /`Comparación \$\{entityTabLabels\[comparison\.kind\]\}`/);
+  assertSourceMatch(source, /action: comparisonId != null \? \{ icon: "more", label: "Acciones de comparación"/);
+  assertSourceMatch(source, /<SavedComparisonActions/);
+  assertSourceDoesNotMatch(source, /<Button[^>]*label="Editar comparación"|Usar en el Asistente|Volver a guardadas/);
+  assertSourceMatch(source, /key: "cards", label: "Cards"/);
+  assertSourceMatch(source, /label: entityTabLabels\[kind\]/);
+  assertSourceMatch(source, /activeTab === "cards" \? <ComparisonResultCards/);
+  assertSourceMatch(source, /Promise\.all\(saved\.items\.map\(\(item\) => apiRequest<LibraryItem>/);
+  assertSourceMatch(source, /activeTab === "entities" \? entityItems\.map/);
+  assertSourceMatch(source, /<LibraryCard apiRequest=\{apiRequest\} interactive=\{false\} item=\{item\}[^>]*navigable/);
 });
 
 test("picker result updates only its destination without mutating prior state", () => {

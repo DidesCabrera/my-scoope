@@ -90,7 +90,7 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inbox, /icon: \(selected\) => <Send color=\{selected \? tokens\.color\.surfaceApp : tokens\.color\.textMuted\}/);
   assertSourceMatch(inbox, /count: data\?\.received\.count \?\? 0/);
   assertSourceMatch(inbox, /count: data\?\.sent\.count \?\? 0/);
-  assertSourceMatch(inbox, /<Screen[\s\S]*scrollHeader=\{<SectionPageHeader section="inbox" title="Compartidos" \/>\}/);
+  assertSourceMatch(inbox, /<Screen[\s\S]*scrollHeader=\{<SectionPageHeader countLabel="elementos" section="inbox" title="Compartidos" \/>\}/);
   assertSourceMatch(inbox, /stickyHeader=\{<DistributedTabBar<SharingScope>/);
   assertSourceMatch(inbox, /stickyHeaderStyle=\{styles\.stickyHeader\}/);
   assertSourceMatch(inbox, /stickyHeader: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding, paddingTop: tokens\.spacing\.sm \}/);
