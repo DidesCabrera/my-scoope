@@ -67,7 +67,7 @@ test("empty drafts hide nutrition comparisons until they have comparable content
   assert.match(detail, /const isEmptyDraft = item\.is_draft && panelCount === 0/);
   assert.match(detail, /const detailIndicators = isEmptyDraft \? undefined/);
   assert.match(detail, /showNutrition=\{!isEmptyDraft\}/);
-  assert.match(detailPage, /showNutrition \? <NutritionKpiSection/);
+  assert.match(detailPage, /showNutrition \? <View style=\{styles\.kpiSection\}><NutritionKpiSection/);
   assert.match(program, /const hasPlans = filledDaysCount > 0/);
   assert.match(program, /const showProgramComparison = !item \|\| weeksCount > 1/);
   assert.match(program, /const showProgramStructure = !item \|\| plansCount > 0 \|\| weeksCount > 1/);

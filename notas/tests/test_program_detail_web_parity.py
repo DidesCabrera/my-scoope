@@ -2,7 +2,6 @@ from pathlib import Path
 
 from django.test import SimpleTestCase
 
-
 TEMPLATES = Path(__file__).resolve().parents[1] / "templates" / "components"
 STATIC = Path(__file__).resolve().parents[1] / "static" / "notas"
 
