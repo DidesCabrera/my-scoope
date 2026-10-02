@@ -1,26 +1,26 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { MessageCircle } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { AIChatListData, AIChatSummary, ProposalListData, ProposalStatus, ProposalSummary } from "@/api/types";
+import type { AIChatListData, AIChatSummary, ProposalListData, ProposalSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantListActions } from "@/components/assistant/assistant-list-actions";
 import { AssistantSectionTabs, type AssistantSection } from "@/components/assistant/assistant-section-tabs";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { SectionPageHeader } from "@/components/ui";
+import { SectionIcon, SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, InlineNotice, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
+import { Button, Card, InlineNotice, LoadingState, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
+import { formatCompactDate } from "@/presentation/date";
 
-const statusColors: Record<ProposalStatus, string> = {
-  applied: tokens.color.success,
-  approved: tokens.color.interactivePrimary,
-  cancelled: tokens.color.textSoft,
-  draft: tokens.color.textSoft,
-  pending_review: tokens.color.warning,
-  rejected: tokens.color.danger,
+const proposalEntityColors: Record<ProposalSummary["attachment_kind"], string> = {
+  brief: tokens.color.proposal,
+  dailyplan: tokens.color.dailyPlan,
+  meal: tokens.color.meal,
+  program: tokens.color.program,
 };
 
 function ChatCard({ chat, onPress }: { chat: AIChatSummary; onPress(): void }) {
@@ -29,10 +29,13 @@ function ChatCard({ chat, onPress }: { chat: AIChatSummary; onPress(): void }) {
       <Card>
         <View style={styles.row}>
           <View style={styles.copy}>
+            <View style={styles.eyebrowRow}>
+              <MessageCircle color={tokens.color.textMain} size={16} strokeWidth={2} />
+              <Text style={styles.eyebrow}>Chat</Text>
+            </View>
             <Text style={styles.title}>{chat.title}</Text>
-            <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(chat.updated_at))}</Text>
+            <Text style={textStyles.caption}>{formatCompactDate(chat.updated_at) ?? "Fecha no disponible"}</Text>
           </View>
-          <Pill label={chat.status_label} />
         </View>
         <Text numberOfLines={3} style={textStyles.muted}>{chat.last_message_preview}</Text>
         <Text style={textStyles.caption}>{chat.message_count} mensajes · Continuar ›</Text>
@@ -42,20 +45,22 @@ function ChatCard({ chat, onPress }: { chat: AIChatSummary; onPress(): void }) {
 }
 
 function displayDate(value: string | null): string {
-  if (!value) return "Sin fecha";
-  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
+  return formatCompactDate(value) ?? "Sin fecha";
 }
 
 function ProposalCard({ proposal, onPress }: { proposal: ProposalSummary; onPress(): void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Card>
+      <Card accent={proposalEntityColors[proposal.attachment_kind]}>
         <View style={styles.row}>
           <View style={styles.copy}>
-            <Text style={styles.source}>{proposal.source === "ai" ? "AI" : proposal.source.toUpperCase()} · {displayDate(proposal.created_at)}</Text>
+            <View style={styles.eyebrowRow}>
+              <SectionIcon section="proposal" size="compact" />
+              <Text style={styles.eyebrow}>Propuesta</Text>
+            </View>
             <Text style={styles.title}>{proposal.title}</Text>
+            <Text style={textStyles.caption}>{displayDate(proposal.created_at)}</Text>
           </View>
-          <Pill color={statusColors[proposal.status]} label={proposal.status_label} />
         </View>
         {proposal.summary ? <Text numberOfLines={3} style={textStyles.muted}>{proposal.summary}</Text> : null}
         <View style={styles.attachment}>
@@ -186,10 +191,11 @@ const styles = StyleSheet.create({
   copy: { flex: 1, gap: 4 },
   creditCopy: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   creditTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
+  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
+  eyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   pressed: { opacity: 0.65 },
   row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   scrollHeader: { alignSelf: "stretch", gap: tokens.spacing.md },
-  source: { color: tokens.color.textSoft, fontSize: 11, fontWeight: "900", letterSpacing: 1.1, textTransform: "uppercase" },
   stickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
 });

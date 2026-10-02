@@ -2,7 +2,7 @@ import { Paperclip } from "lucide-react-native";
 import type { PropsWithChildren, ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { Button, Card, SectionHeading } from "@/components/ui";
+import { Button, Card, SectionDivider, SectionHeading } from "@/components/ui";
 import type { EntityKind } from "@/components/ui";
 import { NutritionKpiSection, type NutritionKpiSectionProps } from "@/components/nutrition";
 import { tokens } from "@/design/tokens";
@@ -30,12 +30,12 @@ export function ProposalDetailPage({
         </View>
         {summary || objectives ? (
           <View style={styles.requestSection}>
-            <SectionHeading title="Detalles de la propuesta" />
+            <SectionHeading title="Requerimiento" />
             {summary ? <ProposalRequestSummary objectives={objectives} requirement={summary} /> : objectives}
           </View>
         ) : null}
       </View>
-      {proposedEntity}
+      {proposedEntity ? <><SectionDivider spacing="compact" />{proposedEntity}</> : null}
       {children}
     </View>
   );
@@ -45,7 +45,6 @@ export function ProposalRequestSummary({ objectives, requirement }: { objectives
   return (
     <View style={styles.requestSummary}>
       <View style={styles.requestCopy}>
-        <Text style={proposalTextStyles.eyebrow}>Requerimiento</Text>
         <Text style={styles.requestText}>{requirement}</Text>
       </View>
       {objectives}
@@ -127,7 +126,7 @@ const styles = StyleSheet.create({
   badges: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   type: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   typeText: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, textTransform: "uppercase" },
-  requestSummary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.md, padding: tokens.card.outerPadding },
+  requestSummary: { backgroundColor: "transparent", gap: tokens.spacing.md },
   requestCopy: { gap: tokens.spacing.xs },
   requestText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, lineHeight: 20 },
   attachmentSection: { gap: tokens.spacing.sm, minWidth: 0 },
@@ -138,7 +137,7 @@ const styles = StyleSheet.create({
   metric: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexBasis: "47%", flexGrow: 1, gap: tokens.spacing.xs, minWidth: 120, padding: tokens.spacing.md },
   metricLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.medium },
   metricValue: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, fontVariant: ["tabular-nums"] },
-  actions: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.sm, padding: tokens.card.outerPadding },
+  actions: { backgroundColor: "transparent", gap: tokens.spacing.sm },
   actionsCopy: { gap: tokens.spacing.xs },
   description: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
 });

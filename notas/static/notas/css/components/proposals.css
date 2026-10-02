@@ -22,6 +22,22 @@
   gap: 10px;
 }
 
+.proposal-list-card--entity-meal {
+  border-top: 3px solid var(--entity-meal);
+}
+
+.proposal-list-card--entity-dailyplan {
+  border-top: 3px solid var(--entity-dailyplan);
+}
+
+.proposal-list-card--entity-program {
+  border-top: 3px solid var(--entity-program);
+}
+
+.proposal-list-card--entity-brief {
+  border-top: 3px solid var(--entity-proposal, var(--entity-home));
+}
+
 .message-card__main, .proposal-list-card__main {
   position: relative;
   display: grid;

@@ -19,6 +19,7 @@ import {
   type EntityKind,
 } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { formatCompactDate } from "@/presentation/date";
 
 const entityBySubject: Record<SharingInboxItem["subject_type"], EntityKind> = {
   daily_plan: "dailyPlan",
@@ -126,7 +127,7 @@ export default function InboxScreen() {
           eyebrow={activeScope === "sent" ? "Enviado" : item.is_read ? "Recibido" : "Nuevo"}
           key={item.id}
           onPress={() => open(item)}
-          subtitle={`${item.sender} · ${new Date(item.created_at).toLocaleDateString()}`}
+          subtitle={`${item.sender} · ${formatCompactDate(item.created_at) ?? "Fecha no disponible"}`}
           title={item.title}
         />
       ))}
