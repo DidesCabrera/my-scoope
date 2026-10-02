@@ -78,6 +78,12 @@
 }
 
 /* Program detail selected day card refinements ============================= */
+.page--program-detail .program-week-child-card {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
 .page--program-detail .program-week-child-card__plan-section {
   padding: 0;
   border: 0;
@@ -85,6 +91,8 @@
 
 .page--program-detail .program-day-selected-card {
   border: 1px solid var(--panel-row-separator);
+  border-top: 3px solid var(--entity-dailyplan);
+  background: var(--surface-card);
 }
 
 /* Shared program week sections ===================================== */

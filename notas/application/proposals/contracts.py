@@ -50,7 +50,7 @@ _INTENT_CONTRACTS = {
     "create_program": ProposalIntentContract(
         intent="create_program", entity_title="Programa semanal propuesto",
         attachment_kind="program", attachment_label="Programa alimentario",
-        attachment_icon="calendar-days", is_apply_supported=True,
+        attachment_icon="calendar", is_apply_supported=True,
     ),
     CREATE_MEAL_INTENT: ProposalIntentContract(
         intent=CREATE_MEAL_INTENT,

@@ -1,0 +1,17 @@
+<div
+  class="calendarization-meal-completion-summary"
+  role="group"
+  aria-label="Cumplimiento comidas: {{ completion.completed_count }} de {{ completion.total_count }} completadas"
+>
+  <strong>Cumplimiento comidas</strong>
+  <div class="calendarization-meal-completion-summary__checks" aria-hidden="true">
+    {% for item in completion.items %}
+      <span
+        class="calendarization-meal-completion-summary__check{% if item.completed %} is-completed{% else %} is-pending{% endif %}"
+        title="{{ item.name }}: {% if item.completed %}cumplida{% else %}pendiente{% endif %}"
+      >
+        <i data-lucide="check"></i>
+      </span>
+    {% endfor %}
+  </div>
+</div>

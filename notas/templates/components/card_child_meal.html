@@ -10,6 +10,10 @@
         </div>
     </div>
 
+    {% if meal_checkin %}
+        {% include "components/calendarization_meal_completion.html" with checkin=meal_checkin embedded=True %}
+    {% endif %}
+
     {% if child_card.id %}
         {% with panel_id=child_card.id %}
             <div

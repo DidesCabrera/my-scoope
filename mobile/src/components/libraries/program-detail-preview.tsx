@@ -139,15 +139,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
         />
       </View> : null}
 
-      {hasPlans ? <>
-        <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
-
-        <SectionHeading title="Tabla de comparación entre planes diarios" />
-        <ProgramDayComparisonPanels key={`comparison-${week}`} onAssign={onAssignDailyPlan} onDelete={onRemoveDailyPlan} onReorder={onReorderDailyPlans} rows={weekData ? dayRows(weekData) : undefined} week={week} />
-
-        <SectionDivider spacing="compact" tone="soft" />
-        <SectionHeading detail={`${filledDaysCount} asignados`} title="Planes diarios esta semana" />
-      </> : null}
+      {hasPlans ? <SectionHeading detail={`${filledDaysCount} asignados`} title="Planes diarios esta semana" /> : null}
       <ProgramDaysGrid key={`${week}:${weekData?.days.map((day) => Number(Boolean(day.plan_name))).join("") ?? "demo"}`} onAssignDailyPlan={onAssignDailyPlan} onOpenDailyPlan={onOpenDailyPlan} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} week={week} weekData={weekData} />
 
       {hasPlans ? <>
@@ -158,6 +150,12 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
           if (onOpenFood) onOpenFood(food.detailId);
           else router.push(`/libraries/foods/${food.detailId}` as Href);
         }} />
+
+        <SectionDivider spacing="compact" tone="soft" />
+        <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
+
+        <SectionHeading title="Tabla de comparación entre planes diarios" />
+        <ProgramDayComparisonPanels key={`comparison-${week}`} onAssign={onAssignDailyPlan} onDelete={onRemoveDailyPlan} onReorder={onReorderDailyPlans} rows={weekData ? dayRows(weekData) : undefined} week={week} />
       </> : null}
     </View>
   );

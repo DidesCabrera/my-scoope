@@ -16,6 +16,12 @@
       </div>
     </div>
 
+    {% if detail.can_check_in %}
+      <div class="calendarization-meal-checkin calendarization-meal-checkin--completion">
+        {% include "components/calendarization_meal_completion.html" with checkin=detail %}
+      </div>
+    {% endif %}
+
     <section class="detail-section">
       <h3>Tabla de comparación entre alimentos</h3>
       <div class="content-panel content-panel--main card-detail-block main">
@@ -29,7 +35,7 @@
     {% include "components/food_detail_cards.html" with food_cards=detail.food_cards %}
 
     {% if detail.can_check_in %}
-      {% include "components/calendarization_meal_checkin.html" with checkin=detail %}
+      {% include "components/calendarization_meal_note.html" with checkin=detail %}
     {% endif %}
   </div>
 </div>

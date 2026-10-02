@@ -57,17 +57,23 @@ class ProgramWeekDayNutritionRowsTests(SimpleTestCase):
 
     def test_builds_assigned_day_average_and_previous_week_ratio(self):
         weeks = [
-            {"filled_days_count": 2, "totals": {"total_kcal": 4000, "protein": 100}},
-            {"filled_days_count": 4, "totals": {"total_kcal": 10000, "protein": 250}},
+            {"filled_days_count": 2, "totals": {"total_kcal": 4000, "protein": 100, "carbs": 300, "fat": 80}},
+            {"filled_days_count": 4, "totals": {"total_kcal": 10000, "protein": 250, "carbs": 800, "fat": 200}},
         ]
 
         enriched = build_program_week_summary_metrics(weeks, current_weight=80)
 
         self.assertEqual(enriched[0]["assigned_dailyplans_count"], 2)
         self.assertEqual(enriched[0]["average_kcal_per_assigned_day"], 2000)
+        self.assertEqual(enriched[0]["average_protein_per_assigned_day"], 50)
+        self.assertEqual(enriched[0]["average_carbs_per_assigned_day"], 150)
+        self.assertEqual(enriched[0]["average_fat_per_assigned_day"], 40)
         self.assertAlmostEqual(enriched[0]["average_ppk_per_assigned_day"], 0.625)
         self.assertIsNone(enriched[0]["previous_week_average_ratio"])
         self.assertEqual(enriched[1]["assigned_dailyplans_count"], 4)
         self.assertEqual(enriched[1]["average_kcal_per_assigned_day"], 2500)
+        self.assertEqual(enriched[1]["average_protein_per_assigned_day"], 62.5)
+        self.assertEqual(enriched[1]["average_carbs_per_assigned_day"], 200)
+        self.assertEqual(enriched[1]["average_fat_per_assigned_day"], 50)
         self.assertAlmostEqual(enriched[1]["average_ppk_per_assigned_day"], 0.78125)
         self.assertEqual(enriched[1]["previous_week_average_ratio"], 25)

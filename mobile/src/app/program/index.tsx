@@ -1,6 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData } from "@/api/types";
@@ -122,7 +123,7 @@ export default function ProgramScreen() {
 
   return (
     <>
-      <ScrollView
+      <NestableScrollContainer
         contentContainerStyle={styles.screenContent}
         keyboardShouldPersistTaps="handled"
         onScroll={({ nativeEvent }) => {
@@ -156,7 +157,7 @@ export default function ProgramScreen() {
         </View>
 
         <CalendarizedProgramPlanning days={programDays} initialWeek={activeWeek} key={`${calendarization.id}:${activeWeek}`} showWeekTabs={false} weeksData={program.weeks} />
-      </ScrollView>
+      </NestableScrollContainer>
       {actionsModal}
     </>
   );
