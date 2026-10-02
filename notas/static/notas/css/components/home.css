@@ -142,6 +142,7 @@ body.page-home .page-header .header-title-mobile {
   letter-spacing: 0.08em;
   opacity: 0.6;
   color: var(--text-muted);
+  font-weight: var(--font-weight-eyebrow);
 }
 
 .home-hero-subtitle {
@@ -894,7 +895,7 @@ body.page-home .page-header .header-title-mobile {
   color: rgb(255, 255, 255);
   font-size: 28px;
   line-height: 1.05;
-  font-weight: 700;
+  font-weight: var(--font-weight-eyebrow);
   max-width: 560px;
   text-align: center;
 }
@@ -1131,7 +1132,7 @@ body.page-home .page-header .header-title-mobile {
 
 .ai-intake-card__eyebrow {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-eyebrow);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1412,7 +1413,7 @@ body.page-home .page-header .header-title-mobile {
 .ai-conversation-message span {
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--font-weight-eyebrow);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -1542,7 +1543,7 @@ body.page-home .page-header .header-title-mobile {
   margin: 0 0 2px;
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--font-weight-eyebrow);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -2763,7 +2764,7 @@ body.page-ai-intake-chat::after {
 .home-calendar__section-title h2 {
   margin: 0;
   font-size: clamp(0.8rem, 1.2vw, 1.15rem);
-  font-weight: 700;
+  font-weight: var(--font-weight-eyebrow);
   color: var(--text-muted);
 }
 
@@ -2802,7 +2803,7 @@ body.page-ai-intake-chat::after {
   margin: 0 0 4px;
   color: var(--text-muted);
   font-size: 0.70rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-eyebrow);
   letter-spacing: 0;
   line-height: 1;
   text-transform: uppercase;

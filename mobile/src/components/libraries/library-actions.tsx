@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   sheet: { backgroundColor: tokens.color.surfaceCard },
   sheetHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
   headerCopy: { flex: 1, gap: 3, minWidth: 0 },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 1.1 },
+  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   closeButton: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },

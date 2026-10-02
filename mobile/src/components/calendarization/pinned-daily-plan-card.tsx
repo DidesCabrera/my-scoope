@@ -61,7 +61,7 @@ export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMeal
   return (<>
     <NutritionEntityCard
       actions={detailAction}
-      beforeNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} />}
+      afterNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} />}
       entity="dailyPlan"
       eyebrow="PLAN DE HOY"
       nutrition={libraryNutrition(item.nutrition)}

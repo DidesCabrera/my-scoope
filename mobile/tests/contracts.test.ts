@@ -8,7 +8,10 @@ import { assertSourceDoesNotMatch, assertSourceMatch, readTestFile } from "./sup
 
 test("mobile visual grammar exposes the reusable card and nutrition tokens", () => {
   assert.equal(tokens.contract, "myscoope.visual-grammar.v2");
-  assert.equal(tokens.radius.card, 22);
+  assert.equal(tokens.radius.card, 26);
+  assert.equal(tokens.radius.panel, 22);
+  assert.equal(tokens.component.eyebrow.fontWeight, "500");
+  assert.equal(tokens.component.entityDetail.kpiMarginTop, 4);
   assert.equal(tokens.color.surfaceApp, "#000000");
   for (const key of ["protein", "carbs", "fat", "kcalSurface", "allocationBarTrack", "allocationPanelTrack", "food", "meal", "dailyPlan", "dpm", "program"] as const) {
     assertSourceMatch(tokens.color[key], /^#[0-9A-F]{6}$/);
@@ -25,6 +28,11 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
     barRadius: 6,
   });
   assert.equal(tokens.component.nutritionKpi.nested.totalSize, 76);
+  assert.deepEqual(tokens.component.entityHeading, {
+    card: { fontSize: 24, lineHeight: 30, indicatorMarginTop: 6, marginTop: 2 },
+    pageCompact: { fontSize: 26, lineHeight: 34, marginTop: 2 },
+    pageRegular: { fontSize: 28, lineHeight: 36, marginTop: 2 },
+  });
 });
 
 test("the development UI gallery remains available at /dev/ui-gallery", async () => {
@@ -65,6 +73,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(libraryCard, /NutritionEntityCard.*from "@\/components\/nutrition"/);
+  assertSourceMatch(libraryCard, /interactive = true[^}]*navigable = interactive/);
+  assertSourceMatch(libraryCard, /navigable \? <EntityCardAction/);
   assertSourceDoesNotMatch(libraryCard, /\.\/nutrition-entity-card/);
 
   const collectionPageHeader = await readTestFile(
@@ -81,8 +91,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(collectionPageHeader, /style=\{styles\.countChip\}/);
 
   for (const [relativePath, section, title] of [
-    ["src/app/comparator/index.tsx", "comparator", "Comparador"],
-    ["src/app/assistant/index.tsx", "chat", "Asistente AI"],
+    ["src/app/comparator/index.tsx", "comparator", "Comparaciones"],
+    ["src/app/assistant/index.tsx", "chat", "Asistente Nutricional"],
   ]) {
     const sectionScreen = await readTestFile(path.resolve(process.cwd(), relativePath), "utf8");
     assertSourceMatch(sectionScreen, new RegExp(`<SectionPageHeader[^>]*section="${section}"[^>]*title="${title}"`));
@@ -222,7 +232,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(calendarizedDailyPlanCard, /<NutritionEntityCard/);
-  assertSourceMatch(calendarizedDailyPlanCard, /beforeNutrition=\{<DailyMealCompletionCard mealExecution=\{mealExecution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
+  assertSourceMatch(calendarizedDailyPlanCard, /afterNutrition=\{<DailyMealCompletionCard mealExecution=\{mealExecution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
   assertSourceMatch(calendarizedDailyPlanCard, /<MealPanels/);
   assertSourceMatch(calendarizedDailyPlanCard, /onOpenItem=/);
   assertSourceMatch(calendarizedDailyPlanCard, /pathname: "\/program\/days\/\[id\]\/meals\/\[mealKey\]"/);
@@ -239,7 +249,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assertSourceMatch(calendarizedMealDetail, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{dayId\}`\)/);
   assertSourceMatch(calendarizedMealDetail, /day\.plan_snapshot\?\.meals\?\.find/);
-  assertSourceMatch(calendarizedMealDetail, /beforeNutrition=\{<MealCompletionCard controller=\{adherence\} \/>\}/);
+  assertSourceMatch(calendarizedMealDetail, /afterNutrition=\{<MealCompletionCard controller=\{adherence\} \/>\}/);
   assertSourceMatch(calendarizedMealDetail, /<FoodPanels\s+editing=\{\{/);
   assertSourceMatch(calendarizedMealDetail, /ordered_keys: items\.map\(\(item\) => item\.id\)/);
   assertSourceMatch(calendarizedMealDetail, /relationKey: food\.id/);
@@ -368,10 +378,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgram, /Array\.from\(\{ length: weekCount \}/);
   assertSourceMatch(activeProgram, /<ProgramWeekTabs activeWeek=\{activeWeek\}/);
   assertSourceMatch(activeProgram, /<CalendarizedProgramPlanning days=\{programDays\} initialWeek=\{activeWeek\} key=\{`\$\{calendarization\.id\}:\$\{activeWeek\}`\} showWeekTabs=\{false\} weeksData=\{program\.weeks\} \/>/);
-  assertSourceMatch(activeProgram, /<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
-  assertSourceMatch(activeProgram, /<ProgramActiveOverview[\s\S]*<DetailLinkRow[\s\S]*<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
-  assertSourceMatch(activeProgram, /label="Ver plantilla original"/);
-  assertSourceMatch(activeProgram, /conserva lo que realmente ocurrió/);
+  assertSourceMatch(activeProgram, /<SectionDivider style=\{styles\.planningDivider\} \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
+  assertSourceMatch(activeProgram, /<ProgramActiveOverview[\s\S]*<SectionDivider style=\{styles\.planningDivider\} \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
+  assertSourceMatch(activeProgram, /planningDivider: \{ marginBottom: 0 \}/);
+  assertSourceDoesNotMatch(activeProgram, /DetailLinkRow|Ver plantilla original/);
+  assertSourceMatch(activeProgram, /onOpenOriginalProgram=\{calendarization\?\.source_program_id \? \(\) => router\.push/);
+  assertSourceDoesNotMatch(activeProgram, /conserva lo que realmente ocurrió/);
   assertSourceMatch(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
 
   const activePlanningControls = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/program-planning-controls.tsx"), "utf8");
@@ -481,12 +493,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
   assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
   assertSourceMatch(todayScreen, /alignment="center"/);
-  assertSourceMatch(todayScreen, /<GuideMetric icon="weight" tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
+  assertSourceMatch(todayScreen, /<GuideMetric tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
+  assertSourceDoesNotMatch(todayScreen, /<GuideMetric icon="weight"/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValueOnly: \{ borderRadius: tokens\.radius\.lg, minHeight: 40 \}/);
-  assertSourceMatch(productUiSourceForIndicators, /guideMetricPpk: \{ backgroundColor: tokens\.color\.ppk, borderColor: tokens\.color\.ppk, borderRadius: tokens\.radius\.md, borderWidth: 1, height: 30, minHeight: 30, paddingHorizontal: tokens\.spacing\.md, paddingVertical: 0 \}/);
-  assertSourceMatch(productUiSourceForIndicators, /guideMetricValuePpk: \{ color: tokens\.color\.surfaceApp, fontSize: 15, lineHeight: 18 \}/);
-  assertSourceMatch(productUiSourceForIndicators, /tone === "ppk" \? tokens\.color\.surfaceApp : tokens\.color\.textMuted/);
+  assertSourceMatch(productUiSourceForIndicators, /guideMetricPpk: \{ backgroundColor: `\$\{tokens\.color\.ppk\}1A`, borderColor: `\$\{tokens\.color\.ppk\}80`/);
+  assertSourceMatch(productUiSourceForIndicators, /guideMetricValuePpk: \{ color: tokens\.color\.textMain, fontSize: 15, lineHeight: 18 \}/);
+  assertSourceDoesNotMatch(productUiSourceForIndicators, /icon === "weight"/);
   assertSourceMatch(todayScreen, /apiRequest<WeightListData>\("\/api\/v1\/weights\?limit=1"\)/);
   assertSourceMatch(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
   assertSourceMatch(todayScreen, /displayWeight\(currentWeightKg\)/);
@@ -546,8 +559,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDayDetail, /<MealPanels\s+editing=\{\{/);
   assertSourceMatch(calendarizedDayDetail, /relationKey: meal\.id/);
   assertSourceMatch(calendarizedDayDetail, /\/meals\/order/);
-  assertSourceMatch(calendarizedDayDetail, /beforeNutrition=\{<DailyMealCompletionCard mealExecution=\{day\.meal_execution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
-  assertSourceMatch(calendarizedDayDetail, /beforeNutrition=\{meal\.key \? <MealCompletionToggleCard/);
+  assertSourceMatch(calendarizedDayDetail, /afterNutrition=\{<DailyMealCompletionCard mealExecution=\{day\.meal_execution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
+  assertSourceMatch(calendarizedDayDetail, /afterNutrition=\{meal\.key \? <MealCompletionToggleCard/);
   assertSourceMatch(calendarizedDayDetail, /onToggleCompleted=\{\(mealKey, completed\) => void toggleMealCompletion\(mealKey, completed\)\}/);
   assertSourceMatch(calendarizedDayDetail, /action: completed \? "completed" : "skipped"/);
   assertSourceMatch(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
@@ -649,6 +662,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(panelSurface, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assertSourceMatch(panelSurface, /borderRadius: tokens\.radius\.panel/);
+  assertSourceMatch(cardSurfaceSource, /borderRadius: tokens\.radius\.card/);
 
   assertSourceMatch(gallery, /Siempre abajo y sin bordes/);
   assertSourceMatch(gallery, /EntityCardAction/);
@@ -682,7 +697,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programChart, /weeks\.flatMap\(\(week\) => week\.days\.map/);
   assertSourceMatch(programChart, /axisLabels = \["S1", "S2"\]/);
   assertSourceMatch(programChart, /width < 600[\s\S]*?\? \{ width: "40%" as const \}/);
-  assertSourceMatch(programChart, /strokeWidth="5"[^\n]*x1=\{x\} x2=\{x\} y1=\{y\} y2=\{y\}/);
+  assertSourceMatch(programChart, /<Polyline[^\n]*strokeWidth="1"/);
+  assertSourceMatch(programChart, /<Stop offset="0" stopColor=\{metric\.color\} stopOpacity=\{0\.2\}/);
+  assertSourceMatch(programChart, /<Stop offset="1" stopColor=\{metric\.color\} stopOpacity=\{0\}/);
+  assertSourceMatch(programChart, /<Polygon fill=\{`url\(#metric-area-\$\{metric\.key\}\)`\} points=\{areaPoints\}/);
+  assertSourceMatch(programChart, /strokeWidth="3"[^\n]*x1=\{x\} x2=\{x\} y1=\{y\} y2=\{y\}/);
   assertSourceMatch(programChart, /P \{allocationRange\(liveAllocationValues, 0/);
   assertSourceMatch(programChart, /const hasAllocation = protein \+ carbs \+ fat > 0/);
   assertSourceMatch(planningControls, /key=\{day\.id\}/);

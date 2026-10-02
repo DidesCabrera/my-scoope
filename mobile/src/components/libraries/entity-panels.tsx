@@ -121,7 +121,7 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
               /> : null}
               <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(item.relation_id ?? ""), id: String(item.detail_id), mealTime: item.time?.slice(0, 5) ?? "", ...(pinnedTracking ? { pinned: "1", mealKey: item.id } : {}) } } as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
             </>}
-            beforeNutrition={pinnedTracking ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={pinnedTracking.completionError?.mealKey === item.id ? pinnedTracking.completionError.message : null} onToggle={(completed) => pinnedTracking.onToggleCompleted(item.id, completed)} saving={pinnedTracking.savingMealKey != null} /> : undefined}
+            afterNutrition={pinnedTracking ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={pinnedTracking.completionError?.mealKey === item.id ? pinnedTracking.completionError.message : null} onToggle={(completed) => pinnedTracking.onToggleCompleted(item.id, completed)} saving={pinnedTracking.savingMealKey != null} /> : undefined}
             completion={pinnedTracking ? { noteCount: execution?.note.trim() ? 1 : 0 } : undefined}
             entity="meal"
             eyebrow={`Comida ${index + 1}`}

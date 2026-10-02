@@ -354,7 +354,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       : []),
   ];
   return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}><EntityDetailPage
-    beforeNutrition={isPinnedPlan && item.panel.meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={item.panel.meals.map((meal) => meal.id)} /> : isPinnedMealContext ? <MealCompletionCard controller={pinnedMealAdherence} /> : undefined}
+    afterNutrition={isPinnedPlan && item.panel.meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={item.panel.meals.map((meal) => meal.id)} /> : isPinnedMealContext ? <MealCompletionCard controller={pinnedMealAdherence} /> : undefined}
     completion={isPinnedPlan ? { noteCount: mealExecution.filter((entry) => entry.note.trim()).length } : isPinnedMealContext ? { noteCount: normalizedPinnedMealExecution?.note.trim() ? 1 : 0 } : undefined}
     entity={item.entity}
     indicators={detailIndicators}

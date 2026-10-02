@@ -57,8 +57,9 @@ export const tokens = {
     "sm": 8,
     "md": 12,
     "lg": 16,
-    "card": 22,
-    "pill": 999
+    "card": 26,
+    "pill": 999,
+    "panel": 22
   },
   "type": {
     "hero": 34,
@@ -71,6 +72,7 @@ export const tokens = {
   "weight": {
     "regular": "400",
     "medium": "500",
+    "eyebrow": "500",
     "semibold": "600",
     "bold": "700",
     "extraBold": "800",
@@ -85,6 +87,30 @@ export const tokens = {
     "reducedInset": 12
   },
   "component": {
+    "entityDetail": {
+      "kpiMarginTop": 4
+    },
+    "eyebrow": {
+      "fontWeight": "500"
+    },
+    "entityHeading": {
+      "card": {
+        "fontSize": 24,
+        "lineHeight": 30,
+        "indicatorMarginTop": 6,
+        "marginTop": 2
+      },
+      "pageCompact": {
+        "fontSize": 26,
+        "lineHeight": 34,
+        "marginTop": 2
+      },
+      "pageRegular": {
+        "fontSize": 28,
+        "lineHeight": 36,
+        "marginTop": 2
+      }
+    },
     "nutritionKpi": {
       "regular": {
         "totalSize": 96,

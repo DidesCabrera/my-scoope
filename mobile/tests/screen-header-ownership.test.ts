@@ -42,9 +42,18 @@ test("Screen has one implementation and never overrides externally owned headers
   assert.match(feedback, /<Screen scroll=\{false\} contentStyle=\{styles\.loadingState\} headerMode="preserve">/);
 });
 
+test("header navigation and action icons use muted text color", async () => {
+  const navigation = await source("src/components/navigation/app-navigation.tsx");
+  for (const icon of ["ChevronLeft", "PanelRight", "Plus", "MoreHorizontal", "Pin", "CalendarClock", "Clock3"]) {
+    assert.doesNotMatch(navigation, new RegExp(`<${icon} color=\\{tokens\\.color\\.textMain\\}`));
+  }
+  assert.match(navigation, /<PanelRight color=\{tokens\.color\.textMuted\}/);
+  assert.match(navigation, /<MoreHorizontal color=\{tokens\.color\.textMuted\}/);
+});
+
 test("compact header identities use a short transition", async () => {
   const navigation = await source("src/components/navigation/app-navigation.tsx");
-  assert.equal((navigation.match(/duration: 90/g) ?? []).length, 2);
+  assert.equal((navigation.match(/duration: 90/g) ?? []).length, 3);
 });
 
 test("compact header identities appear only after twelve scroll points", async () => {
@@ -79,20 +88,22 @@ test("screens that own global navigation preserve their header through content a
   assert.match(comparator, /action: \{ label: "Cancelar", onPress: cancel \}/);
   assert.doesNotMatch(comparator, /title=\{savedId \? "Editar Comparación" : "Nueva Comparación"\}/);
   assert.match(comparator, /<View style=\{styles\.builderTabs\}>[\s\S]*<ComparisonKindTabs kind=\{kind\} onChange=\{changeKind\} \/>[\s\S]*<Screen headerMode="preserve">/);
-  assert.match(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" \/>\}/);
+  assert.match(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparaciones" \/>\}/);
   assert.match(comparator, /stickyHeader=\{<ComparisonKindTabs counts=\{counts\}/);
   assert.match(comparator, /stickyHeaderStyle=\{styles\.dashboardStickyHeader\}/);
   assert.match(comparator, /<DistributedTabBar<ComparisonKind>/);
-  assert.match(comparator, /identityVisible: compactHeaderVisible[\s\S]*title: "Comparador"/);
+  assert.match(comparator, /identityVisible: compactHeaderVisible[\s\S]*title: "Comparaciones"/);
   assert.match(comparator, /dashboardStickyHeader: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assert.match(comparator, /builderTabs: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assert.match(comparator, /onHeaderVisibilityChange=\{setCompactHeaderVisible\}/);
+  assert.match(comparator, /pathname: "\/comparator\/saved\/\[id\]", params: \{ id: String\(saved\.saved_comparison_id\), kind: saved\.kind \}/);
   assert.doesNotMatch(comparator, /<SectionPageHeader count=\{page\?\.total\}/);
 
   const assistant = await source("src/app/assistant/index.tsx");
-  assert.match(assistant, /activeSection === "chats" \? "Acciones de Chats" : "Acciones de Propuestas"/);
+  assert.match(assistant, /action: activeSection === "chats" \? \{ label: "Acciones de Chats"/);
+  assert.doesNotMatch(assistant, /Acciones de Propuestas|ProposalFilter|status=\$\{filter\}|Filtro:/);
   assert.match(assistant, /<AssistantSectionTabs activeSection=\{activeSection\} counts=\{counts\} onChange=\{setActiveSection\} \/>/);
-  assert.match(assistant, /<AssistantListActions[\s\S]*activeSection=\{activeSection\}/);
+  assert.match(assistant, /<AssistantListActions/);
   assert.match(assistant, /scrollHeader=\{scrollHeader\}/);
   assert.match(assistant, /stickyHeader=\{<AssistantSectionTabs/);
   assert.match(assistant, /const scrollHeader = \([\s\S]*<AssistantCreditBalance/);
@@ -100,15 +111,15 @@ test("screens that own global navigation preserve their header through content a
   assert.match(assistant, /stickyHeaderStyle=\{styles\.stickyHeader\}/);
   assert.match(assistant, /identityVisible: compactHeaderVisible/);
   assert.match(assistant, /onHeaderVisibilityChange=\{setCompactHeaderVisible\}/);
-  assert.match(assistant, /const scrollHeader = \([\s\S]*<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" \/>/);
+  assert.match(assistant, /const scrollHeader = \([\s\S]*<SectionPageHeader countLabel="elementos" section="chat" title="Asistente Nutricional" \/>/);
   assert.match(assistant, /stickyHeader: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assert.doesNotMatch(assistant, /<SectionPageHeader count=/);
   assert.doesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
   assert.doesNotMatch(assistant, /<Button[^>]*label="Nuevo chat"/);
 
   const inbox = await source("src/app/inbox.tsx");
-  assert.match(inbox, /setHeaderPresentation\(\{ identityVisible: compactHeaderVisible, mode: "default", title: "Inbox" \}\)/);
-  assert.match(inbox, /isHeaderIdentityVisible\(nativeEvent\.contentOffset\.y\)/);
+  assert.match(inbox, /setHeaderPresentation\(\{ identityVisible: compactHeaderVisible, mode: "default", title: "Compartidos" \}\)/);
+  assert.match(inbox, /onHeaderVisibilityChange=\{setCompactHeaderVisible\}/);
 
   const libraryList = await source("src/components/libraries/library-list-screen.tsx");
   assert.match(libraryList, /mode: "library-list"[\s\S]*identityVisible: compactHeaderVisible/);
@@ -135,12 +146,25 @@ test("screens that own global navigation preserve their header through content a
   assert.match(proposalDetail, /<Screen headerMode="preserve">/);
 
   const creditBalance = await source("src/components/assistant/assistant-credit-balance.tsx");
-  assert.match(creditBalance, /<Card style=\{styles\.card\}>/);
+  assert.match(creditBalance, /<View style=\{\[styles\.panel, \{ width: Math\.max\(0, width - \(tokens\.layout\.reducedInset \* 2\)\) \}\]\}>/);
+  assert.doesNotMatch(creditBalance, /<Card/);
   assert.doesNotMatch(creditBalance, /Saldo de créditos|Sparkles/);
-  assert.match(creditBalance, /\{availability\.available_credits\}<\/Text> créditos disponibles/);
+  assert.match(creditBalance, /<Text style=\{styles\.value\}>\{availability\.available_credits\}<\/Text>/);
+  assert.match(creditBalance, /<Text style=\{styles\.label\}>créditos disponibles<\/Text>/);
   assert.match(creditBalance, /availability\.available_credits/);
+  assert.match(creditBalance, /value: \{[^}]*fontSize: 18/);
+  assert.match(creditBalance, /<LinearGradient id="assistant-credit-macros"/);
+  assert.match(creditBalance, /<Stop offset="0" stopColor=\{tokens\.color\.protein\}/);
+  assert.match(creditBalance, /<Stop offset="0\.5" stopColor=\{tokens\.color\.carbs\}/);
+  assert.match(creditBalance, /<Stop offset="1" stopColor=\{tokens\.color\.fat\}/);
+  assert.doesNotMatch(creditBalance, /<Pill|availability\.label/);
   assert.match(creditBalance, /marginBottom: tokens\.spacing\.sm/);
-  assert.match(creditBalance, /borderRadius: tokens\.radius\.md/);
+  assert.match(creditBalance, /borderRadius: tokens\.radius\.panel/);
+  assert.match(creditBalance, /panel: \{[^}]*minHeight: 54/);
+  assert.match(creditBalance, /panel: \{[^}]*alignSelf: "stretch"/);
+  assert.match(creditBalance, /balance: \{[^}]*flexShrink: 1[^}]*minWidth: 0/);
+  assert.match(creditBalance, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assert.match(assistant, /scrollHeader: \{ alignSelf: "stretch", gap: tokens\.spacing\.md \}/);
   assert.match(assistant, /<AssistantCreditBalance availability=\{chatPage\.availability\} \/>/);
 
   const tabs = await source("src/components/assistant/assistant-section-tabs.tsx");
@@ -154,9 +178,8 @@ test("screens that own global navigation preserve their header through content a
   assert.doesNotMatch(tabs, /useRouter|router\.replace|href:/);
 
   const actions = await source("src/components/assistant/assistant-list-actions.tsx");
-  assert.match(actions, /activeSection === "chats"/);
   assert.match(actions, /label="Nuevo chat"/);
   for (const label of ["Ver todas", "Ver pendientes", "Ver aprobadas", "Ver aplicadas", "Ver rechazadas"]) {
-    assert.match(actions, new RegExp(label));
+    assert.doesNotMatch(actions, new RegExp(label));
   }
 });

@@ -41,6 +41,12 @@ const comparisonEntities = {
   dailyplans: "dailyPlan",
 } as const satisfies Record<ComparisonKind, "food" | "meal" | "dailyPlan">;
 
+const comparisonEntityColors: Record<ComparisonKind, string> = {
+  foods: tokens.color.food,
+  meals: tokens.color.meal,
+  dailyplans: tokens.color.dailyPlan,
+};
+
 function creationHref(kind: ComparisonKind): Href {
   return { pathname: "/comparator", params: { create: "1", kind } } as Href;
 }
@@ -48,7 +54,7 @@ function creationHref(kind: ComparisonKind): Href {
 function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress(): void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Card>
+      <Card accent={comparisonEntityColors[item.kind]}>
         <View style={styles.savedRow}>
           <View style={styles.savedCopy}>
             <Text style={styles.savedTitle}>{item.name}</Text>
@@ -109,7 +115,7 @@ function ComparatorDashboard() {
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: { icon: "plus", label: "Crear una comparación", onPress: () => router.push(creationHref(kind)) }, identityVisible: compactHeaderVisible, mode: "default", title: "Comparador" });
+    setHeaderPresentation({ action: { icon: "plus", label: "Crear una comparación", onPress: () => router.push(creationHref(kind)) }, identityVisible: compactHeaderVisible, mode: "default", title: "Comparaciones" });
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, kind, router, setHeaderPresentation]));
   if (status === "anonymous") return <Redirect href="/login" />;
@@ -120,11 +126,11 @@ function ComparatorDashboard() {
       <Screen
         headerMode="preserve"
         onHeaderVisibilityChange={setCompactHeaderVisible}
-        scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" />}
+        scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparaciones" />}
         stickyHeader={<ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />}
         stickyHeaderStyle={styles.dashboardStickyHeader}>
         {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
-        {page?.items.length ? page.items.map((item) => <SavedCard item={item} key={item.id} onPress={() => router.push(`/comparator/saved/${item.id}` as Href)} />) : (
+        {page?.items.length ? page.items.map((item) => <SavedCard item={item} key={item.id} onPress={() => router.push({ pathname: "/comparator/saved/[id]", params: { id: String(item.id), kind: item.kind } } as Href)} />) : (
           <EmptyState actionLabel="Crear nueva comparación" message={`Todavía no tienes comparaciones guardadas de ${fallbackKinds.find((item) => item.value === kind)?.label.toLowerCase()}.`} onAction={() => router.push(creationHref(kind))} title="Aún no hay comparaciones" />
         )}
       </Screen>
@@ -256,7 +262,7 @@ function ComparatorBuilderScreen() {
         method: savedId ? "PUT" : "POST",
         body: JSON.stringify({ kind, selections: requestSelections() }),
       });
-      router.replace(`/comparator/saved/${saved.saved_comparison_id}` as Href);
+      router.replace({ pathname: "/comparator/saved/[id]", params: { id: String(saved.saved_comparison_id), kind: saved.kind } } as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -265,7 +271,7 @@ function ComparatorBuilderScreen() {
   }
 
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (loading) return <LoadingState label="Preparando el comparador…" />;
+  if (loading) return <LoadingState label="Preparando la comparación…" />;
 
   return (
     <View style={styles.builderRoot}>

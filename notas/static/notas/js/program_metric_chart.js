@@ -287,12 +287,40 @@ document.addEventListener("DOMContentLoaded", () => {
     return path;
   }
 
+  function makeOutlineGradient(id) {
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const gradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+    gradient.setAttribute("id", id);
+    gradient.setAttribute("x1", "0");
+    gradient.setAttribute("x2", "0");
+    gradient.setAttribute("y1", "0");
+    gradient.setAttribute("y2", "1");
+
+    [["0", "0.2"], ["1", "0"]].forEach(([offset, opacity]) => {
+      const stop = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+      stop.setAttribute("offset", offset);
+      stop.setAttribute("class", "program-chart-outline-gradient-stop");
+      stop.setAttribute("stop-opacity", opacity);
+      gradient.appendChild(stop);
+    });
+    defs.appendChild(gradient);
+    return defs;
+  }
+
+  function makeOutlineArea(d, gradientId) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("class", "program-chart-outline-area");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", `url(#${gradientId})`);
+    return path;
+  }
+
   function makeOutlineDot(x, y) {
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     circle.setAttribute("class", "program-chart-outline-dot");
     circle.setAttribute("cx", x.toFixed(2));
     circle.setAttribute("cy", y.toFixed(2));
-    circle.setAttribute("r", "2.35");
+    circle.setAttribute("r", "1.5");
     return circle;
   }
 
@@ -566,6 +594,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const lineCommands = points.map((point, index) => (
       `${index === 0 ? "M" : "L"} ${point.xCenter.toFixed(2)} ${point.yTop.toFixed(2)}`
     ));
+    const firstPoint = points[0];
+    const lastPoint = points[points.length - 1];
+    const areaCommands = [
+      `M ${firstPoint.xCenter.toFixed(2)} ${height.toFixed(2)}`,
+      ...points.map((point) => `L ${point.xCenter.toFixed(2)} ${point.yTop.toFixed(2)}`),
+      `L ${lastPoint.xCenter.toFixed(2)} ${height.toFixed(2)}`,
+      "Z",
+    ];
+    const gradientId = `program-chart-outline-gradient-${Math.random().toString(36).slice(2)}`;
+    svg.appendChild(makeOutlineGradient(gradientId));
+    svg.appendChild(makeOutlineArea(areaCommands.join(" "), gradientId));
     svg.appendChild(makeOutlinePath(lineCommands.join(" ")));
 
     points.forEach((point, index) => {

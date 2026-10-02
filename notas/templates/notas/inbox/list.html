@@ -1,20 +1,24 @@
 {% extends "notas/base.html" %}
-{% block title %}Inbox{% endblock %}
+{% block title %}Compartidos{% endblock %}
 {% block content %}
 
 <div class="page list inbox-list-page proposal-list-page">
 
   {% include "components/list_page_header.html" %}
 
+  <nav class="comparator-tabs" aria-label="Tipo de contenido compartido">
+    {% for tab in vm.content.tabs %}
+      <a href="{{ tab.url }}" class="comparator-tab {% if tab.is_active %}is-active{% endif %}"{% if tab.is_active %} aria-current="page"{% endif %}>
+        <span>{{ tab.label }}</span>
+        <span class="comparator-tab__count">{{ tab.count }}</span>
+      </a>
+    {% endfor %}
+  </nav>
+
   {% if vm.content.list_mode == "delete" %}
     {% include "components/list_panel_inbox_delete.html" with inbox_items=vm.content.inbox_items %}
   {% else %}
-    {% if vm.content.scope == "sent" %}
-      <div class="inbox-filter-chip">
-        <i data-lucide="send" class="metadata-icon"></i>
-        Mostrando enviados
-      </div>
-    {% elif vm.content.favorites_only %}
+    {% if vm.content.favorites_only %}
       <div class="inbox-filter-chip">
         <i data-lucide="star" class="metadata-icon"></i>
         Mostrando favoritos
@@ -32,11 +36,11 @@
 
           <div class="proposal-received-date-row proposal-list-card__received-date-row">
             {% if item.direction == "received" %}
-              <span class="proposal-read-badge{% if item.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if item.is_read %}Inbox abierto{% else %}Inbox no abierto{% endif %}">
+              <span class="proposal-read-badge{% if item.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if item.is_read %}Compartido abierto{% else %}Compartido no abierto{% endif %}">
                 <i data-lucide="{% if item.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
               </span>
             {% else %}
-              <span class="proposal-read-badge proposal-read-badge--open" aria-label="Inbox enviado">
+              <span class="proposal-read-badge proposal-read-badge--open" aria-label="Compartido enviado">
                 <i data-lucide="send" class="proposal-read-badge__icon"></i>
               </span>
             {% endif %}
@@ -83,12 +87,12 @@
       <section class="card proposal-empty-card inbox-empty-card">
         <div>
           {% if vm.content.scope == "sent" %}
-            <h3>No tienes inbox enviados.</h3>
+            <h3>No tienes compartidos enviados.</h3>
             <p>
               Los elementos que compartas desde el detail de tus planes o comidas aparecerán aquí.
             </p>
           {% else %}
-            <h3>No tienes inbox recibidos.</h3>
+            <h3>No tienes compartidos recibidos.</h3>
             <p>
               Los elementos que otras personas compartan contigo aparecerán aquí después de abrir el enlace de invitación.
             </p>

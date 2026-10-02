@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.sm },
   formCard: { gap: tokens.spacing.lg },
   identityRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, textTransform: "uppercase" },
+  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
   macroFields: { gap: tokens.spacing.md },
   macroHeading: { gap: tokens.spacing.xs },
   macroTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },

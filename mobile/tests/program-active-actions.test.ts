@@ -18,6 +18,7 @@ test("current program actions live in the header ellipsis sheet", async () => {
   assert.doesNotMatch(screen, /calendarizations\/history/);
 
   for (const label of [
+    "Ver programa original",
     "Pausar programa",
     "Configurar recordatorios",
     "Cancelar programa",

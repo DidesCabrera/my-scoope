@@ -82,6 +82,19 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   const navigation = await readTestFile(path.resolve(process.cwd(), "src/navigation/product-areas.ts"), "utf8");
 
   assertSourceMatch(inbox, /\/api\/v1\/shares\/inbox/);
+  assertSourceMatch(inbox, /\/api\/v1\/shares\/inbox\?scope=sent/);
+  assertSourceMatch(inbox, /<DistributedTabBar<SharingScope>/);
+  assertSourceMatch(inbox, /label: "Recibidos"/);
+  assertSourceMatch(inbox, /label: "Enviados"/);
+  assertSourceMatch(inbox, /icon: \(selected\) => <MailOpen color=\{selected \? tokens\.color\.surfaceApp : tokens\.color\.textMuted\}/);
+  assertSourceMatch(inbox, /icon: \(selected\) => <Send color=\{selected \? tokens\.color\.surfaceApp : tokens\.color\.textMuted\}/);
+  assertSourceMatch(inbox, /count: data\?\.received\.count \?\? 0/);
+  assertSourceMatch(inbox, /count: data\?\.sent\.count \?\? 0/);
+  assertSourceMatch(inbox, /<Screen[\s\S]*scrollHeader=\{<SectionPageHeader section="inbox" title="Compartidos" \/>\}/);
+  assertSourceMatch(inbox, /stickyHeader=\{<DistributedTabBar<SharingScope>/);
+  assertSourceMatch(inbox, /stickyHeaderStyle=\{styles\.stickyHeader\}/);
+  assertSourceMatch(inbox, /stickyHeader: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding, paddingTop: tokens\.spacing\.sm \}/);
+  assert.doesNotMatch(inbox, /<SectionPageHeader[^>]*count=/);
   assertSourceMatch(inbox, /method: "PATCH"/);
   assertSourceMatch(inbox, /<EntityCard/);
   assertSourceMatch(inbox, /<EntityCardAction/);

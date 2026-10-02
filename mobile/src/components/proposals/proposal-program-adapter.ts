@@ -298,7 +298,7 @@ export function proposalProgramLibraryItem(program: ProposalProgram): LibraryIte
     id: 0,
     entity: "program",
     name: program.name || "Programa propuesto",
-    subtitle: "Propuesta del Asistente AI",
+    subtitle: "Propuesta del Asistente Nutricional",
     nutrition: libraryNutrition(programNutrition),
     indicators: [
       { icon: "week", label: "semanas", value: program.duration_weeks },
@@ -306,7 +306,7 @@ export function proposalProgramLibraryItem(program: ProposalProgram): LibraryIte
       { icon: "food", label: "alimentos", value: uniqueFoods.size },
     ],
     panel: { kind: "weeks", foods: [], meals: [], weeks },
-    creator: "Asistente AI",
+    creator: "Asistente Nutricional",
     created_at: "",
     is_draft: true,
     can_calendarize: false,

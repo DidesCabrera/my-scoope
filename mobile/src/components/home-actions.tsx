@@ -51,7 +51,7 @@ function ActionRow({ icon: Icon, label, onPress }: { icon: typeof Camera; label:
 const styles = StyleSheet.create({
   close: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
   content: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.extraBold, letterSpacing: 1.1 },
+  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   header: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
   icon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
   label: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },

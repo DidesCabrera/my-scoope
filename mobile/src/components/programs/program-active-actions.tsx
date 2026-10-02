@@ -1,4 +1,4 @@
-import { Bell, History, Pause, Play, RefreshCw, Trash2, X } from "lucide-react-native";
+import { Bell, ExternalLink, History, Pause, Play, RefreshCw, Trash2, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,6 +16,7 @@ type ProgramActiveActionsProps = {
   onChangeProgram(): void;
   onClose(): void;
   onOpenHistory(): void;
+  onOpenOriginalProgram?: () => void;
   onOpenReminders(): void;
   onStateAction(action: ProgramStateAction): Promise<void>;
   status: CalendarizationStatus | null;
@@ -39,6 +40,7 @@ export function ProgramActiveActions({
   onChangeProgram,
   onClose,
   onOpenHistory,
+  onOpenOriginalProgram,
   onOpenReminders,
   onStateAction,
   status,
@@ -119,6 +121,7 @@ export function ProgramActiveActions({
                     <ActionRow destructive icon={Trash2} label="Cancelar programa" onPress={() => setSelected("cancel")} />
                   </>
                 ) : null}
+                {onOpenOriginalProgram ? <ActionRow icon={ExternalLink} label="Ver programa original" onPress={() => navigate(onOpenOriginalProgram)} /> : null}
                 <ActionRow icon={RefreshCw} label="Cambiar de programa" onPress={() => navigate(onChangeProgram)} />
                 <ActionRow icon={History} label="Historial de programas" onPress={() => navigate(onOpenHistory)} />
               </View>
@@ -146,7 +149,7 @@ const styles = StyleSheet.create({
   sheet: { backgroundColor: tokens.color.surfaceCard },
   header: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
   headerCopy: { flex: 1, gap: 3, minWidth: 0 },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 1.1 },
+  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   close: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
   content: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },

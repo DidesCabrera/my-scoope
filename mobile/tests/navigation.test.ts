@@ -18,7 +18,7 @@ test("the consumer navigation catalog includes every MCE product area", () => {
 test("only product areas with a functional route are exposed in the sidebar", () => {
   const available = listAvailableProductAreas();
   assert.deepEqual(available.map((area) => area.key), ["home", "program", "assistant", "comparator", "inbox"]);
-  assert.deepEqual(available.map((area) => area.label), ["Inicio", "Mi programa activo", "Asistente Nutricional", "Comparador", "Compartidos"]);
+  assert.deepEqual(available.map((area) => area.label), ["Inicio", "Mi programa activo", "Asistente Nutricional", "Comparaciones", "Compartidos"]);
   assert.ok(available.every((area) => String(area.href).startsWith("/")));
 });
 
@@ -35,8 +35,12 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assert.match(proposalEntity, /\/libraries\/meals\//);
   assert.match(proposalEntity, /\/libraries\/daily-plans\//);
   assert.match(proposalEntity, /\/proposals\/\$\{proposal\.id\}\/entity\/meals\//);
-  assert.match(comparison, /Usar en el Asistente/);
-  assert.match(comparison, /comparisonId/);
+  assert.doesNotMatch(comparison, /Usar en el Asistente|Volver a guardadas/);
+  assert.match(comparison, /forceFallback: true/);
+  assert.match(comparison, /params: \{ kind \}/);
+  assert.match(comparison, /<Screen[\s\S]*headerMode="preserve"[\s\S]*scrollHeader=\{<AppHeader/);
+  assert.match(comparison, /eyebrowIcon=\{<EntityIcon entity=\{entity\} size="compact" \/>\}/);
+  assert.match(comparison, /kind === "dailyplans" \? "dailyPlan" : kind === "meals" \? "meal" : "food"/);
   assert.doesNotMatch(program, /Abrir plan de hoy/);
   assert.match(program, /CalendarizedProgramPlanning/);
   assert.match(programDay, /<EntityDetailPage/);
@@ -64,6 +68,22 @@ test("the native sidebar keeps sign-out inside the account screen", async () => 
   assert.doesNotMatch(navigation, /accessibilityLabel="Cerrar sesión"|signOutButton|drawerFooter/);
 });
 
+test("the native sidebar uses the app surface without section separators", async () => {
+  const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
+  const sidebarItems = await readFile(path.resolve(process.cwd(), "src/components/navigation/sidebar-items.tsx"), "utf8");
+
+  assert.match(navigation, /drawer: \{ backgroundColor: tokens\.color\.surfaceApp/);
+  assert.match(navigation, /drawerHeader: \{[^}]*paddingHorizontal: tokens\.spacing\.md \* 2/);
+  assert.match(navigation, /accessibilityLabel="Cerrar menú"[\s\S]*?<PanelRight color=\{tokens\.color\.textMuted\} size=\{24\} strokeWidth=\{2\}/);
+  assert.doesNotMatch(navigation, /drawerHeader: \{[^}]*borderBottomWidth/);
+  assert.doesNotMatch(navigation, /menuSection: \{[^}]*borderTopWidth/);
+  assert.match(navigation, /menuSectionLabel: \{[^}]*fontSize: tokens\.type\.caption/);
+  assert.match(navigation, /drawerContent: \{ gap: 0/);
+  assert.match(navigation, /menuSection: \{ gap: 0/);
+  assert.match(sidebarItems, /label: \{[^}]*fontSize: tokens\.type\.body/);
+  assert.match(sidebarItems, /item: \{[^}]*minHeight: 48/);
+});
+
 test("shared screens use compact scroll identities and only Home keeps the centered logo", async () => {
   const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
   const entityIdentity = await readFile(path.resolve(process.cwd(), "src/components/navigation/header-entity-identity.tsx"), "utf8");
@@ -85,9 +105,11 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assert.doesNotMatch(libraryList, /searchOffset/);
   assert.match(libraryList, /stickySearch: \{ backgroundColor: tokens\.color\.surfaceApp, marginHorizontal:/);
   assert.doesNotMatch(libraryList, /stickySearchPinned|searchPinned/);
-  assert.match(navigation, /<Plus color=\{tokens\.color\.textMain\}/);
+  assert.match(navigation, /<Plus color=\{tokens\.color\.textMuted\}/);
   assert.match(navigation, /headerPresentation\.createAction/);
   assert.match(navigation, /height: 48/);
+  assert.match(navigation, /logoText: \{[^}]*fontSize: 18/);
+  assert.match(navigation, /logoBar: \{[^}]*height: 3, width: 13/);
   const globalHeaderStyle = navigation.slice(navigation.indexOf("header: { alignItems"), navigation.indexOf("headerButton: {"));
   assert.doesNotMatch(globalHeaderStyle, /borderBottom/);
   assert.match(navigation, /backHeaderSide: \{ alignItems: "flex-start", paddingLeft: tokens\.spacing\.lg, width: 92 \}/);
