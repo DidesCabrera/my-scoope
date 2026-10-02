@@ -827,6 +827,9 @@ def _build_program_review_vm(
             "foods_aggregation_table": food_rows,
             "foods_panel_id": f"proposal-program-{proposal_id or 'new'}-week-{week_number}",
             "average_kcal_per_assigned_day": average_kcal,
+            "average_protein_per_assigned_day": week_totals["protein"] / assigned_count if assigned_count else 0,
+            "average_carbs_per_assigned_day": week_totals["carbs"] / assigned_count if assigned_count else 0,
+            "average_fat_per_assigned_day": week_totals["fat"] / assigned_count if assigned_count else 0,
             "average_ppk_per_assigned_day": (
                 week_totals["protein"] / assigned_count / reference_weight
                 if assigned_count and reference_weight

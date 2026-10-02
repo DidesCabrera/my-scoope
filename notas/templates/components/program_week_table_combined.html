@@ -2,12 +2,11 @@
   <div class="data-grid-header data-grid-header--program-weeks" role="row">
     <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
     <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
-    <div class="data-grid-col data-grid-col--program-plans" role="columnheader">Planes</div>
-    <div class="data-grid-col data-grid-col--program-average-kcal" role="columnheader">Prom. Cal.</div>
-    <div class="data-grid-col data-grid-col--program-week-ratio" role="columnheader">Vs. ant.</div>
-    <div class="data-grid-col data-grid-col--macro data-grid-group-start" role="columnheader">P g</div>
-    <div class="data-grid-col data-grid-col--macro" role="columnheader">C g</div>
-    <div class="data-grid-col data-grid-col--macro" role="columnheader">F g</div>
+    <div class="data-grid-col data-grid-col--program-average-kcal" role="columnheader">CAL prom</div>
+    <div class="data-grid-col data-grid-col--program-week-ratio" role="columnheader">% var</div>
+    <div class="data-grid-col data-grid-col--macro data-grid-group-start" role="columnheader">Pg</div>
+    <div class="data-grid-col data-grid-col--macro" role="columnheader">Cg</div>
+    <div class="data-grid-col data-grid-col--macro" role="columnheader">Fg</div>
     <div class="program-week-table__distribution-group program-week-table__distribution-group--header" role="presentation">
       <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">Dist. PCF</div>
       <span class="program-nutrition-bars__separator" role="presentation"></span>
@@ -20,24 +19,23 @@
   {% for week in weeks %}
     <div class="data-grid-row data-grid-row--program-weeks" role="row">
       <div class="data-grid-cell data-grid-cell--program-week" role="cell">
-        <span class="truncate">Semana {{ week.week_number }}</span>
+        <span class="program-week-table__identity"><i data-lucide="calendar" aria-hidden="true"></i><span>Semana {{ week.week_number }}</span></span>
       </div>
       <div class="data-grid-cell data-grid-cell--kcal" role="cell">
         <span>{{ week.totals.total_kcal|floatformat:0 }}</span>
       </div>
-      <div class="data-grid-cell data-grid-cell--program-plans" role="cell">{{ week.assigned_dailyplans_count }}</div>
       <div class="data-grid-cell data-grid-cell--program-average-kcal" role="cell">{{ week.average_kcal_per_assigned_day|floatformat:0 }}</div>
       <div class="data-grid-cell data-grid-cell--program-week-ratio" role="cell">
-        {% if week.previous_week_average_ratio is None %}-{% else %}{{ week.previous_week_average_ratio|floatformat:0 }}%{% endif %}
+        <span class="program-week-table__variation-chip">{% if week.previous_week_average_ratio is None %}-{% else %}{{ week.previous_week_average_ratio|floatformat:1 }}%{% endif %}</span>
       </div>
       <div class="data-grid-cell data-grid-cell--macro data-grid-group-start program-week-table__macro--protein" role="cell">
-        {{ week.totals.protein|floatformat:0 }}
+        {{ week.average_protein_per_assigned_day|floatformat:0 }}
       </div>
       <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--carbs" role="cell">
-        {{ week.totals.carbs|floatformat:0 }}
+        {{ week.average_carbs_per_assigned_day|floatformat:0 }}
       </div>
       <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--fat" role="cell">
-        {{ week.totals.fat|floatformat:0 }}
+        {{ week.average_fat_per_assigned_day|floatformat:0 }}
       </div>
       <div class="program-week-table__distribution-group" role="presentation">
         <div class="data-grid-cell data-grid-cell--kcal-distribution" role="cell">

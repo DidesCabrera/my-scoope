@@ -2,19 +2,19 @@
   <div class="data-grid-header data-grid-header--program-weeks-mobile-calories" role="row">
     <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
     <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
-    <div class="data-grid-col data-grid-col--program-plans" role="columnheader">Planes</div>
-    <div class="data-grid-col data-grid-col--program-average-kcal" role="columnheader">Prom.</div>
-    <div class="data-grid-col data-grid-col--program-week-ratio" role="columnheader">Vs. ant.</div>
+    <div class="data-grid-col data-grid-col--program-average-kcal" role="columnheader">CAL prom</div>
+    <div class="data-grid-col data-grid-col--program-week-ratio" role="columnheader">% var</div>
   </div>
 
   {% for week in weeks %}
     <div class="data-grid-row data-grid-row--program-weeks-mobile-calories" role="row">
-      <div class="data-grid-cell data-grid-cell--program-week" role="cell">S{{ week.week_number }}</div>
+      <div class="data-grid-cell data-grid-cell--program-week" role="cell">
+        <span class="program-week-table__identity"><i data-lucide="calendar" aria-hidden="true"></i><span>Semana {{ week.week_number }}</span></span>
+      </div>
       <div class="data-grid-cell data-grid-cell--kcal" role="cell">{{ week.totals.total_kcal|floatformat:0 }}</div>
-      <div class="data-grid-cell data-grid-cell--program-plans" role="cell">{{ week.assigned_dailyplans_count }}</div>
       <div class="data-grid-cell data-grid-cell--program-average-kcal" role="cell">{{ week.average_kcal_per_assigned_day|floatformat:0 }}</div>
       <div class="data-grid-cell data-grid-cell--program-week-ratio" role="cell">
-        {% if week.previous_week_average_ratio is None %}-{% else %}{{ week.previous_week_average_ratio|floatformat:0 }}%{% endif %}
+        <span class="program-week-table__variation-chip">{% if week.previous_week_average_ratio is None %}-{% else %}{{ week.previous_week_average_ratio|floatformat:1 }}%{% endif %}</span>
       </div>
     </div>
   {% empty %}
