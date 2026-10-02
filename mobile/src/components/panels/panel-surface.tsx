@@ -70,7 +70,7 @@ export function SortablePanelHeaderCell({ align = "center", direction, label, on
 }
 
 const styles = StyleSheet.create({
-  surface: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0, overflow: "hidden" },
+  surface: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.panel, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0, overflow: "hidden" },
   tabs: { gap: tokens.spacing.compact, padding: tokens.spacing.sm },
   tab: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, height: 30, justifyContent: "center", paddingHorizontal: tokens.spacing.md },
   tabSelected: { backgroundColor: tokens.color.textMain, borderColor: "transparent" },

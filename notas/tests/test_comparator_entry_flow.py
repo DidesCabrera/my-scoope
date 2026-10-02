@@ -24,7 +24,7 @@ class ComparatorEntryFlowTests(TestCase):
         response = self.client.get(reverse("saved_comparisons_list", kwargs={"kind": "foods"}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Comparador")
+        self.assertContains(response, "Comparaciones")
         self.assertContains(response, "Alimentos")
         self.assertContains(response, "Comidas")
         self.assertContains(response, "Planes")

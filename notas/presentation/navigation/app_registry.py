@@ -100,7 +100,7 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="comparators",
-                label="Comparador",
+                label="Comparaciones",
                 icon="scale",
                 page_icon="scale",
                 url_name="comparator_index",
@@ -254,7 +254,7 @@ APP_NAVIGATION = (
                 url_name="program_list",
                 nav_root="program",
                 scope="personal",
-                page_icon="bookmark",
+                page_icon="calendar",
                 action_url_name="program_create",
                 action_icon="plus",
                 action_label="Nuevo programa semanal",

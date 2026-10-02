@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { AIChatListData, AIChatSummary, ProposalListData, ProposalStatus, ProposalSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AssistantListActions, type ProposalFilter } from "@/components/assistant/assistant-list-actions";
+import { AssistantListActions } from "@/components/assistant/assistant-list-actions";
 import { AssistantSectionTabs, type AssistantSection } from "@/components/assistant/assistant-section-tabs";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -13,14 +13,6 @@ import { SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, InlineNotice, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
-
-const filters: { value: ProposalFilter; label: string }[] = [
-  { value: "all", label: "Todas" },
-  { value: "pending_review", label: "Pendientes" },
-  { value: "approved", label: "Aprobadas" },
-  { value: "applied", label: "Aplicadas" },
-  { value: "rejected", label: "Rechazadas" },
-];
 
 const statusColors: Record<ProposalStatus, string> = {
   applied: tokens.color.success,
@@ -86,7 +78,6 @@ export default function AssistantHistoryScreen() {
   const [activeSection, setActiveSection] = useState<AssistantSection>(params.section === "proposals" ? "proposals" : "chats");
   const [chatPage, setChatPage] = useState<AIChatListData | null>(null);
   const [proposalPage, setProposalPage] = useState<ProposalListData | null>(null);
-  const [filter, setFilter] = useState<ProposalFilter>("all");
   const [actionsVisible, setActionsVisible] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [chatsLoading, setChatsLoading] = useState(true);
@@ -110,34 +101,33 @@ export default function AssistantHistoryScreen() {
     setProposalsLoading(true);
     setProposalError(null);
     try {
-      const query = filter === "all" ? "" : `?status=${filter}`;
-      setProposalPage(await apiRequest<ProposalListData>(`/api/v1/proposals${query}`));
+      setProposalPage(await apiRequest<ProposalListData>("/api/v1/proposals"));
     } catch (nextError) {
       setProposalError(userFacingError(nextError));
     } finally {
       setProposalsLoading(false);
     }
-  }, [apiRequest, filter]);
+  }, [apiRequest]);
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void loadChats(); }, [loadChats, status]));
   useFocusEffect(useCallback(() => { if (status === "authenticated") void loadProposals(); }, [loadProposals, status]));
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
-      action: { label: activeSection === "chats" ? "Acciones de Chats" : "Acciones de Propuestas", onPress: () => setActionsVisible(true) },
+      action: activeSection === "chats" ? { label: "Acciones de Chats", onPress: () => setActionsVisible(true) } : undefined,
       identityVisible: compactHeaderVisible,
       mode: "default",
-      title: "Asistente AI",
+      title: "Asistente Nutricional",
     });
     return () => setHeaderPresentation({ mode: "default" });
   }, [activeSection, compactHeaderVisible, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (chatsLoading && proposalsLoading && !chatPage && !proposalPage) return <LoadingState label="Abriendo el Asistente AI…" />;
+  if (chatsLoading && proposalsLoading && !chatPage && !proposalPage) return <LoadingState label="Abriendo el Asistente Nutricional…" />;
 
   const counts = { chats: chatPage?.total ?? 0, proposals: proposalPage?.total ?? 0 };
   const scrollHeader = (
     <View style={styles.scrollHeader}>
-      <SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" />
+      <SectionPageHeader countLabel="elementos" section="chat" title="Asistente Nutricional" />
       {chatPage?.availability ? (
         <AssistantCreditBalance availability={chatPage.availability} />
       ) : null}
@@ -172,22 +162,18 @@ export default function AssistantHistoryScreen() {
         </>
       ) : (
         <>
-          <Text style={textStyles.caption}>Filtro: {filters.find((item) => item.value === filter)?.label ?? "Todas"}</Text>
           {proposalError ? <RecoverableErrorState message={proposalError} onRetry={() => void loadProposals()} /> : null}
           {proposalsLoading && proposalPage ? <Text style={textStyles.caption}>Actualizando…</Text> : null}
           {proposalPage?.items.length ? proposalPage.items.map((proposal) => (
             <ProposalCard key={proposal.id} onPress={() => router.push(`/proposals/${proposal.id}` as Href)} proposal={proposal} />
           )) : !proposalError && !proposalsLoading ? (
-            <EmptyState message="Las propuestas creadas por el Asistente aparecerán aquí para que puedas revisarlas antes de modificar tu librería." title={filter === "all" ? "Aún no hay propuestas" : "No hay propuestas en este estado"} />
+            <EmptyState message="Las propuestas creadas por el Asistente aparecerán aquí para que puedas revisarlas antes de modificar tu librería." title="Aún no hay propuestas" />
           ) : null}
         </>
       )}
       <AssistantListActions
-        activeSection={activeSection}
         onClose={() => setActionsVisible(false)}
         onNewChat={() => router.push("/assistant/new" as Href)}
-        onProposalFilterChange={setFilter}
-        proposalFilter={filter}
         visible={actionsVisible}
       />
     </Screen>
@@ -202,7 +188,7 @@ const styles = StyleSheet.create({
   creditTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   pressed: { opacity: 0.65 },
   row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  scrollHeader: { gap: tokens.spacing.md },
+  scrollHeader: { alignSelf: "stretch", gap: tokens.spacing.md },
   source: { color: tokens.color.textSoft, fontSize: 11, fontWeight: "900", letterSpacing: 1.1, textTransform: "uppercase" },
   stickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },

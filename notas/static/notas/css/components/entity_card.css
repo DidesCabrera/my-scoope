@@ -60,6 +60,26 @@
   border-color: var(--panel-row-separator);
 }
 
+.entity-card--food,
+.card--food {
+  border-top: 3px solid var(--entity-food);
+}
+
+.entity-card--meal,
+.card--meal {
+  border-top: 3px solid var(--entity-meal);
+}
+
+.entity-card--dailyplan,
+.card--dailyplan {
+  border-top: 3px solid var(--entity-dailyplan);
+}
+
+.entity-card--program,
+.card--program {
+  border-top: 3px solid var(--entity-program);
+}
+
 @media (max-width: 768px) {
   .entity-card,
   .card {

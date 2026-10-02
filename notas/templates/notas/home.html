@@ -3,6 +3,9 @@
 
 {% block title %}Home{% endblock %}
 {% block body_class %}page-home{% endblock %}
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="page home-page">
@@ -17,12 +20,6 @@
       alt="My Scoope"
       class="home-brand-logo home-brand-logo--dark"
     >
-    <div class="home-brand-entities" aria-label="Entidades de My Scoope">
-      <i data-lucide="carrot" class="home-brand-entity-icon home-brand-entity-icon--food" aria-hidden="true"></i>
-      <i data-lucide="utensils" class="home-brand-entity-icon home-brand-entity-icon--meal" aria-hidden="true"></i>
-      <i data-lucide="clipboard-list" class="home-brand-entity-icon home-brand-entity-icon--dailyplan" aria-hidden="true"></i>
-      <i data-lucide="calendar" class="home-brand-entity-icon home-brand-entity-icon--program" aria-hidden="true"></i>
-    </div>
   </div>
 
   <section class="home-hero main" hidden>
@@ -113,161 +110,75 @@
       </div>
     </div>
   </section>
-
-
-
-  <section class="home-ai-intake home-ai-intake--composer" aria-labelledby="home-ai-intake-section-title">
-    <div class="home-calendar__section-title home-ai-intake__section-title">
-      <i data-lucide="sparkles" aria-hidden="true"></i>
-      <h2 id="home-ai-intake-section-title">Asistente IA</h2>
-      <details class="home-section-help" data-home-section-help="ai-intake" open>
-        <summary aria-label="Información sobre Asistente IA">
-          <i data-lucide="info" aria-hidden="true"></i>
-        </summary>
-        <div class="home-section-help__popup">
-          <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
-          <div class="home-section-help__copy">
-            <h3>Asistente IA</h3>
-            <p>Describe lo que necesitas y el asistente te ayuda a crear planes, comparar alimentos o ajustar tus comidas con contexto nutricional.</p>
-          </div>
-          <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
-            <i data-lucide="x" aria-hidden="true"></i>
-          </button>
+  <section class="home-calendar" aria-label="Plan de hoy">
+    <div class="home-calendar__welcome-row">
+      <h1>Vamos, @{{ request.user.username }}</h1>
+      {% if current_weight %}
+        <div class="home-calendar__weight-chip" aria-label="Peso actual: {{ current_weight_label }} kilogramos">
+          <span>{{ current_weight_label }} kg</span>
         </div>
-      </details>
+      {% endif %}
     </div>
 
-    <h2 class="home-ai-intake__title">¿En qué puedo ayudarte?</h2>
-
-    <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__form" aria-label="Iniciar chat nutricional">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="analyze_prompt">
-      <textarea
-        id="home-ai-intake-prompt"
-        name="prompt"
-        rows="1"
-        placeholder="Pídeme lo que necesites"
-        required
-      ></textarea>
-      <button type="submit" class="home-ai-intake__submit" aria-label="Enviar solicitud">
-        <i data-lucide="arrow-up" class="ai-chat-send__icon"></i>
-      </button>
-    </form>
-
-    <div class="home-ai-intake__quick-actions" aria-label="Alternativas para iniciar una conversación">
-      <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__quick-form">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="analyze_prompt">
-        <input type="hidden" name="prompt" value="Hola! Necesito una dieta.">
-        <button type="submit" class="home-ai-intake__quick-tab">Necesito una dieta</button>
-      </form>
-
-      <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__quick-form">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="analyze_prompt">
-        <input type="hidden" name="prompt" value="Hola! Me gustaría comparar Alimentos">
-        <button type="submit" class="home-ai-intake__quick-tab">Comparar Alimentos</button>
-      </form>
-
-      <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__quick-form home-ai-intake__quick-form--desktop">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="analyze_prompt">
-        <input type="hidden" name="prompt" value="Quiero reemplazar mi comida.">
-        <button type="submit" class="home-ai-intake__quick-tab">Quiero reemplazar mi comida</button>
-      </form>
-
-      <details class="home-ai-intake__more">
-        <summary class="home-ai-intake__quick-tab home-ai-intake__quick-tab--icon" aria-label="Ver mas alternativas para iniciar una conversación">
-          <i data-lucide="chevron-down" aria-hidden="true"></i>
-          <span>Mas alternativas</span>
-        </summary>
-        <div class="home-ai-intake__more-panel">
-          <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__quick-form home-ai-intake__more-form--mobile">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="analyze_prompt">
-            <input type="hidden" name="prompt" value="Quiero reemplazar mi comida.">
-            <button type="submit" class="home-ai-intake__more-option">Quiero reemplazar mi comida</button>
-          </form>
-
-          <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__quick-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="analyze_prompt">
-            <input type="hidden" name="prompt" value="Necesito reducir las calorias de mi dieta.">
-            <button type="submit" class="home-ai-intake__more-option">Necesito reducir las calorias de mi dieta</button>
-          </form>
-
-          <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__quick-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="analyze_prompt">
-            <input type="hidden" name="prompt" value="Quiero ajustar la composicion de mis comidas.">
-            <button type="submit" class="home-ai-intake__more-option">Quiero ajustar la composicion de mis comidas</button>
-          </form>
-        </div>
-      </details>
-    </div>
-  </section>
-
-  <section class="home-calendar" aria-labelledby="home-calendar-section-title">
-    <div class="home-calendar__section-title">
-      <i data-lucide="calendar-clock" aria-hidden="true"></i>
-      <h2 id="home-calendar-section-title">Calendarización</h2>
-      <details class="home-section-help" data-home-section-help="calendarization" open>
-        <summary aria-label="Información sobre Calendarización">
-          <i data-lucide="info" aria-hidden="true"></i>
-        </summary>
-        <div class="home-section-help__popup">
-          <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
-          <div class="home-section-help__copy">
-            <h3>Calendarización</h3>
-            <p>Consulta el plan de hoy, revisa el avance del programa y abre el detalle de la calendarización.</p>
-          </div>
-          <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
-            <i data-lucide="x" aria-hidden="true"></i>
-          </button>
-        </div>
-      </details>
-    </div>
-
-    <div class="home-calendar__program-card">
-      <div class="home-calendar__heading">
-        <div class="home-calendar__heading-content">
-          {% if vm.content.calendarization.has_calendarization %}
-            <div class="home-calendar__program-heading">
-              <p class="home-calendar__program-eyebrow">
-                <i data-lucide="calendar-clock" aria-hidden="true"></i>
-                <span>Programa Calendarizado</span>
-              </p>
-              <h2 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h2>
-            </div>
-            {% include "components/program_active_kpis.html" with program_kpis=vm.content.calendarization standalone=True %}
-          {% else %}
-            <p class="home-calendar__empty-state">No tienes un programa calendarizado</p>
-          {% endif %}
-        </div>
-        <a class="home-calendar__manage-link" href="{{ vm.content.calendarization.dashboard_url }}" aria-label="Administrar calendario">
-          <i data-lucide="chevron-right" aria-hidden="true"></i>
-        </a>
-      </div>
-
-      <div class="home-calendar__plans" aria-live="polite">
+    <div class="home-calendar__week-slider home-calendar__week-slider--single" aria-label="Calendario de la semana actual">
+      <div class="home-calendar__week program-week-days-layout is-active" role="list">
         {% for day in vm.content.calendarization.days %}
-          {% if day.is_today %}
           <div
-            id="{{ day.panel_id }}"
-            class="home-calendar__plan-panel"
+            class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.is_today %} is-selected{% endif %}{% if day.has_plan %} has-plan{% endif %}"
+            role="listitem"
+            aria-label="{{ day.accessible_date }}"
           >
-            <div class="home-calendar__selected-date">{{ day.accessible_date }}</div>
-            {% if day.dailyplan_card %}
-              {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True calendarized_day=day %}
-            {% else %}
-              <div class="home-calendar__empty-card">
-                <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
-              </div>
-            {% endif %}
+            <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
+            <span class="home-calendar__date-circle" aria-hidden="true">
+              <strong>{{ day.date_number }}</strong>
+              <small>{{ day.month_label }}</small>
+            </span>
           </div>
-          {% endif %}
         {% endfor %}
       </div>
+    </div>
+
+    {% for day in vm.content.calendarization.days %}
+      {% if day.is_today %}
+        <h2 class="home-calendar__today-title">Tu Plan para hoy, {{ day.home_plan_date_label }}</h2>
+        <div id="{{ day.panel_id }}" class="home-calendar__plan-panel">
+          {% if day.dailyplan_card %}
+            {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True calendarized_day=day %}
+          {% else %}
+            <div class="home-calendar__empty-card">
+              <p>No hay un plan nutricional asignado para hoy.</p>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </section>
+
+  <section class="home-active-program" aria-labelledby="home-active-program-title">
+    <h2 id="home-active-program-title" class="home-calendar__today-title">Tu Programa Activo</h2>
+    <div class="home-active-program__card">
+      {% if vm.content.calendarization.has_calendarization %}
+        <div class="home-active-program__identity">
+          <p class="home-calendar__program-eyebrow">
+            <i data-lucide="calendar-clock" aria-hidden="true"></i>
+            <span>Programa activo</span>
+          </p>
+          <h3 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h3>
+          <div class="home-active-program__indicators" aria-label="Estructura del programa">
+            <span>{{ vm.content.calendarization.weeks_count }} semana{{ vm.content.calendarization.weeks_count|pluralize:"s" }}</span>
+            <span>{{ vm.content.calendarization.assigned_plans_count }} planes</span>
+            <span>{{ vm.content.calendarization.start_label }} — {{ vm.content.calendarization.end_label }}</span>
+          </div>
+        </div>
+        {% include "components/program_active_kpis.html" with program_kpis=vm.content.calendarization standalone=True metric_cards=True %}
+        {% include "components/detail_link_row.html" with label="Ir a Mi programa activo" url=vm.content.calendarization.dashboard_url accessibility_label="Ir a Mi programa activo" standalone=True %}
+      {% else %}
+        <div class="home-active-program__identity">
+          <h3 class="home-calendar__program-name">Aún no hay programa activo</h3>
+          <p class="home-calendar__empty-state">Elige uno de tus programas y conviértelo en tu recorrido diario.</p>
+        </div>
+        {% include "components/detail_link_row.html" with label="Calendarizar un programa" url=vm.content.calendarization.dashboard_url accessibility_label="Calendarizar un programa" standalone=True %}
+      {% endif %}
     </div>
   </section>
 
@@ -297,7 +208,7 @@
       <div class="home-stat-card">
         <a href="{% url 'program_list' %}" class="home-stat-card__surface-link" aria-label="Ir a Mis programas semanales"></a>
         <div class="home-stat-top">
-          <i data-lucide="calendar-days" class="home-stat-icon program"></i>
+          <i data-lucide="calendar" class="home-stat-icon program"></i>
           <span class="home-stat-label">Mis Programas Semanales</span>
         </div>
         <p class="home-stat-description">Organiza estructuras semanales listas para convertirlas en planes calendarizados.</p>
@@ -380,6 +291,8 @@
     </div>
   </section>
 
+  {% include "notas/components/home_ai_intake.html" %}
+
   <section class="home-tools" aria-labelledby="home-tools-section-title">
     <div class="home-calendar__section-title home-tools__section-title">
       <i data-lucide="wrench" aria-hidden="true"></i>
@@ -392,7 +305,7 @@
           <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
           <div class="home-section-help__copy">
             <h3>Herramientas</h3>
-            <p>Accede al Comparador para revisar elementos lado a lado, al Explorador para consultar opciones nutricionales y a Calendarizar para organizar programas en fechas.</p>
+            <p>Accede a Comparaciones para revisar elementos lado a lado, al Explorador para consultar opciones nutricionales y a Calendarizar para organizar programas en fechas.</p>
           </div>
           <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
             <i data-lucide="x" aria-hidden="true"></i>
@@ -407,7 +320,7 @@
           <i data-lucide="git-compare-arrows"></i>
         </span>
         <span class="home-tool-card__copy">
-          <strong>Comparador</strong>
+          <strong>Comparaciones</strong>
           <small>Compara alimentos, comidas o planes diarios lado a lado.</small>
         </span>
       </a>

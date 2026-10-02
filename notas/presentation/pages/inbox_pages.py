@@ -450,7 +450,7 @@ def _normalized_metadata(resource: ShareResource) -> tuple[str, str, str]:
         ShareResource.SubjectType.DAILY_PLAN: ("dailyplan", "Plan diario", "clipboard-list"),
         ShareResource.SubjectType.FOOD: ("food", "Alimento", "carrot"),
         ShareResource.SubjectType.MEAL: ("meal", "Comida", "utensils"),
-        ShareResource.SubjectType.PROGRAM: ("program", "Programa semanal", "calendar-days"),
+        ShareResource.SubjectType.PROGRAM: ("program", "Programa semanal", "calendar"),
     }.get(resource.subject_type, ("share", "Contenido", "share-2"))
 
 

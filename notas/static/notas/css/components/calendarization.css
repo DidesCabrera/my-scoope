@@ -43,7 +43,7 @@
 .calendarization-current__planning>.calendarization-current__program-board-header{margin-bottom:var(--space-6)}
 .calendarization-current__planning>.calendarization-current__week-tabs{margin:0 0 var(--space-6)}
 .calendarization-current__planning>.home-calendar__week-slider{margin-bottom:var(--space-6)}
-.calendarization-current__section-divider{margin:0}
+.calendarization-current__section-divider{margin:0 0 calc(-1 * var(--space-3))}
 .calendarization-current .home-calendar__week-slider--single{width:100%}
 .calendarization-current .home-calendar__day{width:100%}
 .calendarization-current .calendarization-actions{justify-content:flex-end;flex-wrap:wrap}
@@ -53,6 +53,11 @@
 .calendarization-warning[hidden],
 .calendarization-push [hidden] {
   display: none !important;
+}
+
+.calendarization-eyebrow,
+.calendarization-current__eyebrow {
+  font-weight: var(--font-weight-eyebrow);
 }
 
 .calendarization-button {
@@ -149,18 +154,90 @@
   margin-bottom: 0;
 }
 
-.calendarization-meal-checkin {
+.calendarization-day-detail-page .page-kpi,
+.calendarization-meal-detail-page .page-kpi {
+  padding-bottom: 0;
+}
+
+.calendarization-meal-checkin--completion {
+  display: grid;
+}
+
+.calendarization-meal-completion-summary {
+  align-items: center;
+  background: color-mix(in srgb, var(--entity-meal) 10%, var(--surface-card));
+  border: 1px solid var(--entity-meal);
+  border-radius: var(--radius-lg);
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: space-between;
+  min-height: 54px;
+  margin-bottom: var(--space-md);
+  margin-top: var(--space-md);
+  padding: 0 var(--space-md);
+}
+
+.calendarization-meal-completion-summary > strong {
+  min-width: 0;
+}
+
+.calendarization-meal-completion-summary__checks {
+  align-items: center;
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+}
+
+.calendarization-meal-completion-summary__check {
+  align-items: center;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  height: 22px;
+  justify-content: center;
+  width: 22px;
+}
+
+.calendarization-meal-completion-summary__check.is-completed {
+  background: var(--entity-meal);
+  color: #fff;
+}
+
+.calendarization-meal-completion-summary__check.is-pending {
+  background: var(--border-default);
+  color: var(--text-muted);
+}
+
+.calendarization-meal-completion-summary__check svg {
+  height: 14px;
+  stroke-width: 3;
+  width: 14px;
+}
+
+.calendarization-meal-checkin__note-section {
   display: grid;
   gap: var(--space-sm);
 }
 
-.calendarization-meal-checkin > h3 {
+.calendarization-meal-checkin__note-section > h3 {
   margin: 0;
 }
 
-.calendarization-meal-checkin__panel {
-  display: grid;
-  gap: var(--space-md);
+.calendarization-meal-checkin__status {
+  background: color-mix(in srgb, var(--entity-meal) 10%, var(--surface-card));
+  border: 1px solid var(--entity-meal);
+  border-radius: var(--radius-lg);
+  min-height: 54px;
+  padding: 0 var(--space-md);
+}
+
+.calendarization-meal-checkin__status--embedded {
+  margin: var(--space-md) 0;
+}
+
+.calendarization-meal-checkin__note-panel {
+  background: var(--surface-card-muted);
   padding: var(--space-lg);
 }
 
@@ -168,30 +245,48 @@
   align-items: center;
   cursor: pointer;
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   justify-content: space-between;
-}
-
-.calendarization-meal-checkin__status label > span {
-  display: grid;
-  gap: var(--space-xs);
-}
-
-.calendarization-meal-checkin__status small {
-  color: var(--text-muted);
+  min-height: 52px;
 }
 
 .calendarization-meal-checkin__status input[type="checkbox"] {
-  accent-color: var(--entity-meal);
+  appearance: none;
+  align-items: center;
+  background: transparent;
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: inline-flex;
   flex: 0 0 auto;
   height: 26px;
+  justify-content: center;
+  margin: 0;
   width: 26px;
 }
 
-.calendarization-meal-checkin__divider {
-  background: var(--border-soft);
-  height: 1px;
-  width: 100%;
+.calendarization-meal-checkin__status input[type="checkbox"]::after {
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  content: "";
+  height: 11px;
+  opacity: 0;
+  transform: translateY(-1px) rotate(45deg);
+  width: 6px;
+}
+
+.calendarization-meal-checkin__status input[type="checkbox"]:checked {
+  background: var(--entity-meal);
+  border-color: var(--entity-meal);
+}
+
+.calendarization-meal-checkin__status input[type="checkbox"]:checked::after {
+  opacity: 1;
+}
+
+.calendarization-meal-checkin__status input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--input-focus-border);
+  outline-offset: 2px;
 }
 
 .calendarization-meal-checkin__note,

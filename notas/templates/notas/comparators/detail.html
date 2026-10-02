@@ -1,11 +1,11 @@
 {% extends "notas/base.html" %}
 {% load static l10n %}
-{% block title %}{% if vm.content.is_saved_detail %}{{ vm.content.saved_comparison_name }}{% else %}Comparadores{% endif %}{% endblock %}
+{% block title %}{% if vm.content.is_saved_detail %}{{ vm.content.saved_comparison_name }}{% else %}Comparaciones{% endif %}{% endblock %}
 {% block content %}
 
-<div class="page {% if vm.content.is_saved_detail %}page--detail comparator-page comparator-saved-detail-page{% else %}list comparator-page{% endif %}">
+<div class="page {% if vm.content.is_saved_detail %}page--detail comparator-page comparator-saved-detail-page{% else %}list comparator-page{% endif %} comparator-page--{{ vm.content.entity_scope }}">
   {% if vm.content.is_saved_detail %}
-    <section class="card-title main comparator-main-title-card">
+    <section class="card-title main comparator-main-title-card comparator-entity-card">
       <div class="card-title-comp">
         <div class="main-title main-card">
           <h1>{{ vm.content.saved_comparison_name }}</h1>
@@ -23,7 +23,7 @@
   {% else %}
     {% include "components/list_page_header.html" %}
 
-    <nav class="comparator-tabs" aria-label="Tipo de comparador">
+    <nav class="comparator-tabs" aria-label="Tipo de comparación">
       {% for tab in vm.content.tabs %}
         <a href="{{ tab.url }}" class="comparator-tab {% if tab.is_active %}is-active{% endif %}">
           <i data-lucide="{{ tab.icon }}" class="comparator-tab__icon"></i>
@@ -35,7 +35,7 @@
 
   <form
     method="get"
-    class="comparator-form card-detail-block{% if vm.content.is_saved_detail and not vm.content.is_saved_edit_mode %} is-read-mode{% endif %}"
+    class="comparator-form comparator-entity-card card-detail-block{% if vm.content.is_saved_detail and not vm.content.is_saved_edit_mode %} is-read-mode{% endif %}"
     data-comparator-form
     {% if vm.content.is_saved_detail %}data-comparator-saved-detail-form{% endif %}
   >
@@ -45,7 +45,7 @@
     {% endif %}
     <div class="comparator-selectors">
       {% for selection in vm.content.selections %}
-        <section class="comparator-selector" data-comparator-selector>
+        <section class="comparator-selector comparator-entity-card" data-comparator-selector>
           <div class="comparator-selector__heading">
             <div class="comparator-selector__title">
               <span class="comparator-selector__badge">{{ forloop.counter }}</span>
@@ -148,7 +148,7 @@
   {% if vm.content.is_ready %}
     <section class="comparator-results" aria-label="Resultados comparativos">
       {% for metric in vm.content.metrics %}
-        <article class="comparator-metric comparator-metric--{{ metric.key }} card-detail-block">
+        <article class="comparator-metric comparator-metric--{{ metric.key }} comparator-entity-card card-detail-block">
           <header class="comparator-metric__header">
             <h3>{{ metric.label }}</h3>
             <span>{{ metric.unit }}</span>

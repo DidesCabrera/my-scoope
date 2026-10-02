@@ -44,7 +44,7 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, 
   return (<>
     <NutritionEntityCard
       actions={dayId ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={() => router.push(`/program/days/${dayId}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}
-      beforeNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} />}
+      afterNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} />}
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       entity="dailyPlan"
       eyebrow={eyebrow}

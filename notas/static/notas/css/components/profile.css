@@ -154,7 +154,7 @@
 
     font-size: 14px;
     line-height: 1.35;
-    font-weight: 600;
+    font-weight: var(--font-weight-eyebrow);
 
     overflow: hidden;
     text-overflow: ellipsis;
@@ -215,7 +215,7 @@
     margin: 0;
 
     font-size: 16px;
-    font-weight: 600;
+    font-weight: var(--font-weight-eyebrow);
 
     color: var(--text-main);
 }
@@ -502,7 +502,7 @@
 
     font-size: 11px;
     line-height: 1.2;
-    font-weight: 600;
+    font-weight: var(--font-weight-eyebrow);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }

@@ -86,14 +86,14 @@ export function ProposalSummary({ children }: { children: string }) {
 }
 
 export const proposalTextStyles = StyleSheet.create({
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0.7, textTransform: "uppercase" },
+  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0.7, textTransform: "uppercase" },
 });
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   copy: { gap: tokens.spacing.compact, minWidth: 0 },
   entityEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  headingEyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
+  headingEyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.bold, lineHeight: 24 },
   detailTitle: { fontSize: tokens.type.title, lineHeight: 30 },
   received: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },

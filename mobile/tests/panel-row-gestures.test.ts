@@ -180,6 +180,7 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   const panels = await source("src/components/panels/entity-panels.tsx");
   const calendarizedDay = await source("src/app/program/days/[id].tsx");
   const calendarizedMeal = await source("src/app/program/days/[id]/meals/[mealKey].tsx");
+  const activeProgram = await source("src/app/program/index.tsx");
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
   const layout = await source("src/app/_layout.tsx");
 
@@ -201,6 +202,8 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   assert.match(panels.match(/function FoodEditPanel[\s\S]*?function MealEditPanel/)?.[0] ?? "", /<NestableDraggableFlatList/);
   assert.match(panels.match(/function MealEditPanel[\s\S]*?export function FoodPanels/)?.[0] ?? "", /<NestableDraggableFlatList/);
   assert.match(libraryDetail, /NestableScrollContainer/);
+  assert.match(activeProgram, /<NestableScrollContainer/);
+  assert.doesNotMatch(activeProgram, /<ScrollView/);
   assert.match(calendarizedDay, /NestableScrollContainer/);
   assert.match(calendarizedMeal, /NestableScrollContainer/);
 });

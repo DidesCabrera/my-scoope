@@ -12,7 +12,7 @@ body { margin: 0; background: radial-gradient(circle at top, #2e251b 0, #080808 
 .share-brand img { display: block; width: 132px; height: auto; }
 .share-card, .share-meal, .share-action { border: 1px solid #39342d; background: rgba(18, 17, 15, .94); border-radius: 22px; }
 .share-card { padding: 32px; text-align: center; box-shadow: 0 24px 80px rgba(0, 0, 0, .28); }
-.share-card__eyebrow { margin: 0; color: #cba76c; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.share-card__eyebrow { margin: 0; color: #cba76c; font-size: 12px; font-weight: var(--font-weight-eyebrow); letter-spacing: .16em; text-transform: uppercase; }
 .share-card h1 { margin: 12px 0; font-size: clamp(30px, 7vw, 48px); line-height: 1.05; }
 .share-card__calories { display: block; margin: 22px 0; color: #e4c58f; font-size: 28px; }
 .share-card__macros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }

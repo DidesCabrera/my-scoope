@@ -10,6 +10,7 @@ from notas.domain.models import (
 def user_weight(request):
     if request.user.is_authenticated:
         user = request.user
+        current_weight = get_current_weight(user)
         inbox_unread_count = InboxItem.objects.filter(
             owner=user,
             dismissed_at__isnull=True,
@@ -28,7 +29,8 @@ def user_weight(request):
         proposal_seen_count = int(request.session.get("proposal_notification_seen_count", 0) or 0)
 
         return {
-            "current_weight": get_current_weight(user),
+            "current_weight": current_weight,
+            "current_weight_label": f"{float(current_weight):.1f}".replace(".", ",") if current_weight is not None else "",
             "inbox_unread_count": inbox_unread_count,
             "proposal_unread_count": proposal_unread_count,
             "inbox_notification_seen": bool(inbox_unread_count and inbox_unread_count <= inbox_seen_count),
@@ -37,6 +39,7 @@ def user_weight(request):
 
     return {
         "current_weight": None,
+        "current_weight_label": "",
         "inbox_unread_count": 0,
         "proposal_unread_count": 0,
         "inbox_notification_seen": False,

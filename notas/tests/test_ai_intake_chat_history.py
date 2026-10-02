@@ -60,6 +60,10 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertIn('data-lucide="chevron-down"', html)
         self.assertIn("home-ai-intake__quick-form--desktop", html)
         self.assertIn("home-ai-intake__more-form--mobile", html)
+        self.assertLess(
+            html.index('class="home-libraries"'),
+            html.index('class="home-ai-intake home-ai-intake--composer"'),
+        )
 
     def test_home_quick_tabs_start_ai_chat_with_expected_prompts(self):
         expected_prompts = [

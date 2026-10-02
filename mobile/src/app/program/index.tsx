@@ -1,6 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData } from "@/api/types";
@@ -13,7 +14,7 @@ import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { ProgramActiveActions } from "@/components/programs/program-active-actions";
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { DetailLinkRow, LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader, textStyles } from "@/components/ui";
+import { LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -100,6 +101,7 @@ export default function ProgramScreen() {
       onChangeProgram={() => router.push("/program/activate" as Href)}
       onClose={() => setActionsVisible(false)}
       onOpenHistory={() => router.push("/program/history" as Href)}
+      onOpenOriginalProgram={calendarization?.source_program_id ? () => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href) : undefined}
       onOpenReminders={() => router.push("/reminders")}
       onStateAction={applyAction}
       status={calendarization?.status ?? null}
@@ -122,7 +124,7 @@ export default function ProgramScreen() {
 
   return (
     <>
-      <ScrollView
+      <NestableScrollContainer
         contentContainerStyle={styles.screenContent}
         keyboardShouldPersistTaps="handled"
         onScroll={({ nativeEvent }) => {
@@ -137,17 +139,7 @@ export default function ProgramScreen() {
           <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <ProgramActiveOverview calendarization={calendarization} program={program} />
-          {calendarization.source_program_id ? (
-            <>
-              <Text style={textStyles.muted}>Tu programa activo conserva lo que realmente ocurrió. La plantilla original es una referencia reutilizable y sus cambios no alteran este historial.</Text>
-              <DetailLinkRow
-                accessibilityLabel={`Ver la plantilla original ${calendarization.program_name}`}
-                label="Ver plantilla original"
-                onPress={() => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href)}
-              />
-            </>
-          ) : null}
-          <SectionDivider />
+          <SectionDivider style={styles.planningDivider} />
           <SectionHeading detail={`${weekCount} ${weekCount === 1 ? "semana" : "semanas"}`} title="Planificación Semanal" />
         </View>
 
@@ -156,7 +148,7 @@ export default function ProgramScreen() {
         </View>
 
         <CalendarizedProgramPlanning days={programDays} initialWeek={activeWeek} key={`${calendarization.id}:${activeWeek}`} showWeekTabs={false} weeksData={program.weeks} />
-      </ScrollView>
+      </NestableScrollContainer>
       {actionsModal}
     </>
   );
@@ -164,6 +156,7 @@ export default function ProgramScreen() {
 
 const styles = StyleSheet.create({
   beforePlanning: { gap: tokens.spacing.lg },
+  planningDivider: { marginBottom: 0 },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   screenContent: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },

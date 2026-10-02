@@ -526,7 +526,11 @@ def build_program_week_summary_metrics(weeks, current_weight=None):
         )
         week["assigned_dailyplans_count"] = assigned_dailyplans_count
         week["average_kcal_per_assigned_day"] = average_kcal
-        average_protein = float((week.get("totals") or {}).get("protein") or 0) / assigned_dailyplans_count if assigned_dailyplans_count else 0
+        totals = week.get("totals") or {}
+        average_protein = float(totals.get("protein") or 0) / assigned_dailyplans_count if assigned_dailyplans_count else 0
+        week["average_protein_per_assigned_day"] = average_protein
+        week["average_carbs_per_assigned_day"] = float(totals.get("carbs") or 0) / assigned_dailyplans_count if assigned_dailyplans_count else 0
+        week["average_fat_per_assigned_day"] = float(totals.get("fat") or 0) / assigned_dailyplans_count if assigned_dailyplans_count else 0
         week["average_ppk_per_assigned_day"] = average_protein / current_weight if current_weight and average_protein else None
         week["previous_week_average_ratio"] = previous_ratio
         previous_average_kcal = average_kcal

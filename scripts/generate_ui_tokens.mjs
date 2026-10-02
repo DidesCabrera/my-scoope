@@ -111,7 +111,7 @@ const nativeTokens = {
     ...nativeEntities,
   },
   spacing: { ...shared.spacing, ...platforms.native.overrides.spacing },
-  radius: shared.radius,
+  radius: { ...shared.radius, ...platforms.native.overrides.radius },
   type: shared.typography,
   weight: shared.fontWeight,
   card: platforms.native.overrides.card,

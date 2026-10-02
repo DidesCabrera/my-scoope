@@ -85,7 +85,7 @@ class SidebarBuilderTests(TestCase):
                 "Inicio",
                 "Mi programa activo",
                 "Asistente Nutricional",
-                "Comparador",
+                "Comparaciones",
                 "Compartidos",
             ],
         )

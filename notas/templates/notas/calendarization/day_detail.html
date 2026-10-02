@@ -10,7 +10,7 @@
   data-page="dailyplan-detail"
 >
   {% if vm.content.day.plan_snapshot %}
-    {% include "components/card_main_dailyplan.html" with main_card=vm.content.main_card temporal_date=vm.content.day.calendar_date|date:"j M"|lower %}
+    {% include "components/card_main_dailyplan.html" with main_card=vm.content.main_card temporal_date=vm.content.day.calendar_date|date:"j M"|lower meal_completion=vm.content.meal_completion %}
 
     <hr>
 
@@ -33,11 +33,8 @@
           {% for entry in vm.content.meal_entries %}
             <div id="calendarized-meal-step-{{ forloop.counter }}" class="dailyplan-detail__meal-step">
               <div class="dailyplan-detail__child-card">
-                {% include "components/card_child_meal.html" with child_card=entry.card dpm_meal="dpm_meal" meal_number=forloop.counter %}
+                {% include "components/card_child_meal.html" with child_card=entry.card dpm_meal="dpm_meal" meal_number=forloop.counter meal_checkin=entry.checkin %}
               </div>
-              {% if entry.checkin %}
-                {% include "components/calendarization_meal_checkin.html" with checkin=entry.checkin %}
-              {% endif %}
             </div>
           {% endfor %}
         </div>
@@ -76,5 +73,7 @@
 </div>
 
 <script src="{% static 'notas/js/dailyplan_menu_scroll.js' %}"></script>
-<script src="{% static 'notas/js/calendarization_meal_checkin.js' %}?v=20260902-2" defer></script>
+{% if vm.content.can_check_in %}
+  <script src="{% static 'notas/js/calendarization_meal_checkin.js' %}?v=20260902-2" defer></script>
+{% endif %}
 {% endblock %}

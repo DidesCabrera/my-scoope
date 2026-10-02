@@ -1,7 +1,7 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import type { PropsWithChildren, ReactElement, ReactNode } from "react";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { type RefreshControlProps, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
@@ -13,6 +13,7 @@ type ScreenProps = PropsWithChildren<{
   contentStyle?: StyleProp<ViewStyle>;
   headerMode?: "automatic" | "preserve";
   onHeaderVisibilityChange?: (visible: boolean) => void;
+  refreshControl?: ReactElement<RefreshControlProps>;
   scroll?: boolean;
   scrollHeader?: ReactNode;
   stickyHeader?: ReactNode;
@@ -25,7 +26,7 @@ export function useScreenScrollControl() {
   return useContext(ScreenScrollContext);
 }
 
-export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onHeaderVisibilityChange, scrollHeader, stickyHeader, stickyHeaderStyle }: ScreenProps) {
+export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onHeaderVisibilityChange, refreshControl, scrollHeader, stickyHeader, stickyHeaderStyle }: ScreenProps) {
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [panelDragging, setPanelDragging] = useState(false);
@@ -49,6 +50,7 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           onScroll={(event) => setCompactIdentityVisible(isHeaderIdentityVisible(event.nativeEvent.contentOffset.y))}
+          refreshControl={refreshControl}
           scrollEnabled={!panelDragging}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
@@ -109,6 +111,6 @@ const styles = StyleSheet.create({
   header: { alignItems: "flex-end", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   headerCentered: { alignItems: "center" },
   headerCopy: { flex: 1, gap: tokens.spacing.xs },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
+  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.2, textTransform: "uppercase" },
   title: { color: tokens.color.textMain, fontSize: tokens.type.title, fontWeight: "800", letterSpacing: -0.5 },
 });

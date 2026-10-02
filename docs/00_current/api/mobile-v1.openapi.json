@@ -15068,7 +15068,22 @@
     "/api/v1/shares/inbox": {
       "get": {
         "operationId": "mobile_api_sharing_inbox",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "default": "received",
+              "enum": [
+                "received",
+                "sent"
+              ],
+              "title": "Scope",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {

@@ -11,7 +11,7 @@
     <h2 class="list-page-header__title">{{ vm.ui.title }}</h2>
   {% endif %}
 
-  {% if vm.ui.entity != 'proposal' and vm.ui.entity != 'chat' %}
+  {% if vm.ui.entity != 'proposal' and vm.ui.entity != 'chat' and vm.ui.entity != 'inbox' %}
     <div class="list-page-header__indicator" aria-label="Total de elementos">
       <span class="structural-item">
         <strong>{% if vm.content.child_cards %}{{ vm.content.child_cards|length }}{% elif vm.content.proposals %}{{ vm.content.proposals|length }}{% elif vm.content.inbox_items %}{{ vm.content.inbox_items|length }}{% elif vm.content.item_count %}{{ vm.content.item_count }}{% else %}0{% endif %}</strong>

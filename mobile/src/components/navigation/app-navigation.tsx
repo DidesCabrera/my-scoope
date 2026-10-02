@@ -21,7 +21,6 @@ import {
   UserPlus,
   WalletCards,
   Weight,
-  X,
 } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 import {
@@ -47,7 +46,7 @@ type HeaderAction = { disabled?: boolean; icon?: "calendar-clock" | "clock" | "m
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
-  | { mode: "back"; action?: HeaderAction; fallback?: Href; leadingAction?: HeaderAction; title: string }
+  | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; title: string }
   | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
 
@@ -133,14 +132,16 @@ function LibraryHeaderIdentity({ entity, title, visible }: { entity: LibraryEnti
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress }]}><HeaderEntityIdentity entity={entity} title={title} /></Animated.View>;
 }
 
-function BackHeaderIdentity({ title }: { title: string }) {
-  return <View accessibilityLabel={title} accessible pointerEvents="none" style={styles.backHeaderIdentity}><Text numberOfLines={1} style={styles.routeIdentityTitle}>{title}</Text></View>;
+function BackHeaderIdentity({ title, visible = true }: { title: string; visible?: boolean }) {
+  const [progress] = useState(() => new Animated.Value(visible ? 1 : 0));
+  useEffect(() => { Animated.timing(progress, { duration: 90, toValue: visible ? 1 : 0, useNativeDriver: true }).start(); }, [progress, visible]);
+  return <Animated.View accessibilityElementsHidden={!visible} accessibilityLabel={title} accessible importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.backHeaderIdentity, { opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [-4, 0] }) }] }]}><Text numberOfLines={1} style={styles.routeIdentityTitle}>{title}</Text></Animated.View>;
 }
 
 function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
-  if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente AI" : "Conversación" };
-  if (pathname.startsWith("/proposals")) return { icon: pathname === "/proposals" ? Sparkles : ClipboardCheck, title: pathname === "/proposals" ? "Asistente AI" : "Detalle de propuesta" };
-  if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparador" };
+  if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente Nutricional" : "Conversación" };
+  if (pathname.startsWith("/proposals")) return { icon: pathname === "/proposals" ? Sparkles : ClipboardCheck, title: pathname === "/proposals" ? "Asistente Nutricional" : "Detalle de propuesta" };
+  if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparaciones" };
   if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Mi programa activo" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
   if (pathname === "/weight") return { icon: Weight, title: "Registrar peso" };
@@ -191,7 +192,7 @@ export function AppNavigationHeader() {
             <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.leadingAction.label}</Text>
           </Pressable>
         ) : headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
-          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMain} size={26} strokeWidth={2.2} /></Pressable>
+          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (headerPresentation.mode === "back" && headerPresentation.forceFallback) router.replace(detailFallback); else if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMuted} size={26} strokeWidth={2.2} /></Pressable>
         ) : canOpenMenu ? (
           <Pressable
             accessibilityLabel="Abrir menú"
@@ -199,12 +200,12 @@ export function AppNavigationHeader() {
             hitSlop={8}
             onPress={openMenu}
             style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
-            <PanelRight color={tokens.color.textMain} size={25} strokeWidth={2} />
+            <PanelRight color={tokens.color.textMuted} size={25} strokeWidth={2} />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />
         )}
-        {headerPresentation.mode === "back" ? <BackHeaderIdentity title={headerPresentation.title} /> : headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
+        {headerPresentation.mode === "back" ? <BackHeaderIdentity title={headerPresentation.title} visible={headerPresentation.identityVisible} /> : headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
           <LibraryHeaderIdentity entity={headerPresentation.entity} title={headerPresentation.title} visible={headerPresentation.identityVisible} />
         ) : isHome ? <View pointerEvents="none" style={styles.headerLogo}><MyScoopeLogo /></View> : <HeaderIdentity icon={routeIdentity.icon} title={headerPresentation.title || routeIdentity.title} visible={defaultIdentityVisible} />}
         {headerPresentation.mode === "back" && headerPresentation.action ? (
@@ -215,7 +216,9 @@ export function AppNavigationHeader() {
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
             style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
-            <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>
+            {headerPresentation.action.icon === "more"
+              ? <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
+              : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
           </Pressable>
         ) : headerPresentation.mode === "library-list" ? (
           <View style={styles.libraryHeaderActions}>
@@ -226,7 +229,7 @@ export function AppNavigationHeader() {
                 hitSlop={8}
                 onPress={headerPresentation.createAction.onPress}
                 style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
-                <Plus color={tokens.color.textMain} size={25} strokeWidth={2.2} />
+                <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
               </Pressable>
             ) : null}
             {headerPresentation.action ? (
@@ -236,7 +239,7 @@ export function AppNavigationHeader() {
                 hitSlop={8}
                 onPress={headerPresentation.action.onPress}
                 style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
-                <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+                <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
               </Pressable>
             ) : null}
           </View>
@@ -250,10 +253,10 @@ export function AppNavigationHeader() {
                 onPress={headerPresentation.secondaryAction.onPress}
                 style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
                 {headerPresentation.secondaryAction.icon === "pin"
-                  ? <Pin color={tokens.color.textMain} fill="none" size={24} strokeWidth={2.2} />
+                  ? <Pin color={tokens.color.textMuted} fill="none" size={24} strokeWidth={2.2} />
                   : headerPresentation.secondaryAction.icon === "calendar-clock"
-                    ? <CalendarClock color={tokens.color.textMain} size={24} strokeWidth={2.2} />
-                    : <Clock3 color={tokens.color.textMain} size={24} strokeWidth={2.2} />}
+                    ? <CalendarClock color={tokens.color.textMuted} size={24} strokeWidth={2.2} />
+                    : <Clock3 color={tokens.color.textMuted} size={24} strokeWidth={2.2} />}
               </Pressable>
             ) : null}
             {headerPresentation.action ? (
@@ -263,7 +266,7 @@ export function AppNavigationHeader() {
                 hitSlop={8}
                 onPress={headerPresentation.action.onPress}
                 style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
-                <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+                <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
               </Pressable>
             ) : null}
           </View>
@@ -277,8 +280,8 @@ export function AppNavigationHeader() {
             onPress={headerPresentation.action.onPress}
             style={({ pressed }) => [styles.headerButton, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.action.icon === "plus"
-              ? <Plus color={tokens.color.textMain} size={25} strokeWidth={2.2} />
-              : <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />}
+              ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+              : <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />}
           </Pressable>
         ) : <View style={[styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide]} />}
       </View>
@@ -351,7 +354,7 @@ function AppSidebar() {
                 accessibilityRole="button"
                 onPress={closeMenu}
                 style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
-                <X color={tokens.color.textMain} size={24} />
+                <PanelRight color={tokens.color.textMuted} size={24} strokeWidth={2} />
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false}>
@@ -390,20 +393,20 @@ const styles = StyleSheet.create({
   routeIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   routeIdentityTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: 16, fontWeight: "600", lineHeight: 22 },
   logo: { alignItems: "center", flexDirection: "row", gap: 5 },
-  logoText: { color: tokens.color.textMain, fontSize: 20, fontWeight: "900", letterSpacing: -0.8 },
+  logoText: { color: tokens.color.textMain, fontSize: 18, fontWeight: "900", letterSpacing: -0.7 },
   logoBars: { gap: 2 },
-  logoBar: { borderRadius: 2, height: 4, width: 15 },
+  logoBar: { borderRadius: 2, height: 3, width: 13 },
   logoBarProtein: { backgroundColor: tokens.color.protein },
   logoBarCarbs: { backgroundColor: tokens.color.carbs },
   logoBarFat: { backgroundColor: tokens.color.fat },
   modalRoot: { flex: 1, flexDirection: "row" },
   scrim: { backgroundColor: "rgba(0,0,0,0.72)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   scrimPressable: { flex: 1 },
-  drawer: { backgroundColor: tokens.color.surfacePage, borderRightColor: tokens.color.borderDefault, borderRightWidth: 1, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
+  drawer: { backgroundColor: tokens.color.surfaceApp, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
   drawerSafeArea: { flex: 1 },
-  drawerHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 64, paddingHorizontal: tokens.spacing.lg },
+  drawerHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 64, paddingHorizontal: tokens.spacing.md * 2 },
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
-  drawerContent: { gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg },
-  menuSection: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, gap: tokens.spacing.xs, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
-  menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
+  drawerContent: { gap: 0, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg },
+  menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
+  menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: "800", letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
 });

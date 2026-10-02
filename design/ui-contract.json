@@ -37,6 +37,7 @@
     "fontWeight": {
       "regular": "400",
       "medium": "500",
+      "eyebrow": "500",
       "semibold": "600",
       "bold": "700",
       "extraBold": "800",
@@ -162,6 +163,30 @@
     },
     "native": {
       "componentRecipes": {
+        "entityDetail": {
+          "kpiMarginTop": 4
+        },
+        "eyebrow": {
+          "fontWeight": "500"
+        },
+        "entityHeading": {
+          "card": {
+            "fontSize": 24,
+            "lineHeight": 30,
+            "indicatorMarginTop": 6,
+            "marginTop": 2
+          },
+          "pageCompact": {
+            "fontSize": 26,
+            "lineHeight": 34,
+            "marginTop": 2
+          },
+          "pageRegular": {
+            "fontSize": 28,
+            "lineHeight": 36,
+            "marginTop": 2
+          }
+        },
         "nutritionKpi": {
           "regular": {
             "totalSize": 96,
@@ -217,6 +242,10 @@
       "overrides": {
         "spacing": {
           "screen": 18
+        },
+        "radius": {
+          "card": 26,
+          "panel": 22
         },
         "entities": {
           "dailyPlan": "#7C4DDB"

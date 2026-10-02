@@ -28,7 +28,7 @@
 .ui-system-gallery__section-heading p {
   color: var(--text-soft);
   font-size: var(--font-size-label);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-eyebrow);
   letter-spacing: .08em;
   text-transform: uppercase;
 }

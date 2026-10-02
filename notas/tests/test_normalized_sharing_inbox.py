@@ -46,6 +46,10 @@ class NormalizedSharingInboxTests(TestCase):
         listing = self.client.get(reverse("inbox_list"))
         detail = self.client.get(reverse("inbox_detail", args=["share", self.inbox_item.id]))
 
+        self.assertContains(listing, "Compartidos")
+        self.assertContains(listing, "Recibidos")
+        self.assertContains(listing, "Enviados")
+        self.assertNotContains(listing, 'aria-label="Total de elementos"')
         self.assertContains(listing, "Plan de snapshot")
         self.assertEqual(detail.status_code, 200)
         self.inbox_item.refresh_from_db()

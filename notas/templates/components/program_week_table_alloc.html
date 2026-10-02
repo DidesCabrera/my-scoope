@@ -8,7 +8,9 @@
 
   {% for week in weeks %}
     <div class="data-grid-row data-grid-row--program-weeks-mobile data-grid-row--program-weeks-mobile-alloc" role="row">
-      <div class="data-grid-cell data-grid-cell--program-week" role="cell">S{{ week.week_number }}</div>
+      <div class="data-grid-cell data-grid-cell--program-week" role="cell">
+        <span class="program-week-table__identity"><i data-lucide="calendar" aria-hidden="true"></i><span>Semana {{ week.week_number }}</span></span>
+      </div>
       <div class="data-grid-cell data-grid-cell--alloc" role="cell">
         {% include "components/grid_alloc_item.html" with value=week.totals.alloc.protein kind="protein" %}
       </div>

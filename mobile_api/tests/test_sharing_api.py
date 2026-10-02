@@ -116,6 +116,14 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         item = inbox.json()["data"]["items"][0]
         self.assertEqual(item["sender"], "Ana")
 
+        sent_source = DailyPlan.objects.create(name="Plan enviado", created_by=self.user, is_draft=False)
+        sent_resource = create_dailyplan_share_resource(sender=self.user, dailyplan_id=sent_source.id).resource
+        sent = self.client.get("/api/v1/shares/inbox?scope=sent")
+        self.assertEqual(sent.status_code, 200)
+        self.assertEqual(sent.json()["data"]["count"], 1)
+        self.assertEqual(sent.json()["data"]["items"][0]["resource_id"], str(sent_resource.public_id))
+        self.assertEqual(sent.json()["data"]["items"][0]["title"], "Plan enviado")
+
         updated = self.client.patch(
             f"/api/v1/shares/inbox/{item['id']}",
             data={"is_read": True, "is_favorite": True},
