@@ -30,11 +30,11 @@ export function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function AppHeader({ eyebrow, title, action }: { eyebrow?: string; title: string; action?: ReactNode }) {
+export function AppHeader({ eyebrow, eyebrowIcon, title, action }: { eyebrow?: string; eyebrowIcon?: ReactNode; title: string; action?: ReactNode }) {
   return (
     <View style={styles.header}>
       <View style={styles.headerCopy}>
-        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+        {eyebrow ? <View style={styles.eyebrowRow}>{eyebrowIcon}<Text style={styles.eyebrow}>{eyebrow}</Text></View> : null}
         <Text style={styles.title}>{title}</Text>
       </View>
       {action}
@@ -224,7 +224,8 @@ const styles = StyleSheet.create({
   brandCaption: { color: tokens.color.textSoft, fontSize: 12, marginTop: 2 },
   header: { alignItems: "flex-end", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   headerCopy: { flex: 1, gap: 4 },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
+  eyebrow: { color: tokens.color.textSoft, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.2, textTransform: "uppercase" },
+  eyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   title: { color: tokens.color.textMain, fontSize: tokens.type.title, fontWeight: "800", letterSpacing: -0.5 },
   card: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: -tokens.spacing.screen, padding: tokens.card.outerPadding },
   cardMuted: { backgroundColor: tokens.color.surfaceMuted },

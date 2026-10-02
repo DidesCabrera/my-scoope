@@ -115,7 +115,6 @@
       <h1>Vamos, @{{ request.user.username }}</h1>
       {% if current_weight %}
         <div class="home-calendar__weight-chip" aria-label="Peso actual: {{ current_weight_label }} kilogramos">
-          <i data-lucide="weight" aria-hidden="true"></i>
           <span>{{ current_weight_label }} kg</span>
         </div>
       {% endif %}
@@ -306,7 +305,7 @@
           <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
           <div class="home-section-help__copy">
             <h3>Herramientas</h3>
-            <p>Accede al Comparador para revisar elementos lado a lado, al Explorador para consultar opciones nutricionales y a Calendarizar para organizar programas en fechas.</p>
+            <p>Accede a Comparaciones para revisar elementos lado a lado, al Explorador para consultar opciones nutricionales y a Calendarizar para organizar programas en fechas.</p>
           </div>
           <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
             <i data-lucide="x" aria-hidden="true"></i>
@@ -321,7 +320,7 @@
           <i data-lucide="git-compare-arrows"></i>
         </span>
         <span class="home-tool-card__copy">
-          <strong>Comparador</strong>
+          <strong>Comparaciones</strong>
           <small>Compara alimentos, comidas o planes diarios lado a lado.</small>
         </span>
       </a>

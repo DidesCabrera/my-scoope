@@ -22,9 +22,9 @@ export function NavigationSidebarItem({ active, icon: Icon, label, onPress }: Sh
   return <SidebarItemFrame active={active} label={label} onPress={onPress}><View style={styles.navigationIcon}><Icon color={active ? tokens.color.textMain : tokens.color.textMuted} size={20} strokeWidth={2} /></View></SidebarItemFrame>;
 }
 const styles = StyleSheet.create({
-  item: { alignItems: "center", borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.md, minHeight: 50, paddingHorizontal: tokens.spacing.md },
+  item: { alignItems: "center", borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.md, minHeight: 48, paddingHorizontal: tokens.spacing.md },
   itemActive: { backgroundColor: tokens.color.surfaceMuted },
-  label: { color: tokens.color.textMuted, flex: 1, fontSize: 15, fontWeight: "600" },
+  label: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.body, fontWeight: "600" },
   labelActive: { color: tokens.color.textMain, fontWeight: "800" },
   navigationIcon: { alignItems: "center", backgroundColor: "transparent", height: 22, justifyContent: "center", width: 22 },
   pressed: { opacity: 0.65 },

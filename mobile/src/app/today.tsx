@@ -171,7 +171,7 @@ export default function TodayScreen() {
       <AppHeader
         alignment="center"
         action={currentWeightKg != null ? (
-          <GuideMetric icon="weight" tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} />
+          <GuideMetric tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} />
         ) : undefined}
         title={`Vamos, ${firstName}`}
       />

@@ -1,43 +1,27 @@
-import { Plus, X } from "lucide-react-native";
-import type { LucideIcon } from "lucide-react-native";
+import { Pencil, X } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { tokens } from "@/design/tokens";
 
-type Props = {
-  onClose(): void;
-  onNewChat?(): void;
-  visible: boolean;
-};
-
-export function AssistantListActions({ onClose, onNewChat, visible }: Props) {
-  const startChat = () => {
-    onClose();
-    onNewChat?.();
-  };
+export function SavedComparisonActions({ onClose, onEdit, visible }: { onClose(): void; onEdit(): void; visible: boolean }) {
+  const edit = () => { onClose(); onEdit(); };
   return (
     <ActionSheetModal onRequestClose={onClose} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <View style={styles.header}>
-          <View><Text style={styles.eyebrow}>ACCIONES</Text><Text style={styles.title}>Chats</Text></View>
+          <View><Text style={styles.eyebrow}>ACCIONES</Text><Text style={styles.title}>Comparación</Text></View>
           <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={onClose} style={({ pressed }) => [styles.close, pressed && styles.pressed]}><X color={tokens.color.textMain} size={22} /></Pressable>
         </View>
         <View style={styles.content}>
-          <ActionRow icon={Plus} label="Nuevo chat" onPress={startChat} />
+          <Pressable accessibilityRole="button" onPress={edit} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+            <View style={styles.icon}><Pencil color={tokens.color.textMain} size={20} /></View>
+            <Text style={styles.label}>Editar comparación</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     </ActionSheetModal>
-  );
-}
-
-function ActionRow({ icon: Icon, label, onPress }: { icon: LucideIcon; label: string; onPress(): void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      <View style={styles.icon}><Icon color={tokens.color.textMain} size={20} /></View>
-      <Text style={styles.label}>{label}</Text>
-    </Pressable>
   );
 }
 

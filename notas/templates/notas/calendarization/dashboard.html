@@ -36,9 +36,6 @@
       </div>
       {% include "components/program_active_kpis.html" with program_kpis=vm.content.current_calendar standalone=True metric_cards=True %}
     </div>
-    {% if vm.content.current_program_url %}
-      {% include "components/detail_link_row.html" with label="Ir a detalle de programa" url=vm.content.current_program_url accessibility_label="Ir al detalle del programa" standalone=True %}
-    {% endif %}
     <hr class="calendarization-current__section-divider">
     <section class="program-board-shell calendarization-current__planning" aria-labelledby="calendarization-planning-title">
     <div class="detail-section-header dailyplan-detail__children-header program-board-header calendarization-current__program-board-header">

@@ -417,12 +417,16 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
             response,
             'class="program-active-kpis program-active-kpis--standalone program-active-kpis--metric-cards"',
         )
-        self.assertContains(response, "Ir a detalle de programa")
+        self.assertNotContains(response, "Ir a detalle de programa")
+        self.assertContains(response, "Ver programa original")
         self.assertContains(response, reverse("program_detail", args=[self.program.id]))
+        header = response.context["vm"]["content"]["header"]
+        self.assertIn("view_original_program", [action["key"] for action in header["desktop_menu_actions"]])
+        self.assertIn("view_original_program", [action["key"] for action in header["mobile_menu_actions"]])
         self.assertContains(response, "calendarization-current__section-divider")
         self.assertContains(response, "Planificación semanal")
         self.assertContains(response, "calendarization-current__week-foods-divider")
-        self.assertContains(response, "Alimentos en esta Semana")
+        self.assertContains(response, "Alimentos en esta semana")
         self.assertContains(
             response,
             'class="program-board-shell calendarization-current__planning"',

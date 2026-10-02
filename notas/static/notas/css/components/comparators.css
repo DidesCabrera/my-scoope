@@ -3,7 +3,24 @@
    ========================================================= */
 
 .comparator-page {
+  --comparator-entity-color: var(--entity-comparator, var(--entity-home));
   padding-bottom: 44px;
+}
+
+.comparator-page--food {
+  --comparator-entity-color: var(--entity-food);
+}
+
+.comparator-page--meal {
+  --comparator-entity-color: var(--entity-meal);
+}
+
+.comparator-page--dailyplan {
+  --comparator-entity-color: var(--entity-dailyplan);
+}
+
+.comparator-entity-card {
+  border-top: 3px solid var(--comparator-entity-color);
 }
 
 .comparator-tabs {
@@ -50,6 +67,10 @@
   height: 14px;
   stroke-width: 2;
   width: 14px;
+}
+
+.comparator-tab__count {
+  font-variant-numeric: tabular-nums;
 }
 
 .comparator-form {

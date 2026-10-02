@@ -13,6 +13,10 @@
   .program-active-kpis__indicator-row strong{font-size:.9rem}
   .program-active-kpis__indicator-row em{font-size:.85rem}
 }
+
+.program-active-kpis__eyebrow {
+  font-weight: var(--font-weight-eyebrow);
+}
 .program-active-kpis__indicators{background:transparent;border-radius:0;padding:var(--space-xs)}
 .program-active-kpis__indicator+.program-active-kpis__indicator{border-top-color:var(--kpi-row-separator)}
 

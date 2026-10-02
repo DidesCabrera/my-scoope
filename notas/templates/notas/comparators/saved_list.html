@@ -1,9 +1,9 @@
 {% extends "notas/base.html" %}
 {% load static %}
-{% block title %}Comparador{% endblock %}
+{% block title %}Comparaciones{% endblock %}
 {% block content %}
 
-<div class="page list comparator-page comparator-saved-page">
+<div class="page list comparator-page comparator-saved-page comparator-page--{{ vm.content.entity_scope }}">
   {% include "components/list_page_header.html" %}
 
   <nav class="comparator-tabs" aria-label="Tipo de comparación guardada">
@@ -17,7 +17,7 @@
 
   <section class="comparator-saved-list" aria-label="Comparaciones guardadas">
     {% for comparison in vm.content.saved_comparisons %}
-      <article class="comparator-saved-card card-detail-block">
+      <article class="comparator-saved-card comparator-entity-card card-detail-block">
         <a href="{{ comparison.url }}" class="comparator-saved-card__link">
           <span class="comparator-saved-card__icon comparator-saved-card__icon--{{ comparison.entity_scope }}">
             <i data-lucide="{{ comparison.icon }}" aria-hidden="true"></i>

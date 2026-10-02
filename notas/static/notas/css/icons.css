@@ -55,7 +55,7 @@
     margin-right: 2px;
     height: 18px;
     width: 18px;
-    color: var(--text-main);
+    color: var(--text-muted);
     flex-shrink: 0;
     stroke-width: 1.5;
   }
@@ -299,7 +299,7 @@
   .mobile-menu-btn,
   .back-header-icon {
     background-color: transparent;
-    color: var(--text-main);
+    color: var(--text-muted);
     padding: 0;
     border: none;
     cursor: pointer;
@@ -309,7 +309,7 @@
   .menu-icon {
     height: 22px;
     width: 22px;
-    color: var(--text-main);
+    color: var(--text-muted);
     flex-shrink: 0;
     stroke-width: 1.5;
   }

@@ -108,7 +108,7 @@
   margin: 0 0 0.25rem;
   color: var(--entity-program);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-eyebrow);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

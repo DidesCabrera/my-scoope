@@ -1169,10 +1169,18 @@
 .program-chart-outline-path {
   fill: none;
   stroke: var(--program-chart-outline-color);
-  stroke-width: var(--program-chart-bar-border-width);
+  stroke-width: 1px;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
+}
+
+.program-chart-outline-area {
+  stroke: none;
+}
+
+.program-chart-outline-gradient-stop {
+  stop-color: var(--program-chart-outline-color);
 }
 
 .program-chart-outline-dot {
@@ -2057,7 +2065,7 @@ html[data-theme="dark"] .program-chart-guide {
 .program-chart-panel__body--stacked-preview .program-chart-bar-slot { width: auto; min-width: 0; max-width: none; padding-left: 0; padding-right: 0; }
 .program-chart-panel__body--stacked-preview .program-chart-bar, .program-chart-panel__body--stacked-preview .program-chart-stacked-bar { width: 100%; border-radius: 0; }
 .program-chart-panel__body--stacked-preview .program-chart-plot:not(.program-chart-plot--alloc) .program-chart-bar { opacity: 1; background: transparent; background-image: none; }
-.program-chart-panel__body--stacked-preview .program-chart-plot:not(.program-chart-plot--alloc) .program-chart-outline-path { stroke-width: 2.65px; }
+.program-chart-panel__body--stacked-preview .program-chart-plot:not(.program-chart-plot--alloc) .program-chart-outline-path { stroke-width: 1px; }
 .program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar { gap: 2px; padding: 3px; border: 0; background: transparent; opacity: 1; }
 .program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment { border-radius: 3px; }
 .program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment--protein { background: #00d0f5; }

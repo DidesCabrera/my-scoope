@@ -4,9 +4,23 @@ from django.test import SimpleTestCase
 
 
 TEMPLATES = Path(__file__).resolve().parents[1] / "templates" / "components"
+STATIC = Path(__file__).resolve().parents[1] / "static" / "notas"
 
 
 class ProgramDetailWebParityTests(SimpleTestCase):
+    def test_program_chart_uses_thin_curves_and_compact_day_markers(self):
+        styles = (STATIC / "css" / "components" / "programs_charts.css").read_text()
+        script = (STATIC / "js" / "program_metric_chart.js").read_text()
+
+        self.assertIn(".program-chart-outline-path", styles)
+        self.assertIn("stroke-width: 1px", styles)
+        self.assertNotIn("program-chart-outline-path { stroke-width: 2.65px; }", styles)
+        self.assertIn('circle.setAttribute("r", "1.5")', script)
+        self.assertIn(".program-chart-outline-area", styles)
+        self.assertIn(".program-chart-outline-gradient-stop", styles)
+        self.assertIn('[["0", "0.2"], ["1", "0"]]', script)
+        self.assertIn("makeOutlineArea(areaCommands.join", script)
+
     def test_week_detail_orders_plans_foods_and_comparison_insights(self):
         source = (TEMPLATES / "program_week_child_card.html").read_text()
 

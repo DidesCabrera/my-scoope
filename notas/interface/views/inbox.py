@@ -55,6 +55,7 @@ from notas.presentation.viewmodels.base_vm import BaseVM
 class InboxListContentVM:
     header: object
     inbox_items: list[dict]
+    tabs: list[dict]
     list_mode: str = "list"
     favorites_only: bool = False
     scope: str = "received"
@@ -114,36 +115,9 @@ def _inbox_list_url(*, mode: str | None = None, favorites_only: bool = False, sc
     return f"{base_url}?{'&'.join(params)}"
 
 
-def _build_inbox_scope_actions(*, scope: str):
-    return [
-        {
-            "key": "received",
-            "label": "Recibidos",
-            "url": _inbox_list_url(),
-            "method": "get",
-            "icon": "inbox",
-            "order": 10,
-            "desktop_position": "menu",
-            "mobile_position": "menu",
-            "extra_class": "is-active" if scope == "received" else "",
-        },
-        {
-            "key": "sent",
-            "label": "Enviados",
-            "url": _inbox_list_url(scope="sent"),
-            "method": "get",
-            "icon": "send",
-            "order": 40,
-            "desktop_position": "menu",
-            "mobile_position": "menu",
-            "extra_class": "is-active" if scope == "sent" else "",
-        },
-    ]
-
-
 def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool, scope: str):
     if scope == "sent":
-        return _build_inbox_scope_actions(scope=scope)
+        return []
 
     if list_mode == "delete":
         return [
@@ -200,7 +174,6 @@ def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool, scope: st
     )
 
     return [
-        *_build_inbox_scope_actions(scope=scope),
         {
             "key": "enter_delete_mode",
             "label": "Eliminar Inbox",
@@ -243,7 +216,7 @@ def _build_inbox_detail_actions(inbox: dict):
 
 def _inbox_parent():
     return BreadcrumbParent(
-        label="Inbox",
+        label="Compartidos",
         url=reverse("inbox_list"),
     )
 
@@ -310,14 +283,9 @@ def inbox_list(request):
     scope = _normalize_inbox_scope(request)
     list_mode = _normalize_inbox_list_mode(request, scope=scope)
     favorites_only = _get_favorites_only(request) if scope == "received" else False
-    items = [
-        asdict(item)
-        for item in build_inbox_items(
-            request.user,
-            favorites_only=favorites_only,
-            scope=scope,
-        )
-    ]
+    received_items = build_inbox_items(request.user, favorites_only=favorites_only)
+    sent_items = build_inbox_items(request.user, scope="sent")
+    items = [asdict(item) for item in (sent_items if scope == "sent" else received_items)]
     if scope == "received":
         request.session["inbox_notification_seen_count"] = sum(
             1 for item in items if not item.get("is_read")
@@ -325,7 +293,7 @@ def inbox_list(request):
 
     content_vm = InboxListContentVM(
         header=build_page_header(
-            title="Inbox",
+            title="Compartidos",
             actions=_build_inbox_list_actions(
                 list_mode=list_mode,
                 favorites_only=favorites_only,
@@ -333,6 +301,20 @@ def inbox_list(request):
             ),
         ),
         inbox_items=items,
+        tabs=[
+            {
+                "label": "Recibidos",
+                "count": len(build_inbox_items(request.user)),
+                "url": _inbox_list_url(),
+                "is_active": scope == "received",
+            },
+            {
+                "label": "Enviados",
+                "count": len(sent_items),
+                "url": _inbox_list_url(scope="sent"),
+                "is_active": scope == "sent",
+            },
+        ],
         list_mode=list_mode,
         favorites_only=favorites_only,
         scope=scope,

@@ -12,7 +12,7 @@ import { tokens } from "@/design/tokens";
 export type EntityDetailPageProps = PropsWithChildren<
   Omit<NutritionEntityCardProps, "children" | "onPress" | "style"> & {
     action?: ReactNode;
-    beforeNutrition?: ReactNode;
+    afterNutrition?: ReactNode;
     backLabel?: string;
     onBack?: () => void;
     showNutrition?: boolean;
@@ -21,7 +21,7 @@ export type EntityDetailPageProps = PropsWithChildren<
 
 export function EntityDetailPage({
   action,
-  beforeNutrition,
+  afterNutrition,
   backLabel = "Volver",
   children,
   accessory,
@@ -67,8 +67,8 @@ export function EntityDetailPage({
             title={title}
             variant="page"
           />
-          {beforeNutrition}
-          {showNutrition ? <NutritionKpiSection variant={kpiVariant} {...nutrition} /> : null}
+          {showNutrition ? <View style={styles.kpiSection}><NutritionKpiSection variant={kpiVariant} {...nutrition} /></View> : null}
+          {afterNutrition}
         </View>
         {children}
       </View>
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
   page: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   pageCard: { alignSelf: "stretch", gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, paddingBottom: tokens.card.outerPadding, paddingHorizontal: tokens.card.outerPadding },
   summary: { gap: tokens.card.gap, minWidth: 0 },
+  kpiSection: { marginTop: tokens.component.entityDetail.kpiMarginTop },
   navigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 32 },
   backButton: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 32 },
   backLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },

@@ -41,7 +41,7 @@ export function ProposalProgramCard({ onOpen, program }: { onOpen(): void; progr
       metricData={programDailyMetricData(weeks)}
       onOpen={onOpen}
       openActionLabel="Explorar programa"
-      owner="Asistente AI"
+      owner="Asistente Nutricional"
       title={item.name}
       weeksCount={indicator("week")}
     />
@@ -66,7 +66,7 @@ export function ProposalProgramPreview({ onOpenDailyPlan, onOpenFood, onOpenMeal
         const facts = weekRequirementFacts(program, week);
         return facts.length ? (
           <ProposalFacts
-            description="Requisitos usados por el Asistente AI para validar los siete planes de esta semana."
+            description="Requisitos usados por el Asistente Nutricional para validar los siete planes de esta semana."
             facts={facts}
             title={`Objetivos de la Semana ${week}`}
           />

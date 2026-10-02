@@ -334,9 +334,9 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Identidad + colección + cantidad" title="Encabezados de páginas de lista" />
           <CollectionPageHeader count={8} countIcon="dailyPlan" entity="dailyPlan" title="Planes diarios" />
           <CollectionPageHeader count={14} countIcon="meal" entity="meal" title="Comidas" />
-          <SectionPageHeader count={6} countLabel="conversaciones" section="chat" title="Asistente AI" />
+          <SectionPageHeader count={6} countLabel="conversaciones" section="chat" title="Asistente Nutricional" />
           <SectionPageHeader count={4} countLabel="propuestas" section="proposal" title="Propuestas" />
-          <SectionPageHeader count={2} countLabel="elementos seleccionados" section="comparator" title="Comparador" />
+          <SectionPageHeader count={2} countLabel="elementos seleccionados" section="comparator" title="Comparaciones" />
           <SectionTitle detail="Base nutricional por 100 g" title="Card de alimento" />
           <NutritionEntityCard
             entity="food"

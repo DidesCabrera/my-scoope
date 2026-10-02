@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Literal
 from uuid import UUID
 
 from ninja import Router
@@ -64,6 +65,21 @@ def _inbox_item_payload(request, item: InboxItem) -> dict:
         "is_favorite": item.is_favorite,
         "is_saved": item.saved_at is not None,
         "created_at": item.created_at,
+    }
+
+
+def _sent_item_payload(request, resource: ShareResource) -> dict:
+    return {
+        "id": resource.id,
+        "resource_id": resource.public_id,
+        "subject_type": resource.subject_type,
+        "title": (resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido",
+        "sender": "Compartido por ti",
+        "public_url": request.build_absolute_uri(f"/s/{resource.public_id}/"),
+        "is_read": True,
+        "is_favorite": False,
+        "is_saved": False,
+        "created_at": resource.created_at,
     }
 
 
@@ -153,7 +169,14 @@ def create_program_share(request, program_id: int, payload: ShareResourceCreateI
     auth=mobile_bearer,
     response={200: SharingInboxEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
 )
-def sharing_inbox(request):
+def sharing_inbox(request, scope: Literal["received", "sent"] = "received"):
+    if scope == "sent":
+        resources = list(
+            ShareResource.objects.filter(sender=request.auth.user)
+            .order_by("-created_at", "-id")
+        )
+        return success({"items": [_sent_item_payload(request, resource) for resource in resources], "count": len(resources)})
+
     items = list(
         InboxItem.objects.filter(owner=request.auth.user, dismissed_at__isnull=True)
         .select_related("resource", "resource__sender")

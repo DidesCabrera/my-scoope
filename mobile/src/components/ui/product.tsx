@@ -47,13 +47,12 @@ export type CompletionIndicatorCounts = {
   noteCount?: number;
 };
 
-export function GuideMetric({ icon, label, tone = "default", value }: { icon?: "weight"; label?: string; tone?: "default" | "ppk"; value: string }) {
+export function GuideMetric({ label, tone = "default", value }: { label?: string; tone?: "default" | "ppk"; value: string }) {
   return (
     <View accessibilityLabel={label ? `${label}: ${value}` : value} accessible style={[styles.guideMetric, !label && styles.guideMetricValueOnly, tone === "ppk" && styles.guideMetricPpk]}>
       <View style={styles.guideMetricCopy}>
         {label ? <Text style={styles.guideMetricLabel}>{label}</Text> : null}
         <View style={styles.guideMetricValueRow}>
-          {icon === "weight" ? <Weight color={tone === "ppk" ? tokens.color.surfaceApp : tokens.color.textMuted} size={14} strokeWidth={2.2} /> : null}
           <Text style={[styles.guideMetricValue, tone === "ppk" && styles.guideMetricValuePpk]}>{value}</Text>
         </View>
       </View>
@@ -222,8 +221,9 @@ export function EntityHeading({
 }) {
   const { width } = useWindowDimensions();
   const page = variant === "page";
-  const pageTitleSize = width < 420 ? 22 : 24;
-  const pageTitleLineHeight = width < 420 ? 32 : 34;
+  const pageTitle = width < 420
+    ? tokens.component.entityHeading.pageCompact
+    : tokens.component.entityHeading.pageRegular;
   return (
     <View style={styles.headingRow}>
       <View style={styles.headingCopy}>
@@ -231,7 +231,7 @@ export function EntityHeading({
           {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon entity={entity} size="compact" />}
           <Text style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
         </View>
-        <Text style={[styles.headingTitle, page && { fontSize: pageTitleSize, lineHeight: pageTitleLineHeight }]}>{title}</Text>
+        <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
         {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
         {indicators || completion ? (
           <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
@@ -442,14 +442,14 @@ const styles = StyleSheet.create({
   sectionIcon: { alignItems: "center", backgroundColor: "transparent", height: 22, justifyContent: "center", width: 22 },
   sectionIconCompact: { height: 18, width: 18 },
   sectionIconHero: { height: 40, width: 40 },
-  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
-  headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
+  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
+  headingTitle: { color: tokens.color.textMain, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
   completionIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },
   completionIndicatorCount: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },
   completionIndicatorSummary: { alignItems: "center", flexDirection: "row", gap: 3 },
-  headingIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
+  headingIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm, marginTop: tokens.component.entityHeading.card.indicatorMarginTop },
   headingIndicatorsPage: { marginTop: tokens.spacing.xs },
   structuralItem: { alignItems: "center", borderRadius: tokens.spacing.compact, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   structuralItemSurface: { borderColor: tokens.color.borderDefault, borderWidth: 1 },
@@ -460,8 +460,8 @@ const styles = StyleSheet.create({
   guideMetricLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.regular, lineHeight: 12, textAlign: "right" },
   guideMetricValue: { color: tokens.color.textMain, fontSize: 17, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
   guideMetricValueOnly: { borderRadius: tokens.radius.lg, minHeight: 40 },
-  guideMetricPpk: { backgroundColor: tokens.color.ppk, borderColor: tokens.color.ppk, borderRadius: tokens.radius.md, borderWidth: 1, height: 30, minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: 0 },
-  guideMetricValuePpk: { color: tokens.color.surfaceApp, fontSize: 15, lineHeight: 18 },
+  guideMetricPpk: { backgroundColor: `${tokens.color.ppk}1A`, borderColor: `${tokens.color.ppk}80`, borderRadius: tokens.radius.md, borderWidth: 1, height: 30, minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: 0 },
+  guideMetricValuePpk: { color: tokens.color.textMain, fontSize: 15, lineHeight: 18 },
   guideMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },

@@ -8,7 +8,7 @@ export type AssistantSection = "chats" | "proposals";
 export function AssistantSectionTabs({ activeSection, counts, onChange }: { activeSection: AssistantSection; counts: Record<AssistantSection, number>; onChange(section: AssistantSection): void }) {
   return (
     <DistributedTabBar<AssistantSection>
-      accessibilityLabel="Secciones del Asistente AI"
+      accessibilityLabel="Secciones del Asistente Nutricional"
       activeTab={activeSection}
       onChange={onChange}
       tabs={[

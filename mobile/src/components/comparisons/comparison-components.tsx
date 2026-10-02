@@ -30,6 +30,16 @@ const metricColors: Record<ComparisonMetricTone, string> = {
   fat: tokens.color.fat,
 };
 
+const comparisonEntityColors: Record<ComparisonScope, string> = {
+  food: tokens.color.food,
+  meal: tokens.color.meal,
+  dailyPlan: tokens.color.dailyPlan,
+};
+
+function entityBorderStyle(entity: ComparisonScope) {
+  return { borderTopColor: comparisonEntityColors[entity], borderTopWidth: 3 } as const;
+}
+
 function formatComparisonQuantity(value: string): string {
   const normalized = value.trim().replace(/^\(|\)$/g, "").replace(/\s+g$/i, "g");
   return `(${normalized})`;
@@ -60,7 +70,7 @@ export function ComparisonSelectionCard({
   quantity?: string;
 }) {
   return (
-    <View style={styles.selectionCard}>
+    <View style={[styles.selectionCard, entityBorderStyle(entity)]}>
       <View style={styles.selectionHeading}>
         <View style={styles.selectionIdentity}>
           <View style={styles.selectionCopy}>
@@ -105,7 +115,7 @@ export function ComparisonEditorCard({
   const supportsQuantity = entity !== "dailyPlan";
 
   return (
-    <View style={styles.editorCard}>
+    <View style={[styles.editorCard, entityBorderStyle(entity)]}>
       <View style={styles.editorField}>
         <Text style={styles.editorFieldLabel}>{singularLabel} {index}</Text>
         <View style={styles.editorSelectRow}>
@@ -144,7 +154,7 @@ export function ComparisonEditorCard({
 export function ComparisonBuilder({ addActionLabel, children, onAdd, onCompare, onSave, scope }: { addActionLabel?: string; children: React.ReactNode; onAdd?: () => void; onCompare?: () => void; onSave?: () => void; scope: ComparisonScope }) {
   const resolvedAddActionLabel = addActionLabel ?? `Agregar ${scopeSingularLabels[scope].toLowerCase()}`;
   return (
-    <View style={styles.builder}>
+    <View style={[styles.builder, entityBorderStyle(scope)]}>
       <View style={styles.builderEyebrow}>
         <SectionIcon section="comparator" size="compact" />
         <Text style={styles.builderEyebrowText}>Nueva comparación</Text>
@@ -170,8 +180,9 @@ export type ComparisonBarItem = {
 
 export function ComparisonMetricCard({ barVariant = "continuous", items, label, tone, unit }: { barVariant?: "compactAlloc" | "continuous"; items: ComparisonBarItem[]; label: string; tone: ComparisonMetricTone; unit: string }) {
   const color = metricColors[tone];
+  const entity = items[0]?.entity;
   return (
-    <View style={styles.metricCard}>
+    <View style={[styles.metricCard, entity ? entityBorderStyle(entity) : null]}>
       <View style={styles.metricHeader}>
         <Text style={styles.metricTitle}>{label}</Text>
         <Text style={styles.metricUnit}>{unit}</Text>
@@ -201,9 +212,9 @@ export function ComparisonMetricCard({ barVariant = "continuous", items, label, 
   );
 }
 
-export function SavedComparisonCard({ items, title }: { items: FoodPanelItem[]; title: string }) {
+export function SavedComparisonCard({ items, scope = "food", title }: { items: FoodPanelItem[]; scope?: ComparisonScope; title: string }) {
   return (
-    <View style={styles.savedCard}>
+    <View style={[styles.savedCard, entityBorderStyle(scope)]}>
       <View style={styles.savedCardHeading}>
         <View style={styles.builderEyebrow}>
           <SectionIcon section="comparator" size="compact" />
@@ -238,7 +249,7 @@ export function SavedComparisonDetailPage({
   const titleLineHeight = width < 420 ? 32 : 34;
 
   return (
-    <View style={styles.savedDetailPage}>
+    <View style={[styles.savedDetailPage, entityBorderStyle(scope)]}>
       <View style={styles.savedDetailHero}>
         <View style={styles.builderEyebrow}>
           <SectionIcon section="comparator" size="compact" />
@@ -269,13 +280,13 @@ const styles = StyleSheet.create({
   selectionHeading: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between", minWidth: 0 },
   selectionIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   selectionCopy: { flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
-  selectionEyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
+  selectionEyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight },
   selectionNameRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   selectionName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   removeButton: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 },
   builder: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
   builderEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  builderEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
+  builderEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
   builderSelections: { gap: tokens.spacing.sm },
   editorCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.spacing.md },
   editorField: { gap: tokens.spacing.compact },

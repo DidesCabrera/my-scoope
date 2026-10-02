@@ -100,7 +100,7 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="comparators",
-                label="Comparador",
+                label="Comparaciones",
                 icon="scale",
                 page_icon="scale",
                 url_name="comparator_index",

@@ -1,7 +1,7 @@
 import { ChevronRight, CircleUserRound, MoreHorizontal } from "lucide-react-native";
 import { Pressable, ScrollView, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 import { useState } from "react";
-import Svg, { Line, Polyline } from "react-native-svg";
+import Svg, { Defs, Line, LinearGradient, Polygon, Polyline, Stop } from "react-native-svg";
 
 import type { LibraryWeekPanelItem } from "@/api/types";
 import { Card, EntityHeading, layoutStyles } from "@/components/ui";
@@ -102,12 +102,22 @@ function MetricPlot({ days, metric, values: providedValues }: { days: number; me
     (_, index) => (index + 1) * 7 * (140 / slotCount),
   );
   const points = coordinates.map(({ x, y }) => `${x},${y}`).join(" ");
+  const areaPoints = coordinates.length > 1
+    ? `${coordinates[0].x},44 ${points} ${coordinates[coordinates.length - 1].x},44`
+    : "";
   return (
     <View accessibilityLabel={`${metric.label}: ${metric.range}`} style={styles.metricPlot}>
       <Svg height="100%" preserveAspectRatio="none" viewBox="0 0 140 44" width="100%">
+        <Defs>
+          <LinearGradient id={`metric-area-${metric.key}`} x1="0" x2="0" y1="0" y2="1">
+            <Stop offset="0" stopColor={metric.color} stopOpacity={0.2} />
+            <Stop offset="1" stopColor={metric.color} stopOpacity={0} />
+          </LinearGradient>
+        </Defs>
         {weekDividers.map((x, index) => <Line key={`week-divider-${index}`} stroke={tokens.color.borderSoft} strokeWidth="0.8" x1={x} x2={x} y1="0" y2="44" />)}
-        <Polyline fill="none" points={points} stroke={metric.color} strokeLinejoin="round" strokeLinecap="round" strokeWidth="2.6" vectorEffect="non-scaling-stroke" />
-        {coordinates.map(({ x, y }, index) => <Line key={`${metric.key}-point-${index}`} stroke={metric.color} strokeLinecap="round" strokeWidth="5" vectorEffect="non-scaling-stroke" x1={x} x2={x} y1={y} y2={y} />)}
+        {areaPoints ? <Polygon fill={`url(#metric-area-${metric.key})`} points={areaPoints} /> : null}
+        <Polyline fill="none" points={points} stroke={metric.color} strokeLinejoin="round" strokeLinecap="round" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        {coordinates.map(({ x, y }, index) => <Line key={`${metric.key}-point-${index}`} stroke={metric.color} strokeLinecap="round" strokeWidth="3" vectorEffect="non-scaling-stroke" x1={x} x2={x} y1={y} y2={y} />)}
       </Svg>
     </View>
   );

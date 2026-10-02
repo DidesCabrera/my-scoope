@@ -136,7 +136,7 @@ export default function CalendarizedMealDetailScreen() {
       style={styles.screen}>
       <EntityDetailPage
         entity="meal"
-        beforeNutrition={<MealCompletionCard controller={adherence} />}
+        afterNutrition={<MealCompletionCard controller={adherence} />}
         completion={{ noteCount: execution && normalizeMealExecutionItem(execution).note.trim() ? 1 : 0 }}
         indicators={[
           { icon: "food", label: "alimentos", value: foods.length },
