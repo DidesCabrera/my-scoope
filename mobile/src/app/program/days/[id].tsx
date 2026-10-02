@@ -17,7 +17,7 @@ import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { FoodPanels, MealPanels, type MealPanelItem } from "@/components/panels";
+import { FoodPanels, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, ContentPanel, EntityCardAction, InlineNotice, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -273,7 +273,7 @@ export default function ProgramDayScreen() {
             <>
               <SectionDivider />
               <EntityDetailSection detail={`${foods.length} alimentos`} title="Alimentos en este plan diario">
-                <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
+                <GroupedFoodsCard items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} title="Alimentos plan diario" />
               </EntityDetailSection>
             </>
           ) : null}

@@ -118,6 +118,10 @@ test("screens that own global navigation preserve their header through content a
   assertSourceDoesNotMatch(assistant, /<SectionPageHeader count=/);
   assertSourceDoesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
   assertSourceDoesNotMatch(assistant, /<Button[^>]*label="Nuevo chat"/);
+  assertSourceMatch(assistant, /dailyplan: tokens\.color\.dailyPlan/);
+  assertSourceMatch(assistant, /meal: tokens\.color\.meal/);
+  assertSourceMatch(assistant, /program: tokens\.color\.program/);
+  assertSourceMatch(assistant, /<Card accent=\{proposalEntityColors\[proposal\.attachment_kind\]\}>/);
 
   const inbox = await source("src/app/inbox.tsx");
   assertSourceMatch(inbox, /setHeaderPresentation\(\{ identityVisible: compactHeaderVisible, mode: "default", title: "Compartidos" \}\)/);

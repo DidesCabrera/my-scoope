@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
-import { Calendar1, Carrot, ClipboardList, Rows3, Utensils } from "lucide-react-native";
+import { Activity, Calendar1, Carrot, ClipboardList, Rows3, Utensils } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
-type SectionTitleIcon = "comparison" | "dailyPlans" | "foods" | "meals" | "planning";
+type SectionTitleIcon = "chart" | "comparison" | "dailyPlans" | "foods" | "meals" | "planning";
 
 function iconForSectionTitle(title: string): SectionTitleIcon | undefined {
   const normalizedTitle = title.trim().toLocaleLowerCase("es");
+  if (normalizedTitle === "gráfico de la semana") return "chart";
   if (normalizedTitle === "composición" || normalizedTitle.startsWith("tabla de comparación")) return "comparison";
   if (normalizedTitle.startsWith("alimentos en est")) return "foods";
   if (normalizedTitle === "planificación semanal") return "planning";
@@ -20,7 +21,8 @@ export function SectionHeading({ title, detail, icon }: { title: string; detail?
   const titleIcon = icon ? undefined : iconForSectionTitle(title);
   const iconProps = { color: tokens.color.entityIconForeground, size: 18 };
   const resolvedIcon = icon
-    ?? (titleIcon === "comparison" ? <Rows3 {...iconProps} />
+    ?? (titleIcon === "chart" ? <Activity {...iconProps} />
+      : titleIcon === "comparison" ? <Rows3 {...iconProps} />
       : titleIcon === "foods" ? <Carrot {...iconProps} />
       : titleIcon === "planning" ? <Calendar1 {...iconProps} />
       : titleIcon === "meals" ? <Utensils {...iconProps} />

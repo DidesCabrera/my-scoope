@@ -11,9 +11,11 @@ test("program proposals allow review of every week and day before application", 
   const adapter = await source("src/components/proposals/proposal-program-adapter.ts");
   const detail = await source("src/app/proposals/[id].tsx");
   const programDetail = await source("src/app/proposals/[id]/program.tsx");
+  const programObjectives = await source("src/app/proposals/[id]/program/objectives.tsx");
   assert.match(program, /<ProgramDetailPreview/);
   assert.match(program, /proposalProgramLibraryItem\(program\)/);
-  assert.match(program, /renderWeekContext/);
+  assert.doesNotMatch(program, /renderWeekContext/);
+  assert.match(program, /export function ProposalProgramWeekObjectivesCard/);
   assert.match(program, /<ProposalFacts/);
   assert.match(program, /program\.warnings/);
   assert.doesNotMatch(program, /<Button/);
@@ -24,6 +26,11 @@ test("program proposals allow review of every week and day before application", 
   assert.match(detail, /<ProposalProgramCard/);
   assert.match(detail, /\/proposals\/\$\{proposal\.id\}\/program/);
   assert.match(programDetail, /<ProposalProgramPreview/);
+  assert.match(programDetail, /action: \{ icon: "more", label: "Acciones del programa propuesto"/);
+  assert.match(programDetail, /<ProposalProgramActions/);
+  assert.match(programDetail, /router\.push\(`\/proposals\/\$\{id\}\/program\/objectives` as Href\)/);
+  assert.match(programObjectives, /title: "Objetivos por semana"/);
+  assert.match(programObjectives, /weeks\.map\(\(\{ week \}\) => <ProposalProgramWeekObjectivesCard/);
   assert.match(programDetail, /onOpenDailyPlan/);
   assert.match(programDetail, /onOpenMeal/);
   assert.match(detail, /libraries\/programs/);
@@ -82,6 +89,7 @@ async function source(relativePath: string) {
 
 test("proposal detail uses the proposal and entity UI System contracts", async () => {
   const detail = await source("src/app/proposals/[id].tsx");
+  const review = await source("src/app/proposals/[id]/review.tsx");
   const preview = await source("src/components/proposals/proposal-preview.tsx");
 
   assert.match(detail, /<ProposalDetailPage/);
@@ -91,7 +99,16 @@ test("proposal detail uses the proposal and entity UI System contracts", async (
   assert.doesNotMatch(detail, /Creada por AI|Origen \$\{proposal\.source\}|Creada por \{proposal\.created_by_username\}/);
 
   assert.match(preview, /<NutritionEntityCard/);
-  assert.match(detail, /<ProposalEvaluationContext current=\{proposal\.current_facts\} targets=\{proposal\.target_facts\} \/>/);
+  assert.match(detail, /action: \{ icon: "more", label: "Acciones de propuesta"/);
+  assert.match(detail, /<ProposalDetailActions/);
+  assert.match(detail, /router\.push\(`\/proposals\/\$\{id\}\/review` as Href\)/);
+  assert.doesNotMatch(detail, /<ProposalEvaluationContext|<ProposalFacts/);
+  assert.doesNotMatch(detail, /label="Volver a Propuestas"/);
+  assert.match(detail, /<SectionDivider spacing="compact" \/>[\s\S]*<ProposalReviewActions/);
+  assert.match(review, /title: "Fichas de la propuesta"/);
+  assert.match(review, /facts=\{proposal\.target_facts\} title="Objetivo"/);
+  assert.match(review, /facts=\{proposal\.current_facts\} title="Punto de partida"/);
+  assert.match(review, /facts=\{proposal\.validation_facts\} title="Validación"/);
   assert.match(preview, /<FoodPanels/);
   assert.match(preview, /const index = foods\.findIndex/);
   assert.match(preview, /onOpenFood\(index\)/);
