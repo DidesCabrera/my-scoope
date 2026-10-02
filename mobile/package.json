@@ -70,6 +70,15 @@
     "export:web": "expo export --platform web"
   },
   "overrides": {
+    "metro": {
+      "image-size": "2.0.3"
+    },
+    "query-string": {
+      "decode-uri-component": "0.5.0"
+    },
+    "minimatch@3.1.5": {
+      "brace-expansion": "1.1.21"
+    },
     "@expo/plist": {
       "@xmldom/xmldom": "0.8.15"
     },

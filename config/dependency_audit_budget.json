@@ -4,20 +4,13 @@
   },
   "mobile": {
     "reviewed_on": "2026-10-01",
-    "reason": "Expo SDK 57 patches resolve brace-expansion; node-forge GHSA-86w9-cpqp-85rv affects the latest published 1.4.0 with no patched release. Its Expo CLI and Sentry dependency chain is temporarily reviewed; new or more severe findings remain forbidden.",
+    "reason": "node-forge GHSA-86w9-cpqp-85rv affects the latest published 1.4.0 with no patched release. Its Expo CLI and Sentry dependency chain is temporarily reviewed; new or more severe findings remain forbidden.",
     "allowed": {
       "@expo/cli": "high",
       "@expo/code-signing-certificates": "high",
       "@sentry/react-native": "high",
-      "decode-uri-component": "moderate",
       "expo": "high",
-      "expo-router": "moderate",
-      "image-size": "high",
-      "metro": "high",
-      "metro-config": "high",
-      "metro-transform-worker": "high",
-      "node-forge": "high",
-      "query-string": "moderate"
+      "node-forge": "high"
     }
   }
 }
