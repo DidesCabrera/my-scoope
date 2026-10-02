@@ -74,7 +74,7 @@ test("composition picker keeps padding on scroll content and actions in a fixed 
 test("impact cards reuse UI-system card, KPI, tab, and data-grid contracts", async () => {
   const resultCard = await source("notas/templates/components/card_picker_result.html");
 
-  assert.match(resultCard, /entity-card card picker-result-card/);
+  assert.match(resultCard, /entity-card entity-card--\{\{ result_kind \}\} card picker-result-card/);
   assert.match(resultCard, /entity-heading card-title-comp/);
   assert.match(resultCard, /dash-kpi-comp/);
   assert.match(resultCard, /detail_tabs_meals\.html/);
