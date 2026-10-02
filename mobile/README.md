@@ -22,6 +22,10 @@ first native build includes `expo-dev-client`, `expo-secure-store`, `expo-camera
 `expo-iap` and the local Apple Vision OCR module. JavaScript changes after that can use the
 development server until native configuration changes again.
 
+Dependency and tool updates follow the [version policy](../docs/40_technical/operations/dependency_version_policy.md).
+If a local iOS rebuild reports a stale Expo podspec after a package update or
+branch change, follow its local iOS repair steps before retrying the build.
+
 For a physical device, `EXPO_PUBLIC_API_BASE_URL` must be an HTTPS environment
 reachable by that device. The OAuth client must allow the exact value of
 `EXPO_PUBLIC_OAUTH_REDIRECT_URI`.
