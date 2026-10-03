@@ -52,6 +52,7 @@ import {
   Field,
   GuideMetric,
   InlineNotice,
+  MacroLoadingIndicator,
   MessageCard,
   Pill,
   ProgressBar,
@@ -638,6 +639,12 @@ export default function UiGalleryScreen() {
 
       {tab === "states" ? (
         <>
+          <SectionTitle detail="Animación de proteína, carbos y grasas" title="Carga entre vistas" />
+          <Card>
+            <View style={styles.loadingPreview}>
+              <MacroLoadingIndicator accessibilityLabel="Preparando tu día" />
+            </View>
+          </Card>
           <SectionTitle detail="Interactivos" title="Controles" />
           <Button label="Acción principal" onPress={() => undefined} />
           <Button label="Acción secundaria" onPress={() => undefined} variant="secondary" />
@@ -774,4 +781,5 @@ const styles = StyleSheet.create({
   allocationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   allocationLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", width: 96 },
   allocationBarInRow: { flex: 1, minWidth: 0, width: "auto" },
+  loadingPreview: { alignItems: "center", justifyContent: "center", minHeight: 180 },
 });

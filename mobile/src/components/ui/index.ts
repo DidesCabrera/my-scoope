@@ -3,6 +3,7 @@ export * from "./controls";
 export * from "./detail-link-row";
 export * from "./feedback";
 export * from "./layout";
+export * from "./macro-loading-indicator";
 export * from "./product";
 export * from "./section-divider";
 export * from "./surfaces";
