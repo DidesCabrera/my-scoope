@@ -3,14 +3,13 @@
     <div class="card-title program-card__title-block">
       <div class="card-title-comp">
         <div class="main-title">
+          <a href="{% if child_card.url %}{{ child_card.url }}{% else %}{% url 'program_detail' child_card.child_id %}{% endif %}" class="card-title-section-link" aria-label="Ver detalle de {{ child_card.title }}"></a>
           <p class="card-title-eyebrow">
             <i data-lucide="calendar" class="card-title-eyebrow__icon program" aria-hidden="true"></i>
             <span>Programa</span>
           </p>
 
-          <a href="{% if child_card.url %}{{ child_card.url }}{% else %}{% url 'program_detail' child_card.child_id %}{% endif %}" class="card-title-link" aria-label="Ver detalle de {{ child_card.title }}">
-            <h3>{{ child_card.title }}</h3>
-          </a>
+          <h3>{{ child_card.title }}</h3>
 
           <div class="entity-indicators structural-indicators">
             <span class="structural-item">

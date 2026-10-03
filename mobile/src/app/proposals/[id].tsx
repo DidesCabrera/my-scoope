@@ -115,8 +115,8 @@ export default function ProposalDetailScreen() {
           isRead
           proposedEntity={proposal.meal || proposal.dailyplan || proposal.program ? (
             <ProposalEntitySection entity={proposal.meal ? "meal" : proposal.dailyplan ? "dailyPlan" : "program"}>
-              {proposal.meal ? <ProposalMealCard actions={entityAction} meal={proposal.meal} onOpenFood={(foodIndex) => router.push(`/proposals/${proposal.id}/entity/foods/${foodIndex}` as Href)} /> : null}
-              {proposal.dailyplan ? <ProposalDailyPlanCard actions={entityAction} dailyplan={proposal.dailyplan} /> : null}
+              {proposal.meal ? <ProposalMealCard actions={entityAction} meal={proposal.meal} onOpen={openEntity} onOpenFood={(foodIndex) => router.push(`/proposals/${proposal.id}/entity/foods/${foodIndex}` as Href)} /> : null}
+              {proposal.dailyplan ? <ProposalDailyPlanCard actions={entityAction} dailyplan={proposal.dailyplan} onOpen={openEntity} /> : null}
               {proposal.program ? <ProposalProgramCard onOpen={() => router.push(`/proposals/${proposal.id}/program` as Href)} program={proposal.program} /> : null}
             </ProposalEntitySection>
           ) : undefined}

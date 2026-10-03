@@ -109,15 +109,17 @@ export default function SharedResourceScreen() {
             {meals.length ? <>
               <SectionDivider />
               <EntityDetailSection title="Detalle de cada Comida">
-                {meals.map((meal, index) => (
-                  <NutritionEntityCard
+                {meals.map((meal, index) => {
+                  const openDetail = () => router.push(`/share/${id}/meals/${index}` as Href);
+                  return <NutritionEntityCard
                     actions={(
-                      <EntityCardAction label={`Ver detalle de ${meal.name}`} onPress={() => router.push(`/share/${id}/meals/${index}` as Href)} role="link">
+                      <EntityCardAction label={`Ver detalle de ${meal.name}`} onPress={openDetail} role="link">
                         <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                       </EntityCardAction>
                     )}
                     entity="meal"
                     eyebrow={`Comida ${index + 1}`}
+                    headingLink={{ label: `Ver detalle de ${meal.name}`, onPress: openDetail }}
                     indicators={[
                       { icon: "food", label: "alimentos", value: meal.foods.length },
                       ...(meal.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.time.slice(0, 5) }] : []),
@@ -129,8 +131,8 @@ export default function SharedResourceScreen() {
                       items={sharedFoodPanelItems(meal)}
                       onOpenItem={(food) => { if (food.detailId != null) router.push(`/share/${id}/meals/${index}/foods/${food.detailId}` as Href); }}
                     />
-                  </NutritionEntityCard>
-                ))}
+                  </NutritionEntityCard>;
+                })}
               </EntityDetailSection>
             </> : null}
           </EntityDetailPage>

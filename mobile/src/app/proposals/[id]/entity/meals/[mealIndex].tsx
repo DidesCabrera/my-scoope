@@ -81,6 +81,7 @@ export default function ProposedMealDetailScreen() {
                 )}
                 food={food}
                 key={`${food.food_id}-${food.food_name}-${foodIndex}`}
+                onOpen={() => router.push(`/proposals/${id}/entity/meals/${index}/foods/${foodIndex}` as Href)}
               />
             ))}
           </EntityDetailSection>

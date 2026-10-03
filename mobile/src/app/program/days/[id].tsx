@@ -43,16 +43,17 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
         const totals = meal.totals;
         const foods = snapshotFoodPanelItems(meal);
         const execution = normalizedMealExecution.find((item) => item.meal_key === meal.key);
+        const openDetail = meal.key ? () => router.push({
+          pathname: "/program/days/[id]/meals/[mealKey]",
+          params: { id: String(dayId), mealKey: meal.key ?? "" },
+        } as Href) : undefined;
         return (
           <View key={meal.key ?? `${meal.name}-${index}`}>
             <NutritionEntityCard
-              actions={meal.key ? (
+              actions={openDetail ? (
                 <EntityCardAction
                   label={`Ver detalle de ${meal.name ?? "la comida"}`}
-                  onPress={() => router.push({
-                    pathname: "/program/days/[id]/meals/[mealKey]",
-                    params: { id: String(dayId), mealKey: meal.key ?? "" },
-                  } as Href)}
+                  onPress={openDetail}
                   role="link">
                   <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                 </EntityCardAction>
@@ -60,6 +61,7 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
               completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
+              headingLink={openDetail ? { label: `Ver detalle de ${meal.name ?? "la comida"}`, onPress: openDetail } : undefined}
               indicators={[
                 { icon: "food", label: "alimentos", value: foods.length },
                 ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),

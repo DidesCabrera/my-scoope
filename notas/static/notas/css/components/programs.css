@@ -1489,8 +1489,7 @@
   margin-right: 0;
 }
 
-.program-card .card-title-link,
-.program-card .card-title-link h3,
+.program-card .main-title h3,
 .program-main-title-card .main-title.main-card,
 .program-main-title-card .main-title h1 {
   width: 100%;

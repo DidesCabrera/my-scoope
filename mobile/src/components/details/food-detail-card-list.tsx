@@ -16,15 +16,17 @@ export function FoodDetailCardList({ items, onOpenFood }: { items: FoodPanelItem
       {items.map((item) => {
         const calculatedCalories = item.proteinGrams * 4 + item.carbsGrams * 4 + item.fatGrams * 9;
         const calories = item.calories || calculatedCalories;
+        const openDetail = onOpenFood && item.detailId != null ? () => onOpenFood(item) : undefined;
         return (
           <NutritionEntityCard
-            actions={onOpenFood && item.detailId != null ? (
-              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => onOpenFood(item)} role="link">
+            actions={openDetail ? (
+              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link">
                 <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
               </EntityCardAction>
             ) : undefined}
             entity="food"
             eyebrow="Alimento"
+            headingLink={openDetail ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined}
             key={item.id}
             nutrition={{
               calories,

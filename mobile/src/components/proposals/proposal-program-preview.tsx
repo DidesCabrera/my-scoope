@@ -49,6 +49,7 @@ export function ProposalProgramCard({ onOpen, program }: { onOpen(): void; progr
       axisLabels={weeks.map((week) => `S${week.week_number}`)}
       filledDaysCount={indicator("dailyPlan")}
       foodsCount={indicator("food")}
+      headingLink={{ label: `Ver detalle de ${item.name}`, onPress: onOpen }}
       metricData={programDailyMetricData(weeks)}
       onOpen={onOpen}
       openActionLabel="Explorar programa"

@@ -100,6 +100,7 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
     <View style={styles.mealCardList}>
       {items.map((item, index) => {
         const execution = mealExecution.find((entry) => entry.meal_key === item.id);
+        const openDetail = () => router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(item.relation_id ?? ""), id: String(item.detail_id), mealTime: item.time?.slice(0, 5) ?? "", ...(pinnedTracking ? { pinned: "1", mealKey: item.id } : {}) } } as Href);
         return <View key={item.id}>
           <NutritionEntityCard
             actions={<>
@@ -119,12 +120,13 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
                 label={`Más acciones para ${item.name}`}
                 title={item.name}
               /> : null}
-              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(item.relation_id ?? ""), id: String(item.detail_id), mealTime: item.time?.slice(0, 5) ?? "", ...(pinnedTracking ? { pinned: "1", mealKey: item.id } : {}) } } as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
+              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
             </>}
             afterNutrition={pinnedTracking ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={pinnedTracking.completionError?.mealKey === item.id ? pinnedTracking.completionError.message : null} onToggle={(completed) => pinnedTracking.onToggleCompleted(item.id, completed)} saving={pinnedTracking.savingMealKey != null} /> : undefined}
             completion={pinnedTracking ? { noteCount: execution?.note.trim() ? 1 : 0 } : undefined}
             entity="meal"
             eyebrow={`Comida ${index + 1}`}
+            headingLink={{ label: `Ver detalle de ${item.name}`, onPress: openDetail }}
             indicators={[
               { icon: "food", label: "alimentos", value: item.foods.length },
               ...(item.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: item.time.slice(0, 5) }] : []),

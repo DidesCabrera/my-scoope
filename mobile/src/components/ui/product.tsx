@@ -47,6 +47,11 @@ export type CompletionIndicatorCounts = {
   noteCount?: number;
 };
 
+export type EntityHeadingLink = {
+  label: string;
+  onPress(): void;
+};
+
 export function GuideMetric({ label, tone = "default", value }: { label?: string; tone?: "default" | "ppk"; value: string }) {
   return (
     <View accessibilityLabel={label ? `${label}: ${value}` : value} accessible style={[styles.guideMetric, !label && styles.guideMetricValueOnly, tone === "ppk" && styles.guideMetricPpk]}>
@@ -207,6 +212,7 @@ export function EntityHeading({
   indicators,
   completion,
   accessory,
+  headingLink,
   identityIcon: IdentityIcon,
   variant = "card",
 }: {
@@ -217,6 +223,7 @@ export function EntityHeading({
   indicators?: StructuralIndicator[];
   completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
+  headingLink?: EntityHeadingLink;
   identityIcon?: LucideIcon;
   variant?: "card" | "page";
 }) {
@@ -225,22 +232,34 @@ export function EntityHeading({
   const pageTitle = width < 420
     ? tokens.component.entityHeading.pageCompact
     : tokens.component.entityHeading.pageRegular;
+  const copy = (
+    <>
+      <View style={styles.entityEyebrowRow}>
+        {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon entity={entity} size="compact" />}
+        <Text style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
+      </View>
+      <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
+      {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
+      {indicators || completion ? (
+        <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
+          {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
+          {completion ? <CompletionIndicators {...completion} summarized={entity === "dailyPlan"} /> : null}
+        </View>
+      ) : null}
+    </>
+  );
   return (
     <View style={styles.headingRow}>
-      <View style={styles.headingCopy}>
-        <View style={styles.entityEyebrowRow}>
-          {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon entity={entity} size="compact" />}
-          <Text style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
-        </View>
-        <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
-        {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
-        {indicators || completion ? (
-          <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
-            {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
-            {completion ? <CompletionIndicators {...completion} summarized={entity === "dailyPlan"} /> : null}
-          </View>
-        ) : null}
-      </View>
+      {headingLink ? (
+        <Pressable
+          accessibilityLabel={headingLink.label}
+          accessibilityRole="link"
+          hitSlop={4}
+          onPress={headingLink.onPress}
+          style={({ pressed }) => [styles.headingCopy, styles.headingLink, pressed && styles.pressed]}>
+          {copy}
+        </Pressable>
+      ) : <View style={styles.headingCopy}>{copy}</View>}
       {accessory}
     </View>
   );
@@ -254,6 +273,7 @@ export function EntityCard({
   indicators,
   completion,
   accessory,
+  headingLink,
   actions,
   children,
   onPress,
@@ -266,13 +286,14 @@ export function EntityCard({
   indicators?: StructuralIndicator[];
   completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
+  headingLink?: EntityHeadingLink;
   actions?: ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }>) {
   const content = (
     <Card accent={tokens.color[entity]} style={[actions ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
-      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
+      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} headingLink={headingLink} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
       {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
     </Card>
@@ -435,6 +456,7 @@ const styles = StyleSheet.create({
   entityCardAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 36, justifyContent: "center", width: 36 },
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
+  headingLink: { borderRadius: tokens.radius.md },
   entityEyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   entityIcon: { alignItems: "center", borderRadius: 5, height: 22, justifyContent: "center", width: 22 },
   entityIconBenefit: { borderRadius: tokens.radius.sm, height: 22, width: 22 },

@@ -636,10 +636,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(programDailyPlan, /day \? \(day\.meals \?\? \[\]\)\.map\(mealPanelItem\) : meals/);
-  assertSourceMatch(programDailyPlan, /label=\{`Ir al detalle del plan de \$\{dayLabel\}`\}/);
+  assertSourceMatch(programDailyPlan, /const openDetailLabel = `Ir al detalle del plan de \$\{dayLabel\}`/);
+  assertSourceMatch(programDailyPlan, /label=\{openDetailLabel\}/);
+  assertSourceMatch(programDailyPlan, /headingLink=\{openDetail \? \{ label: openDetailLabel, onPress: openDetail \} : undefined\}/);
   assertSourceMatch(programDailyPlan, /router\.push\(`\/libraries\/daily-plans\/\$\{day\.dailyplan_id\}` as Href\)/);
-  assertSourceMatch(programDailyPlan, /\{onOpen \? \(/);
-  assertSourceMatch(programDailyPlan, /: day\?\.dailyplan_id \? \(/);
+  assertSourceMatch(programDailyPlan, /const openDetail = onOpen \?\? \(day\?\.dailyplan_id \?/);
   assertSourceMatch(programDailyPlan, /actions=\{\(/);
   assertSourceDoesNotMatch(programDailyPlan, /accessory=\{\(/);
   assertSourceDoesNotMatch(programDailyPlan, /kpiVariant="nested"|subtitle="Plan diario asignado"|label: "plan asignado"/);
@@ -694,7 +695,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),
     "utf8",
   );
-  assertSourceMatch(programChart, /import \{ Card, EntityHeading, layoutStyles \} from "@\/components\/ui"/);
+  assertSourceMatch(programChart, /import \{ Card, EntityHeading, type EntityHeadingLink, layoutStyles \} from "@\/components\/ui"/);
   assertSourceDoesNotMatch(programChart, /Card.*from "@\/components\/ui\/primitives"/);
   assertSourceMatch(programChart, /<Card accent=\{tokens\.color\.program\}>/);
   assertSourceMatch(programChart, /<ProgramMetricPreview[^\n]*style=\{layoutStyles\.cardContentBleed\}/);

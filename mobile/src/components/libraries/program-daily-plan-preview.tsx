@@ -105,22 +105,17 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onR
       onPress: onRemove,
     }] : []),
   ];
+  const openDetail = onOpen ?? (day?.dailyplan_id ? () => router.push(`/libraries/daily-plans/${day.dailyplan_id}` as Href) : undefined);
+  const openDetailLabel = `Ir al detalle del plan de ${dayLabel}`;
   return (
     <NutritionEntityCard
       actions={(
         <>
           <ContextCardActions actions={contextualActions} label={`Más acciones para el plan de ${dayLabel}`} title={day?.plan_name ?? `Plan de ${dayLabel}`} />
-          {onOpen ? (
+          {openDetail ? (
             <EntityCardAction
-              label={`Ir al detalle del plan de ${dayLabel}`}
-              onPress={onOpen}
-              role="link">
-              <ChevronRight color={tokens.color.textMuted} size={21} />
-            </EntityCardAction>
-          ) : day?.dailyplan_id ? (
-            <EntityCardAction
-              label={`Ir al detalle del plan de ${dayLabel}`}
-              onPress={() => router.push(`/libraries/daily-plans/${day.dailyplan_id}` as Href)}
+              label={openDetailLabel}
+              onPress={openDetail}
               role="link">
               <ChevronRight color={tokens.color.textMuted} size={21} />
             </EntityCardAction>
@@ -129,6 +124,7 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onR
       )}
       entity="dailyPlan"
       eyebrow={`SEMANA ${week} · ${dayLabel.toUpperCase()}`}
+      headingLink={openDetail ? { label: openDetailLabel, onPress: openDetail } : undefined}
       indicators={[
         ...(day?.day_number ? [{ icon: "day" as const, label: "posición", value: `S${week} · D${day.day_number}` }] : []),
         { icon: "meal", label: "comidas", value: day ? (day.meals ?? []).length : meals.length },

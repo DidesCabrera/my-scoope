@@ -57,7 +57,11 @@ function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress():
   return (
     <Card accent={comparisonEntityColors[item.kind]}>
         <View style={styles.savedHeader}>
-          <View style={styles.savedCopy}>
+          <Pressable
+            accessibilityLabel={`Ver detalle de ${item.name}`}
+            accessibilityRole="link"
+            onPress={onPress}
+            style={({ pressed }) => [styles.savedCopy, pressed && styles.pressed]}>
             <View style={styles.savedEyebrow}>
               <EntityIcon entity={entity} size="compact" />
               <Text style={styles.savedEyebrowText}>Comparación {item.kind_label}</Text>
@@ -65,7 +69,7 @@ function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress():
             <Text style={styles.savedTitle}>{item.name}</Text>
             <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
             <View style={styles.savedChip}><Pill label={`${item.item_count} elementos`} /></View>
-          </View>
+          </Pressable>
           <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={onPress} role="link">
             <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
           </EntityCardAction>

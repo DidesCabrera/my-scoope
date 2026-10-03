@@ -61,6 +61,7 @@ export default function ProposedProgramDayDetailScreen() {
                 eyebrow={`Comida ${mealIndex + 1}`}
                 key={`${item.hour}-${item.meal.name}-${mealIndex}`}
                 meal={item.meal}
+                onOpen={() => router.push(`/proposals/${id}/program/weeks/${week}/days/${day}/meals/${mealIndex}` as Href)}
                 onOpenFood={(foodIndex) => router.push(`/proposals/${id}/program/weeks/${week}/days/${day}/meals/${mealIndex}/foods/${foodIndex}` as Href)}
                 time={item.hour}
               />

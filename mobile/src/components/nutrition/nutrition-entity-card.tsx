@@ -5,6 +5,7 @@ import {
   EntityCard,
   EntityCardPanelSlot,
   type CompletionIndicatorCounts,
+  type EntityHeadingLink,
   type EntityKind,
   type StructuralIndicator,
 } from "@/components/ui";
@@ -22,6 +23,7 @@ export type NutritionEntityCardProps = {
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
   eyebrow?: string;
+  headingLink?: EntityHeadingLink;
   indicators?: StructuralIndicator[];
   nutrition: Omit<NutritionKpiSectionProps, "style" | "variant">;
   onPress?: () => void;
@@ -39,6 +41,7 @@ export function NutritionEntityCard({
   kpiVariant = "regular",
   entity,
   eyebrow,
+  headingLink,
   indicators,
   nutrition,
   onPress,
@@ -53,6 +56,7 @@ export function NutritionEntityCard({
       completion={completion}
       entity={entity}
       eyebrow={eyebrow}
+      headingLink={headingLink}
       indicators={indicators}
       onPress={onPress}
       style={style}
