@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError
 from ninja.errors import ValidationError as NinjaValidationError
@@ -9,6 +7,7 @@ from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.routes.assistant import router as assistant_router
 from mobile_api.routes.calendarization import router as calendarization_router
 from mobile_api.routes.calendarization_edits import router as calendarization_edits_router
+from mobile_api.routes.comparison_edits import router as comparison_edits_router
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.composition import router as composition_router
 from mobile_api.routes.identity import router as identity_router
@@ -65,6 +64,7 @@ api.add_router("", calendarization_edits_router)
 api.add_router("", proposals_router)
 api.add_router("", sharing_router)
 api.add_router("", comparisons_router)
+api.add_router("", comparison_edits_router)
 api.add_router("", label_capture_router)
 api.add_router("", libraries_router)
 api.add_router("", composition_router)

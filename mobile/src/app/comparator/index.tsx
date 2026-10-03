@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Carrot, ClipboardList, Utensils } from "lucide-react-native";
+import { Carrot, ChevronRight, ClipboardList, Utensils } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -25,7 +25,7 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionKpiSection } from "@/components/nutrition";
-import { DistributedTabBar, EntityCard, EntityIcon, SectionPageHeader } from "@/components/ui";
+import { DistributedTabBar, EntityCard, EntityCardAction, EntityIcon, SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, Field, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -55,23 +55,23 @@ function creationHref(kind: ComparisonKind): Href {
 function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress(): void }) {
   const entity = comparisonEntities[item.kind];
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Card accent={comparisonEntityColors[item.kind]}>
-        <View style={styles.savedCopy}>
-          <View style={styles.savedEyebrow}>
-            <EntityIcon entity={entity} size="compact" />
-            <Text style={styles.savedEyebrowText}>Comparación {item.kind_label}</Text>
+    <Card accent={comparisonEntityColors[item.kind]}>
+        <View style={styles.savedHeader}>
+          <View style={styles.savedCopy}>
+            <View style={styles.savedEyebrow}>
+              <EntityIcon entity={entity} size="compact" />
+              <Text style={styles.savedEyebrowText}>Comparación {item.kind_label}</Text>
+            </View>
+            <Text style={styles.savedTitle}>{item.name}</Text>
+            <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
+            <View style={styles.savedChip}><Pill label={`${item.item_count} elementos`} /></View>
           </View>
-          <Text style={styles.savedTitle}>{item.name}</Text>
+          <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={onPress} role="link">
+            <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+          </EntityCardAction>
         </View>
         <SavedComparisonPreviewPanels items={item.items} scope={entity} />
-        <View style={styles.savedMeta}>
-          <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
-          <Pill label={`${item.item_count} elementos`} />
-        </View>
-        <Text style={textStyles.muted}>Ver comparación guardada ›</Text>
-      </Card>
-    </Pressable>
+    </Card>
   );
 }
 
@@ -351,9 +351,10 @@ const styles = StyleSheet.create({
   removeText: { color: tokens.color.textMuted, fontSize: 24, lineHeight: 26 },
   pressed: { opacity: 0.68 },
   savedCopy: { flex: 1, gap: tokens.spacing.xs },
+  savedChip: { alignItems: "flex-start" },
   savedEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   savedEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
-  savedMeta: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
+  savedHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   savedTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   slots: { gap: tokens.spacing.md },
 });

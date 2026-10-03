@@ -28,6 +28,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   const proposalEntity = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id]/entity.tsx"), "utf8");
   const comparison = await readFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
   const comparisonList = await readFile(path.resolve(process.cwd(), "src/app/comparator/index.tsx"), "utf8");
+  const comparisonActions = await readFile(path.resolve(process.cwd(), "src/components/comparisons/saved-comparison-actions.tsx"), "utf8");
   const program = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   const programDay = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
   const programMeal = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"), "utf8");
@@ -45,6 +46,11 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(comparison, /kind === "dailyplans" \? "dailyPlan" : kind === "meals" \? "meal" : "food"/);
   assertSourceMatch(comparisonList, /<EntityIcon entity=\{entity\} size="compact" \/>[\s\S]*Comparación \{item\.kind_label\}/);
   assertSourceMatch(comparisonList, /<SavedComparisonPreviewPanels items=\{item\.items\} scope=\{entity\} \/>/);
+  assertSourceMatch(comparisonList, /<ChevronRight color=\{tokens\.color\.textMuted\}/);
+  assertSourceDoesNotMatch(comparisonList, /Ver comparación guardada/);
+  assertSourceMatch(comparison, /method: "PATCH"/);
+  assertSourceMatch(comparisonActions, /Editar nombre/);
+  assertSourceMatch(comparisonActions, /Guardar nombre/);
   assertSourceDoesNotMatch(program, /Abrir plan de hoy/);
   assertSourceMatch(program, /CalendarizedProgramPlanning/);
   assertSourceMatch(programDay, /<EntityDetailPage/);

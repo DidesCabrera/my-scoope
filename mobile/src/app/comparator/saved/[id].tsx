@@ -80,7 +80,20 @@ export default function SavedComparisonDetailScreen() {
       {comparison && activeTab === "cards" ? <ComparisonResultCards result={comparison} /> : null}
       {activeTab === "entities" && entityLoading ? <ActivityIndicator color={tokens.color.textMuted} /> : null}
       {activeTab === "entities" ? entityItems.map((item, index) => <LibraryCard apiRequest={apiRequest} interactive={false} item={item} key={`${item.entity}-${item.id}-${index}`} navigable onChanged={() => void load()} />) : null}
-      {comparison ? <SavedComparisonActions onClose={() => setActionsVisible(false)} onEdit={() => router.push({ pathname: "/comparator", params: { kind, savedId: String(comparison.saved_comparison_id) } } as Href)} visible={actionsVisible} /> : null}
+      {comparison ? <SavedComparisonActions
+        name={comparison.saved_comparison_name}
+        onClose={() => setActionsVisible(false)}
+        onEdit={() => router.push({ pathname: "/comparator", params: { kind, savedId: String(comparison.saved_comparison_id) } } as Href)}
+        onRename={async (name) => {
+          const renamed = await apiRequest<SavedComparisonDetail>(`/api/v1/comparisons/saved/${comparison.saved_comparison_id}/name`, {
+            body: JSON.stringify({ name }),
+            headers: { "Content-Type": "application/json" },
+            method: "PATCH",
+          });
+          setComparison(renamed);
+        }}
+        visible={actionsVisible}
+      /> : null}
     </Screen>
   );
 }
