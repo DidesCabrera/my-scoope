@@ -37,6 +37,10 @@ test("domain tab bars use the matching UI System layout contract", async () => {
   assert.match(comparator, /export function SavedComparisonPreviewPanels/);
   assert.match(comparator, /<PanelSurface>/);
   assert.match(comparator, /<EntityPanelTabs activeTab=\{activeTab\}/);
+  assert.match(comparator, /useState<ComparisonPreviewTab>\("entity"\)/);
+  assert.match(comparator, /label: scope === "dailyPlan" \? "Planes diarios" : leadingLabel/);
+  assert.match(comparator, /<FoodQuantityPanel/);
+  assert.match(comparator, /<EntityNamePanel entity=\{scope\}/);
   assert.match(comparator, /<NutritionCaloriesPanel items=\{panelItems\}/);
   assert.match(comparator, /<NutritionMacrosPanel items=\{panelItems\}/);
   assert.match(comparator, /<NutritionDistributionPanel items=\{panelItems\}/);

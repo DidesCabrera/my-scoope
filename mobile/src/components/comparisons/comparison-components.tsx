@@ -6,7 +6,9 @@ import type { ComparisonResultItem } from "@/api/types";
 import { PanelAllocationBar } from "@/components/nutrition";
 import {
   EntityPanelTabs,
+  EntityNamePanel,
   FoodPanels,
+  FoodQuantityPanel,
   type FoodPanelItem,
   NutritionAllocationPanel,
   NutritionCaloriesPanel,
@@ -19,7 +21,7 @@ import { tokens } from "@/design/tokens";
 
 export type ComparisonScope = Extract<EntityKind, "food" | "meal" | "dailyPlan">;
 export type ComparisonMetricTone = "calories" | "ppk" | "protein" | "carbs" | "fat";
-type ComparisonPreviewTab = "allocation" | "calories" | "distribution" | "macros";
+type ComparisonPreviewTab = "allocation" | "calories" | "distribution" | "entity" | "macros";
 
 const scopeLabels: Record<ComparisonScope, string> = {
   food: "Alimentos",
@@ -90,10 +92,12 @@ function comparisonPanelItems(items: ComparisonResultItem[]): FoodPanelItem[] {
 }
 
 export function SavedComparisonPreviewPanels({ items, scope }: { items?: ComparisonResultItem[]; scope: ComparisonScope }) {
-  const [activeTab, setActiveTab] = useState<ComparisonPreviewTab>("calories");
-  const panelItems = comparisonPanelItems(items ?? []);
+  const [activeTab, setActiveTab] = useState<ComparisonPreviewTab>("entity");
+  const sourceItems = items ?? [];
+  const panelItems = comparisonPanelItems(sourceItems);
   const leadingLabel = scopeLabels[scope];
   const tabs = [
+    { key: "entity" as const, label: scope === "dailyPlan" ? "Planes diarios" : leadingLabel },
     { key: "calories" as const, label: "Calorías" },
     { key: "macros" as const, label: "Macros" },
     { key: "distribution" as const, label: "Dist" },
@@ -103,6 +107,8 @@ export function SavedComparisonPreviewPanels({ items, scope }: { items?: Compari
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+      {activeTab === "entity" && scope === "food" ? <FoodQuantityPanel items={panelItems.map((item, index) => ({ ...item, name: sourceItems[index].name }))} /> : null}
+      {activeTab === "entity" && scope !== "food" ? <EntityNamePanel entity={scope} items={sourceItems.map((item) => ({ id: `${item.position}-${item.id}`, name: item.name }))} label={scope === "meal" ? "Comidas" : "Planes diarios"} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
