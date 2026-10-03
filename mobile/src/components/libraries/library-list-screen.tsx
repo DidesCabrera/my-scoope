@@ -1,7 +1,7 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Search, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -9,8 +9,8 @@ import type { LibraryEntity, LibraryListActionResult, LibraryPageData } from "@/
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
-import { CollectionPageHeader, MutationStatusModal, useMutationStatus } from "@/components/ui";
-import { Button, Card, InlineNotice, textStyles } from "@/components/ui/primitives";
+import { CollectionPageHeader, LoadingState, MacroLoadingIndicator, MutationStatusModal, useMutationStatus } from "@/components/ui";
+import { Button, Card, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
 import { LibraryCard } from "./library-card";
@@ -180,6 +180,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   }, [load, mode]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
+  if (loading && mode === "list" && !page) return <LoadingState label="Cargando tu librería…" />;
 
   return (
     <NestableScrollContainer
@@ -227,8 +228,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       ) : null}
       {loading && (mode === "edit" || !page) ? (
         <View style={styles.loading}>
-          <ActivityIndicator color={tokens.color.interactivePrimary} size="large" />
-          <Text style={textStyles.muted}>Cargando tu librería…</Text>
+          <MacroLoadingIndicator accessibilityLabel="Cargando tu librería" />
         </View>
       ) : null}
       {!loading && page?.items.length === 0 ? (

@@ -13,6 +13,7 @@ import {
 
 import { tokens } from "@/design/tokens";
 import { Screen } from "./layout";
+import { MacroLoadingIndicator } from "./macro-loading-indicator";
 
 export { Screen };
 
@@ -211,9 +212,7 @@ export function ProgressBar({ value }: { value: number }) {
 export function LoadingState({ label = "Preparando tu día…" }: { label?: string }) {
   return (
     <Screen scroll={false} contentStyle={styles.loadingState} headerMode="preserve">
-      <Brand />
-      <ActivityIndicator color={tokens.color.interactivePrimary} size="large" />
-      <Text style={styles.mutedText}>{label}</Text>
+      <MacroLoadingIndicator accessibilityLabel={label} />
     </Screen>
   );
 }
@@ -267,6 +266,5 @@ const styles = StyleSheet.create({
   noticeText: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 8, overflow: "hidden" },
   progressFill: { backgroundColor: tokens.color.program, borderRadius: tokens.radius.pill, height: "100%" },
-  loadingState: { alignItems: "center", justifyContent: "center" },
-  mutedText: { color: tokens.color.textMuted, fontSize: 15 },
+  loadingState: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, justifyContent: "center" },
 });

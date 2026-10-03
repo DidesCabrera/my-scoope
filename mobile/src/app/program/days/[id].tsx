@@ -2,7 +2,7 @@ import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } 
 import * as Crypto from "expo-crypto";
 import { ChevronRight } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -19,7 +19,7 @@ import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, ContentPanel, EntityCardAction, InlineNotice, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
+import { Button, ContentPanel, EntityCardAction, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -196,7 +196,7 @@ export default function ProgramDayScreen() {
   }, [compactHeaderVisible, day, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (loading && !day) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Abriendo el día…</Text></View>;
+  if (loading && !day) return <LoadingState label="Abriendo el día…" />;
   if (!day) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
 
   const snapshot = day.plan_snapshot;

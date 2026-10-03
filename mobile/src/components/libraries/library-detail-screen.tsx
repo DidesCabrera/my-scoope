@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Image, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -15,8 +15,8 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
-import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
+import { LoadingState, MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
+import { Button, InlineNotice } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { tokens } from "@/design/tokens";
@@ -315,7 +315,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   }, [apiRequest, item]);
   useFocusEffect(useCallback(() => { if (status === "authenticated" && id) void load(); }, [id, load, status]));
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (loading && !item) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Cargando detalle…</Text></View>;
+  if (loading && !item) return <LoadingState label="Cargando detalle…" />;
   if (!item) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
   const actionsModal = <LibraryActions apiRequest={apiRequest} entitySlug={entitySlug} initialAction={actionSheet === "change-time" ? "change-time" : undefined} item={item} key={actionSheet ?? "closed"} mealTimeChange={hasMealTimeContext ? {
     initialTime: contextTime,
