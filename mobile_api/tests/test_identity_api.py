@@ -23,6 +23,10 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
 
         self.assertEqual(session.status_code, 200)
         self.assertEqual(session.json()["data"]["device_session_id"], str(self.device_session.public_id))
+        self.assertEqual(
+            session.json()["data"]["date_joined"],
+            self.user.date_joined.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+        )
         self.assertEqual(profile.status_code, 200)
         self.assertFalse(profile.json()["data"]["onboarding_completed"])
         self.assertTrue(profile.json()["data"]["review_disclosure_required"])

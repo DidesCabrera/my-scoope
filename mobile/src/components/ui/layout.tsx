@@ -9,6 +9,8 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { tokens } from "@/design/tokens";
 
+const BOTTOM_SPACING = 96;
+
 type ScreenProps = PropsWithChildren<{
   contentStyle?: StyleProp<ViewStyle>;
   headerMode?: "automatic" | "preserve";
@@ -99,7 +101,7 @@ export const layoutStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },
   scrollContent: { flexGrow: 1 },
-  screenContent: { flex: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
+  screenContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: BOTTOM_SPACING },
   scrollHeader: { paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.md, paddingBottom: tokens.spacing.md, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, zIndex: 2 },
   brandRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },

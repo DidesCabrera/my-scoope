@@ -1,6 +1,6 @@
 import type { ProposalMeal, ProposalDailyPlan, ProposalProgram } from "./proposal-entities";
 
-export type { SubscriptionData } from "./billing-types";
+export type { EntitlementsData, SubscriptionData } from "./billing-types";
 export type ApiErrorDetail = {
   code: string;
   message: string;
@@ -15,6 +15,7 @@ export type SessionData = {
   username: string;
   email: string;
   display_name: string;
+  date_joined: string;
   scopes: string[];
   device_session_id: string | null;
 };

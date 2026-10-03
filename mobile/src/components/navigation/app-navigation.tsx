@@ -151,7 +151,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };
   if (pathname === "/inbox") return { icon: UserPlus, title: "Compartidos" };
   if (pathname.startsWith("/share/")) return { icon: UserPlus, title: "Plan compartido" };
-  if (pathname === "/subscription") return { icon: WalletCards, title: "Mi suscripción" };
+  if (pathname === "/subscription" || pathname === "/subscription-details") return { icon: WalletCards, title: pathname === "/subscription" ? "Suscripciones y Bolsas" : "Detalles de suscripciones y bolsas" };
   if (pathname === "/account") return { icon: UserRound, title: "Mi cuenta" };
   if (pathname === "/onboarding") return { icon: UserRound, title: "Tu ficha" };
   if (pathname === "/disclosures") return { icon: FileCheck, title: "Información importante" };
@@ -215,7 +215,7 @@ export function AppNavigationHeader() {
             disabled={headerPresentation.action.disabled}
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.icon === "more" && styles.backHeaderMoreAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.action.icon === "more"
               ? <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
               : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
@@ -386,6 +386,7 @@ const styles = StyleSheet.create({
   backHeaderSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderLeadingAction: { alignItems: "flex-start", height: 52, justifyContent: "center", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 92 },
+  backHeaderMoreAction: { alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens.spacing.lg },
   backHeaderActionText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700" },
   backHeaderIdentity: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0 },
   headerListIdentity: { flex: 1, justifyContent: "center" },

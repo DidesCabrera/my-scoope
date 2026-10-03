@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from ninja import Field, Schema
@@ -11,6 +11,7 @@ class SessionData(Schema):
     username: str
     email: str
     display_name: str
+    date_joined: datetime
     scopes: list[str]
     device_session_id: str | None = None
 

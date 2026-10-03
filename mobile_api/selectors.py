@@ -647,6 +647,7 @@ def session_payload(auth) -> dict:
         "username": user.username,
         "email": user.email,
         "display_name": display_name,
+        "date_joined": user.date_joined,
         "scopes": list(auth.token.scopes),
         "device_session_id": (str(auth.token.device_session.public_id) if auth.token.device_session_id else None),
     }

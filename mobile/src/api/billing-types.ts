@@ -29,3 +29,18 @@ export type SubscriptionData = {
   }[];
   duplicate_active_providers: boolean;
 };
+
+export type EntitlementsData = {
+  plan_name: string;
+  plan_slug: string;
+  subscription_status: string;
+  period: string;
+  available_credits: number;
+  reserved_credits: number;
+  monthly_credit_limit: number;
+  daily_credit_limit: number;
+  included_monthly_credits: number;
+  purchased_credits: number;
+  workspace_limits: Record<string, number | null>;
+  workspace_usage: Record<string, number>;
+};

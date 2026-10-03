@@ -416,9 +416,9 @@ export function MessageCard({
   title,
   children,
 }: PropsWithChildren<{ tone?: "info" | "success" | "warning" | "danger"; title: string }>) {
-  const color = tone === "success" ? tokens.color.success : tone === "warning" ? tokens.color.warning : tone === "danger" ? tokens.color.danger : tokens.color.interactivePrimary;
+  const color = tone === "success" ? tokens.color.success : tone === "warning" ? tokens.color.warning : tone === "danger" ? tokens.color.danger : tokens.color.contextual;
   return (
-    <View style={[styles.message, { borderLeftColor: color }]}>
+    <View style={[styles.message, { backgroundColor: `${color}1A`, borderColor: `${color}80` }]}>
       <Text style={[styles.messageTitle, { color }]}>{title}</Text>
       <Text style={styles.messageBody}>{children}</Text>
     </View>
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   emptySymbol: { color: tokens.color.textSoft, fontSize: tokens.type.hero, fontWeight: "300" },
   emptyTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800", textAlign: "center" },
   emptyDescription: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23, textAlign: "center" },
-  message: { backgroundColor: tokens.color.surfaceMuted, borderLeftWidth: 4, borderRadius: tokens.radius.md, gap: tokens.spacing.xs, padding: tokens.spacing.md },
+  message: { borderRadius: tokens.radius.panel, borderWidth: 1, gap: tokens.spacing.xs, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
   messageTitle: { fontSize: tokens.type.caption, fontWeight: "900", letterSpacing: 0.3 },
   messageBody: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
 });

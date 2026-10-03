@@ -43,8 +43,15 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /export default function UiGalleryScreen/);
   assertSourceMatch(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
   assertSourceMatch(gallery, /Galería del sistema UI/);
+  assertSourceDoesNotMatch(gallery, /<Brand|Referencia interna construida con los componentes reales de la app/);
   assertSourceMatch(gallery, /OnboardingJourneyView/);
   assertSourceMatch(gallery, /Storyboard visual · sin sesión, API ni persistencia/);
+  assertSourceMatch(gallery, /accessibilityLabel="Formatos del onboarding"/);
+  assertSourceMatch(gallery, /tabs=\{calendarPreviewWidths\.map\(\(preview\) => \(\{ key: preview\.width, label: preview\.label \}\)\)\}/);
+  assertSourceMatch(gallery, /onboardingJourneySteps\.map\(\(step, index\) =>/);
+  assertSourceMatch(gallery, /String\(index \+ 1\)\.padStart\(2, "0"\).*step\.label/);
+  assertSourceMatch(gallery, /calendarPreviewWidths\.some\(\(preview\) => preview\.width === onboardingPreviewWidth\)[\s\S]*calendarPreviewWidths\[0\]\.width/);
+  assertSourceDoesNotMatch(gallery, /accessibilityLabel="Vistas del onboarding"|setOnboardingStep/);
   assertSourceMatch(gallery, /Card-child de programa/);
   assertSourceMatch(gallery, /ProgramChildCard/);
   assertSourceMatch(gallery, /Detalle de programa/);
@@ -722,6 +729,19 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assertSourceMatch(layoutUiSource, /cardContentBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
 
+  const controlsUiSource = await readTestFile(
+    path.resolve(process.cwd(), "src/components/ui/controls.tsx"),
+    "utf8",
+  );
+  const primitivesUiSource = await readTestFile(
+    path.resolve(process.cwd(), "src/components/ui/primitives.tsx"),
+    "utf8",
+  );
+  for (const source of [controlsUiSource, primitivesUiSource]) {
+    assertSourceMatch(source, /bleed = true/);
+    assertSourceMatch(source, /buttonBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
+  }
+
   const programDayPanels = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/program-day-comparison-panels.tsx"),
     "utf8",
@@ -767,6 +787,30 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUi, /meal: tokens\.color\.meal/);
   assertSourceMatch(productUi, /dailyPlan: tokens\.color\.dailyPlan/);
   assertSourceDoesNotMatch(productUi, /styles\.structuralDivider/);
+});
+
+test("semantic notices use a half-opacity one-pixel border and a ten-percent tone surface", async () => {
+  const feedback = await readTestFile(path.resolve(process.cwd(), "src/components/ui/feedback.tsx"), "utf8");
+  const primitives = await readTestFile(path.resolve(process.cwd(), "src/components/ui/primitives.tsx"), "utf8");
+  const product = await readTestFile(path.resolve(process.cwd(), "src/components/ui/product.tsx"), "utf8");
+
+  for (const source of [feedback, primitives, product]) {
+    assertSourceMatch(source, /backgroundColor: `\$\{color\}1A`/);
+    assertSourceMatch(source, /borderColor: `\$\{color\}80`/);
+    assertSourceDoesNotMatch(source, /borderLeftColor: color/);
+  }
+  assertSourceMatch(feedback, /notice: \{[^}]*borderWidth: 1/);
+  assertSourceMatch(primitives, /notice: \{[^}]*borderWidth: 1/);
+  assertSourceMatch(product, /message: \{[^}]*borderWidth: 1/);
+  for (const source of [feedback, primitives, product]) {
+    assertSourceMatch(source, /tokens\.color\.contextual/);
+    assertSourceMatch(source, /borderRadius: tokens\.radius\.panel/);
+    assertSourceMatch(source, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+    assertSourceMatch(source, /padding: tokens\.card\.outerPadding/);
+  }
+  assertSourceDoesNotMatch(feedback, /borderLeftWidth/);
+  assertSourceDoesNotMatch(primitives, /borderLeftWidth/);
+  assertSourceDoesNotMatch(product, /message: \{[^}]*borderLeftWidth/);
 });
 
 test("the onboarding gallery exposes every visual journey view without product side effects", async () => {

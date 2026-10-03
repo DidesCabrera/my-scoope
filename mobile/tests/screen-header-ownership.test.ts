@@ -37,6 +37,11 @@ test("Screen has one implementation and never overrides externally owned headers
   assertSourceMatch(layout, /headerMode\?: "automatic" \| "preserve"/);
   assertSourceMatch(layout, /if \(headerMode === "preserve"\) return undefined;[\s\S]*setHeaderPresentation/);
   assertSourceMatch(layout, /onScroll=\{\(event\) => setCompactIdentityVisible\(isHeaderIdentityVisible\(event\.nativeEvent\.contentOffset\.y\)\)\}/);
+  assertSourceMatch(layout, /BOTTOM_SPACING = 96/);
+  assertSourceMatch(layout, /paddingBottom: BOTTOM_SPACING/);
+  assertSourceDoesNotMatch(layout, /contentHeight|viewportHeight|screenContentLong|onContentSizeChange/);
+  assertSourceMatch(layout, /screenContent: \{ flexGrow: 1/);
+  assertSourceDoesNotMatch(layout, /screenContent: \{ flex: 1/);
   assert.equal((layout.match(/export function Screen/g) ?? []).length, 1);
   assertSourceDoesNotMatch(primitives, /export function Screen/);
   assertSourceMatch(primitives, /import \{ Screen \} from "\.\/layout";[\s\S]*export \{ Screen \}/);
@@ -148,7 +153,14 @@ test("screens that own global navigation preserve their header through content a
   assertSourceMatch(proposalDetail, /<Screen headerMode="preserve">/);
 
   const creditBalance = await source("src/components/assistant/assistant-credit-balance.tsx");
-  assertSourceMatch(creditBalance, /<View style=\{\[styles\.panel, \{ width: Math\.max\(0, width - \(tokens\.layout\.reducedInset \* 2\)\) \}\]\}>/);
+  assertSourceMatch(creditBalance, /!contained && \{ width: Math\.max\(0, width - \(tokens\.layout\.reducedInset \* 2\)\) \}/);
+  assertSourceMatch(creditBalance, /return contained \? <View style=\{styles\.panelContained\}>\{panel\}<\/View> : panel/);
+  assertSourceMatch(creditBalance, /panelContained: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assertSourceMatch(creditBalance, /panelContainedSurface: \{ marginBottom: 0 \}/);
+  assertSourceMatch(creditBalance, /panelStandalone: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
+  assertSourceMatch(creditBalance, /<View onLayout=\{handlePanelLayout\}/);
+  assertSourceMatch(creditBalance, /<Svg aria-hidden height=\{panelSize\.height\} pointerEvents="none" style=\{StyleSheet\.absoluteFill\} width=\{panelSize\.width\}>/);
+  assertSourceMatch(creditBalance, /<Rect[^>]*height=\{panelSize\.height\} width=\{panelSize\.width\}/);
   assertSourceDoesNotMatch(creditBalance, /<Card/);
   assertSourceDoesNotMatch(creditBalance, /Saldo de créditos|Sparkles/);
   assertSourceMatch(creditBalance, /<Text style=\{styles\.value\}>\{availability\.available_credits\}<\/Text>/);

@@ -73,7 +73,7 @@ export function Pill({ label, color = tokens.color.interactivePrimary }: { label
 }
 
 export function Button({
-  bleed = false,
+  bleed = true,
   label,
   onPress,
   variant = "primary",
@@ -181,9 +181,9 @@ export function ChoiceRow<T extends string>({
 }
 
 export function InlineNotice({ children, tone = "info" }: PropsWithChildren<{ tone?: "info" | "warning" | "error" }>) {
-  const color = tone === "error" ? tokens.color.danger : tone === "warning" ? tokens.color.warning : tokens.color.interactivePrimary;
+  const color = tone === "error" ? tokens.color.danger : tone === "warning" ? tokens.color.warning : tokens.color.contextual;
   return (
-    <View style={[styles.notice, { borderLeftColor: color }]}>
+    <View style={[styles.notice, { backgroundColor: `${color}1A`, borderColor: `${color}80` }]}>
       <Text style={styles.noticeText}>{children}</Text>
     </View>
   );
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   choiceSelected: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
   choiceText: { color: tokens.color.textMuted, fontSize: 14, fontWeight: "700" },
   choiceTextSelected: { color: tokens.color.surfaceApp },
-  notice: { backgroundColor: tokens.color.surfaceMuted, borderLeftWidth: 3, borderRadius: tokens.radius.md, padding: tokens.spacing.md },
+  notice: { borderRadius: tokens.radius.panel, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
   noticeText: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 8, overflow: "hidden" },
   progressFill: { backgroundColor: tokens.color.program, borderRadius: tokens.radius.pill, height: "100%" },

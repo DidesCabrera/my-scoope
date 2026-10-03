@@ -3,7 +3,7 @@ import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleSheet, Text, Te
 import { tokens } from "@/design/tokens";
 
 export function Button({
-  bleed = false,
+  bleed = true,
   label,
   onPress,
   variant = "primary",
