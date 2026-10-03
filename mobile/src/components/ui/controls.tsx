@@ -1,4 +1,5 @@
 import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
 
@@ -13,11 +14,12 @@ export function Button({
   bleed?: boolean;
   label: string;
   onPress(): void;
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "multicolor";
   disabled?: boolean;
   loading?: boolean;
 }) {
-  const buttonStyle = variant === "primary" ? styles.buttonPrimary : styles.buttonSecondary;
+  const multicolor = variant === "multicolor";
+  const buttonStyle = variant === "primary" ? styles.buttonPrimary : multicolor ? styles.buttonMulticolor : styles.buttonSecondary;
   const textStyle = variant === "primary" ? styles.buttonPrimaryText : styles.buttonSecondaryText;
   return (
     <Pressable
@@ -34,6 +36,19 @@ export function Button({
         (disabled || loading) && styles.buttonDisabled,
         pressed && styles.buttonPressed,
       ]}>
+      {multicolor ? <>
+        <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id="button-border-macros" x1="0" x2="1" y1="0" y2="1">
+              <Stop offset="0" stopColor={tokens.color.protein} />
+              <Stop offset="0.5" stopColor={tokens.color.carbs} />
+              <Stop offset="1" stopColor={tokens.color.fat} />
+            </LinearGradient>
+          </Defs>
+          <Rect fill="url(#button-border-macros)" height="100%" width="100%" />
+        </Svg>
+        <View style={styles.buttonMulticolorInset} />
+      </> : null}
       {loading ? <ActivityIndicator color={variant === "primary" ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
       <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{label}</Text>
     </Pressable>
@@ -113,6 +128,8 @@ const styles = StyleSheet.create({
   button: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 48, paddingHorizontal: tokens.spacing.lg },
   buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   buttonPrimary: { backgroundColor: tokens.color.textMain },
+  buttonMulticolor: { overflow: "hidden" },
+  buttonMulticolorInset: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg - 2, bottom: 2, left: 2, position: "absolute", right: 2, top: 2 },
   buttonSecondary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderWidth: 1 },
   buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger },
   buttonDisabled: { opacity: 0.45 },

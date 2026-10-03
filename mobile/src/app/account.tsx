@@ -15,6 +15,7 @@ import { AppHeader, Button, Card, Field, InlineNotice, Screen, textStyles } from
 import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
+import { subscriptionPlanAccent } from "@/presentation/subscription";
 
 const supportEmail = "felipe@myscoope.com";
 
@@ -92,7 +93,7 @@ export default function AccountScreen() {
   return (
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
       <AppHeader eyebrow="Mi cuenta" title={session?.display_name || session?.username || "My Scoope"} />
-      <Card>
+      <Card accent={subscriptionPlanAccent(entitlements?.plan_name)}>
         <View style={styles.subscriptionHeading}>
           <View style={styles.headerCopy}>
             <Text style={styles.eyebrow}>SUSCRIPCIÓN ACTUAL</Text>
@@ -101,7 +102,7 @@ export default function AccountScreen() {
         </View>
         {entitlements ? <AssistantCreditBalance availability={entitlements} contained /> : null}
         {subscriptionError ? <InlineNotice tone="error">{subscriptionError}</InlineNotice> : null}
-        <Button label="Mejorar mi plan" onPress={() => router.push("/subscription" as Href)} variant="secondary" />
+        <Button label="Mejorar mi suscripción" onPress={() => router.push("/subscription" as Href)} variant="multicolor" />
       </Card>
       <ProposalReviewSection eyebrow="CUENTA" title="Información de la cuenta">
         <AccountInformationRows items={[

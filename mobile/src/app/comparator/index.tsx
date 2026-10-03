@@ -15,6 +15,7 @@ import type {
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
+import { SavedComparisonPreviewPanels } from "@/components/comparisons/comparison-components";
 import {
   applyComparatorSelection,
   initialComparisonSlots,
@@ -24,7 +25,7 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionKpiSection } from "@/components/nutrition";
-import { DistributedTabBar, EntityCard, SectionPageHeader } from "@/components/ui";
+import { DistributedTabBar, EntityCard, EntityIcon, SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, Field, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -52,14 +53,20 @@ function creationHref(kind: ComparisonKind): Href {
 }
 
 function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress(): void }) {
+  const entity = comparisonEntities[item.kind];
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
       <Card accent={comparisonEntityColors[item.kind]}>
-        <View style={styles.savedRow}>
-          <View style={styles.savedCopy}>
-            <Text style={styles.savedTitle}>{item.name}</Text>
-            <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
+        <View style={styles.savedCopy}>
+          <View style={styles.savedEyebrow}>
+            <EntityIcon entity={entity} size="compact" />
+            <Text style={styles.savedEyebrowText}>Comparación {item.kind_label}</Text>
           </View>
+          <Text style={styles.savedTitle}>{item.name}</Text>
+        </View>
+        <SavedComparisonPreviewPanels items={item.items} scope={entity} />
+        <View style={styles.savedMeta}>
+          <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
           <Pill label={`${item.item_count} elementos`} />
         </View>
         <Text style={textStyles.muted}>Ver comparación guardada ›</Text>
@@ -344,7 +351,9 @@ const styles = StyleSheet.create({
   removeText: { color: tokens.color.textMuted, fontSize: 24, lineHeight: 26 },
   pressed: { opacity: 0.68 },
   savedCopy: { flex: 1, gap: tokens.spacing.xs },
-  savedRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
+  savedEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
+  savedEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
+  savedMeta: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   savedTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   slots: { gap: tokens.spacing.md },
 });

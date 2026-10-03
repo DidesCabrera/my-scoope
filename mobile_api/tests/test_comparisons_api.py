@@ -246,17 +246,18 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
         )
         self.assertEqual(saved.status_code, 200)
         comparison_id = saved.json()["data"]["saved_comparison_id"]
-
         first_food.name = "Avena modificada"
         first_food.protein = 20
         first_food.save(update_fields=["name", "protein"])
-
         historical = self.client.get(f"/api/v1/comparisons/saved/{comparison_id}")
         self.assertEqual(historical.status_code, 200)
         self.assertTrue(historical.json()["data"]["historical_snapshot"])
         self.assertEqual(historical.json()["data"]["items"][0]["name"], "Avena original")
         self.assertEqual(historical.json()["data"]["items"][0]["values"]["protein_g"], 10.0)
-
+        listed = self.client.get("/api/v1/comparisons/saved?kind=foods")
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(listed.json()["data"]["items"][0]["items"][0]["name"], "Avena original")
+        self.assertEqual(listed.json()["data"]["items"][0]["items"][0]["values"]["protein_g"], 10.0)
         refreshed = self.client.put(
             f"/api/v1/comparisons/saved/{comparison_id}",
             data=request_payload,
@@ -265,7 +266,6 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
         self.assertEqual(refreshed.status_code, 200)
         self.assertEqual(refreshed.json()["data"]["items"][0]["name"], "Avena modificada")
         self.assertEqual(refreshed.json()["data"]["items"][0]["values"]["protein_g"], 20.0)
-
         other_user = User.objects.create_user(username="saved-comparison-outsider")
         other_token = create_mcp_user_token(
             user=other_user,

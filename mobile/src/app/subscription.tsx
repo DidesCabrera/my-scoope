@@ -3,7 +3,6 @@ import {
   ErrorCode,
   finishTransaction,
   getAvailablePurchases,
-  getStorefront,
   type Purchase,
   useIAP,
 } from "expo-iap";
@@ -18,10 +17,10 @@ import type { EntitlementsData, SubscriptionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { AppHeader, Card, EntityIcon, type EntityKind, InlineNotice, LoadingState, Screen, SectionDivider, SectionTitle, textStyles } from "@/components/ui";
+import { AppHeader, Card, EntityIcon, type EntityKind, InlineNotice, LoadingState, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
 import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
+import { subscriptionPlanAccent } from "@/presentation/subscription";
 
 function purchaseErrorCode(error: unknown): string {
   if (!error || typeof error !== "object" || !("code" in error)) return "";
@@ -65,8 +64,8 @@ export default function SubscriptionScreen() {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restoreNotice, setRestoreNotice] = useState<string | null>(null);
-  const [storefront, setStorefront] = useState<string | null>(null);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const handledTransactions = useRef(new Set<string>());
   const restoring = useRef(false);
 
@@ -142,9 +141,9 @@ export default function SubscriptionScreen() {
   const closeActions = useCallback(() => setActionsVisible(false), []);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, fallback: "/account", mode: "back", title: "Suscripciones y Bolsas" });
+    setHeaderPresentation({ action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, fallback: "/account", identityVisible: compactHeaderVisible, mode: "back", title: "Suscripciones y Bolsas" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [openActions, setHeaderPresentation]));
+  }, [compactHeaderVisible, openActions, setHeaderPresentation]));
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   useEffect(() => {
@@ -162,15 +161,6 @@ export default function SubscriptionScreen() {
       void fetchProducts({ skus: ids, type: "in-app" }).catch((nextError) => setError(userFacingError(nextError)));
     }
   }, [connected, fetchProducts, overview?.credit_packs]);
-
-  useEffect(() => {
-    if (Platform.OS !== "ios" || appConfig.deploymentEnvironment !== "staging" || !connected) return;
-    let active = true;
-    void getStorefront()
-      .then((countryCode) => { if (active) setStorefront(countryCode); })
-      .catch(() => { if (active) setStorefront("No disponible"); });
-    return () => { active = false; };
-  }, [connected]);
 
   useEffect(() => {
     const pending = setTimeout(() => {
@@ -315,14 +305,14 @@ export default function SubscriptionScreen() {
   })).filter((plan) => plan.products.length > 0);
 
   return (
-    <Screen headerMode="preserve">
+    <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
       <AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" />
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {restoreNotice ? <InlineNotice>{restoreNotice}</InlineNotice> : null}
       {overview?.duplicate_active_providers ? (
         <InlineNotice tone="warning">Detectamos más de un canal de cobro activo. El equipo puede revisarlo sin interrumpir tu acceso.</InlineNotice>
       ) : null}
-      <Card>
+      <Card accent={subscriptionPlanAccent(entitlements?.plan_name ?? overview?.plan_name)}>
         <View style={styles.subscriptionHeading}>
           <View style={styles.headerCopy}>
             <Text style={styles.eyebrow}>SUSCRIPCIÓN ACTUAL</Text>
@@ -348,18 +338,14 @@ export default function SubscriptionScreen() {
 
       {overview?.purchases_enabled && (Platform.OS === "ios" || Platform.OS === "android") ? (
         <>
-          {Platform.OS === "ios" && appConfig.deploymentEnvironment === "staging" ? (
-            <Text style={textStyles.caption}>
-              Diagnóstico App Store: tienda {storefront ?? "Consultando…"} · productos {[...subscriptions, ...products]
-                .map((product) => `${product.id}: ${product.displayPrice} (${product.currency})`)
-                .join(" · ") || "Consultando…"}
-            </Text>
-          ) : null}
-          <SectionTitle detail={`Precio oficial de ${Platform.OS === "android" ? "Google Play" : "App Store"}`} title="Planes disponibles" />
-          <Card>
+          <SectionTitle title="Suscripciones disponibles" titleStyle={styles.commercialSectionTitle} />
+          <Card accent={tokens.color.fat}>
             <View style={styles.copy}>
               <Text style={styles.eyebrow}>PLAN DE SUSCRIPCIÓN</Text>
-              <Text style={styles.productName}>Free</Text>
+              <View style={styles.productTitleRow}>
+                <Text style={styles.productName}>Free</Text>
+                <PlanPriceChip color={tokens.color.fat} label="$0/mes" />
+              </View>
               <Text style={textStyles.caption}>Incluido sin costo.</Text>
             </View>
             <PlanBenefitRows items={commercialPlanBenefits.Free} />
@@ -370,12 +356,16 @@ export default function SubscriptionScreen() {
             const monthlyAndroidOffer = monthlyStoreProduct?.subscriptionOffers?.find(
               (item) => item.basePlanIdAndroid === monthlyProduct?.base_plan_id,
             );
+            const monthlyDisplayPrice = Platform.OS === "android" ? monthlyAndroidOffer?.displayPrice : monthlyStoreProduct?.displayPrice;
             const monthlyNumericPrice = Platform.OS === "android" ? monthlyAndroidOffer?.price : monthlyStoreProduct?.price;
             return (
-            <Card key={plan.planName}>
+            <Card accent={subscriptionPlanAccent(plan.planName)} key={plan.planName}>
               <View style={styles.copy}>
                 <Text style={styles.eyebrow}>PLAN DE SUSCRIPCIÓN</Text>
-                <Text style={styles.productName}>{plan.planName}</Text>
+                <View style={styles.productTitleRow}>
+                  <Text style={styles.productName}>{plan.planName}</Text>
+                  <PlanPriceChip color={subscriptionPlanAccent(plan.planName)} label={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : "Consultando…"} />
+                </View>
               </View>
               <PlanBenefitRows items={commercialPlanBenefits[plan.planName] ?? []} />
               <Text style={textStyles.caption}>Elige la modalidad de tu suscripción.</Text>
@@ -416,19 +406,23 @@ export default function SubscriptionScreen() {
       {overview?.can_buy_credit_packs && overview.credit_packs.length ? (
         <>
           <SectionDivider />
-          <SectionTitle title="Bolsas de créditos" detail={Platform.OS === "android" ? "Google Play" : "App Store"} />
+          <SectionHeading
+            icon={<Sparkles color={tokens.color.entityIconForeground} size={18} />}
+            title="Bolsas de créditos"
+            titleStyle={styles.commercialSectionTitle}
+          />
           <Text style={textStyles.muted}>Compra disponible en Basic y Pro.</Text>
           {overview.credit_packs.filter((item) => item.provider === (Platform.OS === "android" ? "google_play" : "apple_app_store")).map((configured) => {
             const storeProduct = products.find((item) => item.id === configured.product_id);
             return (
-              <Card key={configured.product_id}>
+              <Card accent={tokens.color.carbs} key={configured.product_id}>
                 <View style={styles.row}>
                   <View style={styles.copy}>
                     <Text style={styles.eyebrow}>BOLSA DE CRÉDITOS</Text>
                     <Text style={styles.productName}>{configured.credits.toLocaleString("es-CL")} créditos</Text>
                     <Text style={textStyles.caption}>Permanecen en tu cuenta si cambias de plan.</Text>
                   </View>
-                  <Text style={styles.price}>{storeProduct?.displayPrice ?? "Consultando…"}</Text>
+                  <CreditPackPriceChip label={storeProduct?.displayPrice ?? "Consultando…"} />
                 </View>
                 <PurchaseButton
                   disabled={!connected || !storeProduct}
@@ -485,13 +479,39 @@ function PlanBenefitRows({ items }: { items: PlanBenefit[] }) {
         return (
           <View key={item.label} style={[styles.benefitRow, index === items.length - 1 && styles.benefitRowLast]}>
             <View style={styles.benefitIdentity}>
-              {item.entity ? <EntityIcon entity={item.entity} size="compact" /> : Icon ? <View style={styles.benefitIcon}><Icon color={tokens.color.textMain} size={16} strokeWidth={2.2} /></View> : null}
+              {item.entity ? <EntityIcon entity={item.entity} size="benefit" /> : Icon ? <View style={styles.benefitIcon}><Icon color={tokens.color.textMain} size={14} strokeWidth={2.2} /></View> : null}
               <Text style={styles.benefitLabel}>{item.label}</Text>
             </View>
             <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.benefitValue}>{item.value}</Text>
           </View>
         );
       })}
+    </View>
+  );
+}
+
+function PlanPriceChip({ color, label }: { color?: string; label: string }) {
+  return (
+    <View style={[styles.planPriceChip, color ? { backgroundColor: color } : null]}>
+      <Text numberOfLines={1} style={styles.planPriceChipLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function CreditPackPriceChip({ label }: { label: string }) {
+  return (
+    <View style={[styles.planPriceChip, styles.creditPackPriceChip]}>
+      <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <Defs>
+          <LinearGradient id="credit-pack-price-macros" x1="0" x2="1" y1="0" y2="1">
+            <Stop offset="0" stopColor={tokens.color.protein} />
+            <Stop offset="0.5" stopColor={tokens.color.carbs} />
+            <Stop offset="1" stopColor={tokens.color.fat} />
+          </LinearGradient>
+        </Defs>
+        <Rect fill="url(#credit-pack-price-macros)" height="100%" width="100%" />
+      </Svg>
+      <Text numberOfLines={1} style={styles.planPriceChipLabel}>{label}</Text>
     </View>
   );
 }
@@ -525,7 +545,7 @@ const styles = StyleSheet.create({
   actionIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
   actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
   actionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
-  benefitIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.sm, height: 24, justifyContent: "center", width: 24 },
+  benefitIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
   benefitIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   benefitLabel: { color: tokens.color.textMuted, flexShrink: 1, fontSize: 14, lineHeight: 20 },
   benefitRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingVertical: tokens.spacing.xs },
@@ -533,18 +553,22 @@ const styles = StyleSheet.create({
   benefitRows: { marginTop: -tokens.spacing.xs },
   benefitValue: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20, textAlign: "right" },
   closeButton: { alignItems: "center", height: 40, justifyContent: "center", width: 40 },
+  commercialSectionTitle: { fontSize: tokens.type.section, lineHeight: 26 },
+  creditPackPriceChip: { overflow: "hidden" },
   row: { alignItems: "center", flexDirection: "row", gap: 16, justifyContent: "space-between" },
   copy: { flex: 1, gap: 4 },
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   headerCopy: { flex: 1, gap: 3, minWidth: 0 },
   disabledAction: { opacity: 0.45 },
+  planPriceChip: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs },
+  planPriceChipLabel: { color: tokens.color.surfaceApp, fontSize: 16, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },
   planName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
   productName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
+  productTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   purchaseButton: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 48, overflow: "hidden", paddingHorizontal: tokens.spacing.lg },
   purchaseButtonDisabled: { opacity: 0.45 },
   purchaseButtonLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold },
   purchaseButtonPressed: { opacity: 0.72, transform: [{ translateY: 1 }] },
-  price: { color: tokens.color.textMain, fontSize: 17, fontWeight: "900" },
   pressed: { opacity: 0.65 },
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },

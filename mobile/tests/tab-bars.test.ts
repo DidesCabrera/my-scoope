@@ -34,5 +34,12 @@ test("domain tab bars use the matching UI System layout contract", async () => {
   assert.match(assistant, /<DistributedTabBar<AssistantSection>/);
   assert.match(picker, /<DistributedTabBar<PickerEntryTab>/);
   assert.match(comparator, /<DistributedTabBar/);
+  assert.match(comparator, /export function SavedComparisonPreviewPanels/);
+  assert.match(comparator, /<PanelSurface>/);
+  assert.match(comparator, /<EntityPanelTabs activeTab=\{activeTab\}/);
+  assert.match(comparator, /<NutritionCaloriesPanel items=\{panelItems\}/);
+  assert.match(comparator, /<NutritionMacrosPanel items=\{panelItems\}/);
+  assert.match(comparator, /<NutritionDistributionPanel items=\{panelItems\}/);
+  assert.match(comparator, /<NutritionAllocationPanel items=\{panelItems\}/);
   assert.match(weeks, /<ScrollableTabBar[\s\S]*density="compact"/);
 });

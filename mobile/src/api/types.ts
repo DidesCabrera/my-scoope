@@ -667,6 +667,7 @@ export type SavedComparisonSummary = {
   kind: ComparisonKind;
   kind_label: string;
   item_count: number;
+  items: ComparisonResultItem[];
   updated_at: string;
 };
 

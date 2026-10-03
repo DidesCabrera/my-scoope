@@ -27,6 +27,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   const proposal = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id].tsx"), "utf8");
   const proposalEntity = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id]/entity.tsx"), "utf8");
   const comparison = await readFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
+  const comparisonList = await readFile(path.resolve(process.cwd(), "src/app/comparator/index.tsx"), "utf8");
   const program = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   const programDay = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
   const programMeal = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"), "utf8");
@@ -42,6 +43,8 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(comparison, /<Screen[\s\S]*headerMode="preserve"[\s\S]*scrollHeader=\{<AppHeader/);
   assertSourceMatch(comparison, /eyebrowIcon=\{<EntityIcon entity=\{entity\} size="compact" \/>\}/);
   assertSourceMatch(comparison, /kind === "dailyplans" \? "dailyPlan" : kind === "meals" \? "meal" : "food"/);
+  assertSourceMatch(comparisonList, /<EntityIcon entity=\{entity\} size="compact" \/>[\s\S]*Comparación \{item\.kind_label\}/);
+  assertSourceMatch(comparisonList, /<SavedComparisonPreviewPanels items=\{item\.items\} scope=\{entity\} \/>/);
   assertSourceDoesNotMatch(program, /Abrir plan de hoy/);
   assertSourceMatch(program, /CalendarizedProgramPlanning/);
   assertSourceMatch(programDay, /<EntityDetailPage/);
@@ -56,12 +59,13 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(today, /\/program/);
   assertSourceDoesNotMatch(today, /check-in/);
   assertSourceDoesNotMatch(today, /Mi suscripción|Cuenta, privacidad y ayuda|Configurar recordatorios/);
-  assertSourceMatch(account, /label="Mejorar mi plan"/);
+  assertSourceMatch(account, /label="Mejorar mi suscripción"[\s\S]*variant="multicolor"/);
   assertSourceMatch(account, /<AppHeader eyebrow="Mi cuenta"/);
   assertSourceDoesNotMatch(account, /eyebrow="Tu cuenta"/);
   assertSourceMatch(account, /router\.push\("\/subscription" as Href\)/);
   assertSourceMatch(account, /apiRequest<EntitlementsData>\("\/api\/v1\/entitlements"\)/);
   assertSourceMatch(account, /entitlements\?\.plan_name/);
+  assertSourceMatch(account, /<Card accent=\{subscriptionPlanAccent\(entitlements\?\.plan_name\)\}>/);
   assertSourceMatch(account, /<AssistantCreditBalance availability=\{entitlements\} contained \/>/);
   assertSourceDoesNotMatch(account, /subscriptionIcon|plan actual/);
   assertSourceMatch(account, /<ProposalReviewSection eyebrow="CUENTA" title="Información de la cuenta">/);

@@ -7061,6 +7061,13 @@
             "title": "Item Count",
             "type": "integer"
           },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonResultItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
           "kind": {
             "enum": [
               "foods",
@@ -7090,6 +7097,7 @@
           "kind",
           "kind_label",
           "item_count",
+          "items",
           "updated_at"
         ],
         "title": "SavedComparisonSummaryData",
@@ -7097,6 +7105,11 @@
       },
       "SessionData": {
         "properties": {
+          "date_joined": {
+            "format": "date-time",
+            "title": "Date Joined",
+            "type": "string"
+          },
           "device_session_id": {
             "anyOf": [
               {
@@ -7137,6 +7150,7 @@
           "username",
           "email",
           "display_name",
+          "date_joined",
           "scopes"
         ],
         "title": "SessionData",
