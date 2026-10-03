@@ -100,6 +100,7 @@ export default function ProgramScreen() {
     <ProgramActiveActions
       onChangeProgram={() => router.push("/program/activate" as Href)}
       onClose={() => setActionsVisible(false)}
+      onOpenInformation={() => router.push("/program/information" as Href)}
       onOpenHistory={() => router.push("/program/history" as Href)}
       onOpenOriginalProgram={calendarization?.source_program_id ? () => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href) : undefined}
       onOpenReminders={() => router.push("/reminders")}

@@ -6,6 +6,7 @@ import { Card, EntityIcon, SectionIcon, type EntityKind } from "@/components/ui"
 import { tokens } from "@/design/tokens";
 
 export type ProposalStatus = "pending" | "approved" | "applied" | "rejected" | "cancelled";
+export type ProposalTypeKind = "brief" | "dailyplan" | "dailyPlan" | "dpm" | "food" | "meal" | "program";
 export type ProposalAttachmentData = {
   kind: Extract<EntityKind, "dailyPlan" | "dpm" | "food" | "meal">;
   name: string;
@@ -14,6 +15,16 @@ export type ProposalAttachmentData = {
 const labels: Record<ProposalStatus, string> = {
   pending: "Pendiente", approved: "Aprobada", applied: "Aplicada",
   rejected: "Rechazada", cancelled: "Cancelada",
+};
+
+const proposalTypePresentation: Record<ProposalTypeKind, { color: string; label: string }> = {
+  brief: { color: tokens.color.proposal, label: "Requerimiento" },
+  dailyplan: { color: tokens.color.dailyPlan, label: "Plan diario" },
+  dailyPlan: { color: tokens.color.dailyPlan, label: "Plan diario" },
+  dpm: { color: tokens.color.dpm, label: "Plan de comidas" },
+  food: { color: tokens.color.food, label: "Alimento" },
+  meal: { color: tokens.color.meal, label: "Comida" },
+  program: { color: tokens.color.program, label: "Programa semanal" },
 };
 
 function statusColor(status: ProposalStatus): string {
@@ -28,6 +39,15 @@ export function ProposalStatusBadge({ status, label }: { status: ProposalStatus;
   return (
     <View style={[styles.status, { backgroundColor: `${color}1A`, borderColor: `${color}55` }]}>
       <Text style={[styles.statusText, { color }]}>{label ?? labels[status]}</Text>
+    </View>
+  );
+}
+
+export function ProposalTypeBadge({ kind }: { kind: ProposalTypeKind }) {
+  const presentation = proposalTypePresentation[kind];
+  return (
+    <View style={[styles.type, kind === "brief" ? styles.typeNeutral : { backgroundColor: `${presentation.color}1A`, borderColor: presentation.color }]}>
+      <Text style={styles.typeText}>{presentation.label}</Text>
     </View>
   );
 }
@@ -100,6 +120,9 @@ const styles = StyleSheet.create({
   receivedText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.regular },
   status: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   statusText: { fontSize: tokens.type.label, fontWeight: tokens.weight.bold, textTransform: "uppercase" },
+  type: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
+  typeNeutral: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault },
+  typeText: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, textTransform: "uppercase" },
   summary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.md },
   summaryText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, lineHeight: 20 },
   footer: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },

@@ -15,7 +15,7 @@
     {% include "components/list_panel_proposals_delete.html" with proposals=vm.content.proposals %}
   {% else %}
     {% for proposal in vm.content.proposals %}
-      <article class="card message-card proposal-list-card proposal-list-card--{{ proposal.status }}">
+      <article class="card message-card proposal-list-card proposal-list-card--{{ proposal.status }} proposal-list-card--entity-{{ proposal.attachment_kind }}">
         <div class="message-card__main proposal-list-card__main">
           <div class="message-card__title-block proposal-list-card__title-block">
             <div class="message-card__copy proposal-list-card__copy">

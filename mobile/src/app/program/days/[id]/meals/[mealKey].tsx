@@ -189,6 +189,7 @@ export default function CalendarizedMealDetailScreen() {
       entityName={meal.name ?? "Comida"}
       initialAction={actionSheet === "change-time" ? "change-time" : undefined}
       key={actionSheet ?? "closed"}
+      onOpenInformation={() => router.push(`/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/information` as Href)}
       onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }}
       rename={{
         onSubmit: async (name) => {

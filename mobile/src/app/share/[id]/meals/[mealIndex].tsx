@@ -1,10 +1,11 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { FoodDetailCardList } from "@/components/details/food-detail-card-list";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
+import { SharedResourceActions } from "@/components/sharing/shared-resource-actions";
 import { InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { sharedFoodPanelItems, sharedNutrition } from "@/sharing/presentation";
 import { useSharedResource } from "@/sharing/use-shared-resource";
@@ -13,6 +14,7 @@ export default function SharedMealDetailScreen() {
   const router = useRouter();
   const { id, mealIndex } = useLocalSearchParams<{ id: string; mealIndex: string }>();
   const setHeaderPresentation = useHeaderPresentation();
+  const [actionsVisible, setActionsVisible] = useState(false);
   const { error, loading, resource } = useSharedResource(id);
   const index = Number(mealIndex);
   const meal = resource?.snapshot?.meals?.[index];
@@ -23,12 +25,13 @@ export default function SharedMealDetailScreen() {
   };
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: `/share/${id}` as Href, mode: "back", title: "Comida Compartida" });
+    setHeaderPresentation({ action: meal ? { icon: "more", label: `Acciones para ${meal.name}`, onPress: () => setActionsVisible(true) } : undefined, fallback: `/share/${id}` as Href, mode: "back", title: "Comida Compartida" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [id, setHeaderPresentation]));
+  }, [id, meal, setHeaderPresentation]));
 
   if (!id || !Number.isInteger(index) || index < 0) return <Redirect href="/inbox" />;
   return (
+    <>
     <Screen headerMode="preserve">
       {loading ? <LoadingState label="Cargando comida compartida…" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
@@ -58,5 +61,7 @@ export default function SharedMealDetailScreen() {
         </EntityDetailPage>
       ) : null}
     </Screen>
+    <SharedResourceActions onOpenInformation={() => router.push(`/share/${id}/information` as Href)} onVisibleChange={setActionsVisible} title={meal?.name ?? "Comida compartida"} visible={actionsVisible} />
+    </>
   );
 }

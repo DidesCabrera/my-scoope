@@ -136,6 +136,7 @@ class ProposalViewTests(TestCase):
         self.assertContains(response, reverse("ai_nutrition_chat_list"))
         self.assertContains(response, 'aria-current="page"')
         self.assertContains(response, "Increase protein")
+        self.assertContains(response, "proposal-list-card--entity-dailyplan")
         self.assertNotContains(response, "Private other proposal")
 
     def test_proposal_detail_renders_review_page_for_validation_proposal(self):

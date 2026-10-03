@@ -17,7 +17,7 @@ import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { FoodPanels, MealPanels, type MealPanelItem } from "@/components/panels";
+import { FoodPanels, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, ContentPanel, EntityCardAction, InlineNotice, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -273,14 +273,10 @@ export default function ProgramDayScreen() {
             <>
               <SectionDivider />
               <EntityDetailSection detail={`${foods.length} alimentos`} title="Alimentos en este plan diario">
-                <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
+                <GroupedFoodsCard items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} title="Alimentos plan diario" />
               </EntityDetailSection>
             </>
           ) : null}
-          <ContentPanel muted title="Información del día">
-            <View style={styles.metadataRow}><Text style={styles.metadataLabel}>Fecha</Text><Text style={styles.metadataValue}>{displayDate(day.calendar_date)}</Text></View>
-            <View style={styles.metadataRow}><Text style={styles.metadataLabel}>Ubicación</Text><Text style={styles.metadataValue}>Semana {day.week_number} · Día {day.day_number}</Text></View>
-          </ContentPanel>
         </EntityDetailPage>
       ) : (
         <ContentPanel muted title="Día sin plan">
@@ -291,6 +287,7 @@ export default function ProgramDayScreen() {
     </NestableScrollContainer>
     <CalendarizedEntityActions
       entityName={snapshot?.name ?? day.plan_name ?? "Plan diario"}
+      onOpenInformation={() => router.push(`/program/days/${day.id}/information` as Href)}
       onVisibleChange={setActionsVisible}
       rename={{
         onSubmit: async (name) => {
@@ -333,8 +330,5 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
-  metadataLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
-  metadataRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  metadataValue: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: "500", textAlign: "right", textTransform: "capitalize" },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
 });

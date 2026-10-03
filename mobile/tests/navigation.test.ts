@@ -92,8 +92,8 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
 
 test("the native sidebar keeps sign-out inside the account screen", async () => {
   const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
-  assertSourceMatch(navigation, /headerPresentation\.action\?\.icon === "more" && styles\.backHeaderMoreAction/);
-  assertSourceMatch(navigation, /backHeaderMoreAction: \{ alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens\.spacing\.lg \}/);
+  assertSourceMatch(navigation, /headerPresentation\.action\?\.icon === "more" && styles\.backHeaderMenuAction/);
+  assertSourceMatch(navigation, /backHeaderMenuAction: \{ alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens\.spacing\.sm, width: 92 \}/);
   assertSourceMatch(navigation, /inbox: UserPlus/);
   assertSourceDoesNotMatch(navigation, /accessibilityLabel="Cerrar sesión"|signOutButton|drawerFooter/);
 });

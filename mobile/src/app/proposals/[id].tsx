@@ -9,19 +9,19 @@ import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import {
   ProposalDailyPlanCard,
-  ProposalEvaluationContext,
-  ProposalFacts,
   ProposalMealCard,
 } from "@/components/proposals/proposal-preview";
 import {
+  ProposalDetailActions,
   ProposalDetailPage,
   ProposalEntitySection,
   ProposalReviewActions,
 } from "@/components/proposals";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, EntityCardAction, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { Button, Card, EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { ProposalProgramCard } from "@/components/proposals/proposal-program-preview";
+import { formatCompactDate } from "@/presentation/date";
 
 const confirmationCopy: Record<string, { title: string; message: string; label: string; danger?: boolean }> = {
   approve: { title: "¿Aprobar esta propuesta?", message: "La aprobación confirma tu revisión, pero aún no crea ni modifica ninguna entidad. Después podrás aplicarla en un paso separado.", label: "Aprobar" },
@@ -36,10 +36,8 @@ function proposalStatus(status: ProposalStatus): "pending" | "approved" | "appli
 }
 
 function receivedAt(value: string | null): string {
-  if (!value) return "Fecha de recepción no disponible";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Fecha de recepción no disponible";
-  return `Recibida ${date.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}`;
+  const date = formatCompactDate(value);
+  return date ? `Recibida ${date}` : "Fecha de recepción no disponible";
 }
 
 export default function ProposalDetailScreen() {
@@ -48,6 +46,7 @@ export default function ProposalDetailScreen() {
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [proposal, setProposal] = useState<ProposalDetail | null>(null);
+  const [actionsVisible, setActionsVisible] = useState(false);
   const [pendingAction, setPendingAction] = useState<MobileAction | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
@@ -68,7 +67,7 @@ export default function ProposalDetailScreen() {
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: "/assistant?section=proposals" as Href, mode: "back", title: "Detalle de propuesta" });
+    setHeaderPresentation({ action: { icon: "more", label: "Acciones de propuesta", onPress: () => setActionsVisible(true) }, fallback: "/assistant?section=proposals" as Href, mode: "back", title: "Detalle de propuesta" });
     return () => setHeaderPresentation({ mode: "default" });
   }, [setHeaderPresentation]));
 
@@ -125,12 +124,9 @@ export default function ProposalDetailScreen() {
           status={proposalStatus(proposal.status)}
           summary={proposal.summary}
           title={proposal.title}
-          typeLabel={proposal.attachment_label}>
+          typeKind={proposal.attachment_kind}>
           {proposal.subject_context_warning.requires_warning ? <InlineNotice tone="warning">{proposal.subject_context_warning.message}</InlineNotice> : null}
           {!proposal.meal && !proposal.dailyplan && !proposal.program ? <InlineNotice>Esta propuesta conserva su contenido y validación, pero su tipo no genera una entidad aplicable desde móvil.</InlineNotice> : null}
-
-          <ProposalEvaluationContext current={proposal.current_facts} targets={proposal.target_facts} />
-          <ProposalFacts description="Comprobaciones realizadas antes de permitir que la propuesta se aplique." facts={proposal.validation_facts} title="Validación" />
 
           {proposal.applied_result ? (
             <Card accent={tokens.color.success}>
@@ -151,17 +147,24 @@ export default function ProposalDetailScreen() {
               title={applyWarning?.title || confirmation.title}
             />
           ) : proposal.actions.length ? (
-            <ProposalReviewActions
-              description="Revisa el contenido y la validación antes de confirmar cualquier cambio en tu biblioteca."
-              onApply={action("apply") ? () => setPendingAction(action("apply")!) : undefined}
-              onApprove={action("approve") ? () => setPendingAction(action("approve")!) : undefined}
-              onCancel={action("cancel") ? () => setPendingAction(action("cancel")!) : undefined}
-              onReject={action("reject") ? () => setPendingAction(action("reject")!) : undefined}
-            />
+            <>
+              <SectionDivider spacing="compact" />
+              <ProposalReviewActions
+                description="Revisa el contenido y la validación antes de confirmar cualquier cambio en tu biblioteca."
+                onApply={action("apply") ? () => setPendingAction(action("apply")!) : undefined}
+                onApprove={action("approve") ? () => setPendingAction(action("approve")!) : undefined}
+                onCancel={action("cancel") ? () => setPendingAction(action("cancel")!) : undefined}
+                onReject={action("reject") ? () => setPendingAction(action("reject")!) : undefined}
+              />
+            </>
           ) : <Text style={textStyles.caption}>Esta propuesta no tiene acciones pendientes.</Text>}
-          <Button label="Volver a Propuestas" onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/assistant?section=proposals" as Href); }} variant="secondary" />
         </ProposalDetailPage>
       ) : null}
+      <ProposalDetailActions
+        onClose={() => setActionsVisible(false)}
+        onReviewFacts={() => router.push(`/proposals/${id}/review` as Href)}
+        visible={actionsVisible}
+      />
     </Screen>
   );
 }

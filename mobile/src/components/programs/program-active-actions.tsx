@@ -1,4 +1,4 @@
-import { Bell, ExternalLink, History, Pause, Play, RefreshCw, Trash2, X } from "lucide-react-native";
+import { Bell, ExternalLink, History, Info, Pause, Play, RefreshCw, Trash2, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +15,7 @@ type ConfirmableAction = Extract<ProgramStateAction, "pause" | "cancel">;
 type ProgramActiveActionsProps = {
   onChangeProgram(): void;
   onClose(): void;
+  onOpenInformation(): void;
   onOpenHistory(): void;
   onOpenOriginalProgram?: () => void;
   onOpenReminders(): void;
@@ -39,6 +40,7 @@ const confirmationCopy: Record<ConfirmableAction, { confirmLabel: string; messag
 export function ProgramActiveActions({
   onChangeProgram,
   onClose,
+  onOpenInformation,
   onOpenHistory,
   onOpenOriginalProgram,
   onOpenReminders,
@@ -110,6 +112,7 @@ export function ProgramActiveActions({
               </View>
             ) : (
               <View>
+                <ActionRow icon={Info} label="Ver información del elemento" onPress={() => navigate(onOpenInformation)} />
                 {status ? (
                   <>
                     {status === "paused" ? (
