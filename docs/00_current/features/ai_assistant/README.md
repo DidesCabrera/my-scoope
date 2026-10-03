@@ -136,7 +136,9 @@ línea. La card se desplaza con el contenido y únicamente la barra de tabs
 permanece fija. Al desplazar el contenido, el
 título `Asistente AI` aparece en la identidad compacta del header. El indicador de cantidad
 se elimina del título principal. El menú de cabecera siempre expone acciones del
-tab activo.
+tab activo. En el detalle de una conversación, ese menú permite editar el nombre
+del chat mediante una mutación owner-scoped; el título del header se actualiza con
+la respuesta canónica del servidor.
 
 
 ## Current client-memory/tool-oriented baseline

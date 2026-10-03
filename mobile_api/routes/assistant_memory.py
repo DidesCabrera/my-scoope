@@ -1,5 +1,6 @@
 from ninja import Router
 
+from mobile_api.routes.assistant_chat_edits import router as assistant_chat_edits_router
 from mobile_api.routes.assistant_proposals import router as assistant_proposals_router
 
 from mobile_api.ai_chats import commit_chat_preferences
@@ -11,6 +12,7 @@ from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()
+router.add_router("", assistant_chat_edits_router)
 router.add_router("", assistant_proposals_router)
 
 

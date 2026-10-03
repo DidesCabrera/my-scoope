@@ -46,7 +46,11 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(comparison, /kind === "dailyplans" \? "dailyPlan" : kind === "meals" \? "meal" : "food"/);
   assertSourceMatch(comparisonList, /<EntityIcon entity=\{entity\} size="compact" \/>[\s\S]*Comparación \{item\.kind_label\}/);
   assertSourceMatch(comparisonList, /<SavedComparisonPreviewPanels items=\{item\.items\} scope=\{entity\} \/>/);
-  assertSourceMatch(comparisonList, /<ChevronRight color=\{tokens\.color\.textMuted\}/);
+  assertSourceMatch(comparisonList, /<SavedComparisonPreviewPanels items=\{item\.items\} scope=\{entity\} \/>[\s\S]*<EntityCardActions>[\s\S]*<EntityCardAction[\s\S]*<ChevronRight color=\{tokens\.color\.textMuted\}/);
+  assertSourceMatch(comparisonList, /<Card accent=\{entityColor\} style=\{styles\.savedCard\}>/);
+  assertSourceMatch(comparisonList, /savedCard: \{ paddingBottom: tokens\.card\.innerPadding \}/);
+  assertSourceMatch(comparisonList, /backgroundColor=\{`\$\{entityColor\}1A`\}[\s\S]*color=\{entityColor\}[\s\S]*label=\{comparisonCountLabel\(item\.kind, item\.item_count\)\}[\s\S]*textColor=\{tokens\.color\.entityIconForeground\}/);
+  assertSourceMatch(comparisonList, /foods: \{ plural: "Alimentos", singular: "Alimento" \}[\s\S]*meals: \{ plural: "Comidas", singular: "Comida" \}[\s\S]*dailyplans: \{ plural: "Planes diarios", singular: "Plan diario" \}/);
   assertSourceDoesNotMatch(comparisonList, /Ver comparación guardada/);
   assertSourceMatch(comparison, /method: "PATCH"/);
   assertSourceMatch(comparisonActions, /Editar nombre/);

@@ -202,8 +202,20 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
           value={message}
         />
         <AssistantChatActions
+          currentName={chat?.title ?? "Chat"}
           onClose={() => setActionsVisible(false)}
           onOpenProposals={() => router.push(`/assistant/${chatId}/proposals` as Href)}
+          onRename={async (name) => {
+            if (!chatId) return;
+            const renamed = await apiRequest<AIChatDetail>(`/api/v1/ai/chats/${chatId}/name`, {
+              body: JSON.stringify({ name }),
+              headers: { "Content-Type": "application/json" },
+              method: "PATCH",
+            });
+            setChat(renamed);
+            setAvailability(renamed.availability);
+            setPending(renamed.pending_turn);
+          }}
           visible={actionsVisible}
         />
       </Screen>

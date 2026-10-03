@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { MessageCircle } from "lucide-react-native";
+import { ChevronRight, MessageCircle } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -11,16 +11,21 @@ import { AssistantSectionTabs, type AssistantSection } from "@/components/assist
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProposalListCard } from "@/components/proposals";
-import { SectionPageHeader } from "@/components/ui";
+import { EntityCardAction, EntityCardActions, SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, InlineNotice, LoadingState, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { formatCompactDate } from "@/presentation/date";
 
 function ChatCard({ chat, onPress }: { chat: AIChatSummary; onPress(): void }) {
+  const detailLabel = `Abrir conversación ${chat.title}`;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Card>
+    <Card accent={tokens.color.carbs} style={styles.chatCard}>
+      <Pressable
+        accessibilityLabel={detailLabel}
+        accessibilityRole="link"
+        onPress={onPress}
+        style={({ pressed }) => [styles.chatLink, pressed && styles.pressed]}>
         <View style={styles.row}>
           <View style={styles.copy}>
             <View style={styles.eyebrowRow}>
@@ -32,9 +37,13 @@ function ChatCard({ chat, onPress }: { chat: AIChatSummary; onPress(): void }) {
           </View>
         </View>
         <Text numberOfLines={3} style={textStyles.muted}>{chat.last_message_preview}</Text>
-        <Text style={textStyles.caption}>{chat.message_count} mensajes · Continuar ›</Text>
-      </Card>
-    </Pressable>
+      </Pressable>
+      <EntityCardActions>
+        <EntityCardAction label={detailLabel} onPress={onPress} role="link">
+          <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+        </EntityCardAction>
+      </EntityCardActions>
+    </Card>
   );
 }
 
@@ -149,6 +158,8 @@ export default function AssistantHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  chatCard: { paddingBottom: tokens.card.innerPadding },
+  chatLink: { gap: tokens.card.gap },
   copy: { flex: 1, gap: 4 },
   creditCopy: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   creditTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },

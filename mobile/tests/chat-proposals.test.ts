@@ -13,7 +13,12 @@ test("an existing chat exposes its proposal history from the header menu", async
   assert.match(chat, /icon: "more"/);
   assert.match(chat, /Acciones del chat/);
   assert.match(actions, /Ver propuestas del chat/);
+  assert.match(actions, /Editar nombre/);
+  assert.match(actions, /Guardar nombre/);
   assert.match(chat, /`\/assistant\/\$\{chatId\}\/proposals`/);
+  assert.match(chat, /`\/api\/v1\/ai\/chats\/\$\{chatId\}\/name`/);
+  assert.match(chat, /method: "PATCH"/);
+  assert.match(chat, /setChat\(renamed\)/);
   assert.match(proposals, /\/api\/v1\/ai\/chats\/\$\{chatId\}\/proposals\?limit=50/);
   assert.match(proposals, /<ProposalListCard/);
   assert.match(proposals, /fallback: `\/assistant\/\$\{chatId\}`/);
@@ -27,4 +32,21 @@ test("the assistant proposal list and chat proposal history share one card compo
   assert.match(card, /ProposalStatusBadge/);
   assert.match(card, /ProposalTypeBadge/);
   assert.match(card, /section="proposal"/);
+});
+
+test("assistant chat cards reuse the credit bag top accent", async () => {
+  const assistant = await source("src/app/assistant/index.tsx");
+  const subscription = await source("src/app/subscription.tsx");
+
+  assert.match(assistant, /function ChatCard[\s\S]*<Card accent=\{tokens\.color\.carbs\} style=\{styles\.chatCard\}>/);
+  assert.match(subscription, /<Card accent=\{tokens\.color\.carbs\} key=\{configured\.product_id\}>/);
+});
+
+test("assistant chat cards replace the message count with a bottom detail action", async () => {
+  const assistant = await source("src/app/assistant/index.tsx");
+
+  assert.doesNotMatch(assistant, /chat\.message_count|mensajes · Continuar/);
+  assert.match(assistant, /<Pressable[\s\S]*accessibilityLabel=\{detailLabel\}[\s\S]*accessibilityRole="link"[\s\S]*<Text numberOfLines=\{3\}/);
+  assert.match(assistant, /<EntityCardActions>[\s\S]*<EntityCardAction label=\{detailLabel\} onPress=\{onPress\} role="link">[\s\S]*<ChevronRight color=\{tokens\.color\.textMuted\} size=\{23\} strokeWidth=\{2\.2\} \/>[\s\S]*<\/EntityCardActions>/);
+  assert.match(assistant, /chatCard: \{ paddingBottom: tokens\.card\.innerPadding \}/);
 });

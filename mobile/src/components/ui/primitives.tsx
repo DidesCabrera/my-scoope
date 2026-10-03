@@ -64,10 +64,20 @@ export function SectionTitle({ title, detail }: { title: string; detail?: string
   );
 }
 
-export function Pill({ label, color = tokens.color.interactivePrimary }: { label: string; color?: string }) {
+export function Pill({
+  backgroundColor,
+  label,
+  color = tokens.color.interactivePrimary,
+  textColor,
+}: {
+  backgroundColor?: string;
+  label: string;
+  color?: string;
+  textColor?: string;
+}) {
   return (
-    <View style={[styles.pill, { borderColor: color }]}>
-      <Text style={[styles.pillText, { color }]}>{label}</Text>
+    <View style={[styles.pill, { backgroundColor, borderColor: color }]}>
+      <Text style={[styles.pillText, { color: textColor ?? color }]}>{label}</Text>
     </View>
   );
 }
