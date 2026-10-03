@@ -61,7 +61,9 @@ and `schema_domains/composition.py`, with the complete behavior journey in
 `composition_projections.py` so preview calculations cannot be confused with
 persisted library read models.
 Identity uses `routes/identity.py` for session, profile, onboarding and account
-lifecycle; billing uses `routes/billing.py` for entitlements and provider
+lifecycle; account-name mutations are isolated in `routes/identity_edits.py`.
+`PATCH /account/username` requires `mobile:account`, validates uniqueness and
+returns the refreshed canonical session. Billing uses `routes/billing.py` for entitlements and provider
 evidence. Their schemas and tests follow the same names. This separation is
 intentional: transport remains easy to find without collapsing OAuth, account
 and commercial business authority into one module.

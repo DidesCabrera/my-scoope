@@ -7852,6 +7852,21 @@
         "title": "TodayEnvelope",
         "type": "object"
       },
+      "UsernameRenameInput": {
+        "properties": {
+          "username": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "title": "UsernameRenameInput",
+        "type": "object"
+      },
       "WeightCreateInput": {
         "properties": {
           "measured_on": {
@@ -8111,6 +8126,70 @@
           }
         ],
         "summary": "Accept Disclosures"
+      }
+    },
+    "/api/v1/account/username": {
+      "patch": {
+        "operationId": "mobile_api_api_rename_account_username",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsernameRenameInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Rename Account Username"
       }
     },
     "/api/v1/ai/chats": {

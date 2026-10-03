@@ -93,6 +93,11 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(account, /label="Cerrar sesión"[\s\S]*My Scoope no reemplaza atención médica/);
   assertSourceMatch(account, /label: "Acciones de mi cuenta"/);
   assertSourceMatch(account, /accountActions === "menu"/);
+  assertSourceMatch(account, /label="Editar nombre de usuario"/);
+  assertSourceMatch(account, /accountActions === "rename" \? "NOMBRE" : "ACCIONES"/);
+  assertSourceMatch(account, /\/api\/v1\/account\/username/);
+  assertSourceMatch(account, /method: "PATCH"/);
+  assertSourceMatch(account, /label="Guardar nombre"/);
   assertSourceMatch(account, /setAccountActions\("delete"\)/);
   assertSourceMatch(account, /<ActionSheetModal/);
   assertSourceMatch(account, /<AccountAction icon=\{ExternalLink\} label="Política de privacidad"/);

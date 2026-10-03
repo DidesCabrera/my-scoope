@@ -1,12 +1,12 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import { CircleDollarSign, ExternalLink, FileText, Flag, LifeBuoy, Trash2, X } from "lucide-react-native";
+import { CircleDollarSign, ExternalLink, FileText, Flag, LifeBuoy, Pencil, Trash2, X } from "lucide-react-native";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
-import type { AccountDeletionData, EntitlementsData } from "@/api/types";
+import type { AccountDeletionData, EntitlementsData, SessionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -28,22 +28,27 @@ function joinedDateLabel(value?: string): string {
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { status, session, apiRequest, signOut } = useSession();
+  const { status, session, apiRequest, refreshSession, signOut } = useSession();
   const [confirmation, setConfirmation] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [entitlements, setEntitlements] = useState<EntitlementsData | null>(null);
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
-  const [accountActions, setAccountActions] = useState<"menu" | "delete" | null>(null);
+  const [accountActions, setAccountActions] = useState<"menu" | "rename" | "delete" | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const setHeaderPresentation = useHeaderPresentation();
 
-  const openAccountActions = useCallback(() => setAccountActions("menu"), []);
+  const openAccountActions = useCallback(() => {
+    setUsername(session?.username ?? "");
+    setAccountActions("menu");
+  }, [session?.username]);
   const closeAccountActions = useCallback(() => {
     setAccountActions(null);
     setConfirmation("");
     setPassword("");
+    setUsername("");
     setError(null);
   }, []);
 
@@ -90,6 +95,26 @@ export default function AccountScreen() {
     }
   }
 
+  async function renameUsername() {
+    const cleanUsername = username.trim();
+    if (!cleanUsername) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await apiRequest<SessionData>("/api/v1/account/username", {
+        method: "PATCH",
+        body: JSON.stringify({ username: cleanUsername }),
+      });
+      await refreshSession();
+      setAccountActions(null);
+      Alert.alert("Nombre de usuario actualizado", `Ahora tu nombre de usuario es “${cleanUsername}”.`);
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
       <AppHeader eyebrow="Mi cuenta" title={session?.display_name || session?.username || "My Scoope"} />
@@ -120,8 +145,8 @@ export default function AccountScreen() {
         <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
           <View style={styles.sheetHeader}>
             <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>ACCIONES</Text>
-              <Text style={styles.sheetTitle}>{accountActions === "delete" ? "Eliminar mi cuenta" : "Mi cuenta"}</Text>
+              <Text style={styles.eyebrow}>{accountActions === "rename" ? "NOMBRE" : "ACCIONES"}</Text>
+              <Text style={styles.sheetTitle}>{accountActions === "delete" ? "Eliminar mi cuenta" : accountActions === "rename" ? "Editar nombre de usuario" : "Mi cuenta"}</Text>
             </View>
             <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={closeAccountActions} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
               <X color={tokens.color.textMain} size={22} />
@@ -130,12 +155,20 @@ export default function AccountScreen() {
           <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {accountActions === "menu" ? (
               <View>
+                <AccountAction icon={Pencil} label="Editar nombre de usuario" onPress={() => { setUsername(session?.username ?? ""); setError(null); setAccountActions("rename"); }} />
                 <AccountAction icon={ExternalLink} label="Política de privacidad" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/privacy/`)} />
                 <AccountAction icon={FileText} label="Términos de uso" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/terms/`)} />
                 <AccountAction icon={CircleDollarSign} label="Cancelaciones y reembolsos" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/refund-policy/`)} />
                 <AccountAction icon={LifeBuoy} label="Centro de soporte" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/support/`)} />
                 <AccountAction icon={Flag} label="Reportar contenido o un problema" onPress={() => openExternalAction(`mailto:${supportEmail}?subject=Reporte%20desde%20My%20Scoope`)} />
                 <AccountAction destructive icon={Trash2} label="Eliminar cuenta" onPress={() => setAccountActions("delete")} />
+              </View>
+            ) : accountActions === "rename" ? (
+              <View style={styles.deletionForm}>
+                <Field autoCapitalize="none" autoCorrect={false} label="Nombre de usuario" onChangeText={(value) => setUsername(value.slice(0, 150))} value={username} />
+                {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+                <Button disabled={!username.trim() || username.trim() === session?.username} label="Guardar nombre" loading={busy} onPress={() => void renameUsername()} />
+                <Button disabled={busy} label="Volver" onPress={() => { setError(null); setAccountActions("menu"); }} variant="secondary" />
               </View>
             ) : (
               <View style={styles.deletionForm}>

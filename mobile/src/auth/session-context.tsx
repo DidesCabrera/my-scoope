@@ -24,6 +24,7 @@ type SessionContextValue = {
   startSignIn(returnTo?: Href): Promise<void>;
   apiRequest<T>(path: string, init?: RequestInit): Promise<T>;
   refreshProfile(): Promise<ProfileData>;
+  refreshSession(): Promise<SessionData>;
   signOut(): Promise<void>;
 };
 
@@ -64,6 +65,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
     const nextProfile = await manager.request<ProfileData>("/api/v1/me");
     setProfile(nextProfile);
     return nextProfile;
+  }, [manager]);
+
+  const loadSession = useCallback(async () => {
+    const nextSession = await manager.request<SessionData>("/api/v1/session");
+    setSession(nextSession);
+    return nextSession;
   }, [manager]);
 
   useEffect(() => {
@@ -164,6 +171,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       },
       apiRequest: (path, init) => manager.request(path, init),
       refreshProfile: loadProfile,
+      refreshSession: loadSession,
       async signOut() {
         await manager.signOut();
         setSession(null);
@@ -171,7 +179,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         setStatus("anonymous");
       },
     }),
-    [authBusy, authError, authRequest, authReturnTo, loadProfile, manager, profile, promptAsync, session, status],
+    [authBusy, authError, authRequest, authReturnTo, loadProfile, loadSession, manager, profile, promptAsync, session, status],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
