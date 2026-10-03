@@ -89,9 +89,9 @@ function comparisonPanelItems(items: ComparisonResultItem[]): FoodPanelItem[] {
   });
 }
 
-export function SavedComparisonPreviewPanels({ items, scope }: { items: ComparisonResultItem[]; scope: ComparisonScope }) {
+export function SavedComparisonPreviewPanels({ items, scope }: { items?: ComparisonResultItem[]; scope: ComparisonScope }) {
   const [activeTab, setActiveTab] = useState<ComparisonPreviewTab>("calories");
-  const panelItems = comparisonPanelItems(items);
+  const panelItems = comparisonPanelItems(items ?? []);
   const leadingLabel = scopeLabels[scope];
   const tabs = [
     { key: "calories" as const, label: "Calorías" },
@@ -99,6 +99,7 @@ export function SavedComparisonPreviewPanels({ items, scope }: { items: Comparis
     { key: "distribution" as const, label: "Dist" },
     { key: "allocation" as const, label: "Alloc" },
   ];
+  if (panelItems.length === 0) return null;
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
