@@ -1,11 +1,11 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { Check, ChevronDown, ChevronUp, Search, Square, X } from "lucide-react-native";
+import { Search, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
-import type { LibraryEntity, LibraryPageData } from "@/api/types";
+import type { LibraryEntity, LibraryListActionResult, LibraryPageData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
@@ -15,6 +15,7 @@ import { tokens } from "@/design/tokens";
 
 import { LibraryCard } from "./library-card";
 import { LibraryListActions } from "./library-list-actions";
+import { LibraryListEditor } from "./library-list-editor";
 
 type LibraryListScreenProps = {
   emptyDescription: string;
@@ -30,6 +31,13 @@ const createLabels: Record<LibraryEntity, string> = {
   program: "Crear programa",
 };
 
+const deleteLabels: Record<LibraryEntity, string> = {
+  food: "Eliminar alimentos",
+  meal: "Eliminar comidas",
+  dailyPlan: "Eliminar planes diarios",
+  program: "Eliminar programas",
+};
+
 export function LibraryListScreen({ emptyDescription, endpoint, entity, title }: LibraryListScreenProps) {
   const { status, apiRequest } = useSession();
   const router = useRouter();
@@ -42,22 +50,12 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
-  const [mode, setMode] = useState<"list" | "reorder" | "delete">("list");
+  const [mode, setMode] = useState<"list" | "edit">("list");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
-
-  useFocusEffect(useCallback(() => {
-    setHeaderPresentation({
-      mode: "library-list",
-      action: mode === "list" ? { label: `Acciones de ${title}`, onPress: () => setActionsVisible(true) } : undefined,
-      createAction: mode === "list" ? { label: createLabels[entity], onPress: () => router.push({ pathname: "/libraries/create", params: { entity } }) } : undefined,
-      entity,
-      identityVisible: compactHeaderVisible,
-      title,
-    });
-    return () => setHeaderPresentation({ mode: "default" });
-  }, [compactHeaderVisible, entity, mode, router, setHeaderPresentation, title]));
+  const cancelSelection = useCallback(() => setSelectedIds(new Set()), []);
+  const finishEdit = useCallback(() => { setSelectedIds(new Set()); setMode("list"); }, []);
 
   const load = useCallback(async ({ append = false, offset = 0 } = {}) => {
     if (append) setLoadingMore(true);
@@ -93,43 +91,89 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     setPage({ items, limit: items.length, offset: 0, search: null, total });
   };
 
-  const beginReorder = async () => {
-    setActionsVisible(false); setMode("reorder"); setLoading(true); setError(null); setQuery(""); setSubmittedQuery("");
+  const beginEdit = async () => {
+    setActionsVisible(false); setMode("edit"); setSelectedIds(new Set()); setLoading(true); setError(null); setQuery(""); setSubmittedQuery("");
     try { await loadAll(); } catch (nextError) { setMode("list"); setError(userFacingError(nextError)); } finally { setLoading(false); }
   };
 
-  const saveOrder = async () => {
-    if (!page) return;
+  const saveOrder = async (items: LibraryPageData["items"]) => {
+    const previousItems = page?.items ?? [];
+    setPage((current) => current ? { ...current, items } : current);
     setSubmitting(true);
+    setError(null);
     try {
-      await runWithStatus(async () => {
-        await apiRequest(`${endpoint}/order`, { body: JSON.stringify({ ordered_ids: page.items.map((item) => item.id) }), headers: { "Content-Type": "application/json" }, method: "PUT" });
-        setMode("list");
-        await load();
-      }, { loadingLabel: `Actualizando ${title.toLowerCase()}`, successLabel: "Orden actualizado" });
-    } catch (nextError) { setError(userFacingError(nextError)); } finally { setSubmitting(false); }
+      await runWithStatus(
+        () => apiRequest(`${endpoint}/order`, { body: JSON.stringify({ ordered_ids: items.map((item) => item.id) }), headers: { "Content-Type": "application/json" }, method: "PUT" }),
+        { loadingLabel: `Actualizando ${title.toLowerCase()}`, successLabel: "Orden actualizado" },
+      );
+    } catch (nextError) {
+      setPage((current) => current ? { ...current, items: previousItems } : current);
+      setError(userFacingError(nextError));
+    } finally { setSubmitting(false); }
   };
 
-  const confirmDelete = () => {
+  const deleteItems = useCallback(async (itemIds: number[]) => {
+    if (!itemIds.length) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const result = await apiRequest<LibraryListActionResult>(`${endpoint}/bulk-delete`, { body: JSON.stringify({ item_ids: itemIds }), headers: { "Content-Type": "application/json" }, method: "POST" });
+      const affectedIds = new Set(result.affected_ids);
+      setPage((current) => current ? { ...current, items: current.items.filter(({ id }) => !affectedIds.has(id)), total: Math.max(0, current.total - affectedIds.size) } : current);
+      setSelectedIds((current) => new Set([...current].filter((id) => !affectedIds.has(id))));
+      Alert.alert(result.affected_ids.length === 1 ? "Elemento eliminado" : "Elementos eliminados", result.message);
+    } catch (nextError) { setError(userFacingError(nextError)); } finally { setSubmitting(false); }
+  }, [apiRequest, endpoint]);
+
+  const deleteSelected = useCallback(() => deleteItems([...selectedIds]), [deleteItems, selectedIds]);
+
+  const confirmDeleteItem = (item: LibraryPageData["items"][number]) => {
+    Alert.alert(
+      `¿Eliminar “${item.name}”?`,
+      "Esta acción no se puede deshacer.",
+      [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void deleteItems([item.id]) }],
+    );
+  };
+
+  const confirmDeleteSelected = useCallback(() => {
     if (!selectedIds.size) return;
-    Alert.alert("Eliminar elementos", `¿Eliminar ${selectedIds.size} elemento(s)? Esta acción no se puede deshacer.`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void deleteSelected() }]);
-  };
+    Alert.alert(
+      deleteLabels[entity],
+      `¿Eliminar ${selectedIds.size} elemento(s)? Esta acción no se puede deshacer.`,
+      [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void deleteSelected() }],
+    );
+  }, [deleteSelected, entity, selectedIds.size]);
 
-  const deleteSelected = async () => {
-    setSubmitting(true);
-    try {
-      const result = await apiRequest<{ message: string }>(`${endpoint}/bulk-delete`, { body: JSON.stringify({ item_ids: [...selectedIds] }), headers: { "Content-Type": "application/json" }, method: "POST" });
-      setSelectedIds(new Set()); setMode("list"); Alert.alert("Listo", result.message); await load();
-    } catch (nextError) { setError(userFacingError(nextError)); } finally { setSubmitting(false); }
-  };
-
-  const moveItem = (index: number, direction: -1 | 1) => setPage((current) => {
-    if (!current) return current;
-    const target = index + direction;
-    if (target < 0 || target >= current.items.length) return current;
-    const items = [...current.items]; [items[index], items[target]] = [items[target], items[index]];
-    return { ...current, items };
+  const toggleSelected = (item: LibraryPageData["items"][number]) => setSelectedIds((current) => {
+    const next = new Set(current);
+    if (next.has(item.id)) next.delete(item.id);
+    else next.add(item.id);
+    return next;
   });
+
+  useFocusEffect(useCallback(() => {
+    if (mode === "edit" && selectedIds.size) {
+      setHeaderPresentation({
+        action: { disabled: submitting, label: "Eliminar", onPress: confirmDeleteSelected },
+        identityVisible: true,
+        leadingAction: { disabled: submitting, label: "Cancelar", onPress: cancelSelection },
+        mode: "back",
+        title: deleteLabels[entity],
+      });
+    } else {
+      setHeaderPresentation({
+        mode: "library-list",
+        action: mode === "list"
+          ? { icon: "more", label: `Acciones de ${title}`, onPress: () => setActionsVisible(true) }
+          : { disabled: loading || submitting, label: "Listo", onPress: finishEdit },
+        createAction: mode === "list" ? { label: createLabels[entity], onPress: () => router.push({ pathname: "/libraries/create", params: { entity } }) } : undefined,
+        entity,
+        identityVisible: compactHeaderVisible,
+        title,
+      });
+    }
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [cancelSelection, compactHeaderVisible, confirmDeleteSelected, entity, finishEdit, loading, mode, router, selectedIds.size, setHeaderPresentation, submitting, title]));
 
   useFocusEffect(useCallback(() => {
     if (mode === "list") void load();
@@ -144,10 +188,10 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
-      stickyHeaderIndices={[1]}
+      stickyHeaderIndices={mode === "list" ? [1] : undefined}
       style={styles.screen}>
       <CollectionPageHeader count={page?.total} countIcon={entity === "program" ? "week" : entity} entity={entity} title={title} />
-      <View style={styles.stickySearch}>
+      {mode === "list" ? <View style={styles.stickySearch}>
         <View style={styles.searchField}>
           <Search color={tokens.color.textSoft} size={20} />
           <TextInput
@@ -174,15 +218,14 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
             </Pressable>
           ) : null}
         </View>
-      </View>
-      {mode !== "list" ? <View style={styles.modeBar}><View style={styles.modeCopy}><Text style={styles.modeTitle}>{mode === "reorder" ? "Reordenar" : "Seleccionar para eliminar"}</Text>{mode === "delete" ? <Text style={styles.modeCount}>{selectedIds.size} seleccionado(s)</Text> : null}</View><Button label="Cancelar" onPress={() => { setMode("list"); setSelectedIds(new Set()); void load(); }} variant="secondary" />{mode === "reorder" ? <Button label="Guardar" loading={submitting} onPress={() => void saveOrder()} /> : <Button disabled={!selectedIds.size} label="Eliminar" loading={submitting} onPress={confirmDelete} variant="danger" />}</View> : null}
+      </View> : null}
       {error ? (
         <Card>
           <InlineNotice tone="error">{error}</InlineNotice>
-          <Button label="Reintentar" onPress={() => void load()} variant="secondary" />
+          <Button label="Reintentar" onPress={() => void (mode === "edit" ? beginEdit() : load())} variant="secondary" />
         </Card>
       ) : null}
-      {loading && !page ? (
+      {loading && (mode === "edit" || !page) ? (
         <View style={styles.loading}>
           <ActivityIndicator color={tokens.color.interactivePrimary} size="large" />
           <Text style={textStyles.muted}>Cargando tu librería…</Text>
@@ -195,7 +238,8 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           <Text style={styles.emptyDescription}>{submittedQuery ? "Prueba con otra búsqueda." : emptyDescription}</Text>
         </View>
       ) : null}
-      {page?.items.map((item, index) => <View key={`${item.entity}-${item.id}`} style={styles.managedItem}>{mode === "reorder" ? <View style={styles.itemControls}><Text style={styles.position}>{index + 1}</Text><Pressable accessibilityLabel={`Subir ${item.name}`} disabled={index === 0} onPress={() => moveItem(index, -1)} style={[styles.controlButton, index === 0 && styles.disabled]}><ChevronUp color={tokens.color.textMain} size={22} /></Pressable><Pressable accessibilityLabel={`Bajar ${item.name}`} disabled={index === page.items.length - 1} onPress={() => moveItem(index, 1)} style={[styles.controlButton, index === page.items.length - 1 && styles.disabled]}><ChevronDown color={tokens.color.textMain} size={22} /></Pressable></View> : mode === "delete" ? <Pressable accessibilityLabel={`${selectedIds.has(item.id) ? "Deseleccionar" : "Seleccionar"} ${item.name}`} onPress={() => setSelectedIds((current) => { const next = new Set(current); if (next.has(item.id)) next.delete(item.id); else next.add(item.id); return next; })} style={styles.selectionRow}>{selectedIds.has(item.id) ? <Check color={tokens.color.interactivePrimary} size={22} /> : <Square color={tokens.color.textMuted} size={22} />}<Text style={styles.selectionLabel}>{selectedIds.has(item.id) ? "Seleccionado" : "Seleccionar"}</Text></Pressable> : null}<LibraryCard apiRequest={apiRequest} interactive={mode === "list"} item={item} onChanged={() => load()} /></View>)}
+      {mode === "edit" && !loading && page?.items.length ? <LibraryListEditor busy={submitting} items={page.items} onDelete={confirmDeleteItem} onReorder={saveOrder} onToggle={toggleSelected} selectedIds={selectedIds} /> : null}
+      {mode === "list" ? page?.items.map((item) => <View key={`${item.entity}-${item.id}`} style={styles.managedItem}><LibraryCard apiRequest={apiRequest} item={item} onChanged={() => load()} /></View>) : null}
       {mode === "list" && page && page.items.length < page.total ? (
         <Button
           label={`Cargar más (${page.total - page.items.length})`}
@@ -204,7 +248,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           variant="secondary"
         />
       ) : null}
-      <LibraryListActions canCompare={entity !== "program"} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onDelete={() => { setActionsVisible(false); setSelectedIds(new Set()); setMode("delete"); }} onReorder={() => void beginReorder()} visible={actionsVisible} />
+      <LibraryListActions canCompare={entity !== "program"} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onEdit={() => void beginEdit()} visible={actionsVisible} />
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </NestableScrollContainer>
   );
@@ -217,9 +261,7 @@ const styles = StyleSheet.create({
   searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 36, paddingVertical: 0 },
   clearButton: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
-  modeBar: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, padding: tokens.spacing.sm },
-  modeCopy: { flex: 1, minWidth: 0 }, modeTitle: { color: tokens.color.textMain, fontSize: 15, fontWeight: "800" }, modeCount: { color: tokens.color.textMuted, fontSize: 12, marginTop: 2 },
-  managedItem: { gap: tokens.spacing.sm }, itemControls: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end" }, position: { color: tokens.color.textMuted, fontSize: 13, fontWeight: "700", marginRight: "auto" }, controlButton: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, height: 42, justifyContent: "center", width: 48 }, disabled: { opacity: 0.35 }, selectionRow: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 42 }, selectionLabel: { color: tokens.color.textMain, fontSize: 14, fontWeight: "700" },
+  managedItem: { gap: tokens.spacing.sm },
   loading: { alignItems: "center", flex: 1, gap: tokens.spacing.md, justifyContent: "center", minHeight: 240 },
   emptyState: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderStyle: "dashed", borderWidth: 1, gap: tokens.spacing.sm, padding: tokens.spacing.xxl },
   emptySymbol: { fontSize: tokens.type.hero, fontWeight: "300" },

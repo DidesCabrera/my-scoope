@@ -11,6 +11,7 @@ import { MealAdherenceCheckIn, MealCompletionCard, MealNoteCard, useMealAdherenc
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
 import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components/calendarization/meal-execution";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
+import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -41,6 +42,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const router = useRouter();
   const { id, calendarizedDayId, dailyPlanId, dailyPlanMealId, mealKey, mealTime, pinned, pickerEntryTo, pickerKind, pickerRelationId, pickerTargetId, returnTo } = useLocalSearchParams<{ id: string; calendarizedDayId?: string; dailyPlanId?: string; dailyPlanMealId?: string; mealKey?: string; mealTime?: string; pinned?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; returnTo?: string }>();
   const { status, apiRequest } = useSession();
+  const { publishSelection } = useComparatorSelectionTransfer();
   const [item, setItem] = useState<LibraryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,6 +97,24 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const isPinnedPlan = item?.entity === "dailyPlan" && todayContext?.calendarization == null && todayContext?.pinned_plan?.id === item.id;
   const openActions = useCallback(() => setActionSheet("menu"), []);
   const openTimeChange = useCallback(() => setActionSheet("change-time"), []);
+  const openComparison = useCallback(() => {
+    if (!item || item.entity === "program") return;
+    const kind = item.entity === "food" ? "foods" : item.entity === "meal" ? "meals" : "dailyplans";
+    publishSelection({
+      kind,
+      option: {
+        entity: item.entity,
+        id: item.id,
+        indicators: item.indicators,
+        name: item.name,
+        nutrition: item.nutrition,
+        panel: item.panel,
+        subtitle: item.subtitle,
+      },
+      slotKey: 1,
+    });
+    router.push({ pathname: "/comparator", params: { create: "1", kind } } as Href);
+  }, [item, publishSelection, router]);
   const setPinnedPlan = useCallback(async (nextPinned: boolean) => {
     if (!item || item.entity !== "dailyPlan") return;
     setError(null);
@@ -307,7 +327,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       });
       setContextTime(hour);
     },
-  } : undefined} mealTimeInMenu={false} onCompleted={handleActionCompleted} onOpenInformation={() => router.push(`/libraries/${entitySlug}/${item.id}/information` as Href)} onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }} renderTrigger={() => null} visible={actionSheet != null} />;
+  } : undefined} mealTimeInMenu={false} onCompare={item.entity === "program" ? undefined : openComparison} onCompleted={handleActionCompleted} onOpenInformation={() => router.push(`/libraries/${entitySlug}/${item.id}/information` as Href)} onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }} renderTrigger={() => null} visible={actionSheet != null} />;
   const mutationStatusModal = <MutationStatusModal onFinished={() => setMutationStatus(null)} status={mutationStatus} />;
   if (item.entity === "program") {
     return <><ProgramDetailPreview

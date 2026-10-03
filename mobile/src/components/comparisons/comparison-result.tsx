@@ -1,4 +1,5 @@
 import { type Href, useRouter } from "expo-router";
+import { Scale } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { ComparisonKind, ComparisonMetric, ComparisonResult } from "@/api/types";
@@ -23,7 +24,7 @@ export function ComparisonResultCards({ result }: { result: ComparisonResult }) 
   const router = useRouter();
   return (
     <View style={styles.container}>
-      <SectionHeading title="Resultados comparativos" />
+      <SectionHeading icon={<Scale color={tokens.color.entityIconForeground} size={18} />} title="Resultados comparativos" />
       {result.metrics.map((metric) => {
         const color = metricColor(metric);
         return (

@@ -62,6 +62,7 @@ export function Field({
   placeholder,
   keyboardType,
   autoCapitalize = "none",
+  autoCorrect,
   secureTextEntry = false,
 }: {
   label: string;
@@ -70,6 +71,7 @@ export function Field({
   placeholder?: string;
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  autoCorrect?: boolean;
   secureTextEntry?: boolean;
 }) {
   return (
@@ -78,6 +80,7 @@ export function Field({
       <TextInput
         accessibilityLabel={label}
         autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
         keyboardType={keyboardType}
         onChangeText={onChangeText}
         placeholder={placeholder}

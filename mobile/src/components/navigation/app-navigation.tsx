@@ -236,10 +236,14 @@ export function AppNavigationHeader() {
               <Pressable
                 accessibilityLabel={headerPresentation.action.label}
                 accessibilityRole="button"
+                accessibilityState={{ disabled: headerPresentation.action.disabled }}
+                disabled={headerPresentation.action.disabled}
                 hitSlop={8}
                 onPress={headerPresentation.action.onPress}
-                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
-                <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
+                style={({ pressed }) => [headerPresentation.action?.icon === "more" ? [styles.headerButton, styles.libraryHeaderButton] : styles.libraryHeaderTextAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
+                {headerPresentation.action.icon === "more"
+                  ? <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
+                  : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
               </Pressable>
             ) : null}
           </View>
@@ -382,6 +386,7 @@ const styles = StyleSheet.create({
   header: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flexDirection: "row", height: 48, justifyContent: "space-between" },
   headerButton: { alignItems: "center", height: 52, justifyContent: "center", width: 58 },
   libraryHeaderButton: { width: 44 },
+  libraryHeaderTextAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.lg },
   libraryHeaderActions: { alignItems: "center", flexDirection: "row" },
   backHeaderSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderLeadingAction: { alignItems: "flex-start", height: 52, justifyContent: "center", paddingLeft: tokens.spacing.lg, width: 92 },

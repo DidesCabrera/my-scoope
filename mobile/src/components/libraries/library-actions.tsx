@@ -1,4 +1,4 @@
-import { Clock3, Copy, Info, MoreHorizontal, Pencil, Send, Trash2, X } from "lucide-react-native";
+import { Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2, X } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -36,6 +36,7 @@ type LibraryActionsProps = {
   initialAction?: "change-time";
   mealTimeInMenu?: boolean;
   onCompleted(result: LibraryActionResult): void;
+  onCompare?: () => void;
   onOpenInformation?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   renderTrigger?: (open: () => void) => ReactNode;
@@ -60,7 +61,7 @@ const entityLabels = {
   program: "este programa",
 } as const;
 
-export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onOpenInformation, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
+export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCompare, onOpenInformation, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
   const [internalVisible, setInternalVisible] = useState(false);
   const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | null>(
@@ -77,7 +78,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     onVisibleChange?.(nextVisible);
   };
 
-  if (!actions.length && !mealTimeChange && !onOpenInformation) return null;
+  if (!actions.length && !mealTimeChange && !onCompare && !onOpenInformation) return null;
 
   const close = () => {
     if (submitting) return;
@@ -196,6 +197,21 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                       <Info color={tokens.color.textMain} size={20} />
                     </View>
                     <Text style={styles.actionLabel}>Ver información del elemento</Text>
+                  </Pressable>
+                ) : null}
+
+                {!selected && onCompare ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setVisible(false);
+                      onCompare();
+                    }}
+                    style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
+                    <View style={styles.actionIcon}>
+                      <Scale color={tokens.color.textMain} size={20} />
+                    </View>
+                    <Text style={styles.actionLabel}>Comparar</Text>
                   </Pressable>
                 ) : null}
 

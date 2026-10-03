@@ -31,6 +31,7 @@ import {
   EntityCardAction,
   EntityCardActions,
   EntityIcon,
+  SectionDivider,
   SectionPageHeader,
 } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
@@ -357,6 +358,7 @@ function ComparatorBuilderScreen() {
         <Button disabled={selectedCount < 2} label="Comparar" loading={working} onPress={() => void compare()} />
         {result ? (
           <>
+            <SectionDivider />
             <ComparisonResultCards result={result} />
             <Button label={savedId ? "Guardar cambios" : "Guardar comparación"} loading={working} onPress={() => void persist()} variant="secondary" />
           </>

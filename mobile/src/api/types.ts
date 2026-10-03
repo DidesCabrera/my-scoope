@@ -229,6 +229,12 @@ export type LibraryActionResult = {
   message: string;
 };
 
+export type LibraryListActionResult = {
+  affected_ids: number[];
+  skipped_ids: number[];
+  message: string;
+};
+
 export type {
   ShareClaimResult,
   ShareNutrition,
