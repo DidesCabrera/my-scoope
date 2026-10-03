@@ -277,10 +277,6 @@ export default function ProgramDayScreen() {
               </EntityDetailSection>
             </>
           ) : null}
-          <ContentPanel muted title="Información del día">
-            <View style={styles.metadataRow}><Text style={styles.metadataLabel}>Fecha</Text><Text style={styles.metadataValue}>{displayDate(day.calendar_date)}</Text></View>
-            <View style={styles.metadataRow}><Text style={styles.metadataLabel}>Ubicación</Text><Text style={styles.metadataValue}>Semana {day.week_number} · Día {day.day_number}</Text></View>
-          </ContentPanel>
         </EntityDetailPage>
       ) : (
         <ContentPanel muted title="Día sin plan">
@@ -291,6 +287,7 @@ export default function ProgramDayScreen() {
     </NestableScrollContainer>
     <CalendarizedEntityActions
       entityName={snapshot?.name ?? day.plan_name ?? "Plan diario"}
+      onOpenInformation={() => router.push(`/program/days/${day.id}/information` as Href)}
       onVisibleChange={setActionsVisible}
       rename={{
         onSubmit: async (name) => {
@@ -333,8 +330,5 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
-  metadataLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
-  metadataRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  metadataValue: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: "500", textAlign: "right", textTransform: "capitalize" },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
 });

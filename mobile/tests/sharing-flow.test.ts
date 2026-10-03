@@ -64,15 +64,26 @@ test("shared meal foods navigate from panels and detail cards", async () => {
   assertSourceMatch(foodCards, /onOpenFood && item\.detailId != null[\s\S]*<ChevronRight/);
 });
 
-test("shared food detail includes available item information", async () => {
+test("shared details move available item information into the header action", async () => {
+  const sharedDetail = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
+  const sharedMeal = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id]/meals/[mealIndex].tsx"), "utf8");
   const sharedFood = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id]/meals/[mealIndex]/foods/[foodIndex].tsx"), "utf8");
+  const actions = await readTestFile(path.resolve(process.cwd(), "src/components/sharing/shared-resource-actions.tsx"), "utf8");
+  const information = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id]/information.tsx"), "utf8");
   const presentation = await readTestFile(path.resolve(process.cwd(), "src/sharing/presentation.ts"), "utf8");
 
-  assertSourceMatch(sharedFood, /<EntityDetailMetadata/);
-  assertSourceMatch(sharedFood, /creator="Elemento compartido"/);
-  assertSourceMatch(sharedFood, /creatorLabel="Origen"/);
-  assertSourceMatch(sharedFood, /updatedAt=\{sharedDate\(resource\?\.created_at\)\}/);
-  assertSourceMatch(sharedFood, /updatedAtLabel="Compartido"/);
+  for (const detail of [sharedDetail, sharedMeal, sharedFood]) {
+    assertSourceMatch(detail, /<SharedResourceActions/);
+    assertSourceMatch(detail, /`\/share\/\$\{id\}\/information`/);
+  }
+  assertSourceMatch(actions, /Ver información del elemento/);
+  assert.doesNotMatch(sharedFood, /<EntityDetailMetadata/);
+  assertSourceMatch(information, /<EntityDetailMetadata/);
+  assertSourceMatch(information, /creator="Elemento compartido"/);
+  assertSourceMatch(information, /creatorLabel="Origen"/);
+  assertSourceMatch(information, /updatedAt=\{sharedDate\(resource\.created_at\)\}/);
+  assertSourceMatch(information, /updatedAtLabel="Compartido"/);
+  assert.doesNotMatch(information, /forceFallback/);
   assertSourceMatch(presentation, /export function sharedDate/);
 });
 

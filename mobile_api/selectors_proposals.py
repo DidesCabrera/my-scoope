@@ -10,6 +10,7 @@ from notas.application.queries.proposal_queries import (
     build_proposal_list_item_dto,
     get_available_proposal_queryset,
 )
+from notas.domain.models import AiNutritionChat
 from notas.presentation.proposals.proposal_review_viewmodels import build_proposal_review_vm
 
 
@@ -77,6 +78,55 @@ def proposal_list_payload(user, *, status_filter=None, offset=0, limit=30) -> di
         "offset": safe_offset,
         "limit": safe_limit,
         "pending_count": pending_count,
+    }
+
+
+def chat_proposal_list_payload(user, chat_id: int, *, offset=0, limit=30) -> dict | None:
+    chat = AiNutritionChat.objects.filter(pk=chat_id, user=user).first()
+    if chat is None:
+        return None
+
+    proposal_ids: set[int] = set()
+    conversation = chat.conversation_payload if isinstance(chat.conversation_payload, dict) else {}
+    messages = conversation.get("messages") if isinstance(conversation.get("messages"), list) else []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        for key in ("proposal_review_card", "generated_plan_card"):
+            card = message.get(key)
+            if not isinstance(card, dict):
+                continue
+            proposal_id = card.get("proposal_id")
+            if proposal_id is None and key == "generated_plan_card":
+                parts = str(card.get("url") or "").strip("/").split("/")
+                proposal_id = parts[-1] if parts else None
+            try:
+                proposal_ids.add(int(proposal_id))
+            except (TypeError, ValueError):
+                continue
+    if chat.proposal_id:
+        proposal_ids.add(chat.proposal_id)
+
+    queryset = get_available_proposal_queryset(user).filter(pk__in=proposal_ids)
+    safe_offset = max(int(offset or 0), 0)
+    safe_limit = min(max(int(limit or 30), 1), 50)
+    total = queryset.count()
+    items = [
+        _proposal_summary_payload(
+            {
+                **build_proposal_list_item_dto(proposal).as_dict(),
+                "proposed_payload": proposal.proposed_payload,
+                "applied_at": proposal.applied_at,
+            }
+        )
+        for proposal in queryset[safe_offset : safe_offset + safe_limit]
+    ]
+    return {
+        "items": items,
+        "total": total,
+        "offset": safe_offset,
+        "limit": safe_limit,
+        "pending_count": queryset.filter(status="pending_review").count(),
     }
 
 

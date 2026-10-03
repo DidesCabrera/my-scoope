@@ -31,7 +31,7 @@ export function ProposalGallery() {
         status="pending"
         summary="Crear un DailyPlan alto en proteína para un día de entrenamiento."
         title="Propuesta de DailyPlan"
-        typeLabel="Nuevo DailyPlan"
+        typeKind="dailyPlan"
         proposedEntity={
           <ProposalEntitySection entity="dailyPlan">
             <NutritionEntityCard entity="dailyPlan" indicators={[{ icon: "meal", label: "comidas", value: 3 }, { icon: "food", label: "alimentos", value: 9 }]} nutrition={{ calories: 2140, carbs: { grams: 238, allocation: 44 }, fat: { grams: 62, allocation: 26 }, protein: { grams: 155, allocation: 30, perKilogram: 1.8 } }} title="Día de entrenamiento propuesto">

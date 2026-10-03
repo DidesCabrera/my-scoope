@@ -215,7 +215,7 @@ export function AppNavigationHeader() {
             disabled={headerPresentation.action.disabled}
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.icon === "more" && styles.backHeaderMenuAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.action.icon === "more"
               ? <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
               : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
@@ -386,6 +386,7 @@ const styles = StyleSheet.create({
   backHeaderSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderLeadingAction: { alignItems: "flex-start", height: 52, justifyContent: "center", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 92 },
+  backHeaderMenuAction: { alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens.spacing.sm, width: 92 },
   backHeaderActionText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700" },
   backHeaderIdentity: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0 },
   headerListIdentity: { flex: 1, justifyContent: "center" },

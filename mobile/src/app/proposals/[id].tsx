@@ -124,7 +124,7 @@ export default function ProposalDetailScreen() {
           status={proposalStatus(proposal.status)}
           summary={proposal.summary}
           title={proposal.title}
-          typeLabel={proposal.attachment_label}>
+          typeKind={proposal.attachment_kind}>
           {proposal.subject_context_warning.requires_warning ? <InlineNotice tone="warning">{proposal.subject_context_warning.message}</InlineNotice> : null}
           {!proposal.meal && !proposal.dailyplan && !proposal.program ? <InlineNotice>Esta propuesta conserva su contenido y validación, pero su tipo no genera una entidad aplicable desde móvil.</InlineNotice> : null}
 

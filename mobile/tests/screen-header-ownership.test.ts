@@ -118,10 +118,11 @@ test("screens that own global navigation preserve their header through content a
   assertSourceDoesNotMatch(assistant, /<SectionPageHeader count=/);
   assertSourceDoesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
   assertSourceDoesNotMatch(assistant, /<Button[^>]*label="Nuevo chat"/);
-  assertSourceMatch(assistant, /dailyplan: tokens\.color\.dailyPlan/);
-  assertSourceMatch(assistant, /meal: tokens\.color\.meal/);
-  assertSourceMatch(assistant, /program: tokens\.color\.program/);
-  assertSourceMatch(assistant, /<Card accent=\{proposalEntityColors\[proposal\.attachment_kind\]\}>/);
+  const proposalListCard = await source("src/components/proposals/proposal-list-card.tsx");
+  assertSourceMatch(proposalListCard, /dailyplan: tokens\.color\.dailyPlan/);
+  assertSourceMatch(proposalListCard, /meal: tokens\.color\.meal/);
+  assertSourceMatch(proposalListCard, /program: tokens\.color\.program/);
+  assertSourceMatch(proposalListCard, /<Card accent=\{proposalEntityColors\[proposal\.attachment_kind\]\}>/);
 
   const inbox = await source("src/app/inbox.tsx");
   assertSourceMatch(inbox, /setHeaderPresentation\(\{ identityVisible: compactHeaderVisible, mode: "default", title: "Compartidos" \}\)/);
@@ -130,6 +131,10 @@ test("screens that own global navigation preserve their header through content a
   const libraryList = await source("src/components/libraries/library-list-screen.tsx");
   assertSourceMatch(libraryList, /mode: "library-list"[\s\S]*identityVisible: compactHeaderVisible/);
   assertSourceMatch(libraryList, /isHeaderIdentityVisible\(nativeEvent\.contentOffset\.y\)/);
+
+  const navigation = await source("src/components/navigation/app-navigation.tsx");
+  assertSourceMatch(navigation, /headerPresentation\.action\?\.icon === "more" && styles\.backHeaderMenuAction/);
+  assertSourceMatch(navigation, /backHeaderMenuAction: \{ alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens\.spacing\.sm, width: 92 \}/);
 
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
   assertSourceMatch(libraryDetail, /mode: "library-detail"[\s\S]*identityVisible: compactHeaderVisible/);

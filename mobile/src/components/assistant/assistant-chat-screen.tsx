@@ -22,6 +22,7 @@ import { tokens } from "@/design/tokens";
 
 import { ChatComposer } from "./chat-composer";
 import { ChatConversation } from "./chat-conversation";
+import { AssistantChatActions } from "./assistant-chat-actions";
 
 export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: number | null; comparisonId?: number | null }) {
   const router = useRouter();
@@ -36,6 +37,7 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [iterationWarning, setIterationWarning] = useState(false);
+  const [actionsVisible, setActionsVisible] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -60,6 +62,7 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
+      action: chatId ? { icon: "more", label: "Acciones del chat", onPress: () => setActionsVisible(true) } : undefined,
       fallback: "/assistant",
       mode: "back",
       title: chat?.title ?? (chatId ? "Conversación" : "Nuevo chat"),
@@ -197,6 +200,11 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
           onSend={() => void send()}
           supportingText={availability ? `${availability.available_credits} ${availability.available_credits === 1 ? "crédito disponible" : "créditos disponibles"}` : undefined}
           value={message}
+        />
+        <AssistantChatActions
+          onClose={() => setActionsVisible(false)}
+          onOpenProposals={() => router.push(`/assistant/${chatId}/proposals` as Href)}
+          visible={actionsVisible}
         />
       </Screen>
     </KeyboardAvoidingView>

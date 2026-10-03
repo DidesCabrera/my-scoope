@@ -1,4 +1,4 @@
-import { Clock3, Pencil, X } from "lucide-react-native";
+import { Clock3, Info, Pencil, X } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -61,6 +61,7 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
 type CalendarizedEntityActionsProps = {
   entityName: string;
   initialAction?: Exclude<SelectedAction, null>;
+  onOpenInformation?: () => void;
   onVisibleChange(visible: boolean): void;
   rename?: {
     onSubmit(name: string): Promise<void>;
@@ -75,7 +76,7 @@ type CalendarizedEntityActionsProps = {
 
 type SelectedAction = "rename" | "change-time" | null;
 
-export function CalendarizedEntityActions({ entityName, initialAction, onVisibleChange, rename, timeChange, timeChangeInMenu = true, visible }: CalendarizedEntityActionsProps) {
+export function CalendarizedEntityActions({ entityName, initialAction, onOpenInformation, onVisibleChange, rename, timeChange, timeChangeInMenu = true, visible }: CalendarizedEntityActionsProps) {
   const [selected, setSelected] = useState<SelectedAction>(initialAction ?? null);
   const [name, setName] = useState(entityName);
   const [submitting, setSubmitting] = useState(false);
@@ -122,6 +123,12 @@ export function CalendarizedEntityActions({ entityName, initialAction, onVisible
         </View>
         <View style={styles.sheetContent}>
           {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+          {!selected && onOpenInformation ? (
+            <Pressable accessibilityRole="button" onPress={() => { onVisibleChange(false); onOpenInformation(); }} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
+              <View style={styles.actionIcon}><Info color={tokens.color.textMain} size={20} /></View>
+              <Text style={styles.actionLabel}>Ver información del elemento</Text>
+            </Pressable>
+          ) : null}
           {!selected && rename ? (
             <Pressable accessibilityRole="button" onPress={() => { setName(entityName); setError(null); setSelected("rename"); }} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
               <View style={styles.actionIcon}><Pencil color={tokens.color.textMain} size={20} /></View>

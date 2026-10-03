@@ -4,24 +4,18 @@ import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { AIChatListData, AIChatSummary, ProposalListData, ProposalSummary } from "@/api/types";
+import type { AIChatListData, AIChatSummary, ProposalListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantListActions } from "@/components/assistant/assistant-list-actions";
 import { AssistantSectionTabs, type AssistantSection } from "@/components/assistant/assistant-section-tabs";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { SectionIcon, SectionPageHeader } from "@/components/ui";
+import { ProposalListCard } from "@/components/proposals";
+import { SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, InlineNotice, LoadingState, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { formatCompactDate } from "@/presentation/date";
-
-const proposalEntityColors: Record<ProposalSummary["attachment_kind"], string> = {
-  brief: tokens.color.proposal,
-  dailyplan: tokens.color.dailyPlan,
-  meal: tokens.color.meal,
-  program: tokens.color.program,
-};
 
 function ChatCard({ chat, onPress }: { chat: AIChatSummary; onPress(): void }) {
   return (
@@ -39,37 +33,6 @@ function ChatCard({ chat, onPress }: { chat: AIChatSummary; onPress(): void }) {
         </View>
         <Text numberOfLines={3} style={textStyles.muted}>{chat.last_message_preview}</Text>
         <Text style={textStyles.caption}>{chat.message_count} mensajes · Continuar ›</Text>
-      </Card>
-    </Pressable>
-  );
-}
-
-function displayDate(value: string | null): string {
-  return formatCompactDate(value) ?? "Sin fecha";
-}
-
-function ProposalCard({ proposal, onPress }: { proposal: ProposalSummary; onPress(): void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Card accent={proposalEntityColors[proposal.attachment_kind]}>
-        <View style={styles.row}>
-          <View style={styles.copy}>
-            <View style={styles.eyebrowRow}>
-              <SectionIcon section="proposal" size="compact" />
-              <Text style={styles.eyebrow}>Propuesta</Text>
-            </View>
-            <Text style={styles.title}>{proposal.title}</Text>
-            <Text style={textStyles.caption}>{displayDate(proposal.created_at)}</Text>
-          </View>
-        </View>
-        {proposal.summary ? <Text numberOfLines={3} style={textStyles.muted}>{proposal.summary}</Text> : null}
-        <View style={styles.attachment}>
-          <View style={styles.copy}>
-            <Text style={textStyles.caption}>{proposal.attachment_label}</Text>
-            <Text style={textStyles.strong}>{proposal.attachment_name}</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </View>
       </Card>
     </Pressable>
   );
@@ -170,7 +133,7 @@ export default function AssistantHistoryScreen() {
           {proposalError ? <RecoverableErrorState message={proposalError} onRetry={() => void loadProposals()} /> : null}
           {proposalsLoading && proposalPage ? <Text style={textStyles.caption}>Actualizando…</Text> : null}
           {proposalPage?.items.length ? proposalPage.items.map((proposal) => (
-            <ProposalCard key={proposal.id} onPress={() => router.push(`/proposals/${proposal.id}` as Href)} proposal={proposal} />
+            <ProposalListCard key={proposal.id} onPress={() => router.push(`/proposals/${proposal.id}` as Href)} proposal={proposal} />
           )) : !proposalError && !proposalsLoading ? (
             <EmptyState message="Las propuestas creadas por el Asistente aparecerán aquí para que puedas revisarlas antes de modificar tu librería." title="Aún no hay propuestas" />
           ) : null}
@@ -186,8 +149,6 @@ export default function AssistantHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  attachment: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
-  chevron: { color: tokens.color.textSoft, fontSize: 28 },
   copy: { flex: 1, gap: 4 },
   creditCopy: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   creditTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },

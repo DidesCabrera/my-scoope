@@ -9,16 +9,18 @@ import { tokens } from "@/design/tokens";
 import {
   ProposalHeading,
   ProposalStatusBadge,
+  ProposalTypeBadge,
   type ProposalStatus,
+  type ProposalTypeKind,
   proposalTextStyles,
 } from "./proposal-card";
 
 export function ProposalDetailPage({
-  children, isRead, objectives, proposedEntity, receivedAt, status, summary, title, typeLabel,
+  children, isRead, objectives, proposedEntity, receivedAt, status, summary, title, typeKind,
 }: PropsWithChildren<{
   isRead: boolean; objectives?: ReactNode; proposedEntity?: ReactNode;
   receivedAt: string; status: ProposalStatus; summary?: string;
-  title: string; typeLabel?: string;
+  title: string; typeKind?: ProposalTypeKind;
 }>) {
   return (
     <View style={styles.pageCard}>
@@ -26,7 +28,7 @@ export function ProposalDetailPage({
         <ProposalHeading detail isRead={isRead} receivedAt={receivedAt} title={title} />
         <View style={styles.badges}>
           <ProposalStatusBadge status={status} />
-          {typeLabel ? <View style={styles.type}><Text style={styles.typeText}>{typeLabel}</Text></View> : null}
+          {typeKind ? <ProposalTypeBadge kind={typeKind} /> : null}
         </View>
         {summary || objectives ? (
           <View style={styles.requestSection}>
@@ -124,8 +126,6 @@ const styles = StyleSheet.create({
   hero: { gap: tokens.card.gap, minWidth: 0 },
   requestSection: { gap: tokens.spacing.sm, minWidth: 0 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
-  type: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
-  typeText: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, textTransform: "uppercase" },
   requestSummary: { backgroundColor: "transparent", gap: tokens.spacing.md },
   requestCopy: { gap: tokens.spacing.xs },
   requestText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, lineHeight: 20 },
