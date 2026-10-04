@@ -1,5 +1,8 @@
 version: 2
 
+# Scheduled version-update PRs are intentionally disabled because every PR
+# invokes the repository's full validation tier. Dependabot security updates
+# remain available through GitHub's vulnerability-alert workflow.
 updates:
   - package-ecosystem: pip
     directories:
@@ -12,7 +15,7 @@ updates:
       day: monday
       time: "09:00"
       timezone: America/Santiago
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     groups:
       python-minor-and-patch:
         patterns:
@@ -29,7 +32,7 @@ updates:
       day: monday
       time: "09:10"
       timezone: America/Santiago
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     groups:
       web-minor-and-patch:
         patterns:
@@ -46,7 +49,7 @@ updates:
       day: monday
       time: "09:20"
       timezone: America/Santiago
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     groups:
       mobile-minor-and-patch:
         patterns:
@@ -63,7 +66,7 @@ updates:
       day: monday
       time: "09:30"
       timezone: America/Santiago
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     groups:
       actions-minor-and-patch:
         patterns:
