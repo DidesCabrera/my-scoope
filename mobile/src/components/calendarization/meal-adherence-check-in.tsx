@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { MealCheckInInput, MealExecutionItem, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { Button, ContentPanel, InlineNotice, SectionHeading } from "@/components/ui";
+import { Button, ContentPanel, InlineNotice, SectionDivider, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { MealCompletionSurface } from "./meal-completion-summary";
 import { normalizeMealExecution, type NormalizedMealExecutionItem } from "./meal-execution";
@@ -125,8 +125,9 @@ export function MealCompletionCard({ controller }: { controller: MealAdherenceCo
 export function MealNoteCard({ controller }: { controller: MealAdherenceController }) {
   if (!controller.available) return null;
   return <View style={styles.section}>
+    <SectionDivider spacing="compact" tone="soft" />
     <SectionHeading title="Nota de esta comida" />
-    <ContentPanel muted>
+    <ContentPanel>
       <View style={styles.noteBlock}>
         <View style={styles.noteHeader}>
           <Text style={styles.noteLabel}>Nota</Text>
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
   noteCount: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   noteEdit: { alignItems: "center", height: 32, justifyContent: "center", width: 32 },
   noteHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  noteInput: { backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, fontSize: tokens.type.caption, minHeight: 104, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
+  noteInput: { backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, fontSize: tokens.type.caption, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 104, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
   noteLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   noteText: { color: tokens.color.textMain, fontSize: tokens.type.caption, lineHeight: 21, minHeight: 42 },
   noteTextEmpty: { color: tokens.color.textMuted },

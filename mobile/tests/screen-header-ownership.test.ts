@@ -56,6 +56,7 @@ test("header navigation and action icons use muted text color", async () => {
   }
   assertSourceMatch(navigation, /<PanelRight color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(navigation, /<MoreHorizontal color=\{tokens\.color\.textMuted\}/);
+  assertSourceMatch(navigation, /menuSectionLabel: \{[^}]*fontWeight: tokens\.component\.eyebrow\.fontWeight/);
 });
 
 test("compact header identities use a short transition", async () => {

@@ -342,8 +342,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /<MealCompletionSurface>/);
   assertSourceMatch(mealAdherence, /checkbox: \{[^}]*borderRadius: tokens\.radius\.pill/);
   assertSourceMatch(mealAdherence, /completionLabel: \{[^}]*fontSize: tokens\.type\.caption/);
+  assertSourceMatch(mealAdherence, /<SectionDivider spacing="compact" tone="soft" \/>[\s\S]*<SectionHeading title="Nota de esta comida" \/>/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
+  assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>[\s\S]*<ContentPanel>/);
+  assertSourceDoesNotMatch(mealAdherence, /<ContentPanel muted>/);
   assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
+  assertSourceMatch(mealAdherence, /noteInput: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceDoesNotMatch(mealAdherence, /styles\.divider/);
 
   assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked/);
@@ -381,7 +385,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealCompletionSummary, /checkCircleCompleted: \{ backgroundColor: tokens\.color\.meal \}/);
   assertSourceMatch(mealCompletionSummary, /checkCirclePending: \{ backgroundColor: tokens\.color\.borderDefault \}/);
   assertSourceMatch(mealCompletionSummary, /completed \? tokens\.color\.entityIconForeground : tokens\.color\.textMuted/);
-  assertSourceMatch(mealCompletionSummary, /surface: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: tokens\.color\.meal, borderRadius: tokens\.radius\.lg, borderWidth: 1/);
+  assertSourceMatch(mealCompletionSummary, /surface: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: `\$\{tokens\.color\.meal\}B3`, borderRadius: tokens\.radius\.lg, borderWidth: 1/);
   assertSourceMatch(mealCompletionSummary, /checks: \{[^}]*gap: tokens\.spacing\.xs/);
   assertSourceMatch(mealCompletionSummary, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceMatch(mealCompletionSummary, /minHeight: 54/);
@@ -502,7 +506,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(weekDayGrid, /grid: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceMatch(weekDayGrid, /gridCompact: \{ gap: tokens\.spacing\.xs \}/);
   assertSourceMatch(weekDayGrid, /cell: \{[^}]*flex: 1[^}]*gap: tokens\.spacing\.sm/);
-  assertSourceMatch(weekDayGrid, /stopColor="#D62976"/);
+  assertSourceMatch(weekDayGrid, /<LinearGradient id=\{gradientId\}[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat/);
   assertSourceMatch(weekDayGrid, /strokeWidth="6"/);
   assertSourceMatch(weekDayGrid, /selectionRing: \{ bottom: -7, left: -7[^}]*right: -7, top: -7 \}/);
   assertSourceMatch(gallery, /key: "calendars", label: "Calendarios"/);

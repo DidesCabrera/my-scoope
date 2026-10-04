@@ -48,11 +48,9 @@ export function WeekDaySelectionRing() {
       <Svg height="100%" viewBox="0 0 100 100" width="100%">
         <Defs>
           <LinearGradient id={gradientId} x1="0" x2="1" y1="1" y2="0">
-            <Stop offset="0" stopColor="#FEDA75" />
-            <Stop offset="0.24" stopColor="#FA7E1E" />
-            <Stop offset="0.52" stopColor="#D62976" />
-            <Stop offset="0.76" stopColor="#962FBF" />
-            <Stop offset="1" stopColor="#4F5BD5" />
+            <Stop offset="0" stopColor={tokens.color.protein} />
+            <Stop offset="0.5" stopColor={tokens.color.carbs} />
+            <Stop offset="1" stopColor={tokens.color.fat} />
           </LinearGradient>
         </Defs>
         <Circle cx="50" cy="50" fill="none" r="44" stroke={`url(#${gradientId})`} strokeWidth="6" />
