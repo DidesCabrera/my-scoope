@@ -166,7 +166,7 @@
 .calendarization-meal-completion-summary {
   align-items: center;
   background: color-mix(in srgb, var(--entity-meal) 10%, var(--surface-card));
-  border: 1px solid var(--entity-meal);
+  border: 1px solid color-mix(in srgb, var(--entity-meal) 70%, transparent);
   border-radius: var(--radius-lg);
   display: flex;
   gap: var(--space-sm);
@@ -226,7 +226,7 @@
 
 .calendarization-meal-checkin__status {
   background: color-mix(in srgb, var(--entity-meal) 10%, var(--surface-card));
-  border: 1px solid var(--entity-meal);
+  border: 1px solid color-mix(in srgb, var(--entity-meal) 70%, transparent);
   border-radius: var(--radius-lg);
   min-height: 54px;
   padding: 0 var(--space-md);

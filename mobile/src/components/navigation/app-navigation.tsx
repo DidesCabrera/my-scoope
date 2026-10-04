@@ -414,5 +414,5 @@ const styles = StyleSheet.create({
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
   drawerContent: { gap: 0, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg },
   menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
-  menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: "800", letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
+  menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
 });
