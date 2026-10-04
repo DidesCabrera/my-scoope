@@ -248,7 +248,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           variant="secondary"
         />
       ) : null}
-      <LibraryListActions canCompare={entity !== "program"} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onEdit={() => void beginEdit()} visible={actionsVisible} />
+      <LibraryListActions canCompare={entity !== "program"} entity={entity} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onEdit={() => void beginEdit()} title={title} visible={actionsVisible} />
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </NestableScrollContainer>
   );

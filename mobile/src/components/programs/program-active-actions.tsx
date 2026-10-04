@@ -1,11 +1,11 @@
-import { Bell, ExternalLink, History, Info, Pause, Play, RefreshCw, Trash2, X } from "lucide-react-native";
+import { Bell, ExternalLink, History, Info, Pause, Play, RefreshCw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarizationStatus } from "@/api/types";
-import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, InlineNotice } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -86,17 +86,9 @@ export function ProgramActiveActions({
     <ActionSheetModal onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <View style={styles.sheet}>
-          <View style={styles.header}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>ACCIONES</Text>
-              <Text numberOfLines={1} style={styles.title}>{confirmation?.title ?? "Programa en curso"}</Text>
-            </View>
-            <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={close} style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
-              <X color={tokens.color.textMain} size={22} />
-            </Pressable>
-          </View>
+          <ActionSheetHeader entity="program" onClose={close} title={confirmation?.title ?? "Programa en curso"} />
 
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
             {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
             {confirmation && selected ? (
@@ -111,23 +103,23 @@ export function ProgramActiveActions({
                 <Button disabled={submitting} label="Volver" onPress={() => setSelected(null)} variant="secondary" />
               </View>
             ) : (
-              <View>
-                <ActionRow icon={Info} label="Ver información del elemento" onPress={() => navigate(onOpenInformation)} />
+              <ActionSheetActions>
+                <ActionSheetAction icon={Info} label="Ver información del elemento" onPress={() => navigate(onOpenInformation)} />
                 {status ? (
                   <>
                     {status === "paused" ? (
-                      <ActionRow icon={Play} label="Reanudar programa" onPress={() => void execute("resume")} />
+                      <ActionSheetAction icon={Play} label="Reanudar programa" onPress={() => void execute("resume")} />
                     ) : (
-                      <ActionRow icon={Pause} label="Pausar programa" onPress={() => setSelected("pause")} />
+                      <ActionSheetAction icon={Pause} label="Pausar programa" onPress={() => setSelected("pause")} />
                     )}
-                    <ActionRow icon={Bell} label="Configurar recordatorios" onPress={() => navigate(onOpenReminders)} />
-                    <ActionRow destructive icon={Trash2} label="Cancelar programa" onPress={() => setSelected("cancel")} />
+                    <ActionSheetAction icon={Bell} label="Configurar recordatorios" onPress={() => navigate(onOpenReminders)} />
+                    <ActionSheetAction destructive icon={Trash2} label="Cancelar programa" onPress={() => setSelected("cancel")} />
                   </>
                 ) : null}
-                {onOpenOriginalProgram ? <ActionRow icon={ExternalLink} label="Ver programa original" onPress={() => navigate(onOpenOriginalProgram)} /> : null}
-                <ActionRow icon={RefreshCw} label="Cambiar de programa" onPress={() => navigate(onChangeProgram)} />
-                <ActionRow icon={History} label="Historial de programas" onPress={() => navigate(onOpenHistory)} />
-              </View>
+                {onOpenOriginalProgram ? <ActionSheetAction icon={ExternalLink} label="Ver programa original" onPress={() => navigate(onOpenOriginalProgram)} /> : null}
+                <ActionSheetAction icon={RefreshCw} label="Cambiar de programa" onPress={() => navigate(onChangeProgram)} />
+                <ActionSheetAction icon={History} label="Historial de programas" onPress={() => navigate(onOpenHistory)} />
+              </ActionSheetActions>
             )}
           </ScrollView>
         </View>
@@ -136,31 +128,11 @@ export function ProgramActiveActions({
   );
 }
 
-function ActionRow({ destructive = false, icon: Icon, label, onPress }: { destructive?: boolean; icon: typeof Pause; label: string; onPress(): void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      <View style={styles.icon}>
-        <Icon color={destructive ? tokens.color.danger : tokens.color.textMain} size={20} />
-      </View>
-      <Text style={[styles.label, destructive && styles.danger]}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: tokens.color.surfaceCard, maxHeight: "88%" },
   sheet: { backgroundColor: tokens.color.surfaceCard },
-  header: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
-  headerCopy: { flex: 1, gap: 3, minWidth: 0 },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
-  title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
-  close: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
+  sheetScroll: { flexGrow: 0, flexShrink: 1 },
   content: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58 },
-  icon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
-  label: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: "700" },
-  danger: { color: tokens.color.danger },
   confirmation: { gap: tokens.spacing.md },
   confirmationText: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
-  pressed: { opacity: 0.65 },
 });

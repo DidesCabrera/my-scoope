@@ -1,10 +1,10 @@
-import { Pencil, X } from "lucide-react-native";
+import { Pencil } from "lucide-react-native";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
-import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
@@ -39,22 +39,13 @@ export function SavedComparisonActions({ name: currentName, onClose, onEdit, onR
   return (
     <ActionSheetModal onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-        <View style={styles.header}>
-          <View><Text style={styles.eyebrow}>{editingName ? "NOMBRE" : "ACCIONES"}</Text><Text style={styles.title}>{editingName ? "Editar nombre" : "Comparación"}</Text></View>
-          <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={close} style={({ pressed }) => [styles.close, pressed && styles.pressed]}><X color={tokens.color.textMain} size={22} /></Pressable>
-        </View>
+        <ActionSheetHeader onClose={close} section="comparator" title={editingName ? "Editar nombre" : "Comparación"} />
         <View style={styles.content}>
           {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-          {!editingName ? <>
-            <Pressable accessibilityRole="button" onPress={() => { setName(currentName); setError(null); setEditingName(true); }} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-              <View style={styles.icon}><Pencil color={tokens.color.textMain} size={20} /></View>
-              <Text style={styles.label}>Editar nombre</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" onPress={edit} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-              <View style={styles.icon}><Pencil color={tokens.color.textMain} size={20} /></View>
-              <Text style={styles.label}>Editar comparación</Text>
-            </Pressable>
-          </> : (
+          {!editingName ? <ActionSheetActions>
+            <ActionSheetAction icon={Pencil} label="Editar nombre" onPress={() => { setName(currentName); setError(null); setEditingName(true); }} />
+            <ActionSheetAction icon={Pencil} label="Editar comparación" onPress={edit} />
+          </ActionSheetActions> : (
             <View style={styles.form}>
               <Field autoCapitalize="sentences" label="Nombre" onChangeText={(value) => setName(value.slice(0, 255))} value={name} />
               <Button disabled={!name.trim()} label="Guardar nombre" loading={submitting} onPress={() => void saveName()} />
@@ -68,15 +59,7 @@ export function SavedComparisonActions({ name: currentName, onClose, onEdit, onR
 }
 
 const styles = StyleSheet.create({
-  close: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
   content: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   form: { gap: tokens.spacing.md },
-  header: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
-  icon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
-  label: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
-  pressed: { opacity: 0.65 },
-  row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58 },
   safeArea: { backgroundColor: tokens.color.surfaceCard },
-  title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold, marginTop: 3 },
 });

@@ -26,6 +26,7 @@ import { ProgramDetailPreview } from "@/components/libraries/program-detail-prev
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
+import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
 import { OnboardingJourneyView, onboardingJourneySteps } from "@/components/onboarding";
 import {
   KpiAllocationBar,
@@ -639,6 +640,8 @@ export default function UiGalleryScreen() {
 
       {tab === "states" ? (
         <>
+          <SectionTitle detail="Muestras visuales estáticas" title="Pop-ups" />
+          <PopupAestheticGallery />
           <SectionTitle detail="Animación de proteína, carbos y grasas" title="Carga entre vistas" />
           <Card>
             <View style={styles.loadingPreview}>

@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import { CircleDollarSign, ExternalLink, FileText, Flag, LifeBuoy, Pencil, Trash2, X } from "lucide-react-native";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { CircleDollarSign, ExternalLink, FileText, Flag, LifeBuoy, Pencil, Trash2 } from "lucide-react-native";
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -12,7 +12,7 @@ import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProposalReviewSection } from "@/components/proposals/proposal-detail";
 import { AppHeader, Button, Card, Field, InlineNotice, Screen, textStyles } from "@/components/ui";
-import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 import { subscriptionPlanAccent } from "@/presentation/subscription";
@@ -37,14 +37,19 @@ export default function AccountScreen() {
   const [entitlements, setEntitlements] = useState<EntitlementsData | null>(null);
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const [accountActions, setAccountActions] = useState<"menu" | "rename" | "delete" | null>(null);
+  const [accountActionsVisible, setAccountActionsVisible] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const setHeaderPresentation = useHeaderPresentation();
 
   const openAccountActions = useCallback(() => {
     setUsername(session?.username ?? "");
     setAccountActions("menu");
+    setAccountActionsVisible(true);
   }, [session?.username]);
   const closeAccountActions = useCallback(() => {
+    setAccountActionsVisible(false);
+  }, []);
+  const finishClosingAccountActions = useCallback(() => {
     setAccountActions(null);
     setConfirmation("");
     setPassword("");
@@ -53,7 +58,7 @@ export default function AccountScreen() {
   }, []);
 
   const openExternalAction = useCallback((url: string) => {
-    setAccountActions(null);
+    setAccountActionsVisible(false);
     void Linking.openURL(url);
   }, []);
 
@@ -106,7 +111,7 @@ export default function AccountScreen() {
         body: JSON.stringify({ username: cleanUsername }),
       });
       await refreshSession();
-      setAccountActions(null);
+      setAccountActionsVisible(false);
       Alert.alert("Nombre de usuario actualizado", `Ahora tu nombre de usuario es “${cleanUsername}”.`);
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -141,36 +146,31 @@ export default function AccountScreen() {
       ) : null}
       <Button label="Cerrar sesión" onPress={() => void signOut().then(() => router.replace("/login"))} variant="secondary" />
       <InlineNotice tone="warning">My Scoope no reemplaza atención médica. Revisa cualquier cálculo, lectura OCR o propuesta asistida por IA antes de aplicarla.</InlineNotice>
-      <ActionSheetModal onRequestClose={closeAccountActions} visible={accountActions != null}>
+      <ActionSheetModal onDismiss={finishClosingAccountActions} onRequestClose={closeAccountActions} visible={accountActionsVisible}>
         <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
-          <View style={styles.sheetHeader}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>{accountActions === "rename" ? "NOMBRE" : "ACCIONES"}</Text>
-              <Text style={styles.sheetTitle}>{accountActions === "delete" ? "Eliminar mi cuenta" : accountActions === "rename" ? "Editar nombre de usuario" : "Mi cuenta"}</Text>
+          <ActionSheetHeader onClose={closeAccountActions} section="profile" title={accountActions === "delete" ? "Eliminar mi cuenta" : accountActions === "rename" ? "Editar nombre de usuario" : "Mi cuenta"} />
+          {accountActions === "menu" ? (
+            <View style={styles.sheetContent}>
+              <ActionSheetActions>
+                <ActionSheetAction icon={Pencil} label="Editar nombre de usuario" onPress={() => { setUsername(session?.username ?? ""); setError(null); setAccountActions("rename"); }} />
+                <ActionSheetAction icon={ExternalLink} label="Política de privacidad" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/privacy/`)} />
+                <ActionSheetAction icon={FileText} label="Términos de uso" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/terms/`)} />
+                <ActionSheetAction icon={CircleDollarSign} label="Cancelaciones y reembolsos" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/refund-policy/`)} />
+                <ActionSheetAction icon={LifeBuoy} label="Centro de soporte" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/support/`)} />
+                <ActionSheetAction icon={Flag} label="Reportar contenido o un problema" onPress={() => openExternalAction(`mailto:${supportEmail}?subject=Reporte%20desde%20My%20Scoope`)} />
+                <ActionSheetAction destructive icon={Trash2} label="Eliminar cuenta" onPress={() => setAccountActions("delete")} />
+              </ActionSheetActions>
             </View>
-            <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={closeAccountActions} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
-              <X color={tokens.color.textMain} size={22} />
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            {accountActions === "menu" ? (
-              <View>
-                <AccountAction icon={Pencil} label="Editar nombre de usuario" onPress={() => { setUsername(session?.username ?? ""); setError(null); setAccountActions("rename"); }} />
-                <AccountAction icon={ExternalLink} label="Política de privacidad" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/privacy/`)} />
-                <AccountAction icon={FileText} label="Términos de uso" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/terms/`)} />
-                <AccountAction icon={CircleDollarSign} label="Cancelaciones y reembolsos" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/refund-policy/`)} />
-                <AccountAction icon={LifeBuoy} label="Centro de soporte" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/support/`)} />
-                <AccountAction icon={Flag} label="Reportar contenido o un problema" onPress={() => openExternalAction(`mailto:${supportEmail}?subject=Reporte%20desde%20My%20Scoope`)} />
-                <AccountAction destructive icon={Trash2} label="Eliminar cuenta" onPress={() => setAccountActions("delete")} />
-              </View>
-            ) : accountActions === "rename" ? (
+          ) : (
+          <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
+            {accountActions === "rename" ? (
               <View style={styles.deletionForm}>
                 <Field autoCapitalize="none" autoCorrect={false} label="Nombre de usuario" onChangeText={(value) => setUsername(value.slice(0, 150))} value={username} />
                 {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
                 <Button disabled={!username.trim() || username.trim() === session?.username} label="Guardar nombre" loading={busy} onPress={() => void renameUsername()} />
                 <Button disabled={busy} label="Volver" onPress={() => { setError(null); setAccountActions("menu"); }} variant="secondary" />
               </View>
-            ) : (
+            ) : accountActions === "delete" ? (
               <View style={styles.deletionForm}>
                 <Text style={textStyles.muted}>Esta acción revoca el acceso inmediatamente y elimina o anonimiza tus datos conforme a nuestra política. No se puede deshacer.</Text>
                 <Field autoCapitalize="characters" label="Escribe ELIMINAR para confirmar" onChangeText={setConfirmation} value={confirmation} />
@@ -179,8 +179,9 @@ export default function AccountScreen() {
                 <Button disabled={confirmation !== "ELIMINAR"} label="Eliminar cuenta definitivamente" loading={busy} onPress={deleteAccount} variant="danger" />
                 <Button label="Volver" onPress={() => setAccountActions("menu")} variant="secondary" />
               </View>
-            )}
+            ) : null}
           </ScrollView>
+          )}
         </SafeAreaView>
       </ActionSheetModal>
     </Screen>
@@ -200,21 +201,7 @@ function AccountInformationRows({ items }: { items: { label: string; value: stri
   );
 }
 
-function AccountAction({ destructive = false, icon: Icon, label, onPress }: { destructive?: boolean; icon: typeof Trash2; label: string; onPress(): void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-      <View style={styles.actionIcon}><Icon color={destructive ? tokens.color.danger : tokens.color.textMain} size={20} /></View>
-      <Text style={[styles.actionLabel, destructive && styles.actionLabelDanger]}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  actionIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
-  actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
-  actionLabelDanger: { color: tokens.color.danger },
-  actionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
-  closeButton: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
   deletionForm: { gap: tokens.spacing.md },
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   headerCopy: { flex: 1, gap: 3, minWidth: 0 },
@@ -225,9 +212,8 @@ const styles = StyleSheet.create({
   informationValue: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20, textAlign: "right" },
   pressed: { opacity: 0.65 },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  sheetHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
-  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
-  sheetTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold },
+  sheetScroll: { flexGrow: 0, flexShrink: 1 },
+  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   planName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
   subscriptionHeading: { alignItems: "center", flexDirection: "row" },
 });

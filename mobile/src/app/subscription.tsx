@@ -7,7 +7,7 @@ import {
   useIAP,
 } from "expo-iap";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Inbox, Info, type LucideIcon, RefreshCcw, Scale, Sparkles, X } from "lucide-react-native";
+import { Check, Inbox, Info, type LucideIcon, RefreshCcw, Scale, Sparkles, WalletCards } from "lucide-react-native";
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
@@ -18,7 +18,7 @@ import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { AppHeader, Card, EntityIcon, type EntityKind, InlineNotice, LoadingState, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
-import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { tokens } from "@/design/tokens";
 import { subscriptionPlanAccent } from "@/presentation/subscription";
 
@@ -438,32 +438,15 @@ export default function SubscriptionScreen() {
 
       <ActionSheetModal onRequestClose={closeActions} visible={actionsVisible}>
         <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
-          <View style={styles.sheetHeader}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>ACCIONES</Text>
-              <Text style={styles.sheetTitle}>Suscripciones y Bolsas</Text>
-            </View>
-            <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={closeActions} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
-              <X color={tokens.color.textMain} size={22} />
-            </Pressable>
-          </View>
+          <ActionSheetHeader icon={WalletCards} onClose={closeActions} title="Suscripciones y Bolsas" />
           <View style={styles.sheetContent}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => { closeActions(); router.push("/subscription-details" as Href); }}
-              style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-              <View style={styles.actionIcon}><Info color={tokens.color.textMain} size={20} /></View>
-              <Text style={styles.actionLabel}>Ver detalles de Suscripciones y Bolsas</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ busy: working, disabled: working }}
-              disabled={working}
-              onPress={() => { closeActions(); void restore(); }}
-              style={({ pressed }) => [styles.actionRow, working && styles.disabledAction, pressed && styles.pressed]}>
-              <View style={styles.actionIcon}><RefreshCcw color={tokens.color.textMain} size={20} /></View>
-              <Text style={styles.actionLabel}>Restaurar compras</Text>
-            </Pressable>
+            <ActionSheetActions>
+              <ActionSheetAction icon={Info} label="Ver detalles de Suscripciones y Bolsas" onPress={() => { closeActions(); router.push("/subscription-details" as Href); }} />
+              <Pressable accessibilityRole="button" accessibilityState={{ busy: working, disabled: working }} disabled={working} onPress={() => { closeActions(); void restore(); }} style={({ pressed }) => [styles.actionRow, working && styles.disabledAction, pressed && styles.pressed]}>
+                <RefreshCcw color={tokens.color.textMain} size={18} />
+                <Text style={styles.actionLabel}>Restaurar compras</Text>
+              </Pressable>
+            </ActionSheetActions>
           </View>
         </SafeAreaView>
       </ActionSheetModal>
@@ -542,8 +525,7 @@ function PurchaseButton({ disabled = false, label, loading = false, onPress }: {
 }
 
 const styles = StyleSheet.create({
-  actionIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
-  actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
+  actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.medium },
   actionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
   benefitIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
   benefitIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
@@ -571,8 +553,6 @@ const styles = StyleSheet.create({
   purchaseButtonPressed: { opacity: 0.72, transform: [{ translateY: 1 }] },
   pressed: { opacity: 0.65 },
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  sheetHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden" },
-  sheetTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold },
   subscriptionHeading: { alignItems: "center", flexDirection: "row" },
 });

@@ -1,4 +1,4 @@
-import { Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2, X } from "lucide-react-native";
+import { Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -22,7 +22,7 @@ import type {
 } from "@/api/types";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { EntityCardAction } from "@/components/ui";
-import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { MealTimeForm } from "@/components/calendarization/calendarized-entity-actions";
 import { tokens } from "@/design/tokens";
 import { openNativeShare } from "@/sharing/native-share";
@@ -172,20 +172,13 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
       <ActionSheetModal dismissImmediately={dismissShareImmediately} onRequestClose={close} visible={visible}>
           <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
             <View style={styles.sheet}>
-              <View style={styles.sheetHeader}>
-                <View style={styles.headerCopy}>
-                  <Text style={styles.eyebrow}>ACCIONES</Text>
-                  <Text numberOfLines={1} style={styles.title}>{actionTitle ?? item.name}</Text>
-                </View>
-                <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={close} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
-                  <X color={tokens.color.textMain} size={22} />
-                </Pressable>
-              </View>
+              <ActionSheetHeader entity={item.entity} onClose={close} title={actionTitle ?? item.name} />
 
-              <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
                 {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
-                {!selected && onOpenInformation ? (
+                {!selected ? <ActionSheetActions>
+                {onOpenInformation ? (
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => {
@@ -193,14 +186,12 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                       onOpenInformation();
                     }}
                     style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-                    <View style={styles.actionIcon}>
-                      <Info color={tokens.color.textMain} size={20} />
-                    </View>
+                    <Info color={tokens.color.textMain} size={18} />
                     <Text style={styles.actionLabel}>Ver información del elemento</Text>
                   </Pressable>
                 ) : null}
 
-                {!selected && onCompare ? (
+                {onCompare ? (
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => {
@@ -208,14 +199,12 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                       onCompare();
                     }}
                     style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-                    <View style={styles.actionIcon}>
-                      <Scale color={tokens.color.textMain} size={20} />
-                    </View>
+                    <Scale color={tokens.color.textMain} size={18} />
                     <Text style={styles.actionLabel}>Comparar</Text>
                   </Pressable>
                 ) : null}
 
-                {!selected ? actions.map((action) => {
+                {actions.map((action) => {
                   const Icon = actionIcons[action.key];
                   return (
                     <Pressable
@@ -224,25 +213,22 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                       key={action.key}
                       onPress={() => selectAction(action)}
                       style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-                      <View style={[styles.actionIcon, action.destructive && styles.actionIconDanger]}>
-                        <Icon color={action.destructive ? tokens.color.danger : tokens.color.textMain} size={20} />
-                      </View>
+                      <Icon color={action.destructive ? tokens.color.danger : tokens.color.textMain} size={18} />
                       <Text style={[styles.actionLabel, action.destructive && styles.actionLabelDanger]}>{action.label}</Text>
                     </Pressable>
                   );
-                }) : null}
+                })}
 
-                {!selected && mealTimeChange && mealTimeInMenu ? (
+                {mealTimeChange && mealTimeInMenu ? (
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => setSelected({ destructive: false, key: "change-time", label: "Cambiar hora" })}
                     style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-                    <View style={styles.actionIcon}>
-                      <Clock3 color={tokens.color.textMain} size={20} />
-                    </View>
+                    <Clock3 color={tokens.color.textMain} size={18} />
                     <Text style={styles.actionLabel}>Cambiar hora</Text>
                   </Pressable>
                 ) : null}
+                </ActionSheetActions> : null}
 
                 {selected?.key === "change-time" && mealTimeChange ? (
                   <MealTimeForm initialTime={mealTimeChange.initialTime} onCancel={initialAction ? close : () => setSelected(null)} onSaved={close} onSubmit={mealTimeChange.onSubmit} />
@@ -284,16 +270,10 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
 const styles = StyleSheet.create({
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
   sheet: { backgroundColor: tokens.color.surfaceCard },
-  sheetHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
-  headerCopy: { flex: 1, gap: 3, minWidth: 0 },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
-  title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
-  closeButton: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
+  sheetScroll: { flexGrow: 0, flexShrink: 1 },
   actionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
-  actionIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
-  actionIconDanger: { backgroundColor: tokens.color.surfaceMuted },
-  actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: "700" },
+  actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.medium },
   actionLabelDanger: { color: tokens.color.danger },
   form: { gap: tokens.spacing.md },
   confirmation: { gap: tokens.spacing.md },

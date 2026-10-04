@@ -16,7 +16,7 @@ test("in-progress program, plan and meal menus open dedicated information views"
   assert.match(day, /onOpenInformation=\{\(\) => router\.push\(`\/program\/days\/\$\{day\.id\}\/information` as Href\)\}/);
   assert.doesNotMatch(day, /title="Información del día"/);
   assert.match(meal, /onOpenInformation=\{\(\) => router\.push\(`\/program\/days\/\$\{dayId\}\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/information` as Href\)\}/);
-  assert.match(entityActions, /<Text style=\{styles\.actionLabel\}>Ver información del elemento<\/Text>/);
+  assert.match(entityActions, /<ActionSheetAction icon=\{Info\} label="Ver información del elemento"/);
 });
 
 test("in-progress information routes preserve the current element hierarchy", async () => {
