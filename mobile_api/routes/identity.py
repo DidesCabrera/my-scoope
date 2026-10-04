@@ -9,6 +9,7 @@ from accounts.services.onboarding import complete_nutrition_onboarding
 from mobile_api.api_support import form_error, require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
+from mobile_api.routes.identity_edits import router as identity_edits_router
 from mobile_api.schema_domains.identity import (
     AccountDeletionEnvelope,
     AccountDeletionInput,
@@ -20,13 +21,10 @@ from mobile_api.schema_domains.identity import (
 )
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import profile_payload, session_payload
-from notas.application.services.oauth_device_sessions import (
-    MOBILE_SCOPE_ACCOUNT,
-    MOBILE_SCOPE_WRITE,
-    revoke_oauth_device_session,
-)
+from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_ACCOUNT, MOBILE_SCOPE_WRITE, revoke_oauth_device_session
 
 router = Router()
+router.add_router("", identity_edits_router)
 
 
 @router.get(

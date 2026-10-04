@@ -26,7 +26,8 @@ import { ProgramDetailPreview } from "@/components/libraries/program-detail-prev
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
-import { OnboardingJourneyView, onboardingJourneySteps, type OnboardingJourneyStep } from "@/components/onboarding";
+import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
+import { OnboardingJourneyView, onboardingJourneySteps } from "@/components/onboarding";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -37,7 +38,6 @@ import { FoodPanels, type FoodPanelItem, MealPanels, type MealPanelItem } from "
 import { ProgramActiveKpis } from "@/components/programs";
 import {
   AppHeader,
-  Brand,
   Button,
   Card,
   CardHeader,
@@ -53,6 +53,7 @@ import {
   Field,
   GuideMetric,
   InlineNotice,
+  MacroLoadingIndicator,
   MessageCard,
   Pill,
   ProgressBar,
@@ -199,7 +200,7 @@ const activeProgramDayExamples = [
 export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
   const [tab, setTab] = useState<GalleryTab>("components");
-  const [onboardingStep, setOnboardingStep] = useState<OnboardingJourneyStep>("login");
+  const [onboardingPreviewWidth, setOnboardingPreviewWidth] = useState<(typeof calendarPreviewWidths)[number]["width"]>(414);
   const [choice, setChoice] = useState<Choice>("daily");
   const [distributedExample, setDistributedExample] = useState<"chats" | "proposals">("chats");
   const [scrollableExample, setScrollableExample] = useState<"week1" | "week2" | "week3" | "week4">("week1");
@@ -208,14 +209,15 @@ export default function UiGalleryScreen() {
   const [field, setField] = useState("");
   const [selectedProgramDay, setSelectedProgramDay] = useState<number | string | null>("tue");
   const [selectedActiveProgramDay, setSelectedActiveProgramDay] = useState<number | string | null>("active-tue");
+  const activeOnboardingPreviewWidth = calendarPreviewWidths.some((preview) => preview.width === onboardingPreviewWidth)
+    ? onboardingPreviewWidth
+    : calendarPreviewWidths[0].width;
 
   if (!__DEV__) return <Redirect href="/" />;
 
   return (
     <Screen>
-      <Brand />
       <AppHeader eyebrow="Solo desarrollo" title="Galería del sistema UI" />
-      <InlineNotice>Referencia interna construida con los componentes reales de la app.</InlineNotice>
       <View style={[styles.galleryLayout, width >= 700 && styles.galleryLayoutWide]}>
         <GalleryNavigation activeTab={tab} onChange={setTab} wide={width >= 700} />
         <View style={styles.galleryContent}>
@@ -223,21 +225,21 @@ export default function UiGalleryScreen() {
       {tab === "onboarding" ? (
         <>
           <SectionTitle detail="Storyboard visual · sin sesión, API ni persistencia" title="Flujo inicial" />
-          <ScrollableTabBar<OnboardingJourneyStep>
-            accessibilityLabel="Vistas del onboarding"
-            activeTab={onboardingStep}
+          <ScrollableTabBar<(typeof calendarPreviewWidths)[number]["width"]>
+            accessibilityLabel="Formatos del onboarding"
+            activeTab={activeOnboardingPreviewWidth}
             density="compact"
-            onChange={setOnboardingStep}
-            tabs={onboardingJourneySteps.map((step, index) => ({ key: step.key, label: `${index + 1}. ${step.shortLabel}` }))}
+            onChange={setOnboardingPreviewWidth}
+            tabs={calendarPreviewWidths.map((preview) => ({ key: preview.width, label: preview.label }))}
           />
-          <InlineNotice>Selecciona cualquier vista para revisar contenido, orden y estética con datos fijos.</InlineNotice>
-          {calendarPreviewWidths.map((preview) => (
-            <View key={`onboarding-${preview.width}`} style={[styles.devicePreview, { width: preview.width }]}>
+          <InlineNotice>Cada formato presenta el flujo completo en orden, con datos fijos y sin persistencia.</InlineNotice>
+          {onboardingJourneySteps.map((step, index) => (
+            <View key={`onboarding-${activeOnboardingPreviewWidth}-${step.key}`} style={[styles.devicePreview, { width: activeOnboardingPreviewWidth }]}>
               <View style={styles.devicePreviewHeader}>
-                <Text style={styles.devicePreviewName}>{preview.label}</Text>
-                <Text style={styles.devicePreviewWidth}>{preview.width} pt</Text>
+                <Text style={styles.devicePreviewName}>{String(index + 1).padStart(2, "0")}. {step.label}</Text>
+                <Text style={styles.devicePreviewWidth}>{activeOnboardingPreviewWidth} pt</Text>
               </View>
-              <OnboardingJourneyView step={onboardingStep} />
+              <OnboardingJourneyView step={step.key} />
             </View>
           ))}
         </>
@@ -638,6 +640,14 @@ export default function UiGalleryScreen() {
 
       {tab === "states" ? (
         <>
+          <SectionTitle detail="Muestras visuales estáticas" title="Pop-ups" />
+          <PopupAestheticGallery />
+          <SectionTitle detail="Animación de proteína, carbos y grasas" title="Carga entre vistas" />
+          <Card>
+            <View style={styles.loadingPreview}>
+              <MacroLoadingIndicator accessibilityLabel="Preparando tu día" />
+            </View>
+          </Card>
           <SectionTitle detail="Interactivos" title="Controles" />
           <Button label="Acción principal" onPress={() => undefined} />
           <Button label="Acción secundaria" onPress={() => undefined} variant="secondary" />
@@ -774,4 +784,5 @@ const styles = StyleSheet.create({
   allocationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   allocationLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", width: 96 },
   allocationBarInRow: { flex: 1, minWidth: 0, width: "auto" },
+  loadingPreview: { alignItems: "center", justifyContent: "center", minHeight: 180 },
 });

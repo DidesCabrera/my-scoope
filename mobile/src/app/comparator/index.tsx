@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Carrot, ClipboardList, Utensils } from "lucide-react-native";
+import { Carrot, ChevronRight, ClipboardList, Utensils } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -15,6 +15,7 @@ import type {
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
+import { SavedComparisonPreviewPanels } from "@/components/comparisons/comparison-components";
 import {
   applyComparatorSelection,
   initialComparisonSlots,
@@ -24,7 +25,15 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionKpiSection } from "@/components/nutrition";
-import { DistributedTabBar, EntityCard, SectionPageHeader } from "@/components/ui";
+import {
+  DistributedTabBar,
+  EntityCard,
+  EntityCardAction,
+  EntityCardActions,
+  EntityIcon,
+  SectionDivider,
+  SectionPageHeader,
+} from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, Field, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -47,24 +56,53 @@ const comparisonEntityColors: Record<ComparisonKind, string> = {
   dailyplans: tokens.color.dailyPlan,
 };
 
+const comparisonCountLabels: Record<ComparisonKind, { plural: string; singular: string }> = {
+  foods: { plural: "Alimentos", singular: "Alimento" },
+  meals: { plural: "Comidas", singular: "Comida" },
+  dailyplans: { plural: "Planes diarios", singular: "Plan diario" },
+};
+
+function comparisonCountLabel(kind: ComparisonKind, count: number) {
+  const labels = comparisonCountLabels[kind];
+  return `${count} ${count === 1 ? labels.singular : labels.plural}`;
+}
+
 function creationHref(kind: ComparisonKind): Href {
   return { pathname: "/comparator", params: { create: "1", kind } } as Href;
 }
 
 function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress(): void }) {
+  const entity = comparisonEntities[item.kind];
+  const entityColor = comparisonEntityColors[item.kind];
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Card accent={comparisonEntityColors[item.kind]}>
-        <View style={styles.savedRow}>
-          <View style={styles.savedCopy}>
-            <Text style={styles.savedTitle}>{item.name}</Text>
-            <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
-          </View>
-          <Pill label={`${item.item_count} elementos`} />
+    <Card accent={entityColor} style={styles.savedCard}>
+      <Pressable
+        accessibilityLabel={`Ver detalle de ${item.name}`}
+        accessibilityRole="link"
+        onPress={onPress}
+        style={({ pressed }) => [styles.savedCopy, pressed && styles.pressed]}>
+        <View style={styles.savedEyebrow}>
+          <EntityIcon entity={entity} size="compact" />
+          <Text style={styles.savedEyebrowText}>Comparación {item.kind_label}</Text>
         </View>
-        <Text style={textStyles.muted}>Ver comparación guardada ›</Text>
-      </Card>
-    </Pressable>
+        <Text style={styles.savedTitle}>{item.name}</Text>
+        <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
+        <View style={styles.savedChip}>
+          <Pill
+            backgroundColor={`${entityColor}1A`}
+            color={entityColor}
+            label={comparisonCountLabel(item.kind, item.item_count)}
+            textColor={tokens.color.entityIconForeground}
+          />
+        </View>
+      </Pressable>
+      <SavedComparisonPreviewPanels items={item.items} scope={entity} />
+      <EntityCardActions>
+        <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={onPress} role="link">
+          <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+        </EntityCardAction>
+      </EntityCardActions>
+    </Card>
   );
 }
 
@@ -320,6 +358,7 @@ function ComparatorBuilderScreen() {
         <Button disabled={selectedCount < 2} label="Comparar" loading={working} onPress={() => void compare()} />
         {result ? (
           <>
+            <SectionDivider />
             <ComparisonResultCards result={result} />
             <Button label={savedId ? "Guardar cambios" : "Guardar comparación"} loading={working} onPress={() => void persist()} variant="secondary" />
           </>
@@ -343,8 +382,11 @@ const styles = StyleSheet.create({
   remove: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   removeText: { color: tokens.color.textMuted, fontSize: 24, lineHeight: 26 },
   pressed: { opacity: 0.68 },
+  savedCard: { paddingBottom: tokens.card.innerPadding },
   savedCopy: { flex: 1, gap: tokens.spacing.xs },
-  savedRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
+  savedChip: { alignItems: "flex-start" },
+  savedEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
+  savedEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
   savedTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   slots: { gap: tokens.spacing.md },
 });

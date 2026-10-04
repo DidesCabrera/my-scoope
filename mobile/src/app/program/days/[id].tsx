@@ -2,7 +2,7 @@ import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } 
 import * as Crypto from "expo-crypto";
 import { ChevronRight } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -17,9 +17,9 @@ import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { FoodPanels, MealPanels, type MealPanelItem } from "@/components/panels";
+import { FoodPanels, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, ContentPanel, EntityCardAction, InlineNotice, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
+import { Button, ContentPanel, EntityCardAction, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -43,16 +43,17 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
         const totals = meal.totals;
         const foods = snapshotFoodPanelItems(meal);
         const execution = normalizedMealExecution.find((item) => item.meal_key === meal.key);
+        const openDetail = meal.key ? () => router.push({
+          pathname: "/program/days/[id]/meals/[mealKey]",
+          params: { id: String(dayId), mealKey: meal.key ?? "" },
+        } as Href) : undefined;
         return (
           <View key={meal.key ?? `${meal.name}-${index}`}>
             <NutritionEntityCard
-              actions={meal.key ? (
+              actions={openDetail ? (
                 <EntityCardAction
                   label={`Ver detalle de ${meal.name ?? "la comida"}`}
-                  onPress={() => router.push({
-                    pathname: "/program/days/[id]/meals/[mealKey]",
-                    params: { id: String(dayId), mealKey: meal.key ?? "" },
-                  } as Href)}
+                  onPress={openDetail}
                   role="link">
                   <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                 </EntityCardAction>
@@ -60,6 +61,7 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
               completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
+              headingLink={openDetail ? { label: `Ver detalle de ${meal.name ?? "la comida"}`, onPress: openDetail } : undefined}
               indicators={[
                 { icon: "food", label: "alimentos", value: foods.length },
                 ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),
@@ -194,7 +196,7 @@ export default function ProgramDayScreen() {
   }, [compactHeaderVisible, day, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (loading && !day) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Abriendo el día…</Text></View>;
+  if (loading && !day) return <LoadingState label="Abriendo el día…" />;
   if (!day) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
 
   const snapshot = day.plan_snapshot;
@@ -273,14 +275,10 @@ export default function ProgramDayScreen() {
             <>
               <SectionDivider />
               <EntityDetailSection detail={`${foods.length} alimentos`} title="Alimentos en este plan diario">
-                <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
+                <GroupedFoodsCard items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} title="Alimentos plan diario" />
               </EntityDetailSection>
             </>
           ) : null}
-          <ContentPanel muted title="Información del día">
-            <View style={styles.metadataRow}><Text style={styles.metadataLabel}>Fecha</Text><Text style={styles.metadataValue}>{displayDate(day.calendar_date)}</Text></View>
-            <View style={styles.metadataRow}><Text style={styles.metadataLabel}>Ubicación</Text><Text style={styles.metadataValue}>Semana {day.week_number} · Día {day.day_number}</Text></View>
-          </ContentPanel>
         </EntityDetailPage>
       ) : (
         <ContentPanel muted title="Día sin plan">
@@ -291,6 +289,7 @@ export default function ProgramDayScreen() {
     </NestableScrollContainer>
     <CalendarizedEntityActions
       entityName={snapshot?.name ?? day.plan_name ?? "Plan diario"}
+      onOpenInformation={() => router.push(`/program/days/${day.id}/information` as Href)}
       onVisibleChange={setActionsVisible}
       rename={{
         onSubmit: async (name) => {
@@ -333,8 +332,5 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
-  metadataLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
-  metadataRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  metadataValue: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: "500", textAlign: "right", textTransform: "capitalize" },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
 });

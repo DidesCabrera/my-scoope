@@ -118,8 +118,8 @@ class SavedComparisonSummaryData(Schema):
     kind: Literal["foods", "meals", "dailyplans"]
     kind_label: str
     item_count: int
+    items: list[ComparisonResultItemData]
     updated_at: datetime
-
 
 class SavedComparisonListData(Schema):
     items: list[SavedComparisonSummaryData]

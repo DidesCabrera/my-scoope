@@ -41,13 +41,15 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, 
     completed: Boolean(meal.key && completedMealKeys.has(meal.key)),
   }));
   const cardEditing = editing && onChangeMealTime ? { ...editing, onChangeTime: setTimeChangeMeal } : editing;
+  const openDetail = dayId ? () => router.push(`/program/days/${dayId}` as Href) : undefined;
   return (<>
     <NutritionEntityCard
-      actions={dayId ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={() => router.push(`/program/days/${dayId}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}
+      actions={openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}
       afterNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} />}
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       entity="dailyPlan"
       eyebrow={eyebrow}
+      headingLink={openDetail ? { label: "Ir al detalle del plan calendarizado", onPress: openDetail } : undefined}
       indicators={[
         ...(position ? [{ icon: "day" as const, label: "posición", value: `S${position.weekNumber} · D${position.dayNumber}` }] : []),
         { icon: "meal", label: "comidas", value: meals.length },

@@ -26,6 +26,17 @@ function weekRequirementFacts(program: ProposalProgram, week: number): ProposalF
   ];
 }
 
+export function ProposalProgramWeekObjectivesCard({ program, week }: { program: ProposalProgram; week: number }) {
+  const facts = weekRequirementFacts(program, week);
+  return facts.length ? (
+    <ProposalFacts
+      description="Requisitos usados por el Asistente Nutricional para validar los siete planes de esta semana."
+      facts={facts}
+      title={`Objetivos de la Semana ${week}`}
+    />
+  ) : null;
+}
+
 export function ProposalProgramCard({ onOpen, program }: { onOpen(): void; program: ProposalProgram }) {
   const item = useMemo(() => proposalProgramLibraryItem(program), [program]);
   const weeks = item.panel.kind === "weeks" ? item.panel.weeks : [];
@@ -38,6 +49,7 @@ export function ProposalProgramCard({ onOpen, program }: { onOpen(): void; progr
       axisLabels={weeks.map((week) => `S${week.week_number}`)}
       filledDaysCount={indicator("dailyPlan")}
       foodsCount={indicator("food")}
+      headingLink={{ label: `Ver detalle de ${item.name}`, onPress: onOpen }}
       metricData={programDailyMetricData(weeks)}
       onOpen={onOpen}
       openActionLabel="Explorar programa"
@@ -48,7 +60,7 @@ export function ProposalProgramCard({ onOpen, program }: { onOpen(): void; progr
   );
 }
 
-export function ProposalProgramPreview({ onOpenDailyPlan, onOpenFood, onOpenMeal, program }: { onOpenDailyPlan?(week: number, day: number): void; onOpenFood?(id: number): void; onOpenMeal?(week: number, day: number, mealIndex: number): void; program: ProposalProgram }) {
+export function ProposalProgramPreview({ onOpenDailyPlan, onOpenFood, onOpenMeal, program, scrollable = false }: { onOpenDailyPlan?(week: number, day: number): void; onOpenFood?(id: number): void; onOpenMeal?(week: number, day: number, mealIndex: number): void; program: ProposalProgram; scrollable?: boolean }) {
   const item = useMemo(() => proposalProgramLibraryItem(program), [program]);
   return (
     <ProgramDetailPreview
@@ -62,16 +74,7 @@ export function ProposalProgramPreview({ onOpenDailyPlan, onOpenFood, onOpenMeal
       onOpenDailyPlan={onOpenDailyPlan}
       onOpenFood={onOpenFood}
       onOpenMeal={onOpenMeal}
-      renderWeekContext={(week) => {
-        const facts = weekRequirementFacts(program, week);
-        return facts.length ? (
-          <ProposalFacts
-            description="Requisitos usados por el Asistente Nutricional para validar los siete planes de esta semana."
-            facts={facts}
-            title={`Objetivos de la Semana ${week}`}
-          />
-        ) : null;
-      }}
+      scrollable={scrollable}
     />
   );
 }

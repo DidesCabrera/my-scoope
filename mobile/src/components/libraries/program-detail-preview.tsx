@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
-import { FoodPanels, type FoodPanelItem } from "@/components/panels";
+import { GroupedFoodsCard, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
@@ -145,14 +145,17 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
       {hasPlans ? <>
         <SectionDivider spacing="compact" tone="soft" />
         <SectionHeading detail={`${weekData?.foods_count ?? weekData?.foods?.length ?? 28} alimentos`} title="Alimentos en esta semana" />
-        <FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} onOpenItem={(food) => {
+        <GroupedFoodsCard title={`Alimentos semana ${week}`} items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} onOpenItem={(food) => {
           if (food.detailId == null) return;
           if (onOpenFood) onOpenFood(food.detailId);
           else router.push(`/libraries/foods/${food.detailId}` as Href);
         }} />
 
         <SectionDivider spacing="compact" tone="soft" />
-        <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
+        <View style={styles.weekChartSection}>
+          <SectionHeading title="Gráfico de la semana" />
+          <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
+        </View>
 
         <SectionHeading title="Tabla de comparación entre planes diarios" />
         <ProgramDayComparisonPanels key={`comparison-${week}`} onAssign={onAssignDailyPlan} onDelete={onRemoveDailyPlan} onReorder={onReorderDailyPlans} rows={weekData ? dayRows(weekData) : undefined} week={week} />
@@ -252,7 +255,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
   }
 
   return (
-    <NestableScrollContainer contentContainerStyle={styles.page} scrollEnabled={false} showsVerticalScrollIndicator={false}>
+    <View style={styles.page}>
       {overview}
       <SectionDivider />
       <View style={styles.planningSection}>
@@ -262,7 +265,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
         <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
         {footer ? <View style={styles.footer}>{footer}</View> : null}
       </View>
-    </NestableScrollContainer>
+    </View>
   );
 }
 
@@ -277,6 +280,7 @@ const styles = StyleSheet.create({
   weekTabsEmbedded: { paddingBottom: tokens.spacing.sm },
   footer: { gap: tokens.spacing.lg, marginTop: tokens.spacing.xl },
   weekContent: { gap: tokens.spacing.lg, minWidth: 0, paddingTop: tokens.spacing.md, width: "100%" },
+  weekChartSection: { gap: tokens.spacing.md, minWidth: 0 },
   weekCardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   weekIdentity: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
   compactAction: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },

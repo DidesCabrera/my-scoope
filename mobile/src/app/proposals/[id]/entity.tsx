@@ -88,6 +88,7 @@ export default function ProposalEntityDetailScreen() {
                     )}
                     food={food}
                     key={`${food.food_id}-${food.food_name}-${index}`}
+                    onOpen={() => router.push(`/proposals/${proposal.id}/entity/foods/${index}` as Href)}
                   />
                 ))}
               </EntityDetailSection>
@@ -124,6 +125,7 @@ export default function ProposalEntityDetailScreen() {
                 eyebrow={`Comida ${index + 1}`}
                 key={`${item.hour}-${item.meal.name}-${index}`}
                 meal={item.meal}
+                onOpen={() => router.push(`/proposals/${proposal.id}/entity/meals/${index}` as Href)}
                 onOpenFood={(foodIndex) => router.push(`/proposals/${proposal.id}/entity/meals/${index}/foods/${foodIndex}` as Href)}
                 time={item.hour}
               />

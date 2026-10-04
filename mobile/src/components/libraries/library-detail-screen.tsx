@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Image, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -11,11 +11,12 @@ import { MealAdherenceCheckIn, MealCompletionCard, MealNoteCard, useMealAdherenc
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
 import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components/calendarization/meal-execution";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
-import { EntityDetailMetadata, EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
-import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
+import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
+import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
+import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
-import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
+import { LoadingState, MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
+import { Button, InlineNotice } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { tokens } from "@/design/tokens";
@@ -23,7 +24,7 @@ import type { FoodLabelImage } from "@/label-capture/types";
 import { internalHref } from "@/navigation/internal-href";
 
 import { DailyPlanMealCards, ProgramPanels } from "./entity-panels";
-import { libraryDate, libraryNutrition } from "./presentation-adapters";
+import { libraryNutrition } from "./presentation-adapters";
 import { ProgramDetailPreview } from "./program-detail-preview";
 import { LibraryActions } from "./library-actions";
 
@@ -41,6 +42,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const router = useRouter();
   const { id, calendarizedDayId, dailyPlanId, dailyPlanMealId, mealKey, mealTime, pinned, pickerEntryTo, pickerKind, pickerRelationId, pickerTargetId, returnTo } = useLocalSearchParams<{ id: string; calendarizedDayId?: string; dailyPlanId?: string; dailyPlanMealId?: string; mealKey?: string; mealTime?: string; pinned?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; returnTo?: string }>();
   const { status, apiRequest } = useSession();
+  const { publishSelection } = useComparatorSelectionTransfer();
   const [item, setItem] = useState<LibraryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,6 +97,24 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const isPinnedPlan = item?.entity === "dailyPlan" && todayContext?.calendarization == null && todayContext?.pinned_plan?.id === item.id;
   const openActions = useCallback(() => setActionSheet("menu"), []);
   const openTimeChange = useCallback(() => setActionSheet("change-time"), []);
+  const openComparison = useCallback(() => {
+    if (!item || item.entity === "program") return;
+    const kind = item.entity === "food" ? "foods" : item.entity === "meal" ? "meals" : "dailyplans";
+    publishSelection({
+      kind,
+      option: {
+        entity: item.entity,
+        id: item.id,
+        indicators: item.indicators,
+        name: item.name,
+        nutrition: item.nutrition,
+        panel: item.panel,
+        subtitle: item.subtitle,
+      },
+      slotKey: 1,
+    });
+    router.push({ pathname: "/comparator", params: { create: "1", kind } } as Href);
+  }, [item, publishSelection, router]);
   const setPinnedPlan = useCallback(async (nextPinned: boolean) => {
     if (!item || item.entity !== "dailyPlan") return;
     setError(null);
@@ -142,7 +162,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     } else {
       setHeaderPresentation({
         mode: "library-detail",
-        action: item?.actions?.length ? { label: `Más acciones para ${item?.name ?? fallbackTitle}`, onPress: openActions } : undefined,
+        action: item ? { label: `Más acciones para ${item.name}`, onPress: openActions } : undefined,
         entity: headerEntity,
         identityVisible: compactHeaderVisible,
         secondaryAction: hasMealTimeContext
@@ -295,7 +315,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   }, [apiRequest, item]);
   useFocusEffect(useCallback(() => { if (status === "authenticated" && id) void load(); }, [id, load, status]));
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (loading && !item) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Cargando detalle…</Text></View>;
+  if (loading && !item) return <LoadingState label="Cargando detalle…" />;
   if (!item) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
   const actionsModal = <LibraryActions apiRequest={apiRequest} entitySlug={entitySlug} initialAction={actionSheet === "change-time" ? "change-time" : undefined} item={item} key={actionSheet ?? "closed"} mealTimeChange={hasMealTimeContext ? {
     initialTime: contextTime,
@@ -307,11 +327,11 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       });
       setContextTime(hour);
     },
-  } : undefined} mealTimeInMenu={false} onCompleted={handleActionCompleted} onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }} renderTrigger={() => null} visible={actionSheet != null} />;
+  } : undefined} mealTimeInMenu={false} onCompare={item.entity === "program" ? undefined : openComparison} onCompleted={handleActionCompleted} onOpenInformation={() => router.push(`/libraries/${entitySlug}/${item.id}/information` as Href)} onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }} renderTrigger={() => null} visible={actionSheet != null} />;
   const mutationStatusModal = <MutationStatusModal onFinished={() => setMutationStatus(null)} status={mutationStatus} />;
   if (item.entity === "program") {
     return <><ProgramDetailPreview
-      footer={<>{item.can_calendarize && !item.is_draft ? <Button bleed label="Calendarizar este programa" onPress={() => router.push(`/program/activate?programId=${item.id}` as Href)} /> : null}<EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /></>}
+      footer={item.can_calendarize && !item.is_draft ? <Button bleed label="Calendarizar este programa" onPress={() => router.push(`/program/activate?programId=${item.id}` as Href)} /> : undefined}
       item={item}
       onAddWeek={item.can_calendarize ? () => router.push(`/pickers/week-to-program?programId=${item.id}` as Href) : undefined}
       onAssignDailyPlan={item.can_calendarize ? (week, day) => router.push(pickerHref("dailyplan-to-program", { programId: item.id, weekNumber: week, dayNumber: day })) : undefined}
@@ -374,9 +394,8 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     {item.entity === "meal" && isPinnedMealContext ? <MealNoteCard controller={pinnedMealAdherence} /> : null}
     {item.entity === "meal" && !isPinnedMealContext && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></EntityDetailSection></> : null}
-    {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><FoodPanels items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} /></EntityDetailSection></> : null}
+    {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><GroupedFoodsCard items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} title="Alimentos plan diario" /></EntityDetailSection></> : null}
     {item.entity === "dailyPlan" && todayContext?.calendarization == null ? <Button bleed label={isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"} onPress={() => confirmPinnedPlan(!isPinnedPlan)} variant={isPinnedPlan ? "secondary" : "primary"} /> : null}
-    {!isEmptyDraft ? <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /> : null}
   </EntityDetailPage></NestableScrollContainer>{actionsModal}{mutationStatusModal}<CalendarizedEntityActions
     entityName={panelTimeMeal?.name ?? "Comida"}
     initialAction="change-time"

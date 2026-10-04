@@ -1,14 +1,27 @@
 import { ChevronDown, Trash2 } from "lucide-react-native";
-import type { PropsWithChildren, ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 
+import type { ComparisonResultItem } from "@/api/types";
 import { PanelAllocationBar } from "@/components/nutrition";
-import { FoodPanels, type FoodPanelItem } from "@/components/panels";
+import {
+  EntityPanelTabs,
+  EntityNamePanel,
+  FoodPanels,
+  FoodQuantityPanel,
+  type FoodPanelItem,
+  NutritionAllocationPanel,
+  NutritionCaloriesPanel,
+  NutritionDistributionPanel,
+  NutritionMacrosPanel,
+  PanelSurface,
+} from "@/components/panels";
 import { Button, DistributedTabBar, EntityIcon, SectionHeading, SectionIcon, StructuralIndicators, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ComparisonScope = Extract<EntityKind, "food" | "meal" | "dailyPlan">;
 export type ComparisonMetricTone = "calories" | "ppk" | "protein" | "carbs" | "fat";
+type ComparisonPreviewTab = "allocation" | "calories" | "distribution" | "entity" | "macros";
 
 const scopeLabels: Record<ComparisonScope, string> = {
   food: "Alimentos",
@@ -53,6 +66,54 @@ export function ComparisonScopeTabs({ activeScope, onChange }: { activeScope: Co
       onChange={onChange}
       tabs={(Object.keys(scopeLabels) as ComparisonScope[]).map((scope) => ({ icon: <EntityIcon entity={scope} size="compact" />, key: scope, label: scopeLabels[scope] }))}
     />
+  );
+}
+
+function comparisonPanelItems(items: ComparisonResultItem[]): FoodPanelItem[] {
+  const totalCalories = items.reduce((sum, item) => sum + item.values.calories, 0);
+  return items.map((item) => {
+    const macroCalories = (item.values.protein_g * 4) + (item.values.carbs_g * 4) + (item.values.fat_g * 9);
+    return {
+      calorieShare: totalCalories > 0 ? item.values.calories * 100 / totalCalories : 0,
+      calories: item.values.calories,
+      carbsAllocation: macroCalories > 0 ? item.values.carbs_g * 4 * 100 / macroCalories : 0,
+      carbsGrams: item.values.carbs_g,
+      fatAllocation: macroCalories > 0 ? item.values.fat_g * 9 * 100 / macroCalories : 0,
+      fatGrams: item.values.fat_g,
+      id: `${item.position}-${item.id}`,
+      name: item.quantity == null ? item.name : `${item.name} (${item.quantity.toLocaleString("es-CL", { maximumFractionDigits: 1 })}g)`,
+      proteinAllocation: macroCalories > 0 ? item.values.protein_g * 4 * 100 / macroCalories : 0,
+      proteinGrams: item.values.protein_g,
+      proteinPerKilogram: item.values.protein_per_kilogram,
+      quantity: item.quantity ?? 1,
+      quantityUnit: item.quantity == null ? "unidad" : "g",
+    };
+  });
+}
+
+export function SavedComparisonPreviewPanels({ items, scope }: { items?: ComparisonResultItem[]; scope: ComparisonScope }) {
+  const [activeTab, setActiveTab] = useState<ComparisonPreviewTab>("entity");
+  const sourceItems = items ?? [];
+  const panelItems = comparisonPanelItems(sourceItems);
+  const leadingLabel = scopeLabels[scope];
+  const tabs = [
+    { key: "entity" as const, label: scope === "dailyPlan" ? "Planes diarios" : leadingLabel },
+    { key: "calories" as const, label: "Calorías" },
+    { key: "macros" as const, label: "Macros" },
+    { key: "distribution" as const, label: "Dist" },
+    { key: "allocation" as const, label: "Alloc" },
+  ];
+  if (panelItems.length === 0) return null;
+  return (
+    <PanelSurface>
+      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+      {activeTab === "entity" && scope === "food" ? <FoodQuantityPanel items={panelItems.map((item, index) => ({ ...item, name: sourceItems[index].name }))} /> : null}
+      {activeTab === "entity" && scope !== "food" ? <EntityNamePanel entity={scope} items={sourceItems.map((item) => ({ id: `${item.position}-${item.id}`, name: item.name }))} label={scope === "meal" ? "Comidas" : "Planes diarios"} /> : null}
+      {activeTab === "calories" ? <NutritionCaloriesPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
+      {activeTab === "macros" ? <NutritionMacrosPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
+      {activeTab === "distribution" ? <NutritionDistributionPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
+      {activeTab === "allocation" ? <NutritionAllocationPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
+    </PanelSurface>
   );
 }
 

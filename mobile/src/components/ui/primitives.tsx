@@ -13,6 +13,7 @@ import {
 
 import { tokens } from "@/design/tokens";
 import { Screen } from "./layout";
+import { MacroLoadingIndicator } from "./macro-loading-indicator";
 
 export { Screen };
 
@@ -64,16 +65,26 @@ export function SectionTitle({ title, detail }: { title: string; detail?: string
   );
 }
 
-export function Pill({ label, color = tokens.color.interactivePrimary }: { label: string; color?: string }) {
+export function Pill({
+  backgroundColor,
+  label,
+  color = tokens.color.interactivePrimary,
+  textColor,
+}: {
+  backgroundColor?: string;
+  label: string;
+  color?: string;
+  textColor?: string;
+}) {
   return (
-    <View style={[styles.pill, { borderColor: color }]}>
-      <Text style={[styles.pillText, { color }]}>{label}</Text>
+    <View style={[styles.pill, { backgroundColor, borderColor: color }]}>
+      <Text style={[styles.pillText, { color: textColor ?? color }]}>{label}</Text>
     </View>
   );
 }
 
 export function Button({
-  bleed = false,
+  bleed = true,
   label,
   onPress,
   variant = "primary",
@@ -181,9 +192,9 @@ export function ChoiceRow<T extends string>({
 }
 
 export function InlineNotice({ children, tone = "info" }: PropsWithChildren<{ tone?: "info" | "warning" | "error" }>) {
-  const color = tone === "error" ? tokens.color.danger : tone === "warning" ? tokens.color.warning : tokens.color.interactivePrimary;
+  const color = tone === "error" ? tokens.color.danger : tone === "warning" ? tokens.color.warning : tokens.color.contextual;
   return (
-    <View style={[styles.notice, { borderLeftColor: color }]}>
+    <View style={[styles.notice, { backgroundColor: `${color}1A`, borderColor: `${color}80` }]}>
       <Text style={styles.noticeText}>{children}</Text>
     </View>
   );
@@ -201,9 +212,7 @@ export function ProgressBar({ value }: { value: number }) {
 export function LoadingState({ label = "Preparando tu día…" }: { label?: string }) {
   return (
     <Screen scroll={false} contentStyle={styles.loadingState} headerMode="preserve">
-      <Brand />
-      <ActivityIndicator color={tokens.color.interactivePrimary} size="large" />
-      <Text style={styles.mutedText}>{label}</Text>
+      <MacroLoadingIndicator accessibilityLabel={label} />
     </Screen>
   );
 }
@@ -253,10 +262,9 @@ const styles = StyleSheet.create({
   choiceSelected: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
   choiceText: { color: tokens.color.textMuted, fontSize: 14, fontWeight: "700" },
   choiceTextSelected: { color: tokens.color.surfaceApp },
-  notice: { backgroundColor: tokens.color.surfaceMuted, borderLeftWidth: 3, borderRadius: tokens.radius.md, padding: tokens.spacing.md },
+  notice: { borderRadius: tokens.radius.panel, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
   noticeText: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 8, overflow: "hidden" },
   progressFill: { backgroundColor: tokens.color.program, borderRadius: tokens.radius.pill, height: "100%" },
-  loadingState: { alignItems: "center", justifyContent: "center" },
-  mutedText: { color: tokens.color.textMuted, fontSize: 15 },
+  loadingState: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, justifyContent: "center" },
 });

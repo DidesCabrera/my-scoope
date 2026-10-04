@@ -22,8 +22,13 @@ test("comparison builder starts with two independent empty slots", () => {
 test("saved comparison results omit the explanatory snapshot notice", async () => {
   const source = await readFile(path.resolve(process.cwd(), "src/components/comparisons/comparison-result.tsx"), "utf8");
   assertSourceDoesNotMatch(source, /fotografía guardada|historical_snapshot|InlineNotice/);
-  assertSourceMatch(source, /<SectionHeading title="Resultados comparativos" \/>/);
+  assertSourceMatch(source, /<SectionHeading icon=\{<Scale color=\{tokens\.color\.entityIconForeground\} size=\{18\} \/>\} title="Resultados comparativos" \/>/);
   assertSourceDoesNotMatch(source, /SectionTitle/);
+});
+
+test("comparison builder separates its generated results from the controls", async () => {
+  const source = await readFile(path.resolve(process.cwd(), "src/app/comparator/index.tsx"), "utf8");
+  assertSourceMatch(source, /<SectionDivider \/>[\s\S]*<ComparisonResultCards result=\{result\} \/>/);
 });
 
 test("comparison result rows omit numeric position badges", async () => {

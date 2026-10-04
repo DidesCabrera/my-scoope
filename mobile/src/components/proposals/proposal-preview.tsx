@@ -138,13 +138,14 @@ export function ProposalEvaluationContext({ current, targets }: { current: Propo
   );
 }
 
-export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, onOpenFood, time }: { actions?: ReactNode; eyebrow?: string; meal: ProposalMeal; onOpenFood?(foodIndex: number): void; time?: string | null }) {
+export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, onOpen, onOpenFood, time }: { actions?: ReactNode; eyebrow?: string; meal: ProposalMeal; onOpen?: () => void; onOpenFood?(foodIndex: number): void; time?: string | null }) {
   const foods = foodPanelItems(meal);
   return (
     <NutritionEntityCard
       actions={actions}
       entity="meal"
       eyebrow={eyebrow}
+      headingLink={onOpen ? { label: `Ver detalle de ${meal.name || "Comida"}`, onPress: onOpen } : undefined}
       indicators={[
         { icon: "food", label: "alimentos", value: meal.foods.length },
         ...(time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: time.slice(0, 5) }] : []),
@@ -162,12 +163,13 @@ export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, 
   );
 }
 
-export function ProposalDailyPlanCard({ actions, dailyplan, onOpenMeal }: { actions?: ReactNode; dailyplan: ProposalDailyPlan; onOpenMeal?(index: number): void }) {
+export function ProposalDailyPlanCard({ actions, dailyplan, onOpen, onOpenMeal }: { actions?: ReactNode; dailyplan: ProposalDailyPlan; onOpen?: () => void; onOpenMeal?(index: number): void }) {
   return (
     <NutritionEntityCard
       actions={actions}
       entity="dailyPlan"
       eyebrow="Plan diario propuesto"
+      headingLink={onOpen ? { label: `Ver detalle de ${dailyplan.name || "Plan diario"}`, onPress: onOpen } : undefined}
       indicators={[
         { icon: "meal", label: "comidas", value: dailyplan.meals.length },
         { icon: "food", label: "alimentos", value: dailyplan.meals.reduce((total, item) => total + item.meal.foods.length, 0) },
@@ -179,12 +181,13 @@ export function ProposalDailyPlanCard({ actions, dailyplan, onOpenMeal }: { acti
   );
 }
 
-export function ProposalFoodCard({ actions, food }: { actions?: ReactNode; food: ProposalFood }) {
+export function ProposalFoodCard({ actions, food, onOpen }: { actions?: ReactNode; food: ProposalFood; onOpen?: () => void }) {
   return (
     <NutritionEntityCard
       actions={actions}
       entity="food"
       eyebrow="Alimento"
+      headingLink={onOpen ? { label: `Ver detalle de ${food.food_name || "Alimento"}`, onPress: onOpen } : undefined}
       nutrition={foodNutrition(food)}
       subtitle={`${number(food.quantity)} ${food.unit || "g"}`}
       title={food.food_name || "Alimento"}

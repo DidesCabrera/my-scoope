@@ -1,6 +1,6 @@
 import type { ProposalMeal, ProposalDailyPlan, ProposalProgram } from "./proposal-entities";
 
-export type { SubscriptionData } from "./billing-types";
+export type { EntitlementsData, SubscriptionData } from "./billing-types";
 export type ApiErrorDetail = {
   code: string;
   message: string;
@@ -15,6 +15,7 @@ export type SessionData = {
   username: string;
   email: string;
   display_name: string;
+  date_joined: string;
   scopes: string[];
   device_session_id: string | null;
 };
@@ -225,6 +226,12 @@ export type LibraryActionInput = {
 export type LibraryActionResult = {
   action: LibraryActionKey;
   item_id: number;
+  message: string;
+};
+
+export type LibraryListActionResult = {
+  affected_ids: number[];
+  skipped_ids: number[];
   message: string;
 };
 
@@ -666,6 +673,7 @@ export type SavedComparisonSummary = {
   kind: ComparisonKind;
   kind_label: string;
   item_count: number;
+  items: ComparisonResultItem[];
   updated_at: string;
 };
 

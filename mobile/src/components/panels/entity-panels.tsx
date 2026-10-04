@@ -8,7 +8,7 @@ import ReanimatedSwipeable, { SwipeDirection, type SwipeableMethods } from "reac
 import Animated, { type SharedValue, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
-import { EntityIcon } from "@/components/ui";
+import { EntityIcon, type EntityKind } from "@/components/ui";
 import { useScreenScrollControl } from "@/components/ui/layout";
 import { tokens } from "@/design/tokens";
 import { contextualMacroAllocations } from "./contextual-allocation";
@@ -425,6 +425,26 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: {
   );
 }
 
+export function EntityNamePanel({ entity, items, label }: { entity: Extract<EntityKind, "meal" | "dailyPlan">; items: { id: string; name: string }[]; label: string }) {
+  const sorting = useTemporaryPanelSort(items, { name: (item) => item.name });
+  if (items.length === 0) return <PanelEmptyState label={`Todavía no hay ${label.toLowerCase()}.`} />;
+  return (
+    <PanelBody>
+      <View style={[styles.row, styles.header]}>
+        <SortablePanelHeaderCell align="left" direction={sorting.sort?.key === "name" ? sorting.sort.direction : undefined} label={label} onPress={() => sorting.onSort("name")} style={styles.name} />
+      </View>
+      {sorting.items.map((item, index) => (
+        <View key={item.id} style={[styles.row, index === sorting.items.length - 1 && styles.rowLast]}>
+          <View style={styles.entityNameIdentity}>
+            <EntityIcon entity={entity} size="compact" />
+            <Text numberOfLines={2} style={styles.entityNameText}>{item.name}</Text>
+          </View>
+        </View>
+      ))}
+    </PanelBody>
+  );
+}
+
 export function NutritionMacrosPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
   const sorting = useTemporaryPanelSort(items, {
     carbs: (item) => item.carbsGrams,
@@ -750,6 +770,8 @@ const styles = StyleSheet.create({
   headerTextLeft: { paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0 },
   name: { flex: 1, minWidth: 0, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
+  entityNameIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
+  entityNameText: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption + 1, fontWeight: tokens.weight.semibold, lineHeight: 19, minWidth: 0 },
   gridLeadingCell: { alignSelf: "stretch", flexBasis: "40%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
   itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   foodItemName: { fontWeight: tokens.weight.medium },

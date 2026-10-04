@@ -2,9 +2,7 @@ from django.test import Client, override_settings
 
 from accounts.models import AccountDeletionRecord
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import (
-    WeightLog,
-)
+from notas.domain.models import WeightLog
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -20,9 +18,12 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
         session = self.client.get("/api/v1/session")
         profile = self.client.get("/api/v1/me")
         entitlements = self.client.get("/api/v1/entitlements")
-
         self.assertEqual(session.status_code, 200)
         self.assertEqual(session.json()["data"]["device_session_id"], str(self.device_session.public_id))
+        self.assertEqual(
+            session.json()["data"]["date_joined"],
+            self.user.date_joined.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+        )
         self.assertEqual(profile.status_code, 200)
         self.assertFalse(profile.json()["data"]["onboarding_completed"])
         self.assertTrue(profile.json()["data"]["review_disclosure_required"])
@@ -74,7 +75,6 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
             data={"accepted": True},
             content_type="application/json",
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()["data"]["review_disclosure_required"])
         self.user.profile.refresh_from_db()

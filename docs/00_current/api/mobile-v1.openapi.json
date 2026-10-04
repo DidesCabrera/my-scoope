@@ -496,6 +496,21 @@
         "title": "AIChatProposalCardData",
         "type": "object"
       },
+      "AIChatRenameInput": {
+        "properties": {
+          "name": {
+            "maxLength": 140,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "AIChatRenameInput",
+        "type": "object"
+      },
       "AIChatSummaryData": {
         "properties": {
           "id": {
@@ -7051,6 +7066,21 @@
         "title": "SavedComparisonListEnvelope",
         "type": "object"
       },
+      "SavedComparisonRenameInput": {
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "SavedComparisonRenameInput",
+        "type": "object"
+      },
       "SavedComparisonSummaryData": {
         "properties": {
           "id": {
@@ -7060,6 +7090,13 @@
           "item_count": {
             "title": "Item Count",
             "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonResultItemData"
+            },
+            "title": "Items",
+            "type": "array"
           },
           "kind": {
             "enum": [
@@ -7090,6 +7127,7 @@
           "kind",
           "kind_label",
           "item_count",
+          "items",
           "updated_at"
         ],
         "title": "SavedComparisonSummaryData",
@@ -7097,6 +7135,11 @@
       },
       "SessionData": {
         "properties": {
+          "date_joined": {
+            "format": "date-time",
+            "title": "Date Joined",
+            "type": "string"
+          },
           "device_session_id": {
             "anyOf": [
               {
@@ -7137,6 +7180,7 @@
           "username",
           "email",
           "display_name",
+          "date_joined",
           "scopes"
         ],
         "title": "SessionData",
@@ -7808,6 +7852,21 @@
         "title": "TodayEnvelope",
         "type": "object"
       },
+      "UsernameRenameInput": {
+        "properties": {
+          "username": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "title": "UsernameRenameInput",
+        "type": "object"
+      },
       "WeightCreateInput": {
         "properties": {
           "measured_on": {
@@ -8069,6 +8128,70 @@
         "summary": "Accept Disclosures"
       }
     },
+    "/api/v1/account/username": {
+      "patch": {
+        "operationId": "mobile_api_api_rename_account_username",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsernameRenameInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Rename Account Username"
+      }
+    },
     "/api/v1/ai/chats": {
       "get": {
         "operationId": "mobile_api_api_ai_chats",
@@ -8198,6 +8321,90 @@
         "summary": "Ai Chat Detail"
       }
     },
+    "/api/v1/ai/chats/{chat_id}/name": {
+      "patch": {
+        "operationId": "mobile_api_api_rename_ai_chat",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "title": "Chat Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIChatRenameInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIChatDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Rename Ai Chat"
+      }
+    },
     "/api/v1/ai/chats/{chat_id}/preferences/commit": {
       "post": {
         "operationId": "mobile_api_api_commit_ai_chat_preferences",
@@ -8260,6 +8467,90 @@
           }
         ],
         "summary": "Commit Ai Chat Preferences"
+      }
+    },
+    "/api/v1/ai/chats/{chat_id}/proposals": {
+      "get": {
+        "operationId": "mobile_api_api_ai_chat_proposals",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "title": "Chat Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Ai Chat Proposals"
       }
     },
     "/api/v1/ai/jobs/{job_id}": {
@@ -9063,6 +9354,80 @@
           }
         ],
         "summary": "Update Mobile Saved Comparison"
+      }
+    },
+    "/api/v1/comparisons/saved/{comparison_id}/name": {
+      "patch": {
+        "operationId": "mobile_api_api_rename_mobile_saved_comparison",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedComparisonRenameInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Rename Mobile Saved Comparison"
       }
     },
     "/api/v1/credit-packs/apple/transactions": {

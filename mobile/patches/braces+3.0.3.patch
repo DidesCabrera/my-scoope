@@ -1,0 +1,161 @@
+diff --git a/node_modules/braces/lib/compile.js b/node_modules/braces/lib/compile.js
+index dce69be..9876f8a 100644
+--- a/node_modules/braces/lib/compile.js
++++ b/node_modules/braces/lib/compile.js
+@@ -4,7 +4,10 @@ const fill = require('fill-range');
+ const utils = require('./utils');
+ 
+ const compile = (ast, options = {}) => {
+-  const walk = (node, parent = {}) => {
++  const walk = (node, parent = {}, depth = 0) => {
++    if (depth >= 64) {
++      throw new SyntaxError('Brace pattern exceeds maximum nesting depth');
++    }
+     const invalidBlock = utils.isInvalidBrace(parent);
+     const invalidNode = node.invalid === true && options.escapeInvalid === true;
+     const invalid = invalidBlock === true || invalidNode === true;
+@@ -47,7 +50,7 @@ const compile = (ast, options = {}) => {
+ 
+     if (node.nodes) {
+       for (const child of node.nodes) {
+-        output += walk(child, node);
++        output += walk(child, node, depth + 1);
+       }
+     }
+ 
+diff --git a/node_modules/braces/lib/expand.js b/node_modules/braces/lib/expand.js
+index 35b2c41..00a4c29 100644
+--- a/node_modules/braces/lib/expand.js
++++ b/node_modules/braces/lib/expand.js
+@@ -4,7 +4,10 @@ const fill = require('fill-range');
+ const stringify = require('./stringify');
+ const utils = require('./utils');
+ 
+-const append = (queue = '', stash = '', enclose = false) => {
++const append = (queue = '', stash = '', enclose = false, depth = 0) => {
++  if (depth >= 64) {
++    throw new SyntaxError('Brace pattern exceeds maximum nesting depth');
++  }
+   const result = [];
+ 
+   queue = [].concat(queue);
+@@ -18,12 +21,12 @@ const append = (queue = '', stash = '', enclose = false) => {
+   for (const item of queue) {
+     if (Array.isArray(item)) {
+       for (const value of item) {
+-        result.push(append(value, stash, enclose));
++        result.push(append(value, stash, enclose, depth + 1));
+       }
+     } else {
+       for (let ele of stash) {
+         if (enclose === true && typeof ele === 'string') ele = `{${ele}}`;
+-        result.push(Array.isArray(ele) ? append(item, ele, enclose) : item + ele);
++        result.push(Array.isArray(ele) ? append(item, ele, enclose, depth + 1) : item + ele);
+       }
+     }
+   }
+@@ -33,7 +36,10 @@ const append = (queue = '', stash = '', enclose = false) => {
+ const expand = (ast, options = {}) => {
+   const rangeLimit = options.rangeLimit === undefined ? 1000 : options.rangeLimit;
+ 
+-  const walk = (node, parent = {}) => {
++  const walk = (node, parent = {}, depth = 0) => {
++    if (depth >= 64) {
++      throw new SyntaxError('Brace pattern exceeds maximum nesting depth');
++    }
+     node.queue = [];
+ 
+     let p = parent;
+@@ -100,7 +106,7 @@ const expand = (ast, options = {}) => {
+       }
+ 
+       if (child.nodes) {
+-        walk(child, node);
++        walk(child, node, depth + 1);
+       }
+     }
+ 
+diff --git a/node_modules/braces/lib/parse.js b/node_modules/braces/lib/parse.js
+index 3a6988e..1df2018 100644
+--- a/node_modules/braces/lib/parse.js
++++ b/node_modules/braces/lib/parse.js
+@@ -41,6 +41,7 @@ const parse = (input, options = {}) => {
+ 
+   const ast = { type: 'root', input, nodes: [] };
+   const stack = [ast];
++  const maxNesting = 64;
+   let block = ast;
+   let prev = ast;
+   let brackets = 0;
+@@ -143,6 +144,9 @@ const parse = (input, options = {}) => {
+      */
+ 
+     if (value === CHAR_LEFT_PARENTHESES) {
++      if (stack.length >= maxNesting) {
++        throw new SyntaxError('Brace pattern exceeds maximum nesting depth');
++      }
+       block = push({ type: 'paren', nodes: [] });
+       stack.push(block);
+       push({ type: 'text', value });
+@@ -195,6 +199,9 @@ const parse = (input, options = {}) => {
+      */
+ 
+     if (value === CHAR_LEFT_CURLY_BRACE) {
++      if (stack.length >= maxNesting) {
++        throw new SyntaxError('Brace pattern exceeds maximum nesting depth');
++      }
+       depth++;
+ 
+       const dollar = prev.value && prev.value.slice(-1) === '$' || block.dollar === true;
+diff --git a/node_modules/braces/lib/stringify.js b/node_modules/braces/lib/stringify.js
+index 8bcf872..deff2f3 100644
+--- a/node_modules/braces/lib/stringify.js
++++ b/node_modules/braces/lib/stringify.js
+@@ -3,7 +3,10 @@
+ const utils = require('./utils');
+ 
+ module.exports = (ast, options = {}) => {
+-  const stringify = (node, parent = {}) => {
++  const stringify = (node, parent = {}, depth = 0) => {
++    if (depth >= 64) {
++      throw new SyntaxError('Brace pattern exceeds maximum nesting depth');
++    }
+     const invalidBlock = options.escapeInvalid && utils.isInvalidBrace(parent);
+     const invalidNode = node.invalid === true && options.escapeInvalid === true;
+     let output = '';
+@@ -21,7 +24,7 @@ module.exports = (ast, options = {}) => {
+ 
+     if (node.nodes) {
+       for (const child of node.nodes) {
+-        output += stringify(child);
++        output += stringify(child, {}, depth + 1);
+       }
+     }
+     return output;
+@@ -29,4 +32,3 @@ module.exports = (ast, options = {}) => {
+ 
+   return stringify(ast);
+ };
+-
+diff --git a/node_modules/braces/lib/utils.js b/node_modules/braces/lib/utils.js
+index d19311f..a8261fc 100644
+--- a/node_modules/braces/lib/utils.js
++++ b/node_modules/braces/lib/utils.js
+@@ -101,12 +101,15 @@ exports.reduce = nodes => nodes.reduce((acc, node) => {
+ exports.flatten = (...args) => {
+   const result = [];
+ 
+-  const flat = arr => {
++  const flat = (arr, depth = 0) => {
++    if (depth >= 64) {
++      throw new SyntaxError('Brace pattern exceeds maximum nesting depth');
++    }
+     for (let i = 0; i < arr.length; i++) {
+       const ele = arr[i];
+ 
+       if (Array.isArray(ele)) {
+-        flat(ele);
++        flat(ele, depth + 1);
+         continue;
+       }
+ 

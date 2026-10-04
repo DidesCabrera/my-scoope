@@ -27,6 +27,7 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const segment = item.entity === "dailyPlan" ? "daily-plans" : item.entity === "program" ? "programs" : item.entity === "meal" ? "meals" : "foods";
   const detailHref = `/libraries/${segment}/${item.id}` as Href;
+  const openDetail = () => router.push(detailHref);
   const refresh = (message: string) => onChanged({ action: "rename", item_id: item.id, message });
   const mutate = async (path: string, init: RequestInit, message: string, feedback?: { loadingLabel: string; successLabel: string }) => {
     const action = async () => {
@@ -62,7 +63,8 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
         foodsCount={indicatorValue(item, "food")}
         metricData={metrics}
         onMore={onMore}
-        onOpen={navigable ? () => router.push(detailHref) : undefined}
+        onOpen={navigable ? openDetail : undefined}
+        headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined}
         owner={item.creator}
         title={item.name}
         weeksCount={indicatorValue(item, "week")}
@@ -74,7 +76,7 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
     ) : card();
   }
   return (<>
-    <NutritionEntityCard actions={interactive || navigable ? <>{interactive && item.actions?.length ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCompleted={onChanged} /> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push(detailHref)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} entity={item.entity} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
+    <NutritionEntityCard actions={interactive || navigable ? <>{interactive && item.actions?.length ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCompleted={onChanged} /> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} entity={item.entity} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
       {item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={item.panel.foods} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "meals" ? <MealPanels dailyPlanId={item.entity === "dailyPlan" ? item.id : undefined} editing={mealEditing} items={item.panel.meals} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}

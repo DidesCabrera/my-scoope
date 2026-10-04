@@ -61,13 +61,18 @@ and `schema_domains/composition.py`, with the complete behavior journey in
 `composition_projections.py` so preview calculations cannot be confused with
 persisted library read models.
 Identity uses `routes/identity.py` for session, profile, onboarding and account
-lifecycle; billing uses `routes/billing.py` for entitlements and provider
+lifecycle; account-name mutations are isolated in `routes/identity_edits.py`.
+`PATCH /account/username` requires `mobile:account`, validates uniqueness and
+returns the refreshed canonical session. Billing uses `routes/billing.py` for entitlements and provider
 evidence. Their schemas and tests follow the same names. This separation is
 intentional: transport remains easy to find without collapsing OAuth, account
 and commercial business authority into one module.
 Assistant uses `routes/assistant.py`, `schema_domains/assistant.py` and
-`tests/test_assistant_api.py`; durable queues, chat projection and prepared-action
-commands stay in their established application modules. The composition root now
+`tests/test_assistant_api.py`; chat-title mutations are isolated in the matching
+`assistant_chat_edits` route, schema and test modules. Durable queues, chat projection and prepared-action
+commands stay in their established application modules. Chat titles are updated
+through owner-scoped `PATCH /ai/chats/{chat_id}/name`, which requires
+`mobile:write` and returns the canonical chat detail projection. The composition root now
 owns only API construction, shared errors, the public health route and router mounts.
 `schemas.py` is intentionally a compatibility re-export surface plus Error/Health.
 Sharing uses `routes/sharing.py` and `schema_domains/sharing.py`. Its transport only

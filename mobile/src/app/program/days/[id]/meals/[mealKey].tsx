@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -16,7 +16,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, InlineNotice, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
+import { Button, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -121,7 +121,7 @@ export default function CalendarizedMealDetailScreen() {
   }, [compactHeaderVisible, meal, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (loading && !meal) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Cargando detalle…</Text></View>;
+  if (loading && !meal) return <LoadingState label="Cargando detalle…" />;
   if (!meal) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
 
   const totals = meal.totals;
@@ -189,6 +189,7 @@ export default function CalendarizedMealDetailScreen() {
       entityName={meal.name ?? "Comida"}
       initialAction={actionSheet === "change-time" ? "change-time" : undefined}
       key={actionSheet ?? "closed"}
+      onOpenInformation={() => router.push(`/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/information` as Href)}
       onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }}
       rename={{
         onSubmit: async (name) => {

@@ -17,6 +17,7 @@ export const tokens = {
     "borderSoft": "#2A2A2A",
     "borderDefault": "#343434",
     "borderStrong": "#4A4A4A",
+    "contextual": "#515151",
     "interactivePrimary": "#8AB4FF",
     "interactivePressed": "#A9C8FF",
     "danger": "#FF6B6B",

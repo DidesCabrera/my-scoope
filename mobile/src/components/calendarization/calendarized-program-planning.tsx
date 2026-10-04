@@ -8,7 +8,7 @@ import type { ActiveProgramDay, CalendarizedDayDetail, LibraryFoodPanelItem, Lib
 import { useSession } from "@/auth/session-context";
 import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { FoodPanels, type FoodPanelItem, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
+import { GroupedFoodsCard, type FoodPanelItem, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
 import { Button, InlineNotice, MutationStatusModal, SectionDivider, SectionHeading, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
@@ -210,7 +210,7 @@ export function CalendarizedProgramPlanning({
 
         <SectionDivider spacing="compact" tone="soft" />
         <SectionHeading detail={`${weekData?.foods_count ?? weekFoods.length} alimentos`} title="Alimentos en esta semana" />
-        <FoodPanels items={weekFoods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
+        <GroupedFoodsCard title={`Alimentos semana ${activeWeek}`} items={weekFoods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
       </View>
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </View>

@@ -40,8 +40,9 @@ export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMeal
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const addMeal = () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: "/today" }));
+  const openDetail = () => router.push(`/libraries/daily-plans/${item.id}` as Href);
   const detailAction = (
-    <EntityCardAction label="Ir al detalle del plan" onPress={() => router.push(`/libraries/daily-plans/${item.id}` as Href)} role="link">
+    <EntityCardAction label="Ir al detalle del plan" onPress={openDetail} role="link">
       <ChevronRight color={tokens.color.textMuted} size={21} />
     </EntityCardAction>
   );
@@ -49,7 +50,7 @@ export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMeal
 
   if (meals.length === 0) {
     return (
-      <EntityCard actions={detailAction} entity="dailyPlan" eyebrow="PLAN DE HOY" title={item.name}>
+      <EntityCard actions={detailAction} entity="dailyPlan" eyebrow="PLAN DE HOY" headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }} title={item.name}>
         <Button bleed label="+ Agregar Comida" onPress={addMeal} />
       </EntityCard>
     );
@@ -64,6 +65,7 @@ export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMeal
       afterNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} />}
       entity="dailyPlan"
       eyebrow="PLAN DE HOY"
+      headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }}
       nutrition={libraryNutrition(item.nutrition)}
       title={item.name}>
       <MealPanels

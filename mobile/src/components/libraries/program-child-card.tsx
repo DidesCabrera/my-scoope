@@ -4,7 +4,7 @@ import { useState } from "react";
 import Svg, { Defs, Line, LinearGradient, Polygon, Polyline, Stop } from "react-native-svg";
 
 import type { LibraryWeekPanelItem } from "@/api/types";
-import { Card, EntityHeading, layoutStyles } from "@/components/ui";
+import { Card, EntityHeading, type EntityHeadingLink, layoutStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ProgramMetricDatum = {
@@ -224,6 +224,7 @@ export function ProgramChildCard({
   foodsCount,
   owner,
   onOpen,
+  headingLink,
   openActionLabel,
   onMore,
   metricData,
@@ -235,6 +236,7 @@ export function ProgramChildCard({
   foodsCount: number;
   owner: string;
   onOpen?: () => void;
+  headingLink?: EntityHeadingLink;
   openActionLabel?: string;
   onMore?: () => void;
   metricData?: ProgramMetricDatum[];
@@ -244,6 +246,7 @@ export function ProgramChildCard({
     <Card accent={tokens.color.program}>
       <EntityHeading
         entity="program"
+        headingLink={headingLink}
         indicators={[
           { label: "semanas", value: `${weeksCount} SEMANAS` },
           { icon: "dailyPlan", label: "planes asignados", value: filledDaysCount },

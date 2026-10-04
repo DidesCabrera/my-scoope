@@ -1,10 +1,10 @@
-import { Clock3, Pencil, X } from "lucide-react-native";
+import { CalendarClock, Clock3, Info, Pencil } from "lucide-react-native";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
-import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
@@ -61,6 +61,7 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
 type CalendarizedEntityActionsProps = {
   entityName: string;
   initialAction?: Exclude<SelectedAction, null>;
+  onOpenInformation?: () => void;
   onVisibleChange(visible: boolean): void;
   rename?: {
     onSubmit(name: string): Promise<void>;
@@ -75,7 +76,7 @@ type CalendarizedEntityActionsProps = {
 
 type SelectedAction = "rename" | "change-time" | null;
 
-export function CalendarizedEntityActions({ entityName, initialAction, onVisibleChange, rename, timeChange, timeChangeInMenu = true, visible }: CalendarizedEntityActionsProps) {
+export function CalendarizedEntityActions({ entityName, initialAction, onOpenInformation, onVisibleChange, rename, timeChange, timeChangeInMenu = true, visible }: CalendarizedEntityActionsProps) {
   const [selected, setSelected] = useState<SelectedAction>(initialAction ?? null);
   const [name, setName] = useState(entityName);
   const [submitting, setSubmitting] = useState(false);
@@ -111,29 +112,14 @@ export function CalendarizedEntityActions({ entityName, initialAction, onVisible
   return (
     <ActionSheetModal onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
-        <View style={styles.sheetHeader}>
-          <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>{selected === "change-time" ? "HORARIO" : selected === "rename" ? "NOMBRE" : "ACCIONES"}</Text>
-            <Text numberOfLines={1} style={styles.title}>{title}</Text>
-          </View>
-          <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={close} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
-            <X color={tokens.color.textMain} size={22} />
-          </Pressable>
-        </View>
+        <ActionSheetHeader icon={CalendarClock} onClose={close} title={title} />
         <View style={styles.sheetContent}>
           {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-          {!selected && rename ? (
-            <Pressable accessibilityRole="button" onPress={() => { setName(entityName); setError(null); setSelected("rename"); }} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-              <View style={styles.actionIcon}><Pencil color={tokens.color.textMain} size={20} /></View>
-              <Text style={styles.actionLabel}>Renombrar</Text>
-            </Pressable>
-          ) : null}
-          {!selected && timeChange && timeChangeInMenu ? (
-            <Pressable accessibilityRole="button" onPress={() => setSelected("change-time")} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-              <View style={styles.actionIcon}><Clock3 color={tokens.color.textMain} size={20} /></View>
-              <Text style={styles.actionLabel}>Cambiar hora</Text>
-            </Pressable>
-          ) : null}
+          {!selected ? <ActionSheetActions>
+            {onOpenInformation ? <ActionSheetAction icon={Info} label="Ver información del elemento" onPress={() => { onVisibleChange(false); onOpenInformation(); }} /> : null}
+            {rename ? <ActionSheetAction icon={Pencil} label="Renombrar" onPress={() => { setName(entityName); setError(null); setSelected("rename"); }} /> : null}
+            {timeChange && timeChangeInMenu ? <ActionSheetAction icon={Clock3} label="Cambiar hora" onPress={() => setSelected("change-time")} /> : null}
+          </ActionSheetActions> : null}
           {selected === "rename" && rename ? (
             <View style={styles.form}>
               <Field autoCapitalize="sentences" label="Nombre" onChangeText={(value) => setName(value.slice(0, 255))} value={name} />
@@ -152,16 +138,7 @@ export function CalendarizedEntityActions({ entityName, initialAction, onVisible
 
 const styles = StyleSheet.create({
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
-  sheetHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
-  headerCopy: { flex: 1, gap: 3, minWidth: 0 },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
-  title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
-  closeButton: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  actionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
-  actionIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
-  actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: "700" },
   form: { gap: tokens.spacing.md },
   help: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
-  pressed: { opacity: 0.65 },
 });

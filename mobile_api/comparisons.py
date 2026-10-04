@@ -243,18 +243,32 @@ def saved_comparison_list_payload(user, *, kind=None, offset=0, limit=30) -> dic
     safe_offset = max(int(offset or 0), 0)
     safe_limit = min(max(int(limit or 30), 1), 50)
     total = queryset.count()
-    return {
-        "items": [
+    items = []
+    for comparison in queryset[safe_offset:safe_offset + safe_limit]:
+        config = COMPARISON_KINDS[comparison.kind]
+        rows = comparable_rows_from_snapshot(
+            comparison.snapshot_payload,
+            include_quantities=config["include_quantities"],
+        )
+        result = comparison_result_payload(
+            kind=comparison.kind,
+            rows=rows,
+            historical=True,
+            saved_comparison=comparison,
+        )
+        items.append(
             {
                 "id": comparison.id,
                 "name": comparison.name,
                 "kind": comparison.kind,
                 "kind_label": COMPARISON_KINDS[comparison.kind]["label"],
-                "item_count": len(comparison.snapshot_payload or comparison.payload or []),
+                "item_count": len(result["items"]),
+                "items": result["items"],
                 "updated_at": comparison.updated_at,
             }
-            for comparison in queryset[safe_offset:safe_offset + safe_limit]
-        ],
+        )
+    return {
+        "items": items,
         "total": total,
         "offset": safe_offset,
         "limit": safe_limit,

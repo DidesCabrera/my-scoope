@@ -9,6 +9,7 @@ import { EntityDetailPage, EntityDetailSection } from "@/components/details/enti
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, MealPanels } from "@/components/panels";
+import { SharedResourceActions } from "@/components/sharing/shared-resource-actions";
 import { Button, EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
@@ -31,6 +32,7 @@ export default function SharedResourceScreen() {
   const [resource, setResource] = useState<ShareResource | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
+  const [actionsVisible, setActionsVisible] = useState(false);
   const [inboxState, setInboxState] = useState<{ id: number; isSaved: boolean; resourceId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,9 +63,9 @@ export default function SharedResourceScreen() {
   }, [apiRequest, id, status]);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: "/inbox", mode: "back", title: resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : "Contenido Compartido" });
+    setHeaderPresentation({ action: resource ? { icon: "more", label: `Acciones para ${resource.title}`, onPress: () => setActionsVisible(true) } : undefined, fallback: "/inbox", mode: "back", title: resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : "Contenido Compartido" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [resource?.subject_type, setHeaderPresentation]));
+  }, [resource, setHeaderPresentation]));
 
   if (!id) return <Redirect href="/today" />;
 
@@ -86,6 +88,7 @@ export default function SharedResourceScreen() {
   const mealItems = snapshot ? sharedMealPanelItems(meals, snapshot.nutrition.calories) : [];
   const isSaved = inboxState?.resourceId === id && inboxState.isSaved;
   return (
+    <>
     <Screen headerMode="preserve">
       {loading ? <LoadingState label="Cargando contenido compartido…" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
@@ -106,15 +109,17 @@ export default function SharedResourceScreen() {
             {meals.length ? <>
               <SectionDivider />
               <EntityDetailSection title="Detalle de cada Comida">
-                {meals.map((meal, index) => (
-                  <NutritionEntityCard
+                {meals.map((meal, index) => {
+                  const openDetail = () => router.push(`/share/${id}/meals/${index}` as Href);
+                  return <NutritionEntityCard
                     actions={(
-                      <EntityCardAction label={`Ver detalle de ${meal.name}`} onPress={() => router.push(`/share/${id}/meals/${index}` as Href)} role="link">
+                      <EntityCardAction label={`Ver detalle de ${meal.name}`} onPress={openDetail} role="link">
                         <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                       </EntityCardAction>
                     )}
                     entity="meal"
                     eyebrow={`Comida ${index + 1}`}
+                    headingLink={{ label: `Ver detalle de ${meal.name}`, onPress: openDetail }}
                     indicators={[
                       { icon: "food", label: "alimentos", value: meal.foods.length },
                       ...(meal.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.time.slice(0, 5) }] : []),
@@ -126,8 +131,8 @@ export default function SharedResourceScreen() {
                       items={sharedFoodPanelItems(meal)}
                       onOpenItem={(food) => { if (food.detailId != null) router.push(`/share/${id}/meals/${index}/foods/${food.detailId}` as Href); }}
                     />
-                  </NutritionEntityCard>
-                ))}
+                  </NutritionEntityCard>;
+                })}
               </EntityDetailSection>
             </> : null}
           </EntityDetailPage>
@@ -147,5 +152,7 @@ export default function SharedResourceScreen() {
         />
       ) : null}
     </Screen>
+    <SharedResourceActions onOpenInformation={() => router.push(`/share/${id}/information` as Href)} onVisibleChange={setActionsVisible} title={resource?.title ?? "Elemento compartido"} visible={actionsVisible} />
+    </>
   );
 }

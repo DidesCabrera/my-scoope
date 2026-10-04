@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from django.db import transaction
 from django.utils import timezone
 
 from notas.application.ai_intake.nutrition_brief import (
@@ -12,6 +13,24 @@ from notas.application.ai_intake.nutrition_brief import (
 from notas.domain.models import AiNutritionChat, NutritionProposal
 
 AI_NUTRITION_CHAT_SESSION_KEY = "ai_nutrition_chat_id"
+AI_NUTRITION_CHAT_TITLE_MAX_LENGTH = 140
+
+
+@transaction.atomic
+def rename_chat(*, user, chat_id: int, name: str) -> AiNutritionChat:
+    clean_name = (name or "").strip()
+    if not clean_name:
+        raise ValueError("ai_chat_name_required")
+    if len(clean_name) > AI_NUTRITION_CHAT_TITLE_MAX_LENGTH:
+        raise ValueError("ai_chat_name_too_long")
+
+    chat = AiNutritionChat.objects.select_for_update().filter(id=chat_id, user=user).first()
+    if chat is None:
+        raise ValueError("ai_chat_not_found")
+
+    chat.title = clean_name
+    chat.save(update_fields=["title", "updated_at"])
+    return chat
 
 
 def sync_chat_from_conversation(

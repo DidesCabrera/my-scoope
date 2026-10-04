@@ -1,6 +1,9 @@
 <div class="entity-heading card-title-comp">
 
   <div class="main-title">
+    {% if titulo.url %}
+      <a href="{{ titulo.url }}" class="card-title-section-link" aria-label="Ver detalle de {{ titulo.name }}"></a>
+    {% endif %}
     {% if titulo.label and titulo.icon %}
       {% with entity_class=titulo.label|lower|cut:" " %}
         <p class="card-title-eyebrow">
@@ -12,13 +15,7 @@
       {% endwith %}
     {% endif %}
 
-    {% if titulo.url %}
-      <a href="{{ titulo.url }}" class="card-title-link" aria-label="Ver detalle de {{ titulo.name }}">
-        <h3>{{ titulo.name }}</h3>
-      </a>
-    {% else %}
-      <h3>{{ titulo.name }}</h3>
-    {% endif %}
+    <h3>{{ titulo.name }}</h3>
     {% if titulo.classes %}
       <div class="label-class">
         {% for class in titulo.classes %}
