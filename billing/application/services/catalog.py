@@ -157,8 +157,10 @@ def configure_apple_catalog(
         snapshot = _offer_snapshot(offer)
         if active is not None and active.external_product_id == product_id:
             if not _snapshot_matches(active, snapshot):
-                _reprice_unsold_mobile_mapping(active, offer)
-                summary["replaced"] += 1
+                if _refresh_apple_mapping_snapshot(active, offer):
+                    summary["replaced"] += 1
+                else:
+                    summary["reused"] += 1
             else:
                 summary["reused"] += 1
             continue
@@ -183,8 +185,8 @@ def configure_apple_catalog(
 
         if historical is not None:
             if not _snapshot_matches(historical, snapshot):
-                _reprice_unsold_mobile_mapping(historical, offer)
-                summary["replaced"] += 1
+                if _refresh_apple_mapping_snapshot(historical, offer):
+                    summary["replaced"] += 1
             historical.active = True
             historical.save(update_fields=["active", "updated_at"])
             summary["reused"] += 1
@@ -331,3 +333,17 @@ def _reprice_unsold_mobile_mapping(product: BillingProduct, offer: BillingOffer)
     product.save(update_fields=[
         "account_plan", "amount_minor", "currency", "interval", "interval_count", "metadata", "updated_at"
     ])
+
+
+def _refresh_apple_mapping_snapshot(product: BillingProduct, offer: BillingOffer) -> bool:
+    """Refresh an unsold mapping or preserve an immutable provider price snapshot."""
+
+    if not product.subscriptions.exists():
+        _reprice_unsold_mobile_mapping(product, offer)
+        return True
+
+    metadata = dict(product.metadata or {})
+    metadata["provider_price_snapshot_locked"] = True
+    product.metadata = metadata
+    product.save(update_fields=["metadata", "updated_at"])
+    return False

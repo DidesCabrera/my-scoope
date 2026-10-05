@@ -271,7 +271,11 @@ class BillingProduct(models.Model):
                 errors["external_price_id"] = "An active Paddle mapping requires a pri_ price ID."
             if self.offer_id is None:
                 errors["offer"] = "An active Paddle mapping requires a canonical offer."
-        if self.active and self.offer_id is not None:
+        provider_snapshot_locked = (
+            self.provider == PaymentProvider.APPLE_APP_STORE
+            and bool((self.metadata or {}).get("provider_price_snapshot_locked"))
+        )
+        if self.active and self.offer_id is not None and not provider_snapshot_locked:
             snapshot_fields = {
                 "account_plan": (self.account_plan_id, self.offer.account_plan_id),
                 "amount_minor": (self.amount_minor, self.offer.amount_minor),
