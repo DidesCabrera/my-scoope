@@ -51,6 +51,7 @@ MODEL_RETENTION_POLICY = {
     "billing.CreditPackPurchase": RetentionAction.RETAIN_LEGAL,
     "billing.BillingProduct": RetentionAction.RETAIN_SYSTEM,
     "billing.AppleAppAccountToken": RetentionAction.RETAIN_LEGAL,
+    "billing.AppleSandboxAccess": RetentionAction.ERASE,
     "billing.ProviderSubscription": RetentionAction.RETAIN_LEGAL,
     "billing.TaxDocument": RetentionAction.RETAIN_LEGAL,
     "contenttypes.ContentType": RetentionAction.RETAIN_SYSTEM,
