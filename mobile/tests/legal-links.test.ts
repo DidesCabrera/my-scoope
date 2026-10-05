@@ -103,6 +103,15 @@ test("App Store purchases recover a completed StoreKit transaction before report
   assertSourceMatch(subscription, /No se realizó ningún cobro/);
 });
 
+test("cancelling a store purchase closes silently while real purchase errors remain visible", async () => {
+  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
+
+  assertSourceMatch(subscription, /function isUserCancelledPurchase\(error: unknown\): boolean/);
+  assertSourceMatch(subscription, /onPurchaseError: \(purchaseError\) => \{\s+setError\(isUserCancelledPurchase\(purchaseError\) \? null : purchaseError\.message\)/);
+  assertSourceMatch(subscription, /onError: \(nextError\) => \{\s+setError\(isUserCancelledPurchase\(nextError\) \? null : nextError\.message\)/);
+  assertSourceDoesNotMatch(subscription, /onPurchaseError: \(purchaseError\) => \{ setError\(purchaseError\.message\)/);
+});
+
 test("restore purchases explains when no store transaction is pending and reports incomplete verification", async () => {
   const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
 
