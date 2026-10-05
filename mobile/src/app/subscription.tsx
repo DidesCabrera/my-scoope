@@ -7,8 +7,8 @@ import {
   useIAP,
 } from "expo-iap";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Inbox, Info, type LucideIcon, RefreshCcw, Scale, Sparkles, WalletCards } from "lucide-react-native";
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Info, RefreshCcw, Sparkles, WalletCards } from "lucide-react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -17,8 +17,9 @@ import type { EntitlementsData, SubscriptionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { AppHeader, Card, EntityIcon, type EntityKind, InlineNotice, LoadingState, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
+import { AppHeader, Card, InlineNotice, LoadingState, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
 import { tokens } from "@/design/tokens";
 import { subscriptionPlanAccent } from "@/presentation/subscription";
 
@@ -26,33 +27,6 @@ function purchaseErrorCode(error: unknown): string {
   if (!error || typeof error !== "object" || !("code" in error)) return "";
   return String(error.code ?? "").trim().toLowerCase();
 }
-
-type PlanBenefit = { entity?: EntityKind; icon?: LucideIcon; label: string; value: string };
-
-const commercialPlanBenefits: Record<string, PlanBenefit[]> = {
-  Free: [
-    { entity: "food", label: "Alimentos privados", value: "Ilimitados" },
-    { entity: "meal", label: "Comidas", value: "Hasta 12" },
-    { entity: "dailyPlan", label: "Planes diarios", value: "Hasta 4" },
-    { entity: "program", label: "Programas", value: "1 de hasta 2 semanas" },
-    { icon: Inbox, label: "Compartidos", value: "1 incorporación al mes" },
-    { icon: Scale, label: "Comparaciones", value: "Sin guardadas" },
-    { icon: Sparkles, label: "Asistencia IA", value: "Sin créditos incluidos" },
-  ],
-  Basic: [
-    { entity: "food", label: "Alimentos", value: "Ilimitados" },
-    { entity: "meal", label: "Comidas", value: "Ilimitadas" },
-    { entity: "dailyPlan", label: "Planes diarios", value: "Ilimitados" },
-    { entity: "program", label: "Programas", value: "Ilimitados · hasta 12 semanas" },
-    { icon: Inbox, label: "Compartidos", value: "Incorporaciones ilimitadas" },
-    { icon: Scale, label: "Comparaciones", value: "Ilimitadas" },
-    { icon: Sparkles, label: "Asistencia IA", value: "150 créditos al mes" },
-  ],
-  Pro: [
-    { icon: Check, label: "Incluye", value: "Todo lo de Basic" },
-    { icon: Sparkles, label: "Asistencia IA", value: "1.000 créditos al mes" },
-  ],
-};
 
 export default function SubscriptionScreen() {
   const router = useRouter();
@@ -339,17 +313,7 @@ export default function SubscriptionScreen() {
       {overview?.purchases_enabled && (Platform.OS === "ios" || Platform.OS === "android") ? (
         <>
           <SectionTitle title="Suscripciones disponibles" titleStyle={styles.commercialSectionTitle} />
-          <Card accent={tokens.color.fat}>
-            <View style={styles.copy}>
-              <Text style={styles.eyebrow}>PLAN DE SUSCRIPCIÓN</Text>
-              <View style={styles.productTitleRow}>
-                <Text style={styles.productName}>Free</Text>
-                <PlanPriceChip color={tokens.color.fat} label="$0/mes" />
-              </View>
-              <Text style={textStyles.caption}>Incluido sin costo.</Text>
-            </View>
-            <PlanBenefitRows items={commercialPlanBenefits.Free} />
-          </Card>
+          <SubscriptionPlanCard accent={tokens.color.fat} benefits={commercialPlanBenefits.Free} caption="Incluido sin costo." name="Free" price="$0/mes" />
           {subscriptionPlans.map((plan) => {
             const monthlyProduct = plan.products.find((item) => item.interval === "month");
             const monthlyStoreProduct = subscriptions.find((item) => item.id === monthlyProduct?.product_id);
@@ -359,15 +323,7 @@ export default function SubscriptionScreen() {
             const monthlyDisplayPrice = Platform.OS === "android" ? monthlyAndroidOffer?.displayPrice : monthlyStoreProduct?.displayPrice;
             const monthlyNumericPrice = Platform.OS === "android" ? monthlyAndroidOffer?.price : monthlyStoreProduct?.price;
             return (
-            <Card accent={subscriptionPlanAccent(plan.planName)} key={plan.planName}>
-              <View style={styles.copy}>
-                <Text style={styles.eyebrow}>PLAN DE SUSCRIPCIÓN</Text>
-                <View style={styles.productTitleRow}>
-                  <Text style={styles.productName}>{plan.planName}</Text>
-                  <PlanPriceChip color={subscriptionPlanAccent(plan.planName)} label={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : "Consultando…"} />
-                </View>
-              </View>
-              <PlanBenefitRows items={commercialPlanBenefits[plan.planName] ?? []} />
+            <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? []} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : "Consultando…"}>
               <Text style={textStyles.caption}>Elige la modalidad de tu suscripción.</Text>
               {plan.products.map((configured) => {
                   const storeProduct = subscriptions.find((item) => item.id === configured.product_id);
@@ -388,7 +344,7 @@ export default function SubscriptionScreen() {
                     ? `${price}/año${annualDiscount > 0 ? ` · Ahorra ${annualDiscount}%` : ""}`
                     : `${price}/mes`;
                   return (
-                    <PurchaseButton
+                    <SubscriptionPurchaseButton
                       disabled={!connected || !storeProduct || (Platform.OS === "android" && !androidOffer)}
                       key={configured.product_id}
                       label={`${interval} · ${priceExplanation}`}
@@ -397,7 +353,7 @@ export default function SubscriptionScreen() {
                     />
                   );
                 })}
-            </Card>
+            </SubscriptionPlanCard>
             );
           })}
         </>
@@ -424,7 +380,7 @@ export default function SubscriptionScreen() {
                   </View>
                   <CreditPackPriceChip label={storeProduct?.displayPrice ?? "Consultando…"} />
                 </View>
-                <PurchaseButton
+                <SubscriptionPurchaseButton
                   disabled={!connected || !storeProduct}
                   label={`Comprar ${configured.credits.toLocaleString("es-CL")} créditos`}
                   loading={working}
@@ -454,33 +410,6 @@ export default function SubscriptionScreen() {
   );
 }
 
-function PlanBenefitRows({ items }: { items: PlanBenefit[] }) {
-  return (
-    <View style={styles.benefitRows}>
-      {items.map((item, index) => {
-        const Icon = item.icon;
-        return (
-          <View key={item.label} style={[styles.benefitRow, index === items.length - 1 && styles.benefitRowLast]}>
-            <View style={styles.benefitIdentity}>
-              {item.entity ? <EntityIcon entity={item.entity} size="benefit" /> : Icon ? <View style={styles.benefitIcon}><Icon color={tokens.color.textMain} size={14} strokeWidth={2.2} /></View> : null}
-              <Text style={styles.benefitLabel}>{item.label}</Text>
-            </View>
-            <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.benefitValue}>{item.value}</Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-function PlanPriceChip({ color, label }: { color?: string; label: string }) {
-  return (
-    <View style={[styles.planPriceChip, color ? { backgroundColor: color } : null]}>
-      <Text numberOfLines={1} style={styles.planPriceChipLabel}>{label}</Text>
-    </View>
-  );
-}
-
 function CreditPackPriceChip({ label }: { label: string }) {
   return (
     <View style={[styles.planPriceChip, styles.creditPackPriceChip]}>
@@ -499,41 +428,9 @@ function CreditPackPriceChip({ label }: { label: string }) {
   );
 }
 
-function PurchaseButton({ disabled = false, label, loading = false, onPress }: { disabled?: boolean; label: string; loading?: boolean; onPress(): void }) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ busy: loading, disabled: disabled || loading }}
-      disabled={disabled || loading}
-      onPress={onPress}
-      style={({ pressed }) => [styles.purchaseButton, (disabled || loading) && styles.purchaseButtonDisabled, pressed && styles.purchaseButtonPressed]}>
-      <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
-        <Defs>
-          <LinearGradient id="purchase-credit-macros" x1="0" x2="1" y1="0" y2="1">
-            <Stop offset="0" stopColor={tokens.color.protein} />
-            <Stop offset="0.5" stopColor={tokens.color.carbs} />
-            <Stop offset="1" stopColor={tokens.color.fat} />
-          </LinearGradient>
-        </Defs>
-        <Rect fill="url(#purchase-credit-macros)" height="100%" width="100%" />
-      </Svg>
-      {loading ? <ActivityIndicator color={tokens.color.surfaceApp} /> : null}
-      <Text style={styles.purchaseButtonLabel}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.medium },
   actionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
-  benefitIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
-  benefitIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
-  benefitLabel: { color: tokens.color.textMuted, flexShrink: 1, fontSize: 14, lineHeight: 20 },
-  benefitRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingVertical: tokens.spacing.xs },
-  benefitRowLast: { borderBottomWidth: 0 },
-  benefitRows: { marginTop: -tokens.spacing.xs },
-  benefitValue: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20, textAlign: "right" },
   closeButton: { alignItems: "center", height: 40, justifyContent: "center", width: 40 },
   commercialSectionTitle: { fontSize: tokens.type.section, lineHeight: 26 },
   creditPackPriceChip: { overflow: "hidden" },
@@ -546,11 +443,6 @@ const styles = StyleSheet.create({
   planPriceChipLabel: { color: tokens.color.surfaceApp, fontSize: 16, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },
   planName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
   productName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
-  productTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  purchaseButton: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 48, overflow: "hidden", paddingHorizontal: tokens.spacing.lg },
-  purchaseButtonDisabled: { opacity: 0.45 },
-  purchaseButtonLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold },
-  purchaseButtonPressed: { opacity: 0.72, transform: [{ translateY: 1 }] },
   pressed: { opacity: 0.65 },
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden" },

@@ -8,6 +8,7 @@ export function Button({
   label,
   onPress,
   variant = "primary",
+  multicolorSurface = "muted",
   disabled = false,
   loading = false,
 }: {
@@ -15,6 +16,7 @@ export function Button({
   label: string;
   onPress(): void;
   variant?: "primary" | "secondary" | "danger" | "multicolor";
+  multicolorSurface?: "app" | "muted";
   disabled?: boolean;
   loading?: boolean;
 }) {
@@ -47,7 +49,7 @@ export function Button({
           </Defs>
           <Rect fill="url(#button-border-macros)" height="100%" width="100%" />
         </Svg>
-        <View style={styles.buttonMulticolorInset} />
+        <View style={[styles.buttonMulticolorInset, multicolorSurface === "app" && styles.buttonMulticolorInsetApp]} />
       </> : null}
       {loading ? <ActivityIndicator color={variant === "primary" ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
       <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{label}</Text>
@@ -133,6 +135,7 @@ const styles = StyleSheet.create({
   buttonPrimary: { backgroundColor: tokens.color.textMain },
   buttonMulticolor: { overflow: "hidden" },
   buttonMulticolorInset: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg - 2, bottom: 2, left: 2, position: "absolute", right: 2, top: 2 },
+  buttonMulticolorInsetApp: { backgroundColor: tokens.color.surfaceApp },
   buttonSecondary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderWidth: 1 },
   buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger },
   buttonDisabled: { opacity: 0.45 },

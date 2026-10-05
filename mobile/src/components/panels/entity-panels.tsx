@@ -374,7 +374,7 @@ type CaloriesSortKey = "calories" | "name" | "share";
 function CaloriesHeader({ leadingLabel, ...sorting }: HeaderSortProps<CaloriesSortKey> & { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <PanelHeaderCell {...sorting} align="left" sortKey="name" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
+      <PanelHeaderCell {...sorting} align="left" sortKey="name" style={styles.calorieLeadingCell}>{leadingLabel}</PanelHeaderCell>
       <PanelHeaderCell {...sorting} sortKey="calories" style={styles.calorieValue}>Cal</PanelHeaderCell>
       <PanelHeaderCell {...sorting} sortKey="share" style={styles.calorieShare}>% Cal</PanelHeaderCell>
     </View>
@@ -514,7 +514,7 @@ export function NutritionCaloriesPanel<T extends FoodPanelItem | MealPanelItem>(
       <CaloriesHeader leadingLabel={leadingLabel} {...sorting} />
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => (
         <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} />
+          <PanelItemName item={item} style={styles.calorieLeadingCell} />
           <Text style={[styles.cell, styles.calorieValue]}>{rounded(item.calories)}</Text>
           <View style={styles.calorieShare}>
             <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calorieShare)}% de las calorías`} tone="calories" value={item.calorieShare} />
@@ -794,6 +794,7 @@ const styles = StyleSheet.create({
   carbsDistribution: { color: tokens.color.carbs, fontWeight: tokens.weight.semibold },
   fatDistribution: { color: tokens.color.fat, fontWeight: tokens.weight.semibold },
   calorieValue: { textAlign: "center", width: 54 },
+  calorieLeadingCell: { alignSelf: "stretch", flexBasis: "50%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
   calorieShare: { flex: 1, minWidth: 92, textAlign: "center" },
   allocationRow: { gap: tokens.spacing.sm },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },

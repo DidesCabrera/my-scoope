@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, textAlign: "center" },
   leadingCell: { flexBasis: "38%", flexGrow: 0, flexShrink: 0, minWidth: 0, textAlign: "left" },
   dataCell: { flex: 1, minWidth: 0 },
-  calorieShareDataCell: { flex: 1.35 },
+  calorieShareDataCell: { flex: 1.35, maxWidth: "33%" },
   ppkDataCell: { flex: 0.65 },
   dayIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   dayCopy: { flex: 1, minWidth: 0 },

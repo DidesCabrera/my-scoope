@@ -70,7 +70,7 @@ export function NutritionKpiSection({
   const refined = !nested && width < 420;
   const macroFontSize = width < 420 ? 12 : 13;
   return (
-    <View style={[styles.container, nested && styles.containerNested, style]}>
+    <View style={[styles.container, !nested && styles.containerRegular, nested && styles.containerNested, style]}>
       <View
         accessibilityLabel={`${rounded(calories)} calorías`}
         accessible
@@ -97,6 +97,7 @@ export function NutritionKpiSection({
 
 const styles = StyleSheet.create({
   container: { alignItems: "stretch", flexDirection: "row", gap: tokens.component.nutritionKpi.regular.contentGap, minWidth: 0, width: "100%" },
+  containerRegular: { alignSelf: "stretch", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, width: "auto" },
   containerNested: { gap: tokens.component.nutritionKpi.nested.contentGap },
   calories: { alignItems: "center", alignSelf: "center", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.component.nutritionKpi.regular.totalRadius, borderWidth: tokens.component.nutritionKpi.regular.totalBorderWidth, flexShrink: 0, height: tokens.component.nutritionKpi.regular.totalSize, justifyContent: "center", paddingHorizontal: 5, width: tokens.component.nutritionKpi.regular.totalSize },
   caloriesNested: { borderRadius: tokens.component.nutritionKpi.nested.totalRadius, borderWidth: tokens.component.nutritionKpi.nested.totalBorderWidth, height: tokens.component.nutritionKpi.nested.totalSize, width: tokens.component.nutritionKpi.nested.totalSize },
@@ -104,10 +105,10 @@ const styles = StyleSheet.create({
   caloriesLabelNested: { fontSize: tokens.type.label },
   caloriesLabelRegular: { fontSize: 10 },
   caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, letterSpacing: 0 },
-  macros: { flex: 1, minWidth: 0 },
-  macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0, paddingVertical: 5 },
+  macros: { flex: 1, justifyContent: "center", minWidth: 0 },
+  macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0, paddingVertical: 5 },
   macroRowSlightlyTight: { paddingVertical: tokens.spacing.xs },
-  macroRowCompact: { gap: 3, paddingVertical: 4 },
+  macroRowCompact: { gap: tokens.spacing.xs, paddingVertical: 4 },
   macroRowLast: { borderBottomWidth: 0 },
   macroLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0, width: 52 },
   macroLabelCompact: { width: 52 },

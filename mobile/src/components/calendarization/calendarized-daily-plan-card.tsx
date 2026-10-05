@@ -30,6 +30,7 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, 
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const meals = snapshot.meals ?? [];
+  const foodsCount = meals.reduce((total, meal) => total + (meal.foods?.length ?? 0), 0);
   const totals = snapshot.totals;
   const totalCalories = snapshotCalories(totals);
   const mealKeys = new Set(meals.flatMap((meal) => meal.key ? [meal.key] : []));
@@ -53,6 +54,7 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, 
       indicators={[
         ...(position ? [{ icon: "day" as const, label: "posición", value: `S${position.weekNumber} · D${position.dayNumber}` }] : []),
         { icon: "meal", label: "comidas", value: meals.length },
+        { icon: "food", label: "alimentos", value: foodsCount },
         { icon: "day", iconPosition: "leading", label: "fecha", tone: "surfaceMuted", value: dateLabel },
       ]}
       nutrition={{

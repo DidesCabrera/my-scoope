@@ -29,7 +29,7 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   });
   assert.equal(tokens.component.nutritionKpi.nested.totalSize, 76);
   assert.deepEqual(tokens.component.entityHeading, {
-    card: { fontSize: 24, lineHeight: 30, indicatorMarginTop: 6, marginTop: 2 },
+    card: { fontSize: 23, lineHeight: 29, indicatorMarginTop: 6, marginTop: 2 },
     pageCompact: { fontSize: 26, lineHeight: 34, marginTop: 2 },
     pageRegular: { fontSize: 28, lineHeight: 36, marginTop: 2 },
   });
@@ -476,10 +476,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
-  assertSourceMatch(todayScreen, /<AppHeader[\s\S]*?title=\{`Vamos, \$\{firstName\}`\}[\s\S]*?\/>[\s\S]*<CurrentWeekSection localDate=\{today\.local_date\} \/>/);
-  assertSourceDoesNotMatch(todayScreen, /<AppHeader eyebrow=/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`Vamos, \$\{firstName\}`\}[\s\S]*?Fallar en planificar, es planificar fallar/);
+  assertSourceMatch(todayScreen, /<Chip borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
   assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
-  assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>\{`Tu Plan para hoy, \$\{homePlanDateLabel\(today\.local_date\)\}`\}<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>Tu plan de alimentos para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
+  assertSourceMatch(todayScreen, /eyebrow="PLAN DEL DÍA"/);
+  assertSourceMatch(todayScreen, /greetingRow: \{ gap: 0, marginBottom: 0 \}/);
+  assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm \}/);
   assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf("<ProgramActiveHomeOverview"));
   assertSourceMatch(todayScreen, /<CalendarizedDailyPlanCard[\s\S]*?<HomeSectionTitle>Tu Programa Activo<\/HomeSectionTitle>[\s\S]*?<ProgramActiveHomeOverview/);
   assertSourceMatch(todayScreen, /homeSectionTitle: \{[^}]*fontSize: 18[^}]*marginBottom: -tokens\.spacing\.sm[^}]*marginTop: tokens\.spacing\.sm/);
@@ -518,7 +521,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /<ProgramDaySelector/);
   assertSourceMatch(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
   assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
-  assertSourceMatch(todayScreen, /alignment="center"/);
+  assertSourceMatch(todayScreen, /greetingHeading: \{ alignItems: "center", flexDirection: "row"/);
   assertSourceMatch(todayScreen, /<GuideMetric tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /<GuideMetric icon="weight"/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
@@ -777,7 +780,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(programDayPanels, /<PanelAllocationBar size="compact"/);
   assertSourceMatch(programDayPanels, /<ProteinPerKilogramBadge showUnit=\{false\} style=\{styles\.ppkBadge\}/);
   assertSourceMatch(programDayPanels, /ppkBadge: \{ height: 24, minHeight: 24 \}/);
-  assertSourceMatch(programDayPanels, /calorieShareDataCell: \{ flex: 1\.35 \}/);
+  assertSourceMatch(programDayPanels, /calorieShareDataCell: \{ flex: 1\.35, maxWidth: "33%" \}/);
   assertSourceMatch(programDayPanels, /ppkDataCell: \{ flex: 0\.65 \}/);
   assertSourceMatch(programDayPanels, /\{ key: "share", label: "% Cal", style: styles\.calorieShareDataCell \}/);
   assertSourceMatch(programDayPanels, /\{ key: "ppk", label: "PpK", style: styles\.ppkDataCell \}/);
@@ -845,6 +848,50 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /training_frequency/);
   assertSourceMatch(journey, /Cómo leer los paneles/);
   assertSourceMatch(journey, /Continuar con Free/);
+  assertSourceMatch(journey, /<SubscriptionPlanCard/);
+  assertSourceMatch(journey, /commercialPlanBenefits\[plan\.name\]/);
+  assertSourceMatch(journey, /Mensual · \$\{plan\.price\}/);
+  assertSourceMatch(journey, /Anual · \$\{plan\.annualPrice\}/);
+  assertSourceMatch(journey, /<SubscriptionPurchaseButton/);
+  assertSourceMatch(journey, /<SubscriptionPurchaseButton label="Continuar con Free"/);
+  assertSourceMatch(journey, /function ExplanationDots/);
+  assertSourceMatch(journey, /explanationFooter: \{[^}]*marginBottom: 48/);
+  assertSourceMatch(journey, /function ContinueChip/);
+  assertSourceMatch(journey, /id="continue-chip-border"/);
+  assertSourceMatch(journey, /continueChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34/);
+  assertSourceMatch(journey, /continueChipInset: \{[^}]*bottom: 1, left: 1[^}]*right: 1, top: 1/);
+  assertSourceMatch(journey, /<Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress=\{noop\} variant="multicolor" \/>/);
+  assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
+  assertSourceMatch(journey, /<View style=\{styles\.centeredLogo\}><MyScoopeLogo \/><\/View>/);
+  assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
+  assertSourceMatch(journey, /const isCenteredIntro = index <= 6/);
+  assertSourceMatch(journey, /<StepHeader brandedCentered description="Compara lo que incluyen Free, Basic y Pro/);
+  assertSourceMatch(journey, /styles\.introCentered/);
+  assertSourceMatch(journey, /styles\.centeredTitleSpacing/);
+  assertSourceMatch(journey, /function ProfileProgress/);
+  assertSourceMatch(journey, /const isProfileStep = index >= 7 && index <= 11/);
+  assertSourceMatch(journey, /!usesBrandedHeader && !isProfileStep \? <Text/);
+  assertSourceMatch(journey, /isProfileStep \? <ProfileProgress index=\{index\} \/> : index === 6 \? null/);
+  assertSourceMatch(journey, /creditGradient\("dot", `profile-dot-\$\{stepIndex\}`\)/);
+  assertSourceMatch(journey, /creditGradient\("line", `profile-line-\$\{stepIndex\}`\)/);
+  for (const view of ["IdentityView", "MeasurementsView", "ActivityView", "SummaryView"]) {
+    const nextView = view === "IdentityView" ? "MeasurementsView" : view === "MeasurementsView" ? "ActivityView" : view === "ActivityView" ? "SummaryView" : "const plans";
+    const section = journey.match(new RegExp(`function ${view}[\\s\\S]*?${nextView}`))?.[0] ?? "";
+    assertSourceDoesNotMatch(section, /<Card accent=/);
+  }
+  for (const [view, nextView] of [["ValueView", "StructureView"], ["PanelsView", "ControlView"], ["ProgressView", "DisclosuresView"]]) {
+    const section = journey.match(new RegExp(`function ${view}[\\s\\S]*?function ${nextView}`))?.[0] ?? "";
+    assertSourceDoesNotMatch(section, /<Card accent=/);
+  }
+  assertSourceMatch(journey.match(/function ValueView[\s\S]*?function StructureView/)?.[0] ?? "", /<View style=\{styles\.valueFeatures\}>[\s\S]*?<ExplanationCard[\s\S]*?<ExplanationCard/);
+  assertSourceMatch(journey, /explanationSteps\.map\(\(step, dotIndex\) =>/);
+  assertSourceMatch(journey, /id="onboarding-credit-gradient"/);
+  assertSourceMatch(journey, /fill="url\(#onboarding-credit-gradient\)"/);
+  assertSourceDoesNotMatch(journey, /WeekDaySelectionRing/);
+  assertSourceDoesNotMatch(journey.match(/function ValueView[\s\S]*?function DisclosuresView/)?.[0] ?? "", /<JourneyFooter/);
+  assertSourceDoesNotMatch(journey, /PanResponder|OnboardingExplanationCarousel/);
+  assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
+  assertSourceMatch(journey, /loginAction: \{ marginBottom: 114, marginTop: "auto" \}/);
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
 });
 
