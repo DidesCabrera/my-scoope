@@ -65,7 +65,7 @@ class MobileAPICreditPackBillingTests(AuthenticatedMobileAPITestCase):
             environment="Sandbox", ownership_type="PURCHASED",
         )
         gateway = SimpleNamespace(verify_transaction=lambda value: evidence)
-        with patch("mobile_api.routes.credit_packs.build_apple_app_store_gateway", return_value=gateway):
+        with patch("mobile_api.apple_billing.build_apple_app_store_gateway", return_value=gateway):
             for _ in range(2):
                 response = self.client.post(
                     "/api/v1/credit-packs/apple/transactions",

@@ -24,4 +24,16 @@ urlpatterns = [
     path("webhooks/mercado-pago/", mercado_pago_webhook, name="mercado_pago_webhook"),
     path("webhooks/paddle/", paddle_webhook, name="paddle_webhook"),
     path("webhooks/apple-app-store/", apple_app_store_webhook, name="apple_app_store_webhook"),
+    path(
+        "webhooks/apple-app-store/production/",
+        apple_app_store_webhook,
+        {"environment": "production"},
+        name="apple_app_store_production_webhook",
+    ),
+    path(
+        "webhooks/apple-app-store/sandbox/",
+        apple_app_store_webhook,
+        {"environment": "sandbox"},
+        name="apple_app_store_sandbox_webhook",
+    ),
 ]

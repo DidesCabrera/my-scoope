@@ -231,6 +231,12 @@ def _capability_snapshot() -> dict[str, object]:
             "apple_notifications_enabled": bool(
                 getattr(settings, "BILLING_APPLE_NOTIFICATIONS_ENABLED", False)
             ),
+            "apple_sandbox_purchases_enabled": bool(
+                getattr(settings, "BILLING_APPLE_SANDBOX_PURCHASES_ENABLED", False)
+            ),
+            "apple_sandbox_notifications_enabled": bool(
+                getattr(settings, "BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED", False)
+            ),
             "openfactura_enabled": bool(getattr(settings, "BILLING_OPENFACTURA_ENABLED", False)),
         },
     }

@@ -4,9 +4,9 @@ from django.conf import settings
 from ninja import Router
 
 from billing.application.services.credit_packs import CreditPackUnavailable, settle_apple_credit_pack
-from billing.infrastructure.gateways import build_apple_app_store_gateway
 from billing.infrastructure.providers.apple_app_store import AppleAppStoreConfigurationError, InvalidAppleSignedData
 from mobile_api.api_support import require_scope, success
+from mobile_api.apple_billing import verify_apple_transaction_for_user
 from mobile_api.auth import mobile_bearer
 from mobile_api.entitlements_selector import entitlements_payload
 from mobile_api.errors import MobileAPIError
@@ -28,7 +28,7 @@ def apple_credit_pack_transaction(request, payload: AppleTransactionInput):
     if not settings.BILLING_APPLE_PURCHASES_ENABLED:
         raise MobileAPIError("apple_purchases_disabled", "Apple purchases are not enabled.", 403)
     try:
-        evidence = build_apple_app_store_gateway().verify_transaction(payload.signed_transaction)
+        evidence = verify_apple_transaction_for_user(payload.signed_transaction, user=request.auth.user)
         settle_apple_credit_pack(user=request.auth.user, evidence=evidence)
     except InvalidAppleSignedData as exc:
         raise MobileAPIError("apple_transaction_invalid", "The StoreKit transaction could not be verified.", 422) from exc
