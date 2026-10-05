@@ -32,60 +32,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         scenario = options["scenario"]
-        issues: list[str] = []
+        issues = _configuration_issues()
 
-        if settings.BILLING_APPLE_ENVIRONMENT != "production":
-            issues.append("BILLING_APPLE_ENVIRONMENT must be production")
-        if settings.BILLING_APPLE_BUNDLE_ID != "com.myscoope.app":
-            issues.append("BILLING_APPLE_BUNDLE_ID must match com.myscoope.app")
-        if not settings.BILLING_APPLE_APP_ID:
-            issues.append("BILLING_APPLE_APP_ID is missing")
-
-        environments = []
-        if scenario in {"production", "all"}:
-            environments.append(BillingProduct.Environment.LIVE)
-        if scenario in {"testflight", "all"}:
-            environments.append(BillingProduct.Environment.SANDBOX)
-
-        for environment in environments:
-            actual_subscriptions = dict(
-                BillingProduct.objects.filter(
-                    provider=PaymentProvider.APPLE_APP_STORE,
-                    environment=environment,
-                    active=True,
-                ).values_list("offer__code", "external_product_id")
-            )
-            actual_packs = dict(
-                ProviderCreditPack.objects.filter(
-                    provider=PaymentProvider.APPLE_APP_STORE,
-                    environment=environment,
-                    active=True,
-                ).values_list("offer__code", "external_product_id")
-            )
-            subscription_issues = _catalog_issues(
-                environment=environment,
-                expected=SUBSCRIPTION_PRODUCTS,
-                actual=actual_subscriptions,
-                label="subscriptions",
-            )
-            pack_issues = _catalog_issues(
-                environment=environment,
-                expected=PACK_PRODUCTS,
-                actual=actual_packs,
-                label="credit packs",
-            )
-            issues.extend((*subscription_issues, *pack_issues))
-            matched_subscriptions = sum(
-                actual_subscriptions.get(code) == product_id
-                for code, product_id in SUBSCRIPTION_PRODUCTS.items()
-            )
-            matched_packs = sum(
-                actual_packs.get(code) == product_id for code, product_id in PACK_PRODUCTS.items()
-            )
-            self.stdout.write(
-                f"{environment}_catalog=subscriptions:{matched_subscriptions}/4 "
-                f"credit_packs:{matched_packs}/3"
-            )
+        for environment in _scenario_environments(scenario):
+            catalog_issues, summary = _catalog_readiness(environment)
+            issues.extend(catalog_issues)
+            self.stdout.write(summary)
 
         sandbox_access_count = AppleSandboxAccess.objects.filter(active=True).filter(
             Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
@@ -95,16 +47,7 @@ class Command(BaseCommand):
             issues.append("no active, unexpired AppleSandboxAccess account exists")
 
         if options["require_enabled"]:
-            if scenario in {"production", "all"}:
-                if not settings.BILLING_APPLE_PURCHASES_ENABLED:
-                    issues.append("BILLING_APPLE_PURCHASES_ENABLED is false")
-                if not settings.BILLING_APPLE_NOTIFICATIONS_ENABLED:
-                    issues.append("BILLING_APPLE_NOTIFICATIONS_ENABLED is false")
-            if scenario in {"testflight", "all"}:
-                if not settings.BILLING_APPLE_SANDBOX_PURCHASES_ENABLED:
-                    issues.append("BILLING_APPLE_SANDBOX_PURCHASES_ENABLED is false")
-                if not settings.BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED:
-                    issues.append("BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED is false")
+            issues.extend(_enabled_issues(scenario))
 
         reconciliation_ready = all(
             (
@@ -122,6 +65,81 @@ class Command(BaseCommand):
         if issues:
             raise CommandError("Apple billing is not ready: " + "; ".join(issues))
         self.stdout.write(self.style.SUCCESS(f"Apple billing readiness passed for {scenario}."))
+
+
+def _configuration_issues() -> list[str]:
+    issues = []
+    if settings.BILLING_APPLE_ENVIRONMENT != "production":
+        issues.append("BILLING_APPLE_ENVIRONMENT must be production")
+    if settings.BILLING_APPLE_BUNDLE_ID != "com.myscoope.app":
+        issues.append("BILLING_APPLE_BUNDLE_ID must match com.myscoope.app")
+    if not settings.BILLING_APPLE_APP_ID:
+        issues.append("BILLING_APPLE_APP_ID is missing")
+    return issues
+
+
+def _scenario_environments(scenario: str) -> tuple[str, ...]:
+    if scenario == "production":
+        return (BillingProduct.Environment.LIVE,)
+    if scenario == "testflight":
+        return (BillingProduct.Environment.SANDBOX,)
+    return (BillingProduct.Environment.LIVE, BillingProduct.Environment.SANDBOX)
+
+
+def _catalog_readiness(environment: str) -> tuple[list[str], str]:
+    actual_subscriptions = dict(
+        BillingProduct.objects.filter(
+            provider=PaymentProvider.APPLE_APP_STORE,
+            environment=environment,
+            active=True,
+        ).values_list("offer__code", "external_product_id")
+    )
+    actual_packs = dict(
+        ProviderCreditPack.objects.filter(
+            provider=PaymentProvider.APPLE_APP_STORE,
+            environment=environment,
+            active=True,
+        ).values_list("offer__code", "external_product_id")
+    )
+    issues = [
+        *_catalog_issues(
+            environment=environment,
+            expected=SUBSCRIPTION_PRODUCTS,
+            actual=actual_subscriptions,
+            label="subscriptions",
+        ),
+        *_catalog_issues(
+            environment=environment,
+            expected=PACK_PRODUCTS,
+            actual=actual_packs,
+            label="credit packs",
+        ),
+    ]
+    matched_subscriptions = sum(
+        actual_subscriptions.get(code) == product_id
+        for code, product_id in SUBSCRIPTION_PRODUCTS.items()
+    )
+    matched_packs = sum(actual_packs.get(code) == product_id for code, product_id in PACK_PRODUCTS.items())
+    summary = (
+        f"{environment}_catalog=subscriptions:{matched_subscriptions}/4 "
+        f"credit_packs:{matched_packs}/3"
+    )
+    return issues, summary
+
+
+def _enabled_issues(scenario: str) -> list[str]:
+    issues = []
+    if scenario in {"production", "all"}:
+        if not settings.BILLING_APPLE_PURCHASES_ENABLED:
+            issues.append("BILLING_APPLE_PURCHASES_ENABLED is false")
+        if not settings.BILLING_APPLE_NOTIFICATIONS_ENABLED:
+            issues.append("BILLING_APPLE_NOTIFICATIONS_ENABLED is false")
+    if scenario in {"testflight", "all"}:
+        if not settings.BILLING_APPLE_SANDBOX_PURCHASES_ENABLED:
+            issues.append("BILLING_APPLE_SANDBOX_PURCHASES_ENABLED is false")
+        if not settings.BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED:
+            issues.append("BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED is false")
+    return issues
 
 
 def _catalog_issues(*, environment: str, expected: dict[str, str], actual: dict[str | None, str], label: str):
