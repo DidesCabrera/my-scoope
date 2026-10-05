@@ -3969,6 +3969,96 @@
         "title": "HealthEnvelope",
         "type": "object"
       },
+      "HomeData": {
+        "properties": {
+          "active_program": {
+            "$ref": "#/components/schemas/ActiveProgramData"
+          },
+          "latest_weight": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeightItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "library_counts": {
+            "$ref": "#/components/schemas/HomeLibraryCountsData"
+          },
+          "pending_proposal_count": {
+            "title": "Pending Proposal Count",
+            "type": "integer"
+          },
+          "today": {
+            "$ref": "#/components/schemas/TodayData"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "today",
+          "active_program",
+          "library_counts",
+          "pending_proposal_count",
+          "version"
+        ],
+        "title": "HomeData",
+        "type": "object"
+      },
+      "HomeEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/HomeData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "HomeEnvelope",
+        "type": "object"
+      },
+      "HomeLibraryCountsData": {
+        "properties": {
+          "daily_plan": {
+            "title": "Daily Plan",
+            "type": "integer"
+          },
+          "food": {
+            "title": "Food",
+            "type": "integer"
+          },
+          "meal": {
+            "title": "Meal",
+            "type": "integer"
+          },
+          "program": {
+            "title": "Program",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "food",
+          "meal",
+          "daily_plan",
+          "program"
+        ],
+        "title": "HomeLibraryCountsData",
+        "type": "object"
+      },
       "LibraryActionData": {
         "properties": {
           "destructive": {
@@ -10225,6 +10315,50 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/v1/home": {
+      "get": {
+        "operationId": "mobile_api_api_home",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Home"
       }
     },
     "/api/v1/library/daily-plans": {

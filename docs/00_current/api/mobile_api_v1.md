@@ -26,6 +26,13 @@ object containing `code`, `message` and `details`.
 The generated source of truth is `mobile-v1.openapi.json`. CI regenerates the
 schema in memory and fails when the committed contract drifts.
 
+`GET /home` is the canonical initial mobile read. It returns the complete Today
+and active-program projections, latest weight, exact library counts and pending
+proposal count in one private response. The response is short-lived in the
+shared cache, supports ETag revalidation and is invalidated after every successful
+authenticated mobile write. This consolidates transport work without reducing
+the information rendered by the existing Home screen.
+
 ## Implementation navigation
 
 The stable public contract is intentionally separated from domain ownership:

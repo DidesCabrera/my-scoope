@@ -43,6 +43,12 @@ class Program(models.Model):
 
     class Meta:
         ordering = ["list_order", "-created_at", "-id"]
+        indexes = [
+            models.Index(
+                fields=["created_by", "list_order", "created_at"],
+                name="program_mobile_library_idx",
+            ),
+        ]
 
     def kind(self):
         return "Program"

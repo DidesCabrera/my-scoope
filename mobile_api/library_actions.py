@@ -48,6 +48,7 @@ ACTION_LABELS = {
     "share": "Compartir",
     "delete": "Eliminar",
 }
+_UNSET = object()
 
 
 def _action(key: str) -> dict:
@@ -58,7 +59,7 @@ def _action(key: str) -> dict:
     }
 
 
-def library_actions_payload(item, user, *, context: str) -> list[dict]:
+def library_actions_payload(item, user, *, context: str, capabilities=_UNSET) -> list[dict]:
     """Project the same action placement used by the responsive web library."""
     is_owner = item.created_by_id == user.id
 
@@ -69,8 +70,10 @@ def library_actions_payload(item, user, *, context: str) -> list[dict]:
             return [_action("duplicate")] if item.is_forkable else []
 
         actions = []
-        capabilities = get_capabilities(user)
-        can_duplicate = isinstance(item, Program) or bool(capabilities and capabilities.can_fork())
+        resolved_capabilities = get_capabilities(user) if capabilities is _UNSET else capabilities
+        can_duplicate = isinstance(item, Program) or bool(
+            resolved_capabilities and resolved_capabilities.can_fork()
+        )
         if can_duplicate:
             actions.append(_action("duplicate"))
         if is_owner:
@@ -91,6 +94,16 @@ def library_actions_payload(item, user, *, context: str) -> list[dict]:
         actions.append(_action("duplicate"))
     actions.extend([_action("share"), _action("delete")])
     return actions
+
+
+def library_list_actions_projector(user, *, enabled: bool = True):
+    capabilities = get_capabilities(user) if enabled else None
+    return lambda item: library_actions_payload(
+        item,
+        user,
+        context="list",
+        capabilities=capabilities,
+    ) if enabled else []
 
 
 def _available_item(user, entity: str, item_id: int):

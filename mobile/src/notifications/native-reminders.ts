@@ -168,6 +168,6 @@ export async function refreshNativeReminders(
   apiRequest: AuthenticatedRequest,
   options: NativeReminderSyncOptions = {},
 ): Promise<NativeReminderState> {
-  const today = await apiRequest<TodayData>("/api/v1/today");
+  const { today } = await apiRequest<{ today: TodayData }>("/api/v1/home");
   return syncNativeRemindersForProgram(today.reminders, today.calendarization?.status ?? null, apiRequest, options);
 }

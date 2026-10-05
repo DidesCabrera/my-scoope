@@ -46,6 +46,7 @@ class MobileAPIArchitectureTests(SimpleTestCase):
 
     def test_extracted_domains_are_owned_outside_the_route_and_schema_facades(self):
         api_source = (ROOT / "mobile_api/api.py").read_text()
+        root_route_source = (ROOT / "mobile_api/routes/root.py").read_text()
         schema_source = (ROOT / "mobile_api/schemas.py").read_text()
         label_capture_route_source = (ROOT / "mobile_api/routes/label_capture.py").read_text()
 
@@ -55,6 +56,7 @@ class MobileAPIArchitectureTests(SimpleTestCase):
         self.assertIn('api.add_router("", comparisons_router)', api_source)
         self.assertIn('api.add_router("", composition_router)', api_source)
         self.assertIn('api.add_router("", identity_router)', api_source)
+        self.assertIn('router.add_router("", home_router)', root_route_source)
         self.assertIn('api.add_router("", label_capture_router)', api_source)
         self.assertIn('api.add_router("", libraries_router)', api_source)
         self.assertIn('api.add_router("", proposals_router)', api_source)

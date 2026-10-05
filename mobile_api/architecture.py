@@ -2,6 +2,7 @@ from __future__ import annotations
 
 ROUTE_DOMAIN_PREFIXES = (
     ("/ai/", "assistant"),
+    ("/home", "home"),
     ("/program/", "calendarization"),
     ("/today", "calendarization"),
     ("/days/", "calendarization"),

@@ -39,6 +39,14 @@ class Meal(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     list_order = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["created_by", "is_draft", "list_order", "created_at"],
+                name="meal_mobile_library_idx",
+            ),
+        ]
+
     def kind(self):
         return "Meal"
 

@@ -1,7 +1,7 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Search, X } from "lucide-react-native";
-import { useCallback, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -23,6 +23,8 @@ type LibraryListScreenProps = {
   entity: LibraryEntity;
   title: string;
 };
+
+const INITIAL_PAGE_SIZE = 12;
 
 const createLabels: Record<LibraryEntity, string> = {
   food: "Crear alimento",
@@ -46,6 +48,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -58,12 +61,16 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const finishEdit = useCallback(() => { setSelectedIds(new Set()); setMode("list"); }, []);
 
   const load = useCallback(async ({ append = false, offset = 0 } = {}) => {
-    if (append) setLoadingMore(true);
+    if (append) {
+      if (loadingMoreRef.current) return;
+      loadingMoreRef.current = true;
+      setLoadingMore(true);
+    }
     else setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams({
-        limit: "30",
+        limit: String(INITIAL_PAGE_SIZE),
         offset: append ? String(offset) : "0",
       });
       if (entity === "meal" || entity === "dailyPlan") params.set("include_drafts", "true");
@@ -74,9 +81,27 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       setError(userFacingError(nextError));
     } finally {
       setLoading(false);
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
   }, [apiRequest, endpoint, entity, submittedQuery]);
+
+  const handleScroll = useCallback(({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y));
+    const distanceFromEnd = nativeEvent.contentSize.height
+      - nativeEvent.layoutMeasurement.height
+      - nativeEvent.contentOffset.y;
+    if (
+      distanceFromEnd < 640
+      && mode === "list"
+      && !loading
+      && !loadingMoreRef.current
+      && page
+      && page.items.length < page.total
+    ) {
+      void load({ append: true, offset: page.items.length });
+    }
+  }, [load, loading, mode, page]);
 
   const loadAll = async () => {
     const items: LibraryPageData["items"] = [];
@@ -186,7 +211,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     <NestableScrollContainer
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
-      onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
+      onScroll={handleScroll}
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
       stickyHeaderIndices={mode === "list" ? [1] : undefined}

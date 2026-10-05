@@ -10,10 +10,10 @@ from mobile_api.routes.calendarization_edits import router as calendarization_ed
 from mobile_api.routes.comparison_edits import router as comparison_edits_router
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.composition import router as composition_router
-from mobile_api.routes.identity import router as identity_router
 from mobile_api.routes.label_capture import router as label_capture_router
 from mobile_api.routes.libraries import router as libraries_router
 from mobile_api.routes.proposals import router as proposals_router
+from mobile_api.routes.root import router as identity_router
 from mobile_api.routes.sharing import router as sharing_router
 from mobile_api.routes.store_billing import router as billing_router
 from mobile_api.schemas import HealthEnvelope

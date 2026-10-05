@@ -526,12 +526,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUiSourceForIndicators, /guideMetricPpk: \{ backgroundColor: `\$\{tokens\.color\.ppk\}1A`, borderColor: `\$\{tokens\.color\.ppk\}80`/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValuePpk: \{ color: tokens\.color\.textMain, fontSize: 15, lineHeight: 18 \}/);
   assertSourceDoesNotMatch(productUiSourceForIndicators, /icon === "weight"/);
-  assertSourceMatch(todayScreen, /apiRequest<WeightListData>\("\/api\/v1\/weights\?limit=1"\)/);
+  assertSourceMatch(todayScreen, /apiRequest<HomeData>\("\/api\/v1\/home"\)/);
+  assertSourceMatch(todayScreen, /home\.latest_weight\?\.weight_kg/);
   assertSourceMatch(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
   assertSourceMatch(todayScreen, /displayWeight\(currentWeightKg\)/);
   assertSourceMatch(todayScreen, /dateLabel=\{compactDateLabel\(today\.local_date\)\}/);
   assertSourceMatch(todayScreen, /<HomeLibraryGrid counts=\{libraryCounts\} \/>/);
-  assertSourceMatch(todayScreen, /\/api\/v1\/library\/programs\?limit=1/);
+  assertSourceMatch(todayScreen, /home\.library_counts\.program/);
   const homeLibraryGrid = await readTestFile(
     path.resolve(process.cwd(), "src/components/home/home-library-grid.tsx"),
     "utf8",

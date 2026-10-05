@@ -7,6 +7,7 @@ import { createContext, PropsWithChildren, useCallback, useContext, useEffect, u
 import { userFacingError } from "@/api/errors";
 import type { ProfileData, SessionData } from "@/api/types";
 import { appConfig } from "@/config/app-config";
+import { recordMobileRequestMetric } from "@/observability/network-performance";
 
 import { getDeviceIdentity, secureTokenStorage } from "./expo-adapters";
 import { MobileSessionManager } from "./session-manager";
@@ -39,10 +40,11 @@ const discovery = {
 };
 
 export function SessionProvider({ children }: PropsWithChildren) {
-  const manager = useMemo(
-    () => new MobileSessionManager(appConfig, secureTokenStorage, getDeviceIdentity),
-    [],
-  );
+  const manager = useMemo(() => {
+    const nextManager = new MobileSessionManager(appConfig, secureTokenStorage, getDeviceIdentity);
+    nextManager.setRequestMetricObserver(recordMobileRequestMetric);
+    return nextManager;
+  }, []);
   const [status, setStatus] = useState<SessionStatus>("booting");
   const [session, setSession] = useState<SessionData | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
