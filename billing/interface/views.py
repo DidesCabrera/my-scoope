@@ -11,10 +11,10 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from billing.application.services.apple_app_store import (
+from billing.application.services.apple_app_store import process_apple_notification
+from billing.application.services.apple_environment import (
     UnsupportedAppleEnvironment,
     apple_catalog_environment,
-    process_apple_notification,
 )
 from billing.application.services.checkout import (
     BillingCheckoutUnavailable,

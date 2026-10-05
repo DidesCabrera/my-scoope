@@ -9,11 +9,18 @@ from django.db import transaction
 from django.utils import timezone
 
 from billing.application.contracts import AppleNotificationEvidence, AppleTransactionEvidence
+from billing.application.services.apple_environment import (
+    AppleEvidenceError,
+    UnauthorizedAppleSandboxAccess,
+    UnsupportedAppleEnvironment,
+    apple_catalog_environment,
+    require_apple_sandbox_access_in_production,
+    user_has_apple_sandbox_access,
+)
 from billing.application.services.events import claim_billing_event, finish_billing_event
 from billing.application.services.projections import project_provider_subscription
 from billing.models import (
     AppleAppAccountToken,
-    AppleSandboxAccess,
     BillingEvent,
     BillingProduct,
     CreditPackPurchase,
@@ -21,10 +28,6 @@ from billing.models import (
     ProviderCreditPack,
     ProviderSubscription,
 )
-
-
-class AppleEvidenceError(ValueError):
-    pass
 
 
 class UnknownAppleAccountToken(AppleEvidenceError):
@@ -36,14 +39,6 @@ class UnsupportedAppleProduct(AppleEvidenceError):
 
 
 class UnsupportedAppleOwnership(AppleEvidenceError):
-    pass
-
-
-class UnsupportedAppleEnvironment(AppleEvidenceError):
-    pass
-
-
-class UnauthorizedAppleSandboxAccess(AppleEvidenceError):
     pass
 
 
@@ -59,31 +54,6 @@ _STATUS_MAP = {
 def get_or_create_apple_app_account_token(user) -> AppleAppAccountToken:
     token, _ = AppleAppAccountToken.objects.get_or_create(user=user)
     return token
-
-
-def apple_catalog_environment(value: str) -> str:
-    normalized = str(value or "").strip().lower()
-    if normalized == "sandbox":
-        return BillingProduct.Environment.SANDBOX
-    if normalized == "production":
-        return BillingProduct.Environment.LIVE
-    raise UnsupportedAppleEnvironment("Apple evidence has an unsupported environment.")
-
-
-def user_has_apple_sandbox_access(user) -> bool:
-    access = AppleSandboxAccess.objects.filter(user=user, active=True).first()
-    return bool(access and (access.expires_at is None or access.expires_at > timezone.now()))
-
-
-def require_apple_sandbox_access_in_production(user, *, catalog_environment: str) -> None:
-    from django.conf import settings
-
-    if (
-        catalog_environment == BillingProduct.Environment.SANDBOX
-        and settings.BILLING_APPLE_ENVIRONMENT == "production"
-        and not user_has_apple_sandbox_access(user)
-    ):
-        raise UnauthorizedAppleSandboxAccess("This account is not authorized for Apple sandbox evidence.")
 
 
 @transaction.atomic

@@ -2,7 +2,7 @@
 
 from django.conf import settings
 
-from billing.application.services.apple_app_store import (
+from billing.application.services.apple_environment import (
     UnsupportedAppleEnvironment,
     apple_catalog_environment,
     user_has_apple_sandbox_access,

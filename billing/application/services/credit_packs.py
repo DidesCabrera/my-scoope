@@ -132,7 +132,7 @@ def settle_credit_pack_purchase(
 
 
 def settle_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
-    from billing.application.services.apple_app_store import (
+    from billing.application.services.apple_environment import (
         UnauthorizedAppleSandboxAccess,
         UnsupportedAppleEnvironment,
         apple_catalog_environment,

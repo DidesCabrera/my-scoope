@@ -1,9 +1,9 @@
 from django.conf import settings
 
-from billing.application.services.apple_app_store import (
+from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
+from billing.application.services.apple_environment import (
     UnsupportedAppleEnvironment,
     apple_catalog_environment,
-    get_or_create_apple_app_account_token,
 )
 from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
