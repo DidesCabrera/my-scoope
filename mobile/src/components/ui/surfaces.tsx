@@ -1,7 +1,9 @@
 import type { PropsWithChildren } from "react";
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
+
+export { Chip as Pill } from "./chip";
 
 export function Card({
   children,
@@ -16,17 +18,7 @@ export function Card({
   );
 }
 
-export function Pill({ label, color = tokens.color.interactivePrimary }: { label: string; color?: string }) {
-  return (
-    <View style={[styles.pill, { borderColor: color }]}>
-      <Text style={[styles.pillText, { color }]}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: -tokens.spacing.screen, padding: tokens.card.outerPadding },
+  card: { backgroundColor: tokens.color.surfaceCard, borderColor: "transparent", borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: -tokens.spacing.screen, padding: tokens.card.outerPadding },
   cardMuted: { backgroundColor: tokens.color.surfaceMuted },
-  pill: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
-  pillText: { fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 0.4 },
 });

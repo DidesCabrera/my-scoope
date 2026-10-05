@@ -39,7 +39,7 @@ export function ProteinPerKilogramBadge({
 }
 
 const styles = StyleSheet.create({
-  badge: { alignItems: "center", backgroundColor: tokens.color.ppk, borderRadius: 5, justifyContent: "center", minHeight: 22, paddingHorizontal: 3 },
+  badge: { alignItems: "center", backgroundColor: tokens.color.ppk, borderRadius: tokens.component.nutritionKpi.regular.barRadius, justifyContent: "center", minHeight: 22, paddingHorizontal: 3 },
   badgeCompact: { minHeight: 18, paddingHorizontal: 3 },
   text: { color: "#111111", fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0 },
 });

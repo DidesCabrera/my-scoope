@@ -24,7 +24,7 @@ export const tokens = {
     "success": "#01E888",
     "warning": "#FFD16E",
     "kcalSurface": "#26211D",
-    "kcalBorder": "#5A4031",
+    "kcalBorder": "#8d6951",
     "allocationBarTrack": "#313131",
     "allocationPanelTrack": "#313131",
     "protein": "#00D0F5",
@@ -96,8 +96,8 @@ export const tokens = {
     },
     "entityHeading": {
       "card": {
-        "fontSize": 24,
-        "lineHeight": 30,
+        "fontSize": 23,
+        "lineHeight": 29,
         "indicatorMarginTop": 6,
         "marginTop": 2
       },

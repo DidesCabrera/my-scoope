@@ -29,9 +29,10 @@ export function HomeLibraryGrid({ counts }: { counts: HomeLibraryCounts }) {
     <View accessibilityLabel="Mis librerías" style={styles.section}>
       <SectionDivider spacing="compact" style={styles.sectionDivider} />
       <View style={styles.heading}>
-        <Bookmark color={tokens.color.textMain} size={21} strokeWidth={2.2} />
+        <Bookmark color={tokens.color.textMain} size={25} strokeWidth={2.2} />
         <Text style={styles.headingText}>Mis librerías</Text>
       </View>
+      <Text style={styles.subtitle}>Crea, ajusta y reutiliza los elementos en tus librerías. Compara cómo pequeños cambios tienen un alto impacto.</Text>
       <View style={styles.grid}>
         {entries.map((entry) => {
           const Icon = entry.icon;
@@ -57,18 +58,19 @@ export function HomeLibraryGrid({ counts }: { counts: HomeLibraryCounts }) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderTopWidth: 3, borderWidth: 1, flexBasis: "47%", flexGrow: 1, minHeight: 172, overflow: "hidden", padding: tokens.card.outerPadding },
+  card: { backgroundColor: tokens.color.surfaceCard, borderColor: "transparent", borderRadius: tokens.radius.card, borderTopWidth: 3, borderWidth: 1, flexBasis: "47%", flexGrow: 1, minHeight: 172, overflow: "hidden", padding: tokens.card.outerPadding },
   cardMain: { flex: 1 },
   count: { alignItems: "center", flexDirection: "row", gap: 3 },
   countText: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold },
   create: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.sm, height: 30, justifyContent: "center", width: 30 },
   footer: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: tokens.spacing.sm },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
-  heading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
-  headingText: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold },
+  heading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginBottom: -tokens.spacing.xs, marginLeft: tokens.spacing.screen, marginTop: tokens.spacing.lg },
+  headingText: { color: tokens.color.textMain, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.extraBold },
   icon: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", marginBottom: tokens.spacing.sm, width: 34 },
   pressed: { opacity: 0.65 },
   section: { gap: tokens.spacing.md, marginHorizontal: -tokens.spacing.screen },
   sectionDivider: { marginHorizontal: 0 },
+  subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20, marginHorizontal: tokens.spacing.screen },
   title: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold, lineHeight: 19, minHeight: 38 },
 });

@@ -12,12 +12,13 @@ test("Home creates or presents one live pinned daily plan", async () => {
   assertSourceMatch(home, /label="Crear un plan para hoy"/);
   assertSourceMatch(home, /apiRequest<TodayData>\("\/api\/v1\/today\/pinned-plan", \{ method: "POST" \}\)/);
   assertSourceMatch(home, /<PinnedDailyPlanCard editing=\{pinnedMealEditing\} item=\{today\.pinned_plan\}/);
-  assertSourceMatch(card, /<EntityCard actions=\{detailAction\} entity="dailyPlan" eyebrow="PLAN DE HOY" headingLink=\{\{ label: "Ir al detalle del plan", onPress: openDetail \}\} title=\{item\.name\}>/);
+  assertSourceMatch(card, /<EntityCard actions=\{detailAction\} entity="dailyPlan" eyebrow="PLAN DEL DÍA" headingLink=\{\{ label: "Ir al detalle del plan", onPress: openDetail \}\} indicators=\{indicators\} title=\{item\.name\}>/);
   assertSourceMatch(card, /label="Ir al detalle del plan"/);
   assertSourceMatch(card, /router\.push\(`\/libraries\/daily-plans\/\$\{item\.id\}` as Href\)/);
   assertSourceMatch(card, /addMealAction: \{ marginTop: tokens\.spacing\.md \}/);
   assertSourceMatch(card, /label="\+ Agregar Comida"/);
-  assert.doesNotMatch(card, /<EntityCard[^>]*indicators=/);
+  assertSourceMatch(card, /\{ icon: "meal" as const, label: "comidas", value: meals\.length \}/);
+  assertSourceMatch(card, /\{ icon: "food" as const, label: "alimentos", value: meals\.reduce/);
 });
 
 test("pinned library plans reuse daily completion and food preparation controls", async () => {

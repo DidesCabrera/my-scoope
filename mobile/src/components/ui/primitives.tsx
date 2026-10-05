@@ -15,6 +15,8 @@ import { tokens } from "@/design/tokens";
 import { Screen } from "./layout";
 import { MacroLoadingIndicator } from "./macro-loading-indicator";
 
+export { Chip as Pill } from "./chip";
+
 export { Screen };
 
 export function Brand({ compact = false }: { compact?: boolean }) {
@@ -61,24 +63,6 @@ export function SectionTitle({ title, detail }: { title: string; detail?: string
     <View style={styles.sectionTitleRow}>
       <Text style={styles.sectionTitle}>{title}</Text>
       {detail ? <Text style={styles.sectionDetail}>{detail}</Text> : null}
-    </View>
-  );
-}
-
-export function Pill({
-  backgroundColor,
-  label,
-  color = tokens.color.interactivePrimary,
-  textColor,
-}: {
-  backgroundColor?: string;
-  label: string;
-  color?: string;
-  textColor?: string;
-}) {
-  return (
-    <View style={[styles.pill, { backgroundColor, borderColor: color }]}>
-      <Text style={[styles.pillText, { color: textColor ?? color }]}>{label}</Text>
     </View>
   );
 }
@@ -236,13 +220,11 @@ const styles = StyleSheet.create({
   eyebrow: { color: tokens.color.textSoft, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.2, textTransform: "uppercase" },
   eyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   title: { color: tokens.color.textMain, fontSize: tokens.type.title, fontWeight: "800", letterSpacing: -0.5 },
-  card: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: -tokens.spacing.screen, padding: tokens.card.outerPadding },
+  card: { backgroundColor: tokens.color.surfaceCard, borderColor: "transparent", borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: -tokens.spacing.screen, padding: tokens.card.outerPadding },
   cardMuted: { backgroundColor: tokens.color.surfaceMuted },
   sectionTitleRow: { alignItems: "baseline", flexDirection: "row", justifyContent: "space-between" },
   sectionTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   sectionDetail: { color: tokens.color.textSoft, fontSize: tokens.type.caption },
-  pill: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
-  pillText: { fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 0.4 },
   button: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 48, paddingHorizontal: tokens.spacing.lg },
   buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   buttonPrimary: { backgroundColor: tokens.color.textMain },

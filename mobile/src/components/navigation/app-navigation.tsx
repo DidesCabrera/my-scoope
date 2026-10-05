@@ -39,6 +39,7 @@ import { useSession } from "@/auth/session-context";
 import type { LibraryEntity } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
+import { MyScoopeLogo } from "@/components/ui/my-scoope-logo";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
@@ -102,19 +103,6 @@ export function AppNavigationProvider({ children }: PropsWithChildren) {
       {children}
       <AppSidebar />
     </NavigationContext.Provider>
-  );
-}
-
-function MyScoopeLogo() {
-  return (
-    <View accessibilityLabel="My Scoope" accessible style={styles.logo}>
-      <Text style={styles.logoText}>MyScoope</Text>
-      <View aria-hidden style={styles.logoBars}>
-        <View style={[styles.logoBar, styles.logoBarProtein]} />
-        <View style={[styles.logoBar, styles.logoBarCarbs]} />
-        <View style={[styles.logoBar, styles.logoBarFat]} />
-      </View>
-    </View>
   );
 }
 
@@ -398,13 +386,6 @@ const styles = StyleSheet.create({
   headerLogo: { alignItems: "center", bottom: 0, justifyContent: "center", left: 58, position: "absolute", right: 58, top: 0 },
   routeIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   routeIdentityTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: 16, fontWeight: "600", lineHeight: 22 },
-  logo: { alignItems: "center", flexDirection: "row", gap: 5 },
-  logoText: { color: tokens.color.textMain, fontSize: 18, fontWeight: "900", letterSpacing: -0.7 },
-  logoBars: { gap: 2 },
-  logoBar: { borderRadius: 2, height: 3, width: 13 },
-  logoBarProtein: { backgroundColor: tokens.color.protein },
-  logoBarCarbs: { backgroundColor: tokens.color.carbs },
-  logoBarFat: { backgroundColor: tokens.color.fat },
   modalRoot: { flex: 1, flexDirection: "row" },
   scrim: { backgroundColor: "rgba(0,0,0,0.72)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   scrimPressable: { flex: 1 },

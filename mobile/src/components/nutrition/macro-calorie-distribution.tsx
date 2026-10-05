@@ -26,7 +26,7 @@ export function MacroCalorieDistribution(props: MacroCalorieDistributionProps) {
 const styles = StyleSheet.create({
   track: {
     backgroundColor: tokens.color.allocationPanelTrack,
-    borderRadius: 4,
+    borderRadius: tokens.component.nutritionKpi.regular.barRadius,
     flexDirection: "row",
     gap: 1,
     height: 24,
