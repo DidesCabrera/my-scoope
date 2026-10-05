@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from django.conf import settings
 from ninja import Router
 
 from billing.application.services.apple_app_store import AppleEvidenceError, sync_apple_transaction
@@ -9,7 +8,7 @@ from billing.infrastructure.providers.apple_app_store import (
     InvalidAppleSignedData,
 )
 from mobile_api.api_support import require_scope, success
-from mobile_api.apple_billing import verify_apple_transaction_for_user
+from mobile_api.apple_billing import apple_purchases_enabled_for_user, verify_apple_transaction_for_user
 from mobile_api.auth import mobile_bearer
 from mobile_api.billing_selector import subscription_payload
 from mobile_api.entitlements_selector import entitlements_payload
@@ -59,7 +58,7 @@ def subscriptions(request):
 )
 def apple_transaction(request, payload: AppleTransactionInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    if not settings.BILLING_APPLE_PURCHASES_ENABLED:
+    if not apple_purchases_enabled_for_user(request.auth.user):
         raise MobileAPIError(
             code="apple_purchases_disabled",
             message="Apple purchases are not enabled.",

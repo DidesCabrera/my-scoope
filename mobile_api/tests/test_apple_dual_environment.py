@@ -93,7 +93,7 @@ class MobileAPIAppleDualEnvironmentTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.json()["data"]["products"], [])
 
     @override_settings(
-        BILLING_APPLE_PURCHASES_ENABLED=True,
+        BILLING_APPLE_PURCHASES_ENABLED=False,
         BILLING_APPLE_SANDBOX_PURCHASES_ENABLED=True,
         BILLING_APPLE_ENVIRONMENT="production",
     )
@@ -122,19 +122,21 @@ class MobileAPIAppleDualEnvironmentTests(AuthenticatedMobileAPITestCase):
         sandbox_gateway = SimpleNamespace(verify_transaction=lambda value: evidence)
         body = {"signed_transaction": "header.payload.signature"}
 
-        with patch(
-            "mobile_api.apple_billing.build_apple_app_store_gateway",
-            side_effect=[production_gateway],
-        ) as builder:
-            rejected = self.client.post(
-                "/api/v1/subscriptions/apple/transactions",
-                data=body,
-                content_type="application/json",
-            )
-        self.assertEqual(rejected.status_code, 422)
-        self.assertEqual(builder.call_count, 1)
+        rejected = self.client.post(
+            "/api/v1/subscriptions/apple/transactions",
+            data=body,
+            content_type="application/json",
+        )
+        self.assertEqual(rejected.status_code, 403)
 
         AppleSandboxAccess.objects.create(user=self.user, purpose=AppleSandboxAccess.Purpose.APP_REVIEW)
+        overview = self.client.get("/api/v1/subscriptions")
+        self.assertEqual(overview.status_code, 200)
+        self.assertTrue(overview.json()["data"]["purchases_enabled"])
+        self.assertEqual(
+            [item["product_id"] for item in overview.json()["data"]["products"]],
+            [product.external_product_id],
+        )
         with patch(
             "mobile_api.apple_billing.build_apple_app_store_gateway",
             side_effect=[production_gateway, sandbox_gateway],
