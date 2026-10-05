@@ -49,6 +49,28 @@ services:
         value: "false"
       - key: BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED
         value: "false"
+      - key: BILLING_APPLE_NOTIFICATIONS_ENABLED
+        value: "false"
+      - key: BILLING_APPLE_PURCHASES_ENABLED
+        value: "false"
+      - key: BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED
+        value: "false"
+      - key: BILLING_APPLE_SANDBOX_PURCHASES_ENABLED
+        value: "false"
+      - key: BILLING_APPLE_ENVIRONMENT
+        value: production
+      - key: BILLING_APPLE_BUNDLE_ID
+        value: com.myscoope.app
+      - key: BILLING_APPLE_APP_ID
+        value: "6804048394"
+      - key: BILLING_APPLE_ONLINE_CHECKS
+        value: "true"
+      - key: BILLING_APPLE_IN_APP_PURCHASE_KEY
+        sync: false
+      - key: BILLING_APPLE_KEY_ID
+        sync: false
+      - key: BILLING_APPLE_ISSUER_ID
+        sync: false
       - key: BILLING_PADDLE_API_BASE_URL
         value: https://sandbox-api.paddle.com
       - key: BILLING_PADDLE_TIMEOUT_SECONDS

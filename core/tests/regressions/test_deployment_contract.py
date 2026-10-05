@@ -51,6 +51,27 @@ class DeploymentContractTests(SimpleTestCase):
         self.assertNotIn("sqlite:///", blueprint)
         self.assertNotIn("postgresql://", blueprint)
 
+    def test_staging_blueprint_versions_dual_environment_apple_contract(self):
+        blueprint = (ROOT / "render.staging.yaml").read_text()
+
+        self.assertIn("- key: BILLING_APPLE_ENVIRONMENT\n        value: production", blueprint)
+        self.assertIn("- key: BILLING_APPLE_BUNDLE_ID\n        value: com.myscoope.app", blueprint)
+        self.assertIn("- key: BILLING_APPLE_APP_ID\n        value: \"6804048394\"", blueprint)
+        self.assertIn("- key: BILLING_APPLE_ONLINE_CHECKS\n        value: \"true\"", blueprint)
+        for setting in (
+            "BILLING_APPLE_NOTIFICATIONS_ENABLED",
+            "BILLING_APPLE_PURCHASES_ENABLED",
+            "BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED",
+            "BILLING_APPLE_SANDBOX_PURCHASES_ENABLED",
+        ):
+            self.assertIn(f"- key: {setting}\n        value: \"false\"", blueprint)
+        for credential in (
+            "BILLING_APPLE_IN_APP_PURCHASE_KEY",
+            "BILLING_APPLE_KEY_ID",
+            "BILLING_APPLE_ISSUER_ID",
+        ):
+            self.assertIn(f"- key: {credential}\n        sync: false", blueprint)
+
     def test_render_build_keeps_schema_changes_out_of_the_build_step(self):
         build_script = (ROOT / "scripts/render_build.sh").read_text()
 
