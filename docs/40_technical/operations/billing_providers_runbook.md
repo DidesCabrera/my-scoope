@@ -71,6 +71,11 @@ Browser return parameters never grant access. Only verified provider state proje
    dedicated internal/App Review account. Never authorize ordinary customer or staff
    accounts implicitly. Enable sandbox notifications and purchases only while this
    controlled production-profile test is required.
+   Run `.venv/bin/python manage.py check_apple_billing_readiness --scenario all`
+   before activation. Add `--require-enabled` only after changing the four Apple
+   feature flags, and `--require-reconciliation` when validating the private API
+   credentials. The command reads configuration and catalog state without making
+   purchases or changing entitlements.
 6. Enable notifications first. Confirm invalid JWS rejection, notification replay
    idempotency and lifecycle projection. Run
    `.venv/bin/python manage.py reconcile_apple_subscriptions --dry-run`.
