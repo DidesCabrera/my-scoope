@@ -11,7 +11,11 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from billing.application.services.apple_app_store import process_apple_notification
+from billing.application.services.apple_app_store import (
+    UnsupportedAppleEnvironment,
+    apple_catalog_environment,
+    process_apple_notification,
+)
 from billing.application.services.checkout import (
     BillingCheckoutUnavailable,
     cancel_user_subscription,
@@ -27,7 +31,10 @@ from billing.infrastructure.gateways import (
     build_mercado_pago_gateway,
     build_paddle_gateway,
 )
-from billing.infrastructure.providers.apple_app_store import InvalidAppleSignedData
+from billing.infrastructure.providers.apple_app_store import (
+    AppleAppStoreConfigurationError,
+    InvalidAppleSignedData,
+)
 from billing.infrastructure.providers.mercado_pago import MercadoPagoProviderError
 from billing.infrastructure.providers.mercado_pago_webhooks import (
     InvalidMercadoPagoSignature,
@@ -263,10 +270,18 @@ def paddle_webhook(request: HttpRequest) -> HttpResponse:
 
 @csrf_exempt
 @require_POST
-def apple_app_store_webhook(request: HttpRequest) -> HttpResponse:
+def apple_app_store_webhook(request: HttpRequest, environment: str | None = None) -> HttpResponse:
     """Receive App Store Server Notifications V2 after signed-payload verification."""
 
-    if not settings.BILLING_APPLE_NOTIFICATIONS_ENABLED:
+    verifier_environment = environment or settings.BILLING_APPLE_ENVIRONMENT
+    enabled = (
+        settings.BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED
+        if environment == "sandbox"
+        else settings.BILLING_APPLE_NOTIFICATIONS_ENABLED
+    )
+    if environment == "production" and settings.BILLING_APPLE_ENVIRONMENT != "production":
+        enabled = False
+    if not enabled:
         return HttpResponse(status=404)
     if len(request.body) > MAX_WEBHOOK_BODY_BYTES:
         return HttpResponse(status=413)
@@ -276,13 +291,30 @@ def apple_app_store_webhook(request: HttpRequest) -> HttpResponse:
         return JsonResponse({"detail": "invalid_json"}, status=400)
     signed_payload = str(payload.get("signedPayload") or "") if isinstance(payload, dict) else ""
     try:
-        notification = build_apple_app_store_gateway().verify_notification(signed_payload)
+        notification = build_apple_app_store_gateway(
+            environment=verifier_environment
+        ).verify_notification(signed_payload)
     except InvalidAppleSignedData:
         return JsonResponse({"detail": "invalid_signature"}, status=401)
+    except AppleAppStoreConfigurationError:
+        return JsonResponse({"detail": "apple_billing_unavailable"}, status=503)
     if not notification.notification_uuid or not notification.notification_type:
         return JsonResponse({"detail": "missing_event_identity"}, status=400)
 
     transaction = notification.transaction
+    try:
+        expected_catalog_environment = apple_catalog_environment(verifier_environment)
+        notification_catalog_environment = apple_catalog_environment(notification.environment)
+        transaction_catalog_environment = (
+            apple_catalog_environment(transaction.environment) if transaction is not None else None
+        )
+    except UnsupportedAppleEnvironment:
+        return JsonResponse({"detail": "invalid_environment"}, status=400)
+    if notification_catalog_environment != expected_catalog_environment or (
+        transaction_catalog_environment is not None
+        and transaction_catalog_environment != notification_catalog_environment
+    ):
+        return JsonResponse({"detail": "environment_mismatch"}, status=400)
     normalized_payload = {
         "notification_uuid": notification.notification_uuid,
         "notification_type": notification.notification_type,
@@ -295,7 +327,7 @@ def apple_app_store_webhook(request: HttpRequest) -> HttpResponse:
     }
     receipt = receive_verified_billing_event(
         provider=PaymentProvider.APPLE_APP_STORE,
-        external_event_id=notification.notification_uuid,
+        external_event_id=f"{notification_catalog_environment}:{notification.notification_uuid}",
         event_type=notification.notification_type,
         resource_id=transaction.original_transaction_id if transaction else "",
         payload=normalized_payload,

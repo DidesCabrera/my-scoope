@@ -132,6 +132,13 @@ def settle_credit_pack_purchase(
 
 
 def settle_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
+    from billing.application.services.apple_app_store import (
+        UnauthorizedAppleSandboxAccess,
+        UnsupportedAppleEnvironment,
+        apple_catalog_environment,
+        require_apple_sandbox_access_in_production,
+    )
+
     token, _ = AppleAppAccountToken.objects.get_or_create(user=user)
     if str(evidence.app_account_token or "").lower() != str(token.token).lower():
         raise CreditPackUnavailable("credit_pack_apple_account_mismatch")
@@ -139,11 +146,19 @@ def settle_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
         raise CreditPackUnavailable("credit_pack_apple_transaction_not_consumable")
     if str(evidence.ownership_type or "").upper() not in {"PURCHASED", ""}:
         raise CreditPackUnavailable("credit_pack_apple_ownership_invalid")
-    environment = "sandbox" if str(evidence.environment).lower() == "sandbox" else "live"
+    try:
+        environment = apple_catalog_environment(evidence.environment)
+    except UnsupportedAppleEnvironment as exc:
+        raise CreditPackUnavailable("credit_pack_apple_environment_invalid") from exc
+    try:
+        require_apple_sandbox_access_in_production(user, catalog_environment=environment)
+    except UnauthorizedAppleSandboxAccess as exc:
+        raise CreditPackUnavailable("credit_pack_apple_sandbox_unauthorized") from exc
     product = ProviderCreditPack.objects.filter(
         provider=PaymentProvider.APPLE_APP_STORE,
         environment=environment,
         external_product_id=evidence.product_id,
+        active=True,
     ).first()
     if product is None:
         raise CreditPackUnavailable("credit_pack_apple_product_unmapped")

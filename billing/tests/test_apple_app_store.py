@@ -11,14 +11,22 @@ from django.utils import timezone
 from accounts.models import AccountPlan, AccountSubscription
 from billing.application.contracts import AppleNotificationEvidence, AppleTransactionEvidence
 from billing.application.services.apple_app_store import (
+    UnauthorizedAppleSandboxAccess,
     UnknownAppleAccountToken,
+    UnsupportedAppleEnvironment,
     UnsupportedAppleOwnership,
     get_or_create_apple_app_account_token,
     sync_apple_transaction,
 )
 from billing.application.services.projections import project_provider_subscription
 from billing.infrastructure.providers.apple_app_store import AppleAppStoreClient, InvalidAppleSignedData
-from billing.models import BillingEvent, BillingProduct, PaymentProvider, ProviderSubscription
+from billing.models import (
+    AppleSandboxAccess,
+    BillingEvent,
+    BillingProduct,
+    PaymentProvider,
+    ProviderSubscription,
+)
 
 
 class AppleSignedDataAdapterTests(SimpleTestCase):
@@ -47,6 +55,7 @@ class AppleSubscriptionEvidenceTests(TestCase):
         )
         self.apple_product = BillingProduct.objects.create(
             provider=PaymentProvider.APPLE_APP_STORE,
+            environment=BillingProduct.Environment.SANDBOX,
             external_product_id="com.myscoope.pro.monthly",
             account_plan=self.pro,
             amount_minor=0,
@@ -77,6 +86,39 @@ class AppleSubscriptionEvidenceTests(TestCase):
         self.assertEqual(account.plan, self.pro)
         self.assertEqual(account.source, AccountSubscription.Source.BILLING)
         self.assertEqual(account.metadata["billing_provider"], PaymentProvider.APPLE_APP_STORE)
+
+    def test_same_product_id_is_resolved_only_in_signed_environment(self):
+        BillingProduct.objects.create(
+            provider=PaymentProvider.APPLE_APP_STORE,
+            environment=BillingProduct.Environment.LIVE,
+            external_product_id=self.apple_product.external_product_id,
+            account_plan=self.basic,
+            amount_minor=0,
+        )
+
+        provider = sync_apple_transaction(self.evidence(), expected_user=self.user, source="mobile_storekit")
+
+        self.assertEqual(provider.product, self.apple_product)
+
+    def test_unknown_environment_never_falls_back_to_live(self):
+        with self.assertRaises(UnsupportedAppleEnvironment):
+            sync_apple_transaction(self.evidence(environment=""), source="mobile_storekit")
+
+    @override_settings(BILLING_APPLE_ENVIRONMENT="production")
+    def test_production_rejects_sandbox_evidence_for_ordinary_accounts(self):
+        with self.assertRaises(UnauthorizedAppleSandboxAccess):
+            sync_apple_transaction(self.evidence(), source="mobile_storekit")
+
+    @override_settings(BILLING_APPLE_ENVIRONMENT="production")
+    def test_production_accepts_sandbox_evidence_for_explicit_test_account(self):
+        AppleSandboxAccess.objects.create(
+            user=self.user,
+            purpose=AppleSandboxAccess.Purpose.APP_REVIEW,
+        )
+
+        provider = sync_apple_transaction(self.evidence(), source="mobile_storekit")
+
+        self.assertEqual(provider.product.environment, BillingProduct.Environment.SANDBOX)
 
     def test_cross_account_replay_and_family_sharing_are_rejected(self):
         with self.assertRaises(UnknownAppleAccountToken):
@@ -136,6 +178,7 @@ class AppleNotificationWebhookTests(TestCase):
         self.plan = AccountPlan.objects.create(slug="hook-plan", name="Hook", status=AccountPlan.Status.ACTIVE)
         self.product = BillingProduct.objects.create(
             provider=PaymentProvider.APPLE_APP_STORE,
+            environment=BillingProduct.Environment.SANDBOX,
             external_product_id="com.myscoope.hook",
             account_plan=self.plan,
             amount_minor=0,
@@ -146,6 +189,7 @@ class AppleNotificationWebhookTests(TestCase):
             transaction_id="hook-transaction",
             product_id=self.product.external_product_id,
             app_account_token=str(token.token),
+            environment="Sandbox",
             expires_date=int((timezone.now() + timedelta(days=30)).timestamp() * 1000),
             ownership_type="PURCHASED",
         )
@@ -179,5 +223,27 @@ class AppleNotificationWebhookTests(TestCase):
         self.assertEqual(duplicate.status_code, 200)
         event = BillingEvent.objects.get()
         self.assertEqual(event.status, BillingEvent.Status.PROCESSED)
+        self.assertEqual(event.external_event_id, "sandbox:notification-uuid")
         self.assertNotIn("signedPayload", event.payload)
         self.assertEqual(ProviderSubscription.objects.count(), 1)
+
+    def test_notification_and_nested_transaction_environment_must_match(self):
+        mismatched = AppleNotificationEvidence(
+            **{
+                **self.notification.__dict__,
+                "transaction": AppleTransactionEvidence(
+                    **{**self.notification.transaction.__dict__, "environment": "Production"}
+                ),
+            }
+        )
+        gateway = _AppleGateway(notification=mismatched)
+
+        with patch("billing.interface.views.build_apple_app_store_gateway", return_value=gateway):
+            response = self.client.post(
+                self.url,
+                data=json.dumps({"signedPayload": "header.payload.signature"}),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(BillingEvent.objects.exists())

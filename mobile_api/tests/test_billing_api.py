@@ -6,7 +6,14 @@ from django.test import override_settings
 from django.utils import timezone
 
 from billing.application.contracts import AppleTransactionEvidence
-from billing.models import AppleAppAccountToken, BillingProduct, PaymentProvider, ProviderSubscription
+from billing.infrastructure.providers.apple_app_store import InvalidAppleSignedData
+from billing.models import (
+    AppleAppAccountToken,
+    AppleSandboxAccess,
+    BillingProduct,
+    PaymentProvider,
+    ProviderSubscription,
+)
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 
 
@@ -16,7 +23,15 @@ class MobileAPIBillingTests(AuthenticatedMobileAPITestCase):
         plan = self.user.account_subscription.plan
         product = BillingProduct.objects.create(
             provider=PaymentProvider.APPLE_APP_STORE,
+            environment=BillingProduct.Environment.SANDBOX,
             external_product_id="com.myscoope.basic.monthly",
+            account_plan=plan,
+            amount_minor=0,
+        )
+        BillingProduct.objects.create(
+            provider=PaymentProvider.APPLE_APP_STORE,
+            environment=BillingProduct.Environment.LIVE,
+            external_product_id=product.external_product_id,
             account_plan=plan,
             amount_minor=0,
         )
@@ -42,11 +57,29 @@ class MobileAPIBillingTests(AuthenticatedMobileAPITestCase):
         self.assertNotIn("price", data["products"][0])
         self.assertTrue(AppleAppAccountToken.objects.filter(user=self.user).exists())
 
+    @override_settings(BILLING_APPLE_PURCHASES_ENABLED=True, BILLING_APPLE_ENVIRONMENT="invalid")
+    def test_invalid_apple_environment_exposes_no_products(self):
+        plan = self.user.account_subscription.plan
+        BillingProduct.objects.create(
+            provider=PaymentProvider.APPLE_APP_STORE,
+            environment=BillingProduct.Environment.LIVE,
+            external_product_id="com.myscoope.invalid-environment",
+            account_plan=plan,
+            amount_minor=0,
+        )
+
+        response = self.client.get("/api/v1/subscriptions")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["data"]["purchases_enabled"])
+        self.assertEqual(response.json()["data"]["products"], [])
+
     @override_settings(BILLING_APPLE_PURCHASES_ENABLED=True)
     def test_apple_transaction_is_verified_server_side_before_projection(self):
         plan = self.user.account_subscription.plan
         product = BillingProduct.objects.create(
             provider=PaymentProvider.APPLE_APP_STORE,
+            environment=BillingProduct.Environment.SANDBOX,
             external_product_id="com.myscoope.basic.yearly",
             account_plan=plan,
             amount_minor=0,
@@ -58,12 +91,13 @@ class MobileAPIBillingTests(AuthenticatedMobileAPITestCase):
             transaction_id="api-transaction",
             product_id=product.external_product_id,
             app_account_token=str(token.token),
+            environment="Sandbox",
             expires_date=int((timezone.now() + timedelta(days=365)).timestamp() * 1000),
             ownership_type="PURCHASED",
         )
         gateway = SimpleNamespace(verify_transaction=lambda value: evidence)
 
-        with patch("mobile_api.routes.billing.build_apple_app_store_gateway", return_value=gateway):
+        with patch("mobile_api.apple_billing.build_apple_app_store_gateway", return_value=gateway):
             response = self.client.post(
                 "/api/v1/subscriptions/apple/transactions",
                 data={"signed_transaction": "header.payload.signature"},
@@ -77,3 +111,61 @@ class MobileAPIBillingTests(AuthenticatedMobileAPITestCase):
                 status=ProviderSubscription.Status.AUTHORIZED,
             ).exists()
         )
+
+    @override_settings(
+        BILLING_APPLE_PURCHASES_ENABLED=True,
+        BILLING_APPLE_SANDBOX_PURCHASES_ENABLED=True,
+        BILLING_APPLE_ENVIRONMENT="production",
+    )
+    def test_production_uses_sandbox_fallback_only_for_authorized_account(self):
+        plan = self.user.account_subscription.plan
+        product = BillingProduct.objects.create(
+            provider=PaymentProvider.APPLE_APP_STORE,
+            environment=BillingProduct.Environment.SANDBOX,
+            external_product_id="com.myscoope.review.monthly",
+            account_plan=plan,
+            amount_minor=0,
+        )
+        token = AppleAppAccountToken.objects.create(user=self.user)
+        evidence = AppleTransactionEvidence(
+            original_transaction_id="review-original",
+            transaction_id="review-transaction",
+            product_id=product.external_product_id,
+            app_account_token=str(token.token),
+            environment="Sandbox",
+            expires_date=int((timezone.now() + timedelta(days=30)).timestamp() * 1000),
+            ownership_type="PURCHASED",
+        )
+        production_gateway = SimpleNamespace(
+            verify_transaction=lambda value: (_ for _ in ()).throw(InvalidAppleSignedData("not production"))
+        )
+        sandbox_gateway = SimpleNamespace(verify_transaction=lambda value: evidence)
+        body = {"signed_transaction": "header.payload.signature"}
+
+        with patch(
+            "mobile_api.apple_billing.build_apple_app_store_gateway",
+            side_effect=[production_gateway],
+        ) as builder:
+            rejected = self.client.post(
+                "/api/v1/subscriptions/apple/transactions",
+                data=body,
+                content_type="application/json",
+            )
+        self.assertEqual(rejected.status_code, 422)
+        self.assertEqual(builder.call_count, 1)
+
+        AppleSandboxAccess.objects.create(
+            user=self.user,
+            purpose=AppleSandboxAccess.Purpose.APP_REVIEW,
+        )
+        with patch(
+            "mobile_api.apple_billing.build_apple_app_store_gateway",
+            side_effect=[production_gateway, sandbox_gateway],
+        ) as builder:
+            accepted = self.client.post(
+                "/api/v1/subscriptions/apple/transactions",
+                data=body,
+                content_type="application/json",
+            )
+        self.assertEqual(accepted.status_code, 200)
+        self.assertEqual(builder.call_args_list[1].kwargs, {"environment": "sandbox"})

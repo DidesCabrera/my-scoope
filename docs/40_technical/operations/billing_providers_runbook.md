@@ -7,7 +7,9 @@ Last updated: 2026-09-28
 
 Keep `BILLING_PADDLE_CHECKOUT_ENABLED`, `BILLING_PADDLE_WEBHOOK_ENABLED`,
 `BILLING_MERCADOPAGO_CHECKOUT_ENABLED`, `BILLING_MERCADOPAGO_WEBHOOK_ENABLED` and
-`BILLING_APPLE_PURCHASES_ENABLED`, `BILLING_APPLE_NOTIFICATIONS_ENABLED` and
+`BILLING_APPLE_PURCHASES_ENABLED`, `BILLING_APPLE_NOTIFICATIONS_ENABLED`,
+`BILLING_APPLE_SANDBOX_PURCHASES_ENABLED`,
+`BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED` and
 `BILLING_OPENFACTURA_ENABLED` false. Keep Google Play subscription and credit-pack
 refund reconciliation disabled until their sandbox evidence is complete. This
 preserves all history while stopping new traffic.
@@ -49,24 +51,36 @@ Browser return parameters never grant access. Only verified provider state proje
 
 1. Complete App Store Connect agreements, tax and banking setup. Create the
    auto-renewable subscription group and final product identifiers/prices.
-2. Map the four identifiers with `configure_apple_catalog --environment live`
-   and its Basic/Pro monthly/annual arguments. The command snapshots the canonical
-   offers and is safe to repeat. Do not expose a product until this mapping is
-   deliberate.
-3. Configure the sandbox bundle ID and, for production, numeric Apple app ID.
-   Register `/billing/webhooks/apple-app-store/` as the App Store Server
-   Notifications V2 URL.
+2. Map the four identifiers twice: with `configure_apple_catalog --environment live`
+   and `configure_apple_catalog --environment sandbox`. Apple uses the same Product
+   IDs in StoreKit, while the signed transaction determines which catalog row is
+   authoritative. Map the three credit packs in both environments too. The commands
+   snapshot the canonical offers and are safe to repeat.
+   The production predeploy script performs these idempotent mappings so a newly
+   deployed production database exposes the expected StoreKit identifiers; inspect
+   its output for catalog drift before enabling purchases.
+3. Configure the bundle ID, numeric Apple app ID and
+   `BILLING_APPLE_ENVIRONMENT=production`. Register
+   `/billing/webhooks/apple-app-store/production/` as the production App Store Server
+   Notifications V2 URL and `/billing/webhooks/apple-app-store/sandbox/` as its
+   sandbox URL.
 4. Configure the In-App Purchase API `.p8` content, key ID and issuer ID for
    lifecycle reconciliation. The public Apple Root CA G3 certificate is bundled;
    private keys remain environment secrets.
-5. Enable notifications first. Confirm invalid JWS rejection, notification replay
+5. In Django Admin, grant active, time-limited `AppleSandboxAccess` only to the
+   dedicated internal/App Review account. Never authorize ordinary customer or staff
+   accounts implicitly. Enable sandbox notifications and purchases only while this
+   controlled production-profile test is required.
+6. Enable notifications first. Confirm invalid JWS rejection, notification replay
    idempotency and lifecycle projection. Run
    `.venv/bin/python manage.py reconcile_apple_subscriptions --dry-run`.
-6. In a development/TestFlight build on a physical iPhone, buy and restore each
+7. In a development/TestFlight build on a physical iPhone, buy and restore each
    product with a sandbox tester. Confirm localized StoreKit pricing, matching
    `appAccountToken`, server verification before finish and renewal/expiration/
    grace/revocation behavior.
-7. Enable purchases only after that evidence passes. A simultaneous active Apple
+8. Enable production purchases only after that evidence passes. Remove or expire
+   the sandbox authorization after validation and confirm no active sandbox entitlement
+   remains. A simultaneous active Apple
    and Mercado Pago row must appear in Admin Operations and be resolved manually
    with the user; never delete evidence or cancel a provider automatically.
 

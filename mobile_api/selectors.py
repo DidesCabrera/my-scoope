@@ -8,7 +8,11 @@ from django.conf import settings
 from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 
-from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
+from billing.application.services.apple_app_store import (
+    UnsupportedAppleEnvironment,
+    apple_catalog_environment,
+    get_or_create_apple_app_account_token,
+)
 from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
@@ -684,11 +688,30 @@ def subscription_payload(user) -> dict:
     token = get_or_create_apple_app_account_token(user) if eligible or can_buy_packs else None
     products = []
     enabled_providers = []
-    if settings.BILLING_APPLE_PURCHASES_ENABLED:
+    try:
+        configured_apple_catalog_environment = apple_catalog_environment(settings.BILLING_APPLE_ENVIRONMENT)
+    except UnsupportedAppleEnvironment:
+        configured_apple_catalog_environment = None
+    if settings.BILLING_APPLE_PURCHASES_ENABLED and configured_apple_catalog_environment is not None:
         enabled_providers.append(PaymentProvider.APPLE_APP_STORE)
     if settings.BILLING_GOOGLE_PLAY_PURCHASES_ENABLED:
         enabled_providers.append(PaymentProvider.GOOGLE_PLAY)
     if eligible and enabled_providers:
+        product_query = BillingProduct.objects.select_related("account_plan").filter(
+            active=True,
+            account_plan__status="active",
+        )
+        if PaymentProvider.APPLE_APP_STORE in enabled_providers:
+            apple_products = product_query.filter(
+                provider=PaymentProvider.APPLE_APP_STORE,
+                environment=configured_apple_catalog_environment,
+            )
+        else:
+            apple_products = product_query.none()
+        if PaymentProvider.GOOGLE_PLAY in enabled_providers:
+            google_products = product_query.filter(provider=PaymentProvider.GOOGLE_PLAY)
+        else:
+            google_products = product_query.none()
         products = [
             {
                 "product_id": product.external_product_id,
@@ -697,11 +720,7 @@ def subscription_payload(user) -> dict:
                 "plan_name": product.account_plan.name,
                 "interval": product.interval,
             }
-            for product in BillingProduct.objects.select_related("account_plan").filter(
-                provider__in=enabled_providers,
-                active=True,
-                account_plan__status="active",
-            )
+            for product in (*apple_products, *google_products)
         ]
     evidence = list(
         ProviderSubscription.objects.filter(user=user)
@@ -712,6 +731,20 @@ def subscription_payload(user) -> dict:
     metadata = dict(getattr(subscription, "metadata", {}) or {})
     credit_packs = []
     if (eligible or can_buy_packs) and enabled_providers:
+        pack_query = ProviderCreditPack.objects.select_related("offer").filter(
+            active=True, offer__active=True, offer__public=True,
+        )
+        if PaymentProvider.APPLE_APP_STORE in enabled_providers:
+            apple_packs = pack_query.filter(
+                provider=PaymentProvider.APPLE_APP_STORE,
+                environment=configured_apple_catalog_environment,
+            )
+        else:
+            apple_packs = pack_query.none()
+        if PaymentProvider.GOOGLE_PLAY in enabled_providers:
+            google_packs = pack_query.filter(provider=PaymentProvider.GOOGLE_PLAY)
+        else:
+            google_packs = pack_query.none()
         credit_packs = [
             {
                 "product_id": product.external_product_id,
@@ -720,9 +753,10 @@ def subscription_payload(user) -> dict:
                 "amount_minor": product.amount_minor,
                 "currency": product.currency,
             }
-            for product in ProviderCreditPack.objects.select_related("offer").filter(
-                provider__in=enabled_providers, active=True, offer__active=True, offer__public=True,
-            ).order_by("offer__display_order")
+            for product in sorted(
+                (*apple_packs, *google_packs),
+                key=lambda item: item.offer.display_order,
+            )
         ]
     return {
         "eligible": eligible,

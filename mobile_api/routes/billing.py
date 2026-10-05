@@ -4,12 +4,12 @@ from django.conf import settings
 from ninja import Router
 
 from billing.application.services.apple_app_store import AppleEvidenceError, sync_apple_transaction
-from billing.infrastructure.gateways import build_apple_app_store_gateway
 from billing.infrastructure.providers.apple_app_store import (
     AppleAppStoreConfigurationError,
     InvalidAppleSignedData,
 )
 from mobile_api.api_support import require_scope, success
+from mobile_api.apple_billing import verify_apple_transaction_for_user
 from mobile_api.auth import mobile_bearer
 from mobile_api.entitlements_selector import entitlements_payload
 from mobile_api.errors import MobileAPIError
@@ -66,7 +66,7 @@ def apple_transaction(request, payload: AppleTransactionInput):
             status_code=403,
         )
     try:
-        evidence = build_apple_app_store_gateway().verify_transaction(payload.signed_transaction)
+        evidence = verify_apple_transaction_for_user(payload.signed_transaction, user=request.auth.user)
         sync_apple_transaction(evidence, expected_user=request.auth.user, source="mobile_storekit")
     except InvalidAppleSignedData as exc:
         raise MobileAPIError(

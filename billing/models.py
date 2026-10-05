@@ -34,6 +34,31 @@ class AppleAppAccountToken(models.Model):
         return f"Apple account token · {self.user_id}"
 
 
+class AppleSandboxAccess(models.Model):
+    """Explicit, auditable permission to accept Apple sandbox evidence in production."""
+
+    class Purpose(models.TextChoices):
+        INTERNAL = "internal", "Internal testing"
+        APP_REVIEW = "app_review", "App Review"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="apple_sandbox_access",
+    )
+    purpose = models.CharField(max_length=24, choices=Purpose.choices)
+    active = models.BooleanField(default=True, db_index=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["user_id"]
+
+    def __str__(self) -> str:
+        return f"Apple sandbox access · {self.user_id} · {self.purpose}"
+
+
 class BillingOffer(models.Model):
     """Canonical sellable offer for one account plan.
 

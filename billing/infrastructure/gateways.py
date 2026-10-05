@@ -33,11 +33,11 @@ def build_openfactura_gateway() -> OpenFacturaClient:
     )
 
 
-def build_apple_app_store_gateway() -> AppleAppStoreClient:
+def build_apple_app_store_gateway(*, environment: str | None = None) -> AppleAppStoreClient:
     default_certificate = Path(__file__).resolve().parent / "providers" / "AppleRootCA-G3.cer"
     return AppleAppStoreClient(
         bundle_id=settings.BILLING_APPLE_BUNDLE_ID,
-        environment=settings.BILLING_APPLE_ENVIRONMENT,
+        environment=environment or settings.BILLING_APPLE_ENVIRONMENT,
         root_certificate_paths=(str(default_certificate),),
         online_checks=settings.BILLING_APPLE_ONLINE_CHECKS,
         app_apple_id=settings.BILLING_APPLE_APP_ID or None,
