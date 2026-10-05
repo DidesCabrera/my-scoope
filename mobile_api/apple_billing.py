@@ -30,6 +30,28 @@ def verify_apple_transaction_for_user(signed_transaction: str, *, user):
     return evidence
 
 
+def apple_purchase_environment_for_user(user) -> str | None:
+    """Select the Apple catalog a user may purchase from, preferring authorized sandbox access."""
+
+    if (
+        settings.BILLING_APPLE_ENVIRONMENT == "production"
+        and settings.BILLING_APPLE_SANDBOX_PURCHASES_ENABLED
+        and user_has_apple_sandbox_access(user)
+    ):
+        return "sandbox"
+    if not settings.BILLING_APPLE_PURCHASES_ENABLED:
+        return None
+    try:
+        apple_catalog_environment(settings.BILLING_APPLE_ENVIRONMENT)
+    except UnsupportedAppleEnvironment:
+        return None
+    return settings.BILLING_APPLE_ENVIRONMENT
+
+
+def apple_purchases_enabled_for_user(user) -> bool:
+    return apple_purchase_environment_for_user(user) is not None
+
+
 def _require_environment(evidence, *, verifier_environment: str) -> None:
     try:
         if apple_catalog_environment(evidence.environment) != apple_catalog_environment(verifier_environment):

@@ -8,6 +8,7 @@ from billing.application.services.apple_environment import (
 from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
+from mobile_api.apple_billing import apple_purchase_environment_for_user
 
 
 def subscription_payload(user) -> dict:
@@ -18,11 +19,16 @@ def subscription_payload(user) -> dict:
     token = get_or_create_apple_app_account_token(user) if eligible or can_buy_packs else None
     products = []
     enabled_providers = []
+    apple_purchase_environment = apple_purchase_environment_for_user(user)
     try:
-        configured_apple_catalog_environment = apple_catalog_environment(settings.BILLING_APPLE_ENVIRONMENT)
+        configured_apple_catalog_environment = (
+            apple_catalog_environment(apple_purchase_environment)
+            if apple_purchase_environment is not None
+            else None
+        )
     except UnsupportedAppleEnvironment:
         configured_apple_catalog_environment = None
-    if settings.BILLING_APPLE_PURCHASES_ENABLED and configured_apple_catalog_environment is not None:
+    if configured_apple_catalog_environment is not None:
         enabled_providers.append(PaymentProvider.APPLE_APP_STORE)
     if settings.BILLING_GOOGLE_PLAY_PURCHASES_ENABLED:
         enabled_providers.append(PaymentProvider.GOOGLE_PLAY)
