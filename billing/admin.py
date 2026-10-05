@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from billing.models import (
     AppleAppAccountToken,
+    AppleSandboxAccess,
     BillingEvent,
     BillingOffer,
     BillingPayment,
@@ -41,6 +42,14 @@ class AppleAppAccountTokenAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(AppleSandboxAccess)
+class AppleSandboxAccessAdmin(admin.ModelAdmin):
+    list_display = ("user", "purpose", "active", "expires_at", "updated_at")
+    list_filter = ("purpose", "active")
+    search_fields = ("user__username", "user__email")
+    autocomplete_fields = ("user",)
 
 
 @admin.register(BillingProduct)

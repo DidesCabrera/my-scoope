@@ -49,13 +49,20 @@ Checkout, webhook reception and OpenFactura issuance are opt-in. All
 provider credentials are optional secret environment variables; safe defaults keep real
 traffic disabled until sandbox and accounting gates pass.
 
-The Apple notification route is `/billing/webhooks/apple-app-store/` and is
-hidden until `BILLING_APPLE_NOTIFICATIONS_ENABLED=true`. It accepts only App
-Store Server Notifications V2 whose signed payload and nested transaction pass
-Apple's official verifier. Mobile purchase JWS values enter through
+The configured Apple notification route is `/billing/webhooks/apple-app-store/`;
+explicit production and sandbox routes are also available at
+`/billing/webhooks/apple-app-store/production/` and
+`/billing/webhooks/apple-app-store/sandbox/`. The sandbox route is independently
+hidden behind `BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED=false`. Every route
+accepts only App Store Server Notifications V2 whose signed payload, nested
+transaction and environment pass Apple's official verifier. Mobile purchase JWS values enter through
 `POST /api/v1/subscriptions/apple/transactions`; product, account token, bundle
 and environment are verified before projection and transaction finalization.
-The inbox stores normalized evidence, never the raw JWS.
+Production may verify sandbox evidence only when the separate sandbox purchase
+flag is enabled and the authenticated account has active, unexpired
+`AppleSandboxAccess`. This supports TestFlight/App Review without allowing
+sandbox evidence for ordinary production accounts. The inbox stores normalized
+evidence, never the raw JWS.
 
 ```text
 BILLING_PADDLE_ENVIRONMENT=sandbox
@@ -74,6 +81,8 @@ BILLING_MERCADOPAGO_ACCESS_TOKEN=
 BILLING_MERCADOPAGO_WEBHOOK_SECRET=
 BILLING_APPLE_NOTIFICATIONS_ENABLED=false
 BILLING_APPLE_PURCHASES_ENABLED=false
+BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED=false
+BILLING_APPLE_SANDBOX_PURCHASES_ENABLED=false
 BILLING_APPLE_ENVIRONMENT=sandbox
 BILLING_APPLE_BUNDLE_ID=com.myscoope.app
 BILLING_APPLE_APP_ID=

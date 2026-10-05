@@ -34,8 +34,13 @@ class DeploymentContractTests(SimpleTestCase):
         self.assertIn("type: worker", blueprint)
         self.assertIn("type: cron", blueprint)
         self.assertIn("type: keyvalue", blueprint)
-        self.assertIn("preDeployCommand: python manage.py migrate --noinput", blueprint)
+        self.assertIn("preDeployCommand: bash scripts/render_production_predeploy.sh", blueprint)
         self.assertIn("healthCheckPath: /healthz/", blueprint)
+
+        predeploy = (ROOT / "scripts/render_production_predeploy.sh").read_text()
+        self.assertIn("python manage.py migrate --noinput", predeploy)
+        self.assertIn("python manage.py seed_billing_catalog", predeploy)
+        self.assertIn("--environment \"${catalog_environment}\"", predeploy)
 
     def test_render_blueprint_references_managed_data_services(self):
         blueprint = (ROOT / "render.yaml").read_text()

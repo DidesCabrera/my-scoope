@@ -9,6 +9,14 @@ from django.db import transaction
 from django.utils import timezone
 
 from billing.application.contracts import AppleNotificationEvidence, AppleTransactionEvidence
+from billing.application.services.apple_environment import (
+    AppleEvidenceError,
+    UnauthorizedAppleSandboxAccess,
+    UnsupportedAppleEnvironment,
+    apple_catalog_environment,
+    require_apple_sandbox_access_in_production,
+    user_has_apple_sandbox_access,
+)
 from billing.application.services.events import claim_billing_event, finish_billing_event
 from billing.application.services.projections import project_provider_subscription
 from billing.models import (
@@ -20,10 +28,6 @@ from billing.models import (
     ProviderCreditPack,
     ProviderSubscription,
 )
-
-
-class AppleEvidenceError(ValueError):
-    pass
 
 
 class UnknownAppleAccountToken(AppleEvidenceError):
@@ -68,6 +72,7 @@ def sync_apple_transaction(
         raise AppleEvidenceError("Apple transaction identity is incomplete.")
     if evidence.ownership_type.lower() in {"family_shared", "familyshared"}:
         raise UnsupportedAppleOwnership("Family-shared purchases are not supported in CML06.")
+    catalog_environment = apple_catalog_environment(evidence.environment)
 
     existing = (
         ProviderSubscription.objects.select_for_update()
@@ -80,13 +85,21 @@ def sync_apple_transaction(
 
     product = (
         BillingProduct.objects.select_related("account_plan")
-        .filter(provider=PaymentProvider.APPLE_APP_STORE, external_product_id=product_id)
+        .filter(
+            provider=PaymentProvider.APPLE_APP_STORE,
+            environment=catalog_environment,
+            external_product_id=product_id,
+        )
         .first()
     )
     if product is None or (existing is None and not product.active):
         raise UnsupportedAppleProduct("The Apple product is not mapped to a My Scoope plan.")
 
     status = _provider_status(evidence)
+    if existing is not None and existing.product.environment != catalog_environment:
+        raise UnsupportedAppleEnvironment("Apple subscription environment changed unexpectedly.")
+    if status not in {ProviderSubscription.Status.CANCELED, ProviderSubscription.Status.EXPIRED}:
+        require_apple_sandbox_access_in_production(owner, catalog_environment=catalog_environment)
     metadata = dict(existing.metadata or {}) if existing is not None else {}
     metadata.update(
         {
@@ -130,8 +143,11 @@ def process_apple_notification(*, event: BillingEvent, notification: AppleNotifi
         if notification.transaction is None:
             return finish_billing_event(claimed.pk, status=BillingEvent.Status.IGNORED)
         evidence = notification.transaction
+        catalog_environment = apple_catalog_environment(evidence.environment or notification.environment)
         is_pack = ProviderCreditPack.objects.filter(
-            provider=PaymentProvider.APPLE_APP_STORE, external_product_id=evidence.product_id
+            provider=PaymentProvider.APPLE_APP_STORE,
+            environment=catalog_environment,
+            external_product_id=evidence.product_id,
         ).exists()
         if is_pack:
             from billing.application.services.credit_packs import (
@@ -145,6 +161,7 @@ def process_apple_notification(*, event: BillingEvent, notification: AppleNotifi
                 if CreditPackPurchase.objects.filter(
                     provider=PaymentProvider.APPLE_APP_STORE,
                     external_purchase_id=evidence.transaction_id,
+                    product__environment=catalog_environment,
                 ).exists():
                     refund_credit_pack_purchase(
                         provider=PaymentProvider.APPLE_APP_STORE,

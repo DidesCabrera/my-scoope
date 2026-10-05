@@ -15,7 +15,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         subscriptions = list(
-            ProviderSubscription.objects.filter(provider=PaymentProvider.APPLE_APP_STORE)
+            ProviderSubscription.objects.select_related("product").filter(
+                provider=PaymentProvider.APPLE_APP_STORE
+            )
             .order_by("updated_at")[: options["limit"]]
         )
         active_rows = ProviderSubscription.objects.filter(status=ProviderSubscription.Status.AUTHORIZED).values(
@@ -29,9 +31,16 @@ class Command(BaseCommand):
             self.stdout.write(f"apple_subscriptions={len(subscriptions)} duplicate_active_accounts={duplicates}")
             return
         try:
-            gateway = build_apple_app_store_gateway()
+            gateways = {}
             reconciled = 0
             for subscription in subscriptions:
+                verifier_environment = (
+                    "sandbox" if subscription.product.environment == "sandbox" else "production"
+                )
+                gateway = gateways.get(verifier_environment)
+                if gateway is None:
+                    gateway = build_apple_app_store_gateway(environment=verifier_environment)
+                    gateways[verifier_environment] = gateway
                 for item in gateway.get_subscription_statuses(subscription.external_subscription_id):
                     if item.transaction.original_transaction_id != subscription.external_subscription_id:
                         continue
