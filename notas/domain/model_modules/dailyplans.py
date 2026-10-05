@@ -47,6 +47,14 @@ class DailyPlan(models.Model):
     summary_cache = models.JSONField(default=dict, blank=True)
     summary_cache_updated_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["created_by", "source", "is_draft", "list_order"],
+                name="dayplan_mobile_library_idx",
+            ),
+        ]
+
     def kind(self):
         return "Daily Plan"
 

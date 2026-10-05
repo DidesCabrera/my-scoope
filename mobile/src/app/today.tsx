@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, CalendarizedDayDetail, LibraryPageData, ProposalListData, TodayData, WeightListData } from "@/api/types";
+import type { ActiveProgramData, CalendarizedDayDetail, HomeData, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-plan-card";
@@ -47,23 +47,18 @@ export default function TodayScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [nextToday, nextProgram, weightHistory] = await Promise.all([
-        apiRequest<TodayData>("/api/v1/today"),
-        apiRequest<ActiveProgramData>("/api/v1/program/active"),
-        apiRequest<WeightListData>("/api/v1/weights?limit=1").catch(() => null),
-      ]);
+      const home = await apiRequest<HomeData>("/api/v1/home");
+      const nextToday = home.today;
       setToday(nextToday);
-      setActiveProgram(nextProgram);
-      setLatestWeightKg(weightHistory?.items[0]?.weight_kg ?? null);
-      void Promise.all([
-        apiRequest<LibraryPageData>("/api/v1/library/programs?limit=1"),
-        apiRequest<LibraryPageData>("/api/v1/library/daily-plans?limit=1"),
-        apiRequest<LibraryPageData>("/api/v1/library/meals?limit=1"),
-        apiRequest<LibraryPageData>("/api/v1/library/foods?limit=1"),
-      ]).then(([programs, dailyPlans, meals, foods]) => setLibraryCounts({ dailyPlan: dailyPlans.total, food: foods.total, meal: meals.total, program: programs.total })).catch(() => undefined);
-      void apiRequest<ProposalListData>("/api/v1/proposals?status=pending_review&limit=1")
-        .then((page) => setPendingProposalCount(page.pending_count))
-        .catch(() => undefined);
+      setActiveProgram(home.active_program);
+      setLatestWeightKg(home.latest_weight?.weight_kg ?? null);
+      setLibraryCounts({
+        dailyPlan: home.library_counts.daily_plan,
+        food: home.library_counts.food,
+        meal: home.library_counts.meal,
+        program: home.library_counts.program,
+      });
+      setPendingProposalCount(home.pending_proposal_count);
       if (nextToday.reminders) {
         void syncNativeRemindersForProgram(
           nextToday.reminders,

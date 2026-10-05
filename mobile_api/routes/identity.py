@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from ninja import Router
 
 from accounts.forms import AccountDeletionForm, NutritionOnboardingForm
@@ -21,7 +19,11 @@ from mobile_api.schema_domains.identity import (
 )
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import profile_payload, session_payload
-from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_ACCOUNT, MOBILE_SCOPE_WRITE, revoke_oauth_device_session
+from notas.application.services.oauth_device_sessions import (
+    MOBILE_SCOPE_ACCOUNT,
+    MOBILE_SCOPE_WRITE,
+    revoke_oauth_device_session,
+)
 
 router = Router()
 router.add_router("", identity_edits_router)

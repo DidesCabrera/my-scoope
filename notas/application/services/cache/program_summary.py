@@ -275,8 +275,14 @@ def refresh_program_summary_cache(program: Program) -> dict:
     return summary
 
 
-def get_program_summary(program: Program) -> dict:
+def get_program_summary(program: Program, *, persist_missing: bool = True) -> dict:
     cached = getattr(program, "summary_cache", None) or {}
     if cached.get("version") == PROGRAM_SUMMARY_CACHE_VERSION:
         return deepcopy(cached)
+    if not persist_missing:
+        summary = build_program_summary(program)
+        # Reuse the computed projection throughout the current read without
+        # turning a GET into a database write for every uncached program.
+        program.summary_cache = summary
+        return deepcopy(summary)
     return refresh_program_summary_cache(program)

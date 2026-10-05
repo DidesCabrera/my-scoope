@@ -369,6 +369,20 @@ export type LibraryPageData = {
   search: string | null;
 };
 
+export type HomeData = {
+  active_program: ActiveProgramData;
+  latest_weight: WeightItem | null;
+  library_counts: {
+    daily_plan: number;
+    food: number;
+    meal: number;
+    program: number;
+  };
+  pending_proposal_count: number;
+  today: TodayData;
+  version: string;
+};
+
 export type FoodPickerOption = {
   id: number;
   name: string;

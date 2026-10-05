@@ -90,6 +90,14 @@ class Food(models.Model):
         help_text="Allows hiding foods without deleting them.",
     )
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["created_by", "is_active", "list_order", "name"],
+                name="food_mobile_library_idx",
+            ),
+        ]
+
     food_group = models.CharField(
         max_length=120,
         blank=True,

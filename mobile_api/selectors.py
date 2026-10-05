@@ -13,7 +13,7 @@ from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api.errors import MobileAPIError
-from mobile_api.library_actions import library_actions_payload
+from mobile_api.library_actions import library_actions_payload, library_list_actions_projector
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_measurement_summary,
     calendarization_progress_summary,
@@ -41,6 +41,7 @@ from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, 
 from notas.domain.services.nutrition import macro_kcal_distribution
 
 REMINDER_UPCOMING_LIMIT = 60
+_UNSET = object()
 
 
 def _safe_number(value) -> float:
@@ -171,7 +172,7 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str, current_weight=None) -
 
 
 def _program_week_panel_items(program, current_weight=None) -> list[dict]:
-    summary = get_program_summary(program)
+    summary = get_program_summary(program, persist_missing=False)
     program_totals = summary["program_totals"]
     program_total_kcal = program_totals["total_kcal"]
     program_days = {
@@ -380,6 +381,7 @@ def library_foods_payload(user, *, search=None, offset=0, limit=30, include_draf
 
 def library_meals_payload(user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True) -> dict:
     current_weight = get_current_weight(user)
+    actions_for = library_list_actions_projector(user, enabled=include_actions)
     queryset = (
         Meal.objects.filter(created_by=user, dailyplanmeal__isnull=True)
         .select_related("created_by")
@@ -412,7 +414,7 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
             "creator": _creator_name(meal),
             "created_at": meal.created_at,
             "is_draft": meal.is_draft,
-            "actions": library_actions_payload(meal, user, context="list") if include_actions else [],
+            "actions": actions_for(meal),
         },
     )
 
@@ -421,6 +423,7 @@ def library_dailyplans_payload(
     user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True
 ) -> dict:
     current_weight = get_current_weight(user)
+    actions_for = library_list_actions_projector(user, enabled=include_actions)
     queryset = (
         DailyPlan.objects.filter(created_by=user)
         .select_related("created_by")
@@ -465,13 +468,14 @@ def library_dailyplans_payload(
             "creator": _creator_name(dailyplan),
             "created_at": dailyplan.created_at,
             "is_draft": dailyplan.is_draft,
-            "actions": library_actions_payload(dailyplan, user, context="list") if include_actions else [],
+            "actions": actions_for(dailyplan),
         },
     )
 
 
 def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
     current_weight = get_current_weight(user)
+    actions_for = library_list_actions_projector(user)
     queryset = (
         Program.objects.filter(created_by=user)
         .select_related("created_by")
@@ -494,7 +498,7 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "indicators": [
                 {"icon": "week", "label": "semanas", "value": program.normalized_duration_weeks},
                 {"icon": "dailyPlan", "label": "planes asignados", "value": program.library_day_count},
-                {"icon": "food", "label": "alimentos", "value": get_program_summary(program)["program_foods_count"]},
+                {"icon": "food", "label": "alimentos", "value": get_program_summary(program, persist_missing=False)["program_foods_count"]},
             ]
             + ([{"label": "estado", "value": "Borrador"}] if program.is_draft else []),
             "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(program, current_weight)},
@@ -502,7 +506,7 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "created_at": program.created_at,
             "is_draft": program.is_draft,
             "can_calendarize": program.created_by_id == user.id,
-            "actions": library_actions_payload(program, user, context="list"),
+            "actions": actions_for(program),
         },
     )
 
@@ -624,7 +628,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "indicators": [
                     {"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks},
                     {"icon": "dailyPlan", "label": "planes asignados", "value": item.library_day_count},
-                    {"icon": "food", "label": "alimentos", "value": get_program_summary(item)["program_foods_count"]},
+                    {"icon": "food", "label": "alimentos", "value": get_program_summary(item, persist_missing=False)["program_foods_count"]},
                 ]
                 + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item, current_weight)},
@@ -751,8 +755,9 @@ def local_date_for_user(user, *, now=None):
     return timezone.localdate(now or timezone.now(), timezone=user_timezone)
 
 
-def today_payload(user, *, now=None) -> dict:
-    calendarization = current_calendarization_for_user(user)
+def today_payload(user, *, now=None, calendarization=_UNSET) -> dict:
+    if calendarization is _UNSET:
+        calendarization = current_calendarization_for_user(user)
     if calendarization is None:
         local_date = local_date_for_user(user, now=now)
         pinned = PinnedDailyPlan.objects.select_related("dailyplan").filter(user=user, is_active=True).first()
@@ -938,8 +943,9 @@ def _calendarized_days_payload(calendarization) -> list[dict]:
     ]
 
 
-def active_program_payload(user) -> dict:
-    calendarization = current_calendarization_for_user(user)
+def active_program_payload(user, *, calendarization=_UNSET, current_weight=_UNSET) -> dict:
+    if calendarization is _UNSET:
+        calendarization = current_calendarization_for_user(user)
     if calendarization is None:
         return {
             "calendarization": None,
@@ -959,10 +965,9 @@ def active_program_payload(user) -> dict:
         if local_date >= calendarization.start_date
         else None
     )
-    projection, weeks = _calendarized_week_panel_items(
-        calendarization,
-        get_current_weight(user),
-    )
+    if current_weight is _UNSET:
+        current_weight = get_current_weight(user)
+    projection, weeks = _calendarized_week_panel_items(calendarization, current_weight)
     weeks_count = projection["duration_weeks"]
     indicators = [
         {

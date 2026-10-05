@@ -49,7 +49,7 @@ function storage(initial: StoredTokenSet | null = null): TokenStorage & { curren
 
 test("authorization-code exchange binds the device and stores the rotating pair", async () => {
   const saved = storage();
-  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const calls: { url: string; init?: RequestInit }[] = [];
   const fetchMock = (async (input: string | URL | Request, init?: RequestInit) => {
     calls.push({ url: String(input), init });
     if (calls.length === 1) return jsonResponse(tokenResponse("one"));
@@ -142,4 +142,96 @@ test("non-JSON API responses become a bounded product error", async () => {
       && error.code === "mobile_api_invalid_response"
       && error.message === "Esta función todavía no está disponible en el servidor seleccionado.",
   );
+});
+
+test("concurrent reads are deduplicated and fresh data is reused", async () => {
+  const saved = storage({
+    accessToken: "access-current",
+    refreshToken: "refresh-current",
+    accessExpiresAt: now + 100_000,
+    refreshExpiresAt: now + 200_000,
+    scope: "mobile:read",
+    deviceSessionId: "device-session-1",
+  });
+  let calls = 0;
+  let release: (() => void) | undefined;
+  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  const fetchMock = (async (input: string | URL | Request) => {
+    calls += 1;
+    if (String(input).endsWith("/api/v1/session")) {
+      return jsonResponse({ ok: true, data: sessionData, error: null });
+    }
+    await blocked;
+    return jsonResponse({ ok: true, data: { value: 42 }, error: null });
+  }) as typeof fetch;
+  const manager = new MobileSessionManager(config, saved, async () => ({ id: "unused", name: "unused", platform: "ios" }), fetchMock, () => now);
+  await manager.restore();
+
+  const first = manager.request<{ value: number }>("/api/v1/home");
+  const second = manager.request<{ value: number }>("/api/v1/home");
+  release?.();
+
+  assert.deepEqual(await Promise.all([first, second]), [{ value: 42 }, { value: 42 }]);
+  assert.deepEqual(await manager.request("/api/v1/home"), { value: 42 });
+  assert.equal(calls, 2);
+});
+
+test("stale reads revalidate with ETag and reuse a 304 response", async () => {
+  let clock = now;
+  const saved = storage({
+    accessToken: "access-current",
+    refreshToken: "refresh-current",
+    accessExpiresAt: now + 100_000,
+    refreshExpiresAt: now + 200_000,
+    scope: "mobile:read",
+    deviceSessionId: "device-session-1",
+  });
+  const headers: (string | null)[] = [];
+  const fetchMock = (async (input: string | URL | Request, init?: RequestInit) => {
+    if (String(input).endsWith("/api/v1/session")) {
+      return jsonResponse({ ok: true, data: sessionData, error: null });
+    }
+    headers.push(new Headers(init?.headers).get("If-None-Match"));
+    if (headers.length === 1) {
+      return new Response(JSON.stringify({ ok: true, data: { value: 7 }, error: null }), {
+        headers: { "Content-Type": "application/json", ETag: 'W/"home-v1"' },
+      });
+    }
+    return new Response(null, { status: 304, headers: { ETag: 'W/"home-v1"' } });
+  }) as typeof fetch;
+  const manager = new MobileSessionManager(config, saved, async () => ({ id: "unused", name: "unused", platform: "ios" }), fetchMock, () => clock);
+  await manager.restore();
+
+  assert.deepEqual(await manager.request("/api/v1/home"), { value: 7 });
+  clock += 21_000;
+  assert.deepEqual(await manager.request("/api/v1/home"), { value: 7 });
+  assert.deepEqual(headers, [null, 'W/"home-v1"']);
+});
+
+test("a mutation invalidates affected cached reads", async () => {
+  const saved = storage({
+    accessToken: "access-current",
+    refreshToken: "refresh-current",
+    accessExpiresAt: now + 100_000,
+    refreshExpiresAt: now + 200_000,
+    scope: "mobile:read mobile:write",
+    deviceSessionId: "device-session-1",
+  });
+  let homeCalls = 0;
+  const fetchMock = (async (input: string | URL | Request, init?: RequestInit) => {
+    if (String(input).endsWith("/api/v1/session")) {
+      return jsonResponse({ ok: true, data: sessionData, error: null });
+    }
+    if ((init?.method ?? "GET") !== "GET") {
+      return jsonResponse({ ok: true, data: { id: 1 }, error: null });
+    }
+    homeCalls += 1;
+    return jsonResponse({ ok: true, data: { version: homeCalls }, error: null });
+  }) as typeof fetch;
+  const manager = new MobileSessionManager(config, saved, async () => ({ id: "unused", name: "unused", platform: "ios" }), fetchMock, () => now);
+  await manager.restore();
+
+  assert.deepEqual(await manager.request("/api/v1/home"), { version: 1 });
+  await manager.request("/api/v1/weights", { body: JSON.stringify({ weight_kg: 80 }), method: "POST" });
+  assert.deepEqual(await manager.request("/api/v1/home"), { version: 2 });
 });
