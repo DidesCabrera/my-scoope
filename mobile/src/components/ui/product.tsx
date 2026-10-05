@@ -162,9 +162,9 @@ export function StructuralIndicators({ indicators, entity, tone = "identity" }: 
               { backgroundColor: itemTone === "surfaceCard" ? tokens.color.surfaceCard : itemTone === "surfaceMuted" ? tokens.color.surfaceMuted : color },
               itemTone !== "identity" && styles.structuralItemSurface,
             ]}>
-            {Icon && indicator.iconPosition === "leading" ? <Icon color={tokens.color.textMain} size={13} strokeWidth={2.2} /> : null}
+            {Icon && indicator.iconPosition !== "trailing" ? <Icon color={itemTone === "identity" ? tokens.color.entityIconForeground : tokens.color.textMain} size={13} strokeWidth={2.2} /> : null}
             <Text style={[styles.structuralValue, itemTone !== "identity" && styles.structuralValueSurface]}>{indicator.value}</Text>
-            {Icon && indicator.iconPosition !== "leading" ? <Icon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.2} /> : null}
+            {Icon && indicator.iconPosition === "trailing" ? <Icon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.2} /> : null}
           </View>
         );
       })}
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   sectionIconCompact: { height: 18, width: 18 },
   sectionIconHero: { height: 40, width: 40 },
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
-  headingTitle: { color: tokens.color.textMain, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop },
+  headingTitle: { color: tokens.color.textMain, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.bold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
   completionIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },

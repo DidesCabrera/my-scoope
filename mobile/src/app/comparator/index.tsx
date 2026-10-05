@@ -27,6 +27,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionKpiSection } from "@/components/nutrition";
 import {
   DistributedTabBar,
+  Chip,
   EntityCard,
   EntityCardAction,
   EntityCardActions,
@@ -35,7 +36,7 @@ import {
   SectionPageHeader,
 } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, Field, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
+import { Button, Card, Field, LoadingState, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
 const fallbackKinds = [
@@ -88,9 +89,9 @@ function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress():
         <Text style={styles.savedTitle}>{item.name}</Text>
         <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
         <View style={styles.savedChip}>
-          <Pill
+          <Chip
             backgroundColor={`${entityColor}1A`}
-            color={entityColor}
+            borderColor={entityColor}
             label={comparisonCountLabel(item.kind, item.item_count)}
             textColor={tokens.color.entityIconForeground}
           />

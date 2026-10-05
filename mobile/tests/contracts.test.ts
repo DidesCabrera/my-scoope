@@ -29,7 +29,7 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   });
   assert.equal(tokens.component.nutritionKpi.nested.totalSize, 76);
   assert.deepEqual(tokens.component.entityHeading, {
-    card: { fontSize: 24, lineHeight: 30, indicatorMarginTop: 6, marginTop: 2 },
+    card: { fontSize: 23, lineHeight: 29, indicatorMarginTop: 6, marginTop: 2 },
     pageCompact: { fontSize: 26, lineHeight: 34, marginTop: 2 },
     pageRegular: { fontSize: 28, lineHeight: 36, marginTop: 2 },
   });
@@ -476,10 +476,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
-  assertSourceMatch(todayScreen, /<AppHeader[\s\S]*?title=\{`Vamos, \$\{firstName\}`\}[\s\S]*?\/>[\s\S]*<CurrentWeekSection localDate=\{today\.local_date\} \/>/);
-  assertSourceDoesNotMatch(todayScreen, /<AppHeader eyebrow=/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`Vamos, \$\{firstName\}`\}[\s\S]*?Fallar en planificar, es planificar fallar/);
+  assertSourceMatch(todayScreen, /<Chip borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
   assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
-  assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>\{`Tu Plan para hoy, \$\{homePlanDateLabel\(today\.local_date\)\}`\}<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>Tu plan de alimentos para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
+  assertSourceMatch(todayScreen, /eyebrow="PLAN DEL DÍA"/);
+  assertSourceMatch(todayScreen, /greetingRow: \{ gap: 0, marginBottom: 0 \}/);
+  assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm \}/);
   assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf("<ProgramActiveHomeOverview"));
   assertSourceMatch(todayScreen, /<CalendarizedDailyPlanCard[\s\S]*?<HomeSectionTitle>Tu Programa Activo<\/HomeSectionTitle>[\s\S]*?<ProgramActiveHomeOverview/);
   assertSourceMatch(todayScreen, /homeSectionTitle: \{[^}]*fontSize: 18[^}]*marginBottom: -tokens\.spacing\.sm[^}]*marginTop: tokens\.spacing\.sm/);
@@ -518,7 +521,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /<ProgramDaySelector/);
   assertSourceMatch(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
   assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
-  assertSourceMatch(todayScreen, /alignment="center"/);
+  assertSourceMatch(todayScreen, /greetingHeading: \{ alignItems: "center", flexDirection: "row"/);
   assertSourceMatch(todayScreen, /<GuideMetric tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /<GuideMetric icon="weight"/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
@@ -777,7 +780,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(programDayPanels, /<PanelAllocationBar size="compact"/);
   assertSourceMatch(programDayPanels, /<ProteinPerKilogramBadge showUnit=\{false\} style=\{styles\.ppkBadge\}/);
   assertSourceMatch(programDayPanels, /ppkBadge: \{ height: 24, minHeight: 24 \}/);
-  assertSourceMatch(programDayPanels, /calorieShareDataCell: \{ flex: 1\.35 \}/);
+  assertSourceMatch(programDayPanels, /calorieShareDataCell: \{ flex: 1\.35, maxWidth: "33%" \}/);
   assertSourceMatch(programDayPanels, /ppkDataCell: \{ flex: 0\.65 \}/);
   assertSourceMatch(programDayPanels, /\{ key: "share", label: "% Cal", style: styles\.calorieShareDataCell \}/);
   assertSourceMatch(programDayPanels, /\{ key: "ppk", label: "PpK", style: styles\.ppkDataCell \}/);

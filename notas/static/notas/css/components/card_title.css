@@ -258,6 +258,12 @@ line-height: 1;
 color: var(--structural-entity-color);
 }
 
+/* Structural counts use icon first, then value. Time and date already use that DOM order. */
+.structural-item:not(.structural-item--time):not(.structural-item--date):has(.structural-icon),
+.structural-item:not(.structural-item--time):not(.structural-item--date):has(.card-icon.main) {
+flex-direction: row-reverse;
+}
+
 .structural-item:has([data-lucide="carrot"]) {
 --structural-entity-color: var(--entity-food);
 }

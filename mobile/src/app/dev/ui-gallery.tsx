@@ -34,13 +34,14 @@ import {
   NutritionKpiSection,
   PanelAllocationBar,
 } from "@/components/nutrition";
-import { FoodPanels, type FoodPanelItem, MealPanels, type MealPanelItem } from "@/components/panels";
+import { FoodPanels, type FoodPanelItem, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { ProgramActiveKpis } from "@/components/programs";
 import {
   AppHeader,
   Button,
   Card,
   CardHeader,
+  Chip,
   ChoiceRow,
   CollectionPageHeader,
   CollectionEmptyState,
@@ -55,7 +56,6 @@ import {
   InlineNotice,
   MacroLoadingIndicator,
   MessageCard,
-  Pill,
   ProgressBar,
   Screen,
   ScrollableTabBar,
@@ -270,10 +270,17 @@ export default function UiGalleryScreen() {
               { count: 2, key: "proposals", label: "Propuestas" },
             ]}
           />
+          <SectionTitle detail="Componente compartido · borde, fondo y texto configurables" title="Chips" />
+          <Card>
+            <View style={styles.chipGallery}>
+              <Chip borderColor={tokens.color.program} label="Programa en curso" textColor={tokens.color.textMain} />
+              <Chip backgroundColor={`${tokens.color.dailyPlan}1A`} borderColor={tokens.color.dailyPlan} label="3 planes" textColor={tokens.color.textMain} />
+            </View>
+          </Card>
           <SectionTitle detail="Genérico y anidado" title="Títulos de card" />
           <Card>
             <CardHeader
-              accessory={<Pill label="Acción" />}
+              accessory={<Chip label="Acción" />}
               description="Encabezado estándar para una superficie de contenido."
               title="Título de card"
             />
@@ -296,7 +303,7 @@ export default function UiGalleryScreen() {
           </Card>
           <SectionTitle detail="Identidad semántica" title="Título de entidad" />
           <EntityCard
-            accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}
+            accessory={<Chip borderColor={tokens.color.dailyPlan} label="Activo" />}
             entity="dailyPlan"
             indicators={[
               { icon: "meal", label: "comidas", value: 4 },
@@ -368,6 +375,7 @@ export default function UiGalleryScreen() {
             title="Día de entrenamiento"
           />
           <SectionTitle detail="Meal y DPM" title="Paneles de alimentos" />
+          <GroupedFoodsCard items={foodPanelItems} title="Alimentos agrupados" />
           <NutritionEntityCard
             entity="meal"
             indicators={[{ icon: "food", label: "alimentos", value: foodPanelItems.length }]}
@@ -507,7 +515,7 @@ export default function UiGalleryScreen() {
         <>
           <SectionTitle detail="Primera composición reutilizable" title="Página de detalle" />
           <EntityDetailPage
-            action={<Pill color={tokens.color.dailyPlan} label="Editar" />}
+            action={<Chip borderColor={tokens.color.dailyPlan} label="Editar" />}
             completion={{ completedCount: 2, noteCount: 1 }}
             entity="dailyPlan"
             indicators={[
@@ -756,6 +764,7 @@ const styles = StyleSheet.create({
   galleryLayout: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   galleryLayoutWide: { alignItems: "flex-start", flexDirection: "row" },
   galleryContent: { flex: 1, gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
+  chipGallery: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   calendarExampleLabel: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.bold, letterSpacing: 0.8 },
   devicePreview: { alignSelf: "center", backgroundColor: tokens.color.surfacePage, borderColor: tokens.color.borderStrong, borderRadius: 30, borderWidth: 1, maxWidth: "100%", overflow: "hidden" },
   devicePreviewHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },

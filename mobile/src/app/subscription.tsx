@@ -323,7 +323,7 @@ export default function SubscriptionScreen() {
             const monthlyDisplayPrice = Platform.OS === "android" ? monthlyAndroidOffer?.displayPrice : monthlyStoreProduct?.displayPrice;
             const monthlyNumericPrice = Platform.OS === "android" ? monthlyAndroidOffer?.price : monthlyStoreProduct?.price;
             return (
-            <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName)} benefits={commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? []} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : "Consultando…"}>
+            <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? []} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : "Consultando…"}>
               <Text style={textStyles.caption}>Elige la modalidad de tu suscripción.</Text>
               {plan.products.map((configured) => {
                   const storeProduct = subscriptions.find((item) => item.id === configured.product_id);

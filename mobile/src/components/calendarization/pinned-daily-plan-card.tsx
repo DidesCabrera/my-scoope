@@ -47,10 +47,14 @@ export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMeal
     </EntityCardAction>
   );
   const meals = item.panel.meals;
+  const indicators = [
+    { icon: "meal" as const, label: "comidas", value: meals.length },
+    { icon: "food" as const, label: "alimentos", value: meals.reduce((total, meal) => total + meal.foods.length, 0) },
+  ];
 
   if (meals.length === 0) {
     return (
-      <EntityCard actions={detailAction} entity="dailyPlan" eyebrow="PLAN DE HOY" headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }} title={item.name}>
+      <EntityCard actions={detailAction} entity="dailyPlan" eyebrow="PLAN DEL DÍA" headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }} indicators={indicators} title={item.name}>
         <Button bleed label="+ Agregar Comida" onPress={addMeal} />
       </EntityCard>
     );
@@ -64,8 +68,9 @@ export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMeal
       actions={detailAction}
       afterNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} />}
       entity="dailyPlan"
-      eyebrow="PLAN DE HOY"
+      eyebrow="PLAN DEL DÍA"
       headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }}
+      indicators={indicators}
       nutrition={libraryNutrition(item.nutrition)}
       title={item.name}>
       <MealPanels

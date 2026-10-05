@@ -7,7 +7,7 @@ import type { ActiveProgramData, CalendarizedDayDetail, HomeData, TodayData } fr
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-plan-card";
-import { compactDateLabel, homePlanDateLabel } from "@/components/calendarization/current-week";
+import { compactDateLabel } from "@/components/calendarization/current-week";
 import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import { HomeActions } from "@/components/home-actions";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
@@ -15,7 +15,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
 import type { MealPanelEditing, MealPanelItem } from "@/components/panels";
-import { AppHeader, Button, Card, GuideMetric, InlineNotice, LoadingState, MutationStatusModal, Pill, Screen, SectionTitle, textStyles, useMutationStatus } from "@/components/ui";
+import { Button, Card, Chip, GuideMetric, InlineNotice, LoadingState, MutationStatusModal, Screen, SectionTitle, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
@@ -94,6 +94,11 @@ export default function TodayScreen() {
   const todayProgramDay = activeProgram?.days.find((day) => day.id === today?.day_id);
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? today?.measurements?.latest_weight_kg;
+  const planContext = today?.calendarization
+    ? { color: tokens.color.program, label: "Programa en curso" }
+    : today?.pinned_plan
+      ? { color: tokens.color.dailyPlan, label: "Plan calendarizado" }
+      : null;
 
   async function createTodayPlan() {
     setCreatingTodayPlan(true);
@@ -163,22 +168,25 @@ export default function TodayScreen() {
   return (
     <>
       <Screen headerMode="preserve">
-      <AppHeader
-        alignment="center"
-        action={currentWeightKg != null ? (
-          <GuideMetric tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} />
-        ) : undefined}
-        title={`Vamos, ${firstName}`}
-      />
-      {today ? <CurrentWeekSection localDate={today.local_date} /> : null}
-      {today?.calendarization ? <HomeSectionTitle>{`Tu Plan para hoy, ${homePlanDateLabel(today.local_date)}`}</HomeSectionTitle> : null}
+      {today ? <View style={styles.weekRow}><CurrentWeekSection localDate={today.local_date} /></View> : null}
+      <View style={styles.greetingRow}>
+        <View style={styles.greetingHeading}>
+          <Text style={styles.greetingTitle}>{`Vamos, ${firstName}`}</Text>
+          {currentWeightKg != null ? <GuideMetric tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} /> : null}
+        </View>
+        <View style={styles.greetingSubtitle}>
+          <Text style={styles.greetingSubtitleText}>Fallar en planificar, es planificar fallar</Text>
+        </View>
+        {planContext ? <View style={styles.planContext}><Chip borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
+      </View>
+      {today?.calendarization ? <HomeSectionTitle>Tu plan de alimentos para hoy</HomeSectionTitle> : null}
 
       {today?.calendarization && today.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
           dayId={todayDayId ?? null}
           dateLabel={compactDateLabel(today.local_date)}
           editing={calendarizedMealEditing}
-          eyebrow="PLAN DE HOY"
+          eyebrow="PLAN DEL DÍA"
           mealExecution={today.meal_execution}
           onChangeMealTime={async (meal, hour) => {
             await apiRequest(`/api/v1/program/days/${todayDayId}/meals/${encodeURIComponent(meal.id)}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
@@ -195,7 +203,7 @@ export default function TodayScreen() {
         </Card>
       ) : today?.pinned_plan ? (
         <>
-          <HomeSectionTitle>{`Tu Plan para hoy, ${homePlanDateLabel(today.local_date)}`}</HomeSectionTitle>
+          <HomeSectionTitle>Tu plan de alimentos para hoy</HomeSectionTitle>
           <PinnedDailyPlanCard editing={pinnedMealEditing} item={today.pinned_plan} mealExecution={today.meal_execution} onChangeMealTime={async (meal, hour) => {
             if (meal.relationId == null) return;
             await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan!.id}/meals/${meal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
@@ -217,13 +225,7 @@ export default function TodayScreen() {
           <HomeSectionTitle>Tu Programa Activo</HomeSectionTitle>
           <ProgramActiveHomeOverview calendarization={activeProgram.calendarization} program={activeProgram} />
         </>
-      ) : (
-        <Card accent={tokens.color.program}>
-          <SectionTitle title="Aún no hay programa activo" />
-          <Text style={textStyles.muted}>Elige uno de tus programas y conviértelo en tu recorrido diario desde la app.</Text>
-          <Button label="Calendarizar un programa" onPress={() => router.push("/program/activate" as Href)} />
-        </Card>
-      )}
+      ) : null}
 
       <HomeLibraryGrid counts={libraryCounts} />
 
@@ -237,8 +239,8 @@ export default function TodayScreen() {
           <View style={styles.measurementRow}>
             <Text style={styles.measurementValue}>{displayWeight(today.measurements.latest_weight_kg)} kg</Text>
             {today.measurements.change_kg != null ? (
-              <Pill
-                color={tokens.color.protein}
+              <Chip
+                borderColor={tokens.color.protein}
                 label={`${today.measurements.change_kg > 0 ? "+" : ""}${today.measurements.change_kg.toFixed(1)} kg`}
               />
             ) : null}
@@ -276,6 +278,13 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   homeSectionTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.semibold, marginBottom: -tokens.spacing.sm, marginTop: tokens.spacing.sm },
+  greetingRow: { gap: 0, marginBottom: 0 },
+  greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
+  greetingTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5 },
+  greetingSubtitle: { alignItems: "center", flexDirection: "row" },
+  greetingSubtitleText: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, lineHeight: 20 },
+  planContext: { alignSelf: "flex-start", marginTop: tokens.spacing.sm },
+  weekRow: { marginBottom: tokens.spacing.sm },
   measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   measurementValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: "900", fontVariant: ["tabular-nums"] },
 });

@@ -49,7 +49,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(comparisonList, /<SavedComparisonPreviewPanels items=\{item\.items\} scope=\{entity\} \/>[\s\S]*<EntityCardActions>[\s\S]*<EntityCardAction[\s\S]*<ChevronRight color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(comparisonList, /<Card accent=\{entityColor\} style=\{styles\.savedCard\}>/);
   assertSourceMatch(comparisonList, /savedCard: \{ paddingBottom: tokens\.card\.innerPadding \}/);
-  assertSourceMatch(comparisonList, /backgroundColor=\{`\$\{entityColor\}1A`\}[\s\S]*color=\{entityColor\}[\s\S]*label=\{comparisonCountLabel\(item\.kind, item\.item_count\)\}[\s\S]*textColor=\{tokens\.color\.entityIconForeground\}/);
+  assertSourceMatch(comparisonList, /backgroundColor=\{`\$\{entityColor\}1A`\}[\s\S]*borderColor=\{entityColor\}[\s\S]*label=\{comparisonCountLabel\(item\.kind, item\.item_count\)\}[\s\S]*textColor=\{tokens\.color\.entityIconForeground\}/);
   assertSourceMatch(comparisonList, /foods: \{ plural: "Alimentos", singular: "Alimento" \}[\s\S]*meals: \{ plural: "Comidas", singular: "Comida" \}[\s\S]*dailyplans: \{ plural: "Planes diarios", singular: "Plan diario" \}/);
   assertSourceDoesNotMatch(comparisonList, /Ver comparación guardada/);
   assertSourceMatch(comparison, /method: "PATCH"/);
@@ -160,8 +160,10 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /<Plus color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(navigation, /headerPresentation\.createAction/);
   assertSourceMatch(navigation, /height: 48/);
-  assertSourceMatch(navigation, /logoText: \{[^}]*fontSize: 18/);
-  assertSourceMatch(navigation, /logoBar: \{[^}]*height: 3, width: 13/);
+  assertSourceMatch(navigation, /<MyScoopeLogo \/>/);
+  const logo = await readFile(path.resolve(process.cwd(), "src/components/ui/my-scoope-logo.tsx"), "utf8");
+  assertSourceMatch(logo, /logoText: \{[^}]*fontSize: 18/);
+  assertSourceMatch(logo, /logoBar: \{[^}]*height: 3, width: 13/);
   const globalHeaderStyle = navigation.slice(navigation.indexOf("header: { alignItems"), navigation.indexOf("headerButton: {"));
   assertSourceDoesNotMatch(globalHeaderStyle, /borderBottom/);
   assertSourceMatch(navigation, /backHeaderSide: \{ alignItems: "flex-start", paddingLeft: tokens\.spacing\.lg, width: 92 \}/);

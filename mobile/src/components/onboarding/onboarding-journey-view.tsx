@@ -87,7 +87,7 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
 function ExplanationDots({ action, index }: { action?: ReactNode; index: number }) {
   const activeIndex = index - 1;
   return (
-    <View style={[styles.explanationFooter, action && styles.explanationFooterWithAction]}>
+    <View style={[styles.explanationFooter, action ? styles.explanationFooterWithAction : null]}>
       <View accessibilityLabel={`Vista ${activeIndex + 1} de ${explanationSteps.length}`} style={styles.explanationDots}>
         {explanationSteps.map((step, dotIndex) => (
           <View

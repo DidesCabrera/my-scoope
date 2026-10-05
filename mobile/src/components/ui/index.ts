@@ -1,4 +1,5 @@
 export * from "./collection-page-header";
+export * from "./chip";
 export * from "./controls";
 export * from "./detail-link-row";
 export * from "./feedback";

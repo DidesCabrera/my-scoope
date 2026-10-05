@@ -161,6 +161,10 @@
     font-size: 12px;
     font-weight: 650;
   }
+
+  .picker-result-structural__item:has(.picker-result-structural__icon) {
+    flex-direction: row-reverse;
+  }
   
   .picker-result-structural__icon {
     width: 12px;
