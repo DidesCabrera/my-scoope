@@ -20,9 +20,11 @@ import {
 } from "lucide-react-native";
 import type { ComponentType, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { EntityPanelTabs, PanelSurface } from "@/components/panels";
-import { Brand, Button, Card, ChoiceRow, Field, InlineNotice, Pill, textStyles } from "@/components/ui";
+import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
+import { Brand, Button, Card, ChoiceRow, Field, InlineNotice, MyScoopeLogo, Pill, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export const onboardingJourneySteps = [
@@ -44,31 +46,122 @@ export const onboardingJourneySteps = [
 
 export type OnboardingJourneyStep = (typeof onboardingJourneySteps)[number]["key"];
 
+const explanationSteps = onboardingJourneySteps.slice(1, 6);
+
 export const onboardingNutritionFields = ["goal", "birth_date", "sex", "height_cm", "weight_kg", "activity_level", "training_frequency"] as const;
 
 type Icon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
 const noop = () => undefined;
 
-function StepHeader({ icon: IconComponent, index, eyebrow, title, description }: {
+function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, title, description }: {
+  brandedCentered?: boolean;
   description: string;
   eyebrow: string;
   icon: Icon;
   index: number;
   title: string;
 }) {
+  const isExplanation = index >= 1 && index <= 5;
+  const isProfileStep = index >= 7 && index <= 11;
+  const usesBrandedHeader = isExplanation || brandedCentered;
+  const isCenteredIntro = index <= 6 || brandedCentered;
   return (
-    <View style={styles.intro}>
-      <View style={styles.stepMeta}>
-        <Text style={styles.stepCount}>{String(index + 1).padStart(2, "0")} / {onboardingJourneySteps.length}</Text>
-        <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${((index + 1) / onboardingJourneySteps.length) * 100}%` }]} />
+    <View style={[styles.intro, isCenteredIntro && styles.introCentered]}>
+      {usesBrandedHeader ? <View style={styles.centeredLogo}><MyScoopeLogo /></View> : isProfileStep ? <ProfileProgress index={index} /> : index === 6 ? null : (
+        <View style={styles.stepMeta}>
+          <Text style={styles.stepCount}>{String(index + 1).padStart(2, "0")} / {onboardingJourneySteps.length}</Text>
+          <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${((index + 1) / onboardingJourneySteps.length) * 100}%` }]} />
+          </View>
         </View>
+      )}
+      {!usesBrandedHeader ? <View style={styles.iconWell}><IconComponent color={tokens.color.entityIconForeground} size={27} strokeWidth={1.8} /></View> : null}
+      {!usesBrandedHeader && !isProfileStep ? <Text style={[styles.eyebrow, isCenteredIntro && styles.centeredText]}>{eyebrow}</Text> : null}
+      <Text style={[styles.title, isCenteredIntro && styles.centeredText, isCenteredIntro && styles.centeredTitleSpacing]}>{title}</Text>
+      <Text style={[styles.description, isCenteredIntro && styles.centeredText]}>{description}</Text>
+    </View>
+  );
+}
+
+function ExplanationDots({ action, index }: { action?: ReactNode; index: number }) {
+  const activeIndex = index - 1;
+  return (
+    <View style={[styles.explanationFooter, action && styles.explanationFooterWithAction]}>
+      <View accessibilityLabel={`Vista ${activeIndex + 1} de ${explanationSteps.length}`} style={styles.explanationDots}>
+        {explanationSteps.map((step, dotIndex) => (
+          <View
+            key={step.key}
+            accessibilityElementsHidden
+            style={[styles.explanationDot, dotIndex === activeIndex && styles.explanationDotActive]}
+          >
+            {dotIndex === activeIndex ? (
+              <Svg aria-hidden height="100%" viewBox="0 0 10 10" width="100%">
+                <Defs>
+                  <LinearGradient id="onboarding-credit-gradient" x1="0" x2="1" y1="0" y2="1">
+                    <Stop offset="0" stopColor={tokens.color.protein} />
+                    <Stop offset="0.5" stopColor={tokens.color.carbs} />
+                    <Stop offset="1" stopColor={tokens.color.fat} />
+                  </LinearGradient>
+                </Defs>
+                <Circle cx="5" cy="5" fill="url(#onboarding-credit-gradient)" r="5" />
+              </Svg>
+            ) : null}
+          </View>
+        ))}
       </View>
-      <View style={styles.iconWell}><IconComponent color={tokens.color.entityIconForeground} size={27} strokeWidth={1.8} /></View>
-      <Text style={styles.eyebrow}>{eyebrow}</Text>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      {action}
+    </View>
+  );
+}
+
+function ContinueChip() {
+  return (
+    <Pressable accessibilityRole="button" onPress={noop} style={styles.continueChip}>
+      <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <Defs>
+          <LinearGradient id="continue-chip-border" x1="0" x2="1" y1="0" y2="1">
+            <Stop offset="0" stopColor={tokens.color.protein} />
+            <Stop offset="0.5" stopColor={tokens.color.carbs} />
+            <Stop offset="1" stopColor={tokens.color.fat} />
+          </LinearGradient>
+        </Defs>
+        <Rect fill="url(#continue-chip-border)" height="100%" width="100%" />
+      </Svg>
+      <View style={styles.continueChipInset} />
+      <Text style={styles.continueChipText}>Continuar</Text>
+    </Pressable>
+  );
+}
+
+function ProfileProgress({ index }: { index: number }) {
+  const activeIndex = index - 7;
+  const creditGradient = (shape: "dot" | "line", id: string) => (
+    <Svg aria-hidden height="100%" viewBox={shape === "dot" ? "0 0 14 14" : "0 0 100 2"} width="100%">
+      <Defs>
+        <LinearGradient id={id} x1="0" x2="1" y1="0" y2="1">
+          <Stop offset="0" stopColor={tokens.color.protein} />
+          <Stop offset="0.5" stopColor={tokens.color.carbs} />
+          <Stop offset="1" stopColor={tokens.color.fat} />
+        </LinearGradient>
+      </Defs>
+      {shape === "dot" ? <Circle cx="7" cy="7" fill={`url(#${id})`} r="7" /> : <Rect fill={`url(#${id})`} height="2" width="100" />}
+    </Svg>
+  );
+  return (
+    <View accessibilityLabel={`Paso ${activeIndex + 1} de 5 de tu perfil`} style={styles.profileProgress}>
+      {Array.from({ length: 5 }, (_, stepIndex) => (
+        <View key={stepIndex} style={[styles.profileProgressItem, stepIndex === 4 && styles.profileProgressItemLast]}>
+          <View style={styles.profileProgressDot}>
+            {stepIndex <= activeIndex ? creditGradient("dot", `profile-dot-${stepIndex}`) : null}
+          </View>
+          {stepIndex < 4 ? (
+            <View style={styles.profileProgressLine}>
+              {stepIndex < activeIndex ? creditGradient("line", `profile-line-${stepIndex}`) : null}
+            </View>
+          ) : null}
+        </View>
+      ))}
     </View>
   );
 }
@@ -102,18 +195,14 @@ function ExplanationCard({ icon: IconComponent, title, body }: { body: string; i
 function LoginView({ index }: { index: number }) {
   return (
     <>
-      <Brand />
+      <View style={styles.centeredLogo}><MyScoopeLogo /></View>
       <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.loginHero}>
-        <Text style={styles.loginKicker}>ACCESO</Text>
         <Text style={styles.loginTitle}>Inicia sesión para guardar tu progreso</Text>
-        <Text style={textStyles.muted}>Usa tu cuenta para continuar el proceso en cualquiera de tus dispositivos.</Text>
+        <Text style={[textStyles.muted, styles.centeredText]}>Usa tu cuenta para continuar el proceso en cualquiera de tus dispositivos.</Text>
       </View>
-      <Card accent={tokens.color.program}>
-        <Text style={styles.cardTitle}>Accede a tu cuenta</Text>
-        <Text style={textStyles.muted}>Inicia sesión o crea una cuenta para guardar tu progreso en todos tus dispositivos.</Text>
-        <Button label="Iniciar sesión o crear cuenta" onPress={noop} />
-      </Card>
-      <Text style={styles.quietCenter}>Tu información quedará asociada a tu cuenta.</Text>
+      <View style={styles.loginAction}>
+        <Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress={noop} variant="multicolor" />
+      </View>
     </>
   );
 }
@@ -122,11 +211,11 @@ function ValueView({ index }: { index: number }) {
   return (
     <>
       <StepHeader description="My Scoope organiza tu objetivo, calcula referencias nutricionales y las convierte en un plan diario que puedes revisar." eyebrow="Funciones principales" icon={Target} index={index} title="Qué puedes hacer con My Scoope" />
-      <Card accent={tokens.color.dailyPlan}>
+      <View style={styles.valueFeatures}>
         <ExplanationCard body="Una estructura diaria que puedes revisar, adaptar y ejecutar." icon={Check} title="Plan diario" />
         <ExplanationCard body="Calorías, macros y cantidades en una lectura ordenada." icon={Gauge} title="Referencias nutricionales" />
-      </Card>
-      <JourneyFooter index={index} />
+      </View>
+      <ExplanationDots index={index} />
     </>
   );
 }
@@ -150,7 +239,7 @@ function StructureView({ index }: { index: number }) {
           </View>
         ))}
       </View>
-      <JourneyFooter index={index} />
+      <ExplanationDots index={index} />
     </>
   );
 }
@@ -159,7 +248,7 @@ function PanelsView({ index }: { index: number }) {
   return (
     <>
       <StepHeader description="Cada panel muestra primero un resumen y permite consultar calorías, macronutrientes y detalle." eyebrow="Paneles de información" icon={Eye} index={index} title="Cómo leer los paneles" />
-      <Card accent={tokens.color.interactivePrimary}>
+      <Card>
         <View style={styles.panelEntityHeader}>
           <View><Text style={styles.panelEyebrow}>PLAN DIARIO</Text><Text style={styles.panelEntityTitle}>Día equilibrado</Text></View>
           <Pill label="2.140 kcal" color={tokens.color.dailyPlan} />
@@ -179,7 +268,7 @@ function PanelsView({ index }: { index: number }) {
         </PanelSurface>
         <Text style={styles.panelHint}>Resumen primero. Evidencia y detalle a un toque.</Text>
       </Card>
-      <JourneyFooter index={index} />
+      <ExplanationDots index={index} />
     </>
   );
 }
@@ -193,7 +282,7 @@ function ControlView({ index }: { index: number }) {
         <ExplanationCard body="El sistema transforma la intención en objetivos revisables." icon={BarChart3} title="2. Calcula" />
         <ExplanationCard body="Nada importante cambia sin tu confirmación." icon={Check} title="3. Aprueba" />
       </View>
-      <JourneyFooter index={index} />
+      <ExplanationDots index={index} />
     </>
   );
 }
@@ -202,7 +291,7 @@ function ProgressView({ index }: { index: number }) {
   return (
     <>
       <StepHeader description="Compara lo planificado con tus registros para decidir si necesitas ajustar el plan." eyebrow="Seguimiento" icon={BarChart3} index={index} title="Cómo revisar tu progreso" />
-      <Card accent={tokens.color.success}>
+      <Card>
         <View style={styles.metricRow}><Text style={styles.metricLabel}>Adherencia semanal</Text><Text style={styles.metricValue}>86%</Text></View>
         <View style={styles.metricTrack}><View style={styles.metricFill} /></View>
         <View style={styles.progressFacts}>
@@ -210,7 +299,10 @@ function ProgressView({ index }: { index: number }) {
           <ExplanationCard body="Revisiones que explican cambios." icon={Activity} title="Evolución" />
         </View>
       </Card>
-      <JourneyFooter index={index} />
+      <ExplanationDots
+        action={<ContinueChip />}
+        index={index}
+      />
     </>
   );
 }
@@ -251,7 +343,7 @@ function IdentityView({ index }: { index: number }) {
   return (
     <>
       <StepHeader description="La edad y el sexo usado para el cálculo forman parte de la estimación de tu gasto basal." eyebrow="Datos para el cálculo" icon={CircleUserRound} index={index} title="Ingresa tus datos personales" />
-      <Card accent={tokens.color.dailyPlan}>
+      <Card>
         <Field label="Fecha de nacimiento" onChangeText={noop} placeholder="AAAA-MM-DD" value="1990-05-10" />
         <ChoiceRow label="Sexo usado para el cálculo nutricional" onChange={noop} options={[{ value: "male", label: "Masculino" }, { value: "female", label: "Femenino" }]} value="male" />
       </Card>
@@ -265,7 +357,7 @@ function MeasurementsView({ index }: { index: number }) {
   return (
     <>
       <StepHeader description="La altura y el peso permiten estimar tu gasto energético y calcular referencias por kilogramo." eyebrow="Datos para el cálculo" icon={Scale} index={index} title="Ingresa tus medidas actuales" />
-      <Card accent={tokens.color.dailyPlan}>
+      <Card>
         <View style={styles.measurementFields}>
           <View style={styles.flex}><Field keyboardType="number-pad" label="Altura (cm)" onChangeText={noop} placeholder="178" value="178" /></View>
           <View style={styles.flex}><Field keyboardType="decimal-pad" label="Peso (kg)" onChangeText={noop} placeholder="82,5" value="82,5" /></View>
@@ -282,7 +374,7 @@ function ActivityView({ index }: { index: number }) {
     <>
       <StepHeader description="Separa el movimiento habitual de los entrenamientos para evitar contarlos dos veces." eyebrow="Datos para el cálculo" icon={Dumbbell} index={index} title="Describe tu actividad y entrenamiento" />
       <View accessibilityLabel={`Datos solicitados: ${onboardingNutritionFields.join(", ")}`}>
-        <Card accent={tokens.color.program}>
+        <Card>
           <Text style={styles.fieldLabel}>Actividad habitual</Text>
           <View style={styles.activityList}>
             {[
@@ -308,7 +400,7 @@ function SummaryView({ index }: { index: number }) {
   return (
     <>
       <StepHeader description="Comprueba los datos y la estimación inicial antes de continuar." eyebrow="Resumen de la ficha" icon={Gauge} index={index} title="Revisa tu información" />
-      <Card accent={tokens.color.dailyPlan}>
+      <Card>
         <View style={styles.summaryHero}><Text style={styles.summaryValue}>2.340</Text><Text style={styles.summaryUnit}>kcal de mantenimiento estimado</Text></View>
         <View style={styles.summaryGrid}>
           <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Objetivo</Text><Text style={styles.summaryText}>Bajar grasa</Text></View>
@@ -324,22 +416,25 @@ function SummaryView({ index }: { index: number }) {
 }
 
 const plans = [
-  { name: "Free", price: "$0", detail: "Empieza con un plan diario y tus bibliotecas esenciales.", tone: tokens.color.textMuted, recommended: false },
-  { name: "Basic", price: "$3.990", detail: "Bibliotecas ilimitadas y 150 créditos mensuales.", tone: tokens.color.interactivePrimary, recommended: true },
-  { name: "Pro", price: "$6.990", detail: "1.000 créditos para un uso intensivo.", tone: tokens.color.program, recommended: false },
+  { accent: tokens.color.fat, caption: "Incluido sin costo.", name: "Free", price: "$0/mes" },
+  { accent: tokens.color.carbs, annualPrice: "$39.900/año · Ahorra 17%", name: "Basic", price: "$3.990/mes" },
+  { accent: tokens.color.protein, annualPrice: "$69.900/año · Ahorra 17%", name: "Pro", price: "$6.990/mes" },
 ] as const;
 
 function PlansView({ index }: { index: number }) {
   return (
     <>
-      <StepHeader description="Compara lo que incluyen Free, Basic y Pro. Puedes cambiar de plan más adelante." eyebrow="Planes disponibles" icon={BookOpen} index={index} title="Elige un plan" />
+      <StepHeader brandedCentered description="Compara lo que incluyen Free, Basic y Pro. Puedes cambiar de plan más adelante." eyebrow="Planes disponibles" icon={BookOpen} index={index} title="Elige un plan" />
       <View style={styles.planList}>
         {plans.map((plan) => (
-          <View key={plan.name} style={[styles.planCard, plan.recommended && styles.planCardRecommended]}>
-            <View style={styles.planHeading}><View style={styles.flex}><Text style={styles.planName}>{plan.name}</Text>{plan.recommended ? <Text style={styles.recommended}>RECOMENDADO</Text> : null}</View><Text style={[styles.planPrice, { color: plan.tone }]}>{plan.price}<Text style={styles.planPeriod}>/mes</Text></Text></View>
-            <Text style={styles.planDetail}>{plan.detail}</Text>
-            <Button label={plan.name === "Free" ? "Continuar con Free" : `Elegir ${plan.name}`} onPress={noop} variant={plan.name === "Basic" ? "primary" : "secondary"} />
-          </View>
+          <SubscriptionPlanCard accent={plan.accent} benefits={commercialPlanBenefits[plan.name]} caption={"caption" in plan ? plan.caption : undefined} key={plan.name} name={plan.name} price={plan.price}>
+            {plan.name === "Free" ? <SubscriptionPurchaseButton label="Continuar con Free" onPress={noop} /> : (
+              <View style={styles.subscriptionActions}>
+                <SubscriptionPurchaseButton label={`Mensual · ${plan.price}`} onPress={noop} />
+                <SubscriptionPurchaseButton label={`Anual · ${plan.annualPrice}`} onPress={noop} />
+              </View>
+            )}
+          </SubscriptionPlanCard>
         ))}
       </View>
       <Text style={styles.quietCenter}>Precios mensuales en CLP. También habrá opciones anuales.</Text>
@@ -389,6 +484,10 @@ export function OnboardingJourneyView({ step }: { step: OnboardingJourneyStep })
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.lg, minHeight: 690, paddingBottom: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   intro: { alignItems: "flex-start", gap: tokens.spacing.sm },
+  introCentered: { alignItems: "center" },
+  centeredLogo: { alignItems: "center", justifyContent: "center", width: "100%" },
+  centeredText: { textAlign: "center" },
+  centeredTitleSpacing: { marginBottom: tokens.spacing.sm, marginTop: tokens.spacing.xxl + tokens.spacing.md },
   stepMeta: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, width: "100%" },
   stepCount: { color: tokens.color.textSoft, fontSize: 10, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, letterSpacing: 1 },
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, flex: 1, height: 3, overflow: "hidden" },
@@ -398,6 +497,19 @@ const styles = StyleSheet.create({
   title: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 32 },
   description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   footer: { gap: tokens.spacing.sm, marginTop: "auto" },
+  explanationFooter: { alignItems: "center", gap: tokens.spacing.md, marginBottom: 48, marginTop: "auto" },
+  explanationFooterWithAction: { gap: tokens.spacing.xs, marginBottom: 34 },
+  explanationDots: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 40 },
+  explanationDot: { backgroundColor: tokens.color.borderStrong, borderRadius: 5, height: 10, overflow: "hidden", width: 10 },
+  explanationDotActive: { backgroundColor: "transparent", transform: [{ scale: 1.25 }] },
+  continueChip: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 34, overflow: "hidden", paddingHorizontal: tokens.spacing.lg },
+  continueChipInset: { backgroundColor: tokens.color.surfaceApp, borderRadius: tokens.radius.pill, bottom: 1, left: 1, position: "absolute", right: 1, top: 1 },
+  continueChipText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  profileProgress: { alignItems: "center", flexDirection: "row", justifyContent: "center", paddingHorizontal: tokens.spacing.xl, width: "100%" },
+  profileProgressItem: { alignItems: "center", flex: 1, flexDirection: "row" },
+  profileProgressItemLast: { flex: 0 },
+  profileProgressLine: { backgroundColor: tokens.color.borderStrong, flex: 1, height: 2 },
+  profileProgressDot: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderStrong, borderRadius: 7, borderWidth: 1, height: 14, overflow: "hidden", width: 14 },
   backAction: { alignItems: "center", alignSelf: "center", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 40, paddingHorizontal: tokens.spacing.md },
   backLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   explanationCard: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
@@ -405,9 +517,11 @@ const styles = StyleSheet.create({
   explanationCopy: { flex: 1, gap: 2 },
   explanationTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   explanationBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
-  loginHero: { gap: tokens.spacing.md, marginTop: 32 },
+  valueFeatures: { gap: tokens.spacing.sm },
+  loginHero: { alignItems: "center", gap: tokens.spacing.md, marginTop: 64 },
+  loginAction: { marginBottom: 114, marginTop: "auto" },
   loginKicker: { color: tokens.color.program, fontSize: 11, fontWeight: tokens.weight.extraBold, letterSpacing: 1.5 },
-  loginTitle: { color: tokens.color.textMain, fontSize: 32, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 37 },
+  loginTitle: { color: tokens.color.textMain, fontSize: 32, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 37, marginBottom: tokens.spacing.sm, textAlign: "center" },
   cardTitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.bold },
   quietCenter: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16, textAlign: "center" },
   levels: { gap: tokens.spacing.sm },
@@ -458,14 +572,7 @@ const styles = StyleSheet.create({
   summaryLabel: { color: tokens.color.textSoft, fontSize: 10, textTransform: "uppercase" },
   summaryText: { color: tokens.color.textMain, fontSize: 12, fontWeight: tokens.weight.bold },
   planList: { gap: tokens.spacing.sm },
-  planCard: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.sm, padding: tokens.spacing.md },
-  planCardRecommended: { borderColor: tokens.color.interactivePrimary, borderWidth: 2 },
-  planHeading: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "space-between" },
-  planName: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.extraBold },
-  recommended: { color: tokens.color.interactivePrimary, fontSize: 9, fontWeight: tokens.weight.bold, letterSpacing: 0.8, marginTop: 2 },
-  planPrice: { fontSize: 17, fontWeight: tokens.weight.extraBold },
-  planPeriod: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.medium },
-  planDetail: { color: tokens.color.textMuted, fontSize: 11, lineHeight: 16 },
+  subscriptionActions: { gap: tokens.spacing.sm },
   cardEyebrow: { color: tokens.color.dailyPlan, fontSize: 10, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1 },
   homeActions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
 });

@@ -845,6 +845,50 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /training_frequency/);
   assertSourceMatch(journey, /Cómo leer los paneles/);
   assertSourceMatch(journey, /Continuar con Free/);
+  assertSourceMatch(journey, /<SubscriptionPlanCard/);
+  assertSourceMatch(journey, /commercialPlanBenefits\[plan\.name\]/);
+  assertSourceMatch(journey, /Mensual · \$\{plan\.price\}/);
+  assertSourceMatch(journey, /Anual · \$\{plan\.annualPrice\}/);
+  assertSourceMatch(journey, /<SubscriptionPurchaseButton/);
+  assertSourceMatch(journey, /<SubscriptionPurchaseButton label="Continuar con Free"/);
+  assertSourceMatch(journey, /function ExplanationDots/);
+  assertSourceMatch(journey, /explanationFooter: \{[^}]*marginBottom: 48/);
+  assertSourceMatch(journey, /function ContinueChip/);
+  assertSourceMatch(journey, /id="continue-chip-border"/);
+  assertSourceMatch(journey, /continueChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34/);
+  assertSourceMatch(journey, /continueChipInset: \{[^}]*bottom: 1, left: 1[^}]*right: 1, top: 1/);
+  assertSourceMatch(journey, /<Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress=\{noop\} variant="multicolor" \/>/);
+  assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
+  assertSourceMatch(journey, /<View style=\{styles\.centeredLogo\}><MyScoopeLogo \/><\/View>/);
+  assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
+  assertSourceMatch(journey, /const isCenteredIntro = index <= 6/);
+  assertSourceMatch(journey, /<StepHeader brandedCentered description="Compara lo que incluyen Free, Basic y Pro/);
+  assertSourceMatch(journey, /styles\.introCentered/);
+  assertSourceMatch(journey, /styles\.centeredTitleSpacing/);
+  assertSourceMatch(journey, /function ProfileProgress/);
+  assertSourceMatch(journey, /const isProfileStep = index >= 7 && index <= 11/);
+  assertSourceMatch(journey, /!usesBrandedHeader && !isProfileStep \? <Text/);
+  assertSourceMatch(journey, /isProfileStep \? <ProfileProgress index=\{index\} \/> : index === 6 \? null/);
+  assertSourceMatch(journey, /creditGradient\("dot", `profile-dot-\$\{stepIndex\}`\)/);
+  assertSourceMatch(journey, /creditGradient\("line", `profile-line-\$\{stepIndex\}`\)/);
+  for (const view of ["IdentityView", "MeasurementsView", "ActivityView", "SummaryView"]) {
+    const nextView = view === "IdentityView" ? "MeasurementsView" : view === "MeasurementsView" ? "ActivityView" : view === "ActivityView" ? "SummaryView" : "const plans";
+    const section = journey.match(new RegExp(`function ${view}[\\s\\S]*?${nextView}`))?.[0] ?? "";
+    assertSourceDoesNotMatch(section, /<Card accent=/);
+  }
+  for (const [view, nextView] of [["ValueView", "StructureView"], ["PanelsView", "ControlView"], ["ProgressView", "DisclosuresView"]]) {
+    const section = journey.match(new RegExp(`function ${view}[\\s\\S]*?function ${nextView}`))?.[0] ?? "";
+    assertSourceDoesNotMatch(section, /<Card accent=/);
+  }
+  assertSourceMatch(journey.match(/function ValueView[\s\S]*?function StructureView/)?.[0] ?? "", /<View style=\{styles\.valueFeatures\}>[\s\S]*?<ExplanationCard[\s\S]*?<ExplanationCard/);
+  assertSourceMatch(journey, /explanationSteps\.map\(\(step, dotIndex\) =>/);
+  assertSourceMatch(journey, /id="onboarding-credit-gradient"/);
+  assertSourceMatch(journey, /fill="url\(#onboarding-credit-gradient\)"/);
+  assertSourceDoesNotMatch(journey, /WeekDaySelectionRing/);
+  assertSourceDoesNotMatch(journey.match(/function ValueView[\s\S]*?function DisclosuresView/)?.[0] ?? "", /<JourneyFooter/);
+  assertSourceDoesNotMatch(journey, /PanResponder|OnboardingExplanationCarousel/);
+  assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
+  assertSourceMatch(journey, /loginAction: \{ marginBottom: 114, marginTop: "auto" \}/);
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
 });
 
