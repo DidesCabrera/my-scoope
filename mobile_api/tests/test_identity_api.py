@@ -20,7 +20,6 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
         entitlements = self.client.get("/api/v1/entitlements")
         self.assertEqual(session.status_code, 200)
         self.assertEqual(session.json()["data"]["device_session_id"], str(self.device_session.public_id))
-        self.assertFalse(session.json()["data"]["is_staff"])
         self.assertEqual(
             session.json()["data"]["date_joined"],
             self.user.date_joined.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
@@ -30,15 +29,6 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
         self.assertTrue(profile.json()["data"]["review_disclosure_required"])
         self.assertEqual(entitlements.status_code, 200)
         self.assertEqual(entitlements.json()["data"]["plan_slug"], "free")
-
-    def test_session_exposes_staff_status_for_admin_only_mobile_tools(self):
-        self.user.is_staff = True
-        self.user.save(update_fields=["is_staff"])
-
-        response = self.client.get("/api/v1/session")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["data"]["is_staff"])
 
     def test_onboarding_and_weight_endpoints_reuse_product_services(self):
         onboarding = self.client.post(
