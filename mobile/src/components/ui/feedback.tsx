@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 8, overflow: "hidden" },
   progressFill: { borderRadius: tokens.radius.pill, height: "100%" },
   loadingState: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, justifyContent: "center" },
-  statusCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, minWidth: 240, paddingHorizontal: tokens.spacing.xl, paddingVertical: tokens.spacing.xl },
+  statusCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.card, gap: tokens.spacing.md, minWidth: 240, paddingHorizontal: tokens.spacing.xl, paddingVertical: tokens.spacing.xl },
   statusLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, textAlign: "center" },
   statusScrim: { alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.56)", flex: 1, justifyContent: "center", padding: tokens.spacing.screen },
 });

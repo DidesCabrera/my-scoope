@@ -35,6 +35,10 @@ def _stored_purchase_id(*, provider: str, purchase_id: str) -> str:
     return f"sha256:{digest}"
 
 
+def stored_credit_pack_purchase_id(*, provider: str, purchase_id: str) -> str:
+    return _stored_purchase_id(provider=provider, purchase_id=purchase_id)
+
+
 def may_buy_credit_packs(user) -> bool:
     plan = resolve_account_plan_for_user(user)
     return plan is not None and plan.slug in {"basic", "pro"}
@@ -168,16 +172,31 @@ def settle_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
     )
 
 
-def settle_google_play_credit_pack(*, user, evidence) -> CreditPackPurchase:
-    from billing.application.services.google_play import google_play_account_id
+def settle_google_play_credit_pack(*, user, evidence, expected_environment: str | None = None) -> CreditPackPurchase:
+    from billing.application.services.google_play_validation import (
+        get_or_create_google_play_account_token,
+        google_play_environment,
+    )
 
-    if evidence.obfuscated_account_id != google_play_account_id(user):
+    account_token = get_or_create_google_play_account_token(user)
+    if evidence.obfuscated_account_id != account_token.token:
         raise CreditPackUnavailable("credit_pack_google_account_mismatch")
     if evidence.status != "PURCHASED":
         raise CreditPackUnavailable("credit_pack_google_purchase_not_completed")
+    try:
+        environment = google_play_environment(evidence.environment)
+        configured_environment = (
+            google_play_environment(expected_environment)
+            if expected_environment is not None
+            else None
+        )
+    except ValueError as exc:
+        raise CreditPackUnavailable("credit_pack_google_environment_invalid") from exc
+    if configured_environment is not None and environment != configured_environment:
+        raise CreditPackUnavailable("credit_pack_google_environment_mismatch")
     product = ProviderCreditPack.objects.filter(
         provider=PaymentProvider.GOOGLE_PLAY,
-        environment=evidence.environment,
+        environment=environment,
         external_product_id=evidence.product_id,
         active=True,
     ).first()
@@ -189,6 +208,7 @@ def settle_google_play_credit_pack(*, user, evidence) -> CreditPackPurchase:
             "source": "google_play_server_api",
             "product_id": evidence.product_id,
             "order_id": evidence.order_id,
+            "environment": environment,
             # Preserve tokens that exceed external_purchase_id's database limit
             # so a later refund without revocation can still be verified.
             "purchase_token": evidence.purchase_token,
@@ -280,7 +300,7 @@ def reconcile_google_play_refunded_products(*, gateway, apply: bool = False) -> 
     require the verified order, product, account, environment and unit quantity
     to match before reversing any credits.
     """
-    from billing.application.services.google_play import google_play_account_id
+    from billing.application.services.google_play_validation import google_play_account_id
 
     summary = {"checked": 0, "would_refund": 0, "refunded": 0}
     purchases = CreditPackPurchase.objects.select_related("product", "user").filter(

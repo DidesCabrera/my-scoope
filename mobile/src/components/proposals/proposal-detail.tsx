@@ -93,12 +93,12 @@ export function ProposalObjectiveSection({
   );
 }
 
-export function ProposalReviewSection({ children, eyebrow, title }: PropsWithChildren<{ eyebrow?: string; title: string }>) {
+export function ProposalReviewSection({ children, eyebrow, title }: PropsWithChildren<{ eyebrow?: string; title?: string }>) {
   return (
     <Card>
       <View style={styles.sectionHeader}>
         {eyebrow ? <Text style={proposalTextStyles.eyebrow}>{eyebrow}</Text> : null}
-        <Text style={styles.sectionTitle}>{title}</Text>
+        {title ? <Text style={styles.sectionTitle}>{title}</Text> : null}
       </View>
       {children}
     </Card>

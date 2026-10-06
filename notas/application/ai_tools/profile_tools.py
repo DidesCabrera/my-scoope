@@ -84,6 +84,8 @@ def _read_user_profile_context_data(user) -> dict[str, Any]:
         "weight_source": profile.get("current_weight_source"),
         "onboarding_completed_at": profile.get("onboarding_completed_at"),
         "onboarding_version": profile.get("onboarding_version"),
+        "activity_level": profile.get("activity_level"),
+        "training_frequency": profile.get("training_frequency"),
     }
     missing_fields = [field for field in BODY_BASICS_FIELDS if _is_missing(profile_context.get(field))]
     profile_draft = _profile_draft_from_profile_context(profile_context)
@@ -122,9 +124,11 @@ def _profile_draft_from_profile_context(profile_context: Mapping[str, Any]) -> d
         "height_cm": profile_context.get("height_cm"),
         "age_years": profile_context.get("age_years"),
         "sex": profile_context.get("sex"),
+        "activity_level": profile_context.get("activity_level"),
+        "training_frequency": profile_context.get("training_frequency"),
     })
     field_sources = dict(draft.get("field_sources") or {})
-    for field_name in ("weight_kg", "height_cm", "age_years", "sex"):
+    for field_name in ("weight_kg", "height_cm", "age_years", "sex", "activity_level", "training_frequency"):
         if not _is_missing(draft.get(field_name)):
             field_sources[field_name] = "profile"
     draft["field_sources"] = field_sources

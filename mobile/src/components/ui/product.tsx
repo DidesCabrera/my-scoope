@@ -128,13 +128,13 @@ export function EntityIcon({ entity, size = "regular", tone = "entity" }: { enti
   );
 }
 
-export function SectionIcon({ section, size = "regular" }: { section: SectionKind; size?: "compact" | "regular" | "hero" }) {
+export function SectionIcon({ color = tokens.color.textMain, section, size = "regular" }: { color?: string; section: SectionKind; size?: "compact" | "regular" | "hero" }) {
   const Icon = sectionIcons[section];
   const compact = size === "compact";
   const hero = size === "hero";
   return (
     <View style={[styles.sectionIcon, compact && styles.sectionIconCompact, hero && styles.sectionIconHero]}>
-      <Icon color={tokens.color.textMain} size={compact ? 16 : hero ? 28 : 20} strokeWidth={hero ? 1.8 : 2} />
+      <Icon color={color} size={compact ? 16 : hero ? 28 : 20} strokeWidth={hero ? 1.8 : 2} />
     </View>
   );
 }

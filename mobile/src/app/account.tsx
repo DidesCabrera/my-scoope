@@ -11,7 +11,7 @@ import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProposalReviewSection } from "@/components/proposals/proposal-detail";
-import { AppHeader, Button, Card, Field, InlineNotice, Screen, textStyles } from "@/components/ui";
+import { AppHeader, Button, Card, Field, InlineNotice, Screen, SectionIcon, textStyles } from "@/components/ui";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
@@ -122,7 +122,7 @@ export default function AccountScreen() {
 
   return (
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
-      <AppHeader eyebrow="Mi cuenta" title={session?.display_name || session?.username || "My Scoope"} />
+      <AppHeader eyebrow="Mi cuenta" eyebrowIcon={<SectionIcon color={tokens.color.textSoft} section="profile" />} title={session?.display_name || session?.username || "My Scoope"} />
       <Card accent={subscriptionPlanAccent(entitlements?.plan_name)}>
         <View style={styles.subscriptionHeading}>
           <View style={styles.headerCopy}>
@@ -134,18 +134,18 @@ export default function AccountScreen() {
         {subscriptionError ? <InlineNotice tone="error">{subscriptionError}</InlineNotice> : null}
         <Button label="Mejorar mi suscripción" onPress={() => router.push("/subscription" as Href)} variant="multicolor" />
       </Card>
-      <ProposalReviewSection eyebrow="CUENTA" title="Información de la cuenta">
+      <ProposalReviewSection eyebrow="INFORMACIÓN DE LA CUENTA">
         <AccountInformationRows items={[
           { label: "Nombre de usuario", value: session?.username ?? "—" },
           { label: "Correo electrónico", value: session?.email || "No disponible" },
           { label: "Fecha de ingreso", value: joinedDateLabel(session?.date_joined) },
         ]} />
       </ProposalReviewSection>
+      <InlineNotice tone="warning">My Scoope no reemplaza atención médica. Revisa cualquier cálculo, lectura OCR o propuesta asistida por IA antes de aplicarla.</InlineNotice>
       {__DEV__ ? (
         <Button label="Abrir galería del sistema UI" onPress={() => router.push("/dev/ui-gallery" as Href)} variant="secondary" />
       ) : null}
       <Button label="Cerrar sesión" onPress={() => void signOut().then(() => router.replace("/login"))} variant="secondary" />
-      <InlineNotice tone="warning">My Scoope no reemplaza atención médica. Revisa cualquier cálculo, lectura OCR o propuesta asistida por IA antes de aplicarla.</InlineNotice>
       <ActionSheetModal onDismiss={finishClosingAccountActions} onRequestClose={closeAccountActions} visible={accountActionsVisible}>
         <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
           <ActionSheetHeader onClose={closeAccountActions} section="profile" title={accountActions === "delete" ? "Eliminar mi cuenta" : accountActions === "rename" ? "Editar nombre de usuario" : "Mi cuenta"} />

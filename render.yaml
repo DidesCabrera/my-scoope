@@ -120,6 +120,16 @@ services:
         value: "6804048394"
       - key: BILLING_APPLE_ONLINE_CHECKS
         value: "true"
+      - key: BILLING_GOOGLE_PLAY_PURCHASES_ENABLED
+        value: "false"
+      - key: BILLING_GOOGLE_PLAY_RTDN_ENABLED
+        value: "false"
+      - key: BILLING_GOOGLE_PLAY_ENVIRONMENT
+        value: live
+      - key: BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE
+        value: https://www.myscoope.com/billing/webhooks/google-play/
+      - key: BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL
+        sync: false
       - key: BILLING_OPENFACTURA_API_KEY
         sync: false
       - key: MYSCOOPE_APNS_ENABLED
@@ -239,5 +249,7 @@ services:
         sync: false
       - key: BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED
         value: "false"
+      - key: BILLING_GOOGLE_PLAY_ENVIRONMENT
+        value: live
       - key: BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED
         value: "false"

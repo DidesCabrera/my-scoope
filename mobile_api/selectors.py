@@ -8,6 +8,10 @@ from django.conf import settings
 from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 
+from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
+from billing.application.services.credit_packs import may_buy_credit_packs
+from billing.application.services.google_play import google_play_account_id
+from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api.errors import MobileAPIError
 from mobile_api.library_actions import library_actions_payload, library_list_actions_projector
 from notas.application.queries.calendarization_execution_queries import (
@@ -637,6 +641,76 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     raise MobileAPIError(
         code="library_item_not_found", message="The requested library item was not found.", status_code=404
     )
+
+
+def subscription_payload(user) -> dict:
+    profile = getattr(user, "profile", None)
+    eligible = str(getattr(profile, "role", "member") or "member").lower() == "member"
+    can_buy_packs = may_buy_credit_packs(user)
+    subscription = getattr(user, "account_subscription", None)
+    token = get_or_create_apple_app_account_token(user) if eligible or can_buy_packs else None
+    products = []
+    enabled_providers = []
+    if settings.BILLING_APPLE_PURCHASES_ENABLED:
+        enabled_providers.append(PaymentProvider.APPLE_APP_STORE)
+    if settings.BILLING_GOOGLE_PLAY_PURCHASES_ENABLED:
+        enabled_providers.append(PaymentProvider.GOOGLE_PLAY)
+    if eligible and enabled_providers:
+        products = [
+            {
+                "product_id": product.external_product_id,
+                "provider": product.provider,
+                "base_plan_id": product.external_price_id,
+                "plan_name": product.account_plan.name,
+                "interval": product.interval,
+            }
+            for product in BillingProduct.objects.select_related("account_plan").filter(
+                provider__in=enabled_providers,
+                active=True,
+                account_plan__status="active",
+            )
+        ]
+    evidence = list(
+        ProviderSubscription.objects.filter(user=user)
+        .exclude(status=ProviderSubscription.Status.PENDING)
+        .order_by("provider", "-updated_at")
+        .values("provider", "status", "current_period_end")
+    )
+    metadata = dict(getattr(subscription, "metadata", {}) or {})
+    credit_packs = []
+    if (eligible or can_buy_packs) and enabled_providers:
+        credit_packs = [
+            {
+                "product_id": product.external_product_id,
+                "provider": product.provider,
+                "credits": product.credits_snapshot,
+                "amount_minor": product.amount_minor,
+                "currency": product.currency,
+            }
+            for product in ProviderCreditPack.objects.select_related("offer").filter(
+                provider__in=enabled_providers, active=True, offer__active=True, offer__public=True,
+            ).order_by("offer__display_order")
+        ]
+    return {
+        "eligible": eligible,
+        "purchases_enabled": bool(eligible and products),
+        "app_account_token": str(token.token) if token is not None else "",
+        "google_obfuscated_account_id": google_play_account_id(user) if eligible or can_buy_packs else "",
+        "plan_name": subscription.plan.name if subscription is not None else "Sin plan",
+        "status": subscription.status if subscription is not None else "none",
+        "products": products,
+        "credit_packs": credit_packs,
+        "can_buy_credit_packs": can_buy_packs,
+        "evidence": [
+            {
+                "provider": item["provider"],
+                "status": item["status"],
+                "period_end": item["current_period_end"],
+            }
+            for item in evidence
+        ],
+        "duplicate_active_providers": bool(metadata.get("billing_duplicate_active_providers")),
+    }
 
 
 def session_payload(auth) -> dict:

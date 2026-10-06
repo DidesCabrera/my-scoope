@@ -21,6 +21,7 @@ files = [
   "mobile_api/schema_domains/comparisons.py",
   "mobile_api/schema_domains/composition.py",
   "mobile_api/schema_domains/identity.py",
+  "mobile_api/schema_domains/onboarding.py",
   "mobile_api/schema_domains/libraries.py",
   "mobile_api/schema_domains/proposals.py",
 ]

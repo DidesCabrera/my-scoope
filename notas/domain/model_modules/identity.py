@@ -1,5 +1,11 @@
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+from notas.domain.nutrition_profile_contracts import (
+    ACTIVITY_LEVEL_CHOICES,
+    NUTRITION_GOAL_CHOICES,
+)
 
 
 class Plan(models.Model):
@@ -47,6 +53,21 @@ class Profile(models.Model):
 
     ONBOARDING_VERSION_UNSET = 0
     ONBOARDING_VERSION_NUTRITION_V1 = 1
+    ONBOARDING_VERSION_NUTRITION_V2 = 2
+    ONBOARDING_STAGE_INTRO = "intro"
+    ONBOARDING_STAGE_PROFILE = "profile"
+    ONBOARDING_STAGE_SUMMARY = "summary"
+    ONBOARDING_STAGE_PLAN = "plan"
+    ONBOARDING_STAGE_PLANS = "plans"
+    ONBOARDING_STAGE_COMPLETED = "completed"
+    ONBOARDING_STAGE_CHOICES = (
+        (ONBOARDING_STAGE_INTRO, "Introducción"),
+        (ONBOARDING_STAGE_PROFILE, "Ficha"),
+        (ONBOARDING_STAGE_SUMMARY, "Resumen"),
+        (ONBOARDING_STAGE_PLAN, "Primer plan"),
+        (ONBOARDING_STAGE_PLANS, "Planes comerciales"),
+        (ONBOARDING_STAGE_COMPLETED, "Completado"),
+    )
     MOBILE_DISCLOSURE_VERSION = "label-ai.v1"
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -69,6 +90,36 @@ class Profile(models.Model):
         null=True,
         blank=True,
         help_text="Height in centimeters captured by the nutrition onboarding.",
+    )
+    nutrition_goal = models.CharField(
+        max_length=32,
+        choices=NUTRITION_GOAL_CHOICES,
+        blank=True,
+        default="",
+        help_text="Persistent nutrition goal used as the default for planning.",
+    )
+    activity_level = models.CharField(
+        max_length=24,
+        choices=ACTIVITY_LEVEL_CHOICES,
+        blank=True,
+        default="",
+        help_text="Habitual activity level used by the maintenance estimator.",
+    )
+    training_frequency = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(7)],
+        help_text="Declared training sessions per week; persisted as planning context.",
+    )
+    onboarding_stage = models.CharField(
+        max_length=24,
+        choices=ONBOARDING_STAGE_CHOICES,
+        default=ONBOARDING_STAGE_INTRO,
+    )
+    onboarding_plan_proposal_id = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        help_text="Owned proposal identifier used to resume first-plan review without a cross-domain relation.",
     )
     onboarding_completed_at = models.DateTimeField(
         null=True,

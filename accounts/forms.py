@@ -6,6 +6,10 @@ from django.utils import timezone
 
 from accounts.turnstile import validate_signup_token
 from notas.domain.models import Profile
+from notas.domain.nutrition_profile_contracts import (
+    ACTIVITY_LEVEL_CHOICES,
+    NUTRITION_GOAL_CHOICES,
+)
 
 
 class NutritionOnboardingForm(forms.Form):
@@ -63,6 +67,16 @@ class NutritionOnboardingForm(forms.Form):
             raise forms.ValidationError("Revisa la fecha de nacimiento ingresada.")
 
         return birth_date
+
+
+class NutritionOnboardingV2Form(NutritionOnboardingForm):
+    goal = forms.ChoiceField(label="Objetivo nutricional", choices=NUTRITION_GOAL_CHOICES)
+    activity_level = forms.ChoiceField(label="Actividad habitual", choices=ACTIVITY_LEVEL_CHOICES)
+    training_frequency = forms.IntegerField(
+        label="Entrenamientos por semana",
+        min_value=0,
+        max_value=7,
+    )
 
 
 class ProtectedSignupForm(SignupForm):

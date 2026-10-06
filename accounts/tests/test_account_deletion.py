@@ -10,7 +10,14 @@ from accounts.models import AccountDeletionRecord, AccountSubscription
 from accounts.seed_plans import seed_account_plans
 from accounts.services.deletion import MODEL_RETENTION_POLICY, POLICY_VERSION
 from ai_assistant.models import AIUsageEvent
-from billing.models import BillingPayment, BillingProduct, PaymentProvider, ProviderSubscription, TaxDocument
+from billing.models import (
+    BillingPayment,
+    BillingProduct,
+    GooglePlayAccountToken,
+    PaymentProvider,
+    ProviderSubscription,
+    TaxDocument,
+)
 from email_delivery.models import EmailDeliveryAttempt
 from food_catalog.models import (
     CatalogCapabilityDefinition,
@@ -198,6 +205,10 @@ class AccountDeletionViewTests(TestCase):
             amount_minor=9990,
         )
         tax_document = TaxDocument.objects.create(payment=payment)
+        google_play_token = GooglePlayAccountToken.objects.create(
+            user=self.user,
+            token="a" * 64,
+        )
 
         self.client.force_login(self.user)
         response = self.client.post(
@@ -238,11 +249,13 @@ class AccountDeletionViewTests(TestCase):
         self.assertTrue(ProviderSubscription.objects.filter(pk=provider_subscription.pk, user=self.user).exists())
         self.assertTrue(BillingPayment.objects.filter(pk=payment.pk, user=self.user).exists())
         self.assertTrue(TaxDocument.objects.filter(pk=tax_document.pk).exists())
+        self.assertTrue(GooglePlayAccountToken.objects.filter(pk=google_play_token.pk).exists())
         self.assertFalse(AccountSubscription.objects.filter(user=self.user).exists())
 
         record = AccountDeletionRecord.objects.get()
         self.assertEqual(record.policy_version, POLICY_VERSION)
         self.assertEqual(record.retained_counts["billing.BillingPayment"], 1)
+        self.assertEqual(record.retained_counts["billing.GooglePlayAccountToken"], 1)
         self.assertNotContains(self.client.get(reverse("accounts:delete_account"), follow=True), "Mi mezcla privada")
         self.assertIsNone(authenticate(username=original_username, password=self.password))
 

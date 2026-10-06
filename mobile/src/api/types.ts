@@ -1,6 +1,8 @@
 import type { ProposalMeal, ProposalDailyPlan, ProposalProgram } from "./proposal-entities";
+import type { OnboardingStage } from "./onboarding-types";
 
 export type { EntitlementsData, SubscriptionData } from "./billing-types";
+export type { OnboardingAnalyzeInput, OnboardingEstimate, OnboardingInput, OnboardingStage, OnboardingStateData } from "./onboarding-types";
 export type ApiErrorDetail = {
   code: string;
   message: string;
@@ -29,7 +31,13 @@ export type ProfileData = {
   current_weight_kg: number | null;
   review_disclosure_required: boolean;
   review_disclosure_version: string;
+  nutrition_goal: string;
+  activity_level: string;
+  training_frequency: number | null;
+  onboarding_stage: OnboardingStage;
+  onboarding_plan_proposal_id: number | null;
 };
+
 export type AccountDeletionData = { receipt_id: string };
 
 export type CalendarizationData = {
@@ -481,13 +489,6 @@ export type WeightItem = {
 };
 
 export type WeightListData = { items: WeightItem[]; count: number };
-
-export type OnboardingInput = {
-  birth_date: string;
-  sex: string;
-  height_cm: number;
-  weight_kg: number;
-};
 
 export type WeightInput = { weight_kg: number; measured_on?: string };
 

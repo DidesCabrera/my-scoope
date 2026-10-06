@@ -1,7 +1,7 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Search, X } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
-import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -43,12 +43,14 @@ const deleteLabels: Record<LibraryEntity, string> = {
 export function LibraryListScreen({ emptyDescription, endpoint, entity, title }: LibraryListScreenProps) {
   const { status, apiRequest } = useSession();
   const router = useRouter();
+  const { height: viewportHeight } = useWindowDimensions();
   const [page, setPage] = useState<LibraryPageData | null>(null);
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
+  const contentHeightRef = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -88,9 +90,8 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
 
   const handleScroll = useCallback(({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
     setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y));
-    const distanceFromEnd = nativeEvent.contentSize.height
-      - nativeEvent.layoutMeasurement.height
-      - nativeEvent.contentOffset.y;
+    if (!contentHeightRef.current) return;
+    const distanceFromEnd = contentHeightRef.current - viewportHeight - nativeEvent.contentOffset.y;
     if (
       distanceFromEnd < 640
       && mode === "list"
@@ -101,7 +102,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     ) {
       void load({ append: true, offset: page.items.length });
     }
-  }, [load, loading, mode, page]);
+  }, [load, loading, mode, page, viewportHeight]);
 
   const loadAll = async () => {
     const items: LibraryPageData["items"] = [];
@@ -211,6 +212,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     <NestableScrollContainer
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
+      onContentSizeChange={(_width, height) => { contentHeightRef.current = height; }}
       onScroll={handleScroll}
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}

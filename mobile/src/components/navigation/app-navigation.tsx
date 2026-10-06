@@ -40,6 +40,7 @@ import type { LibraryEntity } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
 import { MyScoopeLogo } from "@/components/ui/my-scoope-logo";
+import { ModalBackdrop } from "@/components/ui/action-sheet-modal";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
@@ -332,7 +333,7 @@ function AppSidebar() {
   return (
     <Modal animationType="none" onRequestClose={closeMenu} transparent visible={menuMounted}>
       <View style={styles.modalRoot}>
-        <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]}><Pressable accessibilityLabel="Cerrar menú" onPress={closeMenu} style={styles.scrimPressable} /></Animated.View>
+        <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]}><ModalBackdrop accessibilityLabel="Cerrar menú" onPress={closeMenu} /></Animated.View>
         <Animated.View style={[styles.drawer, { maxWidth: 360, transform: [{ translateX }], width: Math.min(width * 0.88, 360) }]}>
           <View style={[styles.drawerSafeArea, {
             paddingBottom: Math.max(insets.bottom, initialWindowMetrics?.insets.bottom ?? 0),
@@ -387,8 +388,7 @@ const styles = StyleSheet.create({
   routeIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   routeIdentityTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: 16, fontWeight: "600", lineHeight: 22 },
   modalRoot: { flex: 1, flexDirection: "row" },
-  scrim: { backgroundColor: "rgba(0,0,0,0.72)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
-  scrimPressable: { flex: 1 },
+  scrim: { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   drawer: { backgroundColor: tokens.color.surfaceApp, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
   drawerSafeArea: { flex: 1 },
   drawerHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 64, paddingHorizontal: tokens.spacing.md * 2 },

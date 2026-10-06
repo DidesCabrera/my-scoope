@@ -21,4 +21,6 @@ test("library lists start bounded and prefetch the next page near the end", asyn
   assert.ok(source.includes("const INITIAL_PAGE_SIZE = 12"));
   assert.ok(source.includes("distanceFromEnd < 640"));
   assert.ok(source.includes("load({ append: true, offset: page.items.length })"));
+  assert.ok(source.includes("contentHeightRef.current - viewportHeight"));
+  assert.ok(!source.includes("nativeEvent.contentSize.height"));
 });

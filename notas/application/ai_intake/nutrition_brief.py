@@ -59,6 +59,10 @@ from notas.application.queries.user_nutrition_profile import (
     NutritionSubjectContextError,
     build_nutrition_subject_context,
 )
+from notas.domain.nutrition_profile_contracts import (
+    ACTIVITY_LEVEL_CHOICES as PERSISTED_ACTIVITY_LEVEL_CHOICES,
+)
+from notas.domain.nutrition_profile_contracts import NUTRITION_GOAL_CHOICES
 
 AI_NUTRITION_BRIEF_SESSION_KEY = "ai_nutrition_brief"
 AI_NUTRITION_CONVERSATION_SESSION_KEY = "ai_nutrition_conversation"
@@ -66,11 +70,7 @@ AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT = 24
 
 GOAL_CHOICES = (
     ("", "Pendiente"),
-    ("fat_loss", "Bajar grasa"),
-    ("muscle_gain", "Ganar masa muscular"),
-    ("maintenance", "Mantención"),
-    ("performance", "Rendimiento deportivo"),
-    ("healthy_eating", "Comer mejor"),
+    *NUTRITION_GOAL_CHOICES,
 )
 
 REQUESTED_ENTITY_CHOICES = (
@@ -107,11 +107,7 @@ SEX_CHOICES = (
 
 ACTIVITY_LEVEL_CHOICES = (
     ("", "Pendiente"),
-    ("sedentary", "Sedentario"),
-    ("light", "Actividad ligera"),
-    ("moderate", "Actividad moderada"),
-    ("high", "Actividad alta"),
-    ("very_high", "Actividad muy alta"),
+    *PERSISTED_ACTIVITY_LEVEL_CHOICES,
 )
 
 SUBJECT_SOURCE_CHOICES = (

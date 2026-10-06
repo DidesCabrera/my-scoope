@@ -112,8 +112,9 @@ Browser return parameters never grant access. Only verified provider state proje
 
 ## Rollback
 
-Disable the provider flags. Do not delete subscriptions, payments, events, Apple
-account tokens or tax documents. Reconcile external state before re-enabling.
+Disable the provider flags. Do not delete subscriptions, payments, events,
+Apple/Google account tokens or tax documents. Reconcile external state before
+re-enabling.
 
 ## Google Play staging and lifecycle gate
 
@@ -121,6 +122,37 @@ Keep the existing `myscoope_basic` and `myscoope_pro` subscriptions and their
 monthly/annual base plans, plus the three `myscoope.credits.*` one-time products;
 do not duplicate product IDs. A purchase changes entitlements only after the
 Google Play Developer API verifies its token and account binding.
+
+Before the next Android build:
+
+1. Set `BILLING_GOOGLE_PLAY_ENVIRONMENT=sandbox` in staging and keep production
+   at `live`. Confirm that only the configured environment's four base plans
+   and three credit packs are returned by `/api/v1/subscriptions`.
+2. Give the existing Google Play API service account only the Android Publisher
+   access needed to read purchases. Keep its JSON key in the secret file; never
+   place it in Pub/Sub configuration or source control.
+3. Create one Pub/Sub topic for the Play Console notifications and grant
+   `google-play-developer-notifications@system.gserviceaccount.com` Publisher
+   access. Select that topic in Play Console.
+4. Create an authenticated push subscription targeting
+   `/billing/webhooks/google-play/`. Use a dedicated push-auth service account,
+   the exact configured `BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE`, and grant the
+   Pub/Sub service agent permission to mint its OIDC token. Configure the same
+   service-account email in
+   `BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL`.
+5. Keep `BILLING_GOOGLE_PLAY_RTDN_ENABLED=false` until the Play Console test
+   notification is received with a valid JWT. Invalid audience, issuer, email,
+   package or environment must be rejected without creating an inbox row.
+6. Enable RTDN, repeat the test notification, then exercise one subscription
+   and one credit pack. Confirm one idempotent `BillingEvent` per Pub/Sub
+   `messageId`; the row must contain no raw purchase token. Provider/API failure
+   must leave the event `failed` and return a retryable non-2xx response.
+
+The Android client already follows the required completion order: it sends the
+purchase token to My Scoope, waits for server verification and only then calls
+`finishTransaction`. With `expo-iap` 5.5.1, subscriptions are acknowledged and
+credit packs use `isConsumable=true`, which consumes the token so the product
+can be bought again. Preserve this order in every client change.
 
 `reconcile_google_play_subscriptions` reads stored purchase tokens and refreshes
 renewal, grace, hold, cancellation and expiration evidence. It defaults to a

@@ -17,8 +17,8 @@ export default function OAuthCallbackScreen() {
   }, []);
 
   if (status === "authenticated") {
-    if (profile?.review_disclosure_required) return <Redirect href={{ pathname: "/disclosures", params: authReturnTo ? { returnTo: String(authReturnTo) } : {} }} />;
     if (!profile?.onboarding_completed) return <Redirect href={{ pathname: "/onboarding", params: authReturnTo ? { returnTo: String(authReturnTo) } : {} }} />;
+    if (profile?.review_disclosure_required) return <Redirect href={{ pathname: "/disclosures", params: authReturnTo ? { returnTo: String(authReturnTo) } : {} }} />;
     return <Redirect href={authReturnTo ?? ("/today" as Href)} />;
   }
   if (status === "anonymous" && !authBusy) return <Redirect href="/login" />;

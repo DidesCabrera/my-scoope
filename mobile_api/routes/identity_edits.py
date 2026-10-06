@@ -7,7 +7,7 @@ from mobile_api.errors import MobileAPIError
 from mobile_api.schema_domains.identity import SessionEnvelope
 from mobile_api.schema_domains.identity_edits import UsernameRenameInput
 from mobile_api.schemas import ErrorEnvelope
-from mobile_api.selectors import session_payload
+from mobile_api.selectors_identity import session_payload
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_ACCOUNT
 
 router = Router()

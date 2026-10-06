@@ -125,7 +125,6 @@ from mobile_api.schema_domains.identity import (  # noqa: F401 -- compatibility 
     AccountDeletionEnvelope,
     AccountDeletionInput,
     DisclosureAcceptanceInput,
-    OnboardingInput,
     ProfileData,
     ProfileEnvelope,
     RevokeSessionData,
@@ -162,6 +161,7 @@ from mobile_api.schema_domains.libraries import (  # noqa: F401 -- compatibility
     LibraryWeekPanelItemData,
     NamedLibraryCreateInput,
 )
+from mobile_api.schema_domains.onboarding import OnboardingInput  # noqa: F401 -- compatibility re-export
 from mobile_api.schema_domains.proposals import (  # noqa: F401 -- compatibility re-exports
     MobileActionData,
     ProposalAppliedResultData,
