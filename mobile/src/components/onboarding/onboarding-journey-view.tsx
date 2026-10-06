@@ -18,15 +18,17 @@ import {
   Sparkles,
   Target,
 } from "lucide-react-native";
-import type { ComponentType, ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { createContext, type ComponentType, type ReactNode, useContext, useMemo } from "react";
+import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { DailyPlanMealDetailList, type DailyPlanMealDetailItem, EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { NutritionKpiSection } from "@/components/nutrition";
 import { EntityPanelTabs, MealPanels, type MealPanelItem, PanelSurface } from "@/components/panels";
+import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
 import { Button, Card, Field, InlineNotice, MyScoopeLogo, Pill, textStyles } from "@/components/ui";
+import type { OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
 
 export const onboardingJourneySteps = [
@@ -51,11 +53,59 @@ export type OnboardingJourneyStep = (typeof onboardingJourneySteps)[number]["key
 
 const explanationSteps = onboardingJourneySteps.slice(1, 6);
 
-export const onboardingNutritionFields = ["goal", "birth_date", "sex", "height_cm", "weight_kg", "activity_level", "training_frequency"] as const;
+export const onboardingNutritionFields = ["goal", "birth_date", "sex", "height_cm", "weight_kg", "activity_level", "training_frequency", "dietary_pattern", "allergies_or_intolerances", "avoided_foods"] as const;
 
 type Icon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
 const noop = () => undefined;
+
+export type OnboardingJourneyValues = {
+  goal: string;
+  birthDate: string;
+  sex: "male" | "female";
+  height: string;
+  weight: string;
+  activityLevel: string;
+  trainingFrequency: number;
+  dietaryPattern: string;
+  allergy: string;
+  allergyDetails: string;
+  avoidedFoods: string;
+};
+
+export type OnboardingJourneyController = {
+  values: OnboardingJourneyValues;
+  estimate?: OnboardingEstimate | null;
+  proposal?: ProposalDetail | null;
+  busy?: boolean;
+  error?: string | null;
+  onChange?(field: keyof OnboardingJourneyValues, value: string | number): void;
+  onNext?(): void;
+  onBack?(): void;
+  onLogin?(): void;
+  onAdjust?(): void;
+  onChoosePlan?(plan: "Free" | "Basic" | "Pro"): void;
+};
+
+const galleryValues: OnboardingJourneyValues = {
+  goal: "fat_loss",
+  birthDate: "1990-05-10",
+  sex: "male",
+  height: "178",
+  weight: "82,5",
+  activityLevel: "light",
+  trainingFrequency: 3,
+  dietaryPattern: "omnivore",
+  allergy: "",
+  allergyDetails: "",
+  avoidedFoods: "Cilantro y aceitunas",
+};
+
+const JourneyControllerContext = createContext<OnboardingJourneyController>({ values: galleryValues });
+
+function useJourneyController() {
+  return useContext(JourneyControllerContext);
+}
 
 function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, title, description }: {
   brandedCentered?: boolean;
@@ -119,9 +169,10 @@ function ExplanationDots({ action, index }: { action?: ReactNode; index: number 
   );
 }
 
-function ContinueChip({ label = "Continuar" }: { label?: string }) {
+function ContinueChip({ label = "Continuar", onPress }: { label?: string; onPress?: () => void }) {
+  const controller = useJourneyController();
   return (
-    <Pressable accessibilityRole="button" onPress={noop} style={styles.continueChip}>
+    <Pressable accessibilityRole="button" disabled={controller.busy} onPress={onPress ?? controller.onNext ?? noop} style={[styles.continueChip, controller.busy && styles.actionDisabled]}>
       <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="continue-chip-border" x1="0" x2="1" y1="0" y2="1">
@@ -138,9 +189,10 @@ function ContinueChip({ label = "Continuar" }: { label?: string }) {
   );
 }
 
-function CreditContinueButton({ chip = false, label = "Continuar" }: { chip?: boolean; label?: string }) {
+function CreditContinueButton({ chip = false, label = "Continuar", onPress }: { chip?: boolean; label?: string; onPress?: () => void }) {
+  const controller = useJourneyController();
   return (
-    <Pressable accessibilityRole="button" onPress={noop} style={[styles.creditContinueButton, chip && styles.creditContinueButtonChip]}>
+    <Pressable accessibilityRole="button" disabled={controller.busy} onPress={onPress ?? controller.onNext ?? noop} style={[styles.creditContinueButton, chip && styles.creditContinueButtonChip, controller.busy && styles.actionDisabled]}>
       <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="daily-plan-credit-button" x1="0" x2="1" y1="0" y2="1">
@@ -243,10 +295,11 @@ function ProfileProgress({ index }: { index: number }) {
 }
 
 function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: { index: number; primary?: string; secondary?: string }) {
+  const controller = useJourneyController();
   if (index >= 7 && index <= 12) {
     return (
       <View style={[styles.footer, styles.profileFooter]}>
-        <Pressable accessibilityRole="button" onPress={noop} style={[styles.backAction, styles.profileBackAction]}>
+        <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, styles.profileBackAction]}>
           <ChevronLeft color={tokens.color.textMuted} size={16} />
           <Text style={styles.backLabel}>{secondary}</Text>
         </Pressable>
@@ -258,9 +311,9 @@ function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: {
   }
   return (
     <View style={styles.footer}>
-      {index === 6 ? <CreditContinueButton label={primary} /> : <Button label={primary} onPress={noop} />}
+      {index === 6 ? <CreditContinueButton label={primary} /> : <Button label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
       {index > 0 ? (
-        <Pressable accessibilityRole="button" onPress={noop} style={styles.backAction}>
+        <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={styles.backAction}>
           <ChevronLeft color={tokens.color.textMuted} size={16} />
           <Text style={styles.backLabel}>{secondary}</Text>
         </Pressable>
@@ -282,6 +335,7 @@ function ExplanationCard({ icon: IconComponent, title, body }: { body: string; i
 }
 
 function LoginView({ index }: { index: number }) {
+  const controller = useJourneyController();
   return (
     <>
       <View style={styles.centeredLogo}><MyScoopeLogo /></View>
@@ -290,7 +344,7 @@ function LoginView({ index }: { index: number }) {
         <Text style={[textStyles.muted, styles.centeredText]}>Usa tu cuenta para continuar el proceso en cualquiera de tus dispositivos.</Text>
       </View>
       <View style={styles.loginAction}>
-        <Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress={noop} variant="multicolor" />
+        <Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
       </View>
     </>
   );
@@ -412,17 +466,28 @@ function DisclosuresView({ index }: { index: number }) {
 }
 
 function GoalView({ index }: { index: number }) {
+  const controller = useJourneyController();
+  const goals = [
+    ["fat_loss", "Bajar grasa"],
+    ["muscle_gain", "Ganar masa muscular"],
+    ["maintenance", "Mantenerme"],
+    ["performance", "Rendimiento deportivo"],
+    ["healthy_eating", "Comer mejor"],
+  ] as const;
   return (
     <>
       <StepHeader description="Tu objetivo orienta el ajuste energético y la referencia inicial de proteína. Siempre podrás cambiarlo." eyebrow="Objetivo nutricional" icon={Target} index={index} title="Define tu objetivo" />
       <View style={styles.optionGrid}>
-        {["Bajar grasa", "Ganar masa muscular", "Mantenerme", "Rendimiento deportivo", "Comer mejor"].map((label, optionIndex) => (
-          <View key={label} style={[styles.optionCard, optionIndex === 0 && styles.optionCardSelected]}>
-            {optionIndex === 0 ? <CreditSelectionBorder id="goal-option-border" shape="lg" /> : null}
-            <Text style={[styles.optionText, optionIndex === 0 && styles.optionTextSelected]}>{label}</Text>
-            {optionIndex === 0 ? <CreditSelectionCheck /> : null}
-          </View>
-        ))}
+        {goals.map(([value, label]) => {
+          const selected = controller.values.goal === value;
+          return (
+            <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={value} onPress={() => controller.onChange?.("goal", value)} style={[styles.optionCard, selected && styles.optionCardSelected]}>
+              {selected ? <CreditSelectionBorder id="goal-option-border" shape="lg" /> : null}
+              <Text style={[styles.optionText, selected && styles.optionTextSelected]}>{label}</Text>
+              {selected ? <CreditSelectionCheck /> : null}
+            </Pressable>
+          );
+        })}
       </View>
       <JourneyFooter index={index} />
     </>
@@ -430,18 +495,20 @@ function GoalView({ index }: { index: number }) {
 }
 
 function IdentityView({ index }: { index: number }) {
+  const controller = useJourneyController();
   return (
     <>
       <StepHeader description="La edad y el sexo usado para el cálculo forman parte de la estimación de tu gasto basal." eyebrow="Datos para el cálculo" icon={CircleUserRound} index={index} title="Ingresa tus datos personales" />
       <Card style={styles.profileCard}>
-        <Field inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={styles.profileQuestion} onChangeText={noop} placeholder="AAAA-MM-DD" value="1990-05-10" />
+        <Field inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={styles.profileQuestion} onChangeText={(value) => controller.onChange?.("birthDate", value)} placeholder="AAAA-MM-DD" value={controller.values.birthDate} />
         <View accessibilityRole="radiogroup" style={styles.identityChoiceField}>
           <Text style={styles.profileQuestion}>Sexo usado para el cálculo nutricional</Text>
           <View style={styles.identityChoiceRow}>
             {["Masculino", "Femenino"].map((label, optionIndex) => {
-              const selected = optionIndex === 0;
+              const value = optionIndex === 0 ? "male" : "female";
+              const selected = controller.values.sex === value;
               return (
-                <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={label} onPress={noop} style={[styles.trainingFrequencyChip, selected && styles.identityChoiceSelected]}>
+                <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={label} onPress={() => controller.onChange?.("sex", value)} style={[styles.trainingFrequencyChip, selected && styles.identityChoiceSelected]}>
                   {selected ? <CreditSelectionBorder id="identity-option-border" shape="pill" /> : null}
                   <Text style={[styles.trainingFrequencyChipLabel, selected && styles.trainingFrequencyChipLabelSelected]}>{label}</Text>
                 </Pressable>
@@ -457,13 +524,14 @@ function IdentityView({ index }: { index: number }) {
 }
 
 function MeasurementsView({ index }: { index: number }) {
+  const controller = useJourneyController();
   return (
     <>
       <StepHeader description="La altura y el peso permiten estimar tu gasto energético y calcular referencias por kilogramo." eyebrow="Datos para el cálculo" icon={Scale} index={index} title="Ingresa tus medidas actuales" />
       <Card style={styles.profileCard}>
         <View style={styles.measurementFields}>
-          <View style={styles.flex}><Field inputStyle={styles.profileInput} keyboardType="number-pad" label="Altura (cm)" labelStyle={styles.profileQuestion} onChangeText={noop} placeholder="178" value="178" /></View>
-          <View style={styles.flex}><Field inputStyle={styles.profileInput} keyboardType="decimal-pad" label="Peso (kg)" labelStyle={styles.profileQuestion} onChangeText={noop} placeholder="82,5" value="82,5" /></View>
+          <View style={styles.flex}><Field inputStyle={styles.profileInput} keyboardType="number-pad" label="Altura (cm)" labelStyle={styles.profileQuestion} onChangeText={(value) => controller.onChange?.("height", value)} placeholder="178" value={controller.values.height} /></View>
+          <View style={styles.flex}><Field inputStyle={styles.profileInput} keyboardType="decimal-pad" label="Peso (kg)" labelStyle={styles.profileQuestion} onChangeText={(value) => controller.onChange?.("weight", value)} placeholder="82,5" value={controller.values.weight} /></View>
         </View>
         <Text style={textStyles.caption}>El peso inicial quedará como primera referencia de tu evolución.</Text>
       </Card>
@@ -473,6 +541,14 @@ function MeasurementsView({ index }: { index: number }) {
 }
 
 function ActivityView({ index }: { index: number }) {
+  const controller = useJourneyController();
+  const activityOptions = [
+    ["sedentary", "Sedentaria", "La mayor parte del día sentado"],
+    ["light", "Ligera", "Caminatas y movimiento ocasional"],
+    ["moderate", "Moderada", "Movimiento frecuente durante la semana"],
+    ["high", "Alta", "Movimiento exigente la mayoría de los días"],
+    ["very_high", "Muy alta", "Actividad física intensa o doble jornada"],
+  ] as const;
   return (
     <>
       <StepHeader description="Separa el movimiento habitual de los entrenamientos para evitar contarlos dos veces." eyebrow="Datos para el cálculo" icon={Dumbbell} index={index} title="Describe tu actividad y entrenamiento" />
@@ -480,25 +556,23 @@ function ActivityView({ index }: { index: number }) {
         <Card style={styles.profileCard}>
           <Text style={styles.profileQuestion}>Actividad habitual</Text>
           <View style={styles.activityList}>
-            {[
-              ["Sedentaria", "La mayor parte del día sentado"],
-              ["Ligera", "Caminatas y movimiento ocasional"],
-              ["Moderada", "Movimiento frecuente durante la semana"],
-            ].map(([label, detail], optionIndex) => (
-              <View key={label} style={[styles.activityOption, optionIndex === 1 && styles.activityOptionSelected]}>
-                {optionIndex === 1 ? <CreditSelectionBorder id="activity-selection-border" /> : null}
+            {activityOptions.map(([value, label, detail]) => {
+              const selected = controller.values.activityLevel === value;
+              return (
+              <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={value} onPress={() => controller.onChange?.("activityLevel", value)} style={[styles.activityOption, selected && styles.activityOptionSelected]}>
+                {selected ? <CreditSelectionBorder id="activity-selection-border" /> : null}
                 <View style={styles.flex}><Text style={styles.activityLabel}>{label}</Text><Text style={styles.activityDetail}>{detail}</Text></View>
-                {optionIndex === 1 ? <SelectedActivityRadio /> : <View style={styles.radio} />}
-              </View>
-            ))}
+                {selected ? <SelectedActivityRadio /> : <View style={styles.radio} />}
+              </Pressable>
+            );})}
           </View>
           <View style={styles.trainingFrequencyField}>
             <Text style={styles.profileQuestion}>Entrenamientos por semana</Text>
             <View style={styles.trainingFrequencyChips}>
-              {["0–1", "2–3", "4–5", "6+"].map((label) => {
-                const selected = label === "2–3";
+              {[[0, "0"], [1, "1"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6+"]].map(([value, label]) => {
+                const selected = controller.values.trainingFrequency === value;
                 return (
-                  <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={label} onPress={noop} style={[styles.trainingFrequencyChip, selected && styles.trainingFrequencyChipSelected]}>
+                  <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={label} onPress={() => controller.onChange?.("trainingFrequency", value)} style={[styles.trainingFrequencyChip, selected && styles.trainingFrequencyChipSelected]}>
                     {selected ? <CreditSelectionBorder id="training-frequency-border" shape="pill" /> : null}
                     <Text style={[styles.trainingFrequencyChipLabel, selected && styles.trainingFrequencyChipLabelSelected]}>{label}</Text>
                   </Pressable>
@@ -513,13 +587,13 @@ function ActivityView({ index }: { index: number }) {
   );
 }
 
-function DietaryChoiceGroup({ idPrefix, options, selectedIndex = 0 }: { idPrefix: string; options: string[]; selectedIndex?: number }) {
+function DietaryChoiceGroup({ idPrefix, options, selectedValue, onChange }: { idPrefix: string; options: readonly (readonly [string, string])[]; selectedValue: string; onChange(value: string): void }) {
   return (
     <View style={styles.dietaryChoiceGrid}>
-      {options.map((label, optionIndex) => {
-        const selected = optionIndex === selectedIndex;
+      {options.map(([value, label], optionIndex) => {
+        const selected = value === selectedValue;
         return (
-          <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={label} onPress={noop} style={[styles.dietaryChoiceChip, selected && styles.dietaryChoiceChipSelected]}>
+          <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={value} onPress={() => onChange(value)} style={[styles.dietaryChoiceChip, selected && styles.dietaryChoiceChipSelected]}>
             {selected ? <CreditSelectionBorder id={`${idPrefix}-${optionIndex}`} shape="pill" /> : null}
             <Text style={[styles.trainingFrequencyChipLabel, selected && styles.trainingFrequencyChipLabelSelected]}>{label}</Text>
           </Pressable>
@@ -530,61 +604,81 @@ function DietaryChoiceGroup({ idPrefix, options, selectedIndex = 0 }: { idPrefix
 }
 
 function DietaryPreferencesView({ index }: { index: number }) {
+  const controller = useJourneyController();
   return (
     <>
       <StepHeader description="Cuéntanos qué alimentos podemos considerar antes de generar tu primer plan." eyebrow="Preferencias alimentarias" icon={Leaf} index={index} title="Preferencias alimentarias" />
       <Card style={[styles.profileCard, styles.dietaryCard]}>
         <View accessibilityRole="radiogroup" style={styles.dietaryQuestion}>
           <Text style={styles.profileQuestion}>Tipo de alimentación</Text>
-          <DietaryChoiceGroup idPrefix="diet-type" options={["Omnívora", "Vegetariana", "Vegana", "Pescetariana", "Otra"]} />
+          <DietaryChoiceGroup idPrefix="diet-type" onChange={(value) => controller.onChange?.("dietaryPattern", value)} options={[["omnivore", "Omnívora"], ["vegetarian", "Vegetariana"], ["vegan", "Vegana"], ["pescatarian", "Pescetariana"], ["flexitarian", "Flexitariana"]]} selectedValue={controller.values.dietaryPattern} />
         </View>
         <View accessibilityRole="radiogroup" style={styles.dietaryQuestion}>
           <Text style={styles.profileQuestion}>Alergias o condiciones relevantes</Text>
-          <DietaryChoiceGroup idPrefix="diet-condition" options={["Sin alergias", "Gluten", "Lácteos", "Frutos secos", "Mariscos", "Otra"]} />
+          <DietaryChoiceGroup idPrefix="diet-condition" onChange={(value) => controller.onChange?.("allergy", value)} options={[["", "Sin alergias"], ["gluten", "Gluten"], ["lácteos", "Lácteos"], ["frutos secos", "Frutos secos"], ["mariscos", "Mariscos"], ["otra", "Otra"]]} selectedValue={controller.values.allergy} />
+          <Field
+            autoCapitalize="sentences"
+            label="Otra alergia o condición (opcional)"
+            labelStyle={styles.profileQuestion}
+            onChangeText={(value) => controller.onChange?.("allergyDetails", value)}
+            placeholder="Ej. soya, huevo o condición relevante"
+            value={controller.values.allergyDetails}
+          />
         </View>
         <Field
           autoCapitalize="sentences"
           label="Alimentos que no consumes"
           labelStyle={styles.profileQuestion}
-          onChangeText={noop}
+          onChangeText={(value) => controller.onChange?.("avoidedFoods", value)}
           placeholder="Ej. cilantro, aceitunas o champiñones"
-          value="Cilantro y aceitunas"
+          value={controller.values.avoidedFoods}
         />
       </Card>
+      {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
       <JourneyFooter index={index} primary="Analizar" />
     </>
   );
 }
 
 function SummaryView({ index }: { index: number }) {
+  const controller = useJourneyController();
+  const estimate = controller.estimate;
+  const calories = Math.round(estimate?.total_kcal ?? 1980);
+  const protein = Math.round(estimate?.protein ?? 148);
+  const carbs = Math.round(estimate?.carbs ?? 208);
+  const fat = Math.round(estimate?.fat ?? 62);
+  const allocation = (grams: number, kcalPerGram: number) => Math.round(((grams * kcalPerGram) / Math.max(calories, 1)) * 100);
+  const goalLabel = ({ fat_loss: "Bajar grasa", muscle_gain: "Ganar masa muscular", maintenance: "Mantenerme", performance: "Rendimiento", healthy_eating: "Comer mejor" } as Record<string, string>)[controller.values.goal] ?? controller.values.goal;
+  const activityLabel = ({ sedentary: "Sedentaria", light: "Ligera", moderate: "Moderada", high: "Alta", very_high: "Muy alta" } as Record<string, string>)[controller.values.activityLevel] ?? controller.values.activityLevel;
   return (
     <>
       <StepHeader description="Comprueba los datos y la estimación inicial antes de continuar." eyebrow="Resumen de la ficha" icon={Gauge} index={index} title="Revisa tu información" />
       <Card style={[styles.profileCard, styles.summaryCard]}>
         <Text style={styles.summarySectionEyebrow}>INFORMACIÓN PARA LA ESTIMACIÓN</Text>
         <View style={styles.summaryGrid}>
-          <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Objetivo</Text><Text style={styles.summaryText}>Bajar grasa</Text></View>
-          <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Referencia</Text><Text style={styles.summaryText}>82,5 kg</Text></View>
-          <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Actividad</Text><Text style={styles.summaryText}>Ligera</Text></View>
-          <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Entrenamiento</Text><Text style={styles.summaryText}>2–3 días</Text></View>
+          <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Objetivo</Text><Text style={styles.summaryText}>{goalLabel}</Text></View>
+          <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Referencia</Text><Text style={styles.summaryText}>{controller.values.weight} kg</Text></View>
+          <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Actividad</Text><Text style={styles.summaryText}>{activityLabel}</Text></View>
+          <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Entrenamiento</Text><Text style={styles.summaryText}>{controller.values.trainingFrequency >= 6 ? "6+" : controller.values.trainingFrequency} días</Text></View>
         </View>
         <Text style={styles.summarySectionEyebrow}>KCAL DE MANTENIMIENTO ESTIMADO</Text>
         <View style={styles.summaryHero}>
           <Text style={styles.summaryMetricLabel}>Calorías</Text>
-          <Text style={styles.summaryValue}>2.340</Text>
+          <Text style={styles.summaryValue}>{Math.round(estimate?.estimated_maintenance_kcal ?? 2340).toLocaleString("es-CL")}</Text>
           <Text style={styles.summaryMetricUnit}>kcal</Text>
         </View>
         <Text style={styles.summarySectionEyebrow}>OBJETIVO NUTRICIONAL PROPUESTO</Text>
         <NutritionKpiSection
-          calories={1980}
-          protein={{ allocation: 30, grams: 148, perKilogram: 1.8 }}
-          carbs={{ allocation: 42, grams: 208 }}
-          fat={{ allocation: 28, grams: 62 }}
+          calories={calories}
+          protein={{ allocation: allocation(protein, 4), grams: protein, perKilogram: estimate?.protein_per_kg ?? 1.8 }}
+          carbs={{ allocation: allocation(carbs, 4), grams: carbs }}
+          fat={{ allocation: allocation(fat, 9), grams: fat }}
         />
-        <Pressable accessibilityRole="button" onPress={noop} style={styles.adjustNutritionAction}>
+        <Pressable accessibilityRole="button" onPress={controller.onAdjust ?? noop} style={styles.adjustNutritionAction}>
           <Text style={styles.adjustNutritionLabel}>Ajusta objetivo nutricional</Text>
         </Pressable>
       </Card>
+      {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
       <JourneyFooter index={index} primary="Generar primer plan" />
     </>
   );
@@ -630,6 +724,17 @@ const generatedDailyPlanMealDetails: DailyPlanMealDetailItem[] = [
 ];
 
 function GeneratedDailyPlanView() {
+  const controller = useJourneyController();
+  if (controller.proposal?.dailyplan) {
+    return (
+      <>
+        <StepHeader description="Revisa el plan generado antes de guardarlo en tu biblioteca." eyebrow="Plan del día" icon={BookOpen} index={13} title="Tu primer plan diario" />
+        <ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} />
+        {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
+        <CreditContinueButton />
+      </>
+    );
+  }
   return (
     <>
       <EntityDetailPage
@@ -662,21 +767,23 @@ const plans = [
 ] as const;
 
 function PlansView({ index }: { index: number }) {
+  const controller = useJourneyController();
   return (
     <>
       <StepHeader brandedCentered description="Compara lo que incluyen Free, Basic y Pro. Puedes cambiar de plan más adelante." eyebrow="Planes disponibles" icon={BookOpen} index={index} title="Elige un plan" />
       <View style={styles.planList}>
         {plans.map((plan) => (
           <SubscriptionPlanCard accent={plan.accent} benefits={commercialPlanBenefits[plan.name]} caption={"caption" in plan ? plan.caption : undefined} key={plan.name} name={plan.name} price={plan.price}>
-            {plan.name === "Free" ? <SubscriptionPurchaseButton label="Continuar con Free" onPress={noop} /> : (
+            {plan.name === "Free" ? <SubscriptionPurchaseButton label="Continuar con Free" onPress={() => controller.onChoosePlan?.("Free")} /> : (
               <View style={styles.subscriptionActions}>
-                <SubscriptionPurchaseButton label={`Mensual · ${plan.price}`} onPress={noop} />
-                <SubscriptionPurchaseButton label={`Anual · ${plan.annualPrice}`} onPress={noop} />
+                <SubscriptionPurchaseButton label={`Mensual · ${plan.price}`} onPress={() => controller.onChoosePlan?.(plan.name)} />
+                <SubscriptionPurchaseButton label={`Anual · ${plan.annualPrice}`} onPress={() => controller.onChoosePlan?.(plan.name)} />
               </View>
             )}
           </SubscriptionPlanCard>
         ))}
       </View>
+      {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
       <Text style={styles.quietCenter}>Precios mensuales en CLP. También habrá opciones anuales.</Text>
     </>
   );
@@ -700,10 +807,22 @@ const views: Record<OnboardingJourneyStep, (props: { index: number }) => ReactNo
   plans: PlansView,
 };
 
-export function OnboardingJourneyView({ step }: { step: OnboardingJourneyStep }) {
+export function OnboardingJourneyView({ controller, step }: { controller?: OnboardingJourneyController; step: OnboardingJourneyStep }) {
   const index = onboardingJourneySteps.findIndex((item) => item.key === step);
   const ViewComponent = views[step];
-  return <View style={[styles.screen, index >= 7 && index <= 12 && styles.profileScreen]}><ViewComponent index={index} /></View>;
+  const resolvedController = useMemo(() => controller ?? { values: galleryValues }, [controller]);
+  const swipeResponder = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_event, gesture) => Boolean(controller) && index >= 1 && index <= 5 && Math.abs(gesture.dx) > 18 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+    onPanResponderRelease: (_event, gesture) => {
+      if (gesture.dx <= -48) resolvedController.onNext?.();
+      if (gesture.dx >= 48) resolvedController.onBack?.();
+    },
+  }), [controller, index, resolvedController]);
+  return (
+    <JourneyControllerContext.Provider value={resolvedController}>
+      <View {...swipeResponder.panHandlers} style={[styles.screen, index >= 7 && index <= 12 && styles.profileScreen]}><ViewComponent index={index} /></View>
+    </JourneyControllerContext.Provider>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -736,6 +855,7 @@ const styles = StyleSheet.create({
   creditContinueButtonChip: { borderRadius: tokens.radius.pill, minHeight: 34, paddingHorizontal: tokens.spacing.lg },
   creditContinueLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold },
   creditContinueLabelChip: { fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  actionDisabled: { opacity: 0.55 },
   profileProgress: { alignItems: "center", flexDirection: "row", justifyContent: "center", paddingHorizontal: tokens.spacing.xl, width: "100%" },
   profileProgressGroup: { alignItems: "center", gap: tokens.spacing.sm, width: "100%" },
   profileProgressEyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.regular, letterSpacing: 1.2, textAlign: "center", textTransform: "uppercase" },

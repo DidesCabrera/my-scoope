@@ -38,6 +38,9 @@ class UserNutritionProfileDTO:
     current_weight_source: str | None
     onboarding_completed_at: str | None
     onboarding_version: int
+    nutrition_goal: str | None = None
+    activity_level: str | None = None
+    training_frequency: int | None = None
 
     @property
     def is_complete_for_body_basics(self) -> bool:
@@ -53,10 +56,7 @@ class UserNutritionProfileDTO:
 
     @property
     def is_complete_for_energy_estimation(self) -> bool:
-        # The persisted profile does not own activity_level in ONB v1. Energy
-        # estimation becomes complete only after a NutritionSubjectContext adds
-        # activity_level from chat/session or external data.
-        return False
+        return self.is_complete_for_body_basics and bool(self.activity_level)
 
     def as_dict(self) -> dict:
         data = asdict(self)

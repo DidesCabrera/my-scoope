@@ -28,6 +28,9 @@ class BasicBodyProfile:
     current_weight_log: WeightLog | None
     onboarding_completed_at: datetime | None
     onboarding_version: int
+    nutrition_goal: str
+    activity_level: str
+    training_frequency: int | None
 
     @property
     def is_complete_for_onboarding_basics(self) -> bool:
@@ -116,6 +119,9 @@ def get_basic_body_profile(user) -> BasicBodyProfile:
             current_weight_log=weight_log,
             onboarding_completed_at=None,
             onboarding_version=Profile.ONBOARDING_VERSION_UNSET,
+            nutrition_goal="",
+            activity_level="",
+            training_frequency=None,
         )
 
     return BasicBodyProfile(
@@ -127,4 +133,7 @@ def get_basic_body_profile(user) -> BasicBodyProfile:
         current_weight_log=weight_log,
         onboarding_completed_at=profile.onboarding_completed_at,
         onboarding_version=profile.onboarding_version,
+        nutrition_goal=profile.nutrition_goal,
+        activity_level=profile.activity_level,
+        training_frequency=profile.training_frequency,
     )

@@ -5297,6 +5297,75 @@
         "title": "NamedLibraryCreateInput",
         "type": "object"
       },
+      "OnboardingAnalyzeInput": {
+        "properties": {
+          "activity_level": {
+            "title": "Activity Level",
+            "type": "string"
+          },
+          "allergies_or_intolerances": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allergies Or Intolerances",
+            "type": "array"
+          },
+          "avoided_foods": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Avoided Foods",
+            "type": "array"
+          },
+          "birth_date": {
+            "format": "date",
+            "title": "Birth Date",
+            "type": "string"
+          },
+          "dietary_pattern": {
+            "title": "Dietary Pattern",
+            "type": "string"
+          },
+          "goal": {
+            "title": "Goal",
+            "type": "string"
+          },
+          "height_cm": {
+            "maximum": 250,
+            "minimum": 80,
+            "title": "Height Cm",
+            "type": "integer"
+          },
+          "sex": {
+            "title": "Sex",
+            "type": "string"
+          },
+          "training_frequency": {
+            "maximum": 7,
+            "minimum": 0,
+            "title": "Training Frequency",
+            "type": "integer"
+          },
+          "weight_kg": {
+            "maximum": 350,
+            "minimum": 25,
+            "title": "Weight Kg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "birth_date",
+          "sex",
+          "height_cm",
+          "weight_kg",
+          "goal",
+          "activity_level",
+          "training_frequency",
+          "dietary_pattern"
+        ],
+        "title": "OnboardingAnalyzeInput",
+        "type": "object"
+      },
       "OnboardingInput": {
         "properties": {
           "birth_date": {
@@ -5328,6 +5397,143 @@
           "weight_kg"
         ],
         "title": "OnboardingInput",
+        "type": "object"
+      },
+      "OnboardingStateData": {
+        "properties": {
+          "activity_level": {
+            "default": "",
+            "title": "Activity Level",
+            "type": "string"
+          },
+          "allergies_or_intolerances": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allergies Or Intolerances",
+            "type": "array"
+          },
+          "avoided_foods": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Avoided Foods",
+            "type": "array"
+          },
+          "birth_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "dietary_pattern": {
+            "default": "",
+            "title": "Dietary Pattern",
+            "type": "string"
+          },
+          "estimate": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimate"
+          },
+          "goal": {
+            "default": "",
+            "title": "Goal",
+            "type": "string"
+          },
+          "height_cm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height Cm"
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Id"
+          },
+          "sex": {
+            "default": "",
+            "title": "Sex",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "training_frequency": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Training Frequency"
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg"
+          }
+        },
+        "required": [
+          "stage"
+        ],
+        "title": "OnboardingStateData",
+        "type": "object"
+      },
+      "OnboardingStateEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/OnboardingStateData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "OnboardingStateEnvelope",
         "type": "object"
       },
       "PickerCommitData": {
@@ -5621,6 +5827,11 @@
       },
       "ProfileData": {
         "properties": {
+          "activity_level": {
+            "default": "",
+            "title": "Activity Level",
+            "type": "string"
+          },
           "birth_date": {
             "anyOf": [
               {
@@ -5655,9 +5866,30 @@
             ],
             "title": "Height Cm"
           },
+          "nutrition_goal": {
+            "default": "",
+            "title": "Nutrition Goal",
+            "type": "string"
+          },
           "onboarding_completed": {
             "title": "Onboarding Completed",
             "type": "boolean"
+          },
+          "onboarding_plan_proposal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Plan Proposal Id"
+          },
+          "onboarding_stage": {
+            "default": "intro",
+            "title": "Onboarding Stage",
+            "type": "string"
           },
           "onboarding_version": {
             "title": "Onboarding Version",
@@ -5678,6 +5910,17 @@
           "timezone_name": {
             "title": "Timezone Name",
             "type": "string"
+          },
+          "training_frequency": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Training Frequency"
           }
         },
         "required": [
@@ -12856,6 +13099,290 @@
           }
         ],
         "summary": "Onboarding"
+      }
+    },
+    "/api/v1/onboarding/accept-plan": {
+      "post": {
+        "operationId": "mobile_api_api_onboarding_accept_plan",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Onboarding Accept Plan"
+      }
+    },
+    "/api/v1/onboarding/analyze": {
+      "post": {
+        "operationId": "mobile_api_api_onboarding_analyze",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingAnalyzeInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStateEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Onboarding Analyze"
+      }
+    },
+    "/api/v1/onboarding/complete": {
+      "post": {
+        "operationId": "mobile_api_api_onboarding_complete_v2",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Onboarding Complete V2"
+      }
+    },
+    "/api/v1/onboarding/generate-plan": {
+      "post": {
+        "operationId": "mobile_api_api_onboarding_generate_plan",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Onboarding Generate Plan"
+      }
+    },
+    "/api/v1/onboarding/intro-complete": {
+      "post": {
+        "operationId": "mobile_api_api_onboarding_intro_complete",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStateEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Onboarding Intro Complete"
+      }
+    },
+    "/api/v1/onboarding/state": {
+      "get": {
+        "operationId": "mobile_api_api_onboarding_state",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStateEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Onboarding State"
       }
     },
     "/api/v1/program/active": {

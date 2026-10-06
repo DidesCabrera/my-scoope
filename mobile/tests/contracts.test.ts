@@ -863,15 +863,15 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /summaryCell: \{[^}]*flexBasis: "45%"[^}]*flexGrow: 1[^}]*minWidth: 0/);
   assertSourceMatch(journey, /summaryValue: \{[^}]*fontSize: 34/);
   assertSourceMatch(journey, /summarySectionEyebrow: \{[^}]*alignSelf: "stretch"[^}]*textAlign: "left"/);
-  assertSourceMatch(journey, /styles\.summaryMetricLabel}>Calorías<\/Text>[\s\S]*styles\.summaryValue}>2\.340<\/Text>[\s\S]*styles\.summaryMetricUnit}>kcal<\/Text>/);
-  assertSourceMatch(journey, /<NutritionKpiSection[\s\S]*calories=\{1980\}[\s\S]*perKilogram: 1\.8/);
-  assertSourceMatch(journey, /<NutritionKpiSection[\s\S]*<Pressable accessibilityRole="button" onPress=\{noop\} style=\{styles\.adjustNutritionAction\}>[\s\S]*Ajusta objetivo nutricional[\s\S]*<\/Card>/);
+  assertSourceMatch(journey, /styles\.summaryMetricLabel}>Calorías<\/Text>[\s\S]*estimate\?\.estimated_maintenance_kcal[\s\S]*styles\.summaryMetricUnit}>kcal<\/Text>/);
+  assertSourceMatch(journey, /<NutritionKpiSection[\s\S]*calories=\{calories\}[\s\S]*perKilogram: estimate\?\.protein_per_kg \?\? 1\.8/);
+  assertSourceMatch(journey, /<NutritionKpiSection[\s\S]*<Pressable accessibilityRole="button" onPress=\{controller\.onAdjust \?\? noop\} style=\{styles\.adjustNutritionAction\}>[\s\S]*Ajusta objetivo nutricional[\s\S]*<\/Card>/);
   assertSourceDoesNotMatch(journey, /El mantenimiento usa edad, sexo de cálculo/);
   assertSourceMatch(journey, /function GeneratedDailyPlanView/);
   assertSourceMatch(journey, /screen: \{[^}]*paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18/);
   assertSourceMatch(journey, /index >= 7 && index <= 12 && styles\.profileScreen/);
   assertSourceMatch(journey, /profileScreen: \{ paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18 - 32 \}/);
-  assertSourceMatch(journey, /index === 6 \? <CreditContinueButton label=\{primary\} \/> : <Button label=\{primary\} onPress=\{noop\} \/>/);
+  assertSourceMatch(journey, /index === 6 \? <CreditContinueButton label=\{primary\} \/> : <Button label=\{primary\} loading=\{controller\.busy\} onPress=\{controller\.onNext \?\? noop\} \/>/);
   assertSourceMatch(journey, /<EntityDetailPage[\s\S]*eyebrow="PLAN DEL DÍA"[\s\S]*title="Plan equilibrado · Día 1"/);
   assertSourceMatch(journey, /<MealPanels items=\{generatedDailyPlanMeals\} showEditTab=\{false\} \/>/);
   assertSourceMatch(journey, /<EntityDetailSection title="Tabla de comparación entre comidas">/);
@@ -908,7 +908,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /<CreditSelectionBorder id="training-frequency-border" shape="pill" \/>/);
   assertSourceMatch(journey, /<Rect fill="none" height="100%" rx=\{radius\} stroke=\{`url\(#\$\{id\}\)`\} strokeWidth="4" width="100%" \/>/);
   assertSourceMatch(journey, /trainingFrequencyChipSelected: \{[^}]*borderWidth: 0[^}]*overflow: "hidden"/);
-  assertSourceMatch(journey, /const selected = label === "2–3"/);
+  assertSourceMatch(journey, /const selected = controller\.values\.trainingFrequency === value/);
   assertSourceDoesNotMatch(journey, /function HomeView|home: HomeView/);
   assertSourceMatch(journey, /function ExplanationDots/);
   assertSourceMatch(journey, /explanationFooter: \{[^}]*marginBottom: 48/);
@@ -916,7 +916,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /id="continue-chip-border"/);
   assertSourceMatch(journey, /continueChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34/);
   assertSourceMatch(journey, /continueChipInset: \{[^}]*bottom: 2, left: 2[^}]*right: 2, top: 2/);
-  assertSourceMatch(journey, /<Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress=\{noop\} variant="multicolor" \/>/);
+  assertSourceMatch(journey, /<Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress=\{controller\.onLogin \?\? noop\} variant="multicolor" \/>/);
   assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
   assertSourceMatch(journey, /<View style=\{styles\.centeredLogo\}><MyScoopeLogo \/><\/View>/);
   assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
@@ -954,7 +954,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /fill="url\(#onboarding-credit-gradient\)"/);
   assertSourceDoesNotMatch(journey, /WeekDaySelectionRing/);
   assertSourceDoesNotMatch(journey.match(/function ValueView[\s\S]*?function DisclosuresView/)?.[0] ?? "", /<JourneyFooter/);
-  assertSourceDoesNotMatch(journey, /PanResponder|OnboardingExplanationCarousel/);
+  assertSourceMatch(journey, /PanResponder\.create/);
+  assertSourceMatch(journey, /Boolean\(controller\) && index >= 1 && index <= 5/);
+  assertSourceDoesNotMatch(journey, /OnboardingExplanationCarousel/);
   assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
   assertSourceMatch(journey, /loginAction: \{ marginBottom: 114, marginTop: "auto" \}/);
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);

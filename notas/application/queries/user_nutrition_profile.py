@@ -42,6 +42,9 @@ def get_user_nutrition_profile(user) -> UserNutritionProfileDTO:
         current_weight_source=weight_log.source if weight_log else None,
         onboarding_completed_at=_datetime_to_iso(body_profile.onboarding_completed_at),
         onboarding_version=body_profile.onboarding_version,
+        nutrition_goal=body_profile.nutrition_goal or None,
+        activity_level=body_profile.activity_level or None,
+        training_frequency=body_profile.training_frequency,
     )
 
 
@@ -72,8 +75,10 @@ def build_nutrition_subject_context(
 
 def _build_self_profile_subject(*, user, chat_context: Mapping[str, Any]) -> NutritionSubjectContextDTO:
     profile = get_user_nutrition_profile(user)
-    activity_level = _clean_string(chat_context.get("activity_level"))
+    activity_level = _clean_string(chat_context.get("activity_level")) or profile.activity_level
     training_frequency = _int_or_none(chat_context.get("training_frequency"))
+    if training_frequency is None:
+        training_frequency = profile.training_frequency
 
     return NutritionSubjectContextDTO(
         source=SUBJECT_SOURCE_SELF_PROFILE,

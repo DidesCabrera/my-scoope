@@ -12,8 +12,8 @@ export default function LoginScreen() {
   const { status, profile, authBusy, authError, authReady, startSignIn } = useSession();
 
   if (status === "authenticated") {
-    if (profile?.review_disclosure_required) return <Redirect href={{ pathname: "/disclosures", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
     if (!profile?.onboarding_completed) return <Redirect href={{ pathname: "/onboarding", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
+    if (profile?.review_disclosure_required) return <Redirect href={{ pathname: "/disclosures", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
     return <Redirect href={returnHref ?? ("/today" as Href)} />;
   }
 

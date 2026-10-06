@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Literal
 
-from ninja import Field, Schema
+from ninja import Schema
 
 
 class SessionData(Schema):
@@ -30,6 +30,11 @@ class ProfileData(Schema):
     current_weight_kg: float | None = None
     review_disclosure_required: bool
     review_disclosure_version: str
+    nutrition_goal: str = ""
+    activity_level: str = ""
+    training_frequency: int | None = None
+    onboarding_stage: str = "intro"
+    onboarding_plan_proposal_id: int | None = None
 
 
 class ProfileEnvelope(Schema):
@@ -40,13 +45,6 @@ class ProfileEnvelope(Schema):
 
 class DisclosureAcceptanceInput(Schema):
     accepted: Literal[True]
-
-
-class OnboardingInput(Schema):
-    birth_date: date
-    sex: str
-    height_cm: int = Field(ge=80, le=250)
-    weight_kg: float = Field(ge=25, le=350)
 
 
 class AccountDeletionInput(Schema):

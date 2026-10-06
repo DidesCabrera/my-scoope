@@ -1,9 +1,8 @@
 from ninja import Router
 
-from accounts.forms import AccountDeletionForm, NutritionOnboardingForm
+from accounts.forms import AccountDeletionForm
 from accounts.services.deletion import delete_user_account
 from accounts.services.mobile_disclosures import accept_current_mobile_disclosure
-from accounts.services.onboarding import complete_nutrition_onboarding
 from mobile_api.api_support import form_error, require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
@@ -12,16 +11,14 @@ from mobile_api.schema_domains.identity import (
     AccountDeletionEnvelope,
     AccountDeletionInput,
     DisclosureAcceptanceInput,
-    OnboardingInput,
     ProfileEnvelope,
     RevokeSessionEnvelope,
     SessionEnvelope,
 )
 from mobile_api.schemas import ErrorEnvelope
-from mobile_api.selectors import profile_payload, session_payload
+from mobile_api.selectors_identity import profile_payload, session_payload
 from notas.application.services.oauth_device_sessions import (
     MOBILE_SCOPE_ACCOUNT,
-    MOBILE_SCOPE_WRITE,
     revoke_oauth_device_session,
 )
 
@@ -64,34 +61,6 @@ def revoke_session(request, device_session_id: str):
     response={200: ProfileEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
 )
 def me(request):
-    return success(profile_payload(request.auth.user))
-
-
-@router.post(
-    "/onboarding",
-    operation_id="mobile_api_api_onboarding",
-    auth=mobile_bearer,
-    response={200: ProfileEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def onboarding(request, payload: OnboardingInput):
-    require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    form = NutritionOnboardingForm(
-        {
-            "birth_date": payload.birth_date.isoformat(),
-            "sex": payload.sex,
-            "height_cm": payload.height_cm,
-            "weight_kg": payload.weight_kg,
-        }
-    )
-    if not form.is_valid():
-        raise form_error(form, code="onboarding_invalid", message="Onboarding data is invalid.")
-    complete_nutrition_onboarding(
-        user=request.auth.user,
-        birth_date=form.cleaned_data["birth_date"],
-        sex=form.cleaned_data["sex"],
-        height_cm=form.cleaned_data["height_cm"],
-        weight_kg=form.cleaned_data["weight_kg"],
-    )
     return success(profile_payload(request.auth.user))
 
 

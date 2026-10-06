@@ -1,7 +1,8 @@
 # Onboarding Flow Normalization Cycle
 
-Status: active — awaiting storyboard approval
+Status: active — Native v2 implemented; Web normalization pending
 Decision: `docs/20_decisions/0202-onboarding-storyboard-and-cross-platform-flow.md`
+Implementation decision: `docs/20_decisions/0203-native-onboarding-v2-persistence-and-first-plan.md`
 Related decisions: 0186, 0201, 0050, 0008
 
 ## Objective
@@ -239,6 +240,34 @@ storyboard. OFN06–OFN08 no comenzaron porque dependen de esa aprobación.
 - No se ejecutó `ci_mobile_iteration.sh`: corresponde una sola vez cuando Felipe
   cierre la etapa de refinación visual.
 
+## Implementation update — 2026-10-05
+
+Felipe aprobó el storyboard Native refinado y autorizó una primera versión
+funcional. El recorrido Native ahora:
+
+- muestra las cinco vistas introductorias con swipe;
+- mantiene Disclosures como gate antes de la ficha;
+- captura y persiste objetivo, datos corporales, actividad, frecuencia de
+  entrenamiento y preferencias alimentarias sin crear autoridades duplicadas;
+- calcula mantenimiento y objetivos con el Target Estimator vigente;
+- genera una propuesta concreta de Plan diario, la presenta para revisión y solo la
+  aplica tras confirmación;
+- permite elegir Free o continuar hacia suscripción, y reanuda etapas persistidas si
+  la app se cierra.
+
+La regla de OFN06 queda resuelta para esta versión: `activity_level` modifica TDEE y
+`training_frequency` se conserva como contexto sin modificar el cálculo para evitar
+doble conteo. OFN07 está completo en Native y pendiente en Web. OFN08 sigue pendiente
+de integración/publicación y validación de despliegue.
+
+Evidencia local de esta entrega:
+
+- gate Native de iteración: lint, typecheck y 173 pruebas aprobadas;
+- prueba integrada API: persistencia, estimación, generación, aplicación del Plan
+  diario y finalización v2;
+- 32 pruebas focalizadas de onboarding, identidad, perfil y contexto nutricional;
+- migraciones y contrato OpenAPI regenerados sin drift.
+
 ## Review matrix
 
 Cada vista debe revisarse con estas dimensiones:
@@ -268,19 +297,45 @@ La validación posterior a integración debe aportar evidencia diferente: recorr
 staging, configuración, migraciones o dispositivo físico; no una repetición de los
 mismos tests locales.
 
-## Open questions
+## Resolved questions
 
-1. ¿Cómo se traduce `training_frequency` en el estimador sin contar dos veces la
-   actividad ya representada por `activity_level`?
-2. ¿Las cinco vistas explicativas deben conservarse separadas o combinarse después
-   de la primera revisión visual?
-3. ¿El resumen muestra una cifra de mantenimiento desde el primer lanzamiento o solo
-   explica que My Scoope ya tiene lo necesario para calcularla?
-4. ¿La elección comercial asigna Free automáticamente al continuar o requiere una
-   selección explícita de cualquier plan?
-5. ¿Home inicial conduce primero a un Plan diario determinístico o a una elección de
-   intención? La decisión 0201 favorece el Plan diario determinístico para Free, pero
-   su implementación pertenece a un ciclo posterior.
+1. `training_frequency` se persiste como contexto y no modifica TDEE en v2; evita
+   doble conteo con `activity_level`.
+2. Las cinco vistas explicativas se mantienen separadas y se recorren por swipe en
+   Native.
+3. El resumen muestra mantenimiento y objetivo nutricional calculados por el Target
+   Estimator, no cifras calculadas en la UI.
+4. Free es una elección explícita y completa el onboarding; Basic/Pro continúan a la
+   vista de suscripción.
+5. El primer Plan diario se genera como propuesta determinística, se revisa y se
+   aplica antes de completar el onboarding. Queda en la biblioteca; no se calendariza
+   ni fija en Home automáticamente.
+
+## Remaining work
+
+### Native integration and operational readiness
+
+- aplicar la migración y confirmar el catálogo `solver_enabled` en staging;
+- ejecutar smoke de cuenta nueva y reanudación en etapas persistidas;
+- validar accesibilidad, teclado, scroll y swipe en dispositivo físico;
+- validar compra/restauración al elegir Basic o Pro;
+- revisar mensajes específicos cuando no exista una alternativa factible del Solver.
+
+### Cross-platform completion
+
+- implementar el producto Web sobre los mismos servicios y estado v2;
+- mantener temporalmente `/api/v1/onboarding` v1 y retirarlo solo después de migrar
+  Web y verificar consumidores;
+- actualizar el storyboard Web para reflejar la secuencia final de quince vistas.
+
+### Product evolution
+
+- decidir si se guarda cada paso antes del análisis; la primera versión persiste la
+  ficha completa al tocar “Analizar”;
+- definir si el Plan diario aplicado se fija en Home o se calendariza mediante una
+  decisión explícita posterior;
+- agregar métricas de conversión y abandono por etapa;
+- evaluar usos futuros de `training_frequency` con evidencia y pruebas nutricionales.
 
 ## Documentation closure
 

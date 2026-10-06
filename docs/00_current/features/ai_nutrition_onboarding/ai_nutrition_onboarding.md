@@ -726,3 +726,36 @@ La vista Profile debe mantener separadas estas áreas:
 - AI / Solver: datos que se completan en chat y regla de propuestas para terceros.
 
 En v1, actualizar `birth_date`, `sex` y `height_cm` se hace desde la ficha nutricional. Actualizar peso sigue el flujo de Body Metrics y escribe `WeightLog`; no debe sobrescribir silenciosamente historial corporal.
+
+## Actualización ONB v2 Native — ficha persistente y primer plan
+
+La primera implementación funcional del storyboard Native amplía el onboarding sin
+crear una segunda autoridad de datos:
+
+```text
+Profile
+  birth_date, sex, height_cm
+  nutrition_goal, activity_level, training_frequency
+  onboarding_stage, onboarding_plan_proposal
+
+WeightLog
+  weight_kg
+
+NutritionPreferenceProfile
+  dietary_pattern
+  allergies_or_intolerances
+  avoided_foods
+```
+
+`activity_level` alimenta el Target Estimator. `training_frequency` se persiste para
+uso posterior y para el contexto del Assistant/Solver, pero no modifica TDEE en esta
+versión: la actividad habitual ya representa el multiplicador y sumar sesiones
+semanales produciría doble conteo.
+
+El transporte Native expone estado reanudable, análisis, generación, aceptación y
+finalización bajo `/api/v1/onboarding/*`. La generación reutiliza el brief y el
+generador determinístico existentes. Produce una `NutritionProposal` revisable; el
+Plan diario solo se crea en la biblioteca cuando la persona lo confirma. El endpoint
+v1 se conserva temporalmente para el onboarding Web existente.
+
+Decisión: `docs/20_decisions/0203-native-onboarding-v2-persistence-and-first-plan.md`.
