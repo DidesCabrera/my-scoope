@@ -76,18 +76,22 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/app/dev/ui-gallery.tsx"),
     "utf8",
   );
+  const storyboardGallery = await readTestFile(
+    path.resolve(process.cwd(), "src/components/dev/storyboard-gallery.tsx"),
+    "utf8",
+  );
   assertSourceMatch(gallery, /export default function UiGalleryScreen/);
   assertSourceMatch(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
   assertSourceMatch(gallery, /Galería del sistema UI/);
   assertSourceDoesNotMatch(gallery, /<Brand|Referencia interna construida con los componentes reales de la app/);
-  assertSourceMatch(gallery, /OnboardingJourneyView/);
-  assertSourceMatch(gallery, /Storyboard visual · sin sesión, API ni persistencia/);
-  assertSourceMatch(gallery, /accessibilityLabel="Formatos del onboarding"/);
-  assertSourceMatch(gallery, /tabs=\{calendarPreviewWidths\.map\(\(preview\) => \(\{ key: preview\.width, label: preview\.label \}\)\)\}/);
-  assertSourceMatch(gallery, /onboardingJourneySteps\.map\(\(step, index\) =>/);
-  assertSourceMatch(gallery, /String\(index \+ 1\)\.padStart\(2, "0"\).*step\.label/);
-  assertSourceMatch(gallery, /calendarPreviewWidths\.some\(\(preview\) => preview\.width === onboardingPreviewWidth\)[\s\S]*calendarPreviewWidths\[0\]\.width/);
-  assertSourceDoesNotMatch(gallery, /accessibilityLabel="Vistas del onboarding"|setOnboardingStep/);
+  assertSourceMatch(gallery, /<OnboardingStoryboardGallery \/>/);
+  assertSourceMatch(storyboardGallery, /OnboardingJourneyView/);
+  assertSourceMatch(storyboardGallery, /Storyboard visual · sin sesión, API ni persistencia/);
+  assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos del onboarding"/);
+  assertSourceMatch(storyboardGallery, /tabs=\{previewWidths\.map\(\(preview\) => \(\{ key: preview\.width, label: preview\.label \}\)\)\}/);
+  assertSourceMatch(storyboardGallery, /steps\.map\(\(step, index\) =>/);
+  assertSourceMatch(storyboardGallery, /String\(index \+ 1\)\.padStart\(2, "0"\).*step\.label/);
+  assertSourceDoesNotMatch(storyboardGallery, /accessibilityLabel="Vistas del onboarding"|setOnboardingStep/);
   assertSourceMatch(gallery, /Card-child de programa/);
   assertSourceMatch(gallery, /ProgramChildCard/);
   assertSourceMatch(gallery, /Detalle de programa/);
@@ -1023,11 +1027,13 @@ test("the onboarding gallery exposes every visual journey view without product s
 test("the label capture gallery exposes the complete happy-path storyboard without product side effects", async () => {
   const gallery = await readTestFile(path.resolve(process.cwd(), "src/app/dev/ui-gallery.tsx"), "utf8");
   const navigation = await readTestFile(path.resolve(process.cwd(), "src/components/dev/gallery-navigation.tsx"), "utf8");
+  const storyboardGallery = await readTestFile(path.resolve(process.cwd(), "src/components/dev/storyboard-gallery.tsx"), "utf8");
   const storyboard = await readTestFile(path.resolve(process.cwd(), "src/components/label-capture/label-capture-storyboard.tsx"), "utf8");
 
   assertSourceMatch(navigation, /\{ key: "labelCapture", label: "Etiquetas" \}/);
-  assertSourceMatch(gallery, /accessibilityLabel="Formatos de la digitalización de etiquetas"/);
-  assertSourceMatch(gallery, /labelCaptureStoryboardSteps\.map\(\(step, index\) =>/);
+  assertSourceMatch(gallery, /<LabelCaptureStoryboardGallery \/>/);
+  assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos de la digitalización de etiquetas"/);
+  assertSourceMatch(storyboardGallery, /steps=\{labelCaptureStoryboardSteps\}/);
   for (const step of ["intro", "camera", "preview", "processing", "review", "confirmation", "saved"]) {
     assertSourceMatch(storyboard, new RegExp(`key: "${step}"`));
   }
