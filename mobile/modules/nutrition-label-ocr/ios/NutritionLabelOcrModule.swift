@@ -1,4 +1,5 @@
 import ExpoModulesCore
+import CoreImage
 import Foundation
 import ImageIO
 import UIKit
@@ -28,9 +29,6 @@ public class NutritionLabelOcrModule: Module {
           promise.reject(NutritionLabelImageException(imageUri.absoluteString))
           return
         }
-        defer {
-          try? FileManager.default.removeItem(at: imageUri)
-        }
 
         let startedAt = CFAbsoluteTimeGetCurrent()
         let request = VNRecognizeTextRequest { request, error in
@@ -56,11 +54,31 @@ public class NutritionLabelOcrModule: Module {
               ]
             }
 
+          let visionObservations = request.results as? [VNRecognizedTextObservation] ?? []
+          let confidences = visionObservations.compactMap { $0.topCandidates(1).first?.confidence }
+          let averageConfidence = confidences.isEmpty
+            ? 0
+            : confidences.reduce(0, +) / Float(confidences.count)
+          let textCoverage = min(
+            1,
+            visionObservations.reduce(0) { total, observation in
+              total + Float(observation.boundingBox.width * observation.boundingBox.height)
+            }
+          )
+          let visualQuality = imageQuality(cgImage: cgImage)
+
           promise.resolve([
             "engine": "apple_vision",
-            "engineVersion": "2",
+            "engineVersion": "3",
             "durationMs": Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000),
-            "observations": observations
+            "observations": observations,
+            "imageQuality": [
+              "brightness": visualQuality.brightness,
+              "sharpness": visualQuality.sharpness,
+              "textObservationCount": visionObservations.count,
+              "averageTextConfidence": averageConfidence,
+              "textCoverage": textCoverage
+            ]
           ])
         }
         request.recognitionLevel = .accurate
@@ -92,6 +110,39 @@ public class NutritionLabelOcrModule: Module {
       }
     }
   }
+}
+
+private func imageQuality(cgImage: CGImage) -> (brightness: Float, sharpness: Float) {
+  let context = CIContext()
+  let image = CIImage(cgImage: cgImage)
+  let brightness = averageLuminance(image: image, context: context)
+  guard let edges = CIFilter(
+    name: "CIEdges",
+    parameters: [kCIInputImageKey: image, kCIInputIntensityKey: 1.0]
+  )?.outputImage else {
+    return (brightness, 0)
+  }
+  return (brightness, averageLuminance(image: edges, context: context))
+}
+
+private func averageLuminance(image: CIImage, context: CIContext) -> Float {
+  guard !image.extent.isEmpty,
+    let average = CIFilter(
+      name: "CIAreaAverage",
+      parameters: [kCIInputImageKey: image, kCIInputExtentKey: CIVector(cgRect: image.extent)]
+    )?.outputImage else {
+    return 0
+  }
+  var pixel = [UInt8](repeating: 0, count: 4)
+  context.render(
+    average,
+    toBitmap: &pixel,
+    rowBytes: 4,
+    bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+    format: .RGBA8,
+    colorSpace: CGColorSpaceCreateDeviceRGB()
+  )
+  return (0.2126 * Float(pixel[0]) + 0.7152 * Float(pixel[1]) + 0.0722 * Float(pixel[2])) / 255
 }
 
 private extension UIImage.Orientation {

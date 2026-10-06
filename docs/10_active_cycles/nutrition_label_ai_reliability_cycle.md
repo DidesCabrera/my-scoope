@@ -1,7 +1,7 @@
 # Nutrition-label AI reliability cycle
 
-Status: corrective cycle active after first physical TestFlight validation
-Date: 2026-09-03
+Status: repository correction implemented; physical 30-label gate pending
+Date: 2026-10-06
 
 ## Objective
 
@@ -48,6 +48,47 @@ decimal comma/point; glossy packaging; curved packages; small typography; kcal/k
 sodium in mg/g; low light; and deliberate non-label/blurred controls. Record whether
 the candidate was usable before edits, which fields needed edits and whether the
 scan escalated (from the internal report, not the app UI).
+
+Use `nutrition_label_physical_validation.md` as the execution worksheet. Repository
+completion does not satisfy this gate: every row must come from the named physical
+build and device. Release requires at least 90% usable results among legible labels,
+zero charges for locally rejected or totally unresolved images and no duplicate
+captures or charges.
+
+## 2026-10-06 acquisition correction
+
+The latest physical iOS build exposed a focus failure before OCR. Expo Camera 57
+maps `autofocus="on"` to one-shot autofocus and `autofocus="off"` to continuous
+autofocus; the client had selected the former while instructing users to move a
+label close to the lens.
+
+The repository correction now:
+
+- centralizes and tests the continuous-focus contract;
+- delays capture readiness while the camera settles and blocks concurrent shots;
+- offers bounded zoom, lens cycling and minimum-focus-distance guidance;
+- routes camera and gallery through the same local-quality and preview phase;
+- blocks extreme blur, exposure failures and absent text before any AI call;
+- keeps borderline images reviewable with concrete warnings;
+- generates a new idempotency key for each new image and preserves it for retries;
+- shows the analyzed image and overall extraction confidence beside editable values;
+- aligns App Review, product, API and privacy-facing documentation with temporary
+  OpenAI processing and voluntary photo-library selection.
+
+Repository validation completed on 2026-10-06:
+
+- focused mobile visual check passed for the label-capture test file;
+- the mobile iteration gate passed once with lint, type checking and 180 tests;
+- 22 focused backend tests passed for analysis, charging, confirmation and
+  idempotency;
+- Expo prebuild and CocoaPods installation succeeded;
+- the Debug iOS simulator target compiled successfully with Sentry upload disabled
+  because local observability credentials are intentionally absent;
+- the complete mobile gate passed with dependency audits, debt budget, lint, type
+  checking, all 180 tests and static web export.
+
+The remaining closure evidence is the physical worksheet. Automated mobile,
+backend and native compilation gates cannot substitute for real camera optics.
 
 ## TestFlight 14 finding and corrective loop
 
