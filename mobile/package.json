@@ -88,6 +88,7 @@
     "plist": {
       "@xmldom/xmldom": "0.9.12"
     },
+    "shell-quote": "1.11.0",
     "uuid": "^11.1.1"
   },
   "private": true
