@@ -26,7 +26,7 @@ class Command(BaseCommand):
         subscriptions = list(
             ProviderSubscription.objects.filter(provider=PaymentProvider.GOOGLE_PLAY)
             .exclude(status=ProviderSubscription.Status.EXPIRED)
-            .select_related("user")
+            .select_related("user", "product")
             .order_by("updated_at", "pk")[:limit]
         )
         if not subscriptions:
@@ -43,7 +43,11 @@ class Command(BaseCommand):
                     raise GooglePlayEvidenceError("Google Play returned a different purchase token.")
                 if options["apply"]:
                     before = (subscription.status, subscription.current_period_end, subscription.cancel_at_period_end)
-                    refreshed = sync_google_play_subscription(evidence, expected_user=subscription.user)
+                    refreshed = sync_google_play_subscription(
+                        evidence,
+                        expected_user=subscription.user,
+                        expected_environment=subscription.product.environment,
+                    )
                     after = (refreshed.status, refreshed.current_period_end, refreshed.cancel_at_period_end)
                     changed += before != after
                 else:

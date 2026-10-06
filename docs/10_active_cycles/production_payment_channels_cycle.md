@@ -30,7 +30,7 @@ pendiente`, no `completed`.
 | Canal | Validado hasta ahora | Brecha principal |
 |---|---|---|
 | Paddle | Catálogo sandbox; bolsa de 500 acreditada en staging; Pro anual de CLP 59.990 registrada como pago aprobado, suscripción autorizada y plan Pro efectivo desde billing. | Completar otras ofertas y eventos de ciclo de vida; configurar/verificar cuenta y catálogo live; probar cobro real. |
-| Google Play | Cuatro precios visibles y botones habilitados en Android; compra de 500 créditos y reembolso conciliado de forma idempotente en staging. | Probar suscripciones y su ciclo de vida; publicar cliente Android actualizado; habilitar reconciliaciones después de la prueba; comprobar compra real. |
+| Google Play | Cuatro precios visibles y botones habilitados en Android; compra de 500 créditos y reembolso conciliado de forma idempotente en staging. El endurecimiento de repositorio separa sandbox/live y agrega RTDN autenticado con relectura server-to-server. | Configurar y probar Pub/Sub/RTDN en staging; probar suscripciones y su ciclo de vida; publicar cliente Android actualizado; habilitar reconciliaciones después de la prueba; comprobar compra real. |
 | App Store | Integración de repositorio y compilación iOS de staging preparada; envío de Expo a App Store Connect completado, disponibilidad en TestFlight no verificada. | Completar TestFlight físico, compras/restauración/eventos/reembolsos sandbox, aprobación comercial y compra real. |
 
 Este es un **inventario inicial**, no prueba de estado live. Al comenzar PPC00 se

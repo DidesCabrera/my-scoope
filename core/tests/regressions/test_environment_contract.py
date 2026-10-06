@@ -122,6 +122,18 @@ print(json.dumps({
         self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_PADDLE_WEBHOOK_SECRET"].secret)
         self.assertFalse(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_PADDLE_CLIENT_TOKEN"].secret)
         self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_APPLE_IN_APP_PURCHASE_KEY"].secret)
+        self.assertEqual(
+            ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_GOOGLE_PLAY_RTDN_ENABLED"].value_type,
+            "boolean",
+        )
+        self.assertTrue(
+            ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"].secret,
+        )
+        self.assertFalse(
+            ENVIRONMENT_VARIABLE_SPEC_BY_NAME[
+                "BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL"
+            ].secret,
+        )
         self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_OPENFACTURA_API_KEY"].secret)
         self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["TURNSTILE_SECRET_KEY"].secret)
         self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["CACHE_URL"].secret)

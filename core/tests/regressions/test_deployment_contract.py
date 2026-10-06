@@ -72,6 +72,30 @@ class DeploymentContractTests(SimpleTestCase):
         ):
             self.assertIn(f"- key: {credential}\n        sync: false", blueprint)
 
+    def test_blueprints_version_google_play_environment_and_rtdn_contract(self):
+        staging = (ROOT / "render.staging.yaml").read_text()
+        production = (ROOT / "render.yaml").read_text()
+
+        self.assertIn("- key: BILLING_GOOGLE_PLAY_ENVIRONMENT\n        value: sandbox", staging)
+        self.assertIn("- key: BILLING_GOOGLE_PLAY_RTDN_ENABLED\n        value: \"false\"", staging)
+        self.assertIn(
+            "- key: BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE\n"
+            "        value: https://myscoope-staging.onrender.com/billing/webhooks/google-play/",
+            staging,
+        )
+        self.assertIn("- key: BILLING_GOOGLE_PLAY_ENVIRONMENT\n        value: live", production)
+        self.assertIn("- key: BILLING_GOOGLE_PLAY_RTDN_ENABLED\n        value: \"false\"", production)
+        self.assertIn(
+            "- key: BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE\n"
+            "        value: https://www.myscoope.com/billing/webhooks/google-play/",
+            production,
+        )
+        for blueprint in (staging, production):
+            self.assertIn(
+                "- key: BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL\n        sync: false",
+                blueprint,
+            )
+
     def test_render_build_keeps_schema_changes_out_of_the_build_step(self):
         build_script = (ROOT / "scripts/render_build.sh").read_text()
 

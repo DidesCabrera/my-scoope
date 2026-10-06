@@ -56,6 +56,7 @@ class GooglePlayClient:
             product_id=str(current.get("productId") or ""),
             base_plan_id=str(offer.get("basePlanId") or ""),
             status=state,
+            environment="sandbox" if data.get("testPurchase") is not None else "live",
             start_time=data.get("startTime"),
             expiry_time=current.get("expiryTime"),
             obfuscated_account_id=str(identifiers.get("obfuscatedAccountId") or ""),
@@ -92,7 +93,7 @@ class GooglePlayClient:
             status="PURCHASED" if state == "PURCHASED" else state,
             obfuscated_account_id=str(data.get("obfuscatedExternalAccountId") or ""),
             order_id=str(data.get("orderId") or ""),
-            environment="sandbox" if data.get("testPurchaseContext") else "live",
+            environment="sandbox" if data.get("testPurchaseContext") is not None else "live",
             metadata=data,
         )
 

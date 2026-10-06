@@ -45,6 +45,14 @@ services:
         value: "true"
       - key: BILLING_GOOGLE_PLAY_PURCHASES_ENABLED
         value: "true"
+      - key: BILLING_GOOGLE_PLAY_RTDN_ENABLED
+        value: "false"
+      - key: BILLING_GOOGLE_PLAY_ENVIRONMENT
+        value: sandbox
+      - key: BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE
+        value: https://myscoope-staging.onrender.com/billing/webhooks/google-play/
+      - key: BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL
+        sync: false
       - key: BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED
         value: "false"
       - key: BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED

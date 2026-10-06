@@ -10,6 +10,47 @@ from billing.infrastructure.providers.google_play import GooglePlayClient, Googl
 class GooglePlayVoidedClientTests(TestCase):
     @patch.object(GooglePlayClient, "_access_token", return_value="access")
     @patch("billing.infrastructure.providers.google_play.requests.get")
+    def test_subscription_evidence_identifies_test_and_live_environments(self, get, _token):
+        base_payload = {
+            "lineItems": [{
+                "productId": "myscoope_basic",
+                "expiryTime": "2026-11-05T20:00:00Z",
+                "offerDetails": {"basePlanId": "monthly"},
+                "autoRenewingPlan": {"autoRenewEnabled": True},
+            }],
+            "subscriptionState": "SUBSCRIPTION_STATE_ACTIVE",
+            "externalAccountIdentifiers": {"obfuscatedAccountId": "account"},
+            "acknowledgementState": "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED",
+        }
+        get.side_effect = [
+            Mock(status_code=200, json=lambda: {**base_payload, "testPurchase": {}}),
+            Mock(status_code=200, json=lambda: base_payload),
+        ]
+        gateway = GooglePlayClient(package_name="com.myscoope.app", service_account={"key": "test"})
+
+        sandbox = gateway.verify_subscription("sandbox-token")
+        live = gateway.verify_subscription("live-token")
+
+        self.assertEqual((sandbox.environment, live.environment), ("sandbox", "live"))
+        self.assertTrue(sandbox.acknowledged)
+
+    @patch.object(GooglePlayClient, "_access_token", return_value="access")
+    @patch("billing.infrastructure.providers.google_play.requests.get")
+    def test_product_evidence_identifies_empty_test_context_as_sandbox(self, get, _token):
+        get.return_value = Mock(status_code=200, json=lambda: {
+            "productLineItem": [{"productId": "myscoope.credits.500"}],
+            "purchaseStateContext": {"purchaseState": "PURCHASED"},
+            "obfuscatedExternalAccountId": "account",
+            "testPurchaseContext": {},
+        })
+        gateway = GooglePlayClient(package_name="com.myscoope.app", service_account={"key": "test"})
+
+        evidence = gateway.verify_product("sandbox-product-token")
+
+        self.assertEqual(evidence.environment, "sandbox")
+
+    @patch.object(GooglePlayClient, "_access_token", return_value="access")
+    @patch("billing.infrastructure.providers.google_play.requests.get")
     def test_lists_all_pages_of_in_app_voided_purchases(self, get, _token):
         get.side_effect = [
             Mock(status_code=200, json=lambda: {
