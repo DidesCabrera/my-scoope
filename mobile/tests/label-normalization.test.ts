@@ -275,7 +275,10 @@ test("rejects locally unreadable images before AI analysis", () => {
   assert.ok(quality.issues.includes("too_dark"));
   assert.ok(quality.issues.includes("blurry"));
   assert.ok(quality.issues.includes("no_text_detected"));
-  assert.match(labelImageQualityMessage("blurry"), /desenfocado/i);
+  assert.equal(
+    labelImageQualityMessage("blurry"),
+    "El texto está desenfocado. Aléjate un poco, mantén el teléfono firme y usa zoom.",
+  );
 });
 
 test("allows borderline images only with an explicit review warning", () => {
