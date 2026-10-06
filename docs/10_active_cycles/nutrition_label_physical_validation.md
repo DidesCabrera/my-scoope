@@ -1,6 +1,6 @@
 # Nutrition-label physical validation worksheet
 
-Status: required TestFlight/device gate
+Status: active
 Date: 2026-10-06
 
 ## Build identity

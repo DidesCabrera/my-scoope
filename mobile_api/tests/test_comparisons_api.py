@@ -202,7 +202,6 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
         self.assertEqual(meal_option["panel"]["kind"], "foods")
         self.assertEqual(meal_option["panel"]["foods"][0]["name"], "Ingrediente del selector")
         self.assertEqual(meal_option["panel"]["foods"][0]["quantity"], 100.0)
-
         self.assertEqual(dailyplan_response.status_code, 200)
         dailyplan_option = dailyplan_response.json()["data"]["items"][0]
         self.assertEqual(dailyplan_option["entity"], "dailyPlan")
