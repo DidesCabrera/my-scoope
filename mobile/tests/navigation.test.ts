@@ -6,6 +6,10 @@ import test from "node:test";
 import { listAvailableProductAreas, productAreas } from "../src/navigation/product-areas";
 import { assertSourceDoesNotMatch, assertSourceMatch } from "./support/source-contract";
 
+async function readSources(...relativePaths: string[]) {
+  return Promise.all(relativePaths.map((relativePath) => readFile(path.resolve(process.cwd(), relativePath), "utf8")));
+}
+
 test("the consumer navigation catalog includes every MCE product area", () => {
   assert.deepEqual(productAreas.map((area) => area.key), [
     "home",
@@ -121,8 +125,10 @@ test("the native sidebar keeps sign-out inside the account screen", async () => 
 });
 
 test("the native sidebar uses the app surface without section separators", async () => {
-  const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
-  const sidebarItems = await readFile(path.resolve(process.cwd(), "src/components/navigation/sidebar-items.tsx"), "utf8");
+  const [navigation, sidebarItems] = await readSources(
+    "src/components/navigation/app-navigation.tsx",
+    "src/components/navigation/sidebar-items.tsx",
+  );
 
   assertSourceMatch(navigation, /drawer: \{ backgroundColor: tokens\.color\.surfaceApp/);
   assertSourceMatch(navigation, /drawerHeader: \{[^}]*paddingHorizontal: tokens\.spacing\.md \* 2/);
@@ -170,9 +176,11 @@ test("personal records groups the persisted nutrition inputs", async () => {
 });
 
 test("system foundations exposes nutrition and product-manual journeys", async () => {
-  const home = await readFile(path.resolve(process.cwd(), "src/app/system-foundations/index.tsx"), "utf8");
-  const catalog = await readFile(path.resolve(process.cwd(), "src/app/system-foundations/[kind]/index.tsx"), "utf8");
-  const detail = await readFile(path.resolve(process.cwd(), "src/app/system-foundations/[kind]/[slug].tsx"), "utf8");
+  const [home, catalog, detail] = await readSources(
+    "src/app/system-foundations/index.tsx",
+    "src/app/system-foundations/[kind]/index.tsx",
+    "src/app/system-foundations/[kind]/[slug].tsx",
+  );
 
   assertSourceMatch(home, /Fundamentos Nutricionales/);
   assertSourceMatch(home, /Manuales de uso/);
