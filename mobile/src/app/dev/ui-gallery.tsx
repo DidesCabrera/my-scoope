@@ -27,7 +27,7 @@ import { ProgramDaySelector } from "@/components/libraries/program-planning-cont
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
-import { OnboardingJourneyView, onboardingJourneySteps } from "@/components/onboarding";
+import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -200,7 +200,6 @@ const activeProgramDayExamples = [
 export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
   const [tab, setTab] = useState<GalleryTab>("components");
-  const [onboardingPreviewWidth, setOnboardingPreviewWidth] = useState<(typeof calendarPreviewWidths)[number]["width"]>(414);
   const [choice, setChoice] = useState<Choice>("daily");
   const [distributedExample, setDistributedExample] = useState<"chats" | "proposals">("chats");
   const [scrollableExample, setScrollableExample] = useState<"week1" | "week2" | "week3" | "week4">("week1");
@@ -209,10 +208,6 @@ export default function UiGalleryScreen() {
   const [field, setField] = useState("");
   const [selectedProgramDay, setSelectedProgramDay] = useState<number | string | null>("tue");
   const [selectedActiveProgramDay, setSelectedActiveProgramDay] = useState<number | string | null>("active-tue");
-  const activeOnboardingPreviewWidth = calendarPreviewWidths.some((preview) => preview.width === onboardingPreviewWidth)
-    ? onboardingPreviewWidth
-    : calendarPreviewWidths[0].width;
-
   if (!__DEV__) return <Redirect href="/" />;
 
   return (
@@ -223,28 +218,11 @@ export default function UiGalleryScreen() {
         <View style={styles.galleryContent}>
 
       {tab === "onboarding" ? (
-        <>
-          <SectionTitle detail="Storyboard visual · sin sesión, API ni persistencia" title="Flujo inicial" />
-          <ScrollableTabBar<(typeof calendarPreviewWidths)[number]["width"]>
-            accessibilityLabel="Formatos del onboarding"
-            activeTab={activeOnboardingPreviewWidth}
-            density="compact"
-            onChange={setOnboardingPreviewWidth}
-            tabs={calendarPreviewWidths.map((preview) => ({ key: preview.width, label: preview.label }))}
-          />
-          <InlineNotice>Cada formato presenta el flujo completo en orden, con datos fijos y sin persistencia.</InlineNotice>
-          {onboardingJourneySteps.map((step, index) => (
-            <View key={`onboarding-${activeOnboardingPreviewWidth}-${step.key}`} style={[styles.onboardingPreview, { width: activeOnboardingPreviewWidth }]}>
-              <View style={styles.onboardingPreviewMeta}>
-                <Text style={styles.devicePreviewName}>{String(index + 1).padStart(2, "0")}. {step.label}</Text>
-                <Text style={styles.devicePreviewWidth}>{activeOnboardingPreviewWidth} pt</Text>
-              </View>
-              <View style={[styles.devicePreview, styles.onboardingDevicePreview]}>
-                <OnboardingJourneyView step={step.key} />
-              </View>
-            </View>
-          ))}
-        </>
+        <OnboardingStoryboardGallery />
+      ) : null}
+
+      {tab === "labelCapture" ? (
+        <LabelCaptureStoryboardGallery />
       ) : null}
 
       {tab === "components" ? (
@@ -770,9 +748,6 @@ const styles = StyleSheet.create({
   calendarExampleLabel: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.bold, letterSpacing: 0.8 },
   devicePreview: { alignSelf: "center", backgroundColor: tokens.color.surfacePage, borderColor: tokens.color.borderStrong, borderRadius: 30, borderWidth: 1, maxWidth: "100%", overflow: "hidden" },
   devicePreviewHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
-  onboardingPreview: { alignSelf: "center", gap: tokens.spacing.sm, maxWidth: "100%" },
-  onboardingDevicePreview: { width: "100%" },
-  onboardingPreviewMeta: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.sm },
   devicePreviewName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   devicePreviewScreen: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.lg },
   devicePreviewWidth: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },

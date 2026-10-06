@@ -1,19 +1,22 @@
 import * as Crypto from "expo-crypto";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import { Redirect, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { Image, Modal, Platform, StyleSheet, Switch, Text, View } from "react-native";
+import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
+import { Camera, Check, CheckCheck, Maximize2, ScanLine } from "lucide-react-native";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Image, Modal, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
+import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, Field, InlineNotice, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { NutritionEntityCard } from "@/components/nutrition";
+import { Button, Card, Field, InlineNotice, MacroLoadingIndicator, Pill, Screen, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import {
   LABEL_CAMERA_AUTOFOCUS,
   LABEL_CAMERA_FOCUS_SETTLE_MS,
-  LABEL_CAMERA_MAX_ZOOM,
-  LABEL_CAMERA_ZOOM_STEP,
 } from "@/label-capture/camera";
 import { deleteCachedImage, prepareLabelImage, type PreparedLabelImage } from "@/label-capture/image";
 import {
@@ -41,7 +44,8 @@ import {
   recognizeNutritionLabel,
 } from "../../modules/nutrition-label-ocr/src/NutritionLabelOcrModule";
 
-type Phase = "intro" | "camera" | "preview" | "review" | "saved";
+type Phase = "intro" | "camera" | "preview" | "processing" | "review" | "confirmation" | "saved";
+type CaptureSource = "camera" | "gallery";
 type LocalCandidate = { basis: string; values: Record<string, number> };
 type FormState = {
   name: string;
@@ -102,8 +106,78 @@ function aiDraft(result: FoodLabelAIAnalysis): NutritionLabelDraft {
   };
 }
 
+function FullBleedSquare({ children, surfaceStyle }: { children: ReactNode; surfaceStyle?: StyleProp<ViewStyle> }) {
+  const [contentWidth, setContentWidth] = useState(0);
+  const size = contentWidth ? contentWidth + tokens.spacing.screen * 2 : undefined;
+  return (
+    <View
+      onLayout={({ nativeEvent }) => setContentWidth((current) => current === nativeEvent.layout.width ? current : nativeEvent.layout.width)}
+      style={[styles.fullBleedSquareLayout, size ? { height: size } : styles.fullBleedSquareFallback]}>
+      <View style={[surfaceStyle, styles.fullBleedSquareSurface, size ? { height: size, width: size } : styles.fullBleedSquareSurfaceFallback]}>{children}</View>
+    </View>
+  );
+}
+
+function CreditFocusGuide() {
+  const [size, setSize] = useState({ height: 0, width: 0 });
+  return (
+    <View
+      onLayout={({ nativeEvent }) => {
+        const next = nativeEvent.layout;
+        setSize((current) => current.height === next.height && current.width === next.width ? current : { height: next.height, width: next.width });
+      }}
+      pointerEvents="none"
+      style={styles.guide}>
+      {size.width > 4 && size.height > 4 ? (
+        <Svg aria-hidden height={size.height} width={size.width}>
+          <Defs>
+            <LinearGradient id="label-capture-live-guide" x1="0" x2="1" y1="0" y2="1">
+              <Stop offset="0" stopColor={tokens.color.protein} />
+              <Stop offset="0.5" stopColor={tokens.color.carbs} />
+              <Stop offset="1" stopColor={tokens.color.fat} />
+            </LinearGradient>
+          </Defs>
+          <Rect fill="none" height={size.height - 4} rx={tokens.radius.lg} ry={tokens.radius.lg} stroke="url(#label-capture-live-guide)" strokeWidth="4" width={size.width - 4} x="2" y="2" />
+        </Svg>
+      ) : null}
+    </View>
+  );
+}
+
+function CreditTaskIcon({ complete, id }: { complete: boolean; id: string }) {
+  return (
+    <Svg aria-hidden height="18" viewBox="0 0 18 18" width="18">
+      <Defs>
+        <LinearGradient id={id} x1="0" x2="1" y1="0" y2="1">
+          <Stop offset="0" stopColor={tokens.color.protein} />
+          <Stop offset="0.5" stopColor={tokens.color.carbs} />
+          <Stop offset="1" stopColor={tokens.color.fat} />
+        </LinearGradient>
+      </Defs>
+      {complete
+        ? <Path d="M3 9.5 7 13.5 15 5.5" fill="none" stroke={`url(#${id})`} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" />
+        : <Circle cx="9" cy="9" fill="none" r="7" stroke={`url(#${id})`} strokeWidth="2.2" />}
+    </Svg>
+  );
+}
+
+function nutritionSummary(protein: number, carbs: number, fat: number, declaredEnergy?: number) {
+  const proteinCalories = protein * 4;
+  const carbsCalories = carbs * 4;
+  const fatCalories = fat * 9;
+  const macroCalories = proteinCalories + carbsCalories + fatCalories;
+  const allocation = (value: number) => macroCalories > 0 ? value / macroCalories * 100 : 0;
+  return {
+    calories: declaredEnergy ?? macroCalories,
+    protein: { grams: protein, allocation: allocation(proteinCalories) },
+    carbs: { grams: carbs, allocation: allocation(carbsCalories) },
+    fat: { grams: fat, allocation: allocation(fatCalories) },
+  };
+}
+
 export default function LabelCaptureScreen() {
   const router = useRouter();
+  const setHeaderPresentation = useHeaderPresentation();
   const cameraRef = useRef<CameraView>(null);
   const cameraReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const captureInFlightRef = useRef(false);
@@ -129,7 +203,7 @@ export default function LabelCaptureScreen() {
   const [qualityConfidence, setQualityConfidence] = useState<number | null>(null);
   const [retainImage, setRetainImage] = useState(false);
   const [imageExpanded, setImageExpanded] = useState(false);
-  const [zoom, setZoom] = useState(0);
+  const [captureSource, setCaptureSource] = useState<CaptureSource>("camera");
   const [availableLenses, setAvailableLenses] = useState<string[]>([]);
   const [selectedLens, setSelectedLens] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
@@ -146,8 +220,6 @@ export default function LabelCaptureScreen() {
   useEffect(() => () => {
     if (cameraReadyTimerRef.current) clearTimeout(cameraReadyTimerRef.current);
   }, []);
-
-  if (status === "anonymous") return <Redirect href="/login" />;
 
   function update(field: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -239,7 +311,7 @@ export default function LabelCaptureScreen() {
     setOpeningCamera(true);
     setError(null);
     setTorchEnabled(false);
-    setZoom(0);
+    setCaptureSource("camera");
     setSelectedLens(undefined);
     setAvailableLenses([]);
     try {
@@ -298,6 +370,7 @@ export default function LabelCaptureScreen() {
     analysisInFlightRef.current = true;
     setProcessing(true);
     setError(null);
+    setPhase("processing");
     try {
       const result = await apiRequest<FoodLabelAIAnalysis>("/api/v1/foods/label-captures/analyze", {
         method: "POST",
@@ -344,6 +417,7 @@ export default function LabelCaptureScreen() {
     if (preparing || processing) return;
     setPreparing(true);
     setError(null);
+    setCaptureSource("gallery");
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
@@ -375,6 +449,33 @@ export default function LabelCaptureScreen() {
     setSelectedLens(availableLenses[(currentIndex + 1) % availableLenses.length]);
     setCameraReady(false);
     cameraDidBecomeReady();
+  }
+
+  async function retakePhoto() {
+    deleteCachedImage(prepared?.uri);
+    setPrepared(null);
+    setLocalCandidate(undefined);
+    setImageQuality(unavailableLabelImageQuality);
+    await beginCamera();
+  }
+
+  function continueToConfirmation() {
+    if (draft?.normalizationStatus !== "ready") {
+      setError("Confirma la base y completa la conversión antes de continuar.");
+      return;
+    }
+    const requiredValues = [optionalNumber(form.protein), optionalNumber(form.carbs), optionalNumber(form.fat)];
+    if (!form.name.trim() || requiredValues.some((value) => value === undefined)) {
+      setError("Completa el nombre, proteínas, carbos y grasas antes de continuar.");
+      return;
+    }
+    const optionalInputs = [form.energy, form.saturatedFat, form.sugar, form.fiber, form.sodium, form.servingSize, form.volumeWeight];
+    if (optionalInputs.some((value) => value.trim() && optionalNumber(value) === undefined)) {
+      setError("Revisa los campos opcionales: usa sólo números positivos o déjalos vacíos.");
+      return;
+    }
+    setError(null);
+    setPhase("confirmation");
   }
 
   async function save() {
@@ -435,7 +536,7 @@ export default function LabelCaptureScreen() {
     }
   }
 
-  function restart() {
+  const restart = useCallback(() => {
     deleteCachedImage(prepared?.uri);
     setForm(emptyForm);
     setDraft(null);
@@ -449,14 +550,37 @@ export default function LabelCaptureScreen() {
     setError(null);
     setCaptureKey(Crypto.randomUUID());
     setImageExpanded(false);
+    setCaptureSource("camera");
     setPhase("intro");
-  }
+  }, [prepared?.uri]);
+
+  useFocusEffect(useCallback(() => {
+    const hiddenLeadingAction = { icon: "none" as const, label: "", onPress: () => undefined };
+    if (phase === "intro") {
+      setHeaderPresentation({ identityVisible: false, mode: "default" });
+    } else if (phase === "camera") {
+      setHeaderPresentation({ action: { label: "Cancelar", onPress: restart }, leadingAction: { icon: "back", label: "Volver", onPress: restart }, mode: "back", title: "Tomar foto" });
+    } else if (phase === "preview") {
+      const back = () => setPhase(captureSource === "camera" ? "camera" : "intro");
+      setHeaderPresentation({ action: { label: "Cancelar", onPress: restart }, leadingAction: { icon: "back", label: "Volver", onPress: back }, mode: "back", title: "Confirmación calidad" });
+    } else if (phase === "processing") {
+      setHeaderPresentation({ leadingAction: hiddenLeadingAction, mode: "back", title: "Analizando información" });
+    } else if (phase === "review") {
+      setHeaderPresentation({ action: { label: "Cancelar", onPress: restart }, leadingAction: hiddenLeadingAction, mode: "back", title: "Revisión de información" });
+    } else if (phase === "confirmation") {
+      setHeaderPresentation({ action: { label: "Cancelar", onPress: restart }, leadingAction: { icon: "back", label: "Volver", onPress: () => setPhase("review") }, mode: "back", title: "Crear Alimento" });
+    } else {
+      setHeaderPresentation({ action: { label: "Listo", onPress: () => router.back() }, leadingAction: hiddenLeadingAction, mode: "back", title: "" });
+    }
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [captureSource, phase, restart, router, setHeaderPresentation]));
+
+  if (status === "anonymous") return <Redirect href="/login" />;
 
   if (phase === "camera") {
     return (
-      <Screen scroll={false}>
-        <AppHeader eyebrow="Foto para IA" title="Encuadra la tabla" />
-        <View style={styles.cameraFrame}>
+      <Screen contentStyle={styles.fixedScreen} headerMode="preserve" scroll={false}>
+        <FullBleedSquare surfaceStyle={styles.cameraFrame}>
           <CameraView
             autofocus={LABEL_CAMERA_AUTOFOCUS}
             enableTorch={torchEnabled}
@@ -468,86 +592,156 @@ export default function LabelCaptureScreen() {
             ref={cameraRef}
             selectedLens={selectedLens}
             style={StyleSheet.absoluteFill}
-            zoom={zoom}
+            zoom={0}
           />
-          <View pointerEvents="none" style={styles.guide} />
-          <View pointerEvents="none" style={styles.cameraCopy}>
-            <Text style={styles.cameraCopyText}>Mantén el teléfono paralelo y aléjalo hasta ver el texto nítido. Usa zoom en vez de acercarte demasiado.</Text>
+          <CreditFocusGuide />
+          <View pointerEvents="none" style={styles.focusBadge}>
+            <ScanLine color={tokens.color.textMain} size={15} />
+            <Text style={styles.focusText}>{cameraReady ? "Enfoque listo" : "Preparando enfoque"}</Text>
           </View>
-        </View>
+        </FullBleedSquare>
+        <View style={styles.photoMessage}><Text style={styles.photoMessageText}>Intenta tomar la foto con buena iluminación y sin movimiento. Una mejor calidad de la foto facilitará un mejor resultado.</Text></View>
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-        {!cameraReady ? <Text style={textStyles.caption}>Preparando enfoque continuo…</Text> : null}
-        <Button disabled={!cameraReady || capturing || preparing} label="Capturar foto" loading={capturing || preparing} onPress={() => void capture()} />
-        <View style={styles.cameraControls}>
-          <Button disabled={!cameraReady || capturing || zoom <= 0} label="Alejar" onPress={() => setZoom((current) => Math.max(0, current - LABEL_CAMERA_ZOOM_STEP))} variant="secondary" />
-          <Button disabled={!cameraReady || capturing || zoom >= LABEL_CAMERA_MAX_ZOOM} label="Acercar" onPress={() => setZoom((current) => Math.min(LABEL_CAMERA_MAX_ZOOM, current + LABEL_CAMERA_ZOOM_STEP))} variant="secondary" />
+        <View style={styles.bottomActions}>
+          <Button disabled={!cameraReady || capturing || preparing} label="Capturar foto" loading={capturing || preparing} onPress={() => void capture()} />
+          {availableLenses.length > 1 ? <Button disabled={capturing || preparing} label="Cambiar lente" onPress={cycleLens} variant="secondary" /> : null}
+          <Button disabled={!cameraReady || capturing || preparing} label={torchEnabled ? "Apagar luz" : "Encender luz"} onPress={() => setTorchEnabled((current) => !current)} variant="secondary" />
         </View>
-        {availableLenses.length > 1 ? <Button disabled={capturing || preparing} label="Cambiar lente" onPress={cycleLens} variant="secondary" /> : null}
-        <Button disabled={!cameraReady || capturing || preparing} label={torchEnabled ? "Apagar luz" : "Encender luz"} onPress={() => setTorchEnabled((current) => !current)} variant="secondary" />
-        <Button disabled={capturing || preparing} label="Cancelar" onPress={restart} variant="secondary" />
       </Screen>
     );
   }
 
   if (phase === "preview" && prepared) {
+    const qualityPresentation = imageQuality.status === "suitable"
+      ? { detail: "La fotografía superó las comprobaciones de nitidez, encuadre y perspectiva. Confirma que el encabezado y todas las filas estén visibles.", label: "Óptima", title: "Lista para digitalizar", tone: tokens.color.success }
+      : imageQuality.status === "reviewable"
+        ? { detail: "La imagen puede usarse, pero revisa los puntos detectados antes de continuar.", label: "Revisar", title: "Comprueba la fotografía", tone: tokens.color.warning }
+        : imageQuality.status === "unsuitable"
+          ? { detail: "La imagen no es suficientemente legible y no será enviada ni consumirá créditos.", label: "No apta", title: "Toma otra fotografía", tone: tokens.color.danger }
+          : { detail: "No pudimos comprobar automáticamente la nitidez. Confirma visualmente que todo el texto sea legible.", label: "Sin validar", title: "Comprueba la fotografía", tone: tokens.color.warning };
     return (
-      <Screen>
-        <AppHeader eyebrow="Antes de usar créditos" title="Revisa la fotografía" />
+      <Screen headerMode="preserve">
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-        <Image accessibilityLabel="Fotografía procesada de la etiqueta nutricional" resizeMode="contain" source={{ uri: prepared.uri }} style={styles.previewImage} />
-        {imageQuality.status === "suitable" ? <InlineNotice>La imagen superó las comprobaciones locales de legibilidad.</InlineNotice> : null}
-        {imageQuality.status === "reviewable" ? <InlineNotice tone="warning">La imagen puede usarse, pero conviene revisar estos puntos antes de continuar.</InlineNotice> : null}
-        {imageQuality.status === "unsuitable" ? <InlineNotice tone="error">Esta imagen no es suficientemente legible y no será enviada ni consumirá créditos.</InlineNotice> : null}
-        {imageQuality.status === "unavailable" ? <InlineNotice tone="warning">No pudimos comprobar automáticamente la nitidez. Confirma visualmente que todo el texto sea legible.</InlineNotice> : null}
-        {imageQuality.issues.map((issue) => <Text key={issue} style={textStyles.caption}>• {labelImageQualityMessage(issue)}</Text>)}
-        <Button disabled={imageQuality.status === "unsuitable" || processing} label="Usar esta foto" loading={processing} onPress={() => void analyzePreparedImage()} />
-        <Button disabled={processing} label="Usar otra foto" onPress={restart} variant="secondary" />
-        <Button disabled={processing} label="Ingresar manualmente" onPress={() => beginManualReview()} variant="secondary" />
+        <FullBleedSquare><Image accessibilityLabel="Fotografía procesada de la etiqueta nutricional" resizeMode="contain" source={{ uri: prepared.uri }} style={StyleSheet.absoluteFill} /></FullBleedSquare>
+        <View style={styles.qualityPanel}>
+          <View style={styles.qualityCopy}>
+            <Text style={styles.qualityTitle}>{qualityPresentation.title}</Text>
+            <Text style={styles.qualityDetail}>{qualityPresentation.detail}</Text>
+            {imageQuality.issues.map((issue) => <Text key={issue} style={styles.qualityIssue}>• {labelImageQualityMessage(issue)}</Text>)}
+          </View>
+          <Pill color={qualityPresentation.tone} label={qualityPresentation.label} />
+        </View>
+        <View style={styles.bottomActions}>
+          <Button disabled={imageQuality.status === "unsuitable" || processing} label={`Usar esta foto${config ? ` · ${config.credits_per_scan} ${config.credits_per_scan === 1 ? "crédito" : "créditos"}` : ""}`} loading={processing} onPress={() => void analyzePreparedImage()} />
+          <Button disabled={processing} label="Tomar otra foto" onPress={() => void retakePhoto()} variant="secondary" />
+        </View>
       </Screen>
     );
   }
 
+  if (phase === "processing" && prepared) {
+    return (
+      <Screen headerMode="preserve">
+        <FullBleedSquare surfaceStyle={styles.processingPhoto}>
+          <Image accessibilityLabel="Etiqueta nutricional en análisis" resizeMode="contain" source={{ uri: prepared.uri }} style={StyleSheet.absoluteFill} />
+          <View style={styles.scanBeam}>
+            <Svg aria-hidden height="100%" width="100%">
+              <Defs>
+                <LinearGradient id="label-capture-live-scan" x1="0" x2="1" y1="0" y2="0">
+                  <Stop offset="0" stopColor={tokens.color.protein} />
+                  <Stop offset="0.5" stopColor={tokens.color.carbs} />
+                  <Stop offset="1" stopColor={tokens.color.fat} />
+                </LinearGradient>
+              </Defs>
+              <Rect fill="url(#label-capture-live-scan)" height="100%" rx="2" ry="2" width="100%" />
+            </Svg>
+          </View>
+        </FullBleedSquare>
+        <View style={styles.processingDetails}>
+          <View style={styles.processingHeader}>
+            <View style={styles.qualityCopy}><Text style={styles.processingTitle}>Analizando valores</Text><Text style={styles.qualityDetail}>Normalizando la información a 100 g.</Text></View>
+            <MacroLoadingIndicator accessibilityLabel="Analizando los valores nutricionales" style={styles.processingLoading} />
+          </View>
+          <View style={styles.taskList}>
+            <View style={styles.taskRow}><CreditTaskIcon complete id="live-credit-task-text" /><Text style={styles.taskDone}>Texto reconocido</Text></View>
+            <View style={styles.taskRow}><CreditTaskIcon complete id="live-credit-task-column" /><Text style={styles.taskDone}>Columna por 100 g identificada</Text></View>
+            <View style={styles.taskRow}><CreditTaskIcon complete={false} id="live-credit-task-nutrients" /><Text style={styles.taskActive}>Comprobando nutrientes…</Text></View>
+          </View>
+        </View>
+        <Text style={styles.quietCenter}>No cierres esta pantalla. Suele tardar pocos segundos.</Text>
+      </Screen>
+    );
+  }
+
+  const formNutrition = nutritionSummary(
+    optionalNumber(form.protein) ?? 0,
+    optionalNumber(form.carbs) ?? 0,
+    optionalNumber(form.fat) ?? 0,
+    optionalNumber(form.energy),
+  );
+
+  const nutrientRows: { field: keyof FormState; label: string; unit: string }[] = [
+    { field: "energy", label: "Energía", unit: "kcal" },
+    { field: "protein", label: "Proteínas", unit: "g" },
+    { field: "carbs", label: "Carbohidratos", unit: "g" },
+    { field: "fat", label: "Grasas totales", unit: "g" },
+    { field: "saturatedFat", label: "Grasas saturadas", unit: "g" },
+    { field: "sugar", label: "Azúcares", unit: "g" },
+    { field: "fiber", label: "Fibra", unit: "g" },
+    { field: "sodium", label: "Sodio", unit: "mg" },
+  ];
+
   return (
-    <Screen>
-      <AppHeader eyebrow="Alimento privado" title="Digitalizar etiqueta" />
+    <Screen headerMode="preserve">
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
       {phase === "intro" ? (
         <>
-          <Card accent={tokens.color.food}>
-            <SectionTitle detail={config ? `${config.credits_per_scan} créditos` : "Créditos"} title="Foto, IA y revisión" />
-            <Text style={textStyles.muted}>Al continuar, autorizas enviar temporalmente una copia reducida y sin metadatos de la etiqueta a nuestro proveedor de IA. La foto original no se guarda.</Text>
-            <View style={styles.steps}>
-              <Text style={textStyles.caption}>1 · Usa la cámara o elige una foto clara.</Text>
-              <Text style={textStyles.caption}>2 · La IA extrae y valida los valores por 100 g.</Text>
-              <Text style={textStyles.caption}>3 · Tú revisas todo antes de crear el alimento.</Text>
+          <View style={styles.introHeader}>
+            <Camera color={tokens.color.textMain} size={34} strokeWidth={1.8} />
+            <Text style={styles.eyebrow}>DIGITALIZAR ETIQUETA</Text>
+            <Text style={styles.introTitle}>Convierte una etiqueta en segundos</Text>
+            <Text style={styles.introDescription}>Fotografía la tabla nutricional y crea un alimento privado sin transcribir cada dato.</Text>
+          </View>
+          <View style={styles.assuranceList}>
+            <View style={styles.assuranceRow}><Camera color={tokens.color.textMuted} size={17} /><Text style={styles.assuranceText}>Captura o elige una foto clara.</Text></View>
+            <View style={styles.assuranceRow}><CheckCheck color={tokens.color.textMuted} size={17} /><Text style={styles.assuranceText}>Validamos nitidez antes de usar créditos.</Text></View>
+            <View style={styles.assuranceRow}><Check color={tokens.color.textMuted} size={17} /><Text style={styles.assuranceText}>Tú confirmas cada valor antes de guardar.</Text></View>
+          </View>
+          <InlineNotice>Enviaremos una copia reducida y sin metadatos para extraer los valores. La fotografía original no se guarda.</InlineNotice>
+          <View style={styles.introBottom}>
+            {config ? <AssistantCreditBalance availability={{ available_credits: config.available_credits }} contained /> : null}
+            <View style={styles.actionGroup}>
+              <Button disabled={config ? !config.can_scan : false} label="Abrir cámara" loading={openingCamera} onPress={() => void beginCamera()} />
+              <Button disabled={config ? !config.can_scan : false} label="Elegir desde galería" loading={preparing} onPress={() => void chooseFromGallery()} variant="secondary" />
+              <Button label="Ingresar manualmente" onPress={() => beginManualReview()} variant="secondary" />
             </View>
-            {config ? <Text style={textStyles.caption}>Saldo disponible: {config.available_credits} créditos.</Text> : null}
-          </Card>
-          <Button disabled={config ? !config.can_scan : false} label="Abrir cámara" loading={openingCamera} onPress={() => void beginCamera()} />
-          <Button disabled={config ? !config.can_scan : false} label="Elegir desde galería" loading={preparing} onPress={() => void chooseFromGallery()} variant="secondary" />
-          <Button label="Ingresar manualmente" onPress={() => beginManualReview()} variant="secondary" />
+          </View>
         </>
       ) : null}
 
       {phase === "review" ? (
         <>
-          <InlineNotice tone="warning">La IA puede equivocarse. Compara cada valor con el envase antes de guardar.</InlineNotice>
           {prepared ? (
-            <Card>
-              <SectionTitle detail="Imagen analizada" title="Compara la lectura" />
-              <Image accessibilityLabel="Etiqueta nutricional analizada" resizeMode="contain" source={{ uri: prepared.uri }} style={styles.reviewImage} />
-              <Button label="Ampliar foto" onPress={() => setImageExpanded(true)} variant="secondary" />
-            </Card>
-          ) : null}
-          {qualityConfidence !== null ? (
-            <InlineNotice tone={qualityConfidence < 0.82 ? "warning" : undefined}>
-              {qualityConfidence >= 0.9
-                ? "La extracción tiene confianza alta. Confirma igualmente cada valor."
-                : qualityConfidence >= 0.82
-                  ? "La extracción es utilizable, pero revisa cuidadosamente cada valor."
-                  : "La extracción tiene confianza baja. Revisa y corrige cada campo antes de guardar."}
-            </InlineNotice>
+            <View style={styles.reviewEvidence}>
+              <FullBleedSquare surfaceStyle={styles.reviewPhoto}>
+                <Image accessibilityLabel="Etiqueta nutricional analizada" resizeMode="contain" source={{ uri: prepared.uri }} style={StyleSheet.absoluteFill} />
+                <Pressable accessibilityLabel="Expandir foto" accessibilityRole="button" onPress={() => setImageExpanded(true)} style={({ pressed }) => [styles.expandPhotoButton, pressed && styles.expandPhotoButtonPressed]}>
+                  <Maximize2 color={tokens.color.textMain} size={18} strokeWidth={2.2} />
+                </Pressable>
+              </FullBleedSquare>
+              <View style={styles.photoMessage}>
+                <Text style={styles.photoMessageText}>
+                  {qualityConfidence === null
+                    ? "La lectura pasó las comprobaciones automáticas. Confirma cada valor con la etiqueta."
+                    : qualityConfidence >= 0.9
+                      ? "Confianza alta. La lectura pasó las comprobaciones automáticas."
+                      : qualityConfidence >= 0.82
+                        ? "Lectura utilizable. Revisa cuidadosamente cada valor."
+                        : "Confianza baja. Corrige cada campo comparándolo con la etiqueta."}
+                </Text>
+              </View>
+            </View>
           ) : null}
           {draft?.normalizationStatus === "basis_confirmation_required" ? (
             <Card accent={tokens.color.warning}>
@@ -574,61 +768,95 @@ export default function LabelCaptureScreen() {
             </Card>
           ) : null}
           {draft?.warnings.length ? (
-            <Card muted>
-              <SectionTitle detail={`${draft.warnings.length}`} title="Puntos por revisar" />
+            <View style={styles.warningList}>
+              <Text style={styles.warningTitle}>Puntos por revisar</Text>
               {draft.warnings.map((warning) => <Text key={warning} style={textStyles.caption}>• {displayWarning(warning)}</Text>)}
-            </Card>
-          ) : <InlineNotice>La lectura pasó las comprobaciones automáticas. Aun así, confírmala visualmente.</InlineNotice>}
-          <Card accent={tokens.color.food}>
-            <View style={styles.reviewHeader}>
-              <Text style={styles.reviewTitle}>{draft?.normalizationStatus === "ready" ? "Valores por 100 g" : "Valores extraídos"}</Text>
-              <Pill color={tokens.color.food} label={analysisId ? "IA" : "Manual"} />
+            </View>
+          ) : null}
+          <View style={styles.reviewForm}>
+            <Text style={styles.reviewTitle}>{draft?.normalizationStatus === "ready" ? "Valores por 100 g" : "Valores extraídos"}</Text>
+            <View style={styles.nutritionRows}>
+              {nutrientRows.map((item) => (
+                <View key={item.field} style={styles.nutritionRow}>
+                  <Text style={styles.nutritionLabel}>{item.label}</Text>
+                  <View style={styles.nutritionInputSurface}>
+                    <TextInput accessibilityLabel={item.label} keyboardType="decimal-pad" onChangeText={(value) => update(item.field, value)} selectTextOnFocus style={styles.nutritionInput} value={form[item.field]} />
+                    <Text style={styles.nutritionUnit}>{item.unit}</Text>
+                  </View>
+                </View>
+              ))}
+              <View style={[styles.nutritionRow, styles.portionRow]}>
+                <Text style={[styles.nutritionLabel, styles.nutritionLabelEmphasis]}>Tamaño de la porción</Text>
+                <View style={styles.nutritionInputSurface}>
+                  <TextInput accessibilityLabel="Tamaño de la porción" keyboardType="decimal-pad" onChangeText={(value) => update("servingSize", value)} selectTextOnFocus style={styles.nutritionInput} value={form.servingSize} />
+                  <Text style={styles.nutritionUnit}>g</Text>
+                </View>
+              </View>
             </View>
             <Field autoCapitalize="words" label="Nombre del producto" onChangeText={(value) => update("name", value)} placeholder="Ej. Yogur griego natural" value={form.name} />
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Proteínas (g)" onChangeText={(value) => update("protein", value)} value={form.protein} /></View>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Carbos (g)" onChangeText={(value) => update("carbs", value)} value={form.carbs} /></View>
-            </View>
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Grasas (g)" onChangeText={(value) => update("fat", value)} value={form.fat} /></View>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Energía (kcal)" onChangeText={(value) => update("energy", value)} value={form.energy} /></View>
-            </View>
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Azúcares (g)" onChangeText={(value) => update("sugar", value)} value={form.sugar} /></View>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Fibra (g)" onChangeText={(value) => update("fiber", value)} value={form.fiber} /></View>
-            </View>
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Grasas saturadas (g)" onChangeText={(value) => update("saturatedFat", value)} value={form.saturatedFat} /></View>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Sodio (mg)" onChangeText={(value) => update("sodium", value)} value={form.sodium} /></View>
-            </View>
-            <Field keyboardType="decimal-pad" label="Tamaño de porción original (g, opcional)" onChangeText={(value) => update("servingSize", value)} value={form.servingSize} />
-            {prepared && analysisId ? (
+          </View>
+          <View style={styles.reviewContinue}><Button label="Continuar" onPress={continueToConfirmation} /></View>
+        </>
+      ) : null}
+
+      {phase === "confirmation" ? (
+        <>
+          <View style={styles.confirmationHeading}>
+            <SectionHeading icon={<CheckCheck color={tokens.color.entityIconForeground} size={18} />} title="Confirma el alimento" />
+            <Text style={styles.confirmationSubtitle}>Al guardar confirmas que comparaste los valores con la etiqueta.</Text>
+          </View>
+          <NutritionEntityCard entity="food" indicators={[{ label: "base nutricional", value: "100 g" }]} nutrition={formNutrition} title={form.name.trim() || "Alimento sin nombre"} />
+          {prepared && analysisId ? (
+            <View style={styles.retentionPanel}>
               <View style={styles.retentionRow}>
                 <View style={styles.retentionCopy}>
-                  <Text style={textStyles.body}>Guardar copia procesada</Text>
-                  <Text style={textStyles.caption}>Opcional. Quedará privada y podrás eliminarla después.</Text>
+                  <Text style={styles.retentionTitle}>Guardar copia procesada</Text>
+                  <Text style={styles.retentionDetail}>Opcional, privada y eliminable después.</Text>
                 </View>
-                <Switch onValueChange={setRetainImage} value={retainImage} />
+                <Switch accessibilityLabel="Guardar copia procesada" onValueChange={setRetainImage} value={retainImage} />
               </View>
-            ) : null}
+            </View>
+          ) : null}
+          <View style={styles.bottomActions}>
             <Button label="Confirmar y crear alimento" loading={saving} onPress={() => void save()} />
-          </Card>
-          <Button disabled={saving} label="Usar otra foto" onPress={restart} variant="secondary" />
+            <Button disabled={saving} label="Volver a revisar" onPress={() => setPhase("review")} variant="secondary" />
+          </View>
         </>
       ) : null}
 
       {phase === "saved" && saved ? (
         <>
-          <Card accent={tokens.color.success}>
-            <SectionTitle detail={`${Math.round(saved.total_kcal)} kcal`} title={saved.name} />
-            <Text style={textStyles.muted}>Creado en tu biblioteca privada · P {saved.protein_g} g · C {saved.carbs_g} g · G {saved.fat_g} g</Text>
-            <Text style={textStyles.caption}>{saved.label_image_retained ? "Guardamos sólo la copia procesada que autorizaste." : "La foto utilizada para la lectura no fue guardada."}</Text>
-          </Card>
-          <Button label="Digitalizar otra etiqueta" onPress={restart} />
+          <View style={styles.successHero}>
+            <View style={styles.successIcon}>
+              <Svg aria-hidden height="100%" pointerEvents="none" style={StyleSheet.absoluteFill} viewBox="0 0 64 64" width="100%">
+                <Defs>
+                  <LinearGradient id="label-capture-live-success" x1="0" x2="1" y1="0" y2="1">
+                    <Stop offset="0" stopColor={tokens.color.protein} />
+                    <Stop offset="0.5" stopColor={tokens.color.carbs} />
+                    <Stop offset="1" stopColor={tokens.color.fat} />
+                  </LinearGradient>
+                </Defs>
+                <Circle cx="32" cy="32" fill="url(#label-capture-live-success)" r="32" />
+              </Svg>
+              <Check color={tokens.color.surfaceApp} size={32} />
+            </View>
+            <Text style={styles.successTitle}>{saved.name}</Text>
+            <Text style={styles.successDetail}>Creado en tu biblioteca privada</Text>
+          </View>
+          <NutritionEntityCard
+            entity="food"
+            indicators={[{ label: "base nutricional", value: "100 g" }]}
+            nutrition={nutritionSummary(saved.protein_g, saved.carbs_g, saved.fat_g, saved.total_kcal)}
+            title={saved.name}
+          />
+          <InlineNotice>{saved.label_image_retained ? "Guardamos sólo la copia procesada que autorizaste." : "La fotografía utilizada para la lectura no fue guardada."}</InlineNotice>
+          <View style={styles.bottomActions}>
+            <Button label="Ver alimento" onPress={() => router.push(`/libraries/foods/${saved.id}` as Href)} />
+            <Button label="Digitalizar otra etiqueta" onPress={restart} variant="secondary" />
+          </View>
         </>
       ) : null}
 
-      <Button label="Volver a Today" onPress={() => router.back()} variant="secondary" />
       <Modal animationType="fade" onRequestClose={() => setImageExpanded(false)} transparent visible={imageExpanded}>
         <View style={styles.imageModal}>
           {prepared ? <Image accessibilityLabel="Vista ampliada de la etiqueta nutricional" resizeMode="contain" source={{ uri: prepared.uri }} style={styles.expandedImage} /> : null}
@@ -640,20 +868,71 @@ export default function LabelCaptureScreen() {
 }
 
 const styles = StyleSheet.create({
-  cameraFrame: { borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.card, borderWidth: 1, flex: 1, minHeight: 420, overflow: "hidden" },
-  guide: { borderColor: tokens.color.food, borderRadius: tokens.radius.lg, borderWidth: 3, bottom: 70, left: 24, position: "absolute", right: 24, top: 52 },
-  cameraCopy: { backgroundColor: "rgba(0,0,0,0.72)", bottom: 0, left: 0, padding: 16, position: "absolute", right: 0 },
-  cameraCopyText: { color: tokens.color.textMain, fontSize: 13, lineHeight: 18, textAlign: "center" },
-  cameraControls: { flexDirection: "row", gap: tokens.spacing.sm },
-  previewImage: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card, height: 420, width: "100%" },
-  reviewImage: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, height: 260, width: "100%" },
-  imageModal: { backgroundColor: "rgba(0,0,0,0.94)", flex: 1, justifyContent: "center", padding: tokens.spacing.md },
-  expandedImage: { flex: 1, width: "100%" },
-  steps: { gap: tokens.spacing.sm },
-  reviewHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  reviewTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: "800" },
-  fieldRow: { flexDirection: "row", gap: tokens.spacing.sm },
-  fieldCell: { flex: 1 },
+  fixedScreen: { flexGrow: 1, paddingBottom: tokens.spacing.lg },
+  fullBleedSquareLayout: { marginTop: -tokens.spacing.lg, position: "relative" },
+  fullBleedSquareFallback: { aspectRatio: 1 },
+  fullBleedSquareSurface: { left: -tokens.spacing.screen, overflow: "hidden", position: "absolute", top: 0 },
+  fullBleedSquareSurfaceFallback: { bottom: 0, right: -tokens.spacing.screen },
+  cameraFrame: { backgroundColor: "#0C1118", borderBottomColor: tokens.color.borderDefault, borderBottomWidth: 1, borderTopColor: tokens.color.borderDefault, borderTopWidth: 1, justifyContent: "center" },
+  guide: { aspectRatio: 1, borderRadius: tokens.radius.lg, left: 22, overflow: "hidden", position: "absolute", right: 22, top: 22 },
+  focusBadge: { alignItems: "center", alignSelf: "center", backgroundColor: "rgba(5,10,15,0.86)", borderRadius: tokens.radius.pill, flexDirection: "row", gap: 6, paddingHorizontal: 12, paddingVertical: 7, position: "absolute", top: 46 },
+  focusText: { color: tokens.color.textMain, fontSize: 11, fontWeight: tokens.weight.bold },
+  photoMessage: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen, marginTop: -tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
+  photoMessageText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 19 },
+  bottomActions: { gap: tokens.spacing.sm, marginTop: "auto" },
+  qualityPanel: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: -tokens.spacing.screen, marginTop: -tokens.spacing.lg, padding: tokens.card.outerPadding },
+  qualityCopy: { flex: 1, gap: 2 },
+  qualityTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  qualityDetail: { color: tokens.color.textMuted, fontSize: 11, lineHeight: 16 },
+  qualityIssue: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16 },
+  processingPhoto: { position: "relative" },
+  scanBeam: { borderRadius: tokens.radius.pill, height: 3, left: tokens.spacing.lg, overflow: "hidden", position: "absolute", right: tokens.spacing.lg, top: "50%", transform: [{ translateY: -1.5 }] },
+  processingDetails: { gap: tokens.spacing.sm },
+  processingHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  processingLoading: { flexShrink: 0, marginLeft: -16, marginRight: 2, transform: [{ translateX: 16 }, { scale: 0.6 }] },
+  processingTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.bold, lineHeight: 25 },
+  taskList: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.md },
+  taskRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  taskDone: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
+  taskActive: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  quietCenter: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16, marginTop: 20, textAlign: "center" },
+  introHeader: { alignItems: "flex-start", gap: tokens.spacing.sm },
+  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 1.2, marginTop: tokens.spacing.md },
+  introTitle: { color: tokens.color.textMain, fontSize: 27, fontWeight: tokens.weight.extraBold, letterSpacing: -0.7, lineHeight: 32 },
+  introDescription: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 22, marginTop: tokens.spacing.sm },
+  assuranceList: { gap: tokens.spacing.sm, marginTop: tokens.spacing.xs },
+  assuranceRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  assuranceText: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, lineHeight: 19 },
+  introBottom: { gap: tokens.spacing.sm, marginTop: "auto" },
+  actionGroup: { gap: tokens.spacing.sm },
+  reviewEvidence: { gap: 0 },
+  reviewPhoto: { backgroundColor: "#18202A", position: "relative" },
+  expandPhotoButton: { alignItems: "center", backgroundColor: "rgba(5,10,15,0.88)", borderColor: tokens.color.borderStrong, borderRadius: 20, borderWidth: 1, bottom: tokens.spacing.md, height: 40, justifyContent: "center", position: "absolute", right: tokens.spacing.md, width: 40 },
+  expandPhotoButtonPressed: { opacity: 0.72, transform: [{ scale: 0.96 }] },
+  warningList: { gap: tokens.spacing.xs },
+  warningTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  reviewForm: { gap: tokens.card.gap, marginTop: tokens.spacing.sm },
+  reviewContinue: { marginTop: tokens.spacing.xl },
+  reviewTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
+  nutritionRows: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: -tokens.spacing.xs },
+  nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
+  portionRow: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.md },
+  nutritionLabel: { color: tokens.color.textMuted, flex: 1, fontSize: 14, lineHeight: 20 },
+  nutritionLabelEmphasis: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
+  nutritionInputSurface: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", height: 32, minWidth: 112, paddingHorizontal: tokens.spacing.sm },
+  nutritionInput: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, height: 30, padding: 0, textAlign: "right" },
+  nutritionUnit: { color: tokens.color.textSoft, fontSize: 12, marginLeft: 5 },
+  confirmationHeading: { gap: tokens.spacing.xs },
+  confirmationSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 19 },
+  retentionPanel: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.panel, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
   retentionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   retentionCopy: { flex: 1, gap: tokens.spacing.xs },
+  retentionTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  retentionDetail: { color: tokens.color.textMuted, fontSize: 11, lineHeight: 16 },
+  successHero: { alignItems: "center", gap: tokens.spacing.sm, paddingVertical: tokens.spacing.lg },
+  successIcon: { alignItems: "center", borderRadius: 32, height: 64, justifyContent: "center", width: 64 },
+  successTitle: { color: tokens.color.textMain, fontSize: 24, fontWeight: tokens.weight.extraBold, marginTop: tokens.spacing.sm, textAlign: "center" },
+  successDetail: { color: tokens.color.textMuted, fontSize: tokens.type.caption, textAlign: "center" },
+  imageModal: { backgroundColor: "rgba(0,0,0,0.94)", flex: 1, justifyContent: "center", padding: tokens.spacing.md },
+  expandedImage: { flex: 1, width: "100%" },
 });

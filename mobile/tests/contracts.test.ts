@@ -76,18 +76,22 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/app/dev/ui-gallery.tsx"),
     "utf8",
   );
+  const storyboardGallery = await readTestFile(
+    path.resolve(process.cwd(), "src/components/dev/storyboard-gallery.tsx"),
+    "utf8",
+  );
   assertSourceMatch(gallery, /export default function UiGalleryScreen/);
   assertSourceMatch(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
   assertSourceMatch(gallery, /Galería del sistema UI/);
   assertSourceDoesNotMatch(gallery, /<Brand|Referencia interna construida con los componentes reales de la app/);
-  assertSourceMatch(gallery, /OnboardingJourneyView/);
-  assertSourceMatch(gallery, /Storyboard visual · sin sesión, API ni persistencia/);
-  assertSourceMatch(gallery, /accessibilityLabel="Formatos del onboarding"/);
-  assertSourceMatch(gallery, /tabs=\{calendarPreviewWidths\.map\(\(preview\) => \(\{ key: preview\.width, label: preview\.label \}\)\)\}/);
-  assertSourceMatch(gallery, /onboardingJourneySteps\.map\(\(step, index\) =>/);
-  assertSourceMatch(gallery, /String\(index \+ 1\)\.padStart\(2, "0"\).*step\.label/);
-  assertSourceMatch(gallery, /calendarPreviewWidths\.some\(\(preview\) => preview\.width === onboardingPreviewWidth\)[\s\S]*calendarPreviewWidths\[0\]\.width/);
-  assertSourceDoesNotMatch(gallery, /accessibilityLabel="Vistas del onboarding"|setOnboardingStep/);
+  assertSourceMatch(gallery, /<OnboardingStoryboardGallery \/>/);
+  assertSourceMatch(storyboardGallery, /OnboardingJourneyView/);
+  assertSourceMatch(storyboardGallery, /Storyboard visual · sin sesión, API ni persistencia/);
+  assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos del onboarding"/);
+  assertSourceMatch(storyboardGallery, /tabs=\{previewWidths\.map\(\(preview\) => \(\{ key: preview\.width, label: preview\.label \}\)\)\}/);
+  assertSourceMatch(storyboardGallery, /steps\.map\(\(step, index\) =>/);
+  assertSourceMatch(storyboardGallery, /String\(index \+ 1\)\.padStart\(2, "0"\).*step\.label/);
+  assertSourceDoesNotMatch(storyboardGallery, /accessibilityLabel="Vistas del onboarding"|setOnboardingStep/);
   assertSourceMatch(gallery, /Card-child de programa/);
   assertSourceMatch(gallery, /ProgramChildCard/);
   assertSourceMatch(gallery, /Detalle de programa/);
@@ -974,7 +978,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /id="continue-chip-border"/);
   assertSourceMatch(journey, /continueChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34/);
   assertSourceMatch(journey, /continueChipInset: \{[^}]*bottom: 2, left: 2[^}]*right: 2, top: 2/);
-  assertSourceMatch(journey, /<Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress=\{controller\.onLogin \?\? noop\} variant="multicolor" \/>/);
+  assertSourceMatch(journey, /<Button disabled=\{controller\.loginDisabled\} label="Iniciar sesión o crear cuenta" loading=\{controller\.busy\} multicolorSurface="app" onPress=\{controller\.onLogin \?\? noop\} variant="multicolor" \/>/);
   assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
   assertSourceMatch(journey, /<View style=\{styles\.centeredLogo\}><MyScoopeLogo \/><\/View>/);
   assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
@@ -1018,6 +1022,25 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
   assertSourceMatch(journey, /loginAction: \{ marginBottom: 114, marginTop: "auto" \}/);
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
+});
+
+test("the label capture gallery exposes the complete happy-path storyboard without product side effects", async () => {
+  const gallery = await readTestFile(path.resolve(process.cwd(), "src/app/dev/ui-gallery.tsx"), "utf8");
+  const navigation = await readTestFile(path.resolve(process.cwd(), "src/components/dev/gallery-navigation.tsx"), "utf8");
+  const storyboardGallery = await readTestFile(path.resolve(process.cwd(), "src/components/dev/storyboard-gallery.tsx"), "utf8");
+  const storyboard = await readTestFile(path.resolve(process.cwd(), "src/components/label-capture/label-capture-storyboard.tsx"), "utf8");
+
+  assertSourceMatch(navigation, /\{ key: "labelCapture", label: "Etiquetas" \}/);
+  assertSourceMatch(gallery, /<LabelCaptureStoryboardGallery \/>/);
+  assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos de la digitalización de etiquetas"/);
+  assertSourceMatch(storyboardGallery, /steps=\{labelCaptureStoryboardSteps\}/);
+  for (const step of ["intro", "camera", "preview", "processing", "review", "confirmation", "saved"]) {
+    assertSourceMatch(storyboard, new RegExp(`key: "${step}"`));
+  }
+  assertSourceMatch(storyboard, /datos fijos|Yogur griego natural/);
+  assertSourceMatch(storyboard, /Validamos nitidez antes de usar créditos/);
+  assertSourceMatch(storyboard, /Confirmar y crear alimento/);
+  assertSourceDoesNotMatch(storyboard, /apiRequest|expo-camera|useCameraPermissions|useSession/);
 });
 
 test("the committed mobile contract exposes every route consumed through CML08", async () => {

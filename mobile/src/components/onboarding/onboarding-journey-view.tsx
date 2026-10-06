@@ -79,6 +79,7 @@ export type OnboardingJourneyController = {
   proposal?: ProposalDetail | null;
   busy?: boolean;
   error?: string | null;
+  loginDisabled?: boolean;
   onChange?(field: keyof OnboardingJourneyValues, value: string | number): void;
   onNext?(): void;
   onBack?(): void;
@@ -87,7 +88,7 @@ export type OnboardingJourneyController = {
   onChoosePlan?(plan: "Free" | "Basic" | "Pro"): void;
 };
 
-const galleryValues: OnboardingJourneyValues = {
+export const onboardingJourneyPreviewValues: OnboardingJourneyValues = {
   goal: "fat_loss",
   birthDate: "1990-05-10",
   sex: "male",
@@ -101,7 +102,7 @@ const galleryValues: OnboardingJourneyValues = {
   avoidedFoods: "Cilantro y aceitunas",
 };
 
-const JourneyControllerContext = createContext<OnboardingJourneyController>({ values: galleryValues });
+const JourneyControllerContext = createContext<OnboardingJourneyController>({ values: onboardingJourneyPreviewValues });
 
 function useJourneyController() {
   return useContext(JourneyControllerContext);
@@ -344,7 +345,8 @@ function LoginView({ index }: { index: number }) {
         <Text style={[textStyles.muted, styles.centeredText]}>Usa tu cuenta para continuar el proceso en cualquiera de tus dispositivos.</Text>
       </View>
       <View style={styles.loginAction}>
-        <Button label="Iniciar sesión o crear cuenta" multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
+        {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
+        <Button disabled={controller.loginDisabled} label="Iniciar sesión o crear cuenta" loading={controller.busy} multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
       </View>
     </>
   );
@@ -810,7 +812,7 @@ const views: Record<OnboardingJourneyStep, (props: { index: number }) => ReactNo
 export function OnboardingJourneyView({ controller, step }: { controller?: OnboardingJourneyController; step: OnboardingJourneyStep }) {
   const index = onboardingJourneySteps.findIndex((item) => item.key === step);
   const ViewComponent = views[step];
-  const resolvedController = useMemo(() => controller ?? { values: galleryValues }, [controller]);
+  const resolvedController = useMemo(() => controller ?? { values: onboardingJourneyPreviewValues }, [controller]);
   const swipeResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_event, gesture) => Boolean(controller) && index >= 1 && index <= 5 && Math.abs(gesture.dx) > 18 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
     onPanResponderRelease: (_event, gesture) => {
