@@ -22,6 +22,7 @@ import {
   TrendingUp,
   UserRound,
   UserPlus,
+  WandSparkles,
   WalletCards,
   Weight,
 } from "lucide-react-native";
@@ -148,6 +149,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/subscription" || pathname === "/subscription-details") return { icon: WalletCards, title: pathname === "/subscription" ? "Suscripciones y Bolsas" : "Detalles de suscripciones y bolsas" };
   if (pathname === "/account") return { icon: UserRound, title: "Mi cuenta" };
   if (pathname === "/onboarding") return { icon: UserRound, title: "Tu ficha" };
+  if (pathname === "/onboarding-preview") return { icon: WandSparkles, title: "Vista previa del onboarding" };
   if (pathname === "/disclosures") return { icon: FileCheck, title: "Información importante" };
   return { icon: UserRound, title: "Cuenta" };
 }
@@ -320,7 +322,7 @@ function AppSidebar() {
   const drawerWidth = Math.min(width * 0.88, 360);
   const insets = useSafeAreaInsets();
   const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useAppNavigation();
-  const { apiRequest, status } = useSession();
+  const { apiRequest, session, status } = useSession();
   const router = useRouter();
   const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeData["library_counts"] | null>(null);
@@ -391,6 +393,7 @@ function AppSidebar() {
                 <FunctionalSidebarEntry item={{ href: "/account", icon: UserRound, label: "Mi cuenta" }} />
                 <FunctionalSidebarEntry item={{ href: "/personal-records", icon: Files, label: "Fichas personales" }} />
                 <FunctionalSidebarEntry item={{ href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" }} />
+                {session?.is_staff ? <FunctionalSidebarEntry item={{ href: "/onboarding-preview", icon: WandSparkles, label: "Vista previa del onboarding" }} /> : null}
               </View>
             </ScrollView>
             {creditSummary ? (

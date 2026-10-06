@@ -12,6 +12,7 @@ class SessionData(Schema):
     date_joined: datetime
     scopes: list[str]
     device_session_id: str | None = None
+    is_staff: bool = False
 
 
 class SessionEnvelope(Schema):

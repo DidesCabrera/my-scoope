@@ -12,6 +12,7 @@ def session_payload(auth) -> dict:
         "date_joined": user.date_joined,
         "scopes": list(auth.token.scopes),
         "device_session_id": (str(auth.token.device_session.public_id) if auth.token.device_session_id else None),
+        "is_staff": user.is_staff,
     }
 
 

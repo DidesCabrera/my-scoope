@@ -20,6 +20,7 @@ export type SessionData = {
   date_joined: string;
   scopes: string[];
   device_session_id: string | null;
+  is_staff: boolean;
 };
 export type ProfileData = {
   birth_date: string | null;

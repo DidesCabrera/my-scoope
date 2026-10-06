@@ -7700,6 +7700,11 @@
             "title": "Email",
             "type": "string"
           },
+          "is_staff": {
+            "default": false,
+            "title": "Is Staff",
+            "type": "boolean"
+          },
           "scopes": {
             "items": {
               "type": "string"
