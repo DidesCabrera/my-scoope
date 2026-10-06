@@ -1,0 +1,46 @@
+{% extends "notas/base.html" %}
+
+{% block content %}
+<div class="page page--detail profile-page personal-records-page">
+    <section class="profile-account-section">
+        <div class="profile-account-heading">
+            <div class="profile-account-title-row">
+                <i data-lucide="files" class="profile-account-title-icon"></i>
+                <h1>Fichas personales</h1>
+            </div>
+            <p class="personal-records-page__intro">La información que My Scoope utiliza para cálculos nutricionales, objetivos y construcción de planes, reunida en un solo lugar.</p>
+        </div>
+    </section>
+
+    <div class="personal-records-grid">
+        {% for card in vm.content.cards %}
+            <article class="profile-section-card personal-record-card personal-record-card--{{ card.key }}">
+                <header class="profile-section-card__header">
+                    <div class="profile-section-card__title-wrap">
+                        <p class="profile-section-card__eyebrow">{{ card.eyebrow }}</p>
+                        <div class="profile-section-card__title-row">
+                            <i data-lucide="{{ card.icon }}" class="profile-section-card__icon"></i>
+                            <h2>{{ card.title }}</h2>
+                        </div>
+                        <p>{{ card.description }}</p>
+                    </div>
+                </header>
+
+                <div class="personal-record-card__fields">
+                    {% for field in card.fields %}
+                        <div class="personal-record-card__field">
+                            <span>{{ field.label }}</span>
+                            <strong>{{ field.value }}</strong>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <a class="personal-record-card__action" href="{{ card.action_href }}">
+                    <span>{{ card.action_label }}</span>
+                    <i data-lucide="arrow-right"></i>
+                </a>
+            </article>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

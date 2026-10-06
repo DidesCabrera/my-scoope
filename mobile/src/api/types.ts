@@ -40,6 +40,18 @@ export type ProfileData = {
 
 export type AccountDeletionData = { receipt_id: string };
 
+export type LearningArticle = {
+  slug: string;
+  title: string;
+  summary: string;
+  icon: string;
+  sections: { heading: string; body: string }[];
+  takeaway: string;
+  source_label: string;
+  source_url: string;
+};
+export type LearningCatalogData = { nutrition: LearningArticle[]; manuals: LearningArticle[] };
+
 export type CalendarizationData = {
   id: number;
   source_program_id: number | null;

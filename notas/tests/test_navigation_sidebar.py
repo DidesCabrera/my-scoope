@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
+from notas.domain.models import Profile
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_MEAL_VIEWMODE_DETAIL,
@@ -73,6 +75,30 @@ class SidebarBuilderTests(TestCase):
 
         self.assertIn("account", section_keys)
 
+    def test_sidebar_shows_fixed_credit_dashboard(self):
+        response = self.client.get(reverse("home_view"), follow=True)
+        self.assertNotContains(response, "sidebar-credit-dashboard")
+
+        user = User.objects.create_user(username="credit-user", password="secret")
+        user.profile.onboarding_completed_at = timezone.now()
+        user.profile.onboarding_version = Profile.ONBOARDING_VERSION_NUTRITION_V1
+        user.profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
+        self.client.force_login(user)
+        response = self.client.get(reverse("home_view"))
+
+        self.assertContains(response, "sidebar-credit-dashboard")
+        self.assertContains(response, "Plan")
+        self.assertContains(response, "créditos disponibles")
+        self.assertContains(response, "Abrir Suscripciones y bolsas")
+
+    def test_sidebar_credit_dashboard_uses_compact_height(self):
+        css_path = "notas/static/notas/css/components/sidebar.css"
+        with open(css_path, encoding="utf-8") as css_file:
+            css = css_file.read()
+
+        self.assertIn("min-height: 50px", css)
+        self.assertIn("font-size: 22px", css)
+
     def test_build_sidebar_vm_uses_reorganized_section_order(self):
         sidebar = build_sidebar_vm(PROFILE_VIEWMODE)
 
@@ -80,13 +106,16 @@ class SidebarBuilderTests(TestCase):
         self.assertEqual(sidebar[0]["label"], "Tools")
         self.assertEqual(sidebar[1]["label"], "Mis librerias")
         self.assertEqual(
-            [group["label"] for group in sidebar[0]["groups"][:5]],
+            [group["label"] for group in sidebar[0]["groups"][:8]],
             [
                 "Inicio",
+                "Mi cuenta",
+                "Fichas personales",
+                "Fundamentos Sistema",
                 "Mi programa activo",
-                "Asistente Nutricional",
                 "Comparaciones",
                 "Compartidos",
+                "Asistente Nutricional",
             ],
         )
         self.assertEqual(
@@ -125,16 +154,11 @@ class SidebarBuilderTests(TestCase):
         self.assertEqual(ui.page_icon, "circle-user-round")
 
 
-    def test_build_sidebar_vm_does_not_include_profile_group(self):
+    def test_build_sidebar_vm_places_personal_records_after_account(self):
         sidebar = build_sidebar_vm(PROFILE_VIEWMODE)
+        group_keys = [group["key"] for group in sidebar[0]["groups"]]
 
-        group_keys = []
-
-        for section in sidebar:
-            for group in section["groups"]:
-                group_keys.append(group["key"])
-
-        self.assertNotIn("profile", group_keys)
+        self.assertEqual(group_keys.index("personal_records"), group_keys.index("profile") + 1)
     
     def test_build_ui_vm_for_profile_populates_navigation_metadata(self):
         ui = build_ui_vm(PROFILE_VIEWMODE)

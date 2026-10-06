@@ -1,0 +1,21 @@
+{% extends "notas/base.html" %}
+{% load static %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/learning.css' %}">{% endblock %}
+{% block content %}
+<div class="page learning-page">
+  <header class="learning-hero">
+    <p class="learning-eyebrow">Aprender en My Scoope</p>
+    <h1>Fundamentos Sistema</h1>
+    <p>Comprende los conceptos nutricionales esenciales y aprende a usar las herramientas principales del sistema.</p>
+  </header>
+  <div class="learning-hub-grid">
+    {% for catalog in vm.content.catalogs %}
+      <a class="learning-hub-card" href="{% url 'learning_catalog' catalog.key %}">
+        <i data-lucide="{{ catalog.icon }}"></i>
+        <div><h2>{{ catalog.title }}</h2><p>{{ catalog.description }}</p><span>{{ catalog.count }} temas</span></div>
+        <i data-lucide="arrow-right"></i>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

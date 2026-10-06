@@ -202,6 +202,38 @@ class ProfileNutritionForm(forms.Form):
         return birth_date
 
 
+class PersonalPlanningForm(forms.Form):
+    from notas.domain.nutrition_profile_contracts import ACTIVITY_LEVEL_CHOICES, NUTRITION_GOAL_CHOICES
+
+    goal = forms.ChoiceField(label="Objetivo nutricional", choices=NUTRITION_GOAL_CHOICES, widget=forms.Select(attrs={"class": "profile-form-input"}))
+    activity_level = forms.ChoiceField(label="Actividad habitual", choices=ACTIVITY_LEVEL_CHOICES, widget=forms.Select(attrs={"class": "profile-form-input"}))
+    training_frequency = forms.IntegerField(label="Entrenamientos por semana", min_value=0, max_value=7, widget=forms.NumberInput(attrs={"class": "profile-form-input", "inputmode": "numeric"}))
+
+
+class PersonalPreferencesForm(forms.Form):
+    DIETARY_CHOICES = (
+        ("omnivore", "Omnívoro"), ("vegetarian", "Vegetariano"), ("vegan", "Vegano"),
+        ("pescatarian", "Pescetariano"), ("flexitarian", "Flexitariano"),
+    )
+    dietary_pattern = forms.ChoiceField(label="Patrón alimentario", choices=DIETARY_CHOICES, widget=forms.Select(attrs={"class": "profile-form-input"}))
+    allergies_or_intolerances = forms.CharField(label="Alergias o intolerancias", required=False, help_text="Sepáralas con comas.", widget=forms.TextInput(attrs={"class": "profile-form-input"}))
+    avoided_foods = forms.CharField(label="Alimentos evitados", required=False, help_text="Sepáralos con comas.", widget=forms.TextInput(attrs={"class": "profile-form-input"}))
+
+    def clean_allergies_or_intolerances(self):
+        return _comma_separated(self.cleaned_data["allergies_or_intolerances"])
+
+    def clean_avoided_foods(self):
+        return _comma_separated(self.cleaned_data["avoided_foods"])
+
+
+class PersonalWeightForm(forms.Form):
+    weight_kg = forms.FloatField(label="Peso actual", min_value=25, max_value=350, widget=forms.NumberInput(attrs={"class": "profile-form-input", "inputmode": "decimal", "step": "0.1"}))
+
+
+def _comma_separated(value: str) -> list[str]:
+    return list(dict.fromkeys(item.strip() for item in value.split(",") if item.strip()))
+
+
 from notas.domain.models import Food
 
 

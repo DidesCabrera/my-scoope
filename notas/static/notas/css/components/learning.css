@@ -1,0 +1,21 @@
+.learning-page { display: flex; flex-direction: column; gap: 18px; max-width: 980px; }
+.learning-hero { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 10px; }
+.learning-hero h1, .learning-hub-card h2, .learning-article-card h2, .learning-detail h2 { color: var(--text-main); margin: 0; }
+.learning-hero h1 { font-size: 30px; }
+.learning-hero p, .learning-hub-card p, .learning-article-card p, .learning-detail p { color: var(--text-muted); line-height: 1.55; margin: 0; }
+.learning-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.learning-hub-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.learning-hub-card, .learning-article-card { align-items: center; background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 16px; color: var(--text-main); display: flex; gap: 14px; padding: 20px; text-decoration: none; }
+.learning-hub-card > div, .learning-article-card > div { display: grid; flex: 1; gap: 7px; min-width: 0; }
+.learning-hub-card > svg:first-child, .learning-article-card > svg:first-child { flex: 0 0 auto; height: 24px; width: 24px; }
+.learning-hub-card > svg:last-child, .learning-article-card > svg:last-child { color: var(--text-muted); height: 18px; width: 18px; }
+.learning-hub-card span { color: var(--text-soft); font-size: 12px; font-weight: 700; }
+.learning-article-grid { display: grid; gap: 12px; }
+.learning-back, .learning-source { align-items: center; color: var(--text-muted); display: inline-flex; gap: 7px; text-decoration: none; width: fit-content; }
+.learning-back svg, .learning-source svg { height: 16px; width: 16px; }
+.learning-detail__icon { color: var(--text-main); height: 30px; margin-top: 8px; width: 30px; }
+.learning-detail__sections { display: grid; gap: 12px; }
+.learning-detail__sections section, .learning-takeaway { background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 16px; display: grid; gap: 8px; padding: 20px; }
+.learning-takeaway { border-color: var(--color-carbs); }
+.learning-disclaimer { font-size: 12px; }
+@media (max-width: 760px) { .learning-hub-grid { grid-template-columns: 1fr; } .learning-hub-card, .learning-article-card { padding: 16px; } }

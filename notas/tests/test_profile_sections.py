@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from notas.domain.models import Profile, WeightLog
+from notas.domain.models import NutritionPreferenceProfile, Profile, WeightLog
 
 User = get_user_model()
 
@@ -80,6 +80,26 @@ class ProfileSectionsTests(TestCase):
         self.assertNotContains(response, "Información de cuenta")
         self.assertNotContains(response, "Uso comercial")
 
+    def test_personal_record_forms_update_their_own_source(self):
+        user = self._completed_user("personal_record_edits")
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("personal_record_edit", kwargs={"section": "planning"}), {
+            "goal": "fat_loss", "activity_level": "moderate", "training_frequency": "3",
+        })
+        self.assertRedirects(response, reverse("personal_records"))
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.nutrition_goal, "fat_loss")
+        self.assertEqual(user.profile.training_frequency, 3)
+
+        response = self.client.post(reverse("personal_record_edit", kwargs={"section": "preferences"}), {
+            "dietary_pattern": "vegetarian", "allergies_or_intolerances": "Maní, Lactosa", "avoided_foods": "Apio",
+        })
+        self.assertRedirects(response, reverse("personal_records"))
+        stored = NutritionPreferenceProfile.objects.get(user=user).preferences
+        self.assertEqual(stored["allergies_or_intolerances"], ["Maní", "Lactosa"])
+        self.assertEqual(stored["avoided_foods"], ["Apio"])
+
     def test_profile_credits_only_renders_credit_usage(self):
         user = self._completed_user("profile_credit_sections")
         self.client.force_login(user)
@@ -107,6 +127,43 @@ class ProfileSectionsTests(TestCase):
         self.assertContains(response, f'href="{reverse("profile_credits")}"')
         self.assertNotContains(response, "#profile-personal")
         self.assertNotContains(response, "#profile-credits")
+
+    def test_personal_records_groups_persisted_nutrition_context(self):
+        user = self._completed_user("personal_records")
+        user.profile.nutrition_goal = "muscle_gain"
+        user.profile.activity_level = "high"
+        user.profile.training_frequency = 4
+        user.profile.save(update_fields=["nutrition_goal", "activity_level", "training_frequency"])
+        NutritionPreferenceProfile.objects.create(
+            user=user,
+            preferences={
+                "dietary_pattern": "omnivore",
+                "allergies_or_intolerances": ["Lactosa"],
+                "avoided_foods": ["Apio"],
+            },
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("personal_records"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Fichas personales")
+        self.assertContains(response, "Ficha corporal")
+        self.assertContains(response, "Objetivo y actividad")
+        self.assertContains(response, "Preferencias alimentarias")
+        self.assertContains(response, "Métricas corporales")
+        self.assertContains(response, "Ganar masa muscular")
+        self.assertContains(response, "Alta")
+        self.assertContains(response, "Lactosa")
+        self.assertContains(response, "88.5 kg")
+        self.assertContains(response, "Editar información", count=4)
+        self.assertNotContains(response, "Revisar con el Asistente")
+
+    def test_personal_records_requires_authentication(self):
+        response = self.client.get(reverse("personal_records"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response.url)
 
     def test_profile_nutrition_update_changes_stable_body_fields(self):
         user = self._completed_user("profile_update")

@@ -10,16 +10,16 @@ test("the consumer navigation catalog includes every MCE product area", () => {
   assert.deepEqual(productAreas.map((area) => area.key), [
     "home",
     "program",
-    "assistant",
     "comparator",
     "inbox",
+    "assistant",
   ]);
 });
 
 test("only product areas with a functional route are exposed in the sidebar", () => {
   const available = listAvailableProductAreas();
-  assert.deepEqual(available.map((area) => area.key), ["home", "program", "assistant", "comparator", "inbox"]);
-  assert.deepEqual(available.map((area) => area.label), ["Inicio", "Mi programa activo", "Asistente Nutricional", "Comparaciones", "Compartidos"]);
+  assert.deepEqual(available.map((area) => area.key), ["home", "program", "comparator", "inbox", "assistant"]);
+  assert.deepEqual(available.map((area) => area.label), ["Inicio", "Mi programa activo", "Comparaciones", "Compartidos", "Asistente Nutricional"]);
   assert.ok(available.every((area) => String(area.href).startsWith("/")));
 });
 
@@ -136,6 +136,49 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceMatch(navigation, /menuSection: \{ gap: 0/);
   assertSourceMatch(sidebarItems, /label: \{[^}]*fontSize: tokens\.type\.body/);
   assertSourceMatch(sidebarItems, /item: \{[^}]*minHeight: 48/);
+  assertSourceMatch(navigation, /<ScrollView[^>]*style=\{styles\.drawerScroll\}[\s\S]*<View style=\{\[styles\.creditDashboardShadow, \{ width: drawerWidth - tokens\.spacing\.md \}\]\}>/);
+  assertSourceMatch(navigation, /LinearGradient id="sidebar-credit-macros"[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat/);
+  assertSourceMatch(navigation, /creditDashboardShadow: \{[\s\S]*?elevation: 5[\s\S]*?shadowOpacity: 0\.24/);
+  assertSourceMatch(navigation, /width: drawerWidth - tokens\.spacing\.md/);
+  assertSourceMatch(navigation, /creditDashboardShadow: \{[^}]*marginHorizontal: tokens\.spacing\.md/);
+  assertSourceMatch(navigation, /creditDashboardEyebrow}>Plan<[\s\S]*creditDashboardPlanTitle}>\{creditSummary\.planName\}[\s\S]*creditDashboardCreditValue}>\{creditSummary\.availableCredits\}[\s\S]*creditDashboardAvailableLabel}>créditos disponibles/);
+  assertSourceMatch(navigation, /creditDashboardCredits: \{[^}]*alignItems: "flex-end"/);
+  assertSourceMatch(navigation, /creditDashboardPlan: \{[^}]*gap: 0[^}]*paddingLeft: tokens\.spacing\.xs/);
+  assertSourceDoesNotMatch(navigation, /creditDashboardPlan: \{[^}]*paddingBottom/);
+  assertSourceMatch(navigation, /creditDashboard: \{[^}]*minHeight: 58/);
+  assertSourceMatch(navigation, /creditDashboardCreditValue: \{[^}]*fontSize: 15/);
+  assertSourceMatch(navigation, /creditDashboardPlanTitle: \{[^}]*fontSize: 24/);
+  assertSourceMatch(navigation, /creditDashboardAction: \{[^}]*marginRight: tokens\.spacing\.md/);
+  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Abrir Suscripciones y bolsas"[\s\S]*onPress=\{openCredits\}[\s\S]*<ChevronRight/);
+  assertSourceMatch(navigation, /href: "\/account"[\s\S]*label: "Mi cuenta"[\s\S]*href: "\/personal-records"[\s\S]*label: "Fichas personales"/);
+  assertSourceMatch(navigation, /href: "\/personal-records"[\s\S]*href: "\/system-foundations"[\s\S]*label: "Fundamentos Sistema"/);
+});
+
+test("personal records groups the persisted nutrition inputs", async () => {
+  const records = await readFile(path.resolve(process.cwd(), "src/app/personal-records.tsx"), "utf8");
+
+  assertSourceMatch(records, /"\/api\/v1\/onboarding\/state"/);
+  assertSourceMatch(records, /title: "Ficha corporal"/);
+  assertSourceMatch(records, /title: "Objetivo y actividad"/);
+  assertSourceMatch(records, /title: "Preferencias alimentarias"/);
+  assertSourceMatch(records, /title: "Métricas corporales"/);
+  assertSourceDoesNotMatch(records, /Revisar con el Asistente/);
+  assertSourceMatch(records, /label: "Editar información"/);
+  const editor = await readFile(path.resolve(process.cwd(), "src/app/personal-records-edit.tsx"), "utf8");
+  assertSourceMatch(editor, /`\/api\/v1\/personal-records\/\$\{section\}`/);
+  assertSourceMatch(editor, /method: "PATCH"/);
+});
+
+test("system foundations exposes nutrition and product-manual journeys", async () => {
+  const home = await readFile(path.resolve(process.cwd(), "src/app/system-foundations/index.tsx"), "utf8");
+  const catalog = await readFile(path.resolve(process.cwd(), "src/app/system-foundations/[kind]/index.tsx"), "utf8");
+  const detail = await readFile(path.resolve(process.cwd(), "src/app/system-foundations/[kind]/[slug].tsx"), "utf8");
+
+  assertSourceMatch(home, /Fundamentos Nutricionales/);
+  assertSourceMatch(home, /Manuales de uso/);
+  assertSourceMatch(catalog, /"\/api\/v1\/learning"/);
+  assertSourceMatch(detail, /Contenido educativo general/);
+  assertSourceMatch(detail, /article\.sections\.map/);
 });
 
 test("shared screens use compact scroll identities and only Home keeps the centered logo", async () => {
