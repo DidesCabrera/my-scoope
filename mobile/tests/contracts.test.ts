@@ -1020,6 +1020,23 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
 });
 
+test("the label capture gallery exposes the complete happy-path storyboard without product side effects", async () => {
+  const gallery = await readTestFile(path.resolve(process.cwd(), "src/app/dev/ui-gallery.tsx"), "utf8");
+  const navigation = await readTestFile(path.resolve(process.cwd(), "src/components/dev/gallery-navigation.tsx"), "utf8");
+  const storyboard = await readTestFile(path.resolve(process.cwd(), "src/components/label-capture/label-capture-storyboard.tsx"), "utf8");
+
+  assertSourceMatch(navigation, /\{ key: "labelCapture", label: "Etiquetas" \}/);
+  assertSourceMatch(gallery, /accessibilityLabel="Formatos de la digitalización de etiquetas"/);
+  assertSourceMatch(gallery, /labelCaptureStoryboardSteps\.map\(\(step, index\) =>/);
+  for (const step of ["intro", "camera", "preview", "processing", "review", "confirmation", "saved"]) {
+    assertSourceMatch(storyboard, new RegExp(`key: "${step}"`));
+  }
+  assertSourceMatch(storyboard, /datos fijos|Yogur griego natural/);
+  assertSourceMatch(storyboard, /Validamos nitidez antes de usar créditos/);
+  assertSourceMatch(storyboard, /Confirmar y crear alimento/);
+  assertSourceDoesNotMatch(storyboard, /apiRequest|expo-camera|useCameraPermissions|useSession/);
+});
+
 test("the committed mobile contract exposes every route consumed through CML08", async () => {
   const file = path.resolve(process.cwd(), "../docs/00_current/api/mobile-v1.openapi.json");
   const schema = JSON.parse(await readTestFile(file, "utf8")) as { info: { version: string }; paths: Record<string, unknown> };

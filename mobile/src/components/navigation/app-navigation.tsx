@@ -49,7 +49,7 @@ import { ModalBackdrop } from "@/components/ui/action-sheet-modal";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
-type HeaderAction = { disabled?: boolean; icon?: "calendar-clock" | "clock" | "more" | "pin" | "plus"; label: string; onPress(): void };
+type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus"; label: string; onPress(): void };
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
@@ -177,7 +177,9 @@ export function AppNavigationHeader() {
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.headerSafeArea}>
       <View style={styles.header}>
-        {headerPresentation.mode === "back" && headerPresentation.leadingAction ? (
+        {headerPresentation.mode === "back" && headerPresentation.leadingAction?.icon === "none" ? (
+          <View style={styles.backHeaderLeadingAction} />
+        ) : headerPresentation.mode === "back" && headerPresentation.leadingAction ? (
           <Pressable
             accessibilityLabel={headerPresentation.leadingAction.label}
             accessibilityRole="button"
@@ -185,7 +187,9 @@ export function AppNavigationHeader() {
             hitSlop={8}
             onPress={headerPresentation.leadingAction.onPress}
             style={({ pressed }) => [styles.backHeaderLeadingAction, headerPresentation.leadingAction?.disabled && styles.disabled, pressed && styles.pressed]}>
-            <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.leadingAction.label}</Text>
+            {headerPresentation.leadingAction.icon === "back"
+              ? <ChevronLeft color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
+              : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.leadingAction.label}</Text>}
           </Pressable>
         ) : headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
           <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (headerPresentation.mode === "back" && headerPresentation.forceFallback) router.replace(detailFallback); else if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMuted} size={26} strokeWidth={2.2} /></Pressable>

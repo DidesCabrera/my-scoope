@@ -24,6 +24,7 @@ import {
 import { ProgramChildCard } from "@/components/libraries/program-child-card";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
+import { LabelCaptureStoryboardView, labelCaptureStoryboardSteps } from "@/components/label-capture";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
@@ -241,6 +242,31 @@ export default function UiGalleryScreen() {
               </View>
               <View style={[styles.devicePreview, styles.onboardingDevicePreview]}>
                 <OnboardingJourneyView step={step.key} />
+              </View>
+            </View>
+          ))}
+        </>
+      ) : null}
+
+      {tab === "labelCapture" ? (
+        <>
+          <SectionTitle detail="Storyboard visual · datos fijos, sin cámara, créditos ni persistencia" title="Digitalización de etiquetas" />
+          <ScrollableTabBar<(typeof calendarPreviewWidths)[number]["width"]>
+            accessibilityLabel="Formatos de la digitalización de etiquetas"
+            activeTab={activeOnboardingPreviewWidth}
+            density="compact"
+            onChange={setOnboardingPreviewWidth}
+            tabs={calendarPreviewWidths.map((preview) => ({ key: preview.width, label: preview.label }))}
+          />
+          <InlineNotice>El recorrido reproduce el camino exitoso completo. Cada pantalla queda aislada para iterar su jerarquía, textos y acciones antes de modificar el producto.</InlineNotice>
+          {labelCaptureStoryboardSteps.map((step, index) => (
+            <View key={`label-capture-${activeOnboardingPreviewWidth}-${step.key}`} style={[styles.onboardingPreview, { width: activeOnboardingPreviewWidth }]}>
+              <View style={styles.onboardingPreviewMeta}>
+                <Text style={styles.devicePreviewName}>{String(index + 1).padStart(2, "0")}. {step.label}</Text>
+                <Text style={styles.devicePreviewWidth}>{activeOnboardingPreviewWidth} pt</Text>
+              </View>
+              <View style={[styles.devicePreview, styles.onboardingDevicePreview]}>
+                <LabelCaptureStoryboardView step={step.key} />
               </View>
             </View>
           ))}
