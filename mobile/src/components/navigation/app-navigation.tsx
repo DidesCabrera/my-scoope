@@ -5,9 +5,12 @@ import {
   CalendarClock,
   Camera,
   ChevronLeft,
+  ChevronRight,
   ClipboardCheck,
   Clock3,
   FileCheck,
+  Files,
+  BookOpen,
   House,
   PanelRight,
   Pin,
@@ -34,9 +37,10 @@ import {
   View,
 } from "react-native";
 import { initialWindowMetrics, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { useSession } from "@/auth/session-context";
-import type { LibraryEntity } from "@/api/types";
+import type { EntitlementsData, HomeData, LibraryEntity } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
 import { MyScoopeLogo } from "@/components/ui/my-scoope-logo";
@@ -75,6 +79,7 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
 const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().map((area) => ({
   href: area.href,
   icon: productAreaIcons[area.key],
+  iconTreatment: area.key === "assistant" ? "assistant" : "plain",
   label: area.label,
 }));
 
@@ -297,23 +302,33 @@ function useSidebarItem(item: { href: Href }) {
 
 function FunctionalSidebarEntry({ item }: { item: NavigationSidebarItemData }) {
   const state = useSidebarItem(item);
-  return <NavigationSidebarItem {...state} icon={item.icon} label={item.label} />;
+  return <NavigationSidebarItem {...state} icon={item.icon} iconTreatment={item.iconTreatment} label={item.label} />;
 }
 
-function EntitySidebarEntry({ item }: { item: EntitySidebarItemData }) {
+function EntitySidebarEntry({ count, item }: { count: number | null; item: EntitySidebarItemData }) {
   const state = useSidebarItem(item);
-  return <EntitySidebarItem {...state} entity={item.entity} label={item.label} />;
+  return <EntitySidebarItem {...state} count={count} entity={item.entity} label={item.label} />;
+}
+
+function libraryCount(counts: HomeData["library_counts"] | null, entity: LibraryEntity): number | null {
+  if (!counts) return null;
+  return entity === "dailyPlan" ? counts.daily_plan : counts[entity];
 }
 
 function AppSidebar() {
   const { width } = useWindowDimensions();
+  const drawerWidth = Math.min(width * 0.88, 360);
   const insets = useSafeAreaInsets();
   const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useAppNavigation();
+  const { apiRequest, status } = useSession();
+  const router = useRouter();
+  const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
+  const [libraryCounts, setLibraryCounts] = useState<HomeData["library_counts"] | null>(null);
   const [translateX] = useState(() => new Animated.Value(-380));
   const [scrimOpacity] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
-    const hiddenPosition = -Math.min(width * 0.88, 360);
+    const hiddenPosition = -drawerWidth;
     if (menuOpen) {
       translateX.setValue(hiddenPosition);
       scrimOpacity.setValue(0);
@@ -328,13 +343,28 @@ function AppSidebar() {
       Animated.timing(translateX, { duration: 220, toValue: hiddenPosition, useNativeDriver: true }),
       Animated.timing(scrimOpacity, { duration: 180, toValue: 0, useNativeDriver: true }),
     ]).start(({ finished }) => { if (finished) finishClosingMenu(); });
-  }, [finishClosingMenu, menuMounted, menuOpen, scrimOpacity, translateX, width]);
+  }, [drawerWidth, finishClosingMenu, menuMounted, menuOpen, scrimOpacity, translateX]);
+
+  useEffect(() => {
+    if (!menuOpen || status !== "authenticated") return;
+    void apiRequest<EntitlementsData>("/api/v1/entitlements")
+      .then((entitlements) => setCreditSummary({ availableCredits: entitlements.available_credits, planName: entitlements.plan_name }))
+      .catch(() => undefined);
+    void apiRequest<HomeData>("/api/v1/home")
+      .then((home) => setLibraryCounts(home.library_counts))
+      .catch(() => undefined);
+  }, [apiRequest, menuOpen, status]);
+
+  const openCredits = () => {
+    closeMenu();
+    router.push("/subscription" as Href);
+  };
 
   return (
     <Modal animationType="none" onRequestClose={closeMenu} transparent visible={menuMounted}>
       <View style={styles.modalRoot}>
         <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]}><ModalBackdrop accessibilityLabel="Cerrar menú" onPress={closeMenu} /></Animated.View>
-        <Animated.View style={[styles.drawer, { maxWidth: 360, transform: [{ translateX }], width: Math.min(width * 0.88, 360) }]}>
+        <Animated.View style={[styles.drawer, { maxWidth: 360, transform: [{ translateX }], width: drawerWidth }]}>
           <View style={[styles.drawerSafeArea, {
             paddingBottom: Math.max(insets.bottom, initialWindowMetrics?.insets.bottom ?? 0),
             paddingLeft: Math.max(insets.left, initialWindowMetrics?.insets.left ?? 0),
@@ -350,17 +380,46 @@ function AppSidebar() {
                 <PanelRight color={tokens.color.textMuted} size={24} strokeWidth={2} />
               </Pressable>
             </View>
-            <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false} style={styles.drawerScroll}>
               {primaryItems.map((item) => <FunctionalSidebarEntry item={item} key={String(item.href)} />)}
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
-                {libraryItems.map((item) => <EntitySidebarEntry item={item} key={String(item.href)} />)}
+                {libraryItems.map((item) => <EntitySidebarEntry count={libraryCount(libraryCounts, item.entity)} item={item} key={String(item.href)} />)}
               </View>
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>
                 <FunctionalSidebarEntry item={{ href: "/account", icon: UserRound, label: "Mi cuenta" }} />
+                <FunctionalSidebarEntry item={{ href: "/personal-records", icon: Files, label: "Fichas personales" }} />
+                <FunctionalSidebarEntry item={{ href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" }} />
               </View>
             </ScrollView>
+            {creditSummary ? (
+              <View style={[styles.creditDashboardShadow, { width: drawerWidth - tokens.spacing.md }]}>
+                <Pressable accessibilityLabel="Abrir Suscripciones y bolsas" accessibilityRole="button" onPress={openCredits} style={({ pressed }) => [styles.creditDashboard, pressed && styles.creditDashboardPressed]}>
+                  <Svg aria-hidden height="100%" pointerEvents="none" style={StyleSheet.absoluteFill} width="100%">
+                    <Defs>
+                      <LinearGradient id="sidebar-credit-macros" x1="0" x2="1" y1="0" y2="1">
+                        <Stop offset="0" stopColor={tokens.color.protein} />
+                        <Stop offset="0.5" stopColor={tokens.color.carbs} />
+                        <Stop offset="1" stopColor={tokens.color.fat} />
+                      </LinearGradient>
+                    </Defs>
+                    <Rect fill="url(#sidebar-credit-macros)" height="100%" rx={tokens.radius.panel} ry={tokens.radius.panel} width="100%" />
+                  </Svg>
+                  <View style={styles.creditDashboardPlan}>
+                    <Text style={styles.creditDashboardEyebrow}>Plan</Text>
+                    <Text numberOfLines={1} style={styles.creditDashboardPlanTitle}>{creditSummary.planName}</Text>
+                  </View>
+                  <View style={styles.creditDashboardCredits}>
+                    <Text style={styles.creditDashboardCreditValue}>{creditSummary.availableCredits}</Text>
+                    <Text numberOfLines={1} style={styles.creditDashboardAvailableLabel}>créditos disponibles</Text>
+                  </View>
+                  <View style={styles.creditDashboardAction}>
+                    <ChevronRight color={tokens.color.surfaceApp} size={21} strokeWidth={2.4} />
+                  </View>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         </Animated.View>
       </View>
@@ -394,6 +453,17 @@ const styles = StyleSheet.create({
   drawerHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 64, paddingHorizontal: tokens.spacing.md * 2 },
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
   drawerContent: { gap: 0, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg },
+  drawerScroll: { flex: 1 },
+  creditDashboardShadow: { alignSelf: "flex-start", borderRadius: tokens.radius.panel, elevation: 5, marginBottom: tokens.spacing.md, marginHorizontal: tokens.spacing.md, shadowColor: "#000000", shadowOffset: { height: 5, width: 0 }, shadowOpacity: 0.24, shadowRadius: 9 },
+  creditDashboard: { alignItems: "center", borderRadius: tokens.radius.panel, flexDirection: "row", gap: tokens.spacing.compact, minHeight: 58, overflow: "hidden", paddingLeft: tokens.spacing.md },
+  creditDashboardPressed: { opacity: 0.72 },
+  creditDashboardPlan: { flex: 1, gap: 0, minWidth: 0, paddingLeft: tokens.spacing.xs },
+  creditDashboardCredits: { alignItems: "flex-end", flexShrink: 1, gap: 0, minWidth: 0 },
+  creditDashboardEyebrow: { color: tokens.color.surfaceApp, fontSize: 9, fontWeight: tokens.weight.bold, letterSpacing: 0.8, lineHeight: 9, opacity: 0.72, textTransform: "uppercase" },
+  creditDashboardPlanTitle: { color: tokens.color.surfaceApp, fontSize: 24, fontWeight: tokens.weight.bold, lineHeight: 26 },
+  creditDashboardCreditValue: { color: tokens.color.surfaceApp, fontSize: 15, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, lineHeight: 17 },
+  creditDashboardAvailableLabel: { color: tokens.color.surfaceApp, flexShrink: 1, fontSize: 10, fontWeight: tokens.weight.medium, lineHeight: 11 },
+  creditDashboardAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 30, justifyContent: "center", marginRight: tokens.spacing.md, width: 30 },
   menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
   menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
 });

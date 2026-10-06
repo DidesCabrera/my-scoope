@@ -151,12 +151,13 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   weight records, freezes periodic reviews and protects future program changes
   behind audited before/after revisions and explicit user approval. Mobile exposes
   these flows and the common reminder schedule; native iOS delivery remains CML07.
-- Consumer Mobile Launch CML05 repository baseline: the iOS client captures a
-  nutrition label with Expo Camera, recognizes it locally through Apple Vision,
-  exposes normalization uncertainty for editing and sends only confirmed values.
-  The server creates an idempotent private food plus a provenance receipt without
-  retaining the photo or raw OCR text. Physical camera/Vision proof remains an
-  external device gate because the local machine lacks the iOS SDK.
+- Consumer Mobile Launch CML05 began with local Apple Vision extraction and was
+  superseded by the accepted AI reliability contract. The iOS client now checks
+  image quality locally, previews the processed image before consent, sends the
+  accepted reduced copy temporarily to OpenAI, exposes normalization uncertainty
+  for editing and persists only confirmed values. The server creates an idempotent
+  private food plus provenance without retaining the image by default or any raw
+  OCR text. The 30-label physical reliability matrix remains an external device gate.
 - Consumer Mobile Launch CML06 repository baseline: the iOS client purchases and
   restores only configured Apple subscriptions, uses StoreKit-localized prices
   and finishes transactions only after server-side JWS verification. Apple and
@@ -220,7 +221,7 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   its external recovery, staging and legal gates remain visible before release.
   CML02-CML07 are repository-complete with the consumer API, Expo development
   client, secure session lifecycle, translated visual grammar and lived-program
-  execution/adherence/reviews/revisions, review-first on-device label capture and
+  execution/adherence/reviews/revisions, review-first nutrition-label capture and
   verified StoreKit purchase/restore/reconciliation, mutually exclusive native
   reminders, Apple login, Keychain/privacy manifests and sanitized mobile crashes.
   CML08 is repository-complete with versioned transparency acceptance, in-app

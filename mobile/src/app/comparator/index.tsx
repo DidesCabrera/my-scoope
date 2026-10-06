@@ -36,7 +36,7 @@ import {
   SectionPageHeader,
 } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, Field, LoadingState, Screen, textStyles } from "@/components/ui/primitives";
+import { Button, Card, Field, LoadingState, Screen } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
 const fallbackKinds = [
@@ -87,7 +87,6 @@ function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress():
           <Text style={styles.savedEyebrowText}>Comparación {item.kind_label}</Text>
         </View>
         <Text style={styles.savedTitle}>{item.name}</Text>
-        <Text style={textStyles.caption}>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(item.updated_at))}</Text>
         <View style={styles.savedChip}>
           <Chip
             backgroundColor={`${entityColor}1A`}
@@ -385,7 +384,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.68 },
   savedCard: { paddingBottom: tokens.card.innerPadding },
   savedCopy: { flex: 1, gap: tokens.spacing.xs },
-  savedChip: { alignItems: "flex-start" },
+  savedChip: { alignItems: "flex-start", marginTop: tokens.spacing.xs },
   savedEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   savedEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
   savedTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },

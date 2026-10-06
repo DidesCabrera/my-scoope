@@ -16,7 +16,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, useMutationStatus } from "@/components/ui";
+import { Button, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -138,9 +138,9 @@ export default function CalendarizedMealDetailScreen() {
         entity="meal"
         afterNutrition={<MealCompletionCard controller={adherence} />}
         completion={{ noteCount: execution && normalizeMealExecutionItem(execution).note.trim() ? 1 : 0 }}
+        eyebrowAccessory={meal.hour ? <HeaderMetadataChip kind="time" value={meal.hour.slice(0, 5)} /> : undefined}
         indicators={[
           { icon: "food", label: "alimentos", value: foods.length },
-          ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),
         ]}
         nutrition={{
           calories: snapshotCalories(totals),

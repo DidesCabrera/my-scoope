@@ -33,7 +33,7 @@ or adjustment claims; App Store work remains separate from general product work.
 | CML02 · Vertical mobile API | completed (repository) | Product/mobile | Versioned OpenAPI contract for auth, profile, active program, Today, weight, foods, durable AI submit/poll, entitlements and deletion. Mobile OAuth is audited from the existing PKCE baseline and gains rotating device sessions. Adherence waits for the CML04 execution model. |
 | CML03 · React Native and visual system | completed (repository; device gate pending) | Mobile | Expo development build, extracted visual tokens/card grammar and the login → onboarding → Today → check-in preview → persisted weight path. Physical staging proof remains external. |
 | CML04 · Lived program | completed (repository) | Product/mobile | Calendarization owns dated plans, append-only meal execution, reminder coordination, measurement context, frozen reviews and prospective audited adjustment revisions. Native notification delivery remains CML07. |
-| CML05 · Nutrition-label capture | completed (repository; device gate pending) | Product/native | Apple Vision OCR stays on-device, normalizes label values, exposes uncertainty and creates an idempotent private food only after user confirmation. |
+| CML05 · Nutrition-label capture | superseded for extraction by reliability cycle; device gate pending | Product/native | Apple Vision provides local quality/OCR signals; an accepted processed image is extracted temporarily by external AI and creates an idempotent private food only after user confirmation. |
 | CML06 · B2C subscriptions | completed (repository; App Store sandbox gate pending) | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation are implemented, with physical sandbox proof still external. |
 | CML07 · iOS capabilities | completed (repository; device/App Store gate pending) | App Store | Apple login shares PKCE; APNs/local delivery is exclusive per device; Keychain, camera-only permission, privacy manifests and sanitized crash reporting pass repository/prebuild QA. Signing, OCR/camera/APNs and archive proof remain external. |
 | CML08 · Review readiness | completed (repository; App Store/TestFlight gates pending) | App Store | Versioned transparency acceptance, in-app privacy/support/deletion, reconciled privacy labels, metadata, screenshot plan, reproducible demo program and complete reviewer notes. Internal/external TestFlight and submission remain external. |
@@ -153,6 +153,9 @@ existing staging OAuth and Xcode prerequisites. CML05 builds on this baseline.
 
 ## CML05 closure evidence
 
+Historical note: decision 0191 and the nutrition-label reliability cycle supersede
+the original on-device-only extraction and image-handling contract below.
+
 - `expo-camera` captures a temporary image only after an explicit permission
   action; refusing permission degrades to manual review.
 - An auto-linked, iOS-only Expo module uses Apple Vision locally and returns text,
@@ -244,7 +247,8 @@ Keychain restore and sanitized-crash proof.
   reporting channel and exposes deliberate in-app account deletion with an
   identity-free receipt.
 - Published privacy, terms and support copy now describe the consumer iOS product,
-  StoreKit, on-device label OCR, sanitized diagnostics, retention and user controls.
+  StoreKit, review-first label extraction, sanitized diagnostics, retention and
+  user controls.
 - `mobile/store/` contains bounded es-CL metadata, App Privacy answers, TestFlight
   copy, a six-shot 6.9-inch screenshot manifest and complete reviewer notes without
   credentials.

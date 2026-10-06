@@ -776,3 +776,58 @@
         flex-direction: column;
     }
 }
+/* Personal records hub */
+.personal-records-page__intro {
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0.65rem 0 0;
+  max-width: 760px;
+}
+
+.personal-records-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.personal-record-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.personal-record-card__fields {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.personal-record-card__field {
+  align-items: center;
+  border-bottom: 1px solid var(--panel-row-separator);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-bottom: 0.7rem;
+}
+
+.personal-record-card__field span { color: var(--text-muted); }
+.personal-record-card__field strong { text-align: right; }
+
+.personal-record-card__action {
+  align-items: center;
+  color: var(--text-main);
+  display: flex;
+  font-weight: 700;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 1.25rem;
+  text-decoration: none;
+}
+
+.personal-record-card__action svg { height: 18px; width: 18px; }
+
+@media (max-width: 800px) {
+  .personal-records-grid { grid-template-columns: 1fr; }
+}

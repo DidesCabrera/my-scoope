@@ -19,7 +19,7 @@ COMPARISON_KINDS = {
         "label": "Alimentos",
         "entity_label": "Alimento",
         "include_quantities": True,
-        "include_ppk": False,
+        "include_ppk": True,
     },
     SavedComparison.KIND_MEALS: {
         "label": "Comidas",
@@ -128,14 +128,18 @@ def build_comparison(user, *, kind: str, raw_selections: list[dict]):
     for selection in normalized:
         selection.name = items_by_id[selection.id].name
 
+    current_weight = get_current_weight(user)
     if config["include_quantities"]:
         rows = comparable_rows(
             normalized,
             items_by_id,
-            lambda food, selection: food_values(food, selection.quantity),
+            lambda food, selection: food_values(
+                food,
+                selection.quantity,
+                current_weight=current_weight,
+            ),
         )
     else:
-        current_weight = get_current_weight(user)
         rows = comparable_rows(
             normalized,
             items_by_id,

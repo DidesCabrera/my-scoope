@@ -15,6 +15,7 @@ urlpatterns = [
     path("", include("notas.interface.urls.programs")),
     path("", include("notas.interface.urls.calendarization")),
     path("", include("notas.interface.urls.profiles")),
+    path("", include("notas.interface.urls.learning")),
     path("", include("notas.interface.urls.admin_tools")),
     path("", include("notas.interface.urls.proposals")),
     path("", include("notas.interface.urls.ai_tools")),

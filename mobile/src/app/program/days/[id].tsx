@@ -9,6 +9,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
+import { compactDateLabel } from "@/components/calendarization/current-week";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
@@ -19,13 +20,9 @@ import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, ContentPanel, EntityCardAction, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
+import { Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
-
-function displayDate(value: string): string {
-  return new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${value}T12:00:00`));
-}
 
 function completionFor(items: MealExecutionItem[]) {
   const normalized = normalizeMealExecution(items);
@@ -61,10 +58,10 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
               completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
+              eyebrowAccessory={meal.hour ? <HeaderMetadataChip kind="time" value={meal.hour.slice(0, 5)} /> : undefined}
               headingLink={openDetail ? { label: `Ver detalle de ${meal.name ?? "la comida"}`, onPress: openDetail } : undefined}
               indicators={[
                 { icon: "food", label: "alimentos", value: foods.length },
-                ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),
               ]}
               nutrition={{
                 calories: snapshotCalories(totals),
@@ -228,10 +225,9 @@ export default function ProgramDayScreen() {
           entity="dailyPlan"
           afterNutrition={<DailyMealCompletionCard mealExecution={day.meal_execution} mealKeys={meals.map((meal) => meal.key)} />}
           completion={completionFor(mealExecution)}
+          eyebrowAccessory={<HeaderMetadataChip kind="date" value={compactDateLabel(day.calendar_date)} />}
           indicators={[
-            { icon: "day", label: "posición", value: `S${day.week_number} · D${day.day_number}` },
             { icon: "meal", label: "comidas", value: meals.length },
-            { icon: "day", iconPosition: "leading", label: "fecha", tone: "surfaceMuted", value: displayDate(day.calendar_date) },
           ]}
           nutrition={{
             calories: totalCalories,

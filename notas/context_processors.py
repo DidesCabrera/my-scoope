@@ -1,5 +1,6 @@
 from django.db.models import Q
 
+from accounts.services.profile import build_account_credit_display
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import (
     InboxItem,
@@ -29,6 +30,7 @@ def user_weight(request):
         proposal_seen_count = int(request.session.get("proposal_notification_seen_count", 0) or 0)
 
         return {
+            "sidebar_credits": build_account_credit_display(user),
             "current_weight": current_weight,
             "current_weight_label": f"{float(current_weight):.1f}".replace(".", ",") if current_weight is not None else "",
             "inbox_unread_count": inbox_unread_count,
@@ -38,6 +40,7 @@ def user_weight(request):
         }
 
     return {
+        "sidebar_credits": None,
         "current_weight": None,
         "current_weight_label": "",
         "inbox_unread_count": 0,

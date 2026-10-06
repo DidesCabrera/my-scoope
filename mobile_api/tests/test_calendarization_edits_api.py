@@ -103,9 +103,14 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
         )
         day.refresh_from_db()
         self.assertEqual(food_preview.status_code, 200)
-        self.assertEqual(len(food_preview.json()["data"]["result"]["panel"]["foods"]), 2)
+        preview_foods = food_preview.json()["data"]["result"]["panel"]["foods"]
+        self.assertEqual(len(preview_foods), 2)
         self.assertEqual(
-            [food["detail_id"] for food in food_preview.json()["data"]["result"]["panel"]["foods"]],
+            [food["protein_per_kilogram"] for food in preview_foods],
+            [0.1, 0.0],
+        )
+        self.assertEqual(
+            [food["detail_id"] for food in preview_foods],
             [source_food.id, extra_food.id],
         )
         self.assertEqual(len(day.plan_snapshot["meals"][-1]["foods"]), 1)
@@ -122,6 +127,10 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
         day_detail = self.client.get(f"/api/v1/program/days/{day.id}").json()["data"]
         navigable_foods = day_detail["plan_snapshot"]["meals"][-1]["foods"]
         self.assertEqual([food["detail_id"] for food in navigable_foods], [source_food.id, extra_food.id])
+        self.assertEqual(
+            [food["protein_per_kilogram"] for food in navigable_foods],
+            [0.1, 0.0],
+        )
         self.assertAlmostEqual(updated_meal["totals"]["protein_g"], 5.75)
         self.assertAlmostEqual(day.plan_snapshot["totals"]["protein_g"], 10.75)
         source_relation.refresh_from_db()

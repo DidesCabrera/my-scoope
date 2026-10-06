@@ -15,7 +15,7 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { LoadingState, MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
+import { HeaderMetadataChip, LoadingState, MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
 import { Button, InlineNotice } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
@@ -367,16 +367,12 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     onReplace: (meal: MealPanelItem) => { if (meal.relationId) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, dailyPlanMealId: meal.relationId })); },
     onToggleCompleted: isPinnedPlan ? (meal: MealPanelItem, completed: boolean) => { void togglePinnedMealCompletion(meal.id, completed); } : undefined,
   } : undefined;
-  const detailIndicators = isEmptyDraft ? undefined : [
-    ...item.indicators,
-    ...(item.entity === "meal" && hasMealTimeContext && contextTime
-      ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: contextTime }]
-      : []),
-  ];
+  const detailIndicators = isEmptyDraft ? undefined : item.indicators;
   return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}><EntityDetailPage
     afterNutrition={isPinnedPlan && item.panel.meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={item.panel.meals.map((meal) => meal.id)} /> : isPinnedMealContext ? <MealCompletionCard controller={pinnedMealAdherence} /> : undefined}
     completion={isPinnedPlan ? { noteCount: mealExecution.filter((entry) => entry.note.trim()).length } : isPinnedMealContext ? { noteCount: normalizedPinnedMealExecution?.note.trim() ? 1 : 0 } : undefined}
     entity={item.entity}
+    eyebrowAccessory={item.entity === "meal" && hasMealTimeContext && contextTime ? <HeaderMetadataChip kind="time" value={contextTime} /> : undefined}
     indicators={detailIndicators}
     nutrition={libraryNutrition(item.nutrition)}
     showNutrition={!isEmptyDraft}

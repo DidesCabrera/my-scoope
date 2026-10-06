@@ -1,0 +1,18 @@
+{% extends "notas/base.html" %}
+{% load static %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/learning.css' %}">{% endblock %}
+{% block content %}
+<article class="page learning-page learning-detail">
+  <header class="learning-hero">
+    <a class="learning-back" href="{% url 'learning_catalog' vm.content.kind %}"><i data-lucide="arrow-left"></i> {{ vm.content.title }}</a>
+    <i data-lucide="{{ vm.content.article.icon }}" class="learning-detail__icon"></i>
+    <h1>{{ vm.content.article.title }}</h1><p>{{ vm.content.article.summary }}</p>
+  </header>
+  <div class="learning-detail__sections">
+    {% for section in vm.content.article.sections %}<section><h2>{{ section.heading }}</h2><p>{{ section.body }}</p></section>{% endfor %}
+  </div>
+  <aside class="learning-takeaway"><strong>Idea principal</strong><p>{{ vm.content.article.takeaway }}</p></aside>
+  {% if vm.content.kind == 'nutrition' %}<p class="learning-disclaimer">Contenido educativo general. No sustituye evaluación, diagnóstico ni indicaciones de un profesional de salud.</p>{% endif %}
+  {% if vm.content.article.source_url %}<a class="learning-source" href="{{ vm.content.article.source_url }}" target="_blank" rel="noopener noreferrer">Fuente: {{ vm.content.article.source_label }} <i data-lucide="external-link"></i></a>{% endif %}
+</article>
+{% endblock %}

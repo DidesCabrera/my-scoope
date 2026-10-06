@@ -69,7 +69,13 @@ def _nutrition(totals: dict, current_weight) -> dict:
     }
 
 
-def _food_row(food: dict, *, parent_totals: dict, projected: bool = False) -> dict:
+def _food_row(
+    food: dict,
+    *,
+    parent_totals: dict,
+    current_weight,
+    projected: bool = False,
+) -> dict:
     totals = {
         "protein_g": food.get("protein_g"),
         "carbs_g": food.get("carbs_g"),
@@ -94,6 +100,11 @@ def _food_row(food: dict, *, parent_totals: dict, projected: bool = False) -> di
             "fat": _percentage(kcal[2], calories),
         },
         "protein_grams": _number(totals["protein_g"]),
+        "protein_per_kilogram": (
+            _number(float(totals.get("protein_g") or 0) / current_weight)
+            if current_weight and totals.get("protein_g")
+            else None
+        ),
         "carbs_grams": _number(totals["carbs_g"]),
         "fat_grams": _number(totals["fat_g"]),
         "protein_allocation": _percentage(kcal[0], parent_kcal[0]),
@@ -151,6 +162,7 @@ def _meal_row(
             _food_row(
                 food,
                 parent_totals=totals,
+                current_weight=current_weight,
                 projected=bool(projected_food_key and food.get("key") == projected_food_key),
             )
             for food in meal.get("foods", [])
@@ -225,7 +237,12 @@ def _meal_result(*, day_id: int, meal: dict, current_weight, projected_food_key:
         "panel": {
             "kind": "foods",
             "foods": [
-                _food_row(food, parent_totals=totals, projected=food.get("key") == projected_food_key)
+                _food_row(
+                    food,
+                    parent_totals=totals,
+                    current_weight=current_weight,
+                    projected=food.get("key") == projected_food_key,
+                )
                 for food in meal.get("foods", [])
                 if isinstance(food, dict)
             ],

@@ -17,6 +17,104 @@
     border-top: none;
 }
 
+.sidebar-credit-dashboard {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 50px;
+    padding: 7px 15px 7px 11px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    color: #0d1117;
+    background: linear-gradient(135deg, var(--color-protein), var(--color-carbs) 50%, var(--color-fat));
+    box-shadow: 0 7px 18px rgba(0, 0, 0, 0.24);
+    text-decoration: none;
+    overflow: hidden;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.sidebar-credit-dashboard:hover {
+    color: #0d1117;
+    box-shadow: 0 9px 22px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+}
+
+.sidebar-credit-dashboard__metric {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.sidebar-credit-dashboard__metric--plan {
+    flex: 1 1 auto;
+    gap: 0;
+    padding-left: 4px;
+}
+
+.sidebar-credit-dashboard__metric--credits {
+    display: grid;
+    flex: 0 0 auto;
+    justify-items: end;
+    gap: 0;
+    text-align: right;
+}
+
+.sidebar-credit-dashboard__eyebrow {
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.72;
+}
+
+.sidebar-credit-dashboard__metric strong {
+    overflow: hidden;
+    font-size: 16px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-credit-dashboard__metric--plan strong {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.sidebar-credit-dashboard__metric--credits strong {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.sidebar-credit-dashboard__available-label {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.sidebar-credit-dashboard__action {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    color: #0d1117;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.sidebar-credit-dashboard__action svg {
+    width: 19px;
+    height: 19px;
+    stroke-width: 2.4;
+}
+
 .sidebar-main-panel,
 .sidebar-profile-panel {
     transition: transform 0.22s ease, opacity 0.18s ease;
@@ -333,6 +431,22 @@
     height: 26px;
 }
 
+.sidebar-main-icon--chat {
+    width: 26px;
+    height: 26px;
+    padding: 5px;
+    border-radius: 7px;
+    color: #0d1117 !important;
+    stroke: #0d1117 !important;
+    stroke-width: 1.8;
+    background: linear-gradient(135deg, var(--color-protein), var(--color-carbs) 50%, var(--color-fat));
+}
+
+.sidebar-main--link.is-active .sidebar-main-icon--chat {
+    color: #0d1117 !important;
+    stroke: #0d1117 !important;
+}
+
 .sidebar-main-icon--program {
     background-color: var(--color-program);
 }
@@ -450,6 +564,17 @@
    ========================= */
 
 @media (min-width: 981px) {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-credit-dashboard {
+        justify-content: center;
+        min-height: 42px;
+        padding: 8px;
+        border-radius: 10px;
+    }
+
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-credit-dashboard__metric {
+        display: none;
+    }
+
     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .block-logo-sidebar {
         flex-direction: column;
         justify-content: flex-start;

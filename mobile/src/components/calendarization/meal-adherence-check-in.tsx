@@ -1,14 +1,14 @@
 import { useFocusEffect } from "expo-router";
 import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
-import { Check, Pencil } from "lucide-react-native";
+import { Check, CheckCheck, Pencil } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { MealCheckInInput, MealExecutionItem, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { Button, ContentPanel, InlineNotice, SectionDivider, SectionHeading } from "@/components/ui";
+import { Button, InlineNotice, SectionDivider, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { MealCompletionSurface } from "./meal-completion-summary";
 import { normalizeMealExecution, type NormalizedMealExecutionItem } from "./meal-execution";
@@ -102,7 +102,7 @@ export function MealCompletionToggleCard({ available = true, completed, error, o
   if (!available) return null;
   return <MealCompletionSurface>
     <Pressable
-      accessibilityLabel="Comida cumplida"
+      accessibilityLabel="¿Cumpliste con tu comida?"
       accessibilityRole="checkbox"
       accessibilityState={{ checked: completed, disabled: saving }}
       disabled={saving}
@@ -111,7 +111,8 @@ export function MealCompletionToggleCard({ available = true, completed, error, o
         onToggle(!completed);
       }}
       style={styles.completionRow}>
-      <Text style={styles.completionLabel}>Comida cumplida</Text>
+      <CheckCheck color={tokens.color.textMain} size={18} strokeWidth={2.2} />
+      <Text style={styles.completionLabel}>¿Cumpliste con tu comida?</Text>
       <View style={[styles.checkbox, completed && styles.checkboxChecked]}>{completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
     </Pressable>
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
@@ -127,7 +128,7 @@ export function MealNoteCard({ controller }: { controller: MealAdherenceControll
   return <View style={styles.section}>
     <SectionDivider spacing="compact" tone="soft" />
     <SectionHeading title="Nota de esta comida" />
-    <ContentPanel>
+    <View style={styles.noteSurface}>
       <View style={styles.noteBlock}>
         <View style={styles.noteHeader}>
           <Text style={styles.noteLabel}>Nota</Text>
@@ -137,7 +138,7 @@ export function MealNoteCard({ controller }: { controller: MealAdherenceControll
       </View>
       {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
       {controller.editingNote ? <Button label="Guardar nota" loading={controller.savingNote} onPress={() => void controller.saveNote()} /> : null}
-    </ContentPanel>
+    </View>
   </View>;
 }
 
@@ -155,8 +156,9 @@ const styles = StyleSheet.create({
   noteCount: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   noteEdit: { alignItems: "center", height: 32, justifyContent: "center", width: 32 },
   noteHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  noteInput: { backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, fontSize: tokens.type.caption, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 104, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
-  noteLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  noteInput: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: tokens.type.caption, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 104, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
+  noteSurface: { backgroundColor: "transparent", gap: tokens.card.gap, marginTop: tokens.spacing.xs },
+  noteLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label - 1, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, textTransform: "uppercase" },
   noteText: { color: tokens.color.textMain, fontSize: tokens.type.caption, lineHeight: 21, minHeight: 42 },
   noteTextEmpty: { color: tokens.color.textMuted },
   pressed: { opacity: 0.65 }, section: { gap: tokens.spacing.sm, minWidth: 0 },

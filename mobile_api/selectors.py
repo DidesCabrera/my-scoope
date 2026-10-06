@@ -1077,6 +1077,7 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
         add_protein_per_kilogram(meal.get("totals"))
         meal.pop("detail_id", None)
         for food in meal.get("foods", []):
+            add_protein_per_kilogram(food)
             _index_snapshot_food(
                 food,
                 foods_by_source_id=foods_by_source_id,

@@ -49,7 +49,8 @@ The first React Native client covers:
 3. planned meals, meal times, reminders and adherence check-ins;
 4. weight measurements and progress trends;
 5. foods, meals and daily plans needed by the active program;
-6. on-device nutrition-label capture with explicit user confirmation;
+6. review-first nutrition-label capture with local image-quality checks, temporary
+   external AI extraction and explicit user confirmation;
 7. AI Assistant over existing reviewable proposal boundaries;
 8. subscription, privacy and account deletion.
 

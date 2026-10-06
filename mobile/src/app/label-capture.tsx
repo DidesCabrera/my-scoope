@@ -3,13 +3,25 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { Redirect, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Platform, StyleSheet, Switch, Text, View } from "react-native";
+import { Image, Modal, Platform, StyleSheet, Switch, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { AppHeader, Button, Card, Field, InlineNotice, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import {
+  LABEL_CAMERA_AUTOFOCUS,
+  LABEL_CAMERA_FOCUS_SETTLE_MS,
+  LABEL_CAMERA_MAX_ZOOM,
+  LABEL_CAMERA_ZOOM_STEP,
+} from "@/label-capture/camera";
 import { deleteCachedImage, prepareLabelImage, type PreparedLabelImage } from "@/label-capture/image";
+import {
+  classifyLabelImageQuality,
+  labelImageQualityMessage,
+  type LabelImageQuality,
+  unavailableLabelImageQuality,
+} from "@/label-capture/quality";
 import {
   confirmNutritionLabelBasis,
   convertServingDraftTo100g,
@@ -29,7 +41,8 @@ import {
   recognizeNutritionLabel,
 } from "../../modules/nutrition-label-ocr/src/NutritionLabelOcrModule";
 
-type Phase = "intro" | "camera" | "review" | "saved";
+type Phase = "intro" | "camera" | "preview" | "review" | "saved";
+type LocalCandidate = { basis: string; values: Record<string, number> };
 type FormState = {
   name: string;
   energy: string;
@@ -92,12 +105,17 @@ function aiDraft(result: FoodLabelAIAnalysis): NutritionLabelDraft {
 export default function LabelCaptureScreen() {
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
+  const cameraReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const captureInFlightRef = useRef(false);
+  const analysisInFlightRef = useRef(false);
   const { status, apiRequest } = useSession();
   const [permission, requestPermission] = useCameraPermissions();
   const [phase, setPhase] = useState<Phase>("intro");
   const [cameraReady, setCameraReady] = useState(false);
   const [openingCamera, setOpeningCamera] = useState(false);
   const [torchEnabled, setTorchEnabled] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -106,7 +124,14 @@ export default function LabelCaptureScreen() {
   const [config, setConfig] = useState<FoodLabelAIConfig | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<PreparedLabelImage | null>(null);
+  const [localCandidate, setLocalCandidate] = useState<LocalCandidate | undefined>();
+  const [imageQuality, setImageQuality] = useState<LabelImageQuality>(unavailableLabelImageQuality);
+  const [qualityConfidence, setQualityConfidence] = useState<number | null>(null);
   const [retainImage, setRetainImage] = useState(false);
+  const [imageExpanded, setImageExpanded] = useState(false);
+  const [zoom, setZoom] = useState(0);
+  const [availableLenses, setAvailableLenses] = useState<string[]>([]);
+  const [selectedLens, setSelectedLens] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [captureKey, setCaptureKey] = useState(Crypto.randomUUID());
 
@@ -118,6 +143,9 @@ export default function LabelCaptureScreen() {
   }, [apiRequest, status]);
 
   useEffect(() => () => deleteCachedImage(prepared?.uri), [prepared?.uri]);
+  useEffect(() => () => {
+    if (cameraReadyTimerRef.current) clearTimeout(cameraReadyTimerRef.current);
+  }, []);
 
   if (status === "anonymous") return <Redirect href="/login" />;
 
@@ -187,6 +215,9 @@ export default function LabelCaptureScreen() {
   function beginManualReview(message?: string) {
     deleteCachedImage(prepared?.uri);
     setPrepared(null);
+    setLocalCandidate(undefined);
+    setImageQuality(unavailableLabelImageQuality);
+    setQualityConfidence(null);
     setAnalysisId(null);
     setRetainImage(false);
     applyDraft({
@@ -208,6 +239,9 @@ export default function LabelCaptureScreen() {
     setOpeningCamera(true);
     setError(null);
     setTorchEnabled(false);
+    setZoom(0);
+    setSelectedLens(undefined);
+    setAvailableLenses([]);
     try {
       const nextPermission = permission?.granted ? permission : await requestPermission();
       if (!nextPermission.granted) {
@@ -223,59 +257,92 @@ export default function LabelCaptureScreen() {
     }
   }
 
-  async function processImage(uri: string, width: number, height: number) {
-    setProcessing(true);
+  async function prepareForPreview(uri: string, width: number, height: number) {
+    setPreparing(true);
     setError(null);
     let nextPrepared: PreparedLabelImage | null = null;
     try {
       nextPrepared = await prepareLabelImage(uri, width, height);
-      let localCandidate: { basis: string; values: Record<string, number> } | undefined;
+      let nextLocalCandidate: LocalCandidate | undefined;
+      let nextImageQuality = unavailableLabelImageQuality;
       if (Platform.OS === "ios" && isNutritionLabelOcrAvailable()) {
         try {
-          const local = normalizeNutritionLabel(await recognizeNutritionLabel(nextPrepared.uri));
-          localCandidate = { basis: local.basis, values: local.values as Record<string, number> };
+          const recognition = await recognizeNutritionLabel(nextPrepared.uri);
+          const local = normalizeNutritionLabel(recognition);
+          nextLocalCandidate = { basis: local.basis, values: local.values as Record<string, number> };
+          nextImageQuality = classifyLabelImageQuality(recognition.imageQuality);
         } catch {
-          // Local OCR is only a quality signal; server-side AI remains authoritative.
+          // Devices without a usable local quality signal still get an explicit preview.
         }
       }
+      setCaptureKey(Crypto.randomUUID());
+      setPrepared(nextPrepared);
+      setLocalCandidate(nextLocalCandidate);
+      setImageQuality(nextImageQuality);
+      setQualityConfidence(null);
+      setRetainImage(false);
+      setAnalysisId(null);
+      setPhase("preview");
+    } catch (nextError) {
+      deleteCachedImage(nextPrepared?.uri);
+      setError(`No pudimos preparar esta foto. ${userFacingError(nextError)}`);
+      setPhase("intro");
+    } finally {
+      deleteCachedImage(uri);
+      setPreparing(false);
+    }
+  }
+
+  async function analyzePreparedImage() {
+    if (!prepared || analysisInFlightRef.current || imageQuality.status === "unsuitable") return;
+    analysisInFlightRef.current = true;
+    setProcessing(true);
+    setError(null);
+    try {
       const result = await apiRequest<FoodLabelAIAnalysis>("/api/v1/foods/label-captures/analyze", {
         method: "POST",
         body: JSON.stringify({
-          image_base64: nextPrepared.base64,
-          image_content_type: nextPrepared.contentType,
-          image_width: nextPrepared.width,
-          image_height: nextPrepared.height,
+          image_base64: prepared.base64,
+          image_content_type: prepared.contentType,
+          image_width: prepared.width,
+          image_height: prepared.height,
           idempotency_key: captureKey,
           consent_to_ai_processing: true,
           local_candidate: localCandidate,
         }),
       });
       setAnalysisId(result.analysis_id);
-      setPrepared(nextPrepared);
+      setQualityConfidence(result.quality_confidence);
       setConfig((current) => current ? { ...current, available_credits: result.available_credits } : current);
       applyDraft(aiDraft(result), result.name);
     } catch (nextError) {
-      deleteCachedImage(nextPrepared?.uri);
-      beginManualReview(`${userFacingError(nextError)} Puedes completar los valores manualmente sin consumir una digitalización fallida.`);
+      setError(`${userFacingError(nextError)} Puedes usar otra foto o completar los valores manualmente sin consumir una digitalización fallida.`);
+      setPhase("preview");
     } finally {
-      deleteCachedImage(uri);
+      analysisInFlightRef.current = false;
       setProcessing(false);
     }
   }
 
   async function capture() {
-    if (!cameraRef.current || !cameraReady || processing) return;
+    if (!cameraRef.current || !cameraReady || captureInFlightRef.current || preparing || processing) return;
+    captureInFlightRef.current = true;
+    setCapturing(true);
+    setError(null);
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1, skipProcessing: false });
-      await processImage(photo.uri, photo.width, photo.height);
+      await prepareForPreview(photo.uri, photo.width, photo.height);
     } catch (nextError) {
-      beginManualReview(`No pudimos preparar esta foto. ${userFacingError(nextError)}`);
-      setProcessing(false);
+      setError(`No pudimos capturar esta foto. ${userFacingError(nextError)}`);
+    } finally {
+      captureInFlightRef.current = false;
+      setCapturing(false);
     }
   }
 
   async function chooseFromGallery() {
-    setProcessing(true);
+    if (preparing || processing) return;
+    setPreparing(true);
     setError(null);
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -288,13 +355,26 @@ export default function LabelCaptureScreen() {
       });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        await processImage(asset.uri, asset.width, asset.height);
+        await prepareForPreview(asset.uri, asset.width, asset.height);
       }
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
-      setProcessing(false);
+      setPreparing(false);
     }
+  }
+
+  function cameraDidBecomeReady() {
+    if (cameraReadyTimerRef.current) clearTimeout(cameraReadyTimerRef.current);
+    cameraReadyTimerRef.current = setTimeout(() => setCameraReady(true), LABEL_CAMERA_FOCUS_SETTLE_MS);
+  }
+
+  function cycleLens() {
+    if (availableLenses.length < 2) return;
+    const currentIndex = selectedLens ? availableLenses.indexOf(selectedLens) : -1;
+    setSelectedLens(availableLenses[(currentIndex + 1) % availableLenses.length]);
+    setCameraReady(false);
+    cameraDidBecomeReady();
   }
 
   async function save() {
@@ -361,10 +441,14 @@ export default function LabelCaptureScreen() {
     setDraft(null);
     setSaved(null);
     setPrepared(null);
+    setLocalCandidate(undefined);
+    setImageQuality(unavailableLabelImageQuality);
+    setQualityConfidence(null);
     setAnalysisId(null);
     setRetainImage(false);
     setError(null);
     setCaptureKey(Crypto.randomUUID());
+    setImageExpanded(false);
     setPhase("intro");
   }
 
@@ -374,24 +458,51 @@ export default function LabelCaptureScreen() {
         <AppHeader eyebrow="Foto para IA" title="Encuadra la tabla" />
         <View style={styles.cameraFrame}>
           <CameraView
-            autofocus="on"
+            autofocus={LABEL_CAMERA_AUTOFOCUS}
             enableTorch={torchEnabled}
             facing="back"
             mode="picture"
-            onCameraReady={() => setCameraReady(true)}
+            onAvailableLensesChanged={({ lenses }) => setAvailableLenses(lenses)}
+            onCameraReady={cameraDidBecomeReady}
             onMountError={() => { setPhase("intro"); setError("No pudimos iniciar la cámara. Puedes elegir una foto de tu galería."); }}
             ref={cameraRef}
+            selectedLens={selectedLens}
             style={StyleSheet.absoluteFill}
+            zoom={zoom}
           />
           <View pointerEvents="none" style={styles.guide} />
           <View pointerEvents="none" style={styles.cameraCopy}>
-            <Text style={styles.cameraCopyText}>Evita reflejos y llena el marco con la tabla completa.</Text>
+            <Text style={styles.cameraCopyText}>Mantén el teléfono paralelo y aléjalo hasta ver el texto nítido. Usa zoom en vez de acercarte demasiado.</Text>
           </View>
         </View>
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-        <Button disabled={!cameraReady || processing} label="Capturar y digitalizar" loading={processing} onPress={() => void capture()} />
-        <Button disabled={!cameraReady || processing} label={torchEnabled ? "Apagar luz" : "Encender luz"} onPress={() => setTorchEnabled((current) => !current)} variant="secondary" />
-        <Button disabled={processing} label="Cancelar" onPress={() => setPhase("intro")} variant="secondary" />
+        {!cameraReady ? <Text style={textStyles.caption}>Preparando enfoque continuo…</Text> : null}
+        <Button disabled={!cameraReady || capturing || preparing} label="Capturar foto" loading={capturing || preparing} onPress={() => void capture()} />
+        <View style={styles.cameraControls}>
+          <Button disabled={!cameraReady || capturing || zoom <= 0} label="Alejar" onPress={() => setZoom((current) => Math.max(0, current - LABEL_CAMERA_ZOOM_STEP))} variant="secondary" />
+          <Button disabled={!cameraReady || capturing || zoom >= LABEL_CAMERA_MAX_ZOOM} label="Acercar" onPress={() => setZoom((current) => Math.min(LABEL_CAMERA_MAX_ZOOM, current + LABEL_CAMERA_ZOOM_STEP))} variant="secondary" />
+        </View>
+        {availableLenses.length > 1 ? <Button disabled={capturing || preparing} label="Cambiar lente" onPress={cycleLens} variant="secondary" /> : null}
+        <Button disabled={!cameraReady || capturing || preparing} label={torchEnabled ? "Apagar luz" : "Encender luz"} onPress={() => setTorchEnabled((current) => !current)} variant="secondary" />
+        <Button disabled={capturing || preparing} label="Cancelar" onPress={restart} variant="secondary" />
+      </Screen>
+    );
+  }
+
+  if (phase === "preview" && prepared) {
+    return (
+      <Screen>
+        <AppHeader eyebrow="Antes de usar créditos" title="Revisa la fotografía" />
+        {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+        <Image accessibilityLabel="Fotografía procesada de la etiqueta nutricional" resizeMode="contain" source={{ uri: prepared.uri }} style={styles.previewImage} />
+        {imageQuality.status === "suitable" ? <InlineNotice>La imagen superó las comprobaciones locales de legibilidad.</InlineNotice> : null}
+        {imageQuality.status === "reviewable" ? <InlineNotice tone="warning">La imagen puede usarse, pero conviene revisar estos puntos antes de continuar.</InlineNotice> : null}
+        {imageQuality.status === "unsuitable" ? <InlineNotice tone="error">Esta imagen no es suficientemente legible y no será enviada ni consumirá créditos.</InlineNotice> : null}
+        {imageQuality.status === "unavailable" ? <InlineNotice tone="warning">No pudimos comprobar automáticamente la nitidez. Confirma visualmente que todo el texto sea legible.</InlineNotice> : null}
+        {imageQuality.issues.map((issue) => <Text key={issue} style={textStyles.caption}>• {labelImageQualityMessage(issue)}</Text>)}
+        <Button disabled={imageQuality.status === "unsuitable" || processing} label="Usar esta foto" loading={processing} onPress={() => void analyzePreparedImage()} />
+        <Button disabled={processing} label="Usar otra foto" onPress={restart} variant="secondary" />
+        <Button disabled={processing} label="Ingresar manualmente" onPress={() => beginManualReview()} variant="secondary" />
       </Screen>
     );
   }
@@ -414,7 +525,7 @@ export default function LabelCaptureScreen() {
             {config ? <Text style={textStyles.caption}>Saldo disponible: {config.available_credits} créditos.</Text> : null}
           </Card>
           <Button disabled={config ? !config.can_scan : false} label="Abrir cámara" loading={openingCamera} onPress={() => void beginCamera()} />
-          <Button disabled={config ? !config.can_scan : false} label="Elegir desde galería" loading={processing} onPress={() => void chooseFromGallery()} variant="secondary" />
+          <Button disabled={config ? !config.can_scan : false} label="Elegir desde galería" loading={preparing} onPress={() => void chooseFromGallery()} variant="secondary" />
           <Button label="Ingresar manualmente" onPress={() => beginManualReview()} variant="secondary" />
         </>
       ) : null}
@@ -422,6 +533,22 @@ export default function LabelCaptureScreen() {
       {phase === "review" ? (
         <>
           <InlineNotice tone="warning">La IA puede equivocarse. Compara cada valor con el envase antes de guardar.</InlineNotice>
+          {prepared ? (
+            <Card>
+              <SectionTitle detail="Imagen analizada" title="Compara la lectura" />
+              <Image accessibilityLabel="Etiqueta nutricional analizada" resizeMode="contain" source={{ uri: prepared.uri }} style={styles.reviewImage} />
+              <Button label="Ampliar foto" onPress={() => setImageExpanded(true)} variant="secondary" />
+            </Card>
+          ) : null}
+          {qualityConfidence !== null ? (
+            <InlineNotice tone={qualityConfidence < 0.82 ? "warning" : undefined}>
+              {qualityConfidence >= 0.9
+                ? "La extracción tiene confianza alta. Confirma igualmente cada valor."
+                : qualityConfidence >= 0.82
+                  ? "La extracción es utilizable, pero revisa cuidadosamente cada valor."
+                  : "La extracción tiene confianza baja. Revisa y corrige cada campo antes de guardar."}
+            </InlineNotice>
+          ) : null}
           {draft?.normalizationStatus === "basis_confirmation_required" ? (
             <Card accent={tokens.color.warning}>
               <SectionTitle title="¿A qué cantidad corresponden estos valores?" />
@@ -502,6 +629,12 @@ export default function LabelCaptureScreen() {
       ) : null}
 
       <Button label="Volver a Today" onPress={() => router.back()} variant="secondary" />
+      <Modal animationType="fade" onRequestClose={() => setImageExpanded(false)} transparent visible={imageExpanded}>
+        <View style={styles.imageModal}>
+          {prepared ? <Image accessibilityLabel="Vista ampliada de la etiqueta nutricional" resizeMode="contain" source={{ uri: prepared.uri }} style={styles.expandedImage} /> : null}
+          <Button label="Cerrar" onPress={() => setImageExpanded(false)} />
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -511,6 +644,11 @@ const styles = StyleSheet.create({
   guide: { borderColor: tokens.color.food, borderRadius: tokens.radius.lg, borderWidth: 3, bottom: 70, left: 24, position: "absolute", right: 24, top: 52 },
   cameraCopy: { backgroundColor: "rgba(0,0,0,0.72)", bottom: 0, left: 0, padding: 16, position: "absolute", right: 0 },
   cameraCopyText: { color: tokens.color.textMain, fontSize: 13, lineHeight: 18, textAlign: "center" },
+  cameraControls: { flexDirection: "row", gap: tokens.spacing.sm },
+  previewImage: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card, height: 420, width: "100%" },
+  reviewImage: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, height: 260, width: "100%" },
+  imageModal: { backgroundColor: "rgba(0,0,0,0.94)", flex: 1, justifyContent: "center", padding: tokens.spacing.md },
+  expandedImage: { flex: 1, width: "100%" },
   steps: { gap: tokens.spacing.sm },
   reviewHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   reviewTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: "800" },

@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Check } from "lucide-react-native";
+import { Check, CheckCheck } from "lucide-react-native";
 
 import type { MealExecutionItem } from "@/api/types";
 import { tokens } from "@/design/tokens";
@@ -16,6 +16,7 @@ export function DailyMealCompletionCard({ mealKeys, mealExecution }: { mealKeys:
   return (
     <MealCompletionSurface>
       <View accessibilityLabel={`Cumplimiento comidas: ${completedCount} de ${mealKeys.length} completadas`} accessible style={styles.row}>
+        <CheckCheck color={tokens.color.textMain} size={18} strokeWidth={2.2} />
         <Text style={styles.label}>Cumplimiento comidas</Text>
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.checks}>
           {mealKeys.map((key, index) => {

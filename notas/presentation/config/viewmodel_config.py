@@ -5,6 +5,9 @@ HOME_VIEWMODE = vm("home", "list", "personal")
 
 # PROFILE  -------------------------------------------
 PROFILE_VIEWMODE = vm("profile", "list", "personal")
+PERSONAL_RECORDS_VIEWMODE = vm("personal_records", "list", "personal")
+LEARNING_VIEWMODE = vm("learning", "list", "personal")
+LEARNING_DETAIL_VIEWMODE = vm("learning", "detail", "personal")
 BILLING_VIEWMODE = vm("billing", "list", "personal")
 
 

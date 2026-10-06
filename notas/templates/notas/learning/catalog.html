@@ -1,0 +1,21 @@
+{% extends "notas/base.html" %}
+{% load static %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/learning.css' %}">{% endblock %}
+{% block content %}
+<div class="page learning-page">
+  <header class="learning-hero">
+    <a class="learning-back" href="{% url 'learning_home' %}"><i data-lucide="arrow-left"></i> Fundamentos Sistema</a>
+    <p class="learning-eyebrow">Biblioteca de aprendizaje</p>
+    <h1>{{ vm.content.title }}</h1><p>{{ vm.content.description }}</p>
+  </header>
+  <div class="learning-article-grid">
+    {% for article in vm.content.articles %}
+      <a class="learning-article-card" href="{% url 'learning_article' vm.content.kind article.slug %}">
+        <i data-lucide="{{ article.icon }}"></i>
+        <div><h2>{{ article.title }}</h2><p>{{ article.summary }}</p></div>
+        <i data-lucide="chevron-right"></i>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

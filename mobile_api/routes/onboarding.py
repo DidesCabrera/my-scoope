@@ -10,6 +10,12 @@ from accounts.services.onboarding import (
     nutrition_onboarding_estimate,
     save_nutrition_onboarding_v2,
 )
+from accounts.services.personal_records import (
+    update_body_record,
+    update_planning_record,
+    update_preference_record,
+    update_weight_record,
+)
 from mobile_api.api_support import form_error, require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
@@ -18,6 +24,10 @@ from mobile_api.schema_domains.onboarding import (
     OnboardingAnalyzeInput,
     OnboardingInput,
     OnboardingStateEnvelope,
+    PersonalBodyInput,
+    PersonalPlanningInput,
+    PersonalPreferencesInput,
+    PersonalWeightInput,
 )
 from mobile_api.schema_domains.proposals import ProposalDetailEnvelope
 from mobile_api.schemas import ErrorEnvelope
@@ -25,6 +35,7 @@ from mobile_api.selectors_identity import profile_payload
 from mobile_api.selectors_proposals import proposal_detail_payload
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 from notas.domain.models import NutritionPreferenceProfile
+from notas.interface.forms.forms import ProfileNutritionForm
 
 router = Router()
 
@@ -88,6 +99,63 @@ def _onboarding_state_payload(user):
     response={200: OnboardingStateEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
 )
 def onboarding_state(request):
+    return success(_onboarding_state_payload(request.auth.user))
+
+
+@router.patch(
+    "/personal-records/body",
+    operation_id="mobile_api_routes_onboarding_update_personal_body",
+    auth=mobile_bearer,
+    response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_personal_body(request, payload: PersonalBodyInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    form = ProfileNutritionForm({"birth_date": payload.birth_date.isoformat(), "sex": payload.sex, "height_cm": payload.height_cm})
+    if not form.is_valid():
+        raise form_error(form, code="personal_record_invalid", message="Revisa la información ingresada.")
+    update_body_record(user=request.auth.user, birth_date=form.cleaned_data["birth_date"], sex=form.cleaned_data["sex"], height_cm=form.cleaned_data["height_cm"])
+    return success(_onboarding_state_payload(request.auth.user))
+
+
+@router.patch(
+    "/personal-records/planning",
+    operation_id="mobile_api_routes_onboarding_update_personal_planning",
+    auth=mobile_bearer,
+    response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_personal_planning(request, payload: PersonalPlanningInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        update_planning_record(user=request.auth.user, goal=payload.goal, activity_level=payload.activity_level, training_frequency=payload.training_frequency)
+    except ValueError as exc:
+        raise MobileAPIError(code=str(exc), message="Revisa la información ingresada.", status_code=422) from exc
+    return success(_onboarding_state_payload(request.auth.user))
+
+
+@router.patch(
+    "/personal-records/preferences",
+    operation_id="mobile_api_routes_onboarding_update_personal_preferences",
+    auth=mobile_bearer,
+    response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_personal_preferences(request, payload: PersonalPreferencesInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        update_preference_record(user=request.auth.user, dietary_pattern=payload.dietary_pattern, allergies_or_intolerances=payload.allergies_or_intolerances, avoided_foods=payload.avoided_foods)
+    except ValueError as exc:
+        raise MobileAPIError(code=str(exc), message="Revisa la información ingresada.", status_code=422) from exc
+    return success(_onboarding_state_payload(request.auth.user))
+
+
+@router.patch(
+    "/personal-records/metrics",
+    operation_id="mobile_api_routes_onboarding_update_personal_metrics",
+    auth=mobile_bearer,
+    response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_personal_metrics(request, payload: PersonalWeightInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    update_weight_record(user=request.auth.user, weight_kg=payload.weight_kg)
     return success(_onboarding_state_payload(request.auth.user))
 
 

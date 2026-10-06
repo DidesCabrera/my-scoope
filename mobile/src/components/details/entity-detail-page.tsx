@@ -29,6 +29,7 @@ export function EntityDetailPage({
   kpiVariant = "regular",
   entity,
   eyebrow,
+  eyebrowAccessory,
   indicators,
   nutrition,
   onBack,
@@ -62,6 +63,7 @@ export function EntityDetailPage({
             completion={completion}
             entity={entity}
             eyebrow={eyebrow}
+            eyebrowAccessory={eyebrowAccessory}
             indicators={indicators}
             subtitle={subtitle}
             title={title}

@@ -1,0 +1,31 @@
+{% extends "notas/base.html" %}
+
+{% block content %}
+<div class="page page--detail profile-page personal-record-edit-page">
+    <section class="profile-account-section">
+        <div class="profile-account-title-row">
+            <i data-lucide="{{ record_icon }}" class="profile-account-title-icon"></i>
+            <h1>{{ record_title }}</h1>
+        </div>
+    </section>
+    <section class="profile-section-card">
+        <form method="post" class="profile-edit-form">
+            {% csrf_token %}
+            <div class="profile-edit-form__grid">
+                {% for field in record_form %}
+                    <div class="profile-form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                        {% for error in field.errors %}<span class="profile-form-errors">{{ error }}</span>{% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="profile-edit-form__actions">
+                <button type="submit" class="btn-primary">Guardar cambios</button>
+                <a href="{% url 'personal_records' %}">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

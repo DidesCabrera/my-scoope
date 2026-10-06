@@ -4059,6 +4059,121 @@
         "title": "HomeLibraryCountsData",
         "type": "object"
       },
+      "LearningArticleData": {
+        "properties": {
+          "icon": {
+            "title": "Icon",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/LearningSectionData"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "source_label": {
+            "default": "",
+            "title": "Source Label",
+            "type": "string"
+          },
+          "source_url": {
+            "default": "",
+            "title": "Source Url",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "takeaway": {
+            "title": "Takeaway",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "summary",
+          "icon",
+          "sections",
+          "takeaway"
+        ],
+        "title": "LearningArticleData",
+        "type": "object"
+      },
+      "LearningCatalogData": {
+        "properties": {
+          "manuals": {
+            "items": {
+              "$ref": "#/components/schemas/LearningArticleData"
+            },
+            "title": "Manuals",
+            "type": "array"
+          },
+          "nutrition": {
+            "items": {
+              "$ref": "#/components/schemas/LearningArticleData"
+            },
+            "title": "Nutrition",
+            "type": "array"
+          }
+        },
+        "required": [
+          "nutrition",
+          "manuals"
+        ],
+        "title": "LearningCatalogData",
+        "type": "object"
+      },
+      "LearningCatalogEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LearningCatalogData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "LearningCatalogEnvelope",
+        "type": "object"
+      },
+      "LearningSectionData": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string"
+          }
+        },
+        "required": [
+          "heading",
+          "body"
+        ],
+        "title": "LearningSectionData",
+        "type": "object"
+      },
       "LibraryActionData": {
         "properties": {
           "destructive": {
@@ -5534,6 +5649,99 @@
           "data"
         ],
         "title": "OnboardingStateEnvelope",
+        "type": "object"
+      },
+      "PersonalBodyInput": {
+        "properties": {
+          "birth_date": {
+            "format": "date",
+            "title": "Birth Date",
+            "type": "string"
+          },
+          "height_cm": {
+            "maximum": 250,
+            "minimum": 80,
+            "title": "Height Cm",
+            "type": "integer"
+          },
+          "sex": {
+            "title": "Sex",
+            "type": "string"
+          }
+        },
+        "required": [
+          "birth_date",
+          "sex",
+          "height_cm"
+        ],
+        "title": "PersonalBodyInput",
+        "type": "object"
+      },
+      "PersonalPlanningInput": {
+        "properties": {
+          "activity_level": {
+            "title": "Activity Level",
+            "type": "string"
+          },
+          "goal": {
+            "title": "Goal",
+            "type": "string"
+          },
+          "training_frequency": {
+            "maximum": 7,
+            "minimum": 0,
+            "title": "Training Frequency",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "goal",
+          "activity_level",
+          "training_frequency"
+        ],
+        "title": "PersonalPlanningInput",
+        "type": "object"
+      },
+      "PersonalPreferencesInput": {
+        "properties": {
+          "allergies_or_intolerances": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allergies Or Intolerances",
+            "type": "array"
+          },
+          "avoided_foods": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Avoided Foods",
+            "type": "array"
+          },
+          "dietary_pattern": {
+            "title": "Dietary Pattern",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dietary_pattern"
+        ],
+        "title": "PersonalPreferencesInput",
+        "type": "object"
+      },
+      "PersonalWeightInput": {
+        "properties": {
+          "weight_kg": {
+            "maximum": 350,
+            "minimum": 25,
+            "title": "Weight Kg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "weight_kg"
+        ],
+        "title": "PersonalWeightInput",
         "type": "object"
       },
       "PickerCommitData": {
@@ -10604,6 +10812,30 @@
         "summary": "Home"
       }
     },
+    "/api/v1/learning": {
+      "get": {
+        "operationId": "mobile_api_routes_learning_learning_catalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningCatalogEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Learning Catalog"
+      }
+    },
     "/api/v1/library/daily-plans": {
       "get": {
         "operationId": "mobile_api_api_library_dailyplans",
@@ -13383,6 +13615,222 @@
           }
         ],
         "summary": "Onboarding State"
+      }
+    },
+    "/api/v1/personal-records/body": {
+      "patch": {
+        "operationId": "mobile_api_routes_onboarding_update_personal_body",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalBodyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStateEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Personal Body"
+      }
+    },
+    "/api/v1/personal-records/metrics": {
+      "patch": {
+        "operationId": "mobile_api_routes_onboarding_update_personal_metrics",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalWeightInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStateEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Personal Metrics"
+      }
+    },
+    "/api/v1/personal-records/planning": {
+      "patch": {
+        "operationId": "mobile_api_routes_onboarding_update_personal_planning",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalPlanningInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStateEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Personal Planning"
+      }
+    },
+    "/api/v1/personal-records/preferences": {
+      "patch": {
+        "operationId": "mobile_api_routes_onboarding_update_personal_preferences",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalPreferencesInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStateEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Personal Preferences"
       }
     },
     "/api/v1/program/active": {

@@ -100,9 +100,10 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
   prueba física depende de Xcode y OAuth staging. CML04 está completado en
   repositorio con ejecución inmutable, adherencia, mediciones contextualizadas,
   revisiones, ajustes futuros auditados y coordinación de recordatorios. CML05
-  está completado en repositorio con cámara, OCR local Apple Vision, revisión
-  explícita y creación idempotente de alimentos privados; su gate físico depende
-  de Xcode/dispositivo. CML06 está completado en repositorio con compra/restauración
+  fue supersedido para extracción automática por el ciclo de confiabilidad de
+  etiquetas: Apple Vision actúa como control local, la imagen aceptada se procesa
+  temporalmente con IA y la creación sigue requiriendo revisión explícita; su gate
+  físico depende de Xcode/dispositivo. CML06 está completado en repositorio con compra/restauración
   StoreKit verificada, conciliación Apple y agregación determinística con Mercado
   Pago; el ciclo sandbox físico sigue como gate externo. CML07 está completado en
   repositorio con Apple dentro del mismo PKCE, entrega APNs/local exclusiva,

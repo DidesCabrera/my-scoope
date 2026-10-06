@@ -6,6 +6,26 @@ from notas.domain.models import DailyPlan, Food, NutritionPreferenceProfile, Nut
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
+    def test_personal_record_endpoints_update_without_restarting_onboarding(self):
+        self.user.profile.onboarding_stage = Profile.ONBOARDING_STAGE_COMPLETED
+        self.user.profile.save(update_fields=["onboarding_stage"])
+
+        planning = self.client.patch("/api/v1/personal-records/planning", data={
+            "goal": "maintenance", "activity_level": "moderate", "training_frequency": 2,
+        }, content_type="application/json")
+        self.assertEqual(planning.status_code, 200, planning.content)
+        self.assertEqual(planning.json()["data"]["stage"], Profile.ONBOARDING_STAGE_COMPLETED)
+
+        preferences = self.client.patch("/api/v1/personal-records/preferences", data={
+            "dietary_pattern": "vegetarian", "allergies_or_intolerances": ["maní"], "avoided_foods": ["apio"],
+        }, content_type="application/json")
+        self.assertEqual(preferences.status_code, 200, preferences.content)
+        stored = NutritionPreferenceProfile.objects.get(user=self.user).preferences
+        self.assertEqual(stored["dietary_pattern"], "vegetarian")
+
+        metrics = self.client.patch("/api/v1/personal-records/metrics", data={"weight_kg": 81.2}, content_type="application/json")
+        self.assertEqual(metrics.status_code, 200, metrics.content)
+        self.assertEqual(metrics.json()["data"]["weight_kg"], 81.2)
     def _create_minimal_food_catalog(self):
         foods = (
             ("Pechuga de pollo", 31, 0, 3, "carnes", "primary_protein", 170, 90, 260),

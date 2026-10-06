@@ -23,6 +23,7 @@ export type NutritionEntityCardProps = {
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
   eyebrow?: string;
+  eyebrowAccessory?: ReactNode;
   headingLink?: EntityHeadingLink;
   indicators?: StructuralIndicator[];
   nutrition: Omit<NutritionKpiSectionProps, "style" | "variant">;
@@ -41,6 +42,7 @@ export function NutritionEntityCard({
   kpiVariant = "regular",
   entity,
   eyebrow,
+  eyebrowAccessory,
   headingLink,
   indicators,
   nutrition,
@@ -56,6 +58,7 @@ export function NutritionEntityCard({
       completion={completion}
       entity={entity}
       eyebrow={eyebrow}
+      eyebrowAccessory={eyebrowAccessory}
       headingLink={headingLink}
       indicators={indicators}
       onPress={onPress}

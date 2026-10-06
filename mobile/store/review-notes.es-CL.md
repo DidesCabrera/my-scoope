@@ -14,13 +14,13 @@ La app requiere inicio de sesión. Las credenciales de la cuenta de demostració
 2. En **Hoy**, revisar el programa activo, las comidas previstas y sus macros.
 3. En **Plan de hoy**, abrir el detalle de una comida y marcar su cumplimiento.
 4. Abrir **Registrar peso** y guardar una medición.
-5. Abrir **Digitalizar etiqueta nutricional**. El OCR usa Apple Vision en el dispositivo; la foto y el texto crudo no se envían al servidor. Solo se guarda el alimento privado después de confirmar los valores.
+5. Abrir **Digitalizar etiqueta nutricional**. La app muestra una vista previa y realiza comprobaciones locales de legibilidad con Apple Vision antes de cualquier envío. Al elegir **Usar esta foto**, una copia reducida, re-encodedada y sin metadatos se envía temporalmente a OpenAI para extraer los valores. El texto OCR crudo no se conserva y el alimento privado sólo se guarda después de confirmar los valores.
 6. Abrir **Mi suscripción** para probar compra/restauración en Sandbox.
 7. Abrir **Cuenta, privacidad y ayuda** para acceder a privacidad, términos, soporte, reporte de contenido y eliminación de cuenta.
 
 ## Funciones nativas
 
-- Cámara: se solicita únicamente al iniciar la digitalización de una etiqueta; no usa micrófono ni biblioteca de fotos.
+- Cámara: se solicita únicamente al abrir la captura de una etiqueta y no usa micrófono. El usuario también puede elegir voluntariamente una fotografía desde su biblioteca mediante el selector del sistema.
 - Notificaciones: se solicitan desde Recordatorios y representan horarios del programa calendarizado.
 - Sign in with Apple: comparte el mismo flujo OAuth PKCE que los demás accesos.
 - Compras: usa StoreKit y muestra el precio localizado por Apple.

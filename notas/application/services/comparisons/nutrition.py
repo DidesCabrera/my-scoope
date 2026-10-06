@@ -12,7 +12,7 @@ def alloc_from_values(total_kcal: float, kcal_protein: float, kcal_carbs: float,
     }
 
 
-def food_values(food: Any, quantity: float) -> dict[str, float]:
+def food_values(food: Any, quantity: float, current_weight: float | None = None) -> dict[str, float]:
     factor = quantity / 100
     protein = food.protein * factor
     carbs = food.carbs * factor
@@ -25,6 +25,7 @@ def food_values(food: Any, quantity: float) -> dict[str, float]:
 
     return {
         "total_kcal": total_kcal,
+        "ppk": (protein / current_weight) if (current_weight and protein) else 0,
         "protein": protein,
         "carbs": carbs,
         "fat": fat,

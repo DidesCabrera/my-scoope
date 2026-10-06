@@ -165,6 +165,20 @@
     </div>
 
     {% if request.user.is_authenticated %}
+        <a href="{% url 'billing:overview' %}" class="sidebar-credit-dashboard" aria-label="Abrir Suscripciones y bolsas" title="Suscripciones y bolsas">
+            <span class="sidebar-credit-dashboard__metric sidebar-credit-dashboard__metric--plan">
+                <span class="sidebar-credit-dashboard__eyebrow">Plan</span>
+                <strong>{{ sidebar_credits.plan_name }}</strong>
+            </span>
+            <span class="sidebar-credit-dashboard__metric sidebar-credit-dashboard__metric--credits">
+                <strong>{{ sidebar_credits.available_credits }}</strong>
+                <span class="sidebar-credit-dashboard__available-label">créditos disponibles</span>
+            </span>
+            <span class="sidebar-credit-dashboard__action" aria-hidden="true">
+                <i data-lucide="chevron-right"></i>
+            </span>
+        </a>
+
         <div class="sidebar-footer">
             <button type="button" class="user-block user-block--link" aria-label="Abrir profile" data-profile-panel-open>
                 <div class="user">
