@@ -10,9 +10,9 @@ async function source(relativePath: string): Promise<string> {
 test("login renders the first storyboard view with the real authentication action", async () => {
   const login = await source("src/app/login.tsx");
 
-  assert.match(login, /OnboardingJourneyView/);
-  assert.match(login, /step="login"/);
-  assert.match(login, /startSignIn\(returnHref\)/);
+  assert.ok(login.includes("OnboardingJourneyView"));
+  assert.ok(login.includes('step="login"'));
+  assert.ok(login.includes("startSignIn(returnHref)"));
 });
 
 test("staff can traverse a side-effect-free onboarding preview", async () => {
@@ -21,8 +21,10 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
     source("src/components/navigation/app-navigation.tsx"),
   ]);
 
-  assert.match(navigation, /session\?\.is_staff[\s\S]*Vista previa del onboarding/);
-  assert.match(preview, /if \(!session\.is_staff\) return <Redirect href="\/account"/);
-  assert.match(preview, /onboardingJourneySteps\.length - 1/);
-  assert.doesNotMatch(preview, /apiRequest|\/api\/v1\//);
+  assert.ok(navigation.includes("session?.is_staff"));
+  assert.ok(navigation.includes("Vista previa del onboarding"));
+  assert.ok(preview.includes('if (!session.is_staff) return <Redirect href="/account"'));
+  assert.ok(preview.includes("onboardingJourneySteps.length - 1"));
+  assert.ok(!preview.includes("apiRequest"));
+  assert.ok(!preview.includes("/api/v1/"));
 });
