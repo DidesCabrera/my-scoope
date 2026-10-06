@@ -30,6 +30,16 @@ type ActionSheetModalProps = PropsWithChildren<{
 
 const nativeBlurAvailable = Boolean(requireOptionalNativeModule("ExpoBlur"));
 
+export function ModalBackdrop({ accessibilityLabel, onPress }: { accessibilityLabel: string; onPress(): void }) {
+  return (
+    <>
+      {nativeBlurAvailable ? <BlurView intensity={38} style={StyleSheet.absoluteFill} tint="dark" /> : null}
+      <View style={styles.scrimTint} />
+      <Pressable accessibilityLabel={accessibilityLabel} onPress={onPress} style={styles.scrimPressable} />
+    </>
+  );
+}
+
 export function ActionSheetModal({ children, dismissImmediately = false, onDismiss, onRequestClose, visible }: ActionSheetModalProps) {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -113,16 +123,13 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
       visible={mounted}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalRoot}>
         <Animated.View pointerEvents={visible ? "auto" : "none"} style={[styles.scrim, { opacity: scrimOpacity }]}>
-          {nativeBlurAvailable ? <BlurView intensity={38} style={StyleSheet.absoluteFill} tint="dark" /> : null}
-          <View style={styles.scrimTint} />
-          <Pressable accessibilityLabel="Cerrar acciones" onPress={onRequestClose} style={styles.scrimPressable} />
+          <ModalBackdrop accessibilityLabel="Cerrar acciones" onPress={onRequestClose} />
         </Animated.View>
         <Animated.View
           style={[styles.sheetFrame, { paddingBottom: bottomInset, transform: [{ translateY: sheetTranslateY }] }]}
         >
           <View style={styles.sheetHandle} />
           {children}
-          <View pointerEvents="none" style={styles.sheetBorder} />
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
@@ -152,11 +159,11 @@ export function ActionSheetActions({ children }: PropsWithChildren) {
   );
 }
 
-export function ActionSheetAction({ destructive = false, icon: Icon, label, onPress }: { destructive?: boolean; icon: LucideIcon; label: string; onPress(): void }) {
+export function ActionSheetAction({ destructive = false, disabled = false, icon: Icon, label, onPress }: { destructive?: boolean; disabled?: boolean; icon: LucideIcon; label: string; onPress(): void }) {
   const color = destructive ? tokens.color.danger : tokens.color.textMain;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-      <Icon color={color} size={18} />
+    <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.actionRow, (pressed || disabled) && styles.pressed]}>
+      <View style={styles.actionIcon}><Icon color={color} size={18} /></View>
       <Text style={[styles.actionLabel, destructive && styles.actionLabelDanger]}>{label}</Text>
     </Pressable>
   );
@@ -165,9 +172,10 @@ export function ActionSheetAction({ destructive = false, icon: Icon, label, onPr
 const styles = StyleSheet.create({
   actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.medium },
   actionLabelDanger: { color: tokens.color.danger },
+  actionIcon: { alignItems: "center", justifyContent: "center", width: 20 },
   actionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingHorizontal: tokens.spacing.lg },
   actionsEyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, marginBottom: tokens.spacing.sm },
-  actionsTable: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, overflow: "hidden" },
+  actionsTable: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden" },
   close: { alignItems: "center", height: 42, justifyContent: "center", width: 42 },
   header: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
   headerIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.md, minWidth: 0 },
@@ -177,7 +185,6 @@ const styles = StyleSheet.create({
   scrim: { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   scrimPressable: { flex: 1 },
   scrimTint: { backgroundColor: "rgba(0, 0, 0, 0.36)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
-  sheetBorder: { borderColor: tokens.color.borderSoft, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, borderWidth: 1, bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   sheetFrame: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden", width: "100%" },
   sheetHandle: { alignSelf: "center", backgroundColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, height: 4, marginTop: tokens.spacing.sm, width: 40 },
 });

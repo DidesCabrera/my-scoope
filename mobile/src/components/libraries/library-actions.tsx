@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import {
   Alert,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,7 +21,7 @@ import type {
 } from "@/api/types";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { EntityCardAction } from "@/components/ui";
-import { ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { MealTimeForm } from "@/components/calendarization/calendarized-entity-actions";
 import { tokens } from "@/design/tokens";
 import { openNativeShare } from "@/sharing/native-share";
@@ -174,61 +173,58 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
             <View style={styles.sheet}>
               <ActionSheetHeader entity={item.entity} onClose={close} title={actionTitle ?? item.name} />
 
-              <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
-                {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-
-                {!selected ? <ActionSheetActions>
+              {!selected ? (
+                <View style={styles.sheetContent}>
+                  {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+                  <ActionSheetActions>
                 {onOpenInformation ? (
-                  <Pressable
-                    accessibilityRole="button"
+                  <ActionSheetAction
+                    icon={Info}
+                    label="Ver información del elemento"
                     onPress={() => {
                       setVisible(false);
                       onOpenInformation();
                     }}
-                    style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-                    <Info color={tokens.color.textMain} size={18} />
-                    <Text style={styles.actionLabel}>Ver información del elemento</Text>
-                  </Pressable>
+                  />
                 ) : null}
 
                 {onCompare ? (
-                  <Pressable
-                    accessibilityRole="button"
+                  <ActionSheetAction
+                    icon={Scale}
+                    label="Comparar"
                     onPress={() => {
                       setVisible(false);
                       onCompare();
                     }}
-                    style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-                    <Scale color={tokens.color.textMain} size={18} />
-                    <Text style={styles.actionLabel}>Comparar</Text>
-                  </Pressable>
+                  />
                 ) : null}
 
                 {actions.map((action) => {
                   const Icon = actionIcons[action.key];
                   return (
-                    <Pressable
-                      accessibilityRole="button"
+                    <ActionSheetAction
+                      destructive={action.destructive}
                       disabled={submitting}
+                      icon={Icon}
                       key={action.key}
+                      label={action.label}
                       onPress={() => selectAction(action)}
-                      style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-                      <Icon color={action.destructive ? tokens.color.danger : tokens.color.textMain} size={18} />
-                      <Text style={[styles.actionLabel, action.destructive && styles.actionLabelDanger]}>{action.label}</Text>
-                    </Pressable>
+                    />
                   );
                 })}
 
                 {mealTimeChange && mealTimeInMenu ? (
-                  <Pressable
-                    accessibilityRole="button"
+                  <ActionSheetAction
+                    icon={Clock3}
+                    label="Cambiar hora"
                     onPress={() => setSelected({ destructive: false, key: "change-time", label: "Cambiar hora" })}
-                    style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
-                    <Clock3 color={tokens.color.textMain} size={18} />
-                    <Text style={styles.actionLabel}>Cambiar hora</Text>
-                  </Pressable>
+                  />
                 ) : null}
-                </ActionSheetActions> : null}
+                  </ActionSheetActions>
+                </View>
+              ) : (
+                <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
+                {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
                 {selected?.key === "change-time" && mealTimeChange ? (
                   <MealTimeForm initialTime={mealTimeChange.initialTime} onCancel={initialAction ? close : () => setSelected(null)} onSaved={close} onSubmit={mealTimeChange.onSubmit} />
@@ -259,7 +255,8 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                   </View>
                 ) : null}
 
-              </ScrollView>
+                </ScrollView>
+              )}
             </View>
           </SafeAreaView>
       </ActionSheetModal>
@@ -268,15 +265,11 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
 }
 
 const styles = StyleSheet.create({
-  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
+  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   sheet: { backgroundColor: tokens.color.surfaceCard },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
-  actionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
-  actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.medium },
-  actionLabelDanger: { color: tokens.color.danger },
   form: { gap: tokens.spacing.md },
   confirmation: { gap: tokens.spacing.md },
   confirmationText: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
-  pressed: { opacity: 0.65 },
 });

@@ -12,8 +12,7 @@ test("library details move element metadata into a dedicated action and route", 
   assert.doesNotMatch(detail, /<EntityDetailMetadata/);
   assert.match(detail, /action: item \? \{ label: `Más acciones para \$\{item\.name\}`/);
   assert.match(detail, /onOpenInformation=\{\(\) => router\.push\(`\/libraries\/\$\{entitySlug\}\/\$\{item\.id\}\/information` as Href\)\}/);
-  assert.match(actions, /<Text style=\{styles\.actionLabel\}>Ver información del elemento<\/Text>/);
-  assert.match(actions, /<Info color=\{tokens\.color\.textMain\}/);
+  assert.match(actions, /<ActionSheetAction[\s\S]*icon=\{Info\}[\s\S]*label="Ver información del elemento"/);
   assert.match(information, /title: "Información del elemento"/);
   assert.doesNotMatch(information, /forceFallback/);
   assert.match(information, /<EntityDetailMetadata creator=\{item\.creator\} updatedAt=\{libraryDate\(item\.created_at\)\} \/>/);

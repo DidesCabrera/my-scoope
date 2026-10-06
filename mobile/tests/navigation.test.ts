@@ -131,6 +131,8 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceDoesNotMatch(navigation, /menuSection: \{[^}]*borderTopWidth/);
   assertSourceMatch(navigation, /menuSectionLabel: \{[^}]*fontSize: tokens\.type\.caption/);
   assertSourceMatch(navigation, /drawerContent: \{ gap: 0/);
+  assertSourceMatch(navigation, /<ModalBackdrop accessibilityLabel="Cerrar menú" onPress=\{closeMenu\} \/>/);
+  assertSourceDoesNotMatch(navigation, /scrim: \{ backgroundColor: "rgba\(0,0,0,0\.72\)"/);
   assertSourceMatch(navigation, /menuSection: \{ gap: 0/);
   assertSourceMatch(sidebarItems, /label: \{[^}]*fontSize: tokens\.type\.body/);
   assertSourceMatch(sidebarItems, /item: \{[^}]*minHeight: 48/);
