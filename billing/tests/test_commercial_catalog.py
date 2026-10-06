@@ -155,7 +155,7 @@ class CommercialCatalogTests(TestCase):
         self.assertEqual(product.metadata["prelaunch_price_history"][0]["amount_minor"], 7_990)
         self.assertEqual(BillingProduct.objects.filter(provider=PaymentProvider.APPLE_APP_STORE).count(), 4)
 
-    def test_mobile_product_with_subscription_history_cannot_be_repriced_in_place(self):
+    def test_apple_product_with_subscription_history_preserves_provider_price_snapshot(self):
         seed_billing_offers()
         offer = BillingOffer.objects.get(code="basic-monthly")
         offer.amount_minor = 7_990
@@ -172,11 +172,14 @@ class CommercialCatalogTests(TestCase):
         offer.amount_minor = 3_990
         offer.save(update_fields=["amount_minor", "updated_at"])
 
-        with self.assertRaises(CatalogMappingError):
-            configure_apple_catalog(environment="sandbox", references=self._apple_references())
+        summary = configure_apple_catalog(environment="sandbox", references=self._apple_references())
 
         product.refresh_from_db()
+        self.assertEqual(summary, {"created": 0, "reused": 4, "replaced": 0})
+        self.assertTrue(product.active)
         self.assertEqual(product.amount_minor, 7_990)
+        self.assertTrue(product.metadata["provider_price_snapshot_locked"])
+        product.full_clean()
 
     def test_google_base_plan_ids_are_scoped_to_each_existing_subscription(self):
         seed_billing_offers()

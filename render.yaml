@@ -34,7 +34,7 @@ services:
     plan: starter
     autoDeployTrigger: commit
     buildCommand: ./scripts/render_build.sh
-    preDeployCommand: python manage.py migrate --noinput && python manage.py check --deploy
+    preDeployCommand: bash scripts/render_production_predeploy.sh
     startCommand: python -m gunicorn miapp.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     healthCheckPath: /healthz/
     envVars:
@@ -108,14 +108,28 @@ services:
         value: "false"
       - key: BILLING_APPLE_PURCHASES_ENABLED
         value: "false"
+      - key: BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED
+        value: "false"
+      - key: BILLING_APPLE_SANDBOX_PURCHASES_ENABLED
+        value: "false"
       - key: BILLING_APPLE_ENVIRONMENT
-        value: sandbox
+        value: production
       - key: BILLING_APPLE_BUNDLE_ID
         value: com.myscoope.app
       - key: BILLING_APPLE_APP_ID
         value: "6804048394"
       - key: BILLING_APPLE_ONLINE_CHECKS
         value: "true"
+      - key: BILLING_GOOGLE_PLAY_PURCHASES_ENABLED
+        value: "false"
+      - key: BILLING_GOOGLE_PLAY_RTDN_ENABLED
+        value: "false"
+      - key: BILLING_GOOGLE_PLAY_ENVIRONMENT
+        value: live
+      - key: BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE
+        value: https://www.myscoope.com/billing/webhooks/google-play/
+      - key: BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL
+        sync: false
       - key: BILLING_OPENFACTURA_API_KEY
         sync: false
       - key: MYSCOOPE_APNS_ENABLED
@@ -235,5 +249,7 @@ services:
         sync: false
       - key: BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED
         value: "false"
+      - key: BILLING_GOOGLE_PLAY_ENVIRONMENT
+        value: live
       - key: BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED
         value: "false"

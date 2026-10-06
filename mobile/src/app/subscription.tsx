@@ -28,6 +28,10 @@ function purchaseErrorCode(error: unknown): string {
   return String(error.code ?? "").trim().toLowerCase();
 }
 
+function isUserCancelledPurchase(error: unknown): boolean {
+  return purchaseErrorCode(error) === ErrorCode.UserCancelled;
+}
+
 export default function SubscriptionScreen() {
   const router = useRouter();
   const { status, apiRequest } = useSession();
@@ -90,8 +94,14 @@ export default function SubscriptionScreen() {
     restorePurchases,
   } = useIAP({
     onPurchaseSuccess: (purchase) => void submitPurchase(purchase),
-    onPurchaseError: (purchaseError) => { setError(purchaseError.message); setWorking(false); },
-    onError: (nextError) => { setError(nextError.message); setWorking(false); },
+    onPurchaseError: (purchaseError) => {
+      setError(isUserCancelledPurchase(purchaseError) ? null : purchaseError.message);
+      setWorking(false);
+    },
+    onError: (nextError) => {
+      setError(isUserCancelledPurchase(nextError) ? null : nextError.message);
+      setWorking(false);
+    },
   });
 
   const load = useCallback(async () => {
@@ -175,7 +185,7 @@ export default function SubscriptionScreen() {
         } }, type: "subs" });
       }
     } catch (nextError) {
-      if (purchaseErrorCode(nextError) === ErrorCode.UserCancelled) {
+      if (isUserCancelledPurchase(nextError)) {
         setError(null);
         setWorking(false);
         return;
@@ -237,7 +247,7 @@ export default function SubscriptionScreen() {
         }
       }
       setWorking(false);
-      if (purchaseErrorCode(nextError) !== ErrorCode.UserCancelled) setError(userFacingError(nextError));
+      if (!isUserCancelledPurchase(nextError)) setError(userFacingError(nextError));
     }
   };
 

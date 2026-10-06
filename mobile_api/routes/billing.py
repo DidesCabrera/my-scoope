@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from django.conf import settings
 from ninja import Router
 
 from billing.application.services.apple_app_store import AppleEvidenceError, sync_apple_transaction
-from billing.infrastructure.gateways import build_apple_app_store_gateway
 from billing.infrastructure.providers.apple_app_store import (
     AppleAppStoreConfigurationError,
     InvalidAppleSignedData,
 )
 from mobile_api.api_support import require_scope, success
+from mobile_api.apple_billing import apple_purchases_enabled_for_user, verify_apple_transaction_for_user
 from mobile_api.auth import mobile_bearer
+from mobile_api.billing_selector import subscription_payload
 from mobile_api.entitlements_selector import entitlements_payload
 from mobile_api.errors import MobileAPIError
 from mobile_api.schema_domains.billing import (
@@ -19,7 +19,6 @@ from mobile_api.schema_domains.billing import (
     SubscriptionEnvelope,
 )
 from mobile_api.schemas import ErrorEnvelope
-from mobile_api.selectors import subscription_payload
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()
@@ -59,14 +58,14 @@ def subscriptions(request):
 )
 def apple_transaction(request, payload: AppleTransactionInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    if not settings.BILLING_APPLE_PURCHASES_ENABLED:
+    if not apple_purchases_enabled_for_user(request.auth.user):
         raise MobileAPIError(
             code="apple_purchases_disabled",
             message="Apple purchases are not enabled.",
             status_code=403,
         )
     try:
-        evidence = build_apple_app_store_gateway().verify_transaction(payload.signed_transaction)
+        evidence = verify_apple_transaction_for_user(payload.signed_transaction, user=request.auth.user)
         sync_apple_transaction(evidence, expected_user=request.auth.user, source="mobile_storekit")
     except InvalidAppleSignedData as exc:
         raise MobileAPIError(

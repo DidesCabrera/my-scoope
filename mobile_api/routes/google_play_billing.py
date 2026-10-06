@@ -9,11 +9,11 @@ from billing.infrastructure.gateways import build_google_play_gateway
 from billing.infrastructure.providers.google_play import GooglePlayConfigurationError, InvalidGooglePlayPurchase
 from mobile_api.api_support import require_scope, success
 from mobile_api.auth import mobile_bearer
+from mobile_api.billing_selector import subscription_payload
 from mobile_api.entitlements_selector import entitlements_payload
 from mobile_api.errors import MobileAPIError
 from mobile_api.schema_domains.billing import EntitlementsEnvelope, SubscriptionEnvelope
 from mobile_api.schemas import ErrorEnvelope
-from mobile_api.selectors import subscription_payload
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()
@@ -44,7 +44,11 @@ def google_play_purchase(request, payload: GooglePlayPurchaseInput):
         )
     try:
         evidence = build_google_play_gateway().verify_subscription(payload.purchase_token)
-        sync_google_play_subscription(evidence, expected_user=request.auth.user)
+        sync_google_play_subscription(
+            evidence,
+            expected_user=request.auth.user,
+            expected_environment=settings.BILLING_GOOGLE_PLAY_ENVIRONMENT,
+        )
     except InvalidGooglePlayPurchase as exc:
         raise MobileAPIError(
             code="google_play_purchase_invalid",
@@ -78,7 +82,11 @@ def google_play_credit_pack_purchase(request, payload: GooglePlayPurchaseInput):
         raise MobileAPIError("google_play_purchases_disabled", "Google Play purchases are not enabled.", 403)
     try:
         evidence = build_google_play_gateway().verify_product(payload.purchase_token)
-        settle_google_play_credit_pack(user=request.auth.user, evidence=evidence)
+        settle_google_play_credit_pack(
+            user=request.auth.user,
+            evidence=evidence,
+            expected_environment=settings.BILLING_GOOGLE_PLAY_ENVIRONMENT,
+        )
     except InvalidGooglePlayPurchase as exc:
         raise MobileAPIError("google_play_purchase_invalid", "The product purchase could not be verified.", 422) from exc
     except CreditPackUnavailable as exc:

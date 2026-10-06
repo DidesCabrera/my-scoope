@@ -35,6 +35,7 @@ from notas.application.queries.read_boundaries import get_readable_food_queryset
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.cache.program_summary import get_program_summary
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
+from notas.application.services.nutrition.body_metrics import get_basic_body_profile
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, PinnedDailyPlan, Program
 from notas.domain.services.nutrition import macro_kcal_distribution
@@ -709,6 +710,39 @@ def subscription_payload(user) -> dict:
             for item in evidence
         ],
         "duplicate_active_providers": bool(metadata.get("billing_duplicate_active_providers")),
+    }
+
+
+def session_payload(auth) -> dict:
+    user = auth.user
+    display_name = user.get_full_name().strip() or user.username
+    return {
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "display_name": display_name,
+        "date_joined": user.date_joined,
+        "scopes": list(auth.token.scopes),
+        "device_session_id": (str(auth.token.device_session.public_id) if auth.token.device_session_id else None),
+    }
+
+
+def profile_payload(user) -> dict:
+    body = get_basic_body_profile(user)
+    profile = user.profile
+    return {
+        "birth_date": body.birth_date,
+        "sex": body.sex,
+        "height_cm": body.height_cm,
+        "timezone_name": profile.timezone_name,
+        "onboarding_completed": profile.onboarding_completed_at is not None,
+        "onboarding_version": profile.onboarding_version,
+        "current_weight_kg": body.current_weight_kg,
+        "review_disclosure_required": (
+            profile.mobile_disclosure_version != profile.MOBILE_DISCLOSURE_VERSION
+            or profile.mobile_disclosure_accepted_at is None
+        ),
+        "review_disclosure_version": profile.MOBILE_DISCLOSURE_VERSION,
     }
 
 

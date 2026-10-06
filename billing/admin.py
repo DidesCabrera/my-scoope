@@ -2,10 +2,12 @@ from django.contrib import admin
 
 from billing.models import (
     AppleAppAccountToken,
+    AppleSandboxAccess,
     BillingEvent,
     BillingOffer,
     BillingPayment,
     BillingProduct,
+    GooglePlayAccountToken,
     ProviderSubscription,
     TaxDocument,
 )
@@ -29,6 +31,30 @@ class BillingOfferAdmin(admin.ModelAdmin):
 
 @admin.register(AppleAppAccountToken)
 class AppleAppAccountTokenAdmin(admin.ModelAdmin):
+    list_display = ("user", "token", "created_at")
+    search_fields = ("user__username", "user__email", "token")
+    readonly_fields = ("user", "token", "created_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AppleSandboxAccess)
+class AppleSandboxAccessAdmin(admin.ModelAdmin):
+    list_display = ("user", "purpose", "active", "expires_at", "updated_at")
+    list_filter = ("purpose", "active")
+    search_fields = ("user__username", "user__email")
+    autocomplete_fields = ("user",)
+
+
+@admin.register(GooglePlayAccountToken)
+class GooglePlayAccountTokenAdmin(admin.ModelAdmin):
     list_display = ("user", "token", "created_at")
     search_fields = ("user__username", "user__email", "token")
     readonly_fields = ("user", "token", "created_at")

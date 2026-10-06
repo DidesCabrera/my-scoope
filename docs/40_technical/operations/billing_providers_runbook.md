@@ -7,7 +7,9 @@ Last updated: 2026-09-28
 
 Keep `BILLING_PADDLE_CHECKOUT_ENABLED`, `BILLING_PADDLE_WEBHOOK_ENABLED`,
 `BILLING_MERCADOPAGO_CHECKOUT_ENABLED`, `BILLING_MERCADOPAGO_WEBHOOK_ENABLED` and
-`BILLING_APPLE_PURCHASES_ENABLED`, `BILLING_APPLE_NOTIFICATIONS_ENABLED` and
+`BILLING_APPLE_PURCHASES_ENABLED`, `BILLING_APPLE_NOTIFICATIONS_ENABLED`,
+`BILLING_APPLE_SANDBOX_PURCHASES_ENABLED`,
+`BILLING_APPLE_SANDBOX_NOTIFICATIONS_ENABLED` and
 `BILLING_OPENFACTURA_ENABLED` false. Keep Google Play subscription and credit-pack
 refund reconciliation disabled until their sandbox evidence is complete. This
 preserves all history while stopping new traffic.
@@ -49,24 +51,41 @@ Browser return parameters never grant access. Only verified provider state proje
 
 1. Complete App Store Connect agreements, tax and banking setup. Create the
    auto-renewable subscription group and final product identifiers/prices.
-2. Map the four identifiers with `configure_apple_catalog --environment live`
-   and its Basic/Pro monthly/annual arguments. The command snapshots the canonical
-   offers and is safe to repeat. Do not expose a product until this mapping is
-   deliberate.
-3. Configure the sandbox bundle ID and, for production, numeric Apple app ID.
-   Register `/billing/webhooks/apple-app-store/` as the App Store Server
-   Notifications V2 URL.
+2. Map the four identifiers twice: with `configure_apple_catalog --environment live`
+   and `configure_apple_catalog --environment sandbox`. Apple uses the same Product
+   IDs in StoreKit, while the signed transaction determines which catalog row is
+   authoritative. Map the three credit packs in both environments too. The commands
+   snapshot the canonical offers and are safe to repeat.
+   The production predeploy script performs these idempotent mappings so a newly
+   deployed production database exposes the expected StoreKit identifiers; inspect
+   its output for catalog drift before enabling purchases.
+3. Configure the bundle ID, numeric Apple app ID and
+   `BILLING_APPLE_ENVIRONMENT=production`. Register
+   `/billing/webhooks/apple-app-store/production/` as the production App Store Server
+   Notifications V2 URL and `/billing/webhooks/apple-app-store/sandbox/` as its
+   sandbox URL.
 4. Configure the In-App Purchase API `.p8` content, key ID and issuer ID for
    lifecycle reconciliation. The public Apple Root CA G3 certificate is bundled;
    private keys remain environment secrets.
-5. Enable notifications first. Confirm invalid JWS rejection, notification replay
+5. In Django Admin, grant active, time-limited `AppleSandboxAccess` only to the
+   dedicated internal/App Review account. Never authorize ordinary customer or staff
+   accounts implicitly. Enable sandbox notifications and purchases only while this
+   controlled production-profile test is required.
+   Run `.venv/bin/python manage.py check_apple_billing_readiness --scenario all`
+   before activation. Add `--require-enabled` only after changing the four Apple
+   feature flags, and `--require-reconciliation` when validating the private API
+   credentials. The command reads configuration and catalog state without making
+   purchases or changing entitlements.
+6. Enable notifications first. Confirm invalid JWS rejection, notification replay
    idempotency and lifecycle projection. Run
    `.venv/bin/python manage.py reconcile_apple_subscriptions --dry-run`.
-6. In a development/TestFlight build on a physical iPhone, buy and restore each
+7. In a development/TestFlight build on a physical iPhone, buy and restore each
    product with a sandbox tester. Confirm localized StoreKit pricing, matching
    `appAccountToken`, server verification before finish and renewal/expiration/
    grace/revocation behavior.
-7. Enable purchases only after that evidence passes. A simultaneous active Apple
+8. Enable production purchases only after that evidence passes. Remove or expire
+   the sandbox authorization after validation and confirm no active sandbox entitlement
+   remains. A simultaneous active Apple
    and Mercado Pago row must appear in Admin Operations and be resolved manually
    with the user; never delete evidence or cancel a provider automatically.
 
@@ -93,8 +112,9 @@ Browser return parameters never grant access. Only verified provider state proje
 
 ## Rollback
 
-Disable the provider flags. Do not delete subscriptions, payments, events, Apple
-account tokens or tax documents. Reconcile external state before re-enabling.
+Disable the provider flags. Do not delete subscriptions, payments, events,
+Apple/Google account tokens or tax documents. Reconcile external state before
+re-enabling.
 
 ## Google Play staging and lifecycle gate
 
@@ -102,6 +122,37 @@ Keep the existing `myscoope_basic` and `myscoope_pro` subscriptions and their
 monthly/annual base plans, plus the three `myscoope.credits.*` one-time products;
 do not duplicate product IDs. A purchase changes entitlements only after the
 Google Play Developer API verifies its token and account binding.
+
+Before the next Android build:
+
+1. Set `BILLING_GOOGLE_PLAY_ENVIRONMENT=sandbox` in staging and keep production
+   at `live`. Confirm that only the configured environment's four base plans
+   and three credit packs are returned by `/api/v1/subscriptions`.
+2. Give the existing Google Play API service account only the Android Publisher
+   access needed to read purchases. Keep its JSON key in the secret file; never
+   place it in Pub/Sub configuration or source control.
+3. Create one Pub/Sub topic for the Play Console notifications and grant
+   `google-play-developer-notifications@system.gserviceaccount.com` Publisher
+   access. Select that topic in Play Console.
+4. Create an authenticated push subscription targeting
+   `/billing/webhooks/google-play/`. Use a dedicated push-auth service account,
+   the exact configured `BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE`, and grant the
+   Pub/Sub service agent permission to mint its OIDC token. Configure the same
+   service-account email in
+   `BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL`.
+5. Keep `BILLING_GOOGLE_PLAY_RTDN_ENABLED=false` until the Play Console test
+   notification is received with a valid JWT. Invalid audience, issuer, email,
+   package or environment must be rejected without creating an inbox row.
+6. Enable RTDN, repeat the test notification, then exercise one subscription
+   and one credit pack. Confirm one idempotent `BillingEvent` per Pub/Sub
+   `messageId`; the row must contain no raw purchase token. Provider/API failure
+   must leave the event `failed` and return a retryable non-2xx response.
+
+The Android client already follows the required completion order: it sends the
+purchase token to My Scoope, waits for server verification and only then calls
+`finishTransaction`. With `expo-iap` 5.5.1, subscriptions are acknowledged and
+credit packs use `isConsumable=true`, which consumes the token so the product
+can be bought again. Preserve this order in every client change.
 
 `reconcile_google_play_subscriptions` reads stored purchase tokens and refreshes
 renewal, grace, hold, cancellation and expiration evidence. It defaults to a

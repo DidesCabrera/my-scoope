@@ -34,6 +34,49 @@ class AppleAppAccountToken(models.Model):
         return f"Apple account token · {self.user_id}"
 
 
+class AppleSandboxAccess(models.Model):
+    """Explicit, auditable permission to accept Apple sandbox evidence in production."""
+
+    class Purpose(models.TextChoices):
+        INTERNAL = "internal", "Internal testing"
+        APP_REVIEW = "app_review", "App Review"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="apple_sandbox_access",
+    )
+    purpose = models.CharField(max_length=24, choices=Purpose.choices)
+    active = models.BooleanField(default=True, db_index=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["user_id"]
+
+    def __str__(self) -> str:
+        return f"Apple sandbox access · {self.user_id} · {self.purpose}"
+
+
+class GooglePlayAccountToken(models.Model):
+    """Stable opaque hash used to resolve authenticated Google Play RTDNs."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="google_play_account_token",
+    )
+    token = models.CharField(max_length=64, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["user_id"]
+
+    def __str__(self) -> str:
+        return f"Google Play account token · {self.user_id}"
+
+
 class BillingOffer(models.Model):
     """Canonical sellable offer for one account plan.
 
@@ -246,7 +289,11 @@ class BillingProduct(models.Model):
                 errors["external_price_id"] = "An active Paddle mapping requires a pri_ price ID."
             if self.offer_id is None:
                 errors["offer"] = "An active Paddle mapping requires a canonical offer."
-        if self.active and self.offer_id is not None:
+        provider_snapshot_locked = (
+            self.provider == PaymentProvider.APPLE_APP_STORE
+            and bool((self.metadata or {}).get("provider_price_snapshot_locked"))
+        )
+        if self.active and self.offer_id is not None and not provider_snapshot_locked:
             snapshot_fields = {
                 "account_plan": (self.account_plan_id, self.offer.account_plan_id),
                 "amount_minor": (self.amount_minor, self.offer.amount_minor),
