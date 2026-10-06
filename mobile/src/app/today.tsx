@@ -1,9 +1,10 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, CalendarizedDayDetail, HomeData, TodayData } from "@/api/types";
+import type { ActiveProgramData, CalendarizedDayDetail, HomeData, MealCheckInInput, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-plan-card";
@@ -36,8 +37,8 @@ export default function TodayScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [homeActionsVisible, setHomeActionsVisible] = useState(false);
-  const [pendingProposalCount, setPendingProposalCount] = useState(0);
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
+  const [savingCompletionMealKey, setSavingCompletionMealKey] = useState<string | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
@@ -58,7 +59,6 @@ export default function TodayScreen() {
         meal: home.library_counts.meal,
         program: home.library_counts.program,
       });
-      setPendingProposalCount(home.pending_proposal_count);
       if (nextToday.reminders) {
         void syncNativeRemindersForProgram(
           nextToday.reminders,
@@ -91,7 +91,6 @@ export default function TodayScreen() {
 
   const snapshot = today?.plan_snapshot;
   const todayDayId = today?.day_id;
-  const todayProgramDay = activeProgram?.days.find((day) => day.id === today?.day_id);
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? today?.measurements?.latest_weight_kg;
   const planContext = today?.calendarization
@@ -112,6 +111,26 @@ export default function TodayScreen() {
     }
   }
 
+  async function toggleTodayMealCompletion(mealKey: string, completed: boolean, mode: "calendarized" | "pinned") {
+    if (savingCompletionMealKey || (mode === "calendarized" && todayDayId == null)) return;
+    setSavingCompletionMealKey(mealKey);
+    setError(null);
+    try {
+      const payload: MealCheckInInput = {
+        action: completed ? "completed" : "skipped",
+        idempotency_key: Crypto.randomUUID(),
+      };
+      const path = mode === "pinned"
+        ? `/api/v1/today/pinned-plan/meals/${encodeURIComponent(mealKey)}/check-ins`
+        : `/api/v1/days/${todayDayId}/meals/${encodeURIComponent(mealKey)}/check-ins`;
+      setToday(await apiRequest<TodayData>(path, { body: JSON.stringify(payload), method: "POST" }));
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setSavingCompletionMealKey(null);
+    }
+  }
+
   const calendarizedMealEditing: MealPanelEditing | undefined = todayDayId != null ? {
     onChangeTime: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(todayDayId), mealKey: meal.id } } as Href),
     onDelete: async (meal) => {
@@ -119,6 +138,7 @@ export default function TodayScreen() {
       await load();
     },
     onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(todayDayId), mealKey: meal.id } } as Href),
+    onToggleCompleted: (meal, completed) => { void toggleTodayMealCompletion(meal.id, completed, "calendarized"); },
     onReorder: async (meals: MealPanelItem[]) => {
       await runWithStatus(async () => {
         const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${todayDayId}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" });
@@ -146,6 +166,7 @@ export default function TodayScreen() {
       if (meal.detailId == null || meal.relationId == null) return;
       router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(pinnedPlan.id), dailyPlanMealId: String(meal.relationId), id: String(meal.detailId), mealKey: meal.id, mealTime: meal.time ?? "", pinned: "1" } } as Href);
     },
+    onToggleCompleted: (meal, completed) => { void toggleTodayMealCompletion(meal.id, completed, "pinned"); },
     onReorder: async (meals: MealPanelItem[]) => {
       await runWithStatus(async () => {
         await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" });
@@ -193,7 +214,6 @@ export default function TodayScreen() {
             await load();
           }}
           onAddMeal={todayDayId != null ? () => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId })) : undefined}
-          position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
           snapshot={snapshot}
         />
       ) : today?.calendarization ? (
@@ -256,14 +276,6 @@ export default function TodayScreen() {
         </Card>
       ) : null}
 
-      {pendingProposalCount > 0 ? (
-        <Card accent={tokens.color.warning}>
-          <SectionTitle detail={`${pendingProposalCount} pendientes`} title="Propuestas para revisar" />
-          <Text style={textStyles.muted}>El Asistente preparó resultados que aún no modifican tu librería.</Text>
-          <Button label="Abrir Propuestas" onPress={() => router.push("/assistant?section=proposals" as Href)} />
-        </Card>
-      ) : null}
-
       </Screen>
       <HomeActions
         onCaptureLabel={() => router.push("/label-capture")}
@@ -277,7 +289,7 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
-  homeSectionTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.semibold, marginBottom: -tokens.spacing.sm, marginTop: tokens.spacing.sm },
+  homeSectionTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.semibold, marginBottom: 0, marginTop: tokens.spacing.sm },
   greetingRow: { gap: 0, marginBottom: 0 },
   greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   greetingTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5 },

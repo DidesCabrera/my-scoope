@@ -17,6 +17,10 @@ test("entity card headings expose an accessible detail link without making the w
   assertSourceMatch(product, /export type EntityHeadingLink = \{[\s\S]*label: string;[\s\S]*onPress\(\): void;/);
   assertSourceMatch(product, /accessibilityLabel=\{headingLink\.label\}[\s\S]*accessibilityRole="link"[\s\S]*onPress=\{headingLink\.onPress\}/);
   assertSourceMatch(product, /<EntityHeading[\s\S]*headingLink=\{headingLink\}/);
+  assertSourceMatch(product, /function isGramQuantity[\s\S]*\^\[\\d\.,\]\+\\s\*g\$/);
+  assertSourceMatch(product, /function FoodGramChip[\s\S]*backgroundColor=\{`\$\{tokens\.color\.food\}1A`\}[\s\S]*borderColor=\{tokens\.color\.food\}[\s\S]*textColor=\{tokens\.color\.entityIconForeground\}/);
+  assertSourceMatch(product, /entity === "food" && isGramQuantity\(indicator\.value\)[\s\S]*<FoodGramChip key=\{key\} value=\{indicator\.value\}/);
+  assertSourceMatch(product, /subtitle \? entity === "food" && isGramQuantity\(subtitle\) \? <FoodGramChip value=\{subtitle\} \/>/);
   assertSourceMatch(nutritionCard, /headingLink\?: EntityHeadingLink/);
   assertSourceMatch(nutritionCard, /headingLink=\{headingLink\}/);
 });

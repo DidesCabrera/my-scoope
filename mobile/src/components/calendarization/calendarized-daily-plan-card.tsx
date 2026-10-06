@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { DailyPlanSnapshot, MealExecutionItem } from "@/api/types";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
-import { Button, EntityCardAction } from "@/components/ui";
+import { Button, EntityCardAction, HeaderMetadataChip } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { snapshotCalories, snapshotMacroDistribution, snapshotMealPanelItem } from "./presentation-adapters";
 import { DailyMealCompletionCard } from "./meal-completion-summary";
@@ -22,11 +22,10 @@ type Props = {
   onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void>;
   onAddMeal?: () => void;
   planName?: string;
-  position?: { dayNumber: number; weekNumber: number };
   snapshot: DailyPlanSnapshot;
 };
 
-export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, mealExecution = [], onAddMeal, onChangeMealTime, planName, position, snapshot }: Props) {
+export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, mealExecution = [], onAddMeal, onChangeMealTime, planName, snapshot }: Props) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const meals = snapshot.meals ?? [];
@@ -50,12 +49,11 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, 
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       entity="dailyPlan"
       eyebrow={eyebrow}
+      eyebrowAccessory={<HeaderMetadataChip kind="date" value={dateLabel} />}
       headingLink={openDetail ? { label: "Ir al detalle del plan calendarizado", onPress: openDetail } : undefined}
       indicators={[
-        ...(position ? [{ icon: "day" as const, label: "posición", value: `S${position.weekNumber} · D${position.dayNumber}` }] : []),
         { icon: "meal", label: "comidas", value: meals.length },
         { icon: "food", label: "alimentos", value: foodsCount },
-        { icon: "day", iconPosition: "leading", label: "fecha", tone: "surfaceMuted", value: dateLabel },
       ]}
       nutrition={{
         calories: totalCalories,

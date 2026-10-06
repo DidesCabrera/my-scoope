@@ -485,6 +485,7 @@ export type MealSnapshot = {
     name?: string;
     quantity_g?: number | null;
     protein_g?: number | null;
+    protein_per_kilogram?: number | null;
     carbs_g?: number | null;
     fat_g?: number | null;
     total_kcal?: number | null;

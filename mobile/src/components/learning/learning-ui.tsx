@@ -18,7 +18,7 @@ export function LearningIcon({ name }: { name: string }) {
 
 export const learningStyles = StyleSheet.create({
   card: { gap: tokens.spacing.md },
-  cardHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
+  cardHeading: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardText: { flex: 1, gap: 4 },
   intro: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 22 },
   summary: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 19 },
@@ -26,5 +26,5 @@ export const learningStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  icon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 42, justifyContent: "center", width: 42 },
+  icon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 40, justifyContent: "center", width: 40 },
 });

@@ -1,4 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Text, View } from "react-native";
 
@@ -7,7 +8,8 @@ import type { LearningArticle, LearningCatalogData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { LearningIcon, learningStyles } from "@/components/learning/learning-ui";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { AppHeader, Button, Card, InlineNotice, Screen } from "@/components/ui";
+import { AppHeader, Card, EntityCardAction, EntityCardActions, InlineNotice, Screen } from "@/components/ui";
+import { tokens } from "@/design/tokens";
 
 export default function LearningCatalogScreen() {
   const { kind: rawKind } = useLocalSearchParams<{ kind?: string }>();
@@ -28,8 +30,8 @@ export default function LearningCatalogScreen() {
     <AppHeader eyebrow="Biblioteca de aprendizaje" title={title} />
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     {articles.map((article) => <Card key={article.slug} style={learningStyles.card}>
-      <View style={learningStyles.cardHeading}><LearningIcon name={article.icon} /><View style={learningStyles.cardText}><Text style={learningStyles.title}>{article.title}</Text><Text style={learningStyles.summary}>{article.summary}</Text></View></View>
-      <Button label="Leer detalle" onPress={() => router.push(`/system-foundations/${kind}/${article.slug}` as Href)} variant="secondary" />
+      <View style={learningStyles.cardHeading}><View style={learningStyles.cardText}><Text style={learningStyles.title}>{article.title}</Text><Text style={learningStyles.summary}>{article.summary}</Text></View><LearningIcon name={article.icon} /></View>
+      <EntityCardActions><EntityCardAction label={`Leer ${article.title}`} onPress={() => router.push(`/system-foundations/${kind}/${article.slug}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={2.2} /></EntityCardAction></EntityCardActions>
     </Card>)}
   </Screen>;
 }

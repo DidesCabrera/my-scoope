@@ -219,7 +219,7 @@ export default function ActivateProgramScreen() {
 const styles = StyleSheet.create({
   emptyText: { color: tokens.color.textMuted, fontSize: tokens.type.body },
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
+  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   searchInput: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, minHeight: 36, paddingVertical: 0 },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },

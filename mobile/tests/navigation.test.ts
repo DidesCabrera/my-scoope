@@ -56,6 +56,8 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(comparisonList, /backgroundColor=\{`\$\{entityColor\}1A`\}[\s\S]*borderColor=\{entityColor\}[\s\S]*label=\{comparisonCountLabel\(item\.kind, item\.item_count\)\}[\s\S]*textColor=\{tokens\.color\.entityIconForeground\}/);
   assertSourceMatch(comparisonList, /foods: \{ plural: "Alimentos", singular: "Alimento" \}[\s\S]*meals: \{ plural: "Comidas", singular: "Comida" \}[\s\S]*dailyplans: \{ plural: "Planes diarios", singular: "Plan diario" \}/);
   assertSourceDoesNotMatch(comparisonList, /Ver comparación guardada/);
+  assertSourceDoesNotMatch(comparisonList, /DateTimeFormat|item\.updated_at/);
+  assertSourceMatch(comparisonList, /savedChip: \{[^}]*marginTop: tokens\.spacing\.xs/);
   assertSourceMatch(comparison, /method: "PATCH"/);
   assertSourceMatch(comparisonActions, /Editar nombre/);
   assertSourceMatch(comparisonActions, /Guardar nombre/);
@@ -71,7 +73,8 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(programMeal, /mode: "library-detail"/);
   assertSourceMatch(programMeal, /entity: "meal"/);
   assertSourceMatch(today, /\/program/);
-  assertSourceDoesNotMatch(today, /check-in/);
+  assertSourceMatch(today, /\/api\/v1\/days\/\$\{todayDayId\}\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/check-ins/);
+  assertSourceMatch(today, /\/api\/v1\/today\/pinned-plan\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/check-ins/);
   assertSourceDoesNotMatch(today, /Mi suscripción|Cuenta, privacidad y ayuda|Configurar recordatorios/);
   assertSourceMatch(account, /label="Mejorar mi suscripción"[\s\S]*variant="multicolor"/);
   assertSourceMatch(account, /<AppHeader eyebrow="Mi cuenta" eyebrowIcon=\{<SectionIcon color=\{tokens\.color\.textSoft\} section="profile" \/>\}/);
@@ -140,7 +143,14 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceMatch(navigation, /<ModalBackdrop accessibilityLabel="Cerrar menú" onPress=\{closeMenu\} \/>/);
   assertSourceDoesNotMatch(navigation, /scrim: \{ backgroundColor: "rgba\(0,0,0,0\.72\)"/);
   assertSourceMatch(navigation, /menuSection: \{ gap: 0/);
-  assertSourceMatch(sidebarItems, /label: \{[^}]*fontSize: tokens\.type\.body/);
+  assertSourceMatch(sidebarItems, /label: \{ color: tokens\.color\.textMain[^}]*fontSize: tokens\.type\.body/);
+  assertSourceMatch(sidebarItems, /<Icon color=\{assistant \? tokens\.color\.surfaceApp : tokens\.color\.textMain\}/);
+  assertSourceDoesNotMatch(sidebarItems, /active \? tokens\.color\.textMain : tokens\.color\.textMuted/);
+  assertSourceMatch(sidebarItems, /countChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minWidth: 30[^}]*paddingVertical: tokens\.spacing\.xs/);
+  assertSourceDoesNotMatch(sidebarItems, /singleDigitCount|countChipSingle/);
+  assertSourceMatch(navigation, /apiRequest<HomeData>\("\/api\/v1\/home"\)/);
+  assertSourceMatch(navigation, /entity === "dailyPlan" \? counts\.daily_plan : counts\[entity\]/);
+  assertSourceMatch(navigation, /<EntitySidebarEntry count=\{libraryCount\(libraryCounts, item\.entity\)\}/);
   assertSourceMatch(sidebarItems, /item: \{[^}]*minHeight: 48/);
   assertSourceMatch(navigation, /<ScrollView[^>]*style=\{styles\.drawerScroll\}[\s\S]*<View style=\{\[styles\.creditDashboardShadow, \{ width: drawerWidth - tokens\.spacing\.md \}\]\}>/);
   assertSourceMatch(navigation, /LinearGradient id="sidebar-credit-macros"[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat/);
@@ -168,8 +178,17 @@ test("personal records groups the persisted nutrition inputs", async () => {
   assertSourceMatch(records, /title: "Objetivo y actividad"/);
   assertSourceMatch(records, /title: "Preferencias alimentarias"/);
   assertSourceMatch(records, /title: "Métricas corporales"/);
+  assertSourceMatch(records, /title: "Métricas corporales"[\s\S]*title: "Ficha corporal"/);
+  assertSourceMatch(records, /<Text style=\{styles\.eyebrow\}>FICHA PERSONAL<\/Text>/);
+  assertSourceMatch(records, /title: \{[^}]*fontSize: tokens\.type\.section/);
+  assertSourceDoesNotMatch(records, /subtitle:/);
   assertSourceDoesNotMatch(records, /Revisar con el Asistente/);
-  assertSourceMatch(records, /label: "Editar información"/);
+  assertSourceMatch(records, /<Pencil color=\{tokens\.color\.textMuted\}/);
+  assertSourceDoesNotMatch(records, /label: "Editar información"/);
+  assertSourceMatch(records, /row: \{[^}]*alignItems: "center"[^}]*minHeight: 46[^}]*paddingVertical: tokens\.spacing\.xs/);
+  assertSourceMatch(records, /label: \{[^}]*fontSize: tokens\.type\.body/);
+  assertSourceMatch(records, /value: \{[^}]*fontSize: tokens\.type\.body/);
+  assertSourceMatch(records, /<View style=\{styles\.headingCopy\}>[\s\S]*<View style=\{styles\.icon\}>/);
   const editor = await readFile(path.resolve(process.cwd(), "src/app/personal-records-edit.tsx"), "utf8");
   assertSourceMatch(editor, /`\/api\/v1\/personal-records\/\$\{section\}`/);
   assertSourceMatch(editor, /method: "PATCH"/);
@@ -184,9 +203,22 @@ test("system foundations exposes nutrition and product-manual journeys", async (
 
   assertSourceMatch(home, /Fundamentos Nutricionales/);
   assertSourceMatch(home, /Manuales de uso/);
+  assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="heart-pulse"/);
+  assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="book-marked"/);
+  assertSourceMatch(home, /<ChevronRight color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(catalog, /"\/api\/v1\/learning"/);
+  assertSourceMatch(catalog, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon/);
+  assertSourceMatch(catalog, /<ChevronRight color=\{tokens\.color\.textMuted\}/);
+  assertSourceDoesNotMatch(home, /label="Ver fundamentos"|label="Ver manuales"/);
+  assertSourceDoesNotMatch(catalog, /label="Leer detalle"/);
   assertSourceMatch(detail, /Contenido educativo general/);
   assertSourceMatch(detail, /article\.sections\.map/);
+  assertSourceMatch(detail, /<Screen contentStyle=\{styles\.content\}/);
+  assertSourceMatch(detail, /content: \{ gap: tokens\.spacing\.md \}/);
+  assertSourceMatch(detail, /transparentCard: \{ backgroundColor: "transparent", marginHorizontal: 0, paddingHorizontal: 0, paddingVertical: 0 \}/);
+  assertSourceMatch(detail, /<LearningIcon name=\{article\.icon\} \/>[\s\S]*<AppHeader eyebrow=/);
+  assertSourceMatch(detail, /<Card style=\{\[styles\.intro, styles\.transparentCard\]\}><Text/);
+  assertSourceMatch(detail, /<Card key=\{section\.heading\} style=\{\[styles\.section, styles\.transparentCard\]\}/);
 });
 
 test("shared screens use compact scroll identities and only Home keeps the centered logo", async () => {

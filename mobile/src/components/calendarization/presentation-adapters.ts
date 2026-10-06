@@ -64,7 +64,8 @@ export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
       name: food.name ?? "Alimento",
       proteinAllocation: contextualAllocation(totals, meal.totals, "protein_g"),
       proteinGrams: totals.protein_g ?? 0,
-      proteinPerKilogram: currentWeight ? (totals.protein_g ?? 0) / currentWeight : null,
+      proteinPerKilogram: food.protein_per_kilogram
+        ?? (currentWeight ? (totals.protein_g ?? 0) / currentWeight : null),
       quantity: food.quantity_g ?? 0,
       quantityUnit: "g",
     };

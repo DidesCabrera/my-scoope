@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 42 },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
+  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   searchInput: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, minHeight: 36, paddingVertical: 0 },
   stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, zIndex: 2 },
 });

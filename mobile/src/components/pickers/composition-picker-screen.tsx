@@ -565,7 +565,7 @@ export function pickerConfigureHref(
 }
 
 const styles = StyleSheet.create({
-  compactFieldInput: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, fontSize: 16, minHeight: 40, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs, textAlign: "right", width: 128 },
+  compactFieldInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 40, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs, textAlign: "right", width: 128 },
   compactFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   compactFieldRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   configurationDivider: { backgroundColor: tokens.color.borderSoft, height: StyleSheet.hairlineWidth, width: "100%" },
@@ -582,11 +582,11 @@ const styles = StyleSheet.create({
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   noteBlock: { gap: tokens.spacing.sm },
   noteHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 32 },
-  noteInput: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, fontSize: 16, minHeight: 42, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
+  noteInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 42, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   previewHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", width: "100%" },
   previewSection: { gap: tokens.spacing.lg },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 38, paddingHorizontal: tokens.spacing.md },
+  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 36, paddingVertical: 0 },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },

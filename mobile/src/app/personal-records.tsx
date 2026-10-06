@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { Activity, Files, Salad, Scale, Target } from "lucide-react-native";
+import { Activity, Files, Pencil, Salad, Scale, Target } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -7,7 +7,7 @@ import { userFacingError } from "@/api/errors";
 import type { OnboardingStateData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { AppHeader, Button, Card, InlineNotice, Screen } from "@/components/ui";
+import { AppHeader, Card, EntityCardAction, EntityCardActions, InlineNotice, Screen } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 type RecordRow = { label: string; value: string };
@@ -62,46 +62,42 @@ export default function PersonalRecordsScreen() {
 
   if (status === "anonymous") return <Redirect href="/login" />;
 
-  const cards: { action?: { label: string; href: Href }; icon: typeof Files; rows: RecordRow[]; subtitle: string; title: string }[] = [
+  const cards: { action?: { href: Href }; icon: typeof Files; rows: RecordRow[]; title: string }[] = [
     {
-      action: { href: "/personal-records-edit?section=body" as Href, label: "Editar información" },
+      action: { href: "/personal-records-edit?section=metrics" as Href },
+      icon: Scale,
+      rows: [{ label: "Peso actual", value: state?.weight_kg != null ? `${state.weight_kg.toFixed(1)} kg` : "Sin registro" }],
+      title: "Métricas corporales",
+    },
+    {
+      action: { href: "/personal-records-edit?section=body" as Href },
       icon: Activity,
       rows: [
         { label: "Fecha de nacimiento", value: state?.birth_date ?? "Sin completar" },
         { label: "Sexo nutricional", value: valueLabel(state?.sex, { female: "Femenino", male: "Masculino" }) },
         { label: "Altura", value: state?.height_cm ? `${state.height_cm} cm` : "Sin completar" },
       ],
-      subtitle: "Base estable para cálculos nutricionales.",
       title: "Ficha corporal",
     },
     {
-      action: { href: "/personal-records-edit?section=planning" as Href, label: "Editar información" },
+      action: { href: "/personal-records-edit?section=planning" as Href },
       icon: Target,
       rows: [
         { label: "Objetivo", value: valueLabel(state?.goal, goalLabels) },
         { label: "Actividad habitual", value: valueLabel(state?.activity_level, activityLabels) },
         { label: "Entrenamientos", value: state?.training_frequency != null ? `${state.training_frequency} por semana` : "Sin completar" },
       ],
-      subtitle: "Contexto persistente para objetivos, planes y programas.",
       title: "Objetivo y actividad",
     },
     {
-      action: { href: "/personal-records-edit?section=preferences" as Href, label: "Editar información" },
+      action: { href: "/personal-records-edit?section=preferences" as Href },
       icon: Salad,
       rows: [
         { label: "Patrón", value: valueLabel(state?.dietary_pattern, dietaryLabels) },
         { label: "Alergias o intolerancias", value: listLabel(state?.allergies_or_intolerances ?? []) },
         { label: "Alimentos evitados", value: listLabel(state?.avoided_foods ?? []) },
       ],
-      subtitle: "Preferencias aprobadas y disponibles entre conversaciones.",
       title: "Preferencias alimentarias",
-    },
-    {
-      action: { href: "/personal-records-edit?section=metrics" as Href, label: "Editar información" },
-      icon: Scale,
-      rows: [{ label: "Peso actual", value: state?.weight_kg != null ? `${state.weight_kg.toFixed(1)} kg` : "Sin registro" }],
-      subtitle: "Medición corporal vigente para cálculos y seguimiento.",
-      title: "Métricas corporales",
     },
   ];
 
@@ -110,14 +106,14 @@ export default function PersonalRecordsScreen() {
       <AppHeader eyebrow="Información personal" eyebrowIcon={<Files color={tokens.color.textSoft} size={20} />} title="Fichas personales" />
       <Text style={styles.intro}>La información que My Scoope usa para cálculos nutricionales, objetivos y construcción de planes, reunida en un solo lugar.</Text>
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      {cards.map(({ action, icon: Icon, rows, subtitle, title }) => (
+      {cards.map(({ action, icon: Icon, rows, title }) => (
         <Card key={title} style={styles.card}>
           <View style={styles.cardHeading}>
-            <View style={styles.icon}><Icon color={tokens.color.textMain} size={20} strokeWidth={2} /></View>
             <View style={styles.headingCopy}>
+              <Text style={styles.eyebrow}>FICHA PERSONAL</Text>
               <Text style={styles.title}>{title}</Text>
-              <Text style={styles.subtitle}>{subtitle}</Text>
             </View>
+            <View style={styles.icon}><Icon color={tokens.color.textMain} size={20} strokeWidth={2} /></View>
           </View>
           <View>
             {rows.map((row, index) => (
@@ -127,7 +123,7 @@ export default function PersonalRecordsScreen() {
               </View>
             ))}
           </View>
-          {action ? <Button label={action.label} onPress={() => router.push(action.href)} variant="secondary" /> : null}
+          {action ? <EntityCardActions><EntityCardAction label={`Editar ${title}`} onPress={() => router.push(action.href)}><Pencil color={tokens.color.textMuted} size={21} strokeWidth={2.2} /></EntityCardAction></EntityCardActions> : null}
         </Card>
       ))}
     </Screen>
@@ -136,14 +132,14 @@ export default function PersonalRecordsScreen() {
 
 const styles = StyleSheet.create({
   card: { gap: tokens.spacing.md },
-  cardHeading: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
+  cardHeading: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
+  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   headingCopy: { flex: 1, gap: 3 },
   icon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 40, justifyContent: "center", width: 40 },
   intro: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 22 },
-  label: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption },
-  row: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
+  label: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.body, lineHeight: 22 },
+  row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingVertical: tokens.spacing.xs },
   rowLast: { borderBottomWidth: 0 },
-  subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 18 },
-  title: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
-  value: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, textAlign: "right" },
+  title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.bold, lineHeight: 24 },
+  value: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, lineHeight: 22, textAlign: "right" },
 });

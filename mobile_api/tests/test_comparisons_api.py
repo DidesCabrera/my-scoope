@@ -68,6 +68,7 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
             [kind["key"] for kind in metadata.json()["data"]["kinds"]],
             ["foods", "meals", "dailyplans"],
         )
+        self.assertTrue(metadata.json()["data"]["kinds"][0]["includes_ppk"])
         self.assertNotIn("programs", [kind["key"] for kind in metadata.json()["data"]["kinds"]])
         self.assertEqual(options.status_code, 200)
         option_items = options.json()["data"]["items"]
@@ -87,10 +88,10 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
         self.assertEqual(first["quantity"], 50.0)
         self.assertEqual(first["values"]["calories"], 82.5)
         self.assertEqual(first["values"]["protein_g"], 5.0)
-        self.assertIsNone(first["values"]["protein_per_kilogram"])
+        self.assertEqual(first["values"]["protein_per_kilogram"], 0.07)
         self.assertEqual(
             [metric["key"] for metric in compared.json()["data"]["metrics"]],
-            ["total_kcal", "protein", "carbs", "fat", "alloc_protein", "alloc_carbs", "alloc_fat"],
+            ["total_kcal", "ppk", "protein", "carbs", "fat", "alloc_protein", "alloc_carbs", "alloc_fat"],
         )
         calories = compared.json()["data"]["metrics"][0]
         self.assertEqual(calories["bars"][0]["formatted_value"], "82 kcal")

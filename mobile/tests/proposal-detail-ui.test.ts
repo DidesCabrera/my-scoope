@@ -144,7 +144,8 @@ test("proposed entities expose progressive detail navigation", async () => {
   assert.match(meal, /<EntityDetailPage/);
   assert.match(meal, /<SectionDivider \/>[\s\S]*title="Detalle de cada Alimento"/);
   assert.match(meal, /title="Detalle de cada Alimento"/);
-  assert.match(meal, /icon: "clock"/);
+  assert.match(meal, /eyebrowAccessory=\{item\.hour \? <HeaderMetadataChip kind="time" value=\{item\.hour\.slice\(0, 5\)\} \/> : undefined\}/);
+  assert.doesNotMatch(meal, /label: "hora", tone: "surfaceCard"/);
   assert.match(meal, /\/proposals\/\$\{id\}\/entity\/meals\/\$\{index\}\/foods\//);
   assert.doesNotMatch(meal, /subtitle=\{item\.note/);
   assert.match(food, /context === "meal"/);

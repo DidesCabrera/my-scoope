@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   stickySearch: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.layout.reducedInset, paddingTop: tokens.spacing.xs, zIndex: 3 },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 38, paddingHorizontal: tokens.spacing.md },
+  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 36, paddingVertical: 0 },
   clearButton: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
   managedItem: { gap: tokens.spacing.sm },

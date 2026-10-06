@@ -6,7 +6,7 @@ import { FoodDetailCardList } from "@/components/details/food-detail-card-list";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
 import { SharedResourceActions } from "@/components/sharing/shared-resource-actions";
-import { InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { HeaderMetadataChip, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { sharedFoodPanelItems, sharedNutrition } from "@/sharing/presentation";
 import { useSharedResource } from "@/sharing/use-shared-resource";
 
@@ -40,9 +40,9 @@ export default function SharedMealDetailScreen() {
         <EntityDetailPage
           entity="meal"
           eyebrow="Comida compartida"
+          eyebrowAccessory={meal.time ? <HeaderMetadataChip kind="time" value={meal.time.slice(0, 5)} /> : undefined}
           indicators={[
             { icon: "food", label: "alimentos", value: foods.length },
-            ...(meal.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.time.slice(0, 5) }] : []),
           ]}
           nutrition={sharedNutrition(meal.nutrition)}
           title={meal.name}>

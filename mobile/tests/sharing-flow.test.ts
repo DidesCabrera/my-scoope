@@ -60,6 +60,8 @@ test("shared meal foods navigate from panels and detail cards", async () => {
   assertSourceMatch(presentation, /detailId: index/);
   assertSourceMatch(sharedMeal, /<FoodPanels items=\{foods\} onOpenItem=\{openFood\} \/>/);
   assertSourceMatch(sharedMeal, /<FoodDetailCardList[\s\S]*onOpenFood=\{openFood\}/);
+  assertSourceMatch(sharedMeal, /eyebrowAccessory=\{meal\.time \? <HeaderMetadataChip kind="time" value=\{meal\.time\.slice\(0, 5\)\} \/> : undefined\}/);
+  assert.doesNotMatch(sharedMeal, /label: "hora", tone: "surfaceCard"/);
   assertSourceMatch(sharedMeal, /`\/share\/\$\{id\}\/meals\/\$\{index\}\/foods\/\$\{food\.detailId\}`/);
   assertSourceMatch(foodCards, /onOpenFood && item\.detailId != null[\s\S]*<ChevronRight/);
 });

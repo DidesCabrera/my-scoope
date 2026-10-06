@@ -61,3 +61,18 @@ test("calendarized panels keep macro distribution separate from contextual Alloc
     [80, 50, 50],
   );
 });
+
+test("calendarized food panels prefer API PPK and retain the legacy snapshot fallback", () => {
+  const meal: MealSnapshot = {
+    foods: [
+      { name: "Directo", protein_g: 10, protein_per_kilogram: 0.25 },
+      { name: "Compatible", protein_g: 20 },
+    ],
+    totals: { protein_g: 40, protein_per_kilogram: 0.5 },
+  };
+
+  assert.deepEqual(
+    snapshotFoodPanelItems(meal).map((food) => food.proteinPerKilogram),
+    [0.25, 0.25],
+  );
+});

@@ -1,7 +1,7 @@
 import { Redirect, useFocusEffect, useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
 import { useCallback, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { LearningArticle, LearningCatalogData } from "@/api/types";
@@ -24,12 +24,13 @@ export default function LearningArticleScreen() {
     return () => setHeaderPresentation({ mode: "default" });
   }, [apiRequest, article?.title, kind, params.slug, setHeaderPresentation, status]));
   if (status === "anonymous") return <Redirect href="/login" />;
-  return <Screen headerMode="preserve">
+  return <Screen contentStyle={styles.content} headerMode="preserve">
+    {article ? <LearningIcon name={article.icon} /> : null}
     <AppHeader eyebrow={kind === "nutrition" ? "Fundamento nutricional" : "Manual de uso"} title={article?.title ?? "Detalle"} />
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     {article ? <>
-      <Card style={learningStyles.card}><View style={learningStyles.cardHeading}><LearningIcon name={article.icon} /><Text style={learningStyles.summary}>{article.summary}</Text></View></Card>
-      {article.sections.map((section) => <Card key={section.heading} style={styles.section}><Text style={learningStyles.title}>{section.heading}</Text><Text style={styles.body}>{section.body}</Text></Card>)}
+      <Card style={[styles.intro, styles.transparentCard]}><Text style={learningStyles.summary}>{article.summary}</Text></Card>
+      {article.sections.map((section) => <Card key={section.heading} style={[styles.section, styles.transparentCard]}><Text style={learningStyles.title}>{section.heading}</Text><Text style={styles.body}>{section.body}</Text></Card>)}
       <InlineNotice tone="info"><Text style={styles.takeaway}>Idea principal: {article.takeaway}</Text></InlineNotice>
       {kind === "nutrition" ? <Text style={styles.disclaimer}>Contenido educativo general. No sustituye evaluación, diagnóstico ni indicaciones de un profesional de salud.</Text> : null}
       {article.source_url ? <Button label={`Fuente: ${article.source_label}`} onPress={() => void Linking.openURL(article.source_url)} variant="secondary" /> : null}
@@ -37,4 +38,4 @@ export default function LearningArticleScreen() {
   </Screen>;
 }
 
-const styles = StyleSheet.create({ body: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 22 }, disclaimer: { color: tokens.color.textSoft, fontSize: tokens.type.label, lineHeight: 17 }, section: { gap: tokens.spacing.sm }, takeaway: { color: tokens.color.textMain, lineHeight: 20 } });
+const styles = StyleSheet.create({ body: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 22 }, content: { gap: tokens.spacing.md }, disclaimer: { color: tokens.color.textSoft, fontSize: tokens.type.label, lineHeight: 17 }, intro: { gap: tokens.spacing.sm }, section: { gap: tokens.spacing.sm }, takeaway: { color: tokens.color.textMain, lineHeight: 20 }, transparentCard: { backgroundColor: "transparent", marginHorizontal: 0, paddingHorizontal: 0, paddingVertical: 0 } });

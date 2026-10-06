@@ -26,6 +26,7 @@ import {
 import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
+import { Chip } from "./chip";
 import { Button } from "./controls";
 import { Card } from "./surfaces";
 
@@ -51,6 +52,24 @@ export type EntityHeadingLink = {
   label: string;
   onPress(): void;
 };
+
+function isGramQuantity(value: number | string | undefined): value is string {
+  return typeof value === "string" && /^[\d.,]+\s*g$/i.test(value.trim());
+}
+
+function FoodGramChip({ value }: { value: string }) {
+  return <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={value} textColor={tokens.color.entityIconForeground} />;
+}
+
+export function HeaderMetadataChip({ kind, value }: { kind: "date" | "time"; value: string }) {
+  const Icon = kind === "time" ? Clock : CalendarDays;
+  return (
+    <View accessibilityLabel={`${kind === "time" ? "Hora" : "Fecha"}: ${value}`} accessible style={styles.headerMetadataChip}>
+      <Icon color={tokens.color.textMuted} size={11} strokeWidth={2} />
+      <Text style={styles.headerMetadataChipText}>{value}</Text>
+    </View>
+  );
+}
 
 export function GuideMetric({ label, tone = "default", value }: { label?: string; tone?: "default" | "ppk"; value: string }) {
   return (
@@ -147,6 +166,10 @@ export function StructuralIndicators({ indicators, entity, tone = "identity" }: 
       accessible
       style={styles.structuralIndicators}>
       {indicators.map((indicator, index) => {
+        const key = `${indicator.icon ?? "text"}-${indicator.label}-${index}`;
+        if (entity === "food" && isGramQuantity(indicator.value)) {
+          return <FoodGramChip key={key} value={indicator.value} />;
+        }
         const Icon = indicator.icon ? structuralIcons[indicator.icon] : null;
         const itemTone = indicator.tone ?? tone;
         const color = indicator.icon
@@ -156,7 +179,7 @@ export function StructuralIndicators({ indicators, entity, tone = "identity" }: 
             : tokens.color.textMuted;
         return (
           <View
-            key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`}
+            key={key}
             style={[
               styles.structuralItem,
               { backgroundColor: itemTone === "surfaceCard" ? tokens.color.surfaceCard : itemTone === "surfaceMuted" ? tokens.color.surfaceMuted : color },
@@ -212,6 +235,7 @@ export function EntityHeading({
   indicators,
   completion,
   accessory,
+  eyebrowAccessory,
   headingLink,
   identityIcon: IdentityIcon,
   variant = "card",
@@ -223,6 +247,7 @@ export function EntityHeading({
   indicators?: StructuralIndicator[];
   completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
+  eyebrowAccessory?: ReactNode;
   headingLink?: EntityHeadingLink;
   identityIcon?: LucideIcon;
   variant?: "card" | "page";
@@ -234,12 +259,15 @@ export function EntityHeading({
     : tokens.component.entityHeading.pageRegular;
   const copy = (
     <>
-      <View style={styles.entityEyebrowRow}>
-        {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon entity={entity} size="compact" />}
-        <Text style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
+      <View style={styles.headingEyebrowLine}>
+        <View style={styles.entityEyebrowRow}>
+          {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon entity={entity} size="compact" />}
+          <Text numberOfLines={1} style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
+        </View>
+        {eyebrowAccessory}
       </View>
       <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
-      {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
+      {subtitle ? entity === "food" && isGramQuantity(subtitle) ? <FoodGramChip value={subtitle} /> : <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
       {indicators || completion ? (
         <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
           {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
@@ -269,6 +297,7 @@ export function EntityCard({
   entity,
   title,
   eyebrow,
+  eyebrowAccessory,
   subtitle,
   indicators,
   completion,
@@ -282,6 +311,7 @@ export function EntityCard({
   entity: EntityKind;
   title: string;
   eyebrow?: string;
+  eyebrowAccessory?: ReactNode;
   subtitle?: string;
   indicators?: StructuralIndicator[];
   completion?: CompletionIndicatorCounts;
@@ -293,7 +323,7 @@ export function EntityCard({
 }>) {
   const content = (
     <Card accent={tokens.color[entity]} style={[actions ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
-      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} headingLink={headingLink} indicators={indicators} subtitle={subtitle} title={title} />
+      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
       {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
     </Card>
@@ -457,7 +487,10 @@ const styles = StyleSheet.create({
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
   headingLink: { borderRadius: tokens.radius.md },
-  entityEyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
+  headingEyebrowLine: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "space-between", minWidth: 0 },
+  entityEyebrowRow: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.compact, minWidth: 0 },
+  headerMetadataChip: { alignItems: "center", backgroundColor: "transparent", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 4, minHeight: 23, paddingHorizontal: tokens.spacing.sm, paddingVertical: 2 },
+  headerMetadataChipText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
   entityIcon: { alignItems: "center", borderRadius: 5, height: 22, justifyContent: "center", width: 22 },
   entityIconBenefit: { borderRadius: tokens.radius.sm, height: 22, width: 22 },
   entityIconCompact: { height: 18, width: 18 },
@@ -466,7 +499,7 @@ const styles = StyleSheet.create({
   sectionIcon: { alignItems: "center", backgroundColor: "transparent", height: 22, justifyContent: "center", width: 22 },
   sectionIconCompact: { height: 18, width: 18 },
   sectionIconHero: { height: 40, width: 40 },
-  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
+  eyebrow: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
   headingTitle: { color: tokens.color.textMain, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.bold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
@@ -484,7 +517,7 @@ const styles = StyleSheet.create({
   guideMetricLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.regular, lineHeight: 12, textAlign: "right" },
   guideMetricValue: { color: tokens.color.textMain, fontSize: 17, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
   guideMetricValueOnly: { borderRadius: tokens.radius.lg, minHeight: 40 },
-  guideMetricPpk: { backgroundColor: `${tokens.color.ppk}1A`, borderColor: `${tokens.color.ppk}80`, borderRadius: tokens.radius.md, borderWidth: 1, height: 30, minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: 0 },
+  guideMetricPpk: { backgroundColor: "transparent", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 30, minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: 0 },
   guideMetricValuePpk: { color: tokens.color.textMain, fontSize: 15, lineHeight: 18 },
   guideMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   entityCardPanelSlot: { minWidth: 0 },

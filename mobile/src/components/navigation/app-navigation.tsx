@@ -40,7 +40,7 @@ import { initialWindowMetrics, SafeAreaView, useSafeAreaInsets } from "react-nat
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { useSession } from "@/auth/session-context";
-import type { EntitlementsData, LibraryEntity } from "@/api/types";
+import type { EntitlementsData, HomeData, LibraryEntity } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
 import { MyScoopeLogo } from "@/components/ui/my-scoope-logo";
@@ -305,9 +305,14 @@ function FunctionalSidebarEntry({ item }: { item: NavigationSidebarItemData }) {
   return <NavigationSidebarItem {...state} icon={item.icon} iconTreatment={item.iconTreatment} label={item.label} />;
 }
 
-function EntitySidebarEntry({ item }: { item: EntitySidebarItemData }) {
+function EntitySidebarEntry({ count, item }: { count: number | null; item: EntitySidebarItemData }) {
   const state = useSidebarItem(item);
-  return <EntitySidebarItem {...state} entity={item.entity} label={item.label} />;
+  return <EntitySidebarItem {...state} count={count} entity={item.entity} label={item.label} />;
+}
+
+function libraryCount(counts: HomeData["library_counts"] | null, entity: LibraryEntity): number | null {
+  if (!counts) return null;
+  return entity === "dailyPlan" ? counts.daily_plan : counts[entity];
 }
 
 function AppSidebar() {
@@ -318,6 +323,7 @@ function AppSidebar() {
   const { apiRequest, status } = useSession();
   const router = useRouter();
   const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
+  const [libraryCounts, setLibraryCounts] = useState<HomeData["library_counts"] | null>(null);
   const [translateX] = useState(() => new Animated.Value(-380));
   const [scrimOpacity] = useState(() => new Animated.Value(0));
 
@@ -343,6 +349,9 @@ function AppSidebar() {
     if (!menuOpen || status !== "authenticated") return;
     void apiRequest<EntitlementsData>("/api/v1/entitlements")
       .then((entitlements) => setCreditSummary({ availableCredits: entitlements.available_credits, planName: entitlements.plan_name }))
+      .catch(() => undefined);
+    void apiRequest<HomeData>("/api/v1/home")
+      .then((home) => setLibraryCounts(home.library_counts))
       .catch(() => undefined);
   }, [apiRequest, menuOpen, status]);
 
@@ -375,7 +384,7 @@ function AppSidebar() {
               {primaryItems.map((item) => <FunctionalSidebarEntry item={item} key={String(item.href)} />)}
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
-                {libraryItems.map((item) => <EntitySidebarEntry item={item} key={String(item.href)} />)}
+                {libraryItems.map((item) => <EntitySidebarEntry count={libraryCount(libraryCounts, item.entity)} item={item} key={String(item.href)} />)}
               </View>
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>

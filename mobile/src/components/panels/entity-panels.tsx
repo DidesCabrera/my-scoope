@@ -317,10 +317,10 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
   return "foods" in item;
 }
 
-function PanelItemName({ item, itemNameStyle, style = styles.gridLeadingCell }: { item: FoodPanelItem | MealPanelItem; itemNameStyle?: StyleProp<TextStyle>; style?: StyleProp<ViewStyle> }) {
+function PanelItemName({ item, itemNameStyle, showFoodPortion = false, style = styles.gridLeadingCell }: { item: FoodPanelItem | MealPanelItem; itemNameStyle?: StyleProp<TextStyle>; showFoodPortion?: boolean; style?: StyleProp<ViewStyle> }) {
   return (
     <View style={style}>
-      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
+      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
     </View>
   );
 }
@@ -460,7 +460,7 @@ export function NutritionMacrosPanel<T extends FoodPanelItem | MealPanelItem>({ 
       <MacrosHeader leadingLabel={leadingLabel} {...sorting} />
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => (
         <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} />
+          <PanelItemName item={item} showFoodPortion={leadingLabel === "Alimentos"} />
           <View style={[styles.ppkValue, styles.ppkCell]}>
             {item.proteinPerKilogram == null ? <Text style={styles.unavailableValue}>—</Text> : <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={item.proteinPerKilogram} />}
           </View>
@@ -489,7 +489,7 @@ export function NutritionDistributionPanel<T extends FoodPanelItem | MealPanelIt
         const distribution = macroCalorieShares(item);
         return (
           <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-            <PanelItemName item={item} />
+            <PanelItemName item={item} showFoodPortion={leadingLabel === "Alimentos"} />
             <Text style={[styles.cell, styles.distributionValue, styles.proteinDistribution]}>{distribution.protein}%</Text>
             <Text style={[styles.cell, styles.distributionValue, styles.carbsDistribution]}>{distribution.carbs}%</Text>
             <Text style={[styles.cell, styles.distributionValue, styles.fatDistribution]}>{distribution.fat}%</Text>
@@ -514,7 +514,7 @@ export function NutritionCaloriesPanel<T extends FoodPanelItem | MealPanelItem>(
       <CaloriesHeader leadingLabel={leadingLabel} {...sorting} />
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => (
         <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} style={styles.calorieLeadingCell} />
+          <PanelItemName item={item} showFoodPortion={leadingLabel === "Alimentos"} style={styles.calorieLeadingCell} />
           <Text style={[styles.cell, styles.calorieValue]}>{rounded(item.calories)}</Text>
           <View style={styles.calorieShare}>
             <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calorieShare)}% de las calorías`} tone="calories" value={item.calorieShare} />
@@ -542,7 +542,7 @@ export function NutritionAllocationPanel<T extends FoodPanelItem | MealPanelItem
       <AllocationHeader leadingLabel={leadingLabel} {...sorting} />
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => (
         <View key={item.id} style={[styles.row, styles.allocationRow, index === visibleItems.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} />
+          <PanelItemName item={item} showFoodPortion={leadingLabel === "Alimentos"} />
           <PanelAllocationBar style={styles.allocationCell} tone="protein" value={allocations[index].protein} />
           <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={allocations[index].carbs} />
           <PanelAllocationBar style={styles.allocationCell} tone="fat" value={allocations[index].fat} />
@@ -642,7 +642,7 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
           <View style={[styles.editItem, isActive && styles.gestureRowActive, index === draftItems.length - 1 && styles.rowLast]}>
           <View style={[styles.row, styles.editRow]}>
             <EditDragHandle disabled={busy} drag={drag} label={`Reordenar ${item.name}`} />
-            <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}</Text></View>
+            <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}<Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text></Text></View>
             <Text style={[styles.cell, styles.editValue, styles.editPortionValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
             <View style={[styles.editActions, styles.foodEditActions]}>
               <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
@@ -775,6 +775,7 @@ const styles = StyleSheet.create({
   gridLeadingCell: { alignSelf: "stretch", flexBasis: "40%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
   itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   foodItemName: { fontWeight: tokens.weight.medium },
+  foodPortionSuffix: { color: tokens.color.textMuted, fontStyle: "italic", fontWeight: tokens.weight.regular },
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
   foodDetailCopy: { flex: 1, justifyContent: "center", minWidth: 0 },
   quantityItemText: { fontSize: tokens.type.caption + 1 },
@@ -798,10 +799,10 @@ const styles = StyleSheet.create({
   calorieShare: { flex: 1, minWidth: 92, textAlign: "center" },
   allocationRow: { gap: tokens.spacing.sm },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
-  menuRow: { alignItems: "center", alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, paddingLeft: tokens.spacing.sm, paddingRight: tokens.spacing.xs, paddingVertical: tokens.spacing.lg },
-  menuCopy: { flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
+  menuRow: { alignItems: "center", alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, paddingBottom: tokens.spacing.xl, paddingLeft: tokens.spacing.sm, paddingRight: tokens.spacing.xs, paddingTop: tokens.spacing.xl },
+  menuCopy: { flex: 1, gap: tokens.spacing.md, minWidth: 0 },
   menuAction: { alignItems: "center", alignSelf: "stretch", borderRadius: tokens.radius.pill, justifyContent: "center", minWidth: 24 },
-  menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
+  menuTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
   mealIdentityTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
@@ -809,9 +810,9 @@ const styles = StyleSheet.create({
   menuMealName: { fontSize: tokens.type.caption + 1, lineHeight: 19 },
   mealCompleted: { alignItems: "center", backgroundColor: `${tokens.color.meal}1A`, borderColor: tokens.color.meal, borderRadius: tokens.radius.pill, borderWidth: 1, height: 18, justifyContent: "center", width: 18 },
   projectedBadge: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: 9, fontWeight: tokens.weight.semibold, overflow: "hidden", paddingHorizontal: 6, paddingVertical: 2 },
-  menuTimeGroup: { alignItems: "center", flexDirection: "row", gap: 4, paddingHorizontal: tokens.spacing.xs },
+  menuTimeGroup: { alignItems: "center", backgroundColor: "transparent", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 4, marginTop: -2, minHeight: 23, paddingHorizontal: tokens.spacing.sm, paddingVertical: 2 },
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
-  menuFoods: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, paddingHorizontal: tokens.spacing.xs },
+  menuFoods: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 21, paddingHorizontal: tokens.spacing.xs },
   gestureRow: { backgroundColor: tokens.color.surfaceMuted },
   gestureRowActive: {
     backgroundColor: "#3a3a3a",
