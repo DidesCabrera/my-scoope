@@ -4,18 +4,27 @@ import path from "node:path";
 import test from "node:test";
 
 import type { NutritionLabelRecognition } from "../modules/nutrition-label-ocr/src/NutritionLabelOcr.types";
+import { LABEL_CAMERA_AUTOFOCUS } from "../src/label-capture/camera";
 import {
   confirmNutritionLabelBasis,
   convertServingDraftTo100g,
   convertVolumeDraftTo100g,
   normalizeNutritionLabel,
 } from "../src/label-capture/normalize";
+import { classifyLabelImageQuality, labelImageQualityMessage } from "../src/label-capture/quality";
 
 function recognition(lines: string[], confidence = 0.96): NutritionLabelRecognition {
   return {
     engine: "apple_vision",
     engineVersion: "1",
     durationMs: 12,
+    imageQuality: {
+      brightness: 0.48,
+      sharpness: 0.09,
+      textObservationCount: lines.length,
+      averageTextConfidence: confidence,
+      textCoverage: 0.12,
+    },
     observations: lines.map((text, index) => ({
       text,
       confidence,
@@ -225,7 +234,16 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
   const screen = await readFile(path.resolve(process.cwd(), "src/app/label-capture.tsx"), "utf8");
 
   for (const expected of [
-    'autofocus="on"',
+    "autofocus={LABEL_CAMERA_AUTOFOCUS}",
+    'type Phase = "intro" | "camera" | "preview" | "review" | "saved"',
+    'imageQuality.status === "unsuitable"',
+    "captureInFlightRef.current = true",
+    "analysisInFlightRef.current = true",
+    "setCapturing(true)",
+    'label="Usar esta foto"',
+    'label="Usar otra foto"',
+    'label="Ampliar foto"',
+    "qualityConfidence",
     "enableTorch={torchEnabled}",
     "launchImageLibraryAsync",
     "prepareLabelImage",
@@ -240,6 +258,52 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
   }
   assert.ok(!screen.includes("development build iOS de CML05"));
   assert.ok(!screen.includes("CameraView.isAvailableAsync()"));
+  assert.equal(LABEL_CAMERA_AUTOFOCUS, "off", "Expo 57 requires off for continuous autofocus");
+  assert.ok(!screen.includes('autofocus="on"'));
+});
+
+test("rejects locally unreadable images before AI analysis", () => {
+  const quality = classifyLabelImageQuality({
+    brightness: 0.04,
+    sharpness: 0.01,
+    textObservationCount: 0,
+    averageTextConfidence: 0,
+    textCoverage: 0,
+  });
+
+  assert.equal(quality.status, "unsuitable");
+  assert.ok(quality.issues.includes("too_dark"));
+  assert.ok(quality.issues.includes("blurry"));
+  assert.ok(quality.issues.includes("no_text_detected"));
+  assert.match(labelImageQualityMessage("blurry"), /desenfocado/i);
+});
+
+test("allows borderline images only with an explicit review warning", () => {
+  const quality = classifyLabelImageQuality({
+    brightness: 0.15,
+    sharpness: 0.03,
+    textObservationCount: 3,
+    averageTextConfidence: 0.7,
+    textCoverage: 0.01,
+  });
+
+  assert.equal(quality.status, "reviewable");
+  assert.ok(quality.issues.includes("too_dark"));
+  assert.ok(quality.issues.includes("blurry"));
+  assert.ok(quality.issues.includes("text_too_small"));
+});
+
+test("accepts a clear, well exposed nutrition label locally", () => {
+  const quality = classifyLabelImageQuality({
+    brightness: 0.52,
+    sharpness: 0.11,
+    textObservationCount: 12,
+    averageTextConfidence: 0.94,
+    textCoverage: 0.18,
+  });
+
+  assert.equal(quality.status, "suitable");
+  assert.deepEqual(quality.issues, []);
 });
 
 test("the native OCR module uses nutrition vocabulary and versioned provenance", async () => {
@@ -249,7 +313,10 @@ test("the native OCR module uses nutrition vocabulary and versioned provenance",
   );
 
   for (const expected of [
-    '"engineVersion": "2"',
+    '"engineVersion": "3"',
+    '"imageQuality": [',
+    'name: "CIEdges"',
+    'name: "CIAreaAverage"',
     "request.customWords = [",
     '"Proteínas"',
     '"Carbohidratos"',

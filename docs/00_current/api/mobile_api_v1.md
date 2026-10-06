@@ -142,11 +142,14 @@ history. Review summaries are frozen at creation. Revision approval revalidates
 that all affected days are strictly future and unexecuted, and the client cannot
 submit arbitrary before/after plan snapshots.
 
-CML05 adds `POST /foods/label-captures` as a confirmation endpoint, not an OCR
-endpoint. It accepts normalized values only after client review, enforces the
-existing food-creation entitlement and creates a private, unverified,
-solver-disabled food with an idempotent receipt. Photos and raw OCR text are not
-part of the API contract.
+The current label flow uses `GET /foods/label-captures/config`,
+`POST /foods/label-captures/analyze` and `POST /foods/label-captures`. The analyze
+endpoint accepts only the processed image after local preview and explicit consent;
+it returns a normalized, reviewable candidate. The confirmation endpoint accepts
+the user-reviewed values, enforces the existing food-creation entitlement and
+creates a private, unverified, solver-disabled food with an idempotent receipt.
+Raw OCR text is never part of the API contract. A processed image is persisted only
+after explicit opt-in and remains owner-readable and independently deletable.
 
 CML06 adds `GET /subscriptions` and
 `POST /subscriptions/apple/transactions`. The first returns the current effective

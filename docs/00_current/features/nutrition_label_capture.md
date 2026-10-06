@@ -1,7 +1,7 @@
 # Nutrition-label capture
 
 Status: current
-Date: 2026-09-03
+Date: 2026-10-06
 
 ## Product contract
 
@@ -12,7 +12,8 @@ food form, not an authority and not a photo-of-a-meal calorie estimator.
 ```text
 camera or gallery selection
   -> resize + JPEG re-encode on device (metadata removed)
-  -> optional Apple Vision candidate on iOS
+  -> Apple Vision image-quality and OCR signal on iOS
+  -> user preview (repeat locally or explicitly accept)
   -> OpenAI primary extraction (Luna)
   -> deterministic normalization and validation
   -> hidden Sol escalation when quality checks fail
@@ -25,10 +26,26 @@ Switching to the stronger model is an internal My Scoope cost and never changes
 that price. A scan that neither model can resolve releases its reservation and
 charges zero credits. Manual entry remains available without an AI charge.
 
+## Acquisition and local quality boundary
+
+Expo Camera uses continuous autofocus on iOS. The capture action remains disabled
+while the session settles and while a photo is already being taken. The camera
+offers bounded zoom, available-lens switching, torch control and guidance to keep
+the phone parallel and use zoom instead of moving inside the lens's minimum focus
+distance.
+
+Camera and gallery images enter the same preview flow. Apple Vision supplies text
+observations plus aggregate brightness, sharpness, text coverage and confidence
+signals. Extreme darkness, overexposure, blur or absence of text blocks submission
+locally. Borderline images remain reviewable with a concrete warning. The user can
+repeat or cancel without a provider call, credit reservation or charge. A fresh
+image receives a fresh idempotency key; retrying the accepted image keeps its key.
+
 ## Image and consent boundary
 
 Before starting a scan, the app explains that a reduced, re-encoded copy will be
-sent temporarily to OpenAI. The request carries explicit consent. The server
+sent temporarily to OpenAI. The processed image is shown before the user chooses
+`Usar esta foto`; only that action performs the request with explicit consent. The server
 accepts JPEG, PNG or WebP, rejects images outside the size/dimension contract and
 sends the provider a stateless `store: false` request.
 
@@ -64,7 +81,9 @@ Server code then:
 
 If Sol fails but the primary candidate remains valid, the primary candidate is
 shown with an additional review warning. If no valid candidate exists, the scan
-fails without a charge and the same manual form remains available.
+fails without a charge and the same preview remains available for retry or manual
+entry. Review shows the analyzed image beside editable values and translates the
+overall extraction confidence into bounded user-facing guidance.
 
 ### Basis-resolution incident and correction (2026-09-04)
 
