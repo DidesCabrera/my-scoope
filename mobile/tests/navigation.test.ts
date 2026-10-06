@@ -70,7 +70,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(today, /check-in/);
   assertSourceDoesNotMatch(today, /Mi suscripción|Cuenta, privacidad y ayuda|Configurar recordatorios/);
   assertSourceMatch(account, /label="Mejorar mi suscripción"[\s\S]*variant="multicolor"/);
-  assertSourceMatch(account, /<AppHeader eyebrow="Mi cuenta"/);
+  assertSourceMatch(account, /<AppHeader eyebrow="Mi cuenta" eyebrowIcon=\{<SectionIcon color=\{tokens\.color\.textSoft\} section="profile" \/>\}/);
   assertSourceDoesNotMatch(account, /eyebrow="Tu cuenta"/);
   assertSourceMatch(account, /router\.push\("\/subscription" as Href\)/);
   assertSourceMatch(account, /apiRequest<EntitlementsData>\("\/api\/v1\/entitlements"\)/);
@@ -78,7 +78,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(account, /<Card accent=\{subscriptionPlanAccent\(entitlements\?\.plan_name\)\}>/);
   assertSourceMatch(account, /<AssistantCreditBalance availability=\{entitlements\} contained \/>/);
   assertSourceDoesNotMatch(account, /subscriptionIcon|plan actual/);
-  assertSourceMatch(account, /<ProposalReviewSection eyebrow="CUENTA" title="Información de la cuenta">/);
+  assertSourceMatch(account, /<ProposalReviewSection eyebrow="INFORMACIÓN DE LA CUENTA">/);
   assertSourceMatch(account, /label: "Nombre de usuario"/);
   assertSourceMatch(account, /label: "Correo electrónico"/);
   assertSourceMatch(account, /label: "Fecha de ingreso"/);
@@ -90,7 +90,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(account, /signOut\(\)\.then\(\(\) => router\.replace\("\/login"\)\)/);
   assertSourceDoesNotMatch(account, /<SectionTitle title="Sesión"/);
   assertSourceDoesNotMatch(account, /Cierra tu sesión en este dispositivo/);
-  assertSourceMatch(account, /label="Cerrar sesión"[\s\S]*My Scoope no reemplaza atención médica/);
+  assertSourceMatch(account, /eyebrow="INFORMACIÓN DE LA CUENTA">[\s\S]*<\/ProposalReviewSection>[\s\S]*My Scoope no reemplaza atención médica[\s\S]*label="Cerrar sesión"/);
   assertSourceMatch(account, /label: "Acciones de mi cuenta"/);
   assertSourceMatch(account, /accountActions === "menu"/);
   assertSourceMatch(account, /label="Editar nombre de usuario"/);

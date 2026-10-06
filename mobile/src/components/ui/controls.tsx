@@ -1,4 +1,4 @@
-import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
@@ -58,7 +58,9 @@ export function Button({
 }
 
 export function Field({
+  inputStyle,
   label,
+  labelStyle,
   value,
   onChangeText,
   placeholder,
@@ -67,7 +69,9 @@ export function Field({
   autoCorrect,
   secureTextEntry = false,
 }: {
+  inputStyle?: StyleProp<TextStyle>;
   label: string;
+  labelStyle?: StyleProp<TextStyle>;
   value: string;
   onChangeText(value: string): void;
   placeholder?: string;
@@ -78,7 +82,7 @@ export function Field({
 }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={[styles.fieldLabel, labelStyle]}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
         autoCapitalize={autoCapitalize}
@@ -89,7 +93,7 @@ export function Field({
         placeholderTextColor={tokens.color.textSubtle}
         selectionColor={tokens.color.interactivePrimary}
         secureTextEntry={secureTextEntry}
-        style={styles.input}
+        style={[styles.input, inputStyle]}
         value={value}
       />
     </View>

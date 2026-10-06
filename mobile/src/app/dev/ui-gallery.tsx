@@ -234,12 +234,14 @@ export default function UiGalleryScreen() {
           />
           <InlineNotice>Cada formato presenta el flujo completo en orden, con datos fijos y sin persistencia.</InlineNotice>
           {onboardingJourneySteps.map((step, index) => (
-            <View key={`onboarding-${activeOnboardingPreviewWidth}-${step.key}`} style={[styles.devicePreview, { width: activeOnboardingPreviewWidth }]}>
-              <View style={styles.devicePreviewHeader}>
+            <View key={`onboarding-${activeOnboardingPreviewWidth}-${step.key}`} style={[styles.onboardingPreview, { width: activeOnboardingPreviewWidth }]}>
+              <View style={styles.onboardingPreviewMeta}>
                 <Text style={styles.devicePreviewName}>{String(index + 1).padStart(2, "0")}. {step.label}</Text>
                 <Text style={styles.devicePreviewWidth}>{activeOnboardingPreviewWidth} pt</Text>
               </View>
-              <OnboardingJourneyView step={step.key} />
+              <View style={[styles.devicePreview, styles.onboardingDevicePreview]}>
+                <OnboardingJourneyView step={step.key} />
+              </View>
             </View>
           ))}
         </>
@@ -768,6 +770,9 @@ const styles = StyleSheet.create({
   calendarExampleLabel: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.bold, letterSpacing: 0.8 },
   devicePreview: { alignSelf: "center", backgroundColor: tokens.color.surfacePage, borderColor: tokens.color.borderStrong, borderRadius: 30, borderWidth: 1, maxWidth: "100%", overflow: "hidden" },
   devicePreviewHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
+  onboardingPreview: { alignSelf: "center", gap: tokens.spacing.sm, maxWidth: "100%" },
+  onboardingDevicePreview: { width: "100%" },
+  onboardingPreviewMeta: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.sm },
   devicePreviewName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   devicePreviewScreen: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.lg },
   devicePreviewWidth: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
