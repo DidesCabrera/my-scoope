@@ -123,3 +123,15 @@ test("restore purchases explains when no store transaction is pending and report
   assertSourceMatch(subscription, /restored === recovered\.length/);
   assertSourceMatch(subscription, /No pudimos verificar todas las compras disponibles/);
 });
+
+test("Google Play finalizes purchases only after server verification", async () => {
+  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
+
+  assertSourceMatch(subscription, /const isGooglePlay = Platform\.OS === "android"/);
+  assertSourceMatch(subscription, /const isCreditPack = overview\?\.credit_packs\.some/);
+  assertSourceMatch(
+    subscription,
+    /await apiRequest[\s\S]*await finishTransaction\(\{ purchase, isConsumable: isCreditPack \}\)/,
+  );
+  assertSourceMatch(subscription, /obfuscatedAccountId: overview\.google_obfuscated_account_id/);
+});

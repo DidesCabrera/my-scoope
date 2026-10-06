@@ -59,6 +59,24 @@ class AppleSandboxAccess(models.Model):
         return f"Apple sandbox access · {self.user_id} · {self.purpose}"
 
 
+class GooglePlayAccountToken(models.Model):
+    """Stable opaque hash used to resolve authenticated Google Play RTDNs."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="google_play_account_token",
+    )
+    token = models.CharField(max_length=64, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["user_id"]
+
+    def __str__(self) -> str:
+        return f"Google Play account token · {self.user_id}"
+
+
 class BillingOffer(models.Model):
     """Canonical sellable offer for one account plan.
 

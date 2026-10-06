@@ -67,6 +67,7 @@ class GooglePlaySubscriptionEvidence:
     product_id: str
     base_plan_id: str
     status: str
+    environment: str = "live"
     start_time: Any = None
     expiry_time: Any = None
     obfuscated_account_id: str = ""

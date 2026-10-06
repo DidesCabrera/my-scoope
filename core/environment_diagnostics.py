@@ -352,6 +352,43 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
         ),
         action="Complete Apple verifier configuration or disable both Apple billing flags." if apple_enabled and not apple_verifier_ready else "",
     ))
+    google_play_enabled = any(
+        bool(getattr(settings, name, False))
+        for name in (
+            "BILLING_GOOGLE_PLAY_PURCHASES_ENABLED",
+            "BILLING_GOOGLE_PLAY_RTDN_ENABLED",
+            "BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED",
+            "BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED",
+        )
+    )
+    google_play_environment = str(getattr(settings, "BILLING_GOOGLE_PLAY_ENVIRONMENT", ""))
+    google_play_rtdn_enabled = bool(getattr(settings, "BILLING_GOOGLE_PLAY_RTDN_ENABLED", False))
+    google_play_ready = (
+        google_play_environment in {"sandbox", "live"}
+        and bool(getattr(settings, "BILLING_GOOGLE_PLAY_PACKAGE_NAME", ""))
+        and bool(getattr(settings, "BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", {}))
+    )
+    if google_play_rtdn_enabled:
+        google_play_ready = google_play_ready and bool(
+            getattr(settings, "BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE", "")
+        ) and bool(getattr(settings, "BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL", ""))
+    findings.append(DiagnosticFinding(
+        code="billing.google_play",
+        status="error" if google_play_enabled and not google_play_ready else "ok",
+        category="billing",
+        summary=(
+            f"Google Play {google_play_environment} verification is enabled and configured."
+            if google_play_enabled and google_play_ready
+            else "Google Play billing is disabled."
+            if not google_play_enabled
+            else "Google Play billing is missing environment, API or authenticated Pub/Sub configuration."
+        ),
+        action=(
+            "Complete Google Play API and Pub/Sub configuration, or disable its purchase, RTDN and reconciliation flags."
+            if google_play_enabled and not google_play_ready
+            else ""
+        ),
+    ))
     openfactura_enabled = bool(getattr(settings, "BILLING_OPENFACTURA_ENABLED", False))
     openfactura_ready = bool(getattr(settings, "BILLING_OPENFACTURA_API_KEY", "")) and bool(
         getattr(settings, "BILLING_OPENFACTURA_ISSUER_JSON", {})

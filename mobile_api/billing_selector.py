@@ -6,7 +6,10 @@ from billing.application.services.apple_environment import (
     apple_catalog_environment,
 )
 from billing.application.services.credit_packs import may_buy_credit_packs
-from billing.application.services.google_play import google_play_account_id
+from billing.application.services.google_play import (
+    get_or_create_google_play_account_token,
+    google_play_environment,
+)
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api.apple_billing import apple_purchase_environment_for_user
 
@@ -32,6 +35,10 @@ def subscription_payload(user) -> dict:
         enabled_providers.append(PaymentProvider.APPLE_APP_STORE)
     if settings.BILLING_GOOGLE_PLAY_PURCHASES_ENABLED:
         enabled_providers.append(PaymentProvider.GOOGLE_PLAY)
+    try:
+        configured_google_catalog_environment = google_play_environment(settings.BILLING_GOOGLE_PLAY_ENVIRONMENT)
+    except ValueError:
+        configured_google_catalog_environment = None
     if eligible and enabled_providers:
         product_query = BillingProduct.objects.select_related("account_plan").filter(
             active=True,
@@ -46,8 +53,11 @@ def subscription_payload(user) -> dict:
             else product_query.none()
         )
         google_products = (
-            product_query.filter(provider=PaymentProvider.GOOGLE_PLAY)
-            if PaymentProvider.GOOGLE_PLAY in enabled_providers
+            product_query.filter(
+                provider=PaymentProvider.GOOGLE_PLAY,
+                environment=configured_google_catalog_environment,
+            )
+            if PaymentProvider.GOOGLE_PLAY in enabled_providers and configured_google_catalog_environment is not None
             else product_query.none()
         )
         products = [
@@ -83,8 +93,11 @@ def subscription_payload(user) -> dict:
             else pack_query.none()
         )
         google_packs = (
-            pack_query.filter(provider=PaymentProvider.GOOGLE_PLAY)
-            if PaymentProvider.GOOGLE_PLAY in enabled_providers
+            pack_query.filter(
+                provider=PaymentProvider.GOOGLE_PLAY,
+                environment=configured_google_catalog_environment,
+            )
+            if PaymentProvider.GOOGLE_PLAY in enabled_providers and configured_google_catalog_environment is not None
             else pack_query.none()
         )
         credit_packs = [
@@ -104,7 +117,9 @@ def subscription_payload(user) -> dict:
         "eligible": eligible,
         "purchases_enabled": bool(eligible and products),
         "app_account_token": str(token.token) if token is not None else "",
-        "google_obfuscated_account_id": google_play_account_id(user) if eligible or can_buy_packs else "",
+        "google_obfuscated_account_id": (
+            get_or_create_google_play_account_token(user).token if eligible or can_buy_packs else ""
+        ),
         "plan_name": subscription.plan.name if subscription is not None else "Sin plan",
         "status": subscription.status if subscription is not None else "none",
         "products": products,

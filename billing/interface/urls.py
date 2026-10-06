@@ -7,6 +7,7 @@ from billing.interface.views import (
     checkout_return,
     create_checkout,
     create_credit_pack_mercado_pago_checkout,
+    google_play_webhook,
     mercado_pago_webhook,
     paddle_customer_portal,
     paddle_webhook,
@@ -24,6 +25,7 @@ urlpatterns = [
     path("webhooks/mercado-pago/", mercado_pago_webhook, name="mercado_pago_webhook"),
     path("webhooks/paddle/", paddle_webhook, name="paddle_webhook"),
     path("webhooks/apple-app-store/", apple_app_store_webhook, name="apple_app_store_webhook"),
+    path("webhooks/google-play/", google_play_webhook, name="google_play_webhook"),
     path(
         "webhooks/apple-app-store/production/",
         apple_app_store_webhook,

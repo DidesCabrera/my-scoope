@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 from django.conf import settings
@@ -23,17 +24,25 @@ from billing.application.services.checkout import (
 )
 from billing.application.services.credit_packs import CreditPackUnavailable
 from billing.application.services.events import receive_verified_billing_event
+from billing.application.services.google_play import process_google_play_notification
 from billing.application.services.mercado_pago_credit_packs import create_credit_pack_checkout
 from billing.application.services.mercado_pago_events import process_mercado_pago_event
 from billing.application.services.paddle_events import process_paddle_event
 from billing.infrastructure.gateways import (
     build_apple_app_store_gateway,
+    build_google_play_gateway,
     build_mercado_pago_gateway,
     build_paddle_gateway,
 )
 from billing.infrastructure.providers.apple_app_store import (
     AppleAppStoreConfigurationError,
     InvalidAppleSignedData,
+)
+from billing.infrastructure.providers.google_play_pubsub import (
+    GooglePubSubConfigurationError,
+    InvalidGooglePubSubPush,
+    decode_google_play_notification,
+    verify_google_pubsub_authorization,
 )
 from billing.infrastructure.providers.mercado_pago import MercadoPagoProviderError
 from billing.infrastructure.providers.mercado_pago_webhooks import (
@@ -335,6 +344,68 @@ def apple_app_store_webhook(request: HttpRequest, environment: str | None = None
     )
     try:
         event = process_apple_notification(event=receipt.event, notification=notification)
+    except Exception:
+        return JsonResponse({"detail": "provider_reconciliation_failed"}, status=502)
+    return JsonResponse({"status": event.status}, status=200)
+
+
+@csrf_exempt
+@require_POST
+def google_play_webhook(request: HttpRequest) -> HttpResponse:
+    """Receive authenticated Pub/Sub pushes and refresh Google Play state."""
+
+    if not settings.BILLING_GOOGLE_PLAY_RTDN_ENABLED:
+        return HttpResponse(status=404)
+    if len(request.body) > MAX_WEBHOOK_BODY_BYTES:
+        return HttpResponse(status=413)
+    try:
+        verify_google_pubsub_authorization(
+            request.headers.get("Authorization", ""),
+            audience=settings.BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE,
+            service_account_email=settings.BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL,
+        )
+    except InvalidGooglePubSubPush:
+        return JsonResponse({"detail": "invalid_authorization"}, status=401)
+    except GooglePubSubConfigurationError:
+        return JsonResponse({"detail": "google_play_rtdn_unavailable"}, status=503)
+    try:
+        envelope = json.loads(request.body or b"{}")
+        notification = decode_google_play_notification(envelope)
+    except (TypeError, ValueError, InvalidGooglePubSubPush):
+        return JsonResponse({"detail": "invalid_notification"}, status=400)
+    if notification.package_name != settings.BILLING_GOOGLE_PLAY_PACKAGE_NAME:
+        return JsonResponse({"detail": "package_mismatch"}, status=400)
+
+    environment = settings.BILLING_GOOGLE_PLAY_ENVIRONMENT
+    token_digest = (
+        hashlib.sha256(notification.purchase_token.encode("utf-8")).hexdigest()
+        if notification.purchase_token
+        else ""
+    )
+    receipt = receive_verified_billing_event(
+        provider=PaymentProvider.GOOGLE_PLAY,
+        external_event_id=f"{environment}:{notification.message_id}",
+        event_type=f"{notification.kind}:{notification.notification_type}",
+        resource_id=f"sha256:{token_digest}" if token_digest else "",
+        payload={
+            "message_id": notification.message_id,
+            "package_name": notification.package_name,
+            "event_time_millis": notification.event_time_millis,
+            "kind": notification.kind,
+            "notification_type": notification.notification_type,
+            "product_id": notification.product_id,
+            "environment": environment,
+            "published_at": notification.published_at,
+        },
+        signature_verified=True,
+    )
+    try:
+        event = process_google_play_notification(
+            event=receipt.event,
+            notification=notification,
+            gateway=build_google_play_gateway(),
+            expected_environment=environment,
+        )
     except Exception:
         return JsonResponse({"detail": "provider_reconciliation_failed"}, status=502)
     return JsonResponse({"status": event.status}, status=200)

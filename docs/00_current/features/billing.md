@@ -1,7 +1,7 @@
 # Billing
 
 Status: current BILL00-BILL09 + CML06 repository implementation
-Last updated: 2026-09-11
+Last updated: 2026-10-05
 
 `billing` is the provider-integration boundary between external collection/tax systems
 and the commercial state owned by `accounts`.
@@ -64,6 +64,18 @@ flag is enabled and the authenticated account has active, unexpired
 sandbox evidence for ordinary production accounts. The inbox stores normalized
 evidence, never the raw JWS.
 
+Google Play purchases are environment-scoped from catalog exposure through
+server verification. `subscriptionsv2` and `productsv2` determine sandbox/live
+from Google's verified `testPurchase` context; evidence from the other
+environment fails closed. Each eligible account has a persisted opaque
+`GooglePlayAccountToken` used for `obfuscatedAccountId` and authenticated RTDN
+ownership resolution. `/billing/webhooks/google-play/` accepts only Cloud
+Pub/Sub pushes whose Google-signed OIDC JWT has the configured audience,
+verified email and exact push service-account identity. The RTDN is only a
+signal: My Scoope always rereads the purchase through the Google Play Developer
+API before projecting a subscription or settling/refunding a credit pack. The
+inbox stores a token digest and normalized metadata, never the purchase token.
+
 ```text
 BILLING_PADDLE_ENVIRONMENT=sandbox
 BILLING_PADDLE_CHECKOUT_ENABLED=false
@@ -90,6 +102,15 @@ BILLING_APPLE_IN_APP_PURCHASE_KEY=
 BILLING_APPLE_KEY_ID=
 BILLING_APPLE_ISSUER_ID=
 BILLING_APPLE_ONLINE_CHECKS=true
+BILLING_GOOGLE_PLAY_PURCHASES_ENABLED=false
+BILLING_GOOGLE_PLAY_RTDN_ENABLED=false
+BILLING_GOOGLE_PLAY_ENVIRONMENT=sandbox
+BILLING_GOOGLE_PLAY_SUBSCRIPTION_RECONCILIATION_ENABLED=false
+BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED=false
+BILLING_GOOGLE_PLAY_PACKAGE_NAME=com.myscoope.app
+BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON={}
+BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE=
+BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL=
 BILLING_OPENFACTURA_ENABLED=false
 BILLING_OPENFACTURA_API_KEY=
 BILLING_OPENFACTURA_ISSUER_JSON={}
