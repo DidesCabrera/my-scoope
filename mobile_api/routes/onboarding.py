@@ -102,7 +102,12 @@ def onboarding_state(request):
     return success(_onboarding_state_payload(request.auth.user))
 
 
-@router.patch("/personal-records/body", auth=mobile_bearer, response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+@router.patch(
+    "/personal-records/body",
+    operation_id="mobile_api_routes_onboarding_update_personal_body",
+    auth=mobile_bearer,
+    response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
 def update_personal_body(request, payload: PersonalBodyInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     form = ProfileNutritionForm({"birth_date": payload.birth_date.isoformat(), "sex": payload.sex, "height_cm": payload.height_cm})
@@ -112,7 +117,12 @@ def update_personal_body(request, payload: PersonalBodyInput):
     return success(_onboarding_state_payload(request.auth.user))
 
 
-@router.patch("/personal-records/planning", auth=mobile_bearer, response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+@router.patch(
+    "/personal-records/planning",
+    operation_id="mobile_api_routes_onboarding_update_personal_planning",
+    auth=mobile_bearer,
+    response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
 def update_personal_planning(request, payload: PersonalPlanningInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     try:
@@ -122,7 +132,12 @@ def update_personal_planning(request, payload: PersonalPlanningInput):
     return success(_onboarding_state_payload(request.auth.user))
 
 
-@router.patch("/personal-records/preferences", auth=mobile_bearer, response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+@router.patch(
+    "/personal-records/preferences",
+    operation_id="mobile_api_routes_onboarding_update_personal_preferences",
+    auth=mobile_bearer,
+    response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
 def update_personal_preferences(request, payload: PersonalPreferencesInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     try:
@@ -132,7 +147,12 @@ def update_personal_preferences(request, payload: PersonalPreferencesInput):
     return success(_onboarding_state_payload(request.auth.user))
 
 
-@router.patch("/personal-records/metrics", auth=mobile_bearer, response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+@router.patch(
+    "/personal-records/metrics",
+    operation_id="mobile_api_routes_onboarding_update_personal_metrics",
+    auth=mobile_bearer,
+    response={200: OnboardingStateEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
 def update_personal_metrics(request, payload: PersonalWeightInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     update_weight_record(user=request.auth.user, weight_kg=payload.weight_kg)

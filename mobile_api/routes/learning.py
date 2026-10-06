@@ -8,6 +8,11 @@ from notas.application.learning_catalog import catalog_payload
 router = Router()
 
 
-@router.get("/learning", auth=mobile_bearer, response={200: LearningCatalogEnvelope})
+@router.get(
+    "/learning",
+    operation_id="mobile_api_routes_learning_learning_catalog",
+    auth=mobile_bearer,
+    response={200: LearningCatalogEnvelope},
+)
 def learning_catalog(request):
     return success(catalog_payload())
