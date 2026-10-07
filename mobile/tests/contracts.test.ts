@@ -80,12 +80,19 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/dev/storyboard-gallery.tsx"),
     "utf8",
   );
+  const navigation = await readTestFile(
+    path.resolve(process.cwd(), "src/components/dev/gallery-navigation.tsx"),
+    "utf8",
+  );
   assertSourceMatch(gallery, /export default function UiGalleryScreen/);
   assertSourceMatch(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
   assertSourceMatch(gallery, /Galería del sistema UI/);
   assertSourceDoesNotMatch(gallery, /<Brand|Referencia interna construida con los componentes reales de la app/);
   assertSourceMatch(gallery, /<OnboardingStoryboardGallery \/>/);
+  assertSourceMatch(gallery, /<SubscriptionGallery \/>/);
+  assertSourceMatch(navigation, /\{ key: "subscriptions", label: "Suscripciones" \}/);
   assertSourceMatch(storyboardGallery, /OnboardingJourneyView/);
+  assertSourceMatch(storyboardGallery, /step === "plans" \? <SubscriptionPreviewContent context="onboarding" \/>/);
   assertSourceMatch(storyboardGallery, /Storyboard visual · sin sesión, API ni persistencia/);
   assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos del onboarding"/);
   assertSourceMatch(storyboardGallery, /tabs=\{previewWidths\.map\(\(preview\) => \(\{ key: preview\.width, label: preview\.label \}\)\)\}/);
@@ -917,8 +924,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /Continuar con Free/);
   assertSourceMatch(journey, /<SubscriptionPlanCard/);
   assertSourceMatch(journey, /commercialPlanBenefits\[plan\.name\]/);
-  assertSourceMatch(journey, /Mensual · \$\{plan\.price\}/);
-  assertSourceMatch(journey, /Anual · \$\{plan\.annualPrice\}/);
+  assertSourceMatch(journey, /Ver opciones de \$\{plan\.name\}/);
+  assertSourceMatch(journey, /Ver precio en la tienda/);
+  assertSourceDoesNotMatch(journey, /annualPrice|\$3\.990|\$6\.990/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton label="Continuar con Free"/);
   assertSourceMatch(journey, /primary="Generar primer plan"/);
@@ -1030,6 +1038,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
   const onboardingPreview = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding-preview.tsx"), "utf8");
   assertSourceMatch(onboarding, /scroll=\{introSteps\.includes\(step\) \? false : "auto"\}/);
+  assertSourceMatch(onboarding, /pathname: "\/subscription", params: \{ origin: "onboarding"/);
+  const layout = await readTestFile(path.resolve(process.cwd(), "src/app/_layout.tsx"), "utf8");
+  assertSourceMatch(layout, /pathname === "\/subscription" && origin === "onboarding"/);
   assertSourceMatch(onboardingPreview, /scroll=\{stepIndex >= 6 \? "auto" : false\}/);
 });
 

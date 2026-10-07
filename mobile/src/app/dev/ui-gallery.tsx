@@ -29,6 +29,7 @@ import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-nav
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
 import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
 import { ShareableElementsGallery } from "@/components/dev/shareable-elements-gallery";
+import { SubscriptionGallery } from "@/components/dev/subscription-gallery";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -220,6 +221,10 @@ export default function UiGalleryScreen() {
 
       {tab === "onboarding" ? (
         <OnboardingStoryboardGallery />
+      ) : null}
+
+      {tab === "subscriptions" ? (
+        <SubscriptionGallery />
       ) : null}
 
       {tab === "labelCapture" ? (

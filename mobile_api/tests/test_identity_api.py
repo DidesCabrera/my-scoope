@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
 from django.test import Client, override_settings
 
 from accounts.models import AccountDeletionRecord
+from accounts.services.deletion import AppleCredentialRevocationError
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.domain.models import WeightLog
 
@@ -68,6 +71,21 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
         self.assertFalse(self.user.is_active)
         self.assertEqual(AccountDeletionRecord.objects.count(), 1)
         self.assertFalse(WeightLog.objects.filter(user=self.user).exists())
+
+    @patch("mobile_api.routes.identity.delete_user_account")
+    def test_account_deletion_reports_temporary_apple_revocation_failure(self, delete_account):
+        delete_account.side_effect = AppleCredentialRevocationError("Apple unavailable")
+
+        response = self.client.post(
+            "/api/v1/account/delete",
+            data={"confirmation": "ELIMINAR", "password": "mobile-pass-123"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["error"]["code"], "apple_credential_revocation_unavailable")
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
 
     def test_mobile_disclosure_acceptance_is_versioned_and_persisted(self):
         response = self.client.post(

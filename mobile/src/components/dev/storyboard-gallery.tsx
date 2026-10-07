@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { LabelCaptureStoryboardView, labelCaptureStoryboardSteps } from "@/components/label-capture";
 import { OnboardingJourneyView, onboardingJourneySteps } from "@/components/onboarding";
+import { SubscriptionPreviewContent } from "@/components/dev/subscription-gallery";
 import { InlineNotice, ScrollableTabBar, SectionTitle } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -60,7 +61,7 @@ export function OnboardingStoryboardGallery() {
       accessibilityLabel="Formatos del onboarding"
       detail="Storyboard visual · sin sesión, API ni persistencia"
       notice="Cada formato presenta el flujo completo en orden, con datos fijos y sin persistencia."
-      renderStep={(step) => <OnboardingJourneyView step={step} />}
+      renderStep={(step) => step === "plans" ? <SubscriptionPreviewContent context="onboarding" /> : <OnboardingJourneyView step={step} />}
       steps={onboardingJourneySteps}
       title="Flujo inicial"
     />

@@ -260,6 +260,7 @@ export default function LabelCaptureScreen() {
   const [imageQuality, setImageQuality] = useState<LabelImageQuality>(unavailableLabelImageQuality);
   const [qualityConfidence, setQualityConfidence] = useState<number | null>(null);
   const [retainImage, setRetainImage] = useState(false);
+  const [aiConsentGranted, setAiConsentGranted] = useState(false);
   const [captureSource, setCaptureSource] = useState<CaptureSource>("camera");
   const [availableLenses, setAvailableLenses] = useState<string[]>([]);
   const [selectedLens, setSelectedLens] = useState<string | undefined>();
@@ -349,6 +350,7 @@ export default function LabelCaptureScreen() {
     setQualityConfidence(null);
     setAnalysisId(null);
     setRetainImage(false);
+    setAiConsentGranted(false);
     applyDraft({
       basis: "manual",
       servingSizeG: null,
@@ -410,6 +412,7 @@ export default function LabelCaptureScreen() {
       setImageQuality(nextImageQuality);
       setQualityConfidence(null);
       setRetainImage(false);
+      setAiConsentGranted(false);
       setAnalysisId(null);
       setPhase("preview");
     } catch (nextError) {
@@ -423,7 +426,7 @@ export default function LabelCaptureScreen() {
   }
 
   async function analyzePreparedImage() {
-    if (!prepared || analysisInFlightRef.current || imageQuality.status === "unsuitable") return;
+    if (!prepared || !aiConsentGranted || analysisInFlightRef.current || imageQuality.status === "unsuitable") return;
     analysisInFlightRef.current = true;
     setProcessing(true);
     setError(null);
@@ -437,7 +440,7 @@ export default function LabelCaptureScreen() {
           image_width: prepared.width,
           image_height: prepared.height,
           idempotency_key: captureKey,
-          consent_to_ai_processing: true,
+          consent_to_ai_processing: aiConsentGranted,
           local_candidate: localCandidate,
         }),
       });
@@ -604,6 +607,7 @@ export default function LabelCaptureScreen() {
     setQualityConfidence(null);
     setAnalysisId(null);
     setRetainImage(false);
+    setAiConsentGranted(false);
     setError(null);
     setCaptureKey(Crypto.randomUUID());
     setCaptureSource("camera");
@@ -688,7 +692,16 @@ export default function LabelCaptureScreen() {
           <Pill color={qualityPresentation.tone} label={qualityPresentation.label} />
         </View>
         <View style={styles.bottomActions}>
-          <Button disabled={imageQuality.status === "unsuitable" || processing} label={`Usar esta foto${config ? ` · ${config.credits_per_scan} ${config.credits_per_scan === 1 ? "crédito" : "créditos"}` : ""}`} loading={processing} onPress={() => void analyzePreparedImage()} />
+          <View style={styles.retentionPanel}>
+            <View style={styles.retentionRow}>
+              <View style={styles.retentionCopy}>
+                <Text style={styles.retentionTitle}>Autorizar análisis con OpenAI</Text>
+                <Text style={styles.retentionDetail}>Se enviará temporalmente esta copia reducida y sin metadatos para extraer los valores. No se usa para publicidad ni se conserva en OpenAI.</Text>
+              </View>
+              <Switch accessibilityLabel="Autorizar análisis con OpenAI" onValueChange={setAiConsentGranted} value={aiConsentGranted} />
+            </View>
+          </View>
+          <Button disabled={!aiConsentGranted || imageQuality.status === "unsuitable" || processing} label={`Enviar a OpenAI y digitalizar${config ? ` · ${config.credits_per_scan} ${config.credits_per_scan === 1 ? "crédito" : "créditos"}` : ""}`} loading={processing} onPress={() => void analyzePreparedImage()} />
           <Button disabled={processing} label="Tomar otra foto" onPress={() => void retakePhoto()} variant="secondary" />
         </View>
       </Screen>

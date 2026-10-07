@@ -1,7 +1,7 @@
 from ninja import Router
 
 from accounts.forms import AccountDeletionForm
-from accounts.services.deletion import delete_user_account
+from accounts.services.deletion import AppleCredentialRevocationError, delete_user_account
 from accounts.services.mobile_disclosures import accept_current_mobile_disclosure
 from mobile_api.api_support import form_error, require_scope, success
 from mobile_api.auth import mobile_bearer
@@ -68,7 +68,7 @@ def me(request):
     "/account/delete",
     operation_id="mobile_api_api_delete_account",
     auth=mobile_bearer,
-    response={200: AccountDeletionEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+    response={200: AccountDeletionEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope, 503: ErrorEnvelope},
 )
 def delete_account(request, payload: AccountDeletionInput):
     require_scope(request.auth, MOBILE_SCOPE_ACCOUNT)
@@ -82,7 +82,14 @@ def delete_account(request, payload: AccountDeletionInput):
             code="account_deletion_confirmation_invalid",
             message="Account deletion could not be confirmed.",
         )
-    result = delete_user_account(user=request.auth.user, source="self_service_mobile_api")
+    try:
+        result = delete_user_account(user=request.auth.user, source="self_service_mobile_api")
+    except AppleCredentialRevocationError as exc:
+        raise MobileAPIError(
+            "apple_credential_revocation_unavailable",
+            "Apple sign-in access could not be revoked. Try again in a few minutes.",
+            503,
+        ) from exc
     return success({"receipt_id": str(result.receipt_id)})
 
 

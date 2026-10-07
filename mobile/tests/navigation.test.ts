@@ -110,7 +110,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(account, /onDismiss=\{finishClosingAccountActions\}/);
   assertSourceMatch(account, /visible=\{accountActionsVisible\}/);
   assertSourceMatch(account, /<ActionSheetModal/);
-  assertSourceMatch(account, /<ActionSheetAction icon=\{ExternalLink\} label="Política de privacidad"/);
+  assertSourceDoesNotMatch(account, /Política de privacidad|Términos de uso|Cancelaciones y reembolsos/);
   assertSourceMatch(account, /<ActionSheetAction icon=\{LifeBuoy\} label="Centro de soporte"/);
   assertSourceMatch(account, /<ActionSheetAction destructive icon=\{Trash2\} label="Eliminar cuenta"/);
   assertSourceDoesNotMatch(account, /<Card accent=\{tokens\.color\.danger\}>/);

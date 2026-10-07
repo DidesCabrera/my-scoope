@@ -767,9 +767,9 @@ function GeneratedDailyPlanView() {
 }
 
 const plans = [
-  { accent: tokens.color.fat, caption: "Incluido sin costo.", name: "Free", price: "$0/mes" },
-  { accent: tokens.color.carbs, annualPrice: "$39.900/año · Ahorra 17%", name: "Basic", price: "$3.990/mes" },
-  { accent: tokens.color.protein, annualPrice: "$69.900/año · Ahorra 17%", name: "Pro", price: "$6.990/mes" },
+  { accent: tokens.color.fat, caption: "Incluido sin costo.", name: "Free", price: "Gratis" },
+  { accent: tokens.color.carbs, name: "Basic", price: "Ver precio en la tienda" },
+  { accent: tokens.color.protein, name: "Pro", price: "Ver precio en la tienda" },
 ] as const;
 
 function PlansView({ index }: { index: number }) {
@@ -781,16 +781,13 @@ function PlansView({ index }: { index: number }) {
         {plans.map((plan) => (
           <SubscriptionPlanCard accent={plan.accent} benefits={commercialPlanBenefits[plan.name]} caption={"caption" in plan ? plan.caption : undefined} key={plan.name} name={plan.name} price={plan.price}>
             {plan.name === "Free" ? <SubscriptionPurchaseButton label="Continuar con Free" onPress={() => controller.onChoosePlan?.("Free")} /> : (
-              <View style={styles.subscriptionActions}>
-                <SubscriptionPurchaseButton label={`Mensual · ${plan.price}`} onPress={() => controller.onChoosePlan?.(plan.name)} />
-                <SubscriptionPurchaseButton label={`Anual · ${plan.annualPrice}`} onPress={() => controller.onChoosePlan?.(plan.name)} />
-              </View>
+              <SubscriptionPurchaseButton label={`Ver opciones de ${plan.name}`} onPress={() => controller.onChoosePlan?.(plan.name)} />
             )}
           </SubscriptionPlanCard>
         ))}
       </View>
       {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
-      <Text style={styles.quietCenter}>Precios mensuales en CLP. También habrá opciones anuales.</Text>
+      <Text style={styles.quietCenter}>Los precios y periodos vigentes se muestran directamente desde la tienda antes de comprar.</Text>
     </>
   );
 }
@@ -1006,5 +1003,4 @@ const styles = StyleSheet.create({
   adjustNutritionAction: { alignItems: "center", justifyContent: "center", minHeight: 40, paddingHorizontal: tokens.spacing.md },
   adjustNutritionLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium },
   planList: { gap: tokens.spacing.sm },
-  subscriptionActions: { gap: tokens.spacing.sm },
 });

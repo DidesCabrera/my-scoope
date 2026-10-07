@@ -237,7 +237,13 @@ function PreviewView() {
         </View>
       </View>
       <View style={styles.bottomActions}>
-        <Button label="Usar esta foto · 1 crédito" onPress={noop} />
+        <View style={styles.retentionPanel}>
+          <View style={styles.retentionRow}>
+            <View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Autorizar análisis con OpenAI</Text><Text style={styles.qualityDetail}>Se enviará temporalmente esta copia reducida y sin metadatos para extraer los valores.</Text></View>
+            <View style={styles.toggle}><View style={styles.toggleKnob} /></View>
+          </View>
+        </View>
+        <Button label="Enviar a OpenAI y digitalizar · 1 crédito" onPress={noop} />
         <Button label="Tomar otra foto" onPress={noop} variant="secondary" />
       </View>
     </>

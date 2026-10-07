@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import { CircleDollarSign, ExternalLink, FileText, Flag, LifeBuoy, Pencil, Trash2 } from "lucide-react-native";
+import { Flag, LifeBuoy, Pencil, Trash2 } from "lucide-react-native";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -153,9 +153,6 @@ export default function AccountScreen() {
             <View style={styles.sheetContent}>
               <ActionSheetActions>
                 <ActionSheetAction icon={Pencil} label="Editar nombre de usuario" onPress={() => { setUsername(session?.username ?? ""); setError(null); setAccountActions("rename"); }} />
-                <ActionSheetAction icon={ExternalLink} label="Política de privacidad" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/privacy/`)} />
-                <ActionSheetAction icon={FileText} label="Términos de uso" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/terms/`)} />
-                <ActionSheetAction icon={CircleDollarSign} label="Cancelaciones y reembolsos" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/refund-policy/`)} />
                 <ActionSheetAction icon={LifeBuoy} label="Centro de soporte" onPress={() => openExternalAction(`${appConfig.apiBaseUrl}/support/`)} />
                 <ActionSheetAction icon={Flag} label="Reportar contenido o un problema" onPress={() => openExternalAction(`mailto:${supportEmail}?subject=Reporte%20desde%20My%20Scoope`)} />
                 <ActionSheetAction destructive icon={Trash2} label="Eliminar cuenta" onPress={() => setAccountActions("delete")} />

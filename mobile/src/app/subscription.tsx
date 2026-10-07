@@ -1,4 +1,5 @@
-import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
+import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import * as Linking from "expo-linking";
 import {
   ErrorCode,
   finishTransaction,
@@ -17,10 +18,12 @@ import type { EntitlementsData, SubscriptionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { AppHeader, Card, InlineNotice, LoadingState, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
+import { AppHeader, Button, Card, InlineNotice, LoadingState, MyScoopeLogo, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
 import { tokens } from "@/design/tokens";
+import { appConfig } from "@/config/app-config";
+import { internalHref } from "@/navigation/internal-href";
 import { subscriptionPlanAccent } from "@/presentation/subscription";
 
 function purchaseErrorCode(error: unknown): string {
@@ -33,8 +36,11 @@ function isUserCancelledPurchase(error: unknown): boolean {
 }
 
 export default function SubscriptionScreen() {
+  const { origin, returnTo } = useLocalSearchParams<{ origin?: string; returnTo?: string }>();
+  const isOnboarding = origin === "onboarding";
+  const returnHref = internalHref(returnTo);
   const router = useRouter();
-  const { status, apiRequest } = useSession();
+  const { status, apiRequest, refreshProfile } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [overview, setOverview] = useState<SubscriptionData | null>(null);
   const [entitlements, setEntitlements] = useState<EntitlementsData | null>(null);
@@ -46,6 +52,12 @@ export default function SubscriptionScreen() {
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const handledTransactions = useRef(new Set<string>());
   const restoring = useRef(false);
+
+  const finishOnboarding = useCallback(async () => {
+    await apiRequest("/api/v1/onboarding/complete", { method: "POST" });
+    await refreshProfile();
+    router.replace(returnHref ?? ("/today" as Href));
+  }, [apiRequest, refreshProfile, returnHref, router]);
 
   const submitPurchase = useCallback(async (purchase: Purchase): Promise<boolean> => {
     const key = purchase.id || purchase.purchaseToken || "";
@@ -72,6 +84,7 @@ export default function SubscriptionScreen() {
       ]);
       setOverview(nextOverview);
       setEntitlements(nextEntitlements);
+      if (isOnboarding && !isCreditPack) await finishOnboarding();
       return true;
     } catch (nextError) {
       // A failed verification remains pending at the store. Do not replay it
@@ -82,7 +95,7 @@ export default function SubscriptionScreen() {
     } finally {
       setWorking(false);
     }
-  }, [apiRequest, overview]);
+  }, [apiRequest, finishOnboarding, isOnboarding, overview]);
 
   const {
     connected,
@@ -125,9 +138,13 @@ export default function SubscriptionScreen() {
   const closeActions = useCallback(() => setActionsVisible(false), []);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, fallback: "/account", identityVisible: compactHeaderVisible, mode: "back", title: "Suscripciones y Bolsas" });
+    if (isOnboarding) {
+      setHeaderPresentation({ action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, identityVisible: compactHeaderVisible, mode: "default", title: "Elige un plan" });
+    } else {
+      setHeaderPresentation({ action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, fallback: "/account", identityVisible: compactHeaderVisible, mode: "back", title: "Suscripciones y Bolsas" });
+    }
     return () => setHeaderPresentation({ mode: "default" });
-  }, [compactHeaderVisible, openActions, setHeaderPresentation]));
+  }, [compactHeaderVisible, isOnboarding, openActions, setHeaderPresentation]));
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   useEffect(() => {
@@ -280,6 +297,18 @@ export default function SubscriptionScreen() {
     }
   };
 
+  const continueWithFree = async () => {
+    setWorking(true);
+    setError(null);
+    try {
+      await finishOnboarding();
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setWorking(false);
+    }
+  };
+
   const storeProvider = Platform.OS === "android" ? "google_play" : "apple_app_store";
   const subscriptionPlans = ["Basic", "Pro"].map((planName) => ({
     planName,
@@ -290,13 +319,19 @@ export default function SubscriptionScreen() {
 
   return (
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
-      <AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" />
+      {isOnboarding ? (
+        <View style={styles.onboardingIntro}>
+          <View style={styles.onboardingLogo}><MyScoopeLogo /></View>
+          <Text style={styles.onboardingTitle}>Elige un plan</Text>
+          <Text style={styles.onboardingDescription}>Compara lo que incluyen Free, Basic y Pro.{"\n"}Puedes cambiar de plan más adelante.</Text>
+        </View>
+      ) : <AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" />}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {restoreNotice ? <InlineNotice>{restoreNotice}</InlineNotice> : null}
       {overview?.duplicate_active_providers ? (
         <InlineNotice tone="warning">Detectamos más de un canal de cobro activo. El equipo puede revisarlo sin interrumpir tu acceso.</InlineNotice>
       ) : null}
-      <Card accent={subscriptionPlanAccent(entitlements?.plan_name ?? overview?.plan_name)}>
+      {!isOnboarding ? <Card accent={subscriptionPlanAccent(entitlements?.plan_name ?? overview?.plan_name)}>
         <View style={styles.subscriptionHeading}>
           <View style={styles.headerCopy}>
             <Text style={styles.eyebrow}>SUSCRIPCIÓN ACTUAL</Text>
@@ -304,7 +339,7 @@ export default function SubscriptionScreen() {
           </View>
         </View>
         {entitlements ? <AssistantCreditBalance availability={entitlements} contained /> : null}
-      </Card>
+      </Card> : null}
 
       {!overview?.eligible ? (
         <Card muted>
@@ -320,10 +355,16 @@ export default function SubscriptionScreen() {
         </Card>
       ) : null}
 
+      {overview?.eligible && isOnboarding ? (
+        <SubscriptionPlanCard accent={tokens.color.fat} benefits={commercialPlanBenefits.Free} caption="Incluido sin costo." name="Free" price="Gratis">
+          <SubscriptionPurchaseButton label="Continuar con Free" loading={working} onPress={() => void continueWithFree()} />
+        </SubscriptionPlanCard>
+      ) : null}
+
       {overview?.purchases_enabled && (Platform.OS === "ios" || Platform.OS === "android") ? (
         <>
-          <SectionTitle title="Suscripciones disponibles" titleStyle={styles.commercialSectionTitle} />
-          <SubscriptionPlanCard accent={tokens.color.fat} benefits={commercialPlanBenefits.Free} caption="Incluido sin costo." name="Free" price="$0/mes" />
+          {!isOnboarding ? <SectionTitle title="Suscripciones disponibles" titleStyle={styles.commercialSectionTitle} /> : null}
+          {!isOnboarding ? <SubscriptionPlanCard accent={tokens.color.fat} benefits={commercialPlanBenefits.Free} caption="Incluido sin costo." name="Free" price="$0/mes" /> : null}
           {subscriptionPlans.map((plan) => {
             const monthlyProduct = plan.products.find((item) => item.interval === "month");
             const monthlyStoreProduct = subscriptions.find((item) => item.id === monthlyProduct?.product_id);
@@ -366,10 +407,20 @@ export default function SubscriptionScreen() {
             </SubscriptionPlanCard>
             );
           })}
+          <Card style={styles.subscriptionInformationCard}>
+            <SectionTitle title="Información de la suscripción" />
+            <Text style={textStyles.muted}>{Platform.OS === "android"
+              ? "El cobro se realiza a tu cuenta de Google Play al confirmar. La suscripción se renueva automáticamente por el mismo periodo y precio vigente hasta que la canceles desde tu cuenta de Google Play."
+              : "El cobro se realiza a tu cuenta de App Store al confirmar. La suscripción se renueva automáticamente por el mismo periodo y precio vigente hasta que la canceles desde tu cuenta de Apple. Puedes cancelarla al menos 24 horas antes del término del periodo actual."}</Text>
+            <Text style={textStyles.caption}>La compra habilita las funciones y créditos incluidos en el plan seleccionado en todos tus dispositivos donde uses la misma cuenta de My Scoope.</Text>
+            <Button label="Política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/`)} variant="secondary" />
+            <Button label="Términos de uso" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/terms/`)} variant="secondary" />
+            <Button label="Cancelaciones y reembolsos" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/refund-policy/`)} variant="secondary" />
+          </Card>
         </>
       ) : null}
 
-      {overview?.can_buy_credit_packs && overview.credit_packs.length ? (
+      {!isOnboarding && overview?.can_buy_credit_packs && overview.credit_packs.length ? (
         <>
           <SectionDivider />
           <SectionHeading
@@ -448,6 +499,10 @@ const styles = StyleSheet.create({
   copy: { flex: 1, gap: 4 },
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   headerCopy: { flex: 1, gap: 3, minWidth: 0 },
+  onboardingDescription: { color: tokens.color.textMuted, fontSize: 18, lineHeight: 25, textAlign: "center" },
+  onboardingIntro: { alignItems: "center", gap: tokens.spacing.lg, paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.lg },
+  onboardingLogo: { marginBottom: tokens.spacing.lg },
+  onboardingTitle: { color: tokens.color.textMain, fontSize: 34, fontWeight: tokens.weight.extraBold, lineHeight: 40, textAlign: "center" },
   disabledAction: { opacity: 0.45 },
   planPriceChip: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs },
   planPriceChipLabel: { color: tokens.color.surfaceApp, fontSize: 16, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },
@@ -457,4 +512,5 @@ const styles = StyleSheet.create({
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden" },
   subscriptionHeading: { alignItems: "center", flexDirection: "row" },
+  subscriptionInformationCard: { marginTop: tokens.spacing.lg },
 });

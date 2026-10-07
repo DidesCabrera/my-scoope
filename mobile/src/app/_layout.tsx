@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/react-native";
 import * as Notifications from "expo-notifications";
-import { type ErrorBoundaryProps, type Href, Stack, usePathname, useRouter } from "expo-router";
+import { type ErrorBoundaryProps, type Href, Stack, useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { AppState, Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -37,6 +37,7 @@ function ScreenErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 function AuthenticatedRouteGate() {
   const pathname = usePathname();
+  const { origin } = useGlobalSearchParams<{ origin?: string }>();
   const router = useRouter();
   const { status, profile } = useSession();
 
@@ -47,10 +48,11 @@ function AuthenticatedRouteGate() {
       router.replace(returnTo ? { pathname: "/disclosures", params: { returnTo } } : "/disclosures" as Href);
       return;
     }
-    if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding") {
+    const isOnboardingSubscription = pathname === "/subscription" && origin === "onboarding";
+    if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding" && !isOnboardingSubscription) {
       router.replace(returnTo ? { pathname: "/onboarding", params: { returnTo } } : "/onboarding" as Href);
     }
-  }, [pathname, profile, router, status]);
+  }, [origin, pathname, profile, router, status]);
 
   return null;
 }
