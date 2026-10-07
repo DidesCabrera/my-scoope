@@ -27,7 +27,7 @@ import { NutritionKpiSection } from "@/components/nutrition";
 import { EntityPanelTabs, MealPanels, type MealPanelItem, PanelSurface } from "@/components/panels";
 import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
-import { Button, Card, Field, InlineNotice, MyScoopeLogo, NativeDateTimeField, Pill, textStyles } from "@/components/ui";
+import { Button, Card, Field, InlineNotice, MyScoopeLogo, NativeDateTimeField, NativeMeasurementField, Pill, textStyles } from "@/components/ui";
 import type { OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { localDateValue } from "@/presentation/date-time-values";
@@ -537,8 +537,8 @@ function MeasurementsView({ index }: { index: number }) {
       <StepHeader description="La altura y el peso permiten estimar tu gasto energético y calcular referencias por kilogramo." eyebrow="Datos para el cálculo" icon={Scale} index={index} title="Ingresa tus medidas actuales" />
       <Card style={styles.profileCard}>
         <View style={styles.measurementFields}>
-          <View style={styles.flex}><Field inputStyle={styles.profileInput} keyboardType="number-pad" label="Altura (cm)" labelStyle={styles.profileQuestion} onChangeText={(value) => controller.onChange?.("height", value)} placeholder="178" value={controller.values.height} /></View>
-          <View style={styles.flex}><Field inputStyle={styles.profileInput} keyboardType="decimal-pad" label="Peso (kg)" labelStyle={styles.profileQuestion} onChangeText={(value) => controller.onChange?.("weight", value)} placeholder="82,5" value={controller.values.weight} /></View>
+          <View style={styles.flex}><NativeMeasurementField inputStyle={styles.profileInput} kind="height" label="Altura" labelStyle={styles.profileQuestion} onChange={(value) => controller.onChange?.("height", value)} value={controller.values.height} /></View>
+          <View style={styles.flex}><NativeMeasurementField inputStyle={styles.profileInput} kind="weight" label="Peso" labelStyle={styles.profileQuestion} onChange={(value) => controller.onChange?.("weight", value)} value={controller.values.weight} /></View>
         </View>
         <Text style={textStyles.caption}>El peso inicial quedará como primera referencia de tu evolución.</Text>
       </Card>

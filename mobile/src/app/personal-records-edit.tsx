@@ -6,7 +6,7 @@ import { userFacingError } from "@/api/errors";
 import type { OnboardingStateData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, NativeDateTimeField, Screen } from "@/components/ui";
+import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, NativeDateTimeField, NativeMeasurementField, Screen } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { localDateValue } from "@/presentation/date-time-values";
 
@@ -72,7 +72,7 @@ export default function PersonalRecordsEditScreen() {
         {section === "body" ? <>
           <NativeDateTimeField label="Fecha de nacimiento" maximumValue={localDateValue()} mode="date" onChange={(value) => set("birth_date", value)} value={values.birth_date ?? ""} />
           <ChoiceRow label="Sexo para cálculo nutricional" onChange={(value) => set("sex", value)} options={[{ label: "Femenino", value: "female" }, { label: "Masculino", value: "male" }]} value={values.sex ?? ""} />
-          <Field keyboardType="number-pad" label="Altura en centímetros" onChangeText={(value) => set("height_cm", value)} value={values.height_cm ?? ""} />
+          <NativeMeasurementField kind="height" label="Altura" onChange={(value) => set("height_cm", value)} value={values.height_cm ?? ""} />
         </> : null}
         {section === "planning" ? <>
           <OptionGrid label="Objetivo nutricional" onChange={(value) => set("goal", value)} options={goalOptions} value={values.goal} />
@@ -84,7 +84,7 @@ export default function PersonalRecordsEditScreen() {
           <Field label="Alergias o intolerancias, separadas por comas" onChangeText={(value) => set("allergies_or_intolerances", value)} value={values.allergies_or_intolerances ?? ""} />
           <Field label="Alimentos evitados, separados por comas" onChangeText={(value) => set("avoided_foods", value)} value={values.avoided_foods ?? ""} />
         </> : null}
-        {section === "metrics" ? <Field keyboardType="decimal-pad" label="Peso actual en kg" onChangeText={(value) => set("weight_kg", value)} value={values.weight_kg ?? ""} /> : null}
+        {section === "metrics" ? <NativeMeasurementField kind="weight" label="Peso actual" onChange={(value) => set("weight_kg", value)} value={values.weight_kg ?? ""} /> : null}
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         <Button disabled={!record} label="Guardar cambios" loading={busy} onPress={() => void save()} />
         <Button disabled={busy} label="Cancelar" onPress={() => router.back()} variant="secondary" />
