@@ -45,7 +45,9 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /actionLabel="Seleccionar"/);
   matches(picker, /router\.push\(pickerConfigureHref/);
   matches(picker, /onPress: \(\) => router\.dismissTo\(detailHref\)/);
-  matches(picker, /<PickerOptionCard\s+option=\{selected\}/);
+  matches(picker, /<PickerOptionCard\s+option=\{configuredSelection\}/);
+  matches(picker, /nutrition: scaleFoodNutrition\(selected\.nutrition, quantity\)/);
+  matches(picker, /label: "porción seleccionada"/);
   omits(picker, /Cambiar selección/);
   omits(picker, /<Button label="Cambiar selección"/);
   omits(picker, /<Button label="Cancelar"/);
@@ -54,7 +56,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /Previsualización del impacto/);
   matches(picker, /preview\?\.result/);
   matches(picker, /<PickerResultCard preview=\{preview\} \/>/);
-  const selectedCard = picker.indexOf("option={selected}");
+  const selectedCard = picker.indexOf("option={configuredSelection}");
   const configuration = picker.indexOf("style={styles.configurationSticky}");
   const impactPreview = picker.indexOf('title="Previsualización del impacto"');
   assert.ok(selectedCard < configuration);

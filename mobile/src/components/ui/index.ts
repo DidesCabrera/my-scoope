@@ -14,3 +14,5 @@ export * from "./surfaces";
 export * from "./tab-bars";
 export * from "./typography";
 export * from "./week-day-grid";
+export * from "./weight-trend-chart";
+export * from "./weight-trend-values";

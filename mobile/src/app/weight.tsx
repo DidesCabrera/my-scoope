@@ -1,11 +1,12 @@
-import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { WeightInput, WeightItem, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, Field, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { AppHeader, Button, Card, InlineNotice, LoadingState, NativeMeasurementField, Screen, SectionTitle, textStyles, WeightTrendChart } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function formatDate(value: string): string {
@@ -15,8 +16,8 @@ function formatDate(value: string): string {
 }
 
 export default function WeightScreen() {
-  const router = useRouter();
   const { status, profile, apiRequest, refreshProfile } = useSession();
+  const setHeaderPresentation = useHeaderPresentation();
   const [items, setItems] = useState<WeightItem[]>([]);
   const [value, setValue] = useState(profile?.current_weight_kg?.toString() ?? "");
   const [loading, setLoading] = useState(true);
@@ -36,7 +37,11 @@ export default function WeightScreen() {
     }
   }, [apiRequest]);
 
-  useFocusEffect(useCallback(() => { void load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ fallback: "/today", mode: "back", title: "Registrar peso" });
+    void load();
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [load, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !items.length) return <LoadingState label="Cargando tus mediciones…" />;
@@ -63,14 +68,18 @@ export default function WeightScreen() {
   }
 
   return (
-    <Screen>
+    <Screen headerMode="preserve">
       <AppHeader eyebrow="Mediciones" title="Registra tu peso" />
       <Card accent={tokens.color.protein}>
         <Text style={textStyles.muted}>Mídete en condiciones similares para que la tendencia sea comparable. Una cifra aislada no define tu progreso.</Text>
-        <Field keyboardType="decimal-pad" label="Peso actual (kg)" onChangeText={setValue} placeholder="82.5" value={value} />
+        <NativeMeasurementField kind="weight" label="Peso actual" onChange={setValue} value={value} />
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         {saved ? <InlineNotice>Medición guardada. Tu Today ya usa el peso actualizado.</InlineNotice> : null}
         <Button label="Guardar medición" loading={saving} onPress={save} />
+      </Card>
+      <SectionTitle detail={`${items.length} registros`} title="Tendencia de peso" />
+      <Card muted>
+        <WeightTrendChart items={items} />
       </Card>
       <SectionTitle detail={`${items.length} registros`} title="Historial reciente" />
       <Card muted>
@@ -84,7 +93,6 @@ export default function WeightScreen() {
           </View>
         )) : <Text style={textStyles.muted}>Tu primera medición aparecerá aquí.</Text>}
       </Card>
-      <Button label="Volver a Today" onPress={() => router.back()} variant="secondary" />
     </Screen>
   );
 }

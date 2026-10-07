@@ -2,12 +2,11 @@ import { Picker } from "@react-native-picker/picker";
 import { ChevronDown, Ruler, Scale } from "lucide-react-native";
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { tokens } from "@/design/tokens";
-import { ActionSheetHeader, ActionSheetModal } from "./action-sheet-modal";
-import { Button } from "./controls";
 import type { NativeMeasurementFieldProps } from "./native-measurement-field.types";
+import { NativeWheelAdornment } from "./native-wheel-adornment";
+import { nativeWheelMetrics } from "./native-wheel-metrics";
 import {
   HEIGHT_VALUES,
   heightFromValue,
@@ -21,7 +20,7 @@ function displayValue(value: string, kind: NativeMeasurementFieldProps["kind"]):
   if (!value) return kind === "height" ? "Seleccionar altura" : "Seleccionar peso";
   if (kind === "height") return `${heightFromValue(value)} cm`;
   const { grams, kilograms } = weightPartsFromValue(value);
-  return grams ? `${kilograms} kg ${grams} g` : `${kilograms} kg`;
+  return grams ? `${kilograms},${grams / 100} kg` : `${kilograms} kg`;
 }
 
 export function NativeMeasurementField({ containerStyle, disabled = false, inputStyle, kind, label, labelStyle, onChange, value }: NativeMeasurementFieldProps) {
@@ -38,85 +37,91 @@ export function NativeMeasurementField({ containerStyle, disabled = false, input
     const nextWeight = weightPartsFromValue(value);
     setKilograms(nextWeight.kilograms);
     setGrams(nextWeight.grams);
-    setVisible(true);
+    setVisible((current) => !current);
   };
 
-  const save = () => {
-    onChange(kind === "height" ? String(height) : weightValueFromParts(kilograms, grams));
-    setVisible(false);
+  const changeHeight = (next: number) => {
+    setHeight(next);
+    onChange(String(next));
+  };
+
+  const changeKilograms = (next: number) => {
+    const nextGrams = next === 350 ? 0 : grams;
+    setKilograms(next);
+    setGrams(nextGrams);
+    onChange(weightValueFromParts(next, nextGrams));
+  };
+
+  const changeGrams = (next: number) => {
+    setGrams(next);
+    onChange(weightValueFromParts(kilograms, next));
   };
 
   const pickerStyle = Platform.OS === "ios" ? styles.iosPicker : styles.androidPicker;
 
   return (
-    <>
-      <View style={styles.field}>
-        <Text style={[styles.label, labelStyle]}>{label}</Text>
-        <Pressable
-          accessibilityLabel={`${label}: ${displayValue(value, kind)}`}
-          accessibilityRole="button"
-          accessibilityState={{ disabled, expanded: visible }}
-          disabled={disabled}
-          onPress={open}
-          style={({ pressed }) => [styles.input, containerStyle, disabled && styles.disabled, pressed && styles.pressed]}>
-          <Icon color={tokens.color.textMuted} size={18} />
-          <Text style={[styles.value, inputStyle]}>{displayValue(value, kind)}</Text>
-          <ChevronDown color={tokens.color.textSoft} size={18} />
-        </Pressable>
-      </View>
-
-      <ActionSheetModal onRequestClose={() => setVisible(false)} visible={visible}>
-        <SafeAreaView edges={["left", "right"]} style={styles.sheet}>
-          <ActionSheetHeader icon={Icon} onClose={() => setVisible(false)} title={kind === "height" ? "Seleccionar altura" : "Seleccionar peso"} />
-          <View style={styles.sheetContent}>
-            <View accessibilityLabel={kind === "height" ? "Altura en centímetros" : "Peso en kilos y gramos"} style={styles.pickers}>
-              {kind === "height" ? (
-                <View style={styles.pickerColumn}>
-                  <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => setHeight(Number(next))} selectedValue={height} style={pickerStyle}>
-                    {HEIGHT_VALUES.map((option) => <Picker.Item key={option} label={`${option} cm`} value={option} />)}
+    <View style={styles.field}>
+      <Text style={[styles.label, labelStyle]}>{label}</Text>
+      <Pressable
+        accessibilityLabel={`${label}: ${displayValue(value, kind)}`}
+        accessibilityRole="button"
+        accessibilityState={{ disabled, expanded: visible }}
+        disabled={disabled}
+        onPress={open}
+        style={({ pressed }) => [styles.input, containerStyle, disabled && styles.disabled, pressed && styles.pressed]}>
+        <Icon color={tokens.color.textMuted} size={18} />
+        <Text style={[styles.value, inputStyle]}>{displayValue(value, kind)}</Text>
+        <ChevronDown color={tokens.color.textSoft} size={18} />
+      </Pressable>
+      {visible ? (
+        <View style={styles.inlinePicker}>
+          <View accessibilityLabel={kind === "height" ? "Altura en centímetros" : "Peso en kilos y gramos"} style={styles.pickers}>
+            {kind === "height" ? (
+              <View style={styles.pickerColumn}>
+                <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeHeight(Number(next))} selectedValue={height} style={pickerStyle}>
+                  {HEIGHT_VALUES.map((option) => <Picker.Item key={option} label={`${option} cm`} value={option} />)}
+                </Picker>
+              </View>
+            ) : (
+              <>
+                <View style={[styles.pickerColumn, styles.weightPickerColumn]}>
+                  <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeKilograms(Number(next))} selectedValue={kilograms} style={pickerStyle}>
+                    {WEIGHT_KILOGRAM_VALUES.map((option) => <Picker.Item key={option} label={String(option)} value={option} />)}
                   </Picker>
                 </View>
-              ) : (
-                <>
-                  <View style={styles.pickerColumn}>
-                    <Text style={styles.unitLabel}>KILOS</Text>
-                    <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => { const selected = Number(next); setKilograms(selected); if (selected === 350) setGrams(0); }} selectedValue={kilograms} style={pickerStyle}>
-                      {WEIGHT_KILOGRAM_VALUES.map((option) => <Picker.Item key={option} label={`${option} kg`} value={option} />)}
-                    </Picker>
-                  </View>
-                  <View style={styles.pickerColumn}>
-                    <Text style={styles.unitLabel}>GRAMOS</Text>
-                    <Picker dropdownIconColor={tokens.color.textMain} enabled={kilograms < 350} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => setGrams(Number(next))} selectedValue={grams} style={pickerStyle}>
-                      {WEIGHT_GRAM_VALUES.map((option) => <Picker.Item key={option} label={`${option} g`} value={option} />)}
-                    </Picker>
-                  </View>
-                </>
-              )}
-            </View>
-            <Text accessibilityLiveRegion="polite" style={styles.summary}>{kind === "height" ? `${height} centímetros` : displayValue(weightValueFromParts(kilograms, grams), "weight")}</Text>
-            <Button bleed={false} label="Listo" onPress={save} />
-            <Button bleed={false} label="Cancelar" onPress={() => setVisible(false)} variant="secondary" />
+                <NativeWheelAdornment label="," width={16} />
+                <View style={[styles.pickerColumn, styles.weightPickerColumn]}>
+                  <Picker dropdownIconColor={tokens.color.textMain} enabled={kilograms < 350} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeGrams(Number(next))} selectedValue={grams} style={pickerStyle}>
+                    {WEIGHT_GRAM_VALUES.map((option) => <Picker.Item key={option} label={String(option / 100)} value={option} />)}
+                  </Picker>
+                </View>
+                <NativeWheelAdornment label="kg" width={30} />
+              </>
+            )}
           </View>
-        </SafeAreaView>
-      </ActionSheetModal>
-    </>
+          <Pressable accessibilityRole="button" onPress={() => setVisible(false)} style={styles.doneButton}>
+            <Text style={styles.doneLabel}>Listo</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   androidPicker: { color: tokens.color.textMain, minHeight: 54, width: "100%" },
   disabled: { opacity: 0.45 },
+  doneButton: { alignItems: "center", alignSelf: "flex-end", justifyContent: "center", minHeight: 44, paddingHorizontal: tokens.spacing.lg },
+  doneLabel: { color: tokens.color.interactivePrimary, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
   field: { gap: 7 },
+  inlinePicker: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden", paddingBottom: tokens.spacing.xs },
   input: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: tokens.spacing.lg },
-  iosPicker: { color: tokens.color.textMain, height: 180, width: "100%" },
+  iosPicker: { color: tokens.color.textMain, height: nativeWheelMetrics.height, width: "100%" },
   label: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   pickerColumn: { flex: 1, minWidth: 0 },
-  pickerItem: { color: tokens.color.textMain, fontSize: 20 },
-  pickers: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  pickerItem: { color: tokens.color.textMain, fontSize: nativeWheelMetrics.fontSize },
+  pickers: { alignItems: "center", flexDirection: "row", justifyContent: "center" },
   pressed: { opacity: 0.72 },
-  sheet: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
-  sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  summary: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, textAlign: "center" },
-  unitLabel: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 1, textAlign: "center" },
   value: { color: tokens.color.textMain, flex: 1, fontSize: 17 },
+  weightPickerColumn: { flex: 0, width: nativeWheelMetrics.compactColumnWidth },
 });

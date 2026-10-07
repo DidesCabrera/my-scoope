@@ -525,7 +525,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activateProgram, /pathname: "\/libraries\/create", params: \{ entity: "program" \}/);
   assertSourceMatch(activateProgram, /<ProgramChildCard[\s\S]*openActionLabel="Seleccionar"/);
   assertSourceMatch(activateProgram, /<ProgramChildCard[\s\S]*openActionLabel="Cambiar selección"/);
-  assertSourceMatch(activateProgram, /<SectionHeading title="Configura la selección" \/>/);
+  assertSourceMatch(activateProgram, /<SectionHeading title="Configura la selección" \/>[\s\S]*<SystemSwitch[\s\S]*accessibilityLabel="Aviso del plan diario"[\s\S]*<SystemSwitch[\s\S]*accessibilityLabel="Avisos según la hora de cada comida"/);
   assertSourceMatch(activateProgram, /label="Calendarizar programa"/);
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
@@ -742,9 +742,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/ui/controls.tsx"),
     "utf8",
   );
-  assertSourceMatch(controlsSource, /button: \{[^}]*minHeight: 48/);
+  assertSourceMatch(controlsSource, /export function SystemSwitch[\s\S]*return <Switch accessibilityLabel=\{accessibilityLabel\} disabled=\{disabled\} onValueChange=\{onValueChange\} value=\{value\} \/>[\s\S]*button: \{[^}]*minHeight: 48/);
   assertSourceMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 48/);
-  assertSourceDoesNotMatch(controlsSource, /button: \{[^}]*minHeight: 54/);
+  assertSourceDoesNotMatch(controlsSource, /button: \{[^}]*minHeight: 54|trackColor|thumbColor|ios_backgroundColor/);
   assertSourceDoesNotMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 54/);
   assertSourceMatch(cardSurfaceSource, /card: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
   assertSourceMatch(legacyPrimitivesSource, /card: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);

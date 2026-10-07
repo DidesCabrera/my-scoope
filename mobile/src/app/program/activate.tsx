@@ -11,14 +11,12 @@ import { ProgramChildCard, programDailyMetricData } from "@/components/libraries
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, ChoiceRow, Field, LoadingState, NativeDateTimeField, Screen, SectionHeading } from "@/components/ui";
+import { Button, Card, Field, LoadingState, NativeDateTimeField, Screen, SectionHeading, SystemSwitch } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 type Toggle = "on" | "off";
 type Confirmation = { kind: "incomplete" | "replacement"; message: string } | null;
-
-const toggleOptions: { value: Toggle; label: string }[] = [{ value: "on", label: "Sí" }, { value: "off", label: "No" }];
 
 function localDate(): string {
   const now = new Date();
@@ -205,8 +203,22 @@ export default function ActivateProgramScreen() {
             <NativeDateTimeField label="Fecha de inicio" minimumValue={localDate()} mode="date" onChange={(value) => { setStartDate(value); setConfirmation(null); }} value={startDate} />
             <Field label="Zona horaria IANA" onChangeText={setTimezoneName} placeholder="America/Santiago" value={timezoneName} />
             <NativeDateTimeField label="Hora del aviso diario" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} />
-            <ChoiceRow<Toggle> label="Aviso del plan diario" onChange={setDaily} options={toggleOptions} value={daily} />
-            <ChoiceRow<Toggle> label="Avisos según la hora de cada comida" onChange={setMeals} options={toggleOptions} value={meals} />
+            <View style={styles.notificationRow}>
+              <Text style={styles.notificationLabel}>Aviso del plan diario</Text>
+              <SystemSwitch
+                accessibilityLabel="Aviso del plan diario"
+                onValueChange={(enabled) => setDaily(enabled ? "on" : "off")}
+                value={daily === "on"}
+              />
+            </View>
+            <View style={styles.notificationRow}>
+              <Text style={styles.notificationLabel}>Avisos según la hora de cada comida</Text>
+              <SystemSwitch
+                accessibilityLabel="Avisos según la hora de cada comida"
+                onValueChange={(enabled) => setMeals(enabled ? "on" : "off")}
+                value={meals === "on"}
+              />
+            </View>
           </Card>
           {confirmation ? (
             <ConfirmationState busy={saving} confirmLabel={confirmation.kind === "replacement" ? "Cambiar programa" : "Continuar igualmente"} danger={confirmation.kind === "replacement"} message={confirmation.message} onCancel={() => setConfirmation(null)} onConfirm={() => void activate(confirmation.kind === "incomplete" ? { confirm_incomplete: true } : { replace_current: true })} title={confirmation.kind === "replacement" ? "¿Reemplazar tu programa actual?" : "Este programa está incompleto"} />
@@ -219,6 +231,8 @@ export default function ActivateProgramScreen() {
 
 const styles = StyleSheet.create({
   emptyText: { color: tokens.color.textMuted, fontSize: tokens.type.body },
+  notificationLabel: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  notificationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minHeight: 44 },
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   searchInput: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, minHeight: 36, paddingVertical: 0 },

@@ -27,6 +27,7 @@ import { Button, Card, InlineNotice, LoadingState, NativeDateTimeField, SectionT
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
+import { portionGrams, scaleFoodNutrition } from "./food-portion-nutrition";
 import { PickerCardAction } from "./picker-card-action";
 import { buildCompositionPickerPayload } from "./composition-picker-payload";
 import { PickerEntryTabs } from "./picker-entry-tabs";
@@ -311,8 +312,17 @@ export function CompositionPickerScreen({
   }, [apiRequest, isFoodPicker, isMealPicker, query, retryNonce, selectedId, status]));
 
   const hourValid = !isMealPicker || /^([01]\d|2[0-3]):[0-5]\d$/.test(hour);
-  const quantityValid = !isFoodPicker || Number(quantity) > 0;
+  const quantityValid = !isFoodPicker || portionGrams(quantity) > 0;
   const configurationValid = Boolean(selected) && hourValid && quantityValid && (kind !== "dailyplan-to-program" || dayNumbers.length > 0);
+  const configuredSelection = useMemo(() => {
+    if (!selected || !isFoodPicker) return selected;
+    const grams = portionGrams(quantity);
+    return {
+      ...selected,
+      indicators: [{ label: "porción seleccionada", value: `${grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} g` }],
+      nutrition: scaleFoodNutrition(selected.nutrition, quantity),
+    };
+  }, [isFoodPicker, quantity, selected]);
 
   const payload = useMemo(() => {
     if (!selected) return null;
@@ -436,7 +446,7 @@ export function CompositionPickerScreen({
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}>
         <View>
-          {selected ? <PickerOptionCard option={selected} /> : null}
+          {configuredSelection ? <PickerOptionCard option={configuredSelection} /> : null}
         </View>
 
         <View style={styles.configurationSticky}>

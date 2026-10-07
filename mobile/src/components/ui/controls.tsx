@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View } from "react-native";
+import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Switch, Text, TextInput, TextStyle, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
@@ -137,6 +137,10 @@ export function ChoiceRow<T extends string>({
       </View>
     </View>
   );
+}
+
+export function SystemSwitch({ accessibilityLabel, disabled = false, onValueChange, value }: { accessibilityLabel: string; disabled?: boolean; onValueChange(value: boolean): void; value: boolean }) {
+  return <Switch accessibilityLabel={accessibilityLabel} disabled={disabled} onValueChange={onValueChange} value={value} />;
 }
 
 const styles = StyleSheet.create({

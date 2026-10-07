@@ -4,7 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Camera, Check, CheckCheck, ScanLine } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Image, Platform, StyleSheet, Switch, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
+import { Image, Platform, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
@@ -14,7 +14,7 @@ import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, Screen, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
+import { Button, Card, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, Screen, SectionHeading, SectionTitle, SystemSwitch, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import {
   LABEL_CAMERA_AUTOFOCUS,
@@ -698,7 +698,7 @@ export default function LabelCaptureScreen() {
                 <Text style={styles.retentionTitle}>Autorizar análisis con OpenAI</Text>
                 <Text style={styles.retentionDetail}>Se enviará temporalmente esta copia reducida y sin metadatos para extraer los valores. No se usa para publicidad ni se conserva en OpenAI.</Text>
               </View>
-              <Switch accessibilityLabel="Autorizar análisis con OpenAI" onValueChange={setAiConsentGranted} value={aiConsentGranted} />
+              <SystemSwitch accessibilityLabel="Autorizar análisis con OpenAI" onValueChange={setAiConsentGranted} value={aiConsentGranted} />
             </View>
           </View>
           <Button disabled={!aiConsentGranted || imageQuality.status === "unsuitable" || processing} label={`Enviar a OpenAI y digitalizar${config ? ` · ${config.credits_per_scan} ${config.credits_per_scan === 1 ? "crédito" : "créditos"}` : ""}`} loading={processing} onPress={() => void analyzePreparedImage()} />
@@ -883,7 +883,7 @@ export default function LabelCaptureScreen() {
                   <Text style={styles.retentionTitle}>Guardar copia procesada</Text>
                   <Text style={styles.retentionDetail}>Opcional, privada y eliminable después.</Text>
                 </View>
-                <Switch accessibilityLabel="Guardar copia procesada" onValueChange={setRetainImage} value={retainImage} />
+                <SystemSwitch accessibilityLabel="Guardar copia procesada" onValueChange={setRetainImage} value={retainImage} />
               </View>
             </View>
           ) : null}
