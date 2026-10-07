@@ -581,72 +581,78 @@ LIBRARY_CARD_TOOL_NAMES = {
 COMPARISON_CARD_TOOL_NAMES = {"query_workspace", "list_saved_comparisons", "read_saved_comparison"}
 
 
+def _successful_read_results(metadata: dict) -> list[tuple[str, dict]]:
+    results = []
+    for item in list((metadata or {}).get("tool_results") or []):
+        if isinstance(item, dict) and item.get("status") == "ok" and isinstance(item.get("data"), dict):
+            results.append((str(item.get("tool_name") or ""), item["data"]))
+    return results
+
+
+def _library_card_payload(resource: str, item) -> dict | None:
+    if not isinstance(item, dict):
+        return None
+    try:
+        item_id = int(item.get("id"))
+    except (TypeError, ValueError):
+        return None
+    return {
+        "resource": resource,
+        "entity": LIBRARY_CARD_RESOURCES[resource],
+        "item_id": item_id,
+        "title": str(item.get("name") or "Elemento de biblioteca")[:180],
+    }
+
+
+def _library_cards_from_results(results: list[tuple[str, dict]]) -> list[dict]:
+    candidates = []
+    for tool_name, data in results:
+        if tool_name not in LIBRARY_CARD_TOOL_NAMES:
+            continue
+        for resource in LIBRARY_CARD_RESOURCES:
+            candidates.extend((resource, item) for item in data.get(resource, []) if isinstance(data.get(resource), list))
+        candidates.extend((resource, data.get(detail_key)) for detail_key, (resource, _entity) in LIBRARY_DETAIL_KEYS.items())
+    cards_by_key = {}
+    for resource, item in candidates:
+        card = _library_card_payload(resource, item)
+        if card:
+            cards_by_key.setdefault((resource, card["item_id"]), card)
+    return list(cards_by_key.values())[:MAX_READ_RESULT_CARDS]
+
+
+def _comparison_card_payload(item) -> dict | None:
+    if not isinstance(item, dict) or str(item.get("kind") or "") not in {"foods", "meals", "dailyplans"}:
+        return None
+    try:
+        comparison_id = int(item.get("id") or item.get("comparison_id"))
+    except (TypeError, ValueError):
+        return None
+    return {
+        "comparison_id": comparison_id,
+        "kind": str(item["kind"]),
+        "title": str(item.get("name") or item.get("title") or "Comparación guardada")[:180],
+    }
+
+
+def _comparison_cards_from_results(results: list[tuple[str, dict]]) -> list[dict]:
+    candidates = []
+    for tool_name, data in results:
+        if tool_name not in COMPARISON_CARD_TOOL_NAMES:
+            continue
+        if isinstance(data.get("saved_comparisons"), list):
+            candidates.extend(data["saved_comparisons"])
+        candidates.extend((data.get("saved_comparison"), data.get("comparison_card")))
+    cards_by_id = {}
+    for item in candidates:
+        card = _comparison_card_payload(item)
+        if card:
+            cards_by_id.setdefault(card["comparison_id"], card)
+    return list(cards_by_id.values())[:MAX_READ_RESULT_CARDS]
+
+
 def _read_result_card_payloads(metadata: dict) -> tuple[list[dict], list[dict]]:
-    library_cards: list[dict] = []
-    comparison_cards: list[dict] = []
-    seen_library: set[tuple[str, int]] = set()
-    seen_comparisons: set[int] = set()
-
-    def add_library(resource: str, item) -> None:
-        if len(library_cards) >= MAX_READ_RESULT_CARDS or not isinstance(item, dict):
-            return
-        try:
-            item_id = int(item.get("id"))
-        except (TypeError, ValueError):
-            return
-        key = (resource, item_id)
-        if key in seen_library:
-            return
-        seen_library.add(key)
-        library_cards.append(
-            {
-                "resource": resource,
-                "entity": LIBRARY_CARD_RESOURCES[resource],
-                "item_id": item_id,
-                "title": str(item.get("name") or "Elemento de biblioteca")[:180],
-            }
-        )
-
-    def add_comparison(item) -> None:
-        if len(comparison_cards) >= MAX_READ_RESULT_CARDS or not isinstance(item, dict):
-            return
-        try:
-            comparison_id = int(item.get("id") or item.get("comparison_id"))
-        except (TypeError, ValueError):
-            return
-        if comparison_id in seen_comparisons:
-            return
-        kind = str(item.get("kind") or "")
-        if kind not in {"foods", "meals", "dailyplans"}:
-            return
-        seen_comparisons.add(comparison_id)
-        comparison_cards.append(
-            {
-                "comparison_id": comparison_id,
-                "kind": kind,
-                "title": str(item.get("name") or item.get("title") or "Comparación guardada")[:180],
-            }
-        )
-
-    for tool_result in list((metadata or {}).get("tool_results") or []):
-        if not isinstance(tool_result, dict) or tool_result.get("status") != "ok":
-            continue
-        data = tool_result.get("data")
-        if not isinstance(data, dict):
-            continue
-        tool_name = str(tool_result.get("tool_name") or "")
-        if tool_name in LIBRARY_CARD_TOOL_NAMES:
-            for resource in LIBRARY_CARD_RESOURCES:
-                for item in data.get(resource) if isinstance(data.get(resource), list) else []:
-                    add_library(resource, item)
-            for detail_key, (resource, _entity) in LIBRARY_DETAIL_KEYS.items():
-                add_library(resource, data.get(detail_key))
-        if tool_name in COMPARISON_CARD_TOOL_NAMES:
-            for item in data.get("saved_comparisons") if isinstance(data.get("saved_comparisons"), list) else []:
-                add_comparison(item)
-            add_comparison(data.get("saved_comparison"))
-            add_comparison(data.get("comparison_card"))
-    return library_cards, comparison_cards
+    results = _successful_read_results(metadata)
+    return _library_cards_from_results(results), _comparison_cards_from_results(results)
 
 
 def _append_read_result_cards_from_llm_tools(

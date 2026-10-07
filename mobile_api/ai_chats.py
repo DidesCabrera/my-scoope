@@ -72,6 +72,45 @@ def _proposal_id_from_url(value) -> int | None:
         return None
 
 
+def _library_reference_cards(raw: dict) -> list[dict]:
+    cards = []
+    for library in (raw.get("library_cards") if isinstance(raw.get("library_cards"), list) else [])[:8]:
+        if not isinstance(library, dict):
+            continue
+        resource = str(library.get("resource") or "")
+        entity = str(library.get("entity") or "")
+        if resource not in {"foods", "meals", "dailyplans", "programs"} or entity not in {
+            "food", "meal", "dailyPlan", "program",
+        }:
+            continue
+        try:
+            item_id = int(library.get("item_id"))
+        except (TypeError, ValueError):
+            continue
+        cards.append({
+            "type": "library_item", "item_id": item_id, "entity": entity, "resource": resource,
+            "title": str(library.get("title") or "Elemento de biblioteca")[:180],
+        })
+    return cards
+
+
+def _saved_comparison_reference_cards(raw: dict) -> list[dict]:
+    cards = []
+    for saved in (raw.get("saved_comparison_cards") if isinstance(raw.get("saved_comparison_cards"), list) else [])[:8]:
+        kind = str(saved.get("kind") or "") if isinstance(saved, dict) else ""
+        if kind not in {"foods", "meals", "dailyplans"}:
+            continue
+        try:
+            comparison_id = int(saved.get("comparison_id"))
+        except (TypeError, ValueError):
+            continue
+        cards.append({
+            "type": "saved_comparison", "comparison_id": comparison_id, "kind": kind,
+            "title": str(saved.get("title") or "Comparación guardada")[:180],
+        })
+    return cards
+
+
 def _message_cards(user, raw: dict, proposal_summaries: dict[int, dict]) -> list[dict]:
     cards = []
     draft_keys = {
@@ -124,47 +163,8 @@ def _message_cards(user, raw: dict, proposal_summaries: dict[int, dict]) -> list
             }
         )
 
-    for library in (raw.get("library_cards") if isinstance(raw.get("library_cards"), list) else [])[:8]:
-        if not isinstance(library, dict):
-            continue
-        resource = str(library.get("resource") or "")
-        entity = str(library.get("entity") or "")
-        if resource not in {"foods", "meals", "dailyplans", "programs"}:
-            continue
-        if entity not in {"food", "meal", "dailyPlan", "program"}:
-            continue
-        try:
-            item_id = int(library.get("item_id"))
-        except (TypeError, ValueError):
-            continue
-        cards.append(
-            {
-                "type": "library_item",
-                "item_id": item_id,
-                "entity": entity,
-                "resource": resource,
-                "title": str(library.get("title") or "Elemento de biblioteca")[:180],
-            }
-        )
-
-    for saved in (raw.get("saved_comparison_cards") if isinstance(raw.get("saved_comparison_cards"), list) else [])[:8]:
-        if not isinstance(saved, dict):
-            continue
-        kind = str(saved.get("kind") or "")
-        if kind not in {"foods", "meals", "dailyplans"}:
-            continue
-        try:
-            comparison_id = int(saved.get("comparison_id"))
-        except (TypeError, ValueError):
-            continue
-        cards.append(
-            {
-                "type": "saved_comparison",
-                "comparison_id": comparison_id,
-                "kind": kind,
-                "title": str(saved.get("title") or "Comparación guardada")[:180],
-            }
-        )
+    cards.extend(_library_reference_cards(raw))
+    cards.extend(_saved_comparison_reference_cards(raw))
 
     prepared = raw.get("prepared_action_card")
     if isinstance(prepared, dict) and prepared.get("id"):
