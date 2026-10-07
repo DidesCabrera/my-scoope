@@ -325,7 +325,12 @@ export default function SubscriptionScreen() {
           <Text style={styles.onboardingTitle}>Elige un plan</Text>
           <Text style={styles.onboardingDescription}>Compara lo que incluyen Free, Basic y Pro.{"\n"}Puedes cambiar de plan más adelante.</Text>
         </View>
-      ) : <AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" />}
+      ) : (
+        <View style={styles.subscriptionHeader}>
+          <View style={styles.subscriptionLogo}><MyScoopeLogo /></View>
+          <AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" />
+        </View>
+      )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {restoreNotice ? <InlineNotice>{restoreNotice}</InlineNotice> : null}
       {overview?.duplicate_active_providers ? (
@@ -505,5 +510,7 @@ const styles = StyleSheet.create({
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden" },
   subscriptionHeading: { alignItems: "center", flexDirection: "row" },
+  subscriptionHeader: { gap: tokens.spacing.lg },
+  subscriptionLogo: { alignItems: "center" },
   subscriptionInformationCard: { marginTop: tokens.spacing.lg },
 });
