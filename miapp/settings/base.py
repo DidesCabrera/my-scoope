@@ -657,6 +657,13 @@ BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED = _env_bool(
     "BILLING_GOOGLE_PLAY_REFUND_RECONCILIATION_ENABLED", False
 )
 BILLING_GOOGLE_PLAY_PACKAGE_NAME = os.environ.get("BILLING_GOOGLE_PLAY_PACKAGE_NAME", "com.myscoope.app").strip()
+SHARING_APP_STORE_URL = os.environ.get(
+    "SHARING_APP_STORE_URL", "https://apps.apple.com/app/id6804048394"
+).strip()
+SHARING_PLAY_STORE_URL = os.environ.get(
+    "SHARING_PLAY_STORE_URL",
+    "https://play.google.com/store/apps/details?id=com.myscoope.app",
+).strip()
 BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_FILE = os.environ.get(
     "BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_FILE",
     "/etc/secrets/my-scoope-google-play-billing.json",

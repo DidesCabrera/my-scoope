@@ -134,6 +134,8 @@ print(json.dumps({
                 "BILLING_GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL"
             ].secret,
         )
+        self.assertFalse(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["SHARING_APP_STORE_URL"].secret)
+        self.assertFalse(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["SHARING_PLAY_STORE_URL"].secret)
         self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_OPENFACTURA_API_KEY"].secret)
         self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["TURNSTILE_SECRET_KEY"].secret)
         self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["CACHE_URL"].secret)

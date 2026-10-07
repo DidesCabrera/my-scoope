@@ -28,6 +28,7 @@ import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
 import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
+import { ShareableElementsGallery } from "@/components/dev/shareable-elements-gallery";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -446,6 +447,13 @@ export default function UiGalleryScreen() {
               <PanelAllocationBar size="compact" tone="fat" value={0} />
             </DetailSection>
           </ContentPanel>
+        </>
+      ) : null}
+
+      {tab === "shareable" ? (
+        <>
+          <SectionTitle detail="Preview de redes sociales · datos ficticios" title="Elementos compartibles" />
+          <ShareableElementsGallery />
         </>
       ) : null}
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotModified
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -67,6 +68,11 @@ def _preview_response(
         ShareResource.SubjectType.PROGRAM: "Programa semanal",
     }.get(resource.subject_type, "Contenido")
     description = f"{title}: {subject_label.lower()} compartido con MyScoope."
+    app_deep_link = (
+        "myscoope://"
+        if invitation is not None
+        else f"myscoope://share/{resource.public_id}"
+    )
     response = render(
         request,
         "notas/sharing/preview.html",
@@ -82,6 +88,9 @@ def _preview_response(
             "canonical_url": canonical_url,
             "share_description": description,
             "subject_label": subject_label,
+            "app_store_url": settings.SHARING_APP_STORE_URL,
+            "app_deep_link": app_deep_link,
+            "play_store_url": settings.SHARING_PLAY_STORE_URL,
         },
         status=status,
     )

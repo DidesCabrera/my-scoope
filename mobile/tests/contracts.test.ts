@@ -203,6 +203,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programWeekPanels, /weekName: \{ color: tokens\.color\.textMain/);
   assertSourceMatch(programWeekPanels, /cell: \{[^}]*fontSize: tokens\.type\.caption/);
   assertSourceMatch(programWeekPanels, /row: \{[^}]*minHeight: 48/);
+  assertSourceMatch(programWeekPanels, /leadingCell: \{ flexBasis: "38%", flexGrow: 0, flexShrink: 0/);
   assertSourceDoesNotMatch(programWeekPanels, /cell: \{[^}]*fontSize: 11/);
   assertSourceDoesNotMatch(programWeekPanels, /<PanelAllocationBar size="compact"/);
   assertSourceMatch(programWeekPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
@@ -786,19 +787,23 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programChart, /\(index \+ 0\.5\) \* \(140 \/ slotCount\)/);
   assertSourceMatch(programChart, /\(index \+ 1\) \* 7 \* \(140 \/ slotCount\)/);
   assertSourceDoesNotMatch(programChart, /metricPlot: \{[^}]*paddingHorizontal/);
+  assertSourceMatch(programChart, /metricPlot: \{ backgroundColor: tokens\.color\.surfaceApp/);
   assertSourceMatch(programDetail, /axisLeadingLabel="Semana"/);
   assertSourceMatch(programChart, /weeks\.flatMap\(\(week\) => week\.days\.map/);
   assertSourceMatch(programChart, /axisLabels = \["S1", "S2"\]/);
   assertSourceMatch(programChart, /width < 600[\s\S]*?\? \{ width: "40%" as const \}/);
-  assertSourceMatch(programChart, /<Polyline[^\n]*strokeWidth="1"/);
-  assertSourceMatch(programChart, /<Stop offset="0" stopColor=\{metric\.color\} stopOpacity=\{0\.2\}/);
+  assertSourceMatch(programChart, /<Polyline[^\n]*strokeWidth="2"/);
+  assertSourceMatch(programChart, /<Stop offset="0" stopColor=\{metric\.color\} stopOpacity=\{0\.44\}/);
   assertSourceMatch(programChart, /<Stop offset="1" stopColor=\{metric\.color\} stopOpacity=\{0\}/);
+  assertSourceMatch(programChart, /<LinearGradient gradientUnits="userSpaceOnUse" id=\{`metric-area-\$\{metric\.key\}`\} x1="0" x2="0" y1="0" y2="44">/);
+  assertSourceMatch(programChart, /color: tokens\.color\.kcalBorder/);
+  assertSourceMatch(programChart, /rangeBadgeCalories: \{ backgroundColor: tokens\.color\.kcalSurface, borderColor: tokens\.color\.kcalBorder, borderWidth: 1 \}/);
   assertSourceMatch(programChart, /<Polygon fill=\{`url\(#metric-area-\$\{metric\.key\}\)`\} points=\{areaPoints\}/);
   assertSourceMatch(programChart, /strokeWidth="3"[^\n]*x1=\{x\} x2=\{x\} y1=\{y\} y2=\{y\}/);
   assertSourceMatch(programChart, /P \{allocationRange\(liveAllocationValues, 0/);
   assertSourceMatch(programChart, /const hasAllocation = protein \+ carbs \+ fat > 0/);
   assertSourceMatch(planningControls, /key=\{day\.id\}/);
-  assertSourceMatch(programDetail, /axisLabels=\{liveWeeks\.map\(\(week\) => `S\$\{week\.week_number\}`\)\}/);
+  assertSourceMatch(programDetail, /axisLabels=\{\(liveWeeks\.length \? liveWeeks\.map\(\(week\) => week\.week_number\) : displayedWeeks\)\.map\(\(week\) => `S\$\{week\}`\)\}/);
   assertSourceMatch(programDetail, /const liveMetricData = weekData \? programDailyMetricData\(\[weekData\]\) : undefined/);
   assertSourceDoesNotMatch(programDetail, /weekData\.days\.filter\(\(day\) => day\.nutrition\)/);
 

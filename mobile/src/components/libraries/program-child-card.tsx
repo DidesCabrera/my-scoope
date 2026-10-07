@@ -25,7 +25,7 @@ type MetricRow = {
 };
 
 const metricRows: MetricRow[] = [
-  { key: "calories", label: "Calorías", range: "1840 - 2260 cal", color: "#764D35", values: [60, 82, 56, 88, 71, 66, 48, 74, 92, 62, 79, 69, 86, 53] },
+  { key: "calories", label: "Calorías", range: "1840 - 2260 cal", color: tokens.color.kcalBorder, values: [60, 82, 56, 88, 71, 66, 48, 74, 92, 62, 79, 69, 86, 53] },
   { key: "ppk", label: "PPK", range: "1,55 - 1,92 g/kg", color: tokens.color.ppk, values: [55, 76, 69, 87, 73, 82, 51, 70, 91, 64, 80, 75, 85, 58] },
   { key: "protein", label: "Proteína", range: "132 - 168 g", color: tokens.color.protein, values: [57, 78, 68, 90, 74, 84, 52, 72, 94, 63, 82, 77, 88, 56] },
   { key: "carbs", label: "Carbos", range: "196 - 254 g", color: tokens.color.carbs, values: [70, 91, 52, 84, 63, 72, 45, 87, 78, 58, 93, 67, 76, 49] },
@@ -82,11 +82,20 @@ function ChartAxisLabels({ labels }: { labels: string[] }) {
   );
 }
 
-function MetricIdentity({ label, range, color }: Pick<MetricRow, "label" | "range" | "color">) {
+function MetricIdentity({ metricKey, label, range, color }: Pick<MetricRow, "label" | "range" | "color"> & { metricKey: MetricRow["key"] }) {
+  const isCalories = metricKey === "calories";
   return (
     <View style={styles.metricIdentity}>
       <Text numberOfLines={1} style={styles.metricTitle}>{label}</Text>
-      <Text numberOfLines={1} style={[styles.rangeBadge, { backgroundColor: color }, label !== "Calorías" && styles.rangeBadgeDarkText]}>{range}</Text>
+      <Text
+        numberOfLines={1}
+        style={[
+          styles.rangeBadge,
+          isCalories ? styles.rangeBadgeCalories : { backgroundColor: color },
+          !isCalories && styles.rangeBadgeDarkText,
+        ]}>
+        {range}
+      </Text>
     </View>
   );
 }
@@ -109,14 +118,14 @@ function MetricPlot({ days, metric, values: providedValues }: { days: number; me
     <View accessibilityLabel={`${metric.label}: ${metric.range}`} style={styles.metricPlot}>
       <Svg height="100%" preserveAspectRatio="none" viewBox="0 0 140 44" width="100%">
         <Defs>
-          <LinearGradient id={`metric-area-${metric.key}`} x1="0" x2="0" y1="0" y2="1">
-            <Stop offset="0" stopColor={metric.color} stopOpacity={0.2} />
+          <LinearGradient gradientUnits="userSpaceOnUse" id={`metric-area-${metric.key}`} x1="0" x2="0" y1="0" y2="44">
+            <Stop offset="0" stopColor={metric.color} stopOpacity={0.44} />
             <Stop offset="1" stopColor={metric.color} stopOpacity={0} />
           </LinearGradient>
         </Defs>
         {weekDividers.map((x, index) => <Line key={`week-divider-${index}`} stroke={tokens.color.borderSoft} strokeWidth="0.8" x1={x} x2={x} y1="0" y2="44" />)}
         {areaPoints ? <Polygon fill={`url(#metric-area-${metric.key})`} points={areaPoints} /> : null}
-        <Polyline fill="none" points={points} stroke={metric.color} strokeLinejoin="round" strokeLinecap="round" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        <Polyline fill="none" points={points} stroke={metric.color} strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" vectorEffect="non-scaling-stroke" />
         {coordinates.map(({ x, y }, index) => <Line key={`${metric.key}-point-${index}`} stroke={metric.color} strokeLinecap="round" strokeWidth="3" vectorEffect="non-scaling-stroke" x1={x} x2={x} y1={y} y2={y} />)}
       </Svg>
     </View>
@@ -186,7 +195,7 @@ export function ProgramMetricPreview({
           <Text style={[styles.axisChip, styles.axisLeadingChip]}>{axisLeadingLabel ?? programWeekRangeLabel(axisLabels)}</Text>
         </View>
         {metricRows.map((metric) => (
-          <MetricIdentity color={metric.color} key={metric.key} label={metric.label} range={liveRange(metric, metricValues?.[metric.key])} />
+          <MetricIdentity color={metric.color} key={metric.key} label={metric.label} metricKey={metric.key} range={liveRange(metric, metricValues?.[metric.key])} />
         ))}
         <View style={[styles.metricIdentity, styles.allocationIdentity]}>
           <Text style={styles.metricTitle}>Alloc</Text>
@@ -293,8 +302,9 @@ const styles = StyleSheet.create({
   metricIdentity: { alignContent: "center", backgroundColor: tokens.color.surfaceMuted, borderBottomLeftRadius: tokens.radius.md, borderTopLeftRadius: tokens.radius.md, flexGrow: 0, flexShrink: 0, gap: tokens.spacing.xs, height: 58, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.compact },
   metricTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, lineHeight: 20 },
   rangeBadge: { alignSelf: "flex-start", borderRadius: tokens.radius.sm, color: tokens.color.textMain, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, maxWidth: "100%", overflow: "hidden", paddingHorizontal: tokens.spacing.compact, paddingVertical: 2 },
+  rangeBadgeCalories: { backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderWidth: 1 },
   rangeBadgeDarkText: { color: tokens.color.surfaceApp },
-  metricPlot: { borderColor: tokens.color.surfaceMuted, borderTopRightRadius: tokens.radius.md, borderBottomRightRadius: tokens.radius.md, borderWidth: 1, height: 58, minWidth: 0, overflow: "hidden", paddingVertical: tokens.spacing.compact, width: "100%" },
+  metricPlot: { backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.surfaceMuted, borderTopRightRadius: tokens.radius.md, borderBottomRightRadius: tokens.radius.md, borderWidth: 1, height: 58, minWidth: 0, overflow: "hidden", paddingVertical: tokens.spacing.compact, width: "100%" },
   allocationIdentity: { height: 94, paddingVertical: tokens.spacing.sm },
   allocationRanges: { alignItems: "flex-start", gap: 3 },
   allocationRange: { borderRadius: tokens.radius.sm, color: tokens.color.surfaceApp, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, overflow: "hidden", paddingHorizontal: tokens.spacing.compact, paddingVertical: 2 },
