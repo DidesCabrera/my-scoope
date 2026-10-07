@@ -88,7 +88,7 @@ export function ProgramActiveActions({
         <View style={styles.sheet}>
           <ActionSheetHeader entity="program" onClose={close} title={confirmation?.title ?? "Programa en curso"} />
 
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
+          <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
             {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
             {confirmation && selected ? (

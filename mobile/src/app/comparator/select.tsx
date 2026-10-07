@@ -89,6 +89,7 @@ export default function ComparatorSelectScreen() {
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.scrollContent}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"

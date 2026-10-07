@@ -159,7 +159,7 @@ export default function AccountScreen() {
               </ActionSheetActions>
             </View>
           ) : (
-          <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
+          <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
             {accountActions === "rename" ? (
               <View style={styles.deletionForm}>
                 <Field autoCapitalize="none" autoCorrect={false} label="Nombre de usuario" onChangeText={(value) => setUsername(value.slice(0, 150))} value={username} />

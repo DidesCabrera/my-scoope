@@ -87,6 +87,7 @@ export default function ActivateProgramScreen() {
     return (
       <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
         <ScrollView
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={styles.selectionScrollContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"

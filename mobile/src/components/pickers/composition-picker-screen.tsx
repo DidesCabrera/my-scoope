@@ -371,6 +371,7 @@ export function CompositionPickerScreen({
     return (
       <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
         <ScrollView
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={styles.selectionScrollContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
@@ -428,6 +429,7 @@ export function CompositionPickerScreen({
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.configurationSafeArea}>
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.configurationScrollContent}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"

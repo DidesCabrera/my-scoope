@@ -40,8 +40,8 @@ test("Screen has one implementation and never overrides externally owned headers
   assertSourceMatch(layout, /BOTTOM_SPACING = 96/);
   assertSourceMatch(layout, /paddingBottom: BOTTOM_SPACING/);
   assertSourceMatch(layout, /scroll\?: boolean \| "auto"/);
-  assertSourceMatch(layout, /contentOverflows = contentHeight > viewportHeight \+ 1/);
-  assertSourceMatch(layout, /scroll === "auto" && contentOverflows/);
+  assertSourceMatch(layout, /automaticallyAdjustKeyboardInsets/);
+  assertSourceMatch(layout, /keyboardDismissMode=\{Platform\.OS === "ios" \? "interactive" : "on-drag"\}/);
   assertSourceMatch(layout, /screenContent: \{ flexGrow: 1/);
   assertSourceDoesNotMatch(layout, /screenContent: \{ flex: 1/);
   assert.equal((layout.match(/export function Screen/g) ?? []).length, 1);

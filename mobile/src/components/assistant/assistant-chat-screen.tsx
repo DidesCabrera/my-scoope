@@ -164,9 +164,10 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
   const unavailable = !availability?.is_available;
   const outOfCredits = availability?.available_credits === 0;
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
       <Screen contentStyle={styles.screen} headerMode="preserve" scroll={false}>
         <ScrollView
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={styles.chatContent}
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
