@@ -264,6 +264,52 @@
         "title": "AIChatGeneratedPlanCardData",
         "type": "object"
       },
+      "AIChatLibraryCardData": {
+        "properties": {
+          "entity": {
+            "enum": [
+              "food",
+              "meal",
+              "dailyPlan",
+              "program"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "item_id": {
+            "title": "Item Id",
+            "type": "integer"
+          },
+          "resource": {
+            "enum": [
+              "foods",
+              "meals",
+              "dailyplans",
+              "programs"
+            ],
+            "title": "Resource",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "library_item",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "item_id",
+          "entity",
+          "resource",
+          "title"
+        ],
+        "title": "AIChatLibraryCardData",
+        "type": "object"
+      },
       "AIChatListData": {
         "properties": {
           "availability": {
@@ -344,6 +390,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/AIChatComparisonCardData"
+                },
+                {
+                  "$ref": "#/components/schemas/AIChatLibraryCardData"
                 },
                 {
                   "$ref": "#/components/schemas/AIChatPreparedActionCardData"

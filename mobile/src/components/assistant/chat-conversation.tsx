@@ -2,8 +2,10 @@ import { type Href, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-import type { AIChatMessage, ProposalDetail, ProposalSummary } from "@/api/types";
+import type { AIChatMessage, LibraryItem, ProposalDetail, ProposalSummary, SavedComparisonDetail, SavedComparisonSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { SavedComparisonListCard } from "@/components/comparisons";
+import { LibraryCard } from "@/components/libraries/library-card";
 import { ProposalListCard } from "@/components/proposals";
 import { Button, Card, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -12,6 +14,10 @@ import { AssistantMessageText } from "./assistant-message-text";
 
 type PreparedActionHandler = (actionId: string, mode: "commit" | "cancel", destructive: boolean) => void;
 type ChatProposalCardData = Extract<NonNullable<AIChatMessage["cards"]>[number], { type: "proposal_review" | "generated_plan" }>;
+type ChatLibraryCardData = Extract<NonNullable<AIChatMessage["cards"]>[number], { type: "library_item" }>;
+type ChatComparisonCardData = Extract<NonNullable<AIChatMessage["cards"]>[number], { type: "saved_comparison" }>;
+
+const librarySegments = { dailyplans: "daily-plans", foods: "foods", meals: "meals", programs: "programs" } as const;
 
 function receivedTime(value: string | null): string | null {
   if (!value) return null;
@@ -47,13 +53,63 @@ function ChatProposalListCard({ card }: { card: ChatProposalCardData }) {
   return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.summary ? <Text style={styles.cardCopy}>{card.summary}</Text> : null}{proposalId ? <Button label="Abrir propuesta" onPress={() => router.push(`/proposals/${proposalId}` as Href)} /> : null}</Card>;
 }
 
-function ChatCard({ card, onPreferenceCommit, onPreparedAction }: { card: NonNullable<AIChatMessage["cards"]>[number]; onPreferenceCommit: () => void; onPreparedAction: PreparedActionHandler }) {
+function ChatLibraryCard({ card }: { card: ChatLibraryCardData }) {
+  const { apiRequest } = useSession();
+  const [item, setItem] = useState<LibraryItem | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void apiRequest<LibraryItem>(`/api/v1/library/${librarySegments[card.resource]}/${card.item_id}`)
+      .then((nextItem) => { if (active) setItem(nextItem); })
+      .catch(() => { if (active) setFailed(true); });
+    return () => { active = false; };
+  }, [apiRequest, card.item_id, card.resource]);
+
+  if (item) return <LibraryCard apiRequest={apiRequest} interactive={false} item={item} onChanged={() => undefined} />;
+  if (!failed) return <View accessibilityLabel={`Cargando ${card.title}`} style={styles.cardLoading}><ActivityIndicator color={tokens.color.textMuted} /></View>;
+  return <InlineNotice>Este elemento de la biblioteca ya no está disponible.</InlineNotice>;
+}
+
+function ChatSavedComparisonCard({ card }: { card: ChatComparisonCardData }) {
   const router = useRouter();
+  const { apiRequest } = useSession();
+  const [item, setItem] = useState<SavedComparisonSummary | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void apiRequest<SavedComparisonDetail>(`/api/v1/comparisons/saved/${card.comparison_id}`)
+      .then((detail) => {
+        if (!active) return;
+        setItem({
+          id: detail.saved_comparison_id ?? card.comparison_id,
+          item_count: detail.items.length,
+          items: detail.items,
+          kind: detail.kind,
+          kind_label: detail.kind_label,
+          name: detail.saved_comparison_name || card.title,
+          updated_at: detail.updated_at,
+        });
+      })
+      .catch(() => { if (active) setFailed(true); });
+    return () => { active = false; };
+  }, [apiRequest, card.comparison_id, card.title]);
+
+  if (item) return <SavedComparisonListCard item={item} onPress={() => router.push(`/comparator/saved/${item.id}` as Href)} />;
+  if (!failed) return <View accessibilityLabel={`Cargando ${card.title}`} style={styles.cardLoading}><ActivityIndicator color={tokens.color.textMuted} /></View>;
+  return <InlineNotice>Esta comparación ya no está disponible.</InlineNotice>;
+}
+
+function ChatCard({ card, onPreferenceCommit, onPreparedAction }: { card: NonNullable<AIChatMessage["cards"]>[number]; onPreferenceCommit: () => void; onPreparedAction: PreparedActionHandler }) {
   if (card.type === "proposal_review" || card.type === "generated_plan") {
     return <ChatProposalListCard card={card} />;
   }
+  if (card.type === "library_item") {
+    return <ChatLibraryCard card={card} />;
+  }
   if (card.type === "saved_comparison") {
-    return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text><Button label="Abrir comparación" onPress={() => router.push(`/comparator/saved/${card.comparison_id}` as Href)} /></Card>;
+    return <ChatSavedComparisonCard card={card} />;
   }
   if (card.type === "prepared_action") {
     const pending = card.status === "prepared";
@@ -91,6 +147,7 @@ const styles = StyleSheet.create({
   cardCopy: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   cardMeta: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: "700" },
   cardTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: "800" },
+  cardLoading: { alignItems: "center", minHeight: 120, justifyContent: "center" },
   item: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, gap: 2, paddingTop: tokens.spacing.sm },
   itemLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: "700" },
   itemValue: { color: tokens.color.textMain, fontSize: tokens.type.body },

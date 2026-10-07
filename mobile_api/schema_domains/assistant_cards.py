@@ -40,6 +40,14 @@ class AIChatComparisonCardData(Schema):
     title: str
 
 
+class AIChatLibraryCardData(Schema):
+    type: Literal["library_item"]
+    item_id: int
+    entity: Literal["food", "meal", "dailyPlan", "program"]
+    resource: Literal["foods", "meals", "dailyplans", "programs"]
+    title: str
+
+
 class AIChatPreparedActionCardData(Schema):
     type: Literal["prepared_action"]
     action_id: str
@@ -67,6 +75,7 @@ AIChatCardData = (
     AIChatDraftCardData
     | AIChatProposalCardData
     | AIChatComparisonCardData
+    | AIChatLibraryCardData
     | AIChatPreparedActionCardData
     | AIChatGeneratedPlanCardData
 )

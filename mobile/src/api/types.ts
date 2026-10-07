@@ -772,6 +772,14 @@ type AIChatComparisonCard = {
   title: string;
 };
 
+type AIChatLibraryCard = {
+  type: "library_item";
+  item_id: number;
+  entity: "food" | "meal" | "dailyPlan" | "program";
+  resource: "foods" | "meals" | "dailyplans" | "programs";
+  title: string;
+};
+
 type AIChatPreparedActionCard = {
   type: "prepared_action";
   action_id: string;
@@ -805,6 +813,7 @@ export type AIChatCard =
   | AIChatDraftCard
   | AIChatProposalCard
   | AIChatComparisonCard
+  | AIChatLibraryCard
   | AIChatPreparedActionCard
   | AIChatGeneratedPlanCard;
 

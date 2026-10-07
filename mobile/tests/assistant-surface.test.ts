@@ -56,10 +56,15 @@ test("assistant messages render bounded roles instead of raw conversation payloa
 test("typed assistant cards navigate to trusted product surfaces and gate mutations", async () => {
   const conversation = await source("src/components/assistant/chat-conversation.tsx");
   const screen = await source("src/components/assistant/assistant-chat-screen.tsx");
+  const comparator = await source("src/app/comparator/index.tsx");
   assert.match(conversation, /card\.type === "proposal_review"/);
   assert.ok(conversation.includes("<ProposalListCard"));
   assert.ok(conversation.includes("proposal={proposal}"));
   assert.ok(conversation.includes("apiRequest<ProposalDetail>(`/api/v1/proposals/${proposalId}`)"));
+  assert.ok(conversation.includes("<LibraryCard apiRequest={apiRequest} interactive={false}"));
+  assert.ok(conversation.includes("/api/v1/library/${librarySegments[card.resource]}/${card.item_id}"));
+  assert.ok(conversation.includes("<SavedComparisonListCard item={item}"));
+  assert.ok(comparator.includes("<SavedComparisonListCard item={item}"));
   assert.match(conversation, /card\.type === "saved_comparison"/);
   assert.match(conversation, /card\.type === "prepared_action"/);
   assert.match(conversation, /card\.type === "preference_draft" && card\.can_commit/);

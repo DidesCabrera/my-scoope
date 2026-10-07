@@ -11,6 +11,7 @@ from mobile_api.schema_domains.assistant_cards import (
     AIChatComparisonCardData,
     AIChatDraftCardData,
     AIChatGeneratedPlanCardData,
+    AIChatLibraryCardData,
     AIChatPreparedActionCardData,
     AIChatProposalCardData,
 )

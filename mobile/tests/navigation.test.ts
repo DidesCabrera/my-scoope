@@ -31,7 +31,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   const proposal = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id].tsx"), "utf8");
   const proposalEntity = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id]/entity.tsx"), "utf8");
   const comparison = await readFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
-  const comparisonList = await readFile(path.resolve(process.cwd(), "src/app/comparator/index.tsx"), "utf8");
+  const comparisonList = await readFile(path.resolve(process.cwd(), "src/components/comparisons/saved-comparison-list-card.tsx"), "utf8");
   const comparisonActions = await readFile(path.resolve(process.cwd(), "src/components/comparisons/saved-comparison-actions.tsx"), "utf8");
   const program = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   const programDay = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
