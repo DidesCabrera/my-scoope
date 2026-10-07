@@ -223,9 +223,7 @@ export default function UiGalleryScreen() {
         <OnboardingStoryboardGallery />
       ) : null}
 
-      {tab === "subscriptions" ? (
-        <SubscriptionGallery />
-      ) : null}
+      {tab === "subscriptions" ? <SubscriptionGallery /> : null}
 
       {tab === "labelCapture" ? (
         <LabelCaptureStoryboardGallery />
