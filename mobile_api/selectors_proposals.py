@@ -53,6 +53,22 @@ def _proposal_summary_payload(dto: dict) -> dict:
     }
 
 
+def proposal_summary_payloads_by_id(user, proposal_ids) -> dict[int, dict]:
+    normalized_ids = {int(proposal_id) for proposal_id in proposal_ids if proposal_id is not None}
+    if not normalized_ids:
+        return {}
+    return {
+        proposal.id: _proposal_summary_payload(
+            {
+                **build_proposal_list_item_dto(proposal).as_dict(),
+                "proposed_payload": proposal.proposed_payload,
+                "applied_at": proposal.applied_at,
+            }
+        )
+        for proposal in get_available_proposal_queryset(user).filter(pk__in=normalized_ids)
+    }
+
+
 def proposal_list_payload(user, *, status_filter=None, offset=0, limit=30) -> dict:
     queryset = get_available_proposal_queryset(user)
     pending_count = queryset.filter(status="pending_review").count()

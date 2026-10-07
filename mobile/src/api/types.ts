@@ -762,6 +762,7 @@ type AIChatProposalCard = {
   title: string;
   summary: string;
   status: string;
+  proposal: ProposalSummary | null;
 };
 
 type AIChatComparisonCard = {
@@ -791,6 +792,7 @@ type AIChatGeneratedPlanCard = {
   summary: string;
   is_current: boolean;
   items: AIChatCardItem[];
+  proposal: ProposalSummary | null;
 };
 
 export type AIPreparedActionResult = {

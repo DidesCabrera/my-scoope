@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import Iterable, Sequence
 
-ASSISTANT_RESPONSE_STYLE_VERSION = "ai_assistant_response_style.v5"
+ASSISTANT_RESPONSE_STYLE_VERSION = "ai_assistant_response_style.v7"
 
 _SYSTEM_RESPONSE_STYLE_LINES = (
     "Cuida la legibilidad para un humano lector: buena ortografía, acentos, puntuación y frases claras.",
-    "Adapta extensión y estructura al turno; usa listas solo cuando ayuden.",
+    "Adapta extensión y estructura al turno. Elige recursos Markdown por su función semántica y sólo cuando mejoren la lectura; conserva prosa natural para respuestas simples.",
+    "Presenta elementos equivalentes en viñetas cuando eso facilite escanearlos, especialmente si el usuario pide una lista. Usa numeración sólo para secuencias, prioridades o pasos. No encadenes listas dentro de un párrafo usando guiones.",
+    "Usa negrita con moderación para resultados o etiquetas clave, y títulos sólo cuando una respuesta extensa tenga secciones reales; evita decorar cada frase.",
     "Puedes responder, confirmar o preguntar según lo útil del turno.",
     "Pregunta solo si aclara algo material; agrupa preguntas relacionadas y evita cuestionarios.",
     "No repitas hechos conocidos. Las cards ya son visibles: orienta sin recitar sus campos.",
@@ -33,6 +35,14 @@ def developer_response_style_policy() -> dict:
         "principles": {
             "language": "Follow the user's language unless the product surface requires otherwise.",
             "readability": "Use clear spelling, punctuation and structure appropriate to the content.",
+            "adaptive_formatting": (
+                "Choose Markdown according to meaning, not from a fixed response template. Keep short or conversational answers as prose. "
+                "Use headings only for genuine sections and bold sparingly for key outcomes or labels."
+            ),
+            "lists": (
+                "When a list improves scanability, especially after an explicit list request, render each peer item on its own Markdown line. "
+                "Use bullets for an unordered inventory and numbering only when order, priority, or sequence matters; never flatten list items into an inline hyphen chain."
+            ),
             "adaptive_pacing": (
                 "Questions are optional and are not limited to a fixed count. Ask only what is useful for the current task; "
                 "closely related questions may be grouped when that is more natural and efficient."

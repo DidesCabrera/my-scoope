@@ -35,8 +35,11 @@ class AssistantResponseStylePolicyTests(SimpleTestCase):
         serialized = json.dumps(policy, ensure_ascii=False)
 
         self.assertEqual(policy["version"], ASSISTANT_RESPONSE_STYLE_VERSION)
-        self.assertEqual(ASSISTANT_RESPONSE_STYLE_VERSION, "ai_assistant_response_style.v5")
+        self.assertEqual(ASSISTANT_RESPONSE_STYLE_VERSION, "ai_assistant_response_style.v7")
         self.assertIn("Questions are optional and are not limited to a fixed count", serialized)
+        self.assertIn("not from a fixed response template", serialized)
+        self.assertIn("Keep short or conversational answers as prose", serialized)
+        self.assertIn("numbering only when order, priority, or sequence matters", serialized)
         self.assertIn("active_work.expected_outcome", serialized)
         self.assertNotIn("question_dosing", serialized)
         self.assertNotIn("profile_completion_pace", serialized)

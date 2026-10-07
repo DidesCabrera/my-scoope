@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal, Mapping, Protocol, Sequence, runtime_checkable
 
+from ai_assistant.domain.message_text import normalize_visible_message_content
+
 LLMMessageRole = Literal["system", "developer", "user", "assistant"]
 
 
@@ -99,7 +101,7 @@ class LLMProviderRequest:
     @property
     def normalized_messages(self) -> tuple[LLMMessage, ...]:
         return tuple(
-            LLMMessage(role=message.role, content=" ".join(str(message.content or "").split()))
+            LLMMessage(role=message.role, content=normalize_visible_message_content(message.content))
             for message in self.messages
             if str(message.content or "").strip()
         )
@@ -159,9 +161,7 @@ class LLMProviderResponse:
 
     @property
     def normalized_text(self) -> str:
-        raw_text = str(self.text or "").replace("\r\n", "\n").replace("\r", "\n")
-        lines = [" ".join(line.strip().split()) for line in raw_text.split("\n")]
-        return "\n".join(lines).strip()
+        return normalize_visible_message_content(self.text)
 
 
 @runtime_checkable

@@ -3,27 +3,50 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
+const source = (file: string) => readFile(path.resolve(process.cwd(), file), "utf8");
+
 test("the assistant surface resumes server-reported jobs without resubmitting turns", async () => {
-  const screen = await readFile(path.resolve(process.cwd(), "src/components/assistant/assistant-chat-screen.tsx"), "utf8");
+  const screen = await source("src/components/assistant/assistant-chat-screen.tsx");
   assert.match(screen, /pending_turn/);
   assert.match(screen, /pending_new_turn/);
   assert.match(screen, /pollAsyncJob<AITurnResultData>/);
   assert.match(screen, /AbortController/);
   assert.match(screen, /if \(!normalized \|\| sending \|\| pending\) return/);
+  assert.ok(screen.includes("setOptimisticMessage({"));
+  assert.ok(screen.includes("visibleMessages"));
+  assert.ok(screen.includes("setMessage(normalized)"));
   assert.match(screen, /router\.replace\(`\/assistant\/\$\{result\.chat_id\}`/);
 });
 
+test("long assistant conversations keep the message composer inside the viewport", async () => {
+  const screen = await source("src/components/assistant/assistant-chat-screen.tsx");
+  assert.ok(screen.includes("style={styles.conversationScroll}"));
+  assert.ok(screen.includes("conversationScroll: { flex: 1 }"));
+  assert.ok(screen.includes("screen: { flex: 1,"));
+});
+
+test("the assistant composer centers available credits without moving for the character counter", async () => {
+  const composer = await source("src/components/assistant/chat-composer.tsx");
+  assert.ok(composer.includes('justifyContent: "center"'));
+  assert.ok(composer.includes('textAlign: "center"'));
+  assert.ok(composer.includes('position: "absolute", right: tokens.spacing.sm'));
+});
+
 test("assistant messages render bounded roles instead of raw conversation payloads", async () => {
-  const conversation = await readFile(path.resolve(process.cwd(), "src/components/assistant/chat-conversation.tsx"), "utf8");
+  const conversation = await source("src/components/assistant/chat-conversation.tsx");
   assert.match(conversation, /message\.role === "user"/);
   assert.match(conversation, /message\.text/);
+  assert.ok(conversation.includes("<AssistantMessageText>{message.text}</AssistantMessageText>"));
   assert.doesNotMatch(conversation, /conversation_payload/);
 });
 
 test("typed assistant cards navigate to trusted product surfaces and gate mutations", async () => {
-  const conversation = await readFile(path.resolve(process.cwd(), "src/components/assistant/chat-conversation.tsx"), "utf8");
-  const screen = await readFile(path.resolve(process.cwd(), "src/components/assistant/assistant-chat-screen.tsx"), "utf8");
+  const conversation = await source("src/components/assistant/chat-conversation.tsx");
+  const screen = await source("src/components/assistant/assistant-chat-screen.tsx");
   assert.match(conversation, /card\.type === "proposal_review"/);
+  assert.ok(conversation.includes("<ProposalListCard"));
+  assert.ok(conversation.includes("proposal={proposal}"));
+  assert.ok(conversation.includes("apiRequest<ProposalDetail>(`/api/v1/proposals/${proposalId}`)"));
   assert.match(conversation, /card\.type === "saved_comparison"/);
   assert.match(conversation, /card\.type === "prepared_action"/);
   assert.match(conversation, /card\.type === "preference_draft" && card\.can_commit/);

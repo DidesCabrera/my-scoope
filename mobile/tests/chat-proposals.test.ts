@@ -26,9 +26,13 @@ test("an existing chat exposes its proposal history from the header menu", async
 
 test("the assistant proposal list and chat proposal history share one card component", async () => {
   const assistant = await source("src/app/assistant/index.tsx");
+  const conversation = await source("src/components/assistant/chat-conversation.tsx");
+  const gallery = await source("src/components/dev/proposal-gallery.tsx");
   const card = await source("src/components/proposals/proposal-list-card.tsx");
 
   assert.match(assistant, /<ProposalListCard/);
+  assert.ok(conversation.includes("<ProposalListCard"));
+  assert.ok(gallery.includes("<ProposalListCard"));
   assert.match(card, /ProposalStatusBadge/);
   assert.match(card, /ProposalTypeBadge/);
   assert.match(card, /section="proposal"/);

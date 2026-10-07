@@ -221,6 +221,16 @@
             "title": "Items",
             "type": "array"
           },
+          "proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalSummaryData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "proposal_id": {
             "anyOf": [
               {
@@ -464,6 +474,16 @@
       },
       "AIChatProposalCardData": {
         "properties": {
+          "proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalSummaryData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "proposal_id": {
             "title": "Proposal Id",
             "type": "integer"

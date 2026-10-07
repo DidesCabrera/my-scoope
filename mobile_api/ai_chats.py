@@ -11,7 +11,9 @@ from ai_assistant.application.tools import (
     execute_profile_commit_tool,
 )
 from ai_assistant.domain import AssistantToolRequest, AssistantToolStatus
+from ai_assistant.domain.message_text import normalize_visible_message_content
 from ai_assistant.models import AIAsyncJob
+from mobile_api.selectors_proposals import proposal_summary_payloads_by_id
 from notas.application.ai_intake.async_turns import NUTRITION_INTAKE_TURN_JOB_KIND
 from notas.application.ai_intake.chat_engine import build_ai_nutrition_intake_engine_status
 from notas.application.ai_intake.chat_history import sync_chat_from_conversation
@@ -74,7 +76,7 @@ def _proposal_id_from_url(value) -> int | None:
         return None
 
 
-def _message_cards(user, raw: dict) -> list[dict]:
+def _message_cards(user, raw: dict, proposal_summaries: dict[int, dict]) -> list[dict]:
     cards = []
     draft_keys = {
         "profile_draft_card": "profile_draft",
@@ -88,23 +90,27 @@ def _message_cards(user, raw: dict) -> list[dict]:
 
     review = raw.get("proposal_review_card")
     if isinstance(review, dict) and review.get("proposal_id"):
+        proposal_id = int(review["proposal_id"])
         cards.append({
             "type": "proposal_review",
-            "proposal_id": int(review["proposal_id"]),
+            "proposal_id": proposal_id,
             "title": str(review.get("title") or "Propuesta para revisar")[:180],
             "summary": str(review.get("summary") or "")[:1000],
             "status": str(review.get("status") or "")[:80],
+            "proposal": proposal_summaries.get(proposal_id),
         })
 
     plan = raw.get("generated_plan_card")
     if isinstance(plan, dict) and plan:
+        proposal_id = _proposal_id_from_url(plan.get("url"))
         cards.append({
             "type": "generated_plan",
-            "proposal_id": _proposal_id_from_url(plan.get("url")),
+            "proposal_id": proposal_id,
             "title": str(plan.get("title") or "Plan generado")[:180],
             "summary": str(plan.get("summary") or "")[:1000],
             "is_current": bool(plan.get("is_current")),
             "items": _card_items(plan.get("target_items")),
+            "proposal": proposal_summaries.get(proposal_id),
         })
 
     comparison = raw.get("saved_comparison_card") or raw.get("comparison_card")
@@ -159,6 +165,17 @@ def assistant_availability_payload(user) -> dict:
 def _message_payloads(chat: AiNutritionChat) -> list[dict]:
     conversation = chat.conversation_payload if isinstance(chat.conversation_payload, dict) else {}
     raw_messages = conversation.get("messages") if isinstance(conversation.get("messages"), list) else []
+    proposal_ids = set()
+    for raw in raw_messages[-24:]:
+        if not isinstance(raw, dict):
+            continue
+        review = raw.get("proposal_review_card")
+        if isinstance(review, dict) and review.get("proposal_id"):
+            proposal_ids.add(review["proposal_id"])
+        plan = raw.get("generated_plan_card")
+        if isinstance(plan, dict):
+            proposal_ids.add(_proposal_id_from_url(plan.get("url")))
+    proposal_summaries = proposal_summary_payloads_by_id(chat.user, proposal_ids)
     messages = []
     for index, raw in enumerate(raw_messages[-24:], start=1):
         if not isinstance(raw, dict):
@@ -166,8 +183,8 @@ def _message_payloads(chat: AiNutritionChat) -> list[dict]:
         role = str(raw.get("role") or "").strip()
         if role not in {"user", "assistant"}:
             continue
-        text = " ".join(str(raw.get("text") or "").split())[:8000]
-        cards = _message_cards(chat.user, raw)
+        text = normalize_visible_message_content(raw.get("text"), max_chars=8000)
+        cards = _message_cards(chat.user, raw, proposal_summaries)
         has_structured_content = any(
             isinstance(raw.get(key), dict) and bool(raw.get(key))
             for key in (

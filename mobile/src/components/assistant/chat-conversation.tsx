@@ -1,17 +1,49 @@
 import { type Href, useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-import type { AIChatMessage } from "@/api/types";
+import type { AIChatMessage, ProposalDetail, ProposalSummary } from "@/api/types";
+import { useSession } from "@/auth/session-context";
+import { ProposalListCard } from "@/components/proposals";
 import { Button, Card, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
+import { AssistantMessageText } from "./assistant-message-text";
+
 type PreparedActionHandler = (actionId: string, mode: "commit" | "cancel", destructive: boolean) => void;
+type ChatProposalCardData = Extract<NonNullable<AIChatMessage["cards"]>[number], { type: "proposal_review" | "generated_plan" }>;
+
+function ChatProposalListCard({ card }: { card: ChatProposalCardData }) {
+  const router = useRouter();
+  const { apiRequest } = useSession();
+  const [loadedProposal, setLoadedProposal] = useState<ProposalSummary | null>(null);
+  const [failedProposalId, setFailedProposalId] = useState<number | null>(null);
+  const proposalId = card.proposal_id;
+  const proposal = card.proposal ?? (loadedProposal?.id === proposalId ? loadedProposal : null);
+  const failed = proposalId == null || failedProposalId === proposalId;
+
+  useEffect(() => {
+    if (card.proposal || !proposalId) return undefined;
+    let active = true;
+    void apiRequest<ProposalDetail>(`/api/v1/proposals/${proposalId}`)
+      .then((nextProposal) => { if (active) setLoadedProposal(nextProposal); })
+      .catch(() => { if (active) setFailedProposalId(proposalId); });
+    return () => { active = false; };
+  }, [apiRequest, card.proposal, proposalId]);
+
+  if (proposal) {
+    return <ProposalListCard onPress={() => router.push(`/proposals/${proposal.id}` as Href)} proposal={proposal} />;
+  }
+  if (!failed) {
+    return <View accessibilityLabel="Cargando propuesta" style={styles.proposalLoading}><ActivityIndicator color={tokens.color.textMuted} /></View>;
+  }
+  return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.summary ? <Text style={styles.cardCopy}>{card.summary}</Text> : null}{proposalId ? <Button label="Abrir propuesta" onPress={() => router.push(`/proposals/${proposalId}` as Href)} /> : null}</Card>;
+}
 
 function ChatCard({ card, onPreferenceCommit, onPreparedAction }: { card: NonNullable<AIChatMessage["cards"]>[number]; onPreferenceCommit: () => void; onPreparedAction: PreparedActionHandler }) {
   const router = useRouter();
   if (card.type === "proposal_review" || card.type === "generated_plan") {
-    const proposalId = card.proposal_id;
-    return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.summary ? <Text style={styles.cardCopy}>{card.summary}</Text> : null}{proposalId ? <Button label="Abrir propuesta" onPress={() => router.push(`/proposals/${proposalId}` as Href)} /> : null}</Card>;
+    return <ChatProposalListCard card={card} />;
   }
   if (card.type === "saved_comparison") {
     return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text><Button label="Abrir comparación" onPress={() => router.push(`/comparator/saved/${card.comparison_id}` as Href)} /></Card>;
@@ -31,7 +63,7 @@ export function ChatConversation({ messages, onPreferenceCommit, onPreparedActio
         return (
           <View key={message.id} style={[styles.message, isUser ? styles.userMessage : styles.assistantMessage]}>
             <View style={isUser ? styles.userBubble : styles.assistantContent}>
-              {message.text ? <Text style={styles.text}>{message.text}</Text> : null}
+              {message.text ? (isUser ? <Text style={styles.text}>{message.text}</Text> : <AssistantMessageText>{message.text}</AssistantMessageText>) : null}
               {message.cards?.map((card, index) => <ChatCard card={card} key={`${message.id}-${card.type}-${index}`} onPreferenceCommit={onPreferenceCommit} onPreparedAction={onPreparedAction} />)}
               {message.has_structured_content && !message.cards?.length ? <InlineNotice>Este objeto no está disponible en esta versión de la app.</InlineNotice> : null}
             </View>
@@ -55,6 +87,7 @@ const styles = StyleSheet.create({
   itemValue: { color: tokens.color.textMain, fontSize: tokens.type.body },
   message: { width: "100%" },
   pending: { color: tokens.color.textMuted },
+  proposalLoading: { alignItems: "center", minHeight: 120, justifyContent: "center" },
   operation: { color: tokens.color.textMain, fontSize: tokens.type.caption },
   text: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 25 },
   userBubble: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card, gap: tokens.spacing.sm, maxWidth: "86%", paddingHorizontal: tokens.spacing.lg, paddingVertical: tokens.spacing.md },

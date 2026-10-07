@@ -1,9 +1,10 @@
+import type { ProposalSummary } from "@/api/types";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
 import {
-  ChatProposalCard,
   ProposalCard,
   ProposalDetailPage,
   ProposalEntitySection,
+  ProposalListCard,
   ProposalObjectiveSection,
   ProposalReviewActions,
 } from "@/components/proposals";
@@ -16,11 +17,26 @@ const meals: MealPanelItem[] = [
   { id: "dinner", name: "Cena", time: "20:00", foods: [{ name: "Salmón", quantity: 170, quantityUnit: "g" }], calories: 610, calorieShare: 29, proteinGrams: 43, carbsGrams: 58, fatGrams: 23, proteinAllocation: 28, carbsAllocation: 38, fatAllocation: 34 },
 ];
 
+const proposalSummaryExample: ProposalSummary = {
+  actions: [],
+  attachment_kind: "dailyplan",
+  attachment_label: "Plan diario propuesto",
+  attachment_name: "Día de entrenamiento",
+  created_at: "2026-10-07T14:30:00-03:00",
+  id: 101,
+  is_reviewable: true,
+  source: "ai",
+  status: "pending_review",
+  status_label: "Pendiente de revisión",
+  summary: "Crear un plan diario alto en proteína para un día de entrenamiento.",
+  title: "Propuesta de plan diario",
+};
+
 export function ProposalGallery() {
   return (
     <>
-      <SectionTitle detail="Respuesta dentro del chat" title="Propuesta generada" />
-      <ChatProposalCard adjustments={["Más proteína", "Mantener alimentos"]} metrics={[{ label: "Actual", value: "2.050 kcal" }, { label: "Objetivo", value: "2.140 kcal" }, { label: "Alimentos", value: "Sin cambios" }]} onPress={() => undefined} summary="Ajusté las porciones para acercar el plan al objetivo sin reemplazar sus alimentos." title="Día de entrenamiento ajustado" />
+      <SectionTitle detail="Componente compartido por el tab Propuestas y el chat" title="Card de propuesta del Asistente" />
+      <ProposalListCard onPress={() => undefined} proposal={proposalSummaryExample} />
       <SectionTitle detail="Resumen de bandeja" title="Card de propuesta" />
       <ProposalCard attachment={{ kind: "dailyPlan", name: "Día de entrenamiento propuesto" }} isRead={false} onPress={() => undefined} receivedAt="Recibida hoy, 14:30" status="pending" summary="Crear un DailyPlan alto en proteína para un día de entrenamiento." title="Propuesta de DailyPlan" />
       <SectionTitle detail="Revisión antes de aplicar" title="Detalle de propuesta" />

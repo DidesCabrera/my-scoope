@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping, Sequence
 
+from ai_assistant.domain.message_text import normalize_visible_message_content
+
 
 class AssistantContractError(ValueError):
     """Raised when an AI Assistant semantic contract is malformed."""
@@ -301,22 +303,7 @@ def _normalize_text(value: Any) -> str:
 
 def _normalize_message_content(value: Any) -> str:
     """Normalize visible chat text without destroying readable line breaks."""
-
-    raw_text = str(value or "").replace("\r\n", "\n").replace("\r", "\n")
-    lines = [" ".join(line.strip().split()) for line in raw_text.split("\n")]
-
-    normalized_lines: list[str] = []
-    previous_blank = False
-    for line in lines:
-        if not line:
-            if normalized_lines and not previous_blank:
-                normalized_lines.append("")
-            previous_blank = True
-            continue
-        normalized_lines.append(line)
-        previous_blank = False
-
-    return "\n".join(normalized_lines).strip()
+    return normalize_visible_message_content(value)
 
 
 def _normalize_identifier(value: Any) -> str:
