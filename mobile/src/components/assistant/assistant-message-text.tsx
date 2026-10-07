@@ -50,10 +50,10 @@ const styles = StyleSheet.create({
   heading: { fontSize: tokens.type.section, fontWeight: "800", lineHeight: 27 },
   listRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.sm, paddingLeft: tokens.spacing.xs },
   listText: { flex: 1 },
-  marker: { color: tokens.color.interactivePrimary, fontSize: tokens.type.body, fontWeight: "800", lineHeight: 25, minWidth: 20, textAlign: "right" },
+  marker: { color: tokens.color.assistantMessageForeground, fontSize: tokens.type.body, fontWeight: "800", lineHeight: 25, minWidth: 20, textAlign: "right" },
   quote: { borderLeftColor: tokens.color.borderDefault, borderLeftWidth: 3, paddingLeft: tokens.spacing.md },
-  quoteText: { color: tokens.color.textMuted },
+  quoteText: { color: tokens.color.assistantMessageForeground },
   strong: { fontWeight: "800" },
   subheading: { fontSize: tokens.type.body, lineHeight: 25 },
-  text: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 25 },
+  text: { color: tokens.color.assistantMessageForeground, fontSize: tokens.type.body, lineHeight: 25 },
 });

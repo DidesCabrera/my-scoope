@@ -4,12 +4,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { tokens } from "@/design/tokens";
 
-export function ChatComposer({ disabled, loading, maxLength, onChangeText, onSend, supportingText, value }: {
+export function ChatComposer({ disabled, loading, maxLength, onChangeText, onSend, outOfCredits, supportingText, value }: {
   disabled: boolean;
   loading: boolean;
   maxLength: number;
   onChangeText(value: string): void;
   onSend(): void;
+  outOfCredits: boolean;
   supportingText?: string;
   value: string;
 }) {
@@ -40,8 +41,8 @@ export function ChatComposer({ disabled, loading, maxLength, onChangeText, onSen
           disabled={sendDisabled}
           hitSlop={6}
           onPress={onSend}
-          style={({ pressed }) => [styles.sendButton, sendDisabled && styles.sendButtonDisabled, pressed && styles.sendButtonPressed]}>
-          {loading ? <ActivityIndicator color={tokens.color.textMain} size="small" /> : <ArrowUp color={sendDisabled ? tokens.color.textSubtle : tokens.color.surfaceApp} size={20} strokeWidth={3} />}
+          style={({ pressed }) => [styles.sendButton, outOfCredits && styles.sendButtonDisabled, pressed && styles.sendButtonPressed]}>
+          {loading ? <ActivityIndicator color={tokens.color.surfaceApp} size="small" /> : <ArrowUp color={outOfCredits ? tokens.color.textSubtle : tokens.color.surfaceApp} size={20} strokeWidth={3} />}
         </Pressable>
       </View>
       {supportingText || remaining <= 200 ? <View style={styles.meta}>{supportingText ? <Text style={styles.supportingText}>{supportingText}</Text> : null}{remaining <= 200 ? <Text style={styles.counter}>{remaining} caracteres</Text> : null}</View> : null}

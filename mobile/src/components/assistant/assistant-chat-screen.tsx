@@ -218,6 +218,7 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
           maxLength={availability?.max_message_chars ?? 2000}
           onChangeText={setMessage}
           onSend={() => void send()}
+          outOfCredits={outOfCredits}
           supportingText={availability ? `${availability.available_credits} ${availability.available_credits === 1 ? "crédito disponible" : "créditos disponibles"}` : undefined}
           value={message}
         />

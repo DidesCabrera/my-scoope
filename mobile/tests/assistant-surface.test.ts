@@ -32,6 +32,15 @@ test("the assistant composer centers available credits without moving for the ch
   assert.ok(composer.includes('position: "absolute", right: tokens.spacing.sm'));
 });
 
+test("the assistant send button only looks disabled when there are no credits", async () => {
+  const composer = await source("src/components/assistant/chat-composer.tsx");
+  const screen = await source("src/components/assistant/assistant-chat-screen.tsx");
+  assert.ok(composer.includes("outOfCredits && styles.sendButtonDisabled"));
+  assert.ok(composer.includes("outOfCredits ? tokens.color.textSubtle : tokens.color.surfaceApp"));
+  assert.ok(screen.includes("outOfCredits={outOfCredits}"));
+  assert.ok(!composer.includes("sendDisabled && styles.sendButtonDisabled"));
+});
+
 test("assistant messages render bounded roles instead of raw conversation payloads", async () => {
   const conversation = await source("src/components/assistant/chat-conversation.tsx");
   assert.match(conversation, /message\.role === "user"/);
