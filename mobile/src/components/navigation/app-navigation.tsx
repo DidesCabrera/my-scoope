@@ -365,6 +365,10 @@ function AppSidebar() {
     closeMenu();
     router.push("/subscription" as Href);
   };
+  const openHome = () => {
+    closeMenu();
+    router.push("/today" as Href);
+  };
 
   return (
     <Modal animationType="none" onRequestClose={closeMenu} transparent visible={menuMounted}>
@@ -377,7 +381,9 @@ function AppSidebar() {
             paddingTop: Math.max(insets.top, initialWindowMetrics?.insets.top ?? 0),
           }]}>
             <View style={styles.drawerHeader}>
-              <MyScoopeLogo />
+              <Pressable accessibilityLabel="Ir a Inicio" accessibilityRole="button" hitSlop={8} onPress={openHome} style={({ pressed }) => [styles.drawerHome, pressed && styles.pressed]}>
+                <MyScoopeLogo />
+              </Pressable>
               <Pressable
                 accessibilityLabel="Cerrar menú"
                 accessibilityRole="button"
@@ -458,6 +464,7 @@ const styles = StyleSheet.create({
   drawer: { backgroundColor: tokens.color.surfaceApp, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
   drawerSafeArea: { flex: 1 },
   drawerHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 64, paddingHorizontal: tokens.spacing.md * 2 },
+  drawerHome: { alignItems: "center", justifyContent: "center", minHeight: 44 },
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
   drawerContent: { gap: 0, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg },
   drawerScroll: { flex: 1 },

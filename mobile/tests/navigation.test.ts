@@ -245,7 +245,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /<Plus color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(navigation, /headerPresentation\.createAction/);
   assertSourceMatch(navigation, /height: 48/);
-  assertSourceMatch(navigation, /<MyScoopeLogo \/>/);
+  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeLogo \/>/);
   const logo = await readFile(path.resolve(process.cwd(), "src/components/ui/my-scoope-logo.tsx"), "utf8");
   assertSourceMatch(logo, /logoText: \{[^}]*fontSize: 18/);
   assertSourceMatch(logo, /logoBar: \{[^}]*height: 3, width: 13/);

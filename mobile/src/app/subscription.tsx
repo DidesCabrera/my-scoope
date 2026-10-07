@@ -9,7 +9,7 @@ import {
 } from "expo-iap";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Info, RefreshCcw, Sparkles, WalletCards } from "lucide-react-native";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -459,10 +459,7 @@ export default function SubscriptionScreen() {
           <View style={styles.sheetContent}>
             <ActionSheetActions>
               <ActionSheetAction icon={Info} label="Ver detalles de Suscripciones y Bolsas" onPress={() => { closeActions(); router.push("/subscription-details" as Href); }} />
-              <Pressable accessibilityRole="button" accessibilityState={{ busy: working, disabled: working }} disabled={working} onPress={() => { closeActions(); void restore(); }} style={({ pressed }) => [styles.actionRow, working && styles.disabledAction, pressed && styles.pressed]}>
-                <RefreshCcw color={tokens.color.textMain} size={18} />
-                <Text style={styles.actionLabel}>Restaurar compras</Text>
-              </Pressable>
+              <ActionSheetAction disabled={working} icon={RefreshCcw} label="Restaurar compras" onPress={() => { closeActions(); void restore(); }} />
             </ActionSheetActions>
           </View>
         </SafeAreaView>
@@ -490,8 +487,6 @@ function CreditPackPriceChip({ label }: { label: string }) {
 }
 
 const styles = StyleSheet.create({
-  actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.medium },
-  actionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
   closeButton: { alignItems: "center", height: 40, justifyContent: "center", width: 40 },
   commercialSectionTitle: { fontSize: tokens.type.section, lineHeight: 26 },
   creditPackPriceChip: { overflow: "hidden" },
@@ -503,12 +498,10 @@ const styles = StyleSheet.create({
   onboardingIntro: { alignItems: "center", gap: tokens.spacing.lg, paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.lg },
   onboardingLogo: { marginBottom: tokens.spacing.lg },
   onboardingTitle: { color: tokens.color.textMain, fontSize: 34, fontWeight: tokens.weight.extraBold, lineHeight: 40, textAlign: "center" },
-  disabledAction: { opacity: 0.45 },
   planPriceChip: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs },
   planPriceChipLabel: { color: tokens.color.surfaceApp, fontSize: 16, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },
   planName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
   productName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
-  pressed: { opacity: 0.65 },
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden" },
   subscriptionHeading: { alignItems: "center", flexDirection: "row" },
