@@ -11,7 +11,7 @@ import { ProgramChildCard, programDailyMetricData } from "@/components/libraries
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, ChoiceRow, Field, LoadingState, Screen, SectionHeading } from "@/components/ui";
+import { Button, Card, ChoiceRow, Field, LoadingState, NativeDateTimeField, Screen, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -201,9 +201,9 @@ export default function ActivateProgramScreen() {
 
           <Card accent={tokens.color.program}>
             <SectionHeading title="Configura la selección" />
-            <Field keyboardType="numbers-and-punctuation" label="Fecha de inicio (AAAA-MM-DD)" onChangeText={(value) => { setStartDate(value); setConfirmation(null); }} placeholder="2026-08-13" value={startDate} />
+            <NativeDateTimeField label="Fecha de inicio" minimumValue={localDate()} mode="date" onChange={(value) => { setStartDate(value); setConfirmation(null); }} value={startDate} />
             <Field label="Zona horaria IANA" onChangeText={setTimezoneName} placeholder="America/Santiago" value={timezoneName} />
-            <Field keyboardType="numbers-and-punctuation" label="Hora del aviso diario" onChangeText={setDailyTime} placeholder="07:00" value={dailyTime} />
+            <NativeDateTimeField label="Hora del aviso diario" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} />
             <ChoiceRow<Toggle> label="Aviso del plan diario" onChange={setDaily} options={toggleOptions} value={daily} />
             <ChoiceRow<Toggle> label="Avisos según la hora de cada comida" onChange={setMeals} options={toggleOptions} value={meals} />
           </Card>

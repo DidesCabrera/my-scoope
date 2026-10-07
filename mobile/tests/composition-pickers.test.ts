@@ -61,7 +61,7 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.ok(configuration < impactPreview);
   matches(picker, /Porción \(g\)/);
   matches(picker, /<Scale color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
-  matches(picker, /<Clock color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
+  matches(picker, /<NativeDateTimeField[^>]*mode="time"/);
   matches(picker, /<NotebookPen color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   matches(picker, /<CalendarDays color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   matches(picker, /<Text style=\{styles\.compactFieldLabel\}>Porción \(g\)<\/Text>/);
@@ -72,7 +72,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /style=\{styles\.previewHeading\}/);
   matches(picker, /previewHeading: \{[^}]*justifyContent: "space-between"[^}]*width: "100%"/);
   omits(picker, /Actualizando previsualización/);
-  matches(picker, /Hora \(HH:MM\)/);
+  matches(picker, /label="Hora"/);
   matches(picker, /style=\{styles\.configurationDivider\}/);
   matches(picker, /accessibilityLabel=\{noteEditing \? "Ocultar edición de nota" : "Editar nota"\}/);
   matches(picker, /noteEditing \? <TextInput/);

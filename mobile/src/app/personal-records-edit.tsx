@@ -6,8 +6,9 @@ import { userFacingError } from "@/api/errors";
 import type { OnboardingStateData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, Screen } from "@/components/ui";
+import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, NativeDateTimeField, Screen } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { localDateValue } from "@/presentation/date-time-values";
 
 type Section = "body" | "metrics" | "planning" | "preferences";
 const titles: Record<Section, string> = { body: "Ficha corporal", metrics: "Métricas corporales", planning: "Objetivo y actividad", preferences: "Preferencias alimentarias" };
@@ -69,7 +70,7 @@ export default function PersonalRecordsEditScreen() {
       <Card style={styles.form}>
         {!record ? <Text style={styles.loading}>Cargando información…</Text> : null}
         {section === "body" ? <>
-          <Field label="Fecha de nacimiento" onChangeText={(value) => set("birth_date", value)} placeholder="AAAA-MM-DD" value={values.birth_date ?? ""} />
+          <NativeDateTimeField label="Fecha de nacimiento" maximumValue={localDateValue()} mode="date" onChange={(value) => set("birth_date", value)} value={values.birth_date ?? ""} />
           <ChoiceRow label="Sexo para cálculo nutricional" onChange={(value) => set("sex", value)} options={[{ label: "Femenino", value: "female" }, { label: "Masculino", value: "male" }]} value={values.sex ?? ""} />
           <Field keyboardType="number-pad" label="Altura en centímetros" onChangeText={(value) => set("height_cm", value)} value={values.height_cm ?? ""} />
         </> : null}

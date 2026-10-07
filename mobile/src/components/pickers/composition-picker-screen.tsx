@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { CalendarDays, Clock, NotebookPen, Pencil, Scale, Search } from "lucide-react-native";
+import { CalendarDays, NotebookPen, Pencil, Scale, Search } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,7 +23,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, MealPanels } from "@/components/libraries/entity-panels";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, InlineNotice, LoadingState, SectionTitle, textStyles } from "@/components/ui";
+import { Button, Card, InlineNotice, LoadingState, NativeDateTimeField, SectionTitle, textStyles } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
@@ -451,13 +451,7 @@ export function CompositionPickerScreen({
               ) : null}
               {isMealPicker ? (
                 <>
-                  <View style={styles.compactFieldRow}>
-                    <View style={styles.configurationLabel}>
-                      <Clock color={tokens.color.textMuted} size={18} />
-                      <Text style={styles.compactFieldLabel}>Hora (HH:MM)</Text>
-                    </View>
-                    <TextInput keyboardType="numbers-and-punctuation" onChangeText={(value) => { setHour(value); setPreview(null); }} placeholder="08:00" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.compactFieldInput} value={hour} />
-                  </View>
+                  <NativeDateTimeField containerStyle={styles.compactTimeField} label="Hora" minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
                   {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
                   <View style={styles.configurationDivider} />
                   <View style={styles.noteBlock}>
@@ -566,6 +560,7 @@ export function pickerConfigureHref(
 
 const styles = StyleSheet.create({
   compactFieldInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 40, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs, textAlign: "right", width: 128 },
+  compactTimeField: { borderRadius: tokens.radius.md, marginHorizontal: 0 },
   compactFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   compactFieldRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   configurationDivider: { backgroundColor: tokens.color.borderSoft, height: StyleSheet.hairlineWidth, width: "100%" },

@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { CalendarizationStatus, ReminderSettings, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { NativeReminderState, syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
@@ -115,7 +115,7 @@ export default function RemindersScreen() {
               />
             </View>
             <Field label="Zona horaria IANA" onChangeText={setTimezoneName} placeholder="America/Santiago" value={timezoneName} />
-            <Field keyboardType="numbers-and-punctuation" label="Aviso del plan diario" onChangeText={setDailyTime} placeholder="07:00" value={dailyTime} />
+            <NativeDateTimeField label="Aviso del plan diario" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} />
             <ChoiceRow<Toggle> label="Recordatorio diario" onChange={setDaily} options={toggleOptions} value={daily} />
             <ChoiceRow<Toggle> label="Recordatorios según hora de cada comida" onChange={setMeals} options={toggleOptions} value={meals} />
             <Button label="Guardar agenda" loading={saving} onPress={() => void save()} />

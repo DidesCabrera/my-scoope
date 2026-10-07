@@ -27,9 +27,10 @@ import { NutritionKpiSection } from "@/components/nutrition";
 import { EntityPanelTabs, MealPanels, type MealPanelItem, PanelSurface } from "@/components/panels";
 import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
-import { Button, Card, Field, InlineNotice, MyScoopeLogo, Pill, textStyles } from "@/components/ui";
+import { Button, Card, Field, InlineNotice, MyScoopeLogo, NativeDateTimeField, Pill, textStyles } from "@/components/ui";
 import type { OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
+import { localDateValue } from "@/presentation/date-time-values";
 
 export const onboardingJourneySteps = [
   { key: "login", shortLabel: "Acceso", label: "Acceso" },
@@ -506,7 +507,7 @@ function IdentityView({ index }: { index: number }) {
     <>
       <StepHeader description="La edad y el sexo usado para el cálculo forman parte de la estimación de tu gasto basal." eyebrow="Datos para el cálculo" icon={CircleUserRound} index={index} title="Ingresa tus datos personales" />
       <Card style={styles.profileCard}>
-        <Field inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={styles.profileQuestion} onChangeText={(value) => controller.onChange?.("birthDate", value)} placeholder="AAAA-MM-DD" value={controller.values.birthDate} />
+        <NativeDateTimeField inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={styles.profileQuestion} maximumValue={localDateValue()} mode="date" onChange={(value) => controller.onChange?.("birthDate", value)} value={controller.values.birthDate} />
         <View accessibilityRole="radiogroup" style={styles.identityChoiceField}>
           <Text style={styles.profileQuestion}>Sexo usado para el cálculo nutricional</Text>
           <View style={styles.identityChoiceRow}>
