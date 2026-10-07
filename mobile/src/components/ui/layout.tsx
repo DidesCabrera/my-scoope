@@ -16,7 +16,7 @@ type ScreenProps = PropsWithChildren<{
   headerMode?: "automatic" | "preserve";
   onHeaderVisibilityChange?: (visible: boolean) => void;
   refreshControl?: ReactElement<RefreshControlProps>;
-  scroll?: boolean;
+  scroll?: boolean | "auto";
   scrollHeader?: ReactNode;
   stickyHeader?: ReactNode;
   stickyHeaderStyle?: StyleProp<ViewStyle>;
@@ -32,6 +32,8 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [panelDragging, setPanelDragging] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
   const scrollControl = useMemo(() => ({ setPanelDragging }), []);
   useFocusEffect(useCallback(() => {
     if (headerMode === "preserve") return undefined;
@@ -44,16 +46,22 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
     setCompactHeaderVisible(visible);
     onHeaderVisibilityChange?.(visible);
   }, [onHeaderVisibilityChange]);
+  const contentOverflows = contentHeight > viewportHeight + 1;
+  const scrollEnabled = !panelDragging && (scroll === true || (scroll === "auto" && contentOverflows));
   return (
     <ScreenScrollContext.Provider value={scrollControl}>
     <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
       {scroll ? (
         <NestableScrollContainer
+          alwaysBounceVertical={scroll === "auto" ? contentOverflows : undefined}
+          bounces={scroll === "auto" ? contentOverflows : undefined}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          onContentSizeChange={(_width, height) => setContentHeight(height)}
+          onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
           onScroll={(event) => setCompactIdentityVisible(isHeaderIdentityVisible(event.nativeEvent.contentOffset.y))}
           refreshControl={refreshControl}
-          scrollEnabled={!panelDragging}
+          scrollEnabled={scrollEnabled}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           stickyHeaderIndices={stickyHeaderIndex === undefined ? undefined : [stickyHeaderIndex]}

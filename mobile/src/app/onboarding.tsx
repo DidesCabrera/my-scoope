@@ -222,7 +222,7 @@ export default function OnboardingScreen() {
     onChoosePlan: (plan) => void choosePlan(plan),
   };
 
-  return <Screen contentStyle={styles.screen}><OnboardingJourneyView controller={controller} step={step} /></Screen>;
+  return <Screen contentStyle={styles.screen} scroll={introSteps.includes(step) ? false : "auto"}><OnboardingJourneyView controller={controller} step={step} /></Screen>;
 }
 
 const styles = StyleSheet.create({

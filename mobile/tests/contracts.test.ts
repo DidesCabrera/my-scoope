@@ -987,7 +987,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
   assertSourceMatch(journey, /<View style=\{styles\.centeredLogo\}><MyScoopeLogo \/><\/View>/);
   assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
-  assertSourceMatch(journey, /const usesCenteredTitleSpacing = index <= 6 \|\| brandedCentered/);
+  assertSourceMatch(journey, /const usesCenteredTitleSpacing = \(index <= 6 \|\| brandedCentered\) && !externalExplanationChrome/);
   assertSourceMatch(journey, /<StepHeader brandedCentered description="Compara lo que incluyen Free, Basic y Pro/);
   assertSourceMatch(journey, /styles\.introCentered/);
   assertSourceMatch(journey, /styles\.centeredTitleSpacing/);
@@ -1027,6 +1027,10 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
   assertSourceMatch(journey, /loginAction: \{ marginBottom: 114, marginTop: "auto" \}/);
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
+  const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
+  const onboardingPreview = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding-preview.tsx"), "utf8");
+  assertSourceMatch(onboarding, /scroll=\{introSteps\.includes\(step\) \? false : "auto"\}/);
+  assertSourceMatch(onboardingPreview, /scroll=\{stepIndex >= 6 \? "auto" : false\}/);
 });
 
 test("the label capture gallery exposes the complete happy-path storyboard without product side effects", async () => {
@@ -1045,6 +1049,8 @@ test("the label capture gallery exposes the complete happy-path storyboard witho
   assertSourceMatch(storyboard, /datos fijos|Yogur griego natural/);
   assertSourceMatch(storyboard, /Validamos nitidez antes de usar créditos/);
   assertSourceMatch(storyboard, /Confirmar y crear alimento/);
+  assertSourceMatch(storyboard, /intro: \{ leading: "back", trailing: null \}/);
+  assertSourceDoesNotMatch(storyboard, /leading: "menu"|PanelRight/);
   assertSourceDoesNotMatch(storyboard, /apiRequest|expo-camera|useCameraPermissions|useSession/);
 });
 
