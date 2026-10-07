@@ -4,15 +4,16 @@ import test from "node:test";
 
 import { assertSourceDoesNotMatch, assertSourceMatch, readTestFile } from "./support/source-contract";
 
-test("account and disclosures expose the public legal policies", async () => {
+test("legal policies live in disclosures instead of the account action sheet", async () => {
   const account = await readTestFile(path.resolve(process.cwd(), "src/app/account.tsx"), "utf8");
   const disclosures = await readTestFile(path.resolve(process.cwd(), "src/app/disclosures.tsx"), "utf8");
 
-  for (const source of [account, disclosures]) {
+  for (const source of [disclosures]) {
     assertSourceMatch(source, /\/privacy\//);
     assertSourceMatch(source, /\/terms\//);
     assertSourceMatch(source, /\/refund-policy\//);
   }
+  assertSourceDoesNotMatch(account, /Política de privacidad|Términos de uso|Cancelaciones y reembolsos/);
   assertSourceMatch(account, /\/support\//);
 });
 
@@ -24,6 +25,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(details, /apple_app_store: "App Store"/);
   assertSourceMatch(subscription, /label: "Acciones de suscripciones y bolsas"/);
   assertSourceMatch(subscription, /fallback: "\/account", identityVisible: compactHeaderVisible, mode: "back", title: "Suscripciones y Bolsas"/);
+  assertSourceMatch(subscription, /isOnboarding[\s\S]*mode: "default", title: "Elige un plan"/);
   assertSourceMatch(subscription, /<Screen headerMode="preserve" onHeaderVisibilityChange=\{setCompactHeaderVisible\}>/);
   assertSourceMatch(subscription, /<AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" \/>/);
   assertSourceMatch(subscription, /Ver detalles de Suscripciones y Bolsas/);
@@ -51,7 +53,11 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /productStatusAndroid === "not-found"/);
   assertSourceMatch(subscription, /androidUnavailable \? "No disponible" : "Consultando…"/);
   assertSourceMatch(subscription, /const subscriptionPlans = \["Basic", "Pro"\]\.map/);
-  assertSourceMatch(subscription, /<SubscriptionPlanCard accent=\{tokens\.color\.fat\} benefits=\{commercialPlanBenefits\.Free\} caption="Incluido sin costo\." name="Free" price="\$0\/mes" \/>/);
+  assertSourceMatch(subscription, /overview\?\.eligible && isOnboarding[\s\S]*name="Free" price="Gratis"/);
+  assertSourceMatch(subscription, /!isOnboarding \? <SubscriptionPlanCard[^>]*name="Free" price="\$0\/mes"/);
+  assertSourceMatch(subscription, /<MyScoopeLogo \/>[\s\S]*Elige un plan[\s\S]*Compara lo que incluyen Free, Basic y Pro/);
+  assertSourceMatch(subscription, /<SubscriptionPurchaseButton label="Continuar con Free"/);
+  assertSourceMatch(subscription, /!isOnboarding && overview\?\.can_buy_credit_packs/);
   assertSourceMatch(subscription, /<Card accent=\{subscriptionPlanAccent\(entitlements\?\.plan_name \?\? overview\?\.plan_name\)\}>/);
   assertSourceMatch(subscription, /<SubscriptionPlanCard accent=\{subscriptionPlanAccent\(plan\.planName\) \?\? tokens\.color\.contextual\}[^>]*key=\{plan\.planName\}/);
   assertSourceMatch(subscription, /<Card accent=\{tokens\.color\.carbs\} key=\{configured\.product_id\}>/);
@@ -61,6 +67,15 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(planCard, /<Text style=\{styles\.eyebrow\}>PLAN DE SUSCRIPCIÓN<\/Text>[\s\S]*<Text style=\{styles\.productName\}>\{name\}<\/Text>[\s\S]*<Text numberOfLines=\{1\} style=\{styles\.planPriceChipLabel\}>\{price\}<\/Text>/);
   assertSourceMatch(planCard, /\{benefits\.map\(\(item, index\) =>/);
   assertSourceMatch(subscription, /<Text style=\{textStyles\.caption\}>Elige la modalidad de tu suscripción\.<\/Text>/);
+  assertSourceMatch(subscription, /Información de la suscripción/);
+  assertSourceMatch(subscription, /<Card style=\{styles\.subscriptionInformationCard\}>\s*<SectionTitle title="Información de la suscripción" \/>/);
+  assertSourceDoesNotMatch(subscription, /<Card muted>\s*<SectionTitle title="Información de la suscripción" \/>/);
+  assertSourceMatch(subscription, /subscriptionInformationCard: \{ marginTop: tokens\.spacing\.lg \}/);
+  assertSourceMatch(subscription, /se renueva automáticamente/);
+  assertSourceMatch(subscription, /label="Política de privacidad"/);
+  assertSourceMatch(subscription, /label="Términos de uso"/);
+  assertSourceMatch(subscription, /label="Cancelaciones y reembolsos"/);
+  assertSourceMatch(subscription, /\/refund-policy\//);
   assertSourceMatch(planCard, /Free:[\s\S]*Hasta 12[\s\S]*Hasta 4[\s\S]*1 de hasta 2 semanas[\s\S]*Sin créditos incluidos/);
   assertSourceMatch(subscription, /<Text style=\{styles\.eyebrow\}>BOLSA DE CRÉDITOS<\/Text>\s*<Text style=\{styles\.productName\}>\{configured\.credits\.toLocaleString\("es-CL"\)\} créditos<\/Text>/);
   assertSourceMatch(subscription, /productName: \{[^}]*fontSize: 26[^}]*fontWeight: tokens\.weight\.extraBold/);
@@ -88,6 +103,18 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceDoesNotMatch(subscription, /label=\{`Suscribirme a \$\{configured\.plan_name\}`\}/);
   assertSourceDoesNotMatch(subscription, /getStorefront\(\)/);
   assertSourceDoesNotMatch(subscription, /Diagnóstico App Store: tienda/);
+});
+
+test("UI gallery previews both subscription entry contexts without store side effects", async () => {
+  const gallery = await readTestFile(path.resolve(process.cwd(), "src/components/dev/subscription-gallery.tsx"), "utf8");
+
+  assertSourceMatch(gallery, /Desde onboarding/);
+  assertSourceMatch(gallery, /Desde Cuenta/);
+  assertSourceMatch(gallery, /Elige un plan/);
+  assertSourceMatch(gallery, /Suscripciones y Bolsas/);
+  assertSourceMatch(gallery, /Cancelaciones y reembolsos/);
+  assertSourceMatch(gallery, /export function SubscriptionPreviewContent/);
+  assertSourceDoesNotMatch(gallery, /useIAP|apiRequest|fetchProducts|requestPurchase/);
 });
 
 test("App Store purchases recover a completed StoreKit transaction before reporting failure", async () => {

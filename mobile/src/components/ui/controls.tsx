@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -60,6 +61,7 @@ export function Button({
 export function Field({
   inputStyle,
   label,
+  labelIcon,
   labelStyle,
   value,
   onChangeText,
@@ -71,6 +73,7 @@ export function Field({
 }: {
   inputStyle?: StyleProp<TextStyle>;
   label: string;
+  labelIcon?: ReactNode;
   labelStyle?: StyleProp<TextStyle>;
   value: string;
   onChangeText(value: string): void;
@@ -82,7 +85,10 @@ export function Field({
 }) {
   return (
     <View style={styles.field}>
-      <Text style={[styles.fieldLabel, labelStyle]}>{label}</Text>
+      <View style={styles.fieldLabelRow}>
+        {labelIcon}
+        <Text style={[styles.fieldLabel, labelStyle]}>{label}</Text>
+      </View>
       <TextInput
         accessibilityLabel={label}
         autoCapitalize={autoCapitalize}
@@ -148,6 +154,7 @@ const styles = StyleSheet.create({
   buttonSecondaryText: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: "700" },
   buttonDangerText: { color: tokens.color.danger },
   field: { gap: 7 },
+  fieldLabelRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   input: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, color: tokens.color.textMain, fontSize: 17, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: tokens.spacing.lg },
   choiceRow: { flexDirection: "row", gap: tokens.spacing.sm },

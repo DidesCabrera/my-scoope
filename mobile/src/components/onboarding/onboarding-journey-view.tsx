@@ -18,8 +18,8 @@ import {
   Sparkles,
   Target,
 } from "lucide-react-native";
-import { createContext, type ComponentType, type ReactNode, useContext, useMemo } from "react";
-import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import { createContext, type ComponentType, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import { Animated, PanResponder, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { DailyPlanMealDetailList, type DailyPlanMealDetailItem, EntityDetailPage, EntityDetailSection } from "@/components/details";
@@ -103,6 +103,7 @@ export const onboardingJourneyPreviewValues: OnboardingJourneyValues = {
 };
 
 const JourneyControllerContext = createContext<OnboardingJourneyController>({ values: onboardingJourneyPreviewValues });
+const JourneyPresentationContext = createContext({ externalExplanationChrome: false });
 
 function useJourneyController() {
   return useContext(JourneyControllerContext);
@@ -116,14 +117,15 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
   index: number;
   title: string;
 }) {
+  const { externalExplanationChrome } = useContext(JourneyPresentationContext);
   const isExplanation = index >= 1 && index <= 5;
   const isProfileStep = index >= 7 && index <= 12;
   const usesBrandedHeader = isExplanation || brandedCentered;
   const isCenteredIntro = index <= 12 || brandedCentered;
-  const usesCenteredTitleSpacing = index <= 6 || brandedCentered;
+  const usesCenteredTitleSpacing = (index <= 6 || brandedCentered) && !externalExplanationChrome;
   return (
     <View style={[styles.intro, isCenteredIntro && styles.introCentered]}>
-      {usesBrandedHeader ? <View style={styles.centeredLogo}><MyScoopeLogo /></View> : isProfileStep ? <ProfileProgress index={index} /> : index === 6 ? null : (
+      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={styles.centeredLogo}><MyScoopeLogo /></View> : null) : isProfileStep ? <ProfileProgress index={index} /> : index === 6 ? null : (
         <View style={styles.stepMeta}>
           <Text style={styles.stepCount}>{String(index + 1).padStart(2, "0")} / {onboardingJourneySteps.length}</Text>
           <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.progressTrack}>
@@ -139,7 +141,9 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
   );
 }
 
-function ExplanationDots({ action, index }: { action?: ReactNode; index: number }) {
+function ExplanationDots({ action, forceVisible = false, index }: { action?: ReactNode; forceVisible?: boolean; index: number }) {
+  const { externalExplanationChrome } = useContext(JourneyPresentationContext);
+  if (externalExplanationChrome && !forceVisible) return null;
   const activeIndex = index - 1;
   return (
     <View style={[styles.explanationFooter, action ? styles.explanationFooterWithAction : null]}>
@@ -763,9 +767,9 @@ function GeneratedDailyPlanView() {
 }
 
 const plans = [
-  { accent: tokens.color.fat, caption: "Incluido sin costo.", name: "Free", price: "$0/mes" },
-  { accent: tokens.color.carbs, annualPrice: "$39.900/año · Ahorra 17%", name: "Basic", price: "$3.990/mes" },
-  { accent: tokens.color.protein, annualPrice: "$69.900/año · Ahorra 17%", name: "Pro", price: "$6.990/mes" },
+  { accent: tokens.color.fat, caption: "Incluido sin costo.", name: "Free", price: "Gratis" },
+  { accent: tokens.color.carbs, name: "Basic", price: "Ver precio en la tienda" },
+  { accent: tokens.color.protein, name: "Pro", price: "Ver precio en la tienda" },
 ] as const;
 
 function PlansView({ index }: { index: number }) {
@@ -777,16 +781,13 @@ function PlansView({ index }: { index: number }) {
         {plans.map((plan) => (
           <SubscriptionPlanCard accent={plan.accent} benefits={commercialPlanBenefits[plan.name]} caption={"caption" in plan ? plan.caption : undefined} key={plan.name} name={plan.name} price={plan.price}>
             {plan.name === "Free" ? <SubscriptionPurchaseButton label="Continuar con Free" onPress={() => controller.onChoosePlan?.("Free")} /> : (
-              <View style={styles.subscriptionActions}>
-                <SubscriptionPurchaseButton label={`Mensual · ${plan.price}`} onPress={() => controller.onChoosePlan?.(plan.name)} />
-                <SubscriptionPurchaseButton label={`Anual · ${plan.annualPrice}`} onPress={() => controller.onChoosePlan?.(plan.name)} />
-              </View>
+              <SubscriptionPurchaseButton label={`Ver opciones de ${plan.name}`} onPress={() => controller.onChoosePlan?.(plan.name)} />
             )}
           </SubscriptionPlanCard>
         ))}
       </View>
       {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
-      <Text style={styles.quietCenter}>Precios mensuales en CLP. También habrá opciones anuales.</Text>
+      <Text style={styles.quietCenter}>Los precios y periodos vigentes se muestran directamente desde la tienda antes de comprar.</Text>
     </>
   );
 }
@@ -813,13 +814,59 @@ export function OnboardingJourneyView({ controller, step }: { controller?: Onboa
   const index = onboardingJourneySteps.findIndex((item) => item.key === step);
   const ViewComponent = views[step];
   const resolvedController = useMemo(() => controller ?? { values: onboardingJourneyPreviewValues }, [controller]);
+  const [translateX] = useState(() => new Animated.Value(0));
+  const [transitioning, setTransitioning] = useState(false);
+  const { width } = useWindowDimensions();
+  const interactiveExplanation = Boolean(controller) && index >= 1 && index <= 5;
+  const moveToExplanation = useCallback((direction: "back" | "next") => {
+    if (transitioning) return;
+    setTransitioning(true);
+    const exitX = direction === "next" ? -width : width;
+    Animated.timing(translateX, { duration: 170, toValue: exitX, useNativeDriver: true }).start(({ finished }) => {
+      if (!finished) {
+        setTransitioning(false);
+        return;
+      }
+      if (direction === "next") resolvedController.onNext?.();
+      else resolvedController.onBack?.();
+      translateX.setValue(-exitX);
+      requestAnimationFrame(() => {
+        Animated.timing(translateX, { duration: 190, toValue: 0, useNativeDriver: true }).start(() => {
+          setTransitioning(false);
+        });
+      });
+    });
+  }, [resolvedController, transitioning, translateX, width]);
   const swipeResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_event, gesture) => Boolean(controller) && index >= 1 && index <= 5 && Math.abs(gesture.dx) > 18 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-    onPanResponderRelease: (_event, gesture) => {
-      if (gesture.dx <= -48) resolvedController.onNext?.();
-      if (gesture.dx >= 48) resolvedController.onBack?.();
+    onMoveShouldSetPanResponder: (_event, gesture) => interactiveExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+    onMoveShouldSetPanResponderCapture: (_event, gesture) => interactiveExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+    onPanResponderMove: (_event, gesture) => {
+      if (!transitioning) translateX.setValue(gesture.dx);
     },
-  }), [controller, index, resolvedController]);
+    onPanResponderRelease: (_event, gesture) => {
+      if (gesture.dx <= -48 || gesture.vx <= -0.45) moveToExplanation("next");
+      else if (gesture.dx >= 48 || gesture.vx >= 0.45) moveToExplanation("back");
+      else Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: 0, useNativeDriver: true }).start();
+    },
+    onPanResponderTerminate: () => Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: 0, useNativeDriver: true }).start(),
+  }), [interactiveExplanation, moveToExplanation, translateX, transitioning]);
+  if (interactiveExplanation) {
+    return (
+      <JourneyControllerContext.Provider value={resolvedController}>
+        <JourneyPresentationContext.Provider value={{ externalExplanationChrome: true }}>
+          <View style={[styles.screen, styles.interactiveExplanationScreen]}>
+            <View style={styles.centeredLogo}><MyScoopeLogo /></View>
+            <View {...swipeResponder.panHandlers} style={styles.explanationViewport}>
+              <Animated.View style={[styles.explanationSlide, { transform: [{ translateX }] }]}>
+                <ViewComponent index={index} />
+              </Animated.View>
+            </View>
+            <ExplanationDots action={index === 5 ? <ContinueChip /> : undefined} forceVisible index={index} />
+          </View>
+        </JourneyPresentationContext.Provider>
+      </JourneyControllerContext.Provider>
+    );
+  }
   return (
     <JourneyControllerContext.Provider value={resolvedController}>
       <View {...swipeResponder.panHandlers} style={[styles.screen, index >= 7 && index <= 12 && styles.profileScreen]}><ViewComponent index={index} /></View>
@@ -829,6 +876,9 @@ export function OnboardingJourneyView({ controller, step }: { controller?: Onboa
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.lg, minHeight: 690, paddingBottom: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 },
+  interactiveExplanationScreen: { flex: 1 },
+  explanationViewport: { flex: 1, overflow: "hidden", width: "100%" },
+  explanationSlide: { flex: 1, gap: tokens.spacing.lg, paddingTop: tokens.spacing.xxl },
   profileScreen: { paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 - 32 },
   intro: { alignItems: "flex-start", gap: tokens.spacing.sm },
   introCentered: { alignItems: "center" },
@@ -953,5 +1003,4 @@ const styles = StyleSheet.create({
   adjustNutritionAction: { alignItems: "center", justifyContent: "center", minHeight: 40, paddingHorizontal: tokens.spacing.md },
   adjustNutritionLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium },
   planList: { gap: tokens.spacing.sm },
-  subscriptionActions: { gap: tokens.spacing.sm },
 });

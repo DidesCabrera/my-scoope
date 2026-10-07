@@ -23,6 +23,7 @@
   <meta name="twitter:image" content="{{ card_url }}">
   <title>{{ snapshot.subject.title }} · MyScoope</title>
   <link rel="stylesheet" href="{% static 'notas/css/sharing_preview.css' %}">
+  <script src="{% static 'notas/js/sharing_preview.js' %}" defer></script>
 </head>
 <body>
   <main class="share-shell">
@@ -100,24 +101,13 @@
     {% endif %}
 
     <section class="share-action" aria-live="polite">
-      {% if not invitation %}
-        <a class="share-button share-button--secondary" href="myscoope://share/{{ resource.public_id }}">Abrir en la app</a>
-      {% endif %}
-      {% if already_claimed or request.GET.claimed %}
-        <p class="share-action__success">Este contenido ya está en tu Inbox de MyScoope.</p>
-        <a class="share-button share-button--secondary" href="/app/inbox/">Ir al Inbox</a>
-      {% elif resource.claim_policy == "none" %}
-        <p>Puedes consultar este contenido desde este enlace mientras esté activo.</p>
-      {% else %}
-        {% if pending_claim %}<p>Sesión iniciada. Confirma para agregar el contenido a tu Inbox.</p>{% endif %}
-        {% if claim_error %}<p class="share-action__error">No fue posible agregar este contenido.</p>{% endif %}
-        <form method="post" action="{{ claim_url }}">
-          {% csrf_token %}
-          <button class="share-button" type="submit">
-            {% if pending_claim %}Confirmar y agregar{% else %}Agregar a MyScoope{% endif %}
-          </button>
-        </form>
-      {% endif %}
+      <a
+        class="share-button"
+        data-app-store-url="{{ app_store_url }}"
+        data-deep-link="{{ app_deep_link }}"
+        data-play-store-url="{{ play_store_url }}"
+        href="{% if invitation %}myscoope://{% else %}myscoope://share/{{ resource.public_id }}{% endif %}"
+      >Abrir en la app</a>
     </section>
   </main>
 </body>

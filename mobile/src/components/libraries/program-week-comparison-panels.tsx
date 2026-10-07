@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   header: { minHeight: 32 },
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, textAlign: "center", textTransform: "uppercase" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, textAlign: "center" },
-  leadingCell: { flexBasis: "30%", flexGrow: 0, flexShrink: 0, minWidth: 0, textAlign: "left" },
+  leadingCell: { flexBasis: "38%", flexGrow: 0, flexShrink: 0, minWidth: 0, textAlign: "left" },
   dataCell: { flex: 1, minWidth: 0 },
   weekIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   weekName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },

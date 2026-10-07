@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import logging
+import time
 import uuid
 from dataclasses import dataclass
 from enum import StrEnum
 
+import jwt
+import requests
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -12,6 +16,12 @@ from django.db.models import Q
 from accounts.models import AccountDeletionRecord
 
 POLICY_VERSION = "account-deletion.v1"
+APPLE_REVOCATION_URL = "https://appleid.apple.com/auth/revoke"
+logger = logging.getLogger(__name__)
+
+
+class AppleCredentialRevocationError(RuntimeError):
+    """Raised when Apple credentials exist but cannot be revoked safely."""
 
 
 class RetentionAction(StrEnum):
@@ -178,8 +188,74 @@ def _delete_private_culinary_library(user, deleted_counts):
     _delete_queryset(Template.objects.filter(owner=user), deleted_counts)
 
 
-@transaction.atomic
+def _apple_client_secret(app) -> str:
+    certificate_key = str(app.settings.get("certificate_key", "")).strip()
+    if not app.client_id or not app.secret or not app.key or not certificate_key:
+        raise AppleCredentialRevocationError("Apple sign-in credentials are incomplete.")
+    now = int(time.time())
+    return jwt.encode(
+        {
+            "iss": app.key,
+            "aud": "https://appleid.apple.com",
+            "sub": app.client_id.split(",", 1)[0].strip(),
+            "iat": now,
+            "exp": now + 60 * 60,
+        },
+        certificate_key,
+        algorithm="ES256",
+        headers={"kid": app.secret, "alg": "ES256"},
+    )
+
+
+def revoke_apple_credentials(*, user) -> None:
+    """Revoke stored Sign in with Apple grants before deleting local identity."""
+
+    SocialAccount = _model("socialaccount.SocialAccount")
+    SocialToken = _model("socialaccount.SocialToken")
+    apple_accounts = SocialAccount.objects.filter(user=user, provider="apple")
+    for account in apple_accounts:
+        token = SocialToken.objects.filter(account=account).select_related("app").first()
+        if token is None:
+            logger.warning(
+                "Apple account deletion has no stored token to revoke (account_id=%s)",
+                account.pk,
+            )
+            continue
+        app = token.app
+        if app is None:
+            raise AppleCredentialRevocationError("Apple sign-in application is unavailable.")
+        credential = token.token_secret or token.token
+        hint = "refresh_token" if token.token_secret else "access_token"
+        try:
+            response = requests.post(
+                APPLE_REVOCATION_URL,
+                data={
+                    "client_id": app.client_id.split(",", 1)[0].strip(),
+                    "client_secret": _apple_client_secret(app),
+                    "token": credential,
+                    "token_type_hint": hint,
+                },
+                timeout=10,
+            )
+        except (jwt.PyJWTError, requests.RequestException, ValueError) as exc:
+            raise AppleCredentialRevocationError(
+                "Apple sign-in credentials could not be revoked."
+            ) from exc
+        if response.status_code != 200:
+            raise AppleCredentialRevocationError(
+                "Apple sign-in credentials could not be revoked."
+            )
+
+
 def delete_user_account(*, user, source: str) -> AccountDeletionResult:
+    """Revoke external identity, then erase personal data atomically."""
+
+    revoke_apple_credentials(user=user)
+    return _delete_user_account_data(user=user, source=source)
+
+
+@transaction.atomic
+def _delete_user_account_data(*, user, source: str) -> AccountDeletionResult:
     """Erase an account's personal data while retaining minimal financial evidence."""
 
     User = get_user_model()

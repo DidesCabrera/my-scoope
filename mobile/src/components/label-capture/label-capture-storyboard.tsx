@@ -3,8 +3,6 @@ import {
   Check,
   CheckCheck,
   ChevronLeft,
-  Maximize2,
-  PanelRight,
   ScanLine,
   ShieldCheck,
 } from "lucide-react-native";
@@ -12,7 +10,7 @@ import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { Button, Field, InlineNotice, MacroLoadingIndicator, Pill, SectionHeading } from "@/components/ui";
+import { Button, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, SectionHeading } from "@/components/ui";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { tokens } from "@/design/tokens";
@@ -41,8 +39,8 @@ const navigationTitles: Record<LabelCaptureStoryboardStep, string> = {
   saved: "",
 };
 
-const navigationActions: Record<LabelCaptureStoryboardStep, { leading: "menu" | "back" | null; trailing: "Cancelar" | "Listo" | null }> = {
-  intro: { leading: "menu", trailing: null },
+const navigationActions: Record<LabelCaptureStoryboardStep, { leading: "back" | null; trailing: "Cancelar" | "Listo" | null }> = {
+  intro: { leading: "back", trailing: null },
   camera: { leading: "back", trailing: "Cancelar" },
   preview: { leading: "back", trailing: "Cancelar" },
   processing: { leading: null, trailing: null },
@@ -58,7 +56,6 @@ function StoryboardNavigationHeader({ step }: { step: LabelCaptureStoryboardStep
   return (
     <View accessibilityLabel={title ? `Encabezado de ${title}` : "Encabezado sin título"} style={styles.navigationHeader}>
       <View style={[styles.navigationSide, styles.navigationLeadingSide]}>
-        {actions.leading === "menu" ? <PanelRight color={tokens.color.textMuted} size={25} strokeWidth={2} /> : null}
         {actions.leading === "back" ? (
           <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={noop} style={({ pressed }) => pressed && styles.navigationActionPressed}>
             <ChevronLeft color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
@@ -240,7 +237,13 @@ function PreviewView() {
         </View>
       </View>
       <View style={styles.bottomActions}>
-        <Button label="Usar esta foto · 1 crédito" onPress={noop} />
+        <View style={styles.retentionPanel}>
+          <View style={styles.retentionRow}>
+            <View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Autorizar análisis con OpenAI</Text><Text style={styles.qualityDetail}>Se enviará temporalmente esta copia reducida y sin metadatos para extraer los valores.</Text></View>
+            <View style={styles.toggle}><View style={styles.toggleKnob} /></View>
+          </View>
+        </View>
+        <Button label="Enviar a OpenAI y digitalizar · 1 crédito" onPress={noop} />
         <Button label="Tomar otra foto" onPress={noop} variant="secondary" />
       </View>
     </>
@@ -293,14 +296,13 @@ const values = [
 function ReviewView() {
   return (
     <>
-      <View style={styles.reviewEvidence}>
-        <FullBleedSquare surfaceStyle={styles.reviewPhoto}>
-          <NutritionLabelMock compact edgeToEdge />
-          <Pressable accessibilityLabel="Expandir foto" accessibilityRole="button" onPress={noop} style={({ pressed }) => [styles.expandPhotoButton, pressed && styles.expandPhotoButtonPressed]}>
-            <Maximize2 color={tokens.color.textMain} size={18} strokeWidth={2.2} />
-          </Pressable>
-        </FullBleedSquare>
-        <View style={styles.confidenceNotice}><Text style={styles.confidenceNoticeText}>Confianza alta. La lectura pasó las comprobaciones automáticas.</Text></View>
+      <View style={styles.reviewEvidenceGroup}>
+        <View accessibilityLabel="Fotografía fija con zoom y desplazamiento" style={styles.reviewEvidence}>
+          <FullBleedSquare surfaceStyle={styles.reviewPhoto}>
+            <NutritionLabelMock compact edgeToEdge />
+          </FullBleedSquare>
+        </View>
+        <View style={styles.confidenceNotice}><Text style={styles.confidenceNoticeText}>La foto permanece fija mientras desplazas los valores. Confianza alta.</Text></View>
       </View>
       <View style={styles.reviewForm}>
         <View style={styles.reviewTitleRow}><Text style={styles.reviewTitle}>Valores por 100 g</Text></View>
@@ -322,7 +324,7 @@ function ReviewView() {
             </View>
           </View>
         </View>
-        <Field autoCapitalize="words" label="Nombre del producto" onChangeText={noop} value="Yogur griego natural" />
+        <Field autoCapitalize="words" label="Nombre del producto" labelIcon={<EntityIcon entity="food" size="compact" />} onChangeText={noop} value="Yogur griego natural" />
       </View>
       <View style={styles.reviewContinue}><Button label="Continuar" onPress={noop} /></View>
     </>
@@ -473,11 +475,10 @@ const styles = StyleSheet.create({
   taskActive: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   quietCenter: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16, marginTop: 20, textAlign: "center" },
   reviewEvidence: { gap: 0 },
+  reviewEvidenceGroup: { gap: 0 },
   reviewForm: { gap: tokens.card.gap, marginTop: tokens.spacing.sm },
   reviewContinue: { marginTop: tokens.spacing.lg },
   reviewPhoto: { position: "relative" },
-  expandPhotoButton: { alignItems: "center", backgroundColor: "rgba(5,10,15,0.88)", borderColor: tokens.color.borderStrong, borderRadius: 20, borderWidth: 1, bottom: tokens.spacing.md, height: 40, justifyContent: "center", position: "absolute", right: tokens.spacing.md, width: 40 },
-  expandPhotoButtonPressed: { opacity: 0.72, transform: [{ scale: 0.96 }] },
   confidenceNotice: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
   confidenceNoticeText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 19 },
   reviewTitleRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
@@ -485,7 +486,7 @@ const styles = StyleSheet.create({
   nutritionRows: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: -tokens.spacing.xs },
   nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   nutritionRowLast: { borderBottomWidth: 0 },
-  portionRow: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, marginTop: tokens.spacing.sm },
+  portionRow: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, marginTop: tokens.spacing.sm, paddingBottom: tokens.spacing.md, paddingTop: tokens.spacing.md },
   nutritionLabel: { color: tokens.color.textMuted, flex: 1, fontSize: 14, lineHeight: 20 },
   nutritionLabelEmphasis: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
   nutritionInputSurface: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", height: 32, minWidth: 112, paddingHorizontal: tokens.spacing.sm },

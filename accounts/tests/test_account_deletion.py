@@ -1,5 +1,7 @@
 from datetime import date
+from unittest.mock import Mock, patch
 
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from django.apps import apps
 from django.contrib.auth import authenticate, get_user_model
 from django.test import TestCase, override_settings
@@ -8,7 +10,11 @@ from django.utils import timezone
 
 from accounts.models import AccountDeletionRecord, AccountSubscription
 from accounts.seed_plans import seed_account_plans
-from accounts.services.deletion import MODEL_RETENTION_POLICY, POLICY_VERSION
+from accounts.services.deletion import (
+    MODEL_RETENTION_POLICY,
+    POLICY_VERSION,
+    AppleCredentialRevocationError,
+)
 from ai_assistant.models import AIUsageEvent
 from billing.models import (
     BillingPayment,
@@ -258,6 +264,83 @@ class AccountDeletionViewTests(TestCase):
         self.assertEqual(record.retained_counts["billing.GooglePlayAccountToken"], 1)
         self.assertNotContains(self.client.get(reverse("accounts:delete_account"), follow=True), "Mi mezcla privada")
         self.assertIsNone(authenticate(username=original_username, password=self.password))
+
+    @patch("accounts.services.deletion._apple_client_secret", return_value="signed-client-secret")
+    @patch("accounts.services.deletion.requests.post")
+    def test_deletion_revokes_stored_apple_refresh_token_before_erasing_account(
+        self,
+        post,
+        _client_secret,
+    ):
+        apple_app = SocialApp.objects.create(
+            provider="apple",
+            name="Apple",
+            client_id="com.myscoope.web",
+            secret="APPLEKEYID",
+            key="APPLETEAMID",
+            settings={"certificate_key": "test-private-key"},
+        )
+        apple_account = SocialAccount.objects.create(
+            user=self.user,
+            provider="apple",
+            uid="apple-user-id",
+        )
+        SocialToken.objects.create(
+            app=apple_app,
+            account=apple_account,
+            token="access-token",
+            token_secret="refresh-token",
+        )
+        post.return_value = Mock(status_code=200)
+
+        from accounts.services.deletion import delete_user_account
+
+        delete_user_account(user=self.user, source="test")
+
+        post.assert_called_once_with(
+            "https://appleid.apple.com/auth/revoke",
+            data={
+                "client_id": "com.myscoope.web",
+                "client_secret": "signed-client-secret",
+                "token": "refresh-token",
+                "token_type_hint": "refresh_token",
+            },
+            timeout=10,
+        )
+        self.assertFalse(SocialAccount.objects.filter(pk=apple_account.pk).exists())
+
+    @patch("accounts.services.deletion._apple_client_secret", return_value="signed-client-secret")
+    @patch("accounts.services.deletion.requests.post")
+    def test_failed_apple_revocation_keeps_the_account_intact(self, post, _client_secret):
+        apple_app = SocialApp.objects.create(
+            provider="apple",
+            name="Apple",
+            client_id="com.myscoope.web",
+            secret="APPLEKEYID",
+            key="APPLETEAMID",
+            settings={"certificate_key": "test-private-key"},
+        )
+        apple_account = SocialAccount.objects.create(
+            user=self.user,
+            provider="apple",
+            uid="apple-user-id",
+        )
+        SocialToken.objects.create(
+            app=apple_app,
+            account=apple_account,
+            token="access-token",
+            token_secret="refresh-token",
+        )
+        post.return_value = Mock(status_code=503)
+
+        from accounts.services.deletion import delete_user_account
+
+        with self.assertRaises(AppleCredentialRevocationError):
+            delete_user_account(user=self.user, source="test")
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+        self.assertTrue(SocialAccount.objects.filter(pk=apple_account.pk).exists())
 
 
 class AccountDeletionPolicyCoverageTests(TestCase):

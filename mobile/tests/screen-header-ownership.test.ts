@@ -39,7 +39,9 @@ test("Screen has one implementation and never overrides externally owned headers
   assertSourceMatch(layout, /onScroll=\{\(event\) => setCompactIdentityVisible\(isHeaderIdentityVisible\(event\.nativeEvent\.contentOffset\.y\)\)\}/);
   assertSourceMatch(layout, /BOTTOM_SPACING = 96/);
   assertSourceMatch(layout, /paddingBottom: BOTTOM_SPACING/);
-  assertSourceDoesNotMatch(layout, /contentHeight|viewportHeight|screenContentLong|onContentSizeChange/);
+  assertSourceMatch(layout, /scroll\?: boolean \| "auto"/);
+  assertSourceMatch(layout, /contentOverflows = contentHeight > viewportHeight \+ 1/);
+  assertSourceMatch(layout, /scroll === "auto" && contentOverflows/);
   assertSourceMatch(layout, /screenContent: \{ flexGrow: 1/);
   assertSourceDoesNotMatch(layout, /screenContent: \{ flex: 1/);
   assert.equal((layout.match(/export function Screen/g) ?? []).length, 1);

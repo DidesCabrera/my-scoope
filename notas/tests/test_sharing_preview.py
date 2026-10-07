@@ -77,8 +77,19 @@ class SharingPreviewTests(TestCase):
         self.assertEqual(self.client.session["pending_share_claim_public_id"], str(self.resource.public_id))
         self.client.force_login(self.recipient)
         returned = self.client.get(expected_next)
-        self.assertContains(returned, "Confirmar y agregar")
+        self.assertContains(returned, "Abrir en la app")
+        self.assertNotContains(returned, "Confirmar y agregar")
+        self.assertNotContains(returned, "Agregar a MyScoope")
         self.assertEqual(ShareClaim.objects.count(), 0)
+
+    def test_preview_exposes_one_smart_app_button_with_store_fallbacks(self):
+        response = self.client.get(self.preview_url)
+
+        self.assertContains(response, "Abrir en la app", count=1)
+        self.assertContains(response, f'myscoope://share/{self.resource.public_id}')
+        self.assertContains(response, "https://apps.apple.com/app/id6804048394")
+        self.assertContains(response, "https://play.google.com/store/apps/details?id=com.myscoope.app")
+        self.assertNotContains(response, "Agregar a MyScoope")
 
     def test_authenticated_claim_is_explicit_and_idempotent(self):
         self.client.force_login(self.recipient)

@@ -37,7 +37,7 @@ export default function OnboardingPreviewScreen() {
   if (!session.is_staff) return <Redirect href="/account" />;
 
   return (
-    <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 }}>
+    <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 }} scroll={stepIndex >= 6 ? "auto" : false}>
       <OnboardingJourneyView controller={controller} step={step as OnboardingJourneyStep} />
     </Screen>
   );

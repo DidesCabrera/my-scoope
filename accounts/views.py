@@ -7,7 +7,7 @@ from django.shortcuts import redirect, render
 from notas.domain.models import Profile
 
 from .forms import AccountDeletionForm, NutritionOnboardingForm
-from .services.deletion import delete_user_account
+from .services.deletion import AppleCredentialRevocationError, delete_user_account
 from .services.onboarding import complete_nutrition_onboarding
 
 
@@ -50,13 +50,20 @@ def delete_account(request):
     if request.method == "POST":
         form = AccountDeletionForm(request.POST, user=request.user)
         if form.is_valid():
-            result = delete_user_account(user=request.user, source="self_service_web")
-            logout(request)
-            return render(
-                request,
-                "accounts/account_deleted.html",
-                {"receipt_id": result.receipt_id},
-            )
+            try:
+                result = delete_user_account(user=request.user, source="self_service_web")
+            except AppleCredentialRevocationError:
+                form.add_error(
+                    None,
+                    "No pudimos revocar tu acceso con Apple. Inténtalo nuevamente en unos minutos.",
+                )
+            else:
+                logout(request)
+                return render(
+                    request,
+                    "accounts/account_deleted.html",
+                    {"receipt_id": result.receipt_id},
+                )
     else:
         form = AccountDeletionForm(user=request.user)
 

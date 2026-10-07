@@ -80,12 +80,19 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/dev/storyboard-gallery.tsx"),
     "utf8",
   );
+  const navigation = await readTestFile(
+    path.resolve(process.cwd(), "src/components/dev/gallery-navigation.tsx"),
+    "utf8",
+  );
   assertSourceMatch(gallery, /export default function UiGalleryScreen/);
   assertSourceMatch(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
   assertSourceMatch(gallery, /Galería del sistema UI/);
   assertSourceDoesNotMatch(gallery, /<Brand|Referencia interna construida con los componentes reales de la app/);
   assertSourceMatch(gallery, /<OnboardingStoryboardGallery \/>/);
+  assertSourceMatch(gallery, /<SubscriptionGallery \/>/);
+  assertSourceMatch(navigation, /\{ key: "subscriptions", label: "Suscripciones" \}/);
   assertSourceMatch(storyboardGallery, /OnboardingJourneyView/);
+  assertSourceMatch(storyboardGallery, /step === "plans" \? <SubscriptionPreviewContent context="onboarding" \/>/);
   assertSourceMatch(storyboardGallery, /Storyboard visual · sin sesión, API ni persistencia/);
   assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos del onboarding"/);
   assertSourceMatch(storyboardGallery, /tabs=\{previewWidths\.map\(\(preview\) => \(\{ key: preview\.width, label: preview\.label \}\)\)\}/);
@@ -203,6 +210,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programWeekPanels, /weekName: \{ color: tokens\.color\.textMain/);
   assertSourceMatch(programWeekPanels, /cell: \{[^}]*fontSize: tokens\.type\.caption/);
   assertSourceMatch(programWeekPanels, /row: \{[^}]*minHeight: 48/);
+  assertSourceMatch(programWeekPanels, /leadingCell: \{ flexBasis: "38%", flexGrow: 0, flexShrink: 0/);
   assertSourceDoesNotMatch(programWeekPanels, /cell: \{[^}]*fontSize: 11/);
   assertSourceDoesNotMatch(programWeekPanels, /<PanelAllocationBar size="compact"/);
   assertSourceMatch(programWeekPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
@@ -786,19 +794,23 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programChart, /\(index \+ 0\.5\) \* \(140 \/ slotCount\)/);
   assertSourceMatch(programChart, /\(index \+ 1\) \* 7 \* \(140 \/ slotCount\)/);
   assertSourceDoesNotMatch(programChart, /metricPlot: \{[^}]*paddingHorizontal/);
+  assertSourceMatch(programChart, /metricPlot: \{ backgroundColor: tokens\.color\.surfaceApp/);
   assertSourceMatch(programDetail, /axisLeadingLabel="Semana"/);
   assertSourceMatch(programChart, /weeks\.flatMap\(\(week\) => week\.days\.map/);
   assertSourceMatch(programChart, /axisLabels = \["S1", "S2"\]/);
   assertSourceMatch(programChart, /width < 600[\s\S]*?\? \{ width: "40%" as const \}/);
-  assertSourceMatch(programChart, /<Polyline[^\n]*strokeWidth="1"/);
-  assertSourceMatch(programChart, /<Stop offset="0" stopColor=\{metric\.color\} stopOpacity=\{0\.2\}/);
+  assertSourceMatch(programChart, /<Polyline[^\n]*strokeWidth="2"/);
+  assertSourceMatch(programChart, /<Stop offset="0" stopColor=\{metric\.color\} stopOpacity=\{0\.44\}/);
   assertSourceMatch(programChart, /<Stop offset="1" stopColor=\{metric\.color\} stopOpacity=\{0\}/);
+  assertSourceMatch(programChart, /<LinearGradient gradientUnits="userSpaceOnUse" id=\{`metric-area-\$\{metric\.key\}`\} x1="0" x2="0" y1="0" y2="44">/);
+  assertSourceMatch(programChart, /color: tokens\.color\.kcalBorder/);
+  assertSourceMatch(programChart, /rangeBadgeCalories: \{ backgroundColor: tokens\.color\.kcalSurface, borderColor: tokens\.color\.kcalBorder, borderWidth: 1 \}/);
   assertSourceMatch(programChart, /<Polygon fill=\{`url\(#metric-area-\$\{metric\.key\}\)`\} points=\{areaPoints\}/);
   assertSourceMatch(programChart, /strokeWidth="3"[^\n]*x1=\{x\} x2=\{x\} y1=\{y\} y2=\{y\}/);
   assertSourceMatch(programChart, /P \{allocationRange\(liveAllocationValues, 0/);
   assertSourceMatch(programChart, /const hasAllocation = protein \+ carbs \+ fat > 0/);
   assertSourceMatch(planningControls, /key=\{day\.id\}/);
-  assertSourceMatch(programDetail, /axisLabels=\{liveWeeks\.map\(\(week\) => `S\$\{week\.week_number\}`\)\}/);
+  assertSourceMatch(programDetail, /axisLabels=\{\(liveWeeks\.length \? liveWeeks\.map\(\(week\) => week\.week_number\) : displayedWeeks\)\.map\(\(week\) => `S\$\{week\}`\)\}/);
   assertSourceMatch(programDetail, /const liveMetricData = weekData \? programDailyMetricData\(\[weekData\]\) : undefined/);
   assertSourceDoesNotMatch(programDetail, /weekData\.days\.filter\(\(day\) => day\.nutrition\)/);
 
@@ -912,8 +924,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /Continuar con Free/);
   assertSourceMatch(journey, /<SubscriptionPlanCard/);
   assertSourceMatch(journey, /commercialPlanBenefits\[plan\.name\]/);
-  assertSourceMatch(journey, /Mensual · \$\{plan\.price\}/);
-  assertSourceMatch(journey, /Anual · \$\{plan\.annualPrice\}/);
+  assertSourceMatch(journey, /Ver opciones de \$\{plan\.name\}/);
+  assertSourceMatch(journey, /Ver precio en la tienda/);
+  assertSourceDoesNotMatch(journey, /annualPrice|\$3\.990|\$6\.990/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton label="Continuar con Free"/);
   assertSourceMatch(journey, /primary="Generar primer plan"/);
@@ -982,7 +995,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
   assertSourceMatch(journey, /<View style=\{styles\.centeredLogo\}><MyScoopeLogo \/><\/View>/);
   assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
-  assertSourceMatch(journey, /const usesCenteredTitleSpacing = index <= 6 \|\| brandedCentered/);
+  assertSourceMatch(journey, /const usesCenteredTitleSpacing = \(index <= 6 \|\| brandedCentered\) && !externalExplanationChrome/);
   assertSourceMatch(journey, /<StepHeader brandedCentered description="Compara lo que incluyen Free, Basic y Pro/);
   assertSourceMatch(journey, /styles\.introCentered/);
   assertSourceMatch(journey, /styles\.centeredTitleSpacing/);
@@ -1022,6 +1035,13 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
   assertSourceMatch(journey, /loginAction: \{ marginBottom: 114, marginTop: "auto" \}/);
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
+  const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
+  const onboardingPreview = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding-preview.tsx"), "utf8");
+  assertSourceMatch(onboarding, /scroll=\{introSteps\.includes\(step\) \? false : "auto"\}/);
+  assertSourceMatch(onboarding, /pathname: "\/subscription", params: \{ origin: "onboarding"/);
+  const layout = await readTestFile(path.resolve(process.cwd(), "src/app/_layout.tsx"), "utf8");
+  assertSourceMatch(layout, /pathname === "\/subscription" && origin === "onboarding"/);
+  assertSourceMatch(onboardingPreview, /scroll=\{stepIndex >= 6 \? "auto" : false\}/);
 });
 
 test("the label capture gallery exposes the complete happy-path storyboard without product side effects", async () => {
@@ -1040,6 +1060,8 @@ test("the label capture gallery exposes the complete happy-path storyboard witho
   assertSourceMatch(storyboard, /datos fijos|Yogur griego natural/);
   assertSourceMatch(storyboard, /Validamos nitidez antes de usar créditos/);
   assertSourceMatch(storyboard, /Confirmar y crear alimento/);
+  assertSourceMatch(storyboard, /intro: \{ leading: "back", trailing: null \}/);
+  assertSourceDoesNotMatch(storyboard, /leading: "menu"|PanelRight/);
   assertSourceDoesNotMatch(storyboard, /apiRequest|expo-camera|useCameraPermissions|useSession/);
 });
 

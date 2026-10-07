@@ -1,7 +1,7 @@
 import { Redirect } from "expo-router";
 import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { useState } from "react";
-import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Image, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import {
   ComparisonBuilder,
@@ -28,6 +28,8 @@ import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
 import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
+import { ShareableElementsGallery } from "@/components/dev/shareable-elements-gallery";
+import { SubscriptionGallery } from "@/components/dev/subscription-gallery";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -220,6 +222,8 @@ export default function UiGalleryScreen() {
       {tab === "onboarding" ? (
         <OnboardingStoryboardGallery />
       ) : null}
+
+      {tab === "subscriptions" ? <SubscriptionGallery /> : null}
 
       {tab === "labelCapture" ? (
         <LabelCaptureStoryboardGallery />
@@ -449,6 +453,13 @@ export default function UiGalleryScreen() {
         </>
       ) : null}
 
+      {tab === "shareable" ? (
+        <>
+          <SectionTitle detail="Preview de redes sociales · datos ficticios" title="Elementos compartibles" />
+          <ShareableElementsGallery />
+        </>
+      ) : null}
+
       {tab === "calendars" ? (
         <>
           <SectionTitle detail="Componentes reales · 414 pt y 375 pt" title="Calendarios semanales" />
@@ -628,6 +639,17 @@ export default function UiGalleryScreen() {
 
       {tab === "states" ? (
         <>
+          <SectionTitle detail="Splash nativo · antes de la carga entre vistas" title="Inicio de la aplicación" />
+          <View accessibilityLabel="Vista previa de la imagen de inicio de la aplicación" style={styles.launchPreview}>
+            <View style={styles.launchImageFrame}>
+              <Image
+                accessibilityLabel="Imagen de inicio de My Scoope"
+                resizeMode="contain"
+                source={require("../../../assets/images/launch-logo.png")}
+                style={styles.launchImage}
+              />
+            </View>
+          </View>
           <SectionTitle detail="Muestras visuales estáticas" title="Pop-ups" />
           <PopupAestheticGallery />
           <SectionTitle detail="Animación de proteína, carbos y grasas" title="Carga entre vistas" />
@@ -774,4 +796,7 @@ const styles = StyleSheet.create({
   allocationLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", width: 96 },
   allocationBarInRow: { flex: 1, minWidth: 0, width: "auto" },
   loadingPreview: { alignItems: "center", justifyContent: "center", minHeight: 180 },
+  launchPreview: { alignItems: "center", aspectRatio: 9 / 16, backgroundColor: "#000000", borderColor: tokens.color.borderStrong, borderRadius: 30, borderWidth: 1, justifyContent: "center", maxHeight: 560, overflow: "hidden", width: "100%" },
+  launchImageFrame: { aspectRatio: 1052 / 296, width: "50%" },
+  launchImage: { height: "100%", width: "100%" },
 });

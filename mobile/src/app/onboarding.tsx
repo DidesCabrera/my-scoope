@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { OnboardingAnalyzeInput, OnboardingStateData, ProfileData, ProposalDetail } from "@/api/types";
+import type { OnboardingAnalyzeInput, OnboardingStateData, ProposalDetail } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import {
   OnboardingJourneyView,
@@ -62,7 +62,7 @@ export default function OnboardingScreen() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const returnHref = internalHref(returnTo);
   const router = useRouter();
-  const { status, profile, apiRequest, refreshProfile } = useSession();
+  const { status, profile, apiRequest } = useSession();
   const [step, setStep] = useState<OnboardingJourneyStep>("value");
   const [values, setValues] = useState<OnboardingJourneyValues>(initialValues);
   const [state, setState] = useState<OnboardingStateData | null>(null);
@@ -95,6 +95,9 @@ export default function OnboardingScreen() {
   if (status === "anonymous") return <Redirect href={{ pathname: "/login", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
   if (profile?.onboarding_completed) return <Redirect href={returnHref ?? ("/today" as Href)} />;
   if (loading) return <LoadingState label="Preparando tu punto de partida…" />;
+  if (step === "plans") {
+    return <Redirect href={{ pathname: "/subscription", params: { origin: "onboarding", ...(returnHref ? { returnTo: String(returnHref) } : {}) } }} />;
+  }
   if (profile?.review_disclosure_required && state && state.stage !== "intro") {
     return <Redirect href={{ pathname: "/disclosures", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
   }
@@ -175,7 +178,7 @@ export default function OnboardingScreen() {
       if (step === "dailyPlan") {
         const applied = await apiRequest<ProposalDetail>("/api/v1/onboarding/accept-plan", { method: "POST" });
         setProposal(applied);
-        setStep("plans");
+        router.replace({ pathname: "/subscription", params: { origin: "onboarding", ...(returnHref ? { returnTo: String(returnHref) } : {}) } });
       }
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -195,20 +198,6 @@ export default function OnboardingScreen() {
     if (step === "plans") return setStep("dailyPlan");
   }
 
-  async function choosePlan(plan: "Free" | "Basic" | "Pro") {
-    setBusy(true);
-    setError(null);
-    try {
-      await apiRequest<ProfileData>("/api/v1/onboarding/complete", { method: "POST" });
-      await refreshProfile();
-      router.replace(plan === "Free" ? returnHref ?? ("/today" as Href) : "/subscription");
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const controller: OnboardingJourneyController = {
     values,
     estimate: state?.estimate,
@@ -219,10 +208,9 @@ export default function OnboardingScreen() {
     onNext: () => void next(),
     onBack: back,
     onAdjust: () => setStep("goal"),
-    onChoosePlan: (plan) => void choosePlan(plan),
   };
 
-  return <Screen contentStyle={styles.screen}><OnboardingJourneyView controller={controller} step={step} /></Screen>;
+  return <Screen contentStyle={styles.screen} scroll={introSteps.includes(step) ? false : "auto"}><OnboardingJourneyView controller={controller} step={step} /></Screen>;
 }
 
 const styles = StyleSheet.create({
