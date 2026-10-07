@@ -51,7 +51,7 @@ export function ChatComposer({ disabled, loading, maxLength, onChangeText, onSen
 }
 
 const styles = StyleSheet.create({
-  composer: { alignItems: "flex-end", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52, paddingBottom: 6, paddingLeft: tokens.spacing.lg, paddingRight: 6, paddingTop: 6 },
+  composer: { alignItems: "flex-end", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52, paddingBottom: 6, paddingLeft: tokens.spacing.lg, paddingRight: 6, paddingTop: 6 },
   container: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.compact, paddingBottom: tokens.spacing.md, paddingHorizontal: tokens.spacing.md, paddingTop: tokens.spacing.sm },
   counter: { color: tokens.color.textSubtle, fontSize: tokens.type.label, position: "absolute", right: tokens.spacing.sm },
   input: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, lineHeight: 23, maxHeight: 120, minHeight: 38, paddingBottom: 8, paddingHorizontal: 0, paddingTop: 8 },

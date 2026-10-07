@@ -13,6 +13,13 @@ import { AssistantMessageText } from "./assistant-message-text";
 type PreparedActionHandler = (actionId: string, mode: "commit" | "cancel", destructive: boolean) => void;
 type ChatProposalCardData = Extract<NonNullable<AIChatMessage["cards"]>[number], { type: "proposal_review" | "generated_plan" }>;
 
+function receivedTime(value: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleTimeString("es-CL", { hour: "2-digit", hour12: false, minute: "2-digit" });
+}
+
 function ChatProposalListCard({ card }: { card: ChatProposalCardData }) {
   const router = useRouter();
   const { apiRequest } = useSession();
@@ -58,8 +65,9 @@ function ChatCard({ card, onPreferenceCommit, onPreparedAction }: { card: NonNul
 export function ChatConversation({ messages, onPreferenceCommit, onPreparedAction }: { messages: AIChatMessage[]; onPreferenceCommit: () => void; onPreparedAction: PreparedActionHandler }) {
   return (
     <View accessibilityLabel="Conversación con el Asistente" style={styles.conversation}>
-      {messages.map((message) => {
+      {messages.map((message, index) => {
         const isUser = message.role === "user";
+        const time = !isUser && index === messages.length - 1 ? receivedTime(message.created_at) : null;
         return (
           <View key={message.id} style={[styles.message, isUser ? styles.userMessage : styles.assistantMessage]}>
             <View style={isUser ? styles.userBubble : styles.assistantContent}>
@@ -67,6 +75,7 @@ export function ChatConversation({ messages, onPreferenceCommit, onPreparedActio
               {message.cards?.map((card, index) => <ChatCard card={card} key={`${message.id}-${card.type}-${index}`} onPreferenceCommit={onPreferenceCommit} onPreparedAction={onPreparedAction} />)}
               {message.has_structured_content && !message.cards?.length ? <InlineNotice>Este objeto no está disponible en esta versión de la app.</InlineNotice> : null}
             </View>
+            {time ? <Text accessibilityLabel={`Recibido a las ${time}`} style={styles.receivedTime}>{time}</Text> : null}
           </View>
         );
       })}
@@ -88,6 +97,7 @@ const styles = StyleSheet.create({
   message: { width: "100%" },
   pending: { color: tokens.color.textMuted },
   proposalLoading: { alignItems: "center", minHeight: 120, justifyContent: "center" },
+  receivedTime: { color: tokens.color.textSubtle, fontSize: tokens.type.label, marginTop: tokens.spacing.sm },
   operation: { color: tokens.color.textMain, fontSize: tokens.type.caption },
   text: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 25 },
   userBubble: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card, gap: tokens.spacing.sm, maxWidth: "86%", paddingHorizontal: tokens.spacing.lg, paddingVertical: tokens.spacing.md },

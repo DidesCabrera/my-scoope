@@ -22,11 +22,13 @@ test("long assistant conversations keep the message composer inside the viewport
   const screen = await source("src/components/assistant/assistant-chat-screen.tsx");
   assert.ok(screen.includes("style={styles.conversationScroll}"));
   assert.ok(screen.includes("conversationScroll: { flex: 1 }"));
+  assert.ok(screen.includes("paddingBottom: tokens.spacing.xxl * 4"));
   assert.ok(screen.includes("screen: { flex: 1,"));
 });
 
 test("the assistant composer centers available credits without moving for the character counter", async () => {
   const composer = await source("src/components/assistant/chat-composer.tsx");
+  assert.ok(composer.includes('composer: { alignItems: "flex-end", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card'));
   assert.ok(composer.includes('justifyContent: "center"'));
   assert.ok(composer.includes('textAlign: "center"'));
   assert.ok(composer.includes('position: "absolute", right: tokens.spacing.sm'));
@@ -46,6 +48,8 @@ test("assistant messages render bounded roles instead of raw conversation payloa
   assert.match(conversation, /message\.role === "user"/);
   assert.match(conversation, /message\.text/);
   assert.ok(conversation.includes("<AssistantMessageText>{message.text}</AssistantMessageText>"));
+  assert.ok(conversation.includes("index === messages.length - 1 ? receivedTime(message.created_at) : null"));
+  assert.ok(conversation.includes("Recibido a las ${time}"));
   assert.doesNotMatch(conversation, /conversation_payload/);
 });
 

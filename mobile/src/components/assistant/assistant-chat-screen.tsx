@@ -245,7 +245,7 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
 }
 
 const styles = StyleSheet.create({
-  chatContent: { flexGrow: 1, gap: tokens.spacing.xl, paddingBottom: tokens.spacing.xxl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  chatContent: { flexGrow: 1, gap: tokens.spacing.xl, paddingBottom: tokens.spacing.xxl * 4, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   conversationScroll: { flex: 1 },
   creditCopy: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   creditTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
