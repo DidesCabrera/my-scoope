@@ -116,6 +116,98 @@ def _program_daily_calories(snapshot: Mapping) -> list[float]:
     return [calories for _, _, calories in points[:14]]
 
 
+def _draw_program_calorie_chart(
+    image: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    snapshot: Mapping,
+    summary: Mapping,
+    *,
+    chip_top: float,
+) -> float:
+    daily_calories = _program_daily_calories(snapshot)
+    if not daily_calories:
+        return chip_top + 56
+
+    duration_weeks = max(1, int(_number(summary.get("duration_weeks"))))
+    header_top = chip_top + 82
+    header_bottom = header_top + 48
+    chart_top = header_bottom + 8
+    chart_bottom = chart_top + 188
+    chart_left = 52
+    chart_right = 1148
+    identity_right = 424
+    radius = 28
+    draw.rounded_rectangle((chart_left, header_top, identity_right - 8, header_bottom), radius=24, fill="#121212", outline="#343434", width=3)
+    draw.text((74, header_top + 9), f"Semanas 1-{duration_weeks}", font=_font(27, bold=True), fill="#B5B5B5")
+    week_count = min(duration_weeks, 8)
+    chip_gap = 7
+    chip_area_left = identity_right
+    chip_width = (chart_right - chip_area_left - chip_gap * (week_count - 1)) / week_count
+    for index in range(week_count):
+        week_left = chip_area_left + index * (chip_width + chip_gap)
+        draw.rounded_rectangle((week_left, header_top, week_left + chip_width, header_bottom), radius=24, fill="#121212", outline="#343434", width=3)
+        draw.text((week_left + chip_width / 2, header_top + 24), f"S{index + 1}", anchor="mm", font=_font(25, bold=True), fill="#B5B5B5")
+
+    draw.rounded_rectangle((chart_left, chart_top, chart_right, chart_bottom), radius=radius, fill="#000000", outline="#343434", width=3)
+    draw.rounded_rectangle((chart_left, chart_top, identity_right, chart_bottom), radius=radius, fill="#262626")
+    draw.rectangle((identity_right - radius, chart_top, identity_right, chart_bottom), fill="#262626")
+    draw.text((78, chart_top + 24), "Calorías", font=_font(40, bold=True), fill="#F5F5F5")
+    minimum = min(daily_calories)
+    maximum = max(daily_calories)
+    min_label = f"{minimum:.0f}" if minimum < 1000 else f"{minimum:,.0f}".replace(",", ".")
+    max_label = f"{maximum:.0f}" if maximum < 1000 else f"{maximum:,.0f}".replace(",", ".")
+    range_text = f"{min_label} - {max_label} kcal"
+    range_width = draw.textlength(range_text, font=_font(32, bold=True)) + 38
+    draw.rounded_rectangle(
+        (78, chart_top + 94, 78 + range_width, chart_top + 154),
+        radius=18,
+        fill="#26211D",
+        outline="#8D6951",
+        width=3,
+    )
+    draw.text((97, chart_top + 105), range_text, font=_font(32, bold=True), fill="#F5F5F5")
+
+    plot_left = identity_right
+    plot_right = chart_right
+    plot_top = chart_top + 27
+    plot_bottom = chart_bottom - 27
+    slot_width = (plot_right - plot_left - 48) / max(len(daily_calories) - 1, 1)
+    value_range = max(maximum - minimum, 1)
+    points = []
+    for index, value in enumerate(daily_calories):
+        x = plot_left + 24 + index * slot_width
+        normalized = (value - minimum) / value_range
+        y = plot_bottom - normalized * (plot_bottom - plot_top)
+        points.append((x, y))
+
+    area_mask = Image.new("L", CARD_SIZE, 0)
+    area_mask_draw = ImageDraw.Draw(area_mask)
+    area_mask_draw.polygon(
+        [*points, (points[-1][0], plot_bottom), (points[0][0], plot_bottom)],
+        fill=255,
+    )
+    fade_mask = Image.new("L", CARD_SIZE, 0)
+    fade_draw = ImageDraw.Draw(fade_mask)
+    fade_height = max(plot_bottom - plot_top, 1)
+    for y in range(int(plot_top), int(plot_bottom) + 1):
+        opacity = round(112 * (plot_bottom - y) / fade_height)
+        fade_draw.line((plot_left, y, plot_right, y), fill=opacity)
+    area_alpha = ImageChops.multiply(area_mask, fade_mask)
+    area_overlay = Image.new("RGBA", CARD_SIZE, (141, 105, 81, 0))
+    area_overlay.putalpha(area_alpha)
+    image.paste(area_overlay, (0, 0), area_overlay)
+    draw = ImageDraw.Draw(image)
+
+    for divider_index in range(7, len(points), 7):
+        divider_x = (points[divider_index - 1][0] + points[divider_index][0]) / 2
+        draw.line((divider_x, chart_top + 18, divider_x, chart_bottom - 18), fill="#343434", width=3)
+    draw.line(points, fill="#8D6951", width=2, joint="curve")
+    for x, y in points:
+        draw.ellipse((x - 4, y - 4, x + 4, y + 4), fill="#8D6951")
+    draw.rounded_rectangle((chart_left, chart_top, chart_right, chart_bottom), radius=radius, outline="#343434", width=3)
+    return chart_bottom
+
+
 def render_share_card_png(snapshot: Mapping) -> bytes:
     """Render a fixed-size social card without model, request or source-object access."""
     subject = snapshot.get("subject") if isinstance(snapshot, Mapping) else None
@@ -229,86 +321,8 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
             draw.text((1128, row_top + 34), f"{allocation}%", anchor="rm", font=_font(28, bold=True), fill="#F5F5F5")
         content_bottom = total_box[3]
     else:
-        daily_calories = _program_daily_calories(snapshot)
-        if daily_calories:
-            duration_weeks = max(1, int(_number(summary.get("duration_weeks"))))
-            header_top = chip_top + 82
-            header_bottom = header_top + 48
-            chart_top = header_bottom + 8
-            chart_bottom = chart_top + 188
-            chart_left = 52
-            chart_right = 1148
-            identity_right = 424
-            radius = 28
-            draw.rounded_rectangle((chart_left, header_top, identity_right - 8, header_bottom), radius=24, fill="#121212", outline="#343434", width=3)
-            draw.text((74, header_top + 9), f"Semanas 1-{duration_weeks}", font=_font(27, bold=True), fill="#B5B5B5")
-            week_count = min(duration_weeks, 8)
-            chip_gap = 7
-            chip_area_left = identity_right
-            chip_width = (chart_right - chip_area_left - chip_gap * (week_count - 1)) / week_count
-            for index in range(week_count):
-                week_left = chip_area_left + index * (chip_width + chip_gap)
-                draw.rounded_rectangle((week_left, header_top, week_left + chip_width, header_bottom), radius=24, fill="#121212", outline="#343434", width=3)
-                draw.text((week_left + chip_width / 2, header_top + 24), f"S{index + 1}", anchor="mm", font=_font(25, bold=True), fill="#B5B5B5")
-
-            draw.rounded_rectangle((chart_left, chart_top, chart_right, chart_bottom), radius=radius, fill="#000000", outline="#343434", width=3)
-            draw.rounded_rectangle((chart_left, chart_top, identity_right, chart_bottom), radius=radius, fill="#262626")
-            draw.rectangle((identity_right - radius, chart_top, identity_right, chart_bottom), fill="#262626")
-            draw.text((78, chart_top + 24), "Calorías", font=_font(40, bold=True), fill="#F5F5F5")
-            minimum = min(daily_calories)
-            maximum = max(daily_calories)
-            min_label = f"{minimum:.0f}" if minimum < 1000 else f"{minimum:,.0f}".replace(",", ".")
-            max_label = f"{maximum:.0f}" if maximum < 1000 else f"{maximum:,.0f}".replace(",", ".")
-            range_text = f"{min_label} - {max_label} kcal"
-            range_width = draw.textlength(range_text, font=_font(32, bold=True)) + 38
-            draw.rounded_rectangle(
-                (78, chart_top + 94, 78 + range_width, chart_top + 154),
-                radius=18,
-                fill="#26211D",
-                outline="#8D6951",
-                width=3,
-            )
-            draw.text((97, chart_top + 105), range_text, font=_font(32, bold=True), fill="#F5F5F5")
-
-            plot_left = identity_right
-            plot_right = chart_right
-            plot_top = chart_top + 27
-            plot_bottom = chart_bottom - 27
-            slot_width = (plot_right - plot_left - 48) / max(len(daily_calories) - 1, 1)
-            value_range = max(maximum - minimum, 1)
-            points = []
-            for index, value in enumerate(daily_calories):
-                x = plot_left + 24 + index * slot_width
-                normalized = (value - minimum) / value_range
-                y = plot_bottom - normalized * (plot_bottom - plot_top)
-                points.append((x, y))
-
-            area_mask = Image.new("L", CARD_SIZE, 0)
-            area_mask_draw = ImageDraw.Draw(area_mask)
-            area_mask_draw.polygon(
-                [*points, (points[-1][0], plot_bottom), (points[0][0], plot_bottom)],
-                fill=255,
-            )
-            fade_mask = Image.new("L", CARD_SIZE, 0)
-            fade_draw = ImageDraw.Draw(fade_mask)
-            fade_height = max(plot_bottom - plot_top, 1)
-            for y in range(int(plot_top), int(plot_bottom) + 1):
-                opacity = round(112 * (plot_bottom - y) / fade_height)
-                fade_draw.line((plot_left, y, plot_right, y), fill=opacity)
-            area_alpha = ImageChops.multiply(area_mask, fade_mask)
-            area_overlay = Image.new("RGBA", CARD_SIZE, (141, 105, 81, 0))
-            area_overlay.putalpha(area_alpha)
-            image.paste(area_overlay, (0, 0), area_overlay)
-            draw = ImageDraw.Draw(image)
-
-            for divider_index in range(7, len(points), 7):
-                divider_x = (points[divider_index - 1][0] + points[divider_index][0]) / 2
-                draw.line((divider_x, chart_top + 18, divider_x, chart_bottom - 18), fill="#343434", width=3)
-            draw.line(points, fill="#8D6951", width=2, joint="curve")
-            for x, y in points:
-                draw.ellipse((x - 4, y - 4, x + 4, y + 4), fill="#8D6951")
-            draw.rounded_rectangle((chart_left, chart_top, chart_right, chart_bottom), radius=radius, outline="#343434", width=3)
-            content_bottom = chart_bottom
+        content_bottom = _draw_program_calorie_chart(image, draw, snapshot, summary, chip_top=chip_top)
+        draw = ImageDraw.Draw(image)
     # Programs intentionally stop after the title section: there is no Dash KPI.
 
     # MyScoope logo footer.
