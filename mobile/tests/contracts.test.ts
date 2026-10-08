@@ -396,7 +396,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>[\s\S]*<View style=\{styles\.noteSurface\}>/);
   assertSourceDoesNotMatch(mealAdherence, /<ContentPanel/);
   assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
-  assertSourceMatch(mealAdherence, /noteInput: \{[^}]*backgroundColor: tokens\.color\.surfaceCard/);
+  assertSourceMatch(mealAdherence, /noteInput: \{[^}]*backgroundColor: tokens\.color\.surfaceMuted/);
   assertSourceMatch(mealAdherence, /noteInput: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceDoesNotMatch(mealAdherence, /noteInput: \{[^}]*borderColor|noteInput: \{[^}]*borderWidth/);
   assertSourceMatch(mealAdherence, /noteSurface: \{[^}]*backgroundColor: "transparent"[^}]*marginTop: tokens\.spacing\.xs/);

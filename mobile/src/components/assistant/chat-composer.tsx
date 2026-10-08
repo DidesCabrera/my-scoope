@@ -31,7 +31,7 @@ export function ChatComposer({ disabled, loading, maxLength, onChangeText, onSen
           returnKeyType="default"
           selectionColor={tokens.color.interactivePrimary}
           style={styles.input}
-          textAlignVertical="top"
+          textAlignVertical="center"
           value={value}
         />
         <Pressable
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   composer: { alignItems: "flex-end", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52, paddingBottom: 6, paddingLeft: tokens.spacing.lg, paddingRight: 6, paddingTop: 6 },
   container: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.compact, paddingBottom: tokens.spacing.md, paddingHorizontal: tokens.spacing.md, paddingTop: tokens.spacing.sm },
   counter: { color: tokens.color.textSubtle, fontSize: tokens.type.label, position: "absolute", right: tokens.spacing.sm },
-  input: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, lineHeight: 23, maxHeight: 120, minHeight: 38, paddingBottom: 8, paddingHorizontal: 0, paddingTop: 8 },
+  input: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, lineHeight: 23, maxHeight: 120, minHeight: 38, paddingHorizontal: 0, paddingVertical: 0 },
   meta: { alignItems: "center", flexDirection: "row", justifyContent: "center", minHeight: 16, paddingHorizontal: tokens.spacing.sm, position: "relative" },
   sendButton: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.pill, height: 38, justifyContent: "center", width: 38 },
   sendButtonDisabled: { backgroundColor: tokens.color.surfaceElevated },

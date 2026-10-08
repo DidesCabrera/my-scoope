@@ -1,12 +1,13 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronRight, MessageCircle } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { AIChatListData, AIChatSummary, ProposalListData } from "@/api/types";
+import type { AIChatListData, AIChatSummary, LibraryListActionResult, ProposalListData, ProposalSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantListActions } from "@/components/assistant/assistant-list-actions";
+import { AssistantListEditor, type AssistantListItem } from "@/components/assistant/assistant-list-editor";
 import { AssistantSectionTabs, type AssistantSection } from "@/components/assistant/assistant-section-tabs";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -56,6 +57,9 @@ export default function AssistantHistoryScreen() {
   const [chatPage, setChatPage] = useState<AIChatListData | null>(null);
   const [proposalPage, setProposalPage] = useState<ProposalListData | null>(null);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [mode, setMode] = useState<"list" | "edit">("list");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [submitting, setSubmitting] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [chatsLoading, setChatsLoading] = useState(true);
   const [proposalsLoading, setProposalsLoading] = useState(true);
@@ -86,17 +90,136 @@ export default function AssistantHistoryScreen() {
     }
   }, [apiRequest]);
 
+  const loadAll = useCallback(async (section: AssistantSection) => {
+    const items: (AIChatSummary | ProposalSummary)[] = [];
+    let total = 0;
+    do {
+      const endpoint = section === "chats" ? "/api/v1/ai/chats" : "/api/v1/proposals";
+      const next = await apiRequest<AIChatListData | ProposalListData>(`${endpoint}?limit=50&offset=${items.length}`);
+      items.push(...next.items);
+      total = next.total;
+      if (section === "chats") setChatPage({ ...(next as AIChatListData), items: items as AIChatSummary[], limit: items.length, offset: 0 });
+      else setProposalPage({ ...(next as ProposalListData), items: items as ProposalSummary[], limit: items.length, offset: 0 });
+    } while (items.length < total);
+  }, [apiRequest]);
+
+  const beginEdit = useCallback(async () => {
+    setActionsVisible(false);
+    setMode("edit");
+    setSelectedIds(new Set());
+    const setLoading = activeSection === "chats" ? setChatsLoading : setProposalsLoading;
+    const setError = activeSection === "chats" ? setChatError : setProposalError;
+    setLoading(true);
+    setError(null);
+    try {
+      await loadAll(activeSection);
+    } catch (nextError) {
+      setMode("list");
+      setError(userFacingError(nextError));
+    } finally {
+      setLoading(false);
+    }
+  }, [activeSection, loadAll]);
+
+  const finishEdit = useCallback(() => {
+    if (submitting) return;
+    setMode("list");
+    setSelectedIds(new Set());
+  }, [submitting]);
+
+  const cancelSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const deleteItems = useCallback(async (itemIds: number[]) => {
+    if (!itemIds.length) return;
+    setSubmitting(true);
+    const setError = activeSection === "chats" ? setChatError : setProposalError;
+    setError(null);
+    try {
+      const endpoint = activeSection === "chats" ? "/api/v1/ai/chats/bulk-delete" : "/api/v1/proposals/bulk-delete";
+      const result = await apiRequest<LibraryListActionResult>(endpoint, {
+        body: JSON.stringify({ item_ids: itemIds }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const affectedIds = new Set(result.affected_ids);
+      if (activeSection === "chats") {
+        setChatPage((current) => current ? { ...current, items: current.items.filter(({ id }) => !affectedIds.has(id)), total: Math.max(0, current.total - affectedIds.size) } : current);
+      } else {
+        setProposalPage((current) => current ? {
+          ...current,
+          items: current.items.filter(({ id }) => !affectedIds.has(id)),
+          pending_count: current.items.filter(({ id, status: proposalStatus }) => affectedIds.has(id) && proposalStatus === "pending_review").reduce((count) => Math.max(0, count - 1), current.pending_count),
+          total: Math.max(0, current.total - affectedIds.size),
+        } : current);
+      }
+      setSelectedIds((current) => new Set([...current].filter((id) => !affectedIds.has(id))));
+      Alert.alert(result.affected_ids.length === 1 ? "Elemento eliminado" : "Elementos eliminados", result.message);
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setSubmitting(false);
+    }
+  }, [activeSection, apiRequest]);
+
+  const confirmDeleteItem = useCallback((item: AssistantListItem) => {
+    Alert.alert(
+      `¿Eliminar “${item.title}”?`,
+      "Esta acción no se puede deshacer.",
+      [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void deleteItems([item.id]) }],
+    );
+  }, [deleteItems]);
+
+  const confirmDeleteSelected = useCallback(() => {
+    if (!selectedIds.size) return;
+    Alert.alert(
+      activeSection === "chats" ? "Eliminar chats" : "Eliminar propuestas",
+      `¿Eliminar ${selectedIds.size} elemento(s)? Esta acción no se puede deshacer.`,
+      [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void deleteItems([...selectedIds]) }],
+    );
+  }, [activeSection, deleteItems, selectedIds]);
+
+  const toggleSelected = useCallback((item: AssistantListItem) => setSelectedIds((current) => {
+    const next = new Set(current);
+    if (next.has(item.id)) next.delete(item.id);
+    else next.add(item.id);
+    return next;
+  }), []);
+
+  const changeSection = useCallback((section: AssistantSection) => {
+    setMode("list");
+    setSelectedIds(new Set());
+    setActiveSection(section);
+  }, []);
+
   useFocusEffect(useCallback(() => { if (status === "authenticated") void loadChats(); }, [loadChats, status]));
   useFocusEffect(useCallback(() => { if (status === "authenticated") void loadProposals(); }, [loadProposals, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({
-      action: activeSection === "chats" ? { label: "Acciones de Chats", onPress: () => setActionsVisible(true) } : undefined,
-      identityVisible: compactHeaderVisible,
-      mode: "default",
-      title: "Asistente Nutricional",
-    });
+    if (mode === "edit" && selectedIds.size) {
+      setHeaderPresentation({
+        action: { disabled: submitting, label: "Eliminar", onPress: confirmDeleteSelected },
+        identityVisible: true,
+        leadingAction: { disabled: submitting, label: "Cancelar", onPress: cancelSelection },
+        mode: "back",
+        title: activeSection === "chats" ? "Eliminar chats" : "Eliminar propuestas",
+      });
+    } else if (mode === "edit") {
+      setHeaderPresentation({
+        action: { disabled: chatsLoading || proposalsLoading || submitting, label: "Listo", onPress: finishEdit },
+        identityVisible: true,
+        mode: "default",
+        title: activeSection === "chats" ? "Editar chats" : "Editar propuestas",
+      });
+    } else {
+      setHeaderPresentation({
+        action: { icon: "more", label: activeSection === "chats" ? "Acciones de Chats" : "Acciones de Propuestas", onPress: () => setActionsVisible(true) },
+        createAction: { icon: "plus", label: "Nuevo chat", onPress: () => router.push("/assistant/new" as Href) },
+        identityVisible: compactHeaderVisible,
+        mode: "default",
+        title: "Asistente Nutricional",
+      });
+    }
     return () => setHeaderPresentation({ mode: "default" });
-  }, [activeSection, compactHeaderVisible, setHeaderPresentation]));
+  }, [activeSection, cancelSelection, chatsLoading, compactHeaderVisible, confirmDeleteSelected, finishEdit, mode, proposalsLoading, router, selectedIds.size, setHeaderPresentation, submitting]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (chatsLoading && proposalsLoading && !chatPage && !proposalPage) return <LoadingState label="Abriendo el Asistente Nutricional…" />;
@@ -116,10 +239,22 @@ export default function AssistantHistoryScreen() {
       headerMode="preserve"
       onHeaderVisibilityChange={setCompactHeaderVisible}
       scrollHeader={scrollHeader}
-      stickyHeader={<AssistantSectionTabs activeSection={activeSection} counts={counts} onChange={setActiveSection} />}
+      stickyHeader={mode === "list" ? <AssistantSectionTabs activeSection={activeSection} counts={counts} onChange={changeSection} /> : undefined}
       stickyHeaderStyle={styles.stickyHeader}
     >
-      {activeSection === "chats" ? (
+      {mode === "edit" ? (
+        <>
+          {(activeSection === "chats" ? chatError : proposalError) ? <InlineNotice tone="error">{activeSection === "chats" ? chatError : proposalError}</InlineNotice> : null}
+          <AssistantListEditor
+            busy={submitting}
+            items={activeSection === "chats" ? (chatPage?.items ?? []) : (proposalPage?.items ?? [])}
+            kind={activeSection === "chats" ? "chat" : "proposal"}
+            onDelete={confirmDeleteItem}
+            onToggle={toggleSelected}
+            selectedIds={selectedIds}
+          />
+        </>
+      ) : activeSection === "chats" ? (
         <>
           {chatPage?.availability.available_credits === 0 ? (
             <Card accent={tokens.color.warning}>
@@ -150,7 +285,8 @@ export default function AssistantHistoryScreen() {
       )}
       <AssistantListActions
         onClose={() => setActionsVisible(false)}
-        onNewChat={() => router.push("/assistant/new" as Href)}
+        onEdit={() => void beginEdit()}
+        section={activeSection}
         visible={actionsVisible}
       />
     </Screen>

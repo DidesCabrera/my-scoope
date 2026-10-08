@@ -36,6 +36,10 @@ test("the assistant proposal list and chat proposal history share one card compo
   assert.match(card, /ProposalStatusBadge/);
   assert.match(card, /ProposalTypeBadge/);
   assert.match(card, /section="proposal"/);
+  assert.match(card, /<EntityCardActions>/);
+  assert.match(card, /<EntityCardAction label=\{detailLabel\} onPress=\{onPress\} role="link">/);
+  assert.match(card, /<ChevronRight color=\{tokens\.color\.textMuted\}/);
+  assert.doesNotMatch(card, /styles\.chevron|<Text style=\{styles\.chevron\}>/);
 });
 
 test("assistant chat cards reuse the credit bag top accent", async () => {

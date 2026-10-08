@@ -52,7 +52,7 @@ import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, t
 type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus"; label: string; onPress(): void };
 
 type HeaderPresentation =
-  | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
+  | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
   | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; title: string }
   | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
@@ -279,19 +279,35 @@ export function AppNavigationHeader() {
               </Pressable>
             ) : null}
           </View>
-        ) : headerPresentation.mode === "default" && headerPresentation.action ? (
-          <Pressable
-            accessibilityLabel={headerPresentation.action.label}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: headerPresentation.action.disabled }}
-            disabled={headerPresentation.action.disabled}
-            hitSlop={8}
-            onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.headerButton, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
-            {headerPresentation.action.icon === "plus"
-              ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
-              : <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />}
-          </Pressable>
+        ) : headerPresentation.mode === "default" && (headerPresentation.createAction || headerPresentation.action) ? (
+          <View style={styles.libraryHeaderActions}>
+            {headerPresentation.createAction ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.createAction.label}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: headerPresentation.createAction.disabled }}
+                disabled={headerPresentation.createAction.disabled}
+                hitSlop={8}
+                onPress={headerPresentation.createAction.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, headerPresentation.createAction?.disabled && styles.disabled, pressed && styles.pressed]}>
+                <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
+            {headerPresentation.action ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.action.label}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: headerPresentation.action.disabled }}
+                disabled={headerPresentation.action.disabled}
+                hitSlop={8}
+                onPress={headerPresentation.action.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
+                {headerPresentation.action.icon === "plus"
+                  ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+                  : <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />}
+              </Pressable>
+            ) : null}
+          </View>
         ) : <View style={[styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide]} />}
       </View>
     </SafeAreaView>

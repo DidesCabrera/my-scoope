@@ -7,6 +7,7 @@ from ai_assistant.models import AIAsyncJob
 from core.rate_limits import is_ai_assistant_turn_rate_limited
 from mobile_api.ai_chats import chat_detail_payload, chat_list_payload, completed_turn_payload, pending_turn_job
 from mobile_api.api_support import require_scope, success
+from mobile_api.assistant_list_actions import bulk_delete_chats
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
 from mobile_api.routes.assistant_memory import router as assistant_memory_router
@@ -17,6 +18,10 @@ from mobile_api.schema_domains.assistant import (
     AIJobResultEnvelope,
     AIPreparedActionResultEnvelope,
     AITurnInput,
+)
+from mobile_api.schema_domains.list_actions import (
+    ListActionResultEnvelope,
+    ListBulkDeleteInput,
 )
 from mobile_api.schemas import ErrorEnvelope
 from notas.application.ai_intake.async_turns import enqueue_nutrition_intake_turn
@@ -128,6 +133,17 @@ def submit_ai_turn(request, payload: AITurnInput):
 )
 def ai_chats(request, offset: int = 0, limit: int = 30):
     return success(chat_list_payload(request.auth.user, offset=offset, limit=limit))
+
+
+@router.post(
+    "/ai/chats/bulk-delete",
+    operation_id="mobile_api_api_bulk_delete_ai_chats",
+    auth=mobile_bearer,
+    response={200: ListActionResultEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def delete_ai_chats(request, payload: ListBulkDeleteInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return success(bulk_delete_chats(request.auth.user, payload.item_ids))
 
 
 @router.get(

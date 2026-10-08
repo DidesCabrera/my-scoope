@@ -6,8 +6,10 @@ from typing import Any
 from ninja import Router
 
 from mobile_api.api_support import proposal_error, require_scope, success
+from mobile_api.assistant_list_actions import bulk_delete_proposals
 from mobile_api.auth import mobile_bearer
 from mobile_api.schema_domains.proposals import ProposalApplyInput, ProposalDetailEnvelope, ProposalListEnvelope
+from mobile_api.schema_domains.list_actions import ListActionResultEnvelope, ListBulkDeleteInput
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors_proposals import proposal_detail_payload, proposal_list_payload
 from notas.application.proposals.contracts import (
@@ -58,6 +60,16 @@ def _proposal_state_action(
 )
 def proposals(request: Any, status: str | None = None, offset: int = 0, limit: int = 30) -> dict[str, Any]:
     return success(proposal_list_payload(request.auth.user, status_filter=status, offset=offset, limit=limit))
+
+
+@router.post(
+    "/proposals/bulk-delete",
+    response={200: ListActionResultEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+    operation_id="mobile_api_api_bulk_delete_proposals",
+)
+def delete_proposals(request: Any, payload: ListBulkDeleteInput) -> dict[str, Any]:
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return success(bulk_delete_proposals(request.auth.user, payload.item_ids))
 
 
 @router.get(

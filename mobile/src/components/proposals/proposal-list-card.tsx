@@ -1,7 +1,8 @@
+import { ChevronRight } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { ProposalStatus as ApiProposalStatus, ProposalSummary } from "@/api/types";
-import { SectionIcon } from "@/components/ui";
+import { EntityCardAction, EntityCardActions, SectionIcon } from "@/components/ui";
 import { Card, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { formatCompactDate } from "@/presentation/date";
@@ -21,9 +22,10 @@ function proposalCardStatus(status: ApiProposalStatus): ProposalStatus {
 }
 
 export function ProposalListCard({ proposal, onPress }: { proposal: ProposalSummary; onPress(): void }) {
+  const detailLabel = `Ver detalle de ${proposal.title}`;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Card accent={proposalEntityColors[proposal.attachment_kind]}>
+      <Card accent={proposalEntityColors[proposal.attachment_kind]} style={styles.proposalCard}>
+        <Pressable accessibilityLabel={detailLabel} accessibilityRole="link" onPress={onPress} style={({ pressed }) => [styles.cardLink, pressed && styles.pressed]}>
         <View style={styles.copy}>
           <View style={styles.eyebrowRow}>
             <SectionIcon section="proposal" size="compact" />
@@ -42,20 +44,25 @@ export function ProposalListCard({ proposal, onPress }: { proposal: ProposalSumm
             <Text style={textStyles.caption}>{proposal.attachment_label}</Text>
             <Text style={textStyles.strong}>{proposal.attachment_name}</Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
         </View>
+        </Pressable>
+        <EntityCardActions>
+          <EntityCardAction label={detailLabel} onPress={onPress} role="link">
+            <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+          </EntityCardAction>
+        </EntityCardActions>
       </Card>
-    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  attachment: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
-  chevron: { color: tokens.color.textSoft, fontSize: 28 },
+  attachment: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, padding: tokens.spacing.md },
+  cardLink: { gap: tokens.card.gap },
   copy: { flex: 1, gap: 4 },
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
   eyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   pressed: { opacity: 0.65 },
+  proposalCard: { paddingBottom: tokens.card.innerPadding },
   proposalBadges: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm, paddingTop: tokens.spacing.xs },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
 });
