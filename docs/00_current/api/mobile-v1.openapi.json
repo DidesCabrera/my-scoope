@@ -8583,6 +8583,18 @@
             ],
             "title": "Measured On"
           },
+          "measured_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Time"
+          },
           "weight_kg": {
             "exclusiveMinimum": 0,
             "maximum": 350,
@@ -8644,6 +8656,18 @@
             "format": "date",
             "title": "Measured On",
             "type": "string"
+          },
+          "measured_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Time"
           },
           "source": {
             "title": "Source",
@@ -17866,6 +17890,80 @@
           }
         ],
         "summary": "Create Weight"
+      }
+    },
+    "/api/v1/weights/{weight_id}": {
+      "patch": {
+        "operationId": "mobile_api_api_update_weight",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "weight_id",
+            "required": true,
+            "schema": {
+              "title": "Weight Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeightCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Weight"
       }
     }
   },
