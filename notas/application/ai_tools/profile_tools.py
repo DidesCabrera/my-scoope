@@ -14,6 +14,7 @@ from notas.application.dto.nutrition_subject_context_dto import (
 from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
 from notas.application.services.nutrition.body_metrics import record_weight
 from notas.domain.models import Profile
+from notas.domain.nutrition_profile_contracts import NUTRITION_GOAL_CHOICES
 
 COMMITTABLE_PROFILE_FIELDS = (
     "weight_kg",
@@ -29,6 +30,18 @@ BODY_BASICS_FIELDS = (
     "activity_level",
 )
 
+PROFILE_RECORD_CARD_FIELDS = (
+    "height_cm",
+    "age_years",
+    "sex",
+    "nutrition_goal",
+    "activity_level",
+    "training_frequency",
+    "weight_kg",
+    "weight_date",
+    "weight_source",
+)
+
 FIELD_LABELS = {
     "weight_kg": "Peso",
     "height_cm": "Altura",
@@ -36,6 +49,9 @@ FIELD_LABELS = {
     "sex": "Sexo",
     "activity_level": "Actividad",
     "training_frequency": "Entrenamiento semanal",
+    "nutrition_goal": "Objetivo nutricional",
+    "weight_date": "Última medición",
+    "weight_source": "Origen",
 }
 
 SOURCE_LABELS = {
@@ -86,6 +102,7 @@ def _read_user_profile_context_data(user) -> dict[str, Any]:
         "onboarding_version": profile.get("onboarding_version"),
         "activity_level": profile.get("activity_level"),
         "training_frequency": profile.get("training_frequency"),
+        "nutrition_goal": profile.get("nutrition_goal"),
     }
     missing_fields = [field for field in BODY_BASICS_FIELDS if _is_missing(profile_context.get(field))]
     profile_draft = _profile_draft_from_profile_context(profile_context)
@@ -132,7 +149,13 @@ def _profile_draft_from_profile_context(profile_context: Mapping[str, Any]) -> d
         if not _is_missing(draft.get(field_name)):
             field_sources[field_name] = "profile"
     draft["field_sources"] = field_sources
-    return _with_profile_draft_metadata(draft)
+    draft = _with_profile_draft_metadata(draft)
+    draft.update({
+        "nutrition_goal": profile_context.get("nutrition_goal"),
+        "weight_date": profile_context.get("weight_date"),
+        "weight_source": profile_context.get("weight_source"),
+    })
+    return draft
 
 
 def _nutrition_brief_patch_from_profile_context(profile_context: Mapping[str, Any]) -> dict[str, Any]:
@@ -388,7 +411,7 @@ def _with_profile_draft_metadata(draft: Mapping[str, Any]) -> dict[str, Any]:
 
 def _build_profile_draft_card(profile_draft: Mapping[str, Any]) -> dict[str, Any]:
     items = []
-    for field_name in BODY_BASICS_FIELDS:
+    for field_name in PROFILE_RECORD_CARD_FIELDS:
         value = profile_draft.get(field_name)
         source = (profile_draft.get("field_sources") or {}).get(field_name) or "unknown"
         items.append(
@@ -401,7 +424,7 @@ def _build_profile_draft_card(profile_draft: Mapping[str, Any]) -> dict[str, Any
                 "source_label": SOURCE_LABELS.get(source, SOURCE_LABELS["unknown"]),
             }
         )
-    pending_count = sum(1 for item in items if item["is_pending"])
+    pending_count = sum(1 for item in items if item["key"] in BODY_BASICS_FIELDS and item["is_pending"])
     chat_draft_fields = set(profile_draft.get("chat_draft_fields") or ())
     has_committable_chat_updates = bool(chat_draft_fields.intersection(COMMITTABLE_PROFILE_FIELDS))
     return {
@@ -604,6 +627,16 @@ def _format_profile_value(field_name: str, value: Any) -> str:
             "moderate": "Moderada",
             "high": "Alta",
             "very_high": "Muy alta",
+        }.get(str(value), str(value))
+    if field_name == "nutrition_goal":
+        return dict(NUTRITION_GOAL_CHOICES).get(str(value), str(value))
+    if field_name == "training_frequency":
+        return f"{int(value)} por semana"
+    if field_name == "weight_source":
+        return {
+            "manual": "Registro manual",
+            "onboarding": "Onboarding",
+            "imported": "Importado",
         }.get(str(value), str(value))
     return str(value)
 

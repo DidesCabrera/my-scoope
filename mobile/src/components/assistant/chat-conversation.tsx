@@ -2,10 +2,11 @@ import { type Href, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-import type { AIChatMessage, LibraryItem, ProposalDetail, ProposalSummary, SavedComparisonDetail, SavedComparisonSummary } from "@/api/types";
+import type { AIChatCardItem, AIChatMessage, LibraryItem, ProposalDetail, ProposalSummary, SavedComparisonDetail, SavedComparisonSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { SavedComparisonListCard } from "@/components/comparisons";
 import { LibraryCard } from "@/components/libraries/library-card";
+import { PersonalRecordCard, type PersonalRecordItem, type PersonalRecordKind } from "@/components/profile";
 import { ProposalListCard } from "@/components/proposals";
 import { Button, Card, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -16,6 +17,11 @@ type PreparedActionHandler = (actionId: string, mode: "commit" | "cancel", destr
 type ChatProposalCardData = Extract<NonNullable<AIChatMessage["cards"]>[number], { type: "proposal_review" | "generated_plan" }>;
 type ChatLibraryCardData = Extract<NonNullable<AIChatMessage["cards"]>[number], { type: "library_item" }>;
 type ChatComparisonCardData = Extract<NonNullable<AIChatMessage["cards"]>[number], { type: "saved_comparison" }>;
+type ChatDraftCardData = {
+  can_commit: boolean;
+  items: AIChatCardItem[];
+  type: "profile_draft" | "preference_draft";
+};
 
 const librarySegments = { dailyplans: "daily-plans", foods: "foods", meals: "meals", programs: "programs" } as const;
 
@@ -101,6 +107,46 @@ function ChatSavedComparisonCard({ card }: { card: ChatComparisonCardData }) {
   return <InlineNotice>Esta comparación ya no está disponible.</InlineNotice>;
 }
 
+const profileRecordKinds: Partial<Record<string, PersonalRecordKind>> = {
+  activity_level: "planning",
+  age_years: "body",
+  height_cm: "body",
+  nutrition_goal: "planning",
+  sex: "body",
+  training_frequency: "planning",
+  weight_date: "metrics",
+  weight_kg: "metrics",
+  weight_source: "metrics",
+};
+
+function personalRecordItems(card: ChatDraftCardData): { items: PersonalRecordItem[]; kind: PersonalRecordKind }[] {
+  if (card.type === "preference_draft") {
+    return [{
+      kind: "preferences",
+      items: card.items.map((item) => ({ ...item, isPending: item.is_pending })),
+    }];
+  }
+  const grouped = new Map<PersonalRecordKind, PersonalRecordItem[]>();
+  for (const item of card.items) {
+    const kind = profileRecordKinds[item.key];
+    if (!kind) continue;
+    grouped.set(kind, [...(grouped.get(kind) ?? []), { ...item, isPending: item.is_pending }]);
+  }
+  return (["body", "planning", "metrics"] as PersonalRecordKind[])
+    .flatMap((kind) => grouped.has(kind) ? [{ kind, items: grouped.get(kind)! }] : []);
+}
+
+function ChatPersonalRecordCards({ card, onPreferenceCommit }: { card: ChatDraftCardData; onPreferenceCommit: () => void }) {
+  return personalRecordItems(card).map((record) => (
+    <PersonalRecordCard
+      action={card.type === "preference_draft" && card.can_commit ? <Button label="Guardar preferencias" onPress={onPreferenceCommit} /> : undefined}
+      items={record.items}
+      key={record.kind}
+      kind={record.kind}
+    />
+  ));
+}
+
 function ChatCard({ card, onPreferenceCommit, onPreparedAction }: { card: NonNullable<AIChatMessage["cards"]>[number]; onPreferenceCommit: () => void; onPreparedAction: PreparedActionHandler }) {
   if (card.type === "proposal_review" || card.type === "generated_plan") {
     return <ChatProposalListCard card={card} />;
@@ -111,11 +157,14 @@ function ChatCard({ card, onPreferenceCommit, onPreparedAction }: { card: NonNul
   if (card.type === "saved_comparison") {
     return <ChatSavedComparisonCard card={card} />;
   }
+  if (card.type === "profile_draft" || card.type === "preference_draft") {
+    return <ChatPersonalRecordCards card={card as ChatDraftCardData} onPreferenceCommit={onPreferenceCommit} />;
+  }
   if (card.type === "prepared_action") {
     const pending = card.status === "prepared";
     return <Card accent={card.destructive ? tokens.color.danger : tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text><Text style={styles.cardMeta}>{card.operation_count} {card.operation_count === 1 ? "cambio" : "cambios"} · riesgo {card.risk_level}</Text>{card.summary ? <Text style={styles.cardCopy}>{card.summary}</Text> : null}{card.operations.map((operation, index) => <Text key={`${index}-${operation}`} style={styles.operation}>• {operation}</Text>)}{pending ? <View style={styles.actions}><Button label="Confirmar" onPress={() => onPreparedAction(card.action_id, "commit", card.destructive)} variant={card.destructive ? "danger" : "primary"} /><Button label="Cancelar" onPress={() => onPreparedAction(card.action_id, "cancel", false)} variant="secondary" /></View> : <InlineNotice>Acción {card.status === "committed" ? "confirmada" : card.status === "cancelled" ? "cancelada" : "no disponible"}.</InlineNotice>}</Card>;
   }
-  return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.subtitle ? <Text style={styles.cardCopy}>{card.subtitle}</Text> : null}{card.items.map((item) => <View key={`${card.type}-${item.key}`} style={styles.item}><Text style={styles.itemLabel}>{item.label}</Text><Text style={[styles.itemValue, item.is_pending && styles.pending]}>{item.value}</Text></View>)}{card.type === "preference_draft" && card.can_commit ? <Button label="Guardar preferencias" onPress={onPreferenceCommit} /> : null}</Card>;
+  return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.subtitle ? <Text style={styles.cardCopy}>{card.subtitle}</Text> : null}{card.items.map((item) => <View key={`${card.type}-${item.key}`} style={styles.item}><Text style={styles.itemLabel}>{item.label}</Text><Text style={[styles.itemValue, item.is_pending && styles.pending]}>{item.value}</Text></View>)}</Card>;
 }
 
 export function ChatConversation({ messages, onPreferenceCommit, onPreparedAction }: { messages: AIChatMessage[]; onPreferenceCommit: () => void; onPreparedAction: PreparedActionHandler }) {

@@ -5,6 +5,8 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from ai_assistant.application.personal_record_intent import parse_personal_record_request
+
 ACTIVE_WORK_VERSION = "ai_assistant.active_work.v1"
 
 _RESOURCE_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -133,6 +135,15 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": "clarify",
         }
 
+    personal_records = parse_personal_record_request(str(value or ""))
+    if personal_records is not None and personal_records.ambiguous:
+        return {
+            "objective": "ask_clarification",
+            "expected_outcome": "clarification_required",
+            "resource": "profile",
+            "action": "clarify",
+        }
+
     resource = _resource(text)
     mutation_action = _mutation_action(text)
     if resource and mutation_action:
@@ -257,7 +268,7 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
 
 
 def _active_payload(objective: Mapping[str, str], *, source: str) -> dict[str, Any]:
-    return {
+    payload = {
         "version": ACTIVE_WORK_VERSION,
         "status": "active",
         "objective": objective["objective"],
@@ -267,6 +278,19 @@ def _active_payload(objective: Mapping[str, str], *, source: str) -> dict[str, A
         "source": source,
         "inference_grants_write_authority": False,
     }
+    if objective.get("expected_outcome") == "clarification_required" and objective.get("resource") == "profile":
+        payload["clarification_prompt"] = (
+            "Pregunta si se refiere a Ficha corporal, Objetivo y actividad, "
+            "Preferencias alimentarias, Métricas corporales o a todas."
+        )
+        payload["clarification_options"] = [
+            "Ficha corporal",
+            "Objetivo y actividad",
+            "Preferencias alimentarias",
+            "Métricas corporales",
+            "Todas mis fichas",
+        ]
+    return payload
 
 
 def _response_only_payload() -> dict[str, Any]:

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
-export type GalleryTab = "onboarding" | "subscriptions" | "labelCapture" | "components" | "calendars" | "program" | "details" | "shareable" | "proposals" | "comparisons" | "states" | "tokens";
+export type GalleryTab = "onboarding" | "subscriptions" | "labelCapture" | "components" | "calendars" | "program" | "details" | "shareable" | "proposals" | "comparisons" | "personalRecords" | "states" | "tokens";
 
 const tabs: { key: GalleryTab; label: string }[] = [
   { key: "onboarding", label: "Onboarding" },
@@ -14,6 +14,7 @@ const tabs: { key: GalleryTab; label: string }[] = [
   { key: "program", label: "Programa" }, { key: "details", label: "Detalle" },
   { key: "shareable", label: "Compartibles" },
   { key: "proposals", label: "Propuestas" }, { key: "comparisons", label: "Comparaciones" },
+  { key: "personalRecords", label: "Fichas personales" },
   { key: "states", label: "Estados" }, { key: "tokens", label: "Tokens" },
 ];
 
