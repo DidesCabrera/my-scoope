@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import { Flag, LifeBuoy, Pencil, Trash2 } from "lucide-react-native";
+import { Flag, LifeBuoy, LogOut, Pencil, Trash2 } from "lucide-react-native";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -145,7 +145,9 @@ export default function AccountScreen() {
       {__DEV__ ? (
         <Button label="Abrir galería del sistema UI" onPress={() => router.push("/dev/ui-gallery" as Href)} variant="secondary" />
       ) : null}
-      <Button label="Cerrar sesión" onPress={() => void signOut().then(() => router.replace("/login"))} variant="secondary" />
+      <View style={styles.signOutSpacing}>
+        <Button icon={<LogOut color={tokens.color.textMain} size={18} />} label="Cerrar sesión" onPress={() => void signOut().then(() => router.replace("/login"))} variant="secondary" />
+      </View>
       <ActionSheetModal onDismiss={finishClosingAccountActions} onRequestClose={closeAccountActions} visible={accountActionsVisible}>
         <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
           <ActionSheetHeader onClose={closeAccountActions} section="profile" title={accountActions === "delete" ? "Eliminar mi cuenta" : accountActions === "rename" ? "Editar nombre de usuario" : "Mi cuenta"} />
@@ -211,6 +213,7 @@ const styles = StyleSheet.create({
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
+  signOutSpacing: { marginTop: 26 },
   planName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
   subscriptionHeading: { alignItems: "center", flexDirection: "row" },
 });

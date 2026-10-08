@@ -84,6 +84,11 @@ const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().ma
   label: area.label,
 }));
 
+const secondaryPrimaryItems: NavigationSidebarItemData[] = [
+  { href: "/personal-records", icon: Files, label: "Fichas personales" },
+  { href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" },
+];
+
 const libraryItems: EntitySidebarItemData[] = [
   { entity: "program", href: "/libraries/programs", label: "Mis Programas Semanales" },
   { entity: "dailyPlan", href: "/libraries/daily-plans", label: "Mis Planes Diarios" },
@@ -393,7 +398,12 @@ function AppSidebar() {
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false} style={styles.drawerScroll}>
-              {primaryItems.map((item) => <FunctionalSidebarEntry item={item} key={String(item.href)} />)}
+              {primaryItems.flatMap((item) => [
+                <FunctionalSidebarEntry item={item} key={String(item.href)} />,
+                ...(item.href === "/inbox"
+                  ? secondaryPrimaryItems.map((secondaryItem) => <FunctionalSidebarEntry item={secondaryItem} key={String(secondaryItem.href)} />)
+                  : []),
+              ])}
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
                 {libraryItems.map((item) => <EntitySidebarEntry count={libraryCount(libraryCounts, item.entity)} item={item} key={String(item.href)} />)}
@@ -401,8 +411,6 @@ function AppSidebar() {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>
                 <FunctionalSidebarEntry item={{ href: "/account", icon: UserRound, label: "Mi cuenta" }} />
-                <FunctionalSidebarEntry item={{ href: "/personal-records", icon: Files, label: "Fichas personales" }} />
-                <FunctionalSidebarEntry item={{ href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" }} />
                 {session?.is_staff ? <FunctionalSidebarEntry item={{ href: "/onboarding-preview", icon: WandSparkles, label: "Vista previa del onboarding" }} /> : null}
               </View>
             </ScrollView>

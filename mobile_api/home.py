@@ -29,6 +29,7 @@ def _latest_weight(user) -> dict | None:
     return {
         "id": item.id,
         "measured_on": item.date,
+        "measured_time": item.time,
         "weight_kg": item.weight_kg,
         "source": item.source,
         "created_at": item.created_at,

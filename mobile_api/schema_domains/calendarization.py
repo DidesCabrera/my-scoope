@@ -173,6 +173,7 @@ class CalendarizedDayDetailEnvelope(Schema):
 class WeightItem(Schema):
     id: int
     measured_on: date
+    measured_time: time | None = None
     weight_kg: float
     source: str
     created_at: datetime
@@ -193,6 +194,7 @@ class WeightListEnvelope(Schema):
 class WeightCreateInput(Schema):
     weight_kg: float = Field(gt=0, le=350)
     measured_on: date | None = None
+    measured_time: time | None = None
 
 
 class WeightEnvelope(Schema):

@@ -2,6 +2,7 @@ import type { StyleProp, TextStyle, ViewStyle } from "react-native";
 
 export type NativeMeasurementFieldProps = {
   containerStyle?: StyleProp<ViewStyle>;
+  defaultValue?: string;
   disabled?: boolean;
   inputStyle?: StyleProp<TextStyle>;
   kind: "height" | "weight";

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
-import { Card, EntityIcon, type EntityKind, textStyles } from "@/components/ui";
+import { Card, EntityIcon, type EntityKind, KeyValueTable, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 type PlanBenefit = { entity?: EntityKind; icon?: LucideIcon; label: string; value: string };
@@ -53,20 +53,14 @@ export function SubscriptionPlanCard({ accent, benefits, caption, children, name
         </View>
         {caption ? <Text style={textStyles.caption}>{caption}</Text> : null}
       </View>
-      <View style={styles.benefitRows}>
-        {benefits.map((item, index) => {
+      <KeyValueTable items={benefits.map((item) => {
           const Icon = item.icon;
-          return (
-            <View key={item.label} style={[styles.benefitRow, index === benefits.length - 1 && styles.benefitRowLast]}>
-              <View style={styles.benefitIdentity}>
-                {item.entity ? <EntityIcon entity={item.entity} size="benefit" /> : Icon ? <View style={styles.benefitIcon}><Icon color={tokens.color.textMain} size={14} strokeWidth={2.2} /></View> : null}
-                <Text style={styles.benefitLabel}>{item.label}</Text>
-              </View>
-              <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.benefitValue}>{item.value}</Text>
-            </View>
-          );
-        })}
-      </View>
+          return {
+            icon: item.entity ? <EntityIcon entity={item.entity} size="benefit" /> : Icon ? <View style={styles.benefitIcon}><Icon color={tokens.color.textMain} size={14} strokeWidth={2.2} /></View> : undefined,
+            label: item.label,
+            value: item.value,
+          };
+        })} />
       {children}
     </Card>
   );
@@ -104,12 +98,6 @@ export function SubscriptionPurchaseButton({ disabled = false, label, loading = 
 
 const styles = StyleSheet.create({
   benefitIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
-  benefitIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
-  benefitLabel: { color: tokens.color.textMuted, flexShrink: 1, fontSize: 14, lineHeight: 20 },
-  benefitRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingVertical: tokens.spacing.xs },
-  benefitRowLast: { borderBottomWidth: 0 },
-  benefitRows: { marginTop: -tokens.spacing.xs },
-  benefitValue: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20, textAlign: "right" },
   copy: { flex: 1, gap: 4 },
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   planPriceChip: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs },
