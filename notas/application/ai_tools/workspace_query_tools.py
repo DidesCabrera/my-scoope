@@ -141,6 +141,7 @@ def query_workspace_tool(
     resource: str,
     object_id: int | None = None,
     search: str = "",
+    kind: str | None = None,
     limit: int = 20,
     offset: int = 0,
 ):
@@ -175,7 +176,7 @@ def query_workspace_tool(
             user=user,
         )
     if normalized_resource == "saved_comparisons":
-        return list_saved_comparisons_tool(user, limit=limit)
+        return list_saved_comparisons_tool(user, kind=kind, limit=limit)
 
     list_tools = {
         "proposals": (list_user_proposals_tool, search_proposals_tool),

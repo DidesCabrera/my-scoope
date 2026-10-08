@@ -552,7 +552,7 @@ def _apply_llm_tool_result_data_to_brief(brief: NutritionBrief, data: dict) -> N
     return updated
 
 
-MAX_READ_RESULT_CARDS = 8
+MAX_READ_RESULT_CARDS = 3
 LIBRARY_CARD_RESOURCES = {
     "foods": "food",
     "meals": "meal",

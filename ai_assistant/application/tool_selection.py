@@ -324,7 +324,8 @@ def _requests_workspace_query(user_text: str) -> bool:
         text,
     )
     query = "?" in str(user_text or "") or re.search(
-        r"\b(?:que|cual(?:es)?|cuanto(?:s)?|consulta\w*|lista\w*|muestra\w*|busca\w*|dime)\b",
+        r"\b(?:que|cual(?:es)?|cuanto(?:s)?|consulta\w*|lista\w*|muestra\w*|"
+        r"busca\w*|dime|ver|veo|primer(?:o|a|os|as)|ultim(?:o|a|os|as))\b",
         text,
     )
     return resource is not None and query is not None

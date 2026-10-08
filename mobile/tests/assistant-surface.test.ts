@@ -75,3 +75,16 @@ test("typed assistant cards navigate to trusted product surfaces and gate mutati
   assert.match(screen, /\/ai\/chats\/\$\{chatId\}\/preferences\/commit/);
   assert.doesNotMatch(conversation, /preview\.before|preview\.after|arguments/);
 });
+
+test("the UI gallery registers the same saved comparison card used by chat and comparisons", async () => {
+  const gallery = await source("src/app/dev/ui-gallery.tsx");
+  const comparisonGallery = await source("src/components/dev/saved-comparison-card-gallery.tsx");
+  const conversation = await source("src/components/assistant/chat-conversation.tsx");
+  const comparator = await source("src/app/comparator/index.tsx");
+
+  assert.ok(gallery.includes("<SavedComparisonCardGallery"));
+  assert.ok(comparisonGallery.includes("<SavedComparisonListCard"));
+  assert.ok(comparisonGallery.includes("item={savedFoodComparison}"));
+  assert.ok(conversation.includes("<SavedComparisonListCard item={item}"));
+  assert.ok(comparator.includes("<SavedComparisonListCard item={item}"));
+});

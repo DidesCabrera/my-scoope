@@ -25,6 +25,7 @@ import { ProgramChildCard } from "@/components/libraries/program-child-card";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
+import { SavedComparisonCardGallery } from "@/components/dev/saved-comparison-card-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
 import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
@@ -69,7 +70,6 @@ import {
   textStyles,
 } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-
 // GalleryNavigation includes { key: "calendars", label: "Calendarios" }.
 
 const entities: { key: EntityKind; label: string }[] = [
@@ -112,7 +112,6 @@ const comparisonFoodItems: FoodPanelItem[] = [
   { id: "comparison-yogurt", name: "Yogur griego natural", quantity: 100, quantityUnit: "g", calories: 97, calorieShare: 61, proteinGrams: 9, carbsGrams: 3.8, fatGrams: 5, proteinAllocation: 37, carbsAllocation: 16, fatAllocation: 47 },
   { id: "comparison-skyr", name: "Skyr natural", quantity: 100, quantityUnit: "g", calories: 62, calorieShare: 39, proteinGrams: 12, carbsGrams: 4, fatGrams: 0.2, proteinAllocation: 75, carbsAllocation: 24, fatAllocation: 1 },
 ];
-
 const mealPanelItems: MealPanelItem[] = [
   { id: "breakfast", name: "Desayuno", time: "08:00", foods: [{ name: "Avena", quantity: 80, quantityUnit: "g" }, { name: "Yogur", quantity: 180, quantityUnit: "g" }, { name: "Plátano", quantity: 120, quantityUnit: "g" }], calories: 594, calorieShare: 28, proteinGrams: 29.8, carbsGrams: 88.4, fatGrams: 13, proteinAllocation: 20, carbsAllocation: 60, fatAllocation: 20 },
   { id: "lunch", name: "Almuerzo", time: "13:30", foods: [{ name: "Arroz", quantity: 180, quantityUnit: "g" }, { name: "Pollo", quantity: 160, quantityUnit: "g" }, { name: "Ensalada", quantity: 120, quantityUnit: "g" }], calories: 720, calorieShare: 34, proteinGrams: 52, carbsGrams: 82, fatGrams: 20, proteinAllocation: 29, carbsAllocation: 46, fatAllocation: 25 },
@@ -598,7 +597,8 @@ export default function UiGalleryScreen() {
             tone="protein"
             unit="g"
           />
-          <SectionTitle detail="Resumen de comparaciones persistidas" title="Comparación guardada" />
+          <SavedComparisonCardGallery />
+          <SectionTitle detail="Composición interna del resultado guardado" title="Contenido de comparación" />
           <SavedComparisonCard
             items={comparisonFoodItems}
             title="Yogures altos en proteína"

@@ -226,7 +226,7 @@ class AiIntakeAiAssistantProposalCardTests(SimpleTestCase):
             },
         )
 
-        self.assertEqual(library_count, 8)
+        self.assertEqual(library_count, 3)
         self.assertEqual(comparison_count, 2)
         card_message = conversation.messages[-1]
         self.assertEqual(card_message.library_cards[0]["title"], "Alimento 1")
@@ -236,6 +236,32 @@ class AiIntakeAiAssistantProposalCardTests(SimpleTestCase):
         stamped = _stamp_latest_turn(conversation)
         self.assertIsNotNone(stamped.messages[-1].created_at)
         restored = deserialize_conversation(serialize_conversation(stamped))
-        self.assertEqual(len(restored.messages[-1].library_cards), 8)
+        self.assertEqual(len(restored.messages[-1].library_cards), 3)
         self.assertEqual(len(restored.messages[-1].saved_comparison_cards), 2)
         self.assertEqual(restored.messages[-1].created_at, stamped.messages[-1].created_at)
+
+    def test_two_library_results_render_as_two_distinct_cards(self):
+        conversation, library_count, comparison_count = _append_read_result_cards_from_llm_tools(
+            _conversation(),
+            {
+                "tool_results": [
+                    {
+                        "status": "ok",
+                        "tool_name": "query_workspace",
+                        "data": {
+                            "dailyplans": [
+                                {"id": 31, "name": "Plan uno"},
+                                {"id": 32, "name": "Plan dos"},
+                            ]
+                        },
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(library_count, 2)
+        self.assertEqual(comparison_count, 0)
+        self.assertEqual(
+            [card["item_id"] for card in conversation.messages[-1].library_cards],
+            [31, 32],
+        )

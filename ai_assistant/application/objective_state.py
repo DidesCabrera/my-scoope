@@ -43,7 +43,12 @@ _CREATE_PATTERN = re.compile(
 )
 _QUERY_PATTERN = re.compile(
     r"(?:\?|\b(?:que|cual(?:es)?|cuanto(?:s)?|como|donde|lista\w*|muestra\w*|"
-    r"busca\w*|revisa\w*|dime|tengo|hay|existe\w*)\b)"
+    r"busca\w*|revisa\w*|dime|ver|veo|consulta\w*|tengo|hay|existe\w*|"
+    r"primer(?:o|a|os|as)|ultim(?:o|a|os|as))\b)"
+)
+_EXPLICIT_READ_PATTERN = re.compile(
+    r"\b(?:ver|veo|lista\w*|muestra\w*|busca\w*|consulta\w*|dime|"
+    r"tengo|hay|existe\w*|primer(?:o|a|os|as)|ultim(?:o|a|os|as))\b"
 )
 _CONTINUATION_PATTERN = re.compile(
     r"^(?:si|ok|okay|dale|continua|avanza(?:mos)?|hazlo|hagamoslo|"
@@ -138,6 +143,17 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": mutation_action,
         }
 
+    # A generic desire verb ("quiero"/"necesito") must not turn an explicit
+    # read request such as "necesito ver dos planes" into a create proposal.
+    # Read intent takes precedence unless the user also names a mutation.
+    if resource and _EXPLICIT_READ_PATTERN.search(text):
+        return {
+            "objective": "query_workspace",
+            "expected_outcome": "workspace_query",
+            "resource": resource,
+            "action": "read",
+        }
+
     if (
         resource == "program"
         and "mejor" in text
@@ -212,14 +228,6 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "expected_outcome": "nutrition_proposal",
             "resource": "dailyplan",
             "action": "create",
-        }
-
-    if resource and _QUERY_PATTERN.search(text):
-        return {
-            "objective": "query_workspace",
-            "expected_outcome": "workspace_query",
-            "resource": resource,
-            "action": "read",
         }
 
     if _PREFERENCE_FACT_PATTERN.search(text):

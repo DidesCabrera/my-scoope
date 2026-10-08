@@ -378,6 +378,41 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         self.assertEqual(active_work["expected_outcome"], "workspace_query")
         self.assertEqual(active_work["resource"], "program")
 
+    def test_need_to_see_two_library_plans_is_read_not_proposal_creation(self):
+        message = "Necesito ver también los dos primeros planes de mi librería"
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text=message)
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "query_workspace")
+        self.assertEqual(active_work["expected_outcome"], "workspace_query")
+        self.assertEqual(active_work["resource"], "dailyplan")
+        self.assertEqual(active_work["action"], "read")
+
+    def test_first_food_comparison_card_is_a_saved_comparison_query(self):
+        message = "Me puedes enviar la primera card de comparación de alimentos de mi librería"
+        state = self._state_with_messages(
+            NutritionConversationMessage(role="user", text=message)
+        )
+        context = build_safe_llm_context(
+            ChatEngineRequest(message=message, user_id=123),
+            conversation_state=state,
+        ).as_dict()
+
+        active_work = context["metadata"]["tool_oriented_intake"]["work_progress"][
+            "active_work"
+        ]
+        self.assertEqual(active_work["objective"], "query_workspace")
+        self.assertEqual(active_work["expected_outcome"], "workspace_query")
+        self.assertEqual(active_work["resource"], "saved_comparison")
+
     def test_ambiguous_reference_requires_clarification_without_guessing_state(self):
         message = "¿Qué está pasando?"
         state = self._state_with_messages(

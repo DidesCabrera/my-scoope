@@ -339,7 +339,7 @@ CONVERSATION_CARD_FIELDS = (
     "saved_comparison_card",
 )
 CONVERSATION_CARD_LIST_FIELDS = ("library_cards", "saved_comparison_cards")
-MAX_CONVERSATION_CARD_LIST_ITEMS = 8
+MAX_CONVERSATION_CARD_LIST_ITEMS = 3
 
 
 @dataclass(frozen=True)

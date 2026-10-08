@@ -5,6 +5,7 @@ from notas.application.ai_tools.comparison_tools import (
     list_saved_comparisons_tool,
     read_saved_comparison_tool,
 )
+from notas.application.ai_tools.workspace_query_tools import query_workspace_tool
 from notas.domain.models import SavedComparison
 
 
@@ -59,3 +60,31 @@ class AIComparisonToolsTests(TestCase):
 
         self.assertFalse(result.ok)
         self.assertEqual(result.error.code, "not_found")
+
+    def test_workspace_query_returns_only_the_first_food_comparison(self):
+        older = SavedComparison.objects.create(
+            owner=self.user,
+            kind=SavedComparison.KIND_FOODS,
+            name="Avena vs arroz",
+            payload=[{"id": 3, "quantity": 100}, {"id": 4, "quantity": 100}],
+        )
+        newest = SavedComparison.objects.create(
+            owner=self.user,
+            kind=SavedComparison.KIND_FOODS,
+            name="Yogur vs skyr",
+            payload=[{"id": 5, "quantity": 100}, {"id": 6, "quantity": 100}],
+        )
+
+        result = query_workspace_tool(
+            self.user,
+            resource="saved_comparisons",
+            kind="foods",
+            limit=1,
+        )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(
+            [item["id"] for item in result.data["saved_comparisons"]],
+            [newest.id],
+        )
+        self.assertNotEqual(newest.id, older.id)

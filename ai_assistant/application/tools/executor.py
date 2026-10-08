@@ -187,6 +187,7 @@ class ReadOnlyToolExecutor:
         if tool_name == TOOL_QUERY_WORKSPACE:
             payload["resource"] = str(payload.get("resource") or "").strip().lower()
             payload["search"] = str(payload.get("search") or "").strip()
+            payload["kind"] = str(payload.get("kind") or "").strip().lower() or None
             payload["offset"] = _coerce_offset(payload.get("offset", 0))
 
         if tool_name == TOOL_LIST_INBOX_ITEMS:

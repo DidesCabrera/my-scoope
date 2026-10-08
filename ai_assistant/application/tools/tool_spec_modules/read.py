@@ -17,7 +17,9 @@ READ_TOOL_SPECS = {
             "include object_id to read one object. For count questions, always report total_count "
             "(also exposed as count_for_user_questions), never returned_count or the page length. "
             "Library objects and saved comparisons returned by this tool are also rendered as native, "
-            "navigable cards in the chat (up to the UI safety limit), so do not repeat every card field. "
+            "navigable cards in the chat (up to 3). Respect an explicitly requested quantity from 1 to 3; "
+            "for a larger request use limit 3 and explain that the chat shows at most 3 cards. "
+            "Do not repeat every card field. "
             "It never writes data."
         ),
         category=AssistantToolCategory.READ,
@@ -47,6 +49,15 @@ READ_TOOL_SPECS = {
                 "search": {
                     "type": "string",
                     "description": "Optional text search for list resources.",
+                },
+                "kind": {
+                    "type": "string",
+                    "enum": ["foods", "meals", "dailyplans"],
+                    "description": (
+                        "Optional saved comparison kind filter. Use foods for alimentos, "
+                        "meals for comidas and dailyplans for planes. Only applies when "
+                        "resource is saved_comparisons."
+                    ),
                 },
                 "limit": {
                     "type": "integer",
