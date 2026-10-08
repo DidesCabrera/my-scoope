@@ -396,7 +396,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>[\s\S]*<View style=\{styles\.noteSurface\}>/);
   assertSourceDoesNotMatch(mealAdherence, /<ContentPanel/);
   assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
-  assertSourceMatch(mealAdherence, /noteInput: \{[^}]*backgroundColor: tokens\.color\.surfaceCard/);
+  assertSourceMatch(mealAdherence, /noteInput: \{[^}]*backgroundColor: tokens\.color\.surfaceMuted/);
   assertSourceMatch(mealAdherence, /noteInput: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceDoesNotMatch(mealAdherence, /noteInput: \{[^}]*borderColor|noteInput: \{[^}]*borderWidth/);
   assertSourceMatch(mealAdherence, /noteSurface: \{[^}]*backgroundColor: "transparent"[^}]*marginTop: tokens\.spacing\.xs/);
@@ -576,7 +576,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
   assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
   assertSourceMatch(todayScreen, /greetingHeading: \{ alignItems: "center", flexDirection: "row"/);
-  assertSourceMatch(todayScreen, /<GuideMetric tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
+  assertSourceMatch(todayScreen, /<GuideMetric onPress=\{\(\) => router\.push\("\/weight" as Href\)\} tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /<GuideMetric icon="weight"/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValueOnly: \{ borderRadius: tokens\.radius\.lg, minHeight: 40 \}/);
@@ -647,7 +647,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDayDetail, /afterNutrition=\{<DailyMealCompletionCard mealExecution=\{day\.meal_execution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
   assertSourceMatch(calendarizedDayDetail, /eyebrowAccessory=\{<HeaderMetadataChip kind="date" value=\{compactDateLabel\(day\.calendar_date\)\} \/>\}/);
   assertSourceDoesNotMatch(calendarizedDayDetail, /label: "posición"/);
-  assertSourceMatch(calendarizedDayDetail, /afterNutrition=\{meal\.key \? <MealCompletionToggleCard/);
+  assertSourceMatch(calendarizedDayDetail, /afterNutrition=\{mealKey \? <MealCompletionToggleCard/);
   assertSourceMatch(calendarizedDayDetail, /eyebrowAccessory=\{meal\.hour \? <HeaderMetadataChip kind="time" value=\{meal\.hour\.slice\(0, 5\)\} \/> : undefined\}/);
   assertSourceMatch(calendarizedDayDetail, /onToggleCompleted=\{\(mealKey, completed\) => void toggleMealCompletion\(mealKey, completed\)\}/);
   assertSourceMatch(calendarizedDayDetail, /action: completed \? "completed" : "skipped"/);

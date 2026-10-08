@@ -34,6 +34,13 @@ test("the assistant composer centers available credits without moving for the ch
   assert.ok(composer.includes('position: "absolute", right: tokens.spacing.sm'));
 });
 
+test("the assistant composer vertically centers its resting message input", async () => {
+  const composer = await source("src/components/assistant/chat-composer.tsx");
+  assert.match(composer, /textAlignVertical="center"/);
+  assert.match(composer, /input: \{[^}]*minHeight: 38[^}]*paddingVertical: 0/);
+  assert.doesNotMatch(composer, /textAlignVertical="top"|paddingTop: 8|paddingBottom: 8/);
+});
+
 test("the assistant send button only looks disabled when there are no credits", async () => {
   const composer = await source("src/components/assistant/chat-composer.tsx");
   const screen = await source("src/components/assistant/assistant-chat-screen.tsx");

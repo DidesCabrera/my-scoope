@@ -110,12 +110,13 @@ test("screens that own global navigation preserve their header through content a
   assertSourceDoesNotMatch(comparator, /<SectionPageHeader count=\{page\?\.total\}/);
 
   const assistant = await source("src/app/assistant/index.tsx");
-  assertSourceMatch(assistant, /action: activeSection === "chats" \? \{ label: "Acciones de Chats"/);
-  assertSourceDoesNotMatch(assistant, /Acciones de Propuestas|ProposalFilter|status=\$\{filter\}|Filtro:/);
-  assertSourceMatch(assistant, /<AssistantSectionTabs activeSection=\{activeSection\} counts=\{counts\} onChange=\{setActiveSection\} \/>/);
+  assertSourceMatch(assistant, /action: \{ icon: "more", label: activeSection === "chats" \? "Acciones de Chats" : "Acciones de Propuestas"/);
+  assertSourceMatch(assistant, /createAction: \{ icon: "plus", label: "Nuevo chat"/);
+  assertSourceDoesNotMatch(assistant, /ProposalFilter|status=\$\{filter\}|Filtro:/);
+  assertSourceMatch(assistant, /<AssistantSectionTabs activeSection=\{activeSection\} counts=\{counts\} onChange=\{changeSection\} \/>/);
   assertSourceMatch(assistant, /<AssistantListActions/);
   assertSourceMatch(assistant, /scrollHeader=\{scrollHeader\}/);
-  assertSourceMatch(assistant, /stickyHeader=\{<AssistantSectionTabs/);
+  assertSourceMatch(assistant, /stickyHeader=\{mode === "list" \? <AssistantSectionTabs/);
   assertSourceMatch(assistant, /const scrollHeader = \([\s\S]*<AssistantCreditBalance/);
   assertSourceDoesNotMatch(assistant, /const stickyHeader = \([\s\S]*<AssistantCreditBalance/);
   assertSourceMatch(assistant, /stickyHeaderStyle=\{styles\.stickyHeader\}/);
@@ -130,7 +131,8 @@ test("screens that own global navigation preserve their header through content a
   assertSourceMatch(proposalListCard, /dailyplan: tokens\.color\.dailyPlan/);
   assertSourceMatch(proposalListCard, /meal: tokens\.color\.meal/);
   assertSourceMatch(proposalListCard, /program: tokens\.color\.program/);
-  assertSourceMatch(proposalListCard, /<Card accent=\{proposalEntityColors\[proposal\.attachment_kind\]\}>/);
+  assertSourceMatch(proposalListCard, /<Card accent=\{proposalEntityColors\[proposal\.attachment_kind\]\} style=\{styles\.proposalCard\}>/);
+  assertSourceMatch(proposalListCard, /<EntityCardActions>[\s\S]*<ChevronRight/);
 
   const inbox = await source("src/app/inbox.tsx");
   assertSourceMatch(inbox, /setHeaderPresentation\(\{ identityVisible: compactHeaderVisible, mode: "default", title: "Compartidos" \}\)/);
@@ -204,7 +206,8 @@ test("screens that own global navigation preserve their header through content a
   assertSourceDoesNotMatch(tabs, /useRouter|router\.replace|href:/);
 
   const actions = await source("src/components/assistant/assistant-list-actions.tsx");
-  assertSourceMatch(actions, /label="Nuevo chat"/);
+  assertSourceMatch(actions, /label="Editar lista"/);
+  assertSourceDoesNotMatch(actions, /label="Nuevo chat"/);
   for (const label of ["Ver todas", "Ver pendientes", "Ver aprobadas", "Ver aplicadas", "Ver rechazadas"]) {
     assertSourceDoesNotMatch(actions, new RegExp(label));
   }

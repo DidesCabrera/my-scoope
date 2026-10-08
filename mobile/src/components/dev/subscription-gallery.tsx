@@ -52,8 +52,16 @@ export function SubscriptionPreviewContent({ context }: { context: SubscriptionP
             <Text style={styles.onboardingDescription}>Compara lo que incluyen Free, Basic y Pro.{"\n"}Puedes cambiar de plan más adelante.</Text>
           </View>
         ) : (
+          <View style={styles.accountHeaderPreview}>
+            <AppHeader alignment="center" title="Suscripciones y Bolsas" />
+            <View style={styles.subscriptionDescriptionGroup}>
+              <Text style={styles.subscriptionDescription}>Nuestras suscripciones te entregan beneficios para enriquecer tus librería y facilitar tu gestión nutricional.</Text>
+              <Text style={styles.subscriptionDescription}>Ademas si eres un usuario muy activo que necesite asistencia adicional, te puedes comprar bolsas de créditos en el momento que lo desees.</Text>
+            </View>
+          </View>
+        )}
+        {!isOnboarding ? (
           <>
-            <AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" />
             <Card accent={subscriptionPlanAccent("Pro")}>
               <Text style={styles.eyebrow}>SUSCRIPCIÓN ACTUAL</Text>
               <Text style={styles.planName}>Pro</Text>
@@ -61,7 +69,7 @@ export function SubscriptionPreviewContent({ context }: { context: SubscriptionP
             </Card>
             <SectionTitle title="Suscripciones disponibles" titleStyle={styles.commercialSectionTitle} />
           </>
-        )}
+        ) : null}
         <SubscriptionPlanCard accent={tokens.color.fat} benefits={commercialPlanBenefits.Free} caption="Incluido sin costo." name="Free" price={isOnboarding ? "Gratis" : "$0/mes"}>
           {isOnboarding ? <SubscriptionPurchaseButton label="Continuar con Free" onPress={noop} /> : null}
         </SubscriptionPlanCard>
@@ -89,6 +97,7 @@ export function SubscriptionGallery() {
 }
 
 const styles = StyleSheet.create({
+  accountHeaderPreview: { paddingBottom: 20, paddingTop: 20 },
   commercialSectionTitle: { fontSize: tokens.type.section, lineHeight: 26 },
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   gallery: { gap: tokens.spacing.md },
@@ -100,4 +109,6 @@ const styles = StyleSheet.create({
   planName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
   previewContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen },
   subscriptionInformationCard: { marginTop: tokens.spacing.lg },
+  subscriptionDescription: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 24, textAlign: "center" },
+  subscriptionDescriptionGroup: { gap: tokens.spacing.md, marginTop: tokens.spacing.lg },
 });

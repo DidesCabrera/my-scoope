@@ -52,7 +52,7 @@ import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, t
 type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus"; label: string; onPress(): void };
 
 type HeaderPresentation =
-  | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
+  | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
   | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; title: string }
   | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
@@ -83,6 +83,11 @@ const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().ma
   iconTreatment: area.key === "assistant" ? "assistant" : "plain",
   label: area.label,
 }));
+
+const secondaryPrimaryItems: NavigationSidebarItemData[] = [
+  { href: "/personal-records", icon: Files, label: "Fichas personales" },
+  { href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" },
+];
 
 const libraryItems: EntitySidebarItemData[] = [
   { entity: "program", href: "/libraries/programs", label: "Mis Programas Semanales" },
@@ -274,19 +279,35 @@ export function AppNavigationHeader() {
               </Pressable>
             ) : null}
           </View>
-        ) : headerPresentation.mode === "default" && headerPresentation.action ? (
-          <Pressable
-            accessibilityLabel={headerPresentation.action.label}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: headerPresentation.action.disabled }}
-            disabled={headerPresentation.action.disabled}
-            hitSlop={8}
-            onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.headerButton, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
-            {headerPresentation.action.icon === "plus"
-              ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
-              : <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />}
-          </Pressable>
+        ) : headerPresentation.mode === "default" && (headerPresentation.createAction || headerPresentation.action) ? (
+          <View style={styles.libraryHeaderActions}>
+            {headerPresentation.createAction ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.createAction.label}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: headerPresentation.createAction.disabled }}
+                disabled={headerPresentation.createAction.disabled}
+                hitSlop={8}
+                onPress={headerPresentation.createAction.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, headerPresentation.createAction?.disabled && styles.disabled, pressed && styles.pressed]}>
+                <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
+            {headerPresentation.action ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.action.label}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: headerPresentation.action.disabled }}
+                disabled={headerPresentation.action.disabled}
+                hitSlop={8}
+                onPress={headerPresentation.action.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
+                {headerPresentation.action.icon === "plus"
+                  ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+                  : <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />}
+              </Pressable>
+            ) : null}
+          </View>
         ) : <View style={[styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide]} />}
       </View>
     </SafeAreaView>
@@ -393,7 +414,12 @@ function AppSidebar() {
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false} style={styles.drawerScroll}>
-              {primaryItems.map((item) => <FunctionalSidebarEntry item={item} key={String(item.href)} />)}
+              {primaryItems.flatMap((item) => [
+                <FunctionalSidebarEntry item={item} key={String(item.href)} />,
+                ...(item.href === "/inbox"
+                  ? secondaryPrimaryItems.map((secondaryItem) => <FunctionalSidebarEntry item={secondaryItem} key={String(secondaryItem.href)} />)
+                  : []),
+              ])}
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
                 {libraryItems.map((item) => <EntitySidebarEntry count={libraryCount(libraryCounts, item.entity)} item={item} key={String(item.href)} />)}
@@ -401,8 +427,6 @@ function AppSidebar() {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>
                 <FunctionalSidebarEntry item={{ href: "/account", icon: UserRound, label: "Mi cuenta" }} />
-                <FunctionalSidebarEntry item={{ href: "/personal-records", icon: Files, label: "Fichas personales" }} />
-                <FunctionalSidebarEntry item={{ href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" }} />
                 {session?.is_staff ? <FunctionalSidebarEntry item={{ href: "/onboarding-preview", icon: WandSparkles, label: "Vista previa del onboarding" }} /> : null}
               </View>
             </ScrollView>

@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react-native";
+import { ListRestart } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -7,21 +7,25 @@ import { tokens } from "@/design/tokens";
 
 type Props = {
   onClose(): void;
-  onNewChat?(): void;
+  onEdit(): void;
+  section: "chats" | "proposals";
   visible: boolean;
 };
 
-export function AssistantListActions({ onClose, onNewChat, visible }: Props) {
-  const startChat = () => {
+export function AssistantListActions({ onClose, onEdit, section, visible }: Props) {
+  const editList = () => {
     onClose();
-    onNewChat?.();
+    onEdit();
   };
+  const title = section === "chats" ? "Chats" : "Propuestas";
   return (
     <ActionSheetModal onRequestClose={onClose} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-        <ActionSheetHeader onClose={onClose} section="chat" title="Chats" />
+        <ActionSheetHeader onClose={onClose} section="chat" title={`Administrar ${title.toLowerCase()}`} />
         <View style={styles.content}>
-          <ActionSheetActions><ActionSheetAction icon={Plus} label="Nuevo chat" onPress={startChat} /></ActionSheetActions>
+          <ActionSheetActions>
+            <ActionSheetAction icon={ListRestart} label="Editar lista" onPress={editList} />
+          </ActionSheetActions>
         </View>
       </SafeAreaView>
     </ActionSheetModal>

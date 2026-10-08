@@ -6,6 +6,7 @@ import { tokens } from "@/design/tokens";
 
 export function Button({
   bleed = true,
+  icon,
   label,
   onPress,
   variant = "primary",
@@ -14,6 +15,7 @@ export function Button({
   loading = false,
 }: {
   bleed?: boolean;
+  icon?: ReactNode;
   label: string;
   onPress(): void;
   variant?: "primary" | "secondary" | "danger" | "multicolor";
@@ -53,6 +55,7 @@ export function Button({
         <View style={[styles.buttonMulticolorInset, multicolorSurface === "app" && styles.buttonMulticolorInsetApp]} />
       </> : null}
       {loading ? <ActivityIndicator color={variant === "primary" ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
+      {!loading ? icon : null}
       <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{label}</Text>
     </Pressable>
   );

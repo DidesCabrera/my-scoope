@@ -1,8 +1,6 @@
 from __future__ import annotations
-
 from collections.abc import Callable
 from typing import Any
-
 from ninja import Router
 
 from mobile_api.api_support import proposal_error, require_scope, success

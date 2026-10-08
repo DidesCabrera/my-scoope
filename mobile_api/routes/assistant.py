@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 from ninja import Router
-
 from ai_assistant.application.async_jobs import AsyncJobContractError, async_jobs_enabled
 from ai_assistant.models import AIAsyncJob
 from core.rate_limits import is_ai_assistant_turn_rate_limited

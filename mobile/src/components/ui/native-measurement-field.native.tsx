@@ -23,18 +23,20 @@ function displayValue(value: string, kind: NativeMeasurementFieldProps["kind"]):
   return grams ? `${kilograms},${grams / 100} kg` : `${kilograms} kg`;
 }
 
-export function NativeMeasurementField({ containerStyle, disabled = false, inputStyle, kind, label, labelStyle, onChange, value }: NativeMeasurementFieldProps) {
-  const initialWeight = weightPartsFromValue(value);
+export function NativeMeasurementField({ containerStyle, defaultValue, disabled = false, inputStyle, kind, label, labelStyle, onChange, value }: NativeMeasurementFieldProps) {
+  const pickerValue = value || defaultValue || "";
+  const initialWeight = weightPartsFromValue(pickerValue);
   const [visible, setVisible] = useState(false);
-  const [height, setHeight] = useState(() => heightFromValue(value));
+  const [height, setHeight] = useState(() => heightFromValue(pickerValue));
   const [kilograms, setKilograms] = useState(initialWeight.kilograms);
   const [grams, setGrams] = useState(initialWeight.grams);
   const Icon = kind === "height" ? Ruler : Scale;
 
   const open = () => {
     if (disabled) return;
-    setHeight(heightFromValue(value));
-    const nextWeight = weightPartsFromValue(value);
+    const nextPickerValue = value || defaultValue || "";
+    setHeight(heightFromValue(nextPickerValue));
+    const nextWeight = weightPartsFromValue(nextPickerValue);
     setKilograms(nextWeight.kilograms);
     setGrams(nextWeight.grams);
     setVisible((current) => !current);
@@ -84,13 +86,13 @@ export function NativeMeasurementField({ containerStyle, disabled = false, input
               </View>
             ) : (
               <>
-                <View style={[styles.pickerColumn, styles.weightPickerColumn]}>
+                <View style={[styles.pickerColumn, styles.weightKilogramsPickerColumn]}>
                   <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeKilograms(Number(next))} selectedValue={kilograms} style={pickerStyle}>
                     {WEIGHT_KILOGRAM_VALUES.map((option) => <Picker.Item key={option} label={String(option)} value={option} />)}
                   </Picker>
                 </View>
-                <NativeWheelAdornment label="," width={16} />
-                <View style={[styles.pickerColumn, styles.weightPickerColumn]}>
+                <NativeWheelAdornment label="," width={8} />
+                <View style={[styles.pickerColumn, styles.weightGramsPickerColumn]}>
                   <Picker dropdownIconColor={tokens.color.textMain} enabled={kilograms < 350} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeGrams(Number(next))} selectedValue={grams} style={pickerStyle}>
                     {WEIGHT_GRAM_VALUES.map((option) => <Picker.Item key={option} label={String(option / 100)} value={option} />)}
                   </Picker>
@@ -123,5 +125,6 @@ const styles = StyleSheet.create({
   pickers: { alignItems: "center", flexDirection: "row", justifyContent: "center" },
   pressed: { opacity: 0.72 },
   value: { color: tokens.color.textMain, flex: 1, fontSize: 17 },
-  weightPickerColumn: { flex: 0, width: nativeWheelMetrics.compactColumnWidth },
+  weightGramsPickerColumn: { flex: 0, width: 80 },
+  weightKilogramsPickerColumn: { flex: 0, width: 96 },
 });

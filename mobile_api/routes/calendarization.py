@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from mobile_api.api_support import calendarization_error, require_scope, success
@@ -50,6 +51,7 @@ from notas.application.services.commands.calendarization_execution_commands impo
     decide_calendarization_revision,
     record_calendarized_weight,
     record_meal_execution,
+    update_calendarized_weight,
 )
 from notas.application.services.notifications.apple_push import apns_is_configured
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
@@ -398,6 +400,7 @@ def weights(request, limit: int = 30):
         {
             "id": item.id,
             "measured_on": item.date,
+            "measured_time": item.time,
             "weight_kg": item.weight_kg,
             "source": item.source,
             "created_at": item.created_at,
@@ -419,11 +422,44 @@ def create_weight(request, payload: WeightCreateInput):
         user=request.auth.user,
         weight_kg=payload.weight_kg,
         measured_on=payload.measured_on,
+        measured_time=payload.measured_time,
     )
     return success(
         {
             "id": item.id,
             "measured_on": item.date,
+            "measured_time": item.time,
+            "weight_kg": item.weight_kg,
+            "source": item.source,
+            "created_at": item.created_at,
+            "calendarization_id": context.calendarization_id if context else None,
+        }
+    )
+
+
+@router.patch(
+    "/weights/{weight_id}",
+    operation_id="mobile_api_api_update_weight",
+    auth=mobile_bearer,
+    response={200: WeightEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_weight(request, weight_id: int, payload: WeightCreateInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    item = get_object_or_404(WeightLog, id=weight_id, user=request.auth.user)
+    try:
+        item, context = update_calendarized_weight(
+            weight_log=item,
+            weight_kg=payload.weight_kg,
+            measured_on=payload.measured_on or item.date,
+            measured_time=payload.measured_time,
+        )
+    except ValueError as exc:
+        raise calendarization_error(exc) from exc
+    return success(
+        {
+            "id": item.id,
+            "measured_on": item.date,
+            "measured_time": item.time,
             "weight_kg": item.weight_kg,
             "source": item.source,
             "created_at": item.created_at,

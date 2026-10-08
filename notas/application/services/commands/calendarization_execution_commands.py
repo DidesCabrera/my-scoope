@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.db import transaction
 from django.utils import timezone
@@ -144,11 +144,13 @@ def record_calendarized_weight(
     user,
     weight_kg: float,
     measured_on: date | None = None,
+    measured_time: time | None = None,
 ) -> tuple[WeightLog, CalendarizationMeasurementContext | None]:
     weight_log = record_weight(
         user,
         weight_kg,
         measured_on=measured_on,
+        measured_time=measured_time,
         source=WeightLog.SOURCE_MANUAL,
     )
     calendarization = current_calendarization_for_user(user)
@@ -159,6 +161,34 @@ def record_calendarized_weight(
         calendarization=calendarization,
         weight_log=weight_log,
         defaults={"calendarized_day": day},
+    )
+    return weight_log, context
+
+
+@transaction.atomic
+def update_calendarized_weight(
+    *,
+    weight_log: WeightLog,
+    weight_kg: float,
+    measured_on: date,
+    measured_time: time | None = None,
+) -> tuple[WeightLog, CalendarizationMeasurementContext | None]:
+    if WeightLog.objects.filter(user=weight_log.user, date=measured_on).exclude(pk=weight_log.pk).exists():
+        raise ValueError("weight_date_conflict")
+    weight_log.date = measured_on
+    weight_log.time = measured_time
+    weight_log.weight_kg = weight_kg
+    weight_log.source = WeightLog.SOURCE_MANUAL
+    weight_log.save(update_fields=["date", "time", "weight_kg", "source"])
+    CalendarizationMeasurementContext.objects.filter(weight_log=weight_log).delete()
+    calendarization = current_calendarization_for_user(weight_log.user)
+    if calendarization is None or not (calendarization.start_date <= measured_on <= calendarization.end_date):
+        return weight_log, None
+    day = calendarization.days.filter(calendar_date=measured_on).first()
+    context = CalendarizationMeasurementContext.objects.create(
+        calendarization=calendarization,
+        calendarized_day=day,
+        weight_log=weight_log,
     )
     return weight_log, context
 

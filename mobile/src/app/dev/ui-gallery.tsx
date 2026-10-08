@@ -32,6 +32,7 @@ import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery"
 import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
 import { ShareableElementsGallery } from "@/components/dev/shareable-elements-gallery";
 import { SubscriptionGallery } from "@/components/dev/subscription-gallery";
+import { WheelPickerGallery } from "@/components/dev/wheel-picker-gallery";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -54,10 +55,12 @@ import {
   DistributedTabBar,
   EntityCard,
   EntityCardAction,
+  EntityIcon,
   type EntityKind,
   Field,
   GuideMetric,
   InlineNotice,
+  KeyValueTable,
   MacroLoadingIndicator,
   MessageCard,
   ProgressBar,
@@ -273,6 +276,23 @@ export default function UiGalleryScreen() {
               title="Título compacto"
             />
           </Card>
+          <SectionTitle detail="Variantes con y sin iconos · etiqueta a la izquierda · valor a la derecha" title="Tabla de atributos" />
+          <Card>
+            <CardHeader density="compact" title="Con iconos" />
+            <KeyValueTable items={[
+              { icon: <EntityIcon entity="food" size="benefit" />, label: "Alimentos privados", value: "Ilimitados" },
+              { icon: <EntityIcon entity="meal" size="benefit" />, label: "Comidas", value: "Hasta 12" },
+              { icon: <EntityIcon entity="dailyPlan" size="benefit" />, label: "Planes diarios", value: "Hasta 4" },
+            ]} />
+          </Card>
+          <Card>
+            <CardHeader density="compact" title="Sin iconos" />
+            <KeyValueTable items={[
+              { label: "Alimentos privados", value: "Ilimitados" },
+              { label: "Comidas", value: "Hasta 12" },
+              { label: "Planes diarios", value: "Hasta 4" },
+            ]} />
+          </Card>
           <ContentPanel description="Panel principal que agrupa información relacionada." title="ContentPanel">
             <DetailSection description="Sección anidada con encabezado y acción opcional." title="DetailSection">
               <Text style={textStyles.body}>Contenido compuesto sin replicar estilos de superficie.</Text>
@@ -449,6 +469,14 @@ export default function UiGalleryScreen() {
               <PanelAllocationBar size="compact" tone="fat" value={0} />
             </DetailSection>
           </ContentPanel>
+        </>
+      ) : null}
+
+      {tab === "selectors" ? (
+        <>
+          <SectionTitle detail="Controles reales · 402 pt, 375 pt y 320 pt" title="Selectores de rueda" />
+          <InlineNotice>En iOS, toca cada campo para desplegar su rueda. Los ejemplos comparten el mismo valor para facilitar la comparación entre tamaños.</InlineNotice>
+          <WheelPickerGallery />
         </>
       ) : null}
 

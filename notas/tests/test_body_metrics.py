@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, time
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -85,6 +85,19 @@ class BodyMetricsServiceTests(TestCase):
         self.assertEqual(first.pk, second.pk)
         self.assertEqual(WeightLog.objects.count(), 1)
         self.assertEqual(second.weight_kg, 89)
+
+    def test_record_weight_persists_and_clears_optional_time(self):
+        user = User.objects.create_user(
+            username="weight_time",
+            email="weight_time@test.com",
+            password="12345678",
+        )
+
+        first = record_weight(user, 90, measured_on=date(2026, 7, 3), measured_time=time(7, 45))
+        second = record_weight(user, 89, measured_on=date(2026, 7, 3), measured_time=None)
+
+        self.assertEqual(first.pk, second.pk)
+        self.assertIsNone(second.time)
 
     def test_get_basic_body_profile_combines_profile_and_current_weight(self):
         user = User.objects.create_user(

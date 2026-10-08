@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from django.utils import timezone
 
@@ -80,6 +80,7 @@ def record_weight(
     weight_kg: float,
     *,
     measured_on: date | None = None,
+    measured_time: time | None = None,
     source: str = WeightLog.SOURCE_MANUAL,
 ) -> WeightLog:
     """Create or update the user's body-weight metric for a specific date."""
@@ -93,6 +94,7 @@ def record_weight(
         date=metric_date,
         defaults={
             "weight_kg": weight_kg,
+            "time": measured_time,
             "source": source,
         },
     )

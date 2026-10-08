@@ -9,7 +9,7 @@
   "mobile_api/routes/billing.py": {"max_lines": 93},
   "mobile_api/schema_domains/billing.py": {"max_lines": 56},
   "mobile_api/tests/test_billing_api.py": {"max_lines": 79},
-  "mobile_api/routes/calendarization.py": {"max_lines": 444},
+  "mobile_api/routes/calendarization.py": {"max_lines": 468},
   "mobile_api/schema_domains/calendarization.py": {"max_lines": 318},
   "mobile_api/tests/test_calendarization_api.py": {"max_lines": 479},
   "mobile_api/routes/comparisons.py": {"max_lines": 170},
@@ -19,13 +19,13 @@
   "mobile_api/schema_domains/composition.py": {"max_lines": 100},
   "mobile_api/routes/identity.py": {"max_lines": 129},
   "mobile_api/schema_domains/identity.py": {"max_lines": 76},
-  "mobile_api/tests/test_identity_api.py": {"max_lines": 85},
+  "mobile_api/tests/test_identity_api.py": {"max_lines": 98},
   "mobile_api/routes/libraries.py": {"max_lines": 310},
   "mobile_api/schema_domains/libraries.py": {"max_lines": 280},
   "mobile_api/tests/test_libraries_api.py": {"max_lines": 794},
   "mobile_api/routes/proposals.py": {"max_lines": 121},
   "mobile_api/schema_domains/proposals.py": {"max_lines": 121},
   "mobile_api/tests/test_proposals_api.py": {"max_lines": 144},
-  "mobile/src/api/types.ts": {"max_lines": 851},
-  "mobile/src/app/dev/ui-gallery.tsx": {"max_lines": 802}
+  "mobile/src/api/types.ts": {"max_lines": 852},
+  "mobile/src/app/dev/ui-gallery.tsx": {"max_lines": 830}
 }

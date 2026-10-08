@@ -5313,6 +5313,74 @@
         "title": "LibraryWeekPanelItemData",
         "type": "object"
       },
+      "ListActionResultData": {
+        "properties": {
+          "affected_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Affected Ids",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "skipped_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Skipped Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "affected_ids",
+          "skipped_ids",
+          "message"
+        ],
+        "title": "ListActionResultData",
+        "type": "object"
+      },
+      "ListActionResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ListActionResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ListActionResultEnvelope",
+        "type": "object"
+      },
+      "ListBulkDeleteInput": {
+        "properties": {
+          "item_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 1,
+            "title": "Item Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "item_ids"
+        ],
+        "title": "ListBulkDeleteInput",
+        "type": "object"
+      },
       "MealCheckInInput": {
         "properties": {
           "action": {
@@ -8583,6 +8651,18 @@
             ],
             "title": "Measured On"
           },
+          "measured_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Time"
+          },
           "weight_kg": {
             "exclusiveMinimum": 0,
             "maximum": 350,
@@ -8644,6 +8724,18 @@
             "format": "date",
             "title": "Measured On",
             "type": "string"
+          },
+          "measured_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Time"
           },
           "source": {
             "title": "Source",
@@ -8967,6 +9059,60 @@
           }
         ],
         "summary": "Ai Chats"
+      }
+    },
+    "/api/v1/ai/chats/bulk-delete": {
+      "post": {
+        "operationId": "mobile_api_api_bulk_delete_ai_chats",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListBulkDeleteInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListActionResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Delete Ai Chats"
       }
     },
     "/api/v1/ai/chats/{chat_id}": {
@@ -16074,6 +16220,60 @@
         "summary": "Proposals"
       }
     },
+    "/api/v1/proposals/bulk-delete": {
+      "post": {
+        "operationId": "mobile_api_api_bulk_delete_proposals",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListBulkDeleteInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListActionResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Delete Proposals"
+      }
+    },
     "/api/v1/proposals/{proposal_id}": {
       "get": {
         "operationId": "mobile_api_api_proposal_detail",
@@ -17866,6 +18066,80 @@
           }
         ],
         "summary": "Create Weight"
+      }
+    },
+    "/api/v1/weights/{weight_id}": {
+      "patch": {
+        "operationId": "mobile_api_api_update_weight",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "weight_id",
+            "required": true,
+            "schema": {
+              "title": "Weight Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeightCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Weight"
       }
     }
   },

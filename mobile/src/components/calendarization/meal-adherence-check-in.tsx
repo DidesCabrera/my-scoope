@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   noteCount: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   noteEdit: { alignItems: "center", height: 32, justifyContent: "center", width: 32 },
   noteHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  noteInput: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: tokens.type.caption, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 104, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
+  noteInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: tokens.type.caption, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 104, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
   noteSurface: { backgroundColor: "transparent", gap: tokens.card.gap, marginTop: tokens.spacing.xs },
   noteLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label - 1, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, textTransform: "uppercase" },
   noteText: { color: tokens.color.textMain, fontSize: tokens.type.caption, lineHeight: 21, minHeight: 42 },

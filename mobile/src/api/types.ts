@@ -499,6 +499,7 @@ export type MealSnapshot = {
 export type WeightItem = {
   id: number;
   measured_on: string;
+  measured_time?: string | null;
   weight_kg: number;
   source: string;
   created_at: string;
@@ -507,7 +508,7 @@ export type WeightItem = {
 
 export type WeightListData = { items: WeightItem[]; count: number };
 
-export type WeightInput = { weight_kg: number; measured_on?: string };
+export type WeightInput = { weight_kg: number; measured_on?: string; measured_time?: string | null };
 
 export type MealCheckInInput = {
   action: "completed" | "skipped" | "reset" | "note" | "food_prepared" | "food_unprepared";

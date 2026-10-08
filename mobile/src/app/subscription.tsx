@@ -328,7 +328,13 @@ export default function SubscriptionScreen() {
       ) : (
         <View style={styles.subscriptionHeader}>
           <View style={styles.subscriptionLogo}><MyScoopeLogo /></View>
-          <AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" />
+          <View style={styles.subscriptionTitleSpacing}>
+            <AppHeader alignment="center" title="Suscripciones y Bolsas" />
+          </View>
+          <View style={styles.subscriptionDescriptionGroup}>
+            <Text style={styles.subscriptionDescription}>Nuestras suscripciones te entregan beneficios para enriquecer tus librería y facilitar tu gestión nutricional.</Text>
+            <Text style={styles.subscriptionDescription}>Ademas si eres un usuario muy activo que necesite asistencia adicional, te puedes comprar bolsas de créditos en el momento que lo desees.</Text>
+          </View>
         </View>
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
@@ -510,7 +516,10 @@ const styles = StyleSheet.create({
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden" },
   subscriptionHeading: { alignItems: "center", flexDirection: "row" },
-  subscriptionHeader: { gap: tokens.spacing.lg },
+  subscriptionHeader: { paddingBottom: tokens.spacing.lg },
+  subscriptionDescription: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 24, textAlign: "center" },
+  subscriptionDescriptionGroup: { gap: tokens.spacing.md, marginTop: tokens.spacing.lg },
   subscriptionLogo: { alignItems: "center" },
+  subscriptionTitleSpacing: { marginTop: 20 },
   subscriptionInformationCard: { marginTop: tokens.spacing.lg },
 });

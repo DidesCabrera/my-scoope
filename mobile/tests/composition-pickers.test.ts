@@ -171,6 +171,8 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(foodRoute, /mealFoodId/);
   matches(foodRoute, /relationId=\{relationId\}/);
   matches(foodRoute, /returnTo=\{internalHref\(returnTo\)\}/);
+  const calendarizedFoodRoute = await readFile(path.resolve(process.cwd(), "src/app/pickers/food-to-calendarized-meal.tsx"), "utf8");
+  matches(calendarizedFoodRoute, /returnTo=\{internalHref\(returnTo\)\}/);
 
   const weekRoute = await readFile(path.resolve(process.cwd(), "src/app/pickers/week-to-program.tsx"), "utf8");
   matches(weekRoute, /week-picker\/preview/);
@@ -191,6 +193,8 @@ test("active program details expose snapshot-only composition actions after comp
   matches(dayDetail, /pickerHref\("meal-to-calendarized-day", \{ dayId: day\.id \}\)/);
   matches(dayDetail, /label="\+ Agregar Comida"/);
   matches(dayDetail, /<Button\s+bleed\s+label="\+ Agregar Comida"/);
+  matches(dayDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey, returnTo: `\/program\/days\/\$\{dayId\}` \}\)/);
+  matches(dayDetail, /<Button bleed label="\+ Agregar alimento"/);
   assert.ok(dayDetail.indexOf('title="Tabla de comparación entre comidas"') < dayDetail.indexOf('label="+ Agregar Comida"'));
   assert.ok(dayDetail.indexOf('label="+ Agregar Comida"') < dayDetail.indexOf('title="Detalle de cada Comida"'));
 
@@ -201,9 +205,11 @@ test("active program details expose snapshot-only composition actions after comp
   assert.ok(mealDetail.indexOf('label="+ Agregar alimento"') < mealDetail.indexOf('title="Detalle de cada Alimento"'));
 });
 
-test("only the Home plan card exposes the contextual add-meal action below its panels", async () => {
+test("Home and library cards expose their contextual composition actions below the panels", async () => {
   const today = await readFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
   const card = await readFile(path.resolve(process.cwd(), "src/components/calendarization/calendarized-daily-plan-card.tsx"), "utf8");
+  const libraryCard = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-card.tsx"), "utf8");
+  const entityPanels = await readFile(path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"), "utf8");
   const programPlanning = await readFile(path.resolve(process.cwd(), "src/components/calendarization/calendarized-program-planning.tsx"), "utf8");
 
   matches(today, /const todayDayId = today\?\.day_id/);
@@ -211,7 +217,15 @@ test("only the Home plan card exposes the contextual add-meal action below its p
   matches(card, /onAddMeal\?: \(\) => void/);
   matches(card, /<Button bleed label="\+ Agregar Comida" onPress=\{onAddMeal\} \/>/);
   assert.ok(card.indexOf("<MealPanels") < card.indexOf('label="+ Agregar Comida"'));
-  omits(programPlanning, /onAddMeal=/);
+  matches(libraryCard, /interactive && item\.entity === "meal"/);
+  matches(libraryCard, /pickerHref\("food-to-meal", \{ mealId: item\.id, returnTo: String\(libraryHref\) \}\)/);
+  matches(libraryCard, /interactive && item\.entity === "dailyPlan"/);
+  matches(libraryCard, /pickerHref\("meal-to-dailyplan", \{ dailyPlanId: item\.id, returnTo: String\(libraryHref\) \}\)/);
+  assert.ok(libraryCard.indexOf("<FoodPanels") < libraryCard.indexOf('label="+ Agregar alimento"'));
+  assert.ok(libraryCard.indexOf("<MealPanels") < libraryCard.indexOf('label="+ Agregar Comida"'));
+  matches(entityPanels, /pickerHref\("food-to-meal", \{ dailyPlanId, dailyPlanMealId, mealId, returnTo: `\/libraries\/daily-plans\/\$\{dailyPlanId\}` \}\)/);
+  assert.ok(entityPanels.indexOf("<SharedFoodPanels") < entityPanels.indexOf('label="+ Agregar alimento"'));
+  matches(programPlanning, /onAddMeal=\{\(\) => router\.push\(pickerHref\("meal-to-calendarized-day", \{ dayId: detail\.id, returnTo: "\/program" \}\)\)\}/);
 });
 
 test("library details open every composition flow and program days remain editable", async () => {
