@@ -53,7 +53,7 @@ test("grouped foods card owns the food identity and existing comparison panel", 
   assert.match(card, /<Card accent=\{tokens\.color\.food\}>/);
   assert.match(card, /<EntityHeading entity="food" eyebrow="LISTA DE ALIMENTOS" title=\{title\} \/>/);
   assert.match(card, /<Chip backgroundColor=\{`\$\{tokens\.color\.food\}1A`\} borderColor=\{tokens\.color\.food\} label=\{countLabel\} textColor=\{tokens\.color\.textMain\} \/>/);
-  assert.match(card, /<FoodPanels items=\{items\} \{\.\.\.panelProps\} \/>/);
+  assert.match(card, /<FoodPanels items=\{items\} preparation=\{checklist\} \{\.\.\.panelProps\} \/>/);
 });
 
 test("embedded program detail does not clip lateral content with a nested scroll viewport", async () => {

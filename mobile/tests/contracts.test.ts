@@ -647,7 +647,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDayDetail, /afterNutrition=\{<DailyMealCompletionCard mealExecution=\{day\.meal_execution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
   assertSourceMatch(calendarizedDayDetail, /eyebrowAccessory=\{<HeaderMetadataChip kind="date" value=\{compactDateLabel\(day\.calendar_date\)\} \/>\}/);
   assertSourceDoesNotMatch(calendarizedDayDetail, /label: "posición"/);
-  assertSourceMatch(calendarizedDayDetail, /afterNutrition=\{meal\.key \? <MealCompletionToggleCard/);
+  assertSourceMatch(calendarizedDayDetail, /afterNutrition=\{mealKey \? <MealCompletionToggleCard/);
   assertSourceMatch(calendarizedDayDetail, /eyebrowAccessory=\{meal\.hour \? <HeaderMetadataChip kind="time" value=\{meal\.hour\.slice\(0, 5\)\} \/> : undefined\}/);
   assertSourceMatch(calendarizedDayDetail, /onToggleCompleted=\{\(mealKey, completed\) => void toggleMealCompletion\(mealKey, completed\)\}/);
   assertSourceMatch(calendarizedDayDetail, /action: completed \? "completed" : "skipped"/);

@@ -28,7 +28,7 @@ test("current program actions live in the header ellipsis sheet", async () => {
     assert.match(actions, new RegExp(label));
   }
   assert.match(actions, /<ActionSheetModal/);
-  assert.match(navigation, /headerPresentation\.mode === "default" && headerPresentation\.action/);
+  assert.match(navigation, /headerPresentation\.mode === "default" && \(headerPresentation\.createAction \|\| headerPresentation\.action\)/);
   assert.match(navigation, /<MoreHorizontal/);
 });
 
