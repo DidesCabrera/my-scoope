@@ -11,8 +11,8 @@ from food_catalog.application.contracts import (
     FoodCatalogContractError,
     NutrientProfilePer100g,
     OperationalVisibility,
-    PreparationState,
     PortionUnit,
+    PreparationState,
     PublishedFoodSnapshot,
     SourceLicenseStatus,
 )
