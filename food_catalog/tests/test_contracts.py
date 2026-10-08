@@ -13,7 +13,6 @@ from food_catalog.application.contracts import (
     OperationalVisibility,
     PortionUnit,
     PreparationState,
-    PortionUnit,
     PublishedFoodSnapshot,
     SourceLicenseStatus,
 )

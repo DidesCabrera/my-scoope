@@ -4,7 +4,7 @@ from ai_assistant.models import AIAsyncJob
 from mobile_api.errors import MobileAPIError
 from notas.application.ai_intake.async_turns import NUTRITION_INTAKE_TURN_JOB_KIND
 from notas.application.queries.proposal_queries import get_available_proposal_queryset
-from notas.domain.models import AiNutritionChat
+from notas.domain.models import AiNutritionChat, NutritionProposal
 
 
 PENDING_JOB_STATUSES = (
@@ -51,9 +51,20 @@ def bulk_delete_chats(user, item_ids: list[int]) -> dict:
 @transaction.atomic
 def bulk_delete_proposals(user, item_ids: list[int]) -> dict:
     requested_ids = list(dict.fromkeys(item_ids))
+    available_ids = set(
+        get_available_proposal_queryset(user)
+        .filter(id__in=requested_ids)
+        .values_list("id", flat=True)
+    )
+    if available_ids != set(requested_ids):
+        raise MobileAPIError(
+            code="proposal_delete_not_allowed",
+            message="One or more proposals cannot be deleted.",
+            status_code=403,
+        )
     proposals = {
         proposal.id: proposal
-        for proposal in get_available_proposal_queryset(user).select_for_update().filter(id__in=requested_ids)
+        for proposal in NutritionProposal.objects.select_for_update().filter(id__in=available_ids)
     }
     if set(proposals) != set(requested_ids):
         raise MobileAPIError(
