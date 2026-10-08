@@ -8,7 +8,6 @@ import { LABEL_CAMERA_AUTOFOCUS } from "../src/label-capture/camera";
 import {
   confirmNutritionLabelBasis,
   convertServingDraftTo100g,
-  convertVolumeDraftTo100g,
   normalizeNutritionLabel,
 } from "../src/label-capture/normalize";
 import { classifyLabelImageQuality, labelImageQualityMessage } from "../src/label-capture/quality";
@@ -195,7 +194,7 @@ test("routes an explicitly confirmed per-serving basis through the conversion ga
   assert.deepEqual(perServing.values, {});
 });
 
-test("keeps per-100ml values unnormalized until the user supplies their real weight", () => {
+test("keeps per-100ml values in their declared volume basis", () => {
   const draft = normalizeNutritionLabel(recognition([
     "Información nutricional por 100 ml",
     "Energía 46 kcal",
@@ -205,19 +204,14 @@ test("keeps per-100ml values unnormalized until the user supplies their real wei
   ]));
 
   assert.equal(draft.basis, "per_100ml");
-  assert.equal(draft.normalizationStatus, "volume_weight_required");
+  assert.equal(draft.normalizationStatus, "ready");
   assert.equal(draft.sourceValues.protein_g, 3.3);
-  assert.deepEqual(draft.values, {});
-
-  const converted = convertVolumeDraftTo100g(draft, 103);
-  assert.equal(converted.normalizationStatus, "ready");
-  assert.equal(converted.values.protein_g, 3.204);
-  assert.equal(converted.values.carbs_g, 4.854);
-  assert.equal(converted.values.fat_g, 1.942);
-  assert.ok(converted.warnings.includes("basis_normalized_from_100ml"));
+  assert.equal(draft.values.protein_g, 3.3);
+  assert.equal(draft.values.carbs_g, 5);
+  assert.equal(draft.values.fat_g, 2);
 });
 
-test("routes an unknown basis confirmed as per-100ml through the weight gate", () => {
+test("routes an unknown basis confirmed as per-100ml directly to review", () => {
   const draft = normalizeNutritionLabel(recognition([
     "Proteínas 3,3 g",
     "Carbohidratos 5 g",
@@ -226,8 +220,8 @@ test("routes an unknown basis confirmed as per-100ml through the weight gate", (
   const perVolume = confirmNutritionLabelBasis(draft, "per_100ml");
 
   assert.equal(perVolume.basis, "per_100ml");
-  assert.equal(perVolume.normalizationStatus, "volume_weight_required");
-  assert.deepEqual(perVolume.values, {});
+  assert.equal(perVolume.normalizationStatus, "ready");
+  assert.equal(perVolume.values.protein_g, 3.3);
 });
 
 test("the capture screen supports camera and gallery with explicit AI safeguards", async () => {
@@ -258,10 +252,10 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
     '"/api/v1/foods/label-captures/analyze"',
     'loading={openingCamera}',
     'confirmBasis("per_100ml")',
-    "convertVolumeDraftTo100g",
   ]) {
     assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);
   }
+  assert.ok(!screen.includes("convertVolumeDraftTo100g"));
   assert.ok(!screen.includes("development build iOS de CML05"));
   assert.ok(!screen.includes("CameraView.isAvailableAsync()"));
   assert.equal(LABEL_CAMERA_AUTOFOCUS, "off", "Expo 57 requires off for continuous autofocus");

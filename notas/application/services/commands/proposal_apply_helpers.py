@@ -178,7 +178,7 @@ def build_applied_create_meal_metadata(
                 "food_id": meal_food.food_id,
                 "food_name": meal_food.food.name,
                 "quantity": float(meal_food.quantity),
-                "unit": "g",
+                "unit": meal_food.food.portion_unit,
                 "order": meal_food.order,
             }
             for meal_food in (

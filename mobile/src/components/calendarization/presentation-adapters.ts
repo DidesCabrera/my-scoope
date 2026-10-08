@@ -31,7 +31,11 @@ export function snapshotMealPanelItem(meal: MealSnapshot, index: number, planTot
     detailId: meal.detail_id ?? undefined,
     fatAllocation: contextualAllocation(meal.totals, planTotals, "fat_g"),
     fatGrams: meal.totals?.fat_g ?? 0,
-    foods: (meal.foods ?? []).map((food) => ({ name: food.name ?? "Alimento", quantity: food.quantity_g ?? 0, quantityUnit: "g" })),
+    foods: (meal.foods ?? []).map((food) => ({
+      name: food.name ?? "Alimento",
+      quantity: food.quantity_g ?? 0,
+      quantityUnit: food.quantity_unit ?? "g",
+    })),
     id: meal.key ?? `meal-${index}`,
     name: meal.name ?? "Comida",
     proteinAllocation: contextualAllocation(meal.totals, planTotals, "protein_g"),
@@ -67,7 +71,7 @@ export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
       proteinPerKilogram: food.protein_per_kilogram
         ?? (currentWeight ? (totals.protein_g ?? 0) / currentWeight : null),
       quantity: food.quantity_g ?? 0,
-      quantityUnit: "g",
+      quantityUnit: food.quantity_unit ?? "g",
     };
   });
 }
@@ -81,13 +85,17 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     name: string;
     proteinGrams: number;
     quantity: number;
+    quantityUnit: "g" | "ml";
   }>();
 
   meals.forEach((meal) => {
     (meal.foods ?? []).forEach((food) => {
       const name = food.name?.trim() || "Alimento";
       const detailId = food.detail_id ?? undefined;
-      const key = detailId != null ? `food:${detailId}` : `name:${name.toLocaleLowerCase("es-CL")}`;
+      const quantityUnit = food.quantity_unit ?? "g";
+      const key = detailId != null
+        ? `food:${detailId}:${quantityUnit}`
+        : `name:${name.toLocaleLowerCase("es-CL")}:${quantityUnit}`;
       const current = aggregated.get(key) ?? {
         carbsGrams: 0,
         detailId,
@@ -95,6 +103,7 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
         name,
         proteinGrams: 0,
         quantity: 0,
+        quantityUnit,
       };
       current.carbsGrams += food.carbs_g ?? 0;
       current.fatGrams += food.fat_g ?? 0;
@@ -133,7 +142,7 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     proteinGrams: food.proteinGrams,
     proteinPerKilogram: currentWeight ? food.proteinGrams / currentWeight : null,
     quantity: food.quantity,
-    quantityUnit: "g",
+    quantityUnit: food.quantityUnit,
   }));
 }
 

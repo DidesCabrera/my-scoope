@@ -41,6 +41,7 @@ class ManualEvidenceRow:
     source_version: str
     country: str
     food_group: str
+    portion_unit: str
 
 
 @dataclass(frozen=True)
@@ -80,6 +81,7 @@ def dry_run_manual_evidence_csv(path: str | Path, *, limit: int) -> ManualIntake
         fat = _decimal(raw.get("fat_g_per_100g"), "fat_g_per_100g", row_errors)
         portion = _decimal(raw.get("default_portion_g"), "default_portion_g", row_errors)
         preparation = _clean(raw.get("preparation_state"))
+        portion_unit = _clean(raw.get("portion_unit")) or CatalogFood.PORTION_UNIT_GRAMS
         evidence_url = _clean(raw.get("evidence_url"))
         evidence_reference = _clean(raw.get("evidence_reference"))
         license_name = _clean(raw.get("license_name"))
@@ -89,6 +91,8 @@ def dry_run_manual_evidence_csv(path: str | Path, *, limit: int) -> ManualIntake
             row_errors.append("display_name/canonical_name is required")
         if preparation not in dict(CatalogFood.PREPARATION_STATE_CHOICES) or preparation == CatalogFood.PREPARATION_UNKNOWN:
             row_errors.append("preparation_state must be explicit")
+        if portion_unit not in dict(CatalogFood.PORTION_UNIT_CHOICES):
+            row_errors.append("portion_unit must be g or ml")
         for field_name, value in {
             "evidence_url": evidence_url,
             "evidence_reference": evidence_reference,
@@ -121,6 +125,7 @@ def dry_run_manual_evidence_csv(path: str | Path, *, limit: int) -> ManualIntake
             source_version=source_version,
             country=_clean(raw.get("country")) or "CL",
             food_group=_clean(raw.get("food_group")),
+            portion_unit=portion_unit,
         ))
     return ManualIntakePlan(len(raw_rows), len(rows), len(raw_rows) - len(rows), tuple(errors), tuple(rows))
 
@@ -171,6 +176,7 @@ def apply_manual_evidence_csv(
                 "language": "es",
                 "food_group": row.food_group,
                 "preparation_state": row.preparation_state,
+                "portion_unit": row.portion_unit,
                 "protein_g_per_100g": row.protein,
                 "carbs_g_per_100g": row.carbs,
                 "fat_g_per_100g": row.fat,

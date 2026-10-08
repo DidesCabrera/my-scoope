@@ -229,7 +229,7 @@ INVENTORY_SECTION_DEFINITIONS = (
     ("identity", "Identidad", "fingerprint"),
     ("classification", "Clasificación", "tags"),
     ("governance", "Fuente y gobierno", "shield-check"),
-    ("nutrition", "Nutrición / 100 g", "chart-no-axes-combined"),
+    ("nutrition", "Nutrición / base 100", "chart-no-axes-combined"),
     ("functionality", "Funcionalidad", "utensils"),
     ("solver", "Solver", "calculator"),
     ("quality", "Calidad", "scan-search"),
@@ -303,7 +303,7 @@ INVENTORY_SECTION_COLUMNS = {
         ("source_count", "Fuentes"),
         ("portion_count", "Porciones"),
         ("default_portion", "Porción default"),
-        ("default_portion_grams", "Gramos default"),
+        ("default_portion_grams", "Porción default"),
         ("alias_count", "Aliases"),
         ("primary_alias", "Alias principal"),
     ),
@@ -429,7 +429,7 @@ def _publication_issue_label(issue: str) -> str:
         "at least one source with allowed or reviewed license is required": "La fuente necesita una licencia válida",
         "at least one serving/portion option is required": "Falta una porción",
         "one serving/portion option must be marked as default": "Falta elegir una porción predeterminada",
-        "protein + carbs + fat cannot exceed 120 g per 100 g": "La suma de macros supera el rango permitido",
+        "protein + carbs + fat cannot exceed 120 g per 100 g": "La suma de macros supera el rango permitido para la base 100",
     }
     if issue in exact_labels:
         return exact_labels[issue]
@@ -438,7 +438,7 @@ def _publication_issue_label(issue: str) -> str:
     if issue.startswith("solver readiness:"):
         return "Falta completar la configuración para el solver"
     if "_g_per_100g is required" in issue:
-        return "Faltan macronutrientes por 100 g"
+        return "Faltan macronutrientes para la base 100"
     if "cannot" in issue or "outside the accepted" in issue:
         return "Hay un valor nutricional fuera de rango"
     return issue
@@ -750,7 +750,7 @@ def build_catalog_food_detail_vm(catalog_food_id: int) -> AdminOperationsCatalog
     portions = [
         AdminOperationsCatalogPortionVM(
             label=portion.label,
-            grams_label=_format_decimal(portion.grams, suffix=" g"),
+            grams_label=_format_decimal(portion.grams, suffix=f" {catalog_food.portion_unit}"),
             source_label=portion.source or "Food Catalog",
             is_default=portion.is_default,
         )
@@ -792,6 +792,7 @@ def build_catalog_food_detail_vm(catalog_food_id: int) -> AdminOperationsCatalog
         confidence_label=_format_decimal(catalog_food.confidence_score, suffix="/100"),
         readiness_state=action["readiness_state"],
         readiness_label=action["readiness_label"],
+        portion_unit=catalog_food.portion_unit,
         readiness_issues=action["readiness_issues"],
         identity_facts=[
             AdminOperationsDetailFactVM("Nombre normalizado", catalog_food.canonical_name or "Pendiente"),
@@ -814,6 +815,7 @@ def build_catalog_food_detail_vm(catalog_food_id: int) -> AdminOperationsCatalog
                 "Forma culinaria",
                 CATALOG_FORM_LABELS.get(catalog_food.food_form, catalog_food.get_food_form_display()),
             ),
+            AdminOperationsDetailFactVM("Unidad de porción", catalog_food.portion_unit),
             AdminOperationsDetailFactVM(
                 "Idioma y país",
                 " · ".join(part for part in [catalog_food.language, catalog_food.country] if part) or "Sin definir",
@@ -826,7 +828,7 @@ def build_catalog_food_detail_vm(catalog_food_id: int) -> AdminOperationsCatalog
                     catalog_food.calories_kcal_per_100g or catalog_food.macro_calories_kcal,
                     suffix=" kcal",
                 ),
-                "Por 100 g",
+                f"Por 100 {catalog_food.portion_unit}",
             ),
             AdminOperationsDetailFactVM("Proteína", _format_decimal(catalog_food.protein_g_per_100g, suffix=" g")),
             AdminOperationsDetailFactVM("Carbohidratos", _format_decimal(catalog_food.carbs_g_per_100g, suffix=" g")),
@@ -838,9 +840,9 @@ def build_catalog_food_detail_vm(catalog_food_id: int) -> AdminOperationsCatalog
         ],
         solver_facts=[
             AdminOperationsDetailFactVM("Estado", "Habilitado" if catalog_food.solver_enabled else "Deshabilitado"),
-            AdminOperationsDetailFactVM("Porción mínima", _format_decimal(catalog_food.solver_min_portion_g, suffix=" g")),
-            AdminOperationsDetailFactVM("Porción máxima", _format_decimal(catalog_food.solver_max_portion_g, suffix=" g")),
-            AdminOperationsDetailFactVM("Incremento", _format_decimal(catalog_food.solver_portion_step_g, suffix=" g")),
+            AdminOperationsDetailFactVM("Porción mínima", _format_decimal(catalog_food.solver_min_portion_g, suffix=f" {catalog_food.portion_unit}")),
+            AdminOperationsDetailFactVM("Porción máxima", _format_decimal(catalog_food.solver_max_portion_g, suffix=f" {catalog_food.portion_unit}")),
+            AdminOperationsDetailFactVM("Incremento", _format_decimal(catalog_food.solver_portion_step_g, suffix=f" {catalog_food.portion_unit}")),
             AdminOperationsDetailFactVM("Roles", _format_catalog_detail_labels(catalog_food.functional_roles)),
             AdminOperationsDetailFactVM("Afinidades", _format_catalog_detail_labels(catalog_food.meal_affinities)),
             AdminOperationsDetailFactVM("Etiquetas dietarias", _format_catalog_detail_labels(catalog_food.dietary_tags)),
@@ -1134,19 +1136,19 @@ def build_food_catalog_inventory_vm(
             AdminOperationsMetricVM(
                 label="Proteína promedio",
                 value=f"{_format_average(aggregate['average_protein'])} g",
-                helper="Promedio descriptivo por 100 g del catálogo; no es una meta dietaria.",
+                helper="Promedio descriptivo por 100 de la unidad configurada; no es una meta dietaria.",
                 icon="drumstick",
             ),
             AdminOperationsMetricVM(
                 label="Carbohidratos promedio",
                 value=f"{_format_average(aggregate['average_carbs'])} g",
-                helper="Promedio descriptivo por 100 g del catálogo.",
+                helper="Promedio descriptivo por 100 de la unidad configurada.",
                 icon="wheat",
             ),
             AdminOperationsMetricVM(
                 label="Grasa promedio",
                 value=f"{_format_average(aggregate['average_fat'])} g",
-                helper="Promedio descriptivo por 100 g del catálogo.",
+                helper="Promedio descriptivo por 100 de la unidad configurada.",
                 icon="droplets",
             ),
             AdminOperationsMetricVM(
@@ -1690,7 +1692,7 @@ def _catalog_inventory_food_to_vm(
         for source in sources
     ]
     portion_lines = [
-        f"{portion.label}: {_format_decimal(portion.grams, suffix=' g')}"
+        f"{portion.label}: {_format_decimal(portion.grams, suffix=f' {catalog_food.portion_unit}')}"
         f"{' (default)' if portion.is_default else ''}"
         for portion in portions
     ]
@@ -1741,6 +1743,7 @@ def _catalog_inventory_food_to_vm(
             "food_group": catalog_food.food_group or "—",
             "food_subgroup": catalog_food.food_subgroup or "—",
             "food_form": CATALOG_FORM_LABELS.get(catalog_food.food_form, catalog_food.food_form),
+            "portion_unit": catalog_food.portion_unit,
             "preparation_state": CATALOG_PREPARATION_LABELS.get(catalog_food.preparation_state, catalog_food.preparation_state),
             "preparation_effort": catalog_food.preparation_effort or "—",
             "cost_band": catalog_food.cost_band or "—",
@@ -1774,9 +1777,9 @@ def _catalog_inventory_food_to_vm(
         },
         "solver": {
             "solver_enabled": "sí" if catalog_food.solver_enabled else "no",
-            "solver_min": _format_decimal(catalog_food.solver_min_portion_g, suffix=" g"),
-            "solver_max": _format_decimal(catalog_food.solver_max_portion_g, suffix=" g"),
-            "solver_step": _format_decimal(catalog_food.solver_portion_step_g, suffix=" g"),
+            "solver_min": _format_decimal(catalog_food.solver_min_portion_g, suffix=f" {catalog_food.portion_unit}"),
+            "solver_max": _format_decimal(catalog_food.solver_max_portion_g, suffix=f" {catalog_food.portion_unit}"),
+            "solver_step": _format_decimal(catalog_food.solver_portion_step_g, suffix=f" {catalog_food.portion_unit}"),
             "solver_capabilities": catalog_food.solver_capabilities_version or "—",
             "solver_confidence": _format_mapping(catalog_food.solver_feature_confidence),
         },
@@ -1792,7 +1795,7 @@ def _catalog_inventory_food_to_vm(
             "source_count": _format_int(len(sources)),
             "portion_count": _format_int(len(portions)),
             "default_portion": default_portion.label if default_portion else "—",
-            "default_portion_grams": _format_decimal(default_portion.grams, suffix=" g") if default_portion else "—",
+            "default_portion_grams": _format_decimal(default_portion.grams, suffix=f" {catalog_food.portion_unit}") if default_portion else "—",
             "alias_count": _format_int(len(aliases)),
             "primary_alias": primary_alias.name if primary_alias else "—",
         },
@@ -1841,7 +1844,7 @@ def _catalog_inventory_food_to_vm(
         ],
         solver_lines=[
             f"enabled: {'sí' if catalog_food.solver_enabled else 'no'}",
-            f"rango: {_format_decimal(catalog_food.solver_min_portion_g, suffix=' g')} – {_format_decimal(catalog_food.solver_max_portion_g, suffix=' g')} · paso {_format_decimal(catalog_food.solver_portion_step_g, suffix=' g')}",
+            f"rango: {_format_decimal(catalog_food.solver_min_portion_g, suffix=f' {catalog_food.portion_unit}')} – {_format_decimal(catalog_food.solver_max_portion_g, suffix=f' {catalog_food.portion_unit}')} · paso {_format_decimal(catalog_food.solver_portion_step_g, suffix=f' {catalog_food.portion_unit}')}",
             f"capabilities: {catalog_food.solver_capabilities_version}",
             f"confianza features: {_format_mapping(catalog_food.solver_feature_confidence)}",
         ],

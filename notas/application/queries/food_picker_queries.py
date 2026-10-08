@@ -25,6 +25,7 @@ class FoodPickerItemDTO:
     carbs: float
     fat: float
     total_kcal: float
+    quantity_unit: str
     alloc: dict
     picker_source: str
     picker_label: str
@@ -296,6 +297,7 @@ def build_food_picker_item_dto(
         carbs=float(food.carbs),
         fat=float(food.fat),
         total_kcal=float(food.total_kcal),
+        quantity_unit=food.portion_unit,
         alloc=food.alloc,
         picker_source=picker_source,
         picker_label=resolve_food_picker_label(picker_source),

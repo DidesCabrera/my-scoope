@@ -244,6 +244,7 @@ class FoodAdmin(admin.ModelAdmin):
         "name",
         "created_by",
         "category",
+        "portion_unit",
         "food_group",
         "food_subgroup",
         "preparation_state",
@@ -253,6 +254,7 @@ class FoodAdmin(admin.ModelAdmin):
         "fat",
         "total_kcal_display",
         "is_global",
+        "portion_unit",
         "is_verified",
         "is_active",
         "visibility",
@@ -299,6 +301,7 @@ class FoodAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "name",
+                    "portion_unit",
                     "canonical_name",
                     "created_by",
                     "is_global",
@@ -322,7 +325,7 @@ class FoodAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Macronutrientes base por 100 g",
+            "Macronutrientes base por 100 g o ml",
             {
                 "fields": (
                     "protein",
@@ -333,7 +336,7 @@ class FoodAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Nutrientes extendidos por 100 g",
+            "Nutrientes extendidos por 100 g o ml",
             {
                 "fields": (
                     "fiber_g_per_100g",
@@ -392,7 +395,7 @@ class FoodAdmin(admin.ModelAdmin):
         mark_foods_as_inactive,
     )
 
-    @admin.display(description="Total kcal / 100 g")
+    @admin.display(description="Total kcal / 100 g o ml")
     def total_kcal_display(self, obj):
         return round(obj.total_kcal, 2)
 

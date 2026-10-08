@@ -54,7 +54,7 @@
                 {% if selection.name %}
                   <strong>
                     {{ selection.name }}
-                    {% if selection.quantity %}<span class="comparator-selection-quantity">({{ selection.quantity|floatformat:0 }}g)</span>{% endif %}
+                    {% if selection.quantity %}<span class="comparator-selection-quantity">({{ selection.quantity|floatformat:0 }}{{ selection.quantity_unit }})</span>{% endif %}
                   </strong>
                 {% endif %}
               </div>
@@ -88,7 +88,7 @@
             <label class="comparator-field comparator-field--quantity {% if not selection.id %}is-hidden{% endif %}" data-comparator-quantity>
               <span>Cantidad</span>
               <input type="number" name="qty_{{ forloop.counter }}" min="1" step="1" value="{{ selection.quantity|floatformat:0 }}">
-              <em>{{ vm.content.quantity_unit }}</em>
+              <em>{{ selection.quantity_unit }}</em>
             </label>
           {% endif %}
         </section>

@@ -195,6 +195,7 @@ def admin_food_catalog(request):
                 protein = row.get("protein")
                 carbs = row.get("carbs")
                 fat = row.get("fat")
+                raw_portion_unit = row.get("portion_unit") if "portion_unit" in df.columns else None
 
                 if pd.isna(name):
                     invalid_rows.append(index + 2)
@@ -208,40 +209,50 @@ def admin_food_catalog(request):
                     invalid_rows.append(index + 2)
                     continue
 
-            food.name = str(name).strip()
-            food.protein = protein
-            food.carbs = carbs
-            food.fat = fat
+                if raw_portion_unit is not None and not pd.isna(raw_portion_unit):
+                    portion_unit = str(raw_portion_unit).strip().lower()
+                    if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
+                        invalid_rows.append(index + 2)
+                        continue
+                else:
+                    portion_unit = food.portion_unit
 
-            update_fields = [
-                "name",
-                "protein",
-                "carbs",
-                "fat",
-            ]
+                food.name = str(name).strip()
+                food.protein = protein
+                food.carbs = carbs
+                food.fat = fat
+                food.portion_unit = portion_unit
 
-            if "is_global" in df.columns:
-                raw_is_global = row.get("is_global")
+                update_fields = [
+                    "name",
+                    "protein",
+                    "carbs",
+                    "fat",
+                    "portion_unit",
+                ]
 
-                if not pd.isna(raw_is_global):
-                    if isinstance(raw_is_global, str):
-                        normalized_is_global = raw_is_global.strip().lower()
-                        food.is_global = normalized_is_global in {
-                            "1",
-                            "true",
-                            "t",
-                            "yes",
-                            "y",
-                            "si",
-                            "sí",
-                        }
-                    else:
-                        food.is_global = bool(raw_is_global)
+                if "is_global" in df.columns:
+                    raw_is_global = row.get("is_global")
 
-                    update_fields.append("is_global")
+                    if not pd.isna(raw_is_global):
+                        if isinstance(raw_is_global, str):
+                            normalized_is_global = raw_is_global.strip().lower()
+                            food.is_global = normalized_is_global in {
+                                "1",
+                                "true",
+                                "t",
+                                "yes",
+                                "y",
+                                "si",
+                                "sí",
+                            }
+                        else:
+                            food.is_global = bool(raw_is_global)
 
-            food.save(update_fields=update_fields)
-            updated += 1
+                        update_fields.append("is_global")
+
+                food.save(update_fields=update_fields)
+                updated += 1
 
             if missing_ids:
                 messages.warning(
@@ -282,7 +293,7 @@ def admin_foods_template(request):
     response["Content-Disposition"] = 'attachment; filename="foods_update_template.csv"'
 
     writer = csv.writer(response, delimiter=";")
-    writer.writerow(["id", "name", "protein", "carbs", "fat", "is_global"])
-    writer.writerow([1, "Chicken breast", "31,0", "0,0", "3,6", "true"])
+    writer.writerow(["id", "name", "protein", "carbs", "fat", "portion_unit", "is_global"])
+    writer.writerow([1, "Chicken breast", "31,0", "0,0", "3,6", "g", "true"])
 
     return response

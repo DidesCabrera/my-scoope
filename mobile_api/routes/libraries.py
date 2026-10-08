@@ -82,6 +82,7 @@ def _food_picker_item_payload(item):
         "is_user_food": item.is_user_food,
         "is_verified": item.is_verified,
         "data_quality_score": item.data_quality_score,
+        "quantity_unit": item.quantity_unit,
     }
 
 
@@ -169,6 +170,7 @@ def create_library_food(request, payload: FoodCreateInput):
         protein=payload.protein,
         carbs=payload.carbs,
         fat=payload.fat,
+        portion_unit=payload.portion_unit,
     )
     return success(library_item_detail_payload(request.auth.user, "foods", result.food.id))
 

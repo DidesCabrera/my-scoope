@@ -348,6 +348,7 @@ def _create_catalog_food_from_operational_food(
     catalog_food = CatalogFood.objects.create(
         display_name=food.name.strip(),
         canonical_name=_canonical_name_for_food(food),
+        portion_unit=food.portion_unit,
         protein_g_per_100g=_decimal_3(food.protein),
         carbs_g_per_100g=_decimal_3(food.carbs),
         fat_g_per_100g=_decimal_3(food.fat),
@@ -531,6 +532,7 @@ def _evidence_payload_for_food(
         "is_active": food.is_active,
         "visibility": food.visibility,
         "data_quality_score": food.data_quality_score,
+        "portion_unit": food.portion_unit,
         "nutrients_per_100g": {
             "protein_g": str(_decimal_3(food.protein)),
             "carbs_g": str(_decimal_3(food.carbs)),

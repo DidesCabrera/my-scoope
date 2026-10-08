@@ -57,6 +57,9 @@ class NutritionSolverNSO10ActivationTests(TestCase):
 
     @override_settings(NUTRITION_SOLVER_BACKEND="cp_sat_v1", NUTRITION_SOLVER_SHADOW_ENABLED=False)
     def test_cp_sat_can_be_activated_for_dailyplan_generation(self):
+        Food.objects.filter(
+            pk__in=[self.protein_1.pk, self.protein_2.pk, self.carb_1.pk, self.carb_2.pk]
+        ).update(portion_unit=Food.PORTION_UNIT_MILLILITERS)
         target_plan = build_dailyplan_target_plan(user=self.user, brief=self.brief)
         payload, summary = _build_dailyplan_payload_with_solver_summary(
             user=self.user,
@@ -72,6 +75,13 @@ class NutritionSolverNSO10ActivationTests(TestCase):
             for food in item["meal"]["foods"]
         }
         self.assertNotIn(self.carb_1.id, selected_ids)
+        self.assertTrue(
+            all(
+                food["unit"] == Food.PORTION_UNIT_MILLILITERS
+                for item in payload["dailyplan"]["meals"]
+                for food in item["meal"]["foods"]
+            )
+        )
         self.assertEqual(summary["requested_alternative_count"], 3)
         self.assertEqual(summary["selected_alternative_id"], "alternative_1")
         self.assertGreaterEqual(summary["alternative_count"], 2)

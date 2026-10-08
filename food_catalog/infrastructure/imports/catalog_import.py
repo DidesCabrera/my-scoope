@@ -368,6 +368,7 @@ def _create_catalog_food_candidate(
             food_group=dto.food_group,
             food_subgroup=dto.food_subgroup,
             preparation_state=dto.preparation_state,
+            portion_unit=dto.portion_unit,
             status=DEFAULT_CATALOG_IMPORT_STATUS,
             source_type=source_type,
             data_quality_score=prepared_food.quality_score,

@@ -38,6 +38,7 @@ def normalize_imported_food(dto: ImportedFoodDTO) -> ImportedFoodDTO:
         food_group=_clean_key(dto.food_group),
         food_subgroup=_clean_key(dto.food_subgroup),
         preparation_state=_clean_key(dto.preparation_state) or "unknown",
+        portion_unit=_normalize_portion_unit(dto.portion_unit),
         fiber_g_per_100g=_to_optional_decimal(dto.fiber_g_per_100g),
         sugar_g_per_100g=_to_optional_decimal(dto.sugar_g_per_100g),
         saturated_fat_g_per_100g=_to_optional_decimal(dto.saturated_fat_g_per_100g),
@@ -84,6 +85,13 @@ def _clean_key(value: str | None) -> str:
     value = value.replace(" ", "_")
     value = re.sub(r"_+", "_", value)
     return value.strip("_")
+
+
+def _normalize_portion_unit(value: str | None) -> str:
+    portion_unit = _clean_key(value) or "g"
+    if portion_unit not in {"g", "ml"}:
+        raise ValueError("portion_unit must be g or ml")
+    return portion_unit
 
 
 def _strip_accents(value: str) -> str:

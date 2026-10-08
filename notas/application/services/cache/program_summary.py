@@ -153,7 +153,7 @@ def _food_row(food, display_name, total_grams, program_totals):
         "rel": {
             "id": food.id,
             "quantity": total_grams,
-            "quantity_unit": "g",
+            "quantity_unit": food.portion_unit,
             "name": display_name,
             "total_kcal": total_kcal,
             "kcal_share": _safe_percentage(total_kcal, program_totals.get("total_kcal", 0)),

@@ -40,6 +40,7 @@ class FoodPickerQueryTests(TestCase):
             protein=10,
             carbs=2,
             fat=5,
+            portion_unit=Food.PORTION_UNIT_MILLILITERS,
             created_by=self.user,
             is_global=False,
             is_active=True,
@@ -222,6 +223,7 @@ class FoodPickerQueryTests(TestCase):
         self.assertIn("data_quality_score", first_item)
         self.assertIn("source", first_item)
         self.assertIn("search_text", first_item)
+        self.assertEqual(first_item["quantity_unit"], "ml")
 
     def test_list_food_picker_items_marks_user_food(self):
         result = list_food_picker_items(

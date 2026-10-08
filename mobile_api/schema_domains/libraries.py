@@ -6,6 +6,10 @@ from typing import Literal
 from ninja import Field, Schema
 
 
+class OptionalPortionUnitData(Schema):
+    quantity_unit: Literal["g", "ml"] | None = None
+
+
 class FoodItem(Schema):
     id: int
     name: str
@@ -21,6 +25,7 @@ class FoodItem(Schema):
     is_user_food: bool
     is_verified: bool
     data_quality_score: int
+    quantity_unit: Literal["g", "ml"] = "g"
 
 
 class FoodPageData(Schema):
@@ -162,6 +167,7 @@ class FoodCreateInput(Schema):
     protein: float = Field(ge=0, le=100)
     carbs: float = Field(ge=0, le=100)
     fat: float = Field(ge=0, le=100)
+    portion_unit: Literal["g", "ml"] = "g"
 
 
 class NamedLibraryCreateInput(Schema):
@@ -173,6 +179,7 @@ class LibraryItemData(Schema):
     entity: Literal["food", "meal", "dailyPlan", "program"]
     name: str
     subtitle: str
+    quantity_unit: Literal["g", "ml"] | None = None
     nutrition: LibraryNutritionData
     indicators: list[LibraryIndicatorData]
     panel: LibraryPanelData

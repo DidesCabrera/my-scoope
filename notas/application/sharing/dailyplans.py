@@ -68,6 +68,7 @@ def build_dailyplan_share_snapshot(dailyplan: DailyPlan) -> dict:
                 {
                     "name": meal_food.food.name,
                     "quantity_grams": _number(meal_food.quantity),
+                    "quantity_unit": meal_food.food.portion_unit,
                     "nutrition": food_nutrition,
                 }
             )

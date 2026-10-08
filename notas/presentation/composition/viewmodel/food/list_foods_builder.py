@@ -34,7 +34,7 @@ def _build_food_badges(food, user, include_unit=True):
     badges = []
 
     if include_unit:
-        badges.append(FoodBadgeUI(label="100g", modifier="unit"))
+        badges.append(FoodBadgeUI(label=f"100{food.portion_unit}", modifier="unit"))
 
     if food.created_by_id == getattr(user, "id", None):
         badges.append(FoodBadgeUI(label="Tu alimento", modifier="user"))

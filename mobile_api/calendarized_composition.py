@@ -91,7 +91,7 @@ def _food_row(
         "detail_id": food.get("source_food_id") if isinstance(food.get("source_food_id"), int) else None,
         "name": food.get("name") or "Alimento",
         "quantity": _number(food.get("quantity_g")),
-        "quantity_unit": "g",
+        "quantity_unit": food.get("quantity_unit") or "g",
         "calories": _number(calories),
         "calorie_share": _percentage(calories, _total_kcal(parent_totals)),
         "calorie_distribution": {

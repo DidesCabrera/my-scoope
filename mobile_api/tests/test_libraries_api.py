@@ -233,12 +233,14 @@ class MobileAPILibrariesTests(PaidMobileAPITestCase):
     def test_mobile_can_create_and_complete_each_library_entity(self):
         food_response = self.client.post(
             "/api/v1/library/foods",
-            data={"name": "Yogur natural", "protein": 4.2, "carbs": 5.1, "fat": 2.3},
+            data={"name": "Yogur natural", "protein": 4.2, "carbs": 5.1, "fat": 2.3, "portion_unit": "ml"},
             content_type="application/json",
         )
         self.assertEqual(food_response.status_code, 200)
         food = food_response.json()["data"]
         self.assertEqual(food["entity"], "food")
+        self.assertEqual(food["quantity_unit"], "ml")
+        self.assertEqual(food["indicators"][0]["value"], "100 ml")
         self.assertFalse(food["is_draft"])
 
         meal_response = self.client.post(

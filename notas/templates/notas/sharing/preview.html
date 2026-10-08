@@ -44,7 +44,7 @@
         <div><dt>Grasas</dt><dd>{{ snapshot.nutrition.fat_grams|floatformat:1 }} g</dd></div>
       </dl>
       <p class="share-card__count">
-        {% if resource.subject_type == "food" %}Valores por 100 g
+        {% if resource.subject_type == "food" %}Valores por 100 {{ snapshot.summary.basis_unit|default:"g" }}
         {% elif resource.subject_type == "meal" %}{{ snapshot.summary.food_count }} alimentos
         {% elif resource.subject_type == "program" %}{{ snapshot.summary.duration_weeks }} semanas · {{ snapshot.summary.filled_days }} días planificados
         {% else %}{{ snapshot.summary.meal_count }} comidas · {{ snapshot.summary.food_count }} alimentos{% endif %}
@@ -57,7 +57,7 @@
       <article class="share-meal">
         <ul>
           {% for food in snapshot.foods %}
-            <li><span>{{ food.name }}</span><span>{{ food.quantity_grams|floatformat:0 }} g</span></li>
+            <li><span>{{ food.name }}</span><span>{{ food.quantity_grams|floatformat:0 }} {{ food.quantity_unit|default:"g" }}</span></li>
           {% empty %}<li>Sin alimentos registrados</li>{% endfor %}
         </ul>
       </article>
@@ -88,7 +88,7 @@
           <strong>{{ meal.nutrition.calories|floatformat:0 }} kcal</strong>
           <ul>
             {% for food in meal.foods %}
-              <li><span>{{ food.name }}</span><span>{{ food.quantity_grams|floatformat:0 }} g</span></li>
+              <li><span>{{ food.name }}</span><span>{{ food.quantity_grams|floatformat:0 }} {{ food.quantity_unit|default:"g" }}</span></li>
             {% empty %}
               <li>Sin alimentos registrados</li>
             {% endfor %}

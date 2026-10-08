@@ -20,6 +20,7 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
             protein=10,
             carbs=20,
             fat=5,
+            portion_unit=Food.PORTION_UNIT_MILLILITERS,
             created_by=self.user,
         )
         rice = Food.objects.create(
@@ -74,18 +75,16 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
         option_items = options.json()["data"]["items"]
         self.assertEqual({item["id"] for item in option_items}, {oats.id, rice.id})
         oats_option = next(item for item in option_items if item["id"] == oats.id)
-        self.assertEqual(
-            set(oats_option),
-            {"id", "entity", "name", "subtitle", "nutrition", "indicators", "panel"},
-        )
-        self.assertEqual(oats_option["entity"], "food")
+        expected_keys = "id entity name subtitle quantity_unit nutrition indicators panel".split()
+        self.assertEqual(set(oats_option), set(expected_keys))
+        self.assertEqual((oats_option["entity"], oats_option["quantity_unit"]), ("food", "ml"))
         self.assertEqual(oats_option["nutrition"]["calories"], 165.0)
         self.assertEqual(oats_option["nutrition"]["protein"]["grams"], 10.0)
-        self.assertEqual(oats_option["indicators"], [{"icon": None, "label": "base nutricional", "value": "100 g"}])
+        self.assertEqual(oats_option["indicators"], [{"icon": None, "label": "base nutricional", "value": "100 ml"}])
         self.assertEqual(oats_option["panel"]["kind"], "none")
         self.assertEqual(compared.status_code, 200)
         first = compared.json()["data"]["items"][0]
-        self.assertEqual(first["quantity"], 50.0)
+        self.assertEqual((first["quantity"], first["quantity_unit"]), (50.0, "ml"))
         self.assertEqual(first["values"]["calories"], 82.5)
         self.assertEqual(first["values"]["protein_g"], 5.0)
         self.assertEqual(first["values"]["protein_per_kilogram"], 0.07)
@@ -94,7 +93,7 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
             ["total_kcal", "ppk", "protein", "carbs", "fat", "alloc_protein", "alloc_carbs", "alloc_fat"],
         )
         calories = compared.json()["data"]["metrics"][0]
-        self.assertEqual(calories["bars"][0]["formatted_value"], "82 kcal")
+        self.assertEqual((calories["bars"][0]["formatted_value"], calories["bars"][0]["quantity_unit"]), ("82 kcal", "ml"))
         self.assertEqual(calories["bars"][1]["relative_percentage"], 100.0)
         self.assertEqual(inaccessible.status_code, 404)
         self.assertEqual(inaccessible.json()["error"]["code"], "comparison_item_not_available")

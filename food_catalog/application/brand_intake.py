@@ -46,6 +46,7 @@ OPTIONAL_BRAND_INTAKE_COLUMNS = (
     "food_group",
     "food_subgroup",
     "preparation_state",
+    "portion_unit",
     "calories_kcal_per_100g",
     "fiber_g_per_100g",
     "sugar_g_per_100g",
@@ -78,6 +79,7 @@ class BrandFoodIntakeRow:
     food_group: str
     food_subgroup: str
     preparation_state: str
+    portion_unit: str
     protein_g_per_100g: Decimal
     carbs_g_per_100g: Decimal
     fat_g_per_100g: Decimal
@@ -160,6 +162,7 @@ def validate_brand_food_intake_row(raw_row: dict[str, str | None], *, row_number
     food_group = _clean(raw_row.get("food_group"))
     food_subgroup = _clean(raw_row.get("food_subgroup"))
     preparation_state = _clean(raw_row.get("preparation_state")) or CatalogFood.PREPARATION_READY_TO_EAT
+    portion_unit = _clean(raw_row.get("portion_unit")) or CatalogFood.PORTION_UNIT_GRAMS
     serving_label = _clean(raw_row.get("serving_label")) or "Porción"
     aliases = tuple(
         alias.strip()
@@ -176,6 +179,8 @@ def validate_brand_food_intake_row(raw_row: dict[str, str | None], *, row_number
         errors.append("canonical_name is required")
     if preparation_state not in _ALLOWED_PREPARATION_STATES:
         errors.append(f"preparation_state is invalid: {preparation_state}")
+    if portion_unit not in dict(CatalogFood.PORTION_UNIT_CHOICES):
+        errors.append("portion_unit must be g or ml")
     if not authorization_confirmed:
         errors.append("authorization_confirmed must be true/yes/sí/1")
     if not _clean(raw_row.get("label_evidence_url")):
@@ -238,6 +243,7 @@ def validate_brand_food_intake_row(raw_row: dict[str, str | None], *, row_number
             food_group=food_group,
             food_subgroup=food_subgroup,
             preparation_state=preparation_state,
+            portion_unit=portion_unit,
             protein_g_per_100g=protein,
             carbs_g_per_100g=carbs,
             fat_g_per_100g=fat,
@@ -352,6 +358,7 @@ def _upsert_brand_food(row: BrandFoodIntakeRow, *, import_batch: CatalogImportBa
         "food_group": row.food_group,
         "food_subgroup": row.food_subgroup,
         "preparation_state": row.preparation_state,
+        "portion_unit": row.portion_unit,
         "source_type": CatalogFood.SOURCE_BRAND_SUBMITTED,
         "status": CatalogFood.STATUS_PENDING_REVIEW,
         "protein_g_per_100g": row.protein_g_per_100g,

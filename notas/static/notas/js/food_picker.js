@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const list = document.getElementById("food-list");
   const preview = document.getElementById("food-preview");
   const quantityInput = document.getElementById("food-quantity");
+  const quantityUnit = picker.querySelector('[data-role="food-quantity-unit"]');
 
   const form = document.getElementById("form-preview");
 
@@ -442,6 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSelectedFoodSource(selectedFood);
 
     hiddenFoodId.value = selectedFood.id;
+    if (quantityUnit) quantityUnit.textContent = selectedFood.quantity_unit || "g";
 
     renderBase(selectedFood);
 

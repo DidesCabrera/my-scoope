@@ -25,7 +25,7 @@ def build_dailyplan_menu(dailyplan_meals):
         meal = dpm.meal
 
         foods = [
-            f"{resolve_food_display_name(mf.food)} ({_format_quantity(mf.quantity)}g)"
+            f"{resolve_food_display_name(mf.food)} ({_format_quantity(mf.quantity)}{mf.food.portion_unit})"
             for mf in meal.meal_food_set.all()
         ]
 

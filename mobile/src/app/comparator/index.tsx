@@ -163,11 +163,12 @@ function ComparatorBuilderScreen() {
         setMetadata(nextMetadata);
         if (saved) {
           setKind(saved.kind);
-          const restored = saved.editable_selections.map((selection, index) => ({
+          const restored: ComparisonSlot[] = saved.editable_selections.map((selection, index) => ({
             key: index + 1,
             option: {
               id: selection.id,
               name: saved.items[index]?.name ?? `Elemento ${selection.id}`,
+              quantity_unit: saved.items[index]?.quantity_unit === "ml" ? "ml" : "g",
             },
             quantity: String(selection.quantity ?? 100),
           }));
@@ -283,7 +284,7 @@ function ComparatorBuilderScreen() {
                 {usesQuantity && slot.option ? (
                   <Field
                     keyboardType="decimal-pad"
-                    label="Cantidad (g)"
+                    label={`Cantidad (${slot.option.quantity_unit ?? "g"})`}
                     onChangeText={(quantity) => {
                       setSlots((current) => current.map((row) => row.key === slot.key ? { ...row, quantity } : row));
                       invalidateResult();

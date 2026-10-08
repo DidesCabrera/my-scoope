@@ -50,6 +50,7 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(food.food_group, "meats")
         self.assertEqual(food.food_subgroup, "poultry")
         self.assertEqual(food.preparation_state, Food.PREPARATION_COOKED)
+        self.assertEqual(food.portion_unit, Food.PORTION_UNIT_MILLILITERS)
         self.assertTrue(food.solver_enabled)
         self.assertTrue(food.is_global)
         self.assertTrue(food.is_verified)
@@ -139,6 +140,7 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
             food_group="meats",
             food_subgroup="poultry",
             preparation_state=CatalogFood.PREPARATION_COOKED,
+            portion_unit=CatalogFood.PORTION_UNIT_MILLILITERS,
             solver_enabled=True,
             protein_g_per_100g=Decimal("31.000"),
             carbs_g_per_100g=Decimal("0.000"),

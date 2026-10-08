@@ -77,6 +77,13 @@ class PreparationState(StrEnum):
     READY_TO_EAT = "ready_to_eat"
 
 
+class PortionUnit(StrEnum):
+    """Supported units for food portions and their per-100 nutrition basis."""
+
+    GRAMS = "g"
+    MILLILITERS = "ml"
+
+
 def _decimal(value: Decimal | int | float | str | None, *, field_name: str) -> Decimal | None:
     if value is None:
         return None
@@ -105,7 +112,7 @@ def _require_text(value: str, *, field_name: str) -> None:
 
 @dataclass(frozen=True)
 class NutrientProfilePer100g:
-    """Normalized macro/micro nutrient profile per 100 grams."""
+    """Normalized nutrient profile per 100 of the food's configured portion unit."""
 
     protein_g: Decimal | int | float | str
     carbs_g: Decimal | int | float | str
@@ -154,7 +161,7 @@ class NutrientProfilePer100g:
 
 @dataclass(frozen=True)
 class CatalogServingOption:
-    """A serving option normalized to grams."""
+    """A serving amount expressed in the parent food's configured portion unit."""
 
     label: str
     grams: Decimal | int | float | str
@@ -227,6 +234,7 @@ class CatalogFoodCandidate:
     source_license_status: SourceLicenseStatus | str
     display_name: str
     nutrients_per_100g: NutrientProfilePer100g
+    portion_unit: PortionUnit | str = PortionUnit.GRAMS
     canonical_name: str = ""
     brand_name: str = ""
     country: str = ""
@@ -246,6 +254,7 @@ class CatalogFoodCandidate:
         object.__setattr__(self, "source_type", CandidateSourceType(self.source_type))
         object.__setattr__(self, "source_license_status", SourceLicenseStatus(self.source_license_status))
         object.__setattr__(self, "review_status", CatalogReviewStatus(self.review_status))
+        object.__setattr__(self, "portion_unit", PortionUnit(self.portion_unit))
         confidence_score = _decimal(self.confidence_score, field_name="confidence_score")
         _require_non_negative(confidence_score, field_name="confidence_score")
         if confidence_score is not None and confidence_score > 100:
@@ -273,6 +282,7 @@ class PublishedFoodSnapshot:
     catalog_version: str
     display_name: str
     nutrients_per_100g: NutrientProfilePer100g
+    portion_unit: PortionUnit | str = PortionUnit.GRAMS
     canonical_name: str = ""
     food_group: str = ""
     food_subgroup: str = ""
@@ -298,6 +308,7 @@ class PublishedFoodSnapshot:
             raise FoodCatalogContractError("data_quality_score must be between 0 and 100.")
         object.__setattr__(self, "visibility", OperationalVisibility(self.visibility))
         object.__setattr__(self, "preparation_state", PreparationState(self.preparation_state))
+        object.__setattr__(self, "portion_unit", PortionUnit(self.portion_unit))
         for field_name in ("default_portion_g", "min_portion_g", "max_portion_g", "portion_step_g"):
             value = _decimal(getattr(self, field_name), field_name=field_name)
             _require_positive(value, field_name=field_name)
@@ -316,6 +327,7 @@ class PublishedFoodSnapshot:
             food_group=self.food_group.strip(),
             food_subgroup=self.food_subgroup.strip(),
             nutrients_per_100g=self.nutrients_per_100g,
+            portion_unit=self.portion_unit,
             data_quality_score=self.data_quality_score,
             visibility=self.visibility,
             is_verified=self.is_verified,
@@ -343,6 +355,7 @@ class OperationalFoodSnapshotPayload:
     food_group: str
     food_subgroup: str
     nutrients_per_100g: NutrientProfilePer100g
+    portion_unit: PortionUnit | str = PortionUnit.GRAMS
     data_quality_score: int = 0
     visibility: OperationalVisibility | str = OperationalVisibility.EXTENDED
     is_verified: bool = True
@@ -365,6 +378,7 @@ class OperationalFoodSnapshotPayload:
             raise FoodCatalogContractError("data_quality_score must be between 0 and 100.")
         object.__setattr__(self, "visibility", OperationalVisibility(self.visibility))
         object.__setattr__(self, "preparation_state", PreparationState(self.preparation_state))
+        object.__setattr__(self, "portion_unit", PortionUnit(self.portion_unit))
         object.__setattr__(self, "solver_capabilities", dict(self.solver_capabilities or {}))
 
     def food_defaults(self) -> dict[str, Any]:
@@ -385,6 +399,7 @@ class OperationalFoodSnapshotPayload:
             "food_subgroup": self.food_subgroup.strip(),
             "preparation_state": self.preparation_state.value,
             "solver_enabled": self.solver_enabled,
+            "portion_unit": self.portion_unit.value,
             **self.nutrients_per_100g.operational_micro_defaults(),
             "default_portion_g": self.default_portion_g,
             "min_portion_g": self.min_portion_g,
@@ -406,6 +421,7 @@ class OperationalFoodSnapshotPayload:
             "source_catalog_version": self.source_catalog_version,
             "preparation_state": self.preparation_state.value,
             "solver_enabled": self.solver_enabled,
+            "portion_unit": self.portion_unit.value,
             "aliases": tuple(self.aliases),
             "serving_options": tuple(
                 option.operational_portion_defaults() for option in self.serving_options
@@ -434,6 +450,7 @@ __all__ = [
     "OperationalFoodSnapshotPayload",
     "OperationalVisibility",
     "PreparationState",
+    "PortionUnit",
     "PublishedFoodSnapshot",
     "SourceLicenseStatus",
 ]

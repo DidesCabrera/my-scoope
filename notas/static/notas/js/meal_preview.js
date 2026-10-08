@@ -174,7 +174,7 @@ export function renderFoodsAggregation(container, foods) {
   }
 
   const line = normalizedFoods
-    .map(food => `${food.name} (${food.grams}g)`)
+    .map(food => `${food.name} (${food.grams}${food.quantity_unit || "g"})`)
     .join(", ");
 
   const content = document.createElement("span");

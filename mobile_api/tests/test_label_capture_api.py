@@ -115,7 +115,7 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
 
     @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
     @patch("notas.application.services.nutrition_label_ai._call_openai")
-    def test_per_100ml_analysis_returns_extracted_values_for_safe_user_conversion(self, provider):
+    def test_per_100ml_analysis_preserves_extracted_values_in_volume_basis(self, provider):
         provider.return_value = _provider_response(basis="per_100ml", serving_size=None)
 
         response = self.client.post(
@@ -128,9 +128,9 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
         data = response.json()["data"]
         self.assertEqual(data["basis"], "per_100ml")
         self.assertEqual(data["source_basis"], "per_100ml")
-        self.assertEqual(data["normalization_status"], "volume_weight_required")
+        self.assertEqual(data["normalization_status"], "ready")
         self.assertEqual(data["ocr_engine_version"], "nutrition_label_ai.v2")
-        self.assertEqual(data["values"], {})
+        self.assertEqual(data["values"]["protein_g"], 10)
         self.assertEqual(data["source_values"]["protein_g"], 10)
         self.assertEqual(data["credits_charged"], 2)
         self.assertFalse(FoodLabelAIAnalysis.objects.get().escalated)
@@ -394,7 +394,7 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
         self.assertFalse(Food.objects.exists())
         self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
 
-    def test_per_100ml_capture_requires_and_records_conversion_weight(self):
+    def test_per_100ml_capture_records_volume_unit_without_conversion_weight(self):
         payload = {
             "name": "Leche por volumen",
             "protein_g": 3.204,
@@ -407,21 +407,15 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
             "idempotency_key": "label-confirm-per-100ml",
         }
 
-        missing = self.client.post(
-            "/api/v1/foods/label-captures",
-            data=payload,
-            content_type="application/json",
-        )
-        self.assertEqual(missing.status_code, 422)
-        self.assertEqual(missing.json()["error"]["code"], "food_label_volume_weight_required")
-
-        payload["volume_weight_g_per_100ml"] = 103
         saved = self.client.post(
             "/api/v1/foods/label-captures",
             data=payload,
             content_type="application/json",
         )
         self.assertEqual(saved.status_code, 200)
-        receipt = FoodLabelCaptureReceipt.objects.get(pk=saved.json()["data"]["capture_receipt_id"])
+        data = saved.json()["data"]
+        receipt = FoodLabelCaptureReceipt.objects.get(pk=data["capture_receipt_id"])
         self.assertEqual(receipt.detected_basis, "per_100ml")
-        self.assertEqual(float(receipt.volume_weight_g_per_100ml), 103)
+        self.assertIsNone(receipt.volume_weight_g_per_100ml)
+        self.assertEqual(data["portion_unit"], "ml")
+        self.assertEqual(receipt.food.portion_unit, Food.PORTION_UNIT_MILLILITERS)

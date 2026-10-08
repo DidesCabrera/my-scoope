@@ -35,6 +35,7 @@ class CoreNaturalFoodSeed:
     food_group: str
     food_subgroup: str
     preparation_state: str
+    portion_unit: str
     protein_g_per_100g: Decimal
     carbs_g_per_100g: Decimal
     fat_g_per_100g: Decimal
@@ -102,6 +103,9 @@ def validate_core_natural_foods_seed(
         }:
             errors.append(f"{prefix}: preparation_state must be explicit for the core seed")
 
+        if food.portion_unit not in {"g", "ml"}:
+            errors.append(f"{prefix}: portion_unit must be g or ml")
+
         normalized_canonical = normalize_food_name(food.canonical_name)
         if not normalized_canonical:
             errors.append(f"{prefix}: canonical_name is required")
@@ -160,6 +164,7 @@ def _parse_seed_row(row: dict[str, Any]) -> CoreNaturalFoodSeed:
         food_group=str(row.get("food_group", "")).strip(),
         food_subgroup=str(row.get("food_subgroup", "")).strip(),
         preparation_state=str(row.get("preparation_state", "unknown")).strip() or "unknown",
+        portion_unit=str(row.get("portion_unit", "g")).strip() or "g",
         protein_g_per_100g=_decimal(row.get("protein_g_per_100g")),
         carbs_g_per_100g=_decimal(row.get("carbs_g_per_100g")),
         fat_g_per_100g=_decimal(row.get("fat_g_per_100g")),

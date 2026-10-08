@@ -2287,6 +2287,21 @@
             ],
             "title": "Quantity"
           },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
+          },
           "relative_percentage": {
             "title": "Relative Percentage",
             "type": "number"
@@ -2419,6 +2434,21 @@
           },
           "panel": {
             "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
           },
           "subtitle": {
             "title": "Subtitle",
@@ -2634,6 +2664,21 @@
               }
             ],
             "title": "Quantity"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
           },
           "values": {
             "$ref": "#/components/schemas/ComparisonMetricValuesData"
@@ -3016,6 +3061,15 @@
             "title": "Name",
             "type": "string"
           },
+          "portion_unit": {
+            "default": "g",
+            "enum": [
+              "g",
+              "ml"
+            ],
+            "title": "Portion Unit",
+            "type": "string"
+          },
           "protein": {
             "maximum": 100,
             "minimum": 0,
@@ -3081,6 +3135,15 @@
           "protein_allocation": {
             "title": "Protein Allocation",
             "type": "number"
+          },
+          "quantity_unit": {
+            "default": "g",
+            "enum": [
+              "g",
+              "ml"
+            ],
+            "title": "Quantity Unit",
+            "type": "string"
           },
           "source": {
             "title": "Source",
@@ -3440,6 +3503,15 @@
           },
           "ocr_engine": {
             "title": "Ocr Engine",
+            "type": "string"
+          },
+          "portion_unit": {
+            "default": "g",
+            "enum": [
+              "g",
+              "ml"
+            ],
+            "title": "Portion Unit",
             "type": "string"
           },
           "protein_g": {
@@ -4644,6 +4716,21 @@
           },
           "panel": {
             "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
           },
           "subtitle": {
             "title": "Subtitle",

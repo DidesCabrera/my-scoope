@@ -21,6 +21,7 @@ class ComparatorSnapshotTests(TestCase):
                     "id": 7,
                     "name": "Atún",
                     "quantity": 120.0,
+                    "quantity_unit": "g",
                     "values": {"total_kcal": 132.0, "protein": 28.0},
                 }
             ],
@@ -40,6 +41,7 @@ class ComparatorSnapshotTests(TestCase):
                     "id": 9,
                     "name": "Pollo",
                     "quantity": 100.0,
+                    "quantity_unit": "g",
                     "values": {"total_kcal": 165.0},
                 }
             ],
@@ -58,6 +60,7 @@ class ComparatorSnapshotTests(TestCase):
                     "id": 3,
                     "name": "Avena",
                     "quantity": 100.0,
+                    "quantity_unit": "g",
                     "values": {"protein": 10.5},
                 }
             ],
@@ -68,7 +71,7 @@ class ComparatorSnapshotTests(TestCase):
 
         self.assertEqual(
             selection_rows_from_snapshot(payload, include_quantities=True),
-            [{"id": 3, "name": "Avena", "quantity": 90.0}],
+            [{"id": 3, "name": "Avena", "quantity": 90.0, "quantity_unit": "g"}],
         )
 
     def test_comparable_rows_from_snapshot_rebuilds_metric_inputs(self):
@@ -81,4 +84,5 @@ class ComparatorSnapshotTests(TestCase):
         self.assertEqual(selection.id, 3)
         self.assertEqual(selection.name, "Avena")
         self.assertEqual(selection.quantity, 90.0)
+        self.assertEqual(selection.quantity_unit, "g")
         self.assertEqual(values, {"total_kcal": 320.0})

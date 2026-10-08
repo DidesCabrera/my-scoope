@@ -3,8 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from django.conf import settings
 from django.db import transaction
 
+from notas.application.culinary_library import load_culinary_candidates, normalized
 from notas.application.dto.proposal_payloads import CREATE_MEAL_INTENT
 from notas.application.queries.solver_food_candidates import (
     DEFAULT_SOLVER_FOOD_CANDIDATE_LIMIT,
@@ -14,13 +16,15 @@ from notas.application.services.commands.proposal_commands import (
     NutritionProposalCreateResult,
     create_validated_meal_proposal,
 )
-from notas.domain.models import NutritionProposal
+from notas.domain.models import Food, NutritionProposal
 from nutrition_solver.application.contracts import (
     OptimizationInput,
     OptimizationStatus,
     SolverConstraint,
     optimize_meal_portions,
 )
+from nutrition_solver.application.culinary_day_planner import solve_culinary_meal
+from nutrition_solver.application.culinary_planner import CulinaryPlanningError
 from nutrition_solver.domain.models import MacroTarget
 
 SOLVER_MEAL_PROPOSAL_VERSION = "nutrition_solver_meal_proposal_v1"
@@ -43,6 +47,23 @@ class SolverMealProposalResult:
             "proposal_id": self.proposal.id,
             "optimization_result": self.optimization_result.as_dict(),
             "candidate_count": self.candidate_count,
+        }
+
+
+@dataclass(frozen=True)
+class CulinaryMealOptimizationResult:
+    status: OptimizationStatus
+    meal: dict
+    totals: dict
+    solver_status: str
+
+    def as_dict(self) -> dict:
+        return {
+            "status": self.status.value,
+            "strategy": "validated_culinary_variant_then_portions",
+            "meal": dict(self.meal),
+            "totals": dict(self.totals),
+            "solver_status": self.solver_status,
         }
 
 
@@ -72,6 +93,41 @@ def create_solver_generated_meal_proposal(
 
     clean_title = _normalize_title(title)
     macro_target = _parse_macro_target(target)
+    culinary_result, culinary_readiness = _try_culinary_meal(
+        user=user,
+        target=macro_target,
+        meal_slot=meal_slot,
+        search=search,
+        limit=limit,
+    )
+    if culinary_result is not None:
+        proposed_payload = _build_culinary_create_meal_payload(
+            meal_name=culinary_result.meal["name"],
+            meal=culinary_result.meal,
+        )
+        proposal_result = create_validated_meal_proposal(
+            user=user,
+            dailyplan_id=dailyplan_id,
+            title=clean_title,
+            summary=_build_culinary_summary(summary=summary, result=culinary_result),
+            source=source,
+            targets=macro_target.as_dict(),
+            proposed_payload=proposed_payload,
+        )
+        _attach_culinary_validation_summary(
+            proposal_result=proposal_result,
+            result=culinary_result,
+            readiness=culinary_readiness,
+            target=macro_target,
+        )
+        return SolverMealProposalResult(
+            proposal=proposal_result.proposal,
+            optimization_result=culinary_result,
+            candidate_count=culinary_readiness["candidate_count"],
+        )
+    if not bool(getattr(settings, "NUTRITION_CULINARY_RAW_FALLBACK_ENABLED", True)):
+        raise ValueError(culinary_readiness["fallback_reason"])
+
     candidates_result = list_solver_food_candidates(
         user,
         search=search,
@@ -101,6 +157,11 @@ def create_solver_generated_meal_proposal(
     proposed_payload = _build_create_meal_payload(
         meal_name=clean_title,
         optimization_result=optimization_result,
+        portion_units=dict(
+            Food.objects.filter(
+                pk__in=[portion.food_id for portion in optimization_result.portions]
+            ).values_list("id", "portion_unit")
+        ),
     )
 
     if not proposed_payload["meal"]["foods"]:
@@ -120,6 +181,7 @@ def create_solver_generated_meal_proposal(
         optimization_result=optimization_result,
         candidates_result=candidates_result,
         target=macro_target,
+        culinary_readiness=culinary_readiness,
     )
 
     return SolverMealProposalResult(
@@ -127,6 +189,115 @@ def create_solver_generated_meal_proposal(
         optimization_result=optimization_result,
         candidate_count=candidates_result.count,
     )
+
+
+def _try_culinary_meal(*, user, target, meal_slot, search, limit):
+    if not bool(getattr(settings, "NUTRITION_CULINARY_PRIMARY_ENABLED", True)):
+        return None, {"status": "disabled", "fallback_reason": "culinary_primary_disabled", "candidate_count": 0}
+    candidates, rejected = load_culinary_candidates(user=user)
+    meal_kind = _meal_kind_from_slot(meal_slot)
+    if search:
+        term = normalized(search)
+        candidates = tuple(
+            candidate for candidate in candidates
+            if term in normalized(" ".join([
+                candidate.name,
+                candidate.family,
+                *(ingredient.name for ingredient in candidate.ingredients),
+            ]))
+        )
+    compatible = tuple(candidate for candidate in candidates if meal_kind in candidate.meal_kinds)[: _normalize_limit(limit)]
+    readiness = {
+        "status": "ready" if compatible else "insufficient",
+        "candidate_count": len(compatible),
+        "rejected_count": len(rejected),
+        "meal_kind": meal_kind,
+    }
+    if not compatible:
+        readiness["fallback_reason"] = "culinary_catalog_slot_unavailable"
+        return None, readiness
+    try:
+        solution = solve_culinary_meal(
+            target=target.as_dict(),
+            meal_kind=meal_kind,
+            candidates=compatible,
+            time_limit_seconds=max(float(getattr(settings, "NUTRITION_SOLVER_TIME_LIMIT_MS", 1500)) / 1000, 0.1),
+        )
+    except CulinaryPlanningError as exc:
+        readiness.update({"status": "infeasible", "fallback_reason": exc.code, "details": exc.details})
+        return None, readiness
+    meal = solution.meals[0]
+    return CulinaryMealOptimizationResult(
+        status=OptimizationStatus.OPTIMAL if solution.solver_status == "OPTIMAL" else OptimizationStatus.ACCEPTABLE,
+        meal=meal,
+        totals=solution.totals,
+        solver_status=solution.solver_status,
+    ), readiness
+
+
+def _meal_kind_from_slot(value):
+    text = normalized(value or "")
+    if any(term in text for term in ("desayuno", "breakfast")):
+        return "breakfast"
+    if any(term in text for term in ("cena", "dinner")):
+        return "dinner"
+    if any(term in text for term in ("snack", "colacion", "media manana", "merienda")):
+        return "snack"
+    return "main"
+
+
+def _build_culinary_create_meal_payload(*, meal_name, meal):
+    return {
+        "intent": CREATE_MEAL_INTENT,
+        "meal": {
+            "name": meal_name,
+            "foods": [
+                {
+                    "food_id": int(food["food_id"]),
+                    "quantity": round(float(food["quantity"]), 2),
+                    "unit": food["unit"],
+                }
+                for food in meal["foods"]
+            ],
+        },
+    }
+
+
+def _build_culinary_summary(*, summary, result):
+    base = (summary or "").strip()
+    generated = f"Comida seleccionada desde una variante culinaria validada y ajustada por porciones. Estado: {result.status.value}."
+    return f"{base} · {generated}" if base else generated
+
+
+def _attach_culinary_validation_summary(*, proposal_result, result, readiness, target):
+    proposal = proposal_result.proposal
+    validation_summary = dict(proposal.validation_summary or {})
+    validation_summary["nutrition_solver"] = {
+        "version": "nutrition_solver_meal_proposal_v2_culinary",
+        "status": result.status.value,
+        "target": target.as_dict(),
+        "result": result.as_dict(),
+        "culinary_primary": readiness,
+        "raw_food_fallback_used": False,
+        "source_boundary": {
+            "candidate_source": "notas.CulinaryVariant",
+            "applies_changes": False,
+            "requires_human_review": True,
+        },
+    }
+    current_snapshot = dict(proposal.current_snapshot or {})
+    current_snapshot["culinary_selection"] = [{
+        "slot": 0,
+        "variant_id": result.meal["variant_id"],
+        "family": result.meal["family"],
+        "evidence_digest": result.meal["evidence_digest"],
+        "validation_level": result.meal["validation_level"],
+        "components": result.meal["components"],
+        "foods": result.meal["foods"],
+    }]
+    proposal.validation_summary = validation_summary
+    proposal.current_snapshot = current_snapshot
+    proposal.save(update_fields=["validation_summary", "current_snapshot"])
 
 
 def _parse_macro_target(target: Mapping[str, Any]) -> MacroTarget:
@@ -228,7 +399,7 @@ def _required_positive_float(
     return value
 
 
-def _build_create_meal_payload(*, meal_name: str, optimization_result) -> dict:
+def _build_create_meal_payload(*, meal_name: str, optimization_result, portion_units: Mapping[int, str]) -> dict:
     return {
         "intent": CREATE_MEAL_INTENT,
         "meal": {
@@ -237,7 +408,7 @@ def _build_create_meal_payload(*, meal_name: str, optimization_result) -> dict:
                 {
                     "food_id": int(portion.food_id),
                     "quantity": round(float(portion.quantity_g), 2),
-                    "unit": "g",
+                    "unit": portion_units.get(int(portion.food_id), "g"),
                 }
                 for portion in optimization_result.portions
                 if float(portion.quantity_g) > 0
@@ -252,6 +423,7 @@ def _attach_solver_validation_summary(
     optimization_result,
     candidates_result,
     target: MacroTarget,
+    culinary_readiness: Mapping[str, Any] | None = None,
 ) -> None:
     proposal = proposal_result.proposal
     validation_summary = dict(proposal.validation_summary or {})
@@ -280,6 +452,8 @@ def _attach_solver_validation_summary(
             "applies_changes": False,
             "requires_human_review": True,
         },
+        "culinary_primary": dict(culinary_readiness or {}),
+        "raw_food_fallback_used": True,
     }
     proposal.validation_summary = validation_summary
     proposal.save(update_fields=["validation_summary"])

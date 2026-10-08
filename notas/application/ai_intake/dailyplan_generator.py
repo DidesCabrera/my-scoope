@@ -7,6 +7,7 @@ from typing import Iterable
 from django.conf import settings
 from django.db import transaction
 
+from notas.application.ai_intake.culinary_dailyplan import try_build_culinary_dailyplan
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
     apply_subject_context,
@@ -77,7 +78,7 @@ from nutrition_solver.domain.models import (
 )
 
 DAILYPLAN_GENERATOR_INTENT = CREATE_DAILYPLAN_INTENT
-DAILYPLAN_GENERATOR_VERSION = "nutrition_engine_v7_optimizer_gate"
+DAILYPLAN_GENERATOR_VERSION = "nutrition_engine_v8_culinary_primary"
 
 DEFAULT_MEALS_PER_DAY = 4
 
@@ -231,6 +232,7 @@ class DailyPlanGeneratorFood:
     carbs: float
     fat: float
     kcal_per_100g: float
+    portion_unit: str = "g"
     food_group: str = ""
     food_subgroup: str = ""
     default_portion_g: float | None = None
@@ -399,6 +401,26 @@ def _build_dailyplan_payload_with_solver_summary(
     time_limit_ms = int(getattr(settings, "NUTRITION_SOLVER_TIME_LIMIT_MS", 1500))
     alternative_count = alternative_count or int(getattr(settings, "NUTRITION_SOLVER_ALTERNATIVE_COUNT", 3))
 
+    if bool(getattr(settings, "NUTRITION_CULINARY_PRIMARY_ENABLED", True)):
+        culinary, culinary_readiness = try_build_culinary_dailyplan(
+            user=user,
+            brief=brief,
+            target_plan=target_plan,
+            meals_per_day=meals_per_day,
+            plan_name=_build_dailyplan_name(brief),
+            alternative_count=alternative_count,
+            time_limit_ms=time_limit_ms,
+        )
+        if culinary is not None:
+            return culinary.payload, culinary.solver_summary
+        if not bool(getattr(settings, "NUTRITION_CULINARY_RAW_FALLBACK_ENABLED", True)):
+            raise DailyPlanGeneratorError(culinary_readiness["fallback_reason"])
+    else:
+        culinary_readiness = {
+            "status": "disabled",
+            "fallback_reason": "culinary_primary_disabled",
+        }
+
     if backend in {"cp_sat_v1", "portfolio_v1"}:
         try:
             outcome = run_dailyplan_optimizer_v2(
@@ -438,8 +460,14 @@ def _build_dailyplan_payload_with_solver_summary(
                 "selected_alternative_id": "legacy_1",
                 "alternatives": [],
                 "shadow_enabled": False,
+                "culinary_primary": culinary_readiness,
+                "raw_food_fallback_used": True,
             }
-        return outcome.payload, outcome.solver_summary
+        return outcome.payload, {
+            **outcome.solver_summary,
+            "culinary_primary": culinary_readiness,
+            "raw_food_fallback_used": True,
+        }
 
     if backend != "heuristic_v2":
         raise DailyPlanGeneratorError(f"dailyplan_generator_unknown_solver_backend:{backend}")
@@ -460,17 +488,23 @@ def _build_dailyplan_payload_with_solver_summary(
         "alternative_count": 1,
         "selected_alternative_id": "legacy_1",
         "alternatives": [],
+        "culinary_primary": culinary_readiness,
+        "raw_food_fallback_used": True,
     }
     if shadow_enabled:
-        summary = build_shadow_summary_for_legacy_generator(
-            user=user,
-            target_plan=target_plan,
-            meals_per_day=meals_per_day,
-            excluded_terms=brief.excluded_foods,
-            preferred_terms=brief.preferred_foods,
-            shadow_backend=shadow_backend,
-            time_limit_ms=time_limit_ms,
-        )
+        summary = {
+            **build_shadow_summary_for_legacy_generator(
+                user=user,
+                target_plan=target_plan,
+                meals_per_day=meals_per_day,
+                excluded_terms=brief.excluded_foods,
+                preferred_terms=brief.preferred_foods,
+                shadow_backend=shadow_backend,
+                time_limit_ms=time_limit_ms,
+            ),
+            "culinary_primary": culinary_readiness,
+            "raw_food_fallback_used": True,
+        }
     return payload, summary
 
 
@@ -635,6 +669,7 @@ def _load_foods_for_generation(user) -> list[DailyPlanGeneratorFood]:
                 carbs=carbs,
                 fat=fat,
                 kcal_per_100g=kcal,
+                portion_unit=food.portion_unit,
                 food_group=food.food_group or "",
                 food_subgroup=food.food_subgroup or "",
                 default_portion_g=_clean_optional_float(food.default_portion_g),
@@ -690,6 +725,7 @@ def _build_meal(
         ProposedFoodItemDTO(
             food_id=portion.food_id,
             quantity=portion.quantity_g,
+            unit=foods_by_id[portion.food_id].portion_unit,
         )
         for portion in solver_result.portions
     ]
@@ -1029,6 +1065,8 @@ def _build_validation_summary(
 ) -> dict:
     dailyplan = simulation.get("dailyplan") or {}
     kpis = dailyplan.get("kpis") or {}
+    solver_summary = dict(solver_summary or {})
+    culinary_primary = solver_summary.get("active_backend") == "culinary_variants_cp_sat_v1"
 
     return {
         "payload_validation": {
@@ -1038,7 +1076,11 @@ def _build_validation_summary(
         "simulation": simulation,
         "generator": {
             "version": DAILYPLAN_GENERATOR_VERSION,
-            "strategy": "nutrition_engine_meal_templates_candidate_selector_solver",
+            "strategy": (
+                "validated_culinary_variants_then_portion_optimization"
+                if culinary_primary
+                else "nutrition_engine_meal_templates_candidate_selector_solver"
+            ),
             "source_intent": AI_NUTRITION_BRIEF_INTENT,
             "target_plan": target_plan.as_targets_dict(),
             "subject_context": _build_subject_context_snapshot(brief=brief, target_plan=target_plan),
@@ -1048,13 +1090,23 @@ def _build_validation_summary(
                     _normalize_meals_per_day(brief.meals_per_day)
                 )
             ],
-            "notes": [
-                "Generador heurístico inicial: estima targets si el brief no los trae completos.",
-                "Estructura comidas con templates por tipo antes de seleccionar alimentos.",
-                "Selecciona candidatos por rol nutricional, calidad, preferencias, exclusiones y repetición suave.",
-                "Estima targets con Target Estimator formal y calcula porciones con solver v2 multi-start.",
-                "La propuesta debe revisarse antes de aplicar el DailyPlan final.",
-            ],
+            "notes": (
+                [
+                    "Selecciona variantes culinarias previamente validadas para cada tipo de comida.",
+                    "Conserva familia, preparación, componentes, cursos y proporciones culinarias.",
+                    "Ajusta únicamente las porciones permitidas para aproximar los objetivos diarios.",
+                    "La evidencia culinaria se vuelve a validar antes de aplicar la propuesta.",
+                    "La propuesta debe revisarse antes de aplicar el DailyPlan final.",
+                ]
+                if culinary_primary
+                else [
+                    "Fallback explícito: compone desde alimentos porque el catálogo culinario no cubrió la solicitud.",
+                    "Estructura comidas con templates por tipo antes de seleccionar alimentos.",
+                    "Selecciona candidatos por rol nutricional, calidad, preferencias, exclusiones y repetición suave.",
+                    "Estima targets con Target Estimator formal y calcula porciones con solver v2 multi-start.",
+                    "La propuesta debe revisarse antes de aplicar el DailyPlan final.",
+                ]
+            ),
         },
         "target_comparison": _build_target_comparison(
             targets=_build_targets(target_plan),
@@ -1066,7 +1118,7 @@ def _build_validation_summary(
             brief=brief,
             simulation=simulation,
         ),
-        "nutrition_solver": dict(solver_summary or {}),
+        "nutrition_solver": solver_summary,
         "brief": {
             "goal": brief.goal,
             "requested_entity": brief.requested_entity,

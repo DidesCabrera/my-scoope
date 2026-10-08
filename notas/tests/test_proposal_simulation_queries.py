@@ -79,6 +79,8 @@ class ProposalSimulationQueryTests(TestCase):
         )
 
     def test_simulate_create_meal_payload_returns_nutrition_projection(self):
+        self.chicken.portion_unit = Food.PORTION_UNIT_MILLILITERS
+        self.chicken.save(update_fields=["portion_unit"])
         payload = {
             "intent": "create_meal",
             "meal": {
@@ -113,6 +115,8 @@ class ProposalSimulationQueryTests(TestCase):
         self.assertEqual(data["meal"]["foods"][0]["food_id"], self.chicken.id)
         self.assertEqual(data["meal"]["foods"][0]["food_name"], "Pechuga pollo")
         self.assertEqual(data["meal"]["foods"][0]["quantity"], 200.0)
+        self.assertEqual(data["meal"]["foods"][0]["unit"], "ml")
+        self.assertEqual(data["meal"]["foods"][1]["unit"], "g")
 
         self.assertAlmostEqual(data["meal"]["kpis"]["protein"], 64.7)
         self.assertAlmostEqual(data["meal"]["kpis"]["carbs"], 28.0)
