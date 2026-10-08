@@ -39,10 +39,11 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
       {meals.map((meal, index) => {
         const totals = meal.totals;
         const foods = snapshotFoodPanelItems(meal);
+        const mealKey = meal.key;
         const execution = normalizedMealExecution.find((item) => item.meal_key === meal.key);
-        const openDetail = meal.key ? () => router.push({
+        const openDetail = mealKey ? () => router.push({
           pathname: "/program/days/[id]/meals/[mealKey]",
-          params: { id: String(dayId), mealKey: meal.key ?? "" },
+          params: { id: String(dayId), mealKey },
         } as Href) : undefined;
         return (
           <View key={meal.key ?? `${meal.name}-${index}`}>
@@ -69,13 +70,14 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
                 fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
                 protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
               }}
-              afterNutrition={meal.key ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={completionError?.mealKey === meal.key ? completionError.message : null} onToggle={(completed) => onToggleCompleted(meal.key ?? "", completed)} saving={savingMealKey != null} /> : null}
+              afterNutrition={mealKey ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={completionError?.mealKey === mealKey ? completionError.message : null} onToggle={(completed) => onToggleCompleted(mealKey, completed)} saving={savingMealKey != null} /> : null}
               title={meal.name ?? "Comida"}>
-              <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={meal.key ? {
+              <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={mealKey ? {
                 disabled: savingMealKey != null,
                 isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
-                onToggle: (food) => onTogglePrepared(meal.key ?? "", food.id),
+                onToggle: (food) => onTogglePrepared(mealKey, food.id),
               } : undefined} />
+              {mealKey ? <View style={styles.addAction}><Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, returnTo: `/program/days/${dayId}` }))} /></View> : null}
             </NutritionEntityCard>
           </View>
         );
@@ -325,6 +327,7 @@ export default function ProgramDayScreen() {
 }
 
 const styles = StyleSheet.create({
+  addAction: { marginTop: tokens.spacing.md },
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },

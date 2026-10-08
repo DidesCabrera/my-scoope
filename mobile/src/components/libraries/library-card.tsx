@@ -1,11 +1,12 @@
 import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 import type { LibraryActionResult, LibraryItem } from "@/api/types";
 import { NutritionEntityCard } from "@/components/nutrition";
 import type { FoodPanelEditing, FoodPanelItem, MealPanelEditing, MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { EntityCardAction, MutationStatusModal, useMutationStatus } from "@/components/ui";
+import { Button, EntityCardAction, MutationStatusModal, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 
@@ -27,6 +28,7 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const segment = item.entity === "dailyPlan" ? "daily-plans" : item.entity === "program" ? "programs" : item.entity === "meal" ? "meals" : "foods";
   const detailHref = `/libraries/${segment}/${item.id}` as Href;
+  const libraryHref = `/libraries/${segment}` as Href;
   const openDetail = () => router.push(detailHref);
   const refresh = (message: string) => onChanged({ action: "rename", item_id: item.id, message });
   const mutate = async (path: string, init: RequestInit, message: string, feedback?: { loadingLabel: string; successLabel: string }) => {
@@ -80,8 +82,14 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
       {item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={item.panel.foods} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "meals" ? <MealPanels dailyPlanId={item.entity === "dailyPlan" ? item.id : undefined} editing={mealEditing} items={item.panel.meals} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}
+      {interactive && item.entity === "meal" ? <View style={styles.addAction}><Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, returnTo: String(libraryHref) }))} /></View> : null}
+      {interactive && item.entity === "dailyPlan" ? <View style={styles.addAction}><Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: String(libraryHref) }))} /></View> : null}
     </NutritionEntityCard>
     <CalendarizedEntityActions entityName={timeChangeMeal?.name ?? "Comida"} initialAction="change-time" key={timeChangeMeal?.id ?? "closed-library-card-time-change"} onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }} timeChange={timeChangeMeal?.relationId != null ? { initialTime: timeChangeMeal.time, onSubmit: async (hour) => mutate(`/api/v1/library/daily-plans/${item.id}/meals/${timeChangeMeal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" }, "Hora actualizada") } : undefined} visible={timeChangeMeal != null} />
     <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
   </>);
 }
+
+const styles = StyleSheet.create({
+  addAction: { marginTop: tokens.spacing.md },
+});

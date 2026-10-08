@@ -7,6 +7,7 @@ import type { LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem, 
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
+import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import {
   FoodPanels as SharedFoodPanels,
   type FoodPanelEditing,
@@ -19,7 +20,7 @@ import {
   NutritionDistributionPanel,
   NutritionMacrosPanel,
 } from "@/components/panels";
-import { EntityCardAction } from "@/components/ui";
+import { Button, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels/panel-surface";
@@ -100,6 +101,8 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
     <View style={styles.mealCardList}>
       {items.map((item, index) => {
         const execution = mealExecution.find((entry) => entry.meal_key === item.id);
+        const mealId = item.detail_id;
+        const dailyPlanMealId = item.relation_id;
         const openDetail = () => router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(item.relation_id ?? ""), id: String(item.detail_id), mealTime: item.time?.slice(0, 5) ?? "", ...(pinnedTracking ? { pinned: "1", mealKey: item.id } : {}) } } as Href);
         return <View key={item.id}>
           <NutritionEntityCard
@@ -143,6 +146,7 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
               isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
               onToggle: (food) => pinnedTracking.onTogglePrepared(item.id, food.id),
             } : undefined} />
+            {mealId != null && dailyPlanMealId != null ? <View style={styles.addAction}><Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { dailyPlanId, dailyPlanMealId, mealId, returnTo: `/libraries/daily-plans/${dailyPlanId}` }))} /></View> : null}
           </NutritionEntityCard>
         </View>;
       })}
@@ -170,6 +174,7 @@ export function ProgramPanels({ items }: { items: LibraryWeekPanelItem[] }) {
 }
 
 const styles = StyleSheet.create({
+  addAction: { marginTop: tokens.spacing.md },
   row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 44, paddingHorizontal: tokens.spacing.sm },
   rowLast: { borderBottomWidth: 0 },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
