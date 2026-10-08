@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import logging
 import re
+from dataclasses import replace
 from typing import Any, Mapping
 
 from django.conf import settings
+from django.utils import timezone
 
 from ai_assistant.application.chat_engines import (
     ChatEngine,
@@ -73,9 +75,11 @@ class LLMNutritionIntakeChatEngine:
             conversation,
             llm_metadata,
         )
-        conversation, profile_card_count, preference_card_count, proposal_preferences_card_count = _append_draft_cards_from_llm_tools(
-            conversation,
-            llm_metadata,
+        conversation, profile_card_count, preference_card_count, proposal_preferences_card_count = (
+            _append_draft_cards_from_llm_tools(
+                conversation,
+                llm_metadata,
+            )
         )
         conversation, proposal_review_card_count = _append_proposal_review_cards_from_llm_tools(
             conversation,
@@ -85,6 +89,11 @@ class LLMNutritionIntakeChatEngine:
             conversation,
             llm_metadata,
         )
+        conversation, library_card_count, comparison_card_count = _append_read_result_cards_from_llm_tools(
+            conversation,
+            llm_metadata,
+        )
+        conversation = _stamp_latest_turn(conversation)
         return ChatEngineTurnResult(
             state=conversation,
             assistant_text=conversation.last_assistant_message,
@@ -99,9 +108,7 @@ class LLMNutritionIntakeChatEngine:
                 "llm_tools_executed": bool(llm_metadata.get("tools_executed")),
                 "llm_tool_requests": int(llm_metadata.get("tool_requests") or 0),
                 "llm_semantic_intent": str(llm_metadata.get("semantic_intent") or ""),
-                "llm_semantic_missing_slots": _safe_identifier_list(
-                    llm_metadata.get("semantic_missing_slots")
-                ),
+                "llm_semantic_missing_slots": _safe_identifier_list(llm_metadata.get("semantic_missing_slots")),
                 "llm_tool_results": _safe_tool_result_summaries(llm_metadata.get("tool_results")),
                 "llm_tool_state_patches_applied": tool_state_patch_count,
                 "llm_profile_draft_cards_rendered": profile_card_count,
@@ -109,6 +116,8 @@ class LLMNutritionIntakeChatEngine:
                 "llm_proposal_preferences_cards_rendered": proposal_preferences_card_count,
                 "llm_proposal_review_cards_rendered": proposal_review_card_count,
                 "llm_prepared_action_cards_rendered": prepared_action_card_count,
+                "llm_library_cards_rendered": library_card_count,
+                "llm_comparison_cards_rendered": comparison_card_count,
                 "llm_degraded": bool(llm_metadata.get("llm_degraded")),
                 "llm_degraded_reason": llm_metadata.get("llm_degraded_reason", ""),
                 "deterministic_runtime_invoked": bool(llm_metadata.get("deterministic_runtime_invoked")),
@@ -117,33 +126,19 @@ class LLMNutritionIntakeChatEngine:
                 "llm_model": llm_metadata.get("provider_model", ""),
                 "usage_observability": dict(llm_metadata.get("usage_observability") or {}),
                 "llm_provider_parse_error": str(llm_metadata.get("provider_parse_error") or ""),
-                "llm_provider_contract_repair_attempted": bool(
-                    llm_metadata.get("provider_contract_repair_attempted")
-                ),
-                "llm_provider_native_tool_transport": bool(
-                    llm_metadata.get("provider_native_tool_transport")
-                ),
-                "llm_provider_native_tool_calls": int(
-                    llm_metadata.get("provider_native_tool_calls") or 0
-                ),
+                "llm_provider_contract_repair_attempted": bool(llm_metadata.get("provider_contract_repair_attempted")),
+                "llm_provider_native_tool_transport": bool(llm_metadata.get("provider_native_tool_transport")),
+                "llm_provider_native_tool_calls": int(llm_metadata.get("provider_native_tool_calls") or 0),
                 "llm_provider_text_parse_ignored_due_to_native_tools": bool(
                     llm_metadata.get("provider_text_parse_ignored_due_to_native_tools")
                 ),
                 "llm_provider_incomplete_reasons": _safe_identifier_list(
                     llm_metadata.get("provider_incomplete_reasons")
                 ),
-                "llm_provider_final_incomplete_reason": str(
-                    llm_metadata.get("provider_final_incomplete_reason") or ""
-                ),
-                "llm_tool_followup_local_ack": bool(
-                    llm_metadata.get("tool_followup_local_ack")
-                ),
-                "llm_tool_followup_local_ack_policy": str(
-                    llm_metadata.get("tool_followup_local_ack_policy") or ""
-                ),
-                "llm_provider_tool_followup_failed": bool(
-                    llm_metadata.get("provider_tool_followup_failed")
-                ),
+                "llm_provider_final_incomplete_reason": str(llm_metadata.get("provider_final_incomplete_reason") or ""),
+                "llm_tool_followup_local_ack": bool(llm_metadata.get("tool_followup_local_ack")),
+                "llm_tool_followup_local_ack_policy": str(llm_metadata.get("tool_followup_local_ack_policy") or ""),
+                "llm_provider_tool_followup_failed": bool(llm_metadata.get("provider_tool_followup_failed")),
                 **_provider_followup_diagnostics(llm_metadata),
                 "context_builder": "safe_llm_context.v1",
             },
@@ -172,8 +167,7 @@ class LLMNutritionIntakeChatEngine:
         assistant_text = _visible_llm_assistant_text(turn_result.assistant_text)
         metadata = dict(turn_result.metadata or {})
         assistant_text = assistant_text or (
-            "Ahora mismo no pude completar tu solicitud. No hice ningún cambio; "
-            "inténtalo nuevamente en un momento."
+            "Ahora mismo no pude completar tu solicitud. No hice ningún cambio; inténtalo nuevamente en un momento."
         )
         if assistant_text != (turn_result.assistant_text or "").strip():
             metadata["llm_visible_text_extracted"] = True
@@ -189,7 +183,10 @@ class LLMNutritionIntakeChatEngine:
             request,
             surface="ai_nutrition_intake",
             conversation_state=conversation_state,
-            extra_context={"llm_runtime": "outcome_first_llm_v1", "product_context": request.metadata.get("product_context", {})},
+            extra_context={
+                "llm_runtime": "outcome_first_llm_v1",
+                "product_context": request.metadata.get("product_context", {}),
+            },
         )
         llm_request = merge_safe_context_into_request(request, safe_context=safe_context)
         llm_request = _with_llm_metadata(llm_request)
@@ -238,15 +235,10 @@ def build_ai_nutrition_intake_engine_status() -> dict:
         "label": "AI activo",
         "is_active": True,
         "provider": str(getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "openai") or "openai"),
-        "observability_enabled": bool(
-            getattr(settings, "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED", True)
-        ),
+        "observability_enabled": bool(getattr(settings, "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED", True)),
         "guardrails_enabled": True,
-        "proposal_tools_enabled": bool(
-            getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", True)
-        ),
+        "proposal_tools_enabled": bool(getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", True)),
     }
-
 
 
 def _llm_runtime_state_from_request(request: ChatEngineRequest) -> NutritionConversationState:
@@ -291,6 +283,7 @@ def _append_assistant_message(
         result=conversation.result,
     )
 
+
 def _visible_llm_assistant_text(text: str) -> str:
     """Return only the human-readable assistant text for the nutrition chat UI.
 
@@ -327,12 +320,28 @@ def _assistant_content_from_payload(payload: dict) -> str:
     return str(content or "").strip()
 
 
+def _stamp_latest_turn(conversation: NutritionConversationState) -> NutritionConversationState:
+    """Persist one server timestamp for the submitted message and its response objects."""
+
+    messages = list(conversation.messages)
+    latest_user_index = next(
+        (index for index in range(len(messages) - 1, -1, -1) if messages[index].role == "user"),
+        None,
+    )
+    if latest_user_index is None:
+        return conversation
+    created_at = timezone.now().isoformat()
+    stamped = [
+        replace(message, created_at=message.created_at or created_at) if index >= latest_user_index else message
+        for index, message in enumerate(messages)
+    ]
+    return NutritionConversationState(messages=stamped, result=conversation.result)
+
+
 def _loads_llm_json_payload(text: str) -> dict | None:
     cleaned = text.strip()
     if cleaned.startswith("```"):
-        cleaned = "\n".join(
-            line for line in cleaned.splitlines() if not line.strip().startswith("```")
-        ).strip()
+        cleaned = "\n".join(line for line in cleaned.splitlines() if not line.strip().startswith("```")).strip()
     if not (cleaned.startswith("{") and cleaned.endswith("}")):
         return None
     try:
@@ -379,7 +388,7 @@ def _extract_jsonish_assistant_content(text: str) -> str:
     try:
         return json.loads(f'"{raw}"').strip()
     except json.JSONDecodeError:
-        return raw.replace("\\n", "\n").replace("\\\"", '"').strip()
+        return raw.replace("\\n", "\n").replace('\\"', '"').strip()
 
 
 def _with_llm_metadata(request: ChatEngineRequest) -> ChatEngineRequest:
@@ -420,21 +429,15 @@ def _provider_followup_diagnostics(metadata: Mapping[str, Any]) -> dict[str, Any
     if not bool(metadata.get("provider_tool_followup_failed")):
         return {}
     return {
-        "llm_provider_tool_followup_error_status": metadata.get(
-            "provider_tool_followup_error_status"
-        ),
+        "llm_provider_tool_followup_error_status": metadata.get("provider_tool_followup_error_status"),
         "llm_provider_tool_followup_error_provider_type": str(
             metadata.get("provider_tool_followup_error_provider_type") or ""
         )[:120],
-        "llm_provider_tool_followup_error_code": str(
-            metadata.get("provider_tool_followup_error_code") or ""
-        )[:120],
-        "llm_provider_tool_followup_error_message": str(
-            metadata.get("provider_tool_followup_error_message") or ""
-        )[:600],
-        "llm_provider_tool_followup_error_param": str(
-            metadata.get("provider_tool_followup_error_param") or ""
-        )[:120],
+        "llm_provider_tool_followup_error_code": str(metadata.get("provider_tool_followup_error_code") or "")[:120],
+        "llm_provider_tool_followup_error_message": str(metadata.get("provider_tool_followup_error_message") or "")[
+            :600
+        ],
+        "llm_provider_tool_followup_error_param": str(metadata.get("provider_tool_followup_error_param") or "")[:120],
         "llm_provider_tool_followup_error_request_id": str(
             metadata.get("provider_tool_followup_error_request_id") or ""
         )[:160],
@@ -543,14 +546,141 @@ def _apply_llm_tool_result_data_to_brief(brief: NutritionBrief, data: dict) -> N
             # Proposal draft fields were already synchronized with their own
             # provenance. The companion patch is intentionally redundant for
             # older consumers and must not overwrite those source labels.
-            patch = {
-                field_name: value
-                for field_name, value in patch.items()
-                if field_name not in proposal_preferences
-            }
+            patch = {field_name: value for field_name, value in patch.items() if field_name not in proposal_preferences}
         updated = apply_nutrition_brief_patch(updated, patch, default_source="chat_draft")
 
     return updated
+
+
+MAX_READ_RESULT_CARDS = 3
+LIBRARY_CARD_RESOURCES = {
+    "foods": "food",
+    "meals": "meal",
+    "dailyplans": "dailyPlan",
+    "programs": "program",
+}
+LIBRARY_DETAIL_KEYS = {
+    "food": ("foods", "food"),
+    "meal": ("meals", "meal"),
+    "dailyplan": ("dailyplans", "dailyPlan"),
+    "program": ("programs", "program"),
+}
+LIBRARY_CARD_TOOL_NAMES = {
+    "query_workspace",
+    "list_user_foods",
+    "list_user_meals",
+    "list_user_dailyplans",
+    "list_user_programs",
+    "search_user_meals",
+    "search_user_dailyplans",
+    "read_food",
+    "read_meal",
+    "read_dailyplan",
+    "read_program",
+}
+COMPARISON_CARD_TOOL_NAMES = {"query_workspace", "list_saved_comparisons", "read_saved_comparison"}
+
+
+def _successful_read_results(metadata: dict) -> list[tuple[str, dict]]:
+    results = []
+    for item in list((metadata or {}).get("tool_results") or []):
+        if isinstance(item, dict) and item.get("status") == "ok" and isinstance(item.get("data"), dict):
+            results.append((str(item.get("tool_name") or ""), item["data"]))
+    return results
+
+
+def _library_card_payload(resource: str, item) -> dict | None:
+    if not isinstance(item, dict):
+        return None
+    try:
+        item_id = int(item.get("id"))
+    except (TypeError, ValueError):
+        return None
+    return {
+        "resource": resource,
+        "entity": LIBRARY_CARD_RESOURCES[resource],
+        "item_id": item_id,
+        "title": str(item.get("name") or "Elemento de biblioteca")[:180],
+    }
+
+
+def _library_cards_from_results(results: list[tuple[str, dict]]) -> list[dict]:
+    candidates = []
+    for tool_name, data in results:
+        if tool_name not in LIBRARY_CARD_TOOL_NAMES:
+            continue
+        for resource in LIBRARY_CARD_RESOURCES:
+            candidates.extend((resource, item) for item in data.get(resource, []) if isinstance(data.get(resource), list))
+        candidates.extend((resource, data.get(detail_key)) for detail_key, (resource, _entity) in LIBRARY_DETAIL_KEYS.items())
+    cards_by_key = {}
+    for resource, item in candidates:
+        card = _library_card_payload(resource, item)
+        if card:
+            cards_by_key.setdefault((resource, card["item_id"]), card)
+    return list(cards_by_key.values())[:MAX_READ_RESULT_CARDS]
+
+
+def _comparison_card_payload(item) -> dict | None:
+    if not isinstance(item, dict) or str(item.get("kind") or "") not in {"foods", "meals", "dailyplans"}:
+        return None
+    try:
+        comparison_id = int(item.get("id") or item.get("comparison_id"))
+    except (TypeError, ValueError):
+        return None
+    return {
+        "comparison_id": comparison_id,
+        "kind": str(item["kind"]),
+        "title": str(item.get("name") or item.get("title") or "Comparación guardada")[:180],
+    }
+
+
+def _comparison_cards_from_results(results: list[tuple[str, dict]]) -> list[dict]:
+    candidates = []
+    for tool_name, data in results:
+        if tool_name not in COMPARISON_CARD_TOOL_NAMES:
+            continue
+        if isinstance(data.get("saved_comparisons"), list):
+            candidates.extend(data["saved_comparisons"])
+        candidates.extend((data.get("saved_comparison"), data.get("comparison_card")))
+    cards_by_id = {}
+    for item in candidates:
+        card = _comparison_card_payload(item)
+        if card:
+            cards_by_id.setdefault(card["comparison_id"], card)
+    return list(cards_by_id.values())[:MAX_READ_RESULT_CARDS]
+
+
+def _read_result_card_payloads(metadata: dict) -> tuple[list[dict], list[dict]]:
+    results = _successful_read_results(metadata)
+    return _library_cards_from_results(results), _comparison_cards_from_results(results)
+
+
+def _append_read_result_cards_from_llm_tools(
+    conversation: NutritionConversationState,
+    metadata: dict,
+) -> tuple[NutritionConversationState, int, int]:
+    """Project authenticated read results into bounded, navigable chat cards."""
+
+    library_cards, comparison_cards = _read_result_card_payloads(metadata)
+    if not library_cards and not comparison_cards:
+        return conversation, 0, 0
+    messages = [
+        *conversation.messages,
+        NutritionConversationMessage(
+            role="assistant",
+            text="",
+            library_cards=library_cards or None,
+            saved_comparison_cards=comparison_cards or None,
+        ),
+    ]
+    return (
+        NutritionConversationState(
+            messages=messages[-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:],
+            result=conversation.result,
+        ),
+        len(library_cards),
+        len(comparison_cards),
+    )
 
 
 def _append_proposal_review_cards_from_llm_tools(
@@ -564,8 +694,7 @@ def _append_proposal_review_cards_from_llm_tools(
     seen_ids = {
         int(message.proposal_review_card.get("proposal_id"))
         for message in messages
-        if isinstance(message.proposal_review_card, dict)
-        and message.proposal_review_card.get("proposal_id")
+        if isinstance(message.proposal_review_card, dict) and message.proposal_review_card.get("proposal_id")
     }
     for tool_result in list((metadata or {}).get("tool_results") or []):
         if not isinstance(tool_result, dict) or tool_result.get("status") != "ok":
@@ -593,16 +722,8 @@ def _append_proposal_review_cards_from_llm_tools(
                     "dailyplan_name": str(proposal.get("dailyplan_name") or ""),
                     "preserve_foods": bool(payload.get("preserve_foods")),
                     "changed_quantities": len(payload.get("suggested_changes") or []),
-                    "current_total_kcal": (
-                        round(float(current_total), 1)
-                        if current_total is not None
-                        else None
-                    ),
-                    "target_total_kcal": (
-                        round(float(target_total), 1)
-                        if target_total is not None
-                        else None
-                    ),
+                    "current_total_kcal": (round(float(current_total), 1) if current_total is not None else None),
+                    "target_total_kcal": (round(float(target_total), 1) if target_total is not None else None),
                 },
             )
         )
@@ -628,8 +749,7 @@ def _append_prepared_action_cards_from_llm_tools(
     seen_ids = {
         str(message.prepared_action_card.get("id"))
         for message in messages
-        if isinstance(message.prepared_action_card, dict)
-        and message.prepared_action_card.get("id")
+        if isinstance(message.prepared_action_card, dict) and message.prepared_action_card.get("id")
     }
     for tool_result in list((metadata or {}).get("tool_results") or []):
         if not isinstance(tool_result, dict) or tool_result.get("status") != "ok":
@@ -683,8 +803,15 @@ def _append_draft_cards_from_llm_tools(
     and deliberate review moments.
     """
 
+    record_request = _latest_personal_record_request(conversation)
     profile_cards = _profile_draft_cards_from_llm_metadata(metadata)
     preference_cards = _preference_draft_cards_from_llm_metadata(metadata)
+    if record_request is not None and not record_request.ambiguous:
+        requested = set(record_request.kinds)
+        profile_cards = [_filter_profile_card_for_record_kinds(card, requested) for card in profile_cards]
+        profile_cards = [card for card in profile_cards if card]
+        if "preferences" not in requested:
+            preference_cards = []
     proposal_preferences_cards = _proposal_preferences_cards_from_llm_metadata(metadata)
     if not profile_cards and not preference_cards and not proposal_preferences_cards:
         return conversation, 0, 0, 0
@@ -762,6 +889,30 @@ def _append_draft_cards_from_llm_tools(
     )
 
 
+def _latest_personal_record_request(conversation: NutritionConversationState):
+    from ai_assistant.application.personal_record_intent import parse_personal_record_request
+
+    for message in reversed(tuple(conversation.messages or ())):
+        if str(getattr(message, "role", "")) == "user":
+            return parse_personal_record_request(str(getattr(message, "text", "") or ""))
+    return None
+
+
+def _filter_profile_card_for_record_kinds(card: dict, requested: set[str]) -> dict | None:
+    key_kinds = {
+        "height_cm": "body", "age_years": "body", "sex": "body",
+        "nutrition_goal": "planning", "activity_level": "planning", "training_frequency": "planning",
+        "weight_kg": "metrics", "weight_date": "metrics", "weight_source": "metrics",
+    }
+    items = [item for item in list(card.get("items") or []) if key_kinds.get(str(item.get("key") or "")) in requested]
+    if not items:
+        return None
+    filtered = dict(card)
+    filtered["items"] = items
+    filtered["pending_count"] = sum(1 for item in items if item.get("is_pending"))
+    filtered["status"] = "complete" if not filtered["pending_count"] else "pending"
+    return filtered
+
 
 def _append_profile_draft_cards_from_llm_tools(
     conversation: NutritionConversationState,
@@ -829,15 +980,10 @@ def _normalize_profile_draft_card_payload(card: object) -> dict | None:
     status = str(card.get("status") or ("complete" if pending_count == 0 else "pending")).strip()
     committable_keys = {"weight_kg", "height_cm", "sex"}
     has_committable_profile_updates = any(
-        item["key"] in committable_keys
-        and item["source"] == "chat_draft"
-        and not item["is_pending"]
-        for item in items
+        item["key"] in committable_keys and item["source"] == "chat_draft" and not item["is_pending"] for item in items
     )
     can_update = (
-        pending_count == 0
-        and has_committable_profile_updates
-        and bool(card.get("can_update_personal_profile", True))
+        pending_count == 0 and has_committable_profile_updates and bool(card.get("can_update_personal_profile", True))
     )
     return {
         "title": str(card.get("title") or "Ficha para esta propuesta").strip(),
@@ -872,6 +1018,7 @@ def _profile_draft_card_signature(card: object) -> tuple | None:
         int(card.get("pending_count") or 0),
         items,
     )
+
 
 def _preference_draft_cards_from_llm_metadata(metadata: dict) -> list[dict]:
     cards: list[dict] = []
@@ -925,12 +1072,7 @@ def _normalize_preference_draft_card_payload(card: object) -> dict | None:
     try:
         known_count = int(card.get("known_count") or 0)
     except (TypeError, ValueError):
-        known_count = sum(
-            1
-            for section in sections
-            for item in section["items"]
-            if not item["is_pending"]
-        )
+        known_count = sum(1 for section in sections for item in section["items"] if not item["is_pending"])
     status = str(card.get("status") or ("has_data" if known_count else "empty")).strip()
     return {
         "title": str(card.get("title") or "Preferencias para esta propuesta").strip(),
@@ -1025,12 +1167,7 @@ def _normalize_proposal_preferences_card_payload(card: object) -> dict | None:
     try:
         known_count = int(card.get("known_count") or 0)
     except (TypeError, ValueError):
-        known_count = sum(
-            1
-            for section in sections
-            for item in section["items"]
-            if not item["is_pending"]
-        )
+        known_count = sum(1 for section in sections for item in section["items"] if not item["is_pending"])
     status = str(card.get("status") or ("has_data" if known_count else "empty")).strip()
     return {
         "title": str(card.get("title") or "Preferencias de propuesta").strip(),

@@ -70,6 +70,7 @@ def import_food_from_source(dto: ImportedFoodDTO) -> ImportFoodFromSourceResult:
             protein=float(normalized_dto.protein),
             carbs=float(normalized_dto.carbs),
             fat=float(normalized_dto.fat),
+            portion_unit=normalized_dto.portion_unit,
             created_by=None,
             is_global=True,
             is_verified=False,

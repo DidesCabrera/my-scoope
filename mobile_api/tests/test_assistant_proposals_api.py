@@ -12,6 +12,27 @@ from notas.domain.models import AiNutritionChat, NutritionProposal
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPIAssistantProposalTests(AuthenticatedMobileAPITestCase):
+    def test_chat_messages_embed_the_authorized_proposal_summary(self):
+        proposal = NutritionProposal.objects.create(
+            created_by=self.user,
+            source=NutritionProposal.SOURCE_AI,
+            title="Propuesta compartida",
+            summary="Resumen visible en ambas superficies.",
+            proposed_payload={"intent": "create_dailyplan", "dailyplan": {"name": "Plan compartido", "meals": []}},
+        )
+        chat = AiNutritionChat.objects.create(
+            user=self.user,
+            conversation_payload={"messages": [{"role": "assistant", "proposal_review_card": {"proposal_id": proposal.id}}]},
+        )
+
+        response = self.client.get(f"/api/v1/ai/chats/{chat.id}")
+
+        self.assertEqual(response.status_code, 200)
+        card = response.json()["data"]["messages"][0]["cards"][0]
+        self.assertEqual(card["proposal"]["id"], proposal.id)
+        self.assertEqual(card["proposal"]["title"], "Propuesta compartida")
+        self.assertEqual(card["proposal"]["attachment_name"], "Plan compartido")
+
     def test_chat_proposals_lists_every_persisted_proposal_and_is_owner_scoped(self):
         first = NutritionProposal.objects.create(
             created_by=self.user,

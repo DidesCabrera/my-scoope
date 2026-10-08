@@ -12,6 +12,7 @@ from mobile_api.schema_domains.assistant import (  # noqa: F401 -- compatibility
     AIChatDetailEnvelope,
     AIChatDraftCardData,
     AIChatGeneratedPlanCardData,
+    AIChatLibraryCardData,
     AIChatListData,
     AIChatListEnvelope,
     AIChatMessageData,

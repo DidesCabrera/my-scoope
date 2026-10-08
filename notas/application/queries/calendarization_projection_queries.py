@@ -121,11 +121,13 @@ def snapshot_food_aggregation_rows(snapshots: list[dict], totals: dict) -> list[
                 if not isinstance(food, dict):
                     continue
                 name = str(food.get("name") or "Alimento").strip() or "Alimento"
+                quantity_unit = str(food.get("quantity_unit") or "g")
                 detail_id = food.get("source_food_id") if isinstance(food.get("source_food_id"), int) else None
-                key = f"food:{detail_id}" if detail_id else f"name:{name.casefold()}"
+                key = f"food:{detail_id}" if detail_id else f"name:{name.casefold()}:{quantity_unit}"
                 row = aggregation[key]
                 row["name"] = row["name"] or name
                 row["detail_id"] = row.get("detail_id") or detail_id
+                row["quantity_unit"] = quantity_unit
                 row["quantity"] += _number(food.get("quantity_g"))
                 row["protein"] += _number(food.get("protein_g"))
                 row["carbs"] += _number(food.get("carbs_g"))
@@ -147,7 +149,7 @@ def snapshot_food_aggregation_rows(snapshots: list[dict], totals: dict) -> list[
                 "rel": {
                     "id": key,
                     "quantity": food["quantity"],
-                    "quantity_unit": "g",
+                    "quantity_unit": food.get("quantity_unit") or "g",
                     "name": food["name"],
                     "total_kcal": total_kcal,
                     "kcal_share": _percentage(total_kcal, totals["total_kcal"]),

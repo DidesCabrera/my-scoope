@@ -1,4 +1,5 @@
 import type { PickerKind } from "./composition-picker-screen";
+import { portionGrams } from "./food-portion-nutrition";
 
 type PickerPayloadInput = {
   contextDailyPlanId?: number;
@@ -32,12 +33,12 @@ export function buildCompositionPickerPayload({
     meal_food_id: relationId,
     dailyplan_id: contextDailyPlanId,
     dailyplan_meal_id: contextDailyPlanMealId,
-    quantity: Number(quantity),
+    quantity: portionGrams(quantity),
   };
   if (kind === "food-to-calendarized-meal") return {
     food_id: selectedId,
     food_snapshot_key: relationKey,
-    quantity: Number(quantity),
+    quantity: portionGrams(quantity),
   };
   if (kind === "meal-to-dailyplan") return {
     meal_id: selectedId,

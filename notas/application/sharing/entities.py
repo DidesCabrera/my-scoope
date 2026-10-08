@@ -58,7 +58,7 @@ def build_food_share_snapshot(food: Food) -> dict:
     return {
         "schema_version": SHARE_SNAPSHOT_SCHEMA_VERSION,
         "subject": {"type": ShareResource.SubjectType.FOOD, "title": food.name},
-        "summary": {"basis_grams": 100},
+        "summary": {"basis_grams": 100, "basis_unit": food.portion_unit},
         "nutrition": _nutrition(protein=food.protein, carbs=food.carbs, fat=food.fat),
     }
 
@@ -76,6 +76,7 @@ def _meal_snapshot(meal: Meal, *, variant: str = "library", time=None) -> dict:
             {
                 "name": meal_food.food.name,
                 "quantity_grams": _number(meal_food.quantity),
+                "quantity_unit": meal_food.food.portion_unit,
                 "nutrition": item_nutrition,
             }
         )

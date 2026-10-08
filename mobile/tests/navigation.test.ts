@@ -31,7 +31,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   const proposal = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id].tsx"), "utf8");
   const proposalEntity = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id]/entity.tsx"), "utf8");
   const comparison = await readFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
-  const comparisonList = await readFile(path.resolve(process.cwd(), "src/app/comparator/index.tsx"), "utf8");
+  const comparisonList = await readFile(path.resolve(process.cwd(), "src/components/comparisons/saved-comparison-list-card.tsx"), "utf8");
   const comparisonActions = await readFile(path.resolve(process.cwd(), "src/components/comparisons/saved-comparison-actions.tsx"), "utf8");
   const program = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   const programDay = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
@@ -43,7 +43,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(proposalEntity, /\/libraries\/daily-plans\//);
   assertSourceMatch(proposalEntity, /\/proposals\/\$\{proposal\.id\}\/entity\/meals\//);
   assertSourceDoesNotMatch(comparison, /Usar en el Asistente|Volver a guardadas/);
-  assertSourceMatch(comparison, /forceFallback: true/);
+  assertSourceDoesNotMatch(comparison, /forceFallback: true/);
   assertSourceMatch(comparison, /params: \{ kind \}/);
   assertSourceMatch(comparison, /<Screen[\s\S]*headerMode="preserve"[\s\S]*scrollHeader=\{<AppHeader/);
   assertSourceMatch(comparison, /eyebrowIcon=\{<EntityIcon entity=\{entity\} size="compact" \/>\}/);
@@ -245,7 +245,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /<Plus color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(navigation, /headerPresentation\.createAction/);
   assertSourceMatch(navigation, /height: 48/);
-  assertSourceMatch(navigation, /<MyScoopeLogo \/>/);
+  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeLogo \/>/);
   const logo = await readFile(path.resolve(process.cwd(), "src/components/ui/my-scoope-logo.tsx"), "utf8");
   assertSourceMatch(logo, /logoText: \{[^}]*fontSize: 18/);
   assertSourceMatch(logo, /logoBar: \{[^}]*height: 3, width: 13/);

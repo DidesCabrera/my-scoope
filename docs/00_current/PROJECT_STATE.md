@@ -197,6 +197,11 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   snapshots, multi-capability meal grammar, bounded combination planning, a deterministic CP-SAT
   backend, whole-day constraints, alternatives, shadow quality gates and controlled DailyPlan
   proposal activation. The heuristic path remains the default rollback until rollout evidence is accepted.
+- Culinary-First Solver CFS00-CFS08 makes validated meal variants the preferred
+  candidate unit for standalone meals, daily plans, onboarding and programs. The
+  optimizer preserves preparation, courses, ingredient bounds and ratios before
+  adjusting portions. Raw-food composition is an explicit, observable transition
+  fallback until staging proves robust catalog coverage and human review per family.
 - Project Control, Clarity & Foresight PCF00-PCF10 aligns staging CI; the executable environment contract now formalizes 90
   environment variables, adds safe environment and OAuth diagnostics, exposes one
   executable status contract through CLI/Admin Operations/AI, validates the document

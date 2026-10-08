@@ -122,7 +122,7 @@ def _build_food_catalog_item(
         carbs=carbs,
         fat=fat,
         kcal_per_100g=kcal_per_100g,
-        unit="g",
+        unit=food.portion_unit,
         source=_resolve_food_source(
             food=food,
             user=user,

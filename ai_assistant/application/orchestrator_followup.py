@@ -14,7 +14,7 @@ from ai_assistant.application.orchestrator_helpers import (
     _provider_tool_outputs,
 )
 from ai_assistant.application.program_capture import weekly_capture_instruction, weekly_specification_missing
-from ai_assistant.application.tool_selection import next_intake_presentation_tool
+from ai_assistant.application.tool_selection import next_intake_presentation_tool, next_personal_record_read_tool
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_READ_PROPOSAL,
@@ -47,12 +47,19 @@ def build_tool_followup_provider_request(
     tools = tuple(base_request.tools or ()) if remaining_tool_iterations > 0 else ()
     tool_choice: str | Mapping[str, Any] | None = "auto" if tools else None
     decision_results = tuple(accumulated_tool_results or tool_results)
+    personal_record_tool_name = next_personal_record_read_tool(request, decision_results)
     presentation_tool_name = next_intake_presentation_tool(request, decision_results)
     capture_tool_name = orchestrator._fact_capture_tool_after_tool_results(
         request,
         decision_results,
     )
-    if tools and capture_tool_name:
+    if tools and personal_record_tool_name:
+        tools, tool_choice = _select_exact_tool(
+            tools,
+            personal_record_tool_name,
+            fallback_choice=tool_choice,
+        )
+    elif tools and capture_tool_name:
         tools, tool_choice = _select_exact_tool(
             tools,
             capture_tool_name,

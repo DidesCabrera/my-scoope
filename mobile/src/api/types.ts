@@ -370,6 +370,7 @@ export type LibraryItem = {
   entity: LibraryEntity;
   name: string;
   subtitle: string;
+  quantity_unit?: "g" | "ml" | null;
   nutrition: LibraryNutrition;
   indicators: LibraryIndicator[];
   panel: LibraryPanel;
@@ -419,6 +420,7 @@ export type FoodPickerOption = {
   is_user_food: boolean;
   is_verified: boolean;
   data_quality_score: number;
+  quantity_unit: "g" | "ml";
 };
 
 export type FoodPickerPageData = {
@@ -485,6 +487,7 @@ export type MealSnapshot = {
     detail_id?: number | null;
     name?: string;
     quantity_g?: number | null;
+    quantity_unit?: "g" | "ml" | null;
     protein_g?: number | null;
     protein_per_kilogram?: number | null;
     carbs_g?: number | null;
@@ -642,15 +645,12 @@ export type ComparisonKindOption = {
 };
 
 export type ComparisonMetadata = { kinds: ComparisonKindOption[] };
-
 export type ComparisonOption = Pick<
   LibraryItem,
-  "id" | "entity" | "indicators" | "name" | "nutrition" | "panel" | "subtitle"
+  "id" | "entity" | "indicators" | "name" | "nutrition" | "panel" | "quantity_unit" | "subtitle"
 >;
-
-export type SelectedComparisonOption = Pick<ComparisonOption, "id" | "name"> &
+export type SelectedComparisonOption = Pick<ComparisonOption, "id" | "name" | "quantity_unit"> &
   Partial<Pick<ComparisonOption, "nutrition">>;
-
 export type ComparisonOptionsData = MobilePageData<ComparisonOption> & { search: string | null };
 
 export type ComparisonMetricValues = {
@@ -666,6 +666,7 @@ export type ComparisonResultItem = {
   id: number;
   name: string;
   quantity: number | null;
+  quantity_unit?: "g" | "ml" | null;
   values: ComparisonMetricValues;
 };
 
@@ -674,6 +675,7 @@ export type ComparisonMetricBar = {
   id: number;
   label: string;
   quantity: number | null;
+  quantity_unit?: "g" | "ml" | null;
   value: number;
   formatted_value: string;
   relative_percentage: number;
@@ -762,12 +764,21 @@ type AIChatProposalCard = {
   title: string;
   summary: string;
   status: string;
+  proposal: ProposalSummary | null;
 };
 
 type AIChatComparisonCard = {
   type: "saved_comparison";
   comparison_id: number;
   kind: ComparisonKind;
+  title: string;
+};
+
+type AIChatLibraryCard = {
+  type: "library_item";
+  item_id: number;
+  entity: "food" | "meal" | "dailyPlan" | "program";
+  resource: "foods" | "meals" | "dailyplans" | "programs";
   title: string;
 };
 
@@ -791,6 +802,7 @@ type AIChatGeneratedPlanCard = {
   summary: string;
   is_current: boolean;
   items: AIChatCardItem[];
+  proposal: ProposalSummary | null;
 };
 
 export type AIPreparedActionResult = {
@@ -803,6 +815,7 @@ export type AIChatCard =
   | AIChatDraftCard
   | AIChatProposalCard
   | AIChatComparisonCard
+  | AIChatLibraryCard
   | AIChatPreparedActionCard
   | AIChatGeneratedPlanCard;
 

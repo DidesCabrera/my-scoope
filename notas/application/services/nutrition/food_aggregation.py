@@ -63,6 +63,7 @@ def build_meal_foods_projection(meal):
             "id": f["food"].id,
             "name": f["display_name"],
             "grams": round(f["total_grams"], 1),
+            "quantity_unit": f["food"].portion_unit,
         }
         for f in ordered
     ]

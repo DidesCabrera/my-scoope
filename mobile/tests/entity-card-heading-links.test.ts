@@ -44,7 +44,7 @@ test("cards with entity-detail actions also link their heading section", async (
   }
 
   const comparisonList = await readTestFile(
-    path.resolve(process.cwd(), "src/app/comparator/index.tsx"),
+    path.resolve(process.cwd(), "src/components/comparisons/saved-comparison-list-card.tsx"),
     "utf8",
   );
   assertSourceMatch(comparisonList, /accessibilityLabel=\{`Ver detalle de \$\{item\.name\}`\}[\s\S]*accessibilityRole="link"[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.savedCopy/);

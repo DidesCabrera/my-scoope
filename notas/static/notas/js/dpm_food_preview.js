@@ -22,6 +22,8 @@ function setValue(id, value, decimals = 0) {
 
 // -------- FOOD BASE (100g)
 export function renderBase(food) {
+  const basisUnit = document.querySelector('[data-scope="food-preview"] [data-role="food-basis-unit"]');
+  if (basisUnit) basisUnit.textContent = `100${food.quantity_unit || "g"}`;
   const alloc = computeAlloc(food);
 
   setValue("base-kcal", food.total_kcal, 0);

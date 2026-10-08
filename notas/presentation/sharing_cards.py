@@ -256,7 +256,7 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
 
     title_bottom = 102 + len(title_lines) * 68
     if subject_type == "food":
-        structural = (("100 g", "#241E10", "#FF8800"),)
+        structural = ((f"100 {_text(summary.get('basis_unit'), fallback='g')}", "#241E10", "#FF8800"),)
     elif subject_type == "meal":
         structural = ((f"{food_count} alimentos", "#FF8800", None),)
     elif subject_type == "program":

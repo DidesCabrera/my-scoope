@@ -11,7 +11,9 @@ from ai_assistant.application.tools import (
     execute_profile_commit_tool,
 )
 from ai_assistant.domain import AssistantToolRequest, AssistantToolStatus
+from ai_assistant.domain.message_text import normalize_visible_message_content
 from ai_assistant.models import AIAsyncJob
+from mobile_api.selectors_proposals import proposal_summary_payloads_by_id
 from notas.application.ai_intake.async_turns import NUTRITION_INTAKE_TURN_JOB_KIND
 from notas.application.ai_intake.chat_engine import build_ai_nutrition_intake_engine_status
 from notas.application.ai_intake.chat_history import sync_chat_from_conversation
@@ -58,11 +60,7 @@ def _draft_card(raw: dict, card_type: str) -> dict:
         "subtitle": str(raw.get("subtitle") or "")[:500],
         "items": items[:40],
         "status": str(raw.get("status") or "")[:40],
-        "can_commit": bool(
-            raw.get("can_update_preferences")
-            if card_type == "preference_draft"
-            else False
-        ),
+        "can_commit": bool(raw.get("can_update_preferences") if card_type == "preference_draft" else False),
     }
 
 
@@ -74,7 +72,46 @@ def _proposal_id_from_url(value) -> int | None:
         return None
 
 
-def _message_cards(user, raw: dict) -> list[dict]:
+def _library_reference_cards(raw: dict) -> list[dict]:
+    cards = []
+    for library in (raw.get("library_cards") if isinstance(raw.get("library_cards"), list) else [])[:8]:
+        if not isinstance(library, dict):
+            continue
+        resource = str(library.get("resource") or "")
+        entity = str(library.get("entity") or "")
+        if resource not in {"foods", "meals", "dailyplans", "programs"} or entity not in {
+            "food", "meal", "dailyPlan", "program",
+        }:
+            continue
+        try:
+            item_id = int(library.get("item_id"))
+        except (TypeError, ValueError):
+            continue
+        cards.append({
+            "type": "library_item", "item_id": item_id, "entity": entity, "resource": resource,
+            "title": str(library.get("title") or "Elemento de biblioteca")[:180],
+        })
+    return cards
+
+
+def _saved_comparison_reference_cards(raw: dict) -> list[dict]:
+    cards = []
+    for saved in (raw.get("saved_comparison_cards") if isinstance(raw.get("saved_comparison_cards"), list) else [])[:8]:
+        kind = str(saved.get("kind") or "") if isinstance(saved, dict) else ""
+        if kind not in {"foods", "meals", "dailyplans"}:
+            continue
+        try:
+            comparison_id = int(saved.get("comparison_id"))
+        except (TypeError, ValueError):
+            continue
+        cards.append({
+            "type": "saved_comparison", "comparison_id": comparison_id, "kind": kind,
+            "title": str(saved.get("title") or "Comparación guardada")[:180],
+        })
+    return cards
+
+
+def _message_cards(user, raw: dict, proposal_summaries: dict[int, dict]) -> list[dict]:
     cards = []
     draft_keys = {
         "profile_draft_card": "profile_draft",
@@ -88,56 +125,72 @@ def _message_cards(user, raw: dict) -> list[dict]:
 
     review = raw.get("proposal_review_card")
     if isinstance(review, dict) and review.get("proposal_id"):
-        cards.append({
-            "type": "proposal_review",
-            "proposal_id": int(review["proposal_id"]),
-            "title": str(review.get("title") or "Propuesta para revisar")[:180],
-            "summary": str(review.get("summary") or "")[:1000],
-            "status": str(review.get("status") or "")[:80],
-        })
+        proposal_id = int(review["proposal_id"])
+        cards.append(
+            {
+                "type": "proposal_review",
+                "proposal_id": proposal_id,
+                "title": str(review.get("title") or "Propuesta para revisar")[:180],
+                "summary": str(review.get("summary") or "")[:1000],
+                "status": str(review.get("status") or "")[:80],
+                "proposal": proposal_summaries.get(proposal_id),
+            }
+        )
 
     plan = raw.get("generated_plan_card")
     if isinstance(plan, dict) and plan:
-        cards.append({
-            "type": "generated_plan",
-            "proposal_id": _proposal_id_from_url(plan.get("url")),
-            "title": str(plan.get("title") or "Plan generado")[:180],
-            "summary": str(plan.get("summary") or "")[:1000],
-            "is_current": bool(plan.get("is_current")),
-            "items": _card_items(plan.get("target_items")),
-        })
+        proposal_id = _proposal_id_from_url(plan.get("url"))
+        cards.append(
+            {
+                "type": "generated_plan",
+                "proposal_id": proposal_id,
+                "title": str(plan.get("title") or "Plan generado")[:180],
+                "summary": str(plan.get("summary") or "")[:1000],
+                "is_current": bool(plan.get("is_current")),
+                "items": _card_items(plan.get("target_items")),
+                "proposal": proposal_summaries.get(proposal_id),
+            }
+        )
 
     comparison = raw.get("saved_comparison_card") or raw.get("comparison_card")
     if isinstance(comparison, dict) and comparison.get("comparison_id"):
-        cards.append({
-            "type": "saved_comparison",
-            "comparison_id": int(comparison["comparison_id"]),
-            "kind": str(comparison.get("kind") or "foods"),
-            "title": str(comparison.get("title") or "Comparación guardada")[:180],
-        })
+        cards.append(
+            {
+                "type": "saved_comparison",
+                "comparison_id": int(comparison["comparison_id"]),
+                "kind": str(comparison.get("kind") or "foods"),
+                "title": str(comparison.get("title") or "Comparación guardada")[:180],
+            }
+        )
+
+    cards.extend(_library_reference_cards(raw))
+    cards.extend(_saved_comparison_reference_cards(raw))
 
     prepared = raw.get("prepared_action_card")
     if isinstance(prepared, dict) and prepared.get("id"):
         from ai_assistant.models import AIPreparedAction
+
         action = AIPreparedAction.objects.filter(public_id=prepared["id"], user=user).first()
         if action is not None:
             trusted = serialize_prepared_action(action)
-            cards.append({
-                "type": "prepared_action",
-                "action_id": trusted["id"],
-                "title": trusted["title"][:180],
-                "summary": trusted["summary"][:1000],
-                "status": trusted["status"],
-                "destructive": trusted["destructive"],
-                "risk_level": trusted["risk_level"],
-                "operation_count": int(trusted["preview"].get("operation_count") or 1),
-                "operations": [
-                    str(item.get("title") or item.get("action_key") or "Cambio")[:180]
-                    for item in trusted["preview"].get("operations") or ()
-                    if isinstance(item, dict)
-                ],
-                "expires_at": trusted["expires_at"],
-            })
+            cards.append(
+                {
+                    "type": "prepared_action",
+                    "action_id": trusted["id"],
+                    "title": trusted["title"][:180],
+                    "summary": trusted["summary"][:1000],
+                    "status": trusted["status"],
+                    "destructive": trusted["destructive"],
+                    "risk_level": trusted["risk_level"],
+                    "operation_count": int(trusted["preview"].get("operation_count") or 1),
+                    "operations": [
+                        str(item.get("title") or item.get("action_key") or "Cambio")[:180]
+                        for item in trusted["preview"].get("operations") or ()
+                        if isinstance(item, dict)
+                    ],
+                    "expires_at": trusted["expires_at"],
+                }
+            )
     return cards
 
 
@@ -159,6 +212,17 @@ def assistant_availability_payload(user) -> dict:
 def _message_payloads(chat: AiNutritionChat) -> list[dict]:
     conversation = chat.conversation_payload if isinstance(chat.conversation_payload, dict) else {}
     raw_messages = conversation.get("messages") if isinstance(conversation.get("messages"), list) else []
+    proposal_ids = set()
+    for raw in raw_messages[-24:]:
+        if not isinstance(raw, dict):
+            continue
+        review = raw.get("proposal_review_card")
+        if isinstance(review, dict) and review.get("proposal_id"):
+            proposal_ids.add(review["proposal_id"])
+        plan = raw.get("generated_plan_card")
+        if isinstance(plan, dict):
+            proposal_ids.add(_proposal_id_from_url(plan.get("url")))
+    proposal_summaries = proposal_summary_payloads_by_id(chat.user, proposal_ids)
     messages = []
     for index, raw in enumerate(raw_messages[-24:], start=1):
         if not isinstance(raw, dict):
@@ -166,10 +230,10 @@ def _message_payloads(chat: AiNutritionChat) -> list[dict]:
         role = str(raw.get("role") or "").strip()
         if role not in {"user", "assistant"}:
             continue
-        text = " ".join(str(raw.get("text") or "").split())[:8000]
-        cards = _message_cards(chat.user, raw)
+        text = normalize_visible_message_content(raw.get("text"), max_chars=8000)
+        cards = _message_cards(chat.user, raw, proposal_summaries)
         has_structured_content = any(
-            isinstance(raw.get(key), dict) and bool(raw.get(key))
+            isinstance(raw.get(key), (dict, list)) and bool(raw.get(key))
             for key in (
                 "generated_plan_card",
                 "profile_draft_card",
@@ -178,6 +242,8 @@ def _message_payloads(chat: AiNutritionChat) -> list[dict]:
                 "proposal_review_card",
                 "prepared_action_card",
                 "saved_comparison_card",
+                "library_cards",
+                "saved_comparison_cards",
             )
         )
         if not text and not cards:
@@ -187,7 +253,7 @@ def _message_payloads(chat: AiNutritionChat) -> list[dict]:
                 "id": f"{chat.id}:{index}",
                 "role": role,
                 "text": text,
-                "created_at": None,
+                "created_at": raw.get("created_at") or None,
                 "has_structured_content": has_structured_content,
                 "cards": cards,
             }
@@ -238,15 +304,11 @@ def chat_list_payload(user, *, offset=0, limit=30) -> dict:
     safe_limit = min(max(int(limit or 30), 1), 50)
     total = queryset.count()
     pending_new = next(
-        (
-            job
-            for job in _pending_jobs(user)[:50]
-            if not (job.request_payload or {}).get("existing_chat_id")
-        ),
+        (job for job in _pending_jobs(user)[:50] if not (job.request_payload or {}).get("existing_chat_id")),
         None,
     )
     return {
-        "items": [_summary_payload(chat) for chat in queryset[safe_offset:safe_offset + safe_limit]],
+        "items": [_summary_payload(chat) for chat in queryset[safe_offset : safe_offset + safe_limit]],
         "total": total,
         "offset": safe_offset,
         "limit": safe_limit,
@@ -260,11 +322,7 @@ def chat_detail_payload(user, chat_id: int) -> dict | None:
     if chat is None:
         return None
     pending = next(
-        (
-            job
-            for job in _pending_jobs(user)[:50]
-            if (job.request_payload or {}).get("existing_chat_id") == chat.id
-        ),
+        (job for job in _pending_jobs(user)[:50] if (job.request_payload or {}).get("existing_chat_id") == chat.id),
         None,
     )
     return {
@@ -302,9 +360,7 @@ def commit_chat_preferences(user, chat_id: int) -> dict:
         AssistantToolRequest(
             tool_name=TOOL_COMMIT_PREFERENCE_UPDATE,
             arguments={
-                "preference_draft": build_preference_draft_payload_from_brief(
-                    conversation.result.brief
-                ),
+                "preference_draft": build_preference_draft_payload_from_brief(conversation.result.brief),
             },
             request_id=f"mobile_preference_card_{chat.id}",
             reason="User approved preference persistence from the mobile preference card.",

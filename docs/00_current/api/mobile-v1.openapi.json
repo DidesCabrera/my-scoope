@@ -221,6 +221,16 @@
             "title": "Items",
             "type": "array"
           },
+          "proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalSummaryData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "proposal_id": {
             "anyOf": [
               {
@@ -252,6 +262,52 @@
           "title"
         ],
         "title": "AIChatGeneratedPlanCardData",
+        "type": "object"
+      },
+      "AIChatLibraryCardData": {
+        "properties": {
+          "entity": {
+            "enum": [
+              "food",
+              "meal",
+              "dailyPlan",
+              "program"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "item_id": {
+            "title": "Item Id",
+            "type": "integer"
+          },
+          "resource": {
+            "enum": [
+              "foods",
+              "meals",
+              "dailyplans",
+              "programs"
+            ],
+            "title": "Resource",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "library_item",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "item_id",
+          "entity",
+          "resource",
+          "title"
+        ],
+        "title": "AIChatLibraryCardData",
         "type": "object"
       },
       "AIChatListData": {
@@ -334,6 +390,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/AIChatComparisonCardData"
+                },
+                {
+                  "$ref": "#/components/schemas/AIChatLibraryCardData"
                 },
                 {
                   "$ref": "#/components/schemas/AIChatPreparedActionCardData"
@@ -464,6 +523,16 @@
       },
       "AIChatProposalCardData": {
         "properties": {
+          "proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalSummaryData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "proposal_id": {
             "title": "Proposal Id",
             "type": "integer"
@@ -2218,6 +2287,21 @@
             ],
             "title": "Quantity"
           },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
+          },
           "relative_percentage": {
             "title": "Relative Percentage",
             "type": "number"
@@ -2350,6 +2434,21 @@
           },
           "panel": {
             "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
           },
           "subtitle": {
             "title": "Subtitle",
@@ -2565,6 +2664,21 @@
               }
             ],
             "title": "Quantity"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
           },
           "values": {
             "$ref": "#/components/schemas/ComparisonMetricValuesData"
@@ -2947,6 +3061,15 @@
             "title": "Name",
             "type": "string"
           },
+          "portion_unit": {
+            "default": "g",
+            "enum": [
+              "g",
+              "ml"
+            ],
+            "title": "Portion Unit",
+            "type": "string"
+          },
           "protein": {
             "maximum": 100,
             "minimum": 0,
@@ -3012,6 +3135,15 @@
           "protein_allocation": {
             "title": "Protein Allocation",
             "type": "number"
+          },
+          "quantity_unit": {
+            "default": "g",
+            "enum": [
+              "g",
+              "ml"
+            ],
+            "title": "Quantity Unit",
+            "type": "string"
           },
           "source": {
             "title": "Source",
@@ -3371,6 +3503,15 @@
           },
           "ocr_engine": {
             "title": "Ocr Engine",
+            "type": "string"
+          },
+          "portion_unit": {
+            "default": "g",
+            "enum": [
+              "g",
+              "ml"
+            ],
+            "title": "Portion Unit",
             "type": "string"
           },
           "protein_g": {
@@ -4575,6 +4716,21 @@
           },
           "panel": {
             "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
           },
           "subtitle": {
             "title": "Subtitle",

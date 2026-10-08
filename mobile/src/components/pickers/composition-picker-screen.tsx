@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { CalendarDays, Clock, NotebookPen, Pencil, Scale, Search } from "lucide-react-native";
+import { CalendarDays, NotebookPen, Pencil, Scale, Search } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,10 +23,11 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, MealPanels } from "@/components/libraries/entity-panels";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, InlineNotice, LoadingState, SectionTitle, textStyles } from "@/components/ui";
+import { Button, Card, InlineNotice, LoadingState, NativeDateTimeField, SectionTitle, textStyles } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
+import { portionGrams, scaleFoodNutrition } from "./food-portion-nutrition";
 import { PickerCardAction } from "./picker-card-action";
 import { buildCompositionPickerPayload } from "./composition-picker-payload";
 import { PickerEntryTabs } from "./picker-entry-tabs";
@@ -48,6 +49,7 @@ type PickerOption = {
   nutrition: LibraryNutrition;
   panel?: LibraryItem["panel"];
   subtitle?: string;
+  quantityUnit?: "g" | "ml";
 };
 
 type PickerConfig = {
@@ -143,6 +145,7 @@ function optionFromLibrary(item: LibraryItem): PickerOption {
     nutrition: item.nutrition,
     panel: item.panel,
     subtitle: item.subtitle || undefined,
+    quantityUnit: item.quantity_unit ?? undefined,
   };
 }
 
@@ -151,7 +154,8 @@ function optionFromFood(item: FoodPickerOption): PickerOption {
     id: item.id,
     name: item.display_name,
     entity: "food",
-    indicators: [{ label: "base nutricional", value: "100 g" }],
+    indicators: [{ label: "base nutricional", value: `100 ${item.quantity_unit}` }],
+    quantityUnit: item.quantity_unit,
     nutrition: {
       calories: item.total_kcal,
       protein: { grams: item.protein, allocation: item.protein_allocation, per_kilogram: null },
@@ -311,8 +315,18 @@ export function CompositionPickerScreen({
   }, [apiRequest, isFoodPicker, isMealPicker, query, retryNonce, selectedId, status]));
 
   const hourValid = !isMealPicker || /^([01]\d|2[0-3]):[0-5]\d$/.test(hour);
-  const quantityValid = !isFoodPicker || Number(quantity) > 0;
+  const quantityValid = !isFoodPicker || portionGrams(quantity) > 0;
   const configurationValid = Boolean(selected) && hourValid && quantityValid && (kind !== "dailyplan-to-program" || dayNumbers.length > 0);
+  const configuredSelection = useMemo(() => {
+    if (!selected || !isFoodPicker) return selected;
+    const grams = portionGrams(quantity);
+    const quantityUnit = selected.quantityUnit ?? "g";
+    return {
+      ...selected,
+      indicators: [{ label: "porción seleccionada", value: `${grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} ${quantityUnit}` }],
+      nutrition: scaleFoodNutrition(selected.nutrition, quantity),
+    };
+  }, [isFoodPicker, quantity, selected]);
 
   const payload = useMemo(() => {
     if (!selected) return null;
@@ -371,6 +385,7 @@ export function CompositionPickerScreen({
     return (
       <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
         <ScrollView
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={styles.selectionScrollContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
@@ -428,13 +443,14 @@ export function CompositionPickerScreen({
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.configurationSafeArea}>
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.configurationScrollContent}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}>
         <View>
-          {selected ? <PickerOptionCard option={selected} /> : null}
+          {configuredSelection ? <PickerOptionCard option={configuredSelection} /> : null}
         </View>
 
         <View style={styles.configurationSticky}>
@@ -444,20 +460,14 @@ export function CompositionPickerScreen({
                 <View style={styles.compactFieldRow}>
                   <View style={styles.configurationLabel}>
                     <Scale color={tokens.color.textMuted} size={18} />
-                    <Text style={styles.compactFieldLabel}>Porción (g)</Text>
+                    <Text style={styles.compactFieldLabel}>Porción ({selected.quantityUnit ?? "g"})</Text>
                   </View>
                   <TextInput keyboardType="decimal-pad" onChangeText={setQuantity} selectionColor={tokens.color.interactivePrimary} style={styles.compactFieldInput} value={quantity} />
                 </View>
               ) : null}
               {isMealPicker ? (
                 <>
-                  <View style={styles.compactFieldRow}>
-                    <View style={styles.configurationLabel}>
-                      <Clock color={tokens.color.textMuted} size={18} />
-                      <Text style={styles.compactFieldLabel}>Hora (HH:MM)</Text>
-                    </View>
-                    <TextInput keyboardType="numbers-and-punctuation" onChangeText={(value) => { setHour(value); setPreview(null); }} placeholder="08:00" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.compactFieldInput} value={hour} />
-                  </View>
+                  <NativeDateTimeField containerStyle={styles.compactTimeField} label="Hora" minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
                   {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
                   <View style={styles.configurationDivider} />
                   <View style={styles.noteBlock}>
@@ -566,6 +576,7 @@ export function pickerConfigureHref(
 
 const styles = StyleSheet.create({
   compactFieldInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 40, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs, textAlign: "right", width: 128 },
+  compactTimeField: { borderRadius: tokens.radius.md, marginHorizontal: 0 },
   compactFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   compactFieldRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   configurationDivider: { backgroundColor: tokens.color.borderSoft, height: StyleSheet.hairlineWidth, width: "100%" },

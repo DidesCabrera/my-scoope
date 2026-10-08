@@ -121,7 +121,7 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
       statusBarTranslucent
       transparent
       visible={mounted}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalRoot}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalRoot}>
         <Animated.View pointerEvents={visible ? "auto" : "none"} style={[styles.scrim, { opacity: scrimOpacity }]}>
           <ModalBackdrop accessibilityLabel="Cerrar acciones" onPress={onRequestClose} />
         </Animated.View>

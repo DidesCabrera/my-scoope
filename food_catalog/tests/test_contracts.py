@@ -11,6 +11,7 @@ from food_catalog.application.contracts import (
     FoodCatalogContractError,
     NutrientProfilePer100g,
     OperationalVisibility,
+    PortionUnit,
     PreparationState,
     PublishedFoodSnapshot,
     SourceLicenseStatus,
@@ -112,6 +113,7 @@ class FoodCatalogContractTests(TestCase):
                 fat_g="3.6",
                 fiber_g="0",
             ),
+            portion_unit=PortionUnit.MILLILITERS,
             data_quality_score=95,
             visibility=OperationalVisibility.CORE,
             preparation_state=PreparationState.COOKED,
@@ -139,6 +141,7 @@ class FoodCatalogContractTests(TestCase):
                 "food_subgroup": "poultry",
                 "preparation_state": "cooked",
                 "solver_enabled": True,
+                "portion_unit": "ml",
                 "fiber_g_per_100g": Decimal("0"),
                 "sugar_g_per_100g": None,
                 "saturated_fat_g_per_100g": None,
@@ -166,6 +169,7 @@ class FoodCatalogContractTests(TestCase):
         )
         self.assertEqual(payload.snapshot_metadata()["aliases"], ("pollo cocido",))
         self.assertEqual(payload.snapshot_metadata()["preparation_state"], "cooked")
+        self.assertEqual(payload.snapshot_metadata()["portion_unit"], "ml")
         self.assertTrue(payload.snapshot_metadata()["solver_enabled"])
         self.assertEqual(payload.snapshot_metadata()["solver_capabilities"], {})
 

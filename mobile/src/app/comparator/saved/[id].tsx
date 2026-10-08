@@ -54,7 +54,7 @@ export default function SavedComparisonDetailScreen() {
   const comparisonTitle = comparison?.saved_comparison_name ?? "Comparación guardada";
   const comparatorHref = useMemo(() => ({ pathname: "/comparator", params: { kind } } as Href), [kind]);
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: comparisonId != null ? { icon: "more", label: "Acciones de comparación", onPress: () => setActionsVisible(true) } : undefined, fallback: comparatorHref, forceFallback: true, identityVisible: compactHeaderVisible, mode: "back", title: comparisonTitle });
+    setHeaderPresentation({ action: comparisonId != null ? { icon: "more", label: "Acciones de comparación", onPress: () => setActionsVisible(true) } : undefined, fallback: comparatorHref, identityVisible: compactHeaderVisible, mode: "back", title: comparisonTitle });
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, comparisonId, comparisonTitle, comparatorHref, setHeaderPresentation]));
   if (status === "anonymous") return <Redirect href="/login" />;

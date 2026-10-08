@@ -8,6 +8,7 @@ import { pollAsyncJob } from "@/api/async-job";
 import { userFacingError } from "@/api/errors";
 import type {
   AIChatDetail,
+  AIChatMessage,
   AIChatListData,
   AIJobAcceptedData,
   AIPendingTurn,
@@ -33,6 +34,7 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
   const [availability, setAvailability] = useState<AssistantAvailability | null>(null);
   const [pending, setPending] = useState<AIPendingTurn | null>(null);
   const [message, setMessage] = useState("");
+  const [optimisticMessage, setOptimisticMessage] = useState<AIChatMessage | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,14 +80,18 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
       request: (path) => apiRequest(path),
       signal: controller.signal,
     })
-      .then((result) => {
+      .then(async (result) => {
         if (controller.signal.aborted) return;
-        setPending(null);
         setIterationWarning(result.has_iteration_warning);
         if (!chatId || result.chat_id !== chatId) {
+          setPending(null);
           router.replace(`/assistant/${result.chat_id}` as Href);
         } else {
-          void load();
+          await load();
+          if (!controller.signal.aborted) {
+            setOptimisticMessage(null);
+            setPending(null);
+          }
         }
       })
       .catch((nextError) => {
@@ -99,22 +105,33 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
   async function send() {
     const normalized = message.trim();
     if (!normalized || sending || pending) return;
+    const idempotencyKey = `mobile-${Crypto.randomUUID()}`;
     setSending(true);
     setError(null);
+    setOptimisticMessage({
+      cards: [],
+      created_at: new Date().toISOString(),
+      has_structured_content: false,
+      id: `optimistic-${idempotencyKey}`,
+      role: "user",
+      text: normalized,
+    });
+    setMessage("");
     try {
       const accepted = await apiRequest<AIJobAcceptedData>("/api/v1/ai/turns", {
         method: "POST",
         body: JSON.stringify({
           message: normalized,
-          idempotency_key: `mobile-${Crypto.randomUUID()}`,
+          idempotency_key: idempotencyKey,
           chat_id: chatId,
           comparison_id: comparisonId,
         }),
       });
-      setMessage("");
       setPending(accepted);
     } catch (nextError) {
       setError(userFacingError(nextError));
+      setOptimisticMessage(null);
+      setMessage(normalized);
       setSending(false);
     }
   }
@@ -163,16 +180,19 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
 
   const unavailable = !availability?.is_available;
   const outOfCredits = availability?.available_credits === 0;
+  const visibleMessages = [...(chat?.messages ?? []), ...(optimisticMessage ? [optimisticMessage] : [])];
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
       <Screen contentStyle={styles.screen} headerMode="preserve" scroll={false}>
         <ScrollView
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={styles.chatContent}
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
           ref={scrollRef}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          style={styles.conversationScroll}>
           {outOfCredits || unavailable || error || iterationWarning || comparisonId ? <View style={styles.notices}>
             {outOfCredits ? <Card accent={tokens.color.warning}>
               <Text style={styles.creditTitle}>No tienes créditos disponibles</Text>
@@ -183,7 +203,7 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
             {iterationWarning ? <InlineNotice tone="warning">La conversación se guardó, pero una iteración del plan requiere revisión.</InlineNotice> : null}
             {comparisonId ? <InlineNotice>Esta conversación usará la comparación guardada como contexto verificado.</InlineNotice> : null}
           </View> : null}
-          {chat?.messages.length ? <ChatConversation messages={chat.messages} onPreferenceCommit={handlePreferenceCommit} onPreparedAction={handlePreparedAction} /> : (
+          {visibleMessages.length ? <ChatConversation messages={visibleMessages} onPreferenceCommit={handlePreferenceCommit} onPreparedAction={handlePreparedAction} /> : (
             <View style={styles.emptyConversation}>
               <View style={styles.emptyIcon}><Sparkles color={tokens.color.textMain} size={24} strokeWidth={2} /></View>
               <Text style={styles.emptyTitle}>¿Qué quieres planificar?</Text>
@@ -198,6 +218,7 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
           maxLength={availability?.max_message_chars ?? 2000}
           onChangeText={setMessage}
           onSend={() => void send()}
+          outOfCredits={outOfCredits}
           supportingText={availability ? `${availability.available_credits} ${availability.available_credits === 1 ? "crédito disponible" : "créditos disponibles"}` : undefined}
           value={message}
         />
@@ -224,7 +245,8 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
 }
 
 const styles = StyleSheet.create({
-  chatContent: { flexGrow: 1, gap: tokens.spacing.xl, paddingBottom: tokens.spacing.xxl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  chatContent: { flexGrow: 1, gap: tokens.spacing.xl, paddingBottom: tokens.spacing.xxl * 4, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  conversationScroll: { flex: 1 },
   creditCopy: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   creditTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   emptyConversation: { alignItems: "center", flex: 1, gap: tokens.spacing.md, justifyContent: "center", minHeight: 320, paddingHorizontal: tokens.spacing.xl },
@@ -232,7 +254,7 @@ const styles = StyleSheet.create({
   emptyIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 52, justifyContent: "center", width: 52 },
   emptyTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800", textAlign: "center" },
   notices: { gap: tokens.spacing.sm },
-  screen: { gap: 0, paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 },
+  screen: { flex: 1, gap: 0, paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 },
   thinking: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
   thinkingText: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
 });

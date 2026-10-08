@@ -1,11 +1,12 @@
 import { CalendarClock, Clock3, Info, Pencil } from "lucide-react-native";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
+import { NativeDateTimeField } from "@/components/ui/native-date-time-field";
 import { tokens } from "@/design/tokens";
 
 type MealTimeFormProps = {
@@ -43,15 +44,13 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
   return (
     <View style={styles.form}>
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      <Field
-        autoCapitalize="none"
-        keyboardType="numbers-and-punctuation"
+      <NativeDateTimeField
         label="Hora de la comida"
-        onChangeText={(value) => setHour(value.slice(0, 5))}
-        placeholder="08:00"
+        minuteInterval={5}
+        mode="time"
+        onChange={(value) => setHour(value)}
         value={hour}
       />
-      <Text style={styles.help}>Usa el formato de 24 horas, por ejemplo 08:00 o 20:30.</Text>
       <Button disabled={!TIME_PATTERN.test(hour)} label="Guardar hora" loading={submitting} onPress={() => void save()} />
       <Button disabled={submitting} label="Cancelar" onPress={onCancel} variant="secondary" />
     </View>
@@ -140,5 +139,4 @@ const styles = StyleSheet.create({
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   form: { gap: tokens.spacing.md },
-  help: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
 });

@@ -214,7 +214,7 @@ class MealFood(models.Model):
         Food,
         on_delete=models.CASCADE)
 
-    quantity = models.FloatField(help_text="grams")
+    quantity = models.FloatField(help_text="Amount in the food's configured portion unit")
 
     order = models.PositiveIntegerField(default=0)
 

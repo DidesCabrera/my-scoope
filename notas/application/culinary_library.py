@@ -14,6 +14,7 @@ from notas.domain.models import CulinaryVariant, Meal
 from nutrition_solver.application.culinary_planner import CulinaryCandidate, Ingredient
 
 GROUPS = {"protein", "starch", "fruit", "vegetable", "dairy", "fat", "legume", "other"}
+COURSES = {"main", "side", "salad", "dessert", "beverage"}
 RUBRIC_KEYS = {"compatible_ingredients", "appropriate_preparation", "reasonable_portions", "substitutions_checked"}
 
 
@@ -30,7 +31,13 @@ def _snapshot_ingredient(row, components, foods, seen, ids):
     food = foods.get(row["food_id"])
     if not rule or food is None or component in seen or food.pk in ids:
         raise ValueError("culinary_food_unavailable_or_duplicate")
-    if set(rule) != {"group", "foods", "minimum_g", "maximum_g", "step_g"} or rule["group"] not in GROUPS:
+    required_rule_keys = {"group", "foods", "minimum_g", "maximum_g", "step_g"}
+    if (
+        not required_rule_keys.issubset(rule)
+        or set(rule) - required_rule_keys - {"course"}
+        or rule["group"] not in GROUPS
+        or rule.get("course", _default_course(rule["group"])) not in COURSES
+    ):
         raise ValueError("culinary_component_rule_invalid")
     metadata = rule["foods"].get(str(food.pk))
     if not metadata or set(metadata) != {"species", "preparation_state"} or not metadata["species"]:
@@ -48,10 +55,30 @@ def _snapshot_ingredient(row, components, foods, seen, ids):
     for value in (food.protein, food.carbs, food.fat):
         if not isfinite(value) or value < 0:
             raise ValueError("culinary_nutrients_invalid")
-    ingredient = Ingredient(food.pk, food.name, component, rule["group"], metadata["species"],
-                                  row["minimum_g"], row["maximum_g"], row["step_g"],
-                                  food.protein, food.carbs, food.fat)
+    ingredient = Ingredient(
+        food_id=food.pk,
+        name=food.name,
+        component=component,
+        group=rule["group"],
+        species=metadata["species"],
+        minimum_g=row["minimum_g"],
+        maximum_g=row["maximum_g"],
+        step_g=row["step_g"],
+        protein=food.protein,
+        carbs=food.carbs,
+        fat=food.fat,
+        portion_unit=food.portion_unit,
+        course=rule.get("course", _default_course(rule["group"])),
+    )
     return ingredient, food
+
+
+def _default_course(group):
+    if group == "fruit":
+        return "dessert"
+    if group == "vegetable":
+        return "salad"
+    return "main"
 
 
 def _snapshot(variant, foods):
@@ -166,3 +193,47 @@ def load_culinary_candidates(*, user, brief=None, variant_ids=None):
         except (ValueError, KeyError, TypeError) as exc:
             rejected.append({"variant_id": variant.pk, "reason": str(exc)})
     return tuple(candidates), rejected
+
+
+def revalidate_culinary_selections(*, user, selections):
+    """Recheck exact validated variants and portions before proposal apply."""
+
+    if not isinstance(selections, list) or not selections:
+        raise ValueError("culinary_selections_required")
+    variant_ids = [row.get("variant_id") for row in selections if isinstance(row, dict)]
+    if len(variant_ids) != len(selections) or any(type(value) is not int for value in variant_ids):
+        raise ValueError("culinary_selection_invalid")
+    candidates, rejected = load_culinary_candidates(user=user, variant_ids=variant_ids)
+    if rejected or len(candidates) != len(set(variant_ids)):
+        raise ValueError("culinary_catalog_changed_since_review")
+    by_id = {candidate.variant_id: candidate for candidate in candidates}
+    for selection in selections:
+        candidate = by_id.get(selection["variant_id"])
+        if candidate is None or candidate.evidence_digest != selection.get("evidence_digest"):
+            raise ValueError("culinary_catalog_changed_since_review")
+        portions = selection.get("foods")
+        if not isinstance(portions, list) or {row.get("food_id") for row in portions} != {
+            ingredient.food_id for ingredient in candidate.ingredients
+        }:
+            raise ValueError("culinary_selection_ingredients_changed")
+        amounts = {row["food_id"]: row for row in portions}
+        component_amounts = {}
+        for ingredient in candidate.ingredients:
+            portion = amounts[ingredient.food_id]
+            quantity = portion.get("quantity")
+            if (
+                isinstance(quantity, bool)
+                or not isinstance(quantity, (int, float))
+                or not isfinite(quantity)
+                or portion.get("unit") != ingredient.portion_unit
+                or not ingredient.minimum_g <= quantity <= ingredient.maximum_g
+                or abs(quantity / ingredient.step_g - round(quantity / ingredient.step_g)) > 1e-6
+            ):
+                raise ValueError("culinary_selection_portion_invalid")
+            component_amounts[ingredient.component] = quantity
+        for ratio in candidate.ratios:
+            left = component_amounts[ratio["left"]]
+            right = component_amounts[ratio["right"]]
+            if not ratio["minimum"] * right - 1e-6 <= left <= ratio["maximum"] * right + 1e-6:
+                raise ValueError("culinary_selection_ratio_invalid")
+    return {"valid": True, "variant_ids": sorted(set(variant_ids))}

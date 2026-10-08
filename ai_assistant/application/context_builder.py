@@ -183,7 +183,6 @@ def merge_safe_context_into_request(
     )
 
 
-
 def _reviewable_proposal_tools_enabled() -> bool:
     return bool(getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", True))
 
@@ -262,9 +261,7 @@ def _work_progress_context(
     if brief is not None:
         from ai_assistant.application.product_ports import get_ai_product_bindings
 
-        blocking_fields = list(
-            get_ai_product_bindings().required_proposal_fields(brief)
-        )
+        blocking_fields = list(get_ai_product_bindings().required_proposal_fields(brief))
     ready_for_proposal = bool(getattr(result, "is_ready_for_proposal", False))
     if active_work.get("expected_outcome") == "clarification_required":
         # An ambiguous reference is not an implicit request to complete the
@@ -422,12 +419,35 @@ def _recent_chat_objects(messages: Sequence[Any]) -> list[dict[str, Any]]:
             continue
         comparison_card = getattr(message, "saved_comparison_card", None)
         if isinstance(comparison_card, Mapping):
-            objects.append({
-                "type": "saved_comparison_card",
-                "title": _bounded_text(comparison_card.get("title") or "Comparación guardada"),
-                "kind": _bounded_text(comparison_card.get("kind") or ""),
-                "item_count": min(int(comparison_card.get("item_count") or 0), MAX_LIST_ITEMS),
-            })
+            objects.append(
+                {
+                    "type": "saved_comparison_card",
+                    "title": _bounded_text(comparison_card.get("title") or "Comparación guardada"),
+                    "kind": _bounded_text(comparison_card.get("kind") or ""),
+                    "item_count": min(int(comparison_card.get("item_count") or 0), MAX_LIST_ITEMS),
+                }
+            )
+            continue
+        for library_card in list(getattr(message, "library_cards", None) or [])[:MAX_LIST_ITEMS]:
+            if isinstance(library_card, Mapping):
+                objects.append(
+                    {
+                        "type": "library_card",
+                        "entity": _bounded_text(library_card.get("entity") or ""),
+                        "item_id": library_card.get("item_id"),
+                        "title": _bounded_text(library_card.get("title") or "Elemento de biblioteca"),
+                    }
+                )
+        for saved_card in list(getattr(message, "saved_comparison_cards", None) or [])[:MAX_LIST_ITEMS]:
+            if isinstance(saved_card, Mapping):
+                objects.append(
+                    {
+                        "type": "saved_comparison_card",
+                        "comparison_id": saved_card.get("comparison_id"),
+                        "title": _bounded_text(saved_card.get("title") or "Comparación guardada"),
+                        "kind": _bounded_text(saved_card.get("kind") or ""),
+                    }
+                )
     return objects[-6:]
 
 

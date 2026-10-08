@@ -317,6 +317,7 @@ class NutritionBrief:
 class NutritionConversationMessage:
     role: str
     text: str
+    created_at: str | None = None
     generated_plan_card: dict | None = None
     profile_draft_card: dict | None = None
     preference_draft_card: dict | None = None
@@ -324,9 +325,21 @@ class NutritionConversationMessage:
     proposal_review_card: dict | None = None
     prepared_action_card: dict | None = None
     saved_comparison_card: dict | None = None
+    library_cards: list[dict] | None = None
+    saved_comparison_cards: list[dict] | None = None
 
 
-CONVERSATION_CARD_FIELDS = ("generated_plan_card", "profile_draft_card", "preference_draft_card", "proposal_preferences_card", "proposal_review_card", "prepared_action_card", "saved_comparison_card")
+CONVERSATION_CARD_FIELDS = (
+    "generated_plan_card",
+    "profile_draft_card",
+    "preference_draft_card",
+    "proposal_preferences_card",
+    "proposal_review_card",
+    "prepared_action_card",
+    "saved_comparison_card",
+)
+CONVERSATION_CARD_LIST_FIELDS = ("library_cards", "saved_comparison_cards")
+MAX_CONVERSATION_CARD_LIST_ITEMS = 3
 
 
 @dataclass(frozen=True)
@@ -579,9 +592,7 @@ def build_intake_result_from_brief(
     required_fields = required_proposal_fields(brief)
     is_ready_for_proposal = not required_fields
     readiness_label = (
-        "Listo para crear propuesta"
-        if is_ready_for_proposal
-        else f"Faltan {len(required_fields)} datos mínimos"
+        "Listo para crear propuesta" if is_ready_for_proposal else f"Faltan {len(required_fields)} datos mínimos"
     )
 
     if conversation_policy == INTAKE_RESULT_POLICY_STATE_ONLY:
@@ -593,9 +604,7 @@ def build_intake_result_from_brief(
         brief = replace(brief, pending_field=_next_required_field(brief))
         follow_up_questions = build_follow_up_questions(brief)
         required_follow_up_questions = build_required_follow_up_questions(brief)
-        visible_follow_up_questions = (
-            deterministic_questions_for_brief(brief) or follow_up_questions[:1]
-        )
+        visible_follow_up_questions = deterministic_questions_for_brief(brief) or follow_up_questions[:1]
     else:
         raise ValueError(f"unsupported_intake_result_policy:{conversation_policy}")
 
@@ -661,7 +670,9 @@ def serialize_profile_draft_card(card: NutritionProfileDraftCardVM | None) -> di
     }
 
 
-def _conversation_has_profile_draft_card(messages: Iterable[NutritionConversationMessage], *, status: str | None = None) -> bool:
+def _conversation_has_profile_draft_card(
+    messages: Iterable[NutritionConversationMessage], *, status: str | None = None
+) -> bool:
     for message in messages:
         card = message.profile_draft_card
         if not card:
@@ -899,7 +910,9 @@ def build_conversation_reply(
     wants_brief = _is_brief_preview_request(latest_user_message)
 
     if result.required_follow_up_questions:
-        questions = format_numbered_questions(conversational_questions or result.required_follow_up_questions, max_items=1)
+        questions = format_numbered_questions(
+            conversational_questions or result.required_follow_up_questions, max_items=1
+        )
         intro = _conversation_stage_intro(brief, ack_text=ack_text, wants_brief=wants_brief)
         return f"{intro}\n\n{questions}"
 
@@ -912,11 +925,7 @@ def build_conversation_reply(
                 f"{questions}"
             )
         prefix = ack_text or "Ya tengo una base suficiente para preparar una propuesta revisable."
-        return (
-            f"{prefix}\n\n"
-            "Podemos avanzar con esta base o afinar un aspecto práctico.\n"
-            f"{questions}"
-        )
+        return f"{prefix}\n\nPodemos avanzar con esta base o afinar un aspecto práctico.\n{questions}"
 
     pieces = _build_brief_pieces(brief)
     if wants_brief:
@@ -945,26 +954,28 @@ def _should_answer_as_opening_greeting(
 
 
 def _brief_has_actionable_intake_state(brief: NutritionBrief) -> bool:
-    return any((
-        brief.subject_source,
-        brief.goal,
-        brief.meals_per_day,
-        brief.training_frequency is not None,
-        brief.calorie_target,
-        brief.protein_target,
-        brief.carb_target,
-        brief.fat_target,
-        brief.weight_kg,
-        brief.height_cm,
-        brief.age_years,
-        brief.sex,
-        brief.activity_level,
-        brief.style_preferences,
-        brief.excluded_foods,
-        brief.preferred_foods,
-        brief.complexity_level,
-        brief.budget_level,
-    ))
+    return any(
+        (
+            brief.subject_source,
+            brief.goal,
+            brief.meals_per_day,
+            brief.training_frequency is not None,
+            brief.calorie_target,
+            brief.protein_target,
+            brief.carb_target,
+            brief.fat_target,
+            brief.weight_kg,
+            brief.height_cm,
+            brief.age_years,
+            brief.sex,
+            brief.activity_level,
+            brief.style_preferences,
+            brief.excluded_foods,
+            brief.preferred_foods,
+            brief.complexity_level,
+            brief.budget_level,
+        )
+    )
 
 
 def _is_plain_opening_message(message: str) -> bool:
@@ -1016,10 +1027,7 @@ def _build_opening_greeting_reply(message: str) -> str:
 
     prompt = _normalize_prompt(message)
     if _contains_any(prompt, ("como estas", "como estai", "que tal", "todo bien")):
-        return (
-            "¡Hola! Muy bien, gracias. ¿Y tú, cómo estás?\n\n"
-            "Cuéntame, ¿en qué puedo ayudarte hoy?"
-        )
+        return "¡Hola! Muy bien, gracias. ¿Y tú, cómo estás?\n\nCuéntame, ¿en qué puedo ayudarte hoy?"
 
     return (
         "Hola, buen día.\n\n"
@@ -1043,6 +1051,7 @@ def _conversation_stage_intro(brief: NutritionBrief, *, ack_text: str = "", want
     if not brief.meals_per_day or not (brief.style_preferences or brief.complexity_level or brief.budget_level):
         return ack_text or "Ya tengo la base de cálculo. Ahora podemos ordenar la propuesta para tu día a día."
     return ack_text or "Vamos bien. Podemos afinar un detalle práctico antes de avanzar."
+
 
 def _apply_semantic_extraction(brief: NutritionBrief, message: str) -> NutritionBrief:
     """Apply semantic, typo-tolerant facts detected in a chat turn.
@@ -1108,7 +1117,9 @@ def _apply_contextual_answer_extraction(
     if existing_state is None:
         return brief
 
-    requested_field = _clean_pending_field(existing_state.result.brief.pending_field) or _last_assistant_requested_intake_field(existing_state)
+    requested_field = _clean_pending_field(
+        existing_state.result.brief.pending_field
+    ) or _last_assistant_requested_intake_field(existing_state)
     if not requested_field:
         return brief
 
@@ -1320,38 +1331,24 @@ def _append_unique(values: list[str], value: str) -> None:
 
 
 def serialize_conversation(state: NutritionConversationState) -> dict:
-    serialized_messages = []
-    for message in state.messages:
-        cards = {name: value for name in CONVERSATION_CARD_FIELDS if (value := getattr(message, name))}
-        if not message.text and not cards:
-            continue
-        serialized_messages.append({"role": message.role, "text": message.text, **cards})
+    from notas.application.ai_intake.conversation_serialization import serialize_conversation_state
 
-    return {
-        "brief": serialize_brief(state.result.brief),
-        "messages": serialized_messages,
-    }
+    return serialize_conversation_state(state, card_fields=CONVERSATION_CARD_FIELDS, card_list_fields=CONVERSATION_CARD_LIST_FIELDS, serialize_brief=serialize_brief)
 
 
 def deserialize_conversation(payload: dict | None) -> NutritionConversationState | None:
-    if not payload:
-        return None
+    from notas.application.ai_intake.conversation_serialization import deserialize_conversation_state
 
-    brief = deserialize_brief(payload.get("brief"))
-    if not brief:
-        return None
-
-    messages = []
-    for item in payload.get("messages") or []:
-        role = str(item.get("role") or "").strip()
-        text = str(item.get("text") or "").strip()
-        cards = {name: value for name in CONVERSATION_CARD_FIELDS if isinstance((value := item.get(name)), dict)}
-        if role in {"user", "assistant"} and (text or cards):
-            messages.append(NutritionConversationMessage(role=role, text=text, **cards))
-
-    return NutritionConversationState(
-        messages=messages[-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:],
-        result=build_intake_result_from_brief(brief),
+    return deserialize_conversation_state(
+        payload,
+        build_result=build_intake_result_from_brief,
+        card_fields=CONVERSATION_CARD_FIELDS,
+        card_list_fields=CONVERSATION_CARD_LIST_FIELDS,
+        deserialize_brief=deserialize_brief,
+        max_card_items=MAX_CONVERSATION_CARD_LIST_ITEMS,
+        max_messages=AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT,
+        message_factory=NutritionConversationMessage,
+        state_factory=NutritionConversationState,
     )
 
 
@@ -1428,6 +1425,7 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
         return None
 
     from notas.application.ai_intake.program_brief import deserialize_program_fields
+
     duration, program_specification = deserialize_program_fields(payload)
 
     return NutritionBrief(
@@ -1479,14 +1477,18 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
     if existing is None:
         return incoming
 
-    raw_prompt = "\n".join(
-        value for value in (existing.raw_prompt.strip(), incoming.raw_prompt.strip()) if value
-    )
+    raw_prompt = "\n".join(value for value in (existing.raw_prompt.strip(), incoming.raw_prompt.strip()) if value)
     inferred = build_intake_result(raw_prompt).brief if raw_prompt else incoming
 
     requested_entity = existing.requested_entity
-    if incoming.requested_entity == "program" or inferred.requested_entity == "program" or existing.requested_entity not in {"daily_plan", "program"}:
-        requested_entity = incoming.requested_entity if incoming.requested_entity == "program" else inferred.requested_entity
+    if (
+        incoming.requested_entity == "program"
+        or inferred.requested_entity == "program"
+        or existing.requested_entity not in {"daily_plan", "program"}
+    ):
+        requested_entity = (
+            incoming.requested_entity if incoming.requested_entity == "program" else inferred.requested_entity
+        )
 
     subject_source = incoming.subject_source or existing.subject_source or inferred.subject_source
     ppk_weight_source = (
@@ -1523,14 +1525,10 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
         carb_target=incoming.carb_target or existing.carb_target or inferred.carb_target,
         fat_target=incoming.fat_target or existing.fat_target or inferred.fat_target,
         protein_per_kg_target=(
-            incoming.protein_per_kg_target
-            or existing.protein_per_kg_target
-            or inferred.protein_per_kg_target
+            incoming.protein_per_kg_target or existing.protein_per_kg_target or inferred.protein_per_kg_target
         ),
         macro_distribution=(
-            dict(incoming.macro_distribution)
-            or dict(existing.macro_distribution)
-            or dict(inferred.macro_distribution)
+            dict(incoming.macro_distribution) or dict(existing.macro_distribution) or dict(inferred.macro_distribution)
         ),
         weight_kg=incoming.weight_kg or existing.weight_kg or inferred.weight_kg,
         height_cm=incoming.height_cm or existing.height_cm or inferred.height_cm,
@@ -1538,7 +1536,9 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
         sex=incoming.sex or existing.sex or inferred.sex,
         activity_level=incoming.activity_level or existing.activity_level or inferred.activity_level,
         energy_adjustment=incoming.energy_adjustment or existing.energy_adjustment or inferred.energy_adjustment,
-        style_preferences=_merge_unique(existing.style_preferences, inferred.style_preferences, incoming.style_preferences),
+        style_preferences=_merge_unique(
+            existing.style_preferences, inferred.style_preferences, incoming.style_preferences
+        ),
         excluded_foods=_merge_unique(existing.excluded_foods, inferred.excluded_foods, incoming.excluded_foods),
         preferred_foods=_merge_unique(existing.preferred_foods, inferred.preferred_foods, incoming.preferred_foods),
         complexity_level=incoming.complexity_level or existing.complexity_level or inferred.complexity_level,
@@ -1561,11 +1561,7 @@ def _merge_unique(*groups: Iterable[str]) -> list[str]:
 
 def _normalize_prompt(prompt: str) -> str:
     text = " ".join((prompt or "").strip().lower().split())
-    return "".join(
-        char
-        for char in unicodedata.normalize("NFD", text)
-        if unicodedata.category(char) != "Mn"
-    )
+    return "".join(char for char in unicodedata.normalize("NFD", text) if unicodedata.category(char) != "Mn")
 
 
 def _detect_goal(prompt: str) -> str | None:
@@ -1645,11 +1641,15 @@ def _detect_training_frequency(prompt: str) -> int | None:
     if semantic_frequency is not None:
         return semantic_frequency
 
-    match = re.search(r"\b(?:entreno|entrenar|entrenamiento|gym|gimnasio)\D{0,18}([1-7])\s*(?:veces|dias|días)?\b", prompt)
+    match = re.search(
+        r"\b(?:entreno|entrenar|entrenamiento|gym|gimnasio)\D{0,18}([1-7])\s*(?:veces|dias|días)?\b", prompt
+    )
     if match:
         return int(match.group(1))
 
-    match = re.search(r"\b([1-7])\s*(?:veces|dias|días)\D{0,18}(?:entreno|entrenar|entrenamiento|gym|gimnasio)\b", prompt)
+    match = re.search(
+        r"\b([1-7])\s*(?:veces|dias|días)\D{0,18}(?:entreno|entrenar|entrenamiento|gym|gimnasio)\b", prompt
+    )
     if match:
         return int(match.group(1))
 
@@ -1799,9 +1799,7 @@ def _detect_excluded_foods(prompt: str) -> list[str]:
 
 def _detect_preferred_foods(prompt: str) -> list[str]:
     preferred = []
-    preference_patterns = (
-        r"(?:me gusta|prefiero|tengo|usar|incluye|incluir)\s+([^,.]+)",
-    )
+    preference_patterns = (r"(?:me gusta|prefiero|tengo|usar|incluye|incluir)\s+([^,.]+)",)
     for pattern in preference_patterns:
         for match in re.finditer(pattern, prompt):
             fragment = match.group(1)
@@ -1919,9 +1917,7 @@ def build_completed_summary_items(brief: NutritionBrief) -> list[NutritionBriefS
     return [
         item
         for item in build_summary_items(brief)
-        if not item.is_pending
-        and item.value
-        and item.value not in {"Pendiente", "Sin exclusiones detectadas"}
+        if not item.is_pending and item.value and item.value not in {"Pendiente", "Sin exclusiones detectadas"}
     ]
 
 
@@ -1938,6 +1934,7 @@ def required_proposal_fields(brief: NutritionBrief) -> list[str]:
 
     if brief.program_specification:
         from nutrition_solver.application.program_specification import parse_program_specification
+
         parse_program_specification(brief.program_specification)
         return []
     required: list[str] = []
@@ -1958,13 +1955,15 @@ def is_brief_ready_for_proposal(brief: NutritionBrief) -> bool:
 
 
 def can_estimate_energy_expenditure(brief: NutritionBrief) -> bool:
-    return all((
-        brief.weight_kg,
-        brief.height_cm,
-        brief.age_years,
-        brief.sex,
-        brief.activity_level,
-    ))
+    return all(
+        (
+            brief.weight_kg,
+            brief.height_cm,
+            brief.age_years,
+            brief.sex,
+            brief.activity_level,
+        )
+    )
 
 
 def _missing_energy_inputs(brief: NutritionBrief) -> list[str]:
@@ -2134,7 +2133,6 @@ def _choice_label(choices: Iterable[tuple[str, str]], value: str | None, fallbac
     return fallback
 
 
-
 def _clean_ppk_weight_source(value: str | None) -> str:
     value = str(value or "").strip()
     allowed = {key for key, _label in PPK_WEIGHT_SOURCE_CHOICES}
@@ -2174,9 +2172,7 @@ def apply_subject_context(brief: NutritionBrief, *, user=None) -> NutritionBrief
         "sex": brief.sex or subject.sex,
         "activity_level": brief.activity_level or subject.activity_level,
         "training_frequency": (
-            brief.training_frequency
-            if brief.training_frequency is not None
-            else subject.training_frequency
+            brief.training_frequency if brief.training_frequency is not None else subject.training_frequency
         ),
     }
     profile_filled_fields = []
@@ -2230,15 +2226,21 @@ def _question_for_pending_field(field_name: str) -> str:
 
 
 def build_profile_draft_card(brief: NutritionBrief) -> NutritionProfileDraftCardVM | None:
-    if brief.subject_source not in {SUBJECT_SOURCE_SELF_PROFILE, SUBJECT_SOURCE_MANUAL_CHAT_DATA, SUBJECT_SOURCE_EXTERNAL_CHAT_DATA}:
+    if brief.subject_source not in {
+        SUBJECT_SOURCE_SELF_PROFILE,
+        SUBJECT_SOURCE_MANUAL_CHAT_DATA,
+        SUBJECT_SOURCE_EXTERNAL_CHAT_DATA,
+    }:
         return None
-    if not any(_profile_draft_field_value(brief, field_name) not in (None, "") for field_name in PROFILE_DRAFT_FIELD_ORDER) and brief.subject_source != SUBJECT_SOURCE_SELF_PROFILE:
+    if (
+        not any(
+            _profile_draft_field_value(brief, field_name) not in (None, "") for field_name in PROFILE_DRAFT_FIELD_ORDER
+        )
+        and brief.subject_source != SUBJECT_SOURCE_SELF_PROFILE
+    ):
         return None
 
-    items = [
-        _build_profile_draft_item(brief, field_name)
-        for field_name in PROFILE_DRAFT_FIELD_ORDER
-    ]
+    items = [_build_profile_draft_item(brief, field_name) for field_name in PROFILE_DRAFT_FIELD_ORDER]
     pending_count = sum(1 for item in items if item.is_pending)
     has_chat_updates = any(item.source == FIELD_SOURCE_CHAT_DRAFT for item in items)
     title = "Ficha para esta propuesta"

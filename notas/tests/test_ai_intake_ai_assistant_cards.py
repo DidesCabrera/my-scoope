@@ -12,12 +12,15 @@ from ai_assistant.domain import (
 from notas.application.ai_intake.chat_engine import (
     _append_prepared_action_cards_from_llm_tools,
     _append_proposal_review_cards_from_llm_tools,
+    _append_read_result_cards_from_llm_tools,
+    _stamp_latest_turn,
 )
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
     NutritionConversationMessage,
     NutritionConversationState,
     build_intake_result_from_brief,
+    deserialize_conversation,
     serialize_conversation,
 )
 from notas.presentation.pages.ai_intake_page import (
@@ -197,3 +200,68 @@ class AiIntakeAiAssistantProposalCardTests(SimpleTestCase):
         card = conversation.messages[-1].prepared_action_card
         self.assertEqual(card["action_key"], "meal.rename")
         self.assertEqual(card["preview"]["after"]["name"], "Después")
+
+    def test_authenticated_read_results_render_bounded_library_and_comparison_cards(self):
+        conversation, library_count, comparison_count = _append_read_result_cards_from_llm_tools(
+            _conversation(),
+            {
+                "tool_results": [
+                    {
+                        "status": "ok",
+                        "tool_name": "query_workspace",
+                        "data": {
+                            "foods": [{"id": index, "name": f"Alimento {index}"} for index in range(1, 11)],
+                            "saved_comparisons": [
+                                {"id": 21, "name": "Proteínas", "kind": "foods"},
+                                {"id": 22, "name": "Planes", "kind": "dailyplans"},
+                            ],
+                        },
+                    },
+                    {
+                        "status": "ok",
+                        "tool_name": "unrelated_tool",
+                        "data": {"foods": [{"id": 999, "name": "No mostrar"}]},
+                    },
+                ]
+            },
+        )
+
+        self.assertEqual(library_count, 3)
+        self.assertEqual(comparison_count, 2)
+        card_message = conversation.messages[-1]
+        self.assertEqual(card_message.library_cards[0]["title"], "Alimento 1")
+        self.assertNotIn(999, {card["item_id"] for card in card_message.library_cards})
+        self.assertEqual(card_message.saved_comparison_cards[1]["comparison_id"], 22)
+
+        stamped = _stamp_latest_turn(conversation)
+        self.assertIsNotNone(stamped.messages[-1].created_at)
+        restored = deserialize_conversation(serialize_conversation(stamped))
+        self.assertEqual(len(restored.messages[-1].library_cards), 3)
+        self.assertEqual(len(restored.messages[-1].saved_comparison_cards), 2)
+        self.assertEqual(restored.messages[-1].created_at, stamped.messages[-1].created_at)
+
+    def test_two_library_results_render_as_two_distinct_cards(self):
+        conversation, library_count, comparison_count = _append_read_result_cards_from_llm_tools(
+            _conversation(),
+            {
+                "tool_results": [
+                    {
+                        "status": "ok",
+                        "tool_name": "query_workspace",
+                        "data": {
+                            "dailyplans": [
+                                {"id": 31, "name": "Plan uno"},
+                                {"id": 32, "name": "Plan dos"},
+                            ]
+                        },
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(library_count, 2)
+        self.assertEqual(comparison_count, 0)
+        self.assertEqual(
+            [card["item_id"] for card in conversation.messages[-1].library_cards],
+            [31, 32],
+        )

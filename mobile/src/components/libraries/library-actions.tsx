@@ -223,7 +223,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                   </ActionSheetActions>
                 </View>
               ) : (
-                <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
+                <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
                 {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
                 {selected?.key === "change-time" && mealTimeChange ? (

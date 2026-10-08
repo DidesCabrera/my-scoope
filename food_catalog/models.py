@@ -101,6 +101,13 @@ class CatalogFood(models.Model):
         (FOOD_FORM_CONDIMENT, "Condiment"),
     ]
 
+    PORTION_UNIT_GRAMS = "g"
+    PORTION_UNIT_MILLILITERS = "ml"
+    PORTION_UNIT_CHOICES = [
+        (PORTION_UNIT_GRAMS, "Grams"),
+        (PORTION_UNIT_MILLILITERS, "Milliliters"),
+    ]
+
     PREPARATION_EFFORT_UNKNOWN = "unknown"
     PREPARATION_EFFORT_NONE = "none"
     PREPARATION_EFFORT_LOW = "low"
@@ -194,6 +201,13 @@ class CatalogFood(models.Model):
         choices=FOOD_FORM_CHOICES,
         default=FOOD_FORM_UNKNOWN,
         help_text="Curated culinary form used by meal grammar after operational snapshot.",
+    )
+
+    portion_unit = models.CharField(
+        max_length=2,
+        choices=PORTION_UNIT_CHOICES,
+        default=PORTION_UNIT_GRAMS,
+        help_text="Unit used for portions and the nutritional basis: per 100 g or per 100 ml.",
     )
 
     functional_roles = models.JSONField(
@@ -293,7 +307,7 @@ class CatalogFood(models.Model):
         null=True,
         blank=True,
         validators=[MinValueValidator(Decimal("0"))],
-        help_text="Optional label/source kcal per 100 g. Operational kcal remains snapshot-specific.",
+        help_text="Optional label/source kcal per 100 of the configured portion unit.",
     )
 
     fiber_g_per_100g = models.DecimalField(
@@ -502,9 +516,11 @@ class CatalogFoodPortion(models.Model):
     label = models.CharField(max_length=120)
 
     grams = models.DecimalField(
+        verbose_name="amount",
         max_digits=8,
         decimal_places=3,
         validators=[MinValueValidator(Decimal("0.001"))],
+        help_text="Portion amount in the catalog food's configured portion unit.",
     )
 
     source = models.CharField(
@@ -529,7 +545,7 @@ class CatalogFoodPortion(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.catalog_food} · {self.label} = {self.grams} g"
+        return f"{self.catalog_food} · {self.label} = {self.grams} {self.catalog_food.portion_unit}"
 
 
 class CatalogFoodAlias(models.Model):

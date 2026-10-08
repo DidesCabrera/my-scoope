@@ -71,8 +71,8 @@ _MEDIUM_RISK_ACTIONS = {
 }
 
 _ALLOWED_ACTION_ARGUMENTS = {
-    "food.create": {"name", "protein", "carbs", "fat"},
-    "food.update": {"name", "protein", "carbs", "fat"},
+    "food.create": {"name", "protein", "carbs", "fat", "portion_unit"},
+    "food.update": {"name", "protein", "carbs", "fat", "portion_unit"},
     "meal.create": {"name"},
     "meal.rename": {"name"},
     "meal.add_food": {"food_id", "quantity"},
@@ -637,6 +637,7 @@ def _target_snapshot(target_type: str, target) -> dict:
             "protein": float(target.protein),
             "carbs": float(target.carbs),
             "fat": float(target.fat),
+            "portion_unit": target.portion_unit,
             "is_active": target.is_active,
         }
     if target_type in {"meal", "dailyplan", "program"}:
@@ -690,7 +691,7 @@ def _preview_after(spec: PreparedActionSpec, *, before: dict, arguments: dict) -
     if spec.action_key.endswith(".rename"):
         return {**before, "name": str(arguments["name"]).strip()}
     if spec.action_key == "food.update":
-        allowed = {"name", "protein", "carbs", "fat"}
+        allowed = {"name", "protein", "carbs", "fat", "portion_unit"}
         updates = {key: arguments[key] for key in allowed if key in arguments}
         if not updates:
             raise ValueError("prepared_action_update_requires_changes")
@@ -794,6 +795,7 @@ def _dispatch_food_commit(*, key: str, user, target, arguments: dict) -> dict:
             "protein": arguments.get("protein", target.protein),
             "carbs": arguments.get("carbs", target.carbs),
             "fat": arguments.get("fat", target.fat),
+            "portion_unit": arguments.get("portion_unit", target.portion_unit),
         }
         result = update_food(food=target, **values)
         return {"food_id": result.food.id, "food_name": result.food.name}

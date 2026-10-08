@@ -253,7 +253,7 @@ def _simulate_food_item(
         food_id=food.id,
         food_name=food.name,
         quantity=food_item.quantity,
-        unit=food_item.unit,
+        unit=food.portion_unit,
         protein=protein,
         carbs=carbs,
         fat=fat,

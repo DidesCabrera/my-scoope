@@ -174,7 +174,7 @@ def build_mealfood_table_item(mf, current_weight=None):
         "rel": {
             "id": mf.id,
             "quantity": mf.quantity,
-            "quantity_unit": "g",
+            "quantity_unit": food.portion_unit,
 
             "name": resolve_food_display_name(food),
 
@@ -222,7 +222,7 @@ def build_dailyplan_food_aggregation_table_item(food_aggregation, dailyplan_snap
         "rel": {
             "id": food.id,
             "quantity": total_grams,
-            "quantity_unit": "g",
+            "quantity_unit": food.portion_unit,
             "name": food_aggregation["display_name"],
             "total_kcal": total_kcal,
             "kcal_share": _safe_percentage(

@@ -125,7 +125,7 @@ def _food_table_row(food, display_name, total_grams, dailyplan_totals):
         "rel": {
             "id": food.id,
             "quantity": total_grams,
-            "quantity_unit": "g",
+            "quantity_unit": food.portion_unit,
             "name": display_name,
             "total_kcal": total_kcal,
             "kcal_share": _safe_percentage(total_kcal, dailyplan_totals["total_kcal"]),
@@ -177,7 +177,9 @@ def build_dailyplan_summary(dailyplan: DailyPlan) -> dict:
             foods_aggregation[food.id]["food"] = food
             foods_aggregation[food.id]["display_name"] = display_name
             foods_aggregation[food.id]["total_grams"] += meal_food.quantity
-            menu_foods.append(f"{display_name} ({_format_quantity(meal_food.quantity)}g)")
+            menu_foods.append(
+                f"{display_name} ({_format_quantity(meal_food.quantity)}{food.portion_unit})"
+            )
 
     totals = _finalize_totals(totals)
 

@@ -41,11 +41,11 @@ test("product action sheets blur the backdrop and preserve entity identity", () 
   assert.equal(libraryActions.includes("styles.actionRow"), false);
   assert.equal(libraryActions.includes('sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 }'), true);
   assert.equal(libraryActions.includes('maxHeight: "88%"'), false);
-  assert.equal(libraryActions.indexOf('<View style={styles.sheetContent}>') < libraryActions.indexOf('<ScrollView contentContainerStyle={styles.sheetContent}'), true);
+  assert.equal(libraryActions.indexOf('<View style={styles.sheetContent}>') < libraryActions.indexOf('<ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.sheetContent}'), true);
   assert.equal(libraryListActions.includes("<ActionSheetHeader entity={entity}"), true);
   assert.equal(actionSheet.includes("<Icon color={color} size={18} />"), true);
   assert.equal(account.includes("nestedScrollEnabled"), true);
   assert.equal(account.includes("sheetScroll: { flexGrow: 0, flexShrink: 1 }"), true);
-  assert.equal(account.indexOf('accountActions === "menu"') < account.indexOf("<ScrollView contentContainerStyle={styles.sheetContent}"), true);
+  assert.equal(account.indexOf('accountActions === "menu"') < account.indexOf("<ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.sheetContent}"), true);
   assert.equal(account.includes('sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 }'), true);
 });

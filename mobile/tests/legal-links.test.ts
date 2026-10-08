@@ -28,9 +28,10 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /isOnboarding[\s\S]*mode: "default", title: "Elige un plan"/);
   assertSourceMatch(subscription, /<Screen headerMode="preserve" onHeaderVisibilityChange=\{setCompactHeaderVisible\}>/);
   assertSourceMatch(subscription, /<AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" \/>/);
+  assertSourceMatch(subscription, /isOnboarding \? \([\s\S]*<View style=\{styles\.onboardingLogo\}><MyScoopeLogo \/><\/View>[\s\S]*\) : \([\s\S]*<View style=\{styles\.subscriptionLogo\}><MyScoopeLogo \/><\/View>[\s\S]*<AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" \/>/);
   assertSourceMatch(subscription, /Ver detalles de Suscripciones y Bolsas/);
   assertSourceMatch(subscription, /router\.push\("\/subscription-details" as Href\)/);
-  assertSourceMatch(subscription, /<RefreshCcw[^>]*>[\s\S]*Restaurar compras/);
+  assertSourceMatch(subscription, /<ActionSheetAction disabled=\{working\} icon=\{RefreshCcw\} label="Restaurar compras"/);
   assertSourceMatch(subscription, /onPress=\{\(\) => \{ closeActions\(\); void restore\(\); \}\}/);
   assertSourceDoesNotMatch(subscription, /<Button\s+label="Restaurar compras"/);
   assertSourceDoesNotMatch(subscription, /Mi suscripción|Planes y Bolsas|Volver a hoy|router\.back\(\)/);

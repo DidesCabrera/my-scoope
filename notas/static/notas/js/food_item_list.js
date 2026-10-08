@@ -116,7 +116,7 @@ export function renderFoodItem(food) {
         icon: "carrot",
         iconClass: "food",
         badges: buildBadges(food),
-        unitLabel: "100g",
+        unitLabel: `100${food.quantity_unit || "g"}`,
       })}
 
       ${renderPickerResultKpis({

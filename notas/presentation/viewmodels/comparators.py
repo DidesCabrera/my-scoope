@@ -11,6 +11,7 @@ from notas.application.services.comparisons.payloads import selection_rows_from_
 class ComparatorChoice:
     id: int
     name: str
+    quantity_unit: str = "g"
 
 
 @dataclass
@@ -20,6 +21,7 @@ class ComparatorSelection:
     quantity: float | None = None
     position: int = 1
     display_name: str = ""
+    quantity_unit: str = "g"
 
     @property
     def label(self) -> str:
@@ -122,14 +124,14 @@ def format_number(value: float, decimals: int = 0) -> str:
     return formatted.rstrip("0").rstrip(".")
 
 
-def format_selection_name(name: str, quantity: float | None = None) -> str:
+def format_selection_name(name: str, quantity: float | None = None, quantity_unit: str = "g") -> str:
     if not name:
         return ""
 
     if quantity is None:
         return name
 
-    return f"{name} ({format_number(quantity, 0)}g)"
+    return f"{name} ({format_number(quantity, 0)}{quantity_unit})"
 
 
 def format_metric_value(value: float, unit: str) -> str:
@@ -185,7 +187,7 @@ def build_metric(
                 unit,
                 max_value,
                 label_suffix=(
-                    f"({format_number(selection.quantity, 0)}g)"
+                    f"({format_number(selection.quantity, 0)}{selection.quantity_unit})"
                     if selection.quantity is not None and selection.name
                     else ""
                 ),
@@ -246,7 +248,14 @@ def build_tabs(active_key: str, *, saved: bool = False) -> list[ComparatorTab]:
 
 
 def choices_from_queryset(queryset) -> list[ComparatorChoice]:
-    return [ComparatorChoice(id=item.id, name=item.name) for item in queryset]
+    return [
+        ComparatorChoice(
+            id=item.id,
+            name=item.name,
+            quantity_unit=getattr(item, "portion_unit", "g"),
+        )
+        for item in queryset
+    ]
 
 
 def items_by_id(queryset) -> dict[int, Any]:
@@ -272,13 +281,15 @@ def build_selections_from_params(
         selected_item = items_by_id.get(selected_id) if selected_id else None
         name = selected_item.name if selected_item else (row.get("name") or "")
         quantity = row.get("quantity") if include_quantities else None
+        quantity_unit = getattr(selected_item, "portion_unit", None) or row.get("quantity_unit") or "g"
         selections.append(
             ComparatorSelection(
                 id=selected_item.id if selected_item else selected_id,
                 name=name,
                 quantity=quantity,
                 position=index,
-                display_name=format_selection_name(name, quantity),
+                display_name=format_selection_name(name, quantity, quantity_unit),
+                quantity_unit=quantity_unit,
             )
         )
 

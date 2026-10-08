@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactElement, ReactNode } from "react";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { type RefreshControlProps, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { Platform, type RefreshControlProps, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
@@ -54,8 +54,10 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
       {scroll ? (
         <NestableScrollContainer
           alwaysBounceVertical={scroll === "auto" ? contentOverflows : undefined}
+          automaticallyAdjustKeyboardInsets
           bounces={scroll === "auto" ? contentOverflows : undefined}
           contentContainerStyle={styles.scrollContent}
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={(_width, height) => setContentHeight(height)}
           onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}

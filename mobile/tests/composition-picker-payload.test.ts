@@ -52,3 +52,17 @@ test("library food replacements keep both composition context identifiers", () =
     quantity: 125,
   });
 });
+
+test("food portions use decimal commas consistently in KPI and commit payloads", () => {
+  assert.deepEqual(buildCompositionPickerPayload({
+    ...defaults,
+    kind: "food-to-meal",
+    quantity: "125,5",
+  }), {
+    dailyplan_id: undefined,
+    dailyplan_meal_id: undefined,
+    food_id: 77,
+    meal_food_id: undefined,
+    quantity: 125.5,
+  });
+});

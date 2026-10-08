@@ -37,6 +37,7 @@ class ImportedFoodDTO:
     food_group: str = ""
     food_subgroup: str = ""
     preparation_state: str = "unknown"
+    portion_unit: str = "g"
 
     fiber_g_per_100g: Decimal | None = None
     sugar_g_per_100g: Decimal | None = None

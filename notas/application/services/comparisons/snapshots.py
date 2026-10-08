@@ -61,6 +61,7 @@ def snapshot_payload_from_comparable_rows(
 
         if include_quantities:
             row["quantity"] = parse_quantity(getattr(selection, "quantity", None), fallback=100.0)
+            row["quantity_unit"] = getattr(selection, "quantity_unit", None) or "g"
 
         snapshot.append(row)
 
@@ -85,6 +86,8 @@ def normalize_snapshot_payload(payload: Any, *, include_quantities: bool = False
         normalized_row["name"] = str(row.get("name") or "").strip()
         values = row.get("values") if isinstance(row.get("values"), dict) else {}
         normalized_row["values"] = _snapshot_values(values)
+        if include_quantities:
+            normalized_row["quantity_unit"] = str(row.get("quantity_unit") or "g")
         normalized.append(normalized_row)
 
     return normalized
@@ -98,6 +101,7 @@ def selection_rows_from_snapshot(payload: Any, *, include_quantities: bool = Fal
             "id": row.get("id"),
             "name": row.get("name", ""),
             "quantity": row.get("quantity") if include_quantities else None,
+            "quantity_unit": row.get("quantity_unit") if include_quantities else None,
         }
         for row in rows
     ]
@@ -111,6 +115,7 @@ def comparable_rows_from_snapshot(payload: Any, *, include_quantities: bool = Fa
             id=row.get("id"),
             name=row.get("name") or "Elemento eliminado",
             quantity=row.get("quantity") if include_quantities else None,
+            quantity_unit=row.get("quantity_unit") if include_quantities else None,
             position=index,
         )
         comparable_rows.append((selection, row.get("values", {})))

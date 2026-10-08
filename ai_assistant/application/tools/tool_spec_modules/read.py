@@ -8,7 +8,7 @@ from ai_assistant.application.tools.contracts import (
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
 READ_TOOL_SPECS = {
-TOOL_QUERY_WORKSPACE: AssistantToolSpec(
+    TOOL_QUERY_WORKSPACE: AssistantToolSpec(
         name=TOOL_QUERY_WORKSPACE,
         description=(
             "Query the authenticated user's My Scoope workspace. This is the primary read capability for "
@@ -16,6 +16,10 @@ TOOL_QUERY_WORKSPACE: AssistantToolSpec(
             "Use it before saying stored product data is unavailable. Omit object_id to list or search; "
             "include object_id to read one object. For count questions, always report total_count "
             "(also exposed as count_for_user_questions), never returned_count or the page length. "
+            "Library objects and saved comparisons returned by this tool are also rendered as native, "
+            "navigable cards in the chat (up to 3). Respect an explicitly requested quantity from 1 to 3; "
+            "for a larger request use limit 3 and explain that the chat shows at most 3 cards. "
+            "Do not repeat every card field. "
             "It never writes data."
         ),
         category=AssistantToolCategory.READ,
@@ -46,6 +50,15 @@ TOOL_QUERY_WORKSPACE: AssistantToolSpec(
                     "type": "string",
                     "description": "Optional text search for list resources.",
                 },
+                "kind": {
+                    "type": "string",
+                    "enum": ["foods", "meals", "dailyplans"],
+                    "description": (
+                        "Optional saved comparison kind filter. Use foods for alimentos, "
+                        "meals for comidas and dailyplans for planes. Only applies when "
+                        "resource is saved_comparisons."
+                    ),
+                },
                 "limit": {
                     "type": "integer",
                     "description": "Optional maximum result count, from 1 to 50.",
@@ -57,7 +70,7 @@ TOOL_QUERY_WORKSPACE: AssistantToolSpec(
             },
         },
     ),
-TOOL_READ_FOOD: AssistantToolSpec(
+    TOOL_READ_FOOD: AssistantToolSpec(
         name=TOOL_READ_FOOD,
         description="Read one operational Food visible to the authenticated user.",
         category=AssistantToolCategory.READ,
@@ -75,7 +88,7 @@ TOOL_READ_FOOD: AssistantToolSpec(
             },
         },
     ),
-TOOL_READ_MEAL: AssistantToolSpec(
+    TOOL_READ_MEAL: AssistantToolSpec(
         name=TOOL_READ_MEAL,
         description="Read one operational Meal visible to the authenticated user, including its foods and quantities.",
         category=AssistantToolCategory.READ,
@@ -93,7 +106,7 @@ TOOL_READ_MEAL: AssistantToolSpec(
             },
         },
     ),
-TOOL_READ_DAILYPLAN: AssistantToolSpec(
+    TOOL_READ_DAILYPLAN: AssistantToolSpec(
         name=TOOL_READ_DAILYPLAN,
         description="Read one operational DailyPlan visible to the authenticated user.",
         category=AssistantToolCategory.READ,
@@ -113,7 +126,7 @@ TOOL_READ_DAILYPLAN: AssistantToolSpec(
             },
         },
     ),
-TOOL_LIST_USER_FOODS: AssistantToolSpec(
+    TOOL_LIST_USER_FOODS: AssistantToolSpec(
         name=TOOL_LIST_USER_FOODS,
         description="List operational foods owned by the authenticated user.",
         category=AssistantToolCategory.READ,
@@ -128,7 +141,7 @@ TOOL_LIST_USER_FOODS: AssistantToolSpec(
             },
         },
     ),
-TOOL_LIST_USER_MEALS: AssistantToolSpec(
+    TOOL_LIST_USER_MEALS: AssistantToolSpec(
         name=TOOL_LIST_USER_MEALS,
         description="List reusable Meals owned by the authenticated user.",
         category=AssistantToolCategory.READ,
@@ -143,7 +156,7 @@ TOOL_LIST_USER_MEALS: AssistantToolSpec(
             },
         },
     ),
-TOOL_SEARCH_USER_MEALS: AssistantToolSpec(
+    TOOL_SEARCH_USER_MEALS: AssistantToolSpec(
         name=TOOL_SEARCH_USER_MEALS,
         description="Resolve a reusable Meal by name among Meals visible to the authenticated user.",
         category=AssistantToolCategory.READ,
@@ -159,7 +172,7 @@ TOOL_SEARCH_USER_MEALS: AssistantToolSpec(
             },
         },
     ),
-TOOL_LIST_USER_DAILYPLANS: AssistantToolSpec(
+    TOOL_LIST_USER_DAILYPLANS: AssistantToolSpec(
         name=TOOL_LIST_USER_DAILYPLANS,
         description="List DailyPlans owned by the authenticated user.",
         category=AssistantToolCategory.READ,
@@ -174,7 +187,7 @@ TOOL_LIST_USER_DAILYPLANS: AssistantToolSpec(
             },
         },
     ),
-TOOL_SEARCH_USER_DAILYPLANS: AssistantToolSpec(
+    TOOL_SEARCH_USER_DAILYPLANS: AssistantToolSpec(
         name=TOOL_SEARCH_USER_DAILYPLANS,
         description=(
             "Resolve a DailyPlan by name among plans visible to the authenticated user. "
@@ -193,7 +206,7 @@ TOOL_SEARCH_USER_DAILYPLANS: AssistantToolSpec(
             },
         },
     ),
-TOOL_READ_PROPOSAL: AssistantToolSpec(
+    TOOL_READ_PROPOSAL: AssistantToolSpec(
         name=TOOL_READ_PROPOSAL,
         description=(
             "Read one NutritionProposal visible to the authenticated user. "
@@ -220,7 +233,7 @@ TOOL_READ_PROPOSAL: AssistantToolSpec(
             },
         },
     ),
-TOOL_LIST_USER_PROPOSALS: AssistantToolSpec(
+    TOOL_LIST_USER_PROPOSALS: AssistantToolSpec(
         name=TOOL_LIST_USER_PROPOSALS,
         description="List reviewable proposals visible to the authenticated user.",
         category=AssistantToolCategory.READ,
@@ -235,7 +248,7 @@ TOOL_LIST_USER_PROPOSALS: AssistantToolSpec(
             "properties": {},
         },
     ),
-TOOL_READ_USER_PROFILE_CONTEXT: AssistantToolSpec(
+    TOOL_READ_USER_PROFILE_CONTEXT: AssistantToolSpec(
         name=TOOL_READ_USER_PROFILE_CONTEXT,
         description=(
             "Read the authenticated user's nutrition profile context for AI-assisted planning. "
@@ -253,7 +266,7 @@ TOOL_READ_USER_PROFILE_CONTEXT: AssistantToolSpec(
             "properties": {},
         },
     ),
-TOOL_READ_USER_PREFERENCE_CONTEXT: AssistantToolSpec(
+    TOOL_READ_USER_PREFERENCE_CONTEXT: AssistantToolSpec(
         name=TOOL_READ_USER_PREFERENCE_CONTEXT,
         description=(
             "Read the authenticated user's approved food and meal preferences. "
@@ -266,7 +279,7 @@ TOOL_READ_USER_PREFERENCE_CONTEXT: AssistantToolSpec(
         allowed_intents=("read_context", "capture_nutrition_brief", "create_dailyplan_proposal", "answer_question"),
         input_schema={"type": "object", "required": [], "properties": {}},
     ),
-TOOL_LIST_USER_PROGRAMS: AssistantToolSpec(
+    TOOL_LIST_USER_PROGRAMS: AssistantToolSpec(
         name=TOOL_LIST_USER_PROGRAMS,
         description="List or search weekly Programs owned by the authenticated user.",
         category=AssistantToolCategory.READ,
@@ -282,7 +295,7 @@ TOOL_LIST_USER_PROGRAMS: AssistantToolSpec(
             },
         },
     ),
-TOOL_READ_PROGRAM: AssistantToolSpec(
+    TOOL_READ_PROGRAM: AssistantToolSpec(
         name=TOOL_READ_PROGRAM,
         description="Read one owned weekly Program, its slots and independent DailyPlan snapshots.",
         category=AssistantToolCategory.READ,
@@ -297,7 +310,7 @@ TOOL_READ_PROGRAM: AssistantToolSpec(
             },
         },
     ),
-TOOL_READ_CALENDARIZATION: AssistantToolSpec(
+    TOOL_READ_CALENDARIZATION: AssistantToolSpec(
         name=TOOL_READ_CALENDARIZATION,
         description="Read the user's current program calendarization and recent history.",
         category=AssistantToolCategory.READ,
@@ -312,7 +325,7 @@ TOOL_READ_CALENDARIZATION: AssistantToolSpec(
             },
         },
     ),
-TOOL_LIST_INBOX_ITEMS: AssistantToolSpec(
+    TOOL_LIST_INBOX_ITEMS: AssistantToolSpec(
         name=TOOL_LIST_INBOX_ITEMS,
         description="List received or sent My Scoope shares in the authenticated user's Inbox.",
         category=AssistantToolCategory.READ,
@@ -333,7 +346,7 @@ TOOL_LIST_INBOX_ITEMS: AssistantToolSpec(
             },
         },
     ),
-TOOL_READ_ACCOUNT_BILLING_CONTEXT: AssistantToolSpec(
+    TOOL_READ_ACCOUNT_BILLING_CONTEXT: AssistantToolSpec(
         name=TOOL_READ_ACCOUNT_BILLING_CONTEXT,
         description=(
             "Read the user's commercial plan, credits, subscription and payment summary. "
@@ -345,7 +358,7 @@ TOOL_READ_ACCOUNT_BILLING_CONTEXT: AssistantToolSpec(
         allowed_intents=("read_context", "answer_question"),
         input_schema={"type": "object", "required": [], "properties": {}},
     ),
-TOOL_SEARCH_OPERATIONAL_FOODS: AssistantToolSpec(
+    TOOL_SEARCH_OPERATIONAL_FOODS: AssistantToolSpec(
         name=TOOL_SEARCH_OPERATIONAL_FOODS,
         description=(
             "Search operational My Scoope foods available for planning. "
@@ -376,7 +389,7 @@ TOOL_SEARCH_OPERATIONAL_FOODS: AssistantToolSpec(
             },
         },
     ),
-TOOL_LIST_OPERATIONAL_FOODS: AssistantToolSpec(
+    TOOL_LIST_OPERATIONAL_FOODS: AssistantToolSpec(
         name=TOOL_LIST_OPERATIONAL_FOODS,
         description=(
             "List operational foods in My Scoope that are available for planning. "
@@ -420,7 +433,7 @@ TOOL_LIST_OPERATIONAL_FOODS: AssistantToolSpec(
             },
         },
     ),
-TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES: AssistantToolSpec(
+    TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES: AssistantToolSpec(
         name=TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
         description=(
             "Preview solver-ready operational food candidates for the internal nutrition solver. "
@@ -454,7 +467,7 @@ TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES: AssistantToolSpec(
             },
         },
     ),
-TOOL_COMPARE_DAILYPLAN_TO_TARGETS: AssistantToolSpec(
+    TOOL_COMPARE_DAILYPLAN_TO_TARGETS: AssistantToolSpec(
         name=TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
         description="Compare an operational DailyPlan against nutritional targets using My Scoope validation.",
         category=AssistantToolCategory.VALIDATION,
@@ -482,7 +495,7 @@ TOOL_COMPARE_DAILYPLAN_TO_TARGETS: AssistantToolSpec(
             },
         },
     ),
-TOOL_LIST_SAVED_COMPARISONS: AssistantToolSpec(
+    TOOL_LIST_SAVED_COMPARISONS: AssistantToolSpec(
         name=TOOL_LIST_SAVED_COMPARISONS,
         description=(
             "List saved comparisons owned by the authenticated user. "
@@ -507,7 +520,7 @@ TOOL_LIST_SAVED_COMPARISONS: AssistantToolSpec(
             },
         },
     ),
-TOOL_READ_SAVED_COMPARISON: AssistantToolSpec(
+    TOOL_READ_SAVED_COMPARISON: AssistantToolSpec(
         name=TOOL_READ_SAVED_COMPARISON,
         description=(
             "Read one saved comparison owned by the authenticated user, including its stable snapshot payload "

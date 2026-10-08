@@ -272,6 +272,7 @@ def food_edit(request, pk):
                 protein=form.cleaned_data["protein"],
                 carbs=form.cleaned_data["carbs"],
                 fat=form.cleaned_data["fat"],
+                portion_unit=form.cleaned_data["portion_unit"],
             )
 
             return redirect("food_detail", pk=result.food.pk)
@@ -320,6 +321,7 @@ def food_create(request):
                 protein=form.cleaned_data["protein"],
                 carbs=form.cleaned_data["carbs"],
                 fat=form.cleaned_data["fat"],
+                portion_unit=form.cleaned_data["portion_unit"],
             )
 
             if return_to:
@@ -387,6 +389,11 @@ def import_foods(request):
                         "protein": row["protein"],
                         "carbs": row["carbs"],
                         "fat": row["fat"],
+                        "portion_unit": (
+                            str(row["portion_unit"]).strip().lower()
+                            if "portion_unit" in df.columns and not pd.isna(row["portion_unit"])
+                            else Food.PORTION_UNIT_GRAMS
+                        ),
                     }
                 )
 
@@ -427,6 +434,7 @@ def download_food_template(request):
         "protein",
         "carbs",
         "fat",
+        "portion_unit",
     ])
 
     # Optional example row (muy útil)
@@ -435,6 +443,7 @@ def download_food_template(request):
         31,
         0,
         3.6,
+        "g",
     ])
 
     response = HttpResponse(
@@ -492,6 +501,7 @@ def foods_json(request):
             "carbs": item.carbs,
             "fat": item.fat,
             "total_kcal": item.total_kcal,
+            "quantity_unit": item.quantity_unit,
             "alloc": item.alloc,
             "picker_source": item.picker_source,
             "picker_label": item.picker_label,

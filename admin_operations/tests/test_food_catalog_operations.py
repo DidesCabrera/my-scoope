@@ -188,6 +188,7 @@ class AdminOperationsFoodCatalogTests(TestCase):
             food_group="cereals",
             preparation_state=CatalogFood.PREPARATION_COOKED,
             food_form=CatalogFood.FOOD_FORM_INGREDIENT,
+            portion_unit=CatalogFood.PORTION_UNIT_MILLILITERS,
         )
         CatalogFoodSource.objects.create(
             catalog_food=catalog_food,
@@ -217,11 +218,12 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Quinoa detalle")
         self.assertContains(response, "Aprobar revisión")
-        self.assertContains(response, "Valores por 100 gramos")
+        self.assertContains(response, "Valores por 100 ml")
         self.assertContains(response, "Cocido")
         self.assertContains(response, "Ingrediente")
         self.assertContains(response, "Ficha técnica")
         self.assertContains(response, "1 taza")
+        self.assertContains(response, "185 ml")
         self.assertContains(response, "Quinoa cocida")
         self.assertContains(response, 'role="tablist"')
         self.assertContains(response, 'data-detail-tab="nutricion"')
@@ -485,7 +487,7 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertContains(response, "Cobertura de datos del catálogo persistido")
         self.assertContains(response, "Datos existentes")
         self.assertContains(response, "Porcentaje del catálogo")
-        self.assertContains(response, "Nutrición / 100 g")
+        self.assertContains(response, "Nutrición / base 100")
         self.assertContains(response, "Cobertura Alimentos")
         self.assertContains(response, "Catálogo Alimentos")
         self.assertContains(response, "Cobertura datos")

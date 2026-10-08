@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Carrot, ChevronRight, ClipboardList, Utensils } from "lucide-react-native";
+import { Carrot, ClipboardList, Utensils } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -11,11 +11,10 @@ import type {
   ComparisonSelection,
   SavedComparisonDetail,
   SavedComparisonListData,
-  SavedComparisonSummary,
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
-import { SavedComparisonPreviewPanels } from "@/components/comparisons/comparison-components";
+import { SavedComparisonListCard } from "@/components/comparisons";
 import {
   applyComparatorSelection,
   initialComparisonSlots,
@@ -27,16 +26,12 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionKpiSection } from "@/components/nutrition";
 import {
   DistributedTabBar,
-  Chip,
   EntityCard,
-  EntityCardAction,
-  EntityCardActions,
-  EntityIcon,
   SectionDivider,
   SectionPageHeader,
 } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, Field, LoadingState, Screen } from "@/components/ui/primitives";
+import { Button, Field, LoadingState, Screen } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
 const fallbackKinds = [
@@ -51,59 +46,8 @@ const comparisonEntities = {
   dailyplans: "dailyPlan",
 } as const satisfies Record<ComparisonKind, "food" | "meal" | "dailyPlan">;
 
-const comparisonEntityColors: Record<ComparisonKind, string> = {
-  foods: tokens.color.food,
-  meals: tokens.color.meal,
-  dailyplans: tokens.color.dailyPlan,
-};
-
-const comparisonCountLabels: Record<ComparisonKind, { plural: string; singular: string }> = {
-  foods: { plural: "Alimentos", singular: "Alimento" },
-  meals: { plural: "Comidas", singular: "Comida" },
-  dailyplans: { plural: "Planes diarios", singular: "Plan diario" },
-};
-
-function comparisonCountLabel(kind: ComparisonKind, count: number) {
-  const labels = comparisonCountLabels[kind];
-  return `${count} ${count === 1 ? labels.singular : labels.plural}`;
-}
-
 function creationHref(kind: ComparisonKind): Href {
   return { pathname: "/comparator", params: { create: "1", kind } } as Href;
-}
-
-function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress(): void }) {
-  const entity = comparisonEntities[item.kind];
-  const entityColor = comparisonEntityColors[item.kind];
-  return (
-    <Card accent={entityColor} style={styles.savedCard}>
-      <Pressable
-        accessibilityLabel={`Ver detalle de ${item.name}`}
-        accessibilityRole="link"
-        onPress={onPress}
-        style={({ pressed }) => [styles.savedCopy, pressed && styles.pressed]}>
-        <View style={styles.savedEyebrow}>
-          <EntityIcon entity={entity} size="compact" />
-          <Text style={styles.savedEyebrowText}>Comparación {item.kind_label}</Text>
-        </View>
-        <Text style={styles.savedTitle}>{item.name}</Text>
-        <View style={styles.savedChip}>
-          <Chip
-            backgroundColor={`${entityColor}1A`}
-            borderColor={entityColor}
-            label={comparisonCountLabel(item.kind, item.item_count)}
-            textColor={tokens.color.entityIconForeground}
-          />
-        </View>
-      </Pressable>
-      <SavedComparisonPreviewPanels items={item.items} scope={entity} />
-      <EntityCardActions>
-        <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={onPress} role="link">
-          <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
-        </EntityCardAction>
-      </EntityCardActions>
-    </Card>
-  );
 }
 
 function ComparisonKindTabs({ counts, kind, onChange }: { counts?: Record<ComparisonKind, number>; kind: ComparisonKind; onChange(nextKind: ComparisonKind): void }) {
@@ -168,7 +112,7 @@ function ComparatorDashboard() {
         stickyHeader={<ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />}
         stickyHeaderStyle={styles.dashboardStickyHeader}>
         {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
-        {page?.items.length ? page.items.map((item) => <SavedCard item={item} key={item.id} onPress={() => router.push({ pathname: "/comparator/saved/[id]", params: { id: String(item.id), kind: item.kind } } as Href)} />) : (
+        {page?.items.length ? page.items.map((item) => <SavedComparisonListCard item={item} key={item.id} onPress={() => router.push({ pathname: "/comparator/saved/[id]", params: { id: String(item.id), kind: item.kind } } as Href)} />) : (
           <EmptyState actionLabel="Crear nueva comparación" message={`Todavía no tienes comparaciones guardadas de ${fallbackKinds.find((item) => item.value === kind)?.label.toLowerCase()}.`} onAction={() => router.push(creationHref(kind))} title="Aún no hay comparaciones" />
         )}
       </Screen>
@@ -219,11 +163,12 @@ function ComparatorBuilderScreen() {
         setMetadata(nextMetadata);
         if (saved) {
           setKind(saved.kind);
-          const restored = saved.editable_selections.map((selection, index) => ({
+          const restored: ComparisonSlot[] = saved.editable_selections.map((selection, index) => ({
             key: index + 1,
             option: {
               id: selection.id,
               name: saved.items[index]?.name ?? `Elemento ${selection.id}`,
+              quantity_unit: saved.items[index]?.quantity_unit === "ml" ? "ml" : "g",
             },
             quantity: String(selection.quantity ?? 100),
           }));
@@ -339,7 +284,7 @@ function ComparatorBuilderScreen() {
                 {usesQuantity && slot.option ? (
                   <Field
                     keyboardType="decimal-pad"
-                    label="Cantidad (g)"
+                    label={`Cantidad (${slot.option.quantity_unit ?? "g"})`}
                     onChangeText={(quantity) => {
                       setSlots((current) => current.map((row) => row.key === slot.key ? { ...row, quantity } : row));
                       invalidateResult();
@@ -381,12 +326,5 @@ const styles = StyleSheet.create({
   dashboardStickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
   remove: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   removeText: { color: tokens.color.textMuted, fontSize: 24, lineHeight: 26 },
-  pressed: { opacity: 0.68 },
-  savedCard: { paddingBottom: tokens.card.innerPadding },
-  savedCopy: { flex: 1, gap: tokens.spacing.xs },
-  savedChip: { alignItems: "flex-start", marginTop: tokens.spacing.xs },
-  savedEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  savedEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
-  savedTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   slots: { gap: tokens.spacing.md },
 });

@@ -14,6 +14,13 @@ from notas.domain.constants.nutrition import (
 # ==================================================
 
 class Food(models.Model):
+    PORTION_UNIT_GRAMS = "g"
+    PORTION_UNIT_MILLILITERS = "ml"
+    PORTION_UNIT_CHOICES = [
+        (PORTION_UNIT_GRAMS, "Gramos"),
+        (PORTION_UNIT_MILLILITERS, "Mililitros"),
+    ]
+
     CATALOG_SYNC_NONE = "none"
     CATALOG_SYNC_SNAPSHOT = "snapshot"
     CATALOG_SYNC_STALE = "stale"
@@ -55,6 +62,13 @@ class Food(models.Model):
     ]
 
     name = models.CharField(max_length=100)
+
+    portion_unit = models.CharField(
+        max_length=2,
+        choices=PORTION_UNIT_CHOICES,
+        default=PORTION_UNIT_GRAMS,
+        help_text="Unidad usada para las porciones y la base nutricional: por 100 g o por 100 ml.",
+    )
 
     protein = models.FloatField()
     carbs = models.FloatField()
@@ -142,7 +156,7 @@ class Food(models.Model):
         decimal_places=3,
         null=True,
         blank=True,
-        help_text="Fiber in grams per 100 g.",
+        help_text="Fiber in grams per 100 of the food's configured portion unit.",
     )
 
     sugar_g_per_100g = models.DecimalField(
@@ -150,7 +164,7 @@ class Food(models.Model):
         decimal_places=3,
         null=True,
         blank=True,
-        help_text="Sugar in grams per 100 g.",
+        help_text="Sugar in grams per 100 of the food's configured portion unit.",
     )
 
     saturated_fat_g_per_100g = models.DecimalField(
@@ -158,7 +172,7 @@ class Food(models.Model):
         decimal_places=3,
         null=True,
         blank=True,
-        help_text="Saturated fat in grams per 100 g.",
+        help_text="Saturated fat in grams per 100 of the food's configured portion unit.",
     )
 
     sodium_mg_per_100g = models.DecimalField(
@@ -166,7 +180,7 @@ class Food(models.Model):
         decimal_places=3,
         null=True,
         blank=True,
-        help_text="Sodium in milligrams per 100 g.",
+        help_text="Sodium in milligrams per 100 of the food's configured portion unit.",
     )
 
     default_portion_g = models.DecimalField(
@@ -174,7 +188,7 @@ class Food(models.Model):
         decimal_places=3,
         null=True,
         blank=True,
-        help_text="Suggested default portion in grams.",
+        help_text="Suggested default portion in the food's configured portion unit.",
     )
 
     min_portion_g = models.DecimalField(
@@ -514,9 +528,10 @@ class FoodPortion(models.Model):
     )
 
     grams = models.DecimalField(
+        verbose_name="amount",
         max_digits=8,
         decimal_places=3,
-        help_text="Portion equivalent in grams.",
+        help_text="Portion amount in the food's configured portion unit.",
     )
 
     source = models.CharField(
@@ -535,7 +550,7 @@ class FoodPortion(models.Model):
         ordering = ["food", "-is_default", "label"]
 
     def __str__(self):
-        return f"{self.food} · {self.label} = {self.grams} g"
+        return f"{self.food} · {self.label} = {self.grams} {self.food.portion_unit}"
 
 
 class FoodAlias(models.Model):

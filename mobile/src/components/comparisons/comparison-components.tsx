@@ -86,7 +86,7 @@ function comparisonPanelItems(items: ComparisonResultItem[]): FoodPanelItem[] {
       proteinGrams: item.values.protein_g,
       proteinPerKilogram: item.values.protein_per_kilogram,
       quantity: item.quantity ?? 1,
-      quantityUnit: item.quantity == null ? "unidad" : "g",
+      quantityUnit: item.quantity == null ? "unidad" : (item.quantity_unit ?? "g"),
     };
   });
 }
@@ -163,6 +163,7 @@ export function ComparisonEditorCard({
   onQuantityChange,
   onRemove,
   quantity,
+  quantityUnit = "g",
 }: {
   entity: ComparisonScope;
   index: number;
@@ -171,6 +172,7 @@ export function ComparisonEditorCard({
   onQuantityChange?: (value: string) => void;
   onRemove?: () => void;
   quantity?: string;
+  quantityUnit?: string;
 }) {
   const singularLabel = scopeSingularLabels[entity];
   const supportsQuantity = entity !== "dailyPlan";
@@ -198,13 +200,13 @@ export function ComparisonEditorCard({
           <Text style={styles.editorFieldLabel}>Cantidad</Text>
           <View style={styles.quantityInputWrap}>
             <TextInput
-              accessibilityLabel="Cantidad en gramos"
+              accessibilityLabel={`Cantidad en ${quantityUnit === "ml" ? "mililitros" : "gramos"}`}
               inputMode="numeric"
               onChangeText={onQuantityChange}
               style={styles.quantityInput}
               value={quantity}
             />
-            <Text style={styles.quantityUnit}>g</Text>
+            <Text style={styles.quantityUnit}>{quantityUnit}</Text>
           </View>
         </View>
       ) : null}

@@ -35,7 +35,7 @@ export default function SharedFoodDetailScreen() {
           entity="food"
           eyebrow="Alimento compartido"
           nutrition={sharedNutrition(food.nutrition)}
-          subtitle={`${food.quantity_grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} g`}
+          subtitle={`${food.quantity_grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} ${food.quantity_unit ?? "g"}`}
           title={food.name}
         />
       ) : null}

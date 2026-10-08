@@ -131,8 +131,8 @@ class ReadOnlyToolExecutorTests(SimpleTestCase):
     def test_workspace_query_normalizes_non_negative_offset(self):
         calls = []
 
-        def query_workspace(user, *, resource, search, limit, offset):
-            calls.append((resource, search, limit, offset))
+        def query_workspace(user, *, resource, search, kind, limit, offset):
+            calls.append((resource, search, kind, limit, offset))
             return tool_success({"foods": [], "total_count": 0})
 
         executor = ReadOnlyToolExecutor(
@@ -148,7 +148,28 @@ class ReadOnlyToolExecutorTests(SimpleTestCase):
         )
 
         self.assertEqual(result.status, AssistantToolStatus.OK)
-        self.assertEqual(calls, [("foods", "", 20, 0)])
+        self.assertEqual(calls, [("foods", "", None, 20, 0)])
+
+    def test_workspace_query_normalizes_saved_comparison_kind_and_limit(self):
+        calls = []
+
+        def query_workspace(user, *, resource, search, kind, limit, offset):
+            calls.append((resource, search, kind, limit, offset))
+            return tool_success({"saved_comparisons": [{"id": 7, "kind": "foods"}]})
+
+        executor = ReadOnlyToolExecutor(
+            dispatch_table={TOOL_QUERY_WORKSPACE: query_workspace},
+        )
+        result = executor.execute(
+            AssistantToolRequest(
+                tool_name=TOOL_QUERY_WORKSPACE,
+                arguments={"resource": "saved_comparisons", "kind": " Foods ", "limit": 1},
+            ),
+            user="user-1",
+        )
+
+        self.assertEqual(result.status, AssistantToolStatus.OK)
+        self.assertEqual(calls, [("saved_comparisons", "", "foods", 1, 0)])
 
     def test_search_operational_foods_normalizes_query_and_limit(self):
         calls = []

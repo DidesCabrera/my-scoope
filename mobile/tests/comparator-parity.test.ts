@@ -50,6 +50,8 @@ test("saved comparison detail switches between result cards and entity cards", a
   assertSourceMatch(source, /stickyHeader=\{<View style=\{styles\.tabsBleed\}>/);
   assertSourceMatch(source, /onHeaderVisibilityChange=\{setCompactHeaderVisible\}/);
   assertSourceMatch(source, /identityVisible: compactHeaderVisible/);
+  assertSourceMatch(source, /fallback: comparatorHref/);
+  assertSourceDoesNotMatch(source, /forceFallback: true/);
   assertSourceMatch(source, /`Comparación \$\{entityTabLabels\[comparison\.kind\]\}`/);
   assertSourceMatch(source, /action: comparisonId != null \? \{ icon: "more", label: "Acciones de comparación"/);
   assertSourceMatch(source, /<SavedComparisonActions/);

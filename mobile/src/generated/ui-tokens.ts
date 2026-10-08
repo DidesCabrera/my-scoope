@@ -12,6 +12,7 @@ export const tokens = {
     "textMuted": "#B5B5B5",
     "textSoft": "#8F8F8F",
     "textSubtle": "#737373",
+    "assistantMessageForeground": "#FFFFFF",
     "entityIconForeground": "#FFFFFF",
     "structuralIndicatorForeground": "#FFFFFF",
     "borderSoft": "#2A2A2A",

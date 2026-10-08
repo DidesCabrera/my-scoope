@@ -239,16 +239,32 @@ from notas.domain.models import Food
 
 class FoodEditForm(forms.ModelForm):
 
+    portion_unit = forms.ChoiceField(
+        choices=Food.PORTION_UNIT_CHOICES,
+        required=False,
+        label="Unidad de porción y base nutricional",
+        widget=forms.Select(attrs={"class": "food-edit-form__input"}),
+    )
+
+    def clean_portion_unit(self):
+        return (
+            self.cleaned_data.get("portion_unit")
+            or getattr(self.instance, "portion_unit", Food.PORTION_UNIT_GRAMS)
+            or Food.PORTION_UNIT_GRAMS
+        )
+
     class Meta:
         model = Food
         fields = [
             "name",
+            "portion_unit",
             "protein",
             "carbs",
             "fat"
         ]
         labels = {
             "name": "Nombre",
+            "portion_unit": "Unidad de porción y base nutricional",
             "protein": "Protein",
             "carbs": "Carbs",
             "fat": "Fat",

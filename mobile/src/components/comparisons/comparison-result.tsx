@@ -44,7 +44,9 @@ export function ComparisonResultCards({ result }: { result: ComparisonResult }) 
                   style={({ pressed }) => [styles.barRow, pressed && styles.pressed]}>
                   <View style={styles.barMeta}>
                     <Text numberOfLines={2} style={styles.barLabel}>
-                      {bar.label}{bar.quantity != null ? <Text style={styles.quantity}> ({Math.round(bar.quantity)}g)</Text> : null}
+                      {bar.label}{bar.quantity != null ? (
+                        <Text style={styles.quantity}> ({Math.round(bar.quantity)}{bar.quantity_unit ?? "g"})</Text>
+                      ) : null}
                     </Text>
                     <Text style={styles.barValue}>{bar.formatted_value}</Text>
                   </View>

@@ -118,6 +118,17 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
             {"type": "function", "name": TOOL_QUERY_WORKSPACE},
         )
 
+    def test_intake_need_to_see_two_plans_forces_workspace_query(self):
+        request, selected, names = self._selected_for_intake(
+            "Necesito ver los dos primeros planes de mi librería"
+        )
+
+        self.assertIn(TOOL_QUERY_WORKSPACE, names)
+        self.assertEqual(
+            initial_tool_choice(request, selected),
+            {"type": "function", "name": TOOL_QUERY_WORKSPACE},
+        )
+
     def test_intake_accentless_library_program_request_requires_program_listing(self):
         request, selected, names = self._selected_for_intake(
             "gracias, y puedes listarme los programas que tengo en mi libreria?"

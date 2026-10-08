@@ -1,3 +1,4 @@
+from dataclasses import replace
 from decimal import Decimal
 
 from django.test import SimpleTestCase
@@ -42,7 +43,26 @@ class FoodCatalogImportAdapterTests(SimpleTestCase):
         self.assertEqual(result.source_dataset, "foundation_foods")
         self.assertEqual(result.name, "Avena Integral Ácida")
         self.assertEqual(result.canonical_name, "avena integral acida")
+        self.assertEqual(result.portion_unit, "g")
         self.assertEqual(normalize_food_name("  Pechúga   de Pollo  "), "pechuga de pollo")
+
+    def test_import_dto_normalization_accepts_only_supported_portion_units(self):
+        dto = ImportedFoodDTO(
+            source="source",
+            source_food_id="liquid-1",
+            source_dataset="dataset",
+            source_version="1",
+            name="Bebida",
+            canonical_name="bebida",
+            protein=Decimal("1"),
+            carbs=Decimal("2"),
+            fat=Decimal("0"),
+            portion_unit=" ML ",
+        )
+
+        self.assertEqual(normalize_imported_food(dto).portion_unit, "ml")
+        with self.assertRaisesMessage(ValueError, "portion_unit must be g or ml"):
+            normalize_imported_food(replace(dto, portion_unit="cups"))
 
     def test_usda_mapper_preserves_source_identity_and_spanish_curated_name(self):
         payload = {

@@ -7,8 +7,8 @@ import { userFacingError } from "@/api/errors";
 import type { LibraryEntity, LibraryItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { DistributedTabBar, EntityIcon } from "@/components/ui";
 import { Button, Card, Field, InlineNotice, textStyles } from "@/components/ui/primitives";
-import { EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
 
@@ -90,6 +90,7 @@ export function LibraryCreateScreen() {
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
   const [fat, setFat] = useState("");
+  const [portionUnit, setPortionUnit] = useState<"g" | "ml">("g");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,7 +125,7 @@ export function LibraryCreateScreen() {
     setError(null);
     try {
       const body = entity === "food"
-        ? { name: cleanName, protein: macroValues.protein, carbs: macroValues.carbs, fat: macroValues.fat }
+        ? { name: cleanName, protein: macroValues.protein, carbs: macroValues.carbs, fat: macroValues.fat, portion_unit: portionUnit }
         : { name: cleanName };
       const created = await apiRequest<LibraryItem>(config.endpoint, {
         body: JSON.stringify(body),
@@ -156,8 +157,8 @@ export function LibraryCreateScreen() {
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.flex}>
+        <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Card accent={tokens.color[entity]} style={styles.formCard}>
             <View style={styles.identityRow}>
               <EntityIcon entity={entity} size="compact" />
@@ -166,8 +167,14 @@ export function LibraryCreateScreen() {
             <Field autoCapitalize="sentences" label="Nombre" onChangeText={setName} placeholder={config.namePlaceholder} value={name} />
             {entity === "food" ? (
               <View style={styles.macroFields}>
+                <DistributedTabBar<"g" | "ml">
+                  accessibilityLabel="Unidad de porción"
+                  activeTab={portionUnit}
+                  onChange={(unit) => setPortionUnit(unit)}
+                  tabs={[{ key: "g", label: "Gramos" }, { key: "ml", label: "Mililitros" }]}
+                />
                 <View style={styles.macroHeading}>
-                  <Text style={styles.macroTitle}>Información por 100 g</Text>
+                  <Text style={styles.macroTitle}>Información por 100 {portionUnit}</Text>
                   <Text style={textStyles.caption}>Ingresa cada macronutriente entre 0 y 100 g.</Text>
                 </View>
                 <Field keyboardType="decimal-pad" label="Proteínas (g)" onChangeText={setProtein} placeholder="0" value={protein} />

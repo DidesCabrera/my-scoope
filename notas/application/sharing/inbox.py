@@ -67,6 +67,11 @@ def _food_from_snapshot(*, snapshot: dict, actor, quantity_grams: float = 100) -
         protein=_number(nutrition.get("protein_grams")) * factor,
         carbs=_number(nutrition.get("carbs_grams")) * factor,
         fat=_number(nutrition.get("fat_grams")) * factor,
+        portion_unit=(
+            snapshot.get("quantity_unit")
+            or (snapshot.get("summary") or {}).get("basis_unit")
+            or Food.PORTION_UNIT_GRAMS
+        ),
         created_by=actor,
     )
 

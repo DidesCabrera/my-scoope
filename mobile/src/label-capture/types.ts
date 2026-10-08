@@ -63,6 +63,7 @@ export type FoodLabelCaptureResult = {
   capture_receipt_id: number;
   detected_basis: string;
   serving_size_g: number | null;
+  portion_unit: "g" | "ml";
   ocr_engine: string;
   label_image_retained: boolean;
   created_at: string;
