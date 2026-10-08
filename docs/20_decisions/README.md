@@ -241,3 +241,9 @@ Consequences
   inicial compartido semánticamente por Web y Native, incorpora navegación entre
   paneles, captura `training_frequency` con semántica pendiente y ordena la futura
   normalización funcional después de la aprobación visual.
+- `0203-native-onboarding-v2-persistence-and-first-plan.md`: persiste el onboarding
+  Native v2, genera una propuesta revisable y aplica el primer plan diario antes de
+  completar el recorrido.
+- `0204-culinary-variants-as-primary-solver-unit.md`: adopta variantes culinarias
+  validadas como unidad primaria para comidas, planes diarios y programas, modela
+  cursos y conserva el solver por alimentos sólo como fallback explícito de transición.

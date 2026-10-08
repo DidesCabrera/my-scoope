@@ -39,6 +39,10 @@ def apply_approved_program_proposal(*, user, proposal):
     current = simulate_proposal_payload(user, stored.proposed_payload).as_dict()
     if current != stored.validation_summary.get("simulation"):
         raise ValueError("program_proposal_changed_since_review")
+    culinary_selections = stored.current_snapshot.get("culinary_selections")
+    if culinary_selections:
+        from notas.application.culinary_library import revalidate_culinary_selections
+        revalidate_culinary_selections(user=user, selections=culinary_selections)
     if "program_specification" in stored.targets:
         from notas.application.services.nutrition.culinary_validation import revalidate_culinary_proposal
         revalidate_culinary_proposal(user=user, proposal=stored)

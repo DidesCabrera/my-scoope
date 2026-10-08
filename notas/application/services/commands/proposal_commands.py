@@ -204,6 +204,17 @@ def _ensure_not_applied(
         raise ValueError("proposal_already_applied")
 
 
+def _revalidate_culinary_proposal_if_needed(*, user, proposal) -> None:
+    snapshot = proposal.current_snapshot or {}
+    selections = snapshot.get("culinary_selection")
+    if not selections:
+        selections = (snapshot.get("nutrition_solver") or {}).get("culinary_selections")
+    if selections:
+        from notas.application.culinary_library import revalidate_culinary_selections
+
+        revalidate_culinary_selections(user=user, selections=selections)
+
+
 def _build_current_snapshot_from_validation(
     validation_data: dict,
 ) -> dict:
@@ -821,6 +832,7 @@ def apply_approved_create_meal_proposal(
     )
     _ensure_applicable_status(proposal)
     _ensure_not_applied(proposal)
+    _revalidate_culinary_proposal_if_needed(user=user, proposal=proposal)
 
     status_before = proposal.status
 
@@ -895,6 +907,7 @@ def apply_approved_create_dailyplan_proposal(
     )
     _ensure_applicable_status(proposal)
     _ensure_not_applied(proposal)
+    _revalidate_culinary_proposal_if_needed(user=user, proposal=proposal)
 
     status_before = proposal.status
 

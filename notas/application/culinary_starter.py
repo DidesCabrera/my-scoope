@@ -12,12 +12,17 @@ from notas.application.culinary_library import normalized, validate_variant
 from notas.application.queries.solver_food_candidates import get_solver_food_candidate_queryset
 from notas.domain.models import CulinaryTemplate, CulinaryVariant
 
-
-def component(group, names, minimum, maximum, step=5):
-    return {"group": group, "names": names, "minimum_g": minimum, "maximum_g": maximum, "step_g": step}
+STARTER_VERSION = 2
 
 
-FRUIT = ["Manzana", "Plátano", "Arándanos"]
+def component(group, names, minimum, maximum, step=5, course=None):
+    result = {"group": group, "names": names, "minimum_g": minimum, "maximum_g": maximum, "step_g": step}
+    if course:
+        result["course"] = course
+    return result
+
+
+FRUIT = ["Manzana", "Plátano", "Arándanos", "Naranja cruda"]
 STARTER = (
     ("yogurt-bowl", "Yogur con avena y fruta", ["breakfast", "snack"],
      "Mezclar la avena con el yogur y dejar hidratar; añadir la fruta lavada y cortada.", {
@@ -43,26 +48,30 @@ STARTER = (
      "Servir el cereal y la proteína ya cocidos con brócoli; distribuir el aceite medido como aderezo. Las cantidades son del alimento en el estado indicado.", {
          "starch": component("starch", ["Arroz blanco cocido", "Arroz integral cocido", "Quinoa cocida"], 80, 300),
          "protein": component("protein", ["Pechuga de pollo cocida", "Pechuga de pavo cocida", "Carne magra cocida"], 100, 230),
-         "vegetable": component("vegetable", ["Brócoli cocido"], 100, 250),
-         "fat": component("fat", ["Aceite de oliva"], 5, 15)}, []),
+         "vegetable": component("vegetable", ["Brócoli cocido"], 100, 250, course="salad"),
+         "fat": component("fat", ["Aceite de oliva"], 5, 15),
+         "dessert": component("fruit", FRUIT, 100, 200, course="dessert")}, []),
     ("tuber-plate", "Papas o camote con proteína y ensalada", ["main", "dinner"],
      "Calentar las papas o camote y la proteína cocida. Servir con zanahoria rallada o tomate; añadir el aceite medido a la ensalada.", {
          "starch": component("starch", ["Papa cocida sin piel", "Camote cocido"], 100, 350),
          "protein": component("protein", ["Pechuga de pollo cocida", "Pechuga de pavo cocida", "Carne magra cocida"], 100, 230),
-         "vegetable": component("vegetable", ["Zanahoria cruda", "Tomate"], 100, 200),
-         "fat": component("fat", ["Aceite de oliva"], 5, 15)}, []),
+         "vegetable": component("vegetable", ["Zanahoria cruda", "Tomate"], 100, 200, course="salad"),
+         "fat": component("fat", ["Aceite de oliva"], 5, 15),
+         "dessert": component("fruit", FRUIT, 100, 200, course="dessert")}, []),
     ("grain-salad", "Ensalada de quinoa o arroz con atún", ["main", "dinner"],
      "Mezclar el cereal cocido y enfriado con atún drenado y tomate lavado. Añadir palta en cubos al servir. Mantener refrigerado hasta consumir.", {
          "starch": component("starch", ["Quinoa cocida", "Arroz integral cocido"], 100, 300),
          "protein": component("protein", ["Atún en agua drenado"], 100, 220),
-         "vegetable": component("vegetable", ["Tomate"], 100, 200),
-         "fat": component("fat", ["Palta"], 30, 70)}, []),
+         "vegetable": component("vegetable", ["Tomate"], 100, 200, course="salad"),
+         "fat": component("fat", ["Palta"], 30, 70),
+         "dessert": component("fruit", FRUIT, 100, 200, course="dessert")}, []),
     ("legume-plate", "Legumbres con arroz, pollo y verduras", ["main", "dinner"],
      "Calentar las legumbres y arroz cocidos, añadir pollo cocido desmenuzado y servir con zanahoria rallada aparte.", {
          "legume": component("legume", ["Lentejas cocidas", "Porotos negros cocidos", "Garbanzos cocidos"], 80, 180),
          "starch": component("starch", ["Arroz blanco cocido"], 60, 160),
          "protein": component("protein", ["Pechuga de pollo cocida"], 80, 180),
-         "vegetable": component("vegetable", ["Zanahoria cruda"], 100, 180)}, []),
+         "vegetable": component("vegetable", ["Zanahoria cruda"], 100, 180, course="salad"),
+         "dessert": component("fruit", FRUIT, 100, 200, course="dessert")}, []),
 )
 
 
@@ -86,8 +95,12 @@ def seed_starter_library(*, user):
                                                   "preparation_state": food.preparation_state} for food in matches}
         if any(not matches for matches in choices.values()):
             continue
-        template, _ = CulinaryTemplate.objects.get_or_create(key=f"starter-{user.pk}-{key}", version=1,
-            defaults={"owner": user, "name": name, "family": "protein-side-vegetable" if key in {"warm-plate", "tuber-plate"} else key, "meal_kinds": kinds,
+        family = {
+            "warm-plate": "protein-grain-vegetable",
+            "tuber-plate": "protein-tuber-salad",
+        }.get(key, key)
+        template, _ = CulinaryTemplate.objects.get_or_create(key=f"starter-{user.pk}-{key}", version=STARTER_VERSION,
+            defaults={"owner": user, "name": name, "family": family, "meal_kinds": kinds,
                       "preparation": preparation, "rules": {"components": rules, "ratios": ratios}})
         # Existing version may intentionally have a different approved substitution set.
         for combination in product(*choices.values()):
@@ -95,7 +108,7 @@ def seed_starter_library(*, user):
                             **{k: definitions[role][k] for k in ("minimum_g", "maximum_g", "step_g")}}
                            for role, food in zip(choices, combination)]
             variant_key = "foods-" + "-".join(str(food.pk) for food in combination)
-            variant, new = CulinaryVariant.objects.get_or_create(template=template, key=variant_key, version=1,
+            variant, new = CulinaryVariant.objects.get_or_create(template=template, key=variant_key, version=STARTER_VERSION,
                 defaults={"name": (name + ": " + ", ".join(food.name for food in combination))[:150],
                           "ingredients": ingredients, "preparation": preparation})
             if new:

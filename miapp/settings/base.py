@@ -329,6 +329,14 @@ NUTRITION_SOLVER_ALTERNATIVE_COUNT = max(
     1,
     min(_env_int("NUTRITION_SOLVER_ALTERNATIVE_COUNT", 3), 10),
 )
+NUTRITION_CULINARY_PRIMARY_ENABLED = os.environ.get(
+    "NUTRITION_CULINARY_PRIMARY_ENABLED",
+    "true",
+).strip().lower() in {"1", "true", "yes", "on"}
+NUTRITION_CULINARY_RAW_FALLBACK_ENABLED = os.environ.get(
+    "NUTRITION_CULINARY_RAW_FALLBACK_ENABLED",
+    "true",
+).strip().lower() in {"1", "true", "yes", "on"}
 
 
 # ==============================

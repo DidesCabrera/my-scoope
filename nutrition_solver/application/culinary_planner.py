@@ -25,6 +25,10 @@ class Ingredient:
     carbs: float
     fat: float
     portion_unit: str = "g"
+    # A meal may contain several courses. Affinity is evaluated inside the
+    # variant/course structure, so a fruit dessert is not treated as if it had
+    # to pair directly with the main protein.
+    course: str = "main"
 
     @property
     def kcal(self):
