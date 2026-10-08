@@ -576,7 +576,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
   assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
   assertSourceMatch(todayScreen, /greetingHeading: \{ alignItems: "center", flexDirection: "row"/);
-  assertSourceMatch(todayScreen, /<GuideMetric tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
+  assertSourceMatch(todayScreen, /<GuideMetric onPress=\{\(\) => router\.push\("\/weight" as Href\)\} tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /<GuideMetric icon="weight"/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValueOnly: \{ borderRadius: tokens\.radius\.lg, minHeight: 40 \}/);

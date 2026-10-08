@@ -193,7 +193,7 @@ export default function TodayScreen() {
       <View style={styles.greetingRow}>
         <View style={styles.greetingHeading}>
           <Text style={styles.greetingTitle}>{`Vamos, ${firstName}`}</Text>
-          {currentWeightKg != null ? <GuideMetric tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} /> : null}
+          {currentWeightKg != null ? <GuideMetric onPress={() => router.push("/weight" as Href)} tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} /> : null}
         </View>
         <View style={styles.greetingSubtitle}>
           <Text style={styles.greetingSubtitleText}>Fallar en planificar, es planificar fallar</Text>

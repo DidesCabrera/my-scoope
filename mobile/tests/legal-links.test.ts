@@ -19,16 +19,24 @@ test("legal policies live in disclosures instead of the account action sheet", a
 
 test("subscription screen recognizes every planned billing provider", async () => {
   const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
+  const layout = await readTestFile(path.resolve(process.cwd(), "src/components/ui/layout.tsx"), "utf8");
   const details = await readTestFile(path.resolve(process.cwd(), "src/app/subscription-details.tsx"), "utf8");
   const planCard = await readTestFile(path.resolve(process.cwd(), "src/components/subscriptions/subscription-plan-card.tsx"), "utf8");
+  const keyValueTable = await readTestFile(path.resolve(process.cwd(), "src/components/ui/key-value-table.tsx"), "utf8");
 
   assertSourceMatch(details, /apple_app_store: "App Store"/);
   assertSourceMatch(subscription, /label: "Acciones de suscripciones y bolsas"/);
   assertSourceMatch(subscription, /fallback: "\/account", identityVisible: compactHeaderVisible, mode: "back", title: "Suscripciones y Bolsas"/);
   assertSourceMatch(subscription, /isOnboarding[\s\S]*mode: "default", title: "Elige un plan"/);
   assertSourceMatch(subscription, /<Screen headerMode="preserve" onHeaderVisibilityChange=\{setCompactHeaderVisible\}>/);
-  assertSourceMatch(subscription, /<AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" \/>/);
-  assertSourceMatch(subscription, /isOnboarding \? \([\s\S]*<View style=\{styles\.onboardingLogo\}><MyScoopeLogo \/><\/View>[\s\S]*\) : \([\s\S]*<View style=\{styles\.subscriptionLogo\}><MyScoopeLogo \/><\/View>[\s\S]*<AppHeader eyebrow="Cuenta" title="Suscripciones y Bolsas" \/>/);
+  assertSourceMatch(subscription, /<AppHeader alignment="center" title="Suscripciones y Bolsas" \/>/);
+  assertSourceMatch(subscription, /isOnboarding \? \([\s\S]*<View style=\{styles\.onboardingLogo\}><MyScoopeLogo \/><\/View>[\s\S]*\) : \([\s\S]*<View style=\{styles\.subscriptionLogo\}><MyScoopeLogo \/><\/View>[\s\S]*<AppHeader alignment="center" title="Suscripciones y Bolsas" \/>/);
+  assertSourceMatch(subscription, /Nuestras suscripciones te entregan beneficios para enriquecer tus librería y facilitar tu gestión nutricional\./);
+  assertSourceMatch(subscription, /subscriptionDescriptionGroup: \{ gap: tokens\.spacing\.md, marginTop: tokens\.spacing\.lg \}/);
+  assertSourceMatch(subscription, /subscriptionDescription: \{[^}]*textAlign: "center"/);
+  assertSourceMatch(subscription, /subscriptionHeader: \{ paddingBottom: tokens\.spacing\.lg \}/);
+  assertSourceMatch(subscription, /subscriptionTitleSpacing: \{ marginTop: 20 \}/);
+  assertSourceMatch(layout, /titleCentered: \{ textAlign: "center", width: "100%" \}/);
   assertSourceMatch(subscription, /Ver detalles de Suscripciones y Bolsas/);
   assertSourceMatch(subscription, /router\.push\("\/subscription-details" as Href\)/);
   assertSourceMatch(subscription, /<ActionSheetAction disabled=\{working\} icon=\{RefreshCcw\} label="Restaurar compras"/);
@@ -66,7 +74,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /item\.plan_name\.trim\(\)\.toLowerCase\(\) === planName\.toLowerCase\(\)/);
   assertSourceMatch(subscription, /name=\{plan\.planName\} price=\{monthlyDisplayPrice \? `\$\{monthlyDisplayPrice\}\/mes` : "Consultando…"\}/);
   assertSourceMatch(planCard, /<Text style=\{styles\.eyebrow\}>PLAN DE SUSCRIPCIÓN<\/Text>[\s\S]*<Text style=\{styles\.productName\}>\{name\}<\/Text>[\s\S]*<Text numberOfLines=\{1\} style=\{styles\.planPriceChipLabel\}>\{price\}<\/Text>/);
-  assertSourceMatch(planCard, /\{benefits\.map\(\(item, index\) =>/);
+  assertSourceMatch(planCard, /<KeyValueTable items=\{benefits\.map\(\(item\) =>/);
   assertSourceMatch(subscription, /<Text style=\{textStyles\.caption\}>Elige la modalidad de tu suscripción\.<\/Text>/);
   assertSourceMatch(subscription, /Información de la suscripción/);
   assertSourceMatch(subscription, /<Card style=\{styles\.subscriptionInformationCard\}>\s*<SectionTitle title="Información de la suscripción" \/>/);
@@ -85,8 +93,8 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(planCard, /Basic:[\s\S]*entity: "food", label: "Alimentos", value: "Ilimitados"[\s\S]*label: "Comidas", value: "Ilimitadas"[\s\S]*label: "Planes diarios", value: "Ilimitados"[\s\S]*label: "Programas", value: "Ilimitados · hasta 12 semanas"[\s\S]*150 créditos al mes/);
   assertSourceMatch(planCard, /Pro:[\s\S]*Todo lo de Basic[\s\S]*1\.000 créditos al mes/);
   assertSourceDoesNotMatch(subscription, /label: "Publicación"|Contenido compatible|\bUpload\b/);
-  assertSourceMatch(planCard, /benefitLabel: \{[^}]*fontSize: 14/);
-  assertSourceMatch(planCard, /benefitValue: \{[^}]*fontSize: 14[^}]*textAlign: "right"/);
+  assertSourceMatch(keyValueTable, /label: \{[^}]*fontSize: 14/);
+  assertSourceMatch(keyValueTable, /value: \{[^}]*fontSize: 14[^}]*textAlign: "right"/);
   assertSourceMatch(planCard, /item\.entity \? <EntityIcon entity=\{item\.entity\} size="benefit" \/>/);
   assertSourceMatch(planCard, /entity: "meal", label: "Comidas"/);
   assertSourceMatch(planCard, /entity: "dailyPlan", label: "Planes diarios"/);

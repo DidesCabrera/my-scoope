@@ -23,18 +23,20 @@ function displayValue(value: string, kind: NativeMeasurementFieldProps["kind"]):
   return grams ? `${kilograms},${grams / 100} kg` : `${kilograms} kg`;
 }
 
-export function NativeMeasurementField({ containerStyle, disabled = false, inputStyle, kind, label, labelStyle, onChange, value }: NativeMeasurementFieldProps) {
-  const initialWeight = weightPartsFromValue(value);
+export function NativeMeasurementField({ containerStyle, defaultValue, disabled = false, inputStyle, kind, label, labelStyle, onChange, value }: NativeMeasurementFieldProps) {
+  const pickerValue = value || defaultValue || "";
+  const initialWeight = weightPartsFromValue(pickerValue);
   const [visible, setVisible] = useState(false);
-  const [height, setHeight] = useState(() => heightFromValue(value));
+  const [height, setHeight] = useState(() => heightFromValue(pickerValue));
   const [kilograms, setKilograms] = useState(initialWeight.kilograms);
   const [grams, setGrams] = useState(initialWeight.grams);
   const Icon = kind === "height" ? Ruler : Scale;
 
   const open = () => {
     if (disabled) return;
-    setHeight(heightFromValue(value));
-    const nextWeight = weightPartsFromValue(value);
+    const nextPickerValue = value || defaultValue || "";
+    setHeight(heightFromValue(nextPickerValue));
+    const nextWeight = weightPartsFromValue(nextPickerValue);
     setKilograms(nextWeight.kilograms);
     setGrams(nextWeight.grams);
     setVisible((current) => !current);

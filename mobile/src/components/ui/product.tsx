@@ -31,7 +31,7 @@ import { Button } from "./controls";
 import { Card } from "./surfaces";
 
 export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program";
-export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "explore" | "inbox" | "create" | "import";
+export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "create" | "import";
 
 export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "week" | "weight";
 
@@ -71,17 +71,23 @@ export function HeaderMetadataChip({ kind, value }: { kind: "date" | "time"; val
   );
 }
 
-export function GuideMetric({ label, tone = "default", value }: { label?: string; tone?: "default" | "ppk"; value: string }) {
-  return (
-    <View accessibilityLabel={label ? `${label}: ${value}` : value} accessible style={[styles.guideMetric, !label && styles.guideMetricValueOnly, tone === "ppk" && styles.guideMetricPpk]}>
+export function GuideMetric({ label, onPress, tone = "default", value }: { label?: string; onPress?: () => void; tone?: "default" | "ppk"; value: string }) {
+  const content = (
+    <>
       <View style={styles.guideMetricCopy}>
         {label ? <Text style={styles.guideMetricLabel}>{label}</Text> : null}
         <View style={styles.guideMetricValueRow}>
           <Text style={[styles.guideMetricValue, tone === "ppk" && styles.guideMetricValuePpk]}>{value}</Text>
         </View>
       </View>
-    </View>
+    </>
   );
+  const accessibilityLabel = label ? `${label}: ${value}` : value;
+  const style = [styles.guideMetric, !label && styles.guideMetricValueOnly, tone === "ppk" && styles.guideMetricPpk];
+  if (onPress) {
+    return <Pressable accessibilityLabel={accessibilityLabel} accessibilityRole="button" onPress={onPress} style={({ pressed }) => [style, pressed && styles.guideMetricPressed]}>{content}</Pressable>;
+  }
+  return <View accessibilityLabel={accessibilityLabel} accessible style={style}>{content}</View>;
 }
 
 const entityLabels: Record<EntityKind, string> = {
@@ -128,6 +134,7 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   proposal: ClipboardCheck,
   calendarization: CalendarClock,
   comparator: Scale,
+  weight: Weight,
   explore: Search,
   inbox: Inbox,
   create: CircleFadingPlus,
@@ -518,6 +525,7 @@ const styles = StyleSheet.create({
   guideMetricValue: { color: tokens.color.textMain, fontSize: 17, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
   guideMetricValueOnly: { borderRadius: tokens.radius.lg, minHeight: 40 },
   guideMetricPpk: { backgroundColor: "transparent", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 30, minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: 0 },
+  guideMetricPressed: { opacity: 0.68 },
   guideMetricValuePpk: { color: tokens.color.textMain, fontSize: 15, lineHeight: 18 },
   guideMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   entityCardPanelSlot: { minWidth: 0 },

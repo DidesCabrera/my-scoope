@@ -43,7 +43,7 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
         )
         weight = self.client.post(
             "/api/v1/weights",
-            data={"weight_kg": 83.8, "measured_on": "2026-08-04"},
+            data={"weight_kg": 83.8, "measured_on": "2026-08-04", "measured_time": "07:45"},
             content_type="application/json",
         )
         history = self.client.get("/api/v1/weights")
@@ -52,8 +52,21 @@ class MobileAPIIdentityTests(AuthenticatedMobileAPITestCase):
         self.assertTrue(onboarding.json()["data"]["onboarding_completed"])
         self.assertEqual(weight.status_code, 200)
         self.assertEqual(weight.json()["data"]["weight_kg"], 83.8)
+        self.assertEqual(weight.json()["data"]["measured_time"], "07:45:00")
         self.assertEqual(history.status_code, 200)
         self.assertEqual(history.json()["data"]["count"], 2)
+        saved_item = next(item for item in history.json()["data"]["items"] if item["id"] == weight.json()["data"]["id"])
+        self.assertEqual(saved_item["measured_time"], "07:45:00")
+
+        updated = self.client.patch(
+            f"/api/v1/weights/{weight.json()['data']['id']}",
+            data={"weight_kg": 82.9, "measured_on": "2026-08-05", "measured_time": None},
+            content_type="application/json",
+        )
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()["data"]["measured_on"], "2026-08-05")
+        self.assertEqual(updated.json()["data"]["weight_kg"], 82.9)
+        self.assertIsNone(updated.json()["data"]["measured_time"])
 
     def test_account_deletion_is_available_through_the_mobile_contract(self):
         response = self.client.post(

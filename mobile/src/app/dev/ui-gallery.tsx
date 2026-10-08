@@ -54,10 +54,12 @@ import {
   DistributedTabBar,
   EntityCard,
   EntityCardAction,
+  EntityIcon,
   type EntityKind,
   Field,
   GuideMetric,
   InlineNotice,
+  KeyValueTable,
   MacroLoadingIndicator,
   MessageCard,
   ProgressBar,
@@ -273,6 +275,23 @@ export default function UiGalleryScreen() {
               description="Variante para contenido anidado o de mayor densidad."
               title="Título compacto"
             />
+          </Card>
+          <SectionTitle detail="Variantes con y sin iconos · etiqueta a la izquierda · valor a la derecha" title="Tabla de atributos" />
+          <Card>
+            <CardHeader density="compact" title="Con iconos" />
+            <KeyValueTable items={[
+              { icon: <EntityIcon entity="food" size="benefit" />, label: "Alimentos privados", value: "Ilimitados" },
+              { icon: <EntityIcon entity="meal" size="benefit" />, label: "Comidas", value: "Hasta 12" },
+              { icon: <EntityIcon entity="dailyPlan" size="benefit" />, label: "Planes diarios", value: "Hasta 4" },
+            ]} />
+          </Card>
+          <Card>
+            <CardHeader density="compact" title="Sin iconos" />
+            <KeyValueTable items={[
+              { label: "Alimentos privados", value: "Ilimitados" },
+              { label: "Comidas", value: "Hasta 12" },
+              { label: "Planes diarios", value: "Hasta 4" },
+            ]} />
           </Card>
           <ContentPanel description="Panel principal que agrupa información relacionada." title="ContentPanel">
             <DetailSection description="Sección anidada con encabezado y acción opcional." title="DetailSection">

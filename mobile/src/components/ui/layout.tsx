@@ -95,9 +95,9 @@ export function Brand({ compact = false }: { compact?: boolean }) {
 export function AppHeader({ eyebrow, eyebrowIcon, title, action, alignment = "bottom" }: { alignment?: "bottom" | "center"; eyebrow?: string; eyebrowIcon?: ReactNode; title: string; action?: ReactNode }) {
   return (
     <View style={[styles.header, alignment === "center" && styles.headerCentered]}>
-      <View style={styles.headerCopy}>
+      <View style={[styles.headerCopy, alignment === "center" && styles.headerCopyCentered]}>
         {eyebrow ? <View style={styles.eyebrowRow}>{eyebrowIcon}<Text style={styles.eyebrow}>{eyebrow}</Text></View> : null}
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, alignment === "center" && styles.titleCentered]}>{title}</Text>
       </View>
       {action}
     </View>
@@ -123,7 +123,9 @@ const styles = StyleSheet.create({
   header: { alignItems: "flex-end", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   headerCentered: { alignItems: "center" },
   headerCopy: { flex: 1, gap: tokens.spacing.xs },
+  headerCopyCentered: { alignItems: "center" },
   eyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.2, textTransform: "uppercase" },
   title: { color: tokens.color.textMain, fontSize: tokens.type.title, fontWeight: "800", letterSpacing: -0.5 },
+  titleCentered: { textAlign: "center", width: "100%" },
 });

@@ -4,6 +4,7 @@ export * from "./controls";
 export * from "./detail-link-row";
 export * from "./feedback";
 export * from "./layout";
+export * from "./key-value-table";
 export * from "./macro-loading-indicator";
 export * from "./my-scoope-logo";
 export * from "./native-date-time-field";

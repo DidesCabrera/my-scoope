@@ -94,6 +94,8 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(account, /<ProposalMetricGrid/);
   assertSourceDoesNotMatch(account, /<Card accent=\{tokens\.color\.interactivePrimary\}>/);
   assertSourceMatch(account, /label="Cerrar sesión"/);
+  assertSourceMatch(account, /signOutSpacing: \{ marginTop: 26 \}/);
+  assertSourceMatch(account, /icon=\{<LogOut color=\{tokens\.color\.textMain\} size=\{18\} \/>\} label="Cerrar sesión"/);
   assertSourceMatch(account, /signOut\(\)\.then\(\(\) => router\.replace\("\/login"\)\)/);
   assertSourceDoesNotMatch(account, /<SectionTitle title="Sesión"/);
   assertSourceDoesNotMatch(account, /Cierra tu sesión en este dispositivo/);
@@ -166,8 +168,9 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceMatch(navigation, /creditDashboardPlanTitle: \{[^}]*fontSize: 24/);
   assertSourceMatch(navigation, /creditDashboardAction: \{[^}]*marginRight: tokens\.spacing\.md/);
   assertSourceMatch(navigation, /<Pressable accessibilityLabel="Abrir Suscripciones y bolsas"[\s\S]*onPress=\{openCredits\}[\s\S]*<ChevronRight/);
-  assertSourceMatch(navigation, /href: "\/account"[\s\S]*label: "Mi cuenta"[\s\S]*href: "\/personal-records"[\s\S]*label: "Fichas personales"/);
-  assertSourceMatch(navigation, /href: "\/personal-records"[\s\S]*href: "\/system-foundations"[\s\S]*label: "Fundamentos Sistema"/);
+  assertSourceMatch(navigation, /secondaryPrimaryItems[\s\S]*href: "\/personal-records"[\s\S]*label: "Fichas personales"[\s\S]*href: "\/system-foundations"[\s\S]*label: "Fundamentos Sistema"/);
+  assertSourceMatch(navigation, /item\.href === "\/inbox"[\s\S]*secondaryPrimaryItems\.map/);
+  assertSourceDoesNotMatch(navigation, /href: "\/account"[^\n]*[\s\S]{0,250}href: "\/personal-records"/);
 });
 
 test("personal records groups the persisted nutrition inputs", async () => {
