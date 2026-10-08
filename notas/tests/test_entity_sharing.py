@@ -66,9 +66,10 @@ class EntitySharingTests(TestCase):
         program = build_program_share_snapshot(self.program)
 
         self.assertEqual(food["subject"]["type"], "food")
-        self.assertEqual(food["summary"], {"basis_grams": 100})
+        self.assertEqual(food["summary"], {"basis_grams": 100, "basis_unit": "g"})
         self.assertEqual(meal["summary"]["food_count"], 1)
         self.assertEqual(meal["foods"][0]["quantity_grams"], 150)
+        self.assertEqual(meal["foods"][0]["quantity_unit"], "g")
         self.assertEqual(dpm["subject"]["variant"], "daily_plan_meal")
         self.assertEqual(dpm["time"], "08:30")
         self.assertEqual(program["summary"]["duration_weeks"], 2)

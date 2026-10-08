@@ -621,8 +621,6 @@ def _normalize_basis_values(
 ) -> tuple[dict[str, float], str, list[str]]:
     if basis == "per_serving" and not serving_size:
         return {}, "serving_size_required", ["serving_size_required"]
-    if basis == "per_100ml":
-        return {}, "volume_weight_required", ["basis_per_100ml_requires_weight"]
     if basis == "unknown":
         return {}, "basis_confirmation_required", ["basis_not_detected"]
     factor = 100 / serving_size if basis == "per_serving" and serving_size else 1

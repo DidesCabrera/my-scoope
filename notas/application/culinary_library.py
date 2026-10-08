@@ -50,7 +50,7 @@ def _snapshot_ingredient(row, components, foods, seen, ids):
             raise ValueError("culinary_nutrients_invalid")
     ingredient = Ingredient(food.pk, food.name, component, rule["group"], metadata["species"],
                                   row["minimum_g"], row["maximum_g"], row["step_g"],
-                                  food.protein, food.carbs, food.fat)
+                                  food.protein, food.carbs, food.fat, food.portion_unit)
     return ingredient, food
 
 

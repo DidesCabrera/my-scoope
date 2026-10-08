@@ -92,6 +92,7 @@ def build_operational_food_snapshot_payload(
             saturated_fat_g=catalog_food.saturated_fat_g_per_100g,
             sodium_mg=catalog_food.sodium_mg_per_100g,
         ),
+        portion_unit=catalog_food.portion_unit,
         data_quality_score=catalog_food.data_quality_score,
         is_verified=True,
         preparation_state=solver_profile.preparation_state,

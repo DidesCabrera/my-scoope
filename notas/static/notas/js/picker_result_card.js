@@ -161,7 +161,7 @@ function createFoodDesktopRow(item) {
   markProjectedRow(row, item);
   row.append(
     createNameCell(item),
-    createCell("data-grid-cell--qty", `${numeric(item.quantity).toFixed(0)} g`),
+    createCell("data-grid-cell--qty", `${numeric(item.quantity).toFixed(0)} ${item.quantityUnit || "g"}`),
     createCell("data-grid-cell--kcal data-grid-group-start", numeric(item.total_kcal).toFixed(0)),
     createCell("data-grid-cell--kcal-share", createAllocationCell("kcal", item.kcalShare)),
     createCell("data-grid-cell--macro data-grid-group-start", numeric(item.protein).toFixed(1)),
@@ -185,7 +185,7 @@ function createFoodQuantityRow(item) {
   markProjectedRow(row, item);
   row.append(
     createNameCell(item),
-    createCell("data-grid-cell--qty", `${numeric(item.quantity).toFixed(0)} g`),
+    createCell("data-grid-cell--qty", `${numeric(item.quantity).toFixed(0)} ${item.quantityUnit || "g"}`),
   );
   return row;
 }
@@ -234,6 +234,7 @@ function aggregateFoodItems(items) {
     const current = grouped.get(key) || {
       name: item.name,
       quantity: 0,
+      quantityUnit: item.quantityUnit || item.quantity_unit || "g",
       isProjected: false,
       projectedLabel: item.projectedLabel,
     };
@@ -252,7 +253,7 @@ function createFoodSummaryRow(item) {
   markProjectedRow(row, item);
   const cell = createElement("div", "data-grid-cell data-grid-cell--foods");
   const line = createElement("span", "picker-result-row__name-line");
-  line.appendChild(createElement("span", "picker-result-row__name", `${item.name} (${numeric(item.quantity).toFixed(0)} g)`));
+  line.appendChild(createElement("span", "picker-result-row__name", `${item.name} (${numeric(item.quantity).toFixed(0)} ${item.quantityUnit || "g"})`));
   if (item.isProjected) line.appendChild(createProjectedBadge(item.projectedLabel));
   cell.appendChild(line);
   row.appendChild(cell);
@@ -420,6 +421,7 @@ export function projectMealResultItems(existingItems, selectedFood, quantity, ed
       foodId: item.food_id,
       name: item.name,
       quantity: numeric(item.quantity),
+      quantityUnit: item.quantity_unit || item.quantityUnit || "g",
       protein: numeric(item.protein),
       carbs: numeric(item.carbs),
       fat: numeric(item.fat),
@@ -433,6 +435,7 @@ export function projectMealResultItems(existingItems, selectedFood, quantity, ed
       foodId: selectedFood.id,
       name: selectedFood.display_name || selectedFood.name,
       quantity: numeric(quantity),
+      quantityUnit: selectedFood.quantity_unit || "g",
       protein: numeric(selectedFood.protein) * factor,
       carbs: numeric(selectedFood.carbs) * factor,
       fat: numeric(selectedFood.fat) * factor,

@@ -231,6 +231,7 @@ class DailyPlanGeneratorFood:
     carbs: float
     fat: float
     kcal_per_100g: float
+    portion_unit: str = "g"
     food_group: str = ""
     food_subgroup: str = ""
     default_portion_g: float | None = None
@@ -635,6 +636,7 @@ def _load_foods_for_generation(user) -> list[DailyPlanGeneratorFood]:
                 carbs=carbs,
                 fat=fat,
                 kcal_per_100g=kcal,
+                portion_unit=food.portion_unit,
                 food_group=food.food_group or "",
                 food_subgroup=food.food_subgroup or "",
                 default_portion_g=_clean_optional_float(food.default_portion_g),
@@ -690,6 +692,7 @@ def _build_meal(
         ProposedFoodItemDTO(
             food_id=portion.food_id,
             quantity=portion.quantity_g,
+            unit=foods_by_id[portion.food_id].portion_unit,
         )
         for portion in solver_result.portions
     ]

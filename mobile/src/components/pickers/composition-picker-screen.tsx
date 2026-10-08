@@ -49,6 +49,7 @@ type PickerOption = {
   nutrition: LibraryNutrition;
   panel?: LibraryItem["panel"];
   subtitle?: string;
+  quantityUnit?: "g" | "ml";
 };
 
 type PickerConfig = {
@@ -144,6 +145,7 @@ function optionFromLibrary(item: LibraryItem): PickerOption {
     nutrition: item.nutrition,
     panel: item.panel,
     subtitle: item.subtitle || undefined,
+    quantityUnit: item.quantity_unit ?? undefined,
   };
 }
 
@@ -152,7 +154,8 @@ function optionFromFood(item: FoodPickerOption): PickerOption {
     id: item.id,
     name: item.display_name,
     entity: "food",
-    indicators: [{ label: "base nutricional", value: "100 g" }],
+    indicators: [{ label: "base nutricional", value: `100 ${item.quantity_unit}` }],
+    quantityUnit: item.quantity_unit,
     nutrition: {
       calories: item.total_kcal,
       protein: { grams: item.protein, allocation: item.protein_allocation, per_kilogram: null },
@@ -317,9 +320,10 @@ export function CompositionPickerScreen({
   const configuredSelection = useMemo(() => {
     if (!selected || !isFoodPicker) return selected;
     const grams = portionGrams(quantity);
+    const quantityUnit = selected.quantityUnit ?? "g";
     return {
       ...selected,
-      indicators: [{ label: "porción seleccionada", value: `${grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} g` }],
+      indicators: [{ label: "porción seleccionada", value: `${grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} ${quantityUnit}` }],
       nutrition: scaleFoodNutrition(selected.nutrition, quantity),
     };
   }, [isFoodPicker, quantity, selected]);
@@ -456,7 +460,7 @@ export function CompositionPickerScreen({
                 <View style={styles.compactFieldRow}>
                   <View style={styles.configurationLabel}>
                     <Scale color={tokens.color.textMuted} size={18} />
-                    <Text style={styles.compactFieldLabel}>Porción (g)</Text>
+                    <Text style={styles.compactFieldLabel}>Porción ({selected.quantityUnit ?? "g"})</Text>
                   </View>
                   <TextInput keyboardType="decimal-pad" onChangeText={setQuantity} selectionColor={tokens.color.interactivePrimary} style={styles.compactFieldInput} value={quantity} />
                 </View>

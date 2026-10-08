@@ -204,6 +204,11 @@ def create_food_from_label_capture(
                 fiber_g_per_100g=confirmed["fiber_g"],
                 sodium_mg_per_100g=confirmed["sodium_mg"],
                 default_portion_g=confirmed["serving_size_g"],
+                portion_unit=(
+                    Food.PORTION_UNIT_MILLILITERS
+                    if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_100ML
+                    else Food.PORTION_UNIT_GRAMS
+                ),
                 created_by=user,
                 is_global=False,
                 is_verified=False,
@@ -244,8 +249,6 @@ def _validate_label_basis_evidence(*, detected_basis: str, confirmed: dict) -> N
         raise ValueError("food_label_volume_weight_invalid")
     if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_SERVING and serving_size is None:
         raise ValueError("food_label_serving_size_required")
-    if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_100ML and volume_weight is None:
-        raise ValueError("food_label_volume_weight_required")
 
 
 @transaction.atomic
@@ -256,12 +259,16 @@ def create_food(
     protein,
     carbs,
     fat,
+    portion_unit=Food.PORTION_UNIT_GRAMS,
 ) -> FoodCreateResult:
+    if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
+        raise ValueError("food_portion_unit_invalid")
     food = Food.objects.create(
         name=(name or "").strip(),
         protein=protein,
         carbs=carbs,
         fat=fat,
+        portion_unit=portion_unit,
         created_by=user,
         list_order=_next_food_list_order(user),
     )
@@ -279,11 +286,16 @@ def update_food(
     protein,
     carbs,
     fat,
+    portion_unit=None,
 ) -> FoodUpdateResult:
+    portion_unit = portion_unit or food.portion_unit
+    if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
+        raise ValueError("food_portion_unit_invalid")
     food.name = (name or "").strip()
     food.protein = protein
     food.carbs = carbs
     food.fat = fat
+    food.portion_unit = portion_unit
 
     food.save(
         update_fields=[
@@ -291,6 +303,7 @@ def update_food(
             "protein",
             "carbs",
             "fat",
+            "portion_unit",
         ]
     )
 
@@ -321,11 +334,15 @@ def bulk_create_foods(
     next_order = _next_food_list_order(user)
 
     for offset, row in enumerate(rows):
+        portion_unit = row.get("portion_unit", Food.PORTION_UNIT_GRAMS)
+        if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
+            raise ValueError("food_portion_unit_invalid")
         food = Food.objects.create(
             name=(row["name"] or "").strip(),
             protein=row["protein"],
             carbs=row["carbs"],
             fat=row["fat"],
+            portion_unit=portion_unit,
             created_by=user,
             list_order=next_order + offset,
         )

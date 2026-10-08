@@ -44,7 +44,7 @@ def comparison_metadata_payload() -> dict:
                 "label": config["label"],
                 "entity_label": config["entity_label"],
                 "uses_quantity": config["include_quantities"],
-                "quantity_unit": "g" if config["include_quantities"] else None,
+                "quantity_unit": None,
                 "includes_ppk": config["include_ppk"],
             }
             for key, config in COMPARISON_KINDS.items()
@@ -81,7 +81,7 @@ def comparison_options_payload(user, *, kind: str, search=None, offset=0, limit=
     except KeyError as exc:
         raise ValueError("comparison_kind_not_supported") from exc
     page = builder(user, search=search, offset=offset, limit=limit, include_actions=False)
-    visual_fields = {"id", "entity", "name", "subtitle", "nutrition", "indicators", "panel"}
+    visual_fields = {"id", "entity", "name", "subtitle", "nutrition", "indicators", "panel", "quantity_unit"}
     return {
         **page,
         "items": [
@@ -126,7 +126,9 @@ def build_comparison(user, *, kind: str, raw_selections: list[dict]):
     if len(items_by_id) != len(seen):
         raise ValueError("comparison_item_not_available")
     for selection in normalized:
-        selection.name = items_by_id[selection.id].name
+        item = items_by_id[selection.id]
+        selection.name = item.name
+        selection.quantity_unit = getattr(item, "portion_unit", None)
 
     current_weight = get_current_weight(user)
     if config["include_quantities"]:
@@ -161,6 +163,7 @@ def _metrics_payload(rows, *, include_ppk: bool) -> list[dict]:
                     "id": selection.id,
                     "label": bar.label,
                     "quantity": selection.quantity,
+                    "quantity_unit": getattr(selection, "quantity_unit", None),
                     "value": round(float(bar.value), 2),
                     "formatted_value": bar.formatted_value,
                     "relative_percentage": bar.width,
@@ -187,6 +190,7 @@ def comparison_result_payload(*, kind: str, rows, historical=False, saved_compar
                 "id": selection.id,
                 "name": selection.name,
                 "quantity": selection.quantity if config["include_quantities"] else None,
+                "quantity_unit": getattr(selection, "quantity_unit", None) if config["include_quantities"] else None,
                 "values": {
                     "calories": round(float(values.get("total_kcal", 0) or 0), 1),
                     "protein_g": round(float(values.get("protein", 0) or 0), 1),

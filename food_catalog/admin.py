@@ -145,7 +145,7 @@ class CatalogFoodAdmin(admin.ModelAdmin):
         "country",
         "updated_at",
     )
-    list_filter = ("status", "source_type", "solver_enabled", "preparation_state", "is_branded", "country", "language")
+    list_filter = ("status", "source_type", "portion_unit", "solver_enabled", "preparation_state", "is_branded", "country", "language")
     search_fields = ("display_name", "canonical_name", "brand_name", "aliases__name")
     readonly_fields = ("catalog_ref", "created_at", "updated_at")
     inlines = (CatalogFoodPortionInline, CatalogFoodAliasInline, CatalogFoodSourceInline)
@@ -166,6 +166,7 @@ class CatalogFoodAdmin(admin.ModelAdmin):
                     "food_subgroup",
                     "preparation_state",
                     "food_form",
+                    "portion_unit",
                 )
             },
         ),
@@ -189,7 +190,7 @@ class CatalogFoodAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Nutrition per 100 g",
+            "Nutrition per 100 g or ml",
             {
                 "fields": (
                     "protein_g_per_100g",

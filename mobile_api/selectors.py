@@ -86,9 +86,7 @@ def _empty_library_panel(kind="none") -> dict:
 
 def _creator_name(entity) -> str:
     creator = entity.created_by
-    if creator is None:
-        return "Myscoope"
-    return creator.get_full_name().strip() or creator.username
+    return "Myscoope" if creator is None else creator.get_full_name().strip() or creator.username
 
 
 def _food_panel_item(meal_food, current_weight=None) -> dict:
@@ -99,7 +97,7 @@ def _food_panel_item(meal_food, current_weight=None) -> dict:
         "detail_id": meal_food.food_id,
         "name": resolve_food_display_name(meal_food.food),
         "quantity": _safe_number(meal_food.quantity),
-        "quantity_unit": "g",
+        "quantity_unit": meal_food.food.portion_unit,
         "calories": _safe_number(meal_food.total_kcal),
         "calorie_share": _safe_number(meal_food.kcal_share),
         "calorie_distribution": _calorie_distribution(meal_food.kcal_protein, meal_food.kcal_carbs, meal_food.kcal_fat),
@@ -367,9 +365,10 @@ def library_foods_payload(user, *, search=None, offset=0, limit=30, include_draf
             "id": food.id,
             "entity": "food",
             "name": resolve_food_display_name(food),
+            "quantity_unit": food.portion_unit,
             "subtitle": "",
             "nutrition": _library_nutrition_payload(food, current_weight),
-            "indicators": [{"label": "base nutricional", "value": "100 g"}],
+            "indicators": [{"label": "base nutricional", "value": f"100 {food.portion_unit}"}],
             "panel": _empty_library_panel(),
             "creator": _creator_name(food),
             "created_at": food.created_at,
@@ -526,9 +525,10 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "id": item.id,
                 "entity": "food",
                 "name": resolve_food_display_name(item),
+                "quantity_unit": item.portion_unit,
                 "subtitle": "",
                 "nutrition": _library_nutrition_payload(item, current_weight),
-                "indicators": [{"label": "base nutricional", "value": "100 g"}],
+                "indicators": [{"label": "base nutricional", "value": f"100 {item.portion_unit}"}],
                 "panel": _empty_library_panel(),
                 "creator": _creator_name(item),
                 "created_at": item.created_at,
@@ -905,6 +905,7 @@ def food_label_capture_payload(result) -> dict:
         "capture_receipt_id": receipt.id,
         "detected_basis": receipt.detected_basis,
         "serving_size_g": float(receipt.serving_size_g) if receipt.serving_size_g is not None else None,
+        "portion_unit": food.portion_unit,
         "ocr_engine": receipt.ocr_engine,
         "label_image_retained": bool(receipt.retained_label_image),
         "created_at": receipt.created_at,

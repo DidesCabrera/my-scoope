@@ -30,7 +30,6 @@ import {
 import {
   confirmNutritionLabelBasis,
   convertServingDraftTo100g,
-  convertVolumeDraftTo100g,
   normalizeNutritionLabel,
   type NutritionField,
   type NutritionLabelDraft,
@@ -71,8 +70,8 @@ const emptyForm: FormState = {
 const warningCopy: Record<string, string> = {
   manual_review: "Los valores serán ingresados y revisados manualmente.",
   basis_normalized_from_serving: "La IA convirtió los valores desde una porción hacia 100 g.",
-  basis_per_100ml_requires_weight: "La etiqueta está expresada por 100 ml. Indica cuánto pesan 100 ml para convertirla con precisión.",
-  basis_normalized_from_100ml: "Los valores fueron convertidos de 100 ml a 100 g usando el peso que indicaste.",
+  basis_per_100ml_requires_weight: "La etiqueta está expresada por 100 ml y se conservará en esa unidad.",
+  basis_normalized_from_100ml: "Los valores corresponden a 100 ml.",
   basis_not_detected: "Confirma si los valores corresponden a 100 g, 100 ml o una porción.",
   serving_size_required: "Indica el peso en gramos de la porción impresa.",
   energy_macro_mismatch: "Las calorías declaradas difieren del cálculo de proteínas, carbos y grasas.",
@@ -326,22 +325,6 @@ export default function LabelCaptureScreen() {
     }
   }
 
-  function normalizeVolumeValues() {
-    const weight = optionalNumber(form.volumeWeight);
-    if (!draft || !weight || weight <= 0) {
-      setError("Indica cuántos gramos pesan 100 ml de este producto.");
-      return;
-    }
-    try {
-      const next = convertVolumeDraftTo100g(draft, weight);
-      applyDraft(next, form.name);
-      setForm((current) => ({ ...current, volumeWeight: String(weight) }));
-      setError(null);
-    } catch {
-      setError("No pudimos convertir los valores expresados por 100 ml.");
-    }
-  }
-
   function beginManualReview(message?: string) {
     deleteCachedImage(prepared?.uri);
     setPrepared(null);
@@ -565,7 +548,7 @@ export default function LabelCaptureScreen() {
       fiber_g: optionalNumber(form.fiber),
       sodium_mg: optionalNumber(form.sodium),
       serving_size_g: optionalNumber(form.servingSize),
-      volume_weight_g_per_100ml: draft?.basis === "per_100ml" ? optionalNumber(form.volumeWeight) : undefined,
+      volume_weight_g_per_100ml: undefined,
       declared_energy_kcal_per_100g: optionalNumber(form.energy),
       detected_basis: draft?.basis ?? "manual",
       ocr_engine: draft?.ocrEngine ?? "manual_entry",
@@ -728,12 +711,12 @@ export default function LabelCaptureScreen() {
         </FullBleedSquare>
         <View style={styles.processingDetails}>
           <View style={styles.processingHeader}>
-            <View style={styles.qualityCopy}><Text style={styles.processingTitle}>Analizando valores</Text><Text style={styles.qualityDetail}>Normalizando la información a 100 g.</Text></View>
+            <View style={styles.qualityCopy}><Text style={styles.processingTitle}>Analizando valores</Text><Text style={styles.qualityDetail}>Identificando la base nutricional de la etiqueta.</Text></View>
             <MacroLoadingIndicator accessibilityLabel="Analizando los valores nutricionales" style={styles.processingLoading} />
           </View>
           <View style={styles.taskList}>
             <View style={styles.taskRow}><CreditTaskIcon complete id="live-credit-task-text" /><Text style={styles.taskDone}>Texto reconocido</Text></View>
-            <View style={styles.taskRow}><CreditTaskIcon complete id="live-credit-task-column" /><Text style={styles.taskDone}>Columna por 100 g identificada</Text></View>
+            <View style={styles.taskRow}><CreditTaskIcon complete id="live-credit-task-column" /><Text style={styles.taskDone}>Columna nutricional identificada</Text></View>
             <View style={styles.taskRow}><CreditTaskIcon complete={false} id="live-credit-task-nutrients" /><Text style={styles.taskActive}>Comprobando nutrientes…</Text></View>
           </View>
         </View>
@@ -759,6 +742,7 @@ export default function LabelCaptureScreen() {
     { field: "fiber", label: "Fibra", unit: "g" },
     { field: "sodium", label: "Sodio", unit: "mg" },
   ];
+  const portionUnit = draft?.basis === "per_100ml" ? "ml" : "g";
 
   return (
     <Screen
@@ -829,14 +813,6 @@ export default function LabelCaptureScreen() {
               <Button label="Convertir a valores por 100 g" onPress={normalizeServingValues} />
             </Card>
           ) : null}
-          {draft?.normalizationStatus === "volume_weight_required" ? (
-            <Card accent={tokens.color.warning}>
-              <SectionTitle title="Convierte 100 ml a 100 g" />
-              <Text style={textStyles.muted}>No asumimos que 100 ml pesan 100 g. Busca el peso declarado por volumen o mídelo para evitar alterar los macros.</Text>
-              <Field keyboardType="decimal-pad" label="Peso de 100 ml (g)" onChangeText={(value) => update("volumeWeight", value)} value={form.volumeWeight} />
-              <Button label="Convertir con este peso" onPress={normalizeVolumeValues} />
-            </Card>
-          ) : null}
           {draft?.warnings.length ? (
             <View style={styles.warningList}>
               <Text style={styles.warningTitle}>Puntos por revisar</Text>
@@ -844,7 +820,7 @@ export default function LabelCaptureScreen() {
             </View>
           ) : null}
           <View style={styles.reviewForm}>
-            <Text style={styles.reviewTitle}>{draft?.normalizationStatus === "ready" ? "Valores por 100 g" : "Valores extraídos"}</Text>
+            <Text style={styles.reviewTitle}>{draft?.normalizationStatus === "ready" ? `Valores por 100 ${draft.basis === "per_100ml" ? "ml" : "g"}` : "Valores extraídos"}</Text>
             <View style={styles.nutritionRows}>
               {nutrientRows.map((item) => (
                 <View key={item.field} style={styles.nutritionRow}>
@@ -859,7 +835,7 @@ export default function LabelCaptureScreen() {
                 <Text style={[styles.nutritionLabel, styles.nutritionLabelEmphasis]}>Tamaño de la porción</Text>
                 <View style={styles.nutritionInputSurface}>
                   <TextInput accessibilityLabel="Tamaño de la porción" keyboardType="decimal-pad" onChangeText={(value) => update("servingSize", value)} selectTextOnFocus style={styles.nutritionInput} value={form.servingSize} />
-                  <Text style={styles.nutritionUnit}>g</Text>
+                  <Text style={styles.nutritionUnit}>{portionUnit}</Text>
                 </View>
               </View>
             </View>
@@ -875,7 +851,7 @@ export default function LabelCaptureScreen() {
             <SectionHeading icon={<CheckCheck color={tokens.color.entityIconForeground} size={18} />} title="Confirma el alimento" />
             <Text style={styles.confirmationSubtitle}>Al guardar confirmas que comparaste los valores con la etiqueta.</Text>
           </View>
-          <NutritionEntityCard entity="food" indicators={[{ label: "base nutricional", value: "100 g" }]} nutrition={formNutrition} title={form.name.trim() || "Alimento sin nombre"} />
+          <NutritionEntityCard entity="food" indicators={[{ label: "base nutricional", value: `100 ${portionUnit}` }]} nutrition={formNutrition} title={form.name.trim() || "Alimento sin nombre"} />
           {prepared && analysisId ? (
             <View style={styles.retentionPanel}>
               <View style={styles.retentionRow}>
@@ -915,7 +891,7 @@ export default function LabelCaptureScreen() {
           </View>
           <NutritionEntityCard
             entity="food"
-            indicators={[{ label: "base nutricional", value: "100 g" }]}
+            indicators={[{ label: "base nutricional", value: `100 ${saved.portion_unit}` }]}
             nutrition={nutritionSummary(saved.protein_g, saved.carbs_g, saved.fat_g, saved.total_kcal)}
             title={saved.name}
           />

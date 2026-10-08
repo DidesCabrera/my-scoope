@@ -38,7 +38,7 @@ def snapshot_food_table_row(food: dict, meal_calories: float, current_weight=Non
         "rel": {
             "id": food.get("key", ""),
             "quantity": _number(food.get("quantity_g")),
-            "quantity_unit": "g",
+            "quantity_unit": food.get("quantity_unit") or "g",
             "name": food.get("name") or "Alimento",
             "total_kcal": nutrition["calories"],
             "kcal_share": _percentage(nutrition["calories"], meal_calories),

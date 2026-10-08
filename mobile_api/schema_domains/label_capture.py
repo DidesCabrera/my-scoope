@@ -127,6 +127,7 @@ class FoodLabelCaptureData(Schema):
     capture_receipt_id: int
     detected_basis: str
     serving_size_g: float | None = None
+    portion_unit: Literal["g", "ml"] = "g"
     ocr_engine: str
     label_image_retained: bool
     created_at: datetime

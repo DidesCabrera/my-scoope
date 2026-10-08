@@ -22,6 +22,7 @@ def build_food_picker_context_payload(
                     "food_id": meal_food.food_id,
                     "name": resolve_food_display_name(meal_food.food),
                     "quantity": float(meal_food.quantity),
+                    "quantity_unit": meal_food.food.portion_unit,
                     "protein": float(meal_food.protein),
                     "carbs": float(meal_food.carbs),
                     "fat": float(meal_food.fat),
@@ -64,6 +65,7 @@ def build_food_picker_foods_payload(foods):
             "carbs": food.carbs,
             "fat": food.fat,
             "total_kcal": food.total_kcal,
+            "quantity_unit": food.portion_unit,
             "alloc": food.alloc,
         })
 

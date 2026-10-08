@@ -61,12 +61,12 @@ test("composition pickers use independent native routes and one shared flow", as
   const impactPreview = picker.indexOf('title="Previsualización del impacto"');
   assert.ok(selectedCard < configuration);
   assert.ok(configuration < impactPreview);
-  matches(picker, /Porción \(g\)/);
+  matches(picker, /Porción \(\{selected\.quantityUnit \?\? "g"\}\)/);
   matches(picker, /<Scale color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   matches(picker, /<NativeDateTimeField[^>]*mode="time"/);
   matches(picker, /<NotebookPen color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   matches(picker, /<CalendarDays color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
-  matches(picker, /<Text style=\{styles\.compactFieldLabel\}>Porción \(g\)<\/Text>/);
+  matches(picker, /<Text style=\{styles\.compactFieldLabel\}>Porción \(\{selected\.quantityUnit \?\? "g"\}\)<\/Text>/);
   matches(picker, /style=\{styles\.compactFieldInput\} value=\{quantity\}/);
   omits(picker, /setQuantity\(value\); setPreview\(null\)/);
   matches(picker, /setPreviewPayloadKey\(payloadKey\)/);

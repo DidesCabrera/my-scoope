@@ -24,6 +24,7 @@ class Ingredient:
     protein: float
     carbs: float
     fat: float
+    portion_unit: str = "g"
 
     @property
     def kcal(self):
@@ -217,7 +218,7 @@ def _finish_week_model(model, spec, week, previous, family_use, species_use, wee
             continue
         candidate = options[key]
         portions = [{"food_id": ingredient.food_id, "quantity": solver.value(quantities[key, index]) * ingredient.step_g,
-                     "unit": "g"} for index, ingredient in enumerate(candidate.ingredients)]
+                     "unit": ingredient.portion_unit} for index, ingredient in enumerate(candidate.ingredients)]
         kcal = sum(ingredient.kcal * portion["quantity"] / 100
                    for ingredient, portion in zip(candidate.ingredients, portions))
         meals.append({"day": key[0], "slot": key[1], "variant_id": candidate.variant_id,
@@ -237,7 +238,12 @@ def _validate_meal_portions(row, candidate, target, allocation, totals, species,
         portion = amounts[ingredient.food_id]
         quantity = portion.get("quantity")
         from math import isfinite
-        if isinstance(quantity, bool) or not isinstance(quantity, (int, float)) or not isfinite(quantity) or portion.get("unit") != "g":
+        if (
+            isinstance(quantity, bool)
+            or not isinstance(quantity, (int, float))
+            or not isfinite(quantity)
+            or portion.get("unit") != ingredient.portion_unit
+        ):
             errors.append("invalid_portion")
             continue
         if not ingredient.minimum_g <= quantity <= ingredient.maximum_g or abs(quantity / ingredient.step_g - round(quantity / ingredient.step_g)) > 1e-6:

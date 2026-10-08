@@ -33,6 +33,7 @@ class FoodCatalogQueryTests(TestCase):
             protein=31,
             carbs=0,
             fat=3.6,
+            portion_unit=Food.PORTION_UNIT_MILLILITERS,
             created_by=self.user,
         )
 
@@ -116,7 +117,7 @@ class FoodCatalogQueryTests(TestCase):
         self.assertEqual(food["protein"], 31.0)
         self.assertEqual(food["carbs"], 0.0)
         self.assertEqual(food["fat"], 3.6)
-        self.assertEqual(food["unit"], "g")
+        self.assertEqual(food["unit"], "ml")
 
         expected_kcal = 31.0 * 4 + 0.0 * 4 + 3.6 * 9
 

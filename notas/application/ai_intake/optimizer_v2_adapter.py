@@ -17,6 +17,7 @@ from notas.application.queries.solver_food_candidates import (
     build_solver_food_profile,
     get_solver_food_candidate_queryset,
 )
+from notas.domain.models import Food
 from nutrition_solver.application.contracts import OptimizationStatus, SolverConstraint
 from nutrition_solver.application.optimizer_v2 import (
     OptimizationBackend,
@@ -179,6 +180,11 @@ def run_dailyplan_optimizer_v2(
     if not ranked:
         raise DailyPlanOptimizerV2Error("dailyplan_optimizer_v2_impossible:no_acceptable_alternative")
     result, quality = ranked[0]
+    portion_units = dict(
+        Food.objects.filter(
+            pk__in=[profile.food.food_id for profile in problem.food_profiles]
+        ).values_list("id", "portion_unit")
+    )
     alternatives = [
         {
             "alternative_id": f"alternative_{index}",
@@ -188,6 +194,7 @@ def run_dailyplan_optimizer_v2(
                 result=candidate,
                 meals_per_day=meals_per_day,
                 plan_name=plan_name,
+                portion_units=portion_units,
             ),
             "result": candidate.as_dict(),
             "quality": candidate_quality.as_dict(),
@@ -220,6 +227,7 @@ def run_dailyplan_optimizer_v2(
             result=result,
             meals_per_day=meals_per_day,
             plan_name=plan_name,
+            portion_units=portion_units,
         ),
         solver_summary=summary,
     )
@@ -269,6 +277,7 @@ def _build_payload(
     result: OptimizationPlanResultV2,
     meals_per_day: int,
     plan_name: str,
+    portion_units: dict[int, str],
 ) -> dict:
     templates = build_dailyplan_meal_templates(meals_per_day)
     template_by_slot = {f"meal_{template.index}": template for template in templates}
@@ -285,7 +294,11 @@ def _build_payload(
                 meal=ProposedMealDTO(
                     name=f"{template.label} NSO {template.index + 1}",
                     foods=[
-                        ProposedFoodItemDTO(food_id=portion.food_id, quantity=portion.quantity_g)
+                        ProposedFoodItemDTO(
+                            food_id=portion.food_id,
+                            quantity=portion.quantity_g,
+                            unit=portion_units.get(portion.food_id, Food.PORTION_UNIT_GRAMS),
+                        )
                         for portion in meal.portions
                     ],
                 ),

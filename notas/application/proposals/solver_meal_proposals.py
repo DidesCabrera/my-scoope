@@ -14,7 +14,7 @@ from notas.application.services.commands.proposal_commands import (
     NutritionProposalCreateResult,
     create_validated_meal_proposal,
 )
-from notas.domain.models import NutritionProposal
+from notas.domain.models import Food, NutritionProposal
 from nutrition_solver.application.contracts import (
     OptimizationInput,
     OptimizationStatus,
@@ -101,6 +101,11 @@ def create_solver_generated_meal_proposal(
     proposed_payload = _build_create_meal_payload(
         meal_name=clean_title,
         optimization_result=optimization_result,
+        portion_units=dict(
+            Food.objects.filter(
+                pk__in=[portion.food_id for portion in optimization_result.portions]
+            ).values_list("id", "portion_unit")
+        ),
     )
 
     if not proposed_payload["meal"]["foods"]:
@@ -228,7 +233,7 @@ def _required_positive_float(
     return value
 
 
-def _build_create_meal_payload(*, meal_name: str, optimization_result) -> dict:
+def _build_create_meal_payload(*, meal_name: str, optimization_result, portion_units: Mapping[int, str]) -> dict:
     return {
         "intent": CREATE_MEAL_INTENT,
         "meal": {
@@ -237,7 +242,7 @@ def _build_create_meal_payload(*, meal_name: str, optimization_result) -> dict:
                 {
                     "food_id": int(portion.food_id),
                     "quantity": round(float(portion.quantity_g), 2),
-                    "unit": "g",
+                    "unit": portion_units.get(int(portion.food_id), "g"),
                 }
                 for portion in optimization_result.portions
                 if float(portion.quantity_g) > 0

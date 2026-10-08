@@ -49,7 +49,7 @@ DATA_COVERAGE_SECTION_DEFINITIONS = (
         ),
     ),
     (
-        "nutrition", "Nutrición / 100 g", "chart-no-axes-combined", (
+        "nutrition", "Nutrición / base 100", "chart-no-axes-combined", (
             ("protein", "Proteína", Q(protein_g_per_100g__isnull=False)),
             ("carbs", "Carbohidratos", Q(carbs_g_per_100g__isnull=False)),
             ("fat", "Grasa", Q(fat_g_per_100g__isnull=False)),

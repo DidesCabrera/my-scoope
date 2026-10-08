@@ -172,6 +172,7 @@ def _upsert_catalog_food(food_seed: CoreNaturalFoodSeed) -> tuple[CatalogFood, b
         "food_group": food_seed.food_group,
         "food_subgroup": food_seed.food_subgroup,
         "preparation_state": food_seed.preparation_state,
+        "portion_unit": food_seed.portion_unit,
         "solver_enabled": True,
         "solver_min_portion_g": None,
         "solver_max_portion_g": None,

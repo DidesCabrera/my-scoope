@@ -86,6 +86,7 @@ class AdminOperationsCatalogFoodDetailVM:
     confidence_label: str
     readiness_state: str
     readiness_label: str
+    portion_unit: str = "g"
     period_label: str = "Food Catalog · Ficha de curación"
     current_period: str = "Detalle de alimento"
     readiness_issues: list[str] = field(default_factory=list)

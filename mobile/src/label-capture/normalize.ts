@@ -204,7 +204,6 @@ export function normalizeNutritionLabel(recognition: NutritionLabelRecognition):
   if (basis === "manual") warnings.push("basis_not_detected");
   if (basis === "per_serving" && !servingSizeG) warnings.push("serving_size_required");
   if (basis === "per_serving" && servingSizeG) warnings.push("basis_normalized_from_serving");
-  if (basis === "per_100ml") warnings.push("basis_per_100ml_requires_weight");
   for (const key of ["protein_g", "carbs_g", "fat_g"] as const) {
     if (sourceValues[key] === undefined) warnings.push(`${key}_missing`);
   }
@@ -212,8 +211,6 @@ export function normalizeNutritionLabel(recognition: NutritionLabelRecognition):
     ? "basis_confirmation_required"
     : basis === "per_serving" && !servingSizeG
       ? "serving_size_required"
-      : basis === "per_100ml"
-        ? "volume_weight_required"
       : "ready";
   const factor = basis === "per_serving" && servingSizeG ? 100 / servingSizeG : 1;
   const values = normalizationStatus === "ready" ? normalizedValues(sourceValues, factor, warnings) : {};
@@ -258,14 +255,15 @@ export function confirmNutritionLabelBasis(
     };
   }
   if (basis === "per_100ml") {
-    warnings.push("basis_per_100ml_requires_weight");
+    const values = normalizedValues(draft.sourceValues, 1, warnings);
+    appendEnergyWarning(values, warnings);
     return {
       ...draft,
       basis,
       servingSizeG: null,
-      values: {},
+      values,
       warnings: [...new Set(warnings)],
-      normalizationStatus: "volume_weight_required",
+      normalizationStatus: "ready",
     };
   }
   warnings.push("basis_confirmed_as_per_100g");
@@ -275,34 +273,6 @@ export function confirmNutritionLabelBasis(
     ...draft,
     basis,
     servingSizeG: null,
-    values,
-    warnings: [...new Set(warnings)],
-    normalizationStatus: "ready",
-  };
-}
-
-export function convertVolumeDraftTo100g(
-  draft: NutritionLabelDraft,
-  weightGPer100ml: number,
-): NutritionLabelDraft {
-  if (
-    draft.basis !== "per_100ml"
-    || !Number.isFinite(weightGPer100ml)
-    || weightGPer100ml <= 0
-    || weightGPer100ml > 10_000
-  ) {
-    throw new Error("invalid_volume_weight");
-  }
-  const warnings = draft.warnings.filter((warning) => (
-    warning !== "basis_per_100ml_requires_weight"
-    && warning !== "energy_macro_mismatch"
-    && !warning.endsWith("_outside_expected_range")
-  ));
-  warnings.push("basis_normalized_from_100ml");
-  const values = normalizedValues(draft.sourceValues, 100 / weightGPer100ml, warnings);
-  appendEnergyWarning(values, warnings);
-  return {
-    ...draft,
     values,
     warnings: [...new Set(warnings)],
     normalizationStatus: "ready",

@@ -9,7 +9,7 @@ export type ShareMealSnapshot = {
   name: string;
   time?: string | null;
   nutrition: ShareNutrition;
-  foods: { name: string; quantity_grams: number; nutrition: ShareNutrition }[];
+  foods: { name: string; quantity_grams: number; quantity_unit?: "g" | "ml"; nutrition: ShareNutrition }[];
 };
 
 export type ShareSnapshot = {
@@ -17,13 +17,14 @@ export type ShareSnapshot = {
   subject: { type: "daily_plan" | "food" | "meal" | "program"; title: string; variant?: string };
   summary: {
     basis_grams?: number;
+    basis_unit?: "g" | "ml";
     duration_weeks?: number;
     filled_days?: number;
     meal_count?: number;
     food_count?: number;
   };
   nutrition: ShareNutrition;
-  foods?: { name: string; quantity_grams: number; nutrition: ShareNutrition }[];
+  foods?: { name: string; quantity_grams: number; quantity_unit?: "g" | "ml"; nutrition: ShareNutrition }[];
   meals?: ShareMealSnapshot[];
   days?: { week_number: number; day_number: number; plan: ShareSnapshot }[];
 };

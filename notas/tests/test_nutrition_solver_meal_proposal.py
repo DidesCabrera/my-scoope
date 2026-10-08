@@ -99,6 +99,27 @@ class NutritionSolverMealProposalTests(TestCase):
         self.assertNotIn("catalog_snapshot_payload", payload_text)
         self.assertNotIn("provider", payload_text)
 
+    def test_solver_payload_uses_each_food_portion_unit(self):
+        Food.objects.filter(
+            pk__in=[self.chicken.pk, self.rice.pk, self.oil.pk]
+        ).update(portion_unit=Food.PORTION_UNIT_MILLILITERS)
+
+        result = create_solver_generated_meal_proposal(
+            user=self.user,
+            dailyplan_id=self.dailyplan.id,
+            title="Almuerzo líquido",
+            target={"kcal": 520, "protein": 45, "carbs": 65, "fat": 12},
+            limit=10,
+        )
+
+        self.assertTrue(result.proposal.proposed_payload["meal"]["foods"])
+        self.assertTrue(
+            all(
+                item["unit"] == Food.PORTION_UNIT_MILLILITERS
+                for item in result.proposal.proposed_payload["meal"]["foods"]
+            )
+        )
+
     def test_tool_creates_reviewable_proposal_without_applying_changes(self):
         result = create_nutrition_solver_meal_proposal_tool(
             self.user,

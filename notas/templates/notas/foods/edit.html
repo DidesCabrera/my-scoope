@@ -32,14 +32,19 @@
             <div class="food-edit-form__field-errors">{{ form.name.errors }}</div>
           {% endif %}
         </div>
+        <div class="food-edit-form__field">
+          <label for="{{ form.portion_unit.id_for_label }}" class="food-edit-form__label">{{ form.portion_unit.label }}</label>
+          {{ form.portion_unit }}
+          {% if form.portion_unit.errors %}<div class="food-edit-form__field-errors">{{ form.portion_unit.errors }}</div>{% endif %}
+        </div>
       </section>
 
       <section class="food-edit-form__section food-edit-form__section--macros" aria-labelledby="food-edit-macros-title">
         <div class="food-edit-form__section-header">
-          <h3 id="food-edit-macros-title">2. Ingresa los Macros por cada 100g</h3>
+          <h3 id="food-edit-macros-title">2. Ingresa los macros por cada 100 de la unidad seleccionada</h3>
         </div>
 
-        <div class="food-edit-form__macro-card" aria-label="Macros por 100g">
+        <div class="food-edit-form__macro-card" aria-label="Macros por 100 unidades">
           <div class="food-edit-form__macro-row food-edit-form__macro-row--protein">
             <label for="{{ form.protein.id_for_label }}" class="food-edit-form__macro-label">{{ form.protein.label }}</label>
             <div class="food-edit-form__macro-control">

@@ -115,7 +115,7 @@ commands through `scripts/ci_mobile_checks.sh`.
   Meal or DailyPlan library detail.
 - `Comparador` follows the web slot model for owned Foods, Meals and DailyPlans:
   two initial positions, explicit add/remove and repeated entities when useful.
-  Food quantities are edited in grams with the established 100 g fallback;
+  Food quantities use each Food's configured `g` or `ml` unit with a 100-unit fallback;
   non-Food comparisons reject quantities. Results are grouped by metric with
   server-computed relative bars. Saved detail renders a frozen snapshot, while
   explicit edit/save refreshes it from current source values.
