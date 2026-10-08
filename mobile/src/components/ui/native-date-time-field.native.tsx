@@ -101,7 +101,7 @@ export function NativeDateTimeField({
               <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeTimePart("hour", Number(next))} selectedValue={selected.getHours()} style={styles.timePicker}>
                 {hourValues.map((hour) => <Picker.Item key={hour} label={String(hour).padStart(2, "0")} value={hour} />)}
               </Picker>
-              <NativeWheelAdornment label=":" width={16} />
+              <NativeWheelAdornment label=":" width={8} />
               <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeTimePart("minute", Number(next))} selectedValue={selected.getMinutes()} style={styles.timePicker}>
                 {minuteValues.map((minute) => <Picker.Item key={minute} label={String(minute).padStart(2, "0")} value={minute} />)}
               </Picker>
@@ -135,10 +135,10 @@ const styles = StyleSheet.create({
   field: { gap: 7 },
   inlinePicker: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden", paddingBottom: tokens.spacing.xs },
   input: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: tokens.spacing.lg },
-  dateDayPicker: { height: nativeWheelMetrics.height, width: 96 },
-  dateMonthPicker: { height: nativeWheelMetrics.height, width: 94 },
+  dateDayPicker: { height: nativeWheelMetrics.height, width: 90 },
+  dateMonthPicker: { height: nativeWheelMetrics.height, marginLeft: -8, width: 104 },
   datePickerRow: { alignItems: "center", flexDirection: "row", height: nativeWheelMetrics.height, justifyContent: "center" },
-  dateYearPicker: { height: nativeWheelMetrics.height, width: 104 },
+  dateYearPicker: { height: nativeWheelMetrics.height, marginLeft: -8, width: 104 },
   label: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   pickerItem: { color: tokens.color.textMain, fontSize: nativeWheelMetrics.fontSize },
   pressed: { opacity: 0.72 },

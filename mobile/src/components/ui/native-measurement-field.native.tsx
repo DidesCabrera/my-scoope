@@ -84,13 +84,13 @@ export function NativeMeasurementField({ containerStyle, disabled = false, input
               </View>
             ) : (
               <>
-                <View style={[styles.pickerColumn, styles.weightPickerColumn]}>
+                <View style={[styles.pickerColumn, styles.weightKilogramsPickerColumn]}>
                   <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeKilograms(Number(next))} selectedValue={kilograms} style={pickerStyle}>
                     {WEIGHT_KILOGRAM_VALUES.map((option) => <Picker.Item key={option} label={String(option)} value={option} />)}
                   </Picker>
                 </View>
-                <NativeWheelAdornment label="," width={16} />
-                <View style={[styles.pickerColumn, styles.weightPickerColumn]}>
+                <NativeWheelAdornment label="," width={8} />
+                <View style={[styles.pickerColumn, styles.weightGramsPickerColumn]}>
                   <Picker dropdownIconColor={tokens.color.textMain} enabled={kilograms < 350} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeGrams(Number(next))} selectedValue={grams} style={pickerStyle}>
                     {WEIGHT_GRAM_VALUES.map((option) => <Picker.Item key={option} label={String(option / 100)} value={option} />)}
                   </Picker>
@@ -123,5 +123,6 @@ const styles = StyleSheet.create({
   pickers: { alignItems: "center", flexDirection: "row", justifyContent: "center" },
   pressed: { opacity: 0.72 },
   value: { color: tokens.color.textMain, flex: 1, fontSize: 17 },
-  weightPickerColumn: { flex: 0, width: nativeWheelMetrics.compactColumnWidth },
+  weightGramsPickerColumn: { flex: 0, width: 80 },
+  weightKilogramsPickerColumn: { flex: 0, width: 96 },
 });

@@ -31,6 +31,7 @@ import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery"
 import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
 import { ShareableElementsGallery } from "@/components/dev/shareable-elements-gallery";
 import { SubscriptionGallery } from "@/components/dev/subscription-gallery";
+import { WheelPickerGallery } from "@/components/dev/wheel-picker-gallery";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -449,6 +450,14 @@ export default function UiGalleryScreen() {
               <PanelAllocationBar size="compact" tone="fat" value={0} />
             </DetailSection>
           </ContentPanel>
+        </>
+      ) : null}
+
+      {tab === "selectors" ? (
+        <>
+          <SectionTitle detail="Controles reales · 402 pt, 375 pt y 320 pt" title="Selectores de rueda" />
+          <InlineNotice>En iOS, toca cada campo para desplegar su rueda. Los ejemplos comparten el mismo valor para facilitar la comparación entre tamaños.</InlineNotice>
+          <WheelPickerGallery />
         </>
       ) : null}
 
