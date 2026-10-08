@@ -146,7 +146,15 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
     # A generic desire verb ("quiero"/"necesito") must not turn an explicit
     # read request such as "necesito ver dos planes" into a create proposal.
     # Read intent takes precedence unless the user also names a mutation.
-    if resource and _EXPLICIT_READ_PATTERN.search(text):
+    states_personal_fact = (
+        "?" not in text
+        and (
+            _PROFILE_FACT_PATTERN.search(text)
+            or _PREFERENCE_FACT_PATTERN.search(text)
+            or _MEALS_PER_DAY_FACT_PATTERN.search(text)
+        )
+    )
+    if resource and _EXPLICIT_READ_PATTERN.search(text) and not states_personal_fact:
         return {
             "objective": "query_workspace",
             "expected_outcome": "workspace_query",
@@ -228,6 +236,14 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "expected_outcome": "nutrition_proposal",
             "resource": "dailyplan",
             "action": "create",
+        }
+
+    if resource and _QUERY_PATTERN.search(text):
+        return {
+            "objective": "query_workspace",
+            "expected_outcome": "workspace_query",
+            "resource": resource,
+            "action": "read",
         }
 
     if _PREFERENCE_FACT_PATTERN.search(text):
