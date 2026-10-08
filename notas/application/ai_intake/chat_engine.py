@@ -803,8 +803,15 @@ def _append_draft_cards_from_llm_tools(
     and deliberate review moments.
     """
 
+    record_request = _latest_personal_record_request(conversation)
     profile_cards = _profile_draft_cards_from_llm_metadata(metadata)
     preference_cards = _preference_draft_cards_from_llm_metadata(metadata)
+    if record_request is not None and not record_request.ambiguous:
+        requested = set(record_request.kinds)
+        profile_cards = [_filter_profile_card_for_record_kinds(card, requested) for card in profile_cards]
+        profile_cards = [card for card in profile_cards if card]
+        if "preferences" not in requested:
+            preference_cards = []
     proposal_preferences_cards = _proposal_preferences_cards_from_llm_metadata(metadata)
     if not profile_cards and not preference_cards and not proposal_preferences_cards:
         return conversation, 0, 0, 0
@@ -880,6 +887,31 @@ def _append_draft_cards_from_llm_tools(
         preference_appended,
         proposal_preferences_appended,
     )
+
+
+def _latest_personal_record_request(conversation: NutritionConversationState):
+    from ai_assistant.application.personal_record_intent import parse_personal_record_request
+
+    for message in reversed(tuple(conversation.messages or ())):
+        if str(getattr(message, "role", "")) == "user":
+            return parse_personal_record_request(str(getattr(message, "text", "") or ""))
+    return None
+
+
+def _filter_profile_card_for_record_kinds(card: dict, requested: set[str]) -> dict | None:
+    key_kinds = {
+        "height_cm": "body", "age_years": "body", "sex": "body",
+        "nutrition_goal": "planning", "activity_level": "planning", "training_frequency": "planning",
+        "weight_kg": "metrics", "weight_date": "metrics", "weight_source": "metrics",
+    }
+    items = [item for item in list(card.get("items") or []) if key_kinds.get(str(item.get("key") or "")) in requested]
+    if not items:
+        return None
+    filtered = dict(card)
+    filtered["items"] = items
+    filtered["pending_count"] = sum(1 for item in items if item.get("is_pending"))
+    filtered["status"] = "complete" if not filtered["pending_count"] else "pending"
+    return filtered
 
 
 def _append_profile_draft_cards_from_llm_tools(

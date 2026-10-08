@@ -9,6 +9,7 @@ from ai_assistant.application.intake_semantics import (
     extract_nutrition_intake_semantics,
     normalize_intake_text,
 )
+from ai_assistant.application.personal_record_intent import parse_personal_record_request
 from ai_assistant.application.product_ports import AIProductBindings
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
@@ -251,6 +252,11 @@ def _requested_intake_presentation_tools(user_text: str) -> set[str]:
     """Add optional card rendering only when the user explicitly asks to see it."""
 
     text = _normalized_intent_text(user_text)
+    personal_records = parse_personal_record_request(user_text)
+    if personal_records is not None:
+        # Persisted record reads already return the registered read-only cards.
+        # Avoid a second share call with a broader, conversation-only draft.
+        return set()
     if not re.search(
         r"\b(?:muestra\w*|revisa(?:r|me|mos|lo|la)?|cards?|tarjetas?)\b",
         text,
@@ -271,6 +277,15 @@ def _requested_intake_memory_tools(user_text: str) -> set[str]:
 
     text = _normalized_intent_text(user_text)
     selected: set[str] = set()
+    personal_records = parse_personal_record_request(user_text)
+    if personal_records is not None:
+        if personal_records.ambiguous:
+            return selected
+        if set(personal_records.kinds).intersection({"body", "planning", "metrics"}):
+            selected.add(TOOL_READ_USER_PROFILE_CONTEXT)
+        if "preferences" in personal_records.kinds:
+            selected.add(TOOL_READ_USER_PREFERENCE_CONTEXT)
+        return selected
     if any(marker in text for marker in ("ficha", "perfil", "mis datos", "sabes de mi")):
         selected.add(TOOL_READ_USER_PROFILE_CONTEXT)
     if any(
@@ -347,6 +362,9 @@ def initial_tool_choice(
     if not tools:
         return None
     tool_names = {str(tool.get("name") or "") for tool in tools}
+    personal_record_tool = next_personal_record_read_tool(request, ())
+    if personal_record_tool in tool_names:
+        return _named_tool_choice(personal_record_tool)
     presentation_tool = next_intake_presentation_tool(request, ())
     if presentation_tool in tool_names:
         return _named_tool_choice(presentation_tool)
@@ -414,6 +432,22 @@ def next_intake_presentation_tool(
     ):
         if tool_name in requested and tool_name not in completed:
             return tool_name
+    return None
+
+
+def next_personal_record_read_tool(
+    request: AssistantTurnRequest,
+    tool_results: Sequence[AssistantToolResult],
+) -> str | None:
+    personal_records = parse_personal_record_request(_routing_text(request))
+    if personal_records is None or personal_records.ambiguous:
+        return None
+    completed = {result.tool_name for result in tuple(tool_results or ()) if result.ok}
+    requested = set(personal_records.kinds)
+    if requested.intersection({"body", "planning", "metrics"}) and TOOL_READ_USER_PROFILE_CONTEXT not in completed:
+        return TOOL_READ_USER_PROFILE_CONTEXT
+    if "preferences" in requested and TOOL_READ_USER_PREFERENCE_CONTEXT not in completed:
+        return TOOL_READ_USER_PREFERENCE_CONTEXT
     return None
 
 

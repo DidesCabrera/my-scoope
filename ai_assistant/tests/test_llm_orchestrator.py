@@ -599,21 +599,21 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         self.assertIn("read_user_preference_context", tool_names)
         self.assertNotIn("share_preference_draft_card", tool_names)
 
-    def test_intake_exposes_cards_only_when_user_requests_presentation(self):
+    def test_intake_reads_all_registered_personal_records_when_requested(self):
         orchestrator = ExternalLLMOrchestrator(
             llm_client=FakeLLMClient(),
             config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=True),
         )
 
         provider_request = orchestrator.build_provider_request(
-            self._request("Muéstrame mi ficha y mis preferencias guardadas.")
+            self._request("Muéstrame todas mis fichas personales.")
         )
         tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
 
         self.assertIn("read_user_profile_context", tool_names)
-        self.assertIn("share_profile_draft_card", tool_names)
+        self.assertNotIn("share_profile_draft_card", tool_names)
         self.assertIn("read_user_preference_context", tool_names)
-        self.assertIn("share_preference_draft_card", tool_names)
+        self.assertNotIn("share_preference_draft_card", tool_names)
 
     def test_parser_accepts_v2_json_string_slots_and_tool_arguments(self):
         orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient())

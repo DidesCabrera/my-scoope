@@ -4,9 +4,9 @@ My Scoope es una app de autogestión nutricional para consumidores que siguen su
 
 ## Acceso
 
-La app requiere inicio de sesión. Las credenciales de la cuenta de demostración se cargan únicamente en App Store Connect; nunca se guardan en este repositorio. La cuenta debe prepararse antes de enviar el build con:
+La app requiere inicio de sesión. La cuenta dedicada para revisión es `appreview@myscoope.com`, sin autenticación multifactor y sin una suscripción activa, para que App Review pueda recorrer la compra completa en Sandbox. Su contraseña se carga únicamente en App Store Connect y nunca se guarda en este repositorio. La cuenta debe existir y prepararse antes de enviar el build con:
 
-`python manage.py prepare_app_review_demo --login <correo-configurado-en-app-store-connect>`
+`python manage.py prepare_app_review_demo --login appreview@myscoope.com`
 
 ## Recorrido sugerido
 
@@ -15,8 +15,8 @@ La app requiere inicio de sesión. Las credenciales de la cuenta de demostració
 3. En **Plan de hoy**, abrir el detalle de una comida y marcar su cumplimiento.
 4. Abrir **Registrar peso** y guardar una medición.
 5. Abrir **Digitalizar etiqueta nutricional**. La app muestra una vista previa y realiza comprobaciones locales de legibilidad con Apple Vision antes de cualquier envío. El usuario debe activar **Autorizar análisis con OpenAI** antes de poder elegir **Enviar a OpenAI y digitalizar**. Sólo entonces una copia reducida, re-encodedada y sin metadatos se envía temporalmente a OpenAI para extraer los valores. El texto OCR crudo no se conserva y el alimento privado sólo se guarda después de confirmar los valores.
-6. Abrir **Mi suscripción** para probar compra/restauración en Sandbox. Los precios y periodos proceden de StoreKit; las condiciones de renovación, cancelación, privacidad y términos aparecen en la misma pantalla antes de comprar.
-7. Abrir **Cuenta, privacidad y ayuda** para acceder a privacidad, términos, soporte, reporte de contenido y eliminación de cuenta.
+6. Abrir **Mi cuenta**, elegir **Mejorar mi suscripción** y revisar **Suscripciones y Bolsas** para probar compra/restauración en Sandbox. Los precios y periodos proceden de StoreKit; las condiciones de renovación, cancelación, privacidad, términos y reembolsos aparecen en **Información de la suscripción** antes de comprar.
+7. Abrir el menú de **Mi cuenta** para acceder al centro de soporte, reportar contenido o un problema y eliminar la cuenta dentro de la app.
 
 ## Funciones nativas
 

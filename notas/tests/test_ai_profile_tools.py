@@ -38,6 +38,10 @@ class AIProfileToolsTests(TestCase):
         self.assertEqual(draft["sex"], Profile.SEX_MALE)
         self.assertEqual(draft["field_sources"]["height_cm"], "profile")
         self.assertEqual(result.data["profile_draft_card"]["status"], "pending")
+        card_items = {item["key"]: item["value"] for item in result.data["profile_draft_card"]["items"]}
+        self.assertIn("nutrition_goal", card_items)
+        self.assertEqual(card_items["weight_source"], "Registro manual")
+        self.assertNotEqual(card_items["weight_date"], "Pendiente")
         self.assertEqual(result.data["nutrition_brief_patch"]["subject_source"], "self_profile")
         self.assertEqual(result.data["nutrition_brief_patch"]["ppk_weight_source"], "profile_current_weight")
 
@@ -101,7 +105,8 @@ class AIProfileToolsTests(TestCase):
         self.assertEqual(card["pending_count"], 0)
         self.assertTrue(card["has_chat_draft_updates"])
         self.assertTrue(card["can_update_personal_profile"])
-        self.assertEqual(card["items"][0]["value"], "85 kg")
+        weight_item = next(item for item in card["items"] if item["key"] == "weight_kg")
+        self.assertEqual(weight_item["value"], "85 kg")
 
     def test_commit_profile_update_persists_only_approved_committable_fields(self):
         result = commit_profile_update_tool(

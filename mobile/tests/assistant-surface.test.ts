@@ -74,13 +74,31 @@ test("typed assistant cards navigate to trusted product surfaces and gate mutati
   assert.ok(comparator.includes("<SavedComparisonListCard item={item}"));
   assert.match(conversation, /card\.type === "saved_comparison"/);
   assert.match(conversation, /card\.type === "prepared_action"/);
-  assert.match(conversation, /card\.type === "preference_draft" && card\.can_commit/);
+  assert.ok(conversation.includes('<PersonalRecordCard'));
+  assert.ok(conversation.includes('card.type === "profile_draft" || card.type === "preference_draft"'));
+  assert.ok(conversation.includes('card.type === "preference_draft" && card.can_commit'));
   assert.match(conversation, /\/comparator\/saved\//);
   assert.match(conversation, /\/proposals\//);
   assert.match(screen, /Alert\.alert/);
   assert.match(screen, /\/ai\/prepared-actions\/\$\{actionId\}\/\$\{mode\}/);
   assert.match(screen, /\/ai\/chats\/\$\{chatId\}\/preferences\/commit/);
   assert.doesNotMatch(conversation, /preview\.before|preview\.after|arguments/);
+});
+
+test("personal record cards are registered in the UI gallery and reused by chat", async () => {
+  const gallery = await source("src/app/dev/ui-gallery.tsx");
+  const navigation = await source("src/components/dev/gallery-navigation.tsx");
+  const recordGallery = await source("src/components/dev/personal-record-card-gallery.tsx");
+  const conversation = await source("src/components/assistant/chat-conversation.tsx");
+
+  assert.ok(navigation.includes('{ key: "personalRecords", label: "Fichas personales" }'));
+  assert.ok(gallery.includes('<PersonalRecordCardGallery />'));
+  for (const kind of ["body", "planning", "preferences", "metrics"]) {
+    assert.ok(recordGallery.includes(`kind: "${kind}"`));
+  }
+  assert.ok(recordGallery.includes('<PersonalRecordCard'));
+  assert.ok(conversation.includes('<PersonalRecordCard'));
+  assert.ok(conversation.includes('profileRecordKinds'));
 });
 
 test("the UI gallery registers the same saved comparison card used by chat and comparisons", async () => {

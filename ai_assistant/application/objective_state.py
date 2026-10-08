@@ -5,6 +5,8 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from ai_assistant.application.personal_record_intent import parse_personal_record_request
+
 ACTIVE_WORK_VERSION = "ai_assistant.active_work.v1"
 
 _RESOURCE_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -133,6 +135,15 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": "clarify",
         }
 
+    personal_records = parse_personal_record_request(str(value or ""))
+    if personal_records is not None and personal_records.ambiguous:
+        return {
+            "objective": "ask_clarification",
+            "expected_outcome": "clarification_required",
+            "resource": "profile",
+            "action": "clarify",
+        }
+
     resource = _resource(text)
     mutation_action = _mutation_action(text)
     if resource and mutation_action:
@@ -146,7 +157,15 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
     # A generic desire verb ("quiero"/"necesito") must not turn an explicit
     # read request such as "necesito ver dos planes" into a create proposal.
     # Read intent takes precedence unless the user also names a mutation.
-    if resource and _EXPLICIT_READ_PATTERN.search(text):
+    states_personal_fact = (
+        "?" not in text
+        and (
+            _PROFILE_FACT_PATTERN.search(text)
+            or _PREFERENCE_FACT_PATTERN.search(text)
+            or _MEALS_PER_DAY_FACT_PATTERN.search(text)
+        )
+    )
+    if resource and _EXPLICIT_READ_PATTERN.search(text) and not states_personal_fact:
         return {
             "objective": "query_workspace",
             "expected_outcome": "workspace_query",
@@ -230,6 +249,14 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": "create",
         }
 
+    if resource and _QUERY_PATTERN.search(text):
+        return {
+            "objective": "query_workspace",
+            "expected_outcome": "workspace_query",
+            "resource": resource,
+            "action": "read",
+        }
+
     if _PREFERENCE_FACT_PATTERN.search(text):
         return {
             "objective": "record_conversation_facts",
@@ -241,7 +268,7 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
 
 
 def _active_payload(objective: Mapping[str, str], *, source: str) -> dict[str, Any]:
-    return {
+    payload = {
         "version": ACTIVE_WORK_VERSION,
         "status": "active",
         "objective": objective["objective"],
@@ -251,6 +278,19 @@ def _active_payload(objective: Mapping[str, str], *, source: str) -> dict[str, A
         "source": source,
         "inference_grants_write_authority": False,
     }
+    if objective.get("expected_outcome") == "clarification_required" and objective.get("resource") == "profile":
+        payload["clarification_prompt"] = (
+            "Pregunta si se refiere a Ficha corporal, Objetivo y actividad, "
+            "Preferencias alimentarias, Métricas corporales o a todas."
+        )
+        payload["clarification_options"] = [
+            "Ficha corporal",
+            "Objetivo y actividad",
+            "Preferencias alimentarias",
+            "Métricas corporales",
+            "Todas mis fichas",
+        ]
+    return payload
 
 
 def _response_only_payload() -> dict[str, Any]:

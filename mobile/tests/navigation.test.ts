@@ -43,7 +43,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(proposalEntity, /\/libraries\/daily-plans\//);
   assertSourceMatch(proposalEntity, /\/proposals\/\$\{proposal\.id\}\/entity\/meals\//);
   assertSourceDoesNotMatch(comparison, /Usar en el Asistente|Volver a guardadas/);
-  assertSourceMatch(comparison, /forceFallback: true/);
+  assertSourceDoesNotMatch(comparison, /forceFallback: true/);
   assertSourceMatch(comparison, /params: \{ kind \}/);
   assertSourceMatch(comparison, /<Screen[\s\S]*headerMode="preserve"[\s\S]*scrollHeader=\{<AppHeader/);
   assertSourceMatch(comparison, /eyebrowIcon=\{<EntityIcon entity=\{entity\} size="compact" \/>\}/);

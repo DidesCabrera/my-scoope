@@ -25,6 +25,7 @@ import { ProgramChildCard } from "@/components/libraries/program-child-card";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
+import { PersonalRecordCardGallery } from "@/components/dev/personal-record-card-gallery";
 import { SavedComparisonCardGallery } from "@/components/dev/saved-comparison-card-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
@@ -74,7 +75,6 @@ import {
 } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 // GalleryNavigation includes { key: "calendars", label: "Calendarios" }.
-
 const entities: { key: EntityKind; label: string }[] = [
   { key: "food", label: "Food" },
   { key: "meal", label: "Meal" },
@@ -570,7 +570,7 @@ export default function UiGalleryScreen() {
       ) : null}
 
       {tab === "proposals" ? <ProposalGallery /> : null}
-
+      {tab === "personalRecords" ? <PersonalRecordCardGallery /> : null}
       {tab === "comparisons" ? (
         <>
           <SectionTitle detail="Alimentos, comidas y planes" title="Alcance de comparación" />
