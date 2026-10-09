@@ -25,6 +25,7 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(navigation.includes("Vista previa del onboarding"));
   assert.ok(preview.includes('if (!session.is_staff) return <Redirect href="/account"'));
   assert.ok(preview.includes("onboardingJourneySteps.length - 1"));
+  assert.ok(preview.includes("fullWidthExplanationTransition"));
   assert.ok(!preview.includes("apiRequest"));
   assert.ok(!preview.includes("/api/v1/"));
 });

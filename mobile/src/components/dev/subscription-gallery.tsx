@@ -41,10 +41,10 @@ function SubscriptionInformationCard() {
   );
 }
 
-export function SubscriptionPreviewContent({ context }: { context: SubscriptionPreview }) {
+export function SubscriptionPreviewContent({ context, topInsetReduction = 0 }: { context: SubscriptionPreview; topInsetReduction?: number }) {
   const isOnboarding = context === "onboarding";
   return (
-    <View style={styles.previewContent}>
+    <View style={[styles.previewContent, topInsetReduction > 0 && { paddingTop: Math.max(0, tokens.spacing.screen - topInsetReduction) }]}>
         {isOnboarding ? (
           <View style={styles.onboardingIntro}>
             <View style={styles.onboardingLogo}><MyScoopeLogo /></View>
