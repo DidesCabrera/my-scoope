@@ -69,6 +69,7 @@ def create_draft_meal(
         name=clean_name,
         created_by=user,
         is_draft=True,
+        scope=Meal.Scope.EMBEDDED if pending_dailyplan_id else Meal.Scope.LIBRARY,
     )
 
     if pending_dailyplan_id:
@@ -157,7 +158,7 @@ def fork_meal(original: Meal, user) -> Meal:
     return forked
 
 
-def _clone_meal(original: Meal, user) -> Meal:
+def _clone_meal(original: Meal, user, *, scope=Meal.Scope.LIBRARY) -> Meal:
     from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 
     origin = get_meal_origin(original)
@@ -171,6 +172,7 @@ def _clone_meal(original: Meal, user) -> Meal:
         is_forkable=True,
         is_copiable=False,
         is_draft=False,
+        scope=scope,
     )
 
     clone_meal_foods(original, forked)
@@ -193,7 +195,7 @@ def fork_meal_for_library(original: Meal, user) -> Meal:
 
 def fork_meal_for_dailyplan(original: Meal, user) -> Meal:
 
-    forked = _clone_meal(original, user)
+    forked = _clone_meal(original, user, scope=Meal.Scope.EMBEDDED)
 
     # mismo nombre
     return forked
@@ -220,6 +222,7 @@ def copy_meal(original: Meal, user) -> Meal:
         is_forkable=True,
         is_copiable=False,
         is_draft=False,
+        scope=Meal.Scope.LIBRARY,
     )
 
     clone_meal_foods(original, copy)

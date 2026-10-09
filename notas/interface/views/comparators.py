@@ -202,11 +202,10 @@ def _get_foods(user):
 
 def _get_meals(user):
     return list(
-        Meal.objects
+        Meal.objects.library()
         .filter(
             created_by=user,
             is_draft=False,
-            dailyplanmeal__isnull=True,
         )
         .order_by("list_order", "name", "id")
         .distinct()

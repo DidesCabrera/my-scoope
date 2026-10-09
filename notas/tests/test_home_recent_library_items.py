@@ -63,6 +63,8 @@ class HomeRecentLibraryItemsTests(TestCase):
         )
 
         embedded_meal = self._library_meal("Embedded dailyplan meal")
+        embedded_meal.scope = Meal.Scope.EMBEDDED
+        embedded_meal.save(update_fields=["scope"])
         dailyplan = DailyPlan.objects.create(
             name="Container dailyplan",
             created_by=self.user,

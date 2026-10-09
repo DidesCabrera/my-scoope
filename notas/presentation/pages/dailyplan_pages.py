@@ -125,11 +125,10 @@ def get_dailyplan_detail_page_data(
             )
 
         browse_meals_qs = (
-            meals_with_kcal()
+            meals_with_kcal().library()
             .filter(
                 created_by=user,
                 is_draft=False,
-                dailyplanmeal__isnull=True,
             )
             .order_by("-created_at")
             .distinct()

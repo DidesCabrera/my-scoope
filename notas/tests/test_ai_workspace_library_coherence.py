@@ -62,6 +62,7 @@ class AIWorkspaceLibraryCoherenceTests(TestCase):
             name="Snapshot interno",
             created_by=self.user,
             is_draft=False,
+            scope=Meal.Scope.EMBEDDED,
         )
         plan = DailyPlan.objects.create(
             name="Plan visible",

@@ -35,7 +35,7 @@ from notas.presentation.viewmodels.meals import (
 
 
 def _standalone_meals_queryset():
-    return Meal.objects.annotate(
+    return Meal.objects.library().annotate(
         is_dpm_instance_sql=Value(False, output_field=BooleanField()),
     )
 
@@ -246,7 +246,6 @@ def get_meal_explore_list_page_data(user) -> MealListPageData:
         .filter(
             is_public=True,
             is_draft=False,
-            dailyplanmeal__isnull=True,
         )
         .select_related("created_by", "original_author", "forked_from")
         .prefetch_related(
@@ -287,7 +286,6 @@ def get_meal_shared_list_page_data(user) -> MealListPageData:
             shares__accepted_by=user,
             shares__removed=False,
             is_draft=False,
-            dailyplanmeal__isnull=True,
         )
         .select_related("created_by", "original_author", "forked_from")
         .prefetch_related(
@@ -327,7 +325,6 @@ def get_meal_draft_list_page_data(user) -> MealListPageData:
         .filter(
             created_by=user,
             is_draft=True,
-            dailyplanmeal__isnull=True,
         )
         .select_related("created_by", "original_author", "forked_from")
         .prefetch_related(

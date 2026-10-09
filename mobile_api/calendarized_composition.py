@@ -269,7 +269,7 @@ def _day_context(*, user, day_id: int) -> tuple[CalendarizedDay, dict]:
 
 def _library_meal(user, meal_id: int) -> Meal:
     meal = (
-        Meal.objects.filter(pk=meal_id, created_by=user, is_draft=False, dailyplanmeal__isnull=True)
+        Meal.objects.library().filter(pk=meal_id, created_by=user, is_draft=False)
         .prefetch_related(
             Prefetch("meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id"))
         )

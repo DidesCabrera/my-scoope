@@ -76,11 +76,12 @@ def _food_from_snapshot(*, snapshot: dict, actor, quantity_grams: float = 100) -
     )
 
 
-def _meal_from_snapshot(*, snapshot: dict, actor) -> Meal:
+def _meal_from_snapshot(*, snapshot: dict, actor, scope=Meal.Scope.LIBRARY) -> Meal:
     meal = Meal.objects.create(
         name=_clean_name(snapshot.get("name"), "") or _snapshot_title(snapshot, "Comida compartida"),
         created_by=actor,
         is_draft=False,
+        scope=scope,
     )
     foods = snapshot.get("foods", [])
     if not isinstance(foods, list):
@@ -106,7 +107,7 @@ def _dailyplan_from_snapshot(*, snapshot: dict, actor, source: str = DailyPlan.S
     for position, meal_snapshot in enumerate(meals):
         if not isinstance(meal_snapshot, dict):
             raise ShareUnavailable("share_snapshot_invalid")
-        meal = _meal_from_snapshot(snapshot=meal_snapshot, actor=actor)
+        meal = _meal_from_snapshot(snapshot=meal_snapshot, actor=actor, scope=Meal.Scope.EMBEDDED)
         DailyPlanMeal.objects.create(
             dailyplan=dailyplan,
             meal=meal,

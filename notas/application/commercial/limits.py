@@ -22,7 +22,7 @@ def workspace_usage(user) -> dict[str, int]:
     """Count personal library objects, excluding embedded composition snapshots."""
 
     return {
-        "meal": Meal.objects.filter(created_by=user, pending_dailyplan__isnull=True, dailyplanmeal__isnull=True).count(),
+        "meal": Meal.objects.library().filter(created_by=user).count(),
         "dailyplan": DailyPlan.objects.filter(created_by=user).exclude(source=DailyPlan.SOURCE_PROGRAM).count(),
         "program": Program.objects.filter(created_by=user).count(),
         "comparison": SavedComparison.objects.filter(owner=user).count(),

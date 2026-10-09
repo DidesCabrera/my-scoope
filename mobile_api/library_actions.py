@@ -320,7 +320,7 @@ def _owned_library_items(user, entity: str):
     if entity == "foods":
         return Food.objects.filter(created_by=user, is_active=True)
     if entity == "meals":
-        return Meal.objects.filter(created_by=user, dailyplanmeal__isnull=True).distinct()
+        return Meal.objects.library().filter(created_by=user)
     if entity == "daily-plans":
         return DailyPlan.objects.filter(created_by=user).exclude(source=DailyPlan.SOURCE_PROGRAM)
     if entity == "programs":

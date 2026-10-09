@@ -59,11 +59,10 @@ def home_view(request):
         .order_by("-created_at")
     )
 
-    meals_qs = Meal.objects.filter(
+    meals_qs = Meal.objects.library().filter(
         created_by=user,
         is_draft=False,
-        dailyplanmeal__isnull=True,
-    ).distinct()
+    )
 
     foods_qs = Food.objects.filter(
         created_by=user,

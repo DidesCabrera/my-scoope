@@ -498,6 +498,7 @@ def create_empty_meal_for_dailyplan_meal(
         created_by=user,
         is_draft=True,
         is_public=False,
+        scope=Meal.Scope.EMBEDDED,
     )
 
     dailyplan_meal.meal = new_meal
@@ -531,6 +532,7 @@ def create_pending_meal_for_dailyplan(
         created_by=user,
         is_draft=True,
         pending_dailyplan=dailyplan,
+        scope=Meal.Scope.EMBEDDED,
     )
 
     return DailyPlanPendingMealCreateResult(
