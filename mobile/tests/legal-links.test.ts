@@ -31,7 +31,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /<Screen headerMode="preserve" onHeaderVisibilityChange=\{setCompactHeaderVisible\}>/);
   assertSourceMatch(subscription, /<AppHeader alignment="center" title="Suscripciones y Bolsas" \/>/);
   assertSourceMatch(subscription, /isOnboarding \? \([\s\S]*<View style=\{styles\.onboardingLogo\}><MyScoopeLogo \/><\/View>[\s\S]*\) : \([\s\S]*<View style=\{styles\.subscriptionLogo\}><MyScoopeLogo \/><\/View>[\s\S]*<AppHeader alignment="center" title="Suscripciones y Bolsas" \/>/);
-  assertSourceMatch(subscription, /Nuestras suscripciones te entregan beneficios para enriquecer tus librería y facilitar tu gestión nutricional\./);
+  assertSourceMatch(subscription, /Nuestras suscripciones te entregan beneficios para enriquecer tus librerías y facilitar tu gestión nutricional\./);
   assertSourceMatch(subscription, /subscriptionDescriptionGroup: \{ gap: tokens\.spacing\.md, marginTop: tokens\.spacing\.lg \}/);
   assertSourceMatch(subscription, /subscriptionDescription: \{[^}]*textAlign: "center"/);
   assertSourceMatch(subscription, /subscriptionHeader: \{ paddingBottom: tokens\.spacing\.lg \}/);
