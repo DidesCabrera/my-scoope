@@ -1,4 +1,4 @@
-import { type Href, Redirect, useRouter } from "expo-router";
+import { type Href, Redirect, Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 
 import { useSession } from "@/auth/session-context";
@@ -44,8 +44,10 @@ export default function OnboardingPreviewScreen() {
   if (!session.is_staff) return <Redirect href="/account" />;
 
   return (
-    <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 }} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
-      <OnboardingJourneyView
+    <>
+      <Stack.Screen options={{ headerShown: stepIndex !== 0 }} />
+      <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 }} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
+        <OnboardingJourneyView
         conciseSexEyebrow
         contentSizedDietaryChips
         controller={controller}
@@ -69,7 +71,8 @@ export default function OnboardingPreviewScreen() {
         storyboardSummaryLayout
         step={step as OnboardingJourneyStep}
         topInsetReduction={storyboardTopInsetReduction}
-      />
-    </Screen>
+        />
+      </Screen>
+    </>
   );
 }

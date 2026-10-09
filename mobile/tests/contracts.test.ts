@@ -90,7 +90,15 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(gallery, /<Brand|Referencia interna construida con los componentes reales de la app/);
   assertSourceMatch(gallery, /<OnboardingStoryboardGallery \/>/);
   assertSourceMatch(gallery, /<SubscriptionGallery \/>/);
+  assertSourceMatch(gallery, /<DisclosureGallery \/>/);
   assertSourceMatch(navigation, /\{ key: "subscriptions", label: "Suscripciones" \}/);
+  assertSourceMatch(navigation, /\{ key: "disclosures", label: "Responsabilidad" \}/);
+  const disclosureGallery = await readTestFile(
+    path.resolve(process.cwd(), "src/components/dev/disclosure-gallery.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(disclosureGallery, /sin aceptación, navegación ni persistencia/);
+  assertSourceMatch(disclosureGallery, /Entiendo y quiero continuar/);
   assertSourceMatch(storyboardGallery, /OnboardingJourneyView/);
   assertSourceMatch(storyboardGallery, /step === "plans"[\s\S]*<SubscriptionPreviewContent context="onboarding" topInsetReduction=\{topInsetReductionForOnboardingStoryboard\(step\)\} \/>/);
   assertSourceMatch(storyboardGallery, /Storyboard visual · sin sesión, API ni persistencia/);
@@ -1036,7 +1044,8 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /Boolean\(controller\) && index >= 1 && index <= 5/);
   assertSourceDoesNotMatch(journey, /OnboardingExplanationCarousel/);
   assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
-  assertSourceMatch(journey, /loginAction: \{ marginBottom: 114, marginTop: "auto" \}/);
+  assertSourceMatch(journey, /loginAction: \{ width: "100%" \}/);
+  assertSourceDoesNotMatch(journey, /loginAction: \{[^}]*marginTop: "auto"/);
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
   const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
   const onboardingPreview = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding-preview.tsx"), "utf8");

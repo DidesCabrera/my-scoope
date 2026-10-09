@@ -19,7 +19,7 @@ import {
   Target,
 } from "lucide-react-native";
 import { createContext, type ComponentType, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
-import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
+import { Animated, Image, PanResponder, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { DailyPlanMealDetailList, type DailyPlanMealDetailItem, EntityDetailPage, EntityDetailSection } from "@/components/details";
@@ -68,6 +68,8 @@ export const onboardingNutritionFields = ["goal", "birth_date", "sex", "height_c
 type Icon = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 
 const noop = () => undefined;
+const loginBackgroundSource = require("../../../assets/images/login-background.jpg");
+const launchLogoSource = require("../../../assets/images/launch-logo.png");
 
 export type OnboardingJourneyValues = {
   goal: string;
@@ -446,19 +448,31 @@ function ExplanationCard({ icon: IconComponent, title, body }: { body: string; i
 
 function LoginView({ index }: { index: number }) {
   const controller = useJourneyController();
-  const { fixedLoginActionBottomSpacing } = useContext(JourneyPresentationContext);
+  const { height: viewportHeight } = useWindowDimensions();
+  const loginImageHeight = Math.max(280, Math.min(396, viewportHeight - 416));
   return (
-    <>
-      <View style={styles.centeredLogo}><MyScoopeLogo /></View>
+    <View style={styles.loginContent}>
+      <View style={[styles.centeredLogo, styles.loginLogo]}>
+        <Image accessibilityLabel="My Scoope" resizeMode="contain" source={launchLogoSource} style={styles.loginLogoImage} />
+      </View>
+      <View style={[styles.loginImageStage, { height: loginImageHeight }]}>
+        <Image accessibilityIgnoresInvertColors resizeMode="contain" source={loginBackgroundSource} style={[styles.loginBackgroundImage, { height: loginImageHeight }]} />
+      </View>
       <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.loginHero}>
-        <Text style={styles.loginTitle}>Inicia sesión para guardar tu progreso</Text>
-        <Text style={[textStyles.muted, styles.centeredText]}>Usa tu cuenta para continuar el proceso en cualquiera de tus dispositivos.</Text>
+        <View accessibilityLabel="Consigue tu Prime Físico" accessible style={styles.loginTitleRow}>
+          <Text style={styles.loginTitle}>Consigue tu</Text>
+          <View style={styles.loginTitleChip}>
+            <Text style={styles.loginTitleChipText}>Prime</Text>
+          </View>
+          <Text style={styles.loginTitle}>Físico</Text>
+        </View>
+        <Text style={[textStyles.muted, styles.centeredText, styles.loginDescription]}>Planifica, Ejecuta y Aprende sobre alimentación para ver resultados importante</Text>
+        <View style={styles.loginAction}>
+          {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
+          <Button disabled={controller.loginDisabled} label="Iniciar sesión o crear cuenta" loading={controller.busy} multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
+        </View>
       </View>
-      <View style={[styles.loginAction, fixedLoginActionBottomSpacing > 0 && { marginBottom: fixedLoginActionBottomSpacing }]}>
-        {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
-        <Button disabled={controller.loginDisabled} label="Iniciar sesión o crear cuenta" loading={controller.busy} multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
-      </View>
-    </>
+    </View>
   );
 }
 
@@ -1071,6 +1085,7 @@ export function OnboardingJourneyView({
           {...swipeResponder.panHandlers}
           style={[
             styles.screen,
+            index === 0 && styles.loginBackgroundScreen,
             fixedLoginActionBottomSpacing > 0 && index === 0 && styles.fixedLoginScreen,
             index >= 7 && index <= 12 && styles.profileScreen,
             fixedDisclosuresFooter && index === 6 && styles.fixedProfileScreen,
@@ -1091,6 +1106,12 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.lg, minHeight: 690, paddingBottom: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 },
   interactiveExplanationScreen: { flex: 1 },
   fixedLoginScreen: { flex: 1, minHeight: 0 },
+  loginBackgroundScreen: { flex: 1, minHeight: 0, overflow: "hidden" },
+  loginLogo: { marginBottom: -18, marginTop: 62 },
+  loginLogoImage: { height: 28, width: 100 },
+  loginImageStage: { height: 396, position: "relative", width: "100%" },
+  loginBackgroundImage: { bottom: 0, height: 396, left: 0, position: "absolute", right: 0, top: 0, width: "100%" },
+  loginContent: { flex: 1, gap: tokens.spacing.lg, transform: [{ translateY: -12 }], zIndex: 1 },
   explanationViewport: { flex: 1, overflow: "hidden", width: "100%" },
   explanationSlide: { flex: 1, gap: tokens.spacing.lg, paddingTop: tokens.spacing.xxl },
   fullWidthExplanationViewport: { alignSelf: "stretch", marginHorizontal: -tokens.spacing.screen, width: undefined },
@@ -1147,10 +1168,14 @@ const styles = StyleSheet.create({
   explanationTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   explanationBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
   valueFeatures: { gap: tokens.spacing.sm },
-  loginHero: { alignItems: "center", gap: tokens.spacing.md, marginTop: 64 },
-  loginAction: { marginBottom: 114, marginTop: "auto" },
+  loginHero: { alignItems: "center", gap: tokens.spacing.md, marginTop: -12 },
+  loginDescription: { marginBottom: 22, marginTop: -10 },
+  loginAction: { width: "100%" },
   loginKicker: { color: tokens.color.program, fontSize: 11, fontWeight: tokens.weight.extraBold, letterSpacing: 1.5 },
-  loginTitle: { color: tokens.color.textMain, fontSize: 32, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 37, marginBottom: tokens.spacing.sm, textAlign: "center" },
+  loginTitleRow: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 7, justifyContent: "center", marginBottom: tokens.spacing.sm },
+  loginTitle: { color: tokens.color.textMain, fontSize: 32, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 37, textAlign: "center" },
+  loginTitleChip: { backgroundColor: tokens.color.textMain, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 1 },
+  loginTitleChipText: { color: tokens.color.surfaceApp, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 35 },
   cardTitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.bold },
   quietCenter: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16, textAlign: "center" },
   levels: { gap: tokens.spacing.sm },

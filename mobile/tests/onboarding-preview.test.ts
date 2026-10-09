@@ -26,6 +26,8 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(preview.includes('if (!session.is_staff) return <Redirect href="/account"'));
   assert.ok(preview.includes("onboardingJourneySteps.length - 1"));
   assert.ok(preview.includes("fullWidthExplanationTransition"));
+  const journey = await source("src/components/onboarding/onboarding-journey-view.tsx");
+  assert.ok(journey.includes('require("../../../assets/images/login-background.jpg")'));
   assert.ok(!preview.includes("apiRequest"));
   assert.ok(!preview.includes("/api/v1/"));
 });
