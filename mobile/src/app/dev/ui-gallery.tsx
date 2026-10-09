@@ -221,13 +221,10 @@ export default function UiGalleryScreen() {
       <View style={[styles.galleryLayout, width >= 700 && styles.galleryLayoutWide]}>
         <GalleryNavigation activeTab={tab} onChange={setTab} wide={width >= 700} />
         <View style={styles.galleryContent}>
-
       {tab === "onboarding" ? (
         <OnboardingStoryboardGallery />
       ) : null}
-
       {tab === "disclosures" ? <DisclosureGallery /> : null}
-
       {tab === "subscriptions" ? <SubscriptionGallery /> : null}
 
       {tab === "labelCapture" ? (

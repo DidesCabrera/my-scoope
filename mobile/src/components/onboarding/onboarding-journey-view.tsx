@@ -61,6 +61,39 @@ export function topInsetReductionForOnboardingStoryboard(step: OnboardingJourney
     : onboardingStoryboardTopInsetReduction;
 }
 
+export function presentationPropsForOnboardingStep(step: OnboardingJourneyStep) {
+  const index = onboardingJourneySteps.findIndex((item) => item.key === step);
+  const usesRefinedPresentation = index >= 1;
+  return {
+    conciseSexEyebrow: usesRefinedPresentation,
+    contentSizedDietaryChips: usesRefinedPresentation,
+    disclosuresTitleSpacingReduction: index === 6 ? 18 : 0,
+    fixedDisclosuresFooter: index === 6,
+    fixedLoginActionBottomSpacing: 0,
+    fixedProfileChrome: index >= 7 && index <= 12,
+    fixedProfileFooterBottomSpacing: index >= 7 && index <= 12 ? 46 : 0,
+    fullWidthExplanationTransition: index >= 1 && index <= 5,
+    hideCalculationReviewDisclosure: usesRefinedPresentation,
+    measurementReferenceNotice: usesRefinedPresentation,
+    progressiveAllergyDetails: usesRefinedPresentation,
+    profileEyebrowsMuted: usesRefinedPresentation,
+    profileProgressBottomSpacing: index >= 7 && index <= 12 ? 24 : 0,
+    profileProgressEyebrowBottomSpacing: index >= 7 && index <= 12 ? 18 : 0,
+    profileQuestionSpacing: index >= 7 && index <= 12 ? 24 : 0,
+    profileProgressWidthReduction: index >= 7 && index <= 12 ? 36 : 0,
+    profileTitleBottomSpacingReduction: index >= 7 && index <= 12 ? 12 : 0,
+    showGoalOptionsEyebrow: usesRefinedPresentation,
+    showProfileControlBleed: usesRefinedPresentation,
+    storyboardSummaryLayout: usesRefinedPresentation,
+    topInsetReduction: usesRefinedPresentation
+      ? topInsetReductionForOnboardingStoryboard(step)
+        + (index >= 1 && index <= 6 ? 20 : 0)
+        + (index >= 6 ? 20 : 0)
+        + (step === "plans" ? 20 : 0)
+      : 0,
+  };
+}
+
 const explanationSteps = onboardingJourneySteps.slice(1, 6);
 
 export const onboardingNutritionFields = ["goal", "birth_date", "sex", "height_cm", "weight_kg", "activity_level", "training_frequency", "dietary_pattern", "allergies_or_intolerances", "avoided_foods"] as const;
