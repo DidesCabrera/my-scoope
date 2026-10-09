@@ -1,12 +1,13 @@
 import { type Href, Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { useState } from "react";
-import { Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { ProfileData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Brand, Button, Card, InlineNotice, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { ResponsibleUseActionButton, ResponsibleUseContent } from "@/components/disclosures/responsible-use-content";
+import { Button, InlineNotice, Screen, textStyles } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
@@ -48,27 +49,18 @@ export default function DisclosuresScreen() {
 
   return (
     <Screen>
-      <Brand />
-      <AppHeader eyebrow="Antes de comenzar" title="Tu decisión sigue siendo la última" />
-      <Text style={textStyles.muted}>My Scoope está hecho para personas que gestionan activamente su alimentación y quieren ejecutar un programa con disciplina.</Text>
-      <Card accent={tokens.color.warning}>
-        <SectionTitle title="No es atención médica" />
-        <Text style={textStyles.body}>La app no diagnostica, trata ni reemplaza a un médico o nutricionista. Si tienes una condición médica, síntomas, embarazo o restricciones clínicas, consulta a un profesional.</Text>
-      </Card>
-      <Card accent={tokens.color.interactivePrimary}>
-        <SectionTitle title="Revisa antes de aplicar" />
-        <Text style={textStyles.body}>Los cálculos, lecturas de etiquetas y propuestas asistidas por IA pueden contener errores. Confirma cantidades, ingredientes y cambios antes de usarlos.</Text>
-      </Card>
-      <Card muted>
-        <SectionTitle title="Privacidad y control" />
-        <Text style={textStyles.muted}>Si digitalizas una etiqueta, una copia reducida y sin metadatos se envía temporalmente a OpenAI para extraer sus valores. My Scoope no guarda esa foto salvo que tú actives expresamente “Guardar copia procesada”; podrás verla y eliminarla después. Puedes revisar nuestra política y eliminar tu cuenta desde la app.</Text>
+      <ResponsibleUseContent policyActions={<View style={styles.policyActions}>
         <Button label="Leer política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/`)} variant="secondary" />
         <Button label="Leer términos de uso" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/terms/`)} variant="secondary" />
         <Button label="Leer política de reembolsos" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/refund-policy/`)} variant="secondary" />
-      </Card>
+      </View>} />
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      <Button label="Entiendo y quiero continuar" loading={busy} onPress={accept} />
+      <ResponsibleUseActionButton loading={busy} onPress={accept} />
       <Text style={textStyles.caption}>Confirmación {profile?.review_disclosure_version ?? "cml08.v1"}</Text>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  policyActions: { gap: tokens.spacing.sm },
+});
