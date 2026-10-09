@@ -8,7 +8,19 @@ from notas.domain.services.nutrition import compute_meal_nutrition
 # MEAL + MEAL FOOD
 # ==================================================
 
+class MealQuerySet(models.QuerySet):
+    def library(self):
+        return self.filter(scope=Meal.Scope.LIBRARY)
+
+    def embedded(self):
+        return self.filter(scope=Meal.Scope.EMBEDDED)
+
+
 class Meal(models.Model):
+    class Scope(models.TextChoices):
+        LIBRARY = "library", "Library"
+        EMBEDDED = "embedded", "Embedded snapshot"
+
     name = models.CharField(max_length=100)
 
     foods = models.ManyToManyField(Food, through="MealFood")
@@ -38,12 +50,19 @@ class Meal(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     list_order = models.PositiveIntegerField(default=0)
+    scope = models.CharField(max_length=16, choices=Scope.choices, default=Scope.LIBRARY)
+
+    objects = MealQuerySet.as_manager()
 
     class Meta:
         indexes = [
             models.Index(
                 fields=["created_by", "is_draft", "list_order", "created_at"],
                 name="meal_mobile_library_idx",
+            ),
+            models.Index(
+                fields=["created_by", "scope", "is_draft", "list_order"],
+                name="meal_scope_library_idx",
             ),
         ]
 

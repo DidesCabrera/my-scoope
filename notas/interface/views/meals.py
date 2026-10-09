@@ -195,10 +195,9 @@ def meal_list_reorder(request):
 
     meals = {
         meal.id: meal
-        for meal in Meal.objects.filter(
+        for meal in Meal.objects.library().filter(
             created_by=request.user,
             is_draft=False,
-            dailyplanmeal__isnull=True,
             id__in=ordered_ids,
         ).distinct()
     }
@@ -229,10 +228,9 @@ def meal_list_bulk_delete(request):
         messages.info(request, "No seleccionaste comidas para eliminar.")
         return redirect(_safe_return_to(request, "meal_list", mode="delete"))
 
-    meals = Meal.objects.filter(
+    meals = Meal.objects.library().filter(
         created_by=request.user,
         is_draft=False,
-        dailyplanmeal__isnull=True,
         id__in=selected_ids,
     ).distinct()
 

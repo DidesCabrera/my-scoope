@@ -62,6 +62,7 @@ class DailyPlanMealPickerTests(TestCase):
             is_public=False,
             is_forkable=True,
             is_copiable=False,
+            scope=Meal.Scope.EMBEDDED,
         )
 
         DailyPlanMeal.objects.create(

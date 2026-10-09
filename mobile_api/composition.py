@@ -138,11 +138,10 @@ def _readable_food(user, food_id: int) -> Food:
 
 
 def _library_meal(user, meal_id: int) -> Meal:
-    meal = Meal.objects.filter(
+    meal = Meal.objects.library().filter(
         pk=meal_id,
         created_by=user,
         is_draft=False,
-        dailyplanmeal__isnull=True,
     ).first()
     if not meal:
         raise MobileAPIError("picker_selection_not_found", "La comida seleccionada no está disponible.", 404)

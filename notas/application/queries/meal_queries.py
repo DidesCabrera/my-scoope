@@ -4,8 +4,8 @@ from notas.application.dto.meal_dto import (
     MealKpiDTO,
     MealListItemDTO,
 )
+from notas.application.queries.library_queries import meal_library_queryset
 from notas.application.queries.read_boundaries import (
-    get_owned_meal_queryset,
     get_readable_meal_or_404,
     get_readable_meal_queryset,
 )
@@ -175,12 +175,12 @@ def get_available_meal_queryset(user):
     Alias de compatibilidad para el boundary explícito de lectura.
     Mantiene el contrato público existente de meal_queries.
     """
-    return get_readable_meal_queryset(user)
+    return get_readable_meal_queryset(user).library()
 
 
 def list_user_meals(user) -> list[MealListItemDTO]:
     meals = (
-        get_owned_meal_queryset(user)
+        meal_library_queryset(user)
         .prefetch_related("meal_food_set")
     )
 

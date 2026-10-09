@@ -82,6 +82,7 @@ class MobileAPILibrariesTests(PaidMobileAPITestCase):
             name="Instancia del plan",
             created_by=self.user,
             is_draft=False,
+            scope=Meal.Scope.EMBEDDED,
             protein_cached=13,
             carbs_cached=68,
             fat_cached=7,
@@ -160,10 +161,8 @@ class MobileAPILibrariesTests(PaidMobileAPITestCase):
         self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["plan_name"], "Día de entrenamiento")
         self.assertEqual(program_item["panel"]["weeks"][0]["filled_days_count"], 1)
         self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["nutrition"]["calories"], 387.0)
-        self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["meals"][0]["name"], "Instancia del plan")
-        self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["meals"][0]["foods"][0]["name"], "Avena personal")
-        self.assertEqual(program_item["panel"]["weeks"][0]["foods"][0]["name"], "Avena personal")
-        self.assertEqual(program_item["panel"]["weeks"][0]["foods"][0]["protein_per_kilogram"], 0.2)
+        self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["meals"], [])
+        self.assertEqual(program_item["panel"]["weeks"][0]["foods"], [])
         self.assertEqual(program_item["indicators"][1]["icon"], "dailyPlan")
         self.assertEqual(program_item["indicators"][2]["icon"], "food")
         self.assertIn("calorie_share", program_item["panel"]["weeks"][0])

@@ -14,11 +14,10 @@ def food_library_queryset(user):
 
 def meal_library_queryset(user):
     return (
-        Meal.objects
+        Meal.objects.library()
         .filter(
             created_by=user,
             is_draft=False,
-            dailyplanmeal__isnull=True,
         )
         .distinct()
         .order_by("list_order", "-created_at", "-id")

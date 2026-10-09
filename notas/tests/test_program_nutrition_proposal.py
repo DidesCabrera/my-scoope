@@ -74,6 +74,8 @@ class ProgramNutritionProposalTests(TestCase):
         self.assertEqual(len({slot.dailyplan_id for slot in slots}), 56)
         self.assertEqual(DailyPlan.objects.filter(source=DailyPlan.SOURCE_PROGRAM).count(), 56)
         self.assertEqual(Meal.objects.count(), 56)
+        self.assertEqual(Meal.objects.embedded().count(), 56)
+        self.assertEqual(Meal.objects.library().count(), 0)
         self.assertEqual(result.program.duration_weeks, 8)
         slots[0].dailyplan.name = "Cambio individual"
         slots[0].dailyplan.save()

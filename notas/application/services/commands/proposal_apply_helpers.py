@@ -85,6 +85,7 @@ def create_snapshot_meal_from_apply_meal(
         pending_dailyplan=None,
         forked_from=None,
         original_author=None,
+        scope=Meal.Scope.EMBEDDED,
     )
 
     for index, food_item in enumerate(apply_meal.foods, start=1):

@@ -16,7 +16,7 @@ from notas.domain.models import DailyPlan, Food, Meal, Program
 def _library_counts(user) -> dict[str, int]:
     return {
         "food": Food.objects.filter(created_by=user, is_active=True).count(),
-        "meal": Meal.objects.filter(created_by=user, dailyplanmeal__isnull=True).distinct().count(),
+        "meal": Meal.objects.library().filter(created_by=user).count(),
         "daily_plan": DailyPlan.objects.filter(created_by=user).exclude(source=DailyPlan.SOURCE_PROGRAM).count(),
         "program": Program.objects.filter(created_by=user).count(),
     }

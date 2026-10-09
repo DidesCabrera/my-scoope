@@ -57,7 +57,7 @@ def _queryset_for_kind(kind: str, user):
         return Food.objects.filter(created_by=user, is_active=True).order_by("list_order", "name", "id")
     if kind == SavedComparison.KIND_MEALS:
         return (
-            Meal.objects.filter(created_by=user, is_draft=False, dailyplanmeal__isnull=True)
+            Meal.objects.library().filter(created_by=user, is_draft=False)
             .order_by("list_order", "name", "id")
             .distinct()
         )
