@@ -11978,6 +11978,69 @@
         "summary": "Dailyplan Meal Update"
       }
     },
+    "/api/v1/library/daily-plans/{dailyplan_id}/meals/{dailyplan_meal_id}/save-to-library": {
+      "post": {
+        "operationId": "mobile_api_api_dailyplan_meal_save_to_library",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dailyplan_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dailyplan_meal_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Dailyplan Meal Save To Library"
+      }
+    },
     "/api/v1/library/foods": {
       "get": {
         "operationId": "mobile_api_api_library_foods",
@@ -13550,6 +13613,78 @@
           }
         ],
         "summary": "Program Day Delete"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/{day_number}/save-to-library": {
+      "post": {
+        "operationId": "mobile_api_api_program_dailyplan_save_to_library",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "week_number",
+            "required": true,
+            "schema": {
+              "title": "Week Number",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "day_number",
+            "required": true,
+            "schema": {
+              "title": "Day Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Dailyplan Save To Library"
       }
     },
     "/api/v1/library/programs/{program_id}/weeks/{week_number}/duplicate": {
