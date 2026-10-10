@@ -1,4 +1,4 @@
-import { type Href, Redirect, useLocalSearchParams } from "expo-router";
+import { type Href, Redirect, Stack, useLocalSearchParams } from "expo-router";
 
 import { useSession } from "@/auth/session-context";
 import { OnboardingJourneyView, onboardingJourneyPreviewValues } from "@/components/onboarding";
@@ -17,17 +17,20 @@ export default function LoginScreen() {
   }
 
   return (
-    <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 }}>
-      <OnboardingJourneyView
-        controller={{
-          busy: authBusy,
-          error: authError,
-          loginDisabled: !authReady,
-          onLogin: () => void startSignIn(returnHref),
-          values: onboardingJourneyPreviewValues,
-        }}
-        step="login"
-      />
-    </Screen>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 }}>
+        <OnboardingJourneyView
+          controller={{
+            busy: authBusy,
+            error: authError,
+            loginDisabled: !authReady,
+            onLogin: () => void startSignIn(returnHref),
+            values: onboardingJourneyPreviewValues,
+          }}
+          step="login"
+        />
+      </Screen>
+    </>
   );
 }

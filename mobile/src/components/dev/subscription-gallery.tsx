@@ -41,10 +41,10 @@ function SubscriptionInformationCard() {
   );
 }
 
-export function SubscriptionPreviewContent({ context }: { context: SubscriptionPreview }) {
+export function SubscriptionPreviewContent({ context, topInsetReduction = 0 }: { context: SubscriptionPreview; topInsetReduction?: number }) {
   const isOnboarding = context === "onboarding";
   return (
-    <View style={styles.previewContent}>
+    <View style={[styles.previewContent, topInsetReduction > 0 && { paddingTop: Math.max(0, tokens.spacing.screen - topInsetReduction) }]}>
         {isOnboarding ? (
           <View style={styles.onboardingIntro}>
             <View style={styles.onboardingLogo}><MyScoopeLogo /></View>
@@ -55,8 +55,8 @@ export function SubscriptionPreviewContent({ context }: { context: SubscriptionP
           <View style={styles.accountHeaderPreview}>
             <AppHeader alignment="center" title="Suscripciones y Bolsas" />
             <View style={styles.subscriptionDescriptionGroup}>
-              <Text style={styles.subscriptionDescription}>Nuestras suscripciones te entregan beneficios para enriquecer tus librería y facilitar tu gestión nutricional.</Text>
-              <Text style={styles.subscriptionDescription}>Ademas si eres un usuario muy activo que necesite asistencia adicional, te puedes comprar bolsas de créditos en el momento que lo desees.</Text>
+              <Text style={styles.subscriptionDescription}>Nuestras suscripciones te entregan beneficios para enriquecer tus librerías y facilitar tu gestión nutricional.</Text>
+              <Text style={styles.subscriptionDescription}>Ademas si eres un usuario muy activo que necesita asistencia adicional, puedes comprar bolsas de créditos en el momento que lo desees.</Text>
             </View>
           </View>
         )}

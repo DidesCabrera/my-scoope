@@ -10,7 +10,7 @@ async function source(relativePath: string): Promise<string> {
 test("editable food and meal panel rows expose native swipe actions on every data tab", async () => {
   const panels = await source("src/components/panels/entity-panels.tsx");
 
-  assert.match(panels, /ReanimatedSwipeable/);
+  assert.ok(panels.includes("ReanimatedSwipeable"));
   assert.match(panels, /label="Editar"/);
   assert.match(panels, /label="Reemplazar"/);
   assert.match(panels, /label="Eliminar"/);

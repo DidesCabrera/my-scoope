@@ -332,8 +332,8 @@ export default function SubscriptionScreen() {
             <AppHeader alignment="center" title="Suscripciones y Bolsas" />
           </View>
           <View style={styles.subscriptionDescriptionGroup}>
-            <Text style={styles.subscriptionDescription}>Nuestras suscripciones te entregan beneficios para enriquecer tus librería y facilitar tu gestión nutricional.</Text>
-            <Text style={styles.subscriptionDescription}>Ademas si eres un usuario muy activo que necesite asistencia adicional, te puedes comprar bolsas de créditos en el momento que lo desees.</Text>
+            <Text style={styles.subscriptionDescription}>Nuestras suscripciones te entregan beneficios para enriquecer tus librerías y facilitar tu gestión nutricional.</Text>
+            <Text style={styles.subscriptionDescription}>Ademas si eres un usuario muy activo que necesita asistencia adicional, puedes comprar bolsas de créditos en el momento que lo desees.</Text>
           </View>
         </View>
       )}

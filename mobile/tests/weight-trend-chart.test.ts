@@ -20,10 +20,11 @@ test("weight trend and history use the standard card surface", async () => {
   const screen = await readFile(path.resolve(process.cwd(), "src/app/weight.tsx"), "utf8");
   assert.match(screen, /<Card accent=\{tokens\.color\.protein\}>\s*<CardHeader title="Registro de peso actual" \/>/);
   assert.match(screen, /Mídete en condiciones similares para que la tendencia sea comparable\./);
-  assert.match(screen, /Tu registro de peso te permitirá visualizar tu variación de peso/);
+  assert.match(screen, /El registro de peso te permitirá visualizar su variación\./);
   assert.match(screen, /La variación de peso puede deberse a diferentes factores/);
   assert.match(screen, /Por eso te aconsejamos evaluar la tendencia en el mediano plazo/);
-  assert.match(screen, /<SectionPageHeader countLabel="mediciones" section="weight" title="Registra tu peso" \/>\s*<View style=\{styles\.weightIntroduction\}>[\s\S]*?<Text style=\{textStyles\.body\}>Tu registro/);
+  assert.match(screen, /<SectionPageHeader countLabel="mediciones" section="weight" title="Registra tu peso" \/>\s*<View style=\{styles\.weightIntroduction\}>[\s\S]*?<Text style=\{textStyles\.body\}>El registro/);
+  assert.match(screen, /<InlineNotice>[\s\S]*La variación de peso puede deberse[\s\S]*\{"\\n\\n"\}[\s\S]*Por eso te aconsejamos evaluar la tendencia[\s\S]*<\/InlineNotice>/);
   assert.doesNotMatch(screen, /eyebrow="Mediciones"/);
   assert.match(screen, /setHeaderPresentation\(\{ fallback: "\/today", identityVisible: compactHeaderVisible, mode: "back", title: "Registra tu peso" \}\)/);
   assert.match(screen, /<Screen headerMode="preserve" onHeaderVisibilityChange=\{setCompactHeaderVisible\}>/);

@@ -146,9 +146,11 @@ export default function WeightScreen() {
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
       <SectionPageHeader countLabel="mediciones" section="weight" title="Registra tu peso" />
       <View style={styles.weightIntroduction}>
-        <Text style={textStyles.body}>Tu registro de peso te permitirá visualizar tu variación de peso. Esto revelará tendencias en el mediano y largo plazo.</Text>
-        <Text style={textStyles.body}>La variación de peso puede deberse a diferentes factores, entre los que destaca la variación de agua en el cuerpo, la cual puede cambiar en un corto lapso de tiempo.</Text>
-        <Text style={textStyles.body}>Por eso te aconsejamos evaluar la tendencia en el mediano plazo, más que dentro de uno o pocos días.</Text>
+        <Text style={textStyles.body}>El registro de peso te permitirá visualizar su variación. Esto revelará tendencias en el mediano y largo plazo.</Text>
+        <InlineNotice>
+          La variación de peso puede deberse a diferentes factores, destacando la variación de agua en el cuerpo, la cual puede cambiar en un corto lapso de tiempo.{"\n\n"}
+          Por eso te aconsejamos evaluar la tendencia en el mediano plazo, más que dentro de uno o pocos días.
+        </InlineNotice>
       </View>
       <Card accent={tokens.color.protein}>
         <CardHeader title="Registro de peso actual" />

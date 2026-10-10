@@ -1,4 +1,4 @@
-import { type Href, Redirect, useRouter } from "expo-router";
+import { type Href, Redirect, Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 
 import { useSession } from "@/auth/session-context";
@@ -9,6 +9,7 @@ import {
   type OnboardingJourneyValues,
   onboardingJourneyPreviewValues,
   onboardingJourneySteps,
+  presentationPropsForOnboardingStep,
 } from "@/components/onboarding";
 import { LoadingState, Screen } from "@/components/ui";
 
@@ -19,6 +20,9 @@ export default function OnboardingPreviewScreen() {
   const [values, setValues] = useState<OnboardingJourneyValues>({ ...onboardingJourneyPreviewValues });
 
   const step = onboardingJourneySteps[stepIndex]?.key ?? "login";
+  const usesFixedDisclosuresFooter = stepIndex === 6;
+  const usesFixedProfileChrome = stepIndex >= 7 && stepIndex <= 12;
+  const presentationProps = presentationPropsForOnboardingStep(step as OnboardingJourneyStep);
   const controller = useMemo<OnboardingJourneyController>(() => ({
     onAdjust: () => setStepIndex(onboardingJourneySteps.findIndex((item) => item.key === "goal")),
     onBack: () => {
@@ -37,8 +41,15 @@ export default function OnboardingPreviewScreen() {
   if (!session.is_staff) return <Redirect href="/account" />;
 
   return (
-    <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 }} scroll={stepIndex >= 6 ? "auto" : false}>
-      <OnboardingJourneyView controller={controller} step={step as OnboardingJourneyStep} />
-    </Screen>
+    <>
+      <Stack.Screen options={{ headerShown: stepIndex !== 0 }} />
+      <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 }} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
+        <OnboardingJourneyView
+        controller={controller}
+        {...presentationProps}
+        step={step as OnboardingJourneyStep}
+        />
+      </Screen>
+    </>
   );
 }

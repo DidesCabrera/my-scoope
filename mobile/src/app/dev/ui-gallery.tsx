@@ -25,6 +25,7 @@ import { ProgramChildCard } from "@/components/libraries/program-child-card";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
+import { DisclosureGallery } from "@/components/dev/disclosure-gallery";
 import { PersonalRecordCardGallery } from "@/components/dev/personal-record-card-gallery";
 import { SavedComparisonCardGallery } from "@/components/dev/saved-comparison-card-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
@@ -220,11 +221,10 @@ export default function UiGalleryScreen() {
       <View style={[styles.galleryLayout, width >= 700 && styles.galleryLayoutWide]}>
         <GalleryNavigation activeTab={tab} onChange={setTab} wide={width >= 700} />
         <View style={styles.galleryContent}>
-
       {tab === "onboarding" ? (
         <OnboardingStoryboardGallery />
       ) : null}
-
+      {tab === "disclosures" ? <DisclosureGallery /> : null}
       {tab === "subscriptions" ? <SubscriptionGallery /> : null}
 
       {tab === "labelCapture" ? (

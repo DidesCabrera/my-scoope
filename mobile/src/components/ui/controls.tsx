@@ -62,6 +62,7 @@ export function Button({
 }
 
 export function Field({
+  hideLabel = false,
   inputStyle,
   label,
   labelIcon,
@@ -74,6 +75,7 @@ export function Field({
   autoCorrect,
   secureTextEntry = false,
 }: {
+  hideLabel?: boolean;
   inputStyle?: StyleProp<TextStyle>;
   label: string;
   labelIcon?: ReactNode;
@@ -88,10 +90,10 @@ export function Field({
 }) {
   return (
     <View style={styles.field}>
-      <View style={styles.fieldLabelRow}>
+      {!hideLabel ? <View style={styles.fieldLabelRow}>
         {labelIcon}
         <Text style={[styles.fieldLabel, labelStyle]}>{label}</Text>
-      </View>
+      </View> : null}
       <TextInput
         accessibilityLabel={label}
         autoCapitalize={autoCapitalize}
