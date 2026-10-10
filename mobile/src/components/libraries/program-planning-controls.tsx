@@ -44,8 +44,8 @@ function ProgramDayCell({ allowEmptySelection, day, onSelect, selected }: { allo
         {selected ? <WeekDaySelectionRing /> : null}
         {day.dayOfMonth != null && day.monthLabel ? (
           <>
-            <Text style={[styles.dayDateNumber, day.isToday && styles.dayDateTextToday]}>{day.dayOfMonth}</Text>
-            <Text style={[styles.dayDateMonth, day.isToday && styles.dayDateTextToday]}>{day.monthLabel}</Text>
+            <Text style={[styles.dayDateNumber, day.isToday && styles.dayDateTextToday, selected && styles.dayDateNumberSelected]}>{day.dayOfMonth}</Text>
+            <Text style={[styles.dayDateMonth, day.isToday && styles.dayDateTextToday, selected && styles.dayDateMonthSelected]}>{day.monthLabel}</Text>
             {!day.filled && !day.disabled ? (
               <View style={styles.dayAddBadge}><Plus color={tokens.color.textMain} size={10} strokeWidth={2.5} /></View>
             ) : null}
@@ -120,8 +120,10 @@ const styles = StyleSheet.create({
   dayCircleSelected: { borderColor: tokens.color.surfaceApp },
   dayCircleToday: { backgroundColor: tokens.color.entityIconForeground, borderStyle: "solid", opacity: 1 },
   dayAddBadge: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: 8, borderWidth: 1, bottom: -3, height: 16, justifyContent: "center", position: "absolute", right: -3, width: 16 },
-  dayDateMonth: { color: tokens.color.textMuted, fontSize: 8, fontWeight: tokens.weight.regular, lineHeight: 9 },
+  dayDateMonth: { color: tokens.color.textMuted, fontSize: 8, fontWeight: tokens.weight.medium, lineHeight: 9 },
+  dayDateMonthSelected: { fontWeight: tokens.weight.semibold },
   dayDateNumber: { color: tokens.color.textMain, fontSize: 12, fontWeight: tokens.weight.semibold, lineHeight: 14 },
+  dayDateNumberSelected: { fontWeight: tokens.weight.bold },
   dayDateTextToday: { color: tokens.color.surfaceApp },
   dayPlanIcon: { alignItems: "center", backgroundColor: tokens.color.dailyPlan, borderRadius: tokens.spacing.compact, height: 24, justifyContent: "center", width: 24 },
   daySelection: { gap: tokens.spacing.lg, minWidth: 0 },

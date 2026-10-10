@@ -145,8 +145,21 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(nutritionKpi, /height: tokens\.component\.nutritionKpi\.regular\.totalSize/);
   assertSourceMatch(nutritionKpi, /height: tokens\.component\.nutritionKpi\.nested\.totalSize/);
   assertSourceMatch(nutritionKpi, /variant\?: "nested" \| "regular"/);
+  assertSourceMatch(nutritionKpi, /grams: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
   assertSourceDoesNotMatch(nutritionKpi, /density\?: "compact" \| "regular"/);
   assertSourceDoesNotMatch(nutritionKpi, /height: compact \? "100%"/);
+
+  const proteinPerKilogramBadge = await readTestFile(
+    path.resolve(process.cwd(), "src/components/nutrition/protein-per-kilogram-badge.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(proteinPerKilogramBadge, /text: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
+
+  const allocationBar = await readTestFile(
+    path.resolve(process.cwd(), "src/components/nutrition/allocation-bar.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(allocationBar, /panelPercentage: \{[^}]*fontWeight: tokens\.weight\.semibold/);
 
   const libraryCard = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/library-card.tsx"),
@@ -282,6 +295,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(planningControls, /<WeekDaySelectionRing \/>/);
+  assertSourceMatch(planningControls, /selected && styles\.dayDateNumberSelected/);
+  assertSourceMatch(planningControls, /selected && styles\.dayDateMonthSelected/);
+  assertSourceMatch(planningControls, /dayDateMonth: \{[^}]*fontWeight: tokens\.weight\.medium/);
+  assertSourceMatch(planningControls, /dayDateMonthSelected: \{ fontWeight: tokens\.weight\.semibold \}/);
+  assertSourceMatch(planningControls, /dayDateNumberSelected: \{ fontWeight: tokens\.weight\.bold \}/);
   assertSourceMatch(planningControls, /accessibilityState=\{\{ expanded:/);
   assertSourceMatch(planningControls, /backgroundColor: tokens\.color\.surfaceCard/);
   assertSourceMatch(planningControls, /backgroundColor: tokens\.color\.dailyPlan/);
@@ -602,11 +620,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(currentWeek, /Semana en curso|<SectionHeading/);
   assertSourceMatch(currentWeek, /<Text[^>]*styles\.monthLabel[^>]*>\{day\.monthLabel\}<\/Text>/);
   assertSourceMatch(currentWeek, /dayCircle: \{[^}]*backgroundColor: tokens\.color\.surfaceCard[^}]*height: 44[^}]*width: 44/);
-  assertSourceMatch(currentWeek, /monthLabel: \{[^}]*fontFamily: font\.regular[^}]*fontSize: 9[^}]*fontWeight: "300"[^}]*lineHeight: 10/);
-  assertSourceMatch(currentWeek, /monthLabelToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.regular \}/);
+  assertSourceMatch(currentWeek, /monthLabel: \{[^}]*fontFamily: font\.regular[^}]*fontSize: 9[^}]*fontWeight: tokens\.weight\.medium[^}]*lineHeight: 10/);
+  assertSourceMatch(currentWeek, /monthLabelToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.semibold \}/);
   assertSourceMatch(currentWeek, /<WeekDaySelectionRing \/>/);
   assertSourceMatch(currentWeek, /dayCircleToday: \{ backgroundColor: tokens\.color\.entityIconForeground \}/);
-  assertSourceMatch(currentWeek, /dayNumberToday: \{ color: tokens\.color\.surfaceApp \}/);
+  assertSourceMatch(currentWeek, /dayNumberToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.bold \}/);
   assertSourceMatch(currentWeek, /compact && styles\.dayCircleCompact/);
   assertSourceMatch(currentWeek, /dayCircleCompact: \{ height: 40, width: 40 \}/);
   const weekDayGrid = await readTestFile(

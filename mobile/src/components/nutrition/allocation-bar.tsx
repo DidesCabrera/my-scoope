@@ -90,6 +90,6 @@ const styles = StyleSheet.create({
   panelTrack: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: tokens.component.nutritionKpi.regular.barRadius, height: 24, justifyContent: "center", overflow: "hidden", width: "100%" },
   panelFill: { borderRadius: tokens.component.nutritionKpi.regular.barRadius },
   panelTrackCompact: { height: 18 },
-  panelPercentage: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0, paddingRight: tokens.spacing.xs, textAlign: "right" },
+  panelPercentage: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"], letterSpacing: 0, paddingRight: tokens.spacing.xs, textAlign: "right" },
   percentageShadow: { textShadowColor: "rgba(0, 0, 0, 0.42)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 },
 });

@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   macroLabelCompact: { width: 52 },
   ppkSlot: { alignItems: "stretch", justifyContent: "center", width: 60 },
   ppkSlotCompact: { width: 60 },
-  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
+  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
   gramsCompact: { width: 40 },
   allocationBar: { flex: 1, minWidth: 0, width: "auto" },
   allocationBarSlightlyTight: { height: tokens.component.nutritionKpi.regular.narrowBarHeight },
