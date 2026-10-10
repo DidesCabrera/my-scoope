@@ -1,5 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
+import { CalendarClock } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -26,6 +27,18 @@ function displayWeight(value: number): string {
 
 function HomeSectionTitle({ children }: { children: string }) {
   return <Text accessibilityRole="header" style={styles.homeSectionTitle}>{children}</Text>;
+}
+
+function ActiveProgramSectionHeader() {
+  return (
+    <View style={styles.activeProgramSectionHeader}>
+      <View style={styles.activeProgramSectionHeading}>
+        <CalendarClock color={tokens.color.textMain} size={19} strokeWidth={2.2} />
+        <Text accessibilityRole="header" style={styles.activeProgramSectionTitle}>Tu programa en curso</Text>
+      </View>
+      <Text style={styles.activeProgramSectionSubtitle}>Tu plan de hoy pertenece a este programa en curso. Revisa tu adherencia y consulta los otros planes de tu programa.</Text>
+    </View>
+  );
 }
 
 export default function TodayScreen() {
@@ -244,7 +257,7 @@ export default function TodayScreen() {
 
       {activeProgram?.calendarization ? (
         <>
-          <HomeSectionTitle>Tu Programa Activo</HomeSectionTitle>
+          <ActiveProgramSectionHeader />
           <ProgramActiveHomeOverview calendarization={activeProgram.calendarization} program={activeProgram} />
         </>
       ) : null}
@@ -291,6 +304,10 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
+  activeProgramSectionHeader: { gap: tokens.spacing.sm, marginTop: tokens.spacing.xxl },
+  activeProgramSectionHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  activeProgramSectionSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
+  activeProgramSectionTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
   homeSectionTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.semibold, marginBottom: 0, marginTop: tokens.spacing.sm },
   greetingRow: { gap: 0, marginBottom: 0 },
   greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },

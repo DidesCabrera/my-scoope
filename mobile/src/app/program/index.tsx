@@ -1,4 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
+import { Calendar1 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
@@ -13,8 +14,9 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { ProgramActiveActions } from "@/components/programs/program-active-actions";
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader } from "@/components/ui";
+import { LoadingState, Screen, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -140,8 +142,7 @@ export default function ProgramScreen() {
           <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <ProgramActiveOverview calendarization={calendarization} program={program} />
-          <SectionDivider style={styles.planningDivider} />
-          <SectionHeading detail={`${weekCount} ${weekCount === 1 ? "semana" : "semanas"}`} title="Planificación Semanal" />
+          <ProgramSectionHeader icon={Calendar1} subtitle="Recorre las semanas de tu programa y conoce los planes diarios y alimentos de cada una de ellas." title="Planificación Semanal" />
         </View>
 
         <View style={styles.weekTabsSticky}>
@@ -157,7 +158,6 @@ export default function ProgramScreen() {
 
 const styles = StyleSheet.create({
   beforePlanning: { gap: tokens.spacing.lg },
-  planningDivider: { marginBottom: 0 },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   screenContent: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },

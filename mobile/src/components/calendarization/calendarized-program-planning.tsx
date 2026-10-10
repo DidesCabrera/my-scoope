@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { type Href, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
+import { Carrot } from "lucide-react-native";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
@@ -9,7 +10,8 @@ import { useSession } from "@/auth/session-context";
 import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { GroupedFoodsCard, type FoodPanelItem, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
-import { Button, InlineNotice, MutationStatusModal, SectionDivider, SectionHeading, textStyles, useMutationStatus } from "@/components/ui";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
+import { Button, InlineNotice, MutationStatusModal, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
 import { compactDateLabel, compactMonthLabel, preferredCalendarizedDay } from "./current-week";
@@ -208,8 +210,7 @@ export function CalendarizedProgramPlanning({
           ) : null}
         </ProgramDaySelector>
 
-        <SectionDivider spacing="compact" tone="soft" />
-        <SectionHeading detail={`${weekData?.foods_count ?? weekFoods.length} alimentos`} title="Alimentos en esta semana" />
+        <ProgramSectionHeader icon={Carrot} subtitle="Revisa las cantidades de alimentos de esta semana; conoce y compara su aporte nutricional real en el programa." title="Alimentos en esta semana" />
         <GroupedFoodsCard title={`Alimentos semana ${activeWeek}`} items={weekFoods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
       </View>
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />

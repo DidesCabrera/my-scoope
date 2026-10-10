@@ -312,8 +312,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedPlanning, /preferredCalendarizedDay\(days, week, localDate\(\)\)/);
   assertSourceMatch(calendarizedPlanning, /Día sin plan\. No hay un plan diario asignado para esta fecha\./);
   assertSourceMatch(calendarizedPlanning, /isToday: day\.calendar_date === localDate\(\)/);
-  assertSourceMatch(calendarizedPlanning, /<SectionDivider spacing="compact" tone="soft" \/>/);
-  assertSourceMatch(calendarizedPlanning, /title="Alimentos en esta semana"/);
+  assertSourceDoesNotMatch(calendarizedPlanning, /SectionDivider|SectionHeading/);
+  assertSourceMatch(calendarizedPlanning, /<ProgramSectionHeader icon=\{Carrot\} subtitle="Revisa las cantidades de alimentos de esta semana; conoce y compara su aporte nutricional real en el programa\." title="Alimentos en esta semana" \/>/);
   assertSourceMatch(calendarizedPlanning, /<GroupedFoodsCard title=\{`Alimentos semana \$\{activeWeek\}`\} items=\{weekFoods\} onOpenItem=/);
 
   const calendarizedDailyPlanCard = await readTestFile(
@@ -485,13 +485,16 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgram, /Array\.from\(\{ length: weekCount \}/);
   assertSourceMatch(activeProgram, /<ProgramWeekTabs activeWeek=\{activeWeek\}/);
   assertSourceMatch(activeProgram, /<CalendarizedProgramPlanning days=\{programDays\} initialWeek=\{activeWeek\} key=\{`\$\{calendarization\.id\}:\$\{activeWeek\}`\} showWeekTabs=\{false\} weeksData=\{program\.weeks\} \/>/);
-  assertSourceMatch(activeProgram, /<SectionDivider style=\{styles\.planningDivider\} \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
-  assertSourceMatch(activeProgram, /<ProgramActiveOverview[\s\S]*<SectionDivider style=\{styles\.planningDivider\} \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
-  assertSourceMatch(activeProgram, /planningDivider: \{ marginBottom: 0 \}/);
+  assertSourceMatch(activeProgram, /<ProgramActiveOverview[\s\S]*<ProgramSectionHeader icon=\{Calendar1\} subtitle="Recorre las semanas de tu programa y conoce los planes diarios y alimentos de cada una de ellas\." title="Planificación Semanal" \/>/);
+  assertSourceDoesNotMatch(activeProgram, /SectionDivider|SectionHeading|planningDivider/);
   assertSourceDoesNotMatch(activeProgram, /DetailLinkRow|Ver plantilla original/);
   assertSourceMatch(activeProgram, /onOpenOriginalProgram=\{calendarization\?\.source_program_id \? \(\) => router\.push/);
   assertSourceDoesNotMatch(activeProgram, /conserva lo que realmente ocurrió/);
-  assertSourceMatch(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
+  const programSectionHeader = await readTestFile(path.resolve(process.cwd(), "src/components/programs/program-section-header.tsx"), "utf8");
+  assertSourceMatch(programSectionHeader, /<Icon color=\{tokens\.color\.textMain\} size=\{19\} strokeWidth=\{2\.2\} \/>/);
+  assertSourceMatch(programSectionHeader, /header: \{[^}]*marginBottom: tokens\.spacing\.sm[^}]*marginTop: tokens\.spacing\.xxl/);
+  assertSourceMatch(programSectionHeader, /title: \{[^}]*fontSize: 20[^}]*fontWeight: tokens\.weight\.extraBold/);
+  assertSourceMatch(programSectionHeader, /subtitle: \{[^}]*fontSize: tokens\.type\.caption[^}]*lineHeight: 20/);
 
   const activePlanningControls = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/program-planning-controls.tsx"), "utf8");
   assertSourceMatch(activePlanningControls, /<ScrollableTabBar/);
@@ -511,15 +514,18 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*standalone/);
+  assertSourceMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*topInset=\{!embedded\}/);
+  assertSourceMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*mutedPanels=\{embedded\}/);
   assertSourceDoesNotMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
   assertSourceMatch(activeProgramOverview, /eyebrow="Programa activo"/);
   assertSourceDoesNotMatch(activeProgramOverview, /eyebrow="Programa en curso"/);
-  assertSourceMatch(activeProgramOverview, /SectionHeading icon=\{<Activity[^>]*>\} title="Métricas de activación"/);
+  assertSourceDoesNotMatch(activeProgramOverview, /Métricas de activación|SectionHeading|Activity/);
   assertSourceMatch(activeProgramOverview, /embedded \? <DetailLinkRow[\s\S]*router\.push\("\/program" as Href\)/);
   assertSourceMatch(activeProgramOverview, /activeIndicators = program\.indicators\.map/);
   assertSourceMatch(activeProgramOverview, /indicator\.icon === "week"[\s\S]*?icon: undefined[\s\S]*?Number\(indicator\.value\) === 1 \? "SEMANA" : "SEMANAS"/);
   assertSourceMatch(activeProgramOverview, /eyebrowAccessory=\{<HeaderMetadataChip kind="date" value=\{`\$\{compactDateLabel\(calendarization\.start_date\)\} — \$\{compactDateLabel\(calendarization\.end_date\)\}`\} \/>\}/);
-  assertSourceMatch(activeProgramOverview, /indicators=\{embedded \? undefined : activeIndicators\}/);
+  assertSourceMatch(activeProgramOverview, /indicators=\{activeIndicators\}/);
+  assertSourceDoesNotMatch(activeProgramOverview, /indicators=\{embedded \? undefined/);
   assertSourceMatch(activeProgramOverview, /export function ProgramActiveHomeOverview[\s\S]*<ProgramActiveOverview \{\.\.\.props\} embedded/);
   assertSourceMatch(activeProgramOverview, /embedded[\s\S]*<Card accent=\{tokens\.color\.program\} style=\{styles\.content\}>\{content\}<\/Card>/);
 
@@ -530,20 +536,30 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activeProgramKpis, /periodRow|periodDates|CalendarDays/);
   assertSourceDoesNotMatch(activeProgramKpis, /kcalSurface|kcalBorder|periodBorder|periodText/);
   assertSourceMatch(activeProgramKpis, /indicatorsSurfaceReset:\{[^}]*padding:tokens\.spacing\.xs/);
-  assertSourceMatch(activeProgramKpis, /Días recorridos/);
-  assertSourceMatch(activeProgramKpis, /indicator:\{[^}]*padding:tokens\.spacing\.md/);
+  assertSourceMatch(activeProgramKpis, /standaloneTopInset:\{marginTop:tokens\.spacing\.sm\}/);
+  assertSourceMatch(activeProgramKpis, /Planes diarios recorridos/);
+  assertSourceMatch(activeProgramKpis, /Cumplimiento comidas/);
+  assertSourceMatch(activeProgramKpis, /indicator:\{[^}]*paddingHorizontal:tokens\.spacing\.md[^}]*paddingVertical:tokens\.spacing\.lg/);
   assertSourceMatch(activeProgramKpis, /function ProgressRing/);
   assertSourceMatch(activeProgramKpis, /strokeDashoffset=\{dashOffset\}/);
   assertSourceMatch(activeProgramKpis, /strokeLinecap="round"/);
   assertSourceMatch(activeProgramKpis, /transform=\{`rotate\(-90 \$\{RING_CENTER\} \$\{RING_CENTER\}\)`\}/);
-  assertSourceMatch(activeProgramKpis, /fraction:\{[^}]*fontSize:tokens\.type\.section/);
-  assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*fontSize:tokens\.type\.caption/);
+  assertSourceMatch(activeProgramKpis, /indicatorIdentity:\{[^}]*flexDirection:"column"[^}]*justifyContent:"center"/);
+  assertSourceMatch(activeProgramKpis, /indicator:\{[^}]*borderRadius:tokens\.radius\.panel/);
+  assertSourceMatch(activeProgramKpis, /indicatorLabel:\{[^}]*fontSize:18[^}]*textAlign:"center"/);
+  assertSourceDoesNotMatch(activeProgramKpis, /progressRing:\{[^}]*marginTop/);
+  assertSourceMatch(activeProgramKpis, /fraction:\{[^}]*fontSize:tokens\.type\.title/);
+  assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*fontSize:tokens\.type\.body/);
   assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*color:tokens\.color\.textMuted/);
-  assertSourceMatch(activeProgramKpis, /<ProgressRing color=\{tokens\.color\.dailyPlan\} current=\{elapsedDays\} percentage=\{advancement\} total=\{totalDays\} \/>/);
-  assertSourceMatch(activeProgramKpis, /<ProgressRing color=\{tokens\.color\.meal\} current=\{adheredDays\} percentage=\{compliance\} total=\{plannedAdherenceDays\} \/>/);
+  assertSourceMatch(activeProgramKpis, /<ProgressRing color=\{tokens\.color\.dailyPlan\} current=\{elapsedDays\} percentage=\{advancement\} total=\{totalDays\} trackColor=\{`\$\{tokens\.color\.dailyPlan\}33`\} \/>/);
+  assertSourceMatch(activeProgramKpis, /<ProgressRing color=\{tokens\.color\.meal\} current=\{adheredDays\} percentage=\{compliance\} total=\{plannedAdherenceDays\} trackColor=\{`\$\{tokens\.color\.meal\}33`\} \/>/);
+  assertSourceMatch(activeProgramKpis, /stroke=\{trackColor\}/);
   assertSourceDoesNotMatch(activeProgramKpis, /styles\.track|styles\.fill/);
-  assertSourceMatch(activeProgramKpis, /indicatorElapsed:\{backgroundColor:`\$\{tokens\.color\.dailyPlan\}1A`,borderColor:`\$\{tokens\.color\.dailyPlan\}80`\}/);
-  assertSourceMatch(activeProgramKpis, /indicatorAdherence:\{backgroundColor:`\$\{tokens\.color\.meal\}1A`,borderColor:`\$\{tokens\.color\.meal\}80`\}/);
+  assertSourceDoesNotMatch(activeProgramKpis, /indicator:\{[^}]*borderWidth/);
+  assertSourceMatch(activeProgramKpis, /mutedPanels \? styles\.indicatorMuted : styles\.indicatorCard/);
+  assertSourceMatch(activeProgramKpis, /indicatorCard:\{backgroundColor:tokens\.color\.surfaceCard\}/);
+  assertSourceMatch(activeProgramKpis, /indicatorMuted:\{backgroundColor:tokens\.color\.surfaceMuted\}/);
+  assertSourceDoesNotMatch(activeProgramKpis, /indicatorElapsed:\{[^}]*borderColor|indicatorAdherence:\{[^}]*borderColor/);
   assertSourceDoesNotMatch(activeProgramKpis, /percentageTag/);
 
   const activateProgram = await readTestFile(
@@ -571,7 +587,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /greetingRow: \{ gap: 0, marginBottom: 0 \}/);
   assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm \}/);
   assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf("<ProgramActiveHomeOverview"));
-  assertSourceMatch(todayScreen, /<CalendarizedDailyPlanCard[\s\S]*?<HomeSectionTitle>Tu Programa Activo<\/HomeSectionTitle>[\s\S]*?<ProgramActiveHomeOverview/);
+  assertSourceMatch(todayScreen, /<CalendarizedDailyPlanCard[\s\S]*?<ActiveProgramSectionHeader \/>[\s\S]*?<ProgramActiveHomeOverview/);
+  assertSourceMatch(todayScreen, /<CalendarClock color=\{tokens\.color\.textMain\} size=\{19\} strokeWidth=\{2\.2\} \/>/);
+  assertSourceMatch(todayScreen, /Tu programa en curso/);
+  assertSourceMatch(todayScreen, /Tu plan de hoy pertenece a este programa en curso\. Revisa tu adherencia y consulta los otros planes de tu programa\./);
+  assertSourceMatch(todayScreen, /activeProgramSectionTitle: \{[^}]*fontSize: 20[^}]*fontWeight: tokens\.weight\.extraBold/);
+  assertSourceMatch(todayScreen, /activeProgramSectionHeader: \{[^}]*marginTop: tokens\.spacing\.xxl/);
   assertSourceMatch(todayScreen, /homeSectionTitle: \{[^}]*fontSize: 18[^}]*marginBottom: 0[^}]*marginTop: tokens\.spacing\.sm/);
   assertSourceDoesNotMatch(todayScreen, /<SectionDivider \/>/);
   const currentWeek = await readTestFile(
@@ -635,9 +656,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(homeLibraryGrid, /Mis Comidas/);
   assertSourceMatch(homeLibraryGrid, /Mis Alimentos/);
   assertSourceMatch(homeLibraryGrid, /pathname: "\/libraries\/create", params: \{ entity: entry\.entity \}/);
-  assertSourceMatch(homeLibraryGrid, /section: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
-  assertSourceMatch(homeLibraryGrid, /<SectionDivider spacing="compact" style=\{styles\.sectionDivider\} \/>/);
-  assertSourceMatch(homeLibraryGrid, /sectionDivider: \{ marginHorizontal: 0 \}/);
+  assertSourceMatch(homeLibraryGrid, /section: \{[^}]*marginHorizontal: -tokens\.spacing\.screen[^}]*marginTop: tokens\.spacing\.xxl/);
+  assertSourceDoesNotMatch(homeLibraryGrid, /SectionDivider|sectionDivider/);
   assertSourceMatch(homeLibraryGrid, /padding: tokens\.card\.outerPadding/);
   assertSourceMatch(homeLibraryGrid, /borderTopColor: tokens\.color\[entry\.entity\]/);
   assertSourceMatch(homeLibraryGrid, /borderTopWidth: 3/);
