@@ -1,9 +1,9 @@
 import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
-import type { LibraryAction, LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem, MealExecutionItem } from "@/api/types";
+import type { CompositionMutationResult, LibraryAction, LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem, MealExecutionItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
@@ -146,6 +146,10 @@ export function DailyPlanMealCards({ dailyPlanId, items, onChanged, onRemove, pi
                 onCompare={compare}
                 onCompleted={() => { void onChanged?.(); }}
                 onRemove={onRemove ? () => onRemove(item) : undefined}
+                onSaveToLibrary={dailyPlanMealId != null ? async () => {
+                  const result = await apiRequest<CompositionMutationResult>(`/api/v1/library/daily-plans/${dailyPlanId}/meals/${dailyPlanMealId}/save-to-library`, { method: "POST" });
+                  Alert.alert("Listo", result.message);
+                } : undefined}
               /> : null}
               <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
             </>}

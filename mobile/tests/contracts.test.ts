@@ -35,6 +35,26 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   });
 });
 
+test("meals embedded in daily plans can be saved back to the library", async () => {
+  const mealCards = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"), "utf8");
+  const mealDetail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
+  const actions = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-actions.tsx"), "utf8");
+  assertSourceMatch(mealCards, /onSaveToLibrary=\{dailyPlanMealId != null/);
+  assertSourceMatch(mealCards, /daily-plans\/\$\{dailyPlanId\}\/meals\/\$\{dailyPlanMealId\}\/save-to-library/);
+  assertSourceMatch(mealDetail, /onSaveToLibrary=\{hasMealTimeContext/);
+  assertSourceMatch(actions, /label="Guardar en mi biblioteca"/);
+});
+
+test("daily plans embedded in programs can be saved back to the library", async () => {
+  const planCard = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"), "utf8");
+  const programDetail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
+  assertSourceMatch(planCard, /label: "Guardar en mi biblioteca"/);
+  assertSourceMatch(planCard, /onSaveToLibrary/);
+  assertSourceMatch(programDetail, /onSaveDailyPlan=\{async \(week, day\)/);
+  assertSourceMatch(programDetail, /programs\/\$\{item\.id\}\/weeks\/\$\{week\}\/days\/\$\{day\}\/save-to-library/);
+  assertSourceMatch(programDetail, /hasProgramDailyPlanContext/);
+});
+
 test("editable text inputs use borderless surfaces throughout the mobile system", async () => {
   const cases: [string, string[]][] = [
     ["src/components/ui/controls.tsx", ["input"]],
@@ -512,14 +532,18 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgramKpis, /indicatorsSurfaceReset:\{[^}]*padding:tokens\.spacing\.xs/);
   assertSourceMatch(activeProgramKpis, /Días recorridos/);
   assertSourceMatch(activeProgramKpis, /indicator:\{[^}]*padding:tokens\.spacing\.md/);
-  assertSourceMatch(activeProgramKpis, /indicatorValue:\{[^}]*marginTop:tokens\.spacing\.sm/);
+  assertSourceMatch(activeProgramKpis, /function ProgressRing/);
+  assertSourceMatch(activeProgramKpis, /strokeDashoffset=\{dashOffset\}/);
+  assertSourceMatch(activeProgramKpis, /strokeLinecap="round"/);
+  assertSourceMatch(activeProgramKpis, /transform=\{`rotate\(-90 \$\{RING_CENTER\} \$\{RING_CENTER\}\)`\}/);
   assertSourceMatch(activeProgramKpis, /fraction:\{[^}]*fontSize:tokens\.type\.section/);
-  assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*fontSize:tokens\.type\.section/);
-  assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*color:tokens\.color\.textMain/);
-  assertSourceMatch(activeProgramKpis, /<Text style=\{styles\.percentageText\}>\{advancement\}%<\/Text>/);
-  assertSourceMatch(activeProgramKpis, /<Text style=\{styles\.percentageText\}>\{compliance\}%<\/Text>/);
-  assertSourceMatch(activeProgramKpis, /indicatorElapsed:\{backgroundColor:`\$\{tokens\.color\.dailyPlan\}1A`,borderColor:tokens\.color\.dailyPlan\}/);
-  assertSourceMatch(activeProgramKpis, /indicatorAdherence:\{backgroundColor:`\$\{tokens\.color\.meal\}1A`,borderColor:tokens\.color\.meal\}/);
+  assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*fontSize:tokens\.type\.caption/);
+  assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*color:tokens\.color\.textMuted/);
+  assertSourceMatch(activeProgramKpis, /<ProgressRing color=\{tokens\.color\.dailyPlan\} current=\{elapsedDays\} percentage=\{advancement\} total=\{totalDays\} \/>/);
+  assertSourceMatch(activeProgramKpis, /<ProgressRing color=\{tokens\.color\.meal\} current=\{adheredDays\} percentage=\{compliance\} total=\{plannedAdherenceDays\} \/>/);
+  assertSourceDoesNotMatch(activeProgramKpis, /styles\.track|styles\.fill/);
+  assertSourceMatch(activeProgramKpis, /indicatorElapsed:\{backgroundColor:`\$\{tokens\.color\.dailyPlan\}1A`,borderColor:`\$\{tokens\.color\.dailyPlan\}80`\}/);
+  assertSourceMatch(activeProgramKpis, /indicatorAdherence:\{backgroundColor:`\$\{tokens\.color\.meal\}1A`,borderColor:`\$\{tokens\.color\.meal\}80`\}/);
   assertSourceDoesNotMatch(activeProgramKpis, /percentageTag/);
 
   const activateProgram = await readTestFile(

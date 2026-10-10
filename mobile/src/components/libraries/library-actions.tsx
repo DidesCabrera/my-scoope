@@ -1,4 +1,4 @@
-import { Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2 } from "lucide-react-native";
+import { BookPlus, Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -39,6 +39,7 @@ type LibraryActionsProps = {
   onEdit?: () => void;
   onOpenInformation?: () => void;
   onRemove?: () => Promise<void>;
+  onSaveToLibrary?: () => Promise<void>;
   onVisibleChange?: (visible: boolean) => void;
   renderTrigger?: (open: () => void) => ReactNode;
   visible?: boolean;
@@ -62,7 +63,7 @@ const entityLabels = {
   program: "este programa",
 } as const;
 
-export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCompare, onEdit, onOpenInformation, onRemove, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
+export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCompare, onEdit, onOpenInformation, onRemove, onSaveToLibrary, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
   const [internalVisible, setInternalVisible] = useState(false);
   const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | { destructive: true; key: "remove"; label: string } | null>(
@@ -79,7 +80,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     onVisibleChange?.(nextVisible);
   };
 
-  if (!actions.length && !mealTimeChange && !onCompare && !onEdit && !onOpenInformation && !onRemove) return null;
+  if (!actions.length && !mealTimeChange && !onCompare && !onEdit && !onOpenInformation && !onRemove && !onSaveToLibrary) return null;
 
   const close = () => {
     if (submitting) return;
@@ -172,6 +173,21 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     }
   };
 
+  const saveToLibrary = async () => {
+    if (!onSaveToLibrary) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSaveToLibrary();
+      setVisible(false);
+      setSelected(null);
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const actionTitle = selected?.key === "delete"
     ? `¿Eliminar ${entityLabels[item.entity]}?`
     : selected?.key === "remove"
@@ -226,6 +242,15 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                       setVisible(false);
                       onEdit();
                     }}
+                  />
+                ) : null}
+
+                {onSaveToLibrary ? (
+                  <ActionSheetAction
+                    disabled={submitting}
+                    icon={BookPlus}
+                    label="Guardar en mi biblioteca"
+                    onPress={() => void saveToLibrary()}
                   />
                 ) : null}
 
