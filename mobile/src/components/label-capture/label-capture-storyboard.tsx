@@ -10,8 +10,9 @@ import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { Button, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, SectionHeading } from "@/components/ui";
+import { Button, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, SectionHeading } from "@/components/ui";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { AnimatedScanBeam } from "@/components/label-capture/animated-scan-beam";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { tokens } from "@/design/tokens";
 
@@ -255,18 +256,7 @@ function ProcessingView() {
     <>
       <FullBleedSquare surfaceStyle={styles.processingVisual}>
         <NutritionLabelMock compact edgeToEdge />
-        <View style={styles.scanBeam}>
-          <Svg aria-hidden height="100%" width="100%">
-            <Defs>
-              <LinearGradient id="label-capture-credit-scan" x1="0" x2="1" y1="0" y2="0">
-                <Stop offset="0" stopColor={tokens.color.protein} />
-                <Stop offset="0.5" stopColor={tokens.color.carbs} />
-                <Stop offset="1" stopColor={tokens.color.fat} />
-              </LinearGradient>
-            </Defs>
-            <Rect fill="url(#label-capture-credit-scan)" height="100%" rx="2" ry="2" width="100%" />
-          </Svg>
-        </View>
+        <AnimatedScanBeam gradientId="label-capture-credit-scan" />
       </FullBleedSquare>
       <View style={styles.processingDetails}>
         <View style={styles.processingHeader}>
@@ -285,11 +275,12 @@ function ProcessingView() {
 }
 
 const values = [
-  { label: "Energía", value: "97", unit: "kcal" },
-  { label: "Proteínas", value: "9,0", unit: "g" },
-  { label: "Carbohidratos", value: "3,8", unit: "g" },
-  { label: "Grasas totales", value: "5,0", unit: "g" },
+  { emphasized: true, label: "Proteínas", value: "9,0", unit: "g" },
+  { emphasized: true, label: "Grasas totales", value: "5,0", unit: "g" },
+  { label: "Grasas saturadas", value: "3,1", unit: "g" },
+  { emphasized: true, label: "Carbohidratos", value: "3,8", unit: "g" },
   { label: "Azúcares", value: "3,8", unit: "g" },
+  { label: "Fibra", value: "0", unit: "g" },
   { label: "Sodio", value: "58", unit: "mg" },
 ] as const;
 
@@ -305,11 +296,18 @@ function ReviewView() {
         <View style={styles.confidenceNotice}><Text style={styles.confidenceNoticeText}>La foto permanece fija mientras desplazas los valores. Confianza alta.</Text></View>
       </View>
       <View style={styles.reviewForm}>
+        <DistributedTabBar<"g" | "ml">
+          accessibilityLabel="Unidad de porción"
+          activeTab="g"
+          bleed
+          onChange={noop}
+          tabs={[{ key: "g", label: "Gramos" }, { key: "ml", label: "Mililitros" }]}
+        />
         <View style={styles.reviewTitleRow}><Text style={styles.reviewTitle}>Valores por 100 g</Text></View>
         <View style={styles.nutritionRows}>
           {values.map((item) => (
             <View key={item.label} style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>{item.label}</Text>
+              <Text style={[styles.nutritionLabel, "emphasized" in item && item.emphasized && styles.nutritionLabelEmphasis]}>{item.label}</Text>
               <View style={styles.nutritionInputSurface}>
                 <TextInput accessibilityLabel={item.label} defaultValue={item.value} keyboardType="decimal-pad" selectTextOnFocus style={styles.nutritionInput} />
                 <Text style={styles.nutritionUnit}>{item.unit}</Text>
@@ -324,7 +322,7 @@ function ReviewView() {
             </View>
           </View>
         </View>
-        <Field autoCapitalize="words" label="Nombre del producto" labelIcon={<EntityIcon entity="food" size="compact" />} onChangeText={noop} value="Yogur griego natural" />
+        <Field autoCapitalize="words" label="Nombre del producto" labelIcon={<EntityIcon entity="food" size="compact" />} labelStyle={styles.fieldLabel} onChangeText={noop} value="Yogur griego natural" />
       </View>
       <View style={styles.reviewContinue}><Button label="Continuar" onPress={noop} /></View>
     </>
@@ -464,7 +462,6 @@ const styles = StyleSheet.create({
   qualityTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   qualityDetail: { color: tokens.color.textMuted, fontSize: 11, lineHeight: 16 },
   processingVisual: { position: "relative" },
-  scanBeam: { borderRadius: tokens.radius.pill, height: 3, left: tokens.spacing.lg, overflow: "hidden", position: "absolute", right: tokens.spacing.lg, top: "50%", transform: [{ translateY: -1.5 }] },
   processingDetails: { gap: tokens.spacing.sm },
   processingHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   processingLoading: { flexShrink: 0, marginLeft: -16, marginRight: 2, transform: [{ translateX: 16 }, { scale: 0.6 }] },
@@ -487,8 +484,9 @@ const styles = StyleSheet.create({
   nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   nutritionRowLast: { borderBottomWidth: 0 },
   portionRow: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, marginTop: tokens.spacing.sm, paddingBottom: tokens.spacing.md, paddingTop: tokens.spacing.md },
-  nutritionLabel: { color: tokens.color.textMuted, flex: 1, fontSize: 14, lineHeight: 20 },
-  nutritionLabelEmphasis: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
+  fieldLabel: { color: tokens.color.textMain },
+  nutritionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 14, lineHeight: 20 },
+  nutritionLabelEmphasis: { fontWeight: tokens.weight.bold },
   nutritionInputSurface: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", height: 32, minWidth: 112, paddingHorizontal: tokens.spacing.sm },
   nutritionInput: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, height: 30, padding: 0, textAlign: "right" },
   nutritionUnit: { color: tokens.color.textSoft, fontSize: 12, marginLeft: 5 },

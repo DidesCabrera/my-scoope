@@ -1,6 +1,6 @@
 import { CalendarClock, Clock3, Info, Pencil } from "lucide-react-native";
 import { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -112,7 +112,13 @@ export function CalendarizedEntityActions({ entityName, initialAction, onOpenInf
     <ActionSheetModal onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
         <ActionSheetHeader icon={CalendarClock} onClose={close} title={title} />
-        <View style={styles.sheetContent}>
+        <ScrollView
+          automaticallyAdjustKeyboardInsets
+          contentContainerStyle={styles.sheetContent}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+          style={styles.sheetScroll}>
           {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
           {!selected ? <ActionSheetActions>
             {onOpenInformation ? <ActionSheetAction icon={Info} label="Ver información del elemento" onPress={() => { onVisibleChange(false); onOpenInformation(); }} /> : null}
@@ -129,14 +135,15 @@ export function CalendarizedEntityActions({ entityName, initialAction, onOpenInf
           {selected === "change-time" && timeChange ? (
             <MealTimeForm initialTime={timeChange.initialTime} onCancel={initialAction ? close : () => setSelected(null)} onSaved={close} onSubmit={timeChange.onSubmit} />
           ) : null}
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </ActionSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
+  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
+  sheetScroll: { flexGrow: 0, flexShrink: 1 },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   form: { gap: tokens.spacing.md },
 });

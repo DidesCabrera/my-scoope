@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   sheetContent: { paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.lg, paddingTop: tokens.spacing.md },
   sheetHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingBottom: tokens.spacing.md, paddingHorizontal: tokens.spacing.lg },
   sheetIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
-  sheetTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold },
+  sheetTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, lineHeight: 25 },
   stage: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, height: 230, justifyContent: "center", overflow: "hidden", position: "relative" },
   sheetStage: { height: 390, justifyContent: "flex-end" },
   statusCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.card, gap: tokens.spacing.md, minWidth: 220, paddingHorizontal: tokens.spacing.xl, paddingVertical: tokens.spacing.xl },

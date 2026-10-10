@@ -28,9 +28,16 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.match(create, /pickerEntryTo: String\(mealCreationContext\.pickerEntryHref\)/);
   assert.match(create, /returnTo: String\(mealCreationContext\.returnHref\)/);
   assert.doesNotMatch(create, /AppHeader|CollectionPageHeader/);
-  for (const field of ["Nombre", "Proteínas (g)", "Carbohidratos (g)", "Grasas (g)"]) {
+  for (const field of ["Nombre", "Proteínas", "Carbohidratos", "Grasas totales"]) {
     assert.match(create, new RegExp(field.replace(/[()]/g, "\\$&")));
   }
+  assert.match(create, /Valores por 100 \{portionUnit\}/);
+  assert.match(create, /labelStyle=\{entity === "food" \? styles\.foodFieldLabel : undefined\}/);
+  assert.match(create, /foodFieldLabel: \{ color: tokens\.color\.textMain \}/);
+  assert.match(create, /nutritionLabel: \{ color: tokens\.color\.textMain[\s\S]*fontWeight: tokens\.weight\.bold/);
+  assert.match(create, /style=\{styles\.nutritionInputSurface\}/);
+  assert.match(create, /<Text style=\{styles\.nutritionUnit\}>g<\/Text>/);
+  assert.match(create, /<DistributedTabBar<"g" \| "ml">[\s\S]*bleed/);
   for (const endpoint of ["foods", "meals", "daily-plans", "programs"]) {
     assert.match(create, new RegExp(`/api/v1/library/${endpoint}`));
   }

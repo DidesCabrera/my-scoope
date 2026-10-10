@@ -1,7 +1,7 @@
 import { Redirect, useFocusEffect } from "expo-router";
 import { Check, Pencil, Plus } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { WeightInput, WeightItem, WeightListData } from "@/api/types";
@@ -208,14 +208,20 @@ export default function WeightScreen() {
       </Card>
       <ActionSheetModal onRequestClose={closeEdit} visible={historyFormMode != null}>
         <ActionSheetHeader icon={historyFormMode === "create" ? Plus : Pencil} onClose={closeEdit} title={historyFormMode === "create" ? "Agregar medición anterior" : "Editar peso"} />
-        <View style={styles.editForm}>
+        <ScrollView
+          automaticallyAdjustKeyboardInsets
+          contentContainerStyle={styles.editForm}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+          style={styles.editFormScroll}>
           {historyFormMode === "create" ? <Text style={textStyles.muted}>Puedes ingresar una medición antigua que no registraste en el momento.</Text> : null}
           <NativeMeasurementField defaultValue={historyFormMode === "create" ? profile?.current_weight_kg?.toString() : undefined} kind="weight" label="Peso" onChange={setEditValue} value={editValue} />
           <NativeDateTimeField label="Fecha" maximumValue={localDateValue()} mode="date" onChange={setEditDate} value={editDate} />
           <NativeDateTimeField label="Hora (Opcional)" mode="time" onChange={setEditTime} value={editTime} />
           {editError ? <InlineNotice tone="error">{editError}</InlineNotice> : null}
           <Button bleed={false} label={historyFormMode === "create" ? "Guardar medición" : "Guardar cambios"} loading={saving} onPress={saveHistory} />
-        </View>
+        </ScrollView>
       </ActionSheetModal>
     </Screen>
   );
@@ -223,6 +229,7 @@ export default function WeightScreen() {
 
 const styles = StyleSheet.create({
   editForm: { gap: tokens.spacing.md, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
+  editFormScroll: { flexGrow: 0, flexShrink: 1 },
   historyActions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   historyEditToggle: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   pressed: { opacity: 0.65 },

@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   greetingRow: { gap: 0, marginBottom: 0 },
   greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   greetingTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5 },
-  greetingSubtitle: { alignItems: "center", flexDirection: "row" },
+  greetingSubtitle: { alignItems: "center", flexDirection: "row", marginTop: tokens.spacing.xs },
   greetingSubtitleText: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, lineHeight: 20 },
   planContext: { alignSelf: "flex-start", marginTop: tokens.spacing.sm },
   weekRow: { marginBottom: tokens.spacing.sm },

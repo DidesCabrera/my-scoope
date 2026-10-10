@@ -6,6 +6,7 @@ export * from "./feedback";
 export * from "./layout";
 export * from "./key-value-table";
 export * from "./macro-loading-indicator";
+export * from "./my-scoope-brand-logo";
 export * from "./my-scoope-logo";
 export * from "./native-date-time-field";
 export * from "./native-measurement-field";

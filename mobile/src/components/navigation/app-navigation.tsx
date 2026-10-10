@@ -44,7 +44,7 @@ import { useSession } from "@/auth/session-context";
 import type { EntitlementsData, HomeData, LibraryEntity } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
-import { MyScoopeLogo } from "@/components/ui/my-scoope-logo";
+import { MyScoopeBrandLogo } from "@/components/ui/my-scoope-brand-logo";
 import { ModalBackdrop } from "@/components/ui/action-sheet-modal";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
@@ -212,7 +212,7 @@ export function AppNavigationHeader() {
         )}
         {headerPresentation.mode === "back" ? <BackHeaderIdentity title={headerPresentation.title} visible={headerPresentation.identityVisible} /> : headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
           <LibraryHeaderIdentity entity={headerPresentation.entity} title={headerPresentation.title} visible={headerPresentation.identityVisible} />
-        ) : isHome ? <View pointerEvents="none" style={styles.headerLogo}><MyScoopeLogo /></View> : <HeaderIdentity icon={routeIdentity.icon} title={headerPresentation.title || routeIdentity.title} visible={defaultIdentityVisible} />}
+        ) : isHome ? <View pointerEvents="none" style={styles.headerLogo}><MyScoopeBrandLogo compact /></View> : <HeaderIdentity icon={routeIdentity.icon} title={headerPresentation.title || routeIdentity.title} visible={defaultIdentityVisible} />}
         {headerPresentation.mode === "back" && headerPresentation.action ? (
           <Pressable
             accessibilityLabel={headerPresentation.action.label}
@@ -403,7 +403,7 @@ function AppSidebar() {
           }]}>
             <View style={styles.drawerHeader}>
               <Pressable accessibilityLabel="Ir a Inicio" accessibilityRole="button" hitSlop={8} onPress={openHome} style={({ pressed }) => [styles.drawerHome, pressed && styles.pressed]}>
-                <MyScoopeLogo />
+                <MyScoopeBrandLogo compact />
               </Pressable>
               <Pressable
                 accessibilityLabel="Cerrar menú"

@@ -11,7 +11,7 @@ type AllocationBarProps = {
   displayValue?: number | string;
   showValue?: boolean;
   size?: "compact" | "regular";
-  textSize?: 12 | 13;
+  textSize?: 12 | 13 | 14;
   style?: StyleProp<ViewStyle>;
 };
 

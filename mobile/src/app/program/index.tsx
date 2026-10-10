@@ -16,7 +16,7 @@ import { ProgramActiveActions } from "@/components/programs/program-active-actio
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { LoadingState, Screen, SectionPageHeader } from "@/components/ui";
+import { Button, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -34,6 +34,7 @@ export default function ProgramScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [cancelRequested, setCancelRequested] = useState(false);
   const [weekSelection, setWeekSelection] = useState<{ calendarizationId: number; week: number } | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const setHeaderPresentation = useHeaderPresentation();
@@ -50,7 +51,14 @@ export default function ProgramScreen() {
     }
   }, [apiRequest]);
 
-  const openActions = useCallback(() => setActionsVisible(true), []);
+  const openActions = useCallback(() => {
+    setCancelRequested(false);
+    setActionsVisible(true);
+  }, []);
+  const requestCancel = useCallback(() => {
+    setCancelRequested(true);
+    setActionsVisible(true);
+  }, []);
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
@@ -87,7 +95,7 @@ export default function ProgramScreen() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !program) return <LoadingState label="Preparando tu programa…" />;
 
-  async function applyAction(action: "pause" | "resume" | "cancel") {
+  async function applyAction(action: "cancel") {
     if (!calendarization) throw new Error("No hay un programa en curso para actualizar.");
     const nextProgram = await apiRequest<ActiveProgramData>(`/api/v1/program/calendarizations/${calendarization.id}/${action}`, { method: "POST" });
     setProgram(normalizeActiveProgramData(nextProgram));
@@ -100,14 +108,14 @@ export default function ProgramScreen() {
 
   const actionsModal = (
     <ProgramActiveActions
-      onChangeProgram={() => router.push("/program/activate" as Href)}
-      onClose={() => setActionsVisible(false)}
+      initialAction={cancelRequested ? "cancel" : undefined}
+      key={cancelRequested ? "cancel-program" : "program-actions"}
+      onClose={() => { setActionsVisible(false); setCancelRequested(false); }}
       onOpenInformation={() => router.push("/program/information" as Href)}
       onOpenHistory={() => router.push("/program/history" as Href)}
       onOpenOriginalProgram={calendarization?.source_program_id ? () => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href) : undefined}
       onOpenReminders={() => router.push("/reminders")}
       onStateAction={applyAction}
-      status={calendarization?.status ?? null}
       visible={actionsVisible}
     />
   );
@@ -150,6 +158,9 @@ export default function ProgramScreen() {
         </View>
 
         <CalendarizedProgramPlanning days={programDays} initialWeek={activeWeek} key={`${calendarization.id}:${activeWeek}`} showWeekTabs={false} weeksData={program.weeks} />
+        <View style={styles.cancelAction}>
+          <Button label="Cancelar programa" onPress={requestCancel} variant="danger" />
+        </View>
       </NestableScrollContainer>
       {actionsModal}
     </>
@@ -158,6 +169,7 @@ export default function ProgramScreen() {
 
 const styles = StyleSheet.create({
   beforePlanning: { gap: tokens.spacing.lg },
+  cancelAction: { marginTop: 28 },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   screenContent: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },

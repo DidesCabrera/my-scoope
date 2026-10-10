@@ -1,14 +1,14 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type { LibraryEntity, LibraryItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { DistributedTabBar, EntityIcon, LoadingState } from "@/components/ui";
-import { Button, Card, Field, InlineNotice, textStyles } from "@/components/ui/primitives";
+import { DistributedTabBar, EntityIcon, Field, LoadingState } from "@/components/ui";
+import { Button, Card, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
 
@@ -67,6 +67,26 @@ function macroNumber(value: string): number | null {
   if (!normalized) return null;
   const parsed = Number(normalized);
   return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
+}
+
+function NutritionValueRow({ label, onChangeText, value }: { label: string; onChangeText(value: string): void; value: string }) {
+  return (
+    <View style={styles.nutritionRow}>
+      <Text style={styles.nutritionLabel}>{label}</Text>
+      <View style={styles.nutritionInputSurface}>
+        <TextInput
+          accessibilityLabel={label}
+          keyboardType="decimal-pad"
+          onChangeText={onChangeText}
+          placeholder="0"
+          selectTextOnFocus
+          style={styles.nutritionInput}
+          value={value}
+        />
+        <Text style={styles.nutritionUnit}>g</Text>
+      </View>
+    </View>
+  );
 }
 
 export function LibraryCreateScreen() {
@@ -187,22 +207,25 @@ export function LibraryCreateScreen() {
               <EntityIcon entity={entity} size="compact" />
               <Text style={styles.eyebrow}>{editingFoodId ? "Editar alimento" : config.identityLabel}</Text>
             </View>
-            <Field autoCapitalize="sentences" label="Nombre" onChangeText={setName} placeholder={config.namePlaceholder} value={name} />
+            <Field autoCapitalize="sentences" label="Nombre" labelStyle={entity === "food" ? styles.foodFieldLabel : undefined} onChangeText={setName} placeholder={config.namePlaceholder} value={name} />
             {entity === "food" ? (
               <View style={styles.macroFields}>
                 <DistributedTabBar<"g" | "ml">
                   accessibilityLabel="Unidad de porción"
                   activeTab={portionUnit}
+                  bleed
                   onChange={(unit) => setPortionUnit(unit)}
                   tabs={[{ key: "g", label: "Gramos" }, { key: "ml", label: "Mililitros" }]}
                 />
                 <View style={styles.macroHeading}>
-                  <Text style={styles.macroTitle}>Información por 100 {portionUnit}</Text>
+                  <Text style={styles.macroTitle}>Valores por 100 {portionUnit}</Text>
                   <Text style={textStyles.caption}>Ingresa cada macronutriente entre 0 y 100 g.</Text>
                 </View>
-                <Field keyboardType="decimal-pad" label="Proteínas (g)" onChangeText={setProtein} placeholder="0" value={protein} />
-                <Field keyboardType="decimal-pad" label="Carbohidratos (g)" onChangeText={setCarbs} placeholder="0" value={carbs} />
-                <Field keyboardType="decimal-pad" label="Grasas (g)" onChangeText={setFat} placeholder="0" value={fat} />
+                <View style={styles.nutritionRows}>
+                  <NutritionValueRow label="Proteínas" onChangeText={setProtein} value={protein} />
+                  <NutritionValueRow label="Carbohidratos" onChangeText={setCarbs} value={carbs} />
+                  <NutritionValueRow label="Grasas totales" onChangeText={setFat} value={fat} />
+                </View>
               </View>
             ) : null}
             {config.guidance ? <InlineNotice>{config.guidance}</InlineNotice> : null}
@@ -222,7 +245,14 @@ const styles = StyleSheet.create({
   formCard: { gap: tokens.spacing.lg },
   identityRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
+  foodFieldLabel: { color: tokens.color.textMain },
   macroFields: { gap: tokens.spacing.md },
   macroHeading: { gap: tokens.spacing.xs },
-  macroTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
+  macroTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
+  nutritionRows: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: -tokens.spacing.xs },
+  nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
+  nutritionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20 },
+  nutritionInputSurface: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", height: 32, minWidth: 112, paddingHorizontal: tokens.spacing.sm },
+  nutritionInput: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, height: 30, padding: 0, textAlign: "right" },
+  nutritionUnit: { color: tokens.color.textSoft, fontSize: 12, marginLeft: 5 },
 });

@@ -27,7 +27,7 @@ import { NutritionKpiSection } from "@/components/nutrition";
 import { EntityPanelTabs, MealPanels, type MealPanelItem, PanelSurface } from "@/components/panels";
 import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
-import { Button, Card, Field, InlineNotice, MyScoopeLogo, NativeDateTimeField, NativeMeasurementField, Pill, textStyles } from "@/components/ui";
+import { Button, Card, Field, InlineNotice, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, Pill, textStyles } from "@/components/ui";
 import type { OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { localDateValue } from "@/presentation/date-time-values";
@@ -102,7 +102,6 @@ type Icon = ComponentType<{ color?: string; size?: number; strokeWidth?: number 
 
 const noop = () => undefined;
 const loginBackgroundSource = require("../../../assets/images/login-background.jpg");
-const launchLogoSource = require("../../../assets/images/launch-logo.png");
 
 export type OnboardingJourneyValues = {
   goal: string;
@@ -196,7 +195,7 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
   const usesCenteredTitleSpacing = (index <= 6 || brandedCentered) && !externalExplanationChrome;
   return (
     <View style={[styles.intro, isCenteredIntro && styles.introCentered, isProfileStep && fixedProfileChrome && profileTitleBottomSpacingReduction > 0 && { marginBottom: -profileTitleBottomSpacingReduction }]}>
-      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={styles.centeredLogo}><MyScoopeLogo /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 6 ? null : (
+      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={styles.centeredLogo}><MyScoopeBrandLogo /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 6 ? null : (
         <View style={styles.stepMeta}>
           <Text style={styles.stepCount}>{String(index + 1).padStart(2, "0")} / {onboardingJourneySteps.length}</Text>
           <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.progressTrack}>
@@ -486,7 +485,7 @@ function LoginView({ index }: { index: number }) {
   return (
     <View style={styles.loginContent}>
       <View style={[styles.centeredLogo, styles.loginLogo]}>
-        <Image accessibilityLabel="My Scoope" resizeMode="contain" source={launchLogoSource} style={styles.loginLogoImage} />
+        <MyScoopeBrandLogo />
       </View>
       <View style={[styles.loginImageStage, { height: loginImageHeight }]}>
         <Image accessibilityIgnoresInvertColors resizeMode="contain" source={loginBackgroundSource} style={[styles.loginBackgroundImage, { height: loginImageHeight }]} />
@@ -1095,7 +1094,7 @@ export function OnboardingJourneyView({
       <JourneyControllerContext.Provider value={resolvedController}>
         <JourneyPresentationContext.Provider value={{ conciseSexEyebrow, contentSizedDietaryChips, disclosuresTitleSpacingReduction, externalExplanationChrome: true, fixedDisclosuresFooter, fixedLoginActionBottomSpacing, fixedProfileChrome, fixedProfileFooterBottomSpacing, hideCalculationReviewDisclosure, measurementReferenceNotice, progressiveAllergyDetails, profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileQuestionSpacing, profileProgressWidthReduction, profileTitleBottomSpacingReduction, showGoalOptionsEyebrow, showProfileControlBleed, storyboardSummaryLayout }}>
           <View style={[styles.screen, styles.interactiveExplanationScreen, topInsetReduction > 0 && { paddingTop: styles.screen.paddingTop - topInsetReduction }]}>
-            <View style={styles.centeredLogo}><MyScoopeLogo /></View>
+            <View style={styles.centeredLogo}><MyScoopeBrandLogo /></View>
             <View
               {...swipeResponder.panHandlers}
               onLayout={handleExplanationViewportLayout}
@@ -1141,7 +1140,6 @@ const styles = StyleSheet.create({
   fixedLoginScreen: { flex: 1, minHeight: 0 },
   loginBackgroundScreen: { flex: 1, minHeight: 0, overflow: "hidden" },
   loginLogo: { marginBottom: -18, marginTop: 62 },
-  loginLogoImage: { height: 28, width: 100 },
   loginImageStage: { height: 396, position: "relative", width: "100%" },
   loginBackgroundImage: { bottom: 0, height: 396, left: 0, position: "absolute", right: 0, top: 0, width: "100%" },
   loginContent: { flex: 1, gap: tokens.spacing.lg, transform: [{ translateY: -12 }], zIndex: 1 },
