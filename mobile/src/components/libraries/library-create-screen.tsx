@@ -7,7 +7,7 @@ import { userFacingError } from "@/api/errors";
 import type { LibraryEntity, LibraryItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { DistributedTabBar, EntityIcon } from "@/components/ui";
+import { DistributedTabBar, EntityIcon, LoadingState } from "@/components/ui";
 import { Button, Card, Field, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
@@ -70,11 +70,13 @@ function macroNumber(value: string): number | null {
 }
 
 export function LibraryCreateScreen() {
-  const params = useLocalSearchParams<{ entity?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; returnTo?: string }>();
+  const params = useLocalSearchParams<{ entity?: string; id?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; returnTo?: string }>();
   const entity = typeof params.entity === "string" && Object.prototype.hasOwnProperty.call(configs, params.entity)
     ? params.entity as CreatableEntity
     : null;
   const config = entity ? configs[entity] : null;
+  const requestedFoodId = Number(params.id);
+  const editingFoodId = entity === "food" && Number.isInteger(requestedFoodId) && requestedFoodId > 0 ? requestedFoodId : null;
   const returnHref = internalHref(params.returnTo);
   const pickerEntryHref = internalHref(params.pickerEntryTo);
   const pickerKind = params.pickerKind === "meal-to-dailyplan" || params.pickerKind === "meal-to-calendarized-day" ? params.pickerKind : null;
@@ -92,6 +94,7 @@ export function LibraryCreateScreen() {
   const [fat, setFat] = useState("");
   const [portionUnit, setPortionUnit] = useState<"g" | "ml">("g");
   const [submitting, setSubmitting] = useState(false);
+  const [initializing, setInitializing] = useState(editingFoodId != null);
   const [error, setError] = useState<string | null>(null);
 
   const cancel = useCallback(() => {
@@ -105,10 +108,29 @@ export function LibraryCreateScreen() {
       mode: "back",
       action: { label: "Cancelar", onPress: cancel },
       fallback: `/libraries/${config.segment}` as Href,
-      title: config.headerTitle,
+      title: editingFoodId ? "Editar alimento" : config.headerTitle,
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [cancel, config, setHeaderPresentation]));
+  }, [cancel, config, editingFoodId, setHeaderPresentation]));
+
+  useFocusEffect(useCallback(() => {
+    if (!editingFoodId || status !== "authenticated") return;
+    let active = true;
+    setInitializing(true);
+    setError(null);
+    void apiRequest<LibraryItem>(`/api/v1/library/foods/${editingFoodId}`)
+      .then((food) => {
+        if (!active) return;
+        setName(food.name);
+        setProtein(String(food.nutrition.protein.grams));
+        setCarbs(String(food.nutrition.carbs.grams));
+        setFat(String(food.nutrition.fat.grams));
+        setPortionUnit(food.quantity_unit ?? "g");
+      })
+      .catch((nextError) => active && setError(userFacingError(nextError)))
+      .finally(() => active && setInitializing(false));
+    return () => { active = false; };
+  }, [apiRequest, editingFoodId, status]));
 
   const macroValues = useMemo(() => ({
     carbs: macroNumber(carbs),
@@ -127,16 +149,16 @@ export function LibraryCreateScreen() {
       const body = entity === "food"
         ? { name: cleanName, protein: macroValues.protein, carbs: macroValues.carbs, fat: macroValues.fat, portion_unit: portionUnit }
         : { name: cleanName };
-      const created = await apiRequest<LibraryItem>(config.endpoint, {
+      const saved = await apiRequest<LibraryItem>(editingFoodId ? `/api/v1/library/foods/${editingFoodId}/edit` : config.endpoint, {
         body: JSON.stringify(body),
         headers: { "Content-Type": "application/json" },
-        method: "POST",
+        method: editingFoodId ? "PUT" : "POST",
       });
       router.replace(mealCreationContext
         ? {
           pathname: "/libraries/meals/[id]",
           params: {
-            id: String(created.id),
+            id: String(saved.id),
             pickerEntryTo: String(mealCreationContext.pickerEntryHref),
             pickerKind: mealCreationContext.pickerKind,
             ...(mealCreationContext.pickerRelationId ? { pickerRelationId: String(mealCreationContext.pickerRelationId) } : {}),
@@ -144,7 +166,7 @@ export function LibraryCreateScreen() {
             returnTo: String(mealCreationContext.returnHref),
           },
         }
-        : `/libraries/${config.segment}/${created.id}` as Href);
+        : `/libraries/${config.segment}/${saved.id}` as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -154,6 +176,7 @@ export function LibraryCreateScreen() {
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (!config || !entity) return <Redirect href="/today" />;
+  if (initializing) return <LoadingState label="Cargando alimento…" />;
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
@@ -162,7 +185,7 @@ export function LibraryCreateScreen() {
           <Card accent={tokens.color[entity]} style={styles.formCard}>
             <View style={styles.identityRow}>
               <EntityIcon entity={entity} size="compact" />
-              <Text style={styles.eyebrow}>{config.identityLabel}</Text>
+              <Text style={styles.eyebrow}>{editingFoodId ? "Editar alimento" : config.identityLabel}</Text>
             </View>
             <Field autoCapitalize="sentences" label="Nombre" onChangeText={setName} placeholder={config.namePlaceholder} value={name} />
             {entity === "food" ? (
@@ -184,7 +207,7 @@ export function LibraryCreateScreen() {
             ) : null}
             {config.guidance ? <InlineNotice>{config.guidance}</InlineNotice> : null}
             {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-            <Button disabled={!canSubmit} label={config.submitLabel} loading={submitting} onPress={() => void submit()} />
+            <Button disabled={!canSubmit} label={editingFoodId ? "Guardar cambios" : config.submitLabel} loading={submitting} onPress={() => void submit()} />
           </Card>
         </ScrollView>
       </KeyboardAvoidingView>

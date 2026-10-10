@@ -3,7 +3,7 @@ import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-n
 import { CalendarRange, ClipboardList, Plus } from "lucide-react-native";
 
 import { tokens } from "@/design/tokens";
-import { ScrollableTabBar, StructuralIndicators, useWeekDayLayout, WeekDayCell, WeekDayGrid, WeekDaySelectionRing } from "@/components/ui";
+import { HeaderMetadataChip, ScrollableTabBar, useWeekDayLayout, WeekDayCell, WeekDayGrid, WeekDaySelectionRing } from "@/components/ui";
 
 export type ProgramPlanningDay = {
   dayOfMonth?: number;
@@ -24,7 +24,7 @@ export function ProgramWeekHeading({ detail, week }: { detail?: string; week: nu
         </View>
         <Text style={styles.weekHeadingTitle}>Semana {week}</Text>
       </View>
-      {detail ? <StructuralIndicators indicators={[{ icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted", value: detail }]} /> : null}
+      {detail ? <HeaderMetadataChip kind="date" value={detail} /> : null}
     </View>
   );
 }

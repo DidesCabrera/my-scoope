@@ -1,6 +1,7 @@
 from notas.application.services.nutrition.food_aggregation import (
     build_meal_foods_projection,
 )
+from notas.domain.models import Meal, MealFood
 from notas.domain.services.nutrition import compute_meal_nutrition
 
 
@@ -37,3 +38,13 @@ def rebuild_meal_cached_state(meal):
             "foods_aggregation_cached",
         ]
     )
+
+
+def rebuild_meals_and_parent_caches_for_food(food):
+    """Refresh every cached nutrition projection affected by a Food edit."""
+    from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
+
+    meal_ids = MealFood.objects.filter(food=food).values_list("meal_id", flat=True).distinct()
+    for meal in Meal.objects.filter(pk__in=meal_ids).iterator():
+        rebuild_meal_cached_state(meal)
+        refresh_dailyplans_for_meal(meal)

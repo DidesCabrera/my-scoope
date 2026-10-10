@@ -204,6 +204,7 @@ export default function TodayScreen() {
 
       {today?.calendarization && today.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
+          apiRequest={apiRequest}
           dayId={todayDayId ?? null}
           dateLabel={compactDateLabel(today.local_date)}
           editing={calendarizedMealEditing}
@@ -214,6 +215,7 @@ export default function TodayScreen() {
             await load();
           }}
           onAddMeal={todayDayId != null ? () => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId })) : undefined}
+          onChanged={load}
           snapshot={snapshot}
         />
       ) : today?.calendarization ? (
@@ -224,7 +226,7 @@ export default function TodayScreen() {
       ) : today?.pinned_plan ? (
         <>
           <HomeSectionTitle>Tu plan de alimentos para hoy</HomeSectionTitle>
-          <PinnedDailyPlanCard editing={pinnedMealEditing} item={today.pinned_plan} mealExecution={today.meal_execution} onChangeMealTime={async (meal, hour) => {
+          <PinnedDailyPlanCard apiRequest={apiRequest} editing={pinnedMealEditing} item={today.pinned_plan} mealExecution={today.meal_execution} onChanged={load} onChangeMealTime={async (meal, hour) => {
             if (meal.relationId == null) return;
             await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan!.id}/meals/${meal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
             await load();

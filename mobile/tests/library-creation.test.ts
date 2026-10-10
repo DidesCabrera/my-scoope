@@ -36,6 +36,20 @@ test("mobile libraries expose native creation for all four entities", async () =
   }
 });
 
+test("private foods can be edited through the prefilled food form", async () => {
+  const create = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-create-screen.tsx"), "utf8");
+
+  assert.match(create, /const editingFoodId = entity === "food"/);
+  assert.match(create, /`\/api\/v1\/library\/foods\/\$\{editingFoodId\}`/);
+  assert.match(create, /setName\(food\.name\)/);
+  assert.match(create, /setProtein\(String\(food\.nutrition\.protein\.grams\)\)/);
+  assert.match(create, /setCarbs\(String\(food\.nutrition\.carbs\.grams\)\)/);
+  assert.match(create, /setFat\(String\(food\.nutrition\.fat\.grams\)\)/);
+  assert.match(create, /method: editingFoodId \? "PUT" : "POST"/);
+  assert.match(create, /editingFoodId \? "Editar alimento"/);
+  assert.match(create, /editingFoodId \? "Guardar cambios"/);
+});
+
 test("meal creation returns to selection on cancel and advances with the created meal on done", async () => {
   const detail = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
   const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
@@ -67,7 +81,7 @@ test("empty drafts hide nutrition comparisons until they have comparable content
   assert.match(detail, /const isEmptyDraft = item\.is_draft && panelCount === 0/);
   assert.match(detail, /const detailIndicators = isEmptyDraft \? undefined/);
   assert.match(detail, /showNutrition=\{!isEmptyDraft\}/);
-  assert.match(detailPage, /showNutrition \? <View style=\{styles\.kpiSection\}><NutritionKpiSection/);
+  assert.match(detailPage, /showNutrition && nutrition \? <View style=\{styles\.kpiSection\}><NutritionKpiSection/);
   assert.match(program, /const hasPlans = filledDaysCount > 0/);
   assert.match(program, /const showProgramComparison = !item \|\| weeksCount > 1/);
   assert.match(program, /const showProgramStructure = !item \|\| plansCount > 0 \|\| weeksCount > 1/);

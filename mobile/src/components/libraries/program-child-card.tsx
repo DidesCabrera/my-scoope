@@ -1,9 +1,9 @@
-import { ChevronRight, CircleUserRound, MoreHorizontal } from "lucide-react-native";
+import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { Pressable, ScrollView, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 import { useState } from "react";
 import Svg, { Defs, Line, LinearGradient, Polygon, Polyline, Stop } from "react-native-svg";
 
-import type { LibraryWeekPanelItem } from "@/api/types";
+import type { LibraryNutrition } from "@/api/types";
 import { Card, EntityHeading, type EntityHeadingLink, layoutStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -37,7 +37,7 @@ const allocationValues = [
   [30, 46, 24], [31, 45, 24], [28, 47, 25], [32, 44, 24], [29, 46, 25], [30, 48, 22], [31, 43, 26],
 ];
 
-export function programDailyMetricData(weeks: LibraryWeekPanelItem[]): ProgramMetricDatum[] {
+export function programDailyMetricData(weeks: { days: { nutrition?: LibraryNutrition | null }[] }[]): ProgramMetricDatum[] {
   return weeks.flatMap((week) => week.days.map((day) => ({
     allocation: {
       protein: day.nutrition?.protein.allocation ?? 0,
@@ -231,7 +231,6 @@ export function ProgramChildCard({
   weeksCount,
   filledDaysCount,
   foodsCount,
-  owner,
   onOpen,
   headingLink,
   openActionLabel,
@@ -243,7 +242,6 @@ export function ProgramChildCard({
   weeksCount: number;
   filledDaysCount: number;
   foodsCount: number;
-  owner: string;
   onOpen?: () => void;
   headingLink?: EntityHeadingLink;
   openActionLabel?: string;
@@ -267,17 +265,14 @@ export function ProgramChildCard({
       <ProgramMetricPreview axisLabels={axisLabels} data={metricData} days={metricData?.length ?? 14} style={layoutStyles.cardContentBleed} />
 
       <View style={styles.footer}>
-        <View accessibilityLabel={`Creado por ${owner}`} style={styles.owner}>
-          <CircleUserRound color={tokens.color.textMuted} size={17} />
-          <Text style={styles.ownerText}>{owner}</Text>
-        </View>
         <View style={styles.actions}>
           {onMore ? <Pressable accessibilityLabel="Más acciones" accessibilityRole="button" onPress={onMore} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
             <MoreHorizontal color={tokens.color.textMuted} size={21} />
           </Pressable> : null}
           {onOpen ? <Pressable accessibilityLabel={openActionLabel ?? "Ver programa"} accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.actionButton, openActionLabel && styles.actionButtonLabeled, pressed && styles.pressed]}>
-            {openActionLabel ? <Text style={styles.actionButtonLabel}>{openActionLabel}</Text> : null}
-            <ChevronRight color={tokens.color.textMuted} size={21} />
+            {openActionLabel
+              ? <Text style={styles.actionButtonLabel}>{openActionLabel}</Text>
+              : <ChevronRight color={tokens.color.textMuted} size={21} />}
           </Pressable> : null}
         </View>
       </View>
@@ -312,11 +307,9 @@ const styles = StyleSheet.create({
   allocationSlot: { flex: 1, flexDirection: "column-reverse", gap: 2, minWidth: 0, paddingHorizontal: 1 },
   allocationSegment: { borderRadius: 2, minHeight: 1 },
   weekDivider: { borderLeftColor: tokens.color.borderSoft, borderLeftWidth: 1 },
-  footer: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.md },
-  owner: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
-  ownerText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "600" },
+  footer: { alignItems: "center", flexDirection: "row", justifyContent: "flex-end", marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.md },
   actions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
-  actionButton: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
-  actionButtonLabeled: { flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, width: "auto" },
-  actionButtonLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  actionButton: { alignItems: "center", minHeight: 34, justifyContent: "center", minWidth: 34 },
+  actionButtonLabeled: { backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.pill, minHeight: 38, minWidth: 112, paddingHorizontal: tokens.spacing.lg },
+  actionButtonLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: "800" },
 });

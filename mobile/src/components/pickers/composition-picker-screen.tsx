@@ -1,11 +1,11 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { CalendarDays, NotebookPen, Pencil, Scale, Search } from "lucide-react-native";
+import { CalendarDays, NotebookPen, Pencil, Scale } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { userFacingError } from "@/api/errors";
+import { MobileApiError, userFacingError } from "@/api/errors";
 import type {
   FoodPickerPageData,
   FoodPickerOption,
@@ -17,13 +17,15 @@ import type {
   PickerCommitResult,
   PickerPreview,
   CalendarizedDayDetail,
+  CompositionOptionsData,
+  CompositionOption,
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, MealPanels } from "@/components/libraries/entity-panels";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, InlineNotice, LoadingState, NativeDateTimeField, SectionTitle, textStyles } from "@/components/ui";
+import { Button, Card, InlineNotice, LoadingState, NativeDateTimeField, SearchField, SectionTitle, textStyles } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
@@ -136,7 +138,7 @@ const dayOptions = [
   { id: 7, short: "D", label: "Domingo" },
 ];
 
-function optionFromLibrary(item: LibraryItem): PickerOption {
+function optionFromLibrary(item: LibraryItem | CompositionOption): PickerOption {
   return {
     id: item.id,
     name: item.name,
@@ -264,10 +266,13 @@ export function CompositionPickerScreen({
         ? apiRequest<FoodPickerOption>(`/api/v1/food-picker-options/${selectedId}`).then(optionFromFood)
         : apiRequest<LibraryItem>(`/api/v1/library/${isMealPicker ? "meals" : "daily-plans"}/${selectedId}`).then(optionFromLibrary)
       : Promise.resolve(null);
+    const needsTarget = Boolean(relationId || relationKey);
     Promise.all([
-      isCalendarizedPicker
-        ? relationKey ? apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${targetId}`) : Promise.resolve(null)
-        : apiRequest<LibraryItem>(`/api/v1/library/${config.targetSlug}/${targetId}`),
+      needsTarget
+        ? isCalendarizedPicker
+          ? apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${targetId}`)
+          : apiRequest<LibraryItem>(`/api/v1/library/${config.targetSlug}/${targetId}`)
+        : Promise.resolve(null),
       selectionRequest,
     ])
       .then(([target, option]) => {
@@ -303,9 +308,15 @@ export function CompositionPickerScreen({
     const timer = setTimeout(() => {
       setSearching(true);
       const search = query.trim() ? `&search=${encodeURIComponent(query.trim())}` : "";
+      const entitySlug = isMealPicker ? "meals" : "daily-plans";
       const request = isFoodPicker
         ? apiRequest<FoodPickerPageData>(`/api/v1/foods?limit=50${search}`).then((page) => page.items.map(optionFromFood))
-        : apiRequest<LibraryPageData>(`/api/v1/library/${isMealPicker ? "meals" : "daily-plans"}?limit=50${search}`).then((page) => page.items.map(optionFromLibrary));
+        : apiRequest<CompositionOptionsData>(`/api/v1/library/${entitySlug}/composition-options?limit=50${search}`)
+          .catch((nextError) => {
+            if (!(nextError instanceof MobileApiError) || ![404, 422].includes(nextError.status)) throw nextError;
+            return apiRequest<LibraryPageData>(`/api/v1/library/${entitySlug}?limit=50${search}`);
+          })
+          .then((page) => page.items.map(optionFromLibrary));
       void request
         .then((items) => active && setOptions(items))
         .catch((nextError) => active && setError(userFacingError(nextError)))
@@ -408,19 +419,7 @@ export function CompositionPickerScreen({
                 },
               })}
             />
-            <View style={styles.searchField}>
-              <Search color={tokens.color.textSoft} size={19} />
-              <TextInput
-                accessibilityLabel={config.searchLabel}
-                autoCapitalize="words"
-                onChangeText={setQuery}
-                placeholder={config.searchPlaceholder}
-                placeholderTextColor={tokens.color.textSubtle}
-                style={styles.searchInput}
-                value={query}
-              />
-              {searching ? <ActivityIndicator color={tokens.color.interactivePrimary} size="small" /> : null}
-            </View>
+            <SearchField accessibilityLabel={config.searchLabel} autoCapitalize="words" bleed busy={searching} onChangeText={setQuery} placeholder={config.searchPlaceholder} value={query} />
           </View>
 
           <View style={styles.options}>
@@ -440,6 +439,73 @@ export function CompositionPickerScreen({
     );
   }
 
+  const selectedCard = (
+    <View>
+      {configuredSelection ? <PickerOptionCard option={configuredSelection} /> : null}
+    </View>
+  );
+  const configurationCard = (
+    <View style={styles.configurationSticky}>
+      {selected ? (
+        <Card>
+          {isFoodPicker ? (
+            <View style={styles.compactFieldRow}>
+              <View style={styles.configurationLabel}>
+                <Scale color={tokens.color.textMuted} size={18} />
+                <Text style={styles.compactFieldLabel}>Porción ({selected.quantityUnit ?? "g"})</Text>
+              </View>
+              <TextInput keyboardType="decimal-pad" onChangeText={setQuantity} selectionColor={tokens.color.interactivePrimary} style={styles.compactFieldInput} value={quantity} />
+            </View>
+          ) : null}
+          {isMealPicker ? (
+            <>
+              <NativeDateTimeField containerStyle={styles.compactTimeField} label="Hora" minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
+              {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
+              <View style={styles.configurationDivider} />
+              <View style={styles.noteBlock}>
+                <View style={styles.noteHeading}>
+                  <View style={styles.configurationLabel}>
+                    <NotebookPen color={tokens.color.textMuted} size={18} />
+                    <Text style={styles.compactFieldLabel}>Nota</Text>
+                  </View>
+                  <Pressable accessibilityLabel={noteEditing ? "Ocultar edición de nota" : "Editar nota"} accessibilityRole="button" hitSlop={8} onPress={() => setNoteEditing((current) => !current)}>
+                    <Pencil color={tokens.color.textMuted} size={19} />
+                  </Pressable>
+                </View>
+                {noteEditing ? <TextInput autoCapitalize="sentences" onChangeText={(value) => { setNote(value); setPreview(null); }} placeholder="Ej. antes de entrenar" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.noteInput} value={note} /> : null}
+              </View>
+            </>
+          ) : null}
+          {kind === "dailyplan-to-program" ? (
+            <View style={styles.daysBlock}>
+              <View style={styles.configurationLabel}>
+                <CalendarDays color={tokens.color.textMuted} size={18} />
+                <Text style={styles.fieldLabel}>Días de la Semana {weekNumber}</Text>
+              </View>
+              <View accessibilityRole="radiogroup" style={styles.days}>
+                {dayOptions.map((day) => {
+                  const isSelected = dayNumbers.includes(day.id);
+                  return (
+                    <Pressable
+                      accessibilityLabel={day.label}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: isSelected }}
+                      key={day.id}
+                      onPress={() => toggleDay(day.id)}
+                      style={[styles.day, isSelected && styles.daySelected]}>
+                      <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{day.short}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {!dayNumbers.length ? <InlineNotice tone="warning">Selecciona al menos un día.</InlineNotice> : null}
+            </View>
+          ) : null}
+        </Card>
+      ) : null}
+    </View>
+  );
+
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.configurationSafeArea}>
       <ScrollView
@@ -448,70 +514,9 @@ export function CompositionPickerScreen({
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[1]}>
-        <View>
-          {configuredSelection ? <PickerOptionCard option={configuredSelection} /> : null}
-        </View>
-
-        <View style={styles.configurationSticky}>
-          {selected ? (
-            <Card>
-              {isFoodPicker ? (
-                <View style={styles.compactFieldRow}>
-                  <View style={styles.configurationLabel}>
-                    <Scale color={tokens.color.textMuted} size={18} />
-                    <Text style={styles.compactFieldLabel}>Porción ({selected.quantityUnit ?? "g"})</Text>
-                  </View>
-                  <TextInput keyboardType="decimal-pad" onChangeText={setQuantity} selectionColor={tokens.color.interactivePrimary} style={styles.compactFieldInput} value={quantity} />
-                </View>
-              ) : null}
-              {isMealPicker ? (
-                <>
-                  <NativeDateTimeField containerStyle={styles.compactTimeField} label="Hora" minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
-                  {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
-                  <View style={styles.configurationDivider} />
-                  <View style={styles.noteBlock}>
-                    <View style={styles.noteHeading}>
-                      <View style={styles.configurationLabel}>
-                        <NotebookPen color={tokens.color.textMuted} size={18} />
-                        <Text style={styles.compactFieldLabel}>Nota</Text>
-                      </View>
-                      <Pressable accessibilityLabel={noteEditing ? "Ocultar edición de nota" : "Editar nota"} accessibilityRole="button" hitSlop={8} onPress={() => setNoteEditing((current) => !current)}>
-                        <Pencil color={tokens.color.textMuted} size={19} />
-                      </Pressable>
-                    </View>
-                    {noteEditing ? <TextInput autoCapitalize="sentences" onChangeText={(value) => { setNote(value); setPreview(null); }} placeholder="Ej. antes de entrenar" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.noteInput} value={note} /> : null}
-                  </View>
-                </>
-              ) : null}
-              {kind === "dailyplan-to-program" ? (
-                <View style={styles.daysBlock}>
-                  <View style={styles.configurationLabel}>
-                    <CalendarDays color={tokens.color.textMuted} size={18} />
-                    <Text style={styles.fieldLabel}>Días de la Semana {weekNumber}</Text>
-                  </View>
-                  <View accessibilityRole="radiogroup" style={styles.days}>
-                    {dayOptions.map((day) => {
-                      const isSelected = dayNumbers.includes(day.id);
-                      return (
-                        <Pressable
-                          accessibilityLabel={day.label}
-                          accessibilityRole="checkbox"
-                          accessibilityState={{ checked: isSelected }}
-                          key={day.id}
-                          onPress={() => toggleDay(day.id)}
-                          style={[styles.day, isSelected && styles.daySelected]}>
-                          <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{day.short}</Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                  {!dayNumbers.length ? <InlineNotice tone="warning">Selecciona al menos un día.</InlineNotice> : null}
-                </View>
-              ) : null}
-            </Card>
-          ) : null}
-        </View>
+        stickyHeaderIndices={[isMealPicker ? 0 : 1]}>
+        {isMealPicker ? configurationCard : selectedCard}
+        {isMealPicker ? selectedCard : configurationCard}
 
       {error ? <RecoverableErrorState message={error} onRetry={() => { setError(null); setRetryNonce((value) => value + 1); }} /> : null}
 
@@ -597,8 +602,6 @@ const styles = StyleSheet.create({
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   previewHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", width: "100%" },
   previewSection: { gap: tokens.spacing.lg },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 38, paddingHorizontal: tokens.spacing.md },
-  searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 36, paddingVertical: 0 },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },

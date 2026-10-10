@@ -1,7 +1,6 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { Search, X } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
-import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -9,7 +8,7 @@ import type { LibraryEntity, LibraryListActionResult, LibraryPageData } from "@/
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
-import { CollectionPageHeader, LoadingState, MacroLoadingIndicator, MutationStatusModal, useMutationStatus } from "@/components/ui";
+import { CollectionPageHeader, LoadingState, MacroLoadingIndicator, MutationStatusModal, SearchField, useMutationStatus } from "@/components/ui";
 import { Button, Card, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
@@ -220,32 +219,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       style={styles.screen}>
       <CollectionPageHeader count={page?.total} countIcon={entity === "program" ? "week" : entity} entity={entity} title={title} />
       {mode === "list" ? <View style={styles.stickySearch}>
-        <View style={styles.searchField}>
-          <Search color={tokens.color.textSoft} size={20} />
-          <TextInput
-            accessibilityLabel={`Buscar en ${title}`}
-            autoCapitalize="none"
-            autoCorrect={false}
-            onChangeText={setQuery}
-            onSubmitEditing={() => setSubmittedQuery(query.trim())}
-            placeholder="Buscar por nombre"
-            placeholderTextColor={tokens.color.textSubtle}
-            returnKeyType="search"
-            style={styles.searchInput}
-            value={query}
-          />
-          {query ? (
-            <Pressable
-              accessibilityLabel="Limpiar búsqueda"
-              onPress={() => {
-                setQuery("");
-                setSubmittedQuery("");
-              }}
-              style={styles.clearButton}>
-              <X color={tokens.color.textMuted} size={18} />
-            </Pressable>
-          ) : null}
-        </View>
+        <SearchField accessibilityLabel={`Buscar en ${title}`} autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); }} onSubmitEditing={() => setSubmittedQuery(query.trim())} placeholder="Buscar por nombre" returnKeyType="search" value={query} />
       </View> : null}
       {error ? (
         <Card>
@@ -285,9 +259,6 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   stickySearch: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.layout.reducedInset, paddingTop: tokens.spacing.xs, zIndex: 3 },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 38, paddingHorizontal: tokens.spacing.md },
-  searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 36, paddingVertical: 0 },
-  clearButton: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
   managedItem: { gap: tokens.spacing.sm },
   loading: { alignItems: "center", flex: 1, gap: tokens.spacing.md, justifyContent: "center", minHeight: 240 },
   emptyState: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderStyle: "dashed", borderWidth: 1, gap: tokens.spacing.sm, padding: tokens.spacing.xxl },

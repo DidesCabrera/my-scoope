@@ -31,12 +31,14 @@ type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 type LibraryActionsProps = {
   apiRequest: ApiRequest;
   entitySlug: "foods" | "meals" | "daily-plans" | "programs";
-  item: LibraryItem;
+  item: Pick<LibraryItem, "actions" | "entity" | "id" | "name">;
   initialAction?: "change-time";
   mealTimeInMenu?: boolean;
   onCompleted(result: LibraryActionResult): void;
   onCompare?: () => void;
+  onEdit?: () => void;
   onOpenInformation?: () => void;
+  onRemove?: () => Promise<void>;
   onVisibleChange?: (visible: boolean) => void;
   renderTrigger?: (open: () => void) => ReactNode;
   visible?: boolean;
@@ -60,10 +62,10 @@ const entityLabels = {
   program: "este programa",
 } as const;
 
-export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCompare, onOpenInformation, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
+export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCompare, onEdit, onOpenInformation, onRemove, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
   const [internalVisible, setInternalVisible] = useState(false);
-  const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | null>(
+  const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | { destructive: true; key: "remove"; label: string } | null>(
     initialAction === "change-time" ? { destructive: false, key: "change-time", label: "Cambiar hora" } : null,
   );
   const [name, setName] = useState(item.name);
@@ -77,7 +79,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     onVisibleChange?.(nextVisible);
   };
 
-  if (!actions.length && !mealTimeChange && !onCompare && !onOpenInformation) return null;
+  if (!actions.length && !mealTimeChange && !onCompare && !onEdit && !onOpenInformation && !onRemove) return null;
 
   const close = () => {
     if (submitting) return;
@@ -155,8 +157,25 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     setSelected(action);
   };
 
+  const removeItem = async () => {
+    if (!onRemove) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onRemove();
+      setVisible(false);
+      setSelected(null);
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const actionTitle = selected?.key === "delete"
     ? `¿Eliminar ${entityLabels[item.entity]}?`
+    : selected?.key === "remove"
+      ? "¿Quitar comida?"
     : selected?.key === "duplicate"
       ? `¿Duplicar ${entityLabels[item.entity]}?`
       : selected?.label;
@@ -199,6 +218,17 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                   />
                 ) : null}
 
+                {onEdit ? (
+                  <ActionSheetAction
+                    icon={Pencil}
+                    label="Editar"
+                    onPress={() => {
+                      setVisible(false);
+                      onEdit();
+                    }}
+                  />
+                ) : null}
+
                 {actions.map((action) => {
                   const Icon = actionIcons[action.key];
                   return (
@@ -218,6 +248,16 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                     icon={Clock3}
                     label="Cambiar hora"
                     onPress={() => setSelected({ destructive: false, key: "change-time", label: "Cambiar hora" })}
+                  />
+                ) : null}
+
+                {onRemove ? (
+                  <ActionSheetAction
+                    destructive
+                    disabled={submitting}
+                    icon={Trash2}
+                    label="Quitar comida"
+                    onPress={() => setSelected({ destructive: true, key: "remove", label: "Quitar comida" })}
                   />
                 ) : null}
                   </ActionSheetActions>
@@ -251,6 +291,14 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                       onPress={() => void execute({ action: selected.key as Extract<LibraryActionKey, "duplicate" | "delete"> })}
                       variant={selected.key === "delete" ? "danger" : "primary"}
                     />
+                    <Button label="Cancelar" onPress={() => setSelected(null)} variant="secondary" />
+                  </View>
+                ) : null}
+
+                {selected?.key === "remove" ? (
+                  <View style={styles.confirmation}>
+                    <Text style={styles.confirmationText}>Se quitará esta comida del plan diario.</Text>
+                    <Button label="Quitar comida" loading={submitting} onPress={() => void removeItem()} variant="danger" />
                     <Button label="Cancelar" onPress={() => setSelected(null)} variant="secondary" />
                   </View>
                 ) : null}

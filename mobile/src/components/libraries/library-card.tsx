@@ -9,6 +9,7 @@ import { pickerConfigureHref, pickerHref } from "@/components/pickers/compositio
 import { Button, EntityCardAction, MutationStatusModal, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
+import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
 
 import { FoodPanels, MealPanels, ProgramPanels } from "./entity-panels";
 import { libraryNutrition } from "./presentation-adapters";
@@ -24,12 +25,33 @@ type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
 export function LibraryCard({ apiRequest, interactive = true, item, navigable = interactive, onChanged }: { apiRequest: ApiRequest; interactive?: boolean; item: LibraryItem; navigable?: boolean; onChanged(result: LibraryActionResult): Promise<void> | void }) {
   const router = useRouter();
+  const { publishSelection } = useComparatorSelectionTransfer();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const segment = item.entity === "dailyPlan" ? "daily-plans" : item.entity === "program" ? "programs" : item.entity === "meal" ? "meals" : "foods";
   const detailHref = `/libraries/${segment}/${item.id}` as Href;
   const libraryHref = `/libraries/${segment}` as Href;
   const openDetail = () => router.push(detailHref);
+  const openEdit = () => router.push({ pathname: "/libraries/create", params: { entity: "food", id: String(item.id) } });
+  const openComparison = () => {
+    if (item.entity !== "meal" && item.entity !== "dailyPlan") return;
+    const comparisonKind = item.entity === "meal" ? "meals" : "dailyplans";
+    publishSelection({
+      kind: comparisonKind,
+      option: {
+        entity: item.entity,
+        id: item.id,
+        indicators: item.indicators,
+        name: item.name,
+        nutrition: item.nutrition,
+        panel: item.panel,
+        quantity_unit: item.quantity_unit,
+        subtitle: item.subtitle,
+      },
+      slotKey: 1,
+    });
+    router.push({ pathname: "/comparator", params: { create: "1", kind: comparisonKind } } as Href);
+  };
   const refresh = (message: string) => onChanged({ action: "rename", item_id: item.id, message });
   const mutate = async (path: string, init: RequestInit, message: string, feedback?: { loadingLabel: string; successLabel: string }) => {
     const action = async () => {
@@ -67,7 +89,6 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
         onMore={onMore}
         onOpen={navigable ? openDetail : undefined}
         headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined}
-        owner={item.creator}
         title={item.name}
         weeksCount={indicatorValue(item, "week")}
       />
@@ -78,7 +99,7 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
     ) : card();
   }
   return (<>
-    <NutritionEntityCard actions={interactive || navigable ? <>{interactive && item.actions?.length ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCompleted={onChanged} /> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} entity={item.entity} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
+    <NutritionEntityCard actions={interactive || navigable ? <>{interactive && item.actions?.length ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCompare={item.entity === "meal" || item.entity === "dailyPlan" ? openComparison : undefined} onCompleted={onChanged} onEdit={item.entity === "food" ? openEdit : undefined} /> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} entity={item.entity} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
       {item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={item.panel.foods} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "meals" ? <MealPanels dailyPlanId={item.entity === "dailyPlan" ? item.id : undefined} editing={mealEditing} items={item.panel.meals} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}

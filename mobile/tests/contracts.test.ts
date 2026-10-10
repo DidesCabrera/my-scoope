@@ -38,12 +38,10 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
 test("editable text inputs use borderless surfaces throughout the mobile system", async () => {
   const cases: [string, string[]][] = [
     ["src/components/ui/controls.tsx", ["input"]],
+    ["src/components/ui/search-field.tsx", ["field"]],
     ["src/components/ui/primitives.tsx", ["input"]],
     ["src/components/comparisons/comparison-components.tsx", ["quantityInput"]],
-    ["src/components/pickers/composition-picker-screen.tsx", ["compactFieldInput", "noteInput", "searchField"]],
-    ["src/components/libraries/library-list-screen.tsx", ["searchField"]],
-    ["src/app/comparator/select.tsx", ["searchField"]],
-    ["src/app/program/activate.tsx", ["searchField"]],
+    ["src/components/pickers/composition-picker-screen.tsx", ["compactFieldInput", "noteInput"]],
     ["src/components/assistant/chat-composer.tsx", ["composer"]],
     ["src/components/calendarization/meal-adherence-check-in.tsx", ["noteInput"]],
   ];
@@ -190,7 +188,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"),
     "utf8",
   );
-  assertSourceMatch(libraryEntityPanels, /perKilogram: item\.protein_per_kilogram/);
+  assertSourceMatch(libraryEntityPanels, /proteinPerKilogram: item\.protein_per_kilogram/);
   assertSourceMatch(libraryEntityPanels, /eyebrow=\{`Comida \$\{index \+ 1\}`\}/);
   assertSourceDoesNotMatch(libraryEntityPanels, /mealCardMarker|mealCardNumber|mealCardLine/);
 
@@ -276,6 +274,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(planningControls, /<ScrollableTabBar[\s\S]*?tabs=\{weeks\.map/);
   assertSourceMatch(planningControls, /export function ProgramWeekHeading/);
   assertSourceMatch(planningControls, /<CalendarRange color=\{tokens\.color\.entityIconForeground\} size=\{11\}/);
+  assertSourceMatch(planningControls, /<HeaderMetadataChip kind="date" value=\{detail\} \/>/);
   assertSourceMatch(planningControls, /weekHeadingTitle: \{[^}]*fontSize: tokens\.type\.section[^}]*fontWeight: tokens\.weight\.semibold/);
 
   const calendarizedPlanning = await readTestFile(
@@ -499,8 +498,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgramOverview, /embedded \? <DetailLinkRow[\s\S]*router\.push\("\/program" as Href\)/);
   assertSourceMatch(activeProgramOverview, /activeIndicators = program\.indicators\.map/);
   assertSourceMatch(activeProgramOverview, /indicator\.icon === "week"[\s\S]*?icon: undefined[\s\S]*?Number\(indicator\.value\) === 1 \? "SEMANA" : "SEMANAS"/);
-  assertSourceMatch(activeProgramOverview, /indicators=\{\[\.\.\.\(embedded \? \[\] : activeIndicators\), \{ icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted"/);
-  assertSourceMatch(activeProgramOverview, /value: `\$\{compactDateLabel\(calendarization\.start_date\)\} — \$\{compactDateLabel\(calendarization\.end_date\)\}`/);
+  assertSourceMatch(activeProgramOverview, /eyebrowAccessory=\{<HeaderMetadataChip kind="date" value=\{`\$\{compactDateLabel\(calendarization\.start_date\)\} — \$\{compactDateLabel\(calendarization\.end_date\)\}`\} \/>\}/);
+  assertSourceMatch(activeProgramOverview, /indicators=\{embedded \? undefined : activeIndicators\}/);
   assertSourceMatch(activeProgramOverview, /export function ProgramActiveHomeOverview[\s\S]*<ProgramActiveOverview \{\.\.\.props\} embedded/);
   assertSourceMatch(activeProgramOverview, /embedded[\s\S]*<Card accent=\{tokens\.color\.program\} style=\{styles\.content\}>\{content\}<\/Card>/);
 
@@ -530,11 +529,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activateProgram, /stickyHeaderIndices=\{\[0\]\}/);
   assertSourceMatch(activateProgram, /<PickerEntryTabs[\s\S]*createLabel="Crear Nuevo"/);
   assertSourceMatch(activateProgram, /accessibilityLabel="Buscar programa"/);
+  assertSourceMatch(activateProgram, /\/api\/v1\/library\/programs\/calendarization-options\?limit=100/);
   assertSourceMatch(activateProgram, /pathname: "\/libraries\/create", params: \{ entity: "program" \}/);
   assertSourceMatch(activateProgram, /<ProgramChildCard[\s\S]*openActionLabel="Seleccionar"/);
-  assertSourceMatch(activateProgram, /<ProgramChildCard[\s\S]*openActionLabel="Cambiar selección"/);
-  assertSourceMatch(activateProgram, /<SectionHeading title="Configura la selección" \/>[\s\S]*<SystemSwitch[\s\S]*accessibilityLabel="Aviso del plan diario"[\s\S]*<SystemSwitch[\s\S]*accessibilityLabel="Avisos según la hora de cada comida"/);
+  assertSourceDoesNotMatch(activateProgram, /openActionLabel="Cambiar selección"/);
+  assertSourceMatch(activateProgram, /<SectionHeading title="Configura la selección" \/>[\s\S]*<NotificationToggle[\s\S]*label="Aviso inicial del plan diario"[\s\S]*<NotificationToggle[\s\S]*label="Avisos según la hora de cada comida"/);
   assertSourceMatch(activateProgram, /label="Calendarizar programa"/);
+  assertSourceDoesNotMatch(activateProgram, /<Card accent=\{tokens\.color\.program\}>/);
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
@@ -750,7 +751,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/ui/controls.tsx"),
     "utf8",
   );
-  assertSourceMatch(controlsSource, /export function SystemSwitch[\s\S]*return <Switch accessibilityLabel=\{accessibilityLabel\} disabled=\{disabled\} onValueChange=\{onValueChange\} value=\{value\} \/>[\s\S]*button: \{[^}]*minHeight: 48/);
+  assertSourceMatch(controlsSource, /export function SystemSwitch[\s\S]*accessibilityRole="switch"[\s\S]*accessibilityState=\{\{ checked: value, disabled \}\}[\s\S]*onPress=\{\(\) => onValueChange\(!value\)\}/);
+  assertSourceMatch(controlsSource, /systemSwitch: \{[^}]*height: 28[^}]*width: 48/);
+  assertSourceMatch(controlsSource, /systemSwitchActive: \{ backgroundColor: tokens\.color\.success \}/);
+  assertSourceMatch(controlsSource, /systemSwitchKnobActive: \{ transform: \[\{ translateX: 20 \}\] \}/);
   assertSourceMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 48/);
   assertSourceDoesNotMatch(controlsSource, /button: \{[^}]*minHeight: 54|trackColor|thumbColor|ios_backgroundColor/);
   assertSourceDoesNotMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 54/);

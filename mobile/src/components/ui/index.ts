@@ -11,6 +11,7 @@ export * from "./native-date-time-field";
 export * from "./native-measurement-field";
 export * from "./product";
 export * from "./section-divider";
+export * from "./search-field";
 export * from "./surfaces";
 export * from "./tab-bars";
 export * from "./typography";

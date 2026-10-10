@@ -3,6 +3,7 @@ import type { StyleProp, TextStyle, ViewStyle } from "react-native";
 export type NativeDateTimeFieldProps = {
   containerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  hideLabel?: boolean;
   inputStyle?: StyleProp<TextStyle>;
   label: string;
   labelStyle?: StyleProp<TextStyle>;

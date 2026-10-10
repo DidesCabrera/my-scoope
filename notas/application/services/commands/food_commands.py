@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from django.db import IntegrityError, transaction
 from django.db.models import Max
 
+from notas.application.services.nutrition.meal_nutrition import rebuild_meals_and_parent_caches_for_food
 from notas.domain.models import Food, FoodLabelCaptureReceipt
 
 
@@ -306,6 +307,7 @@ def update_food(
             "portion_unit",
         ]
     )
+    rebuild_meals_and_parent_caches_for_food(food)
 
     return FoodUpdateResult(
         food=food,
