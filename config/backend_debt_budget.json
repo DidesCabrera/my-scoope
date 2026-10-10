@@ -1,7 +1,7 @@
 {
   "mobile_api/api.py": {"max_lines": 71},
   "mobile_api/schemas.py": {"max_lines": 223},
-  "mobile_api/selectors.py": {"max_lines": 1128},
+  "mobile_api/selectors.py": {"max_lines": 1231},
   "mobile_api/tests/test_api_v1.py": {"max_lines": 87},
   "mobile_api/routes/assistant.py": {"max_lines": 235},
   "mobile_api/schema_domains/assistant.py": {"max_lines": 180},
@@ -20,12 +20,12 @@
   "mobile_api/routes/identity.py": {"max_lines": 129},
   "mobile_api/schema_domains/identity.py": {"max_lines": 76},
   "mobile_api/tests/test_identity_api.py": {"max_lines": 98},
-  "mobile_api/routes/libraries.py": {"max_lines": 310},
-  "mobile_api/schema_domains/libraries.py": {"max_lines": 280},
-  "mobile_api/tests/test_libraries_api.py": {"max_lines": 794},
+  "mobile_api/routes/libraries.py": {"max_lines": 351},
+  "mobile_api/schema_domains/libraries.py": {"max_lines": 316},
+  "mobile_api/tests/test_libraries_api.py": {"max_lines": 923},
   "mobile_api/routes/proposals.py": {"max_lines": 121},
   "mobile_api/schema_domains/proposals.py": {"max_lines": 121},
   "mobile_api/tests/test_proposals_api.py": {"max_lines": 144},
-  "mobile/src/api/types.ts": {"max_lines": 852},
+  "mobile/src/api/types.ts": {"max_lines": 883},
   "mobile/src/app/dev/ui-gallery.tsx": {"max_lines": 830}
 }

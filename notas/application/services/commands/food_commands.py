@@ -6,8 +6,17 @@ from dataclasses import dataclass
 from django.db import IntegrityError, transaction
 from django.db.models import Max
 
-from notas.application.services.nutrition.meal_nutrition import rebuild_meals_and_parent_caches_for_food
-from notas.domain.models import Food, FoodLabelCaptureReceipt
+from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
+from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
+from notas.domain.models import Food, FoodLabelCaptureReceipt, Meal, MealFood
+
+
+def _rebuild_meals_and_parent_caches_for_food(food):
+    """Refresh every cached projection affected by an edited food."""
+    meal_ids = MealFood.objects.filter(food=food).values_list("meal_id", flat=True).distinct()
+    for meal in Meal.objects.filter(pk__in=meal_ids).iterator():
+        rebuild_meal_cached_state(meal)
+        refresh_dailyplans_for_meal(meal)
 
 
 @dataclass(frozen=True)
@@ -307,7 +316,7 @@ def update_food(
             "portion_unit",
         ]
     )
-    rebuild_meals_and_parent_caches_for_food(food)
+    _rebuild_meals_and_parent_caches_for_food(food)
 
     return FoodUpdateResult(
         food=food,
