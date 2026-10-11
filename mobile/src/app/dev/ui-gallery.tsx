@@ -228,16 +228,12 @@ export default function UiGalleryScreen() {
       {tab === "disclosures" ? <DisclosureGallery /> : null}
       {tab === "subscriptions" ? <SubscriptionGallery /> : null}
 
-      {tab === "labelCapture" ? (
-        <LabelCaptureStoryboardGallery />
-      ) : null}
+      {tab === "labelCapture" ? <LabelCaptureStoryboardGallery /> : null}
 
       {tab === "components" ? (
         <>
           <SectionTitle detail="Pantallas principales y navegación" title="Dashboards de créditos" />
-          <ContentPanel description="Usado al pie del sidebar, con una retícula explícita de tres columnas." title="Plan y créditos del sidebar">
-            <CreditDashboardGrid availableCredits={150} onPress={() => undefined} planName="Basic" />
-          </ContentPanel>
+          <ContentPanel description="Usado al pie del sidebar, con una retícula explícita de tres columnas." title="Plan y créditos del sidebar"><CreditDashboardGrid availableCredits={150} onPress={() => undefined} planName="Basic" /></ContentPanel>
           <SectionTitle detail="Ancho por contenido y scroll horizontal" title="Tabs desplazables" />
           <ScrollableTabBar<"week1" | "week2" | "week3" | "week4">
             accessibilityLabel="Ejemplo de tabs desplazables"
