@@ -1,4 +1,4 @@
-import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { type Href, Redirect, Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet } from "react-native";
 
@@ -215,12 +215,16 @@ export default function OnboardingScreen() {
   const stepIndex = onboardingJourneySteps.findIndex((item) => item.key === step);
   const usesFixedDisclosuresFooter = stepIndex === 6;
   const usesFixedProfileChrome = stepIndex >= 7 && stepIndex <= 12;
+  const headerCompensationTop = stepIndex >= 6 ? 88 : 0;
   const presentationProps = presentationPropsForOnboardingStep(step);
 
   return (
-    <Screen contentStyle={styles.screen} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
-      <OnboardingJourneyView controller={controller} {...presentationProps} step={step} />
-    </Screen>
+    <>
+      <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
+      <Screen key={step} contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
+        <OnboardingJourneyView controller={controller} {...presentationProps} step={step} />
+      </Screen>
+    </>
   );
 }
 

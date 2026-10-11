@@ -998,7 +998,7 @@ test("the onboarding gallery exposes every visual journey view without product s
     assertSourceMatch(journey, new RegExp(`key: "${step}"`));
   }
   assertSourceMatch(journey, /training_frequency/);
-  assertSourceMatch(journey, /Cómo leer los paneles/);
+  assertSourceMatch(journey, /Forma tu propio criterio/);
   assertSourceMatch(journey, /Continuar con Free/);
   assertSourceMatch(journey, /<SubscriptionPlanCard/);
   assertSourceMatch(journey, /commercialPlanBenefits\[plan\.name\]/);
@@ -1074,7 +1074,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /continueChipInset: \{[^}]*bottom: 2, left: 2[^}]*right: 2, top: 2/);
   assertSourceMatch(journey, /<Button disabled=\{controller\.loginDisabled\} label="Iniciar sesión o crear cuenta" loading=\{controller\.busy\} multicolorSurface="app" onPress=\{controller\.onLogin \?\? noop\} variant="multicolor" \/>/);
   assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
-  assertSourceMatch(journey, /<View style=\{styles\.centeredLogo\}><MyScoopeBrandLogo \/><\/View>/);
+  assertSourceMatch(journey, /<View style=\{\[styles\.centeredLogo, styles\.explanationLogo\]\}><MyScoopeBrandLogo scale=\{0\.8\} \/><\/View>/);
   assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
   assertSourceMatch(journey, /const usesCenteredTitleSpacing = \(index <= 6 \|\| brandedCentered\) && !externalExplanationChrome/);
   assertSourceMatch(journey, /<StepHeader brandedCentered description="Compara lo que incluyen Free, Basic y Pro/);
@@ -1084,7 +1084,8 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /const isProfileStep = index >= 7 && index <= 12/);
   assertSourceMatch(journey, /index === 6 && styles\.disclosuresEyebrow/);
   assertSourceMatch(journey, /disclosuresEyebrow: \{ color: tokens\.color\.textMuted \}/);
-  assertSourceMatch(journey, /!isProfileStep \? <Text style=\{\[styles\.description, isCenteredIntro && styles\.centeredText\]\}>\{description\}<\/Text> : null/);
+  assertSourceMatch(journey, /!isProfileStep \? <Text style=\{\[styles\.description, isExplanation && styles\.explanationDescription, isCenteredIntro && styles\.centeredText\]\}>\{description\}<\/Text> : null/);
+  assertSourceMatch(journey, /explanationDescription: \{ color: tokens\.color\.textMain \}/);
   assertSourceMatch(journey, /!usesBrandedHeader && !isProfileStep \? <Text/);
   assertSourceMatch(journey, /isProfileStep \? \(!fixedProfileChrome \? <ProfileProgress index=\{index\} \/> : null\) : index === 6 \? null/);
   assertSourceMatch(journey, /<Text style=\{\[styles\.profileProgressEyebrow, index >= 8 && styles\.profileProgressEyebrowTextMain,[^\]]*profileProgressEyebrowBottomSpacing[^\]]*\]\}>OBJETIVO Y PLANIFICACIÓN<\/Text>/);
@@ -1104,7 +1105,10 @@ test("the onboarding gallery exposes every visual journey view without product s
     const section = journey.match(new RegExp(`function ${view}[\\s\\S]*?function ${nextView}`))?.[0] ?? "";
     assertSourceDoesNotMatch(section, /<Card accent=/);
   }
-  assertSourceMatch(journey.match(/function ValueView[\s\S]*?function StructureView/)?.[0] ?? "", /<View style=\{styles\.valueFeatures\}>[\s\S]*?<ExplanationCard[\s\S]*?<ExplanationCard/);
+  const welcomeView = journey.match(/function ValueView[\s\S]*?function StructureView/)?.[0] ?? "";
+  assertSourceMatch(welcomeView, /title="Bienvenido a My Scoope!"/);
+  assertSourceMatch(welcomeView, /Antes que todo, queremos declarar con toda honestidad/);
+  assertSourceDoesNotMatch(welcomeView, /<ExplanationCard/);
   assertSourceMatch(journey, /explanationSteps\.map\(\(step, dotIndex\) =>/);
   assertSourceMatch(journey, /id="onboarding-credit-gradient"/);
   assertSourceMatch(journey, /fill="url\(#onboarding-credit-gradient\)"/);
@@ -1120,9 +1124,14 @@ test("the onboarding gallery exposes every visual journey view without product s
   const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
   const onboardingPreview = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding-preview.tsx"), "utf8");
   assertSourceMatch(onboarding, /scroll=\{usesFixedDisclosuresFooter \|\| usesFixedProfileChrome \? false : stepIndex >= 6 \? "auto" : false\}/);
+  assertSourceMatch(onboarding, /<Stack\.Screen options=\{\{ gestureEnabled: false, headerShown: false \}\} \/>/);
+  assertSourceMatch(onboarding, /const headerCompensationTop = stepIndex >= 6 \? 88 : 0/);
+  assertSourceMatch(onboarding, /<Screen key=\{step\} contentStyle=\{\[styles\.screen, \{ paddingTop: headerCompensationTop \}\]\}/);
   assertSourceMatch(onboarding, /presentationPropsForOnboardingStep\(step\)/);
   assertSourceMatch(onboarding, /<OnboardingJourneyView controller=\{controller\} \{\.\.\.presentationProps\} step=\{step\} \/>/);
   assertSourceMatch(onboarding, /pathname: "\/subscription", params: \{ origin: "onboarding"/);
+  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
+  assertSourceMatch(subscription, /<Stack\.Screen options=\{\{ headerShown: !isOnboarding \}\} \/>/);
   const layout = await readTestFile(path.resolve(process.cwd(), "src/app/_layout.tsx"), "utf8");
   assertSourceMatch(layout, /pathname === "\/subscription" && origin === "onboarding"/);
   assertSourceMatch(onboardingPreview, /scroll=\{usesFixedDisclosuresFooter \|\| usesFixedProfileChrome \? false : stepIndex >= 6 \? "auto" : false\}/);

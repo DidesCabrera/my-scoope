@@ -181,7 +181,7 @@ function useProfileQuestionStyle() {
 
 function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, title, description }: {
   brandedCentered?: boolean;
-  description: string;
+  description: ReactNode;
   eyebrow: string;
   icon: Icon;
   index: number;
@@ -209,9 +209,10 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
         styles.title,
         isCenteredIntro && styles.centeredText,
         usesCenteredTitleSpacing && styles.centeredTitleSpacing,
+        isExplanation && { marginBottom: (usesCenteredTitleSpacing ? tokens.spacing.sm : 0) + 10 },
         index === 6 && disclosuresTitleSpacingReduction > 0 && { marginTop: styles.centeredTitleSpacing.marginTop - disclosuresTitleSpacingReduction },
       ]}>{title}</Text>
-      {!isProfileStep ? <Text style={[styles.description, isCenteredIntro && styles.centeredText]}>{description}</Text> : null}
+      {!isProfileStep ? <Text style={[styles.description, isExplanation && styles.explanationDescription, isCenteredIntro && styles.centeredText]}>{description}</Text> : null}
     </View>
   );
 }
@@ -509,13 +510,16 @@ function LoginView({ index }: { index: number }) {
 }
 
 function ValueView({ index }: { index: number }) {
+  const welcomeMessage = [
+    "Antes que todo, queremos declarar con toda honestidad que queremos que cumplas todas tus metas personales. Y un cambio físico es un buen punto de partida.",
+    "Conseguir tu objetivo físico será el resultado de pequeñas buenas decisiones que tomes día a día de forma consistente; Y si bien un cambio corporal no se logra de la noche a la mañana, un cambio de actitud sí.",
+    "Decidir enfrentar un desafío con convicción es el primer paso, luego verás tu avance, fruto de tu trabajo, y te sentirás orgulloso de ti mismo, reforzará tu actitud y finalmente se reflejará en un cambio físico (y mental).",
+    "Te deseamos lo mejor en este camino, éxito!",
+  ].join("\n\n");
+
   return (
     <>
-      <StepHeader description="My Scoope organiza tu objetivo, calcula referencias nutricionales y las convierte en un plan diario que puedes revisar." eyebrow="Funciones principales" icon={Target} index={index} title="Qué puedes hacer con My Scoope" />
-      <View style={styles.valueFeatures}>
-        <ExplanationCard body="Una estructura diaria que puedes revisar, adaptar y ejecutar." icon={Check} title="Plan diario" />
-        <ExplanationCard body="Calorías, macros y cantidades en una lectura ordenada." icon={Gauge} title="Referencias nutricionales" />
-      </View>
+      <StepHeader description={welcomeMessage} eyebrow="Funciones principales" icon={Target} index={index} title="Bienvenido a My Scoope!" />
       <ExplanationDots index={index} />
     </>
   );
@@ -530,7 +534,19 @@ function StructureView({ index }: { index: number }) {
   ];
   return (
     <>
-      <StepHeader description="La información se organiza en cuatro niveles reutilizables: alimentos, comidas, planes diarios y programas." eyebrow="Estructura del sistema" icon={Layers3} index={index} title="Cómo se organiza tu alimentación" />
+      <StepHeader
+        description={(
+          <>
+            My scoope es un <Text style={styles.descriptionEmphasis}>entorno nutricional</Text> para que puedas <Text style={styles.descriptionEmphasis}>planificar, ejecutar y aprender</Text> sobre alimentación.
+            {"\n\n"}
+            La planificación la realiza <Text style={styles.descriptionEmphasis}>tu librería</Text>, la cual está compuesta por 4 módulos jerárquicos: <Text style={styles.descriptionEmphasis}>Alimentos</Text>, <Text style={styles.descriptionEmphasis}>Comidas</Text>, <Text style={styles.descriptionEmphasis}>Planes Diarios</Text>, y <Text style={styles.descriptionEmphasis}>Programas Semanales</Text>; Cada elemento puede ser reutilizado, formando las combinaciones que desees.
+          </>
+        )}
+        eyebrow="Estructura del sistema"
+        icon={Layers3}
+        index={index}
+        title="Que es My Scoope"
+      />
       <View style={styles.levels}>
         {levels.map((level, levelIndex) => (
           <View key={level.label} style={styles.levelRow}>
@@ -548,7 +564,21 @@ function StructureView({ index }: { index: number }) {
 function PanelsView({ index }: { index: number }) {
   return (
     <>
-      <StepHeader description="Cada panel muestra primero un resumen y permite consultar calorías, macronutrientes y detalle." eyebrow="Paneles de información" icon={Eye} index={index} title="Cómo leer los paneles" />
+      <StepHeader
+        description={(
+          <>
+            Buscamos ofrecer <Text style={styles.descriptionEmphasis}>instancias de aprendizaje y análisis</Text> para que formes tu propio criterio.
+            {"\n\n"}
+            Navega por los <Text style={styles.descriptionEmphasis}>paneles</Text> y realiza <Text style={styles.descriptionEmphasis}>comparaciones</Text> para comprender de mejor manera el impacto real que los alimentos tienen en tu dieta.
+            {"\n\n"}
+            También dispusimos para ti <Text style={styles.descriptionEmphasis}>fundamentos nutricionales</Text>, para eleves tu conocimiento y complementes tu práctica.
+          </>
+        )}
+        eyebrow="Paneles de información"
+        icon={Eye}
+        index={index}
+        title="Forma tu propio criterio"
+      />
       <Card>
         <View style={styles.panelEntityHeader}>
           <View><Text style={styles.panelEyebrow}>PLAN DIARIO</Text><Text style={styles.panelEntityTitle}>Día equilibrado</Text></View>
@@ -577,7 +607,19 @@ function PanelsView({ index }: { index: number }) {
 function ControlView({ index }: { index: number }) {
   return (
     <>
-      <StepHeader description="La asistencia interpreta tu solicitud y prepara una propuesta. Tú la revisas antes de aplicarla." eyebrow="Asistencia y control" icon={BrainCircuit} index={index} title="Cómo funciona la asistencia" />
+      <StepHeader
+        description={(
+          <>
+            Ya planificaste, aprendiste, ahora toca ejecutar; Porque recorrer el camino es lo que finalmente te transformará.
+            {"\n\n"}
+            Puedes calendarizar Programas Semanas, o Planes Diarios, con lo cual se activan los <Text style={styles.descriptionEmphasis}>registro de cumplimientos de las comidas</Text> de tu planes diarios, permitiéndote ver el progreso y adhesión a tu programa. Además puedes registrar notas en cada comida, para construir tu propia <Text style={styles.descriptionEmphasis}>bitácora de aprendizaje</Text>.
+          </>
+        )}
+        eyebrow="Asistencia y control"
+        icon={BrainCircuit}
+        index={index}
+        title="Ejecuta lo planeado"
+      />
       <View style={styles.controlFlow}>
         <ExplanationCard body="Explicas tu objetivo con tus propias palabras." icon={Sparkles} title="1. Conversa" />
         <ExplanationCard body="El sistema transforma la intención en objetivos revisables." icon={BarChart3} title="2. Calcula" />
@@ -591,7 +633,19 @@ function ControlView({ index }: { index: number }) {
 function ProgressView({ index }: { index: number }) {
   return (
     <>
-      <StepHeader description="Compara lo planificado con tus registros para decidir si necesitas ajustar el plan." eyebrow="Seguimiento" icon={BarChart3} index={index} title="Cómo revisar tu progreso" />
+      <StepHeader
+        description={(
+          <>
+            Puede no ser fácil, pero <Text style={styles.descriptionEmphasis}>no debes frustrarte</Text>. Si necesitas ayuda en la construcciones de comidas, planes, programas, comparaciones, o aclarar dudas; puedes recibirla de nuestro <Text style={styles.descriptionEmphasis}>asistente nutricional</Text>.
+            {"\n\n"}
+            El asistente te hará <Text style={styles.descriptionEmphasis}>propuestas</Text> las cuales están sujetas a tu <Text style={styles.descriptionEmphasis}>aprobación para su aplicación</Text>. Nada ocurrirá si tu no lo apruebas.
+          </>
+        )}
+        eyebrow="Seguimiento"
+        icon={BarChart3}
+        index={index}
+        title="Recibe Asistencia AI"
+      />
       <Card>
         <View style={styles.metricRow}><Text style={styles.metricLabel}>Adherencia semanal</Text><Text style={styles.metricValue}>86%</Text></View>
         <View style={styles.metricTrack}><View style={styles.metricFill} /></View>
@@ -1093,8 +1147,8 @@ export function OnboardingJourneyView({
     return (
       <JourneyControllerContext.Provider value={resolvedController}>
         <JourneyPresentationContext.Provider value={{ conciseSexEyebrow, contentSizedDietaryChips, disclosuresTitleSpacingReduction, externalExplanationChrome: true, fixedDisclosuresFooter, fixedLoginActionBottomSpacing, fixedProfileChrome, fixedProfileFooterBottomSpacing, hideCalculationReviewDisclosure, measurementReferenceNotice, progressiveAllergyDetails, profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileQuestionSpacing, profileProgressWidthReduction, profileTitleBottomSpacingReduction, showGoalOptionsEyebrow, showProfileControlBleed, storyboardSummaryLayout }}>
-          <View style={[styles.screen, styles.interactiveExplanationScreen, topInsetReduction > 0 && { paddingTop: styles.screen.paddingTop - topInsetReduction }]}>
-            <View style={styles.centeredLogo}><MyScoopeBrandLogo /></View>
+          <View style={[styles.screen, styles.interactiveExplanationScreen, topInsetReduction > 0 && { paddingTop: styles.screen.paddingTop - topInsetReduction }, styles.interactiveExplanationScreenFlush]}>
+            <View style={[styles.centeredLogo, styles.explanationLogo]}><MyScoopeBrandLogo scale={0.8} /></View>
             <View
               {...swipeResponder.panHandlers}
               onLayout={handleExplanationViewportLayout}
@@ -1137,6 +1191,7 @@ export function OnboardingJourneyView({
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.lg, minHeight: 690, paddingBottom: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 },
   interactiveExplanationScreen: { flex: 1 },
+  interactiveExplanationScreenFlush: { paddingTop: 76 },
   fixedLoginScreen: { flex: 1, minHeight: 0 },
   loginBackgroundScreen: { flex: 1, minHeight: 0, overflow: "hidden" },
   loginLogo: { marginBottom: -18, marginTop: 62 },
@@ -1144,7 +1199,7 @@ const styles = StyleSheet.create({
   loginBackgroundImage: { bottom: 0, height: 396, left: 0, position: "absolute", right: 0, top: 0, width: "100%" },
   loginContent: { flex: 1, gap: tokens.spacing.lg, transform: [{ translateY: -12 }], zIndex: 1 },
   explanationViewport: { flex: 1, overflow: "hidden", width: "100%" },
-  explanationSlide: { flex: 1, gap: tokens.spacing.lg, paddingTop: tokens.spacing.xxl },
+  explanationSlide: { flex: 1, gap: tokens.spacing.lg, justifyContent: "center", paddingTop: tokens.spacing.xxl - 18 },
   fullWidthExplanationViewport: { alignSelf: "stretch", marginHorizontal: -tokens.spacing.screen, width: undefined },
   fullWidthExplanationSlide: { paddingHorizontal: tokens.spacing.screen },
   profileScreen: { paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 - 32 },
@@ -1155,6 +1210,7 @@ const styles = StyleSheet.create({
   intro: { alignItems: "flex-start", gap: tokens.spacing.sm },
   introCentered: { alignItems: "center" },
   centeredLogo: { alignItems: "center", justifyContent: "center", width: "100%" },
+  explanationLogo: { marginBottom: -20 },
   centeredText: { textAlign: "center" },
   centeredTitleSpacing: { marginBottom: tokens.spacing.sm, marginTop: tokens.spacing.xxl + tokens.spacing.md },
   stepMeta: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, width: "100%" },
@@ -1166,6 +1222,8 @@ const styles = StyleSheet.create({
   disclosuresEyebrow: { color: tokens.color.textMuted },
   title: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 32 },
   description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
+  explanationDescription: { color: tokens.color.textMain },
+  descriptionEmphasis: { fontWeight: tokens.weight.bold },
   footer: { gap: tokens.spacing.sm, marginTop: "auto" },
   explanationFooter: { alignItems: "center", gap: tokens.spacing.md, marginBottom: 48, marginTop: "auto" },
   explanationFooterWithAction: { gap: tokens.spacing.xs, marginBottom: 34 },
@@ -1198,7 +1256,6 @@ const styles = StyleSheet.create({
   explanationCopy: { flex: 1, gap: 2 },
   explanationTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   explanationBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
-  valueFeatures: { gap: tokens.spacing.sm },
   loginHero: { alignItems: "center", gap: tokens.spacing.md, marginTop: -12 },
   loginDescription: { marginBottom: 22, marginTop: -10 },
   loginAction: { width: "100%" },

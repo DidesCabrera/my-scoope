@@ -1,4 +1,4 @@
-import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { type Href, Redirect, Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import {
   ErrorCode,
@@ -318,7 +318,9 @@ export default function SubscriptionScreen() {
   })).filter((plan) => plan.products.length > 0);
 
   return (
-    <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
+    <>
+      <Stack.Screen options={{ headerShown: !isOnboarding }} />
+      <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
       {isOnboarding ? (
         <View style={styles.onboardingIntro}>
           <View style={styles.onboardingLogo}><MyScoopeBrandLogo /></View>
@@ -475,7 +477,8 @@ export default function SubscriptionScreen() {
           </View>
         </SafeAreaView>
       </ActionSheetModal>
-    </Screen>
+      </Screen>
+    </>
   );
 }
 
