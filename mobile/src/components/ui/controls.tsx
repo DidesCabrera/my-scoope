@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Switch, Text, TextInput, TextStyle, View } from "react-native";
+import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
@@ -145,7 +145,18 @@ export function ChoiceRow<T extends string>({
 }
 
 export function SystemSwitch({ accessibilityLabel, disabled = false, onValueChange, value }: { accessibilityLabel: string; disabled?: boolean; onValueChange(value: boolean): void; value: boolean }) {
-  return <Switch accessibilityLabel={accessibilityLabel} disabled={disabled} onValueChange={onValueChange} value={value} />;
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value, disabled }}
+      disabled={disabled}
+      hitSlop={8}
+      onPress={() => onValueChange(!value)}
+      style={({ pressed }) => [styles.systemSwitch, value && styles.systemSwitchActive, disabled && styles.systemSwitchDisabled, pressed && styles.systemSwitchPressed]}>
+      <View style={[styles.systemSwitchKnob, value && styles.systemSwitchKnobActive]} />
+    </Pressable>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -163,6 +174,12 @@ const styles = StyleSheet.create({
   buttonSecondaryText: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: "700" },
   buttonDangerText: { color: tokens.color.danger },
   field: { gap: 7 },
+  systemSwitch: { backgroundColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, height: 28, padding: 3, width: 48 },
+  systemSwitchActive: { backgroundColor: tokens.color.success },
+  systemSwitchDisabled: { opacity: 0.45 },
+  systemSwitchKnob: { backgroundColor: tokens.color.textMain, borderRadius: 11, height: 22, width: 22 },
+  systemSwitchKnobActive: { transform: [{ translateX: 20 }] },
+  systemSwitchPressed: { opacity: 0.72 },
   fieldLabelRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   input: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, color: tokens.color.textMain, fontSize: 17, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: tokens.spacing.lg },

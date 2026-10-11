@@ -252,6 +252,12 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
     '"/api/v1/foods/label-captures/analyze"',
     'loading={openingCamera}',
     'confirmBasis("per_100ml")',
+    "nutritionLabel: { color: tokens.color.textMain",
+    "nutritionLabelEmphasis: { fontWeight: tokens.weight.bold }",
+    "function setReviewUnit(unit: \"g\" | \"ml\")",
+    '<DistributedTabBar<"g" | "ml">',
+    "bleed",
+    '<AnimatedScanBeam gradientId="label-capture-live-scan" />',
   ]) {
     assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);
   }

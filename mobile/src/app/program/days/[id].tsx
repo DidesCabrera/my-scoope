@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { ChevronRight } from "lucide-react-native";
+import { Carrot, ChevronRight, Utensils } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
@@ -20,8 +20,10 @@ import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
+import { Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 function completionFor(items: MealExecutionItem[]) {
@@ -31,7 +33,7 @@ function completionFor(items: MealExecutionItem[]) {
   };
 }
 
-function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, onToggleCompleted, onTogglePrepared, savingMealKey }: { completionError: { mealKey: string; message: string } | null; dayId: number; mealExecution: MealExecutionItem[]; meals: MealSnapshot[]; onToggleCompleted(mealKey: string, completed: boolean): void; onTogglePrepared(mealKey: string, foodKey: string): void; savingMealKey: string | null }) {
+function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecution, meals, onChanged, onToggleCompleted, onTogglePrepared, savingMealKey }: { apiRequest: <T>(path: string, init?: RequestInit) => Promise<T>; completionError: { mealKey: string; message: string } | null; dayId: number; mealExecution: MealExecutionItem[]; meals: MealSnapshot[]; onChanged(): Promise<void> | void; onToggleCompleted(mealKey: string, completed: boolean): void; onTogglePrepared(mealKey: string, foodKey: string): void; savingMealKey: string | null }) {
   const router = useRouter();
   const normalizedMealExecution = normalizeMealExecution(mealExecution);
   return (
@@ -48,14 +50,14 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
         return (
           <View key={meal.key ?? `${meal.name}-${index}`}>
             <NutritionEntityCard
-              actions={openDetail ? (
+              actions={<>{meal.detail_id ? <ContextualLibraryActions apiRequest={apiRequest} entity="meal" id={meal.detail_id} name={meal.name ?? "Comida"} onChanged={onChanged} /> : null}{openDetail ? (
                 <EntityCardAction
                   label={`Ver detalle de ${meal.name ?? "la comida"}`}
                   onPress={openDetail}
                   role="link">
                   <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                 </EntityCardAction>
-              ) : null}
+              ) : null}</>}
               completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
@@ -263,18 +265,14 @@ export default function ProgramDayScreen() {
           />
           {meals.length ? (
             <>
-              <SectionDivider />
-              <EntityDetailSection detail={`${meals.length} comidas`} title="Detalle de cada Comida">
-                <CalendarizedMealCards completionError={completionError} dayId={day.id} mealExecution={mealExecution} meals={meals} onToggleCompleted={(mealKey, completed) => void toggleMealCompletion(mealKey, completed)} onTogglePrepared={(mealKey, foodKey) => void togglePreparedFood(mealKey, foodKey)} savingMealKey={savingMealKey} />
-              </EntityDetailSection>
+              <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
+              <CalendarizedMealCards apiRequest={apiRequest} completionError={completionError} dayId={day.id} mealExecution={mealExecution} meals={meals} onChanged={load} onToggleCompleted={(mealKey, completed) => void toggleMealCompletion(mealKey, completed)} onTogglePrepared={(mealKey, foodKey) => void togglePreparedFood(mealKey, foodKey)} savingMealKey={savingMealKey} />
             </>
           ) : null}
           {foods.length ? (
             <>
-              <SectionDivider />
-              <EntityDetailSection detail={`${foods.length} alimentos`} title="Alimentos en este plan diario">
-                <GroupedFoodsCard items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} title="Alimentos plan diario" />
-              </EntityDetailSection>
+              <ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en este plan diario" />
+              <GroupedFoodsCard items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} title="Alimentos plan diario" />
             </>
           ) : null}
         </EntityDetailPage>

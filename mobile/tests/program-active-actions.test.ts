@@ -16,17 +16,27 @@ test("current program actions live in the header ellipsis sheet", async () => {
   assert.match(screen, /<ProgramActiveActions/);
   assert.doesNotMatch(screen, /<Button label="Pausar programa"/);
   assert.doesNotMatch(screen, /calendarizations\/history/);
+  assert.ok(screen.includes("<CalendarizedProgramPlanning") && screen.includes('<Button label="Cancelar programa" onPress={requestCancel} variant="danger" />'));
+  assert.equal(screen.includes('initialAction={cancelRequested ? "cancel" : undefined}'), true);
+  assert.equal(screen.includes("cancelAction: { marginTop: 28 }"), true);
+  assert.equal(actions.includes("useState<ConfirmableAction | null>(initialAction ?? null)"), true);
 
   for (const label of [
-    "Ver programa original",
-    "Pausar programa",
+    "Ver información del elemento",
     "Configurar recordatorios",
+    "Ver programa original",
+    "Ver historial de programas",
     "Cancelar programa",
-    "Cambiar de programa",
-    "Historial de programas",
   ]) {
     assert.match(actions, new RegExp(label));
   }
+  assert.equal(["Cambiar de programa", "Pausar programa", "Reanudar programa"].some((label) => actions.includes(label)), false);
+  const informationIndex = actions.indexOf('label="Ver información del elemento"');
+  const remindersIndex = actions.indexOf('label="Configurar recordatorios"');
+  const originalIndex = actions.indexOf('label="Ver programa original"');
+  const historyIndex = actions.indexOf('label="Ver historial de programas"');
+  const cancelIndex = actions.indexOf('label="Cancelar programa"');
+  assert.ok(informationIndex < remindersIndex && remindersIndex < originalIndex && originalIndex < historyIndex && historyIndex < cancelIndex);
   assert.match(actions, /<ActionSheetModal/);
   assert.match(navigation, /headerPresentation\.mode === "default" && \(headerPresentation\.createAction \|\| headerPresentation\.action\)/);
   assert.match(navigation, /<MoreHorizontal/);

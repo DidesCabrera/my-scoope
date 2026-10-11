@@ -1,12 +1,14 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { Carrot } from "lucide-react-native";
 import { useCallback, useState } from "react";
 
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { FoodDetailCardList } from "@/components/details/food-detail-card-list";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { SharedResourceActions } from "@/components/sharing/shared-resource-actions";
-import { HeaderMetadataChip, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { HeaderMetadataChip, InlineNotice, LoadingState, Screen } from "@/components/ui";
 import { sharedFoodPanelItems, sharedNutrition } from "@/sharing/presentation";
 import { useSharedResource } from "@/sharing/use-shared-resource";
 
@@ -50,13 +52,11 @@ export default function SharedMealDetailScreen() {
             <FoodPanels items={foods} onOpenItem={openFood} />
           </EntityDetailSection>
           {foods.length ? <>
-            <SectionDivider />
-            <EntityDetailSection title="Detalle de cada Alimento">
+            <ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" />
               <FoodDetailCardList
                 items={foods}
                 onOpenFood={openFood}
               />
-            </EntityDetailSection>
           </> : null}
         </EntityDetailPage>
       ) : null}

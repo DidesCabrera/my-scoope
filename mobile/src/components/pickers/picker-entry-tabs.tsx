@@ -1,14 +1,14 @@
 import { Bookmark, Plus } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 
-import { DistributedTabBar } from "@/components/ui";
+import { DistributedTabBar, layoutStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 type PickerEntryTab = "library" | "create";
 
 export function PickerEntryTabs({ createLabel, onCreate }: { createLabel: string; onCreate(): void }) {
   return (
-    <View style={styles.entryTabsBar}>
+    <View style={[styles.entryTabsBar, layoutStyles.cardContentBleed]}>
       <DistributedTabBar<PickerEntryTab>
         accessibilityLabel="Origen de la selección"
         activeTab="library"
@@ -23,5 +23,5 @@ export function PickerEntryTabs({ createLabel, onCreate }: { createLabel: string
 }
 
 const styles = StyleSheet.create({
-  entryTabsBar: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingVertical: tokens.spacing.sm },
+  entryTabsBar: { backgroundColor: tokens.color.surfaceApp, minWidth: 0, paddingVertical: tokens.spacing.sm },
 });

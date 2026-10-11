@@ -4,7 +4,6 @@ import type { LucideIcon } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { LibraryEntity } from "@/api/types";
-import { SectionDivider } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type HomeLibraryCounts = Record<LibraryEntity, number>;
@@ -27,7 +26,6 @@ export function HomeLibraryGrid({ counts }: { counts: HomeLibraryCounts }) {
   const router = useRouter();
   return (
     <View accessibilityLabel="Mis librerías" style={styles.section}>
-      <SectionDivider spacing="compact" style={styles.sectionDivider} />
       <View style={styles.heading}>
         <Bookmark color={tokens.color.textMain} size={25} strokeWidth={2.2} />
         <Text style={styles.headingText}>Mis librerías</Text>
@@ -65,12 +63,11 @@ const styles = StyleSheet.create({
   create: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.sm, height: 30, justifyContent: "center", width: 30 },
   footer: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: tokens.spacing.sm },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
-  heading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginBottom: -tokens.spacing.xs, marginLeft: tokens.spacing.screen, marginTop: tokens.spacing.lg },
+  heading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginBottom: -tokens.spacing.xs, marginLeft: tokens.spacing.screen },
   headingText: { color: tokens.color.textMain, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.extraBold },
   icon: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", marginBottom: tokens.spacing.sm, width: 34 },
   pressed: { opacity: 0.65 },
-  section: { gap: tokens.spacing.md, marginHorizontal: -tokens.spacing.screen },
-  sectionDivider: { marginHorizontal: 0 },
+  section: { gap: tokens.spacing.md, marginHorizontal: -tokens.spacing.screen, marginTop: tokens.spacing.xxl },
   subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20, marginHorizontal: tokens.spacing.screen },
   title: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold, lineHeight: 19, minHeight: 38 },
 });

@@ -20,6 +20,7 @@ function displayValue(value: string, mode: NativeDateTimeFieldProps["mode"]): st
 export function NativeDateTimeField({
   containerStyle,
   disabled = false,
+  hideLabel = false,
   inputStyle,
   label,
   labelStyle,
@@ -82,7 +83,7 @@ export function NativeDateTimeField({
 
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, labelStyle]}>{label}</Text>
+      {!hideLabel ? <Text style={[styles.label, labelStyle]}>{label}</Text> : null}
       <Pressable
         accessibilityLabel={`${label}: ${displayValue(value, mode)}`}
         accessibilityRole="button"

@@ -1,10 +1,7 @@
 import {
-  Activity,
-  ArrowRight,
   BarChart3,
   BookOpen,
   BrainCircuit,
-  Check,
   ChevronLeft,
   CircleUserRound,
   Dumbbell,
@@ -15,7 +12,6 @@ import {
   Leaf,
   LockKeyhole,
   Scale,
-  Sparkles,
   Target,
 } from "lucide-react-native";
 import { createContext, type ComponentType, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
@@ -23,11 +19,14 @@ import { Animated, Image, PanResponder, Pressable, ScrollView, StyleSheet, Text,
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { DailyPlanMealDetailList, type DailyPlanMealDetailItem, EntityDetailPage, EntityDetailSection } from "@/components/details";
-import { NutritionKpiSection } from "@/components/nutrition";
-import { EntityPanelTabs, MealPanels, type MealPanelItem, PanelSurface } from "@/components/panels";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
+import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
+import { NutritionEntityCard, NutritionKpiSection } from "@/components/nutrition";
+import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
+import { ProgramActiveKpis } from "@/components/programs";
 import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
-import { Button, Card, Field, InlineNotice, MyScoopeLogo, NativeDateTimeField, NativeMeasurementField, Pill, textStyles } from "@/components/ui";
+import { AssistantGradientIcon, Button, Card, EntityIcon, Field, InlineNotice, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, textStyles, type EntityKind } from "@/components/ui";
 import type { OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { localDateValue } from "@/presentation/date-time-values";
@@ -102,7 +101,6 @@ type Icon = ComponentType<{ color?: string; size?: number; strokeWidth?: number 
 
 const noop = () => undefined;
 const loginBackgroundSource = require("../../../assets/images/login-background.jpg");
-const launchLogoSource = require("../../../assets/images/launch-logo.png");
 
 export type OnboardingJourneyValues = {
   goal: string;
@@ -180,13 +178,14 @@ function useProfileQuestionStyle() {
   return [styles.profileQuestion, profileEyebrowsMuted && styles.profileQuestionMuted];
 }
 
-function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, title, description }: {
+function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, title, titleAccessory, description }: {
   brandedCentered?: boolean;
-  description: string;
+  description: ReactNode;
   eyebrow: string;
   icon: Icon;
   index: number;
   title: string;
+  titleAccessory?: ReactNode;
 }) {
   const { disclosuresTitleSpacingReduction, externalExplanationChrome, fixedProfileChrome, profileTitleBottomSpacingReduction } = useContext(JourneyPresentationContext);
   const isExplanation = index >= 1 && index <= 5;
@@ -196,7 +195,7 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
   const usesCenteredTitleSpacing = (index <= 6 || brandedCentered) && !externalExplanationChrome;
   return (
     <View style={[styles.intro, isCenteredIntro && styles.introCentered, isProfileStep && fixedProfileChrome && profileTitleBottomSpacingReduction > 0 && { marginBottom: -profileTitleBottomSpacingReduction }]}>
-      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={styles.centeredLogo}><MyScoopeLogo /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 6 ? null : (
+      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={styles.centeredLogo}><MyScoopeBrandLogo /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 6 ? null : (
         <View style={styles.stepMeta}>
           <Text style={styles.stepCount}>{String(index + 1).padStart(2, "0")} / {onboardingJourneySteps.length}</Text>
           <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.progressTrack}>
@@ -210,9 +209,11 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
         styles.title,
         isCenteredIntro && styles.centeredText,
         usesCenteredTitleSpacing && styles.centeredTitleSpacing,
+        isExplanation && { marginBottom: (usesCenteredTitleSpacing ? tokens.spacing.sm : 0) + 10 },
         index === 6 && disclosuresTitleSpacingReduction > 0 && { marginTop: styles.centeredTitleSpacing.marginTop - disclosuresTitleSpacingReduction },
       ]}>{title}</Text>
-      {!isProfileStep ? <Text style={[styles.description, isCenteredIntro && styles.centeredText]}>{description}</Text> : null}
+      {titleAccessory}
+      {!isProfileStep ? <Text style={[styles.description, isExplanation && styles.explanationDescription, isCenteredIntro && styles.centeredText]}>{description}</Text> : null}
     </View>
   );
 }
@@ -486,7 +487,7 @@ function LoginView({ index }: { index: number }) {
   return (
     <View style={styles.loginContent}>
       <View style={[styles.centeredLogo, styles.loginLogo]}>
-        <Image accessibilityLabel="My Scoope" resizeMode="contain" source={launchLogoSource} style={styles.loginLogoImage} />
+        <MyScoopeBrandLogo />
       </View>
       <View style={[styles.loginImageStage, { height: loginImageHeight }]}>
         <Image accessibilityIgnoresInvertColors resizeMode="contain" source={loginBackgroundSource} style={[styles.loginBackgroundImage, { height: loginImageHeight }]} />
@@ -512,32 +513,59 @@ function LoginView({ index }: { index: number }) {
 function ValueView({ index }: { index: number }) {
   return (
     <>
-      <StepHeader description="My Scoope organiza tu objetivo, calcula referencias nutricionales y las convierte en un plan diario que puedes revisar." eyebrow="Funciones principales" icon={Target} index={index} title="Qué puedes hacer con My Scoope" />
-      <View style={styles.valueFeatures}>
-        <ExplanationCard body="Una estructura diaria que puedes revisar, adaptar y ejecutar." icon={Check} title="Plan diario" />
-        <ExplanationCard body="Calorías, macros y cantidades en una lectura ordenada." icon={Gauge} title="Referencias nutricionales" />
-      </View>
+      <StepHeader
+        description={(
+          <>
+            Nos alegra mucho tenerte por aquí.
+            {"\n\n"}
+            Queremos que cumplas todas tus metas, y un cambio físico es un buen punto de partida.
+            {"\n\n"}
+            Alcanzar tu objetivo corporal será el <Text style={styles.descriptionEmphasis}>resultado de pequeñas buenas decisiones que tomes día a día</Text> <Text style={styles.descriptionEmphasis}>de forma consistente</Text>; Y si bien un cambio corporal no se logra de la noche a la mañana, un cambio de actitud sí.
+            {"\n\n"}
+            Decidir enfrentar un desafío con convicción es el primer paso, luego verás tu avance, fruto de tu trabajo, y <Text style={styles.descriptionEmphasis}>te sentirás orgulloso de ti mismo</Text>, reforzará tu actitud y finalmente <Text style={styles.descriptionEmphasis}>se reflejará en un cambio físico y mental</Text>.
+            {"\n\n"}
+            Te deseamos lo mejor en este camino,
+            {"\n"}
+            Éxito!
+          </>
+        )}
+        eyebrow="Funciones principales"
+        icon={Target}
+        index={index}
+        title="Bienvenido a My Scoope!"
+      />
       <ExplanationDots index={index} />
     </>
   );
 }
 
 function StructureView({ index }: { index: number }) {
-  const levels = [
-    { color: tokens.color.food, label: "Alimentos", detail: "La base nutricional" },
-    { color: tokens.color.meal, label: "Comidas", detail: "Combinaciones que repites" },
-    { color: tokens.color.dailyPlan, label: "Planes diarios", detail: "La pauta de un día" },
-    { color: tokens.color.program, label: "Programas", detail: "Tu estrategia en el tiempo" },
+  const levels: { detail: string; entity: EntityKind; label: string }[] = [
+    { entity: "food", label: "Alimentos", detail: "La base nutricional del sistema" },
+    { entity: "meal", label: "Comidas", detail: "Tu combinación de alimentos y porciones" },
+    { entity: "dailyPlan", label: "Planes diarios", detail: "Tu distribución de comidas en el día" },
+    { entity: "program", label: "Programas semanales", detail: "Tu asignación de planes en semanas" },
   ];
   return (
     <>
-      <StepHeader description="La información se organiza en cuatro niveles reutilizables: alimentos, comidas, planes diarios y programas." eyebrow="Estructura del sistema" icon={Layers3} index={index} title="Cómo se organiza tu alimentación" />
+      <StepHeader
+        description={(
+          <>
+            My scoope es un <Text style={styles.descriptionEmphasis}>entorno nutricional</Text> para que puedas <Text style={styles.descriptionEmphasis}>planificar, ejecutar y aprender</Text> sobre alimentación.
+            {"\n\n"}
+            La planificación la realiza <Text style={styles.descriptionEmphasis}>tu librería</Text>, la cual está compuesta por 4 módulos jerárquicos: <Text style={styles.descriptionEmphasis}>Alimentos</Text>, <Text style={styles.descriptionEmphasis}>Comidas</Text>, <Text style={styles.descriptionEmphasis}>Planes Diarios</Text>, y <Text style={styles.descriptionEmphasis}>Programas Semanales</Text>; Cada elemento puede ser reutilizado, formando las combinaciones que desees.
+          </>
+        )}
+        eyebrow="Estructura del sistema"
+        icon={Layers3}
+        index={index}
+        title="Que es My Scoope"
+      />
       <View style={styles.levels}>
-        {levels.map((level, levelIndex) => (
-          <View key={level.label} style={styles.levelRow}>
-            <View style={[styles.levelMarker, { backgroundColor: level.color }]}><Text style={styles.levelNumber}>{levelIndex + 1}</Text></View>
+        {levels.map((level) => (
+          <View key={level.label} style={[styles.levelRow, { borderTopColor: tokens.color[level.entity] }]}>
+            <EntityIcon entity={level.entity} size="hero" />
             <View style={styles.levelCopy}><Text style={styles.levelTitle}>{level.label}</Text><Text style={styles.levelDetail}>{level.detail}</Text></View>
-            {levelIndex < levels.length - 1 ? <ArrowRight color={tokens.color.textSoft} size={17} /> : <Check color={tokens.color.success} size={17} />}
           </View>
         ))}
       </View>
@@ -547,42 +575,76 @@ function StructureView({ index }: { index: number }) {
 }
 
 function PanelsView({ index }: { index: number }) {
+  const referenceWeightKg = 80;
+  const foods: FoodPanelItem[] = [
+    { id: "rice", name: "Arroz cocido", quantity: 200, quantityUnit: "g", calories: 260, calorieShare: 40, proteinGrams: 5.4, proteinPerKilogram: 5.4 / referenceWeightKg, carbsGrams: 56.4, fatGrams: 0.6, proteinAllocation: 9, carbsAllocation: 89, fatAllocation: 2 },
+    { id: "chicken", name: "Pollo asado", quantity: 120, quantityUnit: "g", calories: 286.8, calorieShare: 45, proteinGrams: 32.76, proteinPerKilogram: 32.76 / referenceWeightKg, carbsGrams: 0, fatGrams: 16.32, proteinAllocation: 47, carbsAllocation: 0, fatAllocation: 53 },
+    { id: "avocado", name: "Palta", quantity: 60, quantityUnit: "g", calories: 96, calorieShare: 15, proteinGrams: 1.2, proteinPerKilogram: 1.2 / referenceWeightKg, carbsGrams: 5.1, fatGrams: 8.82, proteinAllocation: 5, carbsAllocation: 19, fatAllocation: 76 },
+  ];
   return (
-    <>
-      <StepHeader description="Cada panel muestra primero un resumen y permite consultar calorías, macronutrientes y detalle." eyebrow="Paneles de información" icon={Eye} index={index} title="Cómo leer los paneles" />
-      <Card>
-        <View style={styles.panelEntityHeader}>
-          <View><Text style={styles.panelEyebrow}>PLAN DIARIO</Text><Text style={styles.panelEntityTitle}>Día equilibrado</Text></View>
-          <Pill label="2.140 kcal" color={tokens.color.dailyPlan} />
-        </View>
-        <PanelSurface>
-          <EntityPanelTabs activeTab="summary" onChange={noop} tabs={[
-            { key: "summary", label: "Resumen" },
-            { key: "calories", label: "Calorías" },
-            { key: "macros", label: "Macros" },
-            { key: "detail", label: "Detalle" },
-          ]} />
-          <View style={styles.panelPreview}>
-            <Text style={styles.panelPreviewValue}>155 g</Text>
-            <Text style={styles.panelPreviewLabel}>proteína para tu objetivo</Text>
-            <View style={styles.panelBars}><View style={[styles.panelBar, { backgroundColor: tokens.color.protein, flex: 30 }]} /><View style={[styles.panelBar, { backgroundColor: tokens.color.carbs, flex: 44 }]} /><View style={[styles.panelBar, { backgroundColor: tokens.color.fat, flex: 26 }]} /></View>
-          </View>
-        </PanelSurface>
-        <Text style={styles.panelHint}>Resumen primero. Evidencia y detalle a un toque.</Text>
-      </Card>
+    <View style={styles.panelsViewContent}>
+      <StepHeader
+        description={(
+          <>
+            Buscamos ofrecer <Text style={styles.descriptionEmphasis}>instancias de aprendizaje y análisis</Text> para que formes tu propio criterio.
+            {"\n\n"}
+            Navega por los <Text style={styles.descriptionEmphasis}>paneles</Text> y realiza <Text style={styles.descriptionEmphasis}>comparaciones</Text> para comprender de mejor manera el impacto real que los alimentos tienen en tu dieta.
+          </>
+        )}
+        eyebrow="Paneles de información"
+        icon={Eye}
+        index={index}
+        title="Forma tu propio criterio"
+      />
+      <NutritionEntityCard
+        entity="meal"
+        eyebrow="Comida"
+        indicators={[{ icon: "food", label: "alimentos", value: foods.length }]}
+        nutrition={{
+          calories: 642.8,
+          protein: { allocation: 25, grams: 39.36, perKilogram: 39.36 / referenceWeightKg },
+          carbs: { allocation: 39, grams: 61.5 },
+          fat: { allocation: 36, grams: 25.74 },
+        }}
+        style={styles.explanationVisualSpacing}
+        title="Comida equilibrada">
+        <FoodPanels items={foods} showEditTab={false} />
+      </NutritionEntityCard>
       <ExplanationDots index={index} />
-    </>
+    </View>
   );
 }
 
 function ControlView({ index }: { index: number }) {
   return (
     <>
-      <StepHeader description="La asistencia interpreta tu solicitud y prepara una propuesta. Tú la revisas antes de aplicarla." eyebrow="Asistencia y control" icon={BrainCircuit} index={index} title="Cómo funciona la asistencia" />
-      <View style={styles.controlFlow}>
-        <ExplanationCard body="Explicas tu objetivo con tus propias palabras." icon={Sparkles} title="1. Conversa" />
-        <ExplanationCard body="El sistema transforma la intención en objetivos revisables." icon={BarChart3} title="2. Calcula" />
-        <ExplanationCard body="Nada importante cambia sin tu confirmación." icon={Check} title="3. Aprueba" />
+      <StepHeader
+        description={(
+          <>
+            Ya planificaste, aprendiste, ahora toca ejecutar; Porque recorrer el camino es lo que finalmente te transformará.
+            {"\n\n"}
+            Puedes calendarizar Planes y Programas, activando los <Text style={styles.descriptionEmphasis}>registro de cumplimientos de las comidas</Text> permitiéndote ver tu adhesión. Además puedes registrar notas para construir tu propia <Text style={styles.descriptionEmphasis}>bitácora</Text>.
+          </>
+        )}
+        eyebrow="Asistencia y control"
+        icon={BrainCircuit}
+        index={index}
+        title="Ejecuta lo planeado"
+      />
+      <View style={styles.executionPreview}>
+        <MealCompletionToggleCard completed onToggle={() => undefined} />
+        <ProgramActiveKpis
+          adheredDays={10}
+          adherence={83}
+          bleed={false}
+          elapsedDays={4}
+          mealLabel="Comidas Cumplidas"
+          planLabel="Planes Diarios Recorridos"
+          plannedAdherenceDays={12}
+          progress={57}
+          standalone
+          totalDays={7}
+        />
       </View>
       <ExplanationDots index={index} />
     </>
@@ -592,15 +654,24 @@ function ControlView({ index }: { index: number }) {
 function ProgressView({ index }: { index: number }) {
   return (
     <>
-      <StepHeader description="Compara lo planificado con tus registros para decidir si necesitas ajustar el plan." eyebrow="Seguimiento" icon={BarChart3} index={index} title="Cómo revisar tu progreso" />
-      <Card>
-        <View style={styles.metricRow}><Text style={styles.metricLabel}>Adherencia semanal</Text><Text style={styles.metricValue}>86%</Text></View>
-        <View style={styles.metricTrack}><View style={styles.metricFill} /></View>
-        <View style={styles.progressFacts}>
-          <ExplanationCard body="Registro simple y cronológico." icon={Scale} title="Peso" />
-          <ExplanationCard body="Revisiones que explican cambios." icon={Activity} title="Evolución" />
-        </View>
-      </Card>
+      <StepHeader
+        description={(
+          <>
+            Puede no ser fácil, pero <Text style={styles.descriptionEmphasis}>no debes frustrarte</Text>. Si necesitas ayuda en la construcción de programas de alimentación puedes recibirla de nuestro <Text style={styles.descriptionEmphasis}>asistente nutricional</Text>.
+            {"\n\n"}
+            El asistente te hará <Text style={styles.descriptionEmphasis}>propuestas</Text> las cuales están sujetas a tu <Text style={styles.descriptionEmphasis}>aprobación para su aplicación</Text>. Nada ocurrirá si tu no lo apruebas.
+          </>
+        )}
+        eyebrow="Seguimiento"
+        icon={BarChart3}
+        index={index}
+        title="Recibe Asistencia AI"
+        titleAccessory={<View style={styles.assistanceIcon}><AssistantGradientIcon size={52} strokeWidth={1.8} /></View>}
+      />
+      <CreditDashboardGrid availableCredits={150} planName="Basic" style={styles.assistanceDashboardSpacing} />
+      <Text style={[styles.description, styles.explanationDescription, styles.assistanceCreditDescription]}>
+        La asistencia funciona mediante un <Text style={styles.descriptionEmphasis}>sistema de créditos</Text>, y dependiendo de la complejidad de las solicitudes es su consumo. <Text style={styles.descriptionEmphasis}>No tener créditos jamás limitará la gestión sobre tu librería.</Text>
+      </Text>
       <ExplanationDots
         action={<ContinueChip />}
         index={index}
@@ -1094,16 +1165,22 @@ export function OnboardingJourneyView({
     return (
       <JourneyControllerContext.Provider value={resolvedController}>
         <JourneyPresentationContext.Provider value={{ conciseSexEyebrow, contentSizedDietaryChips, disclosuresTitleSpacingReduction, externalExplanationChrome: true, fixedDisclosuresFooter, fixedLoginActionBottomSpacing, fixedProfileChrome, fixedProfileFooterBottomSpacing, hideCalculationReviewDisclosure, measurementReferenceNotice, progressiveAllergyDetails, profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileQuestionSpacing, profileProgressWidthReduction, profileTitleBottomSpacingReduction, showGoalOptionsEyebrow, showProfileControlBleed, storyboardSummaryLayout }}>
-          <View style={[styles.screen, styles.interactiveExplanationScreen, topInsetReduction > 0 && { paddingTop: styles.screen.paddingTop - topInsetReduction }]}>
-            <View style={styles.centeredLogo}><MyScoopeLogo /></View>
+          <View style={[styles.screen, styles.interactiveExplanationScreen, topInsetReduction > 0 && { paddingTop: styles.screen.paddingTop - topInsetReduction }, styles.interactiveExplanationScreenFlush]}>
+            <View style={[styles.centeredLogo, styles.explanationLogo]}><MyScoopeBrandLogo scale={0.8} /></View>
             <View
               {...swipeResponder.panHandlers}
               onLayout={handleExplanationViewportLayout}
               style={[styles.explanationViewport, fullWidthExplanationTransition && styles.fullWidthExplanationViewport]}
             >
-              <Animated.View style={[styles.explanationSlide, fullWidthExplanationTransition && styles.fullWidthExplanationSlide, { transform: [{ translateX }] }] }>
-                <ViewComponent index={index} />
-              </Animated.View>
+              <ScrollView
+                bounces={false}
+                contentContainerStyle={styles.explanationScrollContent}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={false}>
+                <Animated.View style={[styles.explanationSlide, fullWidthExplanationTransition && styles.fullWidthExplanationSlide, { transform: [{ translateX }] }] }>
+                  <ViewComponent index={index} />
+                </Animated.View>
+              </ScrollView>
             </View>
             <ExplanationDots action={index === 5 ? <ContinueChip /> : undefined} forceVisible index={index} />
           </View>
@@ -1138,15 +1215,16 @@ export function OnboardingJourneyView({
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.lg, minHeight: 690, paddingBottom: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 },
   interactiveExplanationScreen: { flex: 1 },
+  interactiveExplanationScreenFlush: { paddingTop: 76 },
   fixedLoginScreen: { flex: 1, minHeight: 0 },
   loginBackgroundScreen: { flex: 1, minHeight: 0, overflow: "hidden" },
   loginLogo: { marginBottom: -18, marginTop: 62 },
-  loginLogoImage: { height: 28, width: 100 },
   loginImageStage: { height: 396, position: "relative", width: "100%" },
   loginBackgroundImage: { bottom: 0, height: 396, left: 0, position: "absolute", right: 0, top: 0, width: "100%" },
   loginContent: { flex: 1, gap: tokens.spacing.lg, transform: [{ translateY: -12 }], zIndex: 1 },
   explanationViewport: { flex: 1, overflow: "hidden", width: "100%" },
-  explanationSlide: { flex: 1, gap: tokens.spacing.lg, paddingTop: tokens.spacing.xxl },
+  explanationScrollContent: { flexGrow: 1 },
+  explanationSlide: { flex: 1, gap: tokens.spacing.lg, justifyContent: "center", paddingTop: tokens.spacing.xxl - 18 },
   fullWidthExplanationViewport: { alignSelf: "stretch", marginHorizontal: -tokens.spacing.screen, width: undefined },
   fullWidthExplanationSlide: { paddingHorizontal: tokens.spacing.screen },
   profileScreen: { paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 - 32 },
@@ -1157,6 +1235,7 @@ const styles = StyleSheet.create({
   intro: { alignItems: "flex-start", gap: tokens.spacing.sm },
   introCentered: { alignItems: "center" },
   centeredLogo: { alignItems: "center", justifyContent: "center", width: "100%" },
+  explanationLogo: { marginBottom: -20 },
   centeredText: { textAlign: "center" },
   centeredTitleSpacing: { marginBottom: tokens.spacing.sm, marginTop: tokens.spacing.xxl + tokens.spacing.md },
   stepMeta: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, width: "100%" },
@@ -1168,6 +1247,11 @@ const styles = StyleSheet.create({
   disclosuresEyebrow: { color: tokens.color.textMuted },
   title: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 32 },
   description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
+  explanationDescription: { color: tokens.color.textMain },
+  assistanceCreditDescription: { textAlign: "center" },
+  assistanceDashboardSpacing: { marginBottom: 8, marginTop: 8 },
+  assistanceIcon: { marginBottom: 12 },
+  descriptionEmphasis: { fontWeight: tokens.weight.bold },
   footer: { gap: tokens.spacing.sm, marginTop: "auto" },
   explanationFooter: { alignItems: "center", gap: tokens.spacing.md, marginBottom: 48, marginTop: "auto" },
   explanationFooterWithAction: { gap: tokens.spacing.xs, marginBottom: 34 },
@@ -1200,9 +1284,8 @@ const styles = StyleSheet.create({
   explanationCopy: { flex: 1, gap: 2 },
   explanationTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   explanationBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
-  valueFeatures: { gap: tokens.spacing.sm },
   loginHero: { alignItems: "center", gap: tokens.spacing.md, marginTop: -12 },
-  loginDescription: { marginBottom: 22, marginTop: -10 },
+  loginDescription: { color: tokens.color.textMain, marginBottom: 22, marginTop: -10 },
   loginAction: { width: "100%" },
   loginKicker: { color: tokens.color.program, fontSize: 11, fontWeight: tokens.weight.extraBold, letterSpacing: 1.5 },
   loginTitleRow: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 7, justifyContent: "center", marginBottom: tokens.spacing.sm },
@@ -1211,23 +1294,14 @@ const styles = StyleSheet.create({
   loginTitleChipText: { color: tokens.color.surfaceApp, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 35 },
   cardTitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.bold },
   quietCenter: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16, textAlign: "center" },
-  levels: { gap: tokens.spacing.sm },
-  levelRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
-  levelMarker: { alignItems: "center", borderRadius: tokens.radius.md, height: 34, justifyContent: "center", width: 34 },
-  levelNumber: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: tokens.weight.extraBold },
+  levels: { gap: tokens.spacing.sm, marginTop: 8 },
+  panelsViewContent: { gap: tokens.spacing.lg, transform: [{ translateY: 20 }] },
+  levelRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderTopWidth: 3, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
   levelCopy: { flex: 1, gap: 2 },
-  levelTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
-  levelDetail: { color: tokens.color.textMuted, fontSize: 11 },
-  panelEntityHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  panelEyebrow: { color: tokens.color.dailyPlan, fontSize: 10, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1 },
-  panelEntityTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.bold, marginTop: 3 },
-  panelPreview: { gap: tokens.spacing.xs, padding: tokens.spacing.md },
-  panelPreviewValue: { color: tokens.color.textMain, fontSize: 24, fontWeight: tokens.weight.extraBold },
-  panelPreviewLabel: { color: tokens.color.textMuted, fontSize: 12 },
-  panelBars: { flexDirection: "row", gap: 2, height: 8, marginTop: tokens.spacing.sm, overflow: "hidden" },
-  panelBar: { borderRadius: tokens.radius.pill },
-  panelHint: { color: tokens.color.textSoft, fontSize: 11, textAlign: "center" },
-  controlFlow: { gap: tokens.spacing.sm },
+  levelTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, lineHeight: 21 },
+  levelDetail: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 18 },
+  executionPreview: { gap: tokens.spacing.lg, marginTop: 8 },
+  explanationVisualSpacing: { marginTop: 8 },
   metricRow: { alignItems: "baseline", flexDirection: "row", justifyContent: "space-between" },
   metricLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   metricValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold },

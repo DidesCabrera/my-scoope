@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
-import { AppHeader, Button, Card, DistributedTabBar, MyScoopeLogo, SectionTitle, textStyles } from "@/components/ui";
+import { AppHeader, Button, Card, DistributedTabBar, MyScoopeBrandLogo, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { subscriptionPlanAccent } from "@/presentation/subscription";
 
@@ -47,7 +47,7 @@ export function SubscriptionPreviewContent({ context, topInsetReduction = 0 }: {
     <View style={[styles.previewContent, topInsetReduction > 0 && { paddingTop: Math.max(0, tokens.spacing.screen - topInsetReduction) }]}>
         {isOnboarding ? (
           <View style={styles.onboardingIntro}>
-            <View style={styles.onboardingLogo}><MyScoopeLogo /></View>
+            <View style={styles.onboardingLogo}><MyScoopeBrandLogo /></View>
             <Text style={styles.onboardingTitle}>Elige un plan</Text>
             <Text style={styles.onboardingDescription}>Compara lo que incluyen Free, Basic y Pro.{"\n"}Puedes cambiar de plan más adelante.</Text>
           </View>
@@ -65,7 +65,7 @@ export function SubscriptionPreviewContent({ context, topInsetReduction = 0 }: {
             <Card accent={subscriptionPlanAccent("Pro")}>
               <Text style={styles.eyebrow}>SUSCRIPCIÓN ACTUAL</Text>
               <Text style={styles.planName}>Pro</Text>
-              <AssistantCreditBalance availability={{ available_credits: 1500 }} contained />
+              <CreditDashboardGrid availableCredits={1500} planName="Pro" />
             </Card>
             <SectionTitle title="Suscripciones disponibles" titleStyle={styles.commercialSectionTitle} />
           </>

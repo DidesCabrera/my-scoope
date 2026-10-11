@@ -23,6 +23,7 @@ from mobile_api.composition import (
     update_food_in_meal,
     update_meal_in_dailyplan,
 )
+from mobile_api.routes.composition_saves import router as composition_saves_router
 from mobile_api.routes.program_days import router as program_days_router
 from mobile_api.schema_domains.composition import (
     CompositionMutationEnvelope,
@@ -40,6 +41,7 @@ from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()
 router.add_router("", program_days_router)
+router.add_router("", composition_saves_router)
 
 
 @router.put(

@@ -83,7 +83,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(account, /apiRequest<EntitlementsData>\("\/api\/v1\/entitlements"\)/);
   assertSourceMatch(account, /entitlements\?\.plan_name/);
   assertSourceMatch(account, /<Card accent=\{subscriptionPlanAccent\(entitlements\?\.plan_name\)\}>/);
-  assertSourceMatch(account, /<AssistantCreditBalance availability=\{entitlements\} contained \/>/);
+  assertSourceMatch(account, /<CreditDashboardGrid availableCredits=\{entitlements\.available_credits\} planName=\{entitlements\.plan_name\} \/>/);
   assertSourceDoesNotMatch(account, /subscriptionIcon|plan actual/);
   assertSourceMatch(account, /<ProposalReviewSection eyebrow="INFORMACIÓN DE LA CUENTA">/);
   assertSourceMatch(account, /label: "Nombre de usuario"/);
@@ -130,9 +130,10 @@ test("the native sidebar keeps sign-out inside the account screen", async () => 
 });
 
 test("the native sidebar uses the app surface without section separators", async () => {
-  const [navigation, sidebarItems] = await readSources(
+  const [navigation, sidebarItems, creditDashboard] = await readSources(
     "src/components/navigation/app-navigation.tsx",
     "src/components/navigation/sidebar-items.tsx",
+    "src/components/assistant/credit-dashboard-grid.tsx",
   );
 
   assertSourceMatch(navigation, /drawer: \{ backgroundColor: tokens\.color\.surfaceApp/);
@@ -146,7 +147,7 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceDoesNotMatch(navigation, /scrim: \{ backgroundColor: "rgba\(0,0,0,0\.72\)"/);
   assertSourceMatch(navigation, /menuSection: \{ gap: 0/);
   assertSourceMatch(sidebarItems, /label: \{ color: tokens\.color\.textMain[^}]*fontSize: tokens\.type\.body/);
-  assertSourceMatch(sidebarItems, /<Icon color=\{assistant \? tokens\.color\.surfaceApp : tokens\.color\.textMain\}/);
+  assertSourceMatch(sidebarItems, /assistant \? <AssistantGradientIcon \/> : <Icon color=\{tokens\.color\.textMain\}/);
   assertSourceDoesNotMatch(sidebarItems, /active \? tokens\.color\.textMain : tokens\.color\.textMuted/);
   assertSourceMatch(sidebarItems, /countChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minWidth: 30[^}]*paddingVertical: tokens\.spacing\.xs/);
   assertSourceDoesNotMatch(sidebarItems, /singleDigitCount|countChipSingle/);
@@ -154,23 +155,25 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceMatch(navigation, /entity === "dailyPlan" \? counts\.daily_plan : counts\[entity\]/);
   assertSourceMatch(navigation, /<EntitySidebarEntry count=\{libraryCount\(libraryCounts, item\.entity\)\}/);
   assertSourceMatch(sidebarItems, /item: \{[^}]*minHeight: 48/);
-  assertSourceMatch(navigation, /<ScrollView[^>]*style=\{styles\.drawerScroll\}[\s\S]*<View style=\{\[styles\.creditDashboardShadow, \{ width: drawerWidth - tokens\.spacing\.md \}\]\}>/);
-  assertSourceMatch(navigation, /LinearGradient id="sidebar-credit-macros"[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat/);
-  assertSourceMatch(navigation, /creditDashboardShadow: \{[\s\S]*?elevation: 5[\s\S]*?shadowOpacity: 0\.24/);
-  assertSourceMatch(navigation, /width: drawerWidth - tokens\.spacing\.md/);
-  assertSourceMatch(navigation, /creditDashboardShadow: \{[^}]*marginHorizontal: tokens\.spacing\.md/);
-  assertSourceMatch(navigation, /creditDashboardEyebrow}>Plan<[\s\S]*creditDashboardPlanTitle}>\{creditSummary\.planName\}[\s\S]*creditDashboardCreditValue}>\{creditSummary\.availableCredits\}[\s\S]*creditDashboardAvailableLabel}>créditos disponibles/);
-  assertSourceMatch(navigation, /creditDashboardCredits: \{[^}]*alignItems: "flex-end"/);
-  assertSourceMatch(navigation, /creditDashboardPlan: \{[^}]*gap: 0[^}]*paddingLeft: tokens\.spacing\.xs/);
-  assertSourceDoesNotMatch(navigation, /creditDashboardPlan: \{[^}]*paddingBottom/);
-  assertSourceMatch(navigation, /creditDashboard: \{[^}]*minHeight: 58/);
-  assertSourceMatch(navigation, /creditDashboardCreditValue: \{[^}]*fontSize: 15/);
-  assertSourceMatch(navigation, /creditDashboardPlanTitle: \{[^}]*fontSize: 24/);
-  assertSourceMatch(navigation, /creditDashboardAction: \{[^}]*marginRight: tokens\.spacing\.md/);
-  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Abrir Suscripciones y bolsas"[\s\S]*onPress=\{openCredits\}[\s\S]*<ChevronRight/);
-  assertSourceMatch(navigation, /secondaryPrimaryItems[\s\S]*href: "\/personal-records"[\s\S]*label: "Fichas personales"[\s\S]*href: "\/system-foundations"[\s\S]*label: "Fundamentos Sistema"/);
+  assertSourceMatch(navigation, /<ScrollView[^>]*style=\{styles\.drawerScroll\}[\s\S]*<CreditDashboardGrid/);
+  assertSourceMatch(creditDashboard, /LinearGradient id="credit-dashboard-grid-macros"[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat/);
+  assertSourceDoesNotMatch(navigation, /width: drawerWidth - tokens\.spacing\.md/);
+  assertSourceMatch(navigation, /marginHorizontal: tokens\.spacing\.md/);
+  assertSourceMatch(creditDashboard, /eyebrow}>Plan<[\s\S]*planName}>\{planName\}[\s\S]*creditValue}>\{availableCredits\.toLocaleString\("es-CL"\)\}[\s\S]*creditLabel}>Créditos disponibles/);
+  assertSourceMatch(creditDashboard, /grid: \{[^}]*flexDirection: "row"[^}]*gap: tokens\.spacing\.sm[^}]*paddingLeft: tokens\.spacing\.lg[^}]*paddingRight: tokens\.spacing\.xs[^}]*paddingVertical: tokens\.spacing\.md/);
+  assertSourceMatch(creditDashboard, /style=\{\[styles\.grid, !onPress && styles\.gridWithoutAction\]\}/);
+  assertSourceMatch(creditDashboard, /gridWithoutAction: \{ paddingRight: tokens\.spacing\.lg \}/);
+  assertSourceMatch(creditDashboard, /creditsColumn: \{[^}]*alignItems: "flex-end"[^}]*flex: 10[^}]*justifyContent: "flex-end"/);
+  assertSourceMatch(creditDashboard, /planColumn: \{[^}]*alignItems: "flex-start"[^}]*flex: 13[^}]*justifyContent: "flex-start"/);
+  assertSourceMatch(creditDashboard, /dashboard: \{[^}]*minHeight: 70/);
+  assertSourceMatch(creditDashboard, /creditValue: \{[^}]*fontSize: 18/);
+  assertSourceMatch(creditDashboard, /planName: \{[^}]*fontSize: 24/);
+  assertSourceMatch(creditDashboard, /actionColumn: \{[^}]*alignItems: "center"[^}]*width: 22/);
+  assertSourceMatch(creditDashboard, /<Pressable[\s\S]*accessibilityLabel=\{onPress \? "Abrir Suscripciones y bolsas"[\s\S]*onPress=\{onPress\}[\s\S]*<ChevronRight/);
+  assertSourceMatch(navigation, /secondaryPrimaryItems[\s\S]*href: "\/system-foundations"[\s\S]*label: "Fundamentos Sistema"/);
+  assertSourceDoesNotMatch(navigation.match(/const secondaryPrimaryItems[\s\S]*?\];/)?.[0] ?? "", /personal-records/);
   assertSourceMatch(navigation, /item\.href === "\/inbox"[\s\S]*secondaryPrimaryItems\.map/);
-  assertSourceDoesNotMatch(navigation, /href: "\/account"[^\n]*[\s\S]{0,250}href: "\/personal-records"/);
+  assertSourceMatch(navigation, /href: "\/account"[^\n]*label: "Mi cuenta"[\s\S]{0,250}href: "\/personal-records"[^\n]*label: "Fichas personales"/);
 });
 
 test("personal records groups the persisted nutrition inputs", async () => {
@@ -231,7 +234,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   const libraryList = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-list-screen.tsx"), "utf8");
   const screenLayout = await readFile(path.resolve(process.cwd(), "src/components/ui/layout.tsx"), "utf8");
   const headerBody = navigation.slice(navigation.indexOf("export function AppNavigationHeader"), navigation.indexOf("export function useHeaderPresentation"));
-  assertSourceMatch(headerBody, /isHome \? <View pointerEvents="none" style=\{styles\.headerLogo\}><MyScoopeLogo/);
+  assertSourceMatch(headerBody, /isHome \? <View pointerEvents="none" style=\{styles\.headerLogo\}><MyScoopeBrandLogo compact \/>/);
   assertSourceMatch(headerBody, /HeaderIdentity/);
   assertSourceMatch(headerBody, /defaultIdentityVisible/);
   assertSourceMatch(navigation, /Icon color=\{tokens\.color\.textMain\}/);
@@ -248,7 +251,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /<Plus color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(navigation, /headerPresentation\.createAction/);
   assertSourceMatch(navigation, /height: 48/);
-  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeLogo \/>/);
+  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeBrandLogo compact \/>/);
   const logo = await readFile(path.resolve(process.cwd(), "src/components/ui/my-scoope-logo.tsx"), "utf8");
   assertSourceMatch(logo, /logoText: \{[^}]*fontSize: 18/);
   assertSourceMatch(logo, /logoBar: \{[^}]*height: 3, width: 13/);

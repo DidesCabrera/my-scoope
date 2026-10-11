@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { Carrot, ChevronRight, Utensils } from "lucide-react-native";
 import { useCallback, useState } from "react";
 
 import { userFacingError } from "@/api/errors";
@@ -9,8 +9,9 @@ import { EntityDetailPage, EntityDetailSection } from "@/components/details/enti
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, MealPanels } from "@/components/panels";
 import { ProposalFoodCard, ProposalMealCard, proposalPreviewAdapters } from "@/components/proposals/proposal-preview";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
-import { EntityCardAction, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { EntityCardAction, LoadingState, Screen } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export default function ProposalEntityDetailScreen() {
@@ -77,8 +78,7 @@ export default function ProposalEntityDetailScreen() {
           </EntityDetailSection>
           {proposal.meal.foods.length ? (
             <>
-              <SectionDivider />
-              <EntityDetailSection title="Detalle de cada Alimento">
+              <ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" />
                 {proposal.meal.foods.map((food, index) => (
                   <ProposalFoodCard
                     actions={(
@@ -91,7 +91,6 @@ export default function ProposalEntityDetailScreen() {
                     onOpen={() => router.push(`/proposals/${proposal.id}/entity/foods/${index}` as Href)}
                   />
                 ))}
-              </EntityDetailSection>
             </>
           ) : null}
         </EntityDetailPage>
@@ -113,8 +112,7 @@ export default function ProposalEntityDetailScreen() {
               onOpenItem={(item) => router.push(`/proposals/${proposal.id}/entity/meals/${item.id}` as Href)}
             />
           </EntityDetailSection>
-          <SectionDivider />
-          <EntityDetailSection title="Detalle de cada Comida">
+          <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
             {proposal.dailyplan.meals.map((item, index) => (
               <ProposalMealCard
                 actions={(
@@ -130,7 +128,6 @@ export default function ProposalEntityDetailScreen() {
                 time={item.hour}
               />
             ))}
-          </EntityDetailSection>
         </EntityDetailPage>
       ) : null}
       {proposal && !proposal.meal && !proposal.dailyplan ? <Redirect href={`/proposals/${proposal.id}` as Href} /> : null}

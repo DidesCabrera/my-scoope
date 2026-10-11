@@ -1,13 +1,14 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { Carrot, ChevronRight } from "lucide-react-native";
 import { useCallback } from "react";
 
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
 import { ProposalFoodCard, proposalPreviewAdapters } from "@/components/proposals/proposal-preview";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { useProposalDetail } from "@/components/proposals/use-proposal-detail";
-import { EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, Screen } from "@/components/ui";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 
@@ -54,8 +55,7 @@ export default function ProposedProgramMealDetailScreen() {
               }}
             />
           </EntityDetailSection>
-          <SectionDivider />
-          <EntityDetailSection title="Detalle de cada Alimento">
+          <ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" />
             {item.meal.foods.map((food, foodIndex) => (
               <ProposalFoodCard
                 actions={(
@@ -68,7 +68,6 @@ export default function ProposedProgramMealDetailScreen() {
                 onOpen={() => router.push(`/proposals/${id}/program/weeks/${week}/days/${day}/meals/${index}/foods/${foodIndex}` as Href)}
               />
             ))}
-          </EntityDetailSection>
         </EntityDetailPage>
       ) : null}
     </Screen>

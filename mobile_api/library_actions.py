@@ -65,17 +65,19 @@ def library_actions_payload(item, user, *, context: str, capabilities=_UNSET) ->
 
     if context == "list":
         if isinstance(item, Food):
-            return []
+            return [_action("rename"), _action("share"), _action("delete")] if is_owner else []
         if isinstance(item, Program) and not is_owner:
             return [_action("duplicate")] if item.is_forkable else []
 
-        actions = []
+        actions = [_action("rename")] if is_owner and isinstance(item, (Meal, DailyPlan, Program)) else []
         resolved_capabilities = get_capabilities(user) if capabilities is _UNSET else capabilities
         can_duplicate = isinstance(item, Program) or bool(
             resolved_capabilities and resolved_capabilities.can_fork()
         )
         if can_duplicate:
             actions.append(_action("duplicate"))
+        if is_owner and isinstance(item, (Meal, DailyPlan, Program)):
+            actions.append(_action("share"))
         if is_owner:
             actions.append(_action("delete"))
         return actions
@@ -86,7 +88,7 @@ def library_actions_payload(item, user, *, context: str, capabilities=_UNSET) ->
         return []
 
     if isinstance(item, Food):
-        return [_action("share"), _action("delete")]
+        return [_action("rename"), _action("share"), _action("delete")]
 
     actions = [_action("rename")]
     capabilities = get_capabilities(user)

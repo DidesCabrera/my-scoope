@@ -10,7 +10,7 @@ test("Home creates or presents one live pinned daily plan", async () => {
   assertSourceMatch(home, /Registra tus comidas en un nuevo Plan/);
   assertSourceMatch(home, /label="Crear un plan para hoy"/);
   assertSourceMatch(home, /apiRequest<TodayData>\("\/api\/v1\/today\/pinned-plan", \{ method: "POST" \}\)/);
-  assertSourceMatch(home, /<PinnedDailyPlanCard editing=\{pinnedMealEditing\} item=\{today\.pinned_plan\}/);
+  assertSourceMatch(home, /<PinnedDailyPlanCard apiRequest=\{apiRequest\} editing=\{pinnedMealEditing\} item=\{today\.pinned_plan\}/);
   assertSourceMatch(home, /onToggleCompleted: \(meal, completed\) => \{ void toggleTodayMealCompletion\(meal\.id, completed, "calendarized"\); \}/);
   assertSourceMatch(home, /onToggleCompleted: \(meal, completed\) => \{ void toggleTodayMealCompletion\(meal\.id, completed, "pinned"\); \}/);
   assertSourceMatch(home, /`\/api\/v1\/days\/\$\{todayDayId\}\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/check-ins`/);

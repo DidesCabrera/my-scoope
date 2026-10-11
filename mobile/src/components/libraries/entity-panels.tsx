@@ -1,12 +1,14 @@
 import { type Href, useRouter } from "expo-router";
-import { ChevronRight, Trash2 } from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
-import type { LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem, MealExecutionItem } from "@/api/types";
+import type { CompositionMutationResult, LibraryAction, LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem, MealExecutionItem } from "@/api/types";
+import { useSession } from "@/auth/session-context";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
+import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import {
   FoodPanels as SharedFoodPanels,
@@ -24,7 +26,7 @@ import { Button, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels/panel-surface";
-import { ContextCardActions, type ContextCardAction } from "./context-card-actions";
+import { LibraryActions } from "./library-actions";
 
 function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return {
@@ -94,8 +96,10 @@ type PinnedTracking = {
   savingMealKey: string | null;
 };
 
-export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTracking }: { dailyPlanId: number; items: LibraryMealPanelItem[]; onRemove?: (item: LibraryMealPanelItem) => Promise<void>; pinnedTracking?: PinnedTracking }) {
+export function DailyPlanMealCards({ dailyPlanId, items, onChanged, onRemove, pinnedTracking }: { dailyPlanId: number; items: LibraryMealPanelItem[]; onChanged?: () => Promise<void>; onRemove?: (item: LibraryMealPanelItem) => Promise<void>; pinnedTracking?: PinnedTracking }) {
   const router = useRouter();
+  const { apiRequest } = useSession();
+  const { publishSelection } = useComparatorSelectionTransfer();
   const mealExecution = normalizeMealExecution(pinnedTracking?.mealExecution);
   return (
     <View style={styles.mealCardList}>
@@ -104,24 +108,48 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
         const mealId = item.detail_id;
         const dailyPlanMealId = item.relation_id;
         const openDetail = () => router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(item.relation_id ?? ""), id: String(item.detail_id), mealTime: item.time?.slice(0, 5) ?? "", ...(pinnedTracking ? { pinned: "1", mealKey: item.id } : {}) } } as Href);
+        const nutrition = {
+          calories: item.calories,
+          protein: { grams: item.protein_grams, allocation: item.protein_allocation, per_kilogram: item.protein_per_kilogram },
+          carbs: { grams: item.carbs_grams, allocation: item.carbs_allocation },
+          fat: { grams: item.fat_grams, allocation: item.fat_allocation },
+        };
+        const actions = [
+          { destructive: false, key: "rename", label: "Renombrar" },
+          { destructive: false, key: "share", label: "Compartir" },
+        ] satisfies LibraryAction[];
+        const compare = () => {
+          if (mealId == null) return;
+          publishSelection({
+            kind: "meals",
+            option: {
+              entity: "meal",
+              id: mealId,
+              indicators: [{ icon: "food", label: "alimentos", value: item.foods.length }],
+              name: item.name,
+              nutrition,
+              panel: { foods: item.foods, kind: "foods", meals: [], weeks: [] },
+              quantity_unit: null,
+              subtitle: item.note ?? "",
+            },
+            slotKey: 1,
+          });
+          router.push({ pathname: "/comparator", params: { create: "1", kind: "meals" } } as Href);
+        };
         return <View key={item.id}>
           <NutritionEntityCard
             actions={<>
-              {onRemove ? <ContextCardActions
-                actions={[{
-                  confirmation: {
-                    confirmLabel: "Quitar comida",
-                    message: "Se quitará esta comida del plan diario. La comida seguirá disponible en tu biblioteca.",
-                    title: "¿Quitar comida?",
-                  },
-                  destructive: true,
-                  icon: Trash2,
-                  key: "remove",
-                  label: "Quitar comida",
-                  onPress: () => onRemove(item),
-                }] satisfies ContextCardAction[]}
-                label={`Más acciones para ${item.name}`}
-                title={item.name}
+              {mealId != null ? <LibraryActions
+                apiRequest={apiRequest}
+                entitySlug="meals"
+                item={{ actions, entity: "meal", id: mealId, name: item.name }}
+                onCompare={compare}
+                onCompleted={() => { void onChanged?.(); }}
+                onRemove={onRemove ? () => onRemove(item) : undefined}
+                onSaveToLibrary={dailyPlanMealId != null ? async () => {
+                  const result = await apiRequest<CompositionMutationResult>(`/api/v1/library/daily-plans/${dailyPlanId}/meals/${dailyPlanMealId}/save-to-library`, { method: "POST" });
+                  Alert.alert("Listo", result.message);
+                } : undefined}
               /> : null}
               <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
             </>}
@@ -135,10 +163,10 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
               ...(item.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: item.time.slice(0, 5) }] : []),
             ]}
             nutrition={{
-              calories: item.calories,
-              protein: { grams: item.protein_grams, allocation: item.protein_allocation, perKilogram: item.protein_per_kilogram },
-              carbs: { grams: item.carbs_grams, allocation: item.carbs_allocation },
-              fat: { grams: item.fat_grams, allocation: item.fat_allocation },
+              calories: nutrition.calories,
+              protein: { grams: nutrition.protein.grams, allocation: nutrition.protein.allocation, perKilogram: nutrition.protein.per_kilogram },
+              carbs: nutrition.carbs,
+              fat: nutrition.fat,
             }}
             title={item.name}>
             <SharedFoodPanels items={item.foods.map(toFoodPanelItem)} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={pinnedTracking ? {

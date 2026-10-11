@@ -206,6 +206,70 @@ class LibraryPageEnvelope(Schema):
     error: None = None
 
 
+class CompositionOptionData(Schema):
+    id: int
+    entity: Literal["meal", "dailyPlan"]
+    name: str
+    subtitle: str
+    quantity_unit: Literal["g", "ml"] | None = None
+    nutrition: LibraryNutritionData
+    indicators: list[LibraryIndicatorData]
+    panel: LibraryPanelData
+
+
+class CompositionOptionsData(Schema):
+    items: list[CompositionOptionData]
+    total: int
+    offset: int
+    limit: int
+    search: str | None = None
+
+
+class CompositionOptionsEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CompositionOptionsData
+    error: None = None
+
+
+class ProgramWeekPickerDetailEnvelope(Schema):
+    ok: Literal[True] = True
+    data: LibraryWeekPanelItemData
+    error: None = None
+
+
+class CalendarizationProgramDayData(Schema):
+    nutrition: LibraryNutritionData | None = None
+
+
+class CalendarizationProgramWeekData(Schema):
+    week_number: int
+    days: list[CalendarizationProgramDayData]
+
+
+class CalendarizationProgramOptionData(Schema):
+    id: int
+    name: str
+    creator: str
+    weeks_count: int
+    filled_days_count: int
+    foods_count: int
+    weeks: list[CalendarizationProgramWeekData]
+
+
+class CalendarizationProgramOptionsData(Schema):
+    items: list[CalendarizationProgramOptionData]
+    total: int
+    offset: int
+    limit: int
+    search: str | None = None
+
+
+class CalendarizationProgramOptionsEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CalendarizationProgramOptionsData
+    error: None = None
+
+
 class LibraryItemEnvelope(Schema):
     ok: Literal[True] = True
     data: LibraryItemData

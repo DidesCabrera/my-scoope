@@ -3,12 +3,11 @@ import { useCallback, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { userFacingError } from "@/api/errors";
+import { MobileApiError, userFacingError } from "@/api/errors";
 import type { CompositionMutationResult, LibraryItem, LibraryWeekPanelItem, PickerCommitResult, PickerPreview } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { EntityDetailPage } from "@/components/details";
 import { ProgramWeekDetail } from "@/components/libraries/program-detail-preview";
-import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { LoadingState } from "@/components/ui";
@@ -29,7 +28,7 @@ export default function WeekToProgramPickerRoute() {
   const returnHref = `/pickers/week-to-program?programId=${targetId}&weekNumber=${createdWeek}` as Href;
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
-  const [target, setTarget] = useState<LibraryItem | null>(null);
+  const [week, setWeek] = useState<LibraryWeekPanelItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const creatingWeek = useRef(false);
@@ -59,14 +58,20 @@ export default function WeekToProgramPickerRoute() {
         router.replace(`/pickers/week-to-program?programId=${targetId}&weekNumber=${result.created_id}` as Href);
         return;
       }
-      setTarget(await apiRequest<LibraryItem>(`/api/v1/library/programs/${targetId}`));
+      try {
+        setWeek(await apiRequest<LibraryWeekPanelItem>(`/api/v1/library/programs/${targetId}/weeks/${createdWeek}/picker-detail`));
+      } catch (nextError) {
+        if (!(nextError instanceof MobileApiError) || ![404, 422].includes(nextError.status)) throw nextError;
+        const target = await apiRequest<LibraryItem>(`/api/v1/library/programs/${targetId}`);
+        setWeek(target.panel.kind === "weeks" ? target.panel.weeks.find((item) => item.week_number === createdWeek) ?? null : null);
+      }
     } catch (nextError) {
       setError(userFacingError(nextError));
       creatingWeek.current = false;
     } finally {
       setLoading(false);
     }
-  }, [apiRequest, hasCreatedWeek, router, targetId]);
+  }, [apiRequest, createdWeek, hasCreatedWeek, router, targetId]);
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
 
@@ -85,8 +90,7 @@ export default function WeekToProgramPickerRoute() {
   if (loading) return <LoadingState label={hasCreatedWeek ? "Preparando la nueva semana…" : "Creando nueva semana…"} />;
   if (!hasCreatedWeek) return <RecoverableErrorState message={error ?? "No pudimos crear la nueva semana."} onRetry={() => void load({ showLoading: true })} />;
 
-  const week = target?.panel.kind === "weeks" ? target.panel.weeks.find((item) => item.week_number === createdWeek) : undefined;
-  const assignedPlans = filledDays(week);
+  const assignedPlans = filledDays(week ?? undefined);
   const weekIndicators = week && assignedPlans > 0 ? [
     { icon: "dailyPlan" as const, label: "planes diarios", value: assignedPlans },
     { icon: "meal" as const, label: "comidas", value: week.meals_count ?? 0 },
@@ -96,12 +100,11 @@ export default function WeekToProgramPickerRoute() {
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        {target && week ? (
+        {week ? (
           <EntityDetailPage
             entity="program"
             eyebrow="Nueva semana"
             indicators={weekIndicators}
-            nutrition={libraryNutrition(target.nutrition)}
             showNutrition={false}
             title={`Semana ${createdWeek}`}>
             {error ? <RecoverableErrorState message={error} onRetry={() => void load({ showLoading: true })} /> : null}

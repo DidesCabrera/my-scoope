@@ -20,6 +20,6 @@ export function SharedResourceActions({ onOpenInformation, onVisibleChange, titl
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
+  safeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   content: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
 });

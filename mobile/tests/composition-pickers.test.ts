@@ -22,10 +22,10 @@ test("composition pickers use independent native routes and one shared flow", as
   );
   matches(picker, /mode: "back"/);
   matches(picker, /stickyHeaderIndices=\{\[0\]\}/);
-  matches(picker, /stickyHeaderIndices=\{\[1\]\}/);
+  matches(picker, /stickyHeaderIndices=\{\[isMealPicker \? 0 : 1\]\}/);
   matches(picker, /style=\{styles\.configurationSticky\}/);
   matches(picker, /style=\{styles\.selectionSticky\}/);
-  matches(picker, /style=\{styles\.searchField\}/);
+  matches(picker, /<SearchField/);
   matches(picker, /if \(!selectedId\) \{/);
   matches(picker, /<PickerEntryTabs/);
   for (const createLabel of ["Crear alimento", "Crear comida", "Crear plan diario"]) {
@@ -38,12 +38,16 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /pickerKind: kind/);
   matches(picker, /pickerTargetId: String\(targetId\)/);
   matches(picker, /returnTo: String\(detailHref\)/);
-  assert.ok(picker.indexOf("<PickerEntryTabs") < picker.indexOf("<View style={styles.searchField}"));
+  assert.ok(picker.indexOf("<PickerEntryTabs") < picker.indexOf("<SearchField"));
   matches(picker, /NutritionEntityCard/);
   matches(picker, /import \{ PickerCardAction \} from "\.\/picker-card-action"/);
   matches(picker, /<PickerCardAction label=\{actionLabel\} onPress=\{onAction\} subject=\{option\.name\} \/>/);
   matches(picker, /actionLabel="Seleccionar"/);
   matches(picker, /router\.push\(pickerConfigureHref/);
+  matches(picker, /const needsTarget = Boolean\(relationId \|\| relationKey\)/);
+  matches(picker, /needsTarget\s*\? isCalendarizedPicker/);
+  matches(picker, /\/composition-options\?limit=50/);
+  matches(picker, /nextError instanceof MobileApiError[^\n]*!\[404, 422\]\.includes\(nextError\.status\)/);
   matches(picker, /onPress: \(\) => router\.dismissTo\(detailHref\)/);
   matches(picker, /<PickerOptionCard\s+option=\{configuredSelection\}/);
   matches(picker, /nutrition: scaleFoodNutrition\(selected\.nutrition, quantity\)/);
@@ -61,6 +65,7 @@ test("composition pickers use independent native routes and one shared flow", as
   const impactPreview = picker.indexOf('title="Previsualización del impacto"');
   assert.ok(selectedCard < configuration);
   assert.ok(configuration < impactPreview);
+  matches(picker, /\{isMealPicker \? configurationCard : selectedCard\}[\s\S]*\{isMealPicker \? selectedCard : configurationCard\}/);
   matches(picker, /Porción \(\{selected\.quantityUnit \?\? "g"\}\)/);
   matches(picker, /<Scale color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   matches(picker, /<NativeDateTimeField[^>]*mode="time"/);
@@ -115,8 +120,8 @@ test("composition pickers use independent native routes and one shared flow", as
     "utf8",
   );
   matches(entryTabs, /styles\.entryTabsBar/);
-  matches(entryTabs, /entryTabsBar: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
-  matches(picker, /searchField: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  matches(entryTabs, /layoutStyles\.cardContentBleed/);
+  matches(picker, /<SearchField[^>]*bleed/);
   matches(picker, /selectionSticky: \{[^}]*paddingHorizontal: tokens\.spacing\.screen/);
   matches(entryTabs, /DistributedTabBar<PickerEntryTab>/);
   matches(entryTabs, /<Bookmark/);

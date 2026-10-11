@@ -13,6 +13,9 @@ import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, EntityCard, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
+import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
+
+type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
 function mealPanelItem(item: LibraryItem["panel"]["meals"][number], completedKeys: Set<string>): MealPanelItem {
   return {
@@ -36,16 +39,17 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number], completedKey
   };
 }
 
-export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMealTime }: { editing?: MealPanelEditing; item: LibraryItem; mealExecution?: MealExecutionItem[] | null; onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void> }) {
+export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, onChangeMealTime, onChanged }: { apiRequest: ApiRequest; editing?: MealPanelEditing; item: LibraryItem; mealExecution?: MealExecutionItem[] | null; onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void>; onChanged(): Promise<void> | void }) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const addMeal = () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: "/today" }));
   const openDetail = () => router.push(`/libraries/daily-plans/${item.id}` as Href);
-  const detailAction = (
+  const detailAction = (<>
+    <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={item.id} name={item.name} onChanged={onChanged} />
     <EntityCardAction label="Ir al detalle del plan" onPress={openDetail} role="link">
       <ChevronRight color={tokens.color.textMuted} size={21} />
     </EntityCardAction>
-  );
+  </>);
   const meals = item.panel.meals;
   const indicators = [
     { icon: "meal" as const, label: "comidas", value: meals.length },

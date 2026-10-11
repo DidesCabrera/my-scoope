@@ -10,10 +10,11 @@ import { ContentPanel, EntityHeading, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type EntityDetailPageProps = PropsWithChildren<
-  Omit<NutritionEntityCardProps, "children" | "onPress" | "style"> & {
+  Omit<NutritionEntityCardProps, "children" | "nutrition" | "onPress" | "style"> & {
     action?: ReactNode;
     afterNutrition?: ReactNode;
     backLabel?: string;
+    nutrition?: NutritionEntityCardProps["nutrition"];
     onBack?: () => void;
     showNutrition?: boolean;
   }
@@ -69,7 +70,7 @@ export function EntityDetailPage({
             title={title}
             variant="page"
           />
-          {showNutrition ? <View style={styles.kpiSection}><NutritionKpiSection variant={kpiVariant} {...nutrition} /></View> : null}
+          {showNutrition && nutrition ? <View style={styles.kpiSection}><NutritionKpiSection variant={kpiVariant} {...nutrition} /></View> : null}
           {afterNutrition}
         </View>
         {children}

@@ -1,35 +1,28 @@
-import { Bell, ExternalLink, History, Info, Pause, Play, RefreshCw, Trash2 } from "lucide-react-native";
+import { Bell, ExternalLink, History, Info, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizationStatus } from "@/api/types";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, InlineNotice } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-type ProgramStateAction = "pause" | "resume" | "cancel";
-type ConfirmableAction = Extract<ProgramStateAction, "pause" | "cancel">;
+type ProgramStateAction = "cancel";
+type ConfirmableAction = ProgramStateAction;
 
 type ProgramActiveActionsProps = {
-  onChangeProgram(): void;
+  initialAction?: ConfirmableAction;
   onClose(): void;
   onOpenInformation(): void;
   onOpenHistory(): void;
   onOpenOriginalProgram?: () => void;
   onOpenReminders(): void;
   onStateAction(action: ProgramStateAction): Promise<void>;
-  status: CalendarizationStatus | null;
   visible: boolean;
 };
 
 const confirmationCopy: Record<ConfirmableAction, { confirmLabel: string; message: string; title: string }> = {
-  pause: {
-    confirmLabel: "Pausar",
-    message: "Tu progreso se conservará y podrás reanudar este programa más adelante.",
-    title: "¿Pausar el programa?",
-  },
   cancel: {
     confirmLabel: "Cancelar programa",
     message: "El programa saldrá de tu recorrido actual y quedará disponible en el historial.",
@@ -38,17 +31,16 @@ const confirmationCopy: Record<ConfirmableAction, { confirmLabel: string; messag
 };
 
 export function ProgramActiveActions({
-  onChangeProgram,
+  initialAction,
   onClose,
   onOpenInformation,
   onOpenHistory,
   onOpenOriginalProgram,
   onOpenReminders,
   onStateAction,
-  status,
   visible,
 }: ProgramActiveActionsProps) {
-  const [selected, setSelected] = useState<ConfirmableAction | null>(null);
+  const [selected, setSelected] = useState<ConfirmableAction | null>(initialAction ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,20 +97,10 @@ export function ProgramActiveActions({
             ) : (
               <ActionSheetActions>
                 <ActionSheetAction icon={Info} label="Ver información del elemento" onPress={() => navigate(onOpenInformation)} />
-                {status ? (
-                  <>
-                    {status === "paused" ? (
-                      <ActionSheetAction icon={Play} label="Reanudar programa" onPress={() => void execute("resume")} />
-                    ) : (
-                      <ActionSheetAction icon={Pause} label="Pausar programa" onPress={() => setSelected("pause")} />
-                    )}
-                    <ActionSheetAction icon={Bell} label="Configurar recordatorios" onPress={() => navigate(onOpenReminders)} />
-                    <ActionSheetAction destructive icon={Trash2} label="Cancelar programa" onPress={() => setSelected("cancel")} />
-                  </>
-                ) : null}
+                <ActionSheetAction icon={Bell} label="Configurar recordatorios" onPress={() => navigate(onOpenReminders)} />
                 {onOpenOriginalProgram ? <ActionSheetAction icon={ExternalLink} label="Ver programa original" onPress={() => navigate(onOpenOriginalProgram)} /> : null}
-                <ActionSheetAction icon={RefreshCw} label="Cambiar de programa" onPress={() => navigate(onChangeProgram)} />
-                <ActionSheetAction icon={History} label="Historial de programas" onPress={() => navigate(onOpenHistory)} />
+                <ActionSheetAction icon={History} label="Ver historial de programas" onPress={() => navigate(onOpenHistory)} />
+                <ActionSheetAction destructive icon={Trash2} label="Cancelar programa" onPress={() => setSelected("cancel")} />
               </ActionSheetActions>
             )}
           </ScrollView>
@@ -129,7 +111,7 @@ export function ProgramActiveActions({
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: tokens.color.surfaceCard, maxHeight: "88%" },
+  safeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   sheet: { backgroundColor: tokens.color.surfaceCard },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   content: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },

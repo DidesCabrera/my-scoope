@@ -1,5 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
+import { Carrot } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
@@ -16,7 +17,8 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, SectionDivider, useMutationStatus } from "@/components/ui";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
+import { Button, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -181,7 +183,7 @@ export default function CalendarizedMealDetailScreen() {
           label="+ Agregar alimento"
           onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
         />
-        {foods.length ? <><SectionDivider /><EntityDetailSection detail={`${foods.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} /></EntityDetailSection></> : null}
+        {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" /><FoodDetailCardList items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} /></> : null}
         <MealNoteCard controller={adherence} />
       </EntityDetailPage>
     </NestableScrollContainer>

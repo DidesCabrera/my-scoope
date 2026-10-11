@@ -35,8 +35,8 @@ const styles = StyleSheet.create({
   dayCircleCompact: { height: 40, width: 40 },
   dayCircleToday: { backgroundColor: tokens.color.entityIconForeground },
   dayNumber: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"] },
-  dayNumberToday: { color: tokens.color.surfaceApp },
-  monthLabel: { color: tokens.color.textMuted, fontFamily: font.regular, fontSize: 9, fontWeight: "300", lineHeight: 10 },
-  monthLabelToday: { color: tokens.color.surfaceApp, fontWeight: tokens.weight.regular },
+  dayNumberToday: { color: tokens.color.surfaceApp, fontWeight: tokens.weight.bold },
+  monthLabel: { color: tokens.color.textMuted, fontFamily: font.regular, fontSize: 9, fontWeight: tokens.weight.medium, lineHeight: 10 },
+  monthLabelToday: { color: tokens.color.surfaceApp, fontWeight: tokens.weight.semibold },
   section: { gap: tokens.spacing.md, minWidth: 0, width: "100%" },
 });

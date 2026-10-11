@@ -33,6 +33,8 @@ test("product action sheets blur the backdrop and preserve entity identity", () 
   assert.equal(actionSheet.includes("<EntityIcon entity={entity} size=\"header\" />"), true);
   assert.equal(actionSheet.includes("<View style={styles.sheetHandle} />"), true);
   assert.equal(actionSheet.includes("height: 4, marginTop: tokens.spacing.sm, width: 40"), true);
+  assert.equal(actionSheet.includes("headerTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, lineHeight: 25 }"), true);
+  assert.equal(source.includes("sheetTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, lineHeight: 25 }"), true);
   assert.equal(actionSheet.includes("sheetBorder"), false);
   assert.equal(actionSheet.includes("actionsTable: { backgroundColor: tokens.color.surfaceMuted, borderColor"), false);
   assert.equal(actionSheet.includes('<View style={styles.actionIcon}><Icon color={color} size={18} /></View>'), true);

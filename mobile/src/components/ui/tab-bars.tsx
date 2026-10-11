@@ -16,6 +16,7 @@ export type TabBarItem<T extends TabKey> = {
 type TabBarProps<T extends TabKey> = {
   accessibilityLabel: string;
   activeTab: T;
+  bleed?: boolean;
   onChange(tab: T): void;
   style?: StyleProp<ViewStyle>;
   tabs: readonly TabBarItem<T>[];
@@ -70,9 +71,9 @@ export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeT
   );
 }
 
-export function DistributedTabBar<T extends TabKey>({ accessibilityLabel, activeTab, onChange, style, tabs }: TabBarProps<T>) {
+export function DistributedTabBar<T extends TabKey>({ accessibilityLabel, activeTab, bleed = false, onChange, style, tabs }: TabBarProps<T>) {
   return (
-    <View accessibilityLabel={accessibilityLabel} accessibilityRole="tablist" style={[styles.distributedBar, style]}>
+    <View accessibilityLabel={accessibilityLabel} accessibilityRole="tablist" style={[styles.distributedBar, bleed && styles.distributedBarBleed, style]}>
       {tabs.map((tab) => {
         const selected = activeTab === tab.key;
         return (
@@ -94,6 +95,7 @@ export function DistributedTabBar<T extends TabKey>({ accessibilityLabel, active
 const styles = StyleSheet.create({
   count: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium },
   distributedBar: { flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, width: "100%" },
+  distributedBarBleed: { alignSelf: "stretch", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, width: "auto" },
   distributedTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flex: 1, flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "center", minHeight: 34, minWidth: 0, paddingHorizontal: tokens.spacing.sm },
   label: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium },
   labelSelected: { color: tokens.color.surfaceApp },

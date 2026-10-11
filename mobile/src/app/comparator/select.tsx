@@ -1,7 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Search } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -14,7 +13,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { LoadingState, textStyles } from "@/components/ui";
+import { LoadingState, SearchField, textStyles } from "@/components/ui";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 
@@ -100,19 +99,7 @@ export default function ComparatorSelectScreen() {
             createLabel={config.createLabel}
             onCreate={() => router.push({ pathname: "/libraries/create", params: { entity: config.createEntity } })}
           />
-          <View style={styles.searchField}>
-            <Search color={tokens.color.textSoft} size={19} />
-            <TextInput
-              accessibilityLabel={config.searchLabel}
-              autoCapitalize="words"
-              onChangeText={setQuery}
-              placeholder={config.searchPlaceholder}
-              placeholderTextColor={tokens.color.textSubtle}
-              style={styles.searchInput}
-              value={query}
-            />
-            {searching ? <ActivityIndicator color={tokens.color.interactivePrimary} size="small" /> : null}
-          </View>
+          <SearchField accessibilityLabel={config.searchLabel} autoCapitalize="words" bleed busy={searching} onChangeText={setQuery} placeholder={config.searchPlaceholder} value={query} />
         </View>
 
         <View style={styles.options}>
@@ -141,7 +128,5 @@ const styles = StyleSheet.create({
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 42 },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
-  searchInput: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, minHeight: 36, paddingVertical: 0 },
-  stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, zIndex: 2 },
+  stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

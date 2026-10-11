@@ -41,7 +41,7 @@ function CompactAction({ label, onPress, children }: { label: string; onPress():
   );
 }
 
-function ProgramDaysGrid({ onAssignDailyPlan, onOpenDailyPlan, onOpenMeal, onRemoveDailyPlan, week, weekData }: { onAssignDailyPlan?: (week: number, day: number) => void; onOpenDailyPlan?: (week: number, day: number) => void; onOpenMeal?: (week: number, day: number, mealIndex: number) => void; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; week: number; weekData?: LibraryWeekPanelItem }) {
+function ProgramDaysGrid({ onAssignDailyPlan, onOpenDailyPlan, onOpenMeal, onRemoveDailyPlan, onSaveDailyPlan, week, weekData }: { onAssignDailyPlan?: (week: number, day: number) => void; onOpenDailyPlan?: (week: number, day: number) => void; onOpenMeal?: (week: number, day: number, mealIndex: number) => void; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onSaveDailyPlan?: (week: number, day: number) => Promise<void>; week: number; weekData?: LibraryWeekPanelItem }) {
   const filledDays = weekData ? weekData.days.map((day) => Boolean(day.plan_name)) : week === 1 ? [true, true, true, true, true, false, true] : [true, true, false, true, true, true, true];
   const labels = weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels;
   const [selectedDay, setSelectedDay] = useState<number | null>(() => filledDays[0] ? 0 : null);
@@ -66,6 +66,7 @@ function ProgramDaysGrid({ onAssignDailyPlan, onOpenDailyPlan, onOpenMeal, onRem
         onOpenMeal={onOpenMeal ? (mealIndex) => onOpenMeal(week, selectedDay + 1, mealIndex) : undefined}
         onRemove={onRemoveDailyPlan ? () => onRemoveDailyPlan(week, selectedDay + 1) : undefined}
         onReplace={onAssignDailyPlan ? () => onAssignDailyPlan(week, selectedDay + 1) : undefined}
+        onSaveToLibrary={onSaveDailyPlan ? () => onSaveDailyPlan(week, selectedDay + 1) : undefined}
         week={week}
       /> : null}
     </ProgramDaySelector>
@@ -97,7 +98,7 @@ function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return { id: item.id, detailId: item.detail_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
-export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onOpenDailyPlan, onOpenFood, onOpenMeal, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, showHeading = true, showWeekAnalytics = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onOpenDailyPlan?: (week: number, day: number) => void; onOpenFood?: (foodId: number) => void; onOpenMeal?: (week: number, day: number, mealIndex: number) => void; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>; showHeading?: boolean; showWeekAnalytics?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
+export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onOpenDailyPlan, onOpenFood, onOpenMeal, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onSaveDailyPlan, showHeading = true, showWeekAnalytics = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onOpenDailyPlan?: (week: number, day: number) => void; onOpenFood?: (foodId: number) => void; onOpenMeal?: (week: number, day: number, mealIndex: number) => void; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>; onSaveDailyPlan?: (week: number, day: number) => Promise<void>; showHeading?: boolean; showWeekAnalytics?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
   const router = useRouter();
   const liveMetricData = weekData ? programDailyMetricData([weekData]) : undefined;
   const filledDaysCount = weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6;
@@ -140,7 +141,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
       </View> : null}
 
       {hasPlans ? <SectionHeading detail={`${filledDaysCount} asignados`} title="Planes diarios esta semana" /> : null}
-      <ProgramDaysGrid key={`${week}:${weekData?.days.map((day) => Number(Boolean(day.plan_name))).join("") ?? "demo"}`} onAssignDailyPlan={onAssignDailyPlan} onOpenDailyPlan={onOpenDailyPlan} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} week={week} weekData={weekData} />
+      <ProgramDaysGrid key={`${week}:${weekData?.days.map((day) => Number(Boolean(day.plan_name))).join("") ?? "demo"}`} onAssignDailyPlan={onAssignDailyPlan} onOpenDailyPlan={onOpenDailyPlan} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onSaveDailyPlan={onSaveDailyPlan} week={week} weekData={weekData} />
 
       {hasPlans ? <>
         <SectionDivider spacing="compact" tone="soft" />
@@ -180,13 +181,14 @@ type ProgramDetailPreviewProps = {
   onRemoveWeek?: (week: number) => Promise<void>;
   onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>;
   onReorderWeeks?: (weeks: number[]) => Promise<void>;
+  onSaveDailyPlan?: (week: number, day: number) => Promise<void>;
   onHeaderVisibilityChange?: (visible: boolean) => void;
   renderWeekContext?: (week: number) => ReactNode;
   scrollable?: boolean;
   showWeekAnalytics?: boolean;
 };
 
-export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onHeaderVisibilityChange, onOpenDailyPlan, onOpenFood, onOpenMeal, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, renderWeekContext, scrollable = false, showWeekAnalytics = true }: ProgramDetailPreviewProps = {}) {
+export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onHeaderVisibilityChange, onOpenDailyPlan, onOpenFood, onOpenMeal, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, onSaveDailyPlan, renderWeekContext, scrollable = false, showWeekAnalytics = true }: ProgramDetailPreviewProps = {}) {
   const [activeWeek, setActiveWeek] = useState(1);
   const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
   const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : item ? [1] : Array.from({ length: fallbackWeeksCount }, (_, index) => index + 1);
@@ -252,7 +254,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onA
         <View style={styles.planningHeaderScreen}>{planningHeader}</View>
         {weekTabs}
         {renderWeekContext?.(displayedActiveWeek)}
-        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
+        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} onSaveDailyPlan={onSaveDailyPlan} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
         {footer ? <View style={styles.footer}>{footer}</View> : null}
       </NestableScrollContainer>
     );
@@ -266,7 +268,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onA
         {planningHeader}
         {weekTabs}
         {renderWeekContext?.(displayedActiveWeek)}
-        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
+        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} onSaveDailyPlan={onSaveDailyPlan} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
         {footer ? <View style={styles.footer}>{footer}</View> : null}
       </View>
     </View>

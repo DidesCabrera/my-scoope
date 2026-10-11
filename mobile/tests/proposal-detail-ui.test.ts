@@ -133,8 +133,8 @@ test("proposed entities expose progressive detail navigation", async () => {
   assert.match(entity, /<EntityDetailPage/);
   assert.match(entity, /proposal\?\.dailyplan \? "Plan Diario Propuesto" : proposal\?\.meal \? "Comida Propuesta"/);
   assert.doesNotMatch(entity, /title: "Entidad propuesta"/);
-  assert.match(entity, /<SectionDivider \/>[\s\S]*title="Detalle de cada Alimento"/);
-  assert.match(entity, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
+  assert.match(entity, /<ProgramSectionHeader icon=\{Carrot\}[\s\S]*title="Detalle de cada Alimento"/);
+  assert.match(entity, /<ProgramSectionHeader icon=\{Utensils\}[\s\S]*title="Detalle de cada Comida"/);
   assert.match(entity, /title="Detalle de cada Comida"/);
   assert.match(entity, /eyebrow=\{`Comida \$\{index \+ 1\}`\}/);
   assert.match(entity, /time=\{item\.hour\}/);
@@ -142,7 +142,7 @@ test("proposed entities expose progressive detail navigation", async () => {
   assert.match(entity, /\/proposals\/\$\{proposal\.id\}\/entity\/meals\//);
   assert.match(entity, /\/proposals\/\$\{proposal\.id\}\/entity\/foods\//);
   assert.match(meal, /<EntityDetailPage/);
-  assert.match(meal, /<SectionDivider \/>[\s\S]*title="Detalle de cada Alimento"/);
+  assert.match(meal, /<ProgramSectionHeader icon=\{Carrot\}[\s\S]*title="Detalle de cada Alimento"/);
   assert.match(meal, /title="Detalle de cada Alimento"/);
   assert.match(meal, /eyebrowAccessory=\{item\.hour \? <HeaderMetadataChip kind="time" value=\{item\.hour\.slice\(0, 5\)\} \/> : undefined\}/);
   assert.doesNotMatch(meal, /label: "hora", tone: "surfaceCard"/);
@@ -168,10 +168,9 @@ test("meal details reuse food entity cards across library and calendarized conte
   const calendarized = await source("src/app/program/days/[id]/meals/[mealKey].tsx");
   const foodCards = await source("src/components/details/food-detail-card-list.tsx");
 
-  assert.match(library, /title="Detalle de cada Alimento"><FoodDetailCardList/);
+  assert.match(library, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada Alimento" \/><FoodDetailCardList/);
   assert.match(library, /\/libraries\/foods\/\$\{food\.detailId\}/);
-  assert.match(calendarized, /title="Detalle de cada Alimento"><FoodDetailCardList/);
-  assert.match(calendarized, /<SectionDivider \/><EntityDetailSection[^>]*title="Detalle de cada Alimento"/);
+  assert.match(calendarized, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada Alimento" \/><FoodDetailCardList/);
   assert.match(foodCards, /<NutritionEntityCard/);
   assert.match(foodCards, /subtitle=\{`\$\{item\.quantity\} \$\{item\.quantityUnit\}`\}/);
   assert.doesNotMatch(foodCards, /indicators=/);

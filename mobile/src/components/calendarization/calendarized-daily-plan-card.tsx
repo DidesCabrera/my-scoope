@@ -12,6 +12,9 @@ import { snapshotCalories, snapshotMacroDistribution, snapshotMealPanelItem } fr
 import { DailyMealCompletionCard } from "./meal-completion-summary";
 import { normalizeMealExecution } from "./meal-execution";
 import { CalendarizedEntityActions } from "./calendarized-entity-actions";
+import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
+
+type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
 type Props = {
   dayId: number | null;
@@ -23,9 +26,11 @@ type Props = {
   onAddMeal?: () => void;
   planName?: string;
   snapshot: DailyPlanSnapshot;
+  apiRequest: ApiRequest;
+  onChanged(): Promise<void> | void;
 };
 
-export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, mealExecution = [], onAddMeal, onChangeMealTime, planName, snapshot }: Props) {
+export function CalendarizedDailyPlanCard({ apiRequest, dayId, dateLabel, editing, eyebrow, mealExecution = [], onAddMeal, onChangeMealTime, onChanged, planName, snapshot }: Props) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const meals = snapshot.meals ?? [];
@@ -42,9 +47,10 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, 
   }));
   const cardEditing = editing && onChangeMealTime ? { ...editing, onChangeTime: setTimeChangeMeal } : editing;
   const openDetail = dayId ? () => router.push(`/program/days/${dayId}` as Href) : undefined;
+  const sourceDailyPlanId = snapshot.source?.dailyplan_id;
   return (<>
     <NutritionEntityCard
-      actions={openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}
+      actions={<>{sourceDailyPlanId ? <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={sourceDailyPlanId} name={snapshot.name ?? planName ?? "Plan diario"} onChanged={onChanged} /> : null}{openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}</>}
       afterNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} />}
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       entity="dailyPlan"

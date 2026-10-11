@@ -28,12 +28,33 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.match(create, /pickerEntryTo: String\(mealCreationContext\.pickerEntryHref\)/);
   assert.match(create, /returnTo: String\(mealCreationContext\.returnHref\)/);
   assert.doesNotMatch(create, /AppHeader|CollectionPageHeader/);
-  for (const field of ["Nombre", "Proteínas (g)", "Carbohidratos (g)", "Grasas (g)"]) {
+  for (const field of ["Nombre", "Proteínas", "Carbohidratos", "Grasas totales"]) {
     assert.match(create, new RegExp(field.replace(/[()]/g, "\\$&")));
   }
+  assert.equal(create.includes("Valores por 100 {portionUnit}"), true);
+  assert.equal(create.includes('labelStyle={entity === "food" ? styles.foodFieldLabel : undefined}'), true);
+  assert.equal(create.includes("foodFieldLabel: { color: tokens.color.textMain }"), true);
+  assert.ok(create.includes("nutritionLabel: { color: tokens.color.textMain") && create.includes("fontWeight: tokens.weight.bold"));
+  assert.equal(create.includes("style={styles.nutritionInputSurface}"), true);
+  assert.equal(create.includes('<Text style={styles.nutritionUnit}>g</Text>'), true);
+  assert.ok(create.includes('<DistributedTabBar<"g" | "ml">') && create.includes("bleed"));
   for (const endpoint of ["foods", "meals", "daily-plans", "programs"]) {
     assert.match(create, new RegExp(`/api/v1/library/${endpoint}`));
   }
+});
+
+test("private foods can be edited through the prefilled food form", async () => {
+  const create = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-create-screen.tsx"), "utf8");
+
+  assert.match(create, /const editingFoodId = entity === "food"/);
+  assert.match(create, /`\/api\/v1\/library\/foods\/\$\{editingFoodId\}`/);
+  assert.match(create, /setName\(food\.name\)/);
+  assert.match(create, /setProtein\(String\(food\.nutrition\.protein\.grams\)\)/);
+  assert.match(create, /setCarbs\(String\(food\.nutrition\.carbs\.grams\)\)/);
+  assert.match(create, /setFat\(String\(food\.nutrition\.fat\.grams\)\)/);
+  assert.match(create, /method: editingFoodId \? "PUT" : "POST"/);
+  assert.match(create, /editingFoodId \? "Editar alimento"/);
+  assert.match(create, /editingFoodId \? "Guardar cambios"/);
 });
 
 test("meal creation returns to selection on cancel and advances with the created meal on done", async () => {
@@ -67,7 +88,7 @@ test("empty drafts hide nutrition comparisons until they have comparable content
   assert.match(detail, /const isEmptyDraft = item\.is_draft && panelCount === 0/);
   assert.match(detail, /const detailIndicators = isEmptyDraft \? undefined/);
   assert.match(detail, /showNutrition=\{!isEmptyDraft\}/);
-  assert.match(detailPage, /showNutrition \? <View style=\{styles\.kpiSection\}><NutritionKpiSection/);
+  assert.match(detailPage, /showNutrition && nutrition \? <View style=\{styles\.kpiSection\}><NutritionKpiSection/);
   assert.match(program, /const hasPlans = filledDaysCount > 0/);
   assert.match(program, /const showProgramComparison = !item \|\| weeksCount > 1/);
   assert.match(program, /const showProgramStructure = !item \|\| plansCount > 0 \|\| weeksCount > 1/);

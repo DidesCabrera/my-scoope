@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { type Href, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
+import { Carrot } from "lucide-react-native";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
@@ -9,7 +10,8 @@ import { useSession } from "@/auth/session-context";
 import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { GroupedFoodsCard, type FoodPanelItem, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
-import { Button, InlineNotice, MutationStatusModal, SectionDivider, SectionHeading, textStyles, useMutationStatus } from "@/components/ui";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
+import { Button, InlineNotice, MutationStatusModal, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
 import { compactDateLabel, compactMonthLabel, preferredCalendarizedDay } from "./current-week";
@@ -185,7 +187,7 @@ export function CalendarizedProgramPlanning({
             <InlineNotice tone="error">{error}</InlineNotice>
           ) : detail?.has_plan && snapshot ? (
             <View style={styles.selectedPlan}>
-              <CalendarizedDailyPlanCard dayId={detail.id} dateLabel={compactDateLabel(detail.calendar_date)} editing={mealEditing} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} onAddMeal={() => router.push(pickerHref("meal-to-calendarized-day", { dayId: detail.id, returnTo: "/program" }))} onChangeMealTime={(meal, hour) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/${encodeURIComponent(meal.id)}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" })} planName={detail.plan_name} snapshot={snapshot} />
+              <CalendarizedDailyPlanCard apiRequest={apiRequest} dayId={detail.id} dateLabel={compactDateLabel(detail.calendar_date)} editing={mealEditing} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} onAddMeal={() => router.push(pickerHref("meal-to-calendarized-day", { dayId: detail.id, returnTo: "/program" }))} onChanged={async () => setDetail(normalizeCalendarizedDayDetail(await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${detail.id}`)))} onChangeMealTime={(meal, hour) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/${encodeURIComponent(meal.id)}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" })} planName={detail.plan_name} snapshot={snapshot} />
               {detail.calendar_date > localDate() ? (
                 <Button
                   label="Cambiar plan diario"
@@ -208,8 +210,7 @@ export function CalendarizedProgramPlanning({
           ) : null}
         </ProgramDaySelector>
 
-        <SectionDivider spacing="compact" tone="soft" />
-        <SectionHeading detail={`${weekData?.foods_count ?? weekFoods.length} alimentos`} title="Alimentos en esta semana" />
+        <ProgramSectionHeader icon={Carrot} subtitle="Revisa las cantidades de alimentos de esta semana; conoce y compara su aporte nutricional real en el programa." title="Alimentos en esta semana" />
         <GroupedFoodsCard title={`Alimentos semana ${activeWeek}`} items={weekFoods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
       </View>
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />

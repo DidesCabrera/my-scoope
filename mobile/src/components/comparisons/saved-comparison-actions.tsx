@@ -1,6 +1,6 @@
 import { Pencil } from "lucide-react-native";
 import { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -40,7 +40,7 @@ export function SavedComparisonActions({ name: currentName, onClose, onEdit, onR
     <ActionSheetModal onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <ActionSheetHeader onClose={close} section="comparator" title={editingName ? "Editar nombre" : "Comparación"} />
-        <View style={styles.content}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={styles.scroll}>
           {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
           {!editingName ? <ActionSheetActions>
             <ActionSheetAction icon={Pencil} label="Editar nombre" onPress={() => { setName(currentName); setError(null); setEditingName(true); }} />
@@ -52,7 +52,7 @@ export function SavedComparisonActions({ name: currentName, onClose, onEdit, onR
               <Button disabled={submitting} label="Volver" onPress={() => setEditingName(false)} variant="secondary" />
             </View>
           )}
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </ActionSheetModal>
   );
@@ -61,5 +61,6 @@ export function SavedComparisonActions({ name: currentName, onClose, onEdit, onR
 const styles = StyleSheet.create({
   content: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   form: { gap: tokens.spacing.md },
-  safeArea: { backgroundColor: tokens.color.surfaceCard },
+  safeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
+  scroll: { flexGrow: 0, flexShrink: 1 },
 });

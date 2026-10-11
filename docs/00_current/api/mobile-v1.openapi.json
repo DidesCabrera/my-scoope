@@ -1656,6 +1656,153 @@
         "title": "CalendarizationHistoryItem",
         "type": "object"
       },
+      "CalendarizationProgramDayData": {
+        "properties": {
+          "nutrition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LibraryNutritionData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "CalendarizationProgramDayData",
+        "type": "object"
+      },
+      "CalendarizationProgramOptionData": {
+        "properties": {
+          "creator": {
+            "title": "Creator",
+            "type": "string"
+          },
+          "filled_days_count": {
+            "title": "Filled Days Count",
+            "type": "integer"
+          },
+          "foods_count": {
+            "title": "Foods Count",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarizationProgramWeekData"
+            },
+            "title": "Weeks",
+            "type": "array"
+          },
+          "weeks_count": {
+            "title": "Weeks Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "creator",
+          "weeks_count",
+          "filled_days_count",
+          "foods_count",
+          "weeks"
+        ],
+        "title": "CalendarizationProgramOptionData",
+        "type": "object"
+      },
+      "CalendarizationProgramOptionsData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarizationProgramOptionData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "CalendarizationProgramOptionsData",
+        "type": "object"
+      },
+      "CalendarizationProgramOptionsEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarizationProgramOptionsData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarizationProgramOptionsEnvelope",
+        "type": "object"
+      },
+      "CalendarizationProgramWeekData": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarizationProgramDayData"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "week_number": {
+            "title": "Week Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "week_number",
+          "days"
+        ],
+        "title": "CalendarizationProgramWeekData",
+        "type": "object"
+      },
       "CalendarizationReviewData": {
         "properties": {
           "created_at": {
@@ -2761,6 +2908,133 @@
           "data"
         ],
         "title": "CompositionMutationEnvelope",
+        "type": "object"
+      },
+      "CompositionOptionData": {
+        "properties": {
+          "entity": {
+            "enum": [
+              "meal",
+              "dailyPlan"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
+          },
+          "subtitle": {
+            "title": "Subtitle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "name",
+          "subtitle",
+          "nutrition",
+          "indicators",
+          "panel"
+        ],
+        "title": "CompositionOptionData",
+        "type": "object"
+      },
+      "CompositionOptionsData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CompositionOptionData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "CompositionOptionsData",
+        "type": "object"
+      },
+      "CompositionOptionsEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CompositionOptionsData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CompositionOptionsEnvelope",
         "type": "object"
       },
       "CompositionOrderInput": {
@@ -6451,6 +6725,28 @@
           "weeks"
         ],
         "title": "ProgramNutritionSpecificationData",
+        "type": "object"
+      },
+      "ProgramWeekPickerDetailEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LibraryWeekPanelItemData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ProgramWeekPickerDetailEnvelope",
         "type": "object"
       },
       "ProgramWeekTargetData": {
@@ -11682,6 +11978,69 @@
         "summary": "Dailyplan Meal Update"
       }
     },
+    "/api/v1/library/daily-plans/{dailyplan_id}/meals/{dailyplan_meal_id}/save-to-library": {
+      "post": {
+        "operationId": "mobile_api_api_dailyplan_meal_save_to_library",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dailyplan_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dailyplan_meal_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Dailyplan Meal Save To Library"
+      }
+    },
     "/api/v1/library/foods": {
       "get": {
         "operationId": "mobile_api_api_library_foods",
@@ -11813,6 +12172,80 @@
           }
         ],
         "summary": "Create Library Food"
+      }
+    },
+    "/api/v1/library/foods/{food_id}/edit": {
+      "put": {
+        "operationId": "mobile_api_api_update_library_food",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "food_id",
+            "required": true,
+            "schema": {
+              "title": "Food Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Library Food"
       }
     },
     "/api/v1/library/meals": {
@@ -12477,6 +12910,87 @@
         "summary": "Create Library Program"
       }
     },
+    "/api/v1/library/programs/calendarization-options": {
+      "get": {
+        "operationId": "mobile_api_api_calendarization_program_options",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizationProgramOptionsEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarization Program Options"
+      }
+    },
     "/api/v1/library/programs/{program_id}/daily-plan-picker/commit": {
       "post": {
         "operationId": "mobile_api_api_program_dailyplan_picker_commit",
@@ -13101,6 +13615,78 @@
         "summary": "Program Day Delete"
       }
     },
+    "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/{day_number}/save-to-library": {
+      "post": {
+        "operationId": "mobile_api_api_program_dailyplan_save_to_library",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "week_number",
+            "required": true,
+            "schema": {
+              "title": "Week Number",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "day_number",
+            "required": true,
+            "schema": {
+              "title": "Day Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Dailyplan Save To Library"
+      }
+    },
     "/api/v1/library/programs/{program_id}/weeks/{week_number}/duplicate": {
       "post": {
         "operationId": "mobile_api_api_program_week_duplicate",
@@ -13172,6 +13758,79 @@
           }
         ],
         "summary": "Program Week Duplicate"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/weeks/{week_number}/picker-detail": {
+      "get": {
+        "operationId": "mobile_api_api_program_week_picker_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "week_number",
+            "required": true,
+            "schema": {
+              "title": "Week Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramWeekPickerDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Week Picker Detail"
       }
     },
     "/api/v1/library/{entity}/bulk-delete": {
@@ -13246,6 +13905,106 @@
           }
         ],
         "summary": "Library Bulk Delete"
+      }
+    },
+    "/api/v1/library/{entity}/composition-options": {
+      "get": {
+        "operationId": "mobile_api_api_composition_options",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entity",
+            "required": true,
+            "schema": {
+              "title": "Entity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionOptionsEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Composition Options"
       }
     },
     "/api/v1/library/{entity}/order": {

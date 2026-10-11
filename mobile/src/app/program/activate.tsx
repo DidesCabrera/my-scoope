@@ -1,22 +1,38 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Search } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MobileApiError, userFacingError } from "@/api/errors";
-import type { CalendarizationActivationData, CalendarizationActivationInput, LibraryItem, LibraryPageData } from "@/api/types";
+import type { CalendarizationActivationData, CalendarizationActivationInput, CalendarizationProgramOption, CalendarizationProgramOptionsData, LibraryItem, LibraryPageData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ProgramChildCard, programDailyMetricData } from "@/components/libraries/program-child-card";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, Field, LoadingState, NativeDateTimeField, Screen, SectionHeading, SystemSwitch } from "@/components/ui";
+import { Button, Card, LoadingState, NativeDateTimeField, Screen, SearchField, SectionHeading, SystemSwitch } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 type Toggle = "on" | "off";
 type Confirmation = { kind: "incomplete" | "replacement"; message: string } | null;
+
+function legacyIndicatorValue(program: LibraryItem, icon: "week" | "dailyPlan" | "food"): number {
+  const value = program.indicators.find((indicator) => indicator.icon === icon)?.value;
+  return typeof value === "number" ? value : Number.parseInt(String(value ?? 0), 10) || 0;
+}
+
+function legacyCalendarizationOption(program: LibraryItem): CalendarizationProgramOption {
+  return {
+    creator: program.creator,
+    filled_days_count: legacyIndicatorValue(program, "dailyPlan"),
+    foods_count: legacyIndicatorValue(program, "food"),
+    id: program.id,
+    name: program.name,
+    weeks: program.panel.kind === "weeks" ? program.panel.weeks : [],
+    weeks_count: legacyIndicatorValue(program, "week"),
+  };
+}
 
 function localDate(): string {
   const now = new Date();
@@ -25,9 +41,23 @@ function localDate(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
-function indicatorValue(program: LibraryItem, icon: "week" | "dailyPlan" | "food"): number {
-  const value = program.indicators.find((indicator) => indicator.icon === icon)?.value;
-  return typeof value === "number" ? value : Number.parseInt(String(value ?? 0), 10) || 0;
+function detectedTimezone(profileTimezone?: string | null): string {
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timezone) return timezone;
+  } catch {
+    // Fall back to the last known profile timezone on runtimes without Intl timezone support.
+  }
+  return profileTimezone?.trim() || "UTC";
+}
+
+function NotificationToggle({ label, onValueChange, value }: { label: string; onValueChange(value: boolean): void; value: boolean }) {
+  return (
+    <View style={styles.notificationRow}>
+      <Text style={styles.notificationLabel}>{label}</Text>
+      <SystemSwitch accessibilityLabel={label} onValueChange={onValueChange} value={value} />
+    </View>
+  );
 }
 
 export default function ActivateProgramScreen() {
@@ -35,14 +65,14 @@ export default function ActivateProgramScreen() {
   const { programId } = useLocalSearchParams<{ programId?: string }>();
   const requestedProgramId = Number(programId);
   const { status, profile, apiRequest } = useSession();
-  const [programs, setPrograms] = useState<LibraryItem[]>([]);
+  const [programs, setPrograms] = useState<CalendarizationProgramOption[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [startDate, setStartDate] = useState(localDate);
-  const [timezoneName, setTimezoneName] = useState(profile?.timezone_name || "UTC");
+  const [timezoneName, setTimezoneName] = useState(() => detectedTimezone(profile?.timezone_name));
   const [dailyTime, setDailyTime] = useState("07:00");
   const [daily, setDaily] = useState<Toggle>("on");
-  const [meals, setMeals] = useState<Toggle>("off");
+  const [meals, setMeals] = useState<Toggle>("on");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,17 +83,23 @@ export default function ActivateProgramScreen() {
   const filteredPrograms = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
     if (!normalizedQuery) return programs;
-    return programs.filter((program) => `${program.name} ${program.subtitle ?? ""}`.toLocaleLowerCase("es").includes(normalizedQuery));
+    return programs.filter((program) => program.name.toLocaleLowerCase("es").includes(normalizedQuery));
   }, [programs, query]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const page = await apiRequest<LibraryPageData>("/api/v1/library/programs?limit=100");
-      const eligiblePrograms = page.items.filter((program) => program.can_calendarize);
-      setPrograms(eligiblePrograms);
-      setSelectedId(Number.isInteger(requestedProgramId) && eligiblePrograms.some((program) => program.id === requestedProgramId) ? requestedProgramId : null);
+      let page: CalendarizationProgramOptionsData;
+      try {
+        page = await apiRequest<CalendarizationProgramOptionsData>("/api/v1/library/programs/calendarization-options?limit=100");
+      } catch (nextError) {
+        if (!(nextError instanceof MobileApiError) || ![404, 422].includes(nextError.status)) throw nextError;
+        const legacyPage = await apiRequest<LibraryPageData>("/api/v1/library/programs?limit=100");
+        page = { ...legacyPage, items: legacyPage.items.filter((program) => program.can_calendarize).map(legacyCalendarizationOption) };
+      }
+      setPrograms(page.items);
+      setSelectedId(Number.isInteger(requestedProgramId) && page.items.some((program) => program.id === requestedProgramId) ? requestedProgramId : null);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -72,6 +108,9 @@ export default function ActivateProgramScreen() {
   }, [apiRequest, requestedProgramId]);
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
+  useFocusEffect(useCallback(() => {
+    setTimezoneName(detectedTimezone(profile?.timezone_name));
+  }, [profile?.timezone_name]));
   useFocusEffect(useCallback(() => {
     const cancel = () => router.dismissTo("/program" as Href);
     setHeaderPresentation({ action: { label: "Cancelar", onPress: cancel }, fallback: "/program", mode: "back", title: "Calendarizar programa" });
@@ -96,34 +135,22 @@ export default function ActivateProgramScreen() {
               createLabel="Crear Nuevo"
               onCreate={() => router.push({ pathname: "/libraries/create", params: { entity: "program" } })}
             />
-            <View style={styles.searchField}>
-              <Search color={tokens.color.textSoft} size={19} />
-              <TextInput
-                accessibilityLabel="Buscar programa"
-                autoCapitalize="words"
-                onChangeText={setQuery}
-                placeholder="Escribe el nombre de un programa"
-                placeholderTextColor={tokens.color.textSubtle}
-                style={styles.searchInput}
-                value={query}
-              />
-            </View>
+            <SearchField accessibilityLabel="Buscar programa" autoCapitalize="words" bleed onChangeText={setQuery} placeholder="Escribe el nombre de un programa" value={query} />
           </View>
 
           <View style={styles.options}>
             <SectionHeading detail={`${filteredPrograms.length} disponibles`} title="Selecciona un programa" />
             {filteredPrograms.map((program) => (
               <ProgramChildCard
-                axisLabels={program.panel.kind === "weeks" ? program.panel.weeks.map((week) => `S${week.week_number}`) : []}
-                filledDaysCount={indicatorValue(program, "dailyPlan")}
-                foodsCount={indicatorValue(program, "food")}
+                axisLabels={program.weeks.map((week) => `S${week.week_number}`)}
+                filledDaysCount={program.filled_days_count}
+                foodsCount={program.foods_count}
                 key={program.id}
-                metricData={program.panel.kind === "weeks" ? programDailyMetricData(program.panel.weeks) : []}
+                metricData={programDailyMetricData(program.weeks)}
                 onOpen={() => router.push(`/program/activate?programId=${program.id}` as Href)}
                 openActionLabel="Seleccionar"
-                owner={program.creator}
                 title={program.name}
-                weeksCount={indicatorValue(program, "week")}
+                weeksCount={program.weeks_count}
               />
             ))}
             {!filteredPrograms.length ? <Text style={styles.emptyText}>No encontramos programas con ese nombre.</Text> : null}
@@ -187,38 +214,30 @@ export default function ActivateProgramScreen() {
       ) : selected ? (
         <>
           <ProgramChildCard
-            axisLabels={selected.panel.kind === "weeks" ? selected.panel.weeks.map((week) => `S${week.week_number}`) : []}
-            filledDaysCount={indicatorValue(selected, "dailyPlan")}
-            foodsCount={indicatorValue(selected, "food")}
-            metricData={selected.panel.kind === "weeks" ? programDailyMetricData(selected.panel.weeks) : []}
-            onOpen={() => router.replace("/program/activate" as Href)}
-            openActionLabel="Cambiar selección"
-            owner={selected.creator}
+            axisLabels={selected.weeks.map((week) => `S${week.week_number}`)}
+            filledDaysCount={selected.filled_days_count}
+            foodsCount={selected.foods_count}
+            metricData={programDailyMetricData(selected.weeks)}
             title={selected.name}
-            weeksCount={indicatorValue(selected, "week")}
+            weeksCount={selected.weeks_count}
           />
 
-          <Card accent={tokens.color.program}>
+          <Card>
             <SectionHeading title="Configura la selección" />
             <NativeDateTimeField label="Fecha de inicio" minimumValue={localDate()} mode="date" onChange={(value) => { setStartDate(value); setConfirmation(null); }} value={startDate} />
-            <Field label="Zona horaria IANA" onChangeText={setTimezoneName} placeholder="America/Santiago" value={timezoneName} />
-            <NativeDateTimeField label="Hora del aviso diario" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} />
-            <View style={styles.notificationRow}>
-              <Text style={styles.notificationLabel}>Aviso del plan diario</Text>
-              <SystemSwitch
-                accessibilityLabel="Aviso del plan diario"
+            <View style={styles.dailyNotificationBlock}>
+              <NotificationToggle
+                label="Aviso inicial del plan diario"
                 onValueChange={(enabled) => setDaily(enabled ? "on" : "off")}
                 value={daily === "on"}
               />
+              {daily === "on" ? <NativeDateTimeField hideLabel label="Hora del aviso diario" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} /> : null}
             </View>
-            <View style={styles.notificationRow}>
-              <Text style={styles.notificationLabel}>Avisos según la hora de cada comida</Text>
-              <SystemSwitch
-                accessibilityLabel="Avisos según la hora de cada comida"
-                onValueChange={(enabled) => setMeals(enabled ? "on" : "off")}
-                value={meals === "on"}
-              />
-            </View>
+            <NotificationToggle
+              label="Avisos según la hora de cada comida"
+              onValueChange={(enabled) => setMeals(enabled ? "on" : "off")}
+              value={meals === "on"}
+            />
           </Card>
           {confirmation ? (
             <ConfirmationState busy={saving} confirmLabel={confirmation.kind === "replacement" ? "Cambiar programa" : "Continuar igualmente"} danger={confirmation.kind === "replacement"} message={confirmation.message} onCancel={() => setConfirmation(null)} onConfirm={() => void activate(confirmation.kind === "incomplete" ? { confirm_incomplete: true } : { replace_current: true })} title={confirmation.kind === "replacement" ? "¿Reemplazar tu programa actual?" : "Este programa está incompleto"} />
@@ -230,13 +249,12 @@ export default function ActivateProgramScreen() {
 }
 
 const styles = StyleSheet.create({
+  dailyNotificationBlock: { gap: tokens.spacing.xs },
   emptyText: { color: tokens.color.textMuted, fontSize: tokens.type.body },
-  notificationLabel: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  notificationLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   notificationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minHeight: 44 },
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
-  searchInput: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, minHeight: 36, paddingVertical: 0 },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
-  selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, zIndex: 2 },
+  selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

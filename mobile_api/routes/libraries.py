@@ -7,6 +7,8 @@ from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
 from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
 from mobile_api.schema_domains.libraries import (
+    CalendarizationProgramOptionsEnvelope,
+    CompositionOptionsEnvelope,
     FoodCreateInput,
     FoodItemEnvelope,
     FoodPageEnvelope,
@@ -18,14 +20,18 @@ from mobile_api.schema_domains.libraries import (
     LibraryOrderInput,
     LibraryPageEnvelope,
     NamedLibraryCreateInput,
+    ProgramWeekPickerDetailEnvelope,
 )
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import (
+    calendarization_program_options_payload,
+    composition_options_payload,
     library_dailyplans_payload,
     library_foods_payload,
     library_item_detail_payload,
     library_meals_payload,
     library_programs_payload,
+    program_week_picker_detail_payload,
 )
 from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.queries.food_picker_queries import (
@@ -34,10 +40,11 @@ from notas.application.queries.food_picker_queries import (
     list_food_picker_page,
 )
 from notas.application.services.commands.dailyplan_commands import create_draft_dailyplan
-from notas.application.services.commands.food_commands import create_food
+from notas.application.services.commands.food_commands import create_food, update_food
 from notas.application.services.commands.meal_commands import create_draft_meal
 from notas.application.services.commands.program_commands import create_weekly_program
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
+from notas.domain.models import Food
 
 router = Router()
 
@@ -110,6 +117,50 @@ def library_programs(request, search: str | None = None, offset: int = 0, limit:
 
 
 @router.get(
+    "/library/programs/calendarization-options",
+    operation_id="mobile_api_api_calendarization_program_options",
+    auth=mobile_bearer,
+    response={200: CalendarizationProgramOptionsEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def calendarization_program_options(request, search: str | None = None, offset: int = 0, limit: int = 30):
+    return success(
+        calendarization_program_options_payload(request.auth.user, search=search, offset=offset, limit=limit)
+    )
+
+
+@router.get(
+    "/library/{entity}/composition-options",
+    operation_id="mobile_api_api_composition_options",
+    auth=mobile_bearer,
+    response={200: CompositionOptionsEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def composition_options(request, entity: str, search: str | None = None, offset: int = 0, limit: int = 30):
+    try:
+        return success(
+            composition_options_payload(
+                request.auth.user, entity=entity, search=search, offset=offset, limit=limit
+            )
+        )
+    except ValueError as exc:
+        raise MobileAPIError(str(exc), "Este tipo de elemento no está disponible para selección.", 422) from exc
+
+
+@router.get(
+    "/library/programs/{program_id}/weeks/{week_number}/picker-detail",
+    operation_id="mobile_api_api_program_week_picker_detail",
+    auth=mobile_bearer,
+    response={200: ProgramWeekPickerDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def program_week_picker_detail(request, program_id: int, week_number: int):
+    week = program_week_picker_detail_payload(
+        request.auth.user, program_id=program_id, week_number=week_number
+    )
+    if week is None:
+        raise MobileAPIError("program_week_not_found", "La semana seleccionada no está disponible.", 404)
+    return success(week)
+
+
+@router.get(
     "/library/daily-plans",
     operation_id="mobile_api_api_library_dailyplans",
     auth=mobile_bearer,
@@ -166,6 +217,28 @@ def create_library_food(request, payload: FoodCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     result = create_food(
         user=request.auth.user,
+        name=_clean_creation_name(payload.name),
+        protein=payload.protein,
+        carbs=payload.carbs,
+        fat=payload.fat,
+        portion_unit=payload.portion_unit,
+    )
+    return success(library_item_detail_payload(request.auth.user, "foods", result.food.id))
+
+
+@router.put(
+    "/library/foods/{food_id}/edit",
+    operation_id="mobile_api_api_update_library_food",
+    auth=mobile_bearer,
+    response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_library_food(request, food_id: int, payload: FoodCreateInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    food = Food.objects.filter(pk=food_id, created_by=request.auth.user, is_active=True).first()
+    if food is None:
+        raise MobileAPIError("library_item_not_found", "El alimento no está disponible para edición.", 404)
+    result = update_food(
+        food=food,
         name=_clean_creation_name(payload.name),
         protein=payload.protein,
         carbs=payload.carbs,

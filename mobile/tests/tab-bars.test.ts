@@ -20,6 +20,7 @@ test("UI System exposes intrinsic scrollable and full-width distributed tab bars
   assert.match(tabs, /scrollableTabCompact: \{[^}]*minHeight: 30/);
   assert.match(tabs, /export function DistributedTabBar/);
   assert.match(tabs, /distributedBar: \{[^}]*width: "100%"/);
+  assert.ok(tabs.includes('distributedBarBleed: { alignSelf: "stretch"') && tabs.includes('marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, width: "auto"'));
   assert.match(tabs, /distributedTab: \{[^}]*flex: 1/);
   assert.match(tabs, /distributedTab: \{[^}]*justifyContent: "center"/);
   assert.match(tabs, /tab\.count != null/);
@@ -33,6 +34,8 @@ test("domain tab bars use the matching UI System layout contract", async () => {
 
   assert.match(assistant, /<DistributedTabBar<AssistantSection>/);
   assert.match(picker, /<DistributedTabBar<PickerEntryTab>/);
+  assert.match(picker, /style=\{\[styles\.entryTabsBar, layoutStyles\.cardContentBleed\]\}/);
+  assert.match(picker, /entryTabsBar: \{[^}]*minWidth: 0/);
   assert.match(comparator, /<DistributedTabBar/);
   assert.match(comparator, /export function SavedComparisonPreviewPanels/);
   assert.match(comparator, /<PanelSurface>/);

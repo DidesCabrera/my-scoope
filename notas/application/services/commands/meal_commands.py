@@ -4,6 +4,7 @@ from typing import Optional
 from django.db import transaction
 
 from notas.application.commercial.limits import require_new_workspace_item
+from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
 from notas.domain.models import Meal, MealFood
 
 # ==================================================
@@ -92,6 +93,7 @@ def rename_meal(
 
     meal.name = clean_name
     meal.save(update_fields=["name"])
+    refresh_dailyplans_for_meal(meal)
 
     return MealRenameResult(meal=meal)
 
