@@ -1,4 +1,5 @@
 export * from "./collection-page-header";
+export * from "./assistant-gradient-icon";
 export * from "./chip";
 export * from "./controls";
 export * from "./detail-link-row";

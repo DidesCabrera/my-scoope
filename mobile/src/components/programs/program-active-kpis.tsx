@@ -5,7 +5,7 @@ import Svg, { Circle } from "react-native-svg";
 import { Card } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-type Props = { adheredDays: number; adherence: number; bleed?: boolean; elapsedDays: number; mutedPanels?: boolean; plannedAdherenceDays: number; progress: number; standalone?: boolean; topInset?: boolean; totalDays: number };
+type Props = { adheredDays: number; adherence: number; bleed?: boolean; elapsedDays: number; mealLabel?: string; mutedPanels?: boolean; planLabel?: string; plannedAdherenceDays: number; progress: number; standalone?: boolean; topInset?: boolean; totalDays: number };
 
 const RING_SIZE = 136;
 const RING_CENTER = RING_SIZE / 2;
@@ -43,17 +43,17 @@ function ProgressRing({ color, current, percentage, total, trackColor }: { color
   );
 }
 
-export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapsedDays, mutedPanels = false, plannedAdherenceDays, progress, standalone = false, topInset = false, totalDays }: Props) {
+export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapsedDays, mealLabel = "Cumplimiento comidas", mutedPanels = false, planLabel = "Planes diarios recorridos", plannedAdherenceDays, progress, standalone = false, topInset = false, totalDays }: Props) {
   const advancement = Math.max(0, Math.min(progress, 100));
   const compliance = Math.max(0, Math.min(adherence, 100));
   const content = <>
     <View style={[styles.indicators, styles.indicatorsSurfaceReset]}>
       <View style={[styles.indicator, mutedPanels ? styles.indicatorMuted : styles.indicatorCard, styles.indicatorMetricSpacing]}>
-        <View style={styles.indicatorIdentity}><Clock3 color={tokens.color.textMuted} size={20} /><Text style={styles.indicatorLabel}>Planes diarios recorridos</Text></View>
+        <View style={styles.indicatorIdentity}><Clock3 color={tokens.color.textMuted} size={20} /><Text style={styles.indicatorLabel}>{planLabel}</Text></View>
         <ProgressRing color={tokens.color.dailyPlan} current={elapsedDays} percentage={advancement} total={totalDays} trackColor={`${tokens.color.dailyPlan}33`} />
       </View>
       <View style={[styles.indicator, mutedPanels ? styles.indicatorMuted : styles.indicatorCard, styles.indicatorMetricSpacing]}>
-        <View style={styles.indicatorIdentity}><CheckCheck color={tokens.color.textMuted} size={20} /><Text style={styles.indicatorLabel}>Cumplimiento comidas</Text></View>
+        <View style={styles.indicatorIdentity}><CheckCheck color={tokens.color.textMuted} size={20} /><Text style={styles.indicatorLabel}>{mealLabel}</Text></View>
         <ProgressRing color={tokens.color.meal} current={adheredDays} percentage={compliance} total={plannedAdherenceDays} trackColor={`${tokens.color.meal}33`} />
       </View>
     </View>

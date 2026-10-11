@@ -105,6 +105,24 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /export default function UiGalleryScreen/);
   assertSourceMatch(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
   assertSourceMatch(gallery, /Galería del sistema UI/);
+  assertSourceMatch(gallery, /title="Dashboards de créditos"/);
+  assertSourceDoesNotMatch(gallery, /AssistantCreditBalance|SidebarCreditDashboard|variante grid/);
+  assertSourceMatch(gallery, /<CreditDashboardGrid availableCredits=\{150\} onPress=\{\(\) => undefined\} planName="Basic" \/>/);
+  const creditDashboardGrid = await readTestFile(
+    path.resolve(process.cwd(), "src/components/assistant/credit-dashboard-grid.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(creditDashboardGrid, /planColumn: \{ alignItems: "flex-start", flex: 13, justifyContent: "flex-start" \}/);
+  assertSourceMatch(creditDashboardGrid, /creditsColumn: \{ alignItems: "flex-end", flex: 10, justifyContent: "flex-end" \}/);
+  assertSourceMatch(creditDashboardGrid, /actionColumn: \{ alignItems: "center", width: 22 \}/);
+  assertSourceMatch(creditDashboardGrid, /creditAiIcon: \{[^}]*height: 18[^}]*width: 18/);
+  assertSourceMatch(creditDashboardGrid, /<Sparkles color=\{tokens\.color\.surfaceApp\} size=\{16\} strokeWidth=\{2\} \/>[\s\S]*\{availableCredits\.toLocaleString\("es-CL"\)\}/);
+  assertSourceMatch(creditDashboardGrid, /\{onPress \? <View style=\{\[styles\.column, styles\.actionColumn\]\}>/);
+  assertSourceMatch(creditDashboardGrid, /const usesPanelBleed = bleed \?\? !onPress/);
+  assertSourceMatch(creditDashboardGrid, /usesPanelBleed && styles\.panelBleed/);
+  assertSourceMatch(creditDashboardGrid, /panelBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
+  assertSourceMatch(creditDashboardGrid, /creditValueRow: \{[^}]*gap: tokens\.spacing\.xs/);
+  assertSourceMatch(creditDashboardGrid, /eyebrow: \{[^}]*transform: \[\{ translateX: 1 \}\]/);
   assertSourceDoesNotMatch(gallery, /<Brand|Referencia interna construida con los componentes reales de la app/);
   assertSourceMatch(gallery, /<OnboardingStoryboardGallery \/>/);
   assertSourceMatch(gallery, /<SubscriptionGallery \/>/);
@@ -1107,7 +1125,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   }
   const welcomeView = journey.match(/function ValueView[\s\S]*?function StructureView/)?.[0] ?? "";
   assertSourceMatch(welcomeView, /title="Bienvenido a My Scoope!"/);
-  assertSourceMatch(welcomeView, /Antes que todo, queremos declarar con toda honestidad/);
+  assertSourceMatch(welcomeView, /Nos alegra mucho tenerte por aquí/);
   assertSourceDoesNotMatch(welcomeView, /<ExplanationCard/);
   assertSourceMatch(journey, /explanationSteps\.map\(\(step, dotIndex\) =>/);
   assertSourceMatch(journey, /id="onboarding-credit-gradient"/);

@@ -11,6 +11,7 @@ test("login renders the first storyboard view with the real authentication actio
   const login = await source("src/app/login.tsx");
 
   assert.ok(login.includes("OnboardingJourneyView"));
+  assert.match(await source("src/components/onboarding/onboarding-journey-view.tsx"), /loginDescription: \{ color: tokens\.color\.textMain/);
   assert.ok(login.includes('step="login"'));
   assert.ok(login.includes("startSignIn(returnHref)"));
 });
@@ -42,27 +43,78 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes("interactiveExplanationScreenFlush: { paddingTop: 76 }"));
   assert.ok(journey.includes("paddingTop: tokens.spacing.xxl - 18"));
   assert.ok(journey.includes('explanationSlide: { flex: 1, gap: tokens.spacing.lg, justifyContent: "center"'));
+  assert.ok(journey.includes("contentContainerStyle={styles.explanationScrollContent}"));
+  assert.ok(journey.includes("explanationScrollContent: { flexGrow: 1 }"));
   assert.ok(journey.includes("isExplanation && { marginBottom: (usesCenteredTitleSpacing ? tokens.spacing.sm : 0) + 10 }"));
-  assert.ok(journey.includes("Antes que todo, queremos declarar con toda honestidad"));
-  assert.ok(journey.includes("Te deseamos lo mejor en este camino, éxito!"));
+  assert.ok(journey.includes("Nos alegra mucho tenerte por aquí"));
+  assert.ok(journey.includes("Queremos que cumplas todas tus metas"));
+  assert.ok(!journey.includes("onboarding-mind-to-body"));
+  for (const emphasizedCopy of ["resultado de pequeñas buenas decisiones que tomes día a día", "de forma consistente", "te sentirás orgulloso de ti mismo", "se reflejará en un cambio físico y mental"]) {
+    assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
+  }
+  assert.ok(journey.includes("Te deseamos lo mejor en este camino,"));
+  assert.ok(journey.includes("Éxito!"));
   assert.ok(journey.includes('title="Que es My Scoope"'));
+  assert.doesNotMatch(journey, /levels\.map\(\(level, levelIndex\)/);
+  assert.doesNotMatch(journey, /levelIndex < levels\.length/);
   for (const emphasizedCopy of ["entorno nutricional", "Alimentos", "Comidas", "Planes Diarios", "Programas Semanales"]) {
     assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
   }
   assert.ok(journey.includes("La planificación la realiza"));
+  for (const entity of ["food", "meal", "dailyPlan", "program"]) {
+    assert.ok(journey.includes(`entity: "${entity}"`));
+  }
+  assert.ok(journey.includes(`<EntityIcon entity={level.entity} size="hero" />`));
+  for (const copy of ["La base nutricional del sistema", "Tu combinación de alimentos y porciones", "Tu distribución de comidas en el día", "Programas semanales", "Tu asignación de planes en semanas"]) {
+    assert.ok(journey.includes(copy));
+  }
+  assert.match(journey, /levelDetail: \{[^}]*fontSize: tokens\.type\.caption[^}]*lineHeight: 18/);
+  assert.ok(journey.includes("borderTopColor: tokens.color[level.entity]"));
+  assert.ok(journey.includes("borderTopWidth: 3"));
   assert.ok(journey.includes('title="Forma tu propio criterio"'));
-  for (const emphasizedCopy of ["instancias de aprendizaje y análisis", "paneles", "comparaciones", "fundamentos nutricionales"]) {
+  assert.ok(!journey.includes("También dispusimos para ti"));
+  assert.match(journey, /panelsViewContent: \{[^}]*gap: tokens\.spacing\.lg[^}]*translateY: 20/);
+  assert.match(journey, /levels: \{[^}]*marginTop: 8/);
+  assert.match(journey, /executionPreview: \{[^}]*marginTop: 8/);
+  assert.ok(journey.includes('style={styles.explanationVisualSpacing}'));
+  for (const emphasizedCopy of ["instancias de aprendizaje y análisis", "paneles", "comparaciones"]) {
     assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
   }
+  assert.ok(journey.includes('<NutritionEntityCard'));
+  assert.ok(journey.includes('const referenceWeightKg = 80'));
+  assert.ok(journey.includes('quantity: 200'));
+  assert.ok(journey.includes('quantity: 120'));
+  assert.ok(journey.includes('quantity: 60'));
+  assert.ok(journey.includes('perKilogram: 39.36 / referenceWeightKg'));
+  assert.ok(journey.includes('proteinPerKilogram: 32.76 / referenceWeightKg'));
+  assert.ok(journey.includes('entity="meal"'));
+  assert.ok(journey.includes('title="Comida equilibrada"'));
+  assert.ok(journey.includes('<FoodPanels items={foods} showEditTab={false} />'));
+  for (const food of ["Arroz cocido", "Pollo asado", "Palta"]) {
+    assert.ok(journey.includes(`name: "${food}"`));
+  }
   assert.ok(journey.includes('title="Ejecuta lo planeado"'));
-  for (const emphasizedCopy of ["registro de cumplimientos de las comidas", "bitácora de aprendizaje"]) {
+  assert.ok(journey.includes('<MealCompletionToggleCard'));
+  assert.ok(journey.includes('<MealCompletionToggleCard completed onToggle={() => undefined} />'));
+  assert.ok(journey.includes('planLabel="Planes Diarios Recorridos"'));
+  assert.ok(journey.includes('mealLabel="Comidas Cumplidas"'));
+  assert.doesNotMatch(journey, /title="1\. Conversa"/);
+  for (const emphasizedCopy of ["registro de cumplimientos de las comidas", "bitácora"]) {
     assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
   }
   assert.ok(journey.includes('title="Recibe Asistencia AI"'));
+  assert.ok(journey.includes("Si necesitas ayuda en la construcción de programas de alimentación puedes recibirla"));
+  assert.ok(journey.includes('titleAccessory={<View style={styles.assistanceIcon}><AssistantGradientIcon size={52} strokeWidth={1.8} /></View>}'));
   for (const emphasizedCopy of ["no debes frustrarte", "asistente nutricional", "propuestas", "aprobación para su aplicación"]) {
     assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
   }
   assert.ok(journey.includes("Nada ocurrirá si tu no lo apruebas"));
+  assert.ok(journey.includes('<CreditDashboardGrid availableCredits={150} planName="Basic" style={styles.assistanceDashboardSpacing} />'));
+  assert.match(journey, /assistanceDashboardSpacing: \{ marginBottom: 8, marginTop: 8 \}/);
+  assert.ok(journey.includes("La asistencia funciona mediante un"));
+  assert.ok(journey.includes('<Text style={styles.descriptionEmphasis}>sistema de créditos</Text>'));
+  assert.ok(journey.includes('<Text style={styles.descriptionEmphasis}>No tener créditos jamás limitará la gestión sobre tu librería.</Text>'));
+  assert.ok(journey.includes("styles.assistanceCreditDescription"));
   assert.ok(!preview.includes("apiRequest"));
   assert.ok(!preview.includes("/api/v1/"));
 });

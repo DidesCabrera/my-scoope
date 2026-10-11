@@ -44,8 +44,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceDoesNotMatch(subscription, /<Button\s+label="Restaurar compras"/);
   assertSourceDoesNotMatch(subscription, /Mi suscripción|Planes y Bolsas|Volver a hoy|router\.back\(\)/);
   assertSourceMatch(subscription, /apiRequest<EntitlementsData>\("\/api\/v1\/entitlements"\)/);
-  assertSourceMatch(subscription, /<Text style=\{styles\.eyebrow\}>SUSCRIPCIÓN ACTUAL<\/Text>/);
-  assertSourceMatch(subscription, /<AssistantCreditBalance availability=\{entitlements\} contained \/>/);
+  assertSourceMatch(subscription, /<CreditDashboardGrid availableCredits=\{entitlements\.available_credits\} planName=\{entitlements\.plan_name\} \/>/);
   assertSourceDoesNotMatch(subscription, /<Pill|Estado actual:/);
   assertSourceMatch(details, /google_play: "Google Play"/);
   assertSourceMatch(details, /paddle: "Paddle"/);

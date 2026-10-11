@@ -16,7 +16,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { userFacingError } from "@/api/errors";
 import type { EntitlementsData, SubscriptionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { AppHeader, Button, Card, InlineNotice, LoadingState, MyScoopeBrandLogo, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
@@ -345,13 +345,7 @@ export default function SubscriptionScreen() {
         <InlineNotice tone="warning">Detectamos más de un canal de cobro activo. El equipo puede revisarlo sin interrumpir tu acceso.</InlineNotice>
       ) : null}
       {!isOnboarding ? <Card accent={subscriptionPlanAccent(entitlements?.plan_name ?? overview?.plan_name)}>
-        <View style={styles.subscriptionHeading}>
-          <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>SUSCRIPCIÓN ACTUAL</Text>
-            <Text style={styles.planName}>{entitlements?.plan_name ?? overview?.plan_name ?? "Consultando…"}</Text>
-          </View>
-        </View>
-        {entitlements ? <AssistantCreditBalance availability={entitlements} contained /> : null}
+        {entitlements ? <CreditDashboardGrid availableCredits={entitlements.available_credits} planName={entitlements.plan_name} /> : null}
       </Card> : null}
 
       {!overview?.eligible ? (
@@ -507,18 +501,15 @@ const styles = StyleSheet.create({
   row: { alignItems: "center", flexDirection: "row", gap: 16, justifyContent: "space-between" },
   copy: { flex: 1, gap: 4 },
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
-  headerCopy: { flex: 1, gap: 3, minWidth: 0 },
   onboardingDescription: { color: tokens.color.textMuted, fontSize: 18, lineHeight: 25, textAlign: "center" },
   onboardingIntro: { alignItems: "center", gap: tokens.spacing.lg, paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.lg },
   onboardingLogo: { marginBottom: tokens.spacing.lg },
   onboardingTitle: { color: tokens.color.textMain, fontSize: 34, fontWeight: tokens.weight.extraBold, lineHeight: 40, textAlign: "center" },
   planPriceChip: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs },
   planPriceChipLabel: { color: tokens.color.surfaceApp, fontSize: 16, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },
-  planName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
   productName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden" },
-  subscriptionHeading: { alignItems: "center", flexDirection: "row" },
   subscriptionHeader: { paddingBottom: tokens.spacing.lg },
   subscriptionDescription: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 24, textAlign: "center" },
   subscriptionDescriptionGroup: { gap: tokens.spacing.md, marginTop: tokens.spacing.lg },

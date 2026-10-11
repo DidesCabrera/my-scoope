@@ -11,7 +11,7 @@ import { Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type View
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { Button, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, SectionHeading } from "@/components/ui";
-import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { AnimatedScanBeam } from "@/components/label-capture/animated-scan-beam";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { tokens } from "@/design/tokens";
@@ -194,7 +194,7 @@ function IntroView() {
       </View>
       <InlineNotice>Enviaremos una copia reducida y sin metadatos para extraer los valores. La fotografía original no se guarda.</InlineNotice>
       <View style={styles.introBottom}>
-        <AssistantCreditBalance availability={{ available_credits: 12 }} contained />
+        <CreditDashboardGrid availableCredits={12} />
         <View style={styles.actionGroup}>
           <Button label="Abrir cámara" onPress={noop} />
           <Button label="Elegir desde galería" onPress={noop} variant="secondary" />

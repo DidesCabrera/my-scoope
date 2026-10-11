@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
 import { AppHeader, Button, Card, DistributedTabBar, MyScoopeBrandLogo, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -65,7 +65,7 @@ export function SubscriptionPreviewContent({ context, topInsetReduction = 0 }: {
             <Card accent={subscriptionPlanAccent("Pro")}>
               <Text style={styles.eyebrow}>SUSCRIPCIÓN ACTUAL</Text>
               <Text style={styles.planName}>Pro</Text>
-              <AssistantCreditBalance availability={{ available_credits: 1500 }} contained />
+              <CreditDashboardGrid availableCredits={1500} planName="Pro" />
             </Card>
             <SectionTitle title="Suscripciones disponibles" titleStyle={styles.commercialSectionTitle} />
           </>

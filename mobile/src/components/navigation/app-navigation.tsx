@@ -5,7 +5,6 @@ import {
   CalendarClock,
   Camera,
   ChevronLeft,
-  ChevronRight,
   ClipboardCheck,
   Clock3,
   FileCheck,
@@ -38,10 +37,10 @@ import {
   View,
 } from "react-native";
 import { initialWindowMetrics, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { useSession } from "@/auth/session-context";
 import type { EntitlementsData, HomeData, LibraryEntity } from "@/api/types";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
 import { MyScoopeBrandLogo } from "@/components/ui/my-scoope-brand-logo";
@@ -85,7 +84,6 @@ const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().ma
 }));
 
 const secondaryPrimaryItems: NavigationSidebarItemData[] = [
-  { href: "/personal-records", icon: Files, label: "Fichas personales" },
   { href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" },
 ];
 
@@ -427,35 +425,17 @@ function AppSidebar() {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>
                 <FunctionalSidebarEntry item={{ href: "/account", icon: UserRound, label: "Mi cuenta" }} />
+                <FunctionalSidebarEntry item={{ href: "/personal-records", icon: Files, label: "Fichas personales" }} />
                 {session?.is_staff ? <FunctionalSidebarEntry item={{ href: "/onboarding-preview", icon: WandSparkles, label: "Vista previa del onboarding" }} /> : null}
               </View>
             </ScrollView>
             {creditSummary ? (
-              <View style={[styles.creditDashboardShadow, { width: drawerWidth - tokens.spacing.md }]}>
-                <Pressable accessibilityLabel="Abrir Suscripciones y bolsas" accessibilityRole="button" onPress={openCredits} style={({ pressed }) => [styles.creditDashboard, pressed && styles.creditDashboardPressed]}>
-                  <Svg aria-hidden height="100%" pointerEvents="none" style={StyleSheet.absoluteFill} width="100%">
-                    <Defs>
-                      <LinearGradient id="sidebar-credit-macros" x1="0" x2="1" y1="0" y2="1">
-                        <Stop offset="0" stopColor={tokens.color.protein} />
-                        <Stop offset="0.5" stopColor={tokens.color.carbs} />
-                        <Stop offset="1" stopColor={tokens.color.fat} />
-                      </LinearGradient>
-                    </Defs>
-                    <Rect fill="url(#sidebar-credit-macros)" height="100%" rx={tokens.radius.panel} ry={tokens.radius.panel} width="100%" />
-                  </Svg>
-                  <View style={styles.creditDashboardPlan}>
-                    <Text style={styles.creditDashboardEyebrow}>Plan</Text>
-                    <Text numberOfLines={1} style={styles.creditDashboardPlanTitle}>{creditSummary.planName}</Text>
-                  </View>
-                  <View style={styles.creditDashboardCredits}>
-                    <Text style={styles.creditDashboardCreditValue}>{creditSummary.availableCredits}</Text>
-                    <Text numberOfLines={1} style={styles.creditDashboardAvailableLabel}>créditos disponibles</Text>
-                  </View>
-                  <View style={styles.creditDashboardAction}>
-                    <ChevronRight color={tokens.color.surfaceApp} size={21} strokeWidth={2.4} />
-                  </View>
-                </Pressable>
-              </View>
+              <CreditDashboardGrid
+                availableCredits={creditSummary.availableCredits}
+                onPress={openCredits}
+                planName={creditSummary.planName}
+                style={{ marginBottom: tokens.spacing.md, marginHorizontal: tokens.spacing.md }}
+              />
             ) : null}
           </View>
         </Animated.View>
@@ -492,16 +472,6 @@ const styles = StyleSheet.create({
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
   drawerContent: { gap: 0, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg },
   drawerScroll: { flex: 1 },
-  creditDashboardShadow: { alignSelf: "flex-start", borderRadius: tokens.radius.panel, elevation: 5, marginBottom: tokens.spacing.md, marginHorizontal: tokens.spacing.md, shadowColor: "#000000", shadowOffset: { height: 5, width: 0 }, shadowOpacity: 0.24, shadowRadius: 9 },
-  creditDashboard: { alignItems: "center", borderRadius: tokens.radius.panel, flexDirection: "row", gap: tokens.spacing.compact, minHeight: 58, overflow: "hidden", paddingLeft: tokens.spacing.md },
-  creditDashboardPressed: { opacity: 0.72 },
-  creditDashboardPlan: { flex: 1, gap: 0, minWidth: 0, paddingLeft: tokens.spacing.xs },
-  creditDashboardCredits: { alignItems: "flex-end", flexShrink: 1, gap: 0, minWidth: 0 },
-  creditDashboardEyebrow: { color: tokens.color.surfaceApp, fontSize: 9, fontWeight: tokens.weight.bold, letterSpacing: 0.8, lineHeight: 9, opacity: 0.72, textTransform: "uppercase" },
-  creditDashboardPlanTitle: { color: tokens.color.surfaceApp, fontSize: 24, fontWeight: tokens.weight.bold, lineHeight: 26 },
-  creditDashboardCreditValue: { color: tokens.color.surfaceApp, fontSize: 15, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, lineHeight: 17 },
-  creditDashboardAvailableLabel: { color: tokens.color.surfaceApp, flexShrink: 1, fontSize: 10, fontWeight: tokens.weight.medium, lineHeight: 11 },
-  creditDashboardAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 30, justifyContent: "center", marginRight: tokens.spacing.md, width: 30 },
   menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
   menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
 });

@@ -11,7 +11,7 @@ import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-nativ
 
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
-import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { AnimatedScanBeam } from "@/components/label-capture/animated-scan-beam";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
@@ -771,7 +771,7 @@ export default function LabelCaptureScreen() {
           </View>
           <InlineNotice>Enviaremos una copia reducida y sin metadatos para extraer los valores. La fotografía original no se guarda.</InlineNotice>
           <View style={styles.introBottom}>
-            {config ? <AssistantCreditBalance availability={{ available_credits: config.available_credits }} contained /> : null}
+            {config ? <CreditDashboardGrid availableCredits={config.available_credits} /> : null}
             <View style={styles.actionGroup}>
               <Button disabled={config ? !config.can_scan : false} label="Abrir cámara" loading={openingCamera} onPress={() => void beginCamera()} />
               <Button disabled={config ? !config.can_scan : false} label="Elegir desde galería" loading={preparing} onPress={() => void chooseFromGallery()} variant="secondary" />

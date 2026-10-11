@@ -4,12 +4,12 @@ import { useCallback, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { AIChatListData, AIChatSummary, LibraryListActionResult, ProposalListData, ProposalSummary } from "@/api/types";
+import type { AIChatListData, AIChatSummary, EntitlementsData, LibraryListActionResult, ProposalListData, ProposalSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantListActions } from "@/components/assistant/assistant-list-actions";
 import { AssistantListEditor, type AssistantListItem } from "@/components/assistant/assistant-list-editor";
 import { AssistantSectionTabs, type AssistantSection } from "@/components/assistant/assistant-section-tabs";
-import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProposalListCard } from "@/components/proposals";
 import { EntityCardAction, EntityCardActions, SectionPageHeader } from "@/components/ui";
@@ -56,6 +56,7 @@ export default function AssistantHistoryScreen() {
   const [activeSection, setActiveSection] = useState<AssistantSection>(params.section === "proposals" ? "proposals" : "chats");
   const [chatPage, setChatPage] = useState<AIChatListData | null>(null);
   const [proposalPage, setProposalPage] = useState<ProposalListData | null>(null);
+  const [planName, setPlanName] = useState<string | null>(null);
   const [actionsVisible, setActionsVisible] = useState(false);
   const [mode, setMode] = useState<"list" | "edit">("list");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -194,6 +195,9 @@ export default function AssistantHistoryScreen() {
   useFocusEffect(useCallback(() => { if (status === "authenticated") void loadChats(); }, [loadChats, status]));
   useFocusEffect(useCallback(() => { if (status === "authenticated") void loadProposals(); }, [loadProposals, status]));
   useFocusEffect(useCallback(() => {
+    if (status === "authenticated") void apiRequest<EntitlementsData>("/api/v1/entitlements").then((data) => setPlanName(data.plan_name)).catch(() => undefined);
+  }, [apiRequest, status]));
+  useFocusEffect(useCallback(() => {
     if (mode === "edit" && selectedIds.size) {
       setHeaderPresentation({
         action: { disabled: submitting, label: "Eliminar", onPress: confirmDeleteSelected },
@@ -229,7 +233,12 @@ export default function AssistantHistoryScreen() {
     <View style={styles.scrollHeader}>
       <SectionPageHeader countLabel="elementos" section="chat" title="Asistente Nutricional" />
       {chatPage?.availability ? (
-        <AssistantCreditBalance availability={chatPage.availability} />
+        <CreditDashboardGrid
+          availableCredits={chatPage.availability.available_credits}
+          bleed
+          onPress={() => router.push("/subscription" as Href)}
+          planName={planName ?? undefined}
+        />
       ) : null}
     </View>
   );

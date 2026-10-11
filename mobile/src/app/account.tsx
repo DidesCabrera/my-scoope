@@ -8,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { userFacingError } from "@/api/errors";
 import type { AccountDeletionData, EntitlementsData, SessionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProposalReviewSection } from "@/components/proposals/proposal-detail";
 import { AppHeader, Button, Card, Field, InlineNotice, Screen, SectionIcon, textStyles } from "@/components/ui";
@@ -124,13 +124,7 @@ export default function AccountScreen() {
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
       <AppHeader eyebrow="Mi cuenta" eyebrowIcon={<SectionIcon color={tokens.color.textSoft} section="profile" />} title={session?.display_name || session?.username || "My Scoope"} />
       <Card accent={subscriptionPlanAccent(entitlements?.plan_name)}>
-        <View style={styles.subscriptionHeading}>
-          <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>SUSCRIPCIÓN ACTUAL</Text>
-            <Text style={styles.planName}>{entitlements?.plan_name ?? "Consultando…"}</Text>
-          </View>
-        </View>
-        {entitlements ? <AssistantCreditBalance availability={entitlements} contained /> : null}
+        {entitlements ? <CreditDashboardGrid availableCredits={entitlements.available_credits} planName={entitlements.plan_name} /> : null}
         {subscriptionError ? <InlineNotice tone="error">{subscriptionError}</InlineNotice> : null}
         <Button label="Mejorar mi suscripción" onPress={() => router.push("/subscription" as Href)} variant="multicolor" />
       </Card>
@@ -202,8 +196,6 @@ function AccountInformationRows({ items }: { items: { label: string; value: stri
 
 const styles = StyleSheet.create({
   deletionForm: { gap: tokens.spacing.md },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
-  headerCopy: { flex: 1, gap: 3, minWidth: 0 },
   informationLabel: { color: tokens.color.textMuted, flex: 1, fontSize: 14, lineHeight: 20 },
   informationRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingVertical: tokens.spacing.xs },
   informationRowLast: { borderBottomWidth: 0 },
@@ -214,6 +206,4 @@ const styles = StyleSheet.create({
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   signOutSpacing: { marginTop: 26 },
-  planName: { color: tokens.color.textMain, fontSize: 26, fontWeight: tokens.weight.extraBold },
-  subscriptionHeading: { alignItems: "center", flexDirection: "row" },
 });
