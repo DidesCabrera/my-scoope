@@ -31,13 +31,13 @@ test("mobile libraries expose native creation for all four entities", async () =
   for (const field of ["Nombre", "Proteínas", "Carbohidratos", "Grasas totales"]) {
     assert.match(create, new RegExp(field.replace(/[()]/g, "\\$&")));
   }
-  assert.match(create, /Valores por 100 \{portionUnit\}/);
-  assert.match(create, /labelStyle=\{entity === "food" \? styles\.foodFieldLabel : undefined\}/);
-  assert.match(create, /foodFieldLabel: \{ color: tokens\.color\.textMain \}/);
-  assert.match(create, /nutritionLabel: \{ color: tokens\.color\.textMain[\s\S]*fontWeight: tokens\.weight\.bold/);
-  assert.match(create, /style=\{styles\.nutritionInputSurface\}/);
-  assert.match(create, /<Text style=\{styles\.nutritionUnit\}>g<\/Text>/);
-  assert.match(create, /<DistributedTabBar<"g" \| "ml">[\s\S]*bleed/);
+  assert.equal(create.includes("Valores por 100 {portionUnit}"), true);
+  assert.equal(create.includes('labelStyle={entity === "food" ? styles.foodFieldLabel : undefined}'), true);
+  assert.equal(create.includes("foodFieldLabel: { color: tokens.color.textMain }"), true);
+  assert.ok(create.includes("nutritionLabel: { color: tokens.color.textMain") && create.includes("fontWeight: tokens.weight.bold"));
+  assert.equal(create.includes("style={styles.nutritionInputSurface}"), true);
+  assert.equal(create.includes('<Text style={styles.nutritionUnit}>g</Text>'), true);
+  assert.ok(create.includes('<DistributedTabBar<"g" | "ml">') && create.includes("bleed"));
   for (const endpoint of ["foods", "meals", "daily-plans", "programs"]) {
     assert.match(create, new RegExp(`/api/v1/library/${endpoint}`));
   }

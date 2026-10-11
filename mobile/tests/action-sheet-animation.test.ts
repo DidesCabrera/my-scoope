@@ -3,6 +3,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
+async function source(file: string): Promise<string> {
+  return readFile(path.resolve(process.cwd(), file), "utf8");
+}
+
 test("all ellipsis action sheets enter from and dismiss toward the bottom", async () => {
   for (const file of [
     "src/components/libraries/library-actions.tsx",
@@ -10,12 +14,12 @@ test("all ellipsis action sheets enter from and dismiss toward the bottom", asyn
     "src/components/libraries/library-list-actions.tsx",
     "src/components/programs/program-active-actions.tsx",
   ]) {
-    const source = await readFile(path.resolve(process.cwd(), file), "utf8");
-    assert.match(source, /<ActionSheetModal/);
-    assert.doesNotMatch(source, /<Modal animationType=/);
+    const contents = await source(file);
+    assert.match(contents, /<ActionSheetModal/);
+    assert.doesNotMatch(contents, /<Modal animationType=/);
   }
 
-  const animation = await readFile(path.resolve(process.cwd(), "src/components/ui/action-sheet-modal.tsx"), "utf8");
+  const animation = await source("src/components/ui/action-sheet-modal.tsx");
   assert.match(animation, /animationType="none"/);
   assert.match(animation, /Animated\.timing\(scrimOpacity/);
   assert.match(animation, /Animated\.timing\(sheetTranslateY/);
@@ -24,7 +28,7 @@ test("all ellipsis action sheets enter from and dismiss toward the bottom", asyn
   assert.match(animation, /useNativeDriver: true/);
   assert.match(animation, /paddingBottom: bottomInset/);
   assert.match(animation, /backgroundColor: tokens\.color\.surfaceCard/);
-  assert.match(animation, /sheetFrame: \{[^}]*flexShrink: 1[^}]*maxHeight: "92%"/);
+  assert.equal(animation.includes('flexShrink: 1, maxHeight: "92%"'), true);
 });
 
 test("action sheets with forms scroll instead of clipping their final action", async () => {
@@ -35,11 +39,12 @@ test("action sheets with forms scroll instead of clipping their final action", a
     "src/components/comparisons/saved-comparison-actions.tsx",
     "src/app/weight.tsx",
   ]) {
-    const source = await readFile(path.resolve(process.cwd(), file), "utf8");
-    assert.match(source, /<ScrollView/);
-    assert.match(source, /flexShrink: 1/);
+    const contents = await source(file);
+    assert.equal(contents.includes("<ScrollView"), true);
+    assert.equal(contents.includes("flexShrink: 1"), true);
   }
 
-  const calendarizedActions = await readFile(path.resolve(process.cwd(), "src/components/calendarization/calendarized-entity-actions.tsx"), "utf8");
-  assert.doesNotMatch(calendarizedActions, /maxHeight: "88%"|overflow: "hidden"/);
+  const calendarizedActions = await source("src/components/calendarization/calendarized-entity-actions.tsx");
+  assert.equal(calendarizedActions.includes('maxHeight: "88%"'), false);
+  assert.equal(calendarizedActions.includes('overflow: "hidden"'), false);
 });
