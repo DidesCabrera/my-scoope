@@ -13,7 +13,7 @@ import { DailyMealCompletionCard } from "@/components/calendarization/meal-compl
 import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components/calendarization/meal-execution";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
-import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
+import { EntityDetailPage, EntityDetailSection, FoodDetailCardList, FoodNutritionFactsCard } from "@/components/details";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
@@ -405,6 +405,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     showNutrition={!isEmptyDraft}
     subtitle={item.subtitle || undefined}
     title={item.name}>
+    {item.entity === "food" && item.food_nutrition ? <><SectionDivider /><FoodNutritionFactsCard nutrition={item.food_nutrition} quantityUnit={item.quantity_unit ?? "g"} /></> : null}
     {item.entity === "food" && item.label_image_available ? <><SectionDivider /><EntityDetailSection title="Etiqueta guardada">
       {labelImage ? <Image resizeMode="contain" source={{ uri: `data:${labelImage.content_type};base64,${labelImage.image_base64}` }} style={styles.labelImage} /> : null}
       {!labelImage ? <Button label="Ver copia procesada" loading={labelImageBusy} onPress={() => void loadLabelImage()} variant="secondary" /> : null}

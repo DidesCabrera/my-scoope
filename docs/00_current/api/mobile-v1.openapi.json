@@ -4208,6 +4208,56 @@
         "title": "FoodLabelLocalCandidateInput",
         "type": "object"
       },
+      "FoodNutritionFactsData": {
+        "properties": {
+          "fiber_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fiber G"
+          },
+          "saturated_fat_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saturated Fat G"
+          },
+          "sodium_mg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sodium Mg"
+          },
+          "sugar_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugar G"
+          }
+        },
+        "title": "FoodNutritionFactsData",
+        "type": "object"
+      },
       "FoodPageData": {
         "properties": {
           "items": {
@@ -4948,6 +4998,16 @@
             ],
             "title": "Entity",
             "type": "string"
+          },
+          "food_nutrition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoodNutritionFactsData"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "id": {
             "title": "Id",

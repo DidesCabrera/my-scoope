@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth.models import User
 from django.test import override_settings
 
@@ -7,6 +9,34 @@ from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class FoodDetailNavigationAPITests(AuthenticatedMobileAPITestCase):
+    def test_food_detail_exposes_optional_nutrition_without_conflating_zero_and_missing(self):
+        food = Food.objects.create(
+            name="Alimento con nutrición extendida",
+            protein=10,
+            carbs=20,
+            fat=5,
+            saturated_fat_g_per_100g=Decimal("1.2"),
+            sugar_g_per_100g=None,
+            fiber_g_per_100g=Decimal("0"),
+            sodium_mg_per_100g=Decimal("125.5"),
+            portion_unit="ml",
+            created_by=self.user,
+        )
+
+        response = self.client.get(f"/api/v1/library/foods/{food.id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["data"]["food_nutrition"],
+            {
+                "saturated_fat_g": 1.2,
+                "sugar_g": None,
+                "fiber_g": 0.0,
+                "sodium_mg": 125.5,
+            },
+        )
+        self.assertEqual(response.json()["data"]["quantity_unit"], "ml")
+
     def test_composition_payloads_expose_the_food_detail_id_at_every_level(self):
         food = Food.objects.create(name="Avena navegable", protein=10, carbs=20, fat=5, created_by=self.user)
         meal = Meal.objects.create(name="Comida navegable", created_by=self.user, is_draft=False)

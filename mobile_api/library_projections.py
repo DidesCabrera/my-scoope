@@ -5,6 +5,18 @@ from notas.domain.models import FoodLocalizedName, MealFood
 from notas.domain.services.nutrition import macro_kcal_distribution
 
 
+def food_nutrition_payload(food) -> dict:
+    def optional_number(value):
+        return None if value is None else round(float(value), 1)
+
+    return {
+        "saturated_fat_g": optional_number(food.saturated_fat_g_per_100g),
+        "sugar_g": optional_number(food.sugar_g_per_100g),
+        "fiber_g": optional_number(food.fiber_g_per_100g),
+        "sodium_mg": optional_number(food.sodium_mg_per_100g),
+    }
+
+
 def _number(value) -> float:
     return round(float(value or 0), 1)
 

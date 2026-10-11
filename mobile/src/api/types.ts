@@ -368,7 +368,6 @@ export type LibraryPanel = {
   meals: LibraryMealPanelItem[];
   weeks: LibraryWeekPanelItem[];
 };
-
 export type LibraryItem = {
   id: number;
   entity: LibraryEntity;
@@ -376,6 +375,7 @@ export type LibraryItem = {
   subtitle: string;
   quantity_unit?: "g" | "ml" | null;
   nutrition: LibraryNutrition;
+  food_nutrition?: import("./food-nutrition").FoodNutritionFacts | null;
   indicators: LibraryIndicator[];
   panel: LibraryPanel;
   creator: string;
