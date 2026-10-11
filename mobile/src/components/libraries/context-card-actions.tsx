@@ -1,7 +1,7 @@
 import { MoreHorizontal, type LucideIcon } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -84,7 +84,12 @@ export function ContextCardActions({ actions, label, renderTrigger, title }: Con
           <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
             <ActionSheetHeader icon={MoreHorizontal} onClose={close} title={selected?.confirmation?.title ?? title} />
 
-            <View style={styles.sheetContent}>
+            <ScrollView
+              contentContainerStyle={styles.sheetContent}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
+              style={styles.sheetScroll}>
               {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
               {!selected ? <ActionSheetActions>{actions.map((action) => {
@@ -113,7 +118,7 @@ export function ContextCardActions({ actions, label, renderTrigger, title }: Con
                   <Button disabled={submitting} label="Cancelar" onPress={() => setSelected(null)} variant="secondary" />
                 </View>
               )}
-            </View>
+            </ScrollView>
           </SafeAreaView>
       </ActionSheetModal>
     </>
@@ -121,7 +126,8 @@ export function ContextCardActions({ actions, label, renderTrigger, title }: Con
 }
 
 const styles = StyleSheet.create({
-  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
+  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
+  sheetScroll: { flexGrow: 0, flexShrink: 1 },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   actionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingVertical: tokens.spacing.sm },
   actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.medium },

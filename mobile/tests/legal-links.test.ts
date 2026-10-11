@@ -30,7 +30,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /isOnboarding[\s\S]*mode: "default", title: "Elige un plan"/);
   assertSourceMatch(subscription, /<Screen headerMode="preserve" onHeaderVisibilityChange=\{setCompactHeaderVisible\}>/);
   assertSourceMatch(subscription, /<AppHeader alignment="center" title="Suscripciones y Bolsas" \/>/);
-  assertSourceMatch(subscription, /isOnboarding \? \([\s\S]*<View style=\{styles\.onboardingLogo\}><MyScoopeLogo \/><\/View>[\s\S]*\) : \([\s\S]*<View style=\{styles\.subscriptionLogo\}><MyScoopeLogo \/><\/View>[\s\S]*<AppHeader alignment="center" title="Suscripciones y Bolsas" \/>/);
+  assertSourceMatch(subscription, /isOnboarding \? \([\s\S]*<View style=\{styles\.onboardingLogo\}><MyScoopeBrandLogo \/><\/View>[\s\S]*\) : \([\s\S]*<View style=\{styles\.subscriptionLogo\}><MyScoopeBrandLogo compact \/><\/View>[\s\S]*<AppHeader alignment="center" title="Suscripciones y Bolsas" \/>/);
   assertSourceMatch(subscription, /Nuestras suscripciones te entregan beneficios para enriquecer tus librerías y facilitar tu gestión nutricional\./);
   assertSourceMatch(subscription, /subscriptionDescriptionGroup: \{ gap: tokens\.spacing\.md, marginTop: tokens\.spacing\.lg \}/);
   assertSourceMatch(subscription, /subscriptionDescription: \{[^}]*textAlign: "center"/);
@@ -64,7 +64,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /const subscriptionPlans = \["Basic", "Pro"\]\.map/);
   assertSourceMatch(subscription, /overview\?\.eligible && isOnboarding[\s\S]*name="Free" price="Gratis"/);
   assertSourceMatch(subscription, /!isOnboarding \? <SubscriptionPlanCard[^>]*name="Free" price="\$0\/mes"/);
-  assertSourceMatch(subscription, /<MyScoopeLogo \/>[\s\S]*Elige un plan[\s\S]*Compara lo que incluyen Free, Basic y Pro/);
+  assertSourceMatch(subscription, /<MyScoopeBrandLogo \/>[\s\S]*Elige un plan[\s\S]*Compara lo que incluyen Free, Basic y Pro/);
   assertSourceMatch(subscription, /<SubscriptionPurchaseButton label="Continuar con Free"/);
   assertSourceMatch(subscription, /!isOnboarding && overview\?\.can_buy_credit_packs/);
   assertSourceMatch(subscription, /<Card accent=\{subscriptionPlanAccent\(entitlements\?\.plan_name \?\? overview\?\.plan_name\)\}>/);

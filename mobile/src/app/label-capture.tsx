@@ -12,9 +12,10 @@ import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-nativ
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
+import { AnimatedScanBeam } from "@/components/label-capture/animated-scan-beam";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, Screen, SectionHeading, SectionTitle, SystemSwitch, textStyles } from "@/components/ui";
+import { Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, Screen, SectionHeading, SectionTitle, SystemSwitch, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import {
   LABEL_CAMERA_AUTOFOCUS,
@@ -309,6 +310,16 @@ export default function LabelCaptureScreen() {
     } catch {
       setError("No pudimos confirmar la base de esta etiqueta.");
     }
+  }
+
+  function setReviewUnit(unit: "g" | "ml") {
+    if (!draft) return;
+    const basis = unit === "ml" ? "per_100ml" : "per_100g";
+    if (draft.normalizationStatus !== "ready") {
+      confirmBasis(basis);
+      return;
+    }
+    setDraft((current) => current ? { ...current, basis } : current);
   }
 
   function normalizeServingValues() {
@@ -696,18 +707,7 @@ export default function LabelCaptureScreen() {
       <Screen headerMode="preserve">
         <FullBleedSquare surfaceStyle={styles.processingPhoto}>
           <Image accessibilityLabel="Etiqueta nutricional en análisis" resizeMode="contain" source={{ uri: prepared.uri }} style={StyleSheet.absoluteFill} />
-          <View style={styles.scanBeam}>
-            <Svg aria-hidden height="100%" width="100%">
-              <Defs>
-                <LinearGradient id="label-capture-live-scan" x1="0" x2="1" y1="0" y2="0">
-                  <Stop offset="0" stopColor={tokens.color.protein} />
-                  <Stop offset="0.5" stopColor={tokens.color.carbs} />
-                  <Stop offset="1" stopColor={tokens.color.fat} />
-                </LinearGradient>
-              </Defs>
-              <Rect fill="url(#label-capture-live-scan)" height="100%" rx="2" ry="2" width="100%" />
-            </Svg>
-          </View>
+          <AnimatedScanBeam gradientId="label-capture-live-scan" />
         </FullBleedSquare>
         <View style={styles.processingDetails}>
           <View style={styles.processingHeader}>
@@ -732,12 +732,11 @@ export default function LabelCaptureScreen() {
     optionalNumber(form.energy),
   );
 
-  const nutrientRows: { field: keyof FormState; label: string; unit: string }[] = [
-    { field: "energy", label: "Energía", unit: "kcal" },
-    { field: "protein", label: "Proteínas", unit: "g" },
-    { field: "carbs", label: "Carbohidratos", unit: "g" },
-    { field: "fat", label: "Grasas totales", unit: "g" },
+  const nutrientRows: { emphasized?: boolean; field: keyof FormState; label: string; unit: string }[] = [
+    { emphasized: true, field: "protein", label: "Proteínas", unit: "g" },
+    { emphasized: true, field: "fat", label: "Grasas totales", unit: "g" },
     { field: "saturatedFat", label: "Grasas saturadas", unit: "g" },
+    { emphasized: true, field: "carbs", label: "Carbohidratos", unit: "g" },
     { field: "sugar", label: "Azúcares", unit: "g" },
     { field: "fiber", label: "Fibra", unit: "g" },
     { field: "sodium", label: "Sodio", unit: "mg" },
@@ -809,7 +808,7 @@ export default function LabelCaptureScreen() {
           {draft?.normalizationStatus === "serving_size_required" ? (
             <Card accent={tokens.color.warning}>
               <SectionTitle title="Completa el peso de la porción" />
-              <Field keyboardType="decimal-pad" label="Peso de la porción (g)" onChangeText={(value) => update("servingSize", value)} value={form.servingSize} />
+              <Field keyboardType="decimal-pad" label="Peso de la porción (g)" labelStyle={styles.fieldLabel} onChangeText={(value) => update("servingSize", value)} value={form.servingSize} />
               <Button label="Convertir a valores por 100 g" onPress={normalizeServingValues} />
             </Card>
           ) : null}
@@ -820,11 +819,18 @@ export default function LabelCaptureScreen() {
             </View>
           ) : null}
           <View style={styles.reviewForm}>
+            <DistributedTabBar<"g" | "ml">
+              accessibilityLabel="Unidad de porción"
+              activeTab={portionUnit}
+              bleed
+              onChange={setReviewUnit}
+              tabs={[{ key: "g", label: "Gramos" }, { key: "ml", label: "Mililitros" }]}
+            />
             <Text style={styles.reviewTitle}>{draft?.normalizationStatus === "ready" ? `Valores por 100 ${draft.basis === "per_100ml" ? "ml" : "g"}` : "Valores extraídos"}</Text>
             <View style={styles.nutritionRows}>
               {nutrientRows.map((item) => (
                 <View key={item.field} style={styles.nutritionRow}>
-                  <Text style={styles.nutritionLabel}>{item.label}</Text>
+                  <Text style={[styles.nutritionLabel, item.emphasized && styles.nutritionLabelEmphasis]}>{item.label}</Text>
                   <View style={styles.nutritionInputSurface}>
                     <TextInput accessibilityLabel={item.label} keyboardType="decimal-pad" onChangeText={(value) => update(item.field, value)} selectTextOnFocus style={styles.nutritionInput} value={form[item.field]} />
                     <Text style={styles.nutritionUnit}>{item.unit}</Text>
@@ -839,7 +845,7 @@ export default function LabelCaptureScreen() {
                 </View>
               </View>
             </View>
-            <Field autoCapitalize="words" label="Nombre del producto" labelIcon={<EntityIcon entity="food" size="compact" />} onChangeText={(value) => update("name", value)} placeholder="Ej. Yogur griego natural" value={form.name} />
+            <Field autoCapitalize="words" label="Nombre del producto" labelIcon={<EntityIcon entity="food" size="compact" />} labelStyle={styles.fieldLabel} onChangeText={(value) => update("name", value)} placeholder="Ej. Yogur griego natural" value={form.name} />
           </View>
           <View style={styles.reviewContinue}><Button label="Continuar" onPress={continueToConfirmation} /></View>
         </>
@@ -926,7 +932,6 @@ const styles = StyleSheet.create({
   qualityDetail: { color: tokens.color.textMuted, fontSize: 11, lineHeight: 16 },
   qualityIssue: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16 },
   processingPhoto: { position: "relative" },
-  scanBeam: { borderRadius: tokens.radius.pill, height: 3, left: tokens.spacing.lg, overflow: "hidden", position: "absolute", right: tokens.spacing.lg, top: "50%", transform: [{ translateY: -1.5 }] },
   processingDetails: { gap: tokens.spacing.sm },
   processingHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   processingLoading: { flexShrink: 0, marginLeft: -16, marginRight: 2, transform: [{ translateX: 16 }, { scale: 0.6 }] },
@@ -957,8 +962,9 @@ const styles = StyleSheet.create({
   nutritionRows: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: -tokens.spacing.xs },
   nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   portionRow: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, marginTop: tokens.spacing.sm, paddingBottom: tokens.spacing.md, paddingTop: tokens.spacing.md },
-  nutritionLabel: { color: tokens.color.textMuted, flex: 1, fontSize: 14, lineHeight: 20 },
-  nutritionLabelEmphasis: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
+  fieldLabel: { color: tokens.color.textMain },
+  nutritionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 14, lineHeight: 20 },
+  nutritionLabelEmphasis: { fontWeight: tokens.weight.bold },
   nutritionInputSurface: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", height: 32, minWidth: 112, paddingHorizontal: tokens.spacing.sm },
   nutritionInput: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, height: 30, padding: 0, textAlign: "right" },
   nutritionUnit: { color: tokens.color.textSoft, fontSize: 12, marginLeft: 5 },

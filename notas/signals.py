@@ -31,3 +31,4 @@ def recompute_meal_on_food_save(sender, instance, **kwargs):
 @receiver(post_delete, sender=MealFood)
 def recompute_meal_on_food_delete(sender, instance, **kwargs):
     rebuild_meal_cached_state(instance.meal)
+    refresh_dailyplans_for_meal(instance.meal)

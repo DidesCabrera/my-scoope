@@ -212,6 +212,10 @@ export type CalendarizationRevision = {
 
 export type DailyPlanSnapshot = {
   schema_version?: string;
+  source?: {
+    dailyplan_id?: number | null;
+    program_day_id?: number | null;
+  };
   name?: string;
   totals?: MacroTotals;
   meals?: MealSnapshot[];
@@ -385,6 +389,27 @@ export type LibraryItem = {
 
 export type LibraryPageData = {
   items: LibraryItem[];
+  total: number;
+  offset: number;
+  limit: number;
+  search: string | null;
+};
+
+export type CalendarizationProgramOption = {
+  id: number;
+  name: string;
+  creator: string;
+  weeks_count: number;
+  filled_days_count: number;
+  foods_count: number;
+  weeks: {
+    week_number: number;
+    days: { nutrition?: LibraryNutrition | null }[];
+  }[];
+};
+
+export type CalendarizationProgramOptionsData = {
+  items: CalendarizationProgramOption[];
   total: number;
   offset: number;
   limit: number;
@@ -653,6 +678,12 @@ export type ComparisonOption = Pick<
 export type SelectedComparisonOption = Pick<ComparisonOption, "id" | "name" | "quantity_unit"> &
   Partial<Pick<ComparisonOption, "nutrition">>;
 export type ComparisonOptionsData = MobilePageData<ComparisonOption> & { search: string | null };
+
+export type CompositionOption = Pick<
+  LibraryItem,
+  "id" | "entity" | "indicators" | "name" | "nutrition" | "panel" | "quantity_unit" | "subtitle"
+>;
+export type CompositionOptionsData = MobilePageData<CompositionOption> & { search: string | null };
 
 export type ComparisonMetricValues = {
   calories: number;

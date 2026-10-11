@@ -1,13 +1,14 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Utensils } from "lucide-react-native";
 import { useCallback } from "react";
 
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { MealPanels } from "@/components/panels";
 import { ProposalMealCard, proposalPreviewAdapters } from "@/components/proposals/proposal-preview";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { useProposalDetail } from "@/components/proposals/use-proposal-detail";
-import { EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { EntityCardAction, InlineNotice, LoadingState, Screen } from "@/components/ui";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 
@@ -49,8 +50,7 @@ export default function ProposedProgramDayDetailScreen() {
               onOpenItem={(item) => router.push(`/proposals/${id}/program/weeks/${week}/days/${day}/meals/${item.id}` as Href)}
             />
           </EntityDetailSection>
-          <SectionDivider />
-          <EntityDetailSection title="Detalle de cada Comida">
+          <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
             {dailyplan.meals.map((item, mealIndex) => (
               <ProposalMealCard
                 actions={(
@@ -66,7 +66,6 @@ export default function ProposedProgramDayDetailScreen() {
                 time={item.hour}
               />
             ))}
-          </EntityDetailSection>
         </EntityDetailPage>
       ) : null}
     </Screen>

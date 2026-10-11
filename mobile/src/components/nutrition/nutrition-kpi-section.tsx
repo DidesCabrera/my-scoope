@@ -23,7 +23,7 @@ type MacroRowProps = MacroKpi & {
   label: string;
   tone: AllocationTone;
   variant: "nested" | "regular";
-  fontSize: 12 | 13;
+  fontSize: 13 | 14;
   isLast?: boolean;
   refined: boolean;
   perKilogram?: number | null;
@@ -41,7 +41,7 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, variant, fontSi
       <Text style={[styles.macroLabel, nested && styles.macroLabelCompact, { fontSize }]}>{label}</Text>
       <View style={[styles.ppkSlot, nested && styles.ppkSlotCompact]}>
         {perKilogram != null ? (
-          <ProteinPerKilogramBadge density={density} textSize={fontSize} value={perKilogram} />
+          <ProteinPerKilogramBadge density={density} textSize={12} value={perKilogram} />
         ) : null}
       </View>
       <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)} g</Text>
@@ -68,7 +68,7 @@ export function NutritionKpiSection({
   const { width } = useWindowDimensions();
   const nested = variant === "nested";
   const refined = !nested && width < 420;
-  const macroFontSize = width < 420 ? 12 : 13;
+  const macroFontSize = width < 420 ? 13 : 14;
   return (
     <View style={[styles.container, !nested && styles.containerRegular, nested && styles.containerNested, style]}>
       <View
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   macroLabelCompact: { width: 52 },
   ppkSlot: { alignItems: "stretch", justifyContent: "center", width: 60 },
   ppkSlotCompact: { width: 60 },
-  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
+  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
   gramsCompact: { width: 40 },
   allocationBar: { flex: 1, minWidth: 0, width: "auto" },
   allocationBarSlightlyTight: { height: tokens.component.nutritionKpi.regular.narrowBarHeight },

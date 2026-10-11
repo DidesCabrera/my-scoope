@@ -6,11 +6,13 @@ from django.test import TestCase
 from notas.application.services.cache.dailyplan_summary import (
     DAILYPLAN_SUMMARY_CACHE_VERSION,
     build_dailyplan_summary,
+    refresh_dailyplan_and_related_program_caches,
 )
 from notas.application.services.cache.program_summary import (
     PROGRAM_SUMMARY_CACHE_VERSION,
     build_program_summary,
 )
+from notas.application.services.commands.food_commands import update_food
 from notas.domain.models import DailyPlanMeal, Program, ProgramDay
 from notas.tests.builders import attach_food, create_dailyplan, create_food, create_meal
 
@@ -73,3 +75,22 @@ class SummaryCacheEnergyMetricsTests(TestCase):
         self.assertEqual(summary["version"], PROGRAM_SUMMARY_CACHE_VERSION)
         self.assert_distribution_contract(summary["program_foods_aggregation_table"][0])
         self.assert_distribution_contract(summary["weeks"][0]["foods_aggregation_table"][0])
+
+    def test_food_nutrition_edit_refreshes_meal_dailyplan_and_program_caches(self):
+        refresh_dailyplan_and_related_program_caches(self.dailyplan)
+
+        update_food(
+            food=self.food,
+            name=self.food.name,
+            protein=30,
+            carbs=self.food.carbs,
+            fat=self.food.fat,
+            portion_unit=self.food.portion_unit,
+        )
+
+        self.meal.refresh_from_db()
+        self.dailyplan.refresh_from_db()
+        self.program.refresh_from_db()
+        self.assertEqual(self.meal.protein_cached, 30)
+        self.assertEqual(self.dailyplan.summary_cache["totals"]["protein"], 30)
+        self.assertEqual(self.program.summary_cache["program_totals"]["protein"], 30)

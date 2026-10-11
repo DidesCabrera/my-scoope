@@ -21,12 +21,14 @@ from notas.application.services.commands.dailyplan_commands import (
     add_existing_meal_to_dailyplan,
     remove_dailyplan_meal,
     reorder_dailyplan_meals,
+    save_dailyplan,
     update_dailyplan_meal,
 )
 from notas.application.services.commands.meal_commands import (
     create_meal_food,
     delete_meal_food,
     reorder_meal_foods,
+    save_dailyplan_meal_to_library,
     update_meal_food,
 )
 from notas.application.services.commands.program_commands import (
@@ -257,6 +259,39 @@ def _owned_dailyplan_meal(user, dailyplan: DailyPlan, dailyplan_meal_id: int) ->
     if not dailyplan_meal:
         raise MobileAPIError("composition_item_not_found", "La comida del plan no está disponible para edición.", 404)
     return dailyplan_meal
+
+
+def save_meal_from_dailyplan(*, user, dailyplan_id: int, dailyplan_meal_id: int) -> dict:
+    dailyplan = _owned_dailyplan(user, dailyplan_id)
+    dailyplan_meal = _owned_dailyplan_meal(user, dailyplan, dailyplan_meal_id)
+    saved_meal = save_dailyplan_meal_to_library(dailyplan_meal=dailyplan_meal, user=user)
+    return {
+        "message": "Comida guardada en tu biblioteca.",
+        "target_id": dailyplan.id,
+        "affected_id": saved_meal.id,
+    }
+
+
+def save_dailyplan_from_program(*, user, program_id: int, week_number: int, day_number: int) -> dict:
+    program = _owned_program(user, program_id)
+    program_day = (
+        ProgramDay.objects.select_related("dailyplan")
+        .filter(
+            program=program,
+            week_number=week_number,
+            day_number=day_number,
+            dailyplan__isnull=False,
+        )
+        .first()
+    )
+    if not program_day or not program_day.dailyplan:
+        raise MobileAPIError("composition_item_not_found", "El plan diario del programa no está disponible.", 404)
+    saved_dailyplan = save_dailyplan(program_day.dailyplan, user)
+    return {
+        "message": "Plan diario guardado en tu biblioteca.",
+        "target_id": program.id,
+        "affected_id": saved_dailyplan.id,
+    }
 
 
 def preview_meal_for_dailyplan(

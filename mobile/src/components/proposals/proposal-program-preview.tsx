@@ -53,7 +53,6 @@ export function ProposalProgramCard({ onOpen, program }: { onOpen(): void; progr
       metricData={programDailyMetricData(weeks)}
       onOpen={onOpen}
       openActionLabel="Explorar programa"
-      owner="Asistente Nutricional"
       title={item.name}
       weeksCount={indicator("week")}
     />

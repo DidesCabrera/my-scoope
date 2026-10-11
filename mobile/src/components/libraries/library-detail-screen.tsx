@@ -1,5 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
+import { Carrot, Utensils } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Alert, Image, StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
@@ -15,6 +16,7 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { HeaderMetadataChip, LoadingState, MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
 import { Button, InlineNotice } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -40,7 +42,7 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelIt
 
 export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "meals" | "daily-plans" | "programs" }) {
   const router = useRouter();
-  const { id, calendarizedDayId, dailyPlanId, dailyPlanMealId, mealKey, mealTime, pinned, pickerEntryTo, pickerKind, pickerRelationId, pickerTargetId, returnTo } = useLocalSearchParams<{ id: string; calendarizedDayId?: string; dailyPlanId?: string; dailyPlanMealId?: string; mealKey?: string; mealTime?: string; pinned?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; returnTo?: string }>();
+  const { id, calendarizedDayId, dailyPlanId, dailyPlanMealId, dayNumber, mealKey, mealTime, pinned, pickerEntryTo, pickerKind, pickerRelationId, pickerTargetId, programId, returnTo, weekNumber } = useLocalSearchParams<{ id: string; calendarizedDayId?: string; dailyPlanId?: string; dailyPlanMealId?: string; dayNumber?: string; mealKey?: string; mealTime?: string; pinned?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; programId?: string; returnTo?: string; weekNumber?: string }>();
   const { status, apiRequest } = useSession();
   const { publishSelection } = useComparatorSelectionTransfer();
   const [item, setItem] = useState<LibraryItem | null>(null);
@@ -60,6 +62,9 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const [contextTime, setContextTime] = useState(mealTime?.slice(0, 5) ?? "");
   const contextDailyPlanId = Number(dailyPlanId);
   const contextDailyPlanMealId = Number(dailyPlanMealId);
+  const contextProgramId = Number(programId);
+  const contextWeekNumber = Number(weekNumber);
+  const contextDayNumber = Number(dayNumber);
   const returnHref = internalHref(returnTo);
   const pickerEntryHref = internalHref(pickerEntryTo);
   const contextualPickerKind = pickerKind === "meal-to-dailyplan" || pickerKind === "meal-to-calendarized-day" ? pickerKind : null;
@@ -90,6 +95,13 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     && contextDailyPlanId > 0
     && Number.isInteger(contextDailyPlanMealId)
     && contextDailyPlanMealId > 0;
+  const hasProgramDailyPlanContext = entitySlug === "daily-plans"
+    && Number.isInteger(contextProgramId)
+    && contextProgramId > 0
+    && Number.isInteger(contextWeekNumber)
+    && contextWeekNumber > 0
+    && Number.isInteger(contextDayNumber)
+    && contextDayNumber > 0;
   const isPinnedMealContext = entitySlug === "meals" && pinned === "1" && Boolean(mealKey);
   const pinnedMealAdherence = useMealAdherenceCheckIn({ enabled: isPinnedMealContext, mealKey: mealKey ?? "", mode: "pinned", onChange: setPinnedMealExecution });
   const headerEntity = entitySlug === "daily-plans" ? "dailyPlan" : entitySlug === "programs" ? "program" : entitySlug === "meals" ? "meal" : "food";
@@ -327,7 +339,13 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       });
       setContextTime(hour);
     },
-  } : undefined} mealTimeInMenu={false} onCompare={item.entity === "program" ? undefined : openComparison} onCompleted={handleActionCompleted} onOpenInformation={() => router.push(`/libraries/${entitySlug}/${item.id}/information` as Href)} onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }} renderTrigger={() => null} visible={actionSheet != null} />;
+  } : undefined} mealTimeInMenu={false} onCompare={item.entity === "program" ? undefined : openComparison} onCompleted={handleActionCompleted} onEdit={item.entity === "food" && item.actions.some((action) => action.key === "rename") ? () => router.push({ pathname: "/libraries/create", params: { entity: "food", id: String(item.id) } }) : undefined} onOpenInformation={() => router.push(`/libraries/${entitySlug}/${item.id}/information` as Href)} onSaveToLibrary={hasMealTimeContext || hasProgramDailyPlanContext ? async () => {
+    const path = hasMealTimeContext
+      ? `/api/v1/library/daily-plans/${contextDailyPlanId}/meals/${contextDailyPlanMealId}/save-to-library`
+      : `/api/v1/library/programs/${contextProgramId}/weeks/${contextWeekNumber}/days/${contextDayNumber}/save-to-library`;
+    const result = await apiRequest<CompositionMutationResult>(path, { method: "POST" });
+    Alert.alert("Listo", result.message);
+  } : undefined} onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }} renderTrigger={() => null} visible={actionSheet != null} />;
   const mutationStatusModal = <MutationStatusModal onFinished={() => setMutationStatus(null)} status={mutationStatus} />;
   if (item.entity === "program") {
     return <><ProgramDetailPreview
@@ -337,10 +355,19 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       onAssignDailyPlan={item.can_calendarize ? (week, day) => router.push(pickerHref("dailyplan-to-program", { programId: item.id, weekNumber: week, dayNumber: day })) : undefined}
       onDuplicateWeek={item.can_calendarize ? async (week) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/duplicate`, { method: "POST" }); } : undefined}
       onHeaderVisibilityChange={setCompactHeaderVisible}
+      onOpenDailyPlan={(week, day) => {
+        const programDay = item.panel.weeks.find((candidate) => candidate.week_number === week)?.days.find((candidate) => candidate.day_number === day);
+        if (!programDay?.dailyplan_id) return;
+        router.push({ pathname: "/libraries/daily-plans/[id]", params: { dayNumber: String(day), id: String(programDay.dailyplan_id), programId: String(item.id), weekNumber: String(week) } } as Href);
+      }}
       onRemoveDailyPlan={item.can_calendarize ? async (week, day) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/days/${day}`, { method: "DELETE" }); } : undefined}
       onRemoveWeek={item.can_calendarize ? async (week) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}`, { method: "DELETE" }); } : undefined}
       onReorderDailyPlans={item.can_calendarize ? async (week, orderedDays) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/days/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: orderedDays }) }, { loadingLabel: "Actualizando programa", successLabel: "Programa actualizado" }); } : undefined}
       onReorderWeeks={item.can_calendarize ? async (weeks) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: weeks }) }, { loadingLabel: "Actualizando programa", successLabel: "Programa actualizado" }); } : undefined}
+      onSaveDailyPlan={async (week, day) => {
+        const result = await apiRequest<CompositionMutationResult>(`/api/v1/library/programs/${item.id}/weeks/${week}/days/${day}/save-to-library`, { method: "POST" });
+        Alert.alert("Listo", result.message);
+      }}
       scrollable
     />{actionsModal}{mutationStatusModal}</>;
   }
@@ -385,12 +412,12 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     </EntityDetailSection></> : null}
     {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={item.panel.kind === "weeks" ? `${panelCount} elementos` : undefined} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} nestedScroll onOpenItem={openFood} preparation={isPinnedMealContext && pinnedMealAdherence.available ? { disabled: savingMealKey != null, isPrepared: (food) => normalizedPinnedMealExecution?.prepared_food_keys.includes(food.id) ?? false, onToggle: (food) => void togglePinnedMealDetailFood(food.id) } : undefined} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} nestedScroll onOpenItem={mealEditing?.onOpen} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
     {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation ? { returnTo: String(currentDetailHref) } : {}) }))} /> : null}
-    {item.entity === "meal" && foodItems.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${foodItems.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foodItems} onOpenFood={openFood} /></EntityDetailSection></> : null}
+    {item.entity === "meal" && foodItems.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" /><FoodDetailCardList items={foodItems} onOpenFood={openFood} /></> : null}
     {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id }))} /> : null}
     {item.entity === "meal" && isPinnedMealContext ? <MealNoteCard controller={pinnedMealAdherence} /> : null}
     {item.entity === "meal" && !isPinnedMealContext && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
-    {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></EntityDetailSection></> : null}
-    {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><GroupedFoodsCard items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} title="Alimentos plan diario" /></EntityDetailSection></> : null}
+    {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" /><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onChanged={load} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></> : null}
+    {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en este plan diario" /><GroupedFoodsCard items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} title="Alimentos plan diario" /></> : null}
     {item.entity === "dailyPlan" && todayContext?.calendarization == null ? <Button bleed label={isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"} onPress={() => confirmPinnedPlan(!isPinnedPlan)} variant={isPinnedPlan ? "secondary" : "primary"} /> : null}
   </EntityDetailPage></NestableScrollContainer>{actionsModal}{mutationStatusModal}<CalendarizedEntityActions
     entityName={panelTimeMeal?.name ?? "Comida"}

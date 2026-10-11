@@ -231,7 +231,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   const libraryList = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-list-screen.tsx"), "utf8");
   const screenLayout = await readFile(path.resolve(process.cwd(), "src/components/ui/layout.tsx"), "utf8");
   const headerBody = navigation.slice(navigation.indexOf("export function AppNavigationHeader"), navigation.indexOf("export function useHeaderPresentation"));
-  assertSourceMatch(headerBody, /isHome \? <View pointerEvents="none" style=\{styles\.headerLogo\}><MyScoopeLogo/);
+  assertSourceMatch(headerBody, /isHome \? <View pointerEvents="none" style=\{styles\.headerLogo\}><MyScoopeBrandLogo compact \/>/);
   assertSourceMatch(headerBody, /HeaderIdentity/);
   assertSourceMatch(headerBody, /defaultIdentityVisible/);
   assertSourceMatch(navigation, /Icon color=\{tokens\.color\.textMain\}/);
@@ -248,7 +248,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /<Plus color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(navigation, /headerPresentation\.createAction/);
   assertSourceMatch(navigation, /height: 48/);
-  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeLogo \/>/);
+  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeBrandLogo compact \/>/);
   const logo = await readFile(path.resolve(process.cwd(), "src/components/ui/my-scoope-logo.tsx"), "utf8");
   assertSourceMatch(logo, /logoText: \{[^}]*fontSize: 18/);
   assertSourceMatch(logo, /logoBar: \{[^}]*height: 3, width: 13/);

@@ -1,5 +1,5 @@
 import { type Href, useRouter } from "expo-router";
-import { ChevronRight, RefreshCw, Trash2 } from "lucide-react-native";
+import { BookPlus, ChevronRight, RefreshCw, Trash2 } from "lucide-react-native";
 
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
@@ -86,11 +86,12 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
   };
 }
 
-export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onRemove, onReplace, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; onOpen?: () => void; onOpenMeal?: (mealIndex: number) => void; onRemove?: () => Promise<void>; onReplace?: () => void; week: number }) {
+export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onRemove, onReplace, onSaveToLibrary, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; onOpen?: () => void; onOpenMeal?: (mealIndex: number) => void; onRemove?: () => Promise<void>; onReplace?: () => void; onSaveToLibrary?: () => Promise<void>; week: number }) {
   const router = useRouter();
   const nutrition = day?.nutrition;
   const liveMeals = day ? (day.meals ?? []).map(mealPanelItem) : meals;
   const contextualActions: ContextCardAction[] = [
+    ...(onSaveToLibrary ? [{ icon: BookPlus, key: "save-to-library", label: "Guardar en mi biblioteca", onPress: onSaveToLibrary }] : []),
     ...(onReplace ? [{ icon: RefreshCw, key: "replace", label: "Reemplazar plan diario", onPress: onReplace }] : []),
     ...(onRemove ? [{
       confirmation: {

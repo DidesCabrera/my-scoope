@@ -339,7 +339,6 @@ export default function UiGalleryScreen() {
             foodsCount={36}
             onMore={() => undefined}
             onOpen={() => undefined}
-            owner="Tú"
             title="Programa de recomposición"
             weeksCount={2}
           />

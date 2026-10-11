@@ -1,11 +1,98 @@
 from django.test import override_settings
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileCompositionProjectionAPITests(AuthenticatedMobileAPITestCase):
+    def test_program_dailyplan_can_be_saved_as_an_independent_library_plan(self):
+        food = Food.objects.create(name="Arroz", protein=3, carbs=28, fat=1, created_by=self.user)
+        meal = Meal.objects.create(name="Almuerzo ajustado", created_by=self.user, is_draft=False)
+        MealFood.objects.create(meal=meal, food=food, quantity=180)
+        embedded_plan = DailyPlan.objects.create(
+            name="Día ajustado",
+            created_by=self.user,
+            is_draft=False,
+            source=DailyPlan.SOURCE_PROGRAM,
+        )
+        DailyPlanMeal.objects.create(dailyplan=embedded_plan, meal=meal, hour="13:00")
+        program = Program.objects.create(name="Programa editable", created_by=self.user, duration_weeks=1)
+        program_day = ProgramDay.objects.create(
+            program=program,
+            dailyplan=embedded_plan,
+            week_number=1,
+            day_number=2,
+        )
+
+        response = self.client.post(
+            f"/api/v1/library/programs/{program.id}/weeks/1/days/2/save-to-library"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        saved = DailyPlan.objects.get(pk=response.json()["data"]["affected_id"])
+        self.assertNotEqual(saved.id, embedded_plan.id)
+        self.assertEqual(saved.source, DailyPlan.SOURCE_MANUAL)
+        self.assertEqual(saved.name, "Día ajustado")
+        self.assertEqual(float(saved.dailyplan_meals.get().meal.meal_food_set.get().quantity), 180)
+        program_day.refresh_from_db()
+        self.assertEqual(program_day.dailyplan_id, embedded_plan.id)
+
+    def test_program_dailyplan_save_rejects_another_users_program(self):
+        other = type(self.user).objects.create_user(username="other-program-user")
+        embedded_plan = DailyPlan.objects.create(
+            name="Plan privado",
+            created_by=other,
+            is_draft=False,
+            source=DailyPlan.SOURCE_PROGRAM,
+        )
+        program = Program.objects.create(name="Programa privado", created_by=other, duration_weeks=1)
+        ProgramDay.objects.create(program=program, dailyplan=embedded_plan, week_number=1, day_number=1)
+
+        response = self.client.post(
+            f"/api/v1/library/programs/{program.id}/weeks/1/days/1/save-to-library"
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_dailyplan_meal_can_be_saved_as_an_independent_library_meal(self):
+        food = Food.objects.create(name="Avena", protein=10, carbs=60, fat=5, created_by=self.user)
+        embedded_meal = Meal.objects.create(
+            name="Desayuno ajustado",
+            created_by=self.user,
+            is_draft=False,
+            scope=Meal.Scope.EMBEDDED,
+        )
+        MealFood.objects.create(meal=embedded_meal, food=food, quantity=75)
+        dailyplan = DailyPlan.objects.create(name="Plan editable", created_by=self.user, is_draft=False)
+        relation = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=embedded_meal, hour="08:30")
+
+        response = self.client.post(
+            f"/api/v1/library/daily-plans/{dailyplan.id}/meals/{relation.id}/save-to-library"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        saved_id = response.json()["data"]["affected_id"]
+        saved = Meal.objects.get(pk=saved_id)
+        self.assertNotEqual(saved.id, embedded_meal.id)
+        self.assertEqual(saved.scope, Meal.Scope.LIBRARY)
+        self.assertEqual(saved.name, "Desayuno ajustado (Copia)")
+        self.assertEqual(float(saved.meal_food_set.get().quantity), 75)
+        relation.refresh_from_db()
+        self.assertEqual(relation.meal_id, embedded_meal.id)
+
+    def test_dailyplan_meal_save_rejects_another_users_plan(self):
+        other = type(self.user).objects.create_user(username="other-mobile-user")
+        meal = Meal.objects.create(name="Privada", created_by=other, is_draft=False)
+        dailyplan = DailyPlan.objects.create(name="Plan privado", created_by=other, is_draft=False)
+        relation = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=meal)
+
+        response = self.client.post(
+            f"/api/v1/library/daily-plans/{dailyplan.id}/meals/{relation.id}/save-to-library"
+        )
+
+        self.assertEqual(response.status_code, 404)
+
     def test_food_picker_replaces_the_owned_relation_and_projects_the_result(self):
         original = Food.objects.create(
             name="Avena original", protein=10, carbs=60, fat=5, created_by=self.user

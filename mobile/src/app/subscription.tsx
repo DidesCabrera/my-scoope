@@ -18,7 +18,7 @@ import type { EntitlementsData, SubscriptionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { AppHeader, Button, Card, InlineNotice, LoadingState, MyScoopeLogo, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
+import { AppHeader, Button, Card, InlineNotice, LoadingState, MyScoopeBrandLogo, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
 import { tokens } from "@/design/tokens";
@@ -321,13 +321,13 @@ export default function SubscriptionScreen() {
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
       {isOnboarding ? (
         <View style={styles.onboardingIntro}>
-          <View style={styles.onboardingLogo}><MyScoopeLogo /></View>
+          <View style={styles.onboardingLogo}><MyScoopeBrandLogo /></View>
           <Text style={styles.onboardingTitle}>Elige un plan</Text>
           <Text style={styles.onboardingDescription}>Compara lo que incluyen Free, Basic y Pro.{"\n"}Puedes cambiar de plan más adelante.</Text>
         </View>
       ) : (
         <View style={styles.subscriptionHeader}>
-          <View style={styles.subscriptionLogo}><MyScoopeLogo /></View>
+          <View style={styles.subscriptionLogo}><MyScoopeBrandLogo compact /></View>
           <View style={styles.subscriptionTitleSpacing}>
             <AppHeader alignment="center" title="Suscripciones y Bolsas" />
           </View>

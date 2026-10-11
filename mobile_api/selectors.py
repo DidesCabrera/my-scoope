@@ -454,6 +454,33 @@ def library_dailyplans_payload(
     )
 
 
+def composition_options_payload(user, *, entity: str, search=None, offset=0, limit=30) -> dict:
+    """Return the visual card fields used by composition picker results."""
+    builders = {
+        "meals": library_meals_payload,
+        "daily-plans": library_dailyplans_payload,
+    }
+    try:
+        builder = builders[entity]
+    except KeyError as exc:
+        raise ValueError("composition_option_entity_not_supported") from exc
+    page = builder(
+        user,
+        search=search,
+        offset=offset,
+        limit=limit,
+        include_actions=False,
+    )
+    visual_fields = {"id", "entity", "name", "subtitle", "nutrition", "indicators", "panel", "quantity_unit"}
+    return {
+        **page,
+        "items": [
+            {key: value for key, value in item.items() if key in visual_fields}
+            for item in page["items"]
+        ],
+    }
+
+
 def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
     current_weight = get_current_weight(user)
     actions_for = library_list_actions_projector(user)
@@ -502,6 +529,82 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
         offset=offset,
         limit=limit,
         builder=build_card,
+    )
+
+
+def calendarization_program_options_payload(user, *, search=None, offset=0, limit=30) -> dict:
+    """Return only the program card data required by the activation picker."""
+    current_weight = get_current_weight(user)
+    queryset = (
+        Program.objects.filter(created_by=user)
+        .select_related("created_by")
+        .annotate(library_day_count=Count("program_dailyplan", distinct=True))
+        .prefetch_related(
+            Prefetch(
+                "program_dailyplan",
+                queryset=ProgramDay.objects.select_related("dailyplan").order_by("week_number", "day_number", "id"),
+                to_attr="_card_program_days",
+            )
+        )
+        .order_by("list_order", "-created_at", "-id")
+        .distinct()
+    )
+
+    def build_option(program):
+        summary = prepare_program_card_summary(program)
+        weeks = program_card_week_panel_items(program, current_weight)
+        return {
+            "id": program.id,
+            "name": program.name,
+            "creator": _creator_name(program),
+            "weeks_count": program.normalized_duration_weeks,
+            "filled_days_count": program.library_day_count,
+            "foods_count": summary["program_foods_count"],
+            "weeks": [
+                {
+                    "week_number": week["week_number"],
+                    "days": [{"nutrition": day["nutrition"]} for day in week["days"]],
+                }
+                for week in weeks
+            ],
+        }
+
+    return _library_page(
+        queryset,
+        search=search,
+        offset=offset,
+        limit=limit,
+        builder=build_option,
+    )
+
+
+def program_week_picker_detail_payload(user, *, program_id: int, week_number: int) -> dict | None:
+    """Return one fully rendered program week without hydrating unrelated weeks."""
+    current_weight = get_current_weight(user)
+    program = (
+        Program.objects.filter(pk=program_id, created_by=user)
+        .prefetch_related(
+            Prefetch(
+                "program_dailyplan",
+                queryset=(
+                    ProgramDay.objects.filter(week_number=week_number)
+                    .select_related("dailyplan")
+                    .prefetch_related(
+                        Prefetch(
+                            "dailyplan__dailyplan_meals__meal__meal_food_set",
+                            queryset=meal_foods_for_library_projection(),
+                        )
+                    )
+                ),
+            )
+        )
+        .first()
+    )
+    if program is None:
+        return None
+    return next(
+        (week for week in _program_week_panel_items(program, current_weight) if week["week_number"] == week_number),
+        None,
     )
 
 

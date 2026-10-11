@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Utensils } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 
 import type { ApiEnvelope, ShareClaimResult, ShareResource, SharingInboxData } from "@/api/types";
@@ -8,9 +8,10 @@ import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { FoodPanels, MealPanels } from "@/components/panels";
 import { SharedResourceActions } from "@/components/sharing/shared-resource-actions";
-import { Button, EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { Button, EntityCardAction, InlineNotice, LoadingState, Screen } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 import { sharedFoodPanelItems, sharedMealPanelItems, sharedNutrition } from "@/sharing/presentation";
@@ -107,8 +108,7 @@ export default function SharedResourceScreen() {
               <MealPanels items={mealItems} onOpenItem={(item) => router.push(`/share/${id}/meals/${item.id}` as Href)} />
             </EntityDetailSection>
             {meals.length ? <>
-              <SectionDivider />
-              <EntityDetailSection title="Detalle de cada Comida">
+              <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
                 {meals.map((meal, index) => {
                   const openDetail = () => router.push(`/share/${id}/meals/${index}` as Href);
                   return <NutritionEntityCard
@@ -133,7 +133,6 @@ export default function SharedResourceScreen() {
                     />
                   </NutritionEntityCard>;
                 })}
-              </EntityDetailSection>
             </> : null}
           </EntityDetailPage>
         </>
