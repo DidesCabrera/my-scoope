@@ -12,7 +12,7 @@
 1. Owner/legal review the published privacy policy, terms and Chile/launch-market wording.
 2. Publish the production legal/support URLs and verify them without authentication.
 3. Configure App Store Connect contracts, tax/banking, subscription group, products and server notifications.
-4. Create `appreview@myscoope.com` through the normal production signup flow, verify it, leave MFA disabled and ensure it has no active subscription. Store its unique password only in the password manager and App Store Connect, then run `python manage.py prepare_app_review_demo --login appreview@myscoope.com` against production.
+4. Create `developer@myscoope.com` through the normal production signup flow, verify it, leave MFA disabled and ensure it has no active subscription. Store its unique password only in the password manager and App Store Connect, then run `python manage.py prepare_app_review_demo --login developer@myscoope.com` against production.
 5. Configure `MYSCOOPE_APPLE_TEAM_ID` on the production web service and verify that `https://www.myscoope.com/.well-known/apple-app-site-association` returns HTTP 200 with the production Team ID and `com.myscoope.app`.
 6. Run the CML07 physical-device matrix on the release candidate.
 7. Capture all six screenshots from the same approved build and verify accepted pixel dimensions.
