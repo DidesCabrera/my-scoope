@@ -4,7 +4,9 @@ export type NativeDateTimeFieldProps = {
   containerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
   hideLabel?: boolean;
+  iconInLabel?: boolean;
   inputStyle?: StyleProp<TextStyle>;
+  inlineLabel?: boolean;
   label: string;
   labelStyle?: StyleProp<TextStyle>;
   maximumValue?: string;

@@ -104,7 +104,7 @@ export default function SharedResourceScreen() {
             ]}
             nutrition={sharedNutrition(snapshot.nutrition)}
             title={resource.title}>
-            <EntityDetailSection detail={`${meals.length} comidas`} title="Composición">
+            <EntityDetailSection detail={`${meals.length} comidas`} title="Composición plan diario">
               <MealPanels items={mealItems} onOpenItem={(item) => router.push(`/share/${id}/meals/${item.id}` as Href)} />
             </EntityDetailSection>
             {meals.length ? <>

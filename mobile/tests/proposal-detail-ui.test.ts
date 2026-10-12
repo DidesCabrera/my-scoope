@@ -154,7 +154,7 @@ test("proposed entities expose progressive detail navigation", async () => {
   assert.match(food, /Alimento dentro de la propuesta/);
   assert.match(programDay, /\/program\/weeks\/\$\{week\}\/days\/\$\{day\}\/meals\//);
   assert.match(programMeal, /\/program\/weeks\/\$\{week\}\/days\/\$\{day\}\/meals\/\$\{index\}\/foods\//);
-  assert.match(typography, /normalizedTitle === "composición"/);
+  assert.match(typography, /normalizedTitle\.startsWith\("composición"\)/);
 });
 
 test("proposed meal food panel rows preserve library food identities", async () => {

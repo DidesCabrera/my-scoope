@@ -64,7 +64,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(program, /Abrir plan de hoy/);
   assertSourceMatch(program, /CalendarizedProgramPlanning/);
   assertSourceMatch(programDay, /<EntityDetailPage/);
-  assertSourceMatch(programDay, /title="Tabla de comparación entre comidas"/);
+  assertSourceMatch(programDay, /title="Composición plan diario"/);
   assertSourceMatch(programDay, /title="Detalle de cada Comida"/);
   assertSourceMatch(programDay, /<NutritionEntityCard/);
   assertSourceMatch(programDay, /\/program\/days\/\[id\]\/meals\/\[mealKey\]/);
@@ -100,6 +100,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(account, /<SectionTitle title="Sesión"/);
   assertSourceDoesNotMatch(account, /Cierra tu sesión en este dispositivo/);
   assertSourceMatch(account, /eyebrow="INFORMACIÓN DE LA CUENTA">[\s\S]*<\/ProposalReviewSection>[\s\S]*My Scoope no reemplaza atención médica[\s\S]*label="Cerrar sesión"/);
+  assertSourceMatch(account, /medicalNoticeSpacing: \{ marginTop: 24 \}/);
   assertSourceMatch(account, /label: "Acciones de mi cuenta"/);
   assertSourceMatch(account, /accountActions === "menu"/);
   assertSourceMatch(account, /label="Editar nombre de usuario"/);

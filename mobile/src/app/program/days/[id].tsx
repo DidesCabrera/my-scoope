@@ -240,7 +240,7 @@ export default function ProgramDayScreen() {
             protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
           }}
           title={snapshot.name ?? day.plan_name ?? "Plan diario"}>
-          <EntityDetailSection title="Tabla de comparación entre comidas">
+          <EntityDetailSection title="Composición plan diario">
             <MealPanels
               editing={{
                 onChangeTime: setTimeChangeMeal,

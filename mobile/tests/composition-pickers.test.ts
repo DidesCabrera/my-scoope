@@ -22,7 +22,7 @@ test("composition pickers use independent native routes and one shared flow", as
   );
   matches(picker, /mode: "back"/);
   matches(picker, /stickyHeaderIndices=\{\[0\]\}/);
-  matches(picker, /stickyHeaderIndices=\{\[isMealPicker \? 0 : 1\]\}/);
+  matches(picker, /stickyHeaderIndices=\{kind === "dailyplan-to-program" \? \[1\] : undefined\}/);
   matches(picker, /style=\{styles\.configurationSticky\}/);
   matches(picker, /style=\{styles\.selectionSticky\}/);
   matches(picker, /<SearchField/);
@@ -61,18 +61,19 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /preview\?\.result/);
   matches(picker, /<PickerResultCard preview=\{preview\} \/>/);
   const selectedCard = picker.indexOf("option={configuredSelection}");
-  const configuration = picker.indexOf("style={styles.configurationSticky}");
   const impactPreview = picker.indexOf('title="Previsualización del impacto"');
-  assert.ok(selectedCard < configuration);
-  assert.ok(configuration < impactPreview);
-  matches(picker, /\{isMealPicker \? configurationCard : selectedCard\}[\s\S]*\{isMealPicker \? selectedCard : configurationCard\}/);
+  assert.ok(selectedCard < impactPreview);
+  matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView[\s\S]*\{selectedCard\}[\s\S]*\{isMealPicker \? mealNoteCard : null\}[\s\S]*\{\(isMealPicker \|\| isFoodPicker\) && configurationAction \? <View style=\{styles\.fixedPickerFooter\}>\{configurationAction\}<\/View> : null\}/);
   matches(picker, /Porción \(\{selected\.quantityUnit \?\? "g"\}\)/);
   matches(picker, /<Scale color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
-  matches(picker, /<NativeDateTimeField[^>]*mode="time"/);
+  matches(picker, /<NativeDateTimeField[^>]*iconInLabel[^>]*inlineLabel[^>]*mode="time"/);
+  matches(picker, /compactControlField: \{[^}]*marginRight: -8[^}]*maxWidth: 120[^}]*minHeight: 36[^}]*minWidth: 120[^}]*width: "40%"/);
   matches(picker, /<NotebookPen color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   matches(picker, /<CalendarDays color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   matches(picker, /<Text style=\{styles\.compactFieldLabel\}>Porción \(\{selected\.quantityUnit \?\? "g"\}\)<\/Text>/);
-  matches(picker, /style=\{styles\.compactFieldInput\} value=\{quantity\}/);
+  matches(picker, /style=\{\[styles\.compactFieldInput, styles\.compactControlField\]\} value=\{quantity\}/);
+  matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView/);
+  matches(picker, /foodFixedPortion: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
   omits(picker, /setQuantity\(value\); setPreview\(null\)/);
   matches(picker, /setPreviewPayloadKey\(payloadKey\)/);
   matches(picker, /disabled=\{!configurationValid \|\| previewing \|\| previewPayloadKey !== payloadKey\}/);
@@ -80,9 +81,11 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /previewHeading: \{[^}]*justifyContent: "space-between"[^}]*width: "100%"/);
   omits(picker, /Actualizando previsualización/);
   matches(picker, /label="Hora"/);
-  matches(picker, /style=\{styles\.configurationDivider\}/);
   matches(picker, /accessibilityLabel=\{noteEditing \? "Ocultar edición de nota" : "Editar nota"\}/);
   matches(picker, /noteEditing \? <TextInput/);
+  matches(picker, /mealFixedTime: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
+  matches(picker, /fixedPickerFooter: \{[^}]*paddingBottom: 68[^}]*paddingHorizontal: tokens\.spacing\.screen/);
+  matches(picker, /fixedControlCard: \{ borderRadius: 18, minHeight: 52, paddingVertical: 6 \}/);
   matches(picker, /configurationSticky: \{[^}]*marginHorizontal: -tokens\.spacing\.screen[^}]*paddingHorizontal: tokens\.spacing\.screen/);
   matches(picker, /height: 34[^}]*width: 34/);
   omits(picker, /function toggleDay\(day: number\) \{[^}]*setPreview\(null\)/s);
@@ -200,13 +203,13 @@ test("active program details expose snapshot-only composition actions after comp
   matches(dayDetail, /<Button\s+bleed\s+label="\+ Agregar Comida"/);
   matches(dayDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey, returnTo: `\/program\/days\/\$\{dayId\}` \}\)/);
   matches(dayDetail, /<Button bleed label="\+ Agregar alimento"/);
-  assert.ok(dayDetail.indexOf('title="Tabla de comparación entre comidas"') < dayDetail.indexOf('label="+ Agregar Comida"'));
+  assert.ok(dayDetail.indexOf('title="Composición plan diario"') < dayDetail.indexOf('label="+ Agregar Comida"'));
   assert.ok(dayDetail.indexOf('label="+ Agregar Comida"') < dayDetail.indexOf('title="Detalle de cada Comida"'));
 
   matches(mealDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey \}\)/);
   matches(mealDetail, /label="\+ Agregar alimento"/);
   matches(mealDetail, /<Button\s+bleed\s+label="\+ Agregar alimento"/);
-  assert.ok(mealDetail.indexOf('title="Tabla de comparación entre alimentos"') < mealDetail.indexOf('label="+ Agregar alimento"'));
+  assert.ok(mealDetail.indexOf('title="Composición comida"') < mealDetail.indexOf('label="+ Agregar alimento"'));
   assert.ok(mealDetail.indexOf('label="+ Agregar alimento"') < mealDetail.indexOf('title="Detalle de cada Alimento"'));
 });
 

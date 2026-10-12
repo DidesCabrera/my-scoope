@@ -9,7 +9,7 @@ type SectionTitleIcon = "chart" | "comparison" | "dailyPlans" | "foods" | "meals
 function iconForSectionTitle(title: string): SectionTitleIcon | undefined {
   const normalizedTitle = title.trim().toLocaleLowerCase("es");
   if (normalizedTitle === "gráfico de la semana") return "chart";
-  if (normalizedTitle === "composición" || normalizedTitle.startsWith("tabla de comparación")) return "comparison";
+  if (normalizedTitle.startsWith("composición") || normalizedTitle.startsWith("tabla de comparación")) return "comparison";
   if (normalizedTitle.startsWith("alimentos en est")) return "foods";
   if (normalizedTitle === "planificación semanal") return "planning";
   if (normalizedTitle.startsWith("detalle de cada comida")) return "meals";

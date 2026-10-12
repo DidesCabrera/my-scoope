@@ -135,7 +135,9 @@ export default function AccountScreen() {
           { label: "Fecha de ingreso", value: joinedDateLabel(session?.date_joined) },
         ]} />
       </ProposalReviewSection>
-      <InlineNotice tone="warning">My Scoope no reemplaza atención médica. Revisa cualquier cálculo, lectura OCR o propuesta asistida por IA antes de aplicarla.</InlineNotice>
+      <View style={styles.medicalNoticeSpacing}>
+        <InlineNotice tone="warning">My Scoope no reemplaza atención médica. Revisa cualquier cálculo, lectura OCR o propuesta asistida por IA antes de aplicarla.</InlineNotice>
+      </View>
       {__DEV__ ? (
         <Button label="Abrir galería del sistema UI" onPress={() => router.push("/dev/ui-gallery" as Href)} variant="secondary" />
       ) : null}
@@ -201,6 +203,7 @@ const styles = StyleSheet.create({
   informationRowLast: { borderBottomWidth: 0 },
   informationRows: { marginTop: -tokens.spacing.xs },
   informationValue: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20, textAlign: "right" },
+  medicalNoticeSpacing: { marginTop: 24 },
   pressed: { opacity: 0.65 },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },

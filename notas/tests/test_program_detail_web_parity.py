@@ -26,7 +26,7 @@ class ProgramDetailWebParityTests(SimpleTestCase):
         plans = source.index("Planes diarios esta semana")
         foods = source.index('program_week_foods_section.html')
         chart = source.index('program_metric_chart_base.html')
-        comparison = source.index("Tabla de comparación entre planes diarios")
+        comparison = source.index("Composición semana")
 
         self.assertLess(plans, foods)
         self.assertLess(foods, chart)
