@@ -13,6 +13,8 @@ const BOTTOM_SPACING = 96;
 
 type ScreenProps = PropsWithChildren<{
   contentStyle?: StyleProp<ViewStyle>;
+  fixedHeader?: ReactNode;
+  fixedHeaderStyle?: StyleProp<ViewStyle>;
   headerMode?: "automatic" | "preserve";
   onHeaderVisibilityChange?: (visible: boolean) => void;
   refreshControl?: ReactElement<RefreshControlProps>;
@@ -28,7 +30,7 @@ export function useScreenScrollControl() {
   return useContext(ScreenScrollContext);
 }
 
-export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onHeaderVisibilityChange, refreshControl, scrollHeader, stickyHeader, stickyHeaderStyle }: ScreenProps) {
+export function Screen({ children, scroll = true, contentStyle, fixedHeader, fixedHeaderStyle, headerMode = "automatic", onHeaderVisibilityChange, refreshControl, scrollHeader, stickyHeader, stickyHeaderStyle }: ScreenProps) {
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [panelDragging, setPanelDragging] = useState(false);
@@ -51,6 +53,7 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
   return (
     <ScreenScrollContext.Provider value={scrollControl}>
     <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
+      {fixedHeader ? <View style={[styles.fixedHeader, fixedHeaderStyle]}>{fixedHeader}</View> : null}
       {scroll ? (
         <NestableScrollContainer
           alwaysBounceVertical={scroll === "auto" ? contentOverflows : undefined}
@@ -63,6 +66,7 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
           onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
           onScroll={(event) => setCompactIdentityVisible(isHeaderIdentityVisible(event.nativeEvent.contentOffset.y))}
           refreshControl={refreshControl}
+          style={styles.scroll}
           scrollEnabled={scrollEnabled}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
@@ -110,10 +114,12 @@ export const layoutStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },
+  scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },
   screenContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: BOTTOM_SPACING },
   scrollHeader: { paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.md, paddingBottom: tokens.spacing.md, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, zIndex: 2 },
+  fixedHeader: { backgroundColor: tokens.color.surfaceApp, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, zIndex: 2 },
   brandRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   brandMark: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
   brandMarkText: { color: tokens.color.surfaceApp, fontSize: 20, fontWeight: "900" },

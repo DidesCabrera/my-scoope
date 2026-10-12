@@ -10,6 +10,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { userFacingError } from "@/api/errors";
+import type { EntitlementsData } from "@/api/billing-types";
 import { useSession } from "@/auth/session-context";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { AnimatedScanBeam } from "@/components/label-capture/animated-scan-beam";
@@ -254,6 +255,7 @@ export default function LabelCaptureScreen() {
   const [draft, setDraft] = useState<NutritionLabelDraft | null>(null);
   const [saved, setSaved] = useState<FoodLabelCaptureResult | null>(null);
   const [config, setConfig] = useState<FoodLabelAIConfig | null>(null);
+  const [planName, setPlanName] = useState<string | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<PreparedLabelImage | null>(null);
   const [localCandidate, setLocalCandidate] = useState<LocalCandidate | undefined>();
@@ -272,6 +274,9 @@ export default function LabelCaptureScreen() {
     void apiRequest<FoodLabelAIConfig>("/api/v1/foods/label-captures/config")
       .then(setConfig)
       .catch(() => setConfig(null));
+    void apiRequest<EntitlementsData>("/api/v1/entitlements")
+      .then((entitlements) => setPlanName(entitlements.plan_name))
+      .catch(() => setPlanName(null));
   }, [apiRequest, status]);
 
   useEffect(() => () => deleteCachedImage(prepared?.uri), [prepared?.uri]);
@@ -674,9 +679,11 @@ export default function LabelCaptureScreen() {
           ? { detail: "La imagen no es suficientemente legible y no será enviada ni consumirá créditos.", label: "No apta", title: "Toma otra fotografía", tone: tokens.color.danger }
           : { detail: "No pudimos comprobar automáticamente la nitidez. Confirma visualmente que todo el texto sea legible.", label: "Sin validar", title: "Comprueba la fotografía", tone: tokens.color.warning };
     return (
-      <Screen headerMode="preserve">
+      <Screen
+        fixedHeader={<FullBleedSquare><Image accessibilityLabel="Fotografía procesada de la etiqueta nutricional" resizeMode="contain" source={{ uri: prepared.uri }} style={StyleSheet.absoluteFill} /></FullBleedSquare>}
+        fixedHeaderStyle={styles.photoFixedHeader}
+        headerMode="preserve">
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-        <FullBleedSquare><Image accessibilityLabel="Fotografía procesada de la etiqueta nutricional" resizeMode="contain" source={{ uri: prepared.uri }} style={StyleSheet.absoluteFill} /></FullBleedSquare>
         <View style={styles.qualityPanel}>
           <View style={styles.qualityCopy}>
             <Text style={styles.qualityTitle}>{qualityPresentation.title}</Text>
@@ -704,11 +711,13 @@ export default function LabelCaptureScreen() {
 
   if (phase === "processing" && prepared) {
     return (
-      <Screen headerMode="preserve">
-        <FullBleedSquare surfaceStyle={styles.processingPhoto}>
+      <Screen
+        fixedHeader={<FullBleedSquare surfaceStyle={styles.processingPhoto}>
           <Image accessibilityLabel="Etiqueta nutricional en análisis" resizeMode="contain" source={{ uri: prepared.uri }} style={StyleSheet.absoluteFill} />
           <AnimatedScanBeam gradientId="label-capture-live-scan" />
-        </FullBleedSquare>
+        </FullBleedSquare>}
+        fixedHeaderStyle={styles.photoFixedHeader}
+        headerMode="preserve">
         <View style={styles.processingDetails}>
           <View style={styles.processingHeader}>
             <View style={styles.qualityCopy}><Text style={styles.processingTitle}>Analizando valores</Text><Text style={styles.qualityDetail}>Identificando la base nutricional de la etiqueta.</Text></View>
@@ -746,13 +755,13 @@ export default function LabelCaptureScreen() {
   return (
     <Screen
       contentStyle={phase === "review" && prepared ? styles.reviewScrollContent : undefined}
-      headerMode="preserve"
-      stickyHeader={phase === "review" && prepared ? (
+      fixedHeader={phase === "review" && prepared ? (
         <FullBleedSquare surfaceStyle={styles.reviewPhoto}>
           <ZoomableLabelImage accessibilityLabel="Etiqueta nutricional analizada" uri={prepared.uri} />
         </FullBleedSquare>
       ) : undefined}
-      stickyHeaderStyle={styles.reviewStickyHeader}
+      fixedHeaderStyle={styles.photoFixedHeader}
+      headerMode="preserve"
     >
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
@@ -771,7 +780,7 @@ export default function LabelCaptureScreen() {
           </View>
           <InlineNotice>Enviaremos una copia reducida y sin metadatos para extraer los valores. La fotografía original no se guarda.</InlineNotice>
           <View style={styles.introBottom}>
-            {config ? <CreditDashboardGrid availableCredits={config.available_credits} /> : null}
+            {config ? <CreditDashboardGrid availableCredits={config.available_credits} planName={planName ?? config.plan_name} /> : null}
             <View style={styles.actionGroup}>
               <Button disabled={config ? !config.can_scan : false} label="Abrir cámara" loading={openingCamera} onPress={() => void beginCamera()} />
               <Button disabled={config ? !config.can_scan : false} label="Elegir desde galería" loading={preparing} onPress={() => void chooseFromGallery()} variant="secondary" />
@@ -950,7 +959,7 @@ const styles = StyleSheet.create({
   assuranceText: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, lineHeight: 19 },
   introBottom: { gap: tokens.spacing.sm, marginTop: "auto" },
   actionGroup: { gap: tokens.spacing.sm },
-  reviewStickyHeader: { paddingBottom: 0, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  photoFixedHeader: { paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   reviewScrollContent: { paddingTop: 0 },
   reviewPhotoMessage: { marginTop: 0 },
   reviewPhoto: { backgroundColor: "#18202A", position: "relative" },

@@ -15,6 +15,10 @@ test("Home creates or presents one live pinned daily plan", async () => {
   assertSourceMatch(home, /onToggleCompleted: \(meal, completed\) => \{ void toggleTodayMealCompletion\(meal\.id, completed, "pinned"\); \}/);
   assertSourceMatch(home, /`\/api\/v1\/days\/\$\{todayDayId\}\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/check-ins`/);
   assertSourceMatch(home, /`\/api\/v1\/today\/pinned-plan\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/check-ins`/);
+  assertSourceMatch(home, /setToday\(optimisticMealExecution\(today, mealKey, completed\)\)/);
+  assertSourceMatch(home, /setActiveProgram\(\(current\) => optimisticProgramAdherence\(current, previousCompleted, completed\)\)/);
+  assertSourceMatch(home, /apiRequest<HomeData>\("\/api\/v1\/home"\)[\s\S]*adherenceMutationIdRef\.current === adherenceMutationId[\s\S]*setActiveProgram\(home\.active_program\)/);
+  assertSourceMatch(home, /setToday\(previousToday\);[\s\S]*setActiveProgram\(previousProgram\)/);
   assertSourceMatch(card, /<EntityCard actions=\{detailAction\} entity="dailyPlan" eyebrow="PLAN DEL DÍA" headingLink=\{\{ label: "Ir al detalle del plan", onPress: openDetail \}\} indicators=\{indicators\} title=\{item\.name\}>/);
   assertSourceMatch(card, /label="Ir al detalle del plan"/);
   assertSourceMatch(card, /router\.push\(`\/libraries\/daily-plans\/\$\{item\.id\}` as Href\)/);

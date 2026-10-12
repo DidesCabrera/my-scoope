@@ -585,6 +585,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgramKpis, /strokeLinecap="round"/);
   assertSourceMatch(activeProgramKpis, /transform=\{`rotate\(-90 \$\{RING_CENTER\} \$\{RING_CENTER\}\)`\}/);
   assertSourceMatch(activeProgramKpis, /indicatorIdentity:\{[^}]*flexDirection:"column"[^}]*justifyContent:"center"/);
+  assertSourceMatch(activeProgramKpis, /backgroundColor: tokens\.color\.dailyPlan[^]*<Clock3 color=\{tokens\.color\.entityIconForeground\}/);
+  assertSourceMatch(activeProgramKpis, /backgroundColor: tokens\.color\.meal[^]*<CheckCheck color=\{tokens\.color\.entityIconForeground\}/);
+  assertSourceMatch(activeProgramKpis, /indicatorIcon:\{[^}]*borderRadius:9[^}]*height:28[^}]*marginBottom:6[^}]*width:28/);
   assertSourceMatch(activeProgramKpis, /indicator:\{[^}]*borderRadius:tokens\.radius\.panel/);
   assertSourceMatch(activeProgramKpis, /indicatorLabel:\{[^}]*fontSize:18[^}]*textAlign:"center"/);
   assertSourceDoesNotMatch(activeProgramKpis, /progressRing:\{[^}]*marginTop/);
@@ -622,6 +625,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`Vamos, \$\{firstName\}`\}[\s\S]*?Fallar en planificar, es planificar fallar/);
   assertSourceMatch(todayScreen, /greetingSubtitle: \{[^}]*marginTop: tokens\.spacing\.xs/);
   assertSourceMatch(todayScreen, /<Chip borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
+  assertSourceMatch(todayScreen, /planContext: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
   assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>Tu plan de alimentos para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
   assertSourceMatch(todayScreen, /eyebrow="PLAN DEL DÍA"/);

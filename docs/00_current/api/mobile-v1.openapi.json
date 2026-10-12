@@ -3688,11 +3688,16 @@
           "image_retention_available": {
             "title": "Image Retention Available",
             "type": "boolean"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
           }
         },
         "required": [
           "credits_per_scan",
           "available_credits",
+          "plan_name",
           "can_scan",
           "image_retention_available"
         ],

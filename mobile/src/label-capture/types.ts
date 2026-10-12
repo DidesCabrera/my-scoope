@@ -25,6 +25,7 @@ export type FoodLabelCaptureInput = {
 export type FoodLabelAIConfig = {
   credits_per_scan: number;
   available_credits: number;
+  plan_name: string;
   can_scan: boolean;
   image_retention_available: boolean;
 };
