@@ -15,8 +15,8 @@ import {
   Target,
   Utensils,
 } from "lucide-react-native";
-import { createContext, type ComponentType, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
-import { Animated, Image, PanResponder, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
+import { createContext, type ComponentType, type ReactNode, useCallback, useContext, useLayoutEffect, useMemo, useState } from "react";
+import { Animated, Image, PanResponder, type PanResponderGestureState, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { DailyPlanMealDetailList, type DailyPlanMealDetailItem, EntityDetailPage, EntityDetailSection } from "@/components/details";
@@ -180,7 +180,7 @@ function useProfileQuestionStyle() {
   return [styles.profileQuestion, profileEyebrowsMuted && styles.profileQuestionMuted];
 }
 
-function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, title, titleAccessory, description }: {
+function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, title, titleAccessory, titleTopSpacingReduction = 0, description }: {
   brandedCentered?: boolean;
   description: ReactNode;
   eyebrow: string;
@@ -188,6 +188,7 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
   index: number;
   title: string;
   titleAccessory?: ReactNode;
+  titleTopSpacingReduction?: number;
 }) {
   const { disclosuresTitleSpacingReduction, externalExplanationChrome, fixedProfileChrome, profileTitleBottomSpacingReduction } = useContext(JourneyPresentationContext);
   const isExplanation = index >= 1 && index <= 5;
@@ -211,6 +212,7 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
         styles.title,
         isCenteredIntro && styles.centeredText,
         usesCenteredTitleSpacing && styles.centeredTitleSpacing,
+        titleTopSpacingReduction > 0 && { marginTop: -titleTopSpacingReduction },
         isExplanation && { marginBottom: (usesCenteredTitleSpacing ? tokens.spacing.sm : 0) + 10 },
         index === 6 && disclosuresTitleSpacingReduction > 0 && { marginTop: styles.centeredTitleSpacing.marginTop - disclosuresTitleSpacingReduction },
       ]}>{title}</Text>
@@ -220,12 +222,12 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
   );
 }
 
-function ExplanationDots({ action, forceVisible = false, index }: { action?: ReactNode; forceVisible?: boolean; index: number }) {
+function ExplanationDots({ action, compact = false, forceVisible = false, index }: { action?: ReactNode; compact?: boolean; forceVisible?: boolean; index: number }) {
   const { externalExplanationChrome } = useContext(JourneyPresentationContext);
   if (externalExplanationChrome && !forceVisible) return null;
   const activeIndex = index - 1;
   return (
-    <View style={[styles.explanationFooter, action ? styles.explanationFooterWithAction : null]}>
+    <View style={[styles.explanationFooter, compact && styles.explanationFooterCompact, action ? styles.explanationFooterWithAction : null]}>
       <View accessibilityLabel={`Vista ${activeIndex + 1} de ${explanationSteps.length}`} style={styles.explanationDots}>
         {explanationSteps.map((step, dotIndex) => (
           <View
@@ -248,7 +250,7 @@ function ExplanationDots({ action, forceVisible = false, index }: { action?: Rea
           </View>
         ))}
       </View>
-      {action}
+      {action ? <View style={styles.explanationFooterAction}>{action}</View> : null}
     </View>
   );
 }
@@ -518,13 +520,13 @@ function ValueView({ index }: { index: number }) {
       <StepHeader
         description={(
           <>
-            Nos alegra mucho tenerte por aquí.
+            Nos alegra tenerte por aquí.
             {"\n\n"}
-            Queremos que cumplas todas tus metas, y un cambio físico es un buen punto de partida.
+            Queremos ayudarte a cumplir a conseguir los resultados que desees, apoyándote en el camino.
             {"\n\n"}
             Alcanzar tu objetivo corporal será el <Text style={styles.descriptionEmphasis}>resultado de pequeñas buenas decisiones que tomes día a día</Text> <Text style={styles.descriptionEmphasis}>de forma consistente</Text>; Y si bien un cambio corporal no se logra de la noche a la mañana, un cambio de actitud sí.
             {"\n\n"}
-            Decidir enfrentar un desafío con convicción es el primer paso, luego verás tu avance, fruto de tu trabajo, y <Text style={styles.descriptionEmphasis}>te sentirás orgulloso de ti mismo</Text>, reforzará tu actitud y finalmente <Text style={styles.descriptionEmphasis}>se reflejará en un cambio físico y mental</Text>.
+            Decidir enfrentar este desafío con convicción es el primer paso, luego verás tu avance fruto de tu trabajo, y <Text style={styles.descriptionEmphasis}>te sentirás orgulloso de ti mismo</Text>, reforzará tu actitud y finalmente <Text style={styles.descriptionEmphasis}>se reflejará en un cambio físico y mental</Text>.
             {"\n\n"}
             Te deseamos lo mejor en este camino,
             {"\n"}
@@ -555,7 +557,7 @@ function StructureView({ index }: { index: number }) {
           <>
             My scoope es un <Text style={styles.descriptionEmphasis}>entorno nutricional</Text> para que puedas <Text style={styles.descriptionEmphasis}>planificar, ejecutar y aprender</Text> sobre alimentación.
             {"\n\n"}
-            La planificación la realiza <Text style={styles.descriptionEmphasis}>tu librería</Text>, la cual está compuesta por 4 módulos jerárquicos: <Text style={styles.descriptionEmphasis}>Alimentos</Text>, <Text style={styles.descriptionEmphasis}>Comidas</Text>, <Text style={styles.descriptionEmphasis}>Planes Diarios</Text>, y <Text style={styles.descriptionEmphasis}>Programas Semanales</Text>; Cada elemento puede ser reutilizado, formando las combinaciones que desees.
+            Podrás organizar tu alimentación en <Text style={styles.descriptionEmphasis}>Tus Librerías</Text>: <Text style={styles.descriptionEmphasis}>Alimentos, Comidas, Planes Diarios, y Programas Semanales</Text>;
           </>
         )}
         eyebrow="Estructura del sistema"
@@ -588,20 +590,20 @@ function PanelsView({ index }: { index: number }) {
       <StepHeader
         description={(
           <>
-            Buscamos ofrecer <Text style={styles.descriptionEmphasis}>instancias de aprendizaje y análisis</Text> para que formes tu propio criterio.
+            Te ofrecemos <Text style={styles.descriptionEmphasis}>instancias de aprendizaje y análisis</Text> para que formes tu propio criterio.
             {"\n\n"}
-            Navega por los <Text style={styles.descriptionEmphasis}>paneles</Text> y realiza <Text style={styles.descriptionEmphasis}>comparaciones</Text> para comprender de mejor manera el impacto real que los alimentos tienen en tu dieta.
+            Navega por los <Text style={styles.descriptionEmphasis}>paneles</Text>, realiza <Text style={styles.descriptionEmphasis}>comparaciones</Text> y comprende de mejor manera el impacto real que los alimentos tienen en tu dieta.
           </>
         )}
         eyebrow="Paneles de información"
         icon={Eye}
         index={index}
         title="Forma tu propio criterio"
+        titleTopSpacingReduction={12}
       />
       <NutritionEntityCard
         entity="meal"
         eyebrow="Comida"
-        indicators={[{ icon: "food", label: "alimentos", value: foods.length }]}
         nutrition={{
           calories: 642.8,
           protein: { allocation: 25, grams: 39.36, perKilogram: 39.36 / referenceWeightKg },
@@ -625,7 +627,7 @@ function ControlView({ index }: { index: number }) {
           <>
             Ya planificaste, aprendiste, ahora toca ejecutar; Porque recorrer el camino es lo que finalmente te transformará.
             {"\n\n"}
-            Puedes calendarizar Planes y Programas, activando los <Text style={styles.descriptionEmphasis}>registro de cumplimientos de las comidas</Text> permitiéndote ver tu adhesión. Además puedes registrar notas para construir tu propia <Text style={styles.descriptionEmphasis}>bitácora</Text>.
+            Puedes <Text style={styles.descriptionEmphasis}>calendarizar Planes y Programas</Text>, y activar el <Text style={styles.descriptionEmphasis}>registro de cumplimiento de comidas</Text> permitiéndote ver tu progreso.
           </>
         )}
         eyebrow="Asistencia y control"
@@ -1125,47 +1127,55 @@ export function OnboardingJourneyView({
   const index = onboardingJourneySteps.findIndex((item) => item.key === step);
   const ViewComponent = views[step];
   const resolvedController = useMemo(() => controller ?? { values: onboardingJourneyPreviewValues }, [controller]);
+  const { width } = useWindowDimensions();
   const [translateX] = useState(() => new Animated.Value(0));
   const [transitioning, setTransitioning] = useState(false);
-  const { width } = useWindowDimensions();
   const [explanationTransitionWidth, setExplanationTransitionWidth] = useState(width);
   const interactiveExplanation = Boolean(controller) && index >= 1 && index <= 5;
+  const transitionWidth = fullWidthExplanationTransition ? explanationTransitionWidth : width;
+  const explanationPageGap = 48;
+  const explanationStride = transitionWidth + explanationPageGap;
+  const explanationOffset = -(index - 1) * explanationStride;
   const handleExplanationViewportLayout = useCallback((event: LayoutChangeEvent) => {
-    if (fullWidthExplanationTransition) setExplanationTransitionWidth(event.nativeEvent.layout.width);
+    if (!fullWidthExplanationTransition) return;
+    setExplanationTransitionWidth(event.nativeEvent.layout.width);
   }, [fullWidthExplanationTransition]);
+  useLayoutEffect(() => {
+    translateX.setValue(explanationOffset);
+  }, [explanationOffset, translateX]);
   const moveToExplanation = useCallback((direction: "back" | "next") => {
     if (transitioning) return;
+    const canMove = direction === "next" ? index < 5 : index > 1;
+    if (!canMove) {
+      Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: explanationOffset, useNativeDriver: true }).start();
+      return;
+    }
     setTransitioning(true);
-    const transitionWidth = fullWidthExplanationTransition ? explanationTransitionWidth : width;
-    const exitX = direction === "next" ? -transitionWidth : transitionWidth;
-    Animated.timing(translateX, { duration: 170, toValue: exitX, useNativeDriver: true }).start(({ finished }) => {
-      if (!finished) {
-        setTransitioning(false);
-        return;
+    const destination = explanationOffset + (direction === "next" ? -explanationStride : explanationStride);
+    Animated.timing(translateX, { duration: 220, toValue: destination, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) {
+        if (direction === "next") resolvedController.onNext?.();
+        else resolvedController.onBack?.();
       }
-      if (direction === "next") resolvedController.onNext?.();
-      else resolvedController.onBack?.();
-      translateX.setValue(-exitX);
-      requestAnimationFrame(() => {
-        Animated.timing(translateX, { duration: 190, toValue: 0, useNativeDriver: true }).start(() => {
-          setTransitioning(false);
-        });
-      });
+      setTransitioning(false);
     });
-  }, [explanationTransitionWidth, fullWidthExplanationTransition, resolvedController, transitioning, translateX, width]);
+  }, [explanationOffset, explanationStride, index, resolvedController, transitioning, translateX]);
+  const finishExplanationGesture = useCallback((gesture: PanResponderGestureState) => {
+    if (gesture.dx <= -48 || gesture.vx <= -0.45) moveToExplanation("next");
+    else if (gesture.dx >= 48 || gesture.vx >= 0.45) moveToExplanation("back");
+    else Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: explanationOffset, useNativeDriver: true }).start();
+  }, [explanationOffset, moveToExplanation, translateX]);
   const swipeResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_event, gesture) => interactiveExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
     onMoveShouldSetPanResponderCapture: (_event, gesture) => interactiveExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
     onPanResponderMove: (_event, gesture) => {
-      if (!transitioning) translateX.setValue(gesture.dx);
+      if (transitioning) return;
+      const atBoundary = (index === 1 && gesture.dx > 0) || (index === 5 && gesture.dx < 0);
+      translateX.setValue(explanationOffset + gesture.dx * (atBoundary ? 0.18 : 1));
     },
-    onPanResponderRelease: (_event, gesture) => {
-      if (gesture.dx <= -48 || gesture.vx <= -0.45) moveToExplanation("next");
-      else if (gesture.dx >= 48 || gesture.vx >= 0.45) moveToExplanation("back");
-      else Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: 0, useNativeDriver: true }).start();
-    },
-    onPanResponderTerminate: () => Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: 0, useNativeDriver: true }).start(),
-  }), [interactiveExplanation, moveToExplanation, translateX, transitioning]);
+    onPanResponderRelease: (_event, gesture) => finishExplanationGesture(gesture),
+    onPanResponderTerminate: (_event, gesture) => finishExplanationGesture(gesture),
+  }), [explanationOffset, finishExplanationGesture, index, interactiveExplanation, transitioning, translateX]);
   if (interactiveExplanation) {
     return (
       <JourneyControllerContext.Provider value={resolvedController}>
@@ -1177,17 +1187,32 @@ export function OnboardingJourneyView({
               onLayout={handleExplanationViewportLayout}
               style={[styles.explanationViewport, fullWidthExplanationTransition && styles.fullWidthExplanationViewport]}
             >
-              <ScrollView
-                bounces={false}
-                contentContainerStyle={styles.explanationScrollContent}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}>
-                <Animated.View style={[styles.explanationSlide, fullWidthExplanationTransition && styles.fullWidthExplanationSlide, { transform: [{ translateX }] }] }>
-                  <ViewComponent index={index} />
-                </Animated.View>
-              </ScrollView>
+              <Animated.View style={[styles.explanationTrack, { transform: [{ translateX }], width: transitionWidth * explanationSteps.length + explanationPageGap * (explanationSteps.length - 1) }] }>
+                {explanationSteps.map((pageStep, explanationIndex) => {
+                  const pageIndex = explanationIndex + 1;
+                  const PageView = views[pageStep.key];
+                  return (
+                    <View
+                      key={pageStep.key}
+                      style={[styles.explanationPage, { width: transitionWidth }]}
+                    >
+                      <ScrollView
+                        bounces={false}
+                        contentContainerStyle={styles.explanationScrollContent}
+                        nestedScrollEnabled
+                        removeClippedSubviews={false}
+                        showsVerticalScrollIndicator={false}
+                        style={styles.explanationPageScroll}>
+                        <View style={[styles.explanationSlide, fullWidthExplanationTransition && styles.fullWidthExplanationSlide]}>
+                          <PageView index={pageIndex} />
+                        </View>
+                      </ScrollView>
+                    </View>
+                  );
+                })}
+              </Animated.View>
             </View>
-            <ExplanationDots action={index === 5 ? <ContinueChip /> : undefined} forceVisible index={index} />
+            <ExplanationDots action={index === 5 ? <ContinueChip /> : undefined} compact forceVisible index={index} />
           </View>
         </JourneyPresentationContext.Provider>
       </JourneyControllerContext.Provider>
@@ -1197,7 +1222,6 @@ export function OnboardingJourneyView({
     <JourneyControllerContext.Provider value={resolvedController}>
       <JourneyPresentationContext.Provider value={{ conciseSexEyebrow, contentSizedDietaryChips, disclosuresTitleSpacingReduction, externalExplanationChrome: false, fixedDisclosuresFooter, fixedLoginActionBottomSpacing, fixedProfileChrome, fixedProfileFooterBottomSpacing, hideCalculationReviewDisclosure, measurementReferenceNotice, progressiveAllergyDetails, profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileQuestionSpacing, profileProgressWidthReduction, profileTitleBottomSpacingReduction, showGoalOptionsEyebrow, showProfileControlBleed, storyboardSummaryLayout }}>
         <View
-          {...swipeResponder.panHandlers}
           style={[
             styles.screen,
             index === 0 && styles.loginBackgroundScreen,
@@ -1228,6 +1252,9 @@ const styles = StyleSheet.create({
   loginBackgroundImage: { bottom: 0, height: 396, left: 0, position: "absolute", right: 0, top: 0, width: "100%" },
   loginContent: { flex: 1, gap: tokens.spacing.lg, transform: [{ translateY: -12 }], zIndex: 1 },
   explanationViewport: { flex: 1, overflow: "hidden", width: "100%" },
+  explanationTrack: { flexDirection: "row", flexShrink: 0, gap: 48, height: "100%" },
+  explanationPage: { flexShrink: 0, height: "100%", overflow: "hidden" },
+  explanationPageScroll: { flex: 1, width: "100%" },
   explanationScrollContent: { flexGrow: 1 },
   explanationSlide: { flex: 1, gap: tokens.spacing.lg, justifyContent: "center", paddingTop: tokens.spacing.xxl - 18 },
   fullWidthExplanationViewport: { alignSelf: "stretch", marginHorizontal: -tokens.spacing.screen, width: undefined },
@@ -1259,9 +1286,11 @@ const styles = StyleSheet.create({
   descriptionEmphasis: { fontWeight: tokens.weight.bold },
   footer: { gap: tokens.spacing.sm, marginTop: "auto" },
   explanationFooter: { alignItems: "center", gap: tokens.spacing.md, marginBottom: 48, marginTop: "auto" },
-  explanationFooterWithAction: { gap: tokens.spacing.xs, marginBottom: 34 },
+  explanationFooterCompact: { marginBottom: 28, marginTop: -16 },
+  explanationFooterWithAction: { position: "relative", width: "100%" },
+  explanationFooterAction: { position: "absolute", right: 0, top: 3 },
   explanationDots: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 40 },
-  explanationDot: { backgroundColor: tokens.color.borderStrong, borderRadius: 5, height: 10, overflow: "hidden", width: 10 },
+  explanationDot: { backgroundColor: tokens.color.borderStrong, borderRadius: 4.5, height: 9, overflow: "hidden", width: 9 },
   explanationDotActive: { backgroundColor: "transparent", transform: [{ scale: 1.25 }] },
   continueChip: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 34, overflow: "hidden", paddingHorizontal: tokens.spacing.lg },
   continueChipInset: { backgroundColor: tokens.color.surfaceApp, borderRadius: tokens.radius.pill, bottom: 2, left: 2, position: "absolute", right: 2, top: 2 },

@@ -48,7 +48,7 @@ test("Screen has one implementation and never overrides externally owned headers
   assertSourceDoesNotMatch(primitives, /export function Screen/);
   assertSourceMatch(primitives, /import \{ Screen \} from "\.\/layout";[\s\S]*export \{ Screen \}/);
   assertSourceMatch(primitives, /<Screen scroll=\{false\} contentStyle=\{styles\.loadingState\} headerMode="preserve">/);
-  assertSourceMatch(feedback, /<Screen scroll=\{false\} contentStyle=\{styles\.loadingState\} headerMode="preserve">/);
+  assertSourceMatch(feedback, /<Screen scroll=\{false\} contentStyle=\{\[styles\.loadingState, viewportCentered && styles\.loadingStateViewportCentered\]\} headerMode="preserve">/);
 });
 
 test("header navigation and action icons use muted text color", async () => {

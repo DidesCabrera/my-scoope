@@ -210,6 +210,8 @@ test("system foundations exposes nutrition and product-manual journeys", async (
 
   assertSourceMatch(home, /Fundamentos Nutricionales/);
   assertSourceMatch(home, /Manuales de uso/);
+  assertSourceMatch(home, /<SectionPageHeader countLabel="contenidos" section="learning" title="Fundamentos Sistema" \/>/);
+  assertSourceDoesNotMatch(home, /<AppHeader|Aprender en My Scoope/);
   assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="heart-pulse"/);
   assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="book-marked"/);
   assertSourceMatch(home, /<ChevronRight color=\{tokens\.color\.textMuted\}/);

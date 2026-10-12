@@ -1101,12 +1101,17 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /function HomeView|home: HomeView/);
   assertSourceMatch(journey, /function ExplanationDots/);
   assertSourceMatch(journey, /explanationFooter: \{[^}]*marginBottom: 48/);
+  assertSourceMatch(journey, /explanationFooterCompact: \{ marginBottom: 28, marginTop: -16 \}/);
+  assertSourceMatch(journey, /explanationDot: \{[^}]*borderRadius: 4\.5[^}]*height: 9[^}]*width: 9/);
+  assertSourceMatch(journey, /<ExplanationDots action=\{index === 5 \? <ContinueChip \/> : undefined\} compact forceVisible index=\{index\} \/>/);
   assertSourceMatch(journey, /function ContinueChip/);
   assertSourceMatch(journey, /id="continue-chip-border"/);
   assertSourceMatch(journey, /continueChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34/);
   assertSourceMatch(journey, /continueChipInset: \{[^}]*bottom: 2, left: 2[^}]*right: 2, top: 2/);
   assertSourceMatch(journey, /<Button disabled=\{controller\.loginDisabled\} label="Iniciar sesión o crear cuenta" loading=\{controller\.busy\} multicolorSurface="app" onPress=\{controller\.onLogin \?\? noop\} variant="multicolor" \/>/);
-  assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
+  assertSourceMatch(journey, /\{action \? <View style=\{styles\.explanationFooterAction\}>\{action\}<\/View> : null\}/);
+  assertSourceMatch(journey, /explanationFooterWithAction: \{ position: "relative", width: "100%" \}/);
+  assertSourceMatch(journey, /explanationFooterAction: \{ position: "absolute", right: 0, top: 3 \}/);
   assertSourceMatch(journey, /<View style=\{\[styles\.centeredLogo, styles\.explanationLogo\]\}><MyScoopeBrandLogo scale=\{0\.8\} \/><\/View>/);
   assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
   assertSourceMatch(journey, /const usesCenteredTitleSpacing = \(index <= 6 \|\| brandedCentered\) && !externalExplanationChrome/);
@@ -1140,7 +1145,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   }
   const welcomeView = journey.match(/function ValueView[\s\S]*?function StructureView/)?.[0] ?? "";
   assertSourceMatch(welcomeView, /title="Bienvenido a My Scoope!"/);
-  assertSourceMatch(welcomeView, /Nos alegra mucho tenerte por aquí/);
+  assertSourceMatch(welcomeView, /Nos alegra tenerte por aquí/);
+  assertSourceMatch(welcomeView, /Queremos ayudarte a cumplir a conseguir los resultados que desees, apoyándote en el camino/);
+  assertSourceMatch(welcomeView, /Decidir enfrentar este desafío con convicción/);
   assertSourceDoesNotMatch(welcomeView, /<ExplanationCard/);
   assertSourceMatch(journey, /explanationSteps\.map\(\(step, dotIndex\) =>/);
   assertSourceMatch(journey, /id="onboarding-credit-gradient"/);
@@ -1148,7 +1155,14 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /WeekDaySelectionRing/);
   assertSourceDoesNotMatch(journey.match(/function ValueView[\s\S]*?function DisclosuresView/)?.[0] ?? "", /<JourneyFooter/);
   assertSourceMatch(journey, /PanResponder\.create/);
+  assertSourceMatch(journey, /Animated\.timing/);
   assertSourceMatch(journey, /Boolean\(controller\) && index >= 1 && index <= 5/);
+  assertSourceMatch(journey, /explanationSteps\.map\(\(pageStep, explanationIndex\) =>/);
+  assertSourceMatch(journey, /style=\{\[styles\.explanationPage, \{ width: transitionWidth \}\]\}/);
+  assertSourceMatch(journey, /const explanationPageGap = 48/);
+  assertSourceMatch(journey, /const explanationStride = transitionWidth \+ explanationPageGap/);
+  assertSourceMatch(journey, /width: transitionWidth \* explanationSteps\.length \+ explanationPageGap \* \(explanationSteps\.length - 1\)/);
+  assertSourceMatch(journey, /explanationTrack: \{[^}]*gap: 48/);
   assertSourceDoesNotMatch(journey, /OnboardingExplanationCarousel/);
   assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
   assertSourceMatch(journey, /loginAction: \{ width: "100%" \}/);
@@ -1159,7 +1173,8 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(onboarding, /scroll=\{usesFixedDisclosuresFooter \|\| usesFixedProfileChrome \? false : stepIndex >= 6 \? "auto" : false\}/);
   assertSourceMatch(onboarding, /<Stack\.Screen options=\{\{ gestureEnabled: false, headerShown: false \}\} \/>/);
   assertSourceMatch(onboarding, /const headerCompensationTop = stepIndex >= 6 \? 88 : 0/);
-  assertSourceMatch(onboarding, /<Screen key=\{step\} contentStyle=\{\[styles\.screen, \{ paddingTop: headerCompensationTop \}\]\}/);
+  assertSourceMatch(onboarding, /<Screen contentStyle=\{\[styles\.screen, \{ paddingTop: headerCompensationTop \}\]\}/);
+  assertSourceDoesNotMatch(onboarding, /<Screen key=\{step\}/);
   assertSourceMatch(onboarding, /presentationPropsForOnboardingStep\(step\)/);
   assertSourceMatch(onboarding, /<OnboardingJourneyView controller=\{controller\} \{\.\.\.presentationProps\} step=\{step\} \/>/);
   assertSourceMatch(onboarding, /pathname: "\/subscription", params: \{ origin: "onboarding"/);

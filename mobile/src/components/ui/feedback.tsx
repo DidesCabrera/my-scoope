@@ -25,9 +25,9 @@ export function ProgressBar({ value, color = tokens.color.program }: { value: nu
   );
 }
 
-export function LoadingState({ label = "Preparando tu día…" }: { label?: string }) {
+export function LoadingState({ label = "Preparando tu día…", viewportCentered = false }: { label?: string; viewportCentered?: boolean }) {
   return (
-    <Screen scroll={false} contentStyle={styles.loadingState} headerMode="preserve">
+    <Screen scroll={false} contentStyle={[styles.loadingState, viewportCentered && styles.loadingStateViewportCentered]} headerMode="preserve">
       <MacroLoadingIndicator accessibilityLabel={label} />
     </Screen>
   );
@@ -94,6 +94,7 @@ const styles = StyleSheet.create({
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 8, overflow: "hidden" },
   progressFill: { borderRadius: tokens.radius.pill, height: "100%" },
   loadingState: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, justifyContent: "center" },
+  loadingStateViewportCentered: { paddingBottom: 0, paddingTop: 0 },
   statusCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.card, gap: tokens.spacing.md, minWidth: 240, paddingHorizontal: tokens.spacing.xl, paddingVertical: tokens.spacing.xl },
   statusLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, textAlign: "center" },
   statusScrim: { alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.56)", flex: 1, justifyContent: "center", padding: tokens.spacing.screen },

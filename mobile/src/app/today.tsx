@@ -128,7 +128,7 @@ export default function TodayScreen() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (status === "authenticated" && profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
   if (status === "authenticated" && !profile?.onboarding_completed) return <Redirect href="/onboarding" />;
-  if (loading && !today) return <><Stack.Screen options={{ headerShown: false }} /><LoadingState /></>;
+  if (loading && !today) return <><Stack.Screen options={{ animation: "none", headerShown: false }} /><LoadingState viewportCentered /></>;
 
   const snapshot = today?.plan_snapshot;
   const todayDayId = today?.day_id;

@@ -1,5 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import {
+  BookOpen,
   CalendarClock,
   CalendarDays,
   CalendarRange,
@@ -31,7 +32,7 @@ import { Button } from "./controls";
 import { Card } from "./surfaces";
 
 export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program";
-export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "create" | "import";
+export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "learning" | "create" | "import";
 
 export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "week" | "weight";
 
@@ -137,6 +138,7 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   weight: Weight,
   explore: Search,
   inbox: Inbox,
+  learning: BookOpen,
   create: CircleFadingPlus,
   import: FileDown,
 };
