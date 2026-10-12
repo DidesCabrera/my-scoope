@@ -4,9 +4,9 @@ My Scoope es una app de autogestión nutricional para consumidores que siguen su
 
 ## Acceso
 
-La app requiere inicio de sesión. La cuenta dedicada para revisión es `appreview@myscoope.com`, sin autenticación multifactor y sin una suscripción activa, para que App Review pueda recorrer la compra completa en Sandbox. Su contraseña se carga únicamente en App Store Connect y nunca se guarda en este repositorio. La cuenta debe existir y prepararse antes de enviar el build con:
+La app requiere inicio de sesión. La cuenta dedicada para revisión es `developer@myscoope.com`, sin autenticación multifactor y sin una suscripción activa, para que App Review pueda recorrer la compra completa en Sandbox. Su contraseña se carga únicamente en App Store Connect y nunca se guarda en este repositorio. La cuenta debe existir y prepararse antes de enviar el build con:
 
-`python manage.py prepare_app_review_demo --login appreview@myscoope.com`
+`python manage.py prepare_app_review_demo --login developer@myscoope.com`
 
 ## Recorrido sugerido
 
