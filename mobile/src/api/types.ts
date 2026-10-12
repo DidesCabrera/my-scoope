@@ -368,14 +368,15 @@ export type LibraryPanel = {
   meals: LibraryMealPanelItem[];
   weeks: LibraryWeekPanelItem[];
 };
-
 export type LibraryItem = {
   id: number;
   entity: LibraryEntity;
   name: string;
   subtitle: string;
   quantity_unit?: "g" | "ml" | null;
+  default_portion?: number | null;
   nutrition: LibraryNutrition;
+  food_nutrition?: import("./food-nutrition").FoodNutritionFacts | null;
   indicators: LibraryIndicator[];
   panel: LibraryPanel;
   creator: string;
@@ -875,7 +876,6 @@ export type AIChatListData = MobilePageData<AIChatSummary> & {
   availability: AssistantAvailability;
   pending_new_turn: AIPendingTurn | null;
 };
-
 export type AIChatDetail = AIChatSummary & {
   messages: AIChatMessage[];
   availability: AssistantAvailability;

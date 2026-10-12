@@ -6,6 +6,7 @@ import { tokens } from "@/design/tokens";
 export type KeyValueTableItem = {
   accessibilityLabel?: string;
   accessory?: ReactNode;
+  emphasized?: boolean;
   icon?: ReactNode;
   id?: number | string;
   label: string;
@@ -17,7 +18,7 @@ function TableRow({ item, last }: { item: KeyValueTableItem; last: boolean }) {
   const content = <>
       <View style={styles.identity}>
         {item.icon}
-        <Text style={styles.label}>{item.label}</Text>
+        <Text style={[styles.label, item.emphasized && styles.labelEmphasized]}>{item.label}</Text>
       </View>
       <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.value}>{item.value}</Text>
       {item.accessory}
@@ -46,6 +47,7 @@ export function KeyValueTable({ items }: { items: KeyValueTableItem[] }) {
 const styles = StyleSheet.create({
   identity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   label: { color: tokens.color.textMuted, flexShrink: 1, fontSize: 14, lineHeight: 20 },
+  labelEmphasized: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
   row: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingVertical: tokens.spacing.xs },
   rowLast: { borderBottomWidth: 0 },
   rowPressed: { opacity: 0.65 },

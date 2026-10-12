@@ -4,7 +4,7 @@ import base64
 
 from ninja import Router
 
-from accounts.services.credits import get_or_create_current_wallet
+from accounts.services.credits import get_or_create_current_wallet, resolve_account_plan_for_user
 from core.rate_limits import is_nutrition_label_scan_rate_limited
 from mobile_api.api_support import food_label_error, require_scope, success
 from mobile_api.auth import mobile_bearer
@@ -42,13 +42,15 @@ router = Router()
 )
 def food_label_capture_config(request):
     capabilities = get_capabilities(request.auth.user)
-    wallet = get_or_create_current_wallet(user=request.auth.user)
+    plan = resolve_account_plan_for_user(request.auth.user)
+    wallet = get_or_create_current_wallet(user=request.auth.user, plan=plan)
     cost = nutrition_label_scan_cost()
     can_create = capabilities is not None and capabilities.can_create_food()
     return success(
         {
             "credits_per_scan": cost,
             "available_credits": wallet.available_credits,
+            "plan_name": plan.name if plan is not None else "Sin plan comercial",
             "can_scan": bool(can_create and wallet.available_credits >= cost),
             "image_retention_available": True,
         }

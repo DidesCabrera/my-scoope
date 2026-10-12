@@ -110,7 +110,6 @@ export default function PersonalRecordsScreen() {
         <Card key={title} style={styles.card}>
           <View style={styles.cardHeading}>
             <View style={styles.headingCopy}>
-              <Text style={styles.eyebrow}>FICHA PERSONAL</Text>
               <Text style={styles.title}>{title}</Text>
             </View>
             <View style={styles.icon}><Icon color={tokens.color.textMain} size={20} strokeWidth={2} /></View>
@@ -132,14 +131,13 @@ export default function PersonalRecordsScreen() {
 
 const styles = StyleSheet.create({
   card: { gap: tokens.spacing.md },
-  cardHeading: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
+  cardHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   headingCopy: { flex: 1, gap: 3 },
   icon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 40, justifyContent: "center", width: 40 },
   intro: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 22 },
-  label: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.body, lineHeight: 22 },
+  label: { color: tokens.color.textMuted, flex: 1, fontSize: 14, lineHeight: 20 },
   row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingVertical: tokens.spacing.xs },
   rowLast: { borderBottomWidth: 0 },
-  title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.bold, lineHeight: 24 },
-  value: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, lineHeight: 22, textAlign: "right" },
+  title: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.bold, lineHeight: 22 },
+  value: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
 });

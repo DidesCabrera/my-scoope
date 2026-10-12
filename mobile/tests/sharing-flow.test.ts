@@ -46,7 +46,7 @@ test("shared daily plans reuse the native entity detail and nutrition panel syst
   assertSourceMatch(shareScreen, /<EntityDetailPage/);
   assertSourceMatch(shareScreen, /entity="dailyPlan"/);
   assertSourceMatch(shareScreen, /<MealPanels items=\{mealItems\}/);
-  assertSourceMatch(shareScreen, /Detalle de cada Comida/);
+  assertSourceMatch(shareScreen, /title="Composición plan diario"[\s\S]*Detalle de cada Comida/);
   assertSourceMatch(shareScreen, /<NutritionEntityCard/);
   assertSourceMatch(shareScreen, /<FoodPanels[\s\S]*?items=\{sharedFoodPanelItems\(meal\)\}/);
   assertSourceMatch(shareScreen, /onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/share\/\$\{id\}\/meals\/\$\{index\}\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);

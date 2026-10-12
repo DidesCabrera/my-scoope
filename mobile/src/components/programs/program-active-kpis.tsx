@@ -49,11 +49,11 @@ export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapse
   const content = <>
     <View style={[styles.indicators, styles.indicatorsSurfaceReset]}>
       <View style={[styles.indicator, mutedPanels ? styles.indicatorMuted : styles.indicatorCard, styles.indicatorMetricSpacing]}>
-        <View style={styles.indicatorIdentity}><Clock3 color={tokens.color.textMuted} size={20} /><Text style={styles.indicatorLabel}>{planLabel}</Text></View>
+        <View style={styles.indicatorIdentity}><View style={[styles.indicatorIcon, { backgroundColor: tokens.color.dailyPlan }]}><Clock3 color={tokens.color.entityIconForeground} size={17} strokeWidth={2.4} /></View><Text style={styles.indicatorLabel}>{planLabel}</Text></View>
         <ProgressRing color={tokens.color.dailyPlan} current={elapsedDays} percentage={advancement} total={totalDays} trackColor={`${tokens.color.dailyPlan}33`} />
       </View>
       <View style={[styles.indicator, mutedPanels ? styles.indicatorMuted : styles.indicatorCard, styles.indicatorMetricSpacing]}>
-        <View style={styles.indicatorIdentity}><CheckCheck color={tokens.color.textMuted} size={20} /><Text style={styles.indicatorLabel}>{mealLabel}</Text></View>
+        <View style={styles.indicatorIdentity}><View style={[styles.indicatorIcon, { backgroundColor: tokens.color.meal }]}><CheckCheck color={tokens.color.entityIconForeground} size={17} strokeWidth={2.4} /></View><Text style={styles.indicatorLabel}>{mealLabel}</Text></View>
         <ProgressRing color={tokens.color.meal} current={adheredDays} percentage={compliance} total={plannedAdherenceDays} trackColor={`${tokens.color.meal}33`} />
       </View>
     </View>
@@ -69,4 +69,5 @@ const styles = StyleSheet.create({
   standaloneTopInset:{marginTop:tokens.spacing.sm},
   card:{gap:tokens.spacing.md},standalone:{alignSelf:"stretch",gap:tokens.spacing.md,marginHorizontal:tokens.layout.reducedInset-tokens.card.outerPadding},header:{alignItems:"flex-start",flexDirection:"row",gap:tokens.spacing.md,justifyContent:"space-between"},headerCopy:{flex:1,gap:2},eyebrow:{color:tokens.color.program,fontSize:10,fontWeight:tokens.component.eyebrow.fontWeight,letterSpacing:1},title:{color:tokens.color.textMain,fontSize:tokens.type.body,fontWeight:tokens.weight.bold},
   indicators:{alignSelf:"stretch",backgroundColor:tokens.color.surfaceMuted,borderRadius:tokens.radius.lg,flexDirection:"row",gap:tokens.spacing.sm,padding:tokens.spacing.sm},indicator:{alignItems:"center",borderRadius:tokens.radius.panel,flexBasis:0,flexGrow:1,flexShrink:1,gap:tokens.spacing.xs,minWidth:0,paddingHorizontal:tokens.spacing.md,paddingVertical:tokens.spacing.lg},indicatorCard:{backgroundColor:tokens.color.surfaceCard},indicatorMuted:{backgroundColor:tokens.color.surfaceMuted},indicatorIdentity:{alignItems:"center",alignSelf:"stretch",flexDirection:"column",gap:tokens.spacing.xs,justifyContent:"center",minWidth:0},indicatorLabel:{color:tokens.color.textMain,flexShrink:1,fontSize:18,fontWeight:tokens.weight.semibold,textAlign:"center"},progressRing:{alignItems:"center",height:RING_SIZE,justifyContent:"center",width:RING_SIZE},ringValue:{alignItems:"center",justifyContent:"center"},fraction:{color:tokens.color.textMain,fontSize:tokens.type.title,fontWeight:tokens.weight.bold,fontVariant:["tabular-nums"]},percentageText:{color:tokens.color.textMuted,fontSize:tokens.type.body,fontWeight:tokens.weight.semibold,fontVariant:["tabular-nums"],marginTop:2},
+  indicatorIcon:{alignItems:"center",borderRadius:9,height:28,justifyContent:"center",marginBottom:6,width:28},
 });

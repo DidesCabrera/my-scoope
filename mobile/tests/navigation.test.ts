@@ -64,7 +64,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(program, /Abrir plan de hoy/);
   assertSourceMatch(program, /CalendarizedProgramPlanning/);
   assertSourceMatch(programDay, /<EntityDetailPage/);
-  assertSourceMatch(programDay, /title="Tabla de comparación entre comidas"/);
+  assertSourceMatch(programDay, /title="Composición plan diario"/);
   assertSourceMatch(programDay, /title="Detalle de cada Comida"/);
   assertSourceMatch(programDay, /<NutritionEntityCard/);
   assertSourceMatch(programDay, /\/program\/days\/\[id\]\/meals\/\[mealKey\]/);
@@ -100,6 +100,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(account, /<SectionTitle title="Sesión"/);
   assertSourceDoesNotMatch(account, /Cierra tu sesión en este dispositivo/);
   assertSourceMatch(account, /eyebrow="INFORMACIÓN DE LA CUENTA">[\s\S]*<\/ProposalReviewSection>[\s\S]*My Scoope no reemplaza atención médica[\s\S]*label="Cerrar sesión"/);
+  assertSourceMatch(account, /medicalNoticeSpacing: \{ marginTop: 24 \}/);
   assertSourceMatch(account, /label: "Acciones de mi cuenta"/);
   assertSourceMatch(account, /accountActions === "menu"/);
   assertSourceMatch(account, /label="Editar nombre de usuario"/);
@@ -185,15 +186,15 @@ test("personal records groups the persisted nutrition inputs", async () => {
   assertSourceMatch(records, /title: "Preferencias alimentarias"/);
   assertSourceMatch(records, /title: "Métricas corporales"/);
   assertSourceMatch(records, /title: "Métricas corporales"[\s\S]*title: "Ficha corporal"/);
-  assertSourceMatch(records, /<Text style=\{styles\.eyebrow\}>FICHA PERSONAL<\/Text>/);
-  assertSourceMatch(records, /title: \{[^}]*fontSize: tokens\.type\.section/);
+  assertSourceDoesNotMatch(records, /FICHA PERSONAL/);
+  assertSourceMatch(records, /title: \{[^}]*fontSize: 18/);
   assertSourceDoesNotMatch(records, /subtitle:/);
   assertSourceDoesNotMatch(records, /Revisar con el Asistente/);
   assertSourceMatch(records, /<Pencil color=\{tokens\.color\.textMuted\}/);
   assertSourceDoesNotMatch(records, /label: "Editar información"/);
   assertSourceMatch(records, /row: \{[^}]*alignItems: "center"[^}]*minHeight: 46[^}]*paddingVertical: tokens\.spacing\.xs/);
-  assertSourceMatch(records, /label: \{[^}]*fontSize: tokens\.type\.body/);
-  assertSourceMatch(records, /value: \{[^}]*fontSize: tokens\.type\.body/);
+  assertSourceMatch(records, /label: \{[^}]*fontSize: 14/);
+  assertSourceMatch(records, /value: \{[^}]*fontSize: 14/);
   assertSourceMatch(records, /<View style=\{styles\.headingCopy\}>[\s\S]*<View style=\{styles\.icon\}>/);
   const editor = await readFile(path.resolve(process.cwd(), "src/app/personal-records-edit.tsx"), "utf8");
   assertSourceMatch(editor, /`\/api\/v1\/personal-records\/\$\{section\}`/);

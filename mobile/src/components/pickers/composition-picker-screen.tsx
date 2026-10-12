@@ -444,38 +444,47 @@ export function CompositionPickerScreen({
       {configuredSelection ? <PickerOptionCard option={configuredSelection} /> : null}
     </View>
   );
+  const mealTimeCard = isMealPicker && selected ? (
+    <View style={styles.mealFixedTime}>
+      <Card style={styles.fixedControlCard}>
+        <NativeDateTimeField containerStyle={styles.compactControlField} iconInLabel inlineLabel label="Hora" minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
+        {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
+      </Card>
+    </View>
+  ) : null;
+  const mealNoteCard = isMealPicker && selected ? (
+    <Card>
+      <View style={styles.noteBlock}>
+        <View style={styles.noteHeading}>
+          <View style={styles.configurationLabel}>
+            <NotebookPen color={tokens.color.textMuted} size={18} />
+            <Text style={styles.compactFieldLabel}>Nota</Text>
+          </View>
+          <Pressable accessibilityLabel={noteEditing ? "Ocultar edición de nota" : "Editar nota"} accessibilityRole="button" hitSlop={8} onPress={() => setNoteEditing((current) => !current)}>
+            <Pencil color={tokens.color.textMuted} size={19} />
+          </Pressable>
+        </View>
+        {noteEditing ? <TextInput autoCapitalize="sentences" onChangeText={(value) => { setNote(value); setPreview(null); }} placeholder="Ej. antes de entrenar" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.noteInput} value={note} /> : null}
+      </View>
+    </Card>
+  ) : null;
+  const foodPortionCard = isFoodPicker && selected ? (
+    <View style={styles.foodFixedPortion}>
+      <Card style={styles.fixedControlCard}>
+        <View style={styles.compactFieldRow}>
+          <View style={styles.configurationLabel}>
+            <Scale color={tokens.color.textMuted} size={18} />
+            <Text style={styles.compactFieldLabel}>Porción ({selected.quantityUnit ?? "g"})</Text>
+          </View>
+          <TextInput keyboardType="decimal-pad" onChangeText={setQuantity} selectionColor={tokens.color.interactivePrimary} style={[styles.compactFieldInput, styles.compactControlField]} value={quantity} />
+        </View>
+      </Card>
+    </View>
+  ) : null;
   const configurationCard = (
     <View style={styles.configurationSticky}>
       {selected ? (
         <Card>
-          {isFoodPicker ? (
-            <View style={styles.compactFieldRow}>
-              <View style={styles.configurationLabel}>
-                <Scale color={tokens.color.textMuted} size={18} />
-                <Text style={styles.compactFieldLabel}>Porción ({selected.quantityUnit ?? "g"})</Text>
-              </View>
-              <TextInput keyboardType="decimal-pad" onChangeText={setQuantity} selectionColor={tokens.color.interactivePrimary} style={styles.compactFieldInput} value={quantity} />
-            </View>
-          ) : null}
-          {isMealPicker ? (
-            <>
-              <NativeDateTimeField containerStyle={styles.compactTimeField} label="Hora" minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
-              {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
-              <View style={styles.configurationDivider} />
-              <View style={styles.noteBlock}>
-                <View style={styles.noteHeading}>
-                  <View style={styles.configurationLabel}>
-                    <NotebookPen color={tokens.color.textMuted} size={18} />
-                    <Text style={styles.compactFieldLabel}>Nota</Text>
-                  </View>
-                  <Pressable accessibilityLabel={noteEditing ? "Ocultar edición de nota" : "Editar nota"} accessibilityRole="button" hitSlop={8} onPress={() => setNoteEditing((current) => !current)}>
-                    <Pencil color={tokens.color.textMuted} size={19} />
-                  </Pressable>
-                </View>
-                {noteEditing ? <TextInput autoCapitalize="sentences" onChangeText={(value) => { setNote(value); setPreview(null); }} placeholder="Ej. antes de entrenar" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.noteInput} value={note} /> : null}
-              </View>
-            </>
-          ) : null}
           {kind === "dailyplan-to-program" ? (
             <View style={styles.daysBlock}>
               <View style={styles.configurationLabel}>
@@ -505,18 +514,37 @@ export function CompositionPickerScreen({
       ) : null}
     </View>
   );
+  const configurationAction = preview && confirming ? (
+    <ConfirmationState
+      busy={submitting}
+      confirmLabel="Reemplazar y asignar"
+      message={`Los días ${preview.replacements.join(", ")} ya tienen un plan. Se reemplazarán por ${preview.selection.name}.`}
+      onCancel={() => setConfirming(false)}
+      onConfirm={() => void commit(true)}
+      title="Confirmar reemplazos"
+    />
+  ) : preview ? (
+    <Button
+      bleed
+      disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
+      label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
+      loading={submitting}
+      onPress={() => preview.confirmation_required ? setConfirming(true) : void commit()}
+    />
+  ) : null;
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.configurationSafeArea}>
+      {isFoodPicker ? foodPortionCard : mealTimeCard}
       <ScrollView
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.configurationScrollContent}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[isMealPicker ? 0 : 1]}>
-        {isMealPicker ? configurationCard : selectedCard}
-        {isMealPicker ? selectedCard : configurationCard}
+        stickyHeaderIndices={kind === "dailyplan-to-program" ? [1] : undefined}>
+        {selectedCard}
+        {kind === "dailyplan-to-program" ? configurationCard : null}
 
       {error ? <RecoverableErrorState message={error} onRetry={() => { setError(null); setRetryNonce((value) => value + 1); }} /> : null}
 
@@ -531,25 +559,10 @@ export function CompositionPickerScreen({
         </View>
       ) : null}
 
-      {preview && confirming ? (
-        <ConfirmationState
-          busy={submitting}
-          confirmLabel="Reemplazar y asignar"
-          message={`Los días ${preview.replacements.join(", ")} ya tienen un plan. Se reemplazarán por ${preview.selection.name}.`}
-          onCancel={() => setConfirming(false)}
-          onConfirm={() => void commit(true)}
-          title="Confirmar reemplazos"
-        />
-      ) : preview ? (
-        <Button
-          bleed
-          disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
-          label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
-          loading={submitting}
-          onPress={() => preview.confirmation_required ? setConfirming(true) : void commit()}
-        />
-      ) : null}
+      {isMealPicker ? mealNoteCard : null}
+      {!isMealPicker && !isFoodPicker ? configurationAction : null}
       </ScrollView>
+      {(isMealPicker || isFoodPicker) && configurationAction ? <View style={styles.fixedPickerFooter}>{configurationAction}</View> : null}
     </SafeAreaView>
   );
 }
@@ -580,11 +593,10 @@ export function pickerConfigureHref(
 }
 
 const styles = StyleSheet.create({
-  compactFieldInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 40, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs, textAlign: "right", width: 128 },
-  compactTimeField: { borderRadius: tokens.radius.md, marginHorizontal: 0 },
+  compactControlField: { borderRadius: tokens.radius.md, marginHorizontal: 0, marginRight: -8, maxWidth: 120, minHeight: 36, minWidth: 120, width: "40%" },
+  compactFieldInput: { backgroundColor: tokens.color.surfaceMuted, color: tokens.color.textMain, fontSize: 16, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs, textAlign: "right" },
   compactFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   compactFieldRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  configurationDivider: { backgroundColor: tokens.color.borderSoft, height: StyleSheet.hairlineWidth, width: "100%" },
   configurationLabel: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   configurationSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   configurationScrollContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
@@ -596,6 +608,10 @@ const styles = StyleSheet.create({
   days: { flexDirection: "row", gap: tokens.spacing.xs, justifyContent: "space-between" },
   daysBlock: { gap: tokens.spacing.sm },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
+  foodFixedPortion: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 8, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
+  fixedPickerFooter: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 68, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.sm },
+  mealFixedTime: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 8, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
+  fixedControlCard: { borderRadius: 18, minHeight: 52, paddingVertical: 6 },
   noteBlock: { gap: tokens.spacing.sm },
   noteHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 32 },
   noteInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 42, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },

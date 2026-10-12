@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/react-native";
 import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
 import { type ErrorBoundaryProps, type Href, Stack, useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -14,6 +15,8 @@ import { tokens } from "@/design/tokens";
 import { clearNativeReminders, refreshNativeReminders } from "@/notifications/native-reminders";
 import { notificationRoute } from "@/notifications/notification-navigation";
 import "@/observability/sentry";
+
+if (Platform.OS !== "web") void SplashScreen.preventAutoHideAsync();
 
 function ScreenErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   useEffect(() => {
@@ -53,6 +56,18 @@ function AuthenticatedRouteGate() {
       router.replace(returnTo ? { pathname: "/onboarding", params: { returnTo } } : "/onboarding" as Href);
     }
   }, [origin, pathname, profile, router, status]);
+
+  return null;
+}
+
+function SplashCoordinator() {
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status === "booting" || Platform.OS === "web") return undefined;
+    const frame = requestAnimationFrame(() => { void SplashScreen.hideAsync(); });
+    return () => cancelAnimationFrame(frame);
+  }, [status]);
 
   return null;
 }
@@ -103,6 +118,7 @@ function RootLayout() {
     <GestureHandlerRootView style={styles.gestureRoot}>
       <SafeAreaProvider>
         <SessionProvider>
+          <SplashCoordinator />
           <AppNavigationProvider>
             <ComparatorSelectionProvider>
               <AuthenticatedRouteGate />

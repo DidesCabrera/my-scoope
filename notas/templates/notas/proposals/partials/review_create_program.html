@@ -41,7 +41,7 @@
     {% if program.weeks|length > 1 %}
       <section class="program-weeks-summary-section" aria-labelledby="proposal-program-weeks-summary-title">
         <div class="title-section-panels program-weeks-title-section">
-          <h3 id="proposal-program-weeks-summary-title">Tabla de comparación entre semanas</h3>
+          <h3 id="proposal-program-weeks-summary-title">Composición programa</h3>
         </div>
         {% include "components/program_week_panels.html" with panel_id="proposal-review" program=program weeks=program.weeks default_desktop=True default_mobile=True can_edit=False %}
       </section>

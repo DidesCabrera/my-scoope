@@ -25,7 +25,7 @@ test("program week detail presents planning before food and comparison insights"
   const dividerAfterFoods = weekDetail.indexOf('<SectionDivider spacing="compact" tone="soft" />', foodPanels);
   const weeklyChartTitle = weekDetail.indexOf('title="Gráfico de la semana"');
   const weeklyChart = weekDetail.indexOf("<ProgramMetricPreview");
-  const comparison = weekDetail.indexOf('title="Tabla de comparación entre planes diarios"');
+  const comparison = weekDetail.indexOf('title="Composición semana"');
 
   assert.ok(dailyPlans >= 0);
   assert.ok(dailyPlans < daysGrid);

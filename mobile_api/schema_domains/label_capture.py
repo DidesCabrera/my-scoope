@@ -77,6 +77,7 @@ class FoodLabelAIAnalysisEnvelope(Schema):
 class FoodLabelAIConfigData(Schema):
     credits_per_scan: int
     available_credits: int
+    plan_name: str
     can_scan: bool
     image_retention_available: bool
 

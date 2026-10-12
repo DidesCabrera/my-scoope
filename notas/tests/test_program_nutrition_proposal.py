@@ -170,7 +170,7 @@ class ProgramNutritionProposalTests(TestCase):
         self.assertContains(program_response, "Semana 8")
         self.assertContains(program_response, "program-chart-panel")
         self.assertContains(program_response, "program-week-tabs")
-        self.assertContains(program_response, "Tabla de comparación entre planes diarios")
+        self.assertContains(program_response, "Composición semana")
         self.assertContains(program_response, "program-week-foods-aggregation")
         self.assertContains(program_response, "proposal-program-week-8-day-7-card")
         self.assertNotContains(program_response, "proposal-program-objectives")

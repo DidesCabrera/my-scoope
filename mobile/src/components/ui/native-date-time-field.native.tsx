@@ -21,7 +21,9 @@ export function NativeDateTimeField({
   containerStyle,
   disabled = false,
   hideLabel = false,
+  iconInLabel = false,
   inputStyle,
+  inlineLabel = false,
   label,
   labelStyle,
   maximumValue,
@@ -81,20 +83,33 @@ export function NativeDateTimeField({
     onChange(pickerValueFromDate(bounded, "date"));
   };
 
-  return (
-    <View style={styles.field}>
-      {!hideLabel ? <Text style={[styles.label, labelStyle]}>{label}</Text> : null}
-      <Pressable
+  const input = (
+    <Pressable
         accessibilityLabel={`${label}: ${displayValue(value, mode)}`}
         accessibilityRole="button"
         accessibilityState={{ disabled, expanded }}
         disabled={disabled}
         onPress={open}
         style={({ pressed }) => [styles.input, containerStyle, disabled && styles.disabled, pressed && styles.pressed]}>
-        <Icon color={tokens.color.textMuted} size={18} />
+        {!iconInLabel ? <Icon color={tokens.color.textMuted} size={18} /> : null}
         <Text style={[styles.value, inputStyle]}>{displayValue(value, mode)}</Text>
         <ChevronDown color={tokens.color.textSoft} size={18} />
-      </Pressable>
+    </Pressable>
+  );
+
+  return (
+    <View style={styles.field}>
+      {inlineLabel ? (
+        <View style={styles.inlineHeader}>
+          {!hideLabel ? <View style={styles.inlineLabelGroup}>{iconInLabel ? <Icon color={tokens.color.textMuted} size={18} /> : null}<Text style={[styles.label, labelStyle]}>{label}</Text></View> : null}
+          {input}
+        </View>
+      ) : (
+        <>
+          {!hideLabel ? <Text style={[styles.label, labelStyle]}>{label}</Text> : null}
+          {input}
+        </>
+      )}
       {Platform.OS === "ios" && expanded ? (
         <View style={styles.inlinePicker}>
           {mode === "time" ? (
@@ -135,6 +150,8 @@ const styles = StyleSheet.create({
   doneLabel: { color: tokens.color.interactivePrimary, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
   field: { gap: 7 },
   inlinePicker: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden", paddingBottom: tokens.spacing.xs },
+  inlineHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
+  inlineLabelGroup: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm },
   input: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: tokens.spacing.lg },
   dateDayPicker: { height: nativeWheelMetrics.height, width: 90 },
   dateMonthPicker: { height: nativeWheelMetrics.height, marginLeft: -8, width: 104 },

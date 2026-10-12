@@ -1,13 +1,14 @@
-import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
+import { type Href, Redirect, Stack, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { CalendarClock } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData, CalendarizedDayDetail, HomeData, MealCheckInInput, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
+import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-plan-card";
 import { compactDateLabel } from "@/components/calendarization/current-week";
 import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
@@ -23,6 +24,32 @@ import { syncNativeRemindersForProgram } from "@/notifications/native-reminders"
 
 function displayWeight(value: number): string {
   return new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(value);
+}
+
+function optimisticMealExecution(data: TodayData, mealKey: string, completed: boolean): TodayData {
+  const mealExecution = normalizeMealExecution(data.meal_execution);
+  const status = completed ? "completed" : "skipped";
+  const existing = mealExecution.find((item) => item.meal_key === mealKey);
+  return {
+    ...data,
+    meal_execution: existing
+      ? mealExecution.map((item) => item.meal_key === mealKey ? { ...item, status } : item)
+      : [...mealExecution, { last_event_id: null, meal_key: mealKey, note: "", prepared_food_keys: [], recorded_at: null, status }],
+  };
+}
+
+function optimisticProgramAdherence(program: ActiveProgramData | null, previousCompleted: boolean, completed: boolean): ActiveProgramData | null {
+  if (!program?.adherence || previousCompleted === completed) return program;
+  const completedMeals = Math.max(0, program.adherence.completed_meals + (completed ? 1 : -1));
+  const elapsedMeals = Math.max(program.adherence.elapsed_meals ?? program.adherence.planned_meals, completedMeals);
+  return {
+    ...program,
+    adherence: {
+      ...program.adherence,
+      adherence_percent: elapsedMeals ? Math.round((completedMeals / elapsedMeals) * 100) : 0,
+      completed_meals: completedMeals,
+    },
+  };
 }
 
 function HomeSectionTitle({ children }: { children: string }) {
@@ -53,6 +80,7 @@ export default function TodayScreen() {
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
   const [savingCompletionMealKey, setSavingCompletionMealKey] = useState<string | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
+  const adherenceMutationIdRef = useRef(0);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
   const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
@@ -100,7 +128,7 @@ export default function TodayScreen() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (status === "authenticated" && profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
   if (status === "authenticated" && !profile?.onboarding_completed) return <Redirect href="/onboarding" />;
-  if (loading && !today) return <LoadingState />;
+  if (loading && !today) return <><Stack.Screen options={{ headerShown: false }} /><LoadingState /></>;
 
   const snapshot = today?.plan_snapshot;
   const todayDayId = today?.day_id;
@@ -126,8 +154,14 @@ export default function TodayScreen() {
 
   async function toggleTodayMealCompletion(mealKey: string, completed: boolean, mode: "calendarized" | "pinned") {
     if (savingCompletionMealKey || (mode === "calendarized" && todayDayId == null)) return;
+    const previousToday = today;
+    const previousProgram = activeProgram;
+    const previousCompleted = normalizeMealExecution(today?.meal_execution).find((item) => item.meal_key === mealKey)?.status === "completed";
+    const adherenceMutationId = mode === "calendarized" ? ++adherenceMutationIdRef.current : adherenceMutationIdRef.current;
     setSavingCompletionMealKey(mealKey);
     setError(null);
+    if (today) setToday(optimisticMealExecution(today, mealKey, completed));
+    if (mode === "calendarized") setActiveProgram((current) => optimisticProgramAdherence(current, previousCompleted, completed));
     try {
       const payload: MealCheckInInput = {
         action: completed ? "completed" : "skipped",
@@ -137,7 +171,14 @@ export default function TodayScreen() {
         ? `/api/v1/today/pinned-plan/meals/${encodeURIComponent(mealKey)}/check-ins`
         : `/api/v1/days/${todayDayId}/meals/${encodeURIComponent(mealKey)}/check-ins`;
       setToday(await apiRequest<TodayData>(path, { body: JSON.stringify(payload), method: "POST" }));
+      if (mode === "calendarized") {
+        void apiRequest<HomeData>("/api/v1/home")
+          .then((home) => { if (adherenceMutationIdRef.current === adherenceMutationId) setActiveProgram(home.active_program); })
+          .catch(() => undefined);
+      }
     } catch (nextError) {
+      setToday(previousToday);
+      setActiveProgram(previousProgram);
       setError(userFacingError(nextError));
     } finally {
       setSavingCompletionMealKey(null);
@@ -201,6 +242,7 @@ export default function TodayScreen() {
 
   return (
     <>
+      <Stack.Screen options={{ headerShown: true }} />
       <Screen headerMode="preserve">
       {today ? <View style={styles.weekRow}><CurrentWeekSection localDate={today.local_date} /></View> : null}
       <View style={styles.greetingRow}>
@@ -211,7 +253,7 @@ export default function TodayScreen() {
         <View style={styles.greetingSubtitle}>
           <Text style={styles.greetingSubtitleText}>Fallar en planificar, es planificar fallar</Text>
         </View>
-        {planContext ? <View style={styles.planContext}><Chip borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
+        {planContext ? <View style={styles.planContext}><Chip backgroundColor={`${planContext.color}4D`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
       </View>
       {today?.calendarization ? <HomeSectionTitle>Tu plan de alimentos para hoy</HomeSectionTitle> : null}
 
@@ -314,7 +356,7 @@ const styles = StyleSheet.create({
   greetingTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5 },
   greetingSubtitle: { alignItems: "center", flexDirection: "row", marginTop: tokens.spacing.xs },
   greetingSubtitleText: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, lineHeight: 20 },
-  planContext: { alignSelf: "flex-start", marginTop: tokens.spacing.sm },
+  planContext: { alignSelf: "flex-start", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: tokens.spacing.sm },
   weekRow: { marginBottom: tokens.spacing.sm },
   measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   measurementValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: "900", fontVariant: ["tabular-nums"] },

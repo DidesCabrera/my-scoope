@@ -11,6 +11,8 @@ export * from "./my-scoope-brand-logo";
 export * from "./my-scoope-logo";
 export * from "./native-date-time-field";
 export * from "./native-measurement-field";
+export * from "./nutrition-facts";
+export * from "./nutrition-facts-card";
 export * from "./product";
 export * from "./section-divider";
 export * from "./search-field";

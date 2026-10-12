@@ -258,6 +258,10 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
     '<DistributedTabBar<"g" | "ml">',
     "bleed",
     '<AnimatedScanBeam gradientId="label-capture-live-scan" />',
+    'apiRequest<EntitlementsData>("/api/v1/entitlements")',
+    'planName={planName ?? config.plan_name}',
+    'fixedHeader={phase === "review" && prepared ? (',
+    'fixedHeaderStyle={styles.photoFixedHeader}',
   ]) {
     assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);
   }

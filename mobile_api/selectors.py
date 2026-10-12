@@ -12,14 +12,9 @@ from billing.application.services.apple_app_store import get_or_create_apple_app
 from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
+from mobile_api import library_projections
 from mobile_api.errors import MobileAPIError
 from mobile_api.library_actions import library_actions_payload, library_list_actions_projector
-from mobile_api.library_projections import (
-    meal_foods_for_library_projection,
-    prepare_program_card_summary,
-    program_card_week_panel_items,
-    snapshot_nutrition_payload,
-)
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_measurement_summary,
     calendarization_progress_summary,
@@ -274,7 +269,9 @@ def _calendarized_week_panel_items(calendarization, current_weight=None) -> tupl
                     "day_number": day["day_number"],
                     "day_label": day["day_label"],
                     "plan_name": day["plan_name"],
-                    "nutrition": (snapshot_nutrition_payload(snapshot, current_weight) if snapshot else None),
+                    "nutrition": (
+                        library_projections.snapshot_nutrition_payload(snapshot, current_weight) if snapshot else None
+                    ),
                 }
             )
         items.append(
@@ -368,7 +365,7 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
         .select_related("created_by")
         .annotate(library_food_count=Count("meal_food_set", distinct=True))
         .prefetch_related(
-            Prefetch("meal_food_set", queryset=meal_foods_for_library_projection())
+            Prefetch("meal_food_set", queryset=library_projections.meal_foods_for_library_projection())
         )
         .order_by("list_order", "-created_at", "-id")
         .distinct()
@@ -416,7 +413,7 @@ def library_dailyplans_payload(
         .prefetch_related(
             Prefetch(
                 "dailyplan_meals__meal__meal_food_set",
-                queryset=meal_foods_for_library_projection(),
+                queryset=library_projections.meal_foods_for_library_projection(),
             )
         )
         .order_by("list_order", "-created_at", "-id")
@@ -499,7 +496,7 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
         .distinct()
     )
     def build_card(program):
-        summary = prepare_program_card_summary(program)
+        summary = library_projections.prepare_program_card_summary(program)
         return {
             "id": program.id,
             "entity": "program",
@@ -514,7 +511,7 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
             + ([{"label": "estado", "value": "Borrador"}] if program.is_draft else []),
             "panel": {
                 **_empty_library_panel("weeks"),
-                "weeks": program_card_week_panel_items(program, current_weight),
+                "weeks": library_projections.program_card_week_panel_items(program, current_weight),
             },
             "creator": _creator_name(program),
             "created_at": program.created_at,
@@ -551,8 +548,8 @@ def calendarization_program_options_payload(user, *, search=None, offset=0, limi
     )
 
     def build_option(program):
-        summary = prepare_program_card_summary(program)
-        weeks = program_card_week_panel_items(program, current_weight)
+        summary = library_projections.prepare_program_card_summary(program)
+        weeks = library_projections.program_card_week_panel_items(program, current_weight)
         return {
             "id": program.id,
             "name": program.name,
@@ -592,7 +589,7 @@ def program_week_picker_detail_payload(user, *, program_id: int, week_number: in
                     .prefetch_related(
                         Prefetch(
                             "dailyplan__dailyplan_meals__meal__meal_food_set",
-                            queryset=meal_foods_for_library_projection(),
+                            queryset=library_projections.meal_foods_for_library_projection(),
                         )
                     )
                 ),
@@ -624,8 +621,10 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "entity": "food",
                 "name": resolve_food_display_name(item),
                 "quantity_unit": item.portion_unit,
+                "default_portion": round(float(item.default_portion_g), 1) if item.default_portion_g is not None else None,
                 "subtitle": "",
                 "nutrition": _library_nutrition_payload(item, current_weight),
+                "food_nutrition": library_projections.food_nutrition_payload(item),
                 "indicators": [{"label": "base nutricional", "value": f"100 {item.portion_unit}"}],
                 "panel": _empty_library_panel(),
                 "creator": _creator_name(item),
@@ -641,7 +640,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
             .select_related("created_by")
             .annotate(library_food_count=Count("meal_food_set", distinct=True))
             .prefetch_related(
-                Prefetch("meal_food_set", queryset=meal_foods_for_library_projection())
+                Prefetch("meal_food_set", queryset=library_projections.meal_foods_for_library_projection())
             )
             .first()
         )
@@ -674,7 +673,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
             .prefetch_related(
                 Prefetch(
                     "dailyplan_meals__meal__meal_food_set",
-                    queryset=meal_foods_for_library_projection(),
+                    queryset=library_projections.meal_foods_for_library_projection(),
                 )
             )
             .first()
@@ -715,7 +714,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
             .prefetch_related(
                 Prefetch(
                     "program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set",
-                    queryset=meal_foods_for_library_projection(),
+                    queryset=library_projections.meal_foods_for_library_projection(),
                 )
             )
             .distinct()

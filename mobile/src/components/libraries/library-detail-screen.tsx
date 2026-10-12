@@ -17,7 +17,7 @@ import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/com
 import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
-import { HeaderMetadataChip, LoadingState, MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
+import { HeaderMetadataChip, LoadingState, MutationStatusModal, NutritionFactsCard, SectionDivider, type MutationStatus } from "@/components/ui";
 import { Button, InlineNotice } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
@@ -26,11 +26,11 @@ import type { FoodLabelImage } from "@/label-capture/types";
 import { internalHref } from "@/navigation/internal-href";
 
 import { DailyPlanMealCards, ProgramPanels } from "./entity-panels";
-import { libraryNutrition } from "./presentation-adapters";
+import { libraryFoodNutritionFacts, libraryNutrition } from "./presentation-adapters";
 import { ProgramDetailPreview } from "./program-detail-preview";
 import { LibraryActions } from "./library-actions";
 
-const sectionTitles = { foods: "Tabla de comparación entre alimentos", meals: "Tabla de comparación entre comidas", weeks: "Semanas del programa" } as const;
+const sectionTitles = { foods: "Composición comida", meals: "Composición plan diario", weeks: "Semanas del programa" } as const;
 
 function foodPanelItem(item: LibraryItem["panel"]["foods"][number]): FoodPanelItem {
   return { id: item.id, detailId: item.detail_id, relationId: item.relation_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
@@ -405,6 +405,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     showNutrition={!isEmptyDraft}
     subtitle={item.subtitle || undefined}
     title={item.name}>
+    {item.entity === "food" && item.food_nutrition ? <NutritionFactsCard facts={libraryFoodNutritionFacts(item.nutrition, item.food_nutrition)} portion={{ quantity: item.default_portion ?? null, unit: item.quantity_unit ?? "g" }} /> : null}
     {item.entity === "food" && item.label_image_available ? <><SectionDivider /><EntityDetailSection title="Etiqueta guardada">
       {labelImage ? <Image resizeMode="contain" source={{ uri: `data:${labelImage.content_type};base64,${labelImage.image_base64}` }} style={styles.labelImage} /> : null}
       {!labelImage ? <Button label="Ver copia procesada" loading={labelImageBusy} onPress={() => void loadLabelImage()} variant="secondary" /> : null}

@@ -13,6 +13,7 @@ import {
   LockKeyhole,
   Scale,
   Target,
+  Utensils,
 } from "lucide-react-native";
 import { createContext, type ComponentType, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { Animated, Image, PanResponder, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
@@ -24,6 +25,7 @@ import { MealCompletionToggleCard } from "@/components/calendarization/meal-adhe
 import { NutritionEntityCard, NutritionKpiSection } from "@/components/nutrition";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { ProgramActiveKpis } from "@/components/programs";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
 import { AssistantGradientIcon, Button, Card, EntityIcon, Field, InlineNotice, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, textStyles, type EntityKind } from "@/components/ui";
@@ -500,7 +502,7 @@ function LoginView({ index }: { index: number }) {
           </View>
           <Text style={styles.loginTitle}>Físico</Text>
         </View>
-        <Text style={[textStyles.muted, styles.centeredText, styles.loginDescription]}>Planifica, Ejecuta y Aprende sobre alimentación para ver resultados importante</Text>
+        <Text style={[textStyles.muted, styles.centeredText, styles.loginDescription]}>Planifica, Ejecuta y Aprende sobre alimentación para ver resultados importantes</Text>
         <View style={styles.loginAction}>
           {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
           <Button disabled={controller.loginDisabled} label="Iniciar sesión o crear cuenta" loading={controller.busy} multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
@@ -948,10 +950,12 @@ function SummaryView({ index }: { index: number }) {
   );
 }
 
+const generatedDailyPlanReferenceWeightKg = 82;
+
 const generatedDailyPlanMeals: MealPanelItem[] = [
-  { id: "generated-breakfast", name: "Desayuno energético", time: "08:00", foods: [{ name: "Avena", quantity: 70, quantityUnit: "g" }, { name: "Yogur griego", quantity: 180, quantityUnit: "g" }, { name: "Arándanos", quantity: 80, quantityUnit: "g" }], calories: 515, calorieShare: 28, proteinGrams: 31, carbsGrams: 67, fatGrams: 14, proteinAllocation: 24, carbsAllocation: 52, fatAllocation: 24 },
-  { id: "generated-lunch", name: "Almuerzo balanceado", time: "13:30", foods: [{ name: "Pechuga de pollo", quantity: 170, quantityUnit: "g" }, { name: "Arroz integral", quantity: 160, quantityUnit: "g" }, { name: "Ensalada mixta", quantity: 150, quantityUnit: "g" }], calories: 710, calorieShare: 39, proteinGrams: 58, carbsGrams: 76, fatGrams: 19, proteinAllocation: 33, carbsAllocation: 43, fatAllocation: 24 },
-  { id: "generated-dinner", name: "Cena liviana", time: "20:00", foods: [{ name: "Salmón", quantity: 150, quantityUnit: "g" }, { name: "Papas asadas", quantity: 180, quantityUnit: "g" }, { name: "Verduras salteadas", quantity: 160, quantityUnit: "g" }], calories: 615, calorieShare: 33, proteinGrams: 41, carbsGrams: 62, fatGrams: 22, proteinAllocation: 27, carbsAllocation: 40, fatAllocation: 33 },
+  { id: "generated-breakfast", name: "Desayuno energético", time: "08:00", foods: [{ name: "Avena", quantity: 70, quantityUnit: "g" }, { name: "Yogur griego", quantity: 180, quantityUnit: "g" }, { name: "Arándanos", quantity: 80, quantityUnit: "g" }], calories: 515, calorieShare: 28, proteinGrams: 31, proteinPerKilogram: 31 / generatedDailyPlanReferenceWeightKg, carbsGrams: 67, fatGrams: 14, proteinAllocation: 24, carbsAllocation: 52, fatAllocation: 24 },
+  { id: "generated-lunch", name: "Almuerzo balanceado", time: "13:30", foods: [{ name: "Pechuga de pollo", quantity: 170, quantityUnit: "g" }, { name: "Arroz integral", quantity: 160, quantityUnit: "g" }, { name: "Ensalada mixta", quantity: 150, quantityUnit: "g" }], calories: 710, calorieShare: 39, proteinGrams: 58, proteinPerKilogram: 58 / generatedDailyPlanReferenceWeightKg, carbsGrams: 76, fatGrams: 19, proteinAllocation: 33, carbsAllocation: 43, fatAllocation: 24 },
+  { id: "generated-dinner", name: "Cena liviana", time: "20:00", foods: [{ name: "Salmón", quantity: 150, quantityUnit: "g" }, { name: "Papas asadas", quantity: 180, quantityUnit: "g" }, { name: "Verduras salteadas", quantity: 160, quantityUnit: "g" }], calories: 615, calorieShare: 33, proteinGrams: 41, proteinPerKilogram: 41 / generatedDailyPlanReferenceWeightKg, carbsGrams: 62, fatGrams: 22, proteinAllocation: 27, carbsAllocation: 40, fatAllocation: 33 },
 ];
 
 const generatedDailyPlanMealDetails: DailyPlanMealDetailItem[] = [
@@ -960,8 +964,8 @@ const generatedDailyPlanMealDetails: DailyPlanMealDetailItem[] = [
     name: "Desayuno energético",
     time: "08:00",
     foods: [
-      { id: "generated-oats", name: "Avena", quantity: 70, quantityUnit: "g", calories: 272, calorieShare: 53, proteinGrams: 9, carbsGrams: 46, fatGrams: 5, proteinAllocation: 13, carbsAllocation: 68, fatAllocation: 19 },
-      { id: "generated-yogurt", name: "Yogur griego y arándanos", quantity: 260, quantityUnit: "g", calories: 243, calorieShare: 47, proteinGrams: 22, carbsGrams: 21, fatGrams: 9, proteinAllocation: 36, carbsAllocation: 35, fatAllocation: 29 },
+      { id: "generated-oats", name: "Avena", quantity: 70, quantityUnit: "g", calories: 272, calorieShare: 53, proteinGrams: 9, proteinPerKilogram: 9 / generatedDailyPlanReferenceWeightKg, carbsGrams: 46, fatGrams: 5, proteinAllocation: 13, carbsAllocation: 68, fatAllocation: 19 },
+      { id: "generated-yogurt", name: "Yogur griego y arándanos", quantity: 260, quantityUnit: "g", calories: 243, calorieShare: 47, proteinGrams: 22, proteinPerKilogram: 22 / generatedDailyPlanReferenceWeightKg, carbsGrams: 21, fatGrams: 9, proteinAllocation: 36, carbsAllocation: 35, fatAllocation: 29 },
     ],
     nutrition: { calories: 515, protein: { allocation: 24, grams: 31, perKilogram: 0.38 }, carbs: { allocation: 52, grams: 67 }, fat: { allocation: 24, grams: 14 } },
   },
@@ -970,8 +974,8 @@ const generatedDailyPlanMealDetails: DailyPlanMealDetailItem[] = [
     name: "Almuerzo balanceado",
     time: "13:30",
     foods: [
-      { id: "generated-chicken", name: "Pechuga de pollo", quantity: 170, quantityUnit: "g", calories: 281, calorieShare: 40, proteinGrams: 53, carbsGrams: 0, fatGrams: 6, proteinAllocation: 76, carbsAllocation: 0, fatAllocation: 24 },
-      { id: "generated-rice-salad", name: "Arroz integral y ensalada", quantity: 310, quantityUnit: "g", calories: 429, calorieShare: 60, proteinGrams: 5, carbsGrams: 76, fatGrams: 13, proteinAllocation: 5, carbsAllocation: 71, fatAllocation: 24 },
+      { id: "generated-chicken", name: "Pechuga de pollo", quantity: 170, quantityUnit: "g", calories: 281, calorieShare: 40, proteinGrams: 53, proteinPerKilogram: 53 / generatedDailyPlanReferenceWeightKg, carbsGrams: 0, fatGrams: 6, proteinAllocation: 76, carbsAllocation: 0, fatAllocation: 24 },
+      { id: "generated-rice-salad", name: "Arroz integral y ensalada", quantity: 310, quantityUnit: "g", calories: 429, calorieShare: 60, proteinGrams: 5, proteinPerKilogram: 5 / generatedDailyPlanReferenceWeightKg, carbsGrams: 76, fatGrams: 13, proteinAllocation: 5, carbsAllocation: 71, fatAllocation: 24 },
     ],
     nutrition: { calories: 710, protein: { allocation: 33, grams: 58, perKilogram: 0.7 }, carbs: { allocation: 43, grams: 76 }, fat: { allocation: 24, grams: 19 } },
   },
@@ -980,8 +984,8 @@ const generatedDailyPlanMealDetails: DailyPlanMealDetailItem[] = [
     name: "Cena liviana",
     time: "20:00",
     foods: [
-      { id: "generated-salmon", name: "Salmón", quantity: 150, quantityUnit: "g", calories: 312, calorieShare: 51, proteinGrams: 33, carbsGrams: 0, fatGrams: 20, proteinAllocation: 42, carbsAllocation: 0, fatAllocation: 58 },
-      { id: "generated-potatoes-vegetables", name: "Papas y verduras", quantity: 340, quantityUnit: "g", calories: 303, calorieShare: 49, proteinGrams: 8, carbsGrams: 62, fatGrams: 2, proteinAllocation: 11, carbsAllocation: 82, fatAllocation: 7 },
+      { id: "generated-salmon", name: "Salmón", quantity: 150, quantityUnit: "g", calories: 312, calorieShare: 51, proteinGrams: 33, proteinPerKilogram: 33 / generatedDailyPlanReferenceWeightKg, carbsGrams: 0, fatGrams: 20, proteinAllocation: 42, carbsAllocation: 0, fatAllocation: 58 },
+      { id: "generated-potatoes-vegetables", name: "Papas y verduras", quantity: 340, quantityUnit: "g", calories: 303, calorieShare: 49, proteinGrams: 8, proteinPerKilogram: 8 / generatedDailyPlanReferenceWeightKg, carbsGrams: 62, fatGrams: 2, proteinAllocation: 11, carbsAllocation: 82, fatAllocation: 7 },
     ],
     nutrition: { calories: 615, protein: { allocation: 27, grams: 41, perKilogram: 0.5 }, carbs: { allocation: 40, grams: 62 }, fat: { allocation: 33, grams: 22 } },
   },
@@ -996,6 +1000,7 @@ function GeneratedDailyPlanView() {
         <ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} />
         {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
         <CreditContinueButton />
+        <View style={styles.generatedDailyPlanBottomSpacing} />
       </>
     );
   }
@@ -1012,14 +1017,14 @@ function GeneratedDailyPlanView() {
           fat: { allocation: 27, grams: 55 },
         }}
         title="Plan equilibrado · Día 1">
-        <EntityDetailSection title="Tabla de comparación entre comidas">
+        <EntityDetailSection title="Composición plan diario">
           <MealPanels items={generatedDailyPlanMeals} showEditTab={false} />
         </EntityDetailSection>
-        <EntityDetailSection title="Detalle de cada Comida">
-          <DailyPlanMealDetailList items={generatedDailyPlanMealDetails} />
-        </EntityDetailSection>
+        <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
+        <DailyPlanMealDetailList items={generatedDailyPlanMealDetails} />
       </EntityDetailPage>
       <CreditContinueButton />
+      <View style={styles.generatedDailyPlanBottomSpacing} />
     </>
   );
 }
@@ -1358,6 +1363,7 @@ const styles = StyleSheet.create({
   summaryText: { color: tokens.color.textMain, fontSize: 12, fontWeight: tokens.weight.bold },
   summaryMetricLabel: { color: tokens.color.textMuted, fontSize: 12, fontWeight: tokens.weight.medium },
   summaryMetricUnit: { color: tokens.color.textSoft, fontSize: 11, fontWeight: tokens.weight.medium },
+  generatedDailyPlanBottomSpacing: { height: 40 },
   adjustNutritionAction: { alignItems: "center", justifyContent: "center", minHeight: 40, paddingHorizontal: tokens.spacing.md },
   adjustNutritionLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium },
   planList: { gap: tokens.spacing.sm },

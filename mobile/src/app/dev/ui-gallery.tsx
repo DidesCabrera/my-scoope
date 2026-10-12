@@ -31,6 +31,7 @@ import { PersonalRecordCardGallery } from "@/components/dev/personal-record-card
 import { SavedComparisonCardGallery } from "@/components/dev/saved-comparison-card-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
+import { NutritionFactsGallery } from "@/components/dev/nutrition-facts-gallery";
 import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
 import { ShareableElementsGallery } from "@/components/dev/shareable-elements-gallery";
 import { SubscriptionGallery } from "@/components/dev/subscription-gallery";
@@ -84,7 +85,6 @@ const entities: { key: EntityKind; label: string }[] = [
   { key: "dpm", label: "DPM" },
   { key: "program", label: "Program" },
 ];
-
 const sections: { key: SectionKind; label: string; lucide: string }[] = [
   { key: "home", label: "Inicio", lucide: "house" },
   { key: "profile", label: "Perfil", lucide: "circle-user-round" },
@@ -98,7 +98,6 @@ const sections: { key: SectionKind; label: string; lucide: string }[] = [
   { key: "create", label: "Crear", lucide: "circle-fading-plus" },
   { key: "import", label: "Importar", lucide: "file-down" },
 ];
-
 const surfaces = [
   { key: "surfaceApp", label: "App", role: "Fondo raíz y navegación global" },
   { key: "surfacePage", label: "Página", role: "Superficie base de una vista" },
@@ -294,6 +293,7 @@ export default function UiGalleryScreen() {
               { label: "Planes diarios", value: "Hasta 4" },
             ]} />
           </Card>
+          <NutritionFactsGallery />
           <ContentPanel description="Panel principal que agrupa información relacionada." title="ContentPanel">
             <DetailSection description="Sección anidada con encabezado y acción opcional." title="DetailSection">
               <Text style={textStyles.body}>Contenido compuesto sin replicar estilos de superficie.</Text>
@@ -548,7 +548,7 @@ export default function UiGalleryScreen() {
             }}
             onBack={() => undefined}
             title="Día de entrenamiento">
-            <EntityDetailSection title="Tabla de comparación entre comidas">
+            <EntityDetailSection title="Composición plan diario">
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
             <SectionDivider />

@@ -5,9 +5,7 @@ from typing import Literal
 
 from ninja import Field, Schema
 
-
-class OptionalPortionUnitData(Schema):
-    quantity_unit: Literal["g", "ml"] | None = None
+from mobile_api.schema_domains.library_common import FoodNutritionFactsData, OptionalPortionUnitData
 
 
 class FoodItem(Schema):
@@ -180,7 +178,9 @@ class LibraryItemData(Schema):
     name: str
     subtitle: str
     quantity_unit: Literal["g", "ml"] | None = None
+    default_portion: float | None = None
     nutrition: LibraryNutritionData
+    food_nutrition: FoodNutritionFactsData | None = None
     indicators: list[LibraryIndicatorData]
     panel: LibraryPanelData
     creator: str

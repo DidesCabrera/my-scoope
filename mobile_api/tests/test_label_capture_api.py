@@ -64,6 +64,14 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
             "consent_to_ai_processing": True,
         }
 
+    def test_config_includes_current_plan_with_credit_balance(self):
+        response = self.client.get("/api/v1/foods/label-captures/config")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertEqual(data["plan_name"], "Basic")
+        self.assertEqual(data["available_credits"], 150)
+
     @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
     @patch("notas.application.services.nutrition_label_ai._call_openai")
     def test_ai_analysis_charges_one_fixed_price_and_replays_without_new_provider_call(self, provider):

@@ -37,9 +37,13 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
 
 test("meals embedded in daily plans can be saved back to the library", async () => {
   const mealCards = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"), "utf8");
+  const sharedPanels = await readTestFile(path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"), "utf8");
   const mealDetail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
   const actions = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-actions.tsx"), "utf8");
   assertSourceMatch(mealCards, /onSaveToLibrary=\{dailyPlanMealId != null/);
+  assertSourceMatch(sharedPanels, /mealIdentityName: \{[^}]*flexShrink: 1[^}]*minWidth: 0/);
+    assertSourceMatch(sharedPanels, /mealCompleted: [^\n]*flexShrink: 0/);
+    assertSourceMatch(sharedPanels, /menuTimeGroup: [^\n]*flexShrink: 0/);
   assertSourceMatch(mealCards, /daily-plans\/\$\{dailyPlanId\}\/meals\/\$\{dailyPlanMealId\}\/save-to-library/);
   assertSourceMatch(mealDetail, /onSaveToLibrary=\{hasMealTimeContext/);
   assertSourceMatch(actions, /label="Guardar en mi biblioteca"/);
@@ -585,6 +589,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgramKpis, /strokeLinecap="round"/);
   assertSourceMatch(activeProgramKpis, /transform=\{`rotate\(-90 \$\{RING_CENTER\} \$\{RING_CENTER\}\)`\}/);
   assertSourceMatch(activeProgramKpis, /indicatorIdentity:\{[^}]*flexDirection:"column"[^}]*justifyContent:"center"/);
+  assertSourceMatch(activeProgramKpis, /backgroundColor: tokens\.color\.dailyPlan[^]*<Clock3 color=\{tokens\.color\.entityIconForeground\}/);
+  assertSourceMatch(activeProgramKpis, /backgroundColor: tokens\.color\.meal[^]*<CheckCheck color=\{tokens\.color\.entityIconForeground\}/);
+  assertSourceMatch(activeProgramKpis, /indicatorIcon:\{[^}]*borderRadius:9[^}]*height:28[^}]*marginBottom:6[^}]*width:28/);
   assertSourceMatch(activeProgramKpis, /indicator:\{[^}]*borderRadius:tokens\.radius\.panel/);
   assertSourceMatch(activeProgramKpis, /indicatorLabel:\{[^}]*fontSize:18[^}]*textAlign:"center"/);
   assertSourceDoesNotMatch(activeProgramKpis, /progressRing:\{[^}]*marginTop/);
@@ -621,7 +628,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   const todayScreen = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
   assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`Vamos, \$\{firstName\}`\}[\s\S]*?Fallar en planificar, es planificar fallar/);
   assertSourceMatch(todayScreen, /greetingSubtitle: \{[^}]*marginTop: tokens\.spacing\.xs/);
-  assertSourceMatch(todayScreen, /<Chip borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
+  assertSourceMatch(todayScreen, /<Chip backgroundColor=\{`\$\{planContext\.color\}4D`\} borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
+  assertSourceMatch(todayScreen, /planContext: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
   assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>Tu plan de alimentos para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
   assertSourceMatch(todayScreen, /eyebrow="PLAN DEL DÍA"/);
@@ -1010,6 +1018,7 @@ test("semantic notices use a half-opacity one-pixel border and a ten-percent ton
 test("the onboarding gallery exposes every visual journey view without product side effects", async () => {
   const navigation = await readTestFile(path.resolve(process.cwd(), "src/components/dev/gallery-navigation.tsx"), "utf8");
   const journey = await readTestFile(path.resolve(process.cwd(), "src/components/onboarding/onboarding-journey-view.tsx"), "utf8");
+  const typography = await readTestFile(path.resolve(process.cwd(), "src/components/ui/typography.tsx"), "utf8");
 
   assertSourceMatch(navigation, /\{ key: "onboarding", label: "Onboarding" \}/);
   for (const step of ["login", "value", "structure", "panels", "control", "progress", "disclosures", "goal", "identity", "measurements", "activity", "dietary", "summary", "dailyPlan", "plans"]) {
@@ -1041,6 +1050,11 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /<NutritionKpiSection[\s\S]*<Pressable accessibilityRole="button" onPress=\{controller\.onAdjust \?\? noop\} style=\{styles\.adjustNutritionAction\}>[\s\S]*Ajusta objetivo nutricional[\s\S]*<\/Card>/);
   assertSourceDoesNotMatch(journey, /El mantenimiento usa edad, sexo de cálculo/);
   assertSourceMatch(journey, /function GeneratedDailyPlanView/);
+  assertSourceMatch(journey, /Planifica, Ejecuta y Aprende sobre alimentación para ver resultados importantes/);
+  assertSourceMatch(journey, /proteinPerKilogram: 9 \/ generatedDailyPlanReferenceWeightKg/);
+  assertSourceMatch(journey, /proteinPerKilogram: 53 \/ generatedDailyPlanReferenceWeightKg/);
+  assertSourceMatch(journey, /proteinPerKilogram: 33 \/ generatedDailyPlanReferenceWeightKg/);
+  assertSourceMatch(journey, /generatedDailyPlanBottomSpacing: \{ height: 40 \}/);
   assertSourceMatch(journey, /screen: \{[^}]*paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18/);
   assertSourceMatch(journey, /topInsetReduction = 0/);
   assertSourceMatch(journey, /index >= 7 && index <= 12 && styles\.profileScreen/);
@@ -1048,8 +1062,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /index === 6 \? <CreditContinueButton label=\{primary\} \/> : <Button label=\{primary\} loading=\{controller\.busy\} onPress=\{controller\.onNext \?\? noop\} \/>/);
   assertSourceMatch(journey, /<EntityDetailPage[\s\S]*eyebrow="PLAN DEL DÍA"[\s\S]*title="Plan equilibrado · Día 1"/);
   assertSourceMatch(journey, /<MealPanels items=\{generatedDailyPlanMeals\} showEditTab=\{false\} \/>/);
-  assertSourceMatch(journey, /<EntityDetailSection title="Tabla de comparación entre comidas">/);
-  assertSourceMatch(journey, /<EntityDetailSection title="Detalle de cada Comida">[\s\S]*<DailyPlanMealDetailList items=\{generatedDailyPlanMealDetails\} \/>/);
+  assertSourceMatch(journey, /<EntityDetailSection title="Composición plan diario">/);
+  assertSourceMatch(typography, /normalizedTitle\.startsWith\("composición"\)[^\n]*return "comparison"/);
+  assertSourceMatch(journey, /<ProgramSectionHeader icon=\{Utensils\} subtitle="Revisa el detalle de comida en este plan diario\. Conoce sus alimentos, compáralos, y ve su impacto real en la comida\." title="Detalle de cada Comida" \/>[\s\S]*<DailyPlanMealDetailList items=\{generatedDailyPlanMealDetails\} \/>/);
   assertSourceDoesNotMatch(journey, /subtitle="Creado a partir de tu objetivo y nivel de actividad"/);
   assertSourceMatch(journey, /id="daily-plan-credit-button"/);
   assertSourceMatch(journey, /<Text style=\{\[styles\.creditContinueLabel, chip && styles\.creditContinueLabelChip\]\}>\{label\}<\/Text>/);

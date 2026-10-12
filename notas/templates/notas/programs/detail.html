@@ -50,7 +50,7 @@
 
     <section class="program-weeks-summary-section" aria-labelledby="program-weeks-summary-title">
       <div class="title-section-panels program-weeks-title-section">
-        <h3 id="program-weeks-summary-title">Tabla de comparacion entre semanas</h3>
+        <h3 id="program-weeks-summary-title">Composición programa</h3>
         {% if vm.content.can_edit %}
           <form method="post" action="{% url 'program_add_week' vm.content.program.id %}" class="program-add-week-form">
             {% csrf_token %}

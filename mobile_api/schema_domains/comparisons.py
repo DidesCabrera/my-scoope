@@ -5,7 +5,7 @@ from typing import Literal
 
 from ninja import Field, Schema
 
-from mobile_api.schema_domains.libraries import LibraryIndicatorData, LibraryNutritionData, LibraryPanelData, OptionalPortionUnitData
+from mobile_api.schema_domains import libraries as library_schemas
 
 
 class ComparisonKindData(Schema):
@@ -37,16 +37,16 @@ class ComparisonRequestInput(Schema):
     selections: list[ComparisonSelectionInput] = Field(min_length=2)
 
 
-class ComparisonOptionData(OptionalPortionUnitData):
+class ComparisonOptionData(library_schemas.OptionalPortionUnitData):
     """Visual contract required to render an entity card in a comparison picker."""
 
     id: int
     entity: Literal["food", "meal", "dailyPlan"]
     name: str
     subtitle: str
-    nutrition: LibraryNutritionData
-    indicators: list[LibraryIndicatorData]
-    panel: LibraryPanelData
+    nutrition: library_schemas.LibraryNutritionData
+    indicators: list[library_schemas.LibraryIndicatorData]
+    panel: library_schemas.LibraryPanelData
 
 
 class ComparisonOptionsData(Schema):
@@ -71,7 +71,7 @@ class ComparisonMetricValuesData(Schema):
     protein_per_kilogram: float | None = None
 
 
-class ComparisonMetricBarData(OptionalPortionUnitData):
+class ComparisonMetricBarData(library_schemas.OptionalPortionUnitData):
     position: int
     id: int
     label: str
@@ -88,7 +88,7 @@ class ComparisonMetricData(Schema):
     bars: list[ComparisonMetricBarData]
 
 
-class ComparisonResultItemData(OptionalPortionUnitData):
+class ComparisonResultItemData(library_schemas.OptionalPortionUnitData):
     position: int
     id: int
     name: str

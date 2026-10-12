@@ -159,7 +159,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
             <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
           </View>
 
-          <SectionHeading title="Tabla de comparación entre planes diarios" />
+          <SectionHeading title="Composición semana" />
           <ProgramDayComparisonPanels key={`comparison-${week}`} onAssign={onAssignDailyPlan} onDelete={onRemoveDailyPlan} onReorder={onReorderDailyPlans} rows={weekData ? dayRows(weekData) : undefined} week={week} />
         </> : null}
       </> : null}
@@ -219,7 +219,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onA
 
         {showProgramComparison ? <>
           <ProgramMetricPreview axisLabels={(liveWeeks.length ? liveWeeks.map((week) => week.week_number) : displayedWeeks).map((week) => `S${week}`)} data={liveMetrics} days={liveMetrics?.length ?? 14} style={layoutStyles.cardContentBleed} />
-          <SectionHeading title="Tabla de comparación entre semanas" />
+          <SectionHeading title="Composición programa" />
           <ProgramWeekComparisonPanels onDelete={onRemoveWeek} onDuplicate={onDuplicateWeek} onReorder={onReorderWeeks} weeks={liveSummaries.length ? liveSummaries : weekSummaries} />
         </> : null}
         {onAddWeek ? <Button bleed label="+ Agregar nueva semana" onPress={onAddWeek} /> : null}

@@ -151,7 +151,7 @@ export default function CalendarizedMealDetailScreen() {
           protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
         }}
         title={meal.name ?? "Comida"}>
-        <EntityDetailSection title="Tabla de comparación entre alimentos">
+        <EntityDetailSection title="Composición comida">
           <FoodPanels
             editing={{
               onDelete: async (food) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { method: "DELETE" }),
