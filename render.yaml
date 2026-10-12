@@ -143,7 +143,7 @@ services:
       - key: MYSCOOPE_APNS_BUNDLE_ID
         value: com.myscoope.app
       - key: MYSCOOPE_APPLE_TEAM_ID
-        sync: false
+        value: CW5B8SKS47
       - key: MYSCOOPE_ANDROID_SHA256_CERT_FINGERPRINTS
         sync: false
 
