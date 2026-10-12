@@ -41,6 +41,10 @@ class Command(BaseCommand):
             ("app-review-rice", "Arroz cocido", 2.7, 28, 0.3),
             ("app-review-oats", "Avena", 16.9, 66, 6.9),
             ("app-review-yogurt", "Yogur alto en proteína", 10, 4, 0.5),
+            ("app-review-banana", "Plátano", 1.1, 23, 0.3),
+            ("app-review-almonds", "Almendras", 21, 22, 50),
+            ("app-review-salmon", "Salmón", 20, 0, 13),
+            ("app-review-potato", "Papa cocida", 1.9, 20, 0.1),
         ):
             food, _ = Food.objects.update_or_create(
                 created_by=user,
@@ -55,7 +59,18 @@ class Command(BaseCommand):
         lunch, _ = Meal.objects.update_or_create(
             created_by=user, name="Almuerzo base", defaults={"is_public": False, "is_draft": False}
         )
-        for meal, rows in ((breakfast, ((foods[2], 80), (foods[3], 200))), (lunch, ((foods[0], 180), (foods[1], 220)))):
+        snack, _ = Meal.objects.update_or_create(
+            created_by=user, name="Colación de la tarde", defaults={"is_public": False, "is_draft": False}
+        )
+        dinner, _ = Meal.objects.update_or_create(
+            created_by=user, name="Cena de recuperación", defaults={"is_public": False, "is_draft": False}
+        )
+        for meal, rows in (
+            (breakfast, ((foods[2], 80), (foods[3], 200))),
+            (lunch, ((foods[0], 180), (foods[1], 220))),
+            (snack, ((foods[4], 120), (foods[5], 25))),
+            (dinner, ((foods[6], 180), (foods[7], 250))),
+        ):
             for order, (food, quantity) in enumerate(rows, start=1):
                 MealFood.objects.update_or_create(meal=meal, food=food, defaults={"quantity": quantity, "order": order})
 
@@ -68,6 +83,12 @@ class Command(BaseCommand):
         DailyPlanMeal.objects.update_or_create(
             dailyplan=daily_plan, meal=lunch, defaults={"hour": time(13, 30), "order": 2}
         )
+        DailyPlanMeal.objects.update_or_create(
+            dailyplan=daily_plan, meal=snack, defaults={"hour": time(17), "order": 3}
+        )
+        DailyPlanMeal.objects.update_or_create(
+            dailyplan=daily_plan, meal=dinner, defaults={"hour": time(21), "order": 4}
+        )
         program, _ = Program.objects.update_or_create(
             created_by=user, name="Semana de fuerza · App Review", defaults={"duration_weeks": 1}
         )
@@ -78,10 +99,16 @@ class Command(BaseCommand):
 
         current = user.program_calendarizations.filter(status__in=("scheduled", "active", "paused")).first()
         if current and current.source_program_id == program.id:
-            self.stdout.write(self.style.SUCCESS(f"Demo already ready: calendarization {current.id}."))
-            return
+            current_days = list(current.days.all())
+            snapshots_are_ready = len(current_days) == 7 and all(
+                len((day.plan_snapshot or {}).get("meals", [])) == 4 for day in current_days
+            )
+            if snapshots_are_ready:
+                self.stdout.write(self.style.SUCCESS(f"Demo already ready: calendarization {current.id}."))
+                return
         if current:
-            raise CommandError("The reviewer account already has another current program; do not replace it implicitly.")
+            if current.source_program_id != program.id:
+                raise CommandError("The reviewer account already has another current program; do not replace it implicitly.")
 
         result = activate_program_calendarization(
             user=user,
@@ -92,5 +119,7 @@ class Command(BaseCommand):
             daily_notifications_enabled=True,
             meal_notifications_enabled=True,
             confirm_incomplete=False,
+            replace_current=current is not None,
         )
-        self.stdout.write(self.style.SUCCESS(f"Demo ready: calendarization {result.calendarization.id}."))
+        message = "Demo refreshed" if result.replaced_calendarization_id else "Demo ready"
+        self.stdout.write(self.style.SUCCESS(f"{message}: calendarization {result.calendarization.id}."))
