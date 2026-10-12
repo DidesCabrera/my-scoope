@@ -178,6 +178,7 @@ class LibraryItemData(Schema):
     name: str
     subtitle: str
     quantity_unit: Literal["g", "ml"] | None = None
+    default_portion: float | None = None
     nutrition: LibraryNutritionData
     food_nutrition: FoodNutritionFactsData | None = None
     indicators: list[LibraryIndicatorData]

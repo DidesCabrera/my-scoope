@@ -374,6 +374,7 @@ export type LibraryItem = {
   name: string;
   subtitle: string;
   quantity_unit?: "g" | "ml" | null;
+  default_portion?: number | null;
   nutrition: LibraryNutrition;
   food_nutrition?: import("./food-nutrition").FoodNutritionFacts | null;
   indicators: LibraryIndicator[];

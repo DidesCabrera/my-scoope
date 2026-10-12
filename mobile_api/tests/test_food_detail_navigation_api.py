@@ -19,6 +19,7 @@ class FoodDetailNavigationAPITests(AuthenticatedMobileAPITestCase):
             sugar_g_per_100g=None,
             fiber_g_per_100g=Decimal("0"),
             sodium_mg_per_100g=Decimal("125.5"),
+            default_portion_g=Decimal("30"),
             portion_unit="ml",
             created_by=self.user,
         )
@@ -36,6 +37,7 @@ class FoodDetailNavigationAPITests(AuthenticatedMobileAPITestCase):
             },
         )
         self.assertEqual(response.json()["data"]["quantity_unit"], "ml")
+        self.assertEqual(response.json()["data"]["default_portion"], 30.0)
 
     def test_composition_payloads_expose_the_food_detail_id_at_every_level(self):
         food = Food.objects.create(name="Avena navegable", protein=10, carbs=20, fat=5, created_by=self.user)

@@ -4989,6 +4989,17 @@
             "title": "Creator",
             "type": "string"
           },
+          "default_portion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Portion"
+          },
           "entity": {
             "enum": [
               "food",

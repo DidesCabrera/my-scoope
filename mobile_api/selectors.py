@@ -621,6 +621,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "entity": "food",
                 "name": resolve_food_display_name(item),
                 "quantity_unit": item.portion_unit,
+                "default_portion": round(float(item.default_portion_g), 1) if item.default_portion_g is not None else None,
                 "subtitle": "",
                 "nutrition": _library_nutrition_payload(item, current_weight),
                 "food_nutrition": library_projections.food_nutrition_payload(item),

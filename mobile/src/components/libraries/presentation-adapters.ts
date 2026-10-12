@@ -1,5 +1,7 @@
+import type { FoodNutritionFacts } from "@/api/food-nutrition";
 import type { LibraryNutrition } from "@/api/types";
 import type { NutritionEntityCardProps } from "@/components/nutrition";
+import type { NutritionFacts } from "@/components/ui";
 
 export function libraryNutrition(nutrition: LibraryNutrition): NutritionEntityCardProps["nutrition"] {
   return {
@@ -10,6 +12,18 @@ export function libraryNutrition(nutrition: LibraryNutrition): NutritionEntityCa
     },
     carbs: nutrition.carbs,
     fat: nutrition.fat,
+  };
+}
+
+export function libraryFoodNutritionFacts(macros: LibraryNutrition, facts: FoodNutritionFacts): NutritionFacts {
+  return {
+    proteinG: macros.protein.grams,
+    totalFatG: macros.fat.grams,
+    saturatedFatG: facts.saturated_fat_g,
+    carbsG: macros.carbs.grams,
+    sugarG: facts.sugar_g,
+    fiberG: facts.fiber_g,
+    sodiumMg: facts.sodium_mg,
   };
 }
 

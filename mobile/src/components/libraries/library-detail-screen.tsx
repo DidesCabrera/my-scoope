@@ -13,11 +13,11 @@ import { DailyMealCompletionCard } from "@/components/calendarization/meal-compl
 import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components/calendarization/meal-execution";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
-import { EntityDetailPage, EntityDetailSection, FoodDetailCardList, FoodNutritionFactsCard } from "@/components/details";
+import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
-import { HeaderMetadataChip, LoadingState, MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
+import { HeaderMetadataChip, LoadingState, MutationStatusModal, NutritionFactsCard, SectionDivider, type MutationStatus } from "@/components/ui";
 import { Button, InlineNotice } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
@@ -26,7 +26,7 @@ import type { FoodLabelImage } from "@/label-capture/types";
 import { internalHref } from "@/navigation/internal-href";
 
 import { DailyPlanMealCards, ProgramPanels } from "./entity-panels";
-import { libraryNutrition } from "./presentation-adapters";
+import { libraryFoodNutritionFacts, libraryNutrition } from "./presentation-adapters";
 import { ProgramDetailPreview } from "./program-detail-preview";
 import { LibraryActions } from "./library-actions";
 
@@ -405,7 +405,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     showNutrition={!isEmptyDraft}
     subtitle={item.subtitle || undefined}
     title={item.name}>
-    {item.entity === "food" && item.food_nutrition ? <><SectionDivider /><FoodNutritionFactsCard nutrition={item.food_nutrition} quantityUnit={item.quantity_unit ?? "g"} /></> : null}
+    {item.entity === "food" && item.food_nutrition ? <NutritionFactsCard facts={libraryFoodNutritionFacts(item.nutrition, item.food_nutrition)} portion={{ quantity: item.default_portion ?? null, unit: item.quantity_unit ?? "g" }} /> : null}
     {item.entity === "food" && item.label_image_available ? <><SectionDivider /><EntityDetailSection title="Etiqueta guardada">
       {labelImage ? <Image resizeMode="contain" source={{ uri: `data:${labelImage.content_type};base64,${labelImage.image_base64}` }} style={styles.labelImage} /> : null}
       {!labelImage ? <Button label="Ver copia procesada" loading={labelImageBusy} onPress={() => void loadLabelImage()} variant="secondary" /> : null}
