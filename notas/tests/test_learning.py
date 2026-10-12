@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from notas.application.learning_catalog import CATALOGS
+
 User = get_user_model()
 
 
@@ -26,7 +28,7 @@ class LearningViewsTests(TestCase):
         self.assertContains(response, reverse("learning_article", args=["nutrition", "alimentacion-saludable"]))
 
         detail = self.client.get(reverse("learning_article", args=["nutrition", "alimentacion-saludable"]))
-        self.assertContains(detail, "Cuatro ideas guía")
+        self.assertContains(detail, "Cuatro principios para orientarse")
         self.assertContains(detail, "Contenido educativo general")
         self.assertContains(detail, "OMS · Alimentación saludable")
 
@@ -36,7 +38,16 @@ class LearningViewsTests(TestCase):
         for title in ("Fichas personales", "Bibliotecas y jerarquía", "Inicio y programa activo", "Comparaciones", "Compartidos", "Asistente y propuestas"):
             self.assertContains(response, title)
         detail = self.client.get(reverse("learning_article", args=["manuals", "bibliotecas"]))
-        self.assertContains(detail, "De menor a mayor")
+        self.assertContains(detail, "La jerarquía del sistema")
+        self.assertContains(detail, "Editar con contexto")
+
+    def test_every_article_provides_a_substantive_detail(self):
+        for kind, articles in CATALOGS.items():
+            for article in articles:
+                with self.subTest(kind=kind, slug=article.slug):
+                    self.assertGreaterEqual(len(article.sections), 4)
+                    self.assertTrue(all(len(section.body) >= 200 for section in article.sections))
+                    self.assertGreaterEqual(len(article.takeaway), 80)
 
     def test_learning_requires_authentication(self):
         self.client.logout()
