@@ -253,7 +253,7 @@ export default function TodayScreen() {
         <View style={styles.greetingSubtitle}>
           <Text style={styles.greetingSubtitleText}>Fallar en planificar, es planificar fallar</Text>
         </View>
-        {planContext ? <View style={styles.planContext}><Chip borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
+        {planContext ? <View style={styles.planContext}><Chip backgroundColor={`${planContext.color}4D`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
       </View>
       {today?.calendarization ? <HomeSectionTitle>Tu plan de alimentos para hoy</HomeSectionTitle> : null}
 
