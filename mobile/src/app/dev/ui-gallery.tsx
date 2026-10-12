@@ -85,7 +85,6 @@ const entities: { key: EntityKind; label: string }[] = [
   { key: "dpm", label: "DPM" },
   { key: "program", label: "Program" },
 ];
-
 const sections: { key: SectionKind; label: string; lucide: string }[] = [
   { key: "home", label: "Inicio", lucide: "house" },
   { key: "profile", label: "Perfil", lucide: "circle-user-round" },
@@ -99,7 +98,6 @@ const sections: { key: SectionKind; label: string; lucide: string }[] = [
   { key: "create", label: "Crear", lucide: "circle-fading-plus" },
   { key: "import", label: "Importar", lucide: "file-down" },
 ];
-
 const surfaces = [
   { key: "surfaceApp", label: "App", role: "Fondo raíz y navegación global" },
   { key: "surfacePage", label: "Página", role: "Superficie base de una vista" },

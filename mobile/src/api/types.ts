@@ -876,7 +876,6 @@ export type AIChatListData = MobilePageData<AIChatSummary> & {
   availability: AssistantAvailability;
   pending_new_turn: AIPendingTurn | null;
 };
-
 export type AIChatDetail = AIChatSummary & {
   messages: AIChatMessage[];
   availability: AssistantAvailability;
