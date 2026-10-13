@@ -3,7 +3,7 @@ import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { type ErrorBoundaryProps, type Href, Stack, useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { AppState, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -74,6 +74,7 @@ function SplashCoordinator() {
 
 function NativeReminderReconciler() {
   const { status, apiRequest } = useSession();
+  const inactiveSince = useRef<number | null>(null);
 
   useEffect(() => {
     const reconcile = () => {
@@ -86,7 +87,13 @@ function NativeReminderReconciler() {
 
     reconcile();
     const subscription = AppState.addEventListener("change", (nextState) => {
-      if (nextState === "active") reconcile();
+      if (nextState !== "active") {
+        inactiveSince.current ??= Date.now();
+        return;
+      }
+      const inactiveDuration = inactiveSince.current == null ? null : Date.now() - inactiveSince.current;
+      inactiveSince.current = null;
+      if (inactiveDuration != null && inactiveDuration >= 10_000) reconcile();
     });
     return () => subscription.remove();
   }, [apiRequest, status]);

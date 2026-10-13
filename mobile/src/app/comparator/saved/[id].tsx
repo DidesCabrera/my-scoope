@@ -15,7 +15,6 @@ import { Chip, DistributedTabBar, EntityIcon } from "@/components/ui";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
 import { AppHeader, LoadingState, Screen } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
-import { openNativeShare } from "@/sharing/native-share";
 
 type DetailTab = "cards" | "table" | "entities";
 
@@ -111,14 +110,11 @@ export default function SavedComparisonDetailScreen() {
           setComparison(renamed);
         }}
         onShare={async () => {
-          const resource = await apiRequest<ShareResource>(`/api/v1/shares/comparisons/${comparison.saved_comparison_id}`, {
+          return apiRequest<ShareResource>(`/api/v1/shares/comparisons/${comparison.saved_comparison_id}`, {
             body: JSON.stringify({ claim_policy: "multiple" }),
             headers: { "Content-Type": "application/json" },
             method: "POST",
           });
-          setActionsVisible(false);
-          await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-          await openNativeShare(resource);
         }}
         visible={actionsVisible}
       /> : null}

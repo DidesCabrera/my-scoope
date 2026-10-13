@@ -86,7 +86,7 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
       sheetTranslateY.setValue(hiddenSheetOffset);
       requestAnimationFrame(() => {
         setMounted(false);
-        onDismiss?.();
+        if (Platform.OS !== "ios") onDismiss?.();
       });
       return;
     }
@@ -107,7 +107,7 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
     ]).start(({ finished }) => {
       if (finished) {
         setMounted(false);
-        onDismiss?.();
+        if (Platform.OS !== "ios") onDismiss?.();
       }
     });
   }, [dismissImmediately, hiddenSheetOffset, mounted, onDismiss, scrimOpacity, sheetTranslateY, visible]);
@@ -116,6 +116,7 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
     <Modal
       animationType="none"
       navigationBarTranslucent
+      onDismiss={Platform.OS === "ios" ? onDismiss : undefined}
       onRequestClose={onRequestClose}
       presentationStyle="overFullScreen"
       statusBarTranslucent

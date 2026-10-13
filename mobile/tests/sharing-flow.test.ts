@@ -20,6 +20,13 @@ test("every library entity opens native sharing directly with one portable resou
   assertSourceMatch(adapter, /Clipboard\.setStringAsync/);
 });
 
+test("brief native share transitions do not reschedule the full reminder queue", async () => {
+  const rootLayout = await readTestFile(path.resolve(process.cwd(), "src/app/_layout.tsx"), "utf8");
+
+  assertSourceMatch(rootLayout, /inactiveSince\.current \?\?= Date\.now\(\)/);
+  assertSourceMatch(rootLayout, /inactiveDuration != null && inactiveDuration >= 10_000/);
+});
+
 test("share deep links preserve their destination through authentication prerequisites", async () => {
   const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
   const universalRoute = await readTestFile(path.resolve(process.cwd(), "src/app/s/[id].tsx"), "utf8");
@@ -75,6 +82,7 @@ test("shared programs and comparisons have complete native detail views", async 
   const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
   const presentation = await readTestFile(path.resolve(process.cwd(), "src/sharing/presentation.ts"), "utf8");
   const comparisonActions = await readTestFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
+  const comparisonActionsModal = await readTestFile(path.resolve(process.cwd(), "src/components/comparisons/saved-comparison-actions.tsx"), "utf8");
 
   assertSourceMatch(shareScreen, /sharedProgramLibraryItem\(snapshot, resource\.title\)/);
   assertSourceMatch(shareScreen, /<Screen[\s\S]*scroll=\{!sharedProgram\}/);
@@ -91,7 +99,9 @@ test("shared programs and comparisons have complete native detail views", async 
   assertSourceMatch(presentation, /aggregateSharedFoods\(sourceDays\.flatMap/);
   assertSourceMatch(presentation, /export function sharedComparisonResult/);
   assertSourceMatch(comparisonActions, /`\/api\/v1\/shares\/comparisons\/\$\{comparison\.saved_comparison_id\}`/);
-  assertSourceMatch(comparisonActions, /await openNativeShare\(resource\)/);
+  assertSourceMatch(comparisonActionsModal, /const resource = await onShare\(\);[\s\S]*?setDismissShareImmediately\(true\);[\s\S]*?onClose\(\);[\s\S]*?requestAnimationFrame\(\(\) => requestAnimationFrame[\s\S]*?await openNativeShare\(resource\)/);
+  assertSourceMatch(comparisonActionsModal, /<ActionSheetModal dismissImmediately=\{dismissShareImmediately\}/);
+  assertSourceMatch(comparisonActions, /onShare=\{async \(\) => \{[\s\S]*?return apiRequest<ShareResource>/);
 });
 
 test("shared meal foods navigate from panels and detail cards", async () => {

@@ -10,7 +10,16 @@ from django.utils import timezone
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.sharing.dailyplans import create_dailyplan_share_resource
 from notas.application.sharing.services import revoke_share_resource
-from notas.domain.models import DailyPlan, Food, Meal, Program, SavedComparison, ShareClaim, ShareInvitation, ShareResource
+from notas.domain.models import (
+    DailyPlan,
+    Food,
+    Meal,
+    Program,
+    SavedComparison,
+    ShareClaim,
+    ShareInvitation,
+    ShareResource,
+)
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -74,6 +83,28 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
             if item["subject_type"] == "comparison"
         )
         self.assertEqual(sent_comparison["comparison_kind"], "foods")
+
+    def test_comparison_kind_is_recovered_for_legacy_sent_resources(self):
+        comparison = SavedComparison.objects.create(
+            owner=self.user,
+            kind=SavedComparison.KIND_MEALS,
+            name="Comparación de Carbos",
+            payload=[{"id": 1}, {"id": 2}],
+            snapshot_payload=[{"id": 1, "name": "Almuerzo"}, {"id": 2, "name": "Cena"}],
+        )
+        ShareResource.objects.create(
+            sender=self.user,
+            subject_type=ShareResource.SubjectType.COMPARISON,
+            source_object_id=comparison.id,
+            snapshot={"subject": {"type": "comparison", "title": comparison.name}},
+            snapshot_schema_version="sharing.snapshot.v1",
+        )
+
+        response = self.client.get("/api/v1/shares/inbox?scope=sent")
+
+        self.assertEqual(response.status_code, 200)
+        item = response.json()["data"]["items"][0]
+        self.assertEqual(item["comparison_kind"], "meals")
 
     def test_owner_can_create_and_revoke_dailyplan_share_resource(self):
         dailyplan = DailyPlan.objects.create(name="Plan desde móvil", created_by=self.user, is_draft=False)

@@ -4,14 +4,17 @@ import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
+import type { ShareResource } from "@/api/types";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
+import { openNativeShare } from "@/sharing/native-share";
 
-export function SavedComparisonActions({ canEdit = true, name: currentName, onClose, onEdit, onRename, onShare, visible }: { canEdit?: boolean; name: string; onClose(): void; onEdit(): void; onRename(name: string): Promise<void>; onShare(): Promise<void>; visible: boolean }) {
+export function SavedComparisonActions({ canEdit = true, name: currentName, onClose, onEdit, onRename, onShare, visible }: { canEdit?: boolean; name: string; onClose(): void; onEdit(): void; onRename(name: string): Promise<void>; onShare(): Promise<ShareResource>; visible: boolean }) {
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(currentName);
   const [submitting, setSubmitting] = useState(false);
+  const [dismissShareImmediately, setDismissShareImmediately] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const edit = () => { onClose(); onEdit(); };
   const close = () => {
@@ -39,12 +42,24 @@ export function SavedComparisonActions({ canEdit = true, name: currentName, onCl
   const share = async () => {
     setSubmitting(true);
     setError(null);
-    try { await onShare(); }
-    catch (nextError) { setError(userFacingError(nextError)); }
-    finally { setSubmitting(false); }
+    try {
+      const resource = await onShare();
+      setDismissShareImmediately(true);
+      onClose();
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+      await openNativeShare(resource);
+    }
+    catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setDismissShareImmediately(false);
+      setSubmitting(false);
+    }
   };
   return (
-    <ActionSheetModal onRequestClose={close} visible={visible}>
+    <ActionSheetModal dismissImmediately={dismissShareImmediately} onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <ActionSheetHeader onClose={close} section="comparator" title={editingName ? "Editar nombre" : "Comparación"} />
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={styles.scroll}>

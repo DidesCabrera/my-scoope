@@ -37,7 +37,7 @@ from notas.application.sharing.services import (
     record_share_preview,
     revoke_share_resource,
 )
-from notas.domain.models import InboxItem, ShareClaim, ShareResource
+from notas.domain.models import InboxItem, SavedComparison, ShareClaim, ShareResource
 
 router = Router()
 
@@ -45,7 +45,16 @@ router = Router()
 def _comparison_kind(resource: ShareResource):
     if resource.subject_type != ShareResource.SubjectType.COMPARISON:
         return None
-    kind = (resource.snapshot.get("summary") or {}).get("comparison_kind")
+    snapshot = resource.snapshot or {}
+    kind = (snapshot.get("summary") or {}).get("comparison_kind")
+    if kind not in {"foods", "meals", "dailyplans"}:
+        kind = (snapshot.get("comparison") or {}).get("kind")
+    if kind not in {"foods", "meals", "dailyplans"} and resource.source_object_id:
+        kind = (
+            SavedComparison.objects.filter(pk=resource.source_object_id, owner_id=resource.sender_id)
+            .values_list("kind", flat=True)
+            .first()
+        )
     return kind if kind in {"foods", "meals", "dailyplans"} else None
 
 
