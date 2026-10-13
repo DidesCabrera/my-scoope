@@ -220,6 +220,7 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
     title = _display_text(_text(subject.get("title"), fallback="Contenido compartido"))
     subject_type = _text(subject.get("type"), fallback="daily_plan")
     type_label = {
+        "comparison": "COMPARACIÓN",
         "daily_plan": "PLAN DIARIO",
         "food": "ALIMENTO",
         "meal": "COMIDA",
@@ -230,6 +231,7 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
     food_count = int(_number(summary.get("food_count")))
 
     entity_colors = {
+        "comparison": "#3057FF",
         "daily_plan": "#7C4DDB",
         "food": "#FF8800",
         "meal": "#CF34B0",
@@ -255,7 +257,9 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
         draw.text((52, 102 + index * 68), line, font=title_font, fill="#F5F5F5")
 
     title_bottom = 102 + len(title_lines) * 68
-    if subject_type == "food":
+    if subject_type == "comparison":
+        structural = ((f"{int(_number(summary.get('item_count')))} elementos", "#3057FF", None),)
+    elif subject_type == "food":
         structural = ((f"100 {_text(summary.get('basis_unit'), fallback='g')}", "#241E10", "#FF8800"),)
     elif subject_type == "meal":
         structural = ((f"{food_count} alimentos", "#FF8800", None),)
@@ -285,7 +289,7 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
         chip_left += chip_width + 14
     content_bottom = chip_top + 56
 
-    if subject_type != "program":
+    if subject_type not in {"comparison", "program"}:
         # Dash KPI: the same card recipe used by entity details.
         kpi_top = max(270, chip_top + 80)
         # Calories and macros form one horizontally centered unit. The calories
@@ -320,7 +324,7 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
                 draw.rounded_rectangle((640, row_top + 7, 640 + fill_width, row_top + 61), radius=12, fill=color)
             draw.text((1128, row_top + 34), f"{allocation}%", anchor="rm", font=_font(28, bold=True), fill="#F5F5F5")
         content_bottom = total_box[3]
-    else:
+    elif subject_type == "program":
         content_bottom = _draw_program_calorie_chart(image, draw, snapshot, summary, chip_top=chip_top)
         draw = ImageDraw.Draw(image)
     # Programs intentionally stop after the title section: there is no Dash KPI.

@@ -44,7 +44,7 @@ export default function OnboardingPreviewScreen() {
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
-      <Screen key={step} contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: headerCompensationTop }} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
+      <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: headerCompensationTop }} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
         <OnboardingJourneyView
         controller={controller}
         {...presentationProps}

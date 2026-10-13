@@ -6,6 +6,7 @@ SHARE_SNAPSHOT_SCHEMA_VERSION = "sharing.snapshot.v1"
 
 
 class ShareSubjectType(StrEnum):
+    COMPARISON = "comparison"
     DAILY_PLAN = "daily_plan"
     FOOD = "food"
     MEAL = "meal"

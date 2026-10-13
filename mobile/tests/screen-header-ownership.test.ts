@@ -47,8 +47,11 @@ test("Screen has one implementation and never overrides externally owned headers
   assert.equal((layout.match(/export function Screen/g) ?? []).length, 1);
   assertSourceDoesNotMatch(primitives, /export function Screen/);
   assertSourceMatch(primitives, /import \{ Screen \} from "\.\/layout";[\s\S]*export \{ Screen \}/);
-  assertSourceMatch(primitives, /<Screen scroll=\{false\} contentStyle=\{styles\.loadingState\} headerMode="preserve">/);
-  assertSourceMatch(feedback, /<Screen scroll=\{false\} contentStyle=\{styles\.loadingState\} headerMode="preserve">/);
+  assertSourceDoesNotMatch(primitives, /export function LoadingState/);
+  assertSourceMatch(primitives, /export \{ LoadingState \}/);
+  assertSourceMatch(feedback, /const viewportOffset = headerVisible \? -\(GLOBAL_HEADER_HEIGHT \+ insets\.top\) \/ 2 : 0/);
+  assertSourceMatch(feedback, /<Screen scroll=\{false\} contentStyle=\{\[styles\.loadingState, \{ transform: \[\{ translateY: viewportOffset \}\] \}\]\} headerMode="preserve">/);
+  assertSourceMatch(feedback, /mode === "content"[\s\S]*styles\.loadingContent/);
 });
 
 test("header navigation and action icons use muted text color", async () => {
@@ -97,14 +100,14 @@ test("screens that own global navigation preserve their header through content a
   assertSourceMatch(comparator, /mode: "back", title: savedId \? "Editar comparación" : "Nueva comparación"/);
   assertSourceMatch(comparator, /action: \{ label: "Cancelar", onPress: cancel \}/);
   assertSourceDoesNotMatch(comparator, /title=\{savedId \? "Editar Comparación" : "Nueva Comparación"\}/);
-  assertSourceMatch(comparator, /<View style=\{styles\.builderTabs\}>[\s\S]*<ComparisonKindTabs kind=\{kind\} onChange=\{changeKind\} \/>[\s\S]*<Screen headerMode="preserve">/);
-  assertSourceMatch(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparaciones" \/>\}/);
+  assertSourceDoesNotMatch(comparator, /<ComparisonKindTabs kind=\{kind\}/);
+  assertSourceMatch(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" subtitle="Compara los elementos de tu librería\. Comprende las similitudes y diferencias, y reemplázalos en tu dieta\." title="Comparaciones" \/>\}/);
   assertSourceMatch(comparator, /stickyHeader=\{<ComparisonKindTabs counts=\{counts\}/);
   assertSourceMatch(comparator, /stickyHeaderStyle=\{styles\.dashboardStickyHeader\}/);
   assertSourceMatch(comparator, /<DistributedTabBar<ComparisonKind>/);
   assertSourceMatch(comparator, /identityVisible: compactHeaderVisible[\s\S]*title: "Comparaciones"/);
   assertSourceMatch(comparator, /dashboardStickyHeader: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
-  assertSourceMatch(comparator, /builderTabs: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assertSourceDoesNotMatch(comparator, /builderTabs:/);
   assertSourceMatch(comparator, /onHeaderVisibilityChange=\{setCompactHeaderVisible\}/);
   assertSourceMatch(comparator, /pathname: "\/comparator\/saved\/\[id\]", params: \{ id: String\(saved\.saved_comparison_id\), kind: saved\.kind \}/);
   assertSourceDoesNotMatch(comparator, /<SectionPageHeader count=\{page\?\.total\}/);

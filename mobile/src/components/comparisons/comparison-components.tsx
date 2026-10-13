@@ -58,6 +58,20 @@ function formatComparisonQuantity(value: string): string {
   return `(${normalized})`;
 }
 
+function comparisonQuantity(value: number): string {
+  return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "0";
+}
+
+export function ComparisonItemsSummary({ items }: { items: ComparisonResultItem[] }) {
+  return (
+    <Text style={styles.itemsSummary}>
+      {items.map((item) => item.quantity == null
+        ? item.name
+        : `${item.name} (${comparisonQuantity(item.quantity)}${item.quantity_unit ?? "g"})`).join(", ")}
+    </Text>
+  );
+}
+
 export function ComparisonScopeTabs({ activeScope, onChange }: { activeScope: ComparisonScope; onChange: (scope: ComparisonScope) => void }) {
   return (
     <DistributedTabBar
@@ -338,6 +352,7 @@ export function SavedComparisonDetailPage({
 }
 
 const styles = StyleSheet.create({
+  itemsSummary: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, lineHeight: 24 },
   pressed: { opacity: 0.7 },
   selectionCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.spacing.md },
   selectionHeading: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between", minWidth: 0 },

@@ -115,8 +115,8 @@ export function DailyPlanMealCards({ dailyPlanId, items, onChanged, onRemove, pi
           fat: { grams: item.fat_grams, allocation: item.fat_allocation },
         };
         const actions = [
-          { destructive: false, key: "rename", label: "Renombrar" },
           { destructive: false, key: "share", label: "Compartir" },
+          { destructive: false, key: "rename", label: "Renombrar" },
         ] satisfies LibraryAction[];
         const compare = () => {
           if (mealId == null) return;

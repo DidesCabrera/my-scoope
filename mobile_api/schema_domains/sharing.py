@@ -13,7 +13,7 @@ class ShareResourceCreateInput(Schema):
 
 class ShareResourceData(Schema):
     id: UUID
-    subject_type: Literal["daily_plan", "food", "meal", "program"]
+    subject_type: Literal["comparison", "daily_plan", "food", "meal", "program"]
     title: str
     public_url: str
     claim_policy: Literal["none", "single", "multiple"]
@@ -29,7 +29,7 @@ class ShareResourceEnvelope(Schema):
 
 class PublicShareResourceData(Schema):
     id: UUID
-    subject_type: Literal["daily_plan", "food", "meal", "program"]
+    subject_type: Literal["comparison", "daily_plan", "food", "meal", "program"]
     title: str
     claim_policy: Literal["none", "single", "multiple"]
     snapshot: dict[str, Any]
@@ -55,10 +55,12 @@ class ShareClaimEnvelope(Schema):
 class SharingInboxItemData(Schema):
     id: int
     resource_id: UUID
-    subject_type: Literal["daily_plan", "food", "meal", "program"]
+    subject_type: Literal["comparison", "daily_plan", "food", "meal", "program"]
+    comparison_kind: Literal["foods", "meals", "dailyplans"] | None = None
     title: str
     sender: str
     public_url: str
+    status: Literal["active", "revoked", "expired"]
     is_read: bool
     is_favorite: bool
     is_saved: bool
@@ -89,7 +91,7 @@ class SharingInboxItemEnvelope(Schema):
 
 
 class SharingInboxSaveData(Schema):
-    entity: Literal["dailyPlan", "food", "meal", "program"]
+    entity: Literal["comparison", "dailyPlan", "food", "meal", "program"]
     item_id: int
 
 

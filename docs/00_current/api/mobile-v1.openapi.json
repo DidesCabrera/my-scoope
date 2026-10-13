@@ -7710,6 +7710,7 @@
           },
           "subject_type": {
             "enum": [
+              "comparison",
               "daily_plan",
               "food",
               "meal",
@@ -8052,6 +8053,41 @@
           "data"
         ],
         "title": "RevokeSessionEnvelope",
+        "type": "object"
+      },
+      "SavedComparisonDeleteData": {
+        "properties": {
+          "deleted_id": {
+            "title": "Deleted Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted_id"
+        ],
+        "title": "SavedComparisonDeleteData",
+        "type": "object"
+      },
+      "SavedComparisonDeleteEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SavedComparisonDeleteData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SavedComparisonDeleteEnvelope",
         "type": "object"
       },
       "SavedComparisonDetailData": {
@@ -8443,6 +8479,7 @@
           },
           "subject_type": {
             "enum": [
+              "comparison",
               "daily_plan",
               "food",
               "meal",
@@ -8535,6 +8572,22 @@
       },
       "SharingInboxItemData": {
         "properties": {
+          "comparison_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "foods",
+                  "meals",
+                  "dailyplans"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Kind"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -8569,8 +8622,18 @@
             "title": "Sender",
             "type": "string"
           },
+          "status": {
+            "enum": [
+              "active",
+              "revoked",
+              "expired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
           "subject_type": {
             "enum": [
+              "comparison",
               "daily_plan",
               "food",
               "meal",
@@ -8591,6 +8654,7 @@
           "title",
           "sender",
           "public_url",
+          "status",
           "is_read",
           "is_favorite",
           "is_saved",
@@ -8625,6 +8689,7 @@
         "properties": {
           "entity": {
             "enum": [
+              "comparison",
               "dailyPlan",
               "food",
               "meal",
@@ -10441,6 +10506,58 @@
       }
     },
     "/api/v1/comparisons/saved/{comparison_id}": {
+      "delete": {
+        "operationId": "mobile_api_api_delete_mobile_saved_comparison",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonDeleteEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Delete Mobile Saved Comparison"
+      },
       "get": {
         "operationId": "mobile_api_api_saved_comparison_detail",
         "parameters": [
@@ -17575,6 +17692,90 @@
           }
         ],
         "summary": "Revoke Session"
+      }
+    },
+    "/api/v1/shares/comparisons/{comparison_id}": {
+      "post": {
+        "operationId": "mobile_api_create_comparison_share_resource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareResourceCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareResourceEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Comparison Share"
       }
     },
     "/api/v1/shares/daily-plans/{dailyplan_id}": {

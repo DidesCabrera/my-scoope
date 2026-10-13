@@ -221,7 +221,7 @@ export default function OnboardingScreen() {
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
-      <Screen key={step} contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
+      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
         <OnboardingJourneyView controller={controller} {...presentationProps} step={step} />
       </Screen>
     </>

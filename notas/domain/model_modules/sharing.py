@@ -6,6 +6,7 @@ from django.db import models
 
 class ShareResource(models.Model):
     class SubjectType(models.TextChoices):
+        COMPARISON = "comparison", "Comparison"
         DAILY_PLAN = "daily_plan", "Daily plan"
         FOOD = "food", "Food"
         MEAL = "meal", "Meal"

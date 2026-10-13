@@ -14,7 +14,7 @@ export type ShareMealSnapshot = {
 
 export type ShareSnapshot = {
   schema_version: string;
-  subject: { type: "daily_plan" | "food" | "meal" | "program"; title: string; variant?: string };
+  subject: { type: "comparison" | "daily_plan" | "food" | "meal" | "program"; title: string; variant?: string };
   summary: {
     basis_grams?: number;
     basis_unit?: "g" | "ml";
@@ -22,16 +22,24 @@ export type ShareSnapshot = {
     filled_days?: number;
     meal_count?: number;
     food_count?: number;
+    comparison_kind?: "dailyplans" | "foods" | "meals";
+    item_count?: number;
   };
   nutrition: ShareNutrition;
+  time?: string | null;
   foods?: { name: string; quantity_grams: number; quantity_unit?: "g" | "ml"; nutrition: ShareNutrition }[];
   meals?: ShareMealSnapshot[];
   days?: { week_number: number; day_number: number; plan: ShareSnapshot }[];
+  comparison?: {
+    kind: "dailyplans" | "foods" | "meals";
+    payload: { id: number; quantity?: number | null }[];
+    snapshot_payload: { id: number; name: string; quantity?: number | null; quantity_unit?: "g" | "ml" | null; values: Record<string, number> }[];
+  };
 };
 
 export type ShareResource = {
   id: string;
-  subject_type: "daily_plan" | "food" | "meal" | "program";
+  subject_type: "comparison" | "daily_plan" | "food" | "meal" | "program";
   title: string;
   public_url?: string;
   claim_policy: "none" | "single" | "multiple";
@@ -46,9 +54,11 @@ export type SharingInboxItem = {
   id: number;
   resource_id: string;
   subject_type: ShareResource["subject_type"];
+  comparison_kind?: "foods" | "meals" | "dailyplans" | null;
   title: string;
   sender: string;
   public_url: string;
+  status?: NonNullable<ShareResource["status"]>;
   is_read: boolean;
   is_favorite: boolean;
   is_saved: boolean;

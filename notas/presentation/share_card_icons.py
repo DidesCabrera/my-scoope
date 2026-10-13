@@ -15,7 +15,13 @@ def draw_share_entity_icon(draw: ImageDraw.ImageDraw, entity: str, box: tuple[in
     stroke = max(2, round(2.2 * scale))
     white = "#FFFFFF"
 
-    if entity == "food":
+    if entity == "comparison":
+        draw.line([point(12, 3), point(12, 20)], fill=white, width=stroke)
+        draw.line([point(5, 7), point(19, 7)], fill=white, width=stroke)
+        draw.line([point(7, 7), point(4, 14), point(10, 14), point(7, 7)], fill=white, width=stroke)
+        draw.line([point(17, 7), point(14, 14), point(20, 14), point(17, 7)], fill=white, width=stroke)
+        draw.line([point(7, 21), point(17, 21)], fill=white, width=stroke)
+    elif entity == "food":
         draw.polygon([point(7, 9), point(15, 7), point(17, 10), point(10, 19), point(5, 20)], outline=white, width=stroke)
         draw.line([point(8, 14), point(11, 17)], fill=white, width=stroke)
         draw.line([point(15, 8), point(18, 4), point(19, 8)], fill=white, width=stroke)

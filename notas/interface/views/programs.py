@@ -672,6 +672,8 @@ def program_share(request, pk):
 
         if delivery.sent:
             messages.success(request, "Compartiste este programa y se envió el correo de invitación.")
+        elif delivery.reason == "self_recipient":
+            messages.error(request, "No puedes compartir un programa contigo mismo.")
         elif delivery.reason == "duplicate_share":
             messages.success(request, "Este programa ya estaba compartido. No reenviamos el correo para evitar duplicados.")
         else:

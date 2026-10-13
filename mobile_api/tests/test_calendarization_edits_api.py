@@ -315,6 +315,10 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
             },
         )
 
+        home_before = self.client.get("/api/v1/home")
+        self.assertEqual(home_before.status_code, 200)
+        self.assertEqual(home_before.json()["data"]["today"]["plan_snapshot"]["meals"][0]["hour"], "20:00")
+
         response = self.client.patch(
             f"/api/v1/program/days/{day.id}/meals/dailyplan_meal:77",
             data={"hour": "21:15"},
@@ -325,6 +329,9 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.json()["data"]["plan_snapshot"]["meals"][0]["hour"], "21:15")
         day.refresh_from_db()
         self.assertEqual(day.plan_snapshot["meals"][0]["hour"], "21:15")
+        home_after = self.client.get("/api/v1/home")
+        self.assertEqual(home_after.status_code, 200)
+        self.assertEqual(home_after.json()["data"]["today"]["plan_snapshot"]["meals"][0]["hour"], "21:15")
 
         other_user = User.objects.create_user(username="other-hour-user")
         other_client = Client()

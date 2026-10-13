@@ -9,6 +9,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
+import { publishCalendarizedDayUpdate } from "@/components/calendarization/calendarized-day-updates";
 import { MealCompletionCard, MealNoteCard, useMealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
 import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components/calendarization/meal-execution";
 import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
@@ -216,6 +217,7 @@ export default function CalendarizedMealDetailScreen() {
           const updatedMeal = day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null;
           setMeal(updatedMeal);
           setExecution(normalizeMealExecution(day.meal_execution).find((item) => item.meal_key === mealKey) ?? null);
+          publishCalendarizedDayUpdate(day);
           await refreshNativeReminders(apiRequest);
         },
       }}

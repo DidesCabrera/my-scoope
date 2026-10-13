@@ -28,7 +28,14 @@ test("the macro loading proposal uses trackless KPI allocation bars and respects
     "withSequence(",
     "Easing.linear",
     "transitionDuration(values[index], value)",
-    'width: `${width.value}%`',
+    "transform: [{ scaleX: width.get() }]",
+    "width.set(withDelay(",
+    'transformOrigin: "left"',
+    'width: "100%"',
+    "useFocusEffect(useCallback(",
+    'AppState.currentState === "active"',
+    'AppState.addEventListener("change"',
+    "if (!active || reducedMotion) return",
     "useReducedMotion()",
     "tokens.component.nutritionKpi.regular.barHeight",
     "tokens.component.nutritionKpi.regular.barRadius",
@@ -44,7 +51,7 @@ test("the macro loading proposal uses trackless KPI allocation bars and respects
 
   assert.equal(componentContracts.every((contract) => component.includes(contract)), true);
   assert.equal(galleryContracts.every((contract) => gallery.includes(contract)), true);
-  assert.equal(productSources.every((source) => source.includes("MacroLoadingIndicator") || source.includes("<LoadingState")), true);
+  assert.equal(productSources.every((source) => source.includes("MacroLoadingIndicator") || source.includes("LoadingState")), true);
   assert.equal(productSources.every((source) => source.includes("surfaceApp") || source.includes("<LoadingState")), true);
   assert.equal(productSources[3].includes('if (loading && mode === "list" && !page) return <LoadingState'), true);
   assert.equal(component.includes("allocationPanelTrack"), false);

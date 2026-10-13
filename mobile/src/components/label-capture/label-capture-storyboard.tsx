@@ -10,7 +10,7 @@ import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { Button, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, SectionHeading } from "@/components/ui";
+import { Button, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, NutritionFactsCard, Pill, SectionHeading } from "@/components/ui";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { AnimatedScanBeam } from "@/components/label-capture/animated-scan-beam";
 import { NutritionEntityCard } from "@/components/nutrition";
@@ -24,6 +24,7 @@ export const labelCaptureStoryboardSteps = [
   { key: "review", label: "Revisión de valores" },
   { key: "confirmation", label: "Confirmación final" },
   { key: "saved", label: "Alimento creado" },
+  { key: "qualityWarnings", label: "Advertencias de calidad" },
 ] as const;
 
 export type LabelCaptureStoryboardStep = (typeof labelCaptureStoryboardSteps)[number]["key"];
@@ -38,6 +39,7 @@ const navigationTitles: Record<LabelCaptureStoryboardStep, string> = {
   review: "Revisión de información",
   confirmation: "Crear Alimento",
   saved: "",
+  qualityWarnings: "Confirmación calidad",
 };
 
 const navigationActions: Record<LabelCaptureStoryboardStep, { leading: "back" | null; trailing: "Cancelar" | "Listo" | null }> = {
@@ -48,6 +50,7 @@ const navigationActions: Record<LabelCaptureStoryboardStep, { leading: "back" | 
   review: { leading: null, trailing: "Cancelar" },
   confirmation: { leading: "back", trailing: "Cancelar" },
   saved: { leading: null, trailing: "Listo" },
+  qualityWarnings: { leading: "back", trailing: "Cancelar" },
 };
 
 function StoryboardNavigationHeader({ step }: { step: LabelCaptureStoryboardStep }) {
@@ -184,7 +187,7 @@ function NutritionLabelMock({ compact = false, edgeToEdge = false }: { compact?:
 function IntroView() {
   return (
     <>
-      <StoryboardHeader detail="Fotografía la tabla nutricional y crea un alimento privado sin transcribir cada dato." icon={<Camera color={tokens.color.textMain} size={34} strokeWidth={1.8} />} title="Convierte una etiqueta en segundos" />
+      <StoryboardHeader detail="Fotografía la tabla nutricional y crea un alimento privado sin transcribir cada dato." icon={<Camera color={tokens.color.textMain} size={34} strokeWidth={1.8} />} title="Enriquece tu librería de alimentos" />
       <View style={styles.introInfo}>
         <View style={styles.assuranceList}>
           <View style={styles.assuranceRow}><Camera color={tokens.color.textMuted} size={17} /><Text style={styles.assuranceText}>Captura o elige una foto clara.</Text></View>
@@ -216,12 +219,9 @@ function CameraView() {
       <View style={[styles.confidenceNotice, styles.cameraHintNotice]}>
         <Text style={styles.confidenceNoticeText}>Intenta tomar la foto con buena iluminación y sin movimiento. Una mejor calidad de la foto facilitará un mejor resultado.</Text>
       </View>
-      <View style={styles.bottomActions}>
+      <View style={[styles.bottomActions, styles.cameraBottomActions]}>
         <Button label="Capturar foto" onPress={noop} />
-        <View style={styles.cameraUtilityRow}>
-          <Button label="Cambiar lente" onPress={noop} variant="secondary" />
-          <Button label="Encender luz" onPress={noop} variant="secondary" />
-        </View>
+        <Button label="Encender luz" onPress={noop} variant="secondary" />
       </View>
     </>
   );
@@ -246,6 +246,40 @@ function PreviewView() {
         </View>
         <Button label="Enviar a OpenAI y digitalizar · 1 crédito" onPress={noop} />
         <Button label="Tomar otra foto" onPress={noop} variant="secondary" />
+      </View>
+    </>
+  );
+}
+
+const qualityWarningIssues = [
+  "Hay muy poca luz. Busca un lugar más iluminado o enciende la luz de la cámara.",
+  "La etiqueta tiene reflejos o zonas demasiado iluminadas. Inclina ligeramente el envase o apaga la luz.",
+  "El texto está desenfocado. Aléjate un poco, mantén el teléfono firme y usa zoom.",
+  "El texto ocupa muy poco espacio. Acerca con zoom sin aproximar demasiado el teléfono.",
+  "No detectamos texto legible. Encuadra únicamente la tabla nutricional.",
+  "La lectura local tiene baja confianza. Revisa la nitidez y el encuadre antes de continuar.",
+] as const;
+
+function QualityWarningsView() {
+  return (
+    <>
+      <FullBleedSquare><NutritionLabelMock edgeToEdge /></FullBleedSquare>
+      <View style={styles.qualityPanel}>
+        <View style={styles.qualityRow}>
+          <View style={styles.qualityCopy}>
+            <Text style={styles.qualityTitle}>Comprueba la fotografía</Text>
+            <Text style={styles.qualityDetail}>La imagen puede usarse, pero revisa los puntos detectados antes de continuar.</Text>
+            {qualityWarningIssues.map((issue) => <Text key={issue} style={styles.qualityIssue}>• {issue}</Text>)}
+          </View>
+          <Pill color={tokens.color.warning} label="Revisar" />
+        </View>
+      </View>
+      <InlineNotice tone="error">No pudimos leer esta etiqueta con suficiente seguridad. Prueba otra foto. Puedes completar los valores manualmente sin consumir una digitalización fallida.</InlineNotice>
+      <View style={styles.retentionPanel}>
+        <View style={styles.retentionRow}>
+          <View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Autorizar análisis con OpenAI</Text><Text style={styles.qualityDetail}>Se enviará temporalmente esta copia reducida y sin metadatos para extraer los valores.</Text></View>
+          <View style={styles.toggle}><View style={styles.toggleKnob} /></View>
+        </View>
       </View>
     </>
   );
@@ -345,8 +379,12 @@ function ConfirmationView() {
           fat: { grams: 5, allocation: 47 },
           protein: { grams: 9, allocation: 37, perKilogram: 0.1 },
         }}
-        title="Yogur griego natural"
-      />
+        title="Yogur griego natural">
+        <NutritionFactsCard
+          facts={{ carbsG: 3.8, fiberG: 0, proteinG: 9, saturatedFatG: 3.1, sodiumMg: 58, sugarG: 3.8, totalFatG: 5 }}
+          portion={{ quantity: 160, unit: "g" }}
+        />
+      </NutritionEntityCard>
       <View style={styles.retentionPanel}>
         <View style={styles.retentionRow}><View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Guardar copia procesada</Text><Text style={styles.qualityDetail}>Opcional, privada y eliminable después.</Text></View><View style={styles.toggle}><View style={styles.toggleKnob} /></View></View>
       </View>
@@ -405,6 +443,7 @@ const views: Record<LabelCaptureStoryboardStep, () => ReactNode> = {
   review: ReviewView,
   confirmation: ConfirmationView,
   saved: SavedView,
+  qualityWarnings: QualityWarningsView,
 };
 
 export function LabelCaptureStoryboardView({ step }: { step: LabelCaptureStoryboardStep }) {
@@ -433,6 +472,7 @@ const styles = StyleSheet.create({
   introBottom: { gap: tokens.spacing.sm, marginTop: "auto" },
   actionGroup: { gap: tokens.spacing.sm },
   bottomActions: { gap: tokens.spacing.sm, marginTop: "auto" },
+  cameraBottomActions: { marginBottom: 74 },
   fullBleedSquareLayout: { marginTop: -tokens.spacing.lg, position: "relative" },
   fullBleedSquareFallback: { aspectRatio: 1 },
   fullBleedSquareSurface: { left: -tokens.spacing.screen, overflow: "hidden", position: "absolute", top: 0 },
@@ -455,12 +495,12 @@ const styles = StyleSheet.create({
   focusBadge: { alignItems: "center", alignSelf: "center", backgroundColor: "rgba(5,10,15,0.86)", borderRadius: tokens.radius.pill, flexDirection: "row", gap: 6, paddingHorizontal: 12, paddingVertical: 7, position: "absolute", top: 46 },
   focusText: { color: tokens.color.textMain, fontSize: 11, fontWeight: tokens.weight.bold },
   cameraHintNotice: { marginTop: -tokens.spacing.lg },
-  cameraUtilityRow: { gap: tokens.spacing.sm },
   qualityPanel: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen, marginTop: -tokens.spacing.lg, padding: tokens.card.outerPadding },
   qualityRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   qualityCopy: { flex: 1, gap: 2 },
   qualityTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   qualityDetail: { color: tokens.color.textMuted, fontSize: 11, lineHeight: 16 },
+  qualityIssue: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16 },
   processingVisual: { position: "relative" },
   processingDetails: { gap: tokens.spacing.sm },
   processingHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },

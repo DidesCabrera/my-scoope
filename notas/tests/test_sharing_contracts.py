@@ -16,7 +16,7 @@ class SharingContractTests(SimpleTestCase):
     def test_public_vocabulary_is_stable_and_channel_independent(self):
         self.assertEqual(SHARE_SNAPSHOT_SCHEMA_VERSION, "sharing.snapshot.v1")
         self.assertEqual(set(ShareSubjectType), {
-            ShareSubjectType.DAILY_PLAN, ShareSubjectType.FOOD,
+            ShareSubjectType.COMPARISON, ShareSubjectType.DAILY_PLAN, ShareSubjectType.FOOD,
             ShareSubjectType.MEAL, ShareSubjectType.PROGRAM,
         })
         self.assertEqual(set(ShareClaimPolicy), {

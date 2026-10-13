@@ -32,6 +32,7 @@ test("assistant cards expose semantic eyebrows and keep dates below titles", asy
 test("received cards and proposal detail reuse the shared date format", async () => {
   const inbox = await readFile(path.resolve(process.cwd(), "src/app/inbox.tsx"), "utf8");
   const detail = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id].tsx"), "utf8");
-  assert.match(inbox, /\$\{item\.sender\} · \$\{formatCompactDate\(item\.created_at\)/);
+  assert.match(inbox, /`Recibido de \$\{item\.sender\}`/);
+  assert.match(inbox, /formatCompactDate\(item\.created_at\)/);
   assert.match(detail, /return date \? `Recibida \$\{date\}`/);
 });

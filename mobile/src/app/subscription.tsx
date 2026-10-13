@@ -9,7 +9,7 @@ import {
 } from "expo-iap";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Info, RefreshCcw, Sparkles, WalletCards } from "lucide-react-native";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { AppState, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -47,10 +47,12 @@ export default function SubscriptionScreen() {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [purchaseNotice, setPurchaseNotice] = useState<string | null>(null);
   const [restoreNotice, setRestoreNotice] = useState<string | null>(null);
   const [actionsVisible, setActionsVisible] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const handledTransactions = useRef(new Set<string>());
+  const pendingPlanName = useRef<string | null>(null);
   const restoring = useRef(false);
 
   const finishOnboarding = useCallback(async () => {
@@ -65,9 +67,11 @@ export default function SubscriptionScreen() {
     handledTransactions.current.add(key);
     setWorking(true);
     setError(null);
+    setPurchaseNotice(null);
     try {
       const isGooglePlay = Platform.OS === "android";
       const isCreditPack = overview?.credit_packs.some((pack) => pack.product_id === purchase.productId) ?? false;
+      const purchasedPlan = overview?.products.find((product) => product.product_id === purchase.productId)?.plan_name;
       await apiRequest(isCreditPack
         ? isGooglePlay ? "/api/v1/credit-packs/google-play/purchases" : "/api/v1/credit-packs/apple/transactions"
         : isGooglePlay ? "/api/v1/subscriptions/google-play/purchases" : "/api/v1/subscriptions/apple/transactions", {
@@ -84,6 +88,15 @@ export default function SubscriptionScreen() {
       ]);
       setOverview(nextOverview);
       setEntitlements(nextEntitlements);
+      if (isCreditPack) {
+        setPurchaseNotice("Compra confirmada. La bolsa de créditos ya fue añadida a tu saldo.");
+      } else if (purchasedPlan && nextEntitlements.plan_name.toLowerCase() === purchasedPlan.toLowerCase()) {
+        pendingPlanName.current = null;
+        setPurchaseNotice(`Compra confirmada. Tu plan ${purchasedPlan} ya está activo.`);
+      } else {
+        pendingPlanName.current = purchasedPlan ?? null;
+        setPurchaseNotice(`${isGooglePlay ? "Google Play" : "Apple"} confirmó la compra. Estamos actualizando tu plan; puedes seguir usando la app.`);
+      }
       if (isOnboarding && !isCreditPack) await finishOnboarding();
       return true;
     } catch (nextError) {
@@ -109,10 +122,14 @@ export default function SubscriptionScreen() {
     onPurchaseSuccess: (purchase) => void submitPurchase(purchase),
     onPurchaseError: (purchaseError) => {
       setError(isUserCancelledPurchase(purchaseError) ? null : purchaseError.message);
+      pendingPlanName.current = null;
+      setPurchaseNotice(null);
       setWorking(false);
     },
     onError: (nextError) => {
       setError(isUserCancelledPurchase(nextError) ? null : nextError.message);
+      pendingPlanName.current = null;
+      setPurchaseNotice(null);
       setWorking(false);
     },
   });
@@ -127,6 +144,11 @@ export default function SubscriptionScreen() {
       ]);
       setOverview(nextOverview);
       setEntitlements(nextEntitlements);
+      if (pendingPlanName.current
+        && nextEntitlements.plan_name.toLowerCase() === pendingPlanName.current.toLowerCase()) {
+        setPurchaseNotice(`Compra confirmada. Tu plan ${pendingPlanName.current} ya está activo.`);
+        pendingPlanName.current = null;
+      }
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -146,6 +168,13 @@ export default function SubscriptionScreen() {
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, isOnboarding, openActions, setHeaderPresentation]));
   useFocusEffect(useCallback(() => { void load(); }, [load]));
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") void load();
+    });
+    return () => subscription.remove();
+  }, [load]);
 
   useEffect(() => {
     const provider = Platform.OS === "android" ? "google_play" : "apple_app_store";
@@ -179,6 +208,10 @@ export default function SubscriptionScreen() {
     if (!overview) return;
     setWorking(true);
     setError(null);
+    setPurchaseNotice(Platform.OS === "ios"
+      ? "Esperando la confirmación de Apple…"
+      : "Esperando la confirmación de Google Play…");
+    pendingPlanName.current = overview.products.find((product) => product.product_id === productId)?.plan_name ?? null;
     try {
       const storeProduct = subscriptions.find((item) => item.id === productId);
       if (Platform.OS === "android") {
@@ -204,6 +237,8 @@ export default function SubscriptionScreen() {
     } catch (nextError) {
       if (isUserCancelledPurchase(nextError)) {
         setError(null);
+        pendingPlanName.current = null;
+        setPurchaseNotice(null);
         setWorking(false);
         return;
       }
@@ -223,6 +258,8 @@ export default function SubscriptionScreen() {
       }
 
       setError(`${Platform.OS === "android" ? "Google Play" : "Apple"} no completó la compra. No se realizó ningún cobro; inténtalo nuevamente o usa Restaurar compras.`);
+      pendingPlanName.current = null;
+      setPurchaseNotice(null);
       setWorking(false);
     }
   };
@@ -231,6 +268,9 @@ export default function SubscriptionScreen() {
     if (!overview?.credit_packs.some((pack) => pack.product_id === productId)) return;
     setWorking(true);
     setError(null);
+    setPurchaseNotice(Platform.OS === "ios"
+      ? "Esperando la confirmación de Apple…"
+      : "Esperando la confirmación de Google Play…");
     try {
       if (Platform.OS === "android") {
         await requestPurchase({
@@ -264,7 +304,12 @@ export default function SubscriptionScreen() {
         }
       }
       setWorking(false);
-      if (!isUserCancelledPurchase(nextError)) setError(userFacingError(nextError));
+      if (isUserCancelledPurchase(nextError)) {
+        setPurchaseNotice(null);
+      } else {
+        setPurchaseNotice(null);
+        setError(userFacingError(nextError));
+      }
     }
   };
 
@@ -340,6 +385,7 @@ export default function SubscriptionScreen() {
         </View>
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+      {purchaseNotice ? <InlineNotice>{purchaseNotice}</InlineNotice> : null}
       {restoreNotice ? <InlineNotice>{restoreNotice}</InlineNotice> : null}
       {overview?.duplicate_active_providers ? (
         <InlineNotice tone="warning">Detectamos más de un canal de cobro activo. El equipo puede revisarlo sin interrumpir tu acceso.</InlineNotice>

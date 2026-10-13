@@ -1,0 +1,53 @@
+{% load static account %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Confirmar correo electrónico</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+
+<body class="auth-body">
+    <main class="auth-card auth-card--message">
+        <img class="auth-logo" src="{% static 'img/logo-white.png' %}" alt="My Scoope">
+
+        <div class="auth-status-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+                <path d="M3.75 6.75 12 12.5l8.25-5.75M5.5 19h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-13a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"/>
+            </svg>
+        </div>
+
+        {% if confirmation %}
+            {% if can_confirm %}
+                <h1 class="auth-title">Confirma tu correo electrónico</h1>
+
+                <div class="auth-copy">
+                    <p>Confirma que esta dirección pertenece a tu cuenta de My Scoope:</p>
+                    <p class="auth-email">{{ confirmation.email_address.email }}</p>
+                </div>
+
+                {% url 'account_confirm_email' confirmation.key as action_url %}
+                <form method="post" action="{{ action_url }}" class="auth-form auth-form--message">
+                    {% csrf_token %}
+                    {{ redirect_field }}
+                    <button type="submit">Confirmar correo</button>
+                </form>
+            {% else %}
+                <h1 class="auth-title">No pudimos confirmar el correo</h1>
+                <div class="auth-copy">
+                    <p>Esta dirección ya está asociada a otra cuenta.</p>
+                </div>
+                <p class="auth-links"><a href="{% url 'account_login' %}">Volver a iniciar sesión</a></p>
+            {% endif %}
+        {% else %}
+            <h1 class="auth-title">El enlace ya no es válido</h1>
+            <div class="auth-copy">
+                <p>El enlace de confirmación venció o ya fue utilizado.</p>
+            </div>
+            <p class="auth-links"><a href="{% url 'account_login' %}">Volver a iniciar sesión</a></p>
+        {% endif %}
+    </main>
+</body>
+</html>

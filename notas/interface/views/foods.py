@@ -547,6 +547,8 @@ def food_share(request, pk):
 
         if delivery.sent:
             messages.success(request, "Compartiste este alimento. Enviamos el correo de invitación al destinatario.")
+        elif delivery.reason == "self_recipient":
+            messages.error(request, "No puedes compartir un alimento contigo mismo.")
         elif delivery.reason == "duplicate_share":
             messages.success(request, "Este alimento ya estaba compartido. No reenviamos el correo para evitar duplicados.")
         else:

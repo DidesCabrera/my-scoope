@@ -1,5 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
+import { StyleSheet } from "react-native";
 
 import { EntityDetailMetadata } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -19,8 +20,8 @@ export default function SharedResourceInformationScreen() {
 
   if (!id) return <Redirect href="/inbox" />;
   return (
-    <Screen headerMode="preserve">
-      {loading ? <LoadingState label="Cargando información…" /> : null}
+    <Screen contentStyle={loading ? styles.loadingContent : undefined} headerMode="preserve">
+      {loading ? <LoadingState label="Cargando información…" mode="content" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {resource ? (
         <EntityDetailMetadata
@@ -33,3 +34,7 @@ export default function SharedResourceInformationScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContent: { paddingBottom: 0, paddingTop: 0 },
+});

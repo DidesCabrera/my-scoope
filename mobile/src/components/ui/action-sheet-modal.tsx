@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react-native";
 import { X } from "lucide-react-native";
@@ -86,7 +86,7 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
       sheetTranslateY.setValue(hiddenSheetOffset);
       requestAnimationFrame(() => {
         setMounted(false);
-        onDismiss?.();
+        if (Platform.OS !== "ios") onDismiss?.();
       });
       return;
     }
@@ -107,7 +107,7 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
     ]).start(({ finished }) => {
       if (finished) {
         setMounted(false);
-        onDismiss?.();
+        if (Platform.OS !== "ios") onDismiss?.();
       }
     });
   }, [dismissImmediately, hiddenSheetOffset, mounted, onDismiss, scrimOpacity, sheetTranslateY, visible]);
@@ -116,6 +116,7 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
     <Modal
       animationType="none"
       navigationBarTranslucent
+      onDismiss={Platform.OS === "ios" ? onDismiss : undefined}
       onRequestClose={onRequestClose}
       presentationStyle="overFullScreen"
       statusBarTranslucent
@@ -159,11 +160,11 @@ export function ActionSheetActions({ children }: PropsWithChildren) {
   );
 }
 
-export function ActionSheetAction({ destructive = false, disabled = false, icon: Icon, label, onPress }: { destructive?: boolean; disabled?: boolean; icon: LucideIcon; label: string; onPress(): void }) {
+export function ActionSheetAction({ destructive = false, disabled = false, icon: Icon, iconNode, label, onPress }: { destructive?: boolean; disabled?: boolean; icon?: LucideIcon; iconNode?: ReactNode; label: string; onPress(): void }) {
   const color = destructive ? tokens.color.danger : tokens.color.textMain;
   return (
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.actionRow, (pressed || disabled) && styles.pressed]}>
-      <View style={styles.actionIcon}><Icon color={color} size={18} /></View>
+      <View style={styles.actionIcon}>{iconNode ?? (Icon ? <Icon color={color} size={18} /> : null)}</View>
       <Text style={[styles.actionLabel, destructive && styles.actionLabelDanger]}>{label}</Text>
     </Pressable>
   );

@@ -548,6 +548,7 @@ def inbox_attachment_detail(request, kind, share_id):
 
     if kind == "share":
         subject_label = {
+            ShareResource.SubjectType.COMPARISON: "Comparación",
             ShareResource.SubjectType.DAILY_PLAN: "Plan diario",
             ShareResource.SubjectType.FOOD: "Alimento",
             ShareResource.SubjectType.MEAL: "Comida",

@@ -4,7 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Camera, Check, CheckCheck, ScanLine } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Image, Platform, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
+import { Image, Keyboard, Platform, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
@@ -16,7 +16,7 @@ import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-gri
 import { AnimatedScanBeam } from "@/components/label-capture/animated-scan-beam";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, Pill, Screen, SectionHeading, SectionTitle, SystemSwitch, textStyles } from "@/components/ui";
+import { Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, NutritionFactsCard, Pill, Screen, SectionHeading, SectionTitle, SystemSwitch, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import {
   LABEL_CAMERA_AUTOFOCUS,
@@ -165,14 +165,16 @@ function aiDraft(result: FoodLabelAIAnalysis): NutritionLabelDraft {
   };
 }
 
-function FullBleedSquare({ children, surfaceStyle }: { children: ReactNode; surfaceStyle?: StyleProp<ViewStyle> }) {
+function FullBleedSquare({ children, surfaceStyle, verticalCrop = 0 }: { children: ReactNode; surfaceStyle?: StyleProp<ViewStyle>; verticalCrop?: number }) {
   const [contentWidth, setContentWidth] = useState(0);
   const size = contentWidth ? contentWidth + tokens.spacing.screen * 2 : undefined;
+  const croppedHeight = size ? size * (1 - verticalCrop) : undefined;
+  const cropOffset = size ? -(size * verticalCrop / 2) : undefined;
   return (
     <View
       onLayout={({ nativeEvent }) => setContentWidth((current) => current === nativeEvent.layout.width ? current : nativeEvent.layout.width)}
-      style={[styles.fullBleedSquareLayout, size ? { height: size } : styles.fullBleedSquareFallback]}>
-      <View style={[surfaceStyle, styles.fullBleedSquareSurface, size ? { height: size, width: size } : styles.fullBleedSquareSurfaceFallback]}>{children}</View>
+      style={[styles.fullBleedSquareLayout, verticalCrop > 0 && styles.fullBleedSquareCropped, size ? { height: croppedHeight } : styles.fullBleedSquareFallback]}>
+      <View style={[surfaceStyle, styles.fullBleedSquareSurface, size ? { height: size, top: cropOffset, width: size } : styles.fullBleedSquareSurfaceFallback]}>{children}</View>
     </View>
   );
 }
@@ -264,10 +266,9 @@ export default function LabelCaptureScreen() {
   const [retainImage, setRetainImage] = useState(false);
   const [aiConsentGranted, setAiConsentGranted] = useState(false);
   const [captureSource, setCaptureSource] = useState<CaptureSource>("camera");
-  const [availableLenses, setAvailableLenses] = useState<string[]>([]);
-  const [selectedLens, setSelectedLens] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [captureKey, setCaptureKey] = useState(Crypto.randomUUID());
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -282,6 +283,16 @@ export default function LabelCaptureScreen() {
   useEffect(() => () => deleteCachedImage(prepared?.uri), [prepared?.uri]);
   useEffect(() => () => {
     if (cameraReadyTimerRef.current) clearTimeout(cameraReadyTimerRef.current);
+  }, []);
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSubscription = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
   }, []);
 
   function update(field: keyof FormState, value: string) {
@@ -370,8 +381,6 @@ export default function LabelCaptureScreen() {
     setError(null);
     setTorchEnabled(false);
     setCaptureSource("camera");
-    setSelectedLens(undefined);
-    setAvailableLenses([]);
     try {
       const nextPermission = permission?.granted ? permission : await requestPermission();
       if (!nextPermission.granted) {
@@ -500,14 +509,6 @@ export default function LabelCaptureScreen() {
   function cameraDidBecomeReady() {
     if (cameraReadyTimerRef.current) clearTimeout(cameraReadyTimerRef.current);
     cameraReadyTimerRef.current = setTimeout(() => setCameraReady(true), LABEL_CAMERA_FOCUS_SETTLE_MS);
-  }
-
-  function cycleLens() {
-    if (availableLenses.length < 2) return;
-    const currentIndex = selectedLens ? availableLenses.indexOf(selectedLens) : -1;
-    setSelectedLens(availableLenses[(currentIndex + 1) % availableLenses.length]);
-    setCameraReady(false);
-    cameraDidBecomeReady();
   }
 
   async function retakePhoto() {
@@ -645,11 +646,9 @@ export default function LabelCaptureScreen() {
             enableTorch={torchEnabled}
             facing="back"
             mode="picture"
-            onAvailableLensesChanged={({ lenses }) => setAvailableLenses(lenses)}
             onCameraReady={cameraDidBecomeReady}
             onMountError={() => { setPhase("intro"); setError("No pudimos iniciar la cámara. Puedes elegir una foto de tu galería."); }}
             ref={cameraRef}
-            selectedLens={selectedLens}
             style={StyleSheet.absoluteFill}
             zoom={0}
           />
@@ -663,7 +662,6 @@ export default function LabelCaptureScreen() {
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         <View style={styles.bottomActions}>
           <Button disabled={!cameraReady || capturing || preparing} label="Capturar foto" loading={capturing || preparing} onPress={() => void capture()} />
-          {availableLenses.length > 1 ? <Button disabled={capturing || preparing} label="Cambiar lente" onPress={cycleLens} variant="secondary" /> : null}
           <Button disabled={!cameraReady || capturing || preparing} label={torchEnabled ? "Apagar luz" : "Encender luz"} onPress={() => setTorchEnabled((current) => !current)} variant="secondary" />
         </View>
       </Screen>
@@ -682,8 +680,8 @@ export default function LabelCaptureScreen() {
       <Screen
         fixedHeader={<FullBleedSquare><Image accessibilityLabel="Fotografía procesada de la etiqueta nutricional" resizeMode="contain" source={{ uri: prepared.uri }} style={StyleSheet.absoluteFill} /></FullBleedSquare>}
         fixedHeaderStyle={styles.photoFixedHeader}
-        headerMode="preserve">
-        {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+        headerMode="preserve"
+        scroll={false}>
         <View style={styles.qualityPanel}>
           <View style={styles.qualityCopy}>
             <Text style={styles.qualityTitle}>{qualityPresentation.title}</Text>
@@ -692,6 +690,7 @@ export default function LabelCaptureScreen() {
           </View>
           <Pill color={qualityPresentation.tone} label={qualityPresentation.label} />
         </View>
+        {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         <View style={styles.bottomActions}>
           <View style={styles.retentionPanel}>
             <View style={styles.retentionRow}>
@@ -717,7 +716,8 @@ export default function LabelCaptureScreen() {
           <AnimatedScanBeam gradientId="label-capture-live-scan" />
         </FullBleedSquare>}
         fixedHeaderStyle={styles.photoFixedHeader}
-        headerMode="preserve">
+        headerMode="preserve"
+        scroll={false}>
         <View style={styles.processingDetails}>
           <View style={styles.processingHeader}>
             <View style={styles.qualityCopy}><Text style={styles.processingTitle}>Analizando valores</Text><Text style={styles.qualityDetail}>Identificando la base nutricional de la etiqueta.</Text></View>
@@ -756,7 +756,7 @@ export default function LabelCaptureScreen() {
     <Screen
       contentStyle={phase === "review" && prepared ? styles.reviewScrollContent : undefined}
       fixedHeader={phase === "review" && prepared ? (
-        <FullBleedSquare surfaceStyle={styles.reviewPhoto}>
+        <FullBleedSquare surfaceStyle={styles.reviewPhoto} verticalCrop={keyboardVisible ? 0.2 : 0}>
           <ZoomableLabelImage accessibilityLabel="Etiqueta nutricional analizada" uri={prepared.uri} />
         </FullBleedSquare>
       ) : undefined}
@@ -770,7 +770,7 @@ export default function LabelCaptureScreen() {
           <View style={styles.introHeader}>
             <Camera color={tokens.color.textMain} size={34} strokeWidth={1.8} />
             <Text style={styles.eyebrow}>DIGITALIZAR ETIQUETA</Text>
-            <Text style={styles.introTitle}>Convierte una etiqueta en segundos</Text>
+            <Text style={styles.introTitle}>Enriquece tu librería de alimentos</Text>
             <Text style={styles.introDescription}>Fotografía la tabla nutricional y crea un alimento privado sin transcribir cada dato.</Text>
           </View>
           <View style={styles.assuranceList}>
@@ -866,7 +866,20 @@ export default function LabelCaptureScreen() {
             <SectionHeading icon={<CheckCheck color={tokens.color.entityIconForeground} size={18} />} title="Confirma el alimento" />
             <Text style={styles.confirmationSubtitle}>Al guardar confirmas que comparaste los valores con la etiqueta.</Text>
           </View>
-          <NutritionEntityCard entity="food" indicators={[{ label: "base nutricional", value: `100 ${portionUnit}` }]} nutrition={formNutrition} title={form.name.trim() || "Alimento sin nombre"} />
+          <NutritionEntityCard entity="food" indicators={[{ label: "base nutricional", value: `100 ${portionUnit}` }]} nutrition={formNutrition} title={form.name.trim() || "Alimento sin nombre"}>
+            <NutritionFactsCard
+              facts={{
+                carbsG: optionalNumber(form.carbs) ?? null,
+                fiberG: optionalNumber(form.fiber) ?? null,
+                proteinG: optionalNumber(form.protein) ?? null,
+                saturatedFatG: optionalNumber(form.saturatedFat) ?? null,
+                sodiumMg: optionalNumber(form.sodium) ?? null,
+                sugarG: optionalNumber(form.sugar) ?? null,
+                totalFatG: optionalNumber(form.fat) ?? null,
+              }}
+              portion={{ quantity: optionalNumber(form.servingSize) ?? null, unit: portionUnit }}
+            />
+          </NutritionEntityCard>
           {prepared && analysisId ? (
             <View style={styles.retentionPanel}>
               <View style={styles.retentionRow}>
@@ -925,6 +938,7 @@ export default function LabelCaptureScreen() {
 const styles = StyleSheet.create({
   fixedScreen: { flexGrow: 1, paddingBottom: tokens.spacing.lg },
   fullBleedSquareLayout: { marginTop: -tokens.spacing.lg, position: "relative" },
+  fullBleedSquareCropped: { overflow: "hidden" },
   fullBleedSquareFallback: { aspectRatio: 1 },
   fullBleedSquareSurface: { left: -tokens.spacing.screen, overflow: "hidden", position: "absolute", top: 0 },
   fullBleedSquareSurfaceFallback: { bottom: 0, right: -tokens.spacing.screen },

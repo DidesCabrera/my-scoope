@@ -7,11 +7,19 @@ import {
   type EntityKind,
   SectionIcon,
   type SectionKind,
-  StructuralIndicators,
-  type StructuralIndicatorKind,
 } from "./product";
+import { Chip } from "./chip";
 
-function PageHeader({ action, icon, indicator, title }: { action?: ReactNode; icon: ReactNode; indicator?: ReactNode; title: string }) {
+const collectionCountLabels: Record<EntityKind, { plural: string; singular: string }> = {
+  comparison: { plural: "Comparaciones", singular: "Comparación" },
+  dailyPlan: { plural: "Planes diarios", singular: "Plan diario" },
+  dpm: { plural: "Planes diarios", singular: "Plan diario" },
+  food: { plural: "Alimentos", singular: "Alimento" },
+  meal: { plural: "Comidas", singular: "Comida" },
+  program: { plural: "Programas semanales", singular: "Programa semanal" },
+};
+
+function PageHeader({ action, icon, indicator, subtitle, title }: { action?: ReactNode; icon: ReactNode; indicator?: ReactNode; subtitle?: string; title: string }) {
   return (
     <View style={styles.container}>
       <View style={styles.iconSlot}>{icon}</View>
@@ -20,6 +28,7 @@ function PageHeader({ action, icon, indicator, title }: { action?: ReactNode; ic
           <Text style={styles.title}>{title}</Text>
           {action}
         </View>
+        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         {indicator}
       </View>
     </View>
@@ -29,14 +38,12 @@ function PageHeader({ action, icon, indicator, title }: { action?: ReactNode; ic
 export function CollectionPageHeader({
   action,
   count,
-  countIcon,
   entity,
   icon,
   title,
 }: {
   action?: ReactNode;
   count?: number;
-  countIcon: StructuralIndicatorKind;
   entity: EntityKind;
   icon?: ReactNode;
   title: string;
@@ -46,14 +53,19 @@ export function CollectionPageHeader({
       action={action}
       icon={icon ?? <EntityIcon entity={entity} size="hero" />}
       indicator={count !== undefined ? (
-          <StructuralIndicators entity={entity} indicators={[{ icon: countIcon, label: "elementos", value: count }]} tone="surfaceMuted" />
+        <Chip
+          backgroundColor={`${tokens.color[entity]}1A`}
+          borderColor={tokens.color[entity]}
+          label={`${count} ${collectionCountLabels[entity][count === 1 ? "singular" : "plural"]}`}
+          textColor={tokens.color.textMain}
+        />
       ) : undefined}
       title={title}
     />
   );
 }
 
-export function SectionPageHeader({ count, countLabel, section, title }: { count?: number; countLabel: string; section: SectionKind; title: string }) {
+export function SectionPageHeader({ count, countLabel, section, subtitle, title }: { count?: number; countLabel: string; section: SectionKind; subtitle?: string; title: string }) {
   return (
     <PageHeader
       icon={<SectionIcon section={section} size="hero" />}
@@ -63,6 +75,7 @@ export function SectionPageHeader({ count, countLabel, section, title }: { count
           <SectionIcon section={section} size="compact" />
         </View>
       ) : undefined}
+      subtitle={subtitle}
       title={title}
     />
   );
@@ -73,6 +86,7 @@ const styles = StyleSheet.create({
   countChip: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.spacing.compact, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   countValue: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, lineHeight: 15 },
   iconSlot: { alignSelf: "flex-start" },
+  subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   copy: { alignItems: "flex-start", gap: tokens.spacing.sm, minWidth: 0, width: "100%" },
   titleRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minWidth: 0, width: "100%" },
   title: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 32, textAlign: "left" },

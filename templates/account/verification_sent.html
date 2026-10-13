@@ -1,0 +1,35 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Verifica tu correo electrónico</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+
+<body class="auth-body">
+    <main class="auth-card auth-card--message">
+        <img class="auth-logo" src="{% static 'img/logo-white.png' %}" alt="My Scoope">
+
+        <div class="auth-status-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+                <path d="M3.75 6.75 12 12.5l8.25-5.75M5.5 19h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-13a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"/>
+            </svg>
+        </div>
+
+        <h1 class="auth-title">Verifica tu correo electrónico</h1>
+
+        <div class="auth-copy">
+            <p>Te enviamos un enlace para completar la creación de tu cuenta.</p>
+            <p>Revisa tu bandeja de entrada y, si no lo encuentras, comprueba la carpeta de correo no deseado.</p>
+        </div>
+
+        <p class="auth-links auth-links--message-footer">
+            ¿Ya verificaste tu correo?
+            <a href="{% url 'account_login' %}">Iniciar sesión</a>
+        </p>
+    </main>
+</body>
+</html>

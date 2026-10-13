@@ -27,6 +27,14 @@ class UISystemGalleryTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "UI System Web")
+        self.assertContains(response, "Verificación de correo")
+        self.assertContains(response, "ui-system-gallery__auth-grid")
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["verification-sent"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["email-confirm"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["password-reset"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["password-reset-sent"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["password-reset-new"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["password-reset-complete"]))
         self.assertContains(response, 'class="dash-kpi-comp"')
         self.assertContains(
             response,
@@ -48,6 +56,46 @@ class UISystemGalleryTests(TestCase):
         self.assertContains(response, "?embed=1#components")
         self.assertEqual(response["X-Frame-Options"], "SAMEORIGIN")
 
+    def test_auth_previews_render_product_templates(self):
+        sent_response = self.client.get(
+            reverse("ui_system_auth_preview", args=["verification-sent"])
+        )
+        confirm_response = self.client.get(
+            reverse("ui_system_auth_preview", args=["email-confirm"])
+        )
+
+        self.assertEqual(sent_response.status_code, 200)
+        self.assertContains(sent_response, "Verifica tu correo electrónico")
+        self.assertEqual(sent_response["X-Frame-Options"], "SAMEORIGIN")
+        self.assertEqual(confirm_response.status_code, 200)
+        self.assertContains(confirm_response, "felipe@myscoope.com")
+        self.assertContains(confirm_response, "Confirmar correo")
+        self.assertEqual(confirm_response["X-Frame-Options"], "SAMEORIGIN")
+
+        password_previews = {
+            "password-reset": "Recupera tu contraseña",
+            "password-reset-sent": "Revisa tu correo",
+            "password-reset-new": "Crea una nueva contraseña",
+            "password-reset-complete": "Contraseña actualizada",
+        }
+        for screen, expected_text in password_previews.items():
+            with self.subTest(screen=screen):
+                response = self.client.get(
+                    reverse("ui_system_auth_preview", args=[screen])
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, expected_text)
+                self.assertEqual(response["X-Frame-Options"], "SAMEORIGIN")
+
+    def test_authentication_focus_hides_unrelated_gallery_sections(self):
+        response = self.client.get(f"{self.url}?focus=authentication")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Verificación de correo")
+        self.assertContains(response, "Ver galería completa")
+        self.assertNotContains(response, "Flujo inicial multiplataforma")
+        self.assertNotContains(response, "Navegador mobile real")
+
     def test_embed_uses_the_same_gallery_without_recursive_frame(self):
         self.client.force_login(self.user)
 
@@ -64,3 +112,8 @@ class UISystemGalleryTests(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 404)
+
+        preview_response = self.client.get(
+            reverse("ui_system_auth_preview", args=["verification-sent"])
+        )
+        self.assertEqual(preview_response.status_code, 404)

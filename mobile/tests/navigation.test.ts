@@ -45,12 +45,14 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(comparison, /Usar en el Asistente|Volver a guardadas/);
   assertSourceDoesNotMatch(comparison, /forceFallback: true/);
   assertSourceMatch(comparison, /params: \{ kind \}/);
-  assertSourceMatch(comparison, /<Screen[\s\S]*headerMode="preserve"[\s\S]*scrollHeader=\{<AppHeader/);
+  assertSourceMatch(comparison, /<Screen[\s\S]*headerMode="preserve"[\s\S]*scrollHeader=\{<View style=\{styles\.detailHeader\}>[\s\S]*<AppHeader/);
   assertSourceMatch(comparison, /eyebrowIcon=\{<EntityIcon entity=\{entity\} size="compact" \/>\}/);
   assertSourceMatch(comparison, /kind === "dailyplans" \? "dailyPlan" : kind === "meals" \? "meal" : "food"/);
   assertSourceMatch(comparisonList, /<EntityIcon entity=\{entity\} size="compact" \/>[\s\S]*Comparación \{item\.kind_label\}/);
   assertSourceMatch(comparisonList, /<SavedComparisonPreviewPanels items=\{item\.items\} scope=\{entity\} \/>/);
   assertSourceMatch(comparisonList, /<SavedComparisonPreviewPanels items=\{item\.items\} scope=\{entity\} \/>[\s\S]*<EntityCardActions>[\s\S]*<EntityCardAction[\s\S]*<ChevronRight color=\{tokens\.color\.textMuted\}/);
+  assertSourceMatch(comparisonList, /Más acciones para \$\{item\.name\}[\s\S]*<Ellipsis/);
+  assertSourceMatch(comparisonList, /<SavedComparisonActions compact[\s\S]*onDelete=\{onDelete\}[\s\S]*onEdit=\{onEdit\}[\s\S]*onRename=\{onRename\}[\s\S]*onShare=\{onShare\}/);
   assertSourceMatch(comparisonList, /<Card accent=\{entityColor\} style=\{styles\.savedCard\}>/);
   assertSourceMatch(comparisonList, /savedCard: \{ paddingBottom: tokens\.card\.innerPadding \}/);
   assertSourceMatch(comparisonList, /backgroundColor=\{`\$\{entityColor\}1A`\}[\s\S]*borderColor=\{entityColor\}[\s\S]*label=\{comparisonCountLabel\(item\.kind, item\.item_count\)\}[\s\S]*textColor=\{tokens\.color\.entityIconForeground\}/);
@@ -126,7 +128,8 @@ test("the native sidebar keeps sign-out inside the account screen", async () => 
   const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
   assertSourceMatch(navigation, /headerPresentation\.action\?\.icon === "more" && styles\.backHeaderMenuAction/);
   assertSourceMatch(navigation, /backHeaderMenuAction: \{ alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens\.spacing\.sm, width: 92 \}/);
-  assertSourceMatch(navigation, /inbox: UserPlus/);
+  assertSourceMatch(navigation, /inbox: Send/);
+  assertSourceMatch(navigation, /pathname === "\/inbox"[^\n]*icon: Send[^\n]*title: "Compartidos"/);
   assertSourceDoesNotMatch(navigation, /accessibilityLabel="Cerrar sesión"|signOutButton|drawerFooter/);
 });
 
@@ -174,7 +177,7 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceMatch(navigation, /secondaryPrimaryItems[\s\S]*href: "\/system-foundations"[\s\S]*label: "Fundamentos Sistema"/);
   assertSourceDoesNotMatch(navigation.match(/const secondaryPrimaryItems[\s\S]*?\];/)?.[0] ?? "", /personal-records/);
   assertSourceMatch(navigation, /item\.href === "\/inbox"[\s\S]*secondaryPrimaryItems\.map/);
-  assertSourceMatch(navigation, /href: "\/account"[^\n]*label: "Mi cuenta"[\s\S]{0,250}href: "\/personal-records"[^\n]*label: "Fichas personales"/);
+  assertSourceMatch(navigation, /href: "\/account"[^\n]*label: "Mi cuenta"[\s\S]{0,250}<PersonalRecordsSidebarEntry weightKg=\{currentWeightKg\} \/>/);
 });
 
 test("personal records groups the persisted nutrition inputs", async () => {
@@ -185,6 +188,8 @@ test("personal records groups the persisted nutrition inputs", async () => {
   assertSourceMatch(records, /title: "Objetivo y actividad"/);
   assertSourceMatch(records, /title: "Preferencias alimentarias"/);
   assertSourceMatch(records, /title: "Métricas corporales"/);
+  assertSourceMatch(records, /action: \{ href: "\/weight" as Href, label: "Registrar peso corporal" \}[\s\S]*title: "Métricas corporales"/);
+  assertSourceMatch(records, /label=\{action\.label \?\? `Editar \$\{title\}`\}/);
   assertSourceMatch(records, /title: "Métricas corporales"[\s\S]*title: "Ficha corporal"/);
   assertSourceDoesNotMatch(records, /FICHA PERSONAL/);
   assertSourceMatch(records, /title: \{[^}]*fontSize: 18/);
@@ -210,8 +215,14 @@ test("system foundations exposes nutrition and product-manual journeys", async (
 
   assertSourceMatch(home, /Fundamentos Nutricionales/);
   assertSourceMatch(home, /Manuales de uso/);
+  assertSourceMatch(home, /<Card accent=\{tokens\.color\.fat\} style=\{learningStyles\.card\}>[\s\S]*Fundamentos Nutricionales/);
+  assertSourceMatch(home, /<Card accent=\{tokens\.color\.carbs\} style=\{learningStyles\.card\}>[\s\S]*Manuales de uso/);
+  assertSourceMatch(catalog, /const cardAccent = kind === "nutrition" \? tokens\.color\.fat : tokens\.color\.carbs/);
+  assertSourceMatch(catalog, /<Card accent=\{cardAccent\} key=\{article\.slug\} style=\{learningStyles\.card\}>/);
+  assertSourceMatch(home, /<SectionPageHeader countLabel="contenidos" section="learning" title="Fundamentos Sistema" \/>/);
+  assertSourceDoesNotMatch(home, /<AppHeader|Aprender en My Scoope/);
   assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="heart-pulse"/);
-  assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="book-marked"/);
+  assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="cog"/);
   assertSourceMatch(home, /<ChevronRight color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(catalog, /"\/api\/v1\/learning"/);
   assertSourceMatch(catalog, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon/);
@@ -252,7 +263,18 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /<Plus color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(navigation, /headerPresentation\.createAction/);
   assertSourceMatch(navigation, /height: 48/);
-  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeBrandLogo compact \/>/);
+  assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeBrandLogo compact scale=\{1\.12\} \/>/);
+  assertSourceMatch(navigation, /const firstName = session\?\.display_name\.split\(" "\)\[0\] \|\| session\?\.username \|\| "Atleta"/);
+  assertSourceMatch(navigation, /<MyScoopeBrandLogo compact scale=\{1\.12\} \/>/);
+  assertSourceMatch(navigation, /<Text style=\{styles\.drawerGreeting\}><Text style=\{styles\.drawerGreetingEmoji\}>💪🏻<\/Text>\{`Vamos \$\{firstName\}!`\}<\/Text>/);
+  assertSourceMatch(navigation, /drawerBrandRow: \{[^}]*alignItems: "center"[^}]*flexDirection: "row"[^}]*justifyContent: "space-between"/);
+  assertSourceMatch(navigation, /drawerHeader: \{[^}]*minHeight: 59\.7[^}]*paddingHorizontal: tokens\.spacing\.md \* 2/);
+  assertSourceMatch(navigation, /drawerContent: \{[^}]*paddingBottom: tokens\.spacing\.lg[^}]*paddingTop: 24/);
+  assertSourceMatch(navigation, /drawerGreeting: \{[^}]*color: tokens\.color\.textMain[^}]*fontSize: 15[^}]*fontWeight: "300"/);
+  assertSourceMatch(navigation, /drawerGreetingEmoji: \{ fontSize: 13 \}/);
+  assertSourceMatch(navigation, /setLatestWeightKg\(home\.latest_weight\?\.weight_kg \?\? null\)/);
+  assertSourceMatch(navigation, /<PersonalRecordsSidebarEntry weightKg=\{currentWeightKg\} \/>/);
+  assertSourceMatch(navigation, /<HeaderMetadataChip kind="weight" value=\{sidebarWeightLabel\(weightKg\)\} \/>/);
   const logo = await readFile(path.resolve(process.cwd(), "src/components/ui/my-scoope-logo.tsx"), "utf8");
   assertSourceMatch(logo, /logoText: \{[^}]*fontSize: 18/);
   assertSourceMatch(logo, /logoBar: \{[^}]*height: 3, width: 13/);

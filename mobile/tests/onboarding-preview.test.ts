@@ -29,7 +29,7 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(preview.includes("headerShown: false"));
   assert.ok(preview.includes("const headerCompensationTop = stepIndex >= 6 ? 88 : 0"));
   assert.ok(preview.includes("paddingTop: headerCompensationTop"));
-  assert.ok(preview.includes("<Screen key={step}"));
+  assert.equal(preview.includes("<Screen key={step}"), false);
   assert.ok(preview.includes("onboardingJourneySteps.length - 1"));
   assert.ok(preview.includes("presentationPropsForOnboardingStep"));
   assert.ok(preview.includes("{...presentationProps}"));
@@ -46,8 +46,8 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes("contentContainerStyle={styles.explanationScrollContent}"));
   assert.ok(journey.includes("explanationScrollContent: { flexGrow: 1 }"));
   assert.ok(journey.includes("isExplanation && { marginBottom: (usesCenteredTitleSpacing ? tokens.spacing.sm : 0) + 10 }"));
-  assert.ok(journey.includes("Nos alegra mucho tenerte por aquí"));
-  assert.ok(journey.includes("Queremos que cumplas todas tus metas"));
+  assert.ok(journey.includes("Nos alegra tenerte por aquí"));
+  assert.ok(journey.includes("Queremos ayudarte a cumplir a conseguir los resultados que desees, apoyándote en el camino"));
   assert.ok(!journey.includes("onboarding-mind-to-body"));
   for (const emphasizedCopy of ["resultado de pequeñas buenas decisiones que tomes día a día", "de forma consistente", "te sentirás orgulloso de ti mismo", "se reflejará en un cambio físico y mental"]) {
     assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
@@ -57,10 +57,10 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes('title="Que es My Scoope"'));
   assert.ok(!journey.includes("levels.map((level, levelIndex)"));
   assert.ok(!journey.includes("levelIndex < levels.length"));
-  for (const emphasizedCopy of ["entorno nutricional", "Alimentos", "Comidas", "Planes Diarios", "Programas Semanales"]) {
+  for (const emphasizedCopy of ["entorno nutricional", "Tus Librerías", "Alimentos, Comidas, Planes Diarios, y Programas Semanales"]) {
     assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
   }
-  assert.ok(journey.includes("La planificación la realiza"));
+  assert.ok(journey.includes("Podrás organizar tu alimentación en"));
   for (const entity of ["food", "meal", "dailyPlan", "program"]) {
     assert.ok(journey.includes(`entity: "${entity}"`));
   }
@@ -72,6 +72,7 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes("borderTopColor: tokens.color[level.entity]"));
   assert.ok(journey.includes("borderTopWidth: 3"));
   assert.ok(journey.includes('title="Forma tu propio criterio"'));
+  assert.ok(journey.includes("titleTopSpacingReduction={12}"));
   assert.ok(!journey.includes("También dispusimos para ti"));
   assert.ok(journey.includes('panelsViewContent: { gap: tokens.spacing.lg, transform: [{ translateY: 20 }] }'));
   assert.ok(journey.includes('levels: { gap: tokens.spacing.sm, marginTop: 8 }'));
@@ -80,7 +81,11 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   for (const emphasizedCopy of ["instancias de aprendizaje y análisis", "paneles", "comparaciones"]) {
     assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
   }
+  assert.ok(journey.includes("Te ofrecemos"));
+  assert.ok(journey.includes("y comprende de mejor manera el impacto real"));
   assert.ok(journey.includes('<NutritionEntityCard'));
+  const panelsView = journey.match(/function PanelsView[\s\S]*?function ControlView/)?.[0] ?? "";
+  assert.ok(!panelsView.includes("indicators="));
   assert.ok(journey.includes('const referenceWeightKg = 80'));
   assert.ok(journey.includes('quantity: 200'));
   assert.ok(journey.includes('quantity: 120'));
@@ -99,9 +104,9 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes('planLabel="Planes Diarios Recorridos"'));
   assert.ok(journey.includes('mealLabel="Comidas Cumplidas"'));
   assert.ok(!journey.includes('title="1. Conversa"'));
-  for (const emphasizedCopy of ["registro de cumplimientos de las comidas", "bitácora"]) {
-    assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
-  }
+  assert.ok(journey.includes("Puedes <Text style={styles.descriptionEmphasis}>calendarizar Planes y Programas</Text>, y activar el"));
+  assert.ok(journey.includes("<Text style={styles.descriptionEmphasis}>registro de cumplimiento de comidas</Text>"));
+  assert.ok(journey.includes("permitiéndote ver tu progreso"));
   assert.ok(journey.includes('title="Recibe Asistencia AI"'));
   assert.ok(journey.includes("Si necesitas ayuda en la construcción de programas de alimentación puedes recibirla"));
   assert.ok(journey.includes('titleAccessory={<View style={styles.assistanceIcon}><AssistantGradientIcon size={52} strokeWidth={1.8} /></View>}'));

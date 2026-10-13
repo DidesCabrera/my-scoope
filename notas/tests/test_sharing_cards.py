@@ -47,3 +47,16 @@ class SharingCardRendererTests(SimpleTestCase):
         payload = render_share_card_png(snapshot)
 
         self.assertLess(len(payload), 250_000)
+
+    def test_comparison_card_renders_without_fake_nutrition_metrics(self):
+        snapshot = {
+            "subject": {"type": "comparison", "title": "Avena vs Yogur"},
+            "summary": {"comparison_kind": "foods", "item_count": 2},
+            "nutrition": {"calories": 0, "protein_grams": 0, "carbs_grams": 0, "fat_grams": 0},
+        }
+
+        payload = render_share_card_png(snapshot)
+
+        self.assertTrue(payload.startswith(b"\x89PNG\r\n\x1a\n"))
+        with Image.open(BytesIO(payload)) as image:
+            self.assertEqual(image.size, (1200, 630))

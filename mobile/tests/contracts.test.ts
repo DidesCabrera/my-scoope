@@ -47,12 +47,14 @@ test("meals embedded in daily plans can be saved back to the library", async () 
   assertSourceMatch(mealCards, /daily-plans\/\$\{dailyPlanId\}\/meals\/\$\{dailyPlanMealId\}\/save-to-library/);
   assertSourceMatch(mealDetail, /onSaveToLibrary=\{hasMealTimeContext/);
   assertSourceMatch(actions, /label="Guardar en mi biblioteca"/);
+  assertSourceMatch(actions, /icon=\{Bookmark\}[\s\S]*label="Guardar en mi biblioteca"/);
 });
 
 test("daily plans embedded in programs can be saved back to the library", async () => {
   const planCard = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"), "utf8");
   const programDetail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
   assertSourceMatch(planCard, /label: "Guardar en mi biblioteca"/);
+  assertSourceMatch(planCard, /icon: Bookmark, key: "save-to-library", label: "Guardar en mi biblioteca"/);
   assertSourceMatch(planCard, /onSaveToLibrary/);
   assertSourceMatch(programDetail, /onSaveDailyPlan=\{async \(week, day\)/);
   assertSourceMatch(programDetail, /programs\/\$\{item\.id\}\/weeks\/\$\{week\}\/days\/\$\{day\}\/save-to-library/);
@@ -202,8 +204,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(collectionPageHeader, /container: \{ alignItems: "flex-start", gap: tokens\.spacing\.sm/);
   assertSourceMatch(collectionPageHeader, /iconSlot: \{ alignSelf: "flex-start" \}/);
   assertSourceMatch(collectionPageHeader, /function PageHeader[\s\S]*<View style=\{styles\.copy\}>[\s\S]*?<Text style=\{styles\.title\}>\{title\}<\/Text>[\s\S]*\{indicator\}/);
+  assertSourceMatch(collectionPageHeader, /subtitle \? <Text style=\{styles\.subtitle\}>\{subtitle\}<\/Text>/);
+  assertSourceMatch(collectionPageHeader, /subtitle: \{ color: tokens\.color\.textMuted, fontSize: tokens\.type\.caption, lineHeight: 20 \}/);
   assertSourceDoesNotMatch(collectionPageHeader, /Bookmark|Mis librerías|eyebrow/);
-  assertSourceMatch(collectionPageHeader, /<StructuralIndicators[^\n]*tone="surfaceMuted"/);
+  assertSourceMatch(collectionPageHeader, /<Chip[\s\S]*backgroundColor=\{`\$\{tokens\.color\[entity\]\}1A`\}[\s\S]*borderColor=\{tokens\.color\[entity\]\}[\s\S]*label=\{`\$\{count\} \$\{collectionCountLabels\[entity\]\[count === 1 \? "singular" : "plural"\]\}`\}/);
   assertSourceMatch(collectionPageHeader, /export function SectionPageHeader/);
   assertSourceMatch(collectionPageHeader, /<SectionIcon section=\{section\} size="hero" \/>/);
   assertSourceMatch(collectionPageHeader, /style=\{styles\.countChip\}/);
@@ -626,12 +630,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
-  assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`Vamos, \$\{firstName\}`\}[\s\S]*?Fallar en planificar, es planificar fallar/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`💪🏻Vamos \$\{firstName\}!`\}[\s\S]*?Fallar en planificar, es planificar fallar/);
   assertSourceMatch(todayScreen, /greetingSubtitle: \{[^}]*marginTop: tokens\.spacing\.xs/);
   assertSourceMatch(todayScreen, /<Chip backgroundColor=\{`\$\{planContext\.color\}4D`\} borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
   assertSourceMatch(todayScreen, /planContext: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
-  assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>Tu plan de alimentos para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle pinned>Tu plan de alimentación para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
+  assertSourceMatch(todayScreen, /pinned \? <Pin color=\{tokens\.color\.textMain\} size=\{18\} strokeWidth=\{2\.2\} \/>/);
   assertSourceMatch(todayScreen, /eyebrow="PLAN DEL DÍA"/);
   assertSourceMatch(todayScreen, /greetingRow: \{ gap: 0, marginBottom: 0 \}/);
   assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm \}/);
@@ -642,7 +647,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /Tu plan de hoy pertenece a este programa en curso\. Revisa tu adherencia y consulta los otros planes de tu programa\./);
   assertSourceMatch(todayScreen, /activeProgramSectionTitle: \{[^}]*fontSize: 20[^}]*fontWeight: tokens\.weight\.extraBold/);
   assertSourceMatch(todayScreen, /activeProgramSectionHeader: \{[^}]*marginTop: tokens\.spacing\.xxl/);
-  assertSourceMatch(todayScreen, /homeSectionTitle: \{[^}]*fontSize: 18[^}]*marginBottom: 0[^}]*marginTop: tokens\.spacing\.sm/);
+  assertSourceMatch(todayScreen, /homeSectionHeading: \{[^}]*marginTop: tokens\.spacing\.sm/);
+  assertSourceMatch(todayScreen, /homeSectionTitle: \{[^}]*fontSize: 18[^}]*marginBottom: 0/);
   assertSourceDoesNotMatch(todayScreen, /<SectionDivider \/>/);
   const currentWeek = await readTestFile(
     path.resolve(process.cwd(), "src/components/calendarization/current-week-section.tsx"),
@@ -680,6 +686,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
   assertSourceMatch(todayScreen, /greetingHeading: \{ alignItems: "center", flexDirection: "row"/);
   assertSourceMatch(todayScreen, /<GuideMetric onPress=\{\(\) => router\.push\("\/weight" as Href\)\} tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
+  assertSourceMatch(todayScreen, /<View style=\{styles\.homeQuickActions\}>[\s\S]*<HomeSectionTitle>Accesos rápidos<\/HomeSectionTitle>[\s\S]*<View style=\{styles\.homeFooterActions\}>/);
+  assertSourceMatch(todayScreen, /homeFooterActions: \{[^}]*marginTop: tokens\.spacing\.sm/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Camera color=\{tokens\.color\.textMain\}[\s\S]*label="Digitalizar etiqueta"[\s\S]*router\.push\("\/label-capture" as Href\)[^>]*variant="secondary"/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Weight color=\{tokens\.color\.textMain\}[\s\S]*label="Registrar peso corporal"[\s\S]*router\.push\("\/weight" as Href\)[^>]*variant="secondary"/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Scale color=\{tokens\.color\.textMain\}[\s\S]*label="Comparar" onPress=\{\(\) => setComparisonActionsVisible\(true\)\} variant="secondary"/);
+  assertSourceMatch(todayScreen, /<HomeActions[\s\S]*onCompare=\{\(\) => \{[\s\S]*setOpenComparisonAfterHomeActions\(true\)[\s\S]*setHomeActionsVisible\(false\)[\s\S]*onDismiss=\{\(\) => \{[\s\S]*setComparisonActionsVisible\(true\)/);
+  assertSourceMatch(todayScreen, /<ComparisonCreateActions onClose=\{\(\) => setComparisonActionsVisible\(false\)\} onSelect=\{openComparisonBuilder\} visible=\{comparisonActionsVisible\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /<GuideMetric icon="weight"/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValueOnly: \{ borderRadius: tokens\.radius\.lg, minHeight: 40 \}/);
@@ -1101,12 +1114,17 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /function HomeView|home: HomeView/);
   assertSourceMatch(journey, /function ExplanationDots/);
   assertSourceMatch(journey, /explanationFooter: \{[^}]*marginBottom: 48/);
+  assertSourceMatch(journey, /explanationFooterCompact: \{ marginBottom: 28, marginTop: -16 \}/);
+  assertSourceMatch(journey, /explanationDot: \{[^}]*borderRadius: 4\.5[^}]*height: 9[^}]*width: 9/);
+  assertSourceMatch(journey, /<ExplanationDots action=\{index === 5 \? <ContinueChip \/> : undefined\} compact forceVisible index=\{index\} \/>/);
   assertSourceMatch(journey, /function ContinueChip/);
   assertSourceMatch(journey, /id="continue-chip-border"/);
   assertSourceMatch(journey, /continueChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34/);
   assertSourceMatch(journey, /continueChipInset: \{[^}]*bottom: 2, left: 2[^}]*right: 2, top: 2/);
   assertSourceMatch(journey, /<Button disabled=\{controller\.loginDisabled\} label="Iniciar sesión o crear cuenta" loading=\{controller\.busy\} multicolorSurface="app" onPress=\{controller\.onLogin \?\? noop\} variant="multicolor" \/>/);
-  assertSourceMatch(journey, /explanationFooterWithAction: \{ gap: tokens\.spacing\.xs, marginBottom: 34 \}/);
+  assertSourceMatch(journey, /\{action \? <View style=\{styles\.explanationFooterAction\}>\{action\}<\/View> : null\}/);
+  assertSourceMatch(journey, /explanationFooterWithAction: \{ position: "relative", width: "100%" \}/);
+  assertSourceMatch(journey, /explanationFooterAction: \{ position: "absolute", right: 0, top: 3 \}/);
   assertSourceMatch(journey, /<View style=\{\[styles\.centeredLogo, styles\.explanationLogo\]\}><MyScoopeBrandLogo scale=\{0\.8\} \/><\/View>/);
   assertSourceMatch(journey, /const isExplanation = index >= 1 && index <= 5/);
   assertSourceMatch(journey, /const usesCenteredTitleSpacing = \(index <= 6 \|\| brandedCentered\) && !externalExplanationChrome/);
@@ -1140,7 +1158,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   }
   const welcomeView = journey.match(/function ValueView[\s\S]*?function StructureView/)?.[0] ?? "";
   assertSourceMatch(welcomeView, /title="Bienvenido a My Scoope!"/);
-  assertSourceMatch(welcomeView, /Nos alegra mucho tenerte por aquí/);
+  assertSourceMatch(welcomeView, /Nos alegra tenerte por aquí/);
+  assertSourceMatch(welcomeView, /Queremos ayudarte a cumplir a conseguir los resultados que desees, apoyándote en el camino/);
+  assertSourceMatch(welcomeView, /Decidir enfrentar este desafío con convicción/);
   assertSourceDoesNotMatch(welcomeView, /<ExplanationCard/);
   assertSourceMatch(journey, /explanationSteps\.map\(\(step, dotIndex\) =>/);
   assertSourceMatch(journey, /id="onboarding-credit-gradient"/);
@@ -1148,7 +1168,14 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /WeekDaySelectionRing/);
   assertSourceDoesNotMatch(journey.match(/function ValueView[\s\S]*?function DisclosuresView/)?.[0] ?? "", /<JourneyFooter/);
   assertSourceMatch(journey, /PanResponder\.create/);
+  assertSourceMatch(journey, /Animated\.timing/);
   assertSourceMatch(journey, /Boolean\(controller\) && index >= 1 && index <= 5/);
+  assertSourceMatch(journey, /explanationSteps\.map\(\(pageStep, explanationIndex\) =>/);
+  assertSourceMatch(journey, /style=\{\[styles\.explanationPage, \{ width: transitionWidth \}\]\}/);
+  assertSourceMatch(journey, /const explanationPageGap = 48/);
+  assertSourceMatch(journey, /const explanationStride = transitionWidth \+ explanationPageGap/);
+  assertSourceMatch(journey, /width: transitionWidth \* explanationSteps\.length \+ explanationPageGap \* \(explanationSteps\.length - 1\)/);
+  assertSourceMatch(journey, /explanationTrack: \{[^}]*gap: 48/);
   assertSourceDoesNotMatch(journey, /OnboardingExplanationCarousel/);
   assertSourceDoesNotMatch(journey.match(/function LoginView[\s\S]*?function ValueView/)?.[0] ?? "", /<Brand|loginKicker|<Card|quietCenter/);
   assertSourceMatch(journey, /loginAction: \{ width: "100%" \}/);
@@ -1159,7 +1186,8 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(onboarding, /scroll=\{usesFixedDisclosuresFooter \|\| usesFixedProfileChrome \? false : stepIndex >= 6 \? "auto" : false\}/);
   assertSourceMatch(onboarding, /<Stack\.Screen options=\{\{ gestureEnabled: false, headerShown: false \}\} \/>/);
   assertSourceMatch(onboarding, /const headerCompensationTop = stepIndex >= 6 \? 88 : 0/);
-  assertSourceMatch(onboarding, /<Screen key=\{step\} contentStyle=\{\[styles\.screen, \{ paddingTop: headerCompensationTop \}\]\}/);
+  assertSourceMatch(onboarding, /<Screen contentStyle=\{\[styles\.screen, \{ paddingTop: headerCompensationTop \}\]\}/);
+  assertSourceDoesNotMatch(onboarding, /<Screen key=\{step\}/);
   assertSourceMatch(onboarding, /presentationPropsForOnboardingStep\(step\)/);
   assertSourceMatch(onboarding, /<OnboardingJourneyView controller=\{controller\} \{\.\.\.presentationProps\} step=\{step\} \/>/);
   assertSourceMatch(onboarding, /pathname: "\/subscription", params: \{ origin: "onboarding"/);
@@ -1202,6 +1230,8 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /fixedProfileChrome: index >= 7 && index <= 12/);
   assertSourceMatch(journey, /disclosuresTitleSpacingReduction: index === 6 \? 18 : 0/);
   assertSourceMatch(journey, /fixedDisclosuresFooter: index === 6/);
+  assertSourceMatch(journey, /style=\{\[styles\.backAction, index === 6 && styles\.disclosuresBackAction\]\}/);
+  assertSourceMatch(journey, /disclosuresBackAction: \{ marginBottom: 20 \}/);
   assertSourceMatch(journey, /fixedProfileFooterBottomSpacing: index >= 7 && index <= 12 \? 46 : 0/);
   assertSourceDoesNotMatch(onboardingPreview, /fixedLoginActionBottomSpacing=\{134\}/);
   assert.ok(journey.includes("fixedLoginActionBottomSpacing: 0"));
@@ -1235,13 +1265,21 @@ test("the label capture gallery exposes the complete happy-path storyboard witho
   assertSourceMatch(gallery, /<LabelCaptureStoryboardGallery \/>/);
   assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos de la digitalización de etiquetas"/);
   assertSourceMatch(storyboardGallery, /steps=\{labelCaptureStoryboardSteps\}/);
-  for (const step of ["intro", "camera", "preview", "processing", "review", "confirmation", "saved"]) {
+  for (const step of ["intro", "camera", "preview", "processing", "review", "confirmation", "saved", "qualityWarnings"]) {
     assertSourceMatch(storyboard, new RegExp(`key: "${step}"`));
   }
   assertSourceMatch(storyboard, /datos fijos|Yogur griego natural/);
+  assertSourceMatch(storyboard, /title="Enriquece tu librería de alimentos"/);
   assertSourceMatch(storyboard, /Validamos nitidez antes de usar créditos/);
   assertSourceMatch(storyboard, /Confirmar y crear alimento/);
+  assertSourceMatch(storyboard, /<NutritionFactsCard[\s\S]*portion=\{\{ quantity: 160, unit: "g" \}\}/);
+  assertSourceMatch(storyboard, /key: "qualityWarnings", label: "Advertencias de calidad"/);
+  assertSourceMatch(storyboard, /function QualityWarningsView/);
+  assertSourceMatch(storyboard, /qualityWarningIssues\.map/);
+  assertSourceMatch(storyboard, /function QualityWarningsView[\s\S]*<View style=\{styles\.qualityPanel\}>\s*<View style=\{styles\.qualityRow\}>[\s\S]*<Pill color=\{tokens\.color\.warning\} label="Revisar" \/>/);
   assertSourceMatch(storyboard, /<AnimatedScanBeam gradientId="label-capture-credit-scan" \/>/);
+  assertSourceMatch(storyboard, /<View style=\{\[styles\.bottomActions, styles\.cameraBottomActions\]\}>/);
+  assertSourceMatch(storyboard, /cameraBottomActions: \{ marginBottom: 74 \}/);
   assertSourceMatch(scanBeam, /Animated\.loop\(Animated\.sequence/);
   assertSourceMatch(scanBeam, /toValue: 1[\s\S]*toValue: 0/);
   assertSourceMatch(scanBeam, /outputRange: \[0, Math\.max\(0, height - beamHeight\)\]/);
@@ -1261,6 +1299,7 @@ test("the label capture gallery exposes the complete happy-path storyboard witho
   assert.ok(proteinIndex < fatIndex && fatIndex < saturatedFatIndex && saturatedFatIndex < carbsIndex && carbsIndex < sugarIndex && sugarIndex < fiberIndex && fiberIndex < sodiumIndex);
   assertSourceMatch(storyboard, /intro: \{ leading: "back", trailing: null \}/);
   assertSourceDoesNotMatch(storyboard, /leading: "menu"|PanelRight/);
+  assertSourceDoesNotMatch(storyboard, /Cambiar lente/);
   assertSourceDoesNotMatch(storyboard, /apiRequest|expo-camera|useCameraPermissions|useSession/);
 });
 

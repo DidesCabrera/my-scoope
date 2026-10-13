@@ -447,6 +447,7 @@ def _normalized_title(resource: ShareResource) -> str:
 
 def _normalized_metadata(resource: ShareResource) -> tuple[str, str, str]:
     return {
+        ShareResource.SubjectType.COMPARISON: ("comparison", "Comparación", "scale"),
         ShareResource.SubjectType.DAILY_PLAN: ("dailyplan", "Plan diario", "clipboard-list"),
         ShareResource.SubjectType.FOOD: ("food", "Alimento", "carrot"),
         ShareResource.SubjectType.MEAL: ("meal", "Comida", "utensils"),

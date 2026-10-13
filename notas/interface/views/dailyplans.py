@@ -31,6 +31,7 @@ from notas.application.services.notifications.share_emails import (
 )
 from notas.application.sharing.dailyplans import get_or_create_dailyplan_share_resource
 from notas.application.sharing.services import (
+    ShareUnavailable,
     create_share_invitation,
     mark_share_invitation_delivered,
 )
@@ -87,13 +88,19 @@ def dailyplan_share(request, pk):
             sender=request.user,
             dailyplan_id=dailyplan.id,
         ).resource
-        invitation = create_share_invitation(
-            resource=resource,
-            sender=request.user,
-            recipient_email=email,
-            subject=share_subject,
-            message=message,
-        )
+        try:
+            invitation = create_share_invitation(
+                resource=resource,
+                sender=request.user,
+                recipient_email=email,
+                subject=share_subject,
+                message=message,
+            )
+        except ShareUnavailable as exc:
+            if str(exc) != "share_self_recipient_not_allowed":
+                raise
+            messages.error(request, "No puedes compartir un plan diario contigo mismo.")
+            return redirect("dailyplan_share", pk=dailyplan.pk)
         subject, email_message = build_normalized_share_invitation_email(
             request=request,
             invitation=invitation,

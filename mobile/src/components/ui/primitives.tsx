@@ -13,11 +13,12 @@ import {
 
 import { tokens } from "@/design/tokens";
 import { Screen } from "./layout";
-import { MacroLoadingIndicator } from "./macro-loading-indicator";
+import { LoadingState } from "./feedback";
 
 export { Chip as Pill } from "./chip";
 
 export { Screen };
+export { LoadingState };
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
@@ -69,6 +70,8 @@ export function SectionTitle({ title, detail }: { title: string; detail?: string
 
 export function Button({
   bleed = true,
+  contentStyle,
+  icon,
   label,
   onPress,
   variant = "primary",
@@ -76,6 +79,8 @@ export function Button({
   loading = false,
 }: {
   bleed?: boolean;
+  contentStyle?: StyleProp<ViewStyle>;
+  icon?: ReactNode;
   label: string;
   onPress(): void;
   variant?: "primary" | "secondary" | "danger";
@@ -98,8 +103,11 @@ export function Button({
         (disabled || loading) && styles.buttonDisabled,
         pressed && styles.buttonPressed,
       ]}>
-      {loading ? <ActivityIndicator color={variant === "primary" ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
-      <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{label}</Text>
+      <View style={[styles.buttonContent, contentStyle]}>
+        {loading ? <ActivityIndicator color={variant === "primary" ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
+        {!loading ? icon : null}
+        <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -193,14 +201,6 @@ export function ProgressBar({ value }: { value: number }) {
   );
 }
 
-export function LoadingState({ label = "Preparando tu día…" }: { label?: string }) {
-  return (
-    <Screen scroll={false} contentStyle={styles.loadingState} headerMode="preserve">
-      <MacroLoadingIndicator accessibilityLabel={label} />
-    </Screen>
-  );
-}
-
 export const textStyles = StyleSheet.create({
   body: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 24 },
   muted: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
@@ -225,7 +225,8 @@ const styles = StyleSheet.create({
   sectionTitleRow: { alignItems: "baseline", flexDirection: "row", justifyContent: "space-between" },
   sectionTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   sectionDetail: { color: tokens.color.textSoft, fontSize: tokens.type.caption },
-  button: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 48, paddingHorizontal: tokens.spacing.lg },
+  button: { alignItems: "center", borderRadius: tokens.radius.lg, justifyContent: "center", minHeight: 48, paddingHorizontal: tokens.spacing.lg },
+  buttonContent: { alignItems: "center", flexDirection: "row", gap: 8, justifyContent: "center" },
   buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   buttonPrimary: { backgroundColor: tokens.color.textMain },
   buttonSecondary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderWidth: 1 },
@@ -248,5 +249,4 @@ const styles = StyleSheet.create({
   noticeText: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 8, overflow: "hidden" },
   progressFill: { backgroundColor: tokens.color.program, borderRadius: tokens.radius.pill, height: "100%" },
-  loadingState: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, justifyContent: "center" },
 });

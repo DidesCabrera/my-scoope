@@ -1,5 +1,5 @@
 import { type Href, useRouter } from "expo-router";
-import { BookPlus, ChevronRight, RefreshCw, Trash2 } from "lucide-react-native";
+import { Bookmark, ChevronRight, RefreshCw, Trash2 } from "lucide-react-native";
 
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
@@ -91,7 +91,7 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onR
   const nutrition = day?.nutrition;
   const liveMeals = day ? (day.meals ?? []).map(mealPanelItem) : meals;
   const contextualActions: ContextCardAction[] = [
-    ...(onSaveToLibrary ? [{ icon: BookPlus, key: "save-to-library", label: "Guardar en mi biblioteca", onPress: onSaveToLibrary }] : []),
+    ...(onSaveToLibrary ? [{ icon: Bookmark, key: "save-to-library", label: "Guardar en mi biblioteca", onPress: onSaveToLibrary }] : []),
     ...(onReplace ? [{ icon: RefreshCw, key: "replace", label: "Reemplazar plan diario", onPress: onReplace }] : []),
     ...(onRemove ? [{
       confirmation: {

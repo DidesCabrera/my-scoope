@@ -512,6 +512,8 @@ def dailyplanmeal_share(request, dailyplan_id, pk):
 
         if delivery.sent:
             messages.success(request, "Compartiste esta comida de plan. Enviamos el correo de invitación al destinatario.")
+        elif delivery.reason == "self_recipient":
+            messages.error(request, "No puedes compartir una comida contigo mismo.")
         elif delivery.reason == "duplicate_share":
             messages.success(request, "Esta comida de plan ya estaba compartida. No reenviamos el correo para evitar duplicados.")
         else:

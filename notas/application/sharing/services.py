@@ -16,16 +16,28 @@ class ShareUnavailable(ValueError):
     pass
 
 
+def effective_share_resource_status(resource: ShareResource, *, now=None) -> str:
+    """Return the status enforced by previews, including due expirations."""
+    current_time = now or timezone.now()
+    if (
+        resource.status == ShareResource.Status.ACTIVE
+        and resource.expires_at
+        and resource.expires_at <= current_time
+    ):
+        return ShareResource.Status.EXPIRED
+    return resource.status
+
+
 def _normalized_email(value: str) -> str:
     return (value or "").strip().casefold()
 
 
 def _active_resource(resource: ShareResource, *, now=None) -> ShareResource:
-    current_time = now or timezone.now()
-    if resource.status != ShareResource.Status.ACTIVE:
-        raise ShareUnavailable("share_resource_not_active")
-    if resource.expires_at and resource.expires_at <= current_time:
+    effective_status = effective_share_resource_status(resource, now=now)
+    if effective_status == ShareResource.Status.EXPIRED:
         raise ShareUnavailable("share_resource_expired")
+    if effective_status != ShareResource.Status.ACTIVE:
+        raise ShareUnavailable("share_resource_not_active")
     return resource
 
 
@@ -57,6 +69,12 @@ def create_share_invitation(
     normalized_email = _normalized_email(recipient_email)
     if not normalized_email:
         raise ShareUnavailable("share_invitation_recipient_required")
+    owns_recipient_email = _normalized_email(sender.email) == normalized_email or EmailAddress.objects.filter(
+        user=sender,
+        email__iexact=normalized_email,
+    ).exists()
+    if owns_recipient_email:
+        raise ShareUnavailable("share_self_recipient_not_allowed")
     invitation, _ = ShareInvitation.objects.get_or_create(
         resource=locked,
         recipient_email=normalized_email,
@@ -158,6 +176,8 @@ def claim_share_resource(
         raise ShareUnavailable("share_claim_source_invalid")
     locked = ShareResource.objects.select_for_update().get(pk=resource.pk)
     _active_resource(locked, now=now)
+    if locked.sender_id == user.id:
+        raise ShareUnavailable("share_self_claim_not_allowed")
     existing = ShareClaim.objects.filter(resource=locked, user=user).first()
     if existing is not None:
         return existing, InboxItem.objects.get(claim=existing)

@@ -18,6 +18,8 @@ test("library cards keep the server-projected web action matrix", async () => {
   assert.doesNotMatch(card, /item\.entity === "program" \? openComparison/);
   assert.match(card, /onEdit=\{item\.entity === "food" \? openEdit : undefined\}/);
   assert.match(actions, /const actions = item\.actions \?\? \[\]/);
+  assert.match(actions, /const shareAction = actions\.find[\s\S]*?<ActionSheetActions>[\s\S]*shareAction[\s\S]*onOpenInformation/);
+  assert.match(actions, /remainingActions\.map/);
   for (const action of ["Renombrar", "Duplicar", "Compartir", "Eliminar"]) {
     assert.match(serverProjection, new RegExp(action));
   }
@@ -68,6 +70,7 @@ test("current and today cards expose source library actions and compare", async 
   for (const label of ["Renombrar", "Compartir", "Eliminar"]) {
     assert.match(contextualActions, new RegExp(label));
   }
+  assert.ok(contextualActions.indexOf('key: "share"') < contextualActions.indexOf('key: "rename"'));
   assert.match(contextualActions, /onCompare=\{\(\) => void compare\(\)\}/);
   assert.match(calendarizedPlan, /snapshot\.source\?\.dailyplan_id/);
   assert.match(calendarizedPlan, /<ContextualLibraryActions[^>]*entity="dailyPlan"/);

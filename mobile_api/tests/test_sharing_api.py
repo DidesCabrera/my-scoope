@@ -1,10 +1,25 @@
+from datetime import timedelta
+from types import SimpleNamespace
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import Client, override_settings
+from django.utils import timezone
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.sharing.dailyplans import create_dailyplan_share_resource
-from notas.domain.models import DailyPlan, Food, Meal, Program, ShareInvitation, ShareResource
+from notas.application.sharing.services import revoke_share_resource
+from notas.domain.models import (
+    DailyPlan,
+    Food,
+    Meal,
+    Program,
+    SavedComparison,
+    ShareClaim,
+    ShareInvitation,
+    ShareResource,
+)
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -35,7 +50,18 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(invitation.status, ShareInvitation.Status.DELIVERED)
 
     def test_owner_can_create_share_links_for_every_library_entity(self):
+        comparison = SavedComparison.objects.create(
+            owner=self.user,
+            kind=SavedComparison.KIND_FOODS,
+            name="Avena vs Yogur",
+            payload=[{"id": 1, "quantity": 100}, {"id": 2, "quantity": 100}],
+            snapshot_payload=[
+                {"id": 1, "name": "Avena", "quantity": 100, "quantity_unit": "g", "values": {"total_kcal": 380}},
+                {"id": 2, "name": "Yogur", "quantity": 100, "quantity_unit": "g", "values": {"total_kcal": 90}},
+            ],
+        )
         entities = (
+            ("comparisons", comparison, "comparison"),
             ("foods", Food.objects.create(name="Avena", protein=10, carbs=60, fat=7, created_by=self.user), "food"),
             ("meals", Meal.objects.create(name="Desayuno", created_by=self.user, is_draft=False), "meal"),
             ("programs", Program.objects.create(name="Semana", created_by=self.user, is_draft=False), "program"),
@@ -50,6 +76,35 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.json()["data"]["subject_type"], subject_type)
                 self.assertEqual(response.json()["data"]["title"], item.name)
+
+        sent_comparison = next(
+            item
+            for item in self.client.get("/api/v1/shares/inbox?scope=sent").json()["data"]["items"]
+            if item["subject_type"] == "comparison"
+        )
+        self.assertEqual(sent_comparison["comparison_kind"], "foods")
+
+    def test_comparison_kind_is_recovered_for_legacy_sent_resources(self):
+        comparison = SavedComparison.objects.create(
+            owner=self.user,
+            kind=SavedComparison.KIND_MEALS,
+            name="Comparación de Carbos",
+            payload=[{"id": 1}, {"id": 2}],
+            snapshot_payload=[{"id": 1, "name": "Almuerzo"}, {"id": 2, "name": "Cena"}],
+        )
+        ShareResource.objects.create(
+            sender=self.user,
+            subject_type=ShareResource.SubjectType.COMPARISON,
+            source_object_id=comparison.id,
+            snapshot={"subject": {"type": "comparison", "title": comparison.name}},
+            snapshot_schema_version="sharing.snapshot.v1",
+        )
+
+        response = self.client.get("/api/v1/shares/inbox?scope=sent")
+
+        self.assertEqual(response.status_code, 200)
+        item = response.json()["data"]["items"][0]
+        self.assertEqual(item["comparison_kind"], "meals")
 
     def test_owner_can_create_and_revoke_dailyplan_share_resource(self):
         dailyplan = DailyPlan.objects.create(name="Plan desde móvil", created_by=self.user, is_draft=False)
@@ -72,6 +127,7 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(revoked.status_code, 200)
         self.assertEqual(revoked.json()["data"]["status"], "revoked")
         self.assertEqual(ShareResource.objects.get(public_id=payload["id"]).status, "revoked")
+        self.assertEqual(self.client.get("/api/v1/shares/inbox?scope=sent").json()["data"]["count"], 0)
 
     def test_user_cannot_create_or_revoke_another_users_resource(self):
         other = User.objects.create_user("mobile-share-other")
@@ -123,6 +179,7 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(sent.json()["data"]["count"], 1)
         self.assertEqual(sent.json()["data"]["items"][0]["resource_id"], str(sent_resource.public_id))
         self.assertEqual(sent.json()["data"]["items"][0]["title"], "Plan enviado")
+        self.assertEqual(sent.json()["data"]["items"][0]["status"], "active")
 
         updated = self.client.patch(
             f"/api/v1/shares/inbox/{item['id']}",
@@ -141,6 +198,65 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(saved.json()["data"]["entity"], "dailyPlan")
         self.assertEqual(dismissed.status_code, 200)
         self.assertEqual(self.client.get("/api/v1/shares/inbox").json()["data"]["count"], 0)
+
+    def test_owner_cannot_claim_or_email_their_own_share(self):
+        source = DailyPlan.objects.create(name="Plan propio", created_by=self.user, is_draft=False)
+        resource = create_dailyplan_share_resource(sender=self.user, dailyplan_id=source.id).resource
+
+        claim = self.client.post(f"/api/v1/shares/{resource.public_id}/claims")
+        emailed = self.client.post(
+            f"/api/v1/library/daily-plans/{source.id}/actions",
+            data={"action": "share", "recipient_email": self.user.email},
+            content_type="application/json",
+        )
+
+        self.assertEqual(claim.status_code, 409)
+        self.assertEqual(claim.json()["error"]["code"], "share_self_claim_not_allowed")
+        self.assertEqual(emailed.status_code, 422)
+        self.assertEqual(emailed.json()["error"]["code"], "share_self_recipient_not_allowed")
+        self.assertFalse(ShareClaim.objects.filter(resource=resource, user=self.user).exists())
+        self.assertFalse(ShareInvitation.objects.filter(resource=resource).exists())
+
+    def test_revoked_share_remains_in_recipient_inbox_without_public_detail(self):
+        sender = User.objects.create_user("revoking-sender")
+        source = DailyPlan.objects.create(name="Plan revocado", created_by=sender, is_draft=False)
+        resource = create_dailyplan_share_resource(sender=sender, dailyplan_id=source.id).resource
+        claimed = self.client.post(f"/api/v1/shares/{resource.public_id}/claims")
+
+        revoke_share_resource(resource=resource, actor=sender)
+
+        inbox = self.client.get("/api/v1/shares/inbox")
+        public_detail = Client().get(f"/api/v1/shares/{resource.public_id}")
+        self.assertEqual(claimed.status_code, 200)
+        self.assertEqual(inbox.status_code, 200)
+        self.assertEqual(inbox.json()["data"]["count"], 1)
+        self.assertEqual(inbox.json()["data"]["items"][0]["status"], "revoked")
+        self.assertEqual(public_detail.status_code, 404)
+
+    def test_expired_share_is_labeled_in_received_and_hidden_from_sent(self):
+        sender = User.objects.create_user("expiring-sender")
+        received_source = DailyPlan.objects.create(name="Plan vencido", created_by=sender, is_draft=False)
+        received_resource = create_dailyplan_share_resource(sender=sender, dailyplan_id=received_source.id).resource
+        claimed = self.client.post(f"/api/v1/shares/{received_resource.public_id}/claims")
+        received_resource.expires_at = timezone.now() - timedelta(seconds=1)
+        received_resource.save(update_fields=["expires_at"])
+
+        sent_source = DailyPlan.objects.create(name="Enviado vencido", created_by=self.user, is_draft=False)
+        sent_resource = create_dailyplan_share_resource(sender=self.user, dailyplan_id=sent_source.id).resource
+        sent_resource.expires_at = timezone.now() - timedelta(seconds=1)
+        sent_resource.save(update_fields=["expires_at"])
+
+        received = self.client.get("/api/v1/shares/inbox")
+        sent = self.client.get("/api/v1/shares/inbox?scope=sent")
+        public_detail = Client().get(f"/api/v1/shares/{received_resource.public_id}")
+
+        self.assertEqual(claimed.status_code, 200)
+        self.assertEqual(received.status_code, 200)
+        self.assertEqual(received.json()["data"]["items"][0]["status"], "expired")
+        self.assertEqual(sent.status_code, 200)
+        self.assertEqual(sent.json()["data"]["count"], 0)
+        self.assertEqual(public_detail.status_code, 404)
+        self.assertEqual(public_detail.json()["error"]["code"], "share_resource_expired")
 
     @override_settings(RATE_LIMIT_SHARING_CREATE_USER="1/h")
     def test_share_creation_has_a_json_rate_limit(self):
@@ -182,5 +298,3 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
             self.assertEqual(second.json()["error"]["code"], "sharing_preview_rate_limited")
         finally:
             cache.clear()
-from types import SimpleNamespace
-from unittest.mock import patch

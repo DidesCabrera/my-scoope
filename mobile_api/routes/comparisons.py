@@ -4,21 +4,19 @@ from typing import Any
 
 from ninja import Router
 
-from mobile_api.api_support import (
-    comparison_error,
-    require_scope,
-    success,
-)
+from mobile_api.api_support import comparison_error, require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.comparisons import (
     comparison_metadata_payload,
     comparison_options_payload,
+    delete_comparison,
     dynamic_comparison_payload,
     save_comparison,
     saved_comparison_detail_payload,
     saved_comparison_list_payload,
     update_comparison,
 )
+from mobile_api.schema_domains.comparison_edits import SavedComparisonDeleteEnvelope
 from mobile_api.schema_domains.comparisons import (
     ComparisonMetadataEnvelope,
     ComparisonOptionsEnvelope,
@@ -52,11 +50,7 @@ def comparison_metadata(request: Any) -> dict[str, Any]:
     operation_id="mobile_api_api_comparison_options",
 )
 def comparison_options(
-    request: Any,
-    kind: str,
-    search: str | None = None,
-    offset: int = 0,
-    limit: int = 30,
+    request: Any, kind: str, search: str | None = None, offset: int = 0, limit: int = 30,
 ) -> dict[str, Any]:
     try:
         payload = comparison_options_payload(
@@ -94,10 +88,7 @@ def compare_entities(request: Any, payload: ComparisonRequestInput) -> dict[str,
     operation_id="mobile_api_api_saved_comparisons",
 )
 def saved_comparisons(
-    request: Any,
-    kind: str | None = None,
-    offset: int = 0,
-    limit: int = 30,
+    request: Any, kind: str | None = None, offset: int = 0, limit: int = 30,
 ) -> dict[str, Any]:
     try:
         payload = saved_comparison_list_payload(
@@ -143,19 +134,12 @@ def saved_comparison_detail(request: Any, comparison_id: int) -> dict[str, Any]:
 
 @router.put(
     "/comparisons/saved/{comparison_id}",
-    response={
-        200: SavedComparisonDetailEnvelope,
-        403: ErrorEnvelope,
-        404: ErrorEnvelope,
-        409: ErrorEnvelope,
-        422: ErrorEnvelope,
-    },
+    response={200: SavedComparisonDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope,
+              409: ErrorEnvelope, 422: ErrorEnvelope},
     operation_id="mobile_api_api_update_mobile_saved_comparison",
 )
 def update_mobile_saved_comparison(
-    request: Any,
-    comparison_id: int,
-    payload: ComparisonRequestInput,
+    request: Any, comparison_id: int, payload: ComparisonRequestInput,
 ) -> dict[str, Any]:
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     try:
@@ -168,3 +152,17 @@ def update_mobile_saved_comparison(
     except ValueError as exc:
         raise comparison_error(exc) from exc
     return success(saved_comparison_detail_payload(request.auth.user, comparison.id))
+
+
+@router.delete(
+    "/comparisons/saved/{comparison_id}",
+    response={200: SavedComparisonDeleteEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+    operation_id="mobile_api_api_delete_mobile_saved_comparison",
+)
+def delete_mobile_saved_comparison(request: Any, comparison_id: int) -> dict[str, Any]:
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        deleted_id = delete_comparison(request.auth.user, comparison_id=comparison_id)
+    except ValueError as exc:
+        raise comparison_error(exc) from exc
+    return success({"deleted_id": deleted_id})
