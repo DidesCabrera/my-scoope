@@ -47,6 +47,22 @@
         <div class="ui-system-gallery__preview-label"><strong>Confirmar correo</strong><span>Enlace válido</span></div>
         <iframe src="{% url 'ui_system_auth_preview' 'email-confirm' %}" title="Vista de confirmación de correo"></iframe>
       </article>
+      <article class="ui-system-gallery__auth-preview">
+        <div class="ui-system-gallery__preview-label"><strong>Recuperar contraseña</strong><span>Solicitud</span></div>
+        <iframe src="{% url 'ui_system_auth_preview' 'password-reset' %}" title="Vista para solicitar recuperación de contraseña"></iframe>
+      </article>
+      <article class="ui-system-gallery__auth-preview">
+        <div class="ui-system-gallery__preview-label"><strong>Correo de recuperación</strong><span>Enlace enviado</span></div>
+        <iframe src="{% url 'ui_system_auth_preview' 'password-reset-sent' %}" title="Vista de correo de recuperación enviado"></iframe>
+      </article>
+      <article class="ui-system-gallery__auth-preview">
+        <div class="ui-system-gallery__preview-label"><strong>Nueva contraseña</strong><span>Enlace válido</span></div>
+        <iframe src="{% url 'ui_system_auth_preview' 'password-reset-new' %}" title="Vista para crear una nueva contraseña"></iframe>
+      </article>
+      <article class="ui-system-gallery__auth-preview">
+        <div class="ui-system-gallery__preview-label"><strong>Recuperación completa</strong><span>Éxito</span></div>
+        <iframe src="{% url 'ui_system_auth_preview' 'password-reset-complete' %}" title="Vista de contraseña actualizada"></iframe>
+      </article>
     </div>
   </section>
 

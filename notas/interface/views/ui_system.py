@@ -1,6 +1,7 @@
 from dataclasses import asdict
 from types import SimpleNamespace
 
+from allauth.account.forms import ResetPasswordForm, ResetPasswordKeyForm
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import render
@@ -56,5 +57,29 @@ def ui_system_auth_preview(request, screen):
             "account/email_confirm.html",
             {"confirmation": confirmation, "can_confirm": True},
         )
+
+    if screen == "password-reset":
+        return render(
+            request,
+            "account/password_reset.html",
+            {"form": ResetPasswordForm()},
+        )
+
+    if screen == "password-reset-sent":
+        return render(request, "account/password_reset_done.html")
+
+    if screen == "password-reset-new":
+        return render(
+            request,
+            "account/password_reset_from_key.html",
+            {
+                "form": ResetPasswordKeyForm(),
+                "token_fail": False,
+                "action_url": "#",
+            },
+        )
+
+    if screen == "password-reset-complete":
+        return render(request, "account/password_reset_from_key_done.html")
 
     raise Http404

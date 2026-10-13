@@ -31,6 +31,10 @@ class UISystemGalleryTests(TestCase):
         self.assertContains(response, "ui-system-gallery__auth-grid")
         self.assertContains(response, reverse("ui_system_auth_preview", args=["verification-sent"]))
         self.assertContains(response, reverse("ui_system_auth_preview", args=["email-confirm"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["password-reset"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["password-reset-sent"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["password-reset-new"]))
+        self.assertContains(response, reverse("ui_system_auth_preview", args=["password-reset-complete"]))
         self.assertContains(response, 'class="dash-kpi-comp"')
         self.assertContains(
             response,
@@ -67,6 +71,21 @@ class UISystemGalleryTests(TestCase):
         self.assertContains(confirm_response, "felipe@myscoope.com")
         self.assertContains(confirm_response, "Confirmar correo")
         self.assertEqual(confirm_response["X-Frame-Options"], "SAMEORIGIN")
+
+        password_previews = {
+            "password-reset": "Recupera tu contraseña",
+            "password-reset-sent": "Revisa tu correo",
+            "password-reset-new": "Crea una nueva contraseña",
+            "password-reset-complete": "Contraseña actualizada",
+        }
+        for screen, expected_text in password_previews.items():
+            with self.subTest(screen=screen):
+                response = self.client.get(
+                    reverse("ui_system_auth_preview", args=[screen])
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, expected_text)
+                self.assertEqual(response["X-Frame-Options"], "SAMEORIGIN")
 
     def test_authentication_focus_hides_unrelated_gallery_sections(self):
         response = self.client.get(f"{self.url}?focus=authentication")
