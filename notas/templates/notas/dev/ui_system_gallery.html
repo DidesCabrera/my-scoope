@@ -18,14 +18,39 @@
   </header>
 
   <nav class="ui-system-gallery__nav" aria-label="Secciones del UI System Web">
+    {% if gallery.focus == "authentication" %}
+      <a href="{% url 'ui_system_gallery' %}">← Ver galería completa</a>
+      <a href="#authentication" aria-current="page">Autenticación</a>
+    {% else %}
     <a href="#foundations">Foundations</a>
+    <a href="?focus=authentication">Autenticación</a>
     <a href="#onboarding-storyboard">Onboarding</a>
     <a href="#components">Components</a>
     <a href="#patterns">Patterns</a>
     <a href="#program-active-kpis">Programa en curso</a>
     {% if not gallery.embed %}<a href="#mobile-web">Mobile web</a>{% endif %}
+    {% endif %}
   </nav>
 
+  <section class="ui-system-gallery__section" id="authentication">
+    <div class="ui-system-gallery__section-heading">
+      <div><p>Account flow · Templates productivos</p><h2>Verificación de correo</h2></div>
+      <code>account/verification_sent.html · account/email_confirm.html</code>
+    </div>
+    <p class="ui-system-gallery__help">Estados posteriores al registro, presentados con el mismo lenguaje visual de ingreso y contraseña.</p>
+    <div class="ui-system-gallery__auth-grid">
+      <article class="ui-system-gallery__auth-preview">
+        <div class="ui-system-gallery__preview-label"><strong>Correo enviado</strong><span>Espera de verificación</span></div>
+        <iframe src="{% url 'ui_system_auth_preview' 'verification-sent' %}" title="Vista de correo de verificación enviado"></iframe>
+      </article>
+      <article class="ui-system-gallery__auth-preview">
+        <div class="ui-system-gallery__preview-label"><strong>Confirmar correo</strong><span>Enlace válido</span></div>
+        <iframe src="{% url 'ui_system_auth_preview' 'email-confirm' %}" title="Vista de confirmación de correo"></iframe>
+      </article>
+    </div>
+  </section>
+
+  {% if gallery.focus != "authentication" %}
   <section class="ui-system-gallery__section" id="onboarding-storyboard">
     <div class="ui-system-gallery__section-heading">
       <div><p>Storyboard · Sin sesión, API ni persistencia</p><h2>Flujo inicial multiplataforma</h2></div>
@@ -102,6 +127,7 @@
       <p class="ui-system-gallery__help">El marco usa esta misma ruta dentro de un viewport de 390px; por eso activa los media queries productivos, no una simulación de estilos.</p>
       <iframe class="ui-system-gallery__mobile-frame" src="?embed=1#components" title="UI System Web en viewport mobile"></iframe>
     </section>
+  {% endif %}
   {% endif %}
 </main>
 

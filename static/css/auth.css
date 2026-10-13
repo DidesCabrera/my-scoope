@@ -93,6 +93,57 @@ line-height:1.15;
 text-align:center;
 }
 
+.auth-card--message{
+max-width:440px;
+}
+
+.auth-status-icon{
+display:flex;
+align-items:center;
+justify-content:center;
+width:48px;
+height:48px;
+margin:0 auto 16px;
+border-radius:15px;
+background:var(--auth-surface-card-muted);
+color:var(--auth-text-main);
+}
+
+.auth-status-icon svg{
+width:25px;
+height:25px;
+fill:none;
+stroke:currentColor;
+stroke-width:1.6;
+stroke-linecap:round;
+stroke-linejoin:round;
+}
+
+.auth-copy{
+color:var(--auth-text-muted);
+font-size:15px;
+line-height:1.55;
+text-align:center;
+}
+
+.auth-copy p{
+margin:0;
+}
+
+.auth-copy p + p{
+margin-top:10px;
+}
+
+.auth-copy .auth-email{
+padding:11px 14px;
+border:1px solid var(--auth-border-default);
+border-radius:14px;
+background:var(--auth-input-bg);
+color:var(--auth-text-main);
+font-weight:600;
+overflow-wrap:anywhere;
+}
+
 /* =========================
    SOCIAL LOGIN BUTTONS
    ========================= */
@@ -212,6 +263,11 @@ transition:opacity 0.15s;
 opacity:0.92;
 }
 
+.auth-form--message{
+margin-top:20px;
+margin-bottom:20px;
+}
+
 /* =========================
    ERRORS
    ========================= */
@@ -253,6 +309,10 @@ font-size:14px;
 line-height:1.35;
 margin:clamp(11px,1.9vh,16px) 0 0 0;
 color:var(--auth-text-soft);
+}
+
+.auth-links--message-footer{
+margin-bottom:20px;
 }
 
 .auth-links a{

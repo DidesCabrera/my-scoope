@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from types import SimpleNamespace
 
 from django.conf import settings
 from django.http import Http404
@@ -22,6 +23,7 @@ def ui_system_gallery(request):
 
     examples = build_ui_system_gallery_examples()
     examples["embed"] = request.GET.get("embed") == "1"
+    examples["focus"] = request.GET.get("focus", "")
 
     return render(
         request,
@@ -34,3 +36,25 @@ def ui_system_gallery(request):
             "gallery": examples,
         },
     )
+
+
+@xframe_options_sameorigin
+def ui_system_auth_preview(request, screen):
+    if not settings.DEBUG:
+        raise Http404
+
+    if screen == "verification-sent":
+        return render(request, "account/verification_sent.html")
+
+    if screen == "email-confirm":
+        confirmation = SimpleNamespace(
+            key="ui-system-preview",
+            email_address=SimpleNamespace(email="felipe@myscoope.com"),
+        )
+        return render(
+            request,
+            "account/email_confirm.html",
+            {"confirmation": confirmation, "can_confirm": True},
+        )
+
+    raise Http404

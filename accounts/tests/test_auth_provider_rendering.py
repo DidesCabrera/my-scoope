@@ -1,4 +1,6 @@
+from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 from allauth.socialaccount.models import SocialApp
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.test import TestCase
 from django.urls import reverse
@@ -47,3 +49,37 @@ class AuthProviderRenderingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Continuar con Apple")
         self.assertContains(response, reverse("apple_login"))
+
+
+class EmailVerificationRenderingTests(TestCase):
+    def test_verification_sent_uses_branded_auth_layout(self):
+        response = self.client.get(reverse("account_email_verification_sent"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="auth-card auth-card--message"')
+        self.assertContains(response, "Verifica tu correo electrónico")
+        self.assertNotContains(response, "Menú:")
+
+    def test_email_confirmation_uses_branded_auth_layout(self):
+        user = get_user_model().objects.create_user(
+            username="confirmation@example.com",
+            email="confirmation@example.com",
+            password="safe-test-password",
+        )
+        email_address = EmailAddress.objects.create(
+            user=user,
+            email=user.email,
+            primary=True,
+            verified=False,
+        )
+        confirmation = EmailConfirmationHMAC.create(email_address)
+
+        response = self.client.get(
+            reverse("account_confirm_email", kwargs={"key": confirmation.key})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="auth-card auth-card--message"')
+        self.assertContains(response, "confirmation@example.com")
+        self.assertContains(response, "Confirmar correo")
+        self.assertNotContains(response, "Menú:")
