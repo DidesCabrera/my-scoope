@@ -89,7 +89,14 @@ test("shared programs and comparisons have complete native detail views", async 
   assertSourceMatch(shareScreen, /<ProgramDetailPreview footer=\{libraryAction\} item=\{sharedProgram\} scrollable showWeekAnalytics=\{false\} \/>/);
   assertSourceMatch(shareScreen, /!sharedProgram \? libraryAction : null/);
   assertSourceMatch(shareScreen, /sharedComparisonResult\(snapshot\)/);
-  assertSourceMatch(shareScreen, /<ComparisonResultCards hideHeader interactive=\{false\} result=\{sharedComparison\} \/>/);
+  assertSourceMatch(shareScreen, /<AppHeader eyebrow=\{`Comparación \$\{sharedComparison\.kind_label\}`\} eyebrowIcon=\{<EntityIcon entity=\{comparisonEntity\}/);
+  assertSourceMatch(shareScreen, /label=\{`\$\{sharedComparison\.items\.length\} \$\{comparisonCountLabel\}`\}/);
+  assertSourceMatch(shareScreen, /<ComparisonItemsSummary items=\{sharedComparison\.items\} \/>/);
+  assertSourceMatch(shareScreen, /accessibilityLabel="Vista de la comparación compartida"/);
+  assertSourceMatch(shareScreen, /key: "cards", label: "Cards"[\s\S]*key: "table", label: "Tabla"[\s\S]*key: "entities", label: sharedComparison\.kind_label/);
+  assertSourceMatch(shareScreen, /comparisonTab === "cards" \? <ComparisonResultCards hideHeader interactive=\{false\} result=\{sharedComparison\} \/>/);
+  assertSourceMatch(shareScreen, /comparisonTab === "table" \? <SavedComparisonPreviewPanels items=\{sharedComparison\.items\} scope=\{comparisonEntity\} \/>/);
+  assertSourceMatch(shareScreen, /comparisonTab === "entities" \? sharedComparison\.items\.map[\s\S]*?<NutritionEntityCard/);
   assertSourceMatch(shareScreen, /saved\.entity === "comparison" \? `\/comparator\/saved\/\$\{saved\.item_id\}`/);
   assertSourceMatch(presentation, /export function sharedProgramLibraryItem/);
   assertSourceMatch(presentation, /function aggregateSharedFoods/);
@@ -101,6 +108,9 @@ test("shared programs and comparisons have complete native detail views", async 
   assertSourceMatch(comparisonActions, /`\/api\/v1\/shares\/comparisons\/\$\{comparison\.saved_comparison_id\}`/);
   assertSourceMatch(comparisonActionsModal, /const resource = await onShare\(\);[\s\S]*?setDismissShareImmediately\(true\);[\s\S]*?onClose\(\);[\s\S]*?requestAnimationFrame\(\(\) => requestAnimationFrame[\s\S]*?await openNativeShare\(resource\)/);
   assertSourceMatch(comparisonActionsModal, /<ActionSheetModal dismissImmediately=\{dismissShareImmediately\}/);
+  assertSourceMatch(comparisonActionsModal, /<ActionSheetActions>[\s\S]*label="Compartir"[\s\S]*label=\{compact \? "Renombrar" : "Editar nombre"\}[\s\S]*label="Editar comparación"[\s\S]*label="Eliminar"/);
+  assertSourceMatch(comparisonActionsModal, /label=\{compact \? "Renombrar" : "Editar nombre"\}[\s\S]*label="Editar comparación"/);
+  assertSourceMatch(comparisonActionsModal, /label="Eliminar comparación"[\s\S]*variant="danger"/);
   assertSourceMatch(comparisonActions, /onShare=\{async \(\) => \{[\s\S]*?return apiRequest<ShareResource>/);
 });
 
@@ -161,7 +171,7 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inbox, /icon: \(selected\) => <Send color=\{selected \? tokens\.color\.surfaceApp : tokens\.color\.textMuted\}/);
   assertSourceMatch(inbox, /count: data\?\.received\.count \?\? 0/);
   assertSourceMatch(inbox, /count: data\?\.sent\.count \?\? 0/);
-  assertSourceMatch(inbox, /<Screen[\s\S]*scrollHeader=\{<SectionPageHeader countLabel="elementos" section="inbox" title="Compartidos" \/>\}/);
+  assertSourceMatch(inbox, /<Screen[\s\S]*scrollHeader=\{<SectionPageHeader countLabel="elementos" section="inbox" subtitle="Envía y recibe los elementos que desees con otros usuarios para complementar tu librería y conocimiento\." title="Compartidos" \/>\}/);
   assertSourceMatch(inbox, /stickyHeader=\{<DistributedTabBar<SharingScope>/);
   assertSourceMatch(inbox, /stickyHeaderStyle=\{styles\.stickyHeader\}/);
   assertSourceMatch(inbox, /stickyHeader: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding, paddingTop: tokens\.spacing\.sm \}/);
@@ -181,7 +191,6 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inbox, /daily_plan: \{ feminine: false, label: "Plan diario" \}/);
   assertSourceMatch(inbox, /meal: \{ feminine: true, label: "Comida" \}/);
   assertSourceMatch(inbox, /activeScope === "received"[\s\S]*eyebrow\.feminine \? "Recibida" : "Recibido"[\s\S]*eyebrow\.feminine \? "Enviada" : "Enviado"/);
-  assertSourceMatch(inbox, /eyebrow=\{`\$\{eyebrow\.label\} \$\{directionLabel\}`\}/);
   assertSourceMatch(inbox, /<ProposalStatusBadge label=\{item\.status === "expired" \? "Enlace vencido" : "Acceso revocado"\} status="rejected" \/>/);
   assertSourceMatch(inbox, /item\.is_read \|\| unavailable[\s\S]*<MailOpen/);
   assertSourceMatch(inbox, /style=\{styles\.unavailableAction\}[\s\S]*<Ban/);
@@ -190,6 +199,9 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inbox, /onPress=\{unavailable \? undefined/);
   assertSourceMatch(inbox, /<EntityCard/);
   assertSourceMatch(inbox, /<EntityCardAction/);
+  assertSourceMatch(inbox, /comparisonLabelByKind[\s\S]*?dailyplans: "Planes diarios"[\s\S]*?foods: "Alimentos"[\s\S]*?meals: "Comidas"/);
+  assertSourceMatch(inbox, /eyebrow=\{`\$\{eyebrowLabel\} \$\{directionLabel\}`\}/);
+  assertSourceMatch(inbox, /identityColor=\{comparisonAccent\}/);
   assertSourceMatch(inbox, /<CollectionEmptyState/);
   assertSourceMatch(inbox, /<LoadingState label="Cargando compartidos…" mode="content" \/>/);
   assertSourceMatch(shareScreen, /<LoadingState label="Cargando contenido compartido…" mode="content" \/>/);
@@ -199,7 +211,7 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inbox, /dailyplans: "dailyPlan"/);
   assertSourceMatch(inbox, /foods: "food"/);
   assertSourceMatch(inbox, /meals: "meal"/);
-  assertSourceMatch(inbox, /accent=\{sharedCardAccent\(item\)\}/);
+  assertSourceMatch(inbox, /const comparisonAccent = sharedCardAccent\(item\)[\s\S]*accent=\{comparisonAccent\}/);
   assertSourceMatch(shareScreen, /\/api\/v1\/shares\/inbox\/\$\{inboxItemId\}\/save/);
   assertSourceMatch(shareScreen, /`\/libraries\/\$\{libraryPathByEntity\[saved\.entity\]\}\/\$\{saved\.item_id\}`/);
   assertSourceMatch(navigation, /href: "\/inbox"/);

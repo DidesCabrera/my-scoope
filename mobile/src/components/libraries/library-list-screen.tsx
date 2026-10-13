@@ -217,7 +217,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       scrollEventThrottle={16}
       stickyHeaderIndices={mode === "list" ? [1] : undefined}
       style={styles.screen}>
-      <CollectionPageHeader count={page?.total} countIcon={entity === "program" ? "week" : entity} entity={entity} title={title} />
+      <CollectionPageHeader count={page?.total} entity={entity} title={title} />
       {mode === "list" ? <View style={styles.stickySearch}>
         <SearchField accessibilityLabel={`Buscar en ${title}`} autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); }} onSubmitEditing={() => setSubmittedQuery(query.trim())} placeholder="Buscar por nombre" returnKeyType="search" value={query} />
       </View> : null}

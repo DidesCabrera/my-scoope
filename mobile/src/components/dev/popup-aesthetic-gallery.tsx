@@ -32,9 +32,9 @@ export function PopupAestheticGallery() {
           <View style={styles.sheetContent}>
             <Text style={styles.actionsEyebrow}>ACCIONES</Text>
             <View style={styles.actionTable}>
+              <ActionRow icon={Share2} label="Compartir" />
               <ActionRow icon={ListRestart} label="Editar lista" />
               <ActionRow icon={Scale} label="Comparar" />
-              <ActionRow icon={Share2} label="Compartir" />
               <ActionRow danger icon={Trash2} label="Eliminar selección" last />
             </View>
           </View>

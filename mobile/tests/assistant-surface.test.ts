@@ -71,7 +71,7 @@ test("typed assistant cards navigate to trusted product surfaces and gate mutati
   assert.ok(conversation.includes("<LibraryCard apiRequest={apiRequest} interactive={false}"));
   assert.ok(conversation.includes("/api/v1/library/${librarySegments[card.resource]}/${card.item_id}"));
   assert.ok(conversation.includes("<SavedComparisonListCard item={item}"));
-  assert.ok(comparator.includes("<SavedComparisonListCard item={item}"));
+  assert.match(comparator, /<SavedComparisonListCard\s+[\s\S]*?item=\{item\}/);
   assert.match(conversation, /card\.type === "saved_comparison"/);
   assert.match(conversation, /card\.type === "prepared_action"/);
   assert.ok(conversation.includes('<PersonalRecordCard'));
@@ -111,5 +111,5 @@ test("the UI gallery registers the same saved comparison card used by chat and c
   assert.ok(comparisonGallery.includes("<SavedComparisonListCard"));
   assert.ok(comparisonGallery.includes("item={savedFoodComparison}"));
   assert.ok(conversation.includes("<SavedComparisonListCard item={item}"));
-  assert.ok(comparator.includes("<SavedComparisonListCard item={item}"));
+  assert.match(comparator, /<SavedComparisonListCard\s+[\s\S]*?item=\{item\}/);
 });

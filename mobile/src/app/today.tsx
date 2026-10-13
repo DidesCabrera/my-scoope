@@ -1,11 +1,11 @@
 import { type Href, Redirect, Stack, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { CalendarClock } from "lucide-react-native";
+import { CalendarClock, Camera, Pin, Scale, Weight } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, CalendarizedDayDetail, HomeData, MealCheckInInput, TodayData } from "@/api/types";
+import type { ActiveProgramData, CalendarizedDayDetail, ComparisonKind, HomeData, MealCheckInInput, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { subscribeToCalendarizedDayUpdates } from "@/components/calendarization/calendarized-day-updates";
@@ -14,6 +14,7 @@ import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-p
 import { compactDateLabel } from "@/components/calendarization/current-week";
 import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import { HomeActions } from "@/components/home-actions";
+import { ComparisonCreateActions } from "@/components/comparisons";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -53,8 +54,11 @@ function optimisticProgramAdherence(program: ActiveProgramData | null, previousC
   };
 }
 
-function HomeSectionTitle({ children }: { children: string }) {
-  return <Text accessibilityRole="header" style={styles.homeSectionTitle}>{children}</Text>;
+function HomeSectionTitle({ children, pinned = false }: { children: string; pinned?: boolean }) {
+  return <View style={styles.homeSectionHeading}>
+    {pinned ? <Pin color={tokens.color.textMain} size={18} strokeWidth={2.2} /> : null}
+    <Text accessibilityRole="header" style={styles.homeSectionTitle}>{children}</Text>
+  </View>;
 }
 
 function ActiveProgramSectionHeader() {
@@ -78,6 +82,8 @@ export default function TodayScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [homeActionsVisible, setHomeActionsVisible] = useState(false);
+  const [comparisonActionsVisible, setComparisonActionsVisible] = useState(false);
+  const [openComparisonAfterHomeActions, setOpenComparisonAfterHomeActions] = useState(false);
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
   const [savingCompletionMealKey, setSavingCompletionMealKey] = useState<string | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
@@ -85,6 +91,10 @@ export default function TodayScreen() {
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
   const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
+
+  const openComparisonBuilder = useCallback((kind: ComparisonKind) => {
+    router.push({ pathname: "/comparator", params: { create: "1", kind } } as Href);
+  }, [router]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -257,7 +267,7 @@ export default function TodayScreen() {
       {today ? <View style={styles.weekRow}><CurrentWeekSection localDate={today.local_date} /></View> : null}
       <View style={styles.greetingRow}>
         <View style={styles.greetingHeading}>
-          <Text style={styles.greetingTitle}>{`Vamos, ${firstName}`}</Text>
+          <Text style={styles.greetingTitle}>{`💪🏻Vamos ${firstName}!`}</Text>
           {currentWeightKg != null ? <GuideMetric onPress={() => router.push("/weight" as Href)} tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} /> : null}
         </View>
         <View style={styles.greetingSubtitle}>
@@ -265,7 +275,7 @@ export default function TodayScreen() {
         </View>
         {planContext ? <View style={styles.planContext}><Chip backgroundColor={`${planContext.color}4D`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
       </View>
-      {today?.calendarization ? <HomeSectionTitle>Tu plan de alimentos para hoy</HomeSectionTitle> : null}
+      {today?.calendarization ? <HomeSectionTitle pinned>Tu plan de alimentación para hoy</HomeSectionTitle> : null}
 
       {today?.calendarization && today.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
@@ -290,7 +300,7 @@ export default function TodayScreen() {
         </Card>
       ) : today?.pinned_plan ? (
         <>
-          <HomeSectionTitle>Tu plan de alimentos para hoy</HomeSectionTitle>
+          <HomeSectionTitle pinned>Tu plan de alimentación para hoy</HomeSectionTitle>
           <PinnedDailyPlanCard apiRequest={apiRequest} editing={pinnedMealEditing} item={today.pinned_plan} mealExecution={today.meal_execution} onChanged={load} onChangeMealTime={async (meal, hour) => {
             if (meal.relationId == null) return;
             await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan!.id}/meals/${meal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
@@ -343,13 +353,32 @@ export default function TodayScreen() {
         </Card>
       ) : null}
 
+      <View style={styles.homeQuickActions}>
+        <HomeSectionTitle>Accesos rápidos</HomeSectionTitle>
+        <View style={styles.homeFooterActions}>
+          <Button icon={<Camera color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Digitalizar etiqueta" onPress={() => router.push("/label-capture" as Href)} variant="secondary" />
+          <Button icon={<Weight color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Registrar peso corporal" onPress={() => router.push("/weight" as Href)} variant="secondary" />
+          <Button icon={<Scale color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Comparar" onPress={() => setComparisonActionsVisible(true)} variant="secondary" />
+        </View>
+      </View>
+
       </Screen>
       <HomeActions
         onCaptureLabel={() => router.push("/label-capture")}
         onClose={() => setHomeActionsVisible(false)}
+        onCompare={() => {
+          setOpenComparisonAfterHomeActions(true);
+          setHomeActionsVisible(false);
+        }}
+        onDismiss={() => {
+          if (!openComparisonAfterHomeActions) return;
+          setOpenComparisonAfterHomeActions(false);
+          setComparisonActionsVisible(true);
+        }}
         onRegisterWeight={() => router.push("/weight")}
         visible={homeActionsVisible}
       />
+      <ComparisonCreateActions onClose={() => setComparisonActionsVisible(false)} onSelect={openComparisonBuilder} visible={comparisonActionsVisible} />
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </>
   );
@@ -360,7 +389,10 @@ const styles = StyleSheet.create({
   activeProgramSectionHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   activeProgramSectionSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   activeProgramSectionTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
-  homeSectionTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.semibold, marginBottom: 0, marginTop: tokens.spacing.sm },
+  homeSectionHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
+  homeSectionTitle: { color: tokens.color.textMain, flex: 1, fontSize: 18, fontWeight: tokens.weight.semibold, marginBottom: 0 },
+  homeFooterActions: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
+  homeQuickActions: { marginTop: tokens.spacing.xl },
   greetingRow: { gap: 0, marginBottom: 0 },
   greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   greetingTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5 },

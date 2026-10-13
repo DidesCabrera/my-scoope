@@ -17,6 +17,7 @@ test("the UI gallery presents static popup aesthetics without modal behavior", (
   assert.equal(source.includes("<Text style={styles.actionsEyebrow}>ACCIONES</Text>"), true);
   assert.equal(source.includes("<EntityIcon entity=\"dailyPlan\" size=\"header\" />"), true);
   assert.equal(source.includes("styles.actionTable"), true);
+  assert.equal(source.indexOf('label="Compartir"') < source.indexOf('label="Editar lista"'), true);
   assert.equal(source.includes("styles.actionIcon"), false);
   assert.equal(source.includes("<Modal"), false);
   assert.equal(source.includes("onPress"), false);
@@ -37,7 +38,7 @@ test("product action sheets blur the backdrop and preserve entity identity", () 
   assert.equal(source.includes("sheetTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, lineHeight: 25 }"), true);
   assert.equal(actionSheet.includes("sheetBorder"), false);
   assert.equal(actionSheet.includes("actionsTable: { backgroundColor: tokens.color.surfaceMuted, borderColor"), false);
-  assert.equal(actionSheet.includes('<View style={styles.actionIcon}><Icon color={color} size={18} /></View>'), true);
+  assert.equal(actionSheet.includes('<View style={styles.actionIcon}>{iconNode ?? (Icon ? <Icon color={color} size={18} /> : null)}</View>'), true);
   assert.equal(actionSheet.includes('actionIcon: { alignItems: "center", justifyContent: "center", width: 20 }'), true);
   assert.equal(libraryActions.includes('<ActionSheetAction\n                    icon={Info}'), true);
   assert.equal(libraryActions.includes("styles.actionRow"), false);

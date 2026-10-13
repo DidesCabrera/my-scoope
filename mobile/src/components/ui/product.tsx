@@ -14,7 +14,7 @@ import {
   Clock,
   FileDown,
   House,
-  Inbox,
+  Send,
   type LucideIcon,
   MessageSquarePlus,
   NotebookPen,
@@ -62,10 +62,11 @@ function FoodGramChip({ value }: { value: string }) {
   return <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={value} textColor={tokens.color.entityIconForeground} />;
 }
 
-export function HeaderMetadataChip({ kind, value }: { kind: "date" | "time"; value: string }) {
-  const Icon = kind === "time" ? Clock : CalendarDays;
+export function HeaderMetadataChip({ kind, value }: { kind: "date" | "time" | "weight"; value: string }) {
+  const Icon = kind === "time" ? Clock : kind === "weight" ? Weight : CalendarDays;
+  const accessibilityLabel = kind === "time" ? "Hora" : kind === "weight" ? "Peso actual" : "Fecha";
   return (
-    <View accessibilityLabel={`${kind === "time" ? "Hora" : "Fecha"}: ${value}`} accessible style={styles.headerMetadataChip}>
+    <View accessibilityLabel={`${accessibilityLabel}: ${value}`} accessible style={styles.headerMetadataChip}>
       <Icon color={tokens.color.textMuted} size={11} strokeWidth={2} />
       <Text style={styles.headerMetadataChipText}>{value}</Text>
     </View>
@@ -139,20 +140,20 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   comparator: Scale,
   weight: Weight,
   explore: Search,
-  inbox: Inbox,
+  inbox: Send,
   learning: BookOpen,
   create: CircleFadingPlus,
   import: FileDown,
 };
 
-export function EntityIcon({ entity, size = "regular", tone = "entity" }: { entity: EntityKind; size?: "benefit" | "compact" | "regular" | "header" | "hero"; tone?: "entity" | "white" }) {
+export function EntityIcon({ backgroundColor, entity, size = "regular", tone = "entity" }: { backgroundColor?: string; entity: EntityKind; size?: "benefit" | "compact" | "regular" | "header" | "hero"; tone?: "entity" | "white" }) {
   const Icon = entityIcons[entity];
   const benefit = size === "benefit";
   const compact = size === "compact";
   const header = size === "header";
   const hero = size === "hero";
   return (
-    <View style={[styles.entityIcon, benefit && styles.entityIconBenefit, compact && styles.entityIconCompact, header && styles.entityIconHeader, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : tokens.color[entity] }]}>
+    <View style={[styles.entityIcon, benefit && styles.entityIconBenefit, compact && styles.entityIconCompact, header && styles.entityIconHeader, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : backgroundColor ?? tokens.color[entity] }]}>
       <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" || header ? 18 : benefit ? 14 : compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
     </View>
   );
@@ -249,6 +250,7 @@ export function EntityHeading({
   eyebrowAccessory,
   headingLink,
   identityIcon: IdentityIcon,
+  identityColor,
   variant = "card",
 }: {
   title: string;
@@ -261,6 +263,7 @@ export function EntityHeading({
   eyebrowAccessory?: ReactNode;
   headingLink?: EntityHeadingLink;
   identityIcon?: LucideIcon;
+  identityColor?: string;
   variant?: "card" | "page";
 }) {
   const { width } = useWindowDimensions();
@@ -272,7 +275,7 @@ export function EntityHeading({
     <>
       <View style={styles.headingEyebrowLine}>
         <View style={styles.entityEyebrowRow}>
-          {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon entity={entity} size="compact" />}
+          {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: identityColor ?? tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon backgroundColor={identityColor} entity={entity} size="compact" />}
           <Text numberOfLines={1} style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
         </View>
         {eyebrowAccessory}
@@ -315,6 +318,7 @@ export function EntityCard({
   completion,
   accessory,
   headingLink,
+  identityColor,
   actions,
   children,
   onPress,
@@ -330,13 +334,14 @@ export function EntityCard({
   completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
   headingLink?: EntityHeadingLink;
+  identityColor?: string;
   actions?: ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }>) {
   const content = (
     <Card accent={accent ?? tokens.color[entity]} style={[actions ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
-      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} indicators={indicators} subtitle={subtitle} title={title} />
+      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} identityColor={identityColor} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
       {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
     </Card>

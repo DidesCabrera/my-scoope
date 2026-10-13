@@ -35,8 +35,8 @@ export function ContextualLibraryActions({ apiRequest, entity, id, name, onChang
       entitySlug={config.slug}
       item={{
         actions: [
-          { destructive: false, key: "rename", label: "Renombrar" },
           { destructive: false, key: "share", label: "Compartir" },
+          { destructive: false, key: "rename", label: "Renombrar" },
           { destructive: true, key: "delete", label: "Eliminar" },
         ],
         entity,

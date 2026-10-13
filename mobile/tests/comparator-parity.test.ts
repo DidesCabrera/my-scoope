@@ -43,6 +43,9 @@ test("comparison header creation action offers every comparison kind", async () 
   assertSourceMatch(actions, /label="Comparar alimentos"[\s\S]*select\("foods"\)/);
   assertSourceMatch(actions, /label="Comparar comidas"[\s\S]*select\("meals"\)/);
   assertSourceMatch(actions, /label="Comparar planes diarios"[\s\S]*select\("dailyplans"\)/);
+  assertSourceMatch(actions, /iconNode=\{<EntityIcon entity="food" size="compact" \/>\}/);
+  assertSourceMatch(actions, /iconNode=\{<EntityIcon entity="meal" size="compact" \/>\}/);
+  assertSourceMatch(actions, /iconNode=\{<EntityIcon entity="dailyPlan" size="compact" \/>\}/);
 });
 
 test("comparison dashboard loads every tab once and switches locally", async () => {
@@ -51,6 +54,8 @@ test("comparison dashboard loads every tab once and switches locally", async () 
   assertSourceMatch(source, /limit=50&kind=\$\{item\.value\}/);
   assertSourceMatch(source, /const page = pages\?\.\[kind\] \?\? null/);
   assertSourceMatch(source, /\}, \[apiRequest\]\)/);
+  assertSourceMatch(source, /onEdit=\{\(\) => router\.push\(\{ pathname: "\/comparator", params: \{ kind: item\.kind, savedId: String\(item\.id\) \} \}/);
+  assertSourceMatch(source, /onRename=\{async \(name\) => \{[\s\S]*method: "PATCH"[\s\S]*await load\(\)/);
   assertSourceDoesNotMatch(source, /item\.value === kind \? 50 : 1/);
 });
 
@@ -127,6 +132,7 @@ test("saved comparison detail switches between result cards and entity cards", a
   assertSourceMatch(source, /`Comparación \$\{entityTabLabels\[comparison\.kind\]\}`/);
   assertSourceMatch(source, /action: comparisonId != null \? \{ icon: "more", label: "Acciones de comparación"/);
   assertSourceMatch(source, /<SavedComparisonActions/);
+  assertSourceMatch(source, /onDelete=\{async \(\) => \{[\s\S]*method: "DELETE"[\s\S]*router\.replace/);
   assertSourceDoesNotMatch(source, /<Button[^>]*label="Editar comparación"|Usar en el Asistente|Volver a guardadas/);
   assertSourceMatch(source, /key: "cards", label: "Cards"/);
   assertSourceMatch(source, /<Rows3[^>]*\/>[^\n]*key: "table", label: "Tabla"/);
@@ -135,6 +141,7 @@ test("saved comparison detail switches between result cards and entity cards", a
   assertSourceMatch(source, /activeTab === "table" \? <SavedComparisonPreviewPanels items=\{comparison\.items\} scope=\{entity\} \/>/);
   assertSourceMatch(source, /<ComparisonResultCards hideHeader result=\{comparison\} \/>/);
   assertSourceMatch(source, /<AppHeader[\s\S]*<Chip backgroundColor=\{`\$\{tokens\.color\[entity\]\}1A`\} borderColor=\{tokens\.color\[entity\]\} label=\{`\$\{comparisonItemCount\} \$\{comparisonItemLabel\}`\}/);
+  assertSourceMatch(source, /<ComparisonItemsSummary items=\{comparison\.items\} \/>/);
   assertSourceMatch(source, /comparisonItemCount === 1 \? 0 : 1/);
   assertSourceMatch(source, /Promise\.all\(saved\.items\.map\(\(item\) => apiRequest<LibraryItem>/);
   assertSourceMatch(source, /activeTab === "entities" \? entityItems\.map/);

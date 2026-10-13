@@ -101,7 +101,7 @@ test("screens that own global navigation preserve their header through content a
   assertSourceMatch(comparator, /action: \{ label: "Cancelar", onPress: cancel \}/);
   assertSourceDoesNotMatch(comparator, /title=\{savedId \? "Editar Comparación" : "Nueva Comparación"\}/);
   assertSourceDoesNotMatch(comparator, /<ComparisonKindTabs kind=\{kind\}/);
-  assertSourceMatch(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparaciones" \/>\}/);
+  assertSourceMatch(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" subtitle="Compara los elementos de tu librería\. Comprende las similitudes y diferencias, y reemplázalos en tu dieta\." title="Comparaciones" \/>\}/);
   assertSourceMatch(comparator, /stickyHeader=\{<ComparisonKindTabs counts=\{counts\}/);
   assertSourceMatch(comparator, /stickyHeaderStyle=\{styles\.dashboardStickyHeader\}/);
   assertSourceMatch(comparator, /<DistributedTabBar<ComparisonKind>/);

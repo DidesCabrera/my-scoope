@@ -65,6 +65,8 @@ const entityLabels = {
 
 export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCompare, onEdit, onOpenInformation, onRemove, onSaveToLibrary, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
+  const shareAction = actions.find((action) => action.key === "share");
+  const remainingActions = actions.filter((action) => action.key !== "share");
   const [internalVisible, setInternalVisible] = useState(false);
   const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | { destructive: true; key: "remove"; label: string } | null>(
     initialAction === "change-time" ? { destructive: false, key: "change-time", label: "Cambiar hora" } : null,
@@ -212,6 +214,15 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                 <View style={styles.sheetContent}>
                   {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
                   <ActionSheetActions>
+                {shareAction ? (
+                  <ActionSheetAction
+                    disabled={submitting}
+                    icon={actionIcons.share}
+                    label={shareAction.label}
+                    onPress={() => selectAction(shareAction)}
+                  />
+                ) : null}
+
                 {onOpenInformation ? (
                   <ActionSheetAction
                     icon={Info}
@@ -254,7 +265,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                   />
                 ) : null}
 
-                {actions.map((action) => {
+                {remainingActions.map((action) => {
                   const Icon = actionIcons[action.key];
                   return (
                     <ActionSheetAction

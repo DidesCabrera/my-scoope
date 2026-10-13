@@ -11,6 +11,7 @@ import type {
   ComparisonSelection,
   SavedComparisonDetail,
   SavedComparisonListData,
+  ShareResource,
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
@@ -112,11 +113,33 @@ function ComparatorDashboard() {
       <Screen
         headerMode="preserve"
         onHeaderVisibilityChange={setCompactHeaderVisible}
-        scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparaciones" />}
+        scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" subtitle="Compara los elementos de tu librería. Comprende las similitudes y diferencias, y reemplázalos en tu dieta." title="Comparaciones" />}
         stickyHeader={<ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />}
         stickyHeaderStyle={styles.dashboardStickyHeader}>
         {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
-        {page?.items.length ? page.items.map((item) => <SavedComparisonListCard item={item} key={item.id} onPress={() => router.push({ pathname: "/comparator/saved/[id]", params: { id: String(item.id), kind: item.kind } } as Href)} />) : (
+        {page?.items.length ? page.items.map((item) => <SavedComparisonListCard
+          item={item}
+          key={item.id}
+          onDelete={async () => {
+            await apiRequest<{ deleted_id: number }>(`/api/v1/comparisons/saved/${item.id}`, { method: "DELETE" });
+            await load();
+          }}
+          onEdit={() => router.push({ pathname: "/comparator", params: { kind: item.kind, savedId: String(item.id) } } as Href)}
+          onPress={() => router.push({ pathname: "/comparator/saved/[id]", params: { id: String(item.id), kind: item.kind } } as Href)}
+          onRename={async (name) => {
+            await apiRequest<SavedComparisonDetail>(`/api/v1/comparisons/saved/${item.id}/name`, {
+              body: JSON.stringify({ name }),
+              headers: { "Content-Type": "application/json" },
+              method: "PATCH",
+            });
+            await load();
+          }}
+          onShare={() => apiRequest<ShareResource>(`/api/v1/shares/comparisons/${item.id}`, {
+            body: JSON.stringify({ claim_policy: "multiple" }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
+          })}
+        />) : (
           <EmptyState actionLabel="Crear nueva comparación" message={`Todavía no tienes comparaciones guardadas de ${fallbackKinds.find((item) => item.value === kind)?.label.toLowerCase()}.`} onAction={() => router.push(creationHref(kind))} title="Aún no hay comparaciones" />
         )}
       </Screen>

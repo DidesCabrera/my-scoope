@@ -1,12 +1,14 @@
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Ellipsis } from "lucide-react-native";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { ComparisonKind, SavedComparisonSummary } from "@/api/types";
+import type { ComparisonKind, SavedComparisonSummary, ShareResource } from "@/api/types";
 import { Card } from "@/components/ui/primitives";
 import { Chip, EntityCardAction, EntityCardActions, EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 import { SavedComparisonPreviewPanels } from "./comparison-components";
+import { SavedComparisonActions } from "./saved-comparison-actions";
 
 const comparisonEntities = {
   foods: "food",
@@ -31,10 +33,12 @@ function comparisonCountLabel(kind: ComparisonKind, count: number) {
   return `${count} ${count === 1 ? labels.singular : labels.plural}`;
 }
 
-export function SavedComparisonListCard({ item, onPress }: { item: SavedComparisonSummary; onPress(): void }) {
+export function SavedComparisonListCard({ item, onDelete, onEdit, onPress, onRename, onShare }: { item: SavedComparisonSummary; onDelete?(): Promise<void>; onEdit?(): void; onPress(): void; onRename?(name: string): Promise<void>; onShare?(): Promise<ShareResource> }) {
+  const [actionsVisible, setActionsVisible] = useState(false);
   const entity = comparisonEntities[item.kind];
   const entityColor = comparisonEntityColors[item.kind];
   return (
+    <>
     <Card accent={entityColor} style={styles.savedCard}>
       <Pressable
         accessibilityLabel={`Ver detalle de ${item.name}`}
@@ -52,11 +56,16 @@ export function SavedComparisonListCard({ item, onPress }: { item: SavedComparis
       </Pressable>
       <SavedComparisonPreviewPanels items={item.items} scope={entity} />
       <EntityCardActions>
+        {onDelete && onEdit && onRename && onShare ? <EntityCardAction label={`Más acciones para ${item.name}`} onPress={() => setActionsVisible(true)}>
+          <Ellipsis color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+        </EntityCardAction> : null}
         <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={onPress} role="link">
           <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
         </EntityCardAction>
       </EntityCardActions>
     </Card>
+    {onDelete && onEdit && onRename && onShare ? <SavedComparisonActions compact name={item.name} onClose={() => setActionsVisible(false)} onDelete={onDelete} onEdit={onEdit} onRename={onRename} onShare={onShare} visible={actionsVisible} /> : null}
+    </>
   );
 }
 

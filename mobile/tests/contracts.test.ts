@@ -204,8 +204,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(collectionPageHeader, /container: \{ alignItems: "flex-start", gap: tokens\.spacing\.sm/);
   assertSourceMatch(collectionPageHeader, /iconSlot: \{ alignSelf: "flex-start" \}/);
   assertSourceMatch(collectionPageHeader, /function PageHeader[\s\S]*<View style=\{styles\.copy\}>[\s\S]*?<Text style=\{styles\.title\}>\{title\}<\/Text>[\s\S]*\{indicator\}/);
+  assertSourceMatch(collectionPageHeader, /subtitle \? <Text style=\{styles\.subtitle\}>\{subtitle\}<\/Text>/);
+  assertSourceMatch(collectionPageHeader, /subtitle: \{ color: tokens\.color\.textMuted, fontSize: tokens\.type\.caption, lineHeight: 20 \}/);
   assertSourceDoesNotMatch(collectionPageHeader, /Bookmark|Mis librerías|eyebrow/);
-  assertSourceMatch(collectionPageHeader, /<StructuralIndicators[^\n]*tone="surfaceMuted"/);
+  assertSourceMatch(collectionPageHeader, /<Chip[\s\S]*backgroundColor=\{`\$\{tokens\.color\[entity\]\}1A`\}[\s\S]*borderColor=\{tokens\.color\[entity\]\}[\s\S]*label=\{`\$\{count\} \$\{collectionCountLabels\[entity\]\[count === 1 \? "singular" : "plural"\]\}`\}/);
   assertSourceMatch(collectionPageHeader, /export function SectionPageHeader/);
   assertSourceMatch(collectionPageHeader, /<SectionIcon section=\{section\} size="hero" \/>/);
   assertSourceMatch(collectionPageHeader, /style=\{styles\.countChip\}/);
@@ -628,12 +630,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
-  assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`Vamos, \$\{firstName\}`\}[\s\S]*?Fallar en planificar, es planificar fallar/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`💪🏻Vamos \$\{firstName\}!`\}[\s\S]*?Fallar en planificar, es planificar fallar/);
   assertSourceMatch(todayScreen, /greetingSubtitle: \{[^}]*marginTop: tokens\.spacing\.xs/);
   assertSourceMatch(todayScreen, /<Chip backgroundColor=\{`\$\{planContext\.color\}4D`\} borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
   assertSourceMatch(todayScreen, /planContext: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
-  assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>Tu plan de alimentos para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle pinned>Tu plan de alimentación para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
+  assertSourceMatch(todayScreen, /pinned \? <Pin color=\{tokens\.color\.textMain\} size=\{18\} strokeWidth=\{2\.2\} \/>/);
   assertSourceMatch(todayScreen, /eyebrow="PLAN DEL DÍA"/);
   assertSourceMatch(todayScreen, /greetingRow: \{ gap: 0, marginBottom: 0 \}/);
   assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm \}/);
@@ -644,7 +647,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /Tu plan de hoy pertenece a este programa en curso\. Revisa tu adherencia y consulta los otros planes de tu programa\./);
   assertSourceMatch(todayScreen, /activeProgramSectionTitle: \{[^}]*fontSize: 20[^}]*fontWeight: tokens\.weight\.extraBold/);
   assertSourceMatch(todayScreen, /activeProgramSectionHeader: \{[^}]*marginTop: tokens\.spacing\.xxl/);
-  assertSourceMatch(todayScreen, /homeSectionTitle: \{[^}]*fontSize: 18[^}]*marginBottom: 0[^}]*marginTop: tokens\.spacing\.sm/);
+  assertSourceMatch(todayScreen, /homeSectionHeading: \{[^}]*marginTop: tokens\.spacing\.sm/);
+  assertSourceMatch(todayScreen, /homeSectionTitle: \{[^}]*fontSize: 18[^}]*marginBottom: 0/);
   assertSourceDoesNotMatch(todayScreen, /<SectionDivider \/>/);
   const currentWeek = await readTestFile(
     path.resolve(process.cwd(), "src/components/calendarization/current-week-section.tsx"),
@@ -682,6 +686,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
   assertSourceMatch(todayScreen, /greetingHeading: \{ alignItems: "center", flexDirection: "row"/);
   assertSourceMatch(todayScreen, /<GuideMetric onPress=\{\(\) => router\.push\("\/weight" as Href\)\} tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
+  assertSourceMatch(todayScreen, /<View style=\{styles\.homeQuickActions\}>[\s\S]*<HomeSectionTitle>Accesos rápidos<\/HomeSectionTitle>[\s\S]*<View style=\{styles\.homeFooterActions\}>/);
+  assertSourceMatch(todayScreen, /homeFooterActions: \{[^}]*marginTop: tokens\.spacing\.sm/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Camera color=\{tokens\.color\.textMain\}[\s\S]*label="Digitalizar etiqueta"[\s\S]*router\.push\("\/label-capture" as Href\)[^>]*variant="secondary"/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Weight color=\{tokens\.color\.textMain\}[\s\S]*label="Registrar peso corporal"[\s\S]*router\.push\("\/weight" as Href\)[^>]*variant="secondary"/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Scale color=\{tokens\.color\.textMain\}[\s\S]*label="Comparar" onPress=\{\(\) => setComparisonActionsVisible\(true\)\} variant="secondary"/);
+  assertSourceMatch(todayScreen, /<HomeActions[\s\S]*onCompare=\{\(\) => \{[\s\S]*setOpenComparisonAfterHomeActions\(true\)[\s\S]*setHomeActionsVisible\(false\)[\s\S]*onDismiss=\{\(\) => \{[\s\S]*setComparisonActionsVisible\(true\)/);
+  assertSourceMatch(todayScreen, /<ComparisonCreateActions onClose=\{\(\) => setComparisonActionsVisible\(false\)\} onSelect=\{openComparisonBuilder\} visible=\{comparisonActionsVisible\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /<GuideMetric icon="weight"/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValueOnly: \{ borderRadius: tokens\.radius\.lg, minHeight: 40 \}/);

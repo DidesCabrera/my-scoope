@@ -37,6 +37,12 @@ const comparisonEntityByKind: Record<NonNullable<SharingInboxItem["comparison_ki
   meals: "meal",
 };
 
+const comparisonLabelByKind: Record<NonNullable<SharingInboxItem["comparison_kind"]>, string> = {
+  dailyplans: "Planes diarios",
+  foods: "Alimentos",
+  meals: "Comidas",
+};
+
 function sharedCardAccent(item: SharingInboxItem): string | undefined {
   if (item.subject_type !== "comparison" || !item.comparison_kind) return undefined;
   return tokens.color[comparisonEntityByKind[item.comparison_kind]];
@@ -125,7 +131,7 @@ export default function InboxScreen() {
       headerMode="preserve"
       onHeaderVisibilityChange={setCompactHeaderVisible}
       refreshControl={<RefreshControl onRefresh={() => void load(true)} refreshing={refreshing} tintColor={tokens.color.interactivePrimary} />}
-      scrollHeader={<SectionPageHeader countLabel="elementos" section="inbox" title="Compartidos" />}
+      scrollHeader={<SectionPageHeader countLabel="elementos" section="inbox" subtitle="Envía y recibe los elementos que desees con otros usuarios para complementar tu librería y conocimiento." title="Compartidos" />}
       stickyHeader={<DistributedTabBar<SharingScope>
         accessibilityLabel="Tipo de contenido compartido"
         activeTab={activeScope}
@@ -154,8 +160,12 @@ export default function InboxScreen() {
         const directionLabel = activeScope === "received"
           ? eyebrow.feminine ? "Recibida" : "Recibido"
           : eyebrow.feminine ? "Enviada" : "Enviado";
+        const eyebrowLabel = item.subject_type === "comparison" && item.comparison_kind
+          ? `Comparación ${comparisonLabelByKind[item.comparison_kind]}`
+          : eyebrow.label;
+        const comparisonAccent = sharedCardAccent(item);
         return <EntityCard
-          accent={sharedCardAccent(item)}
+          accent={comparisonAccent}
           accessory={activeScope === "sent"
             ? <Send color={tokens.color.textMuted} size={20} />
             : item.is_read || unavailable
@@ -172,7 +182,8 @@ export default function InboxScreen() {
             </View>}
           </> : undefined}
           entity={entityBySubject[item.subject_type]}
-          eyebrow={`${eyebrow.label} ${directionLabel}`}
+          eyebrow={`${eyebrowLabel} ${directionLabel}`}
+          identityColor={comparisonAccent}
           key={item.id}
           onPress={unavailable ? undefined : () => open(item)}
           subtitle={`${activeScope === "received" ? `Recibido de ${item.sender}` : "Enviado"} · ${formatCompactDate(item.created_at) ?? "Fecha no disponible"}`}

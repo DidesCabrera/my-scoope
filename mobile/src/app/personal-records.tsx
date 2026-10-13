@@ -62,9 +62,9 @@ export default function PersonalRecordsScreen() {
 
   if (status === "anonymous") return <Redirect href="/login" />;
 
-  const cards: { action?: { href: Href }; icon: typeof Files; rows: RecordRow[]; title: string }[] = [
+  const cards: { action?: { href: Href; label?: string }; icon: typeof Files; rows: RecordRow[]; title: string }[] = [
     {
-      action: { href: "/personal-records-edit?section=metrics" as Href },
+      action: { href: "/weight" as Href, label: "Registrar peso corporal" },
       icon: Scale,
       rows: [{ label: "Peso actual", value: state?.weight_kg != null ? `${state.weight_kg.toFixed(1)} kg` : "Sin registro" }],
       title: "Métricas corporales",
@@ -122,7 +122,7 @@ export default function PersonalRecordsScreen() {
               </View>
             ))}
           </View>
-          {action ? <EntityCardActions><EntityCardAction label={`Editar ${title}`} onPress={() => router.push(action.href)}><Pencil color={tokens.color.textMuted} size={21} strokeWidth={2.2} /></EntityCardAction></EntityCardActions> : null}
+          {action ? <EntityCardActions><EntityCardAction label={action.label ?? `Editar ${title}`} onPress={() => router.push(action.href)}><Pencil color={tokens.color.textMuted} size={21} strokeWidth={2.2} /></EntityCardAction></EntityCardActions> : null}
         </Card>
       ))}
     </Screen>

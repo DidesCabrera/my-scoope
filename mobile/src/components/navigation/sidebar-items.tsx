@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import type { Href } from "expo-router";
 import type { LucideIcon } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -13,15 +13,15 @@ export type EntitySidebarItemData = { entity: LibraryEntity; href: Href; label: 
 
 type SharedProps = { active: boolean; label: string; onPress(): void };
 
-function SidebarItemFrame({ active, children, count, label, onPress }: PropsWithChildren<SharedProps & { count?: number | null }>) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={onPress} style={({ pressed }) => [styles.item, active && styles.itemActive, pressed && styles.pressed]}>{children}<Text style={[styles.label, active && styles.labelActive]}>{label}</Text>{count !== undefined ? <View accessibilityLabel={count == null ? "Cantidad no disponible" : `${count} elementos`} accessible style={styles.countChip}><Text style={styles.countChipText}>{count ?? "—"}</Text></View> : null}</Pressable>;
+function SidebarItemFrame({ accessory, active, children, count, label, onPress }: PropsWithChildren<SharedProps & { accessory?: ReactNode; count?: number | null }>) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={onPress} style={({ pressed }) => [styles.item, active && styles.itemActive, pressed && styles.pressed]}>{children}<Text style={[styles.label, active && styles.labelActive]}>{label}</Text>{accessory}{count !== undefined ? <View accessibilityLabel={count == null ? "Cantidad no disponible" : `${count} elementos`} accessible style={styles.countChip}><Text style={styles.countChipText}>{count ?? "—"}</Text></View> : null}</Pressable>;
 }
 export function EntitySidebarItem({ active, count, entity, label, onPress }: SharedProps & { count: number | null; entity: LibraryEntity }) {
   return <SidebarItemFrame active={active} count={count} label={label} onPress={onPress}><EntityIcon entity={entity} size="regular" /></SidebarItemFrame>;
 }
-export function NavigationSidebarItem({ active, icon: Icon, iconTreatment = "plain", label, onPress }: SharedProps & { icon: LucideIcon; iconTreatment?: "assistant" | "plain" }) {
+export function NavigationSidebarItem({ accessory, active, icon: Icon, iconTreatment = "plain", label, onPress }: SharedProps & { accessory?: ReactNode; icon: LucideIcon; iconTreatment?: "assistant" | "plain" }) {
   const assistant = iconTreatment === "assistant";
-  return <SidebarItemFrame active={active} label={label} onPress={onPress}>{assistant ? <AssistantGradientIcon /> : <Icon color={tokens.color.textMain} size={20} strokeWidth={2} />}</SidebarItemFrame>;
+  return <SidebarItemFrame accessory={accessory} active={active} label={label} onPress={onPress}>{assistant ? <AssistantGradientIcon /> : <Icon color={tokens.color.textMain} size={20} strokeWidth={2} />}</SidebarItemFrame>;
 }
 const styles = StyleSheet.create({
   countChip: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, justifyContent: "center", minWidth: 30, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },

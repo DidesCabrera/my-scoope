@@ -17,6 +17,7 @@ import {
   Plus,
   Bell,
   Scale,
+  Send,
   Sparkles,
   TrendingUp,
   UserRound,
@@ -45,6 +46,7 @@ import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
 import { MyScoopeBrandLogo } from "@/components/ui/my-scoope-brand-logo";
 import { ModalBackdrop } from "@/components/ui/action-sheet-modal";
+import { HeaderMetadataChip } from "@/components/ui/product";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
@@ -72,7 +74,7 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   assistant: Sparkles,
   comparator: Scale,
   home: House,
-  inbox: UserPlus,
+  inbox: Send,
   program: CalendarClock,
 };
 
@@ -147,7 +149,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/review") return { icon: TrendingUp, title: "Revisión de progreso" };
   if (pathname === "/revision") return { icon: ClipboardCheck, title: "Revisar ajuste" };
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };
-  if (pathname === "/inbox") return { icon: UserPlus, title: "Compartidos" };
+  if (pathname === "/inbox") return { icon: Send, title: "Compartidos" };
   if (pathname.startsWith("/share/")) return { icon: UserPlus, title: "Plan compartido" };
   if (pathname === "/subscription" || pathname === "/subscription-details") return { icon: WalletCards, title: pathname === "/subscription" ? "Suscripciones y Bolsas" : "Detalles de suscripciones y bolsas" };
   if (pathname === "/account") return { icon: UserRound, title: "Mi cuenta" };
@@ -335,9 +337,18 @@ function EntitySidebarEntry({ count, item }: { count: number | null; item: Entit
   return <EntitySidebarItem {...state} count={count} entity={item.entity} label={item.label} />;
 }
 
+function PersonalRecordsSidebarEntry({ weightKg }: { weightKg: number | null }) {
+  const state = useSidebarItem({ href: "/personal-records" });
+  return <NavigationSidebarItem {...state} accessory={weightKg != null ? <HeaderMetadataChip kind="weight" value={sidebarWeightLabel(weightKg)} /> : undefined} icon={Files} label="Fichas personales" />;
+}
+
 function libraryCount(counts: HomeData["library_counts"] | null, entity: LibraryEntity): number | null {
   if (!counts) return null;
   return entity === "dailyPlan" ? counts.daily_plan : counts[entity];
+}
+
+function sidebarWeightLabel(value: number): string {
+  return `${new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(value)} kg`;
 }
 
 function AppSidebar() {
@@ -345,12 +356,14 @@ function AppSidebar() {
   const drawerWidth = Math.min(width * 0.88, 360);
   const insets = useSafeAreaInsets();
   const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useAppNavigation();
-  const { apiRequest, session, status } = useSession();
+  const { apiRequest, profile, session, status } = useSession();
   const router = useRouter();
   const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeData["library_counts"] | null>(null);
+  const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [translateX] = useState(() => new Animated.Value(-380));
   const [scrimOpacity] = useState(() => new Animated.Value(0));
+  const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
 
   useEffect(() => {
     const hiddenPosition = -drawerWidth;
@@ -376,7 +389,10 @@ function AppSidebar() {
       .then((entitlements) => setCreditSummary({ availableCredits: entitlements.available_credits, planName: entitlements.plan_name }))
       .catch(() => undefined);
     void apiRequest<HomeData>("/api/v1/home")
-      .then((home) => setLibraryCounts(home.library_counts))
+      .then((home) => {
+        setLibraryCounts(home.library_counts);
+        setLatestWeightKg(home.latest_weight?.weight_kg ?? null);
+      })
       .catch(() => undefined);
   }, [apiRequest, menuOpen, status]);
 
@@ -388,6 +404,7 @@ function AppSidebar() {
     closeMenu();
     router.push("/today" as Href);
   };
+  const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? null;
 
   return (
     <Modal animationType="none" onRequestClose={closeMenu} transparent visible={menuMounted}>
@@ -400,16 +417,19 @@ function AppSidebar() {
             paddingTop: Math.max(insets.top, initialWindowMetrics?.insets.top ?? 0),
           }]}>
             <View style={styles.drawerHeader}>
-              <Pressable accessibilityLabel="Ir a Inicio" accessibilityRole="button" hitSlop={8} onPress={openHome} style={({ pressed }) => [styles.drawerHome, pressed && styles.pressed]}>
-                <MyScoopeBrandLogo compact />
-              </Pressable>
-              <Pressable
-                accessibilityLabel="Cerrar menú"
-                accessibilityRole="button"
-                onPress={closeMenu}
-                style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
-                <PanelRight color={tokens.color.textMuted} size={24} strokeWidth={2} />
-              </Pressable>
+              <View style={styles.drawerBrandRow}>
+                <Pressable accessibilityLabel="Ir a Inicio" accessibilityRole="button" hitSlop={8} onPress={openHome} style={({ pressed }) => [styles.drawerHome, pressed && styles.pressed]}>
+                  <MyScoopeBrandLogo compact scale={1.12} />
+                </Pressable>
+                <Pressable
+                  accessibilityLabel="Cerrar menú"
+                  accessibilityRole="button"
+                  onPress={closeMenu}
+                  style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
+                  <PanelRight color={tokens.color.textMuted} size={24} strokeWidth={2} />
+                </Pressable>
+              </View>
+              <Text style={styles.drawerGreeting}><Text style={styles.drawerGreetingEmoji}>💪🏻</Text>{`Vamos ${firstName}!`}</Text>
             </View>
             <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false} style={styles.drawerScroll}>
               {primaryItems.flatMap((item) => [
@@ -425,7 +445,7 @@ function AppSidebar() {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>
                 <FunctionalSidebarEntry item={{ href: "/account", icon: UserRound, label: "Mi cuenta" }} />
-                <FunctionalSidebarEntry item={{ href: "/personal-records", icon: Files, label: "Fichas personales" }} />
+                <PersonalRecordsSidebarEntry weightKg={currentWeightKg} />
                 {session?.is_staff ? <FunctionalSidebarEntry item={{ href: "/onboarding-preview", icon: WandSparkles, label: "Vista previa del onboarding" }} /> : null}
               </View>
             </ScrollView>
@@ -467,10 +487,13 @@ const styles = StyleSheet.create({
   scrim: { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   drawer: { backgroundColor: tokens.color.surfaceApp, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
   drawerSafeArea: { flex: 1 },
-  drawerHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 64, paddingHorizontal: tokens.spacing.md * 2 },
-  drawerHome: { alignItems: "center", justifyContent: "center", minHeight: 44 },
+  drawerHeader: { alignItems: "stretch", minHeight: 59.7, paddingHorizontal: tokens.spacing.md * 2 },
+  drawerBrandRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 44 },
+  drawerHome: { alignItems: "flex-start", justifyContent: "center", minHeight: 44 },
+  drawerGreeting: { color: tokens.color.textMain, fontSize: 15, fontWeight: "300", lineHeight: 20, marginTop: -4.3 },
+  drawerGreetingEmoji: { fontSize: 13 },
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
-  drawerContent: { gap: 0, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg },
+  drawerContent: { gap: 0, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.md, paddingTop: 24 },
   drawerScroll: { flex: 1 },
   menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
   menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },

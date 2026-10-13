@@ -242,6 +242,15 @@ def update_comparison(user, *, comparison_id: int, kind: str, selections: list[d
     return result.comparison
 
 
+def delete_comparison(user, *, comparison_id: int) -> int:
+    comparison = SavedComparison.objects.filter(pk=comparison_id, owner=user).first()
+    if comparison is None:
+        raise ValueError("saved_comparison_not_found")
+    deleted_id = comparison.id
+    comparison.delete()
+    return deleted_id
+
+
 def saved_comparison_list_payload(user, *, kind=None, offset=0, limit=30) -> dict:
     queryset = SavedComparison.objects.filter(owner=user)
     if kind:

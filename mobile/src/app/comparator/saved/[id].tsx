@@ -7,7 +7,7 @@ import { userFacingError } from "@/api/errors";
 import type { LibraryItem, SavedComparisonDetail, ShareResource } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
-import { SavedComparisonPreviewPanels } from "@/components/comparisons";
+import { ComparisonItemsSummary, SavedComparisonPreviewPanels } from "@/components/comparisons";
 import { SavedComparisonActions } from "@/components/comparisons/saved-comparison-actions";
 import { LibraryCard } from "@/components/libraries/library-card";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -77,6 +77,7 @@ export default function SavedComparisonDetailScreen() {
       scrollHeader={<View style={styles.detailHeader}>
         <AppHeader eyebrow={comparison ? `Comparación ${entityTabLabels[comparison.kind]}` : "Comparación guardada"} eyebrowIcon={<EntityIcon entity={entity} size="compact" />} title={comparison?.saved_comparison_name ?? "Comparación"} />
         {comparison ? <Chip backgroundColor={`${tokens.color[entity]}1A`} borderColor={tokens.color[entity]} label={`${comparisonItemCount} ${comparisonItemLabel}`} textColor={tokens.color.textMain} /> : null}
+        {comparison ? <ComparisonItemsSummary items={comparison.items} /> : null}
       </View>}
       stickyHeader={<View style={styles.tabsBleed}>
         <DistributedTabBar<DetailTab>
@@ -100,6 +101,10 @@ export default function SavedComparisonDetailScreen() {
         canEdit={canEdit}
         name={comparison.saved_comparison_name}
         onClose={() => setActionsVisible(false)}
+        onDelete={async () => {
+          await apiRequest<{ deleted_id: number }>(`/api/v1/comparisons/saved/${comparison.saved_comparison_id}`, { method: "DELETE" });
+          router.replace({ pathname: "/comparator", params: { kind } } as Href);
+        }}
         onEdit={() => router.push({ pathname: "/comparator", params: { kind, savedId: String(comparison.saved_comparison_id) } } as Href)}
         onRename={async (name) => {
           const renamed = await apiRequest<SavedComparisonDetail>(`/api/v1/comparisons/saved/${comparison.saved_comparison_id}/name`, {

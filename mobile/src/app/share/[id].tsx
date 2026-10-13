@@ -1,13 +1,14 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Carrot, ChevronRight, Utensils } from "lucide-react-native";
+import { Carrot, ChevronRight, ClipboardList, LayoutGrid, Rows3, Utensils } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-import type { ApiEnvelope, ShareClaimResult, ShareResource, SharingInboxData } from "@/api/types";
+import type { ApiEnvelope, ComparisonKind, ComparisonResultItem, ShareClaimResult, ShareResource, SharingInboxData } from "@/api/types";
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { FoodDetailCardList } from "@/components/details/food-detail-card-list";
+import { ComparisonItemsSummary, SavedComparisonPreviewPanels } from "@/components/comparisons";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -15,12 +16,40 @@ import { NutritionEntityCard } from "@/components/nutrition";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { FoodPanels, GroupedFoodsCard, MealPanels } from "@/components/panels";
 import { SharedResourceActions } from "@/components/sharing/shared-resource-actions";
-import { Button, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, NutritionFactsCard, Screen } from "@/components/ui";
+import { AppHeader, Button, Chip, DistributedTabBar, EntityCardAction, EntityIcon, HeaderMetadataChip, InlineNotice, LoadingState, NutritionFactsCard, Screen, type EntityKind } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 import { sharedComparisonResult, sharedFoodPanelItems, sharedMealPanelItems, sharedNutrition, sharedNutritionFacts, sharedPlanFoodPanelItems, sharedProgramLibraryItem, type ShareMeal } from "@/sharing/presentation";
 
 type SavedShare = { entity: "comparison" | "dailyPlan" | "food" | "meal" | "program"; item_id: number };
+type SharedComparisonTab = "cards" | "table" | "entities";
+
+const comparisonEntityByKind = {
+  dailyplans: "dailyPlan",
+  foods: "food",
+  meals: "meal",
+} as const satisfies Record<ComparisonKind, Extract<EntityKind, "dailyPlan" | "food" | "meal">>;
+
+const comparisonCountLabels = {
+  dailyplans: ["Plan diario", "Planes diarios"],
+  foods: ["Alimento", "Alimentos"],
+  meals: ["Comida", "Comidas"],
+} as const satisfies Record<ComparisonKind, readonly [string, string]>;
+
+const comparisonTabIcons = { dailyplans: ClipboardList, foods: Carrot, meals: Utensils } as const;
+
+function comparisonItemNutrition(item: ComparisonResultItem) {
+  const calories = item.values.calories;
+  const proteinAllocation = calories > 0 ? item.values.protein_g * 4 * 100 / calories : 0;
+  const carbsAllocation = calories > 0 ? item.values.carbs_g * 4 * 100 / calories : 0;
+  const fatAllocation = calories > 0 ? item.values.fat_g * 9 * 100 / calories : 0;
+  return {
+    calories,
+    protein: { allocation: proteinAllocation, grams: item.values.protein_g, perKilogram: item.values.protein_per_kilogram },
+    carbs: { allocation: carbsAllocation, grams: item.values.carbs_g },
+    fat: { allocation: fatAllocation, grams: item.values.fat_g },
+  };
+}
 
 const libraryPathByEntity: Record<SavedShare["entity"], string> = {
   comparison: "",
@@ -39,6 +68,7 @@ export default function SharedResourceScreen() {
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [comparisonTab, setComparisonTab] = useState<SharedComparisonTab>("cards");
   const [inboxState, setInboxState] = useState<{ id: number; isSaved: boolean; resourceId: string } | null>(null);
   const [isOwnedResource, setIsOwnedResource] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +130,11 @@ export default function SharedResourceScreen() {
   const mealItems = snapshot ? sharedMealPanelItems(meals, snapshot.nutrition.calories) : [];
   const planFoodItems = snapshot ? sharedPlanFoodPanelItems(meals, snapshot.nutrition.calories) : [];
   const sharedComparison = snapshot ? sharedComparisonResult(snapshot) : null;
+  const comparisonEntity = sharedComparison ? comparisonEntityByKind[sharedComparison.kind] : null;
+  const ComparisonTabIcon = sharedComparison ? comparisonTabIcons[sharedComparison.kind] : Carrot;
+  const comparisonCountLabel = sharedComparison
+    ? comparisonCountLabels[sharedComparison.kind][sharedComparison.items.length === 1 ? 0 : 1]
+    : "Elementos";
   const sharedProgram = snapshot && resource?.subject_type === "program" ? sharedProgramLibraryItem(snapshot, resource.title) : null;
   const sharedMeal: ShareMeal | null = snapshot && resource?.subject_type === "meal" ? {
     foods: snapshot.foods ?? [],
@@ -125,7 +160,33 @@ export default function SharedResourceScreen() {
   ) : null;
   return (
     <>
-    <Screen contentStyle={sharedProgram ? styles.programContent : loading ? styles.loadingContent : undefined} headerMode="preserve" scroll={!sharedProgram}>
+    <Screen
+      contentStyle={sharedProgram ? styles.programContent : loading ? styles.loadingContent : undefined}
+      headerMode="preserve"
+      scroll={!sharedProgram}
+      scrollHeader={sharedComparison && comparisonEntity ? <View style={styles.comparisonHeader}>
+        <AppHeader eyebrow={`Comparación ${sharedComparison.kind_label}`} eyebrowIcon={<EntityIcon entity={comparisonEntity} size="compact" />} title={resource?.title ?? "Comparación compartida"} />
+        <Chip
+          backgroundColor={`${tokens.color[comparisonEntity]}1A`}
+          borderColor={tokens.color[comparisonEntity]}
+          label={`${sharedComparison.items.length} ${comparisonCountLabel}`}
+          textColor={tokens.color.textMain}
+        />
+        <ComparisonItemsSummary items={sharedComparison.items} />
+      </View> : undefined}
+      stickyHeader={sharedComparison && comparisonEntity ? <View style={styles.tabsBleed}>
+        <DistributedTabBar<SharedComparisonTab>
+          accessibilityLabel="Vista de la comparación compartida"
+          activeTab={comparisonTab}
+          onChange={setComparisonTab}
+          tabs={[
+            { icon: (selected) => <LayoutGrid color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={14} strokeWidth={2} />, key: "cards", label: "Cards" },
+            { icon: (selected) => <Rows3 color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={14} strokeWidth={2} />, key: "table", label: "Tabla" },
+            { icon: (selected) => <ComparisonTabIcon color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={14} strokeWidth={2} />, key: "entities", label: sharedComparison.kind_label },
+          ]}
+        />
+      </View> : undefined}
+      stickyHeaderStyle={sharedComparison ? styles.stickyTabs : undefined}>
       {loading ? <LoadingState label="Cargando contenido compartido…" mode="content" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {snapshot && resource?.subject_type === "daily_plan" ? (
@@ -203,14 +264,18 @@ export default function SharedResourceScreen() {
           <FoodDetailCardList items={sharedMealFoods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/share/${id}/foods/${food.detailId}` as Href); }} />
         </> : null}
       </EntityDetailPage> : null}
-      {sharedComparison ? <EntityDetailPage
-        entity="comparison"
-        eyebrow={`Comparación de ${sharedComparison.kind_label}`}
-        indicators={[{ label: "elementos", value: sharedComparison.items.length }]}
-        showNutrition={false}
-        title={resource?.title ?? "Comparación compartida"}>
-        <ComparisonResultCards hideHeader interactive={false} result={sharedComparison} />
-      </EntityDetailPage> : null}
+      {sharedComparison && comparisonEntity && comparisonTab === "cards" ? <ComparisonResultCards hideHeader interactive={false} result={sharedComparison} /> : null}
+      {sharedComparison && comparisonEntity && comparisonTab === "table" ? <SavedComparisonPreviewPanels items={sharedComparison.items} scope={comparisonEntity} /> : null}
+      {sharedComparison && comparisonEntity && comparisonTab === "entities" ? sharedComparison.items.map((item, index) => (
+        <NutritionEntityCard
+          entity={comparisonEntity}
+          eyebrow={`${comparisonCountLabels[sharedComparison.kind][0]} ${index + 1}`}
+          key={`${item.id}-${index}`}
+          nutrition={comparisonItemNutrition(item)}
+          subtitle={sharedComparison.kind === "foods" && item.quantity != null ? `${item.quantity} ${item.quantity_unit ?? "g"}` : undefined}
+          title={item.name}
+        />
+      )) : null}
       {!sharedProgram ? libraryAction : null}
     </Screen>
     <SharedResourceActions onOpenInformation={() => router.push(`/share/${id}/information` as Href)} onVisibleChange={setActionsVisible} title={resource?.title ?? "Elemento compartido"} visible={actionsVisible} />
@@ -219,6 +284,9 @@ export default function SharedResourceScreen() {
 }
 
 const styles = StyleSheet.create({
+  comparisonHeader: { gap: tokens.spacing.sm },
   loadingContent: { paddingBottom: 0, paddingTop: 0 },
   programContent: { gap: 0, paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 },
+  stickyTabs: { paddingTop: tokens.spacing.xl },
+  tabsBleed: { alignSelf: "stretch", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
 });

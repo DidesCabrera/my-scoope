@@ -143,3 +143,13 @@ class SavedComparisonDetailEnvelope(Schema):
     ok: Literal[True] = True
     data: SavedComparisonDetailData
     error: None = None
+
+
+class SavedComparisonDeleteData(Schema):
+    deleted_id: int
+
+
+class SavedComparisonDeleteEnvelope(Schema):
+    ok: Literal[True] = True
+    data: SavedComparisonDeleteData
+    error: None = None
