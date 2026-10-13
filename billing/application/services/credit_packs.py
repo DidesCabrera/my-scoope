@@ -114,20 +114,25 @@ def settle_credit_pack_purchase(
     if not purchase_id:
         raise CreditPackUnavailable("credit_pack_purchase_id_missing")
     purchase_id = _stored_purchase_id(provider=product.provider, purchase_id=purchase_id)
-    existing = CreditPackPurchase.objects.select_for_update().filter(
-        provider=product.provider, external_purchase_id=purchase_id
-    ).first()
-    if existing is not None:
-        if existing.user_id != user.pk or existing.product_id != product.pk:
-            raise CreditPackUnavailable("credit_pack_purchase_owner_mismatch")
-        return existing
     if product.credits_snapshot <= 0:
         raise CreditPackUnavailable("credit_pack_product_invalid")
-    purchase = CreditPackPurchase.objects.create(
-        user=user, product=product, provider=product.provider,
-        external_purchase_id=purchase_id, credits_granted=product.credits_snapshot,
-        evidence=dict(evidence or {}),
+    # `get_or_create` resolves the unique-key race between the direct purchase
+    # endpoint and a provider webhook without leaving the outer transaction in
+    # a broken state. Only the process that creates the receipt grants credits.
+    purchase, created = CreditPackPurchase.objects.get_or_create(
+        provider=product.provider,
+        external_purchase_id=purchase_id,
+        defaults={
+            "user": user,
+            "product": product,
+            "credits_granted": product.credits_snapshot,
+            "evidence": dict(evidence or {}),
+        },
     )
+    if purchase.user_id != user.pk or purchase.product_id != product.pk:
+        raise CreditPackUnavailable("credit_pack_purchase_owner_mismatch")
+    if not created:
+        return purchase
     grant_purchased_credits(
         user=user, credits=product.credits_snapshot,
         provider=product.provider, purchase_id=purchase_id,

@@ -136,14 +136,20 @@ test("App Store purchases recover a completed StoreKit transaction before report
   assertSourceMatch(subscription, /purchase\.productId === productId/);
   assertSourceMatch(subscription, /for \(const purchase of matching\) await submitPurchase\(purchase\)/);
   assertSourceMatch(subscription, /No se realizó ningún cobro/);
+  assertSourceMatch(subscription, /Esperando la confirmación de Apple/);
+  assertSourceMatch(subscription, /Compra confirmada\. Tu plan/);
+  assertSourceMatch(subscription, /"Google Play" : "Apple"\} confirmó la compra\. Estamos actualizando tu plan/);
+  assertSourceMatch(subscription, /AppState\.addEventListener\("change"/);
+  assertSourceMatch(subscription, /if \(nextState === "active"\) void load\(\)/);
+  assertSourceMatch(subscription, /pendingPlanName\.current[\s\S]*nextEntitlements\.plan_name\.toLowerCase\(\)/);
 });
 
 test("cancelling a store purchase closes silently while real purchase errors remain visible", async () => {
   const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
 
   assertSourceMatch(subscription, /function isUserCancelledPurchase\(error: unknown\): boolean/);
-  assertSourceMatch(subscription, /onPurchaseError: \(purchaseError\) => \{\s+setError\(isUserCancelledPurchase\(purchaseError\) \? null : purchaseError\.message\)/);
-  assertSourceMatch(subscription, /onError: \(nextError\) => \{\s+setError\(isUserCancelledPurchase\(nextError\) \? null : nextError\.message\)/);
+  assertSourceMatch(subscription, /onPurchaseError: \(purchaseError\) => \{[\s\S]*?setPurchaseNotice\(null\);[\s\S]*?setWorking\(false\)/);
+  assertSourceMatch(subscription, /onError: \(nextError\) => \{[\s\S]*?setPurchaseNotice\(null\);[\s\S]*?setWorking\(false\)/);
   assertSourceDoesNotMatch(subscription, /onPurchaseError: \(purchaseError\) => \{ setError\(purchaseError\.message\)/);
 });
 
