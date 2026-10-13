@@ -47,12 +47,14 @@ test("meals embedded in daily plans can be saved back to the library", async () 
   assertSourceMatch(mealCards, /daily-plans\/\$\{dailyPlanId\}\/meals\/\$\{dailyPlanMealId\}\/save-to-library/);
   assertSourceMatch(mealDetail, /onSaveToLibrary=\{hasMealTimeContext/);
   assertSourceMatch(actions, /label="Guardar en mi biblioteca"/);
+  assertSourceMatch(actions, /icon=\{Bookmark\}[\s\S]*label="Guardar en mi biblioteca"/);
 });
 
 test("daily plans embedded in programs can be saved back to the library", async () => {
   const planCard = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"), "utf8");
   const programDetail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
   assertSourceMatch(planCard, /label: "Guardar en mi biblioteca"/);
+  assertSourceMatch(planCard, /icon: Bookmark, key: "save-to-library", label: "Guardar en mi biblioteca"/);
   assertSourceMatch(planCard, /onSaveToLibrary/);
   assertSourceMatch(programDetail, /onSaveDailyPlan=\{async \(week, day\)/);
   assertSourceMatch(programDetail, /programs\/\$\{item\.id\}\/weeks\/\$\{week\}\/days\/\$\{day\}\/save-to-library/);

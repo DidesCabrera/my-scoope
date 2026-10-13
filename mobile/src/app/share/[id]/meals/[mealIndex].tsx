@@ -1,6 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Carrot } from "lucide-react-native";
 import { useCallback, useState } from "react";
+import { StyleSheet } from "react-native";
 
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { FoodDetailCardList } from "@/components/details/food-detail-card-list";
@@ -34,14 +35,14 @@ export default function SharedMealDetailScreen() {
   if (!id || !Number.isInteger(index) || index < 0) return <Redirect href="/inbox" />;
   return (
     <>
-    <Screen headerMode="preserve">
-      {loading ? <LoadingState label="Cargando comida compartida…" /> : null}
+    <Screen contentStyle={loading ? styles.loadingContent : undefined} headerMode="preserve">
+      {loading ? <LoadingState label="Cargando comida compartida…" mode="content" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!loading && resource && !meal ? <InlineNotice tone="error">La comida compartida no está disponible.</InlineNotice> : null}
       {meal ? (
         <EntityDetailPage
           entity="meal"
-          eyebrow="Comida compartida"
+          eyebrow="Comida"
           eyebrowAccessory={meal.time ? <HeaderMetadataChip kind="time" value={meal.time.slice(0, 5)} /> : undefined}
           indicators={[
             { icon: "food", label: "alimentos", value: foods.length },
@@ -65,3 +66,7 @@ export default function SharedMealDetailScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContent: { paddingBottom: 0, paddingTop: 0 },
+});

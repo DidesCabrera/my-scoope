@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react-native";
+import { Pencil, Send } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,7 +8,7 @@ import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetMo
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
-export function SavedComparisonActions({ name: currentName, onClose, onEdit, onRename, visible }: { name: string; onClose(): void; onEdit(): void; onRename(name: string): Promise<void>; visible: boolean }) {
+export function SavedComparisonActions({ canEdit = true, name: currentName, onClose, onEdit, onRename, onShare, visible }: { canEdit?: boolean; name: string; onClose(): void; onEdit(): void; onRename(name: string): Promise<void>; onShare(): Promise<void>; visible: boolean }) {
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(currentName);
   const [submitting, setSubmitting] = useState(false);
@@ -36,6 +36,13 @@ export function SavedComparisonActions({ name: currentName, onClose, onEdit, onR
       setSubmitting(false);
     }
   };
+  const share = async () => {
+    setSubmitting(true);
+    setError(null);
+    try { await onShare(); }
+    catch (nextError) { setError(userFacingError(nextError)); }
+    finally { setSubmitting(false); }
+  };
   return (
     <ActionSheetModal onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
@@ -44,7 +51,8 @@ export function SavedComparisonActions({ name: currentName, onClose, onEdit, onR
           {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
           {!editingName ? <ActionSheetActions>
             <ActionSheetAction icon={Pencil} label="Editar nombre" onPress={() => { setName(currentName); setError(null); setEditingName(true); }} />
-            <ActionSheetAction icon={Pencil} label="Editar comparación" onPress={edit} />
+            {canEdit ? <ActionSheetAction icon={Pencil} label="Editar comparación" onPress={edit} /> : null}
+            <ActionSheetAction disabled={submitting} icon={Send} label="Compartir" onPress={() => void share()} />
           </ActionSheetActions> : (
             <View style={styles.form}>
               <Field autoCapitalize="sentences" label="Nombre" onChangeText={(value) => setName(value.slice(0, 255))} value={name} />

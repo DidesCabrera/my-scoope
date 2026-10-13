@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Carrot, ClipboardList, Utensils } from "lucide-react-native";
+import { Carrot, ClipboardList, Plus, RefreshCcw, Search, Utensils } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -14,7 +14,7 @@ import type {
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
-import { SavedComparisonListCard } from "@/components/comparisons";
+import { ComparisonCreateActions, SavedComparisonListCard } from "@/components/comparisons";
 import {
   applyComparatorSelection,
   initialComparisonSlots,
@@ -27,7 +27,6 @@ import { NutritionKpiSection } from "@/components/nutrition";
 import {
   DistributedTabBar,
   EntityCard,
-  SectionDivider,
   SectionPageHeader,
 } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
@@ -45,6 +44,8 @@ const comparisonEntities = {
   meals: "meal",
   dailyplans: "dailyPlan",
 } as const satisfies Record<ComparisonKind, "food" | "meal" | "dailyPlan">;
+
+type ComparisonPages = Record<ComparisonKind, SavedComparisonListData>;
 
 function creationHref(kind: ComparisonKind): Href {
   return { pathname: "/comparator", params: { create: "1", kind } } as Href;
@@ -77,29 +78,32 @@ function ComparatorDashboard() {
   const [kind, setKind] = useState<ComparisonKind>(params.kind === "meals" || params.kind === "dailyplans" ? params.kind : "foods");
   const [counts, setCounts] = useState<Record<ComparisonKind, number>>({ dailyplans: 0, foods: 0, meals: 0 });
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
-  const [page, setPage] = useState<SavedComparisonListData | null>(null);
+  const [pages, setPages] = useState<ComparisonPages | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [createActionsVisible, setCreateActionsVisible] = useState(false);
+  const page = pages?.[kind] ?? null;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const pages = await Promise.all(fallbackKinds.map((item) => apiRequest<SavedComparisonListData>(`/api/v1/comparisons/saved?limit=${item.value === kind ? 50 : 1}&kind=${item.value}`)));
-      setCounts({ dailyplans: pages[2].total, foods: pages[0].total, meals: pages[1].total });
-      setPage(pages[fallbackKinds.findIndex((item) => item.value === kind)]);
+      const loadedPages = await Promise.all(fallbackKinds.map((item) => apiRequest<SavedComparisonListData>(`/api/v1/comparisons/saved?limit=50&kind=${item.value}`)));
+      const nextPages = { dailyplans: loadedPages[2], foods: loadedPages[0], meals: loadedPages[1] };
+      setCounts({ dailyplans: nextPages.dailyplans.total, foods: nextPages.foods.total, meals: nextPages.meals.total });
+      setPages(nextPages);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
       setLoading(false);
     }
-  }, [apiRequest, kind]);
+  }, [apiRequest]);
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: { icon: "plus", label: "Crear una comparación", onPress: () => router.push(creationHref(kind)) }, identityVisible: compactHeaderVisible, mode: "default", title: "Comparaciones" });
+    setHeaderPresentation({ action: { icon: "plus", label: "Crear una comparación", onPress: () => setCreateActionsVisible(true) }, identityVisible: compactHeaderVisible, mode: "default", title: "Comparaciones" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [compactHeaderVisible, kind, router, setHeaderPresentation]));
+  }, [compactHeaderVisible, setHeaderPresentation]));
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !page) return <LoadingState label="Buscando tus comparaciones…" />;
 
@@ -116,6 +120,11 @@ function ComparatorDashboard() {
           <EmptyState actionLabel="Crear nueva comparación" message={`Todavía no tienes comparaciones guardadas de ${fallbackKinds.find((item) => item.value === kind)?.label.toLowerCase()}.`} onAction={() => router.push(creationHref(kind))} title="Aún no hay comparaciones" />
         )}
       </Screen>
+      <ComparisonCreateActions
+        onClose={() => setCreateActionsVisible(false)}
+        onSelect={(selectedKind) => router.push(creationHref(selectedKind))}
+        visible={createActionsVisible}
+      />
     </>
   );
 }
@@ -184,17 +193,12 @@ function ComparatorBuilderScreen() {
   const usesQuantity = metadata?.kinds.find((item) => item.key === kind)?.uses_quantity ?? kind === "foods";
   const selectedCount = slots.filter((slot) => slot.option).length;
   const entity = comparisonEntities[kind];
+  const entityLabel = metadata?.kinds.find((item) => item.key === kind)?.entity_label ?? "Elemento";
+  const anotherEntityLabel = `Agregar ${kind === "meals" ? "otra" : "otro"} ${entityLabel}`;
 
   function invalidateResult() {
     setResult(null);
     setError(null);
-  }
-
-  function changeKind(nextKind: ComparisonKind) {
-    setKind(nextKind);
-    setSlots(initialComparisonSlots());
-    nextSlotKey.current = 3;
-    invalidateResult();
   }
 
   function openSelector(slotKey: number) {
@@ -258,9 +262,6 @@ function ComparatorBuilderScreen() {
 
   return (
     <View style={styles.builderRoot}>
-      <View style={styles.builderTabs}>
-        <ComparisonKindTabs kind={kind} onChange={changeKind} />
-      </View>
       <Screen headerMode="preserve">
 
         <View style={styles.slots}>
@@ -273,14 +274,22 @@ function ComparatorBuilderScreen() {
                     </Pressable>
                 ) : undefined}
                 entity={entity}
-                eyebrow={`${metadata?.kinds.find((item) => item.key === kind)?.entity_label ?? "Elemento"} ${index + 1}`}
+                eyebrow={`${entityLabel} ${index + 1}`}
                 key={slot.key}
                 title={slot.option?.name ?? "Sin seleccionar"}>
 
                 {slot.option?.nutrition ? (
                   <NutritionKpiSection variant="nested" {...libraryNutrition(slot.option.nutrition)} />
                 ) : null}
-                <Button label={slot.option ? "Cambiar selección" : "Seleccionar"} onPress={() => openSelector(slot.key)} variant="secondary" />
+                <Button
+                  contentStyle={styles.comparisonButtonContent}
+                  icon={slot.option
+                    ? <RefreshCcw color={tokens.color.textMain} size={18} />
+                    : <Search color={tokens.color.textMain} size={18} />}
+                  label={slot.option ? "Cambiar selección" : `Seleccionar ${entityLabel}`}
+                  onPress={() => openSelector(slot.key)}
+                  variant="secondary"
+                />
                 {usesQuantity && slot.option ? (
                   <Field
                     keyboardType="decimal-pad"
@@ -298,18 +307,19 @@ function ComparatorBuilderScreen() {
           })}
         </View>
 
-        <Button label={`Agregar ${metadata?.kinds.find((item) => item.key === kind)?.entity_label ?? "elemento"}`} onPress={addSlot} variant="secondary" />
+        <Button contentStyle={styles.comparisonButtonContent} icon={<Plus color={tokens.color.textMain} size={19} />} label={anotherEntityLabel} onPress={addSlot} variant="secondary" />
         {error ? <RecoverableErrorState message={error} onRetry={() => void compare()} /> : null}
-        <Button disabled={selectedCount < 2} label="Comparar" loading={working} onPress={() => void compare()} />
+        <View style={styles.compareAction}>
+          <Button disabled={selectedCount < 2 || result != null} label="Comparar" loading={working} onPress={() => void compare()} />
+        </View>
         {result ? (
           <>
-            <SectionDivider />
             <ComparisonResultCards result={result} />
-            <Button label={savedId ? "Guardar cambios" : "Guardar comparación"} loading={working} onPress={() => void persist()} variant="secondary" />
+            <View style={styles.saveAction}>
+              <Button label={savedId ? "Guardar cambios" : "Guardar comparación"} loading={working} onPress={() => void persist()} />
+            </View>
           </>
-        ) : (
-          <EmptyState message="Completa al menos dos slots. Puedes repetir una entidad con cantidades diferentes para comparar porciones." title="Aún no hay resultado" />
-        )}
+        ) : null}
       </Screen>
     </View>
   );
@@ -322,9 +332,11 @@ export default function ComparatorScreen() {
 
 const styles = StyleSheet.create({
   builderRoot: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  builderTabs: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.xs },
+  comparisonButtonContent: { transform: [{ translateX: -10 }] },
+  compareAction: { marginTop: 28 },
   dashboardStickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
   remove: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   removeText: { color: tokens.color.textMuted, fontSize: 24, lineHeight: 26 },
+  saveAction: { marginTop: 40 },
   slots: { gap: tokens.spacing.md },
 });

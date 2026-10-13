@@ -2,21 +2,21 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import test from "node:test";
 
-import { assertSourceMatch, readTestFile } from "./support/source-contract";
+import { assertSourceDoesNotMatch, assertSourceMatch, readTestFile } from "./support/source-contract";
 
 test("every library entity opens native sharing directly with one portable resource", async () => {
   const actions = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-actions.tsx"), "utf8");
   const adapter = await readTestFile(path.resolve(process.cwd(), "src/sharing/native-share.ts"), "utf8");
   const packageJson = JSON.parse(await readTestFile(path.resolve(process.cwd(), "package.json"), "utf8"));
 
-  assert.match(packageJson.dependencies["expo-clipboard"], /^~57\./);
+  assertSourceMatch(packageJson.dependencies["expo-clipboard"], /^~57\./);
   assertSourceMatch(actions, /\/api\/v1\/shares\/\$\{entitySlug\}\/\$\{item\.id\}/);
   assertSourceMatch(actions, /entitySlug: "foods" \| "meals" \| "daily-plans" \| "programs"/);
   assertSourceMatch(actions, /action\.key === "share"[\s\S]*?void shareItem\(\)/);
   assertSourceMatch(actions, /setDismissShareImmediately\(true\);[\s\S]*?setVisible\(false\);[\s\S]*?requestAnimationFrame\(\(\) => requestAnimationFrame[\s\S]*?await openNativeShare\(resource\)/);
-  assert.doesNotMatch(actions, /submitting && !selected/);
+  assertSourceDoesNotMatch(actions, /submitting && !selected/);
   assertSourceMatch(actions, /openNativeShare\(resource\)/);
-  assert.doesNotMatch(actions, /Compartir con otra app|Copiar enlace|Correo del destinatario/);
+  assertSourceDoesNotMatch(actions, /Compartir con otra app|Copiar enlace|Correo del destinatario/);
   assertSourceMatch(adapter, /Share\.share/);
   assertSourceMatch(adapter, /Clipboard\.setStringAsync/);
 });
@@ -45,11 +45,29 @@ test("shared daily plans reuse the native entity detail and nutrition panel syst
 
   assertSourceMatch(shareScreen, /<EntityDetailPage/);
   assertSourceMatch(shareScreen, /entity="dailyPlan"/);
+  assertSourceMatch(shareScreen, /eyebrow="Plan diario"/);
+  assertSourceDoesNotMatch(shareScreen, /eyebrow="Plan diario compartido"/);
   assertSourceMatch(shareScreen, /<MealPanels items=\{mealItems\}/);
   assertSourceMatch(shareScreen, /title="Composición plan diario"[\s\S]*Detalle de cada Comida/);
   assertSourceMatch(shareScreen, /<NutritionEntityCard/);
   assertSourceMatch(shareScreen, /<FoodPanels[\s\S]*?items=\{sharedFoodPanelItems\(meal\)\}/);
   assertSourceMatch(shareScreen, /onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/share\/\$\{id\}\/meals\/\$\{index\}\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);
+});
+
+test("shared programs and comparisons have complete native detail views", async () => {
+  const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
+  const presentation = await readTestFile(path.resolve(process.cwd(), "src/sharing/presentation.ts"), "utf8");
+  const comparisonActions = await readTestFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
+
+  assertSourceMatch(shareScreen, /sharedProgramLibraryItem\(snapshot, resource\.title\)/);
+  assertSourceMatch(shareScreen, /<ProgramDetailPreview item=\{sharedProgram\} showWeekAnalytics=\{false\} \/>/);
+  assertSourceMatch(shareScreen, /sharedComparisonResult\(snapshot\)/);
+  assertSourceMatch(shareScreen, /<ComparisonResultCards hideHeader interactive=\{false\} result=\{sharedComparison\} \/>/);
+  assertSourceMatch(shareScreen, /saved\.entity === "comparison" \? `\/comparator\/saved\/\$\{saved\.item_id\}`/);
+  assertSourceMatch(presentation, /export function sharedProgramLibraryItem/);
+  assertSourceMatch(presentation, /export function sharedComparisonResult/);
+  assertSourceMatch(comparisonActions, /`\/api\/v1\/shares\/comparisons\/\$\{comparison\.saved_comparison_id\}`/);
+  assertSourceMatch(comparisonActions, /await openNativeShare\(resource\)/);
 });
 
 test("shared meal foods navigate from panels and detail cards", async () => {
@@ -61,7 +79,9 @@ test("shared meal foods navigate from panels and detail cards", async () => {
   assertSourceMatch(sharedMeal, /<FoodPanels items=\{foods\} onOpenItem=\{openFood\} \/>/);
   assertSourceMatch(sharedMeal, /<FoodDetailCardList[\s\S]*onOpenFood=\{openFood\}/);
   assertSourceMatch(sharedMeal, /eyebrowAccessory=\{meal\.time \? <HeaderMetadataChip kind="time" value=\{meal\.time\.slice\(0, 5\)\} \/> : undefined\}/);
-  assert.doesNotMatch(sharedMeal, /label: "hora", tone: "surfaceCard"/);
+  assertSourceMatch(sharedMeal, /eyebrow="Comida"/);
+  assertSourceDoesNotMatch(sharedMeal, /eyebrow="Comida compartida"/);
+  assertSourceDoesNotMatch(sharedMeal, /label: "hora", tone: "surfaceCard"/);
   assertSourceMatch(sharedMeal, /`\/share\/\$\{id\}\/meals\/\$\{index\}\/foods\/\$\{food\.detailId\}`/);
   assertSourceMatch(foodCards, /onOpenFood && item\.detailId != null[\s\S]*<ChevronRight/);
 });
@@ -79,18 +99,21 @@ test("shared details move available item information into the header action", as
     assertSourceMatch(detail, /`\/share\/\$\{id\}\/information`/);
   }
   assertSourceMatch(actions, /Ver información del elemento/);
-  assert.doesNotMatch(sharedFood, /<EntityDetailMetadata/);
+  assertSourceDoesNotMatch(sharedFood, /<EntityDetailMetadata/);
+  assertSourceMatch(sharedFood, /eyebrow="Alimento"/);
+  assertSourceDoesNotMatch(sharedFood, /eyebrow="Alimento compartido"/);
   assertSourceMatch(information, /<EntityDetailMetadata/);
   assertSourceMatch(information, /creator="Elemento compartido"/);
   assertSourceMatch(information, /creatorLabel="Origen"/);
   assertSourceMatch(information, /updatedAt=\{sharedDate\(resource\.created_at\)\}/);
   assertSourceMatch(information, /updatedAtLabel="Compartido"/);
-  assert.doesNotMatch(information, /forceFallback/);
+  assertSourceDoesNotMatch(information, /forceFallback/);
   assertSourceMatch(presentation, /export function sharedDate/);
 });
 
 test("native Inbox manages messages while shared detail owns saving to the library", async () => {
   const inbox = await readTestFile(path.resolve(process.cwd(), "src/app/inbox.tsx"), "utf8");
+  const inboxActions = await readTestFile(path.resolve(process.cwd(), "src/components/sharing/inbox-item-actions.tsx"), "utf8");
   const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
   const navigation = await readTestFile(path.resolve(process.cwd(), "src/navigation/product-areas.ts"), "utf8");
 
@@ -107,12 +130,27 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inbox, /stickyHeader=\{<DistributedTabBar<SharingScope>/);
   assertSourceMatch(inbox, /stickyHeaderStyle=\{styles\.stickyHeader\}/);
   assertSourceMatch(inbox, /stickyHeader: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding, paddingTop: tokens\.spacing\.sm \}/);
-  assert.doesNotMatch(inbox, /<SectionPageHeader[^>]*count=/);
+  assertSourceDoesNotMatch(inbox, /<SectionPageHeader[^>]*count=/);
   assertSourceMatch(inbox, /method: "PATCH"/);
+  assertSourceMatch(inbox, /\/api\/v1\/shares\/\$\{item\.resource_id\}[\s\S]*method: "DELETE"/);
+  assertSourceMatch(inbox, /MoreHorizontal/);
+  assertSourceMatch(inbox, /label=\{`Más acciones para \$\{item\.title\}`\}/);
+  assertSourceMatch(inbox, /<InboxItemActions/);
+  assertSourceMatch(inboxActions, /label="Revocar acceso"/);
+  assertSourceMatch(inboxActions, /label="Confirmar revocación"/);
+  assertSourceMatch(inboxActions, /setConfirmingRevoke\(true\)/);
+  assertSourceMatch(inboxActions, /label="Eliminar de Compartidos"/);
+  assertSourceMatch(inbox, /current\.sent\.items\.filter\(\(\{ resource_id \}\) => resource_id !== item\.resource_id\)/);
+  assertSourceMatch(inbox, /item\.status === "revoked" \|\| item\.status === "expired"/);
+  assertSourceMatch(inbox, /eyebrow=\{unavailable \? "Acceso revocado"/);
+  assertSourceMatch(inbox, /onPress=\{unavailable \? undefined/);
   assertSourceMatch(inbox, /<EntityCard/);
   assertSourceMatch(inbox, /<EntityCardAction/);
   assertSourceMatch(inbox, /<CollectionEmptyState/);
+  assertSourceMatch(inbox, /<LoadingState label="Cargando compartidos…" mode="content" \/>/);
+  assertSourceMatch(shareScreen, /<LoadingState label="Cargando contenido compartido…" mode="content" \/>/);
   assertSourceMatch(inbox, /daily_plan: "dailyPlan"/);
+  assertSourceMatch(inbox, /comparison: "comparison"/);
   assertSourceMatch(shareScreen, /\/api\/v1\/shares\/inbox\/\$\{inboxItemId\}\/save/);
   assertSourceMatch(shareScreen, /`\/libraries\/\$\{libraryPathByEntity\[saved\.entity\]\}\/\$\{saved\.item_id\}`/);
   assertSourceMatch(navigation, /href: "\/inbox"/);

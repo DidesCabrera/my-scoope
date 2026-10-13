@@ -42,6 +42,7 @@ export const tokens = {
     "proposal": "#121212",
     "inbox": "#121212",
     "comparator": "#3057FF",
+    "comparison": "#3057FF",
     "home": "#121212",
     "profile": "#121212"
   },

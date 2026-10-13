@@ -20,6 +20,7 @@ from notas.domain.models import (
     MealFood,
     Program,
     ProgramDay,
+    SavedComparison,
     ShareResource,
 )
 
@@ -143,6 +144,20 @@ def build_program_share_snapshot(program: Program) -> dict:
     }
 
 
+def build_comparison_share_snapshot(comparison: SavedComparison) -> dict:
+    return {
+        "schema_version": SHARE_SNAPSHOT_SCHEMA_VERSION,
+        "subject": {"type": ShareResource.SubjectType.COMPARISON, "title": comparison.name},
+        "summary": {"comparison_kind": comparison.kind, "item_count": len(comparison.snapshot_payload)},
+        "nutrition": _nutrition(protein=0, carbs=0, fat=0),
+        "comparison": {
+            "kind": comparison.kind,
+            "payload": comparison.payload,
+            "snapshot_payload": comparison.snapshot_payload,
+        },
+    }
+
+
 def _meal_queryset():
     return Meal.objects.prefetch_related(
         Prefetch(
@@ -162,6 +177,8 @@ def _dailyplan_queryset():
 
 
 def _load_owned_subject(*, sender, subject_type: str, subject_id: int, variant: str = ""):
+    if subject_type == ShareResource.SubjectType.COMPARISON:
+        return SavedComparison.objects.filter(pk=subject_id, owner=sender).first()
     if subject_type == ShareResource.SubjectType.DAILY_PLAN:
         return (
             _dailyplan_queryset()
@@ -205,6 +222,8 @@ def _load_owned_subject(*, sender, subject_type: str, subject_id: int, variant: 
 
 
 def _snapshot_for(subject_type: str, instance, *, variant: str = "") -> dict:
+    if subject_type == ShareResource.SubjectType.COMPARISON:
+        return build_comparison_share_snapshot(instance)
     if subject_type == ShareResource.SubjectType.DAILY_PLAN:
         return build_dailyplan_share_snapshot(instance)
     if subject_type == ShareResource.SubjectType.FOOD:
@@ -292,4 +311,15 @@ def get_or_create_program_share_resource(
 ):
     return get_or_create_entity_share_resource(
         sender=sender, subject_type=ShareResource.SubjectType.PROGRAM, subject_id=program_id, claim_policy=claim_policy
+    )
+
+
+def get_or_create_comparison_share_resource(
+    *, sender, comparison_id: int, claim_policy=ShareResource.ClaimPolicy.MULTIPLE
+):
+    return get_or_create_entity_share_resource(
+        sender=sender,
+        subject_type=ShareResource.SubjectType.COMPARISON,
+        subject_id=comparison_id,
+        claim_policy=claim_policy,
     )

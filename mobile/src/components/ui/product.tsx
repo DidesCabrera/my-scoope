@@ -31,7 +31,7 @@ import { Chip } from "./chip";
 import { Button } from "./controls";
 import { Card } from "./surfaces";
 
-export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program";
+export type EntityKind = "comparison" | "food" | "meal" | "dailyPlan" | "dpm" | "program";
 export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "learning" | "create" | "import";
 
 export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "week" | "weight";
@@ -92,6 +92,7 @@ export function GuideMetric({ label, onPress, tone = "default", value }: { label
 }
 
 const entityLabels: Record<EntityKind, string> = {
+  comparison: "Comparación",
   food: "Alimento",
   meal: "Comida",
   dailyPlan: "Plan diario",
@@ -100,6 +101,7 @@ const entityLabels: Record<EntityKind, string> = {
 };
 
 const entityIcons: Record<EntityKind, LucideIcon> = {
+  comparison: Scale,
   food: Carrot,
   meal: Utensils,
   dailyPlan: ClipboardList,

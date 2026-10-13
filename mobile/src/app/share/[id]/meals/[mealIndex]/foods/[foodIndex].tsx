@@ -1,5 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
+import { StyleSheet } from "react-native";
 
 import { EntityDetailPage } from "@/components/details/entity-detail-page";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -26,14 +27,14 @@ export default function SharedFoodDetailScreen() {
   if (!id || !Number.isInteger(mealPosition) || !Number.isInteger(foodPosition) || mealPosition < 0 || foodPosition < 0) return <Redirect href="/inbox" />;
   return (
     <>
-    <Screen headerMode="preserve">
-      {loading ? <LoadingState label="Cargando alimento compartido…" /> : null}
+    <Screen contentStyle={loading ? styles.loadingContent : undefined} headerMode="preserve">
+      {loading ? <LoadingState label="Cargando alimento compartido…" mode="content" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!loading && resource && !food ? <InlineNotice tone="error">El alimento compartido no está disponible.</InlineNotice> : null}
       {food ? (
         <EntityDetailPage
           entity="food"
-          eyebrow="Alimento compartido"
+          eyebrow="Alimento"
           nutrition={sharedNutrition(food.nutrition)}
           subtitle={`${food.quantity_grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} ${food.quantity_unit ?? "g"}`}
           title={food.name}
@@ -44,3 +45,7 @@ export default function SharedFoodDetailScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContent: { paddingBottom: 0, paddingTop: 0 },
+});

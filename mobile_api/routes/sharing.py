@@ -61,6 +61,7 @@ def _inbox_item_payload(request, item: InboxItem) -> dict:
         "title": (resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido",
         "sender": resource.sender.get_full_name() or resource.sender.username,
         "public_url": request.build_absolute_uri(f"/s/{resource.public_id}/"),
+        "status": resource.status,
         "is_read": item.read_at is not None,
         "is_favorite": item.is_favorite,
         "is_saved": item.saved_at is not None,
@@ -76,6 +77,7 @@ def _sent_item_payload(request, resource: ShareResource) -> dict:
         "title": (resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido",
         "sender": "Compartido por ti",
         "public_url": request.build_absolute_uri(f"/s/{resource.public_id}/"),
+        "status": resource.status,
         "is_read": True,
         "is_favorite": False,
         "is_saved": False,
@@ -163,6 +165,21 @@ def create_program_share(request, program_id: int, payload: ShareResourceCreateI
     )
 
 
+@router.post(
+    "/shares/comparisons/{comparison_id}",
+    operation_id="mobile_api_create_comparison_share_resource",
+    auth=mobile_bearer,
+    response={200: ShareResourceEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 429: ErrorEnvelope},
+)
+def create_comparison_share(request, comparison_id: int, payload: ShareResourceCreateInput):
+    return _create_entity_share(
+        request,
+        subject_type=ShareResource.SubjectType.COMPARISON,
+        subject_id=comparison_id,
+        payload=payload,
+    )
+
+
 @router.get(
     "/shares/inbox",
     operation_id="mobile_api_sharing_inbox",
@@ -172,7 +189,10 @@ def create_program_share(request, program_id: int, payload: ShareResourceCreateI
 def sharing_inbox(request, scope: Literal["received", "sent"] = "received"):
     if scope == "sent":
         resources = list(
-            ShareResource.objects.filter(sender=request.auth.user)
+            ShareResource.objects.filter(
+                sender=request.auth.user,
+                status=ShareResource.Status.ACTIVE,
+            )
             .order_by("-created_at", "-id")
         )
         return success({"items": [_sent_item_payload(request, resource) for resource in resources], "count": len(resources)})

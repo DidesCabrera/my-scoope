@@ -14,12 +14,12 @@ export default function SystemFoundationsScreen() {
   return <Screen>
     <SectionPageHeader countLabel="contenidos" section="learning" title="Fundamentos Sistema" />
     <Text style={learningStyles.intro}>Comprende los conceptos nutricionales esenciales y aprende a usar las herramientas principales del sistema.</Text>
-    <Card style={learningStyles.card}>
+    <Card accent={tokens.color.fat} style={learningStyles.card}>
       <View style={learningStyles.cardHeading}><View style={learningStyles.cardText}><Text style={learningStyles.title}>Fundamentos Nutricionales</Text><Text style={learningStyles.summary}>Conceptos básicos para interpretar energía, nutrientes y seguimiento.</Text></View><LearningIcon name="heart-pulse" /></View>
       <EntityCardActions><EntityCardAction label="Ver Fundamentos Nutricionales" onPress={() => router.push("/system-foundations/nutrition" as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={2.2} /></EntityCardAction></EntityCardActions>
     </Card>
-    <Card style={learningStyles.card}>
-      <View style={learningStyles.cardHeading}><View style={learningStyles.cardText}><Text style={learningStyles.title}>Manuales de uso</Text><Text style={learningStyles.summary}>Guías breves de los módulos y flujos principales de My Scoope.</Text></View><LearningIcon name="book-marked" /></View>
+    <Card accent={tokens.color.carbs} style={learningStyles.card}>
+      <View style={learningStyles.cardHeading}><View style={learningStyles.cardText}><Text style={learningStyles.title}>Manuales de uso</Text><Text style={learningStyles.summary}>Guías breves de los módulos y flujos principales de My Scoope.</Text></View><LearningIcon name="cog" /></View>
       <EntityCardActions><EntityCardAction label="Ver Manuales de uso" onPress={() => router.push("/system-foundations/manuals" as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={2.2} /></EntityCardAction></EntityCardActions>
     </Card>
   </Screen>;

@@ -62,6 +62,7 @@ def _preview_response(
     canonical_url = request.build_absolute_uri(request.path)
     title = str(snapshot.get("subject", {}).get("title", "Contenido compartido"))
     subject_label = {
+        ShareResource.SubjectType.COMPARISON: "Comparación",
         ShareResource.SubjectType.DAILY_PLAN: "Plan diario",
         ShareResource.SubjectType.FOOD: "Alimento",
         ShareResource.SubjectType.MEAL: "Comida",

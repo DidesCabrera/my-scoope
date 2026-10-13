@@ -1,11 +1,14 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronRight, Utensils } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
+import { StyleSheet } from "react-native";
 
 import type { ApiEnvelope, ShareClaimResult, ShareResource, SharingInboxData } from "@/api/types";
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
+import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
+import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
@@ -14,11 +17,12 @@ import { SharedResourceActions } from "@/components/sharing/shared-resource-acti
 import { Button, EntityCardAction, InlineNotice, LoadingState, Screen } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
-import { sharedFoodPanelItems, sharedMealPanelItems, sharedNutrition } from "@/sharing/presentation";
+import { sharedComparisonResult, sharedFoodPanelItems, sharedMealPanelItems, sharedNutrition, sharedProgramLibraryItem } from "@/sharing/presentation";
 
-type SavedShare = { entity: "dailyPlan" | "food" | "meal" | "program"; item_id: number };
+type SavedShare = { entity: "comparison" | "dailyPlan" | "food" | "meal" | "program"; item_id: number };
 
 const libraryPathByEntity: Record<SavedShare["entity"], string> = {
+  comparison: "",
   dailyPlan: "daily-plans",
   food: "foods",
   meal: "meals",
@@ -64,7 +68,8 @@ export default function SharedResourceScreen() {
   }, [apiRequest, id, status]);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: resource ? { icon: "more", label: `Acciones para ${resource.title}`, onPress: () => setActionsVisible(true) } : undefined, fallback: "/inbox", mode: "back", title: resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : "Contenido Compartido" });
+    const headerTitle = resource?.subject_type === "comparison" ? "Comparación Compartida" : resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : resource?.subject_type === "program" ? "Programa Compartido" : "Contenido Compartido";
+    setHeaderPresentation({ action: resource ? { icon: "more", label: `Acciones para ${resource.title}`, onPress: () => setActionsVisible(true) } : undefined, fallback: "/inbox", mode: "back", title: headerTitle });
     return () => setHeaderPresentation({ mode: "default" });
   }, [resource, setHeaderPresentation]));
 
@@ -76,7 +81,7 @@ export default function SharedResourceScreen() {
     try {
       const inboxItemId = inboxState?.resourceId === id ? inboxState.id : (await apiRequest<ShareClaimResult>(`/api/v1/shares/${id}/claims`, { method: "POST" })).inbox_item_id;
       const saved = await apiRequest<SavedShare>(`/api/v1/shares/inbox/${inboxItemId}/save`, { method: "POST" });
-      router.replace(`/libraries/${libraryPathByEntity[saved.entity]}/${saved.item_id}` as Href);
+      router.replace((saved.entity === "comparison" ? `/comparator/saved/${saved.item_id}` : `/libraries/${libraryPathByEntity[saved.entity]}/${saved.item_id}`) as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -87,17 +92,19 @@ export default function SharedResourceScreen() {
   const snapshot = resource?.snapshot;
   const meals = snapshot?.meals ?? [];
   const mealItems = snapshot ? sharedMealPanelItems(meals, snapshot.nutrition.calories) : [];
+  const sharedComparison = snapshot ? sharedComparisonResult(snapshot) : null;
+  const sharedProgram = snapshot && resource?.subject_type === "program" ? sharedProgramLibraryItem(snapshot, resource.title) : null;
   const isSaved = inboxState?.resourceId === id && inboxState.isSaved;
   return (
     <>
-    <Screen headerMode="preserve">
-      {loading ? <LoadingState label="Cargando contenido compartido…" /> : null}
+    <Screen contentStyle={loading ? styles.loadingContent : undefined} headerMode="preserve">
+      {loading ? <LoadingState label="Cargando contenido compartido…" mode="content" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {snapshot && resource?.subject_type === "daily_plan" ? (
         <>
           <EntityDetailPage
             entity="dailyPlan"
-            eyebrow="Plan diario compartido"
+            eyebrow="Plan diario"
             indicators={[
               { icon: "meal", label: "comidas", value: meals.length },
               { icon: "food", label: "alimentos", value: meals.reduce((total, meal) => total + meal.foods.length, 0) },
@@ -137,7 +144,15 @@ export default function SharedResourceScreen() {
           </EntityDetailPage>
         </>
       ) : null}
-      {snapshot && resource?.subject_type !== "daily_plan" ? <InlineNotice>La vista detallada para este tipo de contenido aún no está disponible.</InlineNotice> : null}
+      {sharedProgram ? <ProgramDetailPreview item={sharedProgram} showWeekAnalytics={false} /> : null}
+      {sharedComparison ? <EntityDetailPage
+        entity="comparison"
+        eyebrow={`Comparación de ${sharedComparison.kind_label}`}
+        indicators={[{ label: "elementos", value: sharedComparison.items.length }]}
+        showNutrition={false}
+        title={resource?.title ?? "Comparación compartida"}>
+        <ComparisonResultCards hideHeader interactive={false} result={sharedComparison} />
+      </EntityDetailPage> : null}
       {snapshot ? status === "anonymous" ? (
         <Button label="Iniciar sesión para agregar" onPress={() => router.push({ pathname: "/login", params: { returnTo: `/share/${id}` } })} />
       ) : resource?.claim_policy === "none" ? (
@@ -155,3 +170,7 @@ export default function SharedResourceScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContent: { paddingBottom: 0, paddingTop: 0 },
+});

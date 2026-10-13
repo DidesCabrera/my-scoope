@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react-native";
-import { BadgeInfo, BookMarked, CalendarClock, ChartNoAxesColumnIncreasing, Files, Flame, HeartPulse, LibraryBig, LineChart, Salad, Scale, Sparkles, UserPlus } from "lucide-react-native";
+import { BadgeInfo, BookMarked, CalendarClock, ChartNoAxesColumnIncreasing, Cog, Files, Flame, HeartPulse, LibraryBig, LineChart, Salad, Scale, Sparkles, UserPlus } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
@@ -7,7 +7,7 @@ import { tokens } from "@/design/tokens";
 const icons: Record<string, LucideIcon> = {
   "badge-info": BadgeInfo, "book-marked": BookMarked, "calendar-clock": CalendarClock,
   "chart-no-axes-column-increasing": ChartNoAxesColumnIncreasing, files: Files, flame: Flame,
-  "heart-pulse": HeartPulse, "library-big": LibraryBig, "line-chart": LineChart,
+  cog: Cog, "heart-pulse": HeartPulse, "library-big": LibraryBig, "line-chart": LineChart,
   salad: Salad, scale: Scale, sparkles: Sparkles, "user-plus": UserPlus,
 };
 

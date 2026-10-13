@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
+import { initialMealTime, isValidMealTime } from "@/components/calendarization/meal-time";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { NativeDateTimeField } from "@/components/ui/native-date-time-field";
@@ -16,15 +17,13 @@ type MealTimeFormProps = {
   onSubmit(hour: string): Promise<void>;
 };
 
-const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
-
 export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealTimeFormProps) {
-  const [hour, setHour] = useState(initialTime?.slice(0, 5) ?? "");
+  const [hour, setHour] = useState(() => initialMealTime(initialTime));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const save = async () => {
-    if (!TIME_PATTERN.test(hour)) {
+    if (!isValidMealTime(hour)) {
       setError("Ingresa una hora válida en formato HH:MM.");
       return;
     }
@@ -51,7 +50,7 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
         onChange={(value) => setHour(value)}
         value={hour}
       />
-      <Button disabled={!TIME_PATTERN.test(hour)} label="Guardar hora" loading={submitting} onPress={() => void save()} />
+      <Button disabled={!isValidMealTime(hour)} label="Guardar hora" loading={submitting} onPress={() => void save()} />
       <Button disabled={submitting} label="Cancelar" onPress={onCancel} variant="secondary" />
     </View>
   );

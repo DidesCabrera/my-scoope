@@ -25,6 +25,7 @@ from notas.domain.models import (
     MealFood,
     Program,
     ProgramDay,
+    SavedComparison,
     ShareResource,
 )
 
@@ -154,6 +155,23 @@ def _program_from_snapshot(*, snapshot: dict, actor) -> Program:
     return program
 
 
+def _comparison_from_snapshot(*, snapshot: dict, actor) -> SavedComparison:
+    comparison = snapshot.get("comparison")
+    if not isinstance(comparison, dict):
+        raise ShareUnavailable("share_snapshot_invalid")
+    kind = comparison.get("kind")
+    snapshot_payload = comparison.get("snapshot_payload")
+    if kind not in dict(SavedComparison.KIND_CHOICES) or not isinstance(snapshot_payload, list) or len(snapshot_payload) < 2:
+        raise ShareUnavailable("share_snapshot_invalid")
+    return SavedComparison.objects.create(
+        owner=actor,
+        kind=kind,
+        name=_snapshot_title(snapshot, "Comparación compartida")[:160],
+        payload=[],
+        snapshot_payload=snapshot_payload,
+    )
+
+
 @transaction.atomic
 def update_inbox_item(
     *,
@@ -187,12 +205,14 @@ def save_inbox_item(*, inbox_item: InboxItem, actor) -> SavedInboxSubject:
     if item.owner_id != actor.id:
         raise ShareUnavailable("share_inbox_item_not_owned")
     model_by_type = {
+        ShareResource.SubjectType.COMPARISON: SavedComparison,
         ShareResource.SubjectType.DAILY_PLAN: DailyPlan,
         ShareResource.SubjectType.FOOD: Food,
         ShareResource.SubjectType.MEAL: Meal,
         ShareResource.SubjectType.PROGRAM: Program,
     }
     entity_by_type = {
+        ShareResource.SubjectType.COMPARISON: "comparison",
         ShareResource.SubjectType.DAILY_PLAN: "dailyPlan",
         ShareResource.SubjectType.FOOD: "food",
         ShareResource.SubjectType.MEAL: "meal",
@@ -202,7 +222,8 @@ def save_inbox_item(*, inbox_item: InboxItem, actor) -> SavedInboxSubject:
     if model is None:
         raise ShareUnavailable("share_snapshot_subject_not_supported")
     if item.saved_subject_type and item.saved_object_id:
-        existing = model.objects.filter(pk=item.saved_object_id, created_by=actor).first()
+        ownership = {"owner": actor} if model is SavedComparison else {"created_by": actor}
+        existing = model.objects.filter(pk=item.saved_object_id, **ownership).first()
         if existing is not None:
             return SavedInboxSubject(entity=entity_by_type[item.resource.subject_type], instance=existing)
 
@@ -210,6 +231,7 @@ def save_inbox_item(*, inbox_item: InboxItem, actor) -> SavedInboxSubject:
     try:
         require_shared_import(actor)
         kind = {
+            ShareResource.SubjectType.COMPARISON: "comparison",
             ShareResource.SubjectType.MEAL: "meal",
             ShareResource.SubjectType.DAILY_PLAN: "dailyplan",
             ShareResource.SubjectType.PROGRAM: "program",
@@ -237,7 +259,9 @@ def save_inbox_item(*, inbox_item: InboxItem, actor) -> SavedInboxSubject:
         or subject.get("type") != item.resource.subject_type
     ):
         raise ShareUnavailable("share_snapshot_version_not_supported")
-    if item.resource.subject_type == ShareResource.SubjectType.DAILY_PLAN:
+    if item.resource.subject_type == ShareResource.SubjectType.COMPARISON:
+        saved = _comparison_from_snapshot(snapshot=snapshot, actor=actor)
+    elif item.resource.subject_type == ShareResource.SubjectType.DAILY_PLAN:
         saved = _dailyplan_from_snapshot(snapshot=snapshot, actor=actor)
     elif item.resource.subject_type == ShareResource.SubjectType.FOOD:
         saved = _food_from_snapshot(snapshot=snapshot, actor=actor)

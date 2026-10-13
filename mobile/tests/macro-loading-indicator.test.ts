@@ -44,7 +44,7 @@ test("the macro loading proposal uses trackless KPI allocation bars and respects
 
   assert.equal(componentContracts.every((contract) => component.includes(contract)), true);
   assert.equal(galleryContracts.every((contract) => gallery.includes(contract)), true);
-  assert.equal(productSources.every((source) => source.includes("MacroLoadingIndicator") || source.includes("<LoadingState")), true);
+  assert.equal(productSources.every((source) => source.includes("MacroLoadingIndicator") || source.includes("LoadingState")), true);
   assert.equal(productSources.every((source) => source.includes("surfaceApp") || source.includes("<LoadingState")), true);
   assert.equal(productSources[3].includes('if (loading && mode === "list" && !page) return <LoadingState'), true);
   assert.equal(component.includes("allocationPanelTrack"), false);

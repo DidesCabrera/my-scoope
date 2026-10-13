@@ -1,4 +1,4 @@
-import { BookPlus, Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2 } from "lucide-react-native";
+import { Bookmark, Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -248,7 +248,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                 {onSaveToLibrary ? (
                   <ActionSheetAction
                     disabled={submitting}
-                    icon={BookPlus}
+                    icon={Bookmark}
                     label="Guardar en mi biblioteca"
                     onPress={() => void saveToLibrary()}
                   />

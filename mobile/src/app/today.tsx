@@ -1,13 +1,14 @@
 import { type Href, Redirect, Stack, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { CalendarClock } from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData, CalendarizedDayDetail, HomeData, MealCheckInInput, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
+import { subscribeToCalendarizedDayUpdates } from "@/components/calendarization/calendarized-day-updates";
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-plan-card";
 import { compactDateLabel } from "@/components/calendarization/current-week";
@@ -120,6 +121,15 @@ export default function TodayScreen() {
     }, [load]),
   );
 
+  useEffect(() => subscribeToCalendarizedDayUpdates((day) => {
+    setToday((current) => current?.day_id === day.id ? {
+      ...current,
+      has_plan: day.has_plan,
+      meal_execution: day.meal_execution,
+      plan_snapshot: day.plan_snapshot,
+    } : current);
+  }), []);
+
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({ action: { label: "Acciones de inicio", onPress: openHomeActions }, mode: "default" });
     return () => setHeaderPresentation({ mode: "default" });
@@ -128,7 +138,7 @@ export default function TodayScreen() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (status === "authenticated" && profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
   if (status === "authenticated" && !profile?.onboarding_completed) return <Redirect href="/onboarding" />;
-  if (loading && !today) return <><Stack.Screen options={{ animation: "none", headerShown: false }} /><LoadingState viewportCentered /></>;
+  if (loading && !today) return <><Stack.Screen options={{ animation: "none", headerShown: false }} /><LoadingState headerVisible={false} /></>;
 
   const snapshot = today?.plan_snapshot;
   const todayDayId = today?.day_id;

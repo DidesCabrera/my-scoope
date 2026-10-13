@@ -15,6 +15,7 @@ export default function LearningCatalogScreen() {
   const { kind: rawKind } = useLocalSearchParams<{ kind?: string }>();
   const kind = rawKind === "manuals" ? "manuals" : "nutrition";
   const title = kind === "nutrition" ? "Fundamentos Nutricionales" : "Manuales de uso";
+  const cardAccent = kind === "nutrition" ? tokens.color.fat : tokens.color.carbs;
   const router = useRouter();
   const { apiRequest, status } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
@@ -29,7 +30,7 @@ export default function LearningCatalogScreen() {
   return <Screen headerMode="preserve">
     <AppHeader eyebrow="Biblioteca de aprendizaje" title={title} />
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    {articles.map((article) => <Card key={article.slug} style={learningStyles.card}>
+    {articles.map((article) => <Card accent={cardAccent} key={article.slug} style={learningStyles.card}>
       <View style={learningStyles.cardHeading}><View style={learningStyles.cardText}><Text style={learningStyles.title}>{article.title}</Text><Text style={learningStyles.summary}>{article.summary}</Text></View><LearningIcon name={article.icon} /></View>
       <EntityCardActions><EntityCardAction label={`Leer ${article.title}`} onPress={() => router.push(`/system-foundations/${kind}/${article.slug}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={2.2} /></EntityCardAction></EntityCardActions>
     </Card>)}

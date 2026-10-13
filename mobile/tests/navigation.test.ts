@@ -45,7 +45,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(comparison, /Usar en el Asistente|Volver a guardadas/);
   assertSourceDoesNotMatch(comparison, /forceFallback: true/);
   assertSourceMatch(comparison, /params: \{ kind \}/);
-  assertSourceMatch(comparison, /<Screen[\s\S]*headerMode="preserve"[\s\S]*scrollHeader=\{<AppHeader/);
+  assertSourceMatch(comparison, /<Screen[\s\S]*headerMode="preserve"[\s\S]*scrollHeader=\{<View style=\{styles\.detailHeader\}>[\s\S]*<AppHeader/);
   assertSourceMatch(comparison, /eyebrowIcon=\{<EntityIcon entity=\{entity\} size="compact" \/>\}/);
   assertSourceMatch(comparison, /kind === "dailyplans" \? "dailyPlan" : kind === "meals" \? "meal" : "food"/);
   assertSourceMatch(comparisonList, /<EntityIcon entity=\{entity\} size="compact" \/>[\s\S]*Comparación \{item\.kind_label\}/);
@@ -210,10 +210,14 @@ test("system foundations exposes nutrition and product-manual journeys", async (
 
   assertSourceMatch(home, /Fundamentos Nutricionales/);
   assertSourceMatch(home, /Manuales de uso/);
+  assertSourceMatch(home, /<Card accent=\{tokens\.color\.fat\} style=\{learningStyles\.card\}>[\s\S]*Fundamentos Nutricionales/);
+  assertSourceMatch(home, /<Card accent=\{tokens\.color\.carbs\} style=\{learningStyles\.card\}>[\s\S]*Manuales de uso/);
+  assertSourceMatch(catalog, /const cardAccent = kind === "nutrition" \? tokens\.color\.fat : tokens\.color\.carbs/);
+  assertSourceMatch(catalog, /<Card accent=\{cardAccent\} key=\{article\.slug\} style=\{learningStyles\.card\}>/);
   assertSourceMatch(home, /<SectionPageHeader countLabel="contenidos" section="learning" title="Fundamentos Sistema" \/>/);
   assertSourceDoesNotMatch(home, /<AppHeader|Aprender en My Scoope/);
   assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="heart-pulse"/);
-  assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="book-marked"/);
+  assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="cog"/);
   assertSourceMatch(home, /<ChevronRight color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(catalog, /"\/api\/v1\/learning"/);
   assertSourceMatch(catalog, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon/);

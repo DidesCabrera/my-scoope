@@ -27,6 +27,7 @@ from notas.domain.models import (
     Program,
     ProgramDay,
     ProgramShare,
+    SavedComparison,
     ShareClaim,
     ShareInvitation,
     ShareResource,
@@ -57,6 +58,16 @@ class EntitySharingTests(TestCase):
         )
         ProgramDay.objects.create(
             program=self.program, dailyplan=self.plan, week_number=1, day_number=2
+        )
+        self.comparison = SavedComparison.objects.create(
+            owner=self.sender,
+            kind=SavedComparison.KIND_FOODS,
+            name="Yogur vs Avena",
+            payload=[{"id": 1, "quantity": 100}, {"id": 2, "quantity": 100}],
+            snapshot_payload=[
+                {"id": 1, "name": "Yogur", "quantity": 100, "quantity_unit": "g", "values": {"total_kcal": 116}},
+                {"id": 2, "name": "Avena", "quantity": 100, "quantity_unit": "g", "values": {"total_kcal": 380}},
+            ],
         )
 
     def test_adapters_are_portable_and_keep_entity_shape(self):
@@ -149,6 +160,18 @@ class EntitySharingTests(TestCase):
         self.assertEqual((slot.week_number, slot.day_number), (1, 2))
         self.assertEqual(slot.dailyplan.source, DailyPlan.SOURCE_PROGRAM)
         self.assertEqual(slot.dailyplan.created_by, self.recipient)
+
+    def test_comparison_snapshot_saves_a_detached_historical_copy(self):
+        resource = get_or_create_entity_share_resource(
+            sender=self.sender, subject_type="comparison", subject_id=self.comparison.id
+        ).resource
+        _, saved = self._claim_and_save(resource)
+
+        self.assertEqual(saved.entity, "comparison")
+        self.assertEqual(saved.instance.owner, self.recipient)
+        self.assertEqual(saved.instance.name, self.comparison.name)
+        self.assertEqual(saved.instance.payload, [])
+        self.assertEqual(saved.instance.snapshot_payload, self.comparison.snapshot_payload)
 
     def test_dailyplan_meal_variant_saves_as_detached_meal(self):
         resource = get_or_create_entity_share_resource(
