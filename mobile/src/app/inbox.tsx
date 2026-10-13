@@ -1,12 +1,13 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Ban, ChevronRight, Mail, MailOpen, MoreHorizontal, Send } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { RefreshControl, StyleSheet } from "react-native";
+import { RefreshControl, StyleSheet, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { SharingInboxData, SharingInboxItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { ProposalStatusBadge } from "@/components/proposals/proposal-card";
 import { InboxItemActions } from "@/components/sharing/inbox-item-actions";
 import {
   CollectionEmptyState,
@@ -131,11 +132,9 @@ export default function InboxScreen() {
       {visibleData?.items.map((item) => {
         const unavailable = item.status === "revoked" || item.status === "expired";
         return <EntityCard
-          accessory={unavailable
-            ? <Ban color={tokens.color.textMuted} size={20} />
-            : activeScope === "sent"
+          accessory={activeScope === "sent"
             ? <Send color={tokens.color.textMuted} size={20} />
-            : item.is_read
+            : item.is_read || unavailable
             ? <MailOpen color={tokens.color.textMuted} size={20} />
             : <Mail color={tokens.color[entityBySubject[item.subject_type]]} size={20} />}
           actions={activeScope === "received" || !unavailable ? <>
@@ -144,15 +143,18 @@ export default function InboxScreen() {
             </EntityCardAction>
             {!unavailable ? <EntityCardAction label={`Ver detalle de ${item.title}`} onPress={() => open(item)} role="link">
               <ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={2.2} />
-            </EntityCardAction> : null}
+            </EntityCardAction> : <View accessibilityLabel={item.status === "expired" ? "Enlace vencido" : "Acceso revocado"} accessible style={styles.unavailableAction}>
+              <Ban color={tokens.color.textMuted} size={21} />
+            </View>}
           </> : undefined}
           entity={entityBySubject[item.subject_type]}
-          eyebrow={item.status === "expired" ? "Enlace vencido" : unavailable ? "Acceso revocado" : activeScope === "sent" ? "Enviado" : item.is_read ? "Recibido" : "Nuevo"}
           key={item.id}
           onPress={unavailable ? undefined : () => open(item)}
-          subtitle={`${item.sender} · ${formatCompactDate(item.created_at) ?? "Fecha no disponible"}`}
+          subtitle={`${activeScope === "received" ? `Recibido de ${item.sender}` : "Enviado"} · ${formatCompactDate(item.created_at) ?? "Fecha no disponible"}`}
           title={item.title}
-        />;
+        >
+          {unavailable && activeScope === "received" ? <ProposalStatusBadge label={item.status === "expired" ? "Enlace vencido" : "Acceso revocado"} status="rejected" /> : null}
+        </EntityCard>;
       })}
       {visibleData && visibleData.count === 0 ? (
         <CollectionEmptyState
@@ -185,4 +187,5 @@ export default function InboxScreen() {
 const styles = StyleSheet.create({
   loadingContent: { paddingBottom: 0, paddingTop: 0 },
   stickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
+  unavailableAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 36, justifyContent: "center", width: 36 },
 });

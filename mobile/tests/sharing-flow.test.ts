@@ -1,4 +1,3 @@
-import assert from "node:assert/strict";
 import path from "node:path";
 import test from "node:test";
 
@@ -139,10 +138,15 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inboxActions, /label="Revocar acceso"/);
   assertSourceMatch(inboxActions, /label="Confirmar revocación"/);
   assertSourceMatch(inboxActions, /setConfirmingRevoke\(true\)/);
-  assertSourceMatch(inboxActions, /label="Eliminar de Compartidos"/);
+  assertSourceMatch(inboxActions, /label="Eliminar de Recibidos"/);
   assertSourceMatch(inbox, /current\.sent\.items\.filter\(\(\{ resource_id \}\) => resource_id !== item\.resource_id\)/);
   assertSourceMatch(inbox, /item\.status === "revoked" \|\| item\.status === "expired"/);
-  assertSourceMatch(inbox, /item\.status === "expired" \? "Enlace vencido" : unavailable \? "Acceso revocado"/);
+  assertSourceDoesNotMatch(inbox, /eyebrow=\{/);
+  assertSourceMatch(inbox, /<ProposalStatusBadge label=\{item\.status === "expired" \? "Enlace vencido" : "Acceso revocado"\} status="rejected" \/>/);
+  assertSourceMatch(inbox, /item\.is_read \|\| unavailable[\s\S]*<MailOpen/);
+  assertSourceMatch(inbox, /style=\{styles\.unavailableAction\}[\s\S]*<Ban/);
+  assertSourceMatch(inbox, /`Recibido de \$\{item\.sender\}`/);
+  assertSourceMatch(inbox, /activeScope === "received" \? `Recibido de \$\{item\.sender\}` : "Enviado"/);
   assertSourceMatch(inbox, /onPress=\{unavailable \? undefined/);
   assertSourceMatch(inbox, /<EntityCard/);
   assertSourceMatch(inbox, /<EntityCardAction/);

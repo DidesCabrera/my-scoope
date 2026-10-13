@@ -40,7 +40,7 @@ export function InboxItemActions({
             <Button label="Volver" onPress={() => setConfirmingRevoke(false)} variant="secondary" />
           </View> : <ActionSheetActions>
             {mode === "received" ? (
-              <ActionSheetAction destructive icon={Trash2} label="Eliminar de Compartidos" onPress={onDelete} />
+              <ActionSheetAction destructive icon={Trash2} label="Eliminar de Recibidos" onPress={onDelete} />
             ) : (
               <ActionSheetAction destructive icon={Ban} label="Revocar acceso" onPress={() => setConfirmingRevoke(true)} />
             )}
