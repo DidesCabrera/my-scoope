@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 
 import { formatNutritionFact, formatNutritionFactForPortion, formatNutritionPortion, nutritionFactRows } from "../src/components/ui/nutrition-facts";
@@ -16,6 +18,15 @@ test("nutrition portions use the registered quantity without inventing missing d
   assert.equal(formatNutritionFactForPortion(79, 30, "g"), "23,7 g");
   assert.equal(formatNutritionFactForPortion(0, 30, "g"), "0 g");
   assert.equal(formatNutritionFactForPortion(79, null, "g"), "-");
+});
+
+test("nutrition facts use the registered portion as the third column header", async () => {
+  const card = await readFile(path.resolve(process.cwd(), "src/components/ui/nutrition-facts-card.tsx"), "utf8");
+  assert.match(card, /\{formatNutritionPortion\(portion\.quantity, portion\.unit\)\}<\/Text>/);
+  assert.doesNotMatch(card, />PORCIÓN<\/Text>/);
+  assert.match(card, /card: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding, paddingBottom:/);
+  assert.match(card, /table: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
+  assert.doesNotMatch(card, /(?:card|table): \{[^}]*marginTop: -/);
 });
 
 test("food nutrition facts expose the approved rows in display order", () => {

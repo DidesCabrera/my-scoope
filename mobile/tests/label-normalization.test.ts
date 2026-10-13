@@ -230,6 +230,7 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
   for (const expected of [
     "autofocus={LABEL_CAMERA_AUTOFOCUS}",
     'type Phase = "intro" | "camera" | "preview" | "processing" | "review" | "confirmation" | "saved"',
+    "Enriquece tu librería de alimentos",
     'imageQuality.status === "unsuitable"',
     "captureInFlightRef.current = true",
     "analysisInFlightRef.current = true",
@@ -258,6 +259,10 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
     '<DistributedTabBar<"g" | "ml">',
     "bleed",
     '<AnimatedScanBeam gradientId="label-capture-live-scan" />',
+    'verticalCrop={keyboardVisible ? 0.2 : 0}',
+    'fullBleedSquareCropped: { overflow: "hidden" }',
+    '<NutritionFactsCard',
+    'portion={{ quantity: optionalNumber(form.servingSize) ?? null, unit: portionUnit }}',
     'apiRequest<EntitlementsData>("/api/v1/entitlements")',
     'planName={planName ?? config.plan_name}',
     'fixedHeader={phase === "review" && prepared ? (',
@@ -265,9 +270,20 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
   ]) {
     assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);
   }
+  const processingView = screen.match(/if \(phase === "processing" && prepared\)[\s\S]*?const formNutrition/)?.[0] ?? "";
+  const cameraView = screen.match(/if \(phase === "camera"\)[\s\S]*?if \(phase === "preview" && prepared\)/)?.[0] ?? "";
+  const previewView = screen.match(/if \(phase === "preview" && prepared\)[\s\S]*?if \(phase === "processing" && prepared\)/)?.[0] ?? "";
+  assert.ok(cameraView.includes('scroll={false}'));
+  assert.ok(cameraView.includes('style={styles.bottomActions}'));
+  assert.ok(!screen.includes('cameraBottomActions'));
+  assert.ok(previewView.includes('scroll={false}'));
+  assert.ok(previewView.indexOf('<View style={styles.qualityPanel}>') < previewView.indexOf('{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}'));
+  assert.ok(processingView.includes('scroll={false}'));
   assert.ok(!screen.includes("convertVolumeDraftTo100g"));
   assert.ok(!screen.includes("development build iOS de CML05"));
   assert.ok(!screen.includes("CameraView.isAvailableAsync()"));
+  assert.ok(!screen.includes("Cambiar lente"));
+  assert.ok(!screen.includes("availableLenses"));
   assert.equal(LABEL_CAMERA_AUTOFOCUS, "off", "Expo 57 requires off for continuous autofocus");
   assert.ok(!screen.includes('autofocus="on"'));
 });

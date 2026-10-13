@@ -1217,6 +1217,8 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /fixedProfileChrome: index >= 7 && index <= 12/);
   assertSourceMatch(journey, /disclosuresTitleSpacingReduction: index === 6 \? 18 : 0/);
   assertSourceMatch(journey, /fixedDisclosuresFooter: index === 6/);
+  assertSourceMatch(journey, /style=\{\[styles\.backAction, index === 6 && styles\.disclosuresBackAction\]\}/);
+  assertSourceMatch(journey, /disclosuresBackAction: \{ marginBottom: 20 \}/);
   assertSourceMatch(journey, /fixedProfileFooterBottomSpacing: index >= 7 && index <= 12 \? 46 : 0/);
   assertSourceDoesNotMatch(onboardingPreview, /fixedLoginActionBottomSpacing=\{134\}/);
   assert.ok(journey.includes("fixedLoginActionBottomSpacing: 0"));
@@ -1250,13 +1252,21 @@ test("the label capture gallery exposes the complete happy-path storyboard witho
   assertSourceMatch(gallery, /<LabelCaptureStoryboardGallery \/>/);
   assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos de la digitalización de etiquetas"/);
   assertSourceMatch(storyboardGallery, /steps=\{labelCaptureStoryboardSteps\}/);
-  for (const step of ["intro", "camera", "preview", "processing", "review", "confirmation", "saved"]) {
+  for (const step of ["intro", "camera", "preview", "processing", "review", "confirmation", "saved", "qualityWarnings"]) {
     assertSourceMatch(storyboard, new RegExp(`key: "${step}"`));
   }
   assertSourceMatch(storyboard, /datos fijos|Yogur griego natural/);
+  assertSourceMatch(storyboard, /title="Enriquece tu librería de alimentos"/);
   assertSourceMatch(storyboard, /Validamos nitidez antes de usar créditos/);
   assertSourceMatch(storyboard, /Confirmar y crear alimento/);
+  assertSourceMatch(storyboard, /<NutritionFactsCard[\s\S]*portion=\{\{ quantity: 160, unit: "g" \}\}/);
+  assertSourceMatch(storyboard, /key: "qualityWarnings", label: "Advertencias de calidad"/);
+  assertSourceMatch(storyboard, /function QualityWarningsView/);
+  assertSourceMatch(storyboard, /qualityWarningIssues\.map/);
+  assertSourceMatch(storyboard, /function QualityWarningsView[\s\S]*<View style=\{styles\.qualityPanel\}>\s*<View style=\{styles\.qualityRow\}>[\s\S]*<Pill color=\{tokens\.color\.warning\} label="Revisar" \/>/);
   assertSourceMatch(storyboard, /<AnimatedScanBeam gradientId="label-capture-credit-scan" \/>/);
+  assertSourceMatch(storyboard, /<View style=\{\[styles\.bottomActions, styles\.cameraBottomActions\]\}>/);
+  assertSourceMatch(storyboard, /cameraBottomActions: \{ marginBottom: 74 \}/);
   assertSourceMatch(scanBeam, /Animated\.loop\(Animated\.sequence/);
   assertSourceMatch(scanBeam, /toValue: 1[\s\S]*toValue: 0/);
   assertSourceMatch(scanBeam, /outputRange: \[0, Math\.max\(0, height - beamHeight\)\]/);
@@ -1276,6 +1286,7 @@ test("the label capture gallery exposes the complete happy-path storyboard witho
   assert.ok(proteinIndex < fatIndex && fatIndex < saturatedFatIndex && saturatedFatIndex < carbsIndex && carbsIndex < sugarIndex && sugarIndex < fiberIndex && fiberIndex < sodiumIndex);
   assertSourceMatch(storyboard, /intro: \{ leading: "back", trailing: null \}/);
   assertSourceDoesNotMatch(storyboard, /leading: "menu"|PanelRight/);
+  assertSourceDoesNotMatch(storyboard, /Cambiar lente/);
   assertSourceDoesNotMatch(storyboard, /apiRequest|expo-camera|useCameraPermissions|useSession/);
 });
 

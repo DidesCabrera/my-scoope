@@ -22,7 +22,7 @@ export function NutritionFactsCard({ facts, portion }: NutritionFactsCardProps) 
           <View accessibilityRole="header" style={[styles.row, styles.header]}>
             <Text style={[styles.headerText, styles.labelColumn]}>Nutriente</Text>
             <Text style={[styles.headerText, styles.valueColumn]}>{`100 ${portion.unit}`.toUpperCase()}</Text>
-            <Text style={[styles.headerText, styles.valueColumn, styles.portionColumn]}>PORCIÓN</Text>
+            <Text style={[styles.headerText, styles.valueColumn, styles.portionColumn]}>{formatNutritionPortion(portion.quantity, portion.unit)}</Text>
           </View>
           {rows.map((row, index) => (
             <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.lastRow]}>
@@ -38,8 +38,8 @@ export function NutritionFactsCard({ facts, portion }: NutritionFactsCardProps) 
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: -(tokens.spacing.sm + 2), paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.sm + 2 },
-  table: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: -tokens.spacing.xs },
+  card: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.sm + 2 },
+  table: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 46 },
   lastRow: { borderBottomWidth: 0 },
   header: { backgroundColor: tokens.color.surfaceMuted, minHeight: 32 },

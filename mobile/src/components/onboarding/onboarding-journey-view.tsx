@@ -463,7 +463,7 @@ function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: {
     <View style={styles.footer}>
       {index === 6 ? <CreditContinueButton label={primary} /> : <Button label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
       {index > 0 ? (
-        <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={styles.backAction}>
+        <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, index === 6 && styles.disclosuresBackAction]}>
           <ChevronLeft color={tokens.color.textMuted} size={16} />
           <Text style={styles.backLabel}>{secondary}</Text>
         </Pressable>
@@ -1309,6 +1309,7 @@ const styles = StyleSheet.create({
   profileProgressLine: { backgroundColor: tokens.color.borderStrong, flex: 1, height: 2 },
   profileProgressDot: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderStrong, borderRadius: 7, borderWidth: 1, height: 14, overflow: "hidden", width: 14 },
   backAction: { alignItems: "center", alignSelf: "center", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 40, paddingHorizontal: tokens.spacing.md },
+  disclosuresBackAction: { marginBottom: 20 },
   profileFooter: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   profileBackAction: { alignSelf: "auto", paddingLeft: 0 },
   profilePrimaryAction: { minWidth: 144 },
