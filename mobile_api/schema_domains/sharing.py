@@ -56,6 +56,7 @@ class SharingInboxItemData(Schema):
     id: int
     resource_id: UUID
     subject_type: Literal["comparison", "daily_plan", "food", "meal", "program"]
+    comparison_kind: Literal["foods", "meals", "dailyplans"] | None = None
     title: str
     sender: str
     public_url: str

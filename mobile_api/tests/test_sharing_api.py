@@ -10,7 +10,7 @@ from django.utils import timezone
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.sharing.dailyplans import create_dailyplan_share_resource
 from notas.application.sharing.services import revoke_share_resource
-from notas.domain.models import DailyPlan, Food, Meal, Program, SavedComparison, ShareInvitation, ShareResource
+from notas.domain.models import DailyPlan, Food, Meal, Program, SavedComparison, ShareClaim, ShareInvitation, ShareResource
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -67,6 +67,13 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.json()["data"]["subject_type"], subject_type)
                 self.assertEqual(response.json()["data"]["title"], item.name)
+
+        sent_comparison = next(
+            item
+            for item in self.client.get("/api/v1/shares/inbox?scope=sent").json()["data"]["items"]
+            if item["subject_type"] == "comparison"
+        )
+        self.assertEqual(sent_comparison["comparison_kind"], "foods")
 
     def test_owner_can_create_and_revoke_dailyplan_share_resource(self):
         dailyplan = DailyPlan.objects.create(name="Plan desde móvil", created_by=self.user, is_draft=False)
@@ -160,6 +167,24 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(saved.json()["data"]["entity"], "dailyPlan")
         self.assertEqual(dismissed.status_code, 200)
         self.assertEqual(self.client.get("/api/v1/shares/inbox").json()["data"]["count"], 0)
+
+    def test_owner_cannot_claim_or_email_their_own_share(self):
+        source = DailyPlan.objects.create(name="Plan propio", created_by=self.user, is_draft=False)
+        resource = create_dailyplan_share_resource(sender=self.user, dailyplan_id=source.id).resource
+
+        claim = self.client.post(f"/api/v1/shares/{resource.public_id}/claims")
+        emailed = self.client.post(
+            f"/api/v1/library/daily-plans/{source.id}/actions",
+            data={"action": "share", "recipient_email": self.user.email},
+            content_type="application/json",
+        )
+
+        self.assertEqual(claim.status_code, 409)
+        self.assertEqual(claim.json()["error"]["code"], "share_self_claim_not_allowed")
+        self.assertEqual(emailed.status_code, 422)
+        self.assertEqual(emailed.json()["error"]["code"], "share_self_recipient_not_allowed")
+        self.assertFalse(ShareClaim.objects.filter(resource=resource, user=self.user).exists())
+        self.assertFalse(ShareInvitation.objects.filter(resource=resource).exists())
 
     def test_revoked_share_remains_in_recipient_inbox_without_public_detail(self):
         sender = User.objects.create_user("revoking-sender")

@@ -42,6 +42,13 @@ from notas.domain.models import InboxItem, ShareClaim, ShareResource
 router = Router()
 
 
+def _comparison_kind(resource: ShareResource):
+    if resource.subject_type != ShareResource.SubjectType.COMPARISON:
+        return None
+    kind = (resource.snapshot.get("summary") or {}).get("comparison_kind")
+    return kind if kind in {"foods", "meals", "dailyplans"} else None
+
+
 def _resource_payload(request, resource: ShareResource) -> dict:
     relative_url = f"/s/{resource.public_id}/"
     return {
@@ -61,6 +68,7 @@ def _inbox_item_payload(request, item: InboxItem) -> dict:
         "id": item.id,
         "resource_id": resource.public_id,
         "subject_type": resource.subject_type,
+        "comparison_kind": _comparison_kind(resource),
         "title": (resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido",
         "sender": resource.sender.get_full_name() or resource.sender.username,
         "public_url": request.build_absolute_uri(f"/s/{resource.public_id}/"),
@@ -77,6 +85,7 @@ def _sent_item_payload(request, resource: ShareResource) -> dict:
         "id": resource.id,
         "resource_id": resource.public_id,
         "subject_type": resource.subject_type,
+        "comparison_kind": _comparison_kind(resource),
         "title": (resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido",
         "sender": "Compartido por ti",
         "public_url": request.build_absolute_uri(f"/s/{resource.public_id}/"),

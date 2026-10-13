@@ -306,6 +306,7 @@ export function EntityHeading({
 
 export function EntityCard({
   entity,
+  accent,
   title,
   eyebrow,
   eyebrowAccessory,
@@ -320,6 +321,7 @@ export function EntityCard({
   style,
 }: PropsWithChildren<{
   entity: EntityKind;
+  accent?: string;
   title: string;
   eyebrow?: string;
   eyebrowAccessory?: ReactNode;
@@ -333,7 +335,7 @@ export function EntityCard({
   style?: StyleProp<ViewStyle>;
 }>) {
   const content = (
-    <Card accent={tokens.color[entity]} style={[actions ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
+    <Card accent={accent ?? tokens.color[entity]} style={[actions ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
       <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
       {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}

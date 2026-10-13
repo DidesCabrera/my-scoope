@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronRight, Utensils } from "lucide-react-native";
+import { Carrot, ChevronRight, Utensils } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 
@@ -7,17 +7,18 @@ import type { ApiEnvelope, ShareClaimResult, ShareResource, SharingInboxData } f
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
+import { FoodDetailCardList } from "@/components/details/food-detail-card-list";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
-import { FoodPanels, MealPanels } from "@/components/panels";
+import { FoodPanels, GroupedFoodsCard, MealPanels } from "@/components/panels";
 import { SharedResourceActions } from "@/components/sharing/shared-resource-actions";
-import { Button, EntityCardAction, InlineNotice, LoadingState, Screen } from "@/components/ui";
+import { Button, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, NutritionFactsCard, Screen } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
-import { sharedComparisonResult, sharedFoodPanelItems, sharedMealPanelItems, sharedNutrition, sharedProgramLibraryItem } from "@/sharing/presentation";
+import { sharedComparisonResult, sharedFoodPanelItems, sharedMealPanelItems, sharedNutrition, sharedNutritionFacts, sharedPlanFoodPanelItems, sharedProgramLibraryItem, type ShareMeal } from "@/sharing/presentation";
 
 type SavedShare = { entity: "comparison" | "dailyPlan" | "food" | "meal" | "program"; item_id: number };
 
@@ -39,6 +40,7 @@ export default function SharedResourceScreen() {
   const [claiming, setClaiming] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
   const [inboxState, setInboxState] = useState<{ id: number; isSaved: boolean; resourceId: string } | null>(null);
+  const [isOwnedResource, setIsOwnedResource] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,17 +60,21 @@ export default function SharedResourceScreen() {
   useEffect(() => {
     if (!id || status !== "authenticated") return;
     let active = true;
-    void apiRequest<SharingInboxData>("/api/v1/shares/inbox")
-      .then((inbox) => {
+    void Promise.all([
+      apiRequest<SharingInboxData>("/api/v1/shares/inbox"),
+      apiRequest<SharingInboxData>("/api/v1/shares/inbox?scope=sent"),
+    ])
+      .then(([inbox, sent]) => {
         const item = inbox.items.find((candidate) => candidate.resource_id === id);
         if (active && item) setInboxState({ id: item.id, isSaved: item.is_saved, resourceId: id });
+        if (active) setIsOwnedResource(sent.items.some((candidate) => candidate.resource_id === id));
       })
       .catch(() => undefined);
     return () => { active = false; };
   }, [apiRequest, id, status]);
 
   useFocusEffect(useCallback(() => {
-    const headerTitle = resource?.subject_type === "comparison" ? "Comparación Compartida" : resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : resource?.subject_type === "program" ? "Programa Compartido" : "Contenido Compartido";
+    const headerTitle = resource?.subject_type === "comparison" ? "Comparación Compartida" : resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : resource?.subject_type === "food" ? "Alimento Compartido" : resource?.subject_type === "meal" ? "Comida Compartida" : resource?.subject_type === "program" ? "Programa Compartido" : "Contenido Compartido";
     setHeaderPresentation({ action: resource ? { icon: "more", label: `Acciones para ${resource.title}`, onPress: () => setActionsVisible(true) } : undefined, fallback: "/inbox", mode: "back", title: headerTitle });
     return () => setHeaderPresentation({ mode: "default" });
   }, [resource, setHeaderPresentation]));
@@ -92,12 +98,34 @@ export default function SharedResourceScreen() {
   const snapshot = resource?.snapshot;
   const meals = snapshot?.meals ?? [];
   const mealItems = snapshot ? sharedMealPanelItems(meals, snapshot.nutrition.calories) : [];
+  const planFoodItems = snapshot ? sharedPlanFoodPanelItems(meals, snapshot.nutrition.calories) : [];
   const sharedComparison = snapshot ? sharedComparisonResult(snapshot) : null;
   const sharedProgram = snapshot && resource?.subject_type === "program" ? sharedProgramLibraryItem(snapshot, resource.title) : null;
+  const sharedMeal: ShareMeal | null = snapshot && resource?.subject_type === "meal" ? {
+    foods: snapshot.foods ?? [],
+    name: resource.title,
+    nutrition: snapshot.nutrition,
+    time: snapshot.time,
+  } : null;
+  const sharedMealFoods = sharedMeal ? sharedFoodPanelItems(sharedMeal) : [];
   const isSaved = inboxState?.resourceId === id && inboxState.isSaved;
+  const libraryAction = snapshot ? status === "anonymous" ? (
+    <Button label="Iniciar sesión para agregar" onPress={() => router.push({ pathname: "/login", params: { returnTo: `/share/${id}` } })} />
+  ) : isOwnedResource ? (
+    <InlineNotice>Este contenido ya pertenece a tu biblioteca.</InlineNotice>
+  ) : resource?.claim_policy === "none" ? (
+    <InlineNotice>Este enlace es sólo de lectura.</InlineNotice>
+  ) : (
+    <Button
+      label={isSaved ? "Abrir en mi biblioteca" : "Guardar en mi biblioteca"}
+      loading={claiming}
+      onPress={() => void saveToLibrary()}
+      variant={isSaved ? "secondary" : "primary"}
+    />
+  ) : null;
   return (
     <>
-    <Screen contentStyle={loading ? styles.loadingContent : undefined} headerMode="preserve">
+    <Screen contentStyle={sharedProgram ? styles.programContent : loading ? styles.loadingContent : undefined} headerMode="preserve" scroll={!sharedProgram}>
       {loading ? <LoadingState label="Cargando contenido compartido…" mode="content" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {snapshot && resource?.subject_type === "daily_plan" ? (
@@ -141,10 +169,40 @@ export default function SharedResourceScreen() {
                   </NutritionEntityCard>;
                 })}
             </> : null}
+            {planFoodItems.length ? <>
+              <ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento y evaluar su impacto contextual." title="Alimentos en este plan diario" />
+              <GroupedFoodsCard items={planFoodItems} title="Alimentos plan diario" />
+            </> : null}
           </EntityDetailPage>
         </>
       ) : null}
-      {sharedProgram ? <ProgramDetailPreview item={sharedProgram} showWeekAnalytics={false} /> : null}
+      {sharedProgram ? <ProgramDetailPreview footer={libraryAction} item={sharedProgram} scrollable showWeekAnalytics={false} /> : null}
+      {snapshot && resource?.subject_type === "food" ? <EntityDetailPage
+        entity="food"
+        eyebrow="Alimento"
+        nutrition={sharedNutrition(snapshot.nutrition)}
+        subtitle={`${snapshot.summary.basis_grams ?? 100} ${snapshot.summary.basis_unit ?? "g"}`}
+        title={resource.title}>
+        <NutritionFactsCard
+          facts={sharedNutritionFacts(snapshot.nutrition)}
+          portion={{ quantity: null, unit: snapshot.summary.basis_unit ?? "g" }}
+        />
+      </EntityDetailPage> : null}
+      {sharedMeal ? <EntityDetailPage
+        entity="meal"
+        eyebrow="Comida"
+        eyebrowAccessory={sharedMeal.time ? <HeaderMetadataChip kind="time" value={sharedMeal.time.slice(0, 5)} /> : undefined}
+        indicators={[{ icon: "food", label: "alimentos", value: sharedMealFoods.length }]}
+        nutrition={sharedNutrition(sharedMeal.nutrition)}
+        title={sharedMeal.name}>
+        <EntityDetailSection detail={`${sharedMealFoods.length} alimentos`} title="Composición comida">
+          <FoodPanels items={sharedMealFoods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/share/${id}/foods/${food.detailId}` as Href); }} />
+        </EntityDetailSection>
+        {sharedMealFoods.length ? <>
+          <ProgramSectionHeader icon={Carrot} subtitle="Familiarízate con los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" />
+          <FoodDetailCardList items={sharedMealFoods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/share/${id}/foods/${food.detailId}` as Href); }} />
+        </> : null}
+      </EntityDetailPage> : null}
       {sharedComparison ? <EntityDetailPage
         entity="comparison"
         eyebrow={`Comparación de ${sharedComparison.kind_label}`}
@@ -153,18 +211,7 @@ export default function SharedResourceScreen() {
         title={resource?.title ?? "Comparación compartida"}>
         <ComparisonResultCards hideHeader interactive={false} result={sharedComparison} />
       </EntityDetailPage> : null}
-      {snapshot ? status === "anonymous" ? (
-        <Button label="Iniciar sesión para agregar" onPress={() => router.push({ pathname: "/login", params: { returnTo: `/share/${id}` } })} />
-      ) : resource?.claim_policy === "none" ? (
-        <InlineNotice>Este enlace es sólo de lectura.</InlineNotice>
-      ) : (
-        <Button
-          label={isSaved ? "Abrir en mi biblioteca" : "Guardar en mi biblioteca"}
-          loading={claiming}
-          onPress={() => void saveToLibrary()}
-          variant={isSaved ? "secondary" : "primary"}
-        />
-      ) : null}
+      {!sharedProgram ? libraryAction : null}
     </Screen>
     <SharedResourceActions onOpenInformation={() => router.push(`/share/${id}/information` as Href)} onVisibleChange={setActionsVisible} title={resource?.title ?? "Elemento compartido"} visible={actionsVisible} />
     </>
@@ -173,4 +220,5 @@ export default function SharedResourceScreen() {
 
 const styles = StyleSheet.create({
   loadingContent: { paddingBottom: 0, paddingTop: 0 },
+  programContent: { gap: 0, paddingBottom: 0, paddingHorizontal: 0, paddingTop: 0 },
 });

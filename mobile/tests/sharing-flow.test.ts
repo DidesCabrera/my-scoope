@@ -51,6 +51,24 @@ test("shared daily plans reuse the native entity detail and nutrition panel syst
   assertSourceMatch(shareScreen, /<NutritionEntityCard/);
   assertSourceMatch(shareScreen, /<FoodPanels[\s\S]*?items=\{sharedFoodPanelItems\(meal\)\}/);
   assertSourceMatch(shareScreen, /onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/share\/\$\{id\}\/meals\/\$\{index\}\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);
+  assertSourceMatch(shareScreen, /sharedPlanFoodPanelItems\(meals, snapshot\.nutrition\.calories\)/);
+  assertSourceMatch(shareScreen, /title="Alimentos en este plan diario"[\s\S]*<GroupedFoodsCard items=\{planFoodItems\} title="Alimentos plan diario" \/>/);
+  assertSourceMatch(shareScreen, /planFoodItems\.length/);
+});
+
+test("standalone shared foods and meals render complete native detail views", async () => {
+  const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
+  const sharedMealFood = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id]/foods/[foodIndex].tsx"), "utf8");
+  const sharingTypes = await readTestFile(path.resolve(process.cwd(), "src/sharing/types.ts"), "utf8");
+
+  assertSourceMatch(shareScreen, /resource\?\.subject_type === "food"[\s\S]*entity="food"[\s\S]*nutrition=\{sharedNutrition\(snapshot\.nutrition\)\}/);
+  assertSourceMatch(shareScreen, /<NutritionFactsCard[\s\S]*facts=\{sharedNutritionFacts\(snapshot\.nutrition\)\}[\s\S]*portion=\{\{ quantity: null, unit: snapshot\.summary\.basis_unit \?\? "g" \}\}/);
+  assertSourceMatch(shareScreen, /resource\?\.subject_type === "meal"[\s\S]*entity="meal"[\s\S]*items=\{sharedMealFoods\}/);
+  assertSourceMatch(shareScreen, /`\/share\/\$\{id\}\/foods\/\$\{food\.detailId\}`/);
+  assertSourceMatch(sharedMealFood, /resource\?\.subject_type === "meal" \? resource\.snapshot\?\.foods\?\.\[position\]/);
+  assertSourceMatch(sharedMealFood, /entity="food"/);
+  assertSourceMatch(sharedMealFood, /<NutritionFactsCard[\s\S]*facts=\{sharedNutritionFacts\(food\.nutrition\)\}/);
+  assertSourceMatch(sharingTypes, /time\?: string \| null/);
 });
 
 test("shared programs and comparisons have complete native detail views", async () => {
@@ -59,11 +77,18 @@ test("shared programs and comparisons have complete native detail views", async 
   const comparisonActions = await readTestFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
 
   assertSourceMatch(shareScreen, /sharedProgramLibraryItem\(snapshot, resource\.title\)/);
-  assertSourceMatch(shareScreen, /<ProgramDetailPreview item=\{sharedProgram\} showWeekAnalytics=\{false\} \/>/);
+  assertSourceMatch(shareScreen, /<Screen[\s\S]*scroll=\{!sharedProgram\}/);
+  assertSourceMatch(shareScreen, /<ProgramDetailPreview footer=\{libraryAction\} item=\{sharedProgram\} scrollable showWeekAnalytics=\{false\} \/>/);
+  assertSourceMatch(shareScreen, /!sharedProgram \? libraryAction : null/);
   assertSourceMatch(shareScreen, /sharedComparisonResult\(snapshot\)/);
   assertSourceMatch(shareScreen, /<ComparisonResultCards hideHeader interactive=\{false\} result=\{sharedComparison\} \/>/);
   assertSourceMatch(shareScreen, /saved\.entity === "comparison" \? `\/comparator\/saved\/\$\{saved\.item_id\}`/);
   assertSourceMatch(presentation, /export function sharedProgramLibraryItem/);
+  assertSourceMatch(presentation, /function aggregateSharedFoods/);
+  assertSourceMatch(presentation, /const key = `\$\{food\.name\.trim\(\)\.toLocaleLowerCase\("es-CL"\)\}:\$\{unit\}`/);
+  assertSourceMatch(presentation, /current\.quantity_grams \+= food\.quantity_grams/);
+  assertSourceMatch(presentation, /current\.nutrition = sumNutrition\(\[current\.nutrition, food\.nutrition\]\)/);
+  assertSourceMatch(presentation, /aggregateSharedFoods\(sourceDays\.flatMap/);
   assertSourceMatch(presentation, /export function sharedComparisonResult/);
   assertSourceMatch(comparisonActions, /`\/api\/v1\/shares\/comparisons\/\$\{comparison\.saved_comparison_id\}`/);
   assertSourceMatch(comparisonActions, /await openNativeShare\(resource\)/);
@@ -76,6 +101,7 @@ test("shared meal foods navigate from panels and detail cards", async () => {
 
   assertSourceMatch(presentation, /detailId: index/);
   assertSourceMatch(sharedMeal, /<FoodPanels items=\{foods\} onOpenItem=\{openFood\} \/>/);
+  assertSourceMatch(sharedMeal, /title="Composición comida"/);
   assertSourceMatch(sharedMeal, /<FoodDetailCardList[\s\S]*onOpenFood=\{openFood\}/);
   assertSourceMatch(sharedMeal, /eyebrowAccessory=\{meal\.time \? <HeaderMetadataChip kind="time" value=\{meal\.time\.slice\(0, 5\)\} \/> : undefined\}/);
   assertSourceMatch(sharedMeal, /eyebrow="Comida"/);
@@ -141,7 +167,11 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inboxActions, /label="Eliminar de Recibidos"/);
   assertSourceMatch(inbox, /current\.sent\.items\.filter\(\(\{ resource_id \}\) => resource_id !== item\.resource_id\)/);
   assertSourceMatch(inbox, /item\.status === "revoked" \|\| item\.status === "expired"/);
-  assertSourceDoesNotMatch(inbox, /eyebrow=\{/);
+  assertSourceMatch(inbox, /comparison: \{ feminine: true, label: "Comparación" \}/);
+  assertSourceMatch(inbox, /daily_plan: \{ feminine: false, label: "Plan diario" \}/);
+  assertSourceMatch(inbox, /meal: \{ feminine: true, label: "Comida" \}/);
+  assertSourceMatch(inbox, /activeScope === "received"[\s\S]*eyebrow\.feminine \? "Recibida" : "Recibido"[\s\S]*eyebrow\.feminine \? "Enviada" : "Enviado"/);
+  assertSourceMatch(inbox, /eyebrow=\{`\$\{eyebrow\.label\} \$\{directionLabel\}`\}/);
   assertSourceMatch(inbox, /<ProposalStatusBadge label=\{item\.status === "expired" \? "Enlace vencido" : "Acceso revocado"\} status="rejected" \/>/);
   assertSourceMatch(inbox, /item\.is_read \|\| unavailable[\s\S]*<MailOpen/);
   assertSourceMatch(inbox, /style=\{styles\.unavailableAction\}[\s\S]*<Ban/);
@@ -155,7 +185,23 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(shareScreen, /<LoadingState label="Cargando contenido compartido…" mode="content" \/>/);
   assertSourceMatch(inbox, /daily_plan: "dailyPlan"/);
   assertSourceMatch(inbox, /comparison: "comparison"/);
+  assertSourceMatch(inbox, /comparisonEntityByKind/);
+  assertSourceMatch(inbox, /dailyplans: "dailyPlan"/);
+  assertSourceMatch(inbox, /foods: "food"/);
+  assertSourceMatch(inbox, /meals: "meal"/);
+  assertSourceMatch(inbox, /accent=\{sharedCardAccent\(item\)\}/);
   assertSourceMatch(shareScreen, /\/api\/v1\/shares\/inbox\/\$\{inboxItemId\}\/save/);
   assertSourceMatch(shareScreen, /`\/libraries\/\$\{libraryPathByEntity\[saved\.entity\]\}\/\$\{saved\.item_id\}`/);
   assertSourceMatch(navigation, /href: "\/inbox"/);
+});
+
+test("owners can preview their shares without claiming them into their own Inbox", async () => {
+  const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
+  const errors = await readTestFile(path.resolve(process.cwd(), "src/api/errors.ts"), "utf8");
+
+  assertSourceMatch(shareScreen, /apiRequest<SharingInboxData>\("\/api\/v1\/shares\/inbox\?scope=sent"\)/);
+  assertSourceMatch(shareScreen, /setIsOwnedResource\(sent\.items\.some\(\(candidate\) => candidate\.resource_id === id\)\)/);
+  assertSourceMatch(shareScreen, /isOwnedResource \? \([\s\S]*Este contenido ya pertenece a tu biblioteca\./);
+  assertSourceMatch(errors, /share_self_claim_not_allowed: "Este contenido ya pertenece a tu biblioteca\."/);
+  assertSourceMatch(errors, /share_self_recipient_not_allowed: "No puedes compartir contenido contigo mismo\."/);
 });

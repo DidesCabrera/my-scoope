@@ -5,8 +5,8 @@ import { StyleSheet } from "react-native";
 import { EntityDetailPage } from "@/components/details/entity-detail-page";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { SharedResourceActions } from "@/components/sharing/shared-resource-actions";
-import { InlineNotice, LoadingState, Screen } from "@/components/ui";
-import { sharedNutrition } from "@/sharing/presentation";
+import { InlineNotice, LoadingState, NutritionFactsCard, Screen } from "@/components/ui";
+import { sharedNutrition, sharedNutritionFacts } from "@/sharing/presentation";
 import { useSharedResource } from "@/sharing/use-shared-resource";
 
 export default function SharedFoodDetailScreen() {
@@ -31,15 +31,19 @@ export default function SharedFoodDetailScreen() {
       {loading ? <LoadingState label="Cargando alimento compartido…" mode="content" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!loading && resource && !food ? <InlineNotice tone="error">El alimento compartido no está disponible.</InlineNotice> : null}
-      {food ? (
-        <EntityDetailPage
-          entity="food"
-          eyebrow="Alimento"
-          nutrition={sharedNutrition(food.nutrition)}
-          subtitle={`${food.quantity_grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} ${food.quantity_unit ?? "g"}`}
-          title={food.name}
-        />
-      ) : null}
+        {food ? (
+          <EntityDetailPage
+            entity="food"
+            eyebrow="Alimento"
+            nutrition={sharedNutrition(food.nutrition)}
+            subtitle={`${food.quantity_grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} ${food.quantity_unit ?? "g"}`}
+            title={food.name}>
+            <NutritionFactsCard
+              facts={sharedNutritionFacts(food.nutrition)}
+              portion={{ quantity: food.quantity_grams, unit: food.quantity_unit ?? "g" }}
+            />
+          </EntityDetailPage>
+        ) : null}
     </Screen>
     <SharedResourceActions onOpenInformation={() => router.push(`/share/${id}/information` as Href)} onVisibleChange={setActionsVisible} title={food?.name ?? "Alimento compartido"} visible={actionsVisible} />
     </>

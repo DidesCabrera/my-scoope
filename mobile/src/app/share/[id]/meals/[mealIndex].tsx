@@ -49,7 +49,7 @@ export default function SharedMealDetailScreen() {
           ]}
           nutrition={sharedNutrition(meal.nutrition)}
           title={meal.name}>
-          <EntityDetailSection detail={`${foods.length} alimentos`} title="Composición">
+          <EntityDetailSection detail={`${foods.length} alimentos`} title="Composición comida">
             <FoodPanels items={foods} onOpenItem={openFood} />
           </EntityDetailSection>
           {foods.length ? <>

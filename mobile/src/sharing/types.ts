@@ -26,6 +26,7 @@ export type ShareSnapshot = {
     item_count?: number;
   };
   nutrition: ShareNutrition;
+  time?: string | null;
   foods?: { name: string; quantity_grams: number; quantity_unit?: "g" | "ml"; nutrition: ShareNutrition }[];
   meals?: ShareMealSnapshot[];
   days?: { week_number: number; day_number: number; plan: ShareSnapshot }[];
@@ -53,6 +54,7 @@ export type SharingInboxItem = {
   id: number;
   resource_id: string;
   subject_type: ShareResource["subject_type"];
+  comparison_kind?: "foods" | "meals" | "dailyplans" | null;
   title: string;
   sender: string;
   public_url: string;

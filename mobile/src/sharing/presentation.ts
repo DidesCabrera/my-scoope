@@ -1,5 +1,6 @@
 import type { ComparisonMetric, ComparisonResult, LibraryFoodPanelItem, LibraryItem, LibraryMealPanelItem, LibraryNutrition, LibraryWeekPanelItem, ShareResource, ShareSnapshot } from "@/api/types";
 import type { FoodPanelItem, MealPanelItem } from "@/components/panels";
+import type { NutritionFacts } from "@/components/ui";
 
 export type ShareNutrition = NonNullable<ShareResource["snapshot"]>["nutrition"];
 export type ShareMeal = NonNullable<NonNullable<ShareResource["snapshot"]>["meals"]>[number];
@@ -19,6 +20,18 @@ export function sharedNutrition(values: ShareNutrition) {
     protein: { grams: values.protein_grams, allocation: calories > 0 ? values.protein_grams * 4 * 100 / calories : 0 },
     carbs: { grams: values.carbs_grams, allocation: calories > 0 ? values.carbs_grams * 4 * 100 / calories : 0 },
     fat: { grams: values.fat_grams, allocation: calories > 0 ? values.fat_grams * 9 * 100 / calories : 0 },
+  };
+}
+
+export function sharedNutritionFacts(values: ShareNutrition): NutritionFacts {
+  return {
+    proteinG: values.protein_grams,
+    totalFatG: values.fat_grams,
+    saturatedFatG: null,
+    carbsG: values.carbs_grams,
+    sugarG: null,
+    fiberG: null,
+    sodiumMg: null,
   };
 }
 
@@ -87,13 +100,51 @@ function sumNutrition(values: ShareNutrition[]): ShareNutrition {
   }), { calories: 0, protein_grams: 0, carbs_grams: 0, fat_grams: 0 });
 }
 
+function aggregateSharedFoods(meals: ShareMeal[]): ShareMeal["foods"] {
+  const aggregated = new Map<string, ShareMeal["foods"][number]>();
+  meals.forEach((meal) => {
+    meal.foods.forEach((food) => {
+      const unit = food.quantity_unit ?? "g";
+      const key = `${food.name.trim().toLocaleLowerCase("es-CL")}:${unit}`;
+      const current = aggregated.get(key);
+      if (!current) {
+        aggregated.set(key, { ...food, nutrition: { ...food.nutrition }, quantity_unit: unit });
+        return;
+      }
+      current.quantity_grams += food.quantity_grams;
+      current.nutrition = sumNutrition([current.nutrition, food.nutrition]);
+    });
+  });
+  return [...aggregated.values()];
+}
+
+export function sharedPlanFoodPanelItems(meals: ShareMeal[], planCalories: number): FoodPanelItem[] {
+  return aggregateSharedFoods(meals).map((food, index) => {
+    const nutrition = sharedNutrition(food.nutrition);
+    return {
+      id: `shared-plan-food-${index}`,
+      name: food.name,
+      quantity: food.quantity_grams,
+      quantityUnit: food.quantity_unit ?? "g",
+      calories: nutrition.calories,
+      calorieShare: planCalories > 0 ? nutrition.calories * 100 / planCalories : 0,
+      proteinGrams: nutrition.protein.grams,
+      carbsGrams: nutrition.carbs.grams,
+      fatGrams: nutrition.fat.grams,
+      proteinAllocation: nutrition.protein.allocation,
+      carbsAllocation: nutrition.carbs.allocation,
+      fatAllocation: nutrition.fat.allocation,
+    };
+  });
+}
+
 export function sharedProgramLibraryItem(snapshot: ShareSnapshot, title: string): LibraryItem {
   const duration = Math.max(snapshot.summary.duration_weeks ?? 1, 1);
   const weeks: LibraryWeekPanelItem[] = Array.from({ length: duration }, (_, weekIndex) => {
     const weekNumber = weekIndex + 1;
     const sourceDays = (snapshot.days ?? []).filter((day) => day.week_number === weekNumber);
     const weekNutrition = libraryNutrition(sumNutrition(sourceDays.map((day) => day.plan.nutrition)));
-    const foods = sourceDays.flatMap((day) => (day.plan.meals ?? []).flatMap((meal, mealIndex) => meal.foods.map((food, foodIndex) => libraryFood(food, `shared:${weekNumber}:${day.day_number}:${mealIndex}:${foodIndex}`, weekNutrition.calories))));
+    const foods = aggregateSharedFoods(sourceDays.flatMap((day) => day.plan.meals ?? [])).map((food, foodIndex) => libraryFood(food, `shared:${weekNumber}:food:${foodIndex}`, weekNutrition.calories));
     return {
       id: `shared-week-${weekNumber}`,
       week_number: weekNumber,

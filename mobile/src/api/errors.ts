@@ -36,6 +36,8 @@ export function userFacingError(error: unknown): string {
       saved_comparison_not_found: "Esta comparación ya no está disponible o no pertenece a tu cuenta.",
       share_resource_already_claimed: "Este enlace ya fue agregado por otra persona.",
       share_claims_disabled: "Este enlace es sólo de lectura.",
+      share_self_claim_not_allowed: "Este contenido ya pertenece a tu biblioteca.",
+      share_self_recipient_not_allowed: "No puedes compartir contenido contigo mismo.",
       share_resource_expired: "Este enlace compartido venció.",
       share_resource_not_active: "Este enlace compartido fue revocado.",
       sharing_inbox_item_not_found: "Este elemento ya no está disponible en tu Inbox.",

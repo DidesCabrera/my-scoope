@@ -8537,6 +8537,22 @@
       },
       "SharingInboxItemData": {
         "properties": {
+          "comparison_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "foods",
+                  "meals",
+                  "dailyplans"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Kind"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",

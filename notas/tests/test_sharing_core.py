@@ -42,6 +42,18 @@ class SharingCoreTests(TestCase):
         self.assertEqual(first_item, second_item)
         self.assertEqual(InboxItem.objects.count(), 1)
 
+    def test_sender_cannot_claim_their_own_resource(self):
+        with self.assertRaisesMessage(ShareUnavailable, "share_self_claim_not_allowed"):
+            claim_share_resource(resource=self.resource, user=self.sender, source=ShareClaim.Source.LINK)
+        self.assertFalse(ShareClaim.objects.filter(resource=self.resource, user=self.sender).exists())
+
+    def test_sender_cannot_invite_their_own_email(self):
+        EmailAddress.objects.create(user=self.sender, email="alias@example.com", verified=True)
+        for email in (self.sender.email, " ALIAS@example.com "):
+            with self.subTest(email=email), self.assertRaisesMessage(ShareUnavailable, "share_self_recipient_not_allowed"):
+                create_share_invitation(resource=self.resource, sender=self.sender, recipient_email=email)
+        self.assertFalse(ShareInvitation.objects.filter(resource=self.resource).exists())
+
     def test_single_claim_policy_blocks_a_second_user(self):
         self.resource.claim_policy = ShareResource.ClaimPolicy.SINGLE
         self.resource.save(update_fields=["claim_policy"])

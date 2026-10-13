@@ -69,6 +69,12 @@ def create_share_invitation(
     normalized_email = _normalized_email(recipient_email)
     if not normalized_email:
         raise ShareUnavailable("share_invitation_recipient_required")
+    owns_recipient_email = _normalized_email(sender.email) == normalized_email or EmailAddress.objects.filter(
+        user=sender,
+        email__iexact=normalized_email,
+    ).exists()
+    if owns_recipient_email:
+        raise ShareUnavailable("share_self_recipient_not_allowed")
     invitation, _ = ShareInvitation.objects.get_or_create(
         resource=locked,
         recipient_email=normalized_email,
@@ -170,6 +176,8 @@ def claim_share_resource(
         raise ShareUnavailable("share_claim_source_invalid")
     locked = ShareResource.objects.select_for_update().get(pk=resource.pk)
     _active_resource(locked, now=now)
+    if locked.sender_id == user.id:
+        raise ShareUnavailable("share_self_claim_not_allowed")
     existing = ShareClaim.objects.filter(resource=locked, user=user).first()
     if existing is not None:
         return existing, InboxItem.objects.get(claim=existing)

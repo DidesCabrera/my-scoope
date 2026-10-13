@@ -31,6 +31,25 @@ const entityBySubject: Record<SharingInboxItem["subject_type"], EntityKind> = {
   program: "program",
 };
 
+const comparisonEntityByKind: Record<NonNullable<SharingInboxItem["comparison_kind"]>, EntityKind> = {
+  dailyplans: "dailyPlan",
+  foods: "food",
+  meals: "meal",
+};
+
+function sharedCardAccent(item: SharingInboxItem): string | undefined {
+  if (item.subject_type !== "comparison" || !item.comparison_kind) return undefined;
+  return tokens.color[comparisonEntityByKind[item.comparison_kind]];
+}
+
+const eyebrowBySubject: Record<SharingInboxItem["subject_type"], { feminine: boolean; label: string }> = {
+  comparison: { feminine: true, label: "Comparación" },
+  daily_plan: { feminine: false, label: "Plan diario" },
+  food: { feminine: false, label: "Alimento" },
+  meal: { feminine: true, label: "Comida" },
+  program: { feminine: false, label: "Programa semanal" },
+};
+
 type SharingScope = "received" | "sent";
 
 export default function InboxScreen() {
@@ -131,7 +150,12 @@ export default function InboxScreen() {
       {!data && !error ? <LoadingState label="Cargando compartidos…" mode="content" /> : null}
       {visibleData?.items.map((item) => {
         const unavailable = item.status === "revoked" || item.status === "expired";
+        const eyebrow = eyebrowBySubject[item.subject_type];
+        const directionLabel = activeScope === "received"
+          ? eyebrow.feminine ? "Recibida" : "Recibido"
+          : eyebrow.feminine ? "Enviada" : "Enviado";
         return <EntityCard
+          accent={sharedCardAccent(item)}
           accessory={activeScope === "sent"
             ? <Send color={tokens.color.textMuted} size={20} />
             : item.is_read || unavailable
@@ -148,6 +172,7 @@ export default function InboxScreen() {
             </View>}
           </> : undefined}
           entity={entityBySubject[item.subject_type]}
+          eyebrow={`${eyebrow.label} ${directionLabel}`}
           key={item.id}
           onPress={unavailable ? undefined : () => open(item)}
           subtitle={`${activeScope === "received" ? `Recibido de ${item.sender}` : "Enviado"} · ${formatCompactDate(item.created_at) ?? "Fecha no disponible"}`}

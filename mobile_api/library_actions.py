@@ -30,6 +30,7 @@ from notas.application.services.notifications.share_emails import (
 )
 from notas.application.sharing.entities import get_or_create_entity_share_resource
 from notas.application.sharing.services import (
+    ShareUnavailable,
     create_share_invitation,
     mark_share_invitation_delivered,
 )
@@ -267,13 +268,22 @@ def _share(request, item, *, recipient_email: str, subject: str, message: str) -
         subject_type=subject_type,
         subject_id=item.id,
     ).resource
-    invitation = create_share_invitation(
-        resource=resource,
-        sender=request.auth.user,
-        recipient_email=clean_email,
-        subject=clean_subject,
-        message=(message or "").strip(),
-    )
+    try:
+        invitation = create_share_invitation(
+            resource=resource,
+            sender=request.auth.user,
+            recipient_email=clean_email,
+            subject=clean_subject,
+            message=(message or "").strip(),
+        )
+    except ShareUnavailable as exc:
+        if str(exc) != "share_self_recipient_not_allowed":
+            raise
+        raise MobileAPIError(
+            code="share_self_recipient_not_allowed",
+            message="No puedes compartir contenido contigo mismo.",
+            status_code=422,
+        ) from exc
     email_subject, email_message = build_normalized_share_invitation_email(
         request=request, invitation=invitation
     )
