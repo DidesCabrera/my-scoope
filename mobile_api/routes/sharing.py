@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Literal
 from uuid import UUID
 
+from django.db.models import Q
+from django.utils import timezone
 from ninja import Router
 
 from core.rate_limits import (
@@ -30,6 +32,7 @@ from notas.application.sharing.inbox import save_inbox_item, update_inbox_item
 from notas.application.sharing.services import (
     ShareUnavailable,
     claim_share_resource,
+    effective_share_resource_status,
     get_share_resource_for_preview,
     record_share_preview,
     revoke_share_resource,
@@ -61,7 +64,7 @@ def _inbox_item_payload(request, item: InboxItem) -> dict:
         "title": (resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido",
         "sender": resource.sender.get_full_name() or resource.sender.username,
         "public_url": request.build_absolute_uri(f"/s/{resource.public_id}/"),
-        "status": resource.status,
+        "status": effective_share_resource_status(resource),
         "is_read": item.read_at is not None,
         "is_favorite": item.is_favorite,
         "is_saved": item.saved_at is not None,
@@ -188,11 +191,13 @@ def create_comparison_share(request, comparison_id: int, payload: ShareResourceC
 )
 def sharing_inbox(request, scope: Literal["received", "sent"] = "received"):
     if scope == "sent":
+        current_time = timezone.now()
         resources = list(
             ShareResource.objects.filter(
                 sender=request.auth.user,
                 status=ShareResource.Status.ACTIVE,
             )
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=current_time))
             .order_by("-created_at", "-id")
         )
         return success({"items": [_sent_item_payload(request, resource) for resource in resources], "count": len(resources)})

@@ -16,16 +16,28 @@ class ShareUnavailable(ValueError):
     pass
 
 
+def effective_share_resource_status(resource: ShareResource, *, now=None) -> str:
+    """Return the status enforced by previews, including due expirations."""
+    current_time = now or timezone.now()
+    if (
+        resource.status == ShareResource.Status.ACTIVE
+        and resource.expires_at
+        and resource.expires_at <= current_time
+    ):
+        return ShareResource.Status.EXPIRED
+    return resource.status
+
+
 def _normalized_email(value: str) -> str:
     return (value or "").strip().casefold()
 
 
 def _active_resource(resource: ShareResource, *, now=None) -> ShareResource:
-    current_time = now or timezone.now()
-    if resource.status != ShareResource.Status.ACTIVE:
-        raise ShareUnavailable("share_resource_not_active")
-    if resource.expires_at and resource.expires_at <= current_time:
+    effective_status = effective_share_resource_status(resource, now=now)
+    if effective_status == ShareResource.Status.EXPIRED:
         raise ShareUnavailable("share_resource_expired")
+    if effective_status != ShareResource.Status.ACTIVE:
+        raise ShareUnavailable("share_resource_not_active")
     return resource
 
 

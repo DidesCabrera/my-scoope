@@ -142,7 +142,7 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inboxActions, /label="Eliminar de Compartidos"/);
   assertSourceMatch(inbox, /current\.sent\.items\.filter\(\(\{ resource_id \}\) => resource_id !== item\.resource_id\)/);
   assertSourceMatch(inbox, /item\.status === "revoked" \|\| item\.status === "expired"/);
-  assertSourceMatch(inbox, /eyebrow=\{unavailable \? "Acceso revocado"/);
+  assertSourceMatch(inbox, /item\.status === "expired" \? "Enlace vencido" : unavailable \? "Acceso revocado"/);
   assertSourceMatch(inbox, /onPress=\{unavailable \? undefined/);
   assertSourceMatch(inbox, /<EntityCard/);
   assertSourceMatch(inbox, /<EntityCardAction/);

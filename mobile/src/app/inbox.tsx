@@ -147,7 +147,7 @@ export default function InboxScreen() {
             </EntityCardAction> : null}
           </> : undefined}
           entity={entityBySubject[item.subject_type]}
-          eyebrow={unavailable ? "Acceso revocado" : activeScope === "sent" ? "Enviado" : item.is_read ? "Recibido" : "Nuevo"}
+          eyebrow={item.status === "expired" ? "Enlace vencido" : unavailable ? "Acceso revocado" : activeScope === "sent" ? "Enviado" : item.is_read ? "Recibido" : "Nuevo"}
           key={item.id}
           onPress={unavailable ? undefined : () => open(item)}
           subtitle={`${item.sender} · ${formatCompactDate(item.created_at) ?? "Fecha no disponible"}`}

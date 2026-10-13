@@ -1,6 +1,11 @@
+from datetime import timedelta
+from types import SimpleNamespace
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import Client, override_settings
+from django.utils import timezone
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.sharing.dailyplans import create_dailyplan_share_resource
@@ -172,6 +177,31 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(inbox.json()["data"]["items"][0]["status"], "revoked")
         self.assertEqual(public_detail.status_code, 404)
 
+    def test_expired_share_is_labeled_in_received_and_hidden_from_sent(self):
+        sender = User.objects.create_user("expiring-sender")
+        received_source = DailyPlan.objects.create(name="Plan vencido", created_by=sender, is_draft=False)
+        received_resource = create_dailyplan_share_resource(sender=sender, dailyplan_id=received_source.id).resource
+        claimed = self.client.post(f"/api/v1/shares/{received_resource.public_id}/claims")
+        received_resource.expires_at = timezone.now() - timedelta(seconds=1)
+        received_resource.save(update_fields=["expires_at"])
+
+        sent_source = DailyPlan.objects.create(name="Enviado vencido", created_by=self.user, is_draft=False)
+        sent_resource = create_dailyplan_share_resource(sender=self.user, dailyplan_id=sent_source.id).resource
+        sent_resource.expires_at = timezone.now() - timedelta(seconds=1)
+        sent_resource.save(update_fields=["expires_at"])
+
+        received = self.client.get("/api/v1/shares/inbox")
+        sent = self.client.get("/api/v1/shares/inbox?scope=sent")
+        public_detail = Client().get(f"/api/v1/shares/{received_resource.public_id}")
+
+        self.assertEqual(claimed.status_code, 200)
+        self.assertEqual(received.status_code, 200)
+        self.assertEqual(received.json()["data"]["items"][0]["status"], "expired")
+        self.assertEqual(sent.status_code, 200)
+        self.assertEqual(sent.json()["data"]["count"], 0)
+        self.assertEqual(public_detail.status_code, 404)
+        self.assertEqual(public_detail.json()["error"]["code"], "share_resource_expired")
+
     @override_settings(RATE_LIMIT_SHARING_CREATE_USER="1/h")
     def test_share_creation_has_a_json_rate_limit(self):
         cache.clear()
@@ -212,5 +242,3 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
             self.assertEqual(second.json()["error"]["code"], "sharing_preview_rate_limited")
         finally:
             cache.clear()
-from types import SimpleNamespace
-from unittest.mock import patch
