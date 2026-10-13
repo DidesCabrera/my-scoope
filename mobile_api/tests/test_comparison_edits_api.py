@@ -44,3 +44,30 @@ class MobileAPIComparisonEditTests(PaidMobileAPITestCase):
             content_type="application/json",
         )
         self.assertEqual(hidden.status_code, 404)
+
+    def test_saved_comparison_delete_is_owner_scoped(self):
+        foods = [
+            Food.objects.create(name=name, protein=10, carbs=20, fat=5, created_by=self.user)
+            for name in ("Avena para eliminar", "Arroz para eliminar")
+        ]
+        saved = self.client.post(
+            "/api/v1/comparisons/saved",
+            data={"kind": "foods", "selections": [{"id": food.id, "quantity": 100} for food in foods]},
+            content_type="application/json",
+        )
+        comparison_id = saved.json()["data"]["saved_comparison_id"]
+        outsider = User.objects.create_user(username="comparison-delete-outsider")
+        token = create_mcp_user_token(
+            user=outsider,
+            name="Comparison delete outsider token",
+            scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE],
+            expires_at=timezone.now() + timedelta(minutes=15),
+        )
+        foreign_delete = Client(HTTP_AUTHORIZATION=f"Bearer {token.raw_token}").delete(
+            f"/api/v1/comparisons/saved/{comparison_id}"
+        )
+        self.assertEqual(foreign_delete.status_code, 404)
+        deleted = self.client.delete(f"/api/v1/comparisons/saved/{comparison_id}")
+        self.assertEqual(deleted.status_code, 200)
+        self.assertEqual(deleted.json()["data"]["deleted_id"], comparison_id)
+        self.assertEqual(self.client.get(f"/api/v1/comparisons/saved/{comparison_id}").status_code, 404)

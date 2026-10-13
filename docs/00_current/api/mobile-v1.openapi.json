@@ -8055,6 +8055,41 @@
         "title": "RevokeSessionEnvelope",
         "type": "object"
       },
+      "SavedComparisonDeleteData": {
+        "properties": {
+          "deleted_id": {
+            "title": "Deleted Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted_id"
+        ],
+        "title": "SavedComparisonDeleteData",
+        "type": "object"
+      },
+      "SavedComparisonDeleteEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SavedComparisonDeleteData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SavedComparisonDeleteEnvelope",
+        "type": "object"
+      },
       "SavedComparisonDetailData": {
         "properties": {
           "editable_selections": {
@@ -10471,6 +10506,58 @@
       }
     },
     "/api/v1/comparisons/saved/{comparison_id}": {
+      "delete": {
+        "operationId": "mobile_api_api_delete_mobile_saved_comparison",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonDeleteEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Delete Mobile Saved Comparison"
+      },
       "get": {
         "operationId": "mobile_api_api_saved_comparison_detail",
         "parameters": [

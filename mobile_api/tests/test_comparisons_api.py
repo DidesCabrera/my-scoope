@@ -275,10 +275,3 @@ class MobileAPIComparisonTests(PaidMobileAPITestCase):
         outsider = Client(HTTP_AUTHORIZATION=f"Bearer {other_token.raw_token}")
         hidden = outsider.get(f"/api/v1/comparisons/saved/{comparison_id}")
         self.assertEqual(hidden.status_code, 404)
-
-        foreign_delete = outsider.delete(f"/api/v1/comparisons/saved/{comparison_id}")
-        self.assertEqual(foreign_delete.status_code, 404)
-        deleted = self.client.delete(f"/api/v1/comparisons/saved/{comparison_id}")
-        self.assertEqual(deleted.status_code, 200)
-        self.assertEqual(deleted.json()["data"]["deleted_id"], comparison_id)
-        self.assertEqual(self.client.get(f"/api/v1/comparisons/saved/{comparison_id}").status_code, 404)

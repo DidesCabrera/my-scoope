@@ -5,8 +5,8 @@ from ninja import Router
 from mobile_api.api_support import comparison_error, require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.comparison_edits import rename_comparison
-from mobile_api.comparisons import saved_comparison_detail_payload
-from mobile_api.schema_domains.comparison_edits import SavedComparisonRenameInput
+from mobile_api.comparisons import delete_comparison, saved_comparison_detail_payload
+from mobile_api.schema_domains.comparison_edits import SavedComparisonDeleteEnvelope, SavedComparisonRenameInput
 from mobile_api.schema_domains.comparisons import SavedComparisonDetailEnvelope
 from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
@@ -26,3 +26,17 @@ def rename_mobile_saved_comparison(request: Any, comparison_id: int, payload: Sa
     except ValueError as exc:
         raise comparison_error(exc) from exc
     return success(saved_comparison_detail_payload(request.auth.user, comparison.id))
+
+
+@router.delete(
+    "/comparisons/saved/{comparison_id}",
+    response={200: SavedComparisonDeleteEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+    operation_id="mobile_api_api_delete_mobile_saved_comparison",
+)
+def delete_mobile_saved_comparison(request: Any, comparison_id: int) -> dict[str, Any]:
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        deleted_id = delete_comparison(request.auth.user, comparison_id=comparison_id)
+    except ValueError as exc:
+        raise comparison_error(exc) from exc
+    return success({"deleted_id": deleted_id})
