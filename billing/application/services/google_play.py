@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
 
 from billing.application.contracts import ProviderPaymentSnapshot, ProviderSubscriptionSnapshot
 from billing.application.services.projections import project_provider_subscription

@@ -3,7 +3,11 @@ from django.test import TestCase
 
 from accounts.models import AccountPlan, AccountSubscription, CreditWallet
 from accounts.seed_plans import seed_account_plans
-from accounts.services.credits import get_or_create_current_wallet, release_account_credit_reservation, reserve_account_credits
+from accounts.services.credits import (
+    get_or_create_current_wallet,
+    release_account_credit_reservation,
+    reserve_account_credits,
+)
 from accounts.services.profile import build_account_credit_display
 
 

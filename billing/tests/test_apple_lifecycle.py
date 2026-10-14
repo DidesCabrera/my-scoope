@@ -2,8 +2,8 @@
 
 from datetime import timedelta
 
-from django.utils import timezone
 from django.test import TestCase
+from django.utils import timezone
 
 from accounts.models import AccountSubscription
 from billing.application.services.apple_app_store import AppleEvidenceError, sync_apple_transaction

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 
 from accounts.models import AccountSubscription

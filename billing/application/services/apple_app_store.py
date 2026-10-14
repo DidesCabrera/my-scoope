@@ -5,8 +5,8 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 
 from billing.application.contracts import AppleNotificationEvidence, AppleTransactionEvidence

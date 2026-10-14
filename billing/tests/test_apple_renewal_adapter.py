@@ -1,10 +1,14 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from django.test import SimpleTestCase
 from appstoreserverlibrary.signed_data_verifier import VerificationException, VerificationStatus
+from django.test import SimpleTestCase
 
-from billing.infrastructure.providers.apple_app_store import AppleAppStoreClient, AppleAppStoreConfigurationError, InvalidAppleSignedData
+from billing.infrastructure.providers.apple_app_store import (
+    AppleAppStoreClient,
+    AppleAppStoreConfigurationError,
+    InvalidAppleSignedData,
+)
 
 
 class AppleRenewalAdapterTests(SimpleTestCase):
