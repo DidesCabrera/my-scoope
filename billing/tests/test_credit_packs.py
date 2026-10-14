@@ -75,17 +75,19 @@ class CreditPackSettlementTests(TestCase):
         wallet.refresh_from_db()
         self.assertEqual((wallet.balance, wallet.purchased_balance), (450, 450))
 
-    def test_downgrade_keeps_bought_credits_but_blocks_consumption(self):
+    def test_downgrade_keeps_bought_credits_available_for_consumption(self):
         self._set_plan("basic")
         settle_credit_pack_purchase(user=self.user, product=self.product, external_purchase_id="txn-2")
         self._set_plan("free")
         wallet = get_or_create_current_wallet(user=self.user)
         self.assertEqual((wallet.balance, wallet.purchased_balance), (500, 500))
-        with self.assertRaises(InsufficientAccountCredits):
-            reserve_account_credits(user=self.user, credits=1, reference_type="test", reference_id="task-2")
+        reserve_account_credits(user=self.user, credits=1, reference_type="test", reference_id="task-2")
+        consume_account_credit_reservation(user=self.user, credits=1, reference_type="test", reference_id="task-2")
+        wallet.refresh_from_db()
+        self.assertEqual((wallet.balance, wallet.purchased_balance), (499, 499))
         self._set_plan("pro")
         wallet = get_or_create_current_wallet(user=self.user)
-        self.assertEqual((wallet.balance, wallet.purchased_balance), (1500, 500))
+        self.assertEqual((wallet.balance, wallet.purchased_balance), (1499, 499))
 
     def test_refund_debits_only_bought_credits_once(self):
         self._set_plan("basic")

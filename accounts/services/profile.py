@@ -111,8 +111,6 @@ def build_account_credit_display(user: Any) -> AccountCreditDisplay:
         elif transition and wallet.reserved_balance:
             available_credits = 0
             credit_status = "pending_reservation"
-        if plan_slug == DEFAULT_ACCOUNT_PLAN_SLUG:
-            available_credits = 0
         wallet_exists = True
         wallet_updated_at = timezone.localtime(wallet.updated_at).strftime("%Y-%m-%d %H:%M")
         period = wallet.period or period

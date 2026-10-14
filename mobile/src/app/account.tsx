@@ -135,6 +135,7 @@ export default function AccountScreen() {
           { label: "Fecha de ingreso", value: joinedDateLabel(session?.date_joined) },
         ]} />
       </ProposalReviewSection>
+      <Button label="Notificaciones y recordatorios" onPress={() => router.push("/reminders" as Href)} variant="secondary" />
       <View style={styles.medicalNoticeSpacing}>
         <InlineNotice tone="warning">My Scoope no reemplaza atención médica. Revisa cualquier cálculo, lectura OCR o propuesta asistida por IA antes de aplicarla.</InlineNotice>
       </View>
