@@ -1,4 +1,5 @@
 import { ResponseType, useAuthRequest } from "expo-auth-session";
+import * as Crypto from "expo-crypto";
 import * as Linking from "expo-linking";
 import type { Href } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -11,6 +12,7 @@ import { recordMobileRequestMetric } from "@/observability/network-performance";
 
 import { getDeviceIdentity, secureTokenStorage } from "./expo-adapters";
 import { MobileSessionManager } from "./session-manager";
+import { AuthorizationFlow } from "./authorization-flow";
 
 type SessionStatus = "booting" | "anonymous" | "authenticated";
 
@@ -56,6 +58,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [authReturnTo, setAuthReturnTo] = useState<Href | null>(null);
   const handledCode = useRef<string | null>(null);
+  const authorizationFlow = useMemo(() => new AuthorizationFlow(), []);
+  const [authorizationState, setAuthorizationState] = useState(() => Crypto.randomUUID());
+  const resetAuthorization = useCallback(() => {
+    authorizationFlow.invalidate();
+    setAuthorizationState(Crypto.randomUUID());
+    setAuthBusy(false);
+  }, [authorizationFlow]);
   const [authRequest, authResponse, promptAsync] = useAuthRequest(
     {
       clientId: appConfig.oauthClientId,
@@ -63,25 +72,30 @@ export function SessionProvider({ children }: PropsWithChildren) {
       responseType: ResponseType.Code,
       scopes: [...appConfig.mobileScopes],
       usePKCE: true,
+      state: authorizationState,
     },
     discovery,
   );
 
   const loadProfile = useCallback(async () => {
+    const version = authorizationFlow.version;
     const nextProfile = await manager.request<ProfileData>("/api/v1/me");
-    setProfile(nextProfile);
+    if (version === authorizationFlow.version) setProfile(nextProfile);
     return nextProfile;
-  }, [manager]);
+  }, [authorizationFlow, manager]);
 
   const loadSession = useCallback(async () => {
+    const version = authorizationFlow.version;
     const nextSession = await manager.request<SessionData>("/api/v1/session");
-    setSession(nextSession);
+    if (version === authorizationFlow.version) setSession(nextSession);
     return nextSession;
-  }, [manager]);
+  }, [authorizationFlow, manager]);
   const apiRequest = useCallback(async <T,>(path: string, init?: RequestInit): Promise<T> => {
+    const version = authorizationFlow.version;
     try { return await manager.request<T>(path, init); }
     catch (error) {
-      if (!manager.hasCredentials && !(error instanceof MobileApiError && error.code === "mobile_session_changed")) {
+      if (version === authorizationFlow.version && !manager.hasCredentials
+        && !(error instanceof MobileApiError && error.code === "mobile_session_changed")) {
         setSession(null);
         setProfile(null);
         setStatus("anonymous");
@@ -90,7 +104,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       }
       throw error;
     }
-  }, [manager]);
+  }, [authorizationFlow, manager]);
 
   useEffect(() => {
     let active = true;
@@ -125,27 +139,38 @@ export function SessionProvider({ children }: PropsWithChildren) {
     };
   }, [loadProfile, manager, restoreAttempt]);
 
-  const completeAuthorization = useCallback((code: string, codeVerifier: string) => {
+  const completeAuthorization = useCallback((code: string, codeVerifier: string, state: string | undefined) => {
+    if (!authorizationFlow.accepts(state)) return;
     if (handledCode.current === code) return;
     handledCode.current = code;
     setAuthBusy(true);
+    const version = authorizationFlow.version;
     void (async () => {
       try {
-        const nextSession = await manager.exchangeAuthorizationCode(code, codeVerifier);
-        setSession(nextSession);
-        await loadProfile();
+        const result = await authorizationFlow.complete(state, async () => ({
+          session: await manager.exchangeAuthorizationCode(code, codeVerifier),
+          profile: await manager.request<ProfileData>("/api/v1/me"),
+        }));
+        if (!result) return;
+        setSession(result.session);
+        setProfile(result.profile);
         setStatus("authenticated");
-      } catch (error) {
-        setAuthError(userFacingError(error));
-      } finally {
         setAuthBusy(false);
+        authorizationFlow.invalidate();
+      } catch (error) {
+        if (version === authorizationFlow.version) {
+          setAuthError(userFacingError(error));
+          resetAuthorization();
+        }
+      } finally {
+        if (version === authorizationFlow.version) setAuthBusy(false);
       }
     })();
-  }, [loadProfile, manager]);
+  }, [authorizationFlow, manager, resetAuthorization]);
 
   useEffect(() => {
     if (authResponse?.type !== "success" || !authResponse.params.code || !authRequest?.codeVerifier) return;
-    completeAuthorization(authResponse.params.code, authRequest.codeVerifier);
+    completeAuthorization(authResponse.params.code, authRequest.codeVerifier, authResponse.params.state);
   }, [authRequest?.codeVerifier, authResponse, completeAuthorization]);
 
   useEffect(() => {
@@ -153,16 +178,17 @@ export function SessionProvider({ children }: PropsWithChildren) {
     // Android can deliver the deep link before WebBrowser's promise settles.
     const subscription = Linking.addEventListener("url", ({ url }) => {
       if (!url.startsWith(`${appConfig.oauthRedirectUri}?`)) return;
+      if (!authorizationFlow.accepts(new URL(url).searchParams.get("state"))) return;
       const result = authRequest.parseReturnUrl(url);
       if (result.type === "success" && result.params.code && authRequest.codeVerifier) {
-        completeAuthorization(result.params.code, authRequest.codeVerifier);
+        completeAuthorization(result.params.code, authRequest.codeVerifier, result.params.state);
       } else {
         setAuthError("No pudimos verificar el inicio de sesión. Inténtalo nuevamente.");
-        setAuthBusy(false);
+        resetAuthorization();
       }
     });
     return () => subscription.remove();
-  }, [authRequest, completeAuthorization]);
+  }, [authRequest, authorizationFlow, completeAuthorization, resetAuthorization]);
 
   const value = useMemo<SessionContextValue>(
     () => ({
@@ -172,27 +198,31 @@ export function SessionProvider({ children }: PropsWithChildren) {
       authBusy,
       authError,
       authRestorePending,
-      authReady: Boolean(authRequest),
+      authReady: Boolean(authRequest && authRequest.state === authorizationState),
       authReturnTo,
       async startSignIn(returnTo) {
-        if (!authRequest) return;
+        if (!authRequest || authRequest.state !== authorizationState) return;
+        const version = authorizationFlow.start(authRequest.state);
         setAuthError(null);
         setAuthReturnTo(returnTo ?? null);
         setAuthBusy(true);
         try {
-          const result = await promptAsync();
+          const result = await promptAsync({ preferEphemeralSession: true });
+          if (!authorizationFlow.isCurrent(version)) return;
           if (result.type === "success" && (!result.params.code || !authRequest.codeVerifier)) {
             setAuthError("No pudimos completar el inicio de sesión. Inténtalo nuevamente.");
-            setAuthBusy(false);
+            resetAuthorization();
           } else if (result.type !== "success") {
             if (result.type === "error") {
               setAuthError(userFacingError(result.error));
             }
-            setAuthBusy(false);
+            resetAuthorization();
           }
         } catch (error) {
-          setAuthError(userFacingError(error));
-          setAuthBusy(false);
+          if (authorizationFlow.isCurrent(version)) {
+            setAuthError(userFacingError(error));
+            resetAuthorization();
+          }
         }
       },
       apiRequest,
@@ -200,13 +230,16 @@ export function SessionProvider({ children }: PropsWithChildren) {
       refreshProfile: loadProfile,
       refreshSession: loadSession,
       async signOut() {
-        await manager.signOut();
+        resetAuthorization();
+        setAuthReturnTo(null);
+        setAuthError(null);
         setSession(null);
         setProfile(null);
         setStatus("anonymous");
+        await manager.signOut();
       },
     }),
-    [apiRequest, authBusy, authError, authRequest, authRestorePending, authReturnTo, loadProfile, loadSession, manager, profile, promptAsync, session, status],
+    [apiRequest, authBusy, authError, authRequest, authRestorePending, authReturnTo, authorizationFlow, authorizationState, loadProfile, loadSession, manager, profile, promptAsync, resetAuthorization, session, status],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

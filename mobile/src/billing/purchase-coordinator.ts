@@ -3,6 +3,9 @@ import type { EntitlementsData, SubscriptionData } from "../api/billing-types";
 export type StorePurchase = {
   id: string; productId: string; purchaseToken?: string | null;
   purchaseState: "pending" | "purchased" | "unknown"; appAccountToken?: string | null;
+  transactionDate?: number;
+  reasonIOS?: string | null;
+  transactionReasonIOS?: string | null;
 };
 export type BillingState = {
   overview: SubscriptionData | null; entitlements: EntitlementsData | null;
@@ -17,6 +20,7 @@ type Dependencies = {
   errorMessage(error: unknown): string;
   wait?(milliseconds: number, signal: AbortSignal): Promise<void>;
   requestTimeoutMs?: number;
+  now?(): number;
 };
 type TransactionRecord = { task: Promise<boolean>; accepted: boolean; finished: boolean; completed: boolean; phase?: BillingState["phase"] };
 
@@ -49,6 +53,8 @@ export class PurchaseCoordinator {
   private reconciliation: Promise<void> | null = null;
   private requestedGoal: string | null = null;
   private awaitingCredits = false;
+  private noticeEnabled = false;
+  private action: { productId: string; startedAt: number; hasReceipt: boolean; sheetCompleted: boolean; alreadyScheduled: boolean } | null = null;
 
   constructor(private readonly deps: Dependencies) {}
   subscribe(listener: (state: BillingState) => void): () => void {
@@ -60,6 +66,14 @@ export class PurchaseCoordinator {
   private get alive(): boolean { return !this.lifetime.signal.aborted; }
   private update(patch: Partial<BillingState>): void {
     if (!this.alive) return;
+    if (patch.message && patch.phase !== "pending") {
+      const success = ["active", "credited", "refunded"].includes(patch.phase ?? "");
+      const scheduled = patch.phase === "scheduled";
+      if (!this.noticeEnabled || (success && !this.action?.hasReceipt)
+        || (scheduled && !this.action?.hasReceipt && (!this.action?.sheetCompleted || this.action.alreadyScheduled))) {
+        patch = { ...patch, message: null };
+      }
+    }
     this.state = { ...this.state, ...patch };
     for (const listener of this.listeners) listener(this.state);
   }
@@ -85,6 +99,10 @@ export class PurchaseCoordinator {
     const pack = this.state.overview?.credit_packs.find((product) => product.provider === this.deps.provider && product.product_id === productId);
     if ((!plan && !pack) || (pack && !this.state.overview?.can_buy_credit_packs)) return false;
     this.requestedGoal = productId;
+    this.action = { productId, startedAt: (this.deps.now ?? Date.now)(), hasReceipt: false, sheetCompleted: false,
+      alreadyScheduled: Boolean(this.state.overview?.evidence.some((row) => row.provider === this.deps.provider
+        && row.next_product_id === productId && row.status === "authorized" && !row.cancel_at_period_end)) };
+    this.noticeEnabled = true;
     this.update({ phase: "store", productId, planName: plan?.plan_name ?? null, busy: true,
       message: `Esperando la confirmación de ${this.deps.provider === "apple_app_store" ? "Apple" : "Google Play"}…`, error: null });
     return true;
@@ -93,7 +111,13 @@ export class PurchaseCoordinator {
     // A late store error must never erase an accepted/verifying transaction.
     if (this.state.phase !== "store") return;
     this.requestedGoal = null;
+    this.action = null;
+    this.clearMessages();
     this.update({ phase: "idle", busy: false, message: null, error: message });
+  }
+  clearMessages(): void {
+    this.noticeEnabled = false;
+    this.update({ message: null, error: null });
   }
   awaitingApproval(): void {
     if (this.state.phase !== "store") return;
@@ -101,7 +125,8 @@ export class PurchaseCoordinator {
     this.update({ phase: "idle", busy: false,
       message: "La tienda aún no entregó una transacción nueva. Si solicitaste un cambio de modalidad o aprobación, revisa su estado en la tienda." });
   }
-  async reconcile(): Promise<void> {
+  async reconcile(storeRequestCompleted = false): Promise<void> {
+    if (storeRequestCompleted && this.action) this.action.sheetCompleted = true;
     if (!this.alive || this.deps.provider !== "apple_app_store") return this.refresh();
     if (this.reconciliation) return this.reconciliation;
     const task = (async () => {
@@ -143,7 +168,7 @@ export class PurchaseCoordinator {
     this.read = task;
     try { await task; } finally { if (this.read === task) this.read = null; }
   }
-  submit(purchase: StorePurchase, retry = false): Promise<boolean> {
+  submit(purchase: StorePurchase, retry = false, source: "event" | "purchase" | "restore" | "recovery" = "event"): Promise<boolean> {
     if (purchase.purchaseState === "pending" && purchase.productId === this.state.productId) this.awaitingApproval();
     if (this.alive && purchase.purchaseState === "purchased" && !purchase.purchaseToken) {
       this.update({ phase: "pending", busy: false, error: "No pudimos leer el comprobante de la tienda. Usa Restaurar compras para recuperarlo.",
@@ -157,6 +182,7 @@ export class PurchaseCoordinator {
     const record: TransactionRecord = existing ?? { task: Promise.resolve(false), accepted: false, finished: false, completed: false };
     record.completed = false;
     this.queued += 1;
+    let preserveStoreRequest = false;
     const task = this.queue.then(async () => {
       if (!this.alive) return false;
       if (!this.state.overview) await this.refresh();
@@ -174,12 +200,18 @@ export class PurchaseCoordinator {
       const plan = overview.products.find((item) => item.provider === this.deps.provider && item.product_id === purchase.productId)
         ?? (historical?.kind === "subscription" ? historical : undefined);
       if (!pack && !plan) throw new Error("La compra no corresponde al catálogo disponible. Reintenta Restaurar compras cuando la tienda esté disponible.");
-      if (!this.requestedGoal && plan) this.requestedGoal = purchase.productId;
-      const targetId = this.requestedGoal ?? purchase.productId;
+      const freshRequestedReceipt = (source === "event" || source === "purchase") && this.action?.productId === purchase.productId
+        && (purchase.transactionReasonIOS ?? purchase.reasonIOS)?.toLowerCase() !== "renewal"
+        && (purchase.transactionDate === undefined ? source === "purchase" : purchase.transactionDate >= this.action.startedAt);
+      preserveStoreRequest = this.state.phase === "store" && !freshRequestedReceipt;
+      if (freshRequestedReceipt && this.action) this.action.hasReceipt = true;
+      else if (!preserveStoreRequest && !(this.action?.hasReceipt && this.requestedGoal === this.action.productId)) this.noticeEnabled = false;
+      if (!this.requestedGoal && plan && !preserveStoreRequest) this.requestedGoal = purchase.productId;
+      const targetId = preserveStoreRequest ? purchase.productId : this.requestedGoal ?? purchase.productId;
       const targetPlan = overview.products.find((item) => item.provider === this.deps.provider && item.product_id === targetId)
         ?? overview.transaction_products?.find((item) => item.provider === this.deps.provider && item.product_id === targetId && item.kind === "subscription");
       const preservesPlanGoal = Boolean(pack && targetPlan && this.requestedGoal && targetId !== purchase.productId);
-      this.update({ phase: "verifying", busy: true, productId: targetId,
+      if (!preserveStoreRequest) this.update({ phase: "verifying", busy: true, productId: targetId,
         planName: targetPlan?.plan_name ?? null, error: null, message: "Compra confirmada por la tienda. Estamos verificando tus beneficios…" });
       if (!record.accepted) {
         const store = this.deps.provider === "google_play" ? "google-play" : "apple";
@@ -194,7 +226,10 @@ export class PurchaseCoordinator {
         record.accepted = true;
         this.snapshotVersion += 1;
         if (!this.alive) return true;
-        if (pack) {
+        if (preserveStoreRequest) {
+          this.update({ ...(plan ? { overview: result } : {}), entitlements: pack ? result : result.entitlements ?? this.state.entitlements });
+          record.phase = pack ? result.purchase_status === "refunded" ? "refunded" : "credited" : "active";
+        } else if (pack) {
           this.awaitingCredits = !preservesPlanGoal && result.purchase_status !== "refunded" && result.credit_status !== undefined && result.credit_status !== "ready";
           this.update({ entitlements: result, phase: preservesPlanGoal || this.awaitingCredits ? "activating" : result.purchase_status === "refunded" ? "refunded" : "credited",
             message: preservesPlanGoal ? "Revisamos tu saldo. Aún estamos verificando los beneficios de tu suscripción."
@@ -209,21 +244,21 @@ export class PurchaseCoordinator {
             this.update({ phase: "idle", message: `Transacción verificada. El plan vigente es ${this.state.entitlements?.plan_name ?? result.plan_name}.` });
           } else this.confirmBenefits();
         }
-        record.phase = this.state.phase;
+        if (!preserveStoreRequest) record.phase = this.state.phase;
       } else {
         // Acceptance stays idempotent, but a prior success can have expired or
         // been refunded while StoreKit still needs to finish this receipt.
-        this.update({ phase: "activating", message: "Compra verificada. Estamos revisando tus beneficios actuales…" });
+        if (!preserveStoreRequest) this.update({ phase: "activating", message: "Compra verificada. Estamos revisando tus beneficios actuales…" });
         await this.refresh();
-        if (pack && !preservesPlanGoal) {
+        if (!preserveStoreRequest && pack && !preservesPlanGoal) {
           this.awaitingCredits = record.phase !== "refunded";
           if (!this.awaitingCredits) {
             this.requestedGoal = null;
             this.update({ phase: "refunded", message: "Esta compra fue reembolsada. Revisamos tu saldo actual." });
           }
         }
-        const confirmed = pack && record.phase === "refunded" && !preservesPlanGoal ? true : this.confirmBenefits();
-        if (!pack && !confirmed && ["active", "scheduled", "idle"].includes(record.phase ?? "") &&
+        const confirmed = preserveStoreRequest || (pack && record.phase === "refunded" && !preservesPlanGoal) ? true : this.confirmBenefits();
+        if (!preserveStoreRequest && !pack && !confirmed && ["active", "scheduled", "idle"].includes(record.phase ?? "") &&
           this.requestedGoal === purchase.productId && (!this.state.entitlements?.credit_status || this.state.entitlements.credit_status === "ready")) {
           this.requestedGoal = null;
           this.update({ phase: "idle", message: `Compra verificada. Tus beneficios actuales corresponden al plan ${this.state.entitlements?.plan_name ?? this.state.overview?.plan_name}.` });
@@ -234,10 +269,11 @@ export class PurchaseCoordinator {
         await this.deps.finish(purchase, Boolean(pack));
         record.finished = true;
       } catch { /* The store retains unfinished receipts for explicit recovery. */ }
-      this.update({ busy: false, finishPending: [...this.transactions.values()].some((item) => item.accepted && !item.finished) });
+      this.update({ busy: this.state.phase === "store" ? this.state.busy : false, finishPending: [...this.transactions.values()].some((item) => item.accepted && !item.finished) });
       if (this.state.phase === "activating") void this.watchActivation();
       return true;
     }).catch((error) => {
+      if (preserveStoreRequest && this.state.phase === "store") return false;
       const status = error && typeof error === "object" && "status" in error ? Number(error.status) : 0;
       const mismatch = [403, 409, 422].includes(status);
       this.update({ phase: mismatch ? "idle" : "pending", busy: false,
@@ -272,8 +308,12 @@ export class PurchaseCoordinator {
       (item.product_id === productId || item.next_product_id === productId));
     if (row?.next_product_id === productId && row.product_id !== productId && row.status === "authorized" && !row.cancel_at_period_end) {
       this.requestedGoal = null;
+      const renewalDate = row.period_end ? new Date(row.period_end) : null;
+      const renewal = renewalDate && !Number.isNaN(renewalDate.getTime())
+        ? `el ${renewalDate.toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" })}`
+        : "la próxima renovación";
       this.update({ phase: "scheduled",
-        message: `Tu cambio a ${planName ?? "la nueva modalidad"} está programado para la próxima renovación. Tus beneficios actuales siguen activos.` });
+        message: `Tu cambio a ${planName ?? "la nueva modalidad"} está programado para ${renewal}. Tus beneficios actuales siguen activos.` });
       return true;
     }
     const providerRows = overview?.evidence.filter((item) => item.provider === this.deps.provider) ?? [];

@@ -61,7 +61,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /androidUnavailable \? "No disponible" : "Consultando…"/);
   assertSourceMatch(subscription, /const subscriptionPlans = \["Basic", "Pro"\]\.map/);
   assertSourceMatch(subscription, /overview\?\.eligible && isOnboarding[\s\S]*name="Free" price="Gratis"/);
-  assertSourceMatch(subscription, /!isOnboarding \? <SubscriptionPlanCard[^>]*name="Free" price="\$0\/mes"/);
+  assertSourceMatch(subscription, /!isOnboarding \? <SubscriptionPlanCard[^>]*name="Free" price="Gratis"/);
   assertSourceMatch(subscription, /<MyScoopeBrandLogo \/>[\s\S]*Elige un plan[\s\S]*Compara lo que incluyen Free, Basic y Pro/);
   assertSourceMatch(subscription, /<SubscriptionPurchaseButton disabled=\{purchaseBlocked\} label="Continuar con Free"/);
   assertSourceMatch(subscription, /!isOnboarding && overview\?\.can_buy_credit_packs/);

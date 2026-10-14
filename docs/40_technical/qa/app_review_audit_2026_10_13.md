@@ -1,16 +1,24 @@
 # Auditoría de App Review — 13 de octubre de 2026
 
-Status: current audit evidence; release approval pending
+Status: build 39 tested physically; follow-up local validation complete; device revalidation pending
 Fecha: 2026-10-13, America/Santiago
 Última validación: 2026-10-14, America/Santiago
-Rama de correcciones: `codex/app-review-audit`
+Rama inicial: `codex/app-review-audit`
+Rama posterior a pruebas físicas: `codex/build-39-physical-fixes`
 
 ## Dictamen
 
-**No recomendar todavía el envío a App Review.** Las correcciones de esta
-auditoría están preparadas localmente; falta integrarlas con autorización,
-validarlas en el candidato nativo y corregir los datos publicados en App Store
-Connect. El build 38 contiene el código anterior a estas correcciones.
+**No recomendar todavía el envío a App Review.** La auditoría inicial fue
+integrada mediante [PR #111](https://github.com/DidesCabrera/my-scoope/pull/111),
+desplegada y compilada en el build 39, commit `2039165ca24c7fbf5835fbc4f3f762ec76d6fa02`.
+Felipe completó pruebas físicas de ese candidato y confirmó siete hallazgos.
+Las correcciones posteriores se agrupan en una rama basada en el staging actual.
+El informe siguiente registra su validación local antes de integrar; no se ha
+creado otra build para ese bloque.
+
+El [reporte de pruebas y correcciones del build 39](app_review_build_39_physical_2026_10_14.md)
+actualiza el dictamen, registra lo que funcionó y delimita la revalidación pendiente.
+Las secciones siguientes conservan la evidencia de la auditoría inicial del 13.
 
 Esta auditoría distingue pruebas automáticas, observaciones de servicios reales
 y pruebas que requieren dispositivo/StoreKit/App Store Connect. No convierte una
@@ -30,9 +38,11 @@ prueba con evidencia simulada en una compra real ni promete ausencia de rechazos
   dos archivos. También se guardó su parche en
   `/private/tmp/my-scoope-mobile-corrections-preserved.patch`. Sus treinta
   consultas cada dos segundos no se adoptaron como solución de compra.
-- No se modificaron las notas personales del checkout principal ni el Knowledge
-  Center. No se inició EAS/TestFlight, no se publicó, no se creó PR y no se hizo
-  push, merge o despliegue. Las consultas de producción/Connect fueron de lectura.
+- Durante la etapa inicial del 13 no se modificaron las notas personales ni el
+  Knowledge Center, y no se hicieron builds o integraciones. El cierre autorizado
+  del 14 integró PR #111, desplegó el commit `2039165` y generó el único build 39.
+  Las notas y privacidad de Connect se corrigieron y las siete compras quedaron
+  preparadas en el mismo borrador. El seguimiento físico se documenta por separado.
 
 La CI de la base pasó en las ejecuciones
 [38474122237](https://github.com/DidesCabrera/my-scoope/actions/runs/38474122237)

@@ -1,6 +1,7 @@
-import { Redirect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import * as Linking from "expo-linking";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarizationStatus, ReminderSettings, TodayData } from "@/api/types";
@@ -8,6 +9,7 @@ import { useSession } from "@/auth/session-context";
 import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { NativeReminderState, syncNativeRemindersForProgram } from "@/notifications/native-reminders";
+import { activateReminderPermission } from "@/notifications/reminder-permissions";
 
 type Toggle = "on" | "off";
 const toggleOptions: { value: Toggle; label: string }[] = [
@@ -30,8 +32,10 @@ export default function RemindersScreen() {
   const [error, setError] = useState<string | null>(null);
   const [nativeState, setNativeState] = useState<NativeReminderState | null>(null);
   const [syncingNative, setSyncingNative] = useState(false);
+  const currentAgenda = useRef({ settings, calendarizationStatus });
+  useEffect(() => { currentAgenda.current = { settings, calendarizationStatus }; }, [settings, calendarizationStatus]);
 
-  const syncNative = useCallback(async (next: ReminderSettings, nextStatus: CalendarizationStatus | null, requestPermission = false) => {
+  const syncNative = useCallback(async (next: ReminderSettings | null, nextStatus: CalendarizationStatus | null, requestPermission = false) => {
     setSyncingNative(true);
     try {
       setNativeState(await syncNativeRemindersForProgram(next, nextStatus, apiRequest, { requestPermission }));
@@ -54,12 +58,37 @@ export default function RemindersScreen() {
           setDailyTime(next.daily_notification_time.slice(0, 5));
           setDaily(next.daily_notifications_enabled ? "on" : "off");
           setMeals(next.meal_notifications_enabled ? "on" : "off");
-          void syncNative(next, nextStatus);
         }
       })
       .catch((nextError) => setError(userFacingError(nextError)))
       .finally(() => setLoading(false));
   }, [apiRequest, syncNative]);
+
+  useFocusEffect(useCallback(() => {
+    if (loading) return;
+    const synchronize = () => {
+      const agenda = currentAgenda.current;
+      void syncNative(agenda.settings, agenda.calendarizationStatus);
+    };
+    synchronize();
+    let previous = AppState.currentState;
+    const listener = AppState.addEventListener("change", (next) => {
+      if (next === "active" && previous !== "active") synchronize();
+      previous = next;
+    });
+    return () => listener.remove();
+  }, [loading, syncNative]));
+
+  const activate = async () => {
+    if (!nativeState || syncingNative) return;
+    setError(null);
+    try {
+      await activateReminderPermission(nativeState.permission, {
+        openSettings: () => Linking.openSettings(),
+        synchronize: (requestPermission) => syncNative(settings, calendarizationStatus, requestPermission),
+      });
+    } catch { setError("No pudimos abrir los Ajustes. Puedes activar los avisos de My Scoope desde Ajustes de iOS."); }
+  };
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading) return <LoadingState label="Cargando tu agenda…" />;
@@ -96,24 +125,27 @@ export default function RemindersScreen() {
   return (
     <Screen>
       <AppHeader eyebrow="Programa vivido" title="Agenda de recordatorios" />
-      <InlineNotice>La calendarización gobierna las horas y eventos. iOS usa APNs cuando el servidor está habilitado y conserva avisos locales como respaldo; nunca duplica ambos modos.</InlineNotice>
+      <InlineNotice>Configura los avisos de My Scoope en este iPhone y el horario de los recordatorios de tu programa activo.</InlineNotice>
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {saved ? <InlineNotice>Agenda actualizada y eventos futuros recalculados.</InlineNotice> : null}
+      <Card accent={tokens.color.meal}>
+        <View style={styles.nativeDelivery}>
+          <View style={styles.nativeCopy}>
+            <Text style={styles.eventTitle}>Avisos de iPhone</Text>
+            <Text style={textStyles.caption}>{nativeDeliveryLabel(nativeState)}</Text>
+          </View>
+          <Button
+            disabled={!nativeState || nativeState.permission === "unavailable"}
+            label={nativeState?.permission === "denied" ? "Abrir Ajustes" : nativeState?.permission === "granted" ? "Sincronizar" : "Activar"}
+            loading={syncingNative}
+            onPress={() => void activate()}
+            variant="secondary"
+          />
+        </View>
+      </Card>
       {settings ? (
         <>
           <Card accent={tokens.color.meal}>
-            <View style={styles.nativeDelivery}>
-              <View style={styles.nativeCopy}>
-                <Text style={styles.eventTitle}>Avisos de iPhone</Text>
-                <Text style={textStyles.caption}>{nativeDeliveryLabel(nativeState)}</Text>
-              </View>
-              <Button
-                label={nativeState?.permission === "granted" ? "Sincronizar" : "Activar"}
-                loading={syncingNative}
-                onPress={() => void syncNative(settings, calendarizationStatus, true)}
-                variant="secondary"
-              />
-            </View>
             <Field label="Zona horaria IANA" onChangeText={setTimezoneName} placeholder="America/Santiago" value={timezoneName} />
             <NativeDateTimeField label="Aviso del plan diario" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} />
             <ChoiceRow<Toggle> label="Recordatorio diario" onChange={setDaily} options={toggleOptions} value={daily} />
@@ -134,7 +166,10 @@ export default function RemindersScreen() {
           </Card>
         </>
       ) : (
-        <Card><Text style={textStyles.muted}>No hay una calendarización activa para configurar.</Text></Card>
+        <Card>
+          <Text style={textStyles.muted}>Puedes activar los avisos ahora. Para recibir recordatorios de comidas y planes diarios, activa y calendariza un programa.</Text>
+          <Button label="Ver mis programas" onPress={() => router.push("/program")} variant="secondary" />
+        </Card>
       )}
       <Button label="Volver a Today" onPress={() => router.back()} variant="secondary" />
     </Screen>
@@ -154,7 +189,7 @@ function nativeDeliveryLabel(state: NativeReminderState | null): string {
   if (state.permission === "unavailable") return "Disponible en la app para iPhone.";
   if (state.permission === "denied") return "Desactivados en Ajustes de iOS.";
   if (state.permission === "undetermined") return "Aún no has decidido si permites avisos.";
-  if (state.deliveryMode === "apns") return "APNs activo para este dispositivo.";
+  if (state.deliveryMode === "apns") return "Avisos activados para este dispositivo.";
   if (state.deliveryMode === "none") return "No hay avisos activos para el estado actual del programa.";
   return `${state.scheduledCount} avisos locales sincronizados.`;
 }

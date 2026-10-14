@@ -265,7 +265,7 @@ def reserve_account_credits(
         if plan is None:
             return {"reserved": False, "reason": "account_plan_not_found"}
         ai_config = (plan.entitlements or {}).get("ai_assistant") or {}
-        if plan.slug == DEFAULT_ACCOUNT_PLAN_SLUG or not isinstance(ai_config, Mapping) or not ai_config.get("enabled", False):
+        if plan.slug != DEFAULT_ACCOUNT_PLAN_SLUG and (not isinstance(ai_config, Mapping) or not ai_config.get("enabled", False)):
             raise InsufficientAccountCredits("The current plan cannot run credit-consuming tasks.")
         wallet = get_or_create_current_wallet(user=user, plan=plan)
         wallet = CreditWallet.objects.select_for_update().get(pk=wallet.pk)
@@ -274,6 +274,9 @@ def reserve_account_credits(
 
         if wallet.is_frozen:
             raise AccountCreditsFrozen(wallet.frozen_reason or "Account credits are frozen.")
+
+        if plan.slug == DEFAULT_ACCOUNT_PLAN_SLUG and wallet.available_purchased_credits < credits:
+            raise InsufficientAccountCredits("Insufficient purchased credits available for this reservation.")
 
         if wallet.available_credits < credits:
             raise InsufficientAccountCredits("Insufficient account credits available for this reservation.")

@@ -20,12 +20,13 @@ function overview(name = "Basic", product = basicId): SubscriptionData {
     can_buy_credit_packs: true, duplicate_active_providers: false,
     evidence: [{ provider: "apple_app_store", status: "authorized", period_end: null, product_id: product }] };
 }
-const purchase: StorePurchase = { id: "receipt-1", productId: proId, purchaseToken: "signed-receipt", purchaseState: "purchased", appAccountToken: "account-a" };
+const purchase: StorePurchase = { id: "receipt-1", productId: proId, purchaseToken: "signed-receipt", purchaseState: "purchased", appAccountToken: "account-a", transactionDate: 2000 };
 async function fixture(options: { provider?: "apple_app_store" | "google_play"; post?: (path: string) => Promise<unknown>; finish?: () => Promise<void>; wait?: (ms: number) => Promise<void> } = {}) {
   const calls: string[] = [];
   let server = overview();
   let serverCredits = entitlements(server.plan_name);
   const coordinator = new PurchaseCoordinator({ provider: options.provider ?? "apple_app_store", errorMessage: String,
+    now: () => 1000,
     finish: async (_purchase, consumable) => { calls.push(`finish:${consumable}`); await options.finish?.(); },
     wait: options.wait ?? (async () => undefined),
     apiRequest: async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -235,6 +236,7 @@ test("a purchased receipt without its signed token remains recoverable rather th
 test("a request deadline leaves the transaction unfinished and offers verification retry", async () => {
   let finished = 0;
   const coordinator = new PurchaseCoordinator({ provider: "apple_app_store", errorMessage: String,
+    now: () => 1000,
     requestTimeoutMs: 5, finish: async () => { finished++; },
     apiRequest: async <T,>(path: string, init?: RequestInit): Promise<T> => {
       if (init?.method !== "POST") return (path.endsWith("/entitlements") ? entitlements("Basic") : overview()) as T;

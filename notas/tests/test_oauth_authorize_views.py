@@ -122,13 +122,35 @@ class OAuthAuthorizeViewsTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "oauth_client_not_found")
 
-        data = response.json()
+    def test_browser_account_can_change_without_reusing_the_previous_identity(self):
+        browser = Client(enforce_csrf_checks=True)
+        browser.force_login(self.user)
+        params = self._authorize_params()
+        response = browser.get(reverse("oauth_authorize"), params)
+        self.assertContains(response, self.user.email)
+        self.assertContains(response, "Usar otra cuenta")
+        csrf_token = browser.cookies["csrftoken"].value
+        authorization_url = response.wsgi_request.get_full_path()
+        response = browser.post(reverse("account_logout"), {
+            "next": authorization_url, "csrfmiddlewaretoken": csrf_token,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], authorization_url)
+        self.assertNotIn("_auth_user_id", browser.session)
+        self.assertEqual(OAuthAuthorizationCode.objects.count(), 0)
 
-        self.assertEqual(
-            data["error"]["code"],
-            "oauth_client_not_found",
-        )
+        other = User.objects.create_user(username="other-account", email="other@example.com", password="pass123")
+        browser.force_login(other)
+        response = browser.get(authorization_url)
+        self.assertContains(response, other.email)
+        self.assertNotContains(response, self.user.email)
+        response = browser.post(reverse("oauth_authorize_consent"), {
+            **params, "csrfmiddlewaretoken": browser.cookies["csrftoken"].value,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(OAuthAuthorizationCode.objects.get().user_id, other.pk)
 
     def test_authorize_rejects_unknown_redirect_uri(self):
         self.client.force_login(self.user)
