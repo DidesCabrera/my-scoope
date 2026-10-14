@@ -4,7 +4,7 @@ My Scoope es una app de autogestión nutricional para consumidores que siguen su
 
 ## Acceso
 
-La app requiere inicio de sesión. La cuenta dedicada para revisión es `developer@myscoope.com`, sin autenticación multifactor y sin una suscripción activa, para que App Review pueda recorrer la compra completa en Sandbox. Su contraseña se carga únicamente en App Store Connect y nunca se guarda en este repositorio. La cuenta debe existir y prepararse antes de enviar el build con:
+La app requiere inicio de sesión. La cuenta dedicada para revisión es `developer@myscoope.com`, sin autenticación multifactor, con plan Free y sin una suscripción de pago, para que App Review pueda recorrer la compra completa en Sandbox. Su contraseña se carga únicamente en App Store Connect y nunca se guarda en este repositorio. La cuenta debe existir y prepararse antes de enviar el build con:
 
 `python manage.py prepare_app_review_demo --login developer@myscoope.com`
 
@@ -14,8 +14,8 @@ La app requiere inicio de sesión. La cuenta dedicada para revisión es `develop
 2. En **Hoy**, revisar el programa activo, las comidas previstas y sus macros.
 3. En **Plan de hoy**, abrir el detalle de una comida y marcar su cumplimiento.
 4. Abrir **Registrar peso** y guardar una medición.
-5. Abrir **Digitalizar etiqueta nutricional**. La app muestra una vista previa y realiza comprobaciones locales de legibilidad con Apple Vision antes de cualquier envío. El usuario debe activar **Autorizar análisis con OpenAI** antes de poder elegir **Enviar a OpenAI y digitalizar**. Sólo entonces una copia reducida, re-encodedada y sin metadatos se envía temporalmente a OpenAI para extraer los valores. El texto OCR crudo no se conserva y el alimento privado sólo se guarda después de confirmar los valores.
-6. Abrir **Mi cuenta**, elegir **Mejorar mi suscripción** y revisar **Suscripciones y Bolsas** para probar compra/restauración en Sandbox. Los precios y periodos proceden de StoreKit; las condiciones de renovación, cancelación, privacidad, términos y reembolsos aparecen en **Información de la suscripción** antes de comprar.
+5. La cuenta comienza en **Free**. Abrir **Mi cuenta**, elegir **Mejorar mi suscripción** y revisar **Suscripciones y Bolsas** para probar compra/restauración en Sandbox. Los precios y periodos proceden de StoreKit; las condiciones de renovación, cancelación, privacidad, términos y reembolsos aparecen en **Información de la suscripción** antes de comprar. Después de la confirmación de Apple, la app verifica el recibo y muestra el nuevo plan cuando sus beneficios están disponibles. Si la conexión interrumpe la verificación, usar **Reintentar verificación** o **Restaurar compras**.
+6. Después de activar Basic o Pro, abrir **Digitalizar etiqueta nutricional**. La app muestra una vista previa y realiza comprobaciones locales de legibilidad con Apple Vision antes de cualquier envío. El usuario debe activar **Autorizar análisis con OpenAI** antes de poder elegir **Enviar a OpenAI y digitalizar**. Sólo entonces una copia reducida y recodificada, sin metadatos, se envía a OpenAI para extraer los valores; su tratamiento y retención se explican en la política de privacidad enlazada. My Scoope no conserva el texto OCR crudo y el alimento privado sólo se guarda después de confirmar los valores. Guardar una copia procesada de la imagen es una autorización adicional, opcional, privada y revocable.
 7. Abrir el menú de **Mi cuenta** para acceder al centro de soporte, reportar contenido o un problema y eliminar la cuenta dentro de la app.
 
 ## Funciones nativas

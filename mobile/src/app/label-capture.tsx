@@ -1,6 +1,7 @@
 import * as Crypto from "expo-crypto";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
+import * as Linking from "expo-linking";
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Camera, Check, CheckCheck, ScanLine } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -18,6 +19,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, NutritionFactsCard, Pill, Screen, SectionHeading, SectionTitle, SystemSwitch, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { appConfig } from "@/config/app-config";
 import {
   LABEL_CAMERA_AUTOFOCUS,
   LABEL_CAMERA_FOCUS_SETTLE_MS,
@@ -696,7 +698,7 @@ export default function LabelCaptureScreen() {
             <View style={styles.retentionRow}>
               <View style={styles.retentionCopy}>
                 <Text style={styles.retentionTitle}>Autorizar análisis con OpenAI</Text>
-                <Text style={styles.retentionDetail}>Se enviará temporalmente esta copia reducida y sin metadatos para extraer los valores. No se usa para publicidad ni se conserva en OpenAI.</Text>
+                <Text style={styles.retentionDetail}>Se enviará a OpenAI esta copia reducida y sin metadatos para extraer los valores. Consulta su tratamiento y retención en nuestra <Text accessibilityRole="link" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/`).catch((nextError) => setError(userFacingError(nextError)))} style={{ textDecorationLine: "underline" }}>política de privacidad</Text>.</Text>
               </View>
               <SystemSwitch accessibilityLabel="Autorizar análisis con OpenAI" onValueChange={setAiConsentGranted} value={aiConsentGranted} />
             </View>

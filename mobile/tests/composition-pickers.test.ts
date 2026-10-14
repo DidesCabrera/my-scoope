@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { pickerConfigureHref } from "../src/components/pickers/picker-routes";
 
 function matches(source: string, pattern: RegExp) {
   assert.match(source, pattern);
@@ -106,7 +107,12 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{targetId\}`\)/);
   matches(payload, /dailyplan_id: contextDailyPlanId/);
   matches(payload, /dailyplan_meal_id: contextDailyPlanMealId/);
-  matches(picker, /return \{ pathname: "\/pickers\/configure", params \} as Href/);
+  assert.deepEqual(pickerConfigureHref("food-to-meal", {
+    selectedId: 10, targetId: 20, weekNumber: 1, contextDailyPlanId: 30,
+    contextDailyPlanMealId: 40, returnTo: "/libraries/daily-plans/30",
+  }), { pathname: "/pickers/configure", params: { kind: "food-to-meal", selectedId: "10",
+    targetId: "20", weekNumber: "1", contextDailyPlanId: "30", contextDailyPlanMealId: "40",
+    returnTo: "/libraries/daily-plans/30" } });
   omits(picker, /protein\s*\*\s*4|carbs\s*\*\s*4|fat\s*\*\s*9/);
 
   const cardAction = await readFile(

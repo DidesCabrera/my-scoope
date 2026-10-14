@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from django.db.models import Q
 from django.utils import timezone
 
 from accounts.models import AccountPlan, AccountSubscription, CreditWallet
@@ -38,6 +39,7 @@ class AccountCreditDisplay:
     wallet_updated_at: str
     plan_source_label: str
     credit_source_label: str
+    credit_status: str = "ready"
 
     @property
     def available_label(self) -> str:
@@ -67,6 +69,7 @@ def build_account_credit_display(user: Any) -> AccountCreditDisplay:
     subscription = _active_subscription_for_user(user)
     wallet = _wallet_for_user(user)
     period = current_account_credit_period()
+    credit_status = "ready"
 
     if plan is None:
         plan_name = "Sin plan comercial"
@@ -93,7 +96,8 @@ def build_account_credit_display(user: Any) -> AccountCreditDisplay:
         purchased_credits = 0
     else:
         purchased_credits = int(wallet.available_purchased_credits)
-        if wallet.period != period or wallet.plan_snapshot_code != plan_slug:
+        transition = wallet.period != period or wallet.plan_snapshot_code != plan_slug
+        if transition and not wallet.reserved_balance and not wallet.is_frozen:
             balance = included_monthly_credits + purchased_credits
             reserved_credits = 0
             available_credits = balance
@@ -101,12 +105,22 @@ def build_account_credit_display(user: Any) -> AccountCreditDisplay:
             balance = int(wallet.balance or 0)
             reserved_credits = int(wallet.reserved_balance or 0)
             available_credits = int(wallet.available_credits)
+        if wallet.is_frozen:
+            available_credits = 0
+            credit_status = "frozen"
+        elif transition and wallet.reserved_balance:
+            available_credits = 0
+            credit_status = "pending_reservation"
         if plan_slug == DEFAULT_ACCOUNT_PLAN_SLUG:
             available_credits = 0
         wallet_exists = True
         wallet_updated_at = timezone.localtime(wallet.updated_at).strftime("%Y-%m-%d %H:%M")
         period = wallet.period or period
         credit_source_label = "Wallet comercial actual"
+        if credit_status == "pending_reservation":
+            credit_source_label = "Actualización pendiente de la tarea anterior"
+        elif credit_status == "frozen":
+            credit_source_label = "Créditos en revisión"
 
     return AccountCreditDisplay(
         plan_name=plan_name,
@@ -125,6 +139,7 @@ def build_account_credit_display(user: Any) -> AccountCreditDisplay:
         wallet_updated_at=wallet_updated_at,
         plan_source_label=plan_source_label,
         credit_source_label=credit_source_label,
+        credit_status=credit_status,
     )
 
 
@@ -138,6 +153,7 @@ def _active_subscription_for_user(user: Any) -> AccountSubscription | None:
             status__in=(AccountSubscription.Status.TRIALING, AccountSubscription.Status.ACTIVE),
             plan__status=AccountPlan.Status.ACTIVE,
         )
+        .filter(Q(current_period_end__isnull=True) | Q(current_period_end__gt=timezone.now()))
         .first()
     )
 

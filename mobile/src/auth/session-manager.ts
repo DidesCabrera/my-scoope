@@ -58,6 +58,8 @@ export class MobileSessionManager {
   private readonly responseCache = new Map<string, CachedResponse>();
   private readonly inFlightReads = new Map<string, Promise<unknown>>();
   private cacheGeneration = 0;
+  private sessionGeneration = 0;
+  private storageMutation: Promise<void> = Promise.resolve();
   private refreshPromise: Promise<void> | null = null;
   private metricObserver: ((metric: MobileRequestMetric) => void) | null = null;
 
@@ -72,9 +74,13 @@ export class MobileSessionManager {
   setRequestMetricObserver(observer: (metric: MobileRequestMetric) => void): void {
     this.metricObserver = observer;
   }
+  get hasCredentials(): boolean { return this.tokens !== null; }
 
   async restore(): Promise<SessionData | null> {
-    this.tokens = await this.storage.get();
+    const sessionGeneration = this.sessionGeneration;
+    const restoredTokens = await this.storage.get();
+    if (sessionGeneration !== this.sessionGeneration) return null;
+    this.tokens = restoredTokens;
     if (!this.tokens || this.tokens.refreshExpiresAt <= this.now()) {
       await this.clear();
       return null;
@@ -85,13 +91,23 @@ export class MobileSessionManager {
         await this.refresh();
       }
       return await this.request<SessionData>("/api/v1/session");
-    } catch {
-      await this.clear();
-      return null;
+    } catch (error) {
+      if (error instanceof MobileApiError && [400, 401, 403].includes(error.status)) {
+        if (sessionGeneration === this.sessionGeneration) await this.clear();
+        return null;
+      }
+      // A network/server outage must not destroy the rotating credentials.
+      throw error;
     }
   }
 
   async exchangeAuthorizationCode(code: string, codeVerifier: string): Promise<SessionData> {
+    const sessionGeneration = ++this.sessionGeneration;
+    this.cacheGeneration += 1;
+    this.responseCache.clear();
+    this.inFlightReads.clear();
+    this.tokens = null;
+    await this.persist(null);
     const device = await this.getDeviceIdentity();
     const body = new URLSearchParams({
       grant_type: "authorization_code",
@@ -108,7 +124,7 @@ export class MobileSessionManager {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: body.toString(),
     });
-    await this.acceptTokenResponse(response);
+    await this.acceptTokenResponse(response, sessionGeneration);
     return this.request<SessionData>("/api/v1/session");
   }
 
@@ -123,6 +139,9 @@ export class MobileSessionManager {
     const method = (init.method ?? "GET").toUpperCase();
     const cacheKey = `${method}:${path}`;
     if (method === "GET") {
+      if (init.cache === "no-store" || init.cache === "reload") {
+        return this.performRequest<T>(path, init, canRetry, null, -1);
+      }
       const cached = this.responseCache.get(cacheKey);
       if (cached && this.now() - cached.storedAt <= this.cacheTtl(path)) {
         this.reportMetric({ cache: "fresh", durationMs: 0, method, path, responseBytes: 0, status: 200 });
@@ -157,6 +176,7 @@ export class MobileSessionManager {
     const startedAt = this.now();
     const method = (init.method ?? "GET").toUpperCase();
     const tokens = this.tokens;
+    const sessionGeneration = this.sessionGeneration;
     if (!tokens) {
       throw new MobileApiError("Inicia sesión para continuar.", "mobile_auth_required", 401);
     }
@@ -174,7 +194,13 @@ export class MobileSessionManager {
       });
     } catch (error) {
       this.reportMetric({ cache: "network", durationMs: this.now() - startedAt, method, path, responseBytes: null, status: 0 });
+      if (sessionGeneration !== this.sessionGeneration) {
+        throw new MobileApiError("La sesión cambió durante la solicitud.", "mobile_session_changed", 401);
+      }
       throw error;
+    }
+    if (sessionGeneration !== this.sessionGeneration) {
+      throw new MobileApiError("La sesión cambió durante la solicitud.", "mobile_session_changed", 401);
     }
 
     if (response.status === 401 && canRetry) {
@@ -208,6 +234,9 @@ export class MobileSessionManager {
     const responseText = await response.text();
     const responseBytes = new TextEncoder().encode(responseText).length;
     const payload = JSON.parse(responseText) as ApiEnvelope<T>;
+    if (sessionGeneration !== this.sessionGeneration) {
+      throw new MobileApiError("La sesión cambió durante la solicitud.", "mobile_session_changed", 401);
+    }
     this.reportMetric({ cache: "network", durationMs: this.now() - startedAt, method, path, responseBytes, status: response.status });
     if (!response.ok || !payload.ok) {
       const detail = payload.ok
@@ -238,10 +267,18 @@ export class MobileSessionManager {
   }
 
   async clear(): Promise<void> {
+    this.sessionGeneration += 1;
+    this.cacheGeneration += 1;
     this.tokens = null;
     this.responseCache.clear();
     this.inFlightReads.clear();
-    await this.storage.clear();
+    await this.persist(null);
+  }
+
+  private persist(tokens: StoredTokenSet | null): Promise<void> {
+    const task = this.storageMutation.catch(() => undefined).then(() => tokens ? this.storage.set(tokens) : this.storage.clear());
+    this.storageMutation = task;
+    return task;
   }
 
   private cacheTtl(path: string): number {
@@ -289,15 +326,17 @@ export class MobileSessionManager {
 
   private async refresh(): Promise<void> {
     if (this.refreshPromise) return this.refreshPromise;
-    this.refreshPromise = this.performRefresh();
+    const task = this.performRefresh();
+    this.refreshPromise = task;
     try {
-      await this.refreshPromise;
+      await task;
     } finally {
-      this.refreshPromise = null;
+      if (this.refreshPromise === task) this.refreshPromise = null;
     }
   }
 
   private async performRefresh(): Promise<void> {
+    const sessionGeneration = this.sessionGeneration;
     if (!this.tokens || this.tokens.refreshExpiresAt <= this.now()) {
       await this.clear();
       throw new MobileApiError("Tu sesión expiró. Inicia sesión nuevamente.", "mobile_session_expired", 401);
@@ -312,17 +351,20 @@ export class MobileSessionManager {
           refresh_token: this.tokens.refreshToken,
         }).toString(),
       });
-      await this.acceptTokenResponse(response);
+      await this.acceptTokenResponse(response, sessionGeneration);
     } catch (error) {
-      if (error instanceof MobileApiError && [400, 401].includes(error.status)) {
+      if (sessionGeneration === this.sessionGeneration && error instanceof MobileApiError && [400, 401].includes(error.status)) {
         await this.clear();
       }
       throw error;
     }
   }
 
-  private async acceptTokenResponse(response: Response): Promise<void> {
+  private async acceptTokenResponse(response: Response, sessionGeneration: number): Promise<void> {
     const payload = (await response.json()) as OAuthTokenResponse | OAuthErrorResponse;
+    if (sessionGeneration !== this.sessionGeneration) {
+      throw new MobileApiError("La sesión cambió durante la solicitud.", "mobile_session_changed", 401);
+    }
     if (!response.ok || !("access_token" in payload)) {
       const error = payload as OAuthErrorResponse;
       throw new MobileApiError(
@@ -341,6 +383,9 @@ export class MobileSessionManager {
       scope: payload.scope,
       deviceSessionId: payload.device_session_id,
     };
-    await this.storage.set(this.tokens);
+    await this.persist(this.tokens);
+    if (sessionGeneration !== this.sessionGeneration) {
+      throw new MobileApiError("La sesión cambió durante la solicitud.", "mobile_session_changed", 401);
+    }
   }
 }

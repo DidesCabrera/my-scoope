@@ -47,6 +47,67 @@ function storage(initial: StoredTokenSet | null = null): TokenStorage & { curren
   };
 }
 
+test("purchase revalidation bypasses cached and in-flight billing snapshots", async () => {
+  let reads = 0;
+  const manager = new MobileSessionManager(config, storage(), async () => ({ id: "device", name: "iPhone", platform: "ios" }),
+    (async (input) => String(input).endsWith("/oauth/token") ? jsonResponse(tokenResponse("fresh")) :
+      jsonResponse({ ok: true, data: String(input).endsWith("/subscriptions") ? { plan: ++reads === 1 ? "Basic" : "Pro" } : sessionData, error: null })) as typeof fetch,
+    () => now);
+  await manager.exchangeAuthorizationCode("code", "verifier");
+  assert.equal((await manager.request<{ plan: string }>("/api/v1/subscriptions")).plan, "Basic");
+  assert.equal((await manager.request<{ plan: string }>("/api/v1/subscriptions", { cache: "no-store" })).plan, "Pro");
+  assert.equal(reads, 2);
+});
+
+test("a delayed response from an old account is rejected after logout", async () => {
+  let release!: (value: Response) => void;
+  const manager = new MobileSessionManager(config, storage(), async () => ({ id: "device", name: "iPhone", platform: "ios" }),
+    (async (input) => String(input).endsWith("/oauth/token") ? jsonResponse(tokenResponse("a")) :
+      String(input).endsWith("/subscriptions") ? new Promise<Response>((resolve) => { release = resolve; }) :
+        jsonResponse({ ok: true, data: sessionData, error: null })) as typeof fetch, () => now);
+  await manager.exchangeAuthorizationCode("code", "verifier");
+  const read = manager.request("/api/v1/subscriptions");
+  await manager.clear();
+  release(jsonResponse({ ok: true, data: { plan_name: "Pro" }, error: null }));
+  await assert.rejects(read, /sesión cambió/);
+});
+
+test("logout while a token refresh is in flight cannot recreate credentials", async () => {
+  let time = now;
+  let release!: (value: Response) => void;
+  let issued = 0;
+  const saved = storage();
+  const manager = new MobileSessionManager(config, saved, async () => ({ id: "device", name: "iPhone", platform: "ios" }),
+    (async (input) => String(input).endsWith("/oauth/token") ? (++issued === 1 ? jsonResponse(tokenResponse("a")) :
+      new Promise<Response>((resolve) => { release = resolve; })) : jsonResponse({ ok: true, data: sessionData, error: null })) as typeof fetch, () => time);
+  await manager.exchangeAuthorizationCode("code", "verifier");
+  time += 900_000;
+  const read = manager.request("/api/v1/subscriptions");
+  await manager.clear();
+  release(jsonResponse(tokenResponse("late")));
+  await assert.rejects(read, /sesión cambió/);
+  assert.equal(saved.current, null);
+});
+
+test("a transient startup outage keeps credentials and can restore without another login", async () => {
+  const saved = storage();
+  let offline = false;
+  const manager = new MobileSessionManager(config, saved, async () => ({ id: "device", name: "iPhone", platform: "ios" }),
+    (async (input) => {
+      if (offline) throw new Error("offline");
+      return String(input).endsWith("/oauth/token") ? jsonResponse(tokenResponse("a")) :
+        jsonResponse({ ok: true, data: sessionData, error: null });
+    }) as typeof fetch, () => now);
+  await manager.exchangeAuthorizationCode("code", "verifier");
+  const restarted = new MobileSessionManager(config, saved, async () => ({ id: "device", name: "iPhone", platform: "ios" }),
+    (async () => { if (offline) throw new Error("offline"); return jsonResponse({ ok: true, data: sessionData, error: null }); }) as typeof fetch, () => now);
+  offline = true;
+  await assert.rejects(restarted.restore(), /offline/);
+  assert.equal(saved.current?.refreshToken, "refresh-a");
+  offline = false;
+  assert.equal((await restarted.restore())?.user_id, sessionData.user_id);
+});
+
 test("authorization-code exchange binds the device and stores the rotating pair", async () => {
   const saved = storage();
   const calls: { url: string; init?: RequestInit }[] = [];

@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
@@ -23,7 +24,6 @@ from billing.models import (
     AppleAppAccountToken,
     BillingEvent,
     BillingProduct,
-    CreditPackPurchase,
     PaymentProvider,
     ProviderCreditPack,
     ProviderSubscription,
@@ -75,13 +75,20 @@ def sync_apple_transaction(
     catalog_environment = apple_catalog_environment(evidence.environment)
 
     existing = (
-        ProviderSubscription.objects.select_for_update()
+        ProviderSubscription.objects.select_related("product")
         .filter(provider=PaymentProvider.APPLE_APP_STORE, external_subscription_id=original_id)
         .first()
     )
     owner = _resolve_owner(evidence.app_account_token, existing=existing)
     if expected_user is not None and owner.pk != expected_user.pk:
         raise UnknownAppleAccountToken("The Apple transaction belongs to another My Scoope account.")
+    # Serialize every Apple chain for this account before taking evidence locks.
+    get_user_model().objects.select_for_update().get(pk=owner.pk)
+    existing = ProviderSubscription.objects.select_for_update(of=("self",)).select_related("product").filter(
+        provider=PaymentProvider.APPLE_APP_STORE, external_subscription_id=original_id,
+    ).first()
+    if existing is not None and existing.user_id != owner.pk:
+        raise UnknownAppleAccountToken("Apple transaction ownership changed unexpectedly.")
 
     product = (
         BillingProduct.objects.select_related("account_plan")
@@ -98,6 +105,8 @@ def sync_apple_transaction(
     status = _provider_status(evidence)
     if existing is not None and existing.product.environment != catalog_environment:
         raise UnsupportedAppleEnvironment("Apple subscription environment changed unexpectedly.")
+    if existing is not None and _is_stale_evidence(evidence, existing, source=source):
+        return _current_subscription(existing)
     if status not in {ProviderSubscription.Status.CANCELED, ProviderSubscription.Status.EXPIRED}:
         require_apple_sandbox_access_in_production(owner, catalog_environment=catalog_environment)
     metadata = dict(existing.metadata or {}) if existing is not None else {}
@@ -117,69 +126,87 @@ def sync_apple_transaction(
         "product": product,
         "status": status,
         "current_period_start": _as_datetime(evidence.purchase_date),
-        "current_period_end": _as_datetime(evidence.expires_date),
-        "cancel_at_period_end": status in {
+        "current_period_end": _access_deadline(evidence),
+        "cancel_at_period_end": metadata.get("apple_auto_renew_enabled") is False or status in {
             ProviderSubscription.Status.CANCELED,
             ProviderSubscription.Status.EXPIRED,
         },
         "metadata": metadata,
     }
-    subscription, _ = ProviderSubscription.objects.update_or_create(
+    subscription, created = ProviderSubscription.objects.get_or_create(
         provider=PaymentProvider.APPLE_APP_STORE,
         external_subscription_id=original_id,
         defaults=defaults,
     )
+    if not created:
+        subscription = ProviderSubscription.objects.select_for_update().get(pk=subscription.pk)
+        if subscription.user_id != owner.pk:
+            raise UnknownAppleAccountToken("Apple transaction ownership changed unexpectedly.")
+        if subscription.product.environment != catalog_environment:
+            raise UnsupportedAppleEnvironment("Apple subscription environment changed unexpectedly.")
+        if _is_stale_evidence(evidence, subscription, source=source):
+            return _current_subscription(subscription)
+        defaults["metadata"] = {**dict(subscription.metadata or {}), **defaults["metadata"]}
+        for field, value in defaults.items():
+            setattr(subscription, field, value)
+        subscription.save()
     project_provider_subscription(subscription)
     return subscription
 
 
+def _current_subscription(subscription):
+    # Ignoring a stale receipt must not preserve an authorization whose known
+    # deadline has since passed. Recompute any remaining provider entitlement.
+    if subscription.status == ProviderSubscription.Status.AUTHORIZED and subscription.current_period_end and subscription.current_period_end <= timezone.now():
+        project_provider_subscription(subscription)
+        subscription.refresh_from_db()
+    return subscription
+
+
 def process_apple_notification(*, event: BillingEvent, notification: AppleNotificationEvidence) -> BillingEvent:
+    try:
+        return _process_apple_notification_atomic(event=event, notification=notification)
+    except AppleEvidenceError as exc:
+        return finish_billing_event(event.pk, status=BillingEvent.Status.IGNORED, last_error=type(exc).__name__)
+    except Exception as exc:
+        finish_billing_event(event.pk, status=BillingEvent.Status.FAILED, last_error=type(exc).__name__)
+        raise
+
+
+@transaction.atomic
+def _process_apple_notification_atomic(*, event: BillingEvent, notification: AppleNotificationEvidence) -> BillingEvent:
+    # The event lock stays held through settlement and its final status. A
+    # concurrent duplicate cannot claim or settle the same notification twice.
+    BillingEvent.objects.select_for_update().get(pk=event.pk)
     claimed = claim_billing_event(event.pk)
     if claimed.status in {BillingEvent.Status.PROCESSED, BillingEvent.Status.IGNORED}:
         return claimed
     if claimed.status != BillingEvent.Status.PROCESSING:
         return claimed
-    try:
-        if notification.transaction is None:
-            return finish_billing_event(claimed.pk, status=BillingEvent.Status.IGNORED)
-        evidence = notification.transaction
-        catalog_environment = apple_catalog_environment(evidence.environment or notification.environment)
-        is_pack = ProviderCreditPack.objects.filter(
-            provider=PaymentProvider.APPLE_APP_STORE,
-            environment=catalog_environment,
-            external_product_id=evidence.product_id,
-        ).exists()
-        if is_pack:
-            from billing.application.services.credit_packs import (
-                refund_credit_pack_purchase,
-                settle_apple_credit_pack,
-            )
-            if notification.notification_type == "ONE_TIME_CHARGE":
-                owner = _resolve_owner(evidence.app_account_token, existing=None)
-                settle_apple_credit_pack(user=owner, evidence=evidence)
-            elif notification.notification_type == "REFUND":
-                if CreditPackPurchase.objects.filter(
-                    provider=PaymentProvider.APPLE_APP_STORE,
-                    external_purchase_id=evidence.transaction_id,
-                    product__environment=catalog_environment,
-                ).exists():
-                    refund_credit_pack_purchase(
-                        provider=PaymentProvider.APPLE_APP_STORE,
-                        external_purchase_id=evidence.transaction_id,
-                    )
-            else:
-                return finish_billing_event(claimed.pk, status=BillingEvent.Status.IGNORED)
-        else:
-            sync_apple_transaction(evidence, source="app_store_notification_v2")
-    except AppleEvidenceError as exc:
-        return finish_billing_event(
-            claimed.pk,
-            status=BillingEvent.Status.IGNORED,
-            last_error=type(exc).__name__,
+    if notification.transaction is None:
+        return finish_billing_event(claimed.pk, status=BillingEvent.Status.IGNORED)
+    evidence = notification.transaction
+    catalog_environment = apple_catalog_environment(evidence.environment or notification.environment)
+    is_pack = ProviderCreditPack.objects.filter(
+        provider=PaymentProvider.APPLE_APP_STORE,
+        environment=catalog_environment,
+        external_product_id=evidence.product_id,
+    ).exists()
+    if is_pack:
+        from billing.application.services.credit_packs import (
+            refund_apple_credit_pack,
+            settle_apple_credit_pack,
         )
-    except Exception as exc:
-        finish_billing_event(claimed.pk, status=BillingEvent.Status.FAILED, last_error=type(exc).__name__)
-        raise
+        if notification.notification_type == "ONE_TIME_CHARGE":
+            owner = _resolve_owner(evidence.app_account_token, existing=None)
+            settle_apple_credit_pack(user=owner, evidence=evidence)
+        elif notification.notification_type == "REFUND":
+            owner = _resolve_owner(evidence.app_account_token, existing=None)
+            refund_apple_credit_pack(user=owner, evidence=evidence)
+        else:
+            return finish_billing_event(claimed.pk, status=BillingEvent.Status.IGNORED)
+    else:
+        sync_apple_transaction(evidence, source="app_store_notification_v2")
     return finish_billing_event(claimed.pk, status=BillingEvent.Status.PROCESSED)
 
 
@@ -189,7 +216,7 @@ def _resolve_owner(token_value: str, *, existing: ProviderSubscription | None):
             normalized = uuid.UUID(str(token_value))
         except ValueError as exc:
             raise UnknownAppleAccountToken("Apple appAccountToken is invalid.") from exc
-        token = AppleAppAccountToken.objects.select_for_update().filter(token=normalized).select_related("user").first()
+        token = AppleAppAccountToken.objects.filter(token=normalized).select_related("user").first()
         if token is None:
             raise UnknownAppleAccountToken("Apple appAccountToken is unknown.")
         if existing is not None and existing.user_id != token.user_id:
@@ -201,15 +228,49 @@ def _resolve_owner(token_value: str, *, existing: ProviderSubscription | None):
 
 
 def _provider_status(evidence: AppleTransactionEvidence) -> str:
+    if evidence.expires_date is None:
+        raise AppleEvidenceError("An Apple subscription requires an expiration date.")
     if evidence.revocation_date is not None:
         return ProviderSubscription.Status.CANCELED
     status = _STATUS_MAP.get(evidence.status.lower())
     if status is None:
         raise AppleEvidenceError("Apple subscription status is unsupported.")
-    expires_at = _as_datetime(evidence.expires_date)
+    if (evidence.metadata or {}).get("apple_is_upgraded"):
+        return ProviderSubscription.Status.EXPIRED
+    expires_at = _access_deadline(evidence)
     if status == ProviderSubscription.Status.AUTHORIZED and expires_at is not None and expires_at <= timezone.now():
         return ProviderSubscription.Status.EXPIRED
     return status
+
+
+def _access_deadline(evidence: AppleTransactionEvidence) -> datetime | None:
+    if evidence.status.lower() == "grace_period":
+        deadline = (evidence.metadata or {}).get("apple_grace_period_expires_date")
+        if deadline is None:
+            raise AppleEvidenceError("Apple grace period requires verified renewal evidence.")
+        return _as_datetime(deadline)
+    return _as_datetime(evidence.expires_date)
+
+
+def _is_stale_evidence(evidence, existing, *, source: str) -> bool:
+    current_id = (existing.metadata or {}).get("apple_latest_transaction_id")
+    incoming_start = _as_datetime(evidence.purchase_date)
+    if current_id != evidence.transaction_id and incoming_start and existing.current_period_start:
+        if incoming_start < existing.current_period_start:
+            return True
+    elif current_id == evidence.transaction_id:
+        # StoreKit's transaction alone cannot undo a later lifecycle decision
+        # (refund, grace/retry, or renewal preference) about this transaction.
+        if source == "mobile_storekit" and (existing.metadata or {}).get("apple_evidence_source") != "mobile_storekit":
+            return True
+        signed = _as_datetime(evidence.signed_date)
+        stored = (existing.metadata or {}).get("apple_signed_date")
+        if signed and stored and signed < datetime.fromisoformat(stored):
+            return True
+        if existing.status == ProviderSubscription.Status.CANCELED and not evidence.revocation_date:
+            if not signed or not stored or signed <= datetime.fromisoformat(stored):
+                return True
+    return False
 
 
 def _as_datetime(value) -> datetime | None:

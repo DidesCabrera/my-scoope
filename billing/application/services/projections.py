@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
@@ -40,8 +41,12 @@ def project_provider_subscription(subscription: ProviderSubscription) -> Account
 
 @transaction.atomic
 def project_user_billing_entitlement(user) -> AccountSubscription | None:
+    user = get_user_model().objects.select_for_update().get(pk=user.pk)
+    existing = AccountSubscription.objects.select_for_update().filter(user=user).first()
+    if not user.is_active and existing is None:
+        return None
     evidence = list(
-        ProviderSubscription.objects.select_for_update()
+        ProviderSubscription.objects.select_for_update(of=("self",))
         .select_related("product", "product__account_plan")
         .filter(user=user)
         .exclude(status=ProviderSubscription.Status.PENDING)
@@ -49,10 +54,14 @@ def project_user_billing_entitlement(user) -> AccountSubscription | None:
     if not evidence:
         return None
 
+    now = timezone.now()
+    for item in evidence:
+        if item.status == ProviderSubscription.Status.AUTHORIZED and item.current_period_end and item.current_period_end <= now:
+            item.status = ProviderSubscription.Status.EXPIRED
+            item.save(update_fields=["status", "updated_at"])
     active = [item for item in evidence if item.status == ProviderSubscription.Status.AUTHORIZED]
     selected = max(active or evidence, key=_projection_sort_key)
     target_status = _STATUS_MAP[selected.status]
-    existing = AccountSubscription.objects.select_for_update().filter(user=user).first()
     active_providers = sorted({item.provider for item in active})
     metadata = dict(existing.metadata or {}) if existing is not None else {}
     metadata.update(

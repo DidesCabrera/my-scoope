@@ -2,6 +2,7 @@
 
 Status: current
 Date: 2026-10-06
+Last updated: 2026-10-13
 
 ## Product contract
 
@@ -44,10 +45,14 @@ image receives a fresh idempotency key; retrying the accepted image keeps its ke
 ## Image and consent boundary
 
 Before starting a scan, the app explains that a reduced, re-encoded copy will be
-sent temporarily to OpenAI. The processed image is shown before the user chooses
-`Usar esta foto`; only that action performs the request with explicit consent. The server
+sent to OpenAI and links to the privacy policy for processing and retention. The
+processed image is shown before the user enables `Autorizar análisis con OpenAI`
+and chooses `Enviar a OpenAI y digitalizar`; only that action performs the request with explicit consent. The server
 accepts JPEG, PNG or WebP, rejects images outside the size/dimension contract and
 sends the provider a stateless `store: false` request.
+That setting disables Responses application-state storage; it does not by itself
+prove Zero Data Retention or disable abuse-monitoring retention. Provider-account
+data controls remain a separate operational check before release.
 
 The original image is never persisted by My Scoope. The provider response and
 raw OCR text are not stored. Only the normalized candidate, image SHA-256 digest,

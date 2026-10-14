@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
@@ -69,6 +70,7 @@ def resolve_account_plan_for_user(user: Any | None) -> AccountPlan | None:
             status__in=(AccountSubscription.Status.TRIALING, AccountSubscription.Status.ACTIVE),
             plan__status=AccountPlan.Status.ACTIVE,
         )
+        .filter(Q(current_period_end__isnull=True) | Q(current_period_end__gt=timezone.now()))
         .first()
     )
     if subscription is not None:

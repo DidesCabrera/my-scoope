@@ -1,21 +1,15 @@
 import { type Href, Redirect, Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import {
-  ErrorCode,
-  finishTransaction,
-  getAvailablePurchases,
-  type Purchase,
-  useIAP,
-} from "expo-iap";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Info, RefreshCcw, Sparkles, WalletCards } from "lucide-react-native";
-import { AppState, Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { userFacingError } from "@/api/errors";
 import type { EntitlementsData, SubscriptionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { useStoreBilling } from "@/billing/store-billing-context";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { AppHeader, Button, Card, InlineNotice, LoadingState, MyScoopeBrandLogo, Screen, SectionDivider, SectionHeading, SectionTitle, textStyles } from "@/components/ui";
@@ -26,333 +20,119 @@ import { appConfig } from "@/config/app-config";
 import { internalHref } from "@/navigation/internal-href";
 import { subscriptionPlanAccent } from "@/presentation/subscription";
 
-function purchaseErrorCode(error: unknown): string {
-  if (!error || typeof error !== "object" || !("code" in error)) return "";
-  return String(error.code ?? "").trim().toLowerCase();
-}
-
-function isUserCancelledPurchase(error: unknown): boolean {
-  return purchaseErrorCode(error) === ErrorCode.UserCancelled;
-}
-
 export default function SubscriptionScreen() {
   const { origin, returnTo } = useLocalSearchParams<{ origin?: string; returnTo?: string }>();
   const isOnboarding = origin === "onboarding";
   const returnHref = internalHref(returnTo);
   const router = useRouter();
   const { status, apiRequest, refreshProfile } = useSession();
+  const billing = useStoreBilling();
   const setHeaderPresentation = useHeaderPresentation();
-  const [overview, setOverview] = useState<SubscriptionData | null>(null);
-  const [entitlements, setEntitlements] = useState<EntitlementsData | null>(null);
+  const [fallbackOverview, setFallbackOverview] = useState<SubscriptionData | null>(null);
+  const [fallbackEntitlements, setFallbackEntitlements] = useState<EntitlementsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [working, setWorking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [purchaseNotice, setPurchaseNotice] = useState<string | null>(null);
+  const [localWorking, setLocalWorking] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [restoreNotice, setRestoreNotice] = useState<string | null>(null);
   const [actionsVisible, setActionsVisible] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
-  const handledTransactions = useRef(new Set<string>());
-  const pendingPlanName = useRef<string | null>(null);
-  const restoring = useRef(false);
+  const onboardingFinishing = useRef(false);
+  const coordinator = billing?.coordinator;
+  const overview = billing?.state.overview ?? fallbackOverview;
+  const entitlements = billing?.state.entitlements ?? fallbackEntitlements;
+  const working = localWorking || Boolean(billing?.state.busy);
+  const error = localError ?? billing?.state.error;
+  const purchaseNotice = billing?.state.message;
+  const activatingPlan = billing && ["verifying", "activating", "pending"].includes(billing.state.phase) ? billing.state.planName : null;
+  const creditBlocked = entitlements?.credit_status === "frozen" || entitlements?.credit_status === "pending_reservation";
+  const purchaseBlocked = working || creditBlocked || Boolean(billing && ["pending", "activating"].includes(billing.state.phase));
+  const connected = billing?.store.connected ?? false;
+  const products = billing?.store.products ?? [];
+  const subscriptions = billing?.store.subscriptions ?? [];
+  const fetchProducts = billing?.store.fetchProducts;
 
   const finishOnboarding = useCallback(async () => {
-    await apiRequest("/api/v1/onboarding/complete", { method: "POST" });
-    await refreshProfile();
-    router.replace(returnHref ?? ("/today" as Href));
+    if (onboardingFinishing.current) return;
+    onboardingFinishing.current = true;
+    try {
+      await apiRequest("/api/v1/onboarding/complete", { method: "POST" });
+      await refreshProfile();
+      router.replace(returnHref ?? ("/today" as Href));
+    } finally { onboardingFinishing.current = false; }
   }, [apiRequest, refreshProfile, returnHref, router]);
 
-  const submitPurchase = useCallback(async (purchase: Purchase): Promise<boolean> => {
-    const key = purchase.id || purchase.purchaseToken || "";
-    if (!purchase.purchaseToken || !key || handledTransactions.current.has(key)) return false;
-    handledTransactions.current.add(key);
-    setWorking(true);
-    setError(null);
-    setPurchaseNotice(null);
-    try {
-      const isGooglePlay = Platform.OS === "android";
-      const isCreditPack = overview?.credit_packs.some((pack) => pack.product_id === purchase.productId) ?? false;
-      const purchasedPlan = overview?.products.find((product) => product.product_id === purchase.productId)?.plan_name;
-      await apiRequest(isCreditPack
-        ? isGooglePlay ? "/api/v1/credit-packs/google-play/purchases" : "/api/v1/credit-packs/apple/transactions"
-        : isGooglePlay ? "/api/v1/subscriptions/google-play/purchases" : "/api/v1/subscriptions/apple/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isGooglePlay
-          ? { purchase_token: purchase.purchaseToken }
-          : { signed_transaction: purchase.purchaseToken }),
-      });
-      await finishTransaction({ purchase, isConsumable: isCreditPack });
-      const [nextOverview, nextEntitlements] = await Promise.all([
-        apiRequest<SubscriptionData>("/api/v1/subscriptions"),
-        apiRequest<EntitlementsData>("/api/v1/entitlements"),
-      ]);
-      setOverview(nextOverview);
-      setEntitlements(nextEntitlements);
-      if (isCreditPack) {
-        setPurchaseNotice("Compra confirmada. La bolsa de créditos ya fue añadida a tu saldo.");
-      } else if (purchasedPlan && nextEntitlements.plan_name.toLowerCase() === purchasedPlan.toLowerCase()) {
-        pendingPlanName.current = null;
-        setPurchaseNotice(`Compra confirmada. Tu plan ${purchasedPlan} ya está activo.`);
-      } else {
-        pendingPlanName.current = purchasedPlan ?? null;
-        setPurchaseNotice(`${isGooglePlay ? "Google Play" : "Apple"} confirmó la compra. Estamos actualizando tu plan; puedes seguir usando la app.`);
-      }
-      if (isOnboarding && !isCreditPack) await finishOnboarding();
-      return true;
-    } catch (nextError) {
-      // A failed verification remains pending at the store. Do not replay it
-      // continuously when the purchase list or component state refreshes.
-      // The user can explicitly retry it with Restore purchases.
-      setError(userFacingError(nextError));
-      return false;
-    } finally {
-      setWorking(false);
-    }
-  }, [apiRequest, finishOnboarding, isOnboarding, overview]);
-
-  const {
-    connected,
-    products,
-    subscriptions,
-    availablePurchases,
-    fetchProducts,
-    requestPurchase,
-    restorePurchases,
-  } = useIAP({
-    onPurchaseSuccess: (purchase) => void submitPurchase(purchase),
-    onPurchaseError: (purchaseError) => {
-      setError(isUserCancelledPurchase(purchaseError) ? null : purchaseError.message);
-      pendingPlanName.current = null;
-      setPurchaseNotice(null);
-      setWorking(false);
-    },
-    onError: (nextError) => {
-      setError(isUserCancelledPurchase(nextError) ? null : nextError.message);
-      pendingPlanName.current = null;
-      setPurchaseNotice(null);
-      setWorking(false);
-    },
-  });
-
   const load = useCallback(async () => {
+    if (status !== "authenticated") return;
     setLoading(true);
-    setError(null);
     try {
-      const [nextOverview, nextEntitlements] = await Promise.all([
-        apiRequest<SubscriptionData>("/api/v1/subscriptions"),
-        apiRequest<EntitlementsData>("/api/v1/entitlements"),
-      ]);
-      setOverview(nextOverview);
-      setEntitlements(nextEntitlements);
-      if (pendingPlanName.current
-        && nextEntitlements.plan_name.toLowerCase() === pendingPlanName.current.toLowerCase()) {
-        setPurchaseNotice(`Compra confirmada. Tu plan ${pendingPlanName.current} ya está activo.`);
-        pendingPlanName.current = null;
+      if (coordinator) await coordinator.refresh();
+      else {
+        const [nextOverview, nextEntitlements] = await Promise.all([
+          apiRequest<SubscriptionData>("/api/v1/subscriptions", { cache: "no-store" }),
+          apiRequest<EntitlementsData>("/api/v1/entitlements", { cache: "no-store" }),
+        ]);
+        setFallbackOverview(nextOverview);
+        setFallbackEntitlements(nextEntitlements);
       }
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    } finally {
-      setLoading(false);
-    }
-  }, [apiRequest]);
-
+      setLocalError(null);
+    } catch (nextError) { setLocalError(userFacingError(nextError)); }
+    finally { setLoading(false); }
+  }, [apiRequest, coordinator, status]);
   const openActions = useCallback(() => setActionsVisible(true), []);
   const closeActions = useCallback(() => setActionsVisible(false), []);
-
   useFocusEffect(useCallback(() => {
-    if (isOnboarding) {
-      setHeaderPresentation({ action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, identityVisible: compactHeaderVisible, mode: "default", title: "Elige un plan" });
-    } else {
-      setHeaderPresentation({ action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, fallback: "/account", identityVisible: compactHeaderVisible, mode: "back", title: "Suscripciones y Bolsas" });
-    }
+    setHeaderPresentation(isOnboarding
+      ? { action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, identityVisible: compactHeaderVisible, mode: "default", title: "Elige un plan" }
+      : { action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, fallback: "/account", identityVisible: compactHeaderVisible, mode: "back", title: "Suscripciones y Bolsas" });
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, isOnboarding, openActions, setHeaderPresentation]));
   useFocusEffect(useCallback(() => { void load(); }, [load]));
-
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextState) => {
-      if (nextState === "active") void load();
-    });
-    return () => subscription.remove();
-  }, [load]);
-
-  useEffect(() => {
-    const provider = Platform.OS === "android" ? "google_play" : "apple_app_store";
-    const ids = [...new Set(overview?.products.filter((item) => item.provider === provider).map((item) => item.product_id) ?? [])];
-    if ((Platform.OS === "ios" || Platform.OS === "android") && connected && ids.length > 0) {
-      void fetchProducts({ skus: ids, type: "subs" }).catch((nextError) => setError(userFacingError(nextError)));
+    if (isOnboarding && billing?.state.phase === "active") {
+      void finishOnboarding().catch((nextError) => setLocalError(userFacingError(nextError)));
     }
-  }, [connected, fetchProducts, overview?.products]);
+  }, [billing?.state.phase, finishOnboarding, isOnboarding]);
 
+  const provider = Platform.OS === "android" ? "google_play" : "apple_app_store";
+  const subscriptionIds = [...new Set(overview?.products.filter((item) => item.provider === provider).map((item) => item.product_id) ?? [])].sort().join(",");
+  const packIds = [...new Set(overview?.credit_packs.filter((item) => item.provider === provider).map((item) => item.product_id) ?? [])].sort().join(",");
   useEffect(() => {
-    const provider = Platform.OS === "android" ? "google_play" : "apple_app_store";
-    const ids = [...new Set(overview?.credit_packs.filter((item) => item.provider === provider).map((item) => item.product_id) ?? [])];
-    if ((Platform.OS === "ios" || Platform.OS === "android") && connected && ids.length > 0) {
-      void fetchProducts({ skus: ids, type: "in-app" }).catch((nextError) => setError(userFacingError(nextError)));
-    }
-  }, [connected, fetchProducts, overview?.credit_packs]);
+    if (connected && fetchProducts && subscriptionIds) void fetchProducts({ skus: subscriptionIds.split(","), type: "subs" }).catch((nextError) => setLocalError(userFacingError(nextError)));
+  }, [connected, fetchProducts, subscriptionIds]);
+  useEffect(() => {
+    if (connected && fetchProducts && packIds) void fetchProducts({ skus: packIds.split(","), type: "in-app" }).catch((nextError) => setLocalError(userFacingError(nextError)));
+  }, [connected, fetchProducts, packIds]);
 
-  useEffect(() => {
-    const pending = setTimeout(() => {
-      if (!restoring.current) {
-        for (const purchase of availablePurchases) void submitPurchase(purchase);
-      }
-    }, 0);
-    return () => clearTimeout(pending);
-  }, [availablePurchases, submitPurchase]);
+  const buy = (productId: string, basePlanId = "") => billing?.buy(productId, basePlanId);
+  const buyCreditPack = (productId: string) => billing?.buy(productId, "", true);
+  const restore = async () => {
+    if (!billing || working) return;
+    setRestoreNotice(null);
+    setLocalError(null);
+    try {
+      const result = await billing.restore();
+      if (result) setRestoreNotice(result.found === 0
+        ? "No hay compras pendientes de restaurar. Las bolsas acreditadas permanecen en tu saldo."
+        : result.verified < result.found
+          ? "Algunas compras no pudieron verificarse o pertenecen a otra cuenta. Revisa tu plan y saldo; puedes reintentar más tarde."
+          : "Revisamos tus compras. Tu plan y saldo muestran los beneficios actuales.");
+    } catch (nextError) { setLocalError(userFacingError(nextError)); }
+  };
+  const continueWithFree = async () => {
+    if (purchaseBlocked) return;
+    setLocalWorking(true);
+    setLocalError(null);
+    try { await finishOnboarding(); }
+    catch (nextError) { setLocalError(userFacingError(nextError)); }
+    finally { setLocalWorking(false); }
+  };
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !overview) return <LoadingState label="Revisando tu suscripción…" />;
-
-  const buy = async (productId: string, basePlanId = "") => {
-    if (!overview) return;
-    setWorking(true);
-    setError(null);
-    setPurchaseNotice(Platform.OS === "ios"
-      ? "Esperando la confirmación de Apple…"
-      : "Esperando la confirmación de Google Play…");
-    pendingPlanName.current = overview.products.find((product) => product.product_id === productId)?.plan_name ?? null;
-    try {
-      const storeProduct = subscriptions.find((item) => item.id === productId);
-      if (Platform.OS === "android") {
-        const offer = storeProduct?.subscriptionOffers?.find(
-          (item) => item.basePlanIdAndroid === basePlanId && item.offerTokenAndroid,
-        );
-        if (!offer?.offerTokenAndroid) throw new Error("El plan seleccionado no está disponible en Google Play.");
-        await requestPurchase({
-          request: { google: {
-            skus: [productId],
-            subscriptionOffers: [{ sku: productId, offerToken: offer.offerTokenAndroid }],
-            obfuscatedAccountId: overview.google_obfuscated_account_id,
-          } },
-          type: "subs",
-        });
-      } else {
-        await requestPurchase({ request: { apple: {
-            sku: productId,
-            appAccountToken: overview.app_account_token,
-            andDangerouslyFinishTransactionAutomatically: false,
-        } }, type: "subs" });
-      }
-    } catch (nextError) {
-      if (isUserCancelledPurchase(nextError)) {
-        setError(null);
-        pendingPlanName.current = null;
-        setPurchaseNotice(null);
-        setWorking(false);
-        return;
-      }
-
-      try {
-        const recovered = await getAvailablePurchases({
-          alsoPublishToEventListenerIOS: false,
-          onlyIncludeActiveItemsIOS: true,
-        });
-        const matching = recovered.filter((purchase) => purchase.productId === productId);
-        if (matching.length > 0) {
-          for (const purchase of matching) await submitPurchase(purchase);
-          return;
-        }
-      } catch {
-        // Preserve the original StoreKit failure below. A manual restore remains available.
-      }
-
-      setError(`${Platform.OS === "android" ? "Google Play" : "Apple"} no completó la compra. No se realizó ningún cobro; inténtalo nuevamente o usa Restaurar compras.`);
-      pendingPlanName.current = null;
-      setPurchaseNotice(null);
-      setWorking(false);
-    }
-  };
-
-  const buyCreditPack = async (productId: string) => {
-    if (!overview?.credit_packs.some((pack) => pack.product_id === productId)) return;
-    setWorking(true);
-    setError(null);
-    setPurchaseNotice(Platform.OS === "ios"
-      ? "Esperando la confirmación de Apple…"
-      : "Esperando la confirmación de Google Play…");
-    try {
-      if (Platform.OS === "android") {
-        await requestPurchase({
-          request: { google: { skus: [productId], obfuscatedAccountId: overview.google_obfuscated_account_id } },
-          type: "in-app",
-        });
-      } else {
-        await requestPurchase({
-          request: { apple: {
-            sku: productId,
-            appAccountToken: overview.app_account_token,
-            andDangerouslyFinishTransactionAutomatically: false,
-          } },
-          type: "in-app",
-        });
-      }
-    } catch (nextError) {
-      if (purchaseErrorCode(nextError) === ErrorCode.AlreadyOwned) {
-        try {
-          const recovered = await getAvailablePurchases();
-          const matching = recovered.filter((purchase) => purchase.productId === productId);
-          if (matching.length > 0) {
-            for (const purchase of matching) {
-              handledTransactions.current.delete(purchase.id || purchase.purchaseToken || "");
-              await submitPurchase(purchase);
-            }
-            return;
-          }
-        } catch {
-          // Keep the store error below if the pending purchase cannot be read.
-        }
-      }
-      setWorking(false);
-      if (isUserCancelledPurchase(nextError)) {
-        setPurchaseNotice(null);
-      } else {
-        setPurchaseNotice(null);
-        setError(userFacingError(nextError));
-      }
-    }
-  };
-
-  const restore = async () => {
-    if (restoring.current) return;
-    restoring.current = true;
-    setWorking(true);
-    setError(null);
-    setRestoreNotice(null);
-    try {
-      handledTransactions.current.clear();
-      await restorePurchases();
-      const recovered = await getAvailablePurchases();
-      let restored = 0;
-      for (const purchase of recovered) {
-        if (await submitPurchase(purchase)) restored += 1;
-      }
-      if (recovered.length === 0) {
-        setRestoreNotice("No hay compras pendientes de restaurar. Las bolsas ya acreditadas permanecen en tu saldo.");
-      } else if (restored === recovered.length) {
-        setRestoreNotice("Revisamos tus compras disponibles. Comprueba tu plan y saldo actualizados.");
-      } else {
-        setError("No pudimos verificar todas las compras disponibles. Inténtalo nuevamente más tarde.");
-      }
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    } finally {
-      restoring.current = false;
-      setWorking(false);
-    }
-  };
-
-  const continueWithFree = async () => {
-    setWorking(true);
-    setError(null);
-    try {
-      await finishOnboarding();
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    } finally {
-      setWorking(false);
-    }
-  };
+  if (!overview) return <Screen headerMode="preserve">
+    <InlineNotice tone="error">{error ?? "No pudimos consultar tu suscripción."}</InlineNotice>
+    <Button label="Reintentar" onPress={() => void load()} />
+  </Screen>;
 
   const storeProvider = Platform.OS === "android" ? "google_play" : "apple_app_store";
   const subscriptionPlans = ["Basic", "Pro"].map((planName) => ({
@@ -385,12 +165,24 @@ export default function SubscriptionScreen() {
         </View>
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      {purchaseNotice ? <InlineNotice>{purchaseNotice}</InlineNotice> : null}
+      {purchaseNotice && !activatingPlan ? <InlineNotice>{purchaseNotice}</InlineNotice> : null}
+      {overview.evidence.some((item) => item.status === "authorized" && item.cancel_at_period_end) ?
+        <InlineNotice>La renovación está desactivada. Tus beneficios actuales siguen disponibles hasta el final del periodo.</InlineNotice> : null}
+      {billing?.state.finishPending ? <InlineNotice>Los beneficios verificados están guardados. La tienda aún debe cerrar la transacción; puedes reintentar con Restaurar compras.</InlineNotice> : null}
+      {billing?.state.phase === "pending" ? <Button label="Reintentar verificación" onPress={() => void restore()} variant="secondary" /> : null}
       {restoreNotice ? <InlineNotice>{restoreNotice}</InlineNotice> : null}
+      {creditBlocked ? <InlineNotice tone="warning">{entitlements?.credit_status === "frozen"
+        ? "Los créditos están en revisión. Contacta al centro de soporte para continuar."
+        : "Una tarea anterior debe finalizar antes de actualizar la disponibilidad de tus créditos."}</InlineNotice> : null}
+      {creditBlocked ? <Button label="Actualizar saldo" onPress={() => void load()} variant="secondary" /> : null}
       {overview?.duplicate_active_providers ? (
         <InlineNotice tone="warning">Detectamos más de un canal de cobro activo. El equipo puede revisarlo sin interrumpir tu acceso.</InlineNotice>
       ) : null}
-      {!isOnboarding ? <Card accent={subscriptionPlanAccent(entitlements?.plan_name ?? overview?.plan_name)}>
+      {activatingPlan ? <Card accent={subscriptionPlanAccent(activatingPlan)}>
+        <Text style={styles.eyebrow}>COMPRA CONFIRMADA POR LA TIENDA</Text>
+        <SectionTitle title={`Plan ${activatingPlan}`} />
+        <Text style={textStyles.muted}>{purchaseNotice}</Text>
+      </Card> : !isOnboarding ? <Card accent={subscriptionPlanAccent(entitlements?.plan_name ?? overview?.plan_name)}>
         {entitlements ? <CreditDashboardGrid availableCredits={entitlements.available_credits} planName={entitlements.plan_name} /> : null}
       </Card> : null}
 
@@ -410,7 +202,7 @@ export default function SubscriptionScreen() {
 
       {overview?.eligible && isOnboarding ? (
         <SubscriptionPlanCard accent={tokens.color.fat} benefits={commercialPlanBenefits.Free} caption="Incluido sin costo." name="Free" price="Gratis">
-          <SubscriptionPurchaseButton label="Continuar con Free" loading={working} onPress={() => void continueWithFree()} />
+          <SubscriptionPurchaseButton disabled={purchaseBlocked} label="Continuar con Free" loading={working} onPress={() => void continueWithFree()} />
         </SubscriptionPlanCard>
       ) : null}
 
@@ -449,7 +241,7 @@ export default function SubscriptionScreen() {
                     : `${price}/mes`;
                   return (
                     <SubscriptionPurchaseButton
-                      disabled={!connected || !storeProduct || (Platform.OS === "android" && !androidOffer)}
+                      disabled={purchaseBlocked || !connected || !storeProduct || (Platform.OS === "android" && !androidOffer)}
                       key={configured.product_id}
                       label={`${interval} · ${priceExplanation}`}
                       loading={working}
@@ -495,7 +287,7 @@ export default function SubscriptionScreen() {
                   <CreditPackPriceChip label={storeProduct?.displayPrice ?? "Consultando…"} />
                 </View>
                 <SubscriptionPurchaseButton
-                  disabled={!connected || !storeProduct}
+                  disabled={purchaseBlocked || !connected || !storeProduct}
                   label={`Comprar ${configured.credits.toLocaleString("es-CL")} créditos`}
                   loading={working}
                   onPress={() => void buyCreditPack(configured.product_id)}

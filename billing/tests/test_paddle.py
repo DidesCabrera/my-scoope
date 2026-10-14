@@ -4,11 +4,13 @@ import hashlib
 import hmac
 import json
 import time
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from accounts.models import AccountPlan, AccountSubscription
 from billing.application.services.paddle_checkout import (
@@ -317,8 +319,8 @@ class PaddleSandboxIntegrationTests(TestCase):
                     "myscoope_checkout_reference": self.checkout.checkout_reference,
                 },
                 "current_billing_period": {
-                    "starts_at": "2026-09-11T12:00:00Z",
-                    "ends_at": "2026-10-11T12:00:00Z",
+                    "starts_at": (timezone.now() - timedelta(days=1)).isoformat(),
+                    "ends_at": (timezone.now() + timedelta(days=29)).isoformat(),
                 },
                 "scheduled_change": None,
             },

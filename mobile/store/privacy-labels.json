@@ -9,7 +9,7 @@
     "purchases": ["purchase_history"],
     "health_and_fitness": ["health", "fitness"],
     "usage_data": ["product_interaction"],
-    "user_content": ["other_user_content"]
+    "user_content": ["photos_or_videos", "other_user_content"]
   },
   "purposes": ["app_functionality", "product_personalization"],
   "not_collected": ["raw_payment_card_data", "raw_ocr_text"],

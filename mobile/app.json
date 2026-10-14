@@ -70,6 +70,12 @@
             "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
           },
           {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotosorVideos",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          },
+          {
             "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeOtherUserContent",
             "NSPrivacyCollectedDataTypeLinked": true,
             "NSPrivacyCollectedDataTypeTracking": false,
@@ -159,7 +165,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "My Scoope accede sólo a la foto de etiqueta nutricional que tú elijas para digitalizar."
+          "photosPermission": "My Scoope accede sólo a la foto de etiqueta nutricional que tú elijas para digitalizar.",
+          "microphonePermission": false
         }
       ],
       [

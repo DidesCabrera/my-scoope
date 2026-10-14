@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from billing.application.contracts import ProviderPaymentSnapshot, ProviderSubscriptionSnapshot
@@ -18,8 +19,9 @@ class BillingResourceMismatch(ValueError):
 
 @transaction.atomic
 def sync_provider_subscription(snapshot: ProviderSubscriptionSnapshot) -> ProviderSubscription:
+    _lock_registered_owner(snapshot)
     subscription = (
-        ProviderSubscription.objects.select_for_update()
+        ProviderSubscription.objects.select_for_update(of=("self",))
         .select_related("product", "product__account_plan", "user")
         .filter(provider=snapshot.provider, external_subscription_id=snapshot.external_subscription_id)
         .first()
@@ -44,8 +46,9 @@ def sync_provider_subscription(snapshot: ProviderSubscriptionSnapshot) -> Provid
 
 @transaction.atomic
 def sync_provider_payment(snapshot: ProviderPaymentSnapshot) -> BillingPayment:
+    _lock_registered_owner(snapshot)
     subscription = (
-        ProviderSubscription.objects.select_for_update()
+        ProviderSubscription.objects.select_for_update(of=("self",))
         .select_related("product", "user")
         .filter(provider=snapshot.provider, external_subscription_id=snapshot.external_subscription_id)
         .first()
@@ -87,3 +90,11 @@ def sync_provider_payment(snapshot: ProviderPaymentSnapshot) -> BillingPayment:
             adjustment_reason=f"Tax review required after payment status {payment.status}.",
         )
     return payment
+
+
+def _lock_registered_owner(snapshot) -> None:
+    user_id = ProviderSubscription.objects.filter(
+        provider=snapshot.provider, external_subscription_id=snapshot.external_subscription_id,
+    ).values_list("user_id", flat=True).first()
+    if user_id is not None:
+        get_user_model().objects.select_for_update().get(pk=user_id)

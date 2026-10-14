@@ -7,7 +7,7 @@ from pathlib import Path
 from appstoreserverlibrary.api_client import AppStoreServerAPIClient
 from appstoreserverlibrary.models.Environment import Environment
 from appstoreserverlibrary.models.Status import Status
-from appstoreserverlibrary.signed_data_verifier import SignedDataVerifier, VerificationException
+from appstoreserverlibrary.signed_data_verifier import SignedDataVerifier, VerificationException, VerificationStatus
 
 from billing.application.contracts import (
     AppleNotificationEvidence,
@@ -22,6 +22,12 @@ class AppleAppStoreConfigurationError(RuntimeError):
 
 class InvalidAppleSignedData(ValueError):
     pass
+
+
+def _raise_verification_error(exc, message):
+    if exc.status == VerificationStatus.RETRYABLE_VERIFICATION_FAILURE:
+        raise AppleAppStoreConfigurationError("Apple signature verification is temporarily unavailable.") from exc
+    raise InvalidAppleSignedData(message) from exc
 
 
 _STATUS_NAMES = {
@@ -75,7 +81,7 @@ class AppleAppStoreClient:
         try:
             decoded = self.verifier.verify_and_decode_signed_transaction(signed_transaction)
         except VerificationException as exc:
-            raise InvalidAppleSignedData("The StoreKit transaction signature is invalid.") from exc
+            _raise_verification_error(exc, "The StoreKit transaction signature is invalid.")
         return _transaction_evidence(decoded)
 
     def verify_notification(self, signed_payload: str) -> AppleNotificationEvidence:
@@ -89,7 +95,9 @@ class AppleAppStoreClient:
                 if data is not None and data.signedTransactionInfo
                 else None
             )
-        except (VerificationException, InvalidAppleSignedData) as exc:
+        except VerificationException as exc:
+            _raise_verification_error(exc, "The App Store notification signature is invalid.")
+        except InvalidAppleSignedData as exc:
             raise InvalidAppleSignedData("The App Store notification signature is invalid.") from exc
         status_value = _enum_value(getattr(data, "status", None)) if data is not None else None
         if transaction is not None and status_value is not None:
@@ -99,6 +107,11 @@ class AppleAppStoreClient:
                     "status": _STATUS_NAMES.get(status_value, transaction.status),
                 }
             )
+        if transaction is not None:
+            transaction = self._with_renewal(transaction, getattr(data, "signedRenewalInfo", None))
+            transaction = AppleTransactionEvidence(**{
+                **transaction.__dict__, "signed_date": max(transaction.signed_date or 0, decoded.signedDate or 0),
+            })
         return AppleNotificationEvidence(
             notification_uuid=str(decoded.notificationUUID or ""),
             notification_type=str(_enum_value(decoded.notificationType) or ""),
@@ -123,8 +136,30 @@ class AppleAppStoreClient:
                 if status is None:
                     continue
                 transaction = AppleTransactionEvidence(**{**transaction.__dict__, "status": status})
+                transaction = self._with_renewal(transaction, getattr(latest, "signedRenewalInfo", None))
                 results.append(AppleSubscriptionStatusEvidence(status=status, transaction=transaction))
         return tuple(results)
+
+    def _with_renewal(self, transaction, signed_renewal):
+        if not signed_renewal:
+            return transaction
+        try:
+            renewal = self.verifier.verify_and_decode_renewal_info(signed_renewal)
+        except VerificationException as exc:
+            _raise_verification_error(exc, "The Apple renewal signature is invalid.")
+        if str(renewal.originalTransactionId or "") != transaction.original_transaction_id:
+            raise InvalidAppleSignedData("Apple renewal evidence belongs to another subscription.")
+        auto_renew = _enum_value(renewal.autoRenewStatus)
+        return AppleTransactionEvidence(**{
+            **transaction.__dict__,
+            "signed_date": max(transaction.signed_date or 0, renewal.signedDate or 0),
+            "metadata": {
+                **dict(transaction.metadata or {}),
+                "apple_auto_renew_enabled": None if auto_renew is None else auto_renew == 1,
+                "apple_next_product_id": str(renewal.autoRenewProductId or ""),
+                "apple_grace_period_expires_date": renewal.gracePeriodExpiresDate,
+            },
+        })
 
 
 def _transaction_evidence(decoded) -> AppleTransactionEvidence:
@@ -142,6 +177,8 @@ def _transaction_evidence(decoded) -> AppleTransactionEvidence:
         metadata={
             "apple_currency": str(decoded.currency or ""),
             "apple_price_milliunits": decoded.price,
+            "apple_is_upgraded": bool(getattr(decoded, "isUpgraded", False)),
+            "apple_subscription_group_id": str(getattr(decoded, "subscriptionGroupIdentifier", "") or ""),
         },
     )
 
