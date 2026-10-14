@@ -125,6 +125,7 @@ export type OnboardingJourneyController = {
   busy?: boolean;
   error?: string | null;
   loginDisabled?: boolean;
+  loginLabel?: string;
   onChange?(field: keyof OnboardingJourneyValues, value: string | number): void;
   onNext?(): void;
   onBack?(): void;
@@ -507,7 +508,7 @@ function LoginView({ index }: { index: number }) {
         <Text style={[textStyles.muted, styles.centeredText, styles.loginDescription]}>Planifica, Ejecuta y Aprende sobre alimentación para ver resultados importantes</Text>
         <View style={styles.loginAction}>
           {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
-          <Button disabled={controller.loginDisabled} label="Iniciar sesión o crear cuenta" loading={controller.busy} multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
+          <Button disabled={controller.loginDisabled} label={controller.loginLabel ?? "Iniciar sesión o crear cuenta"} loading={controller.busy} multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
         </View>
       </View>
     </View>

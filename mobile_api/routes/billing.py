@@ -14,10 +14,11 @@ from mobile_api.billing_selector import subscription_payload
 from mobile_api.entitlements_selector import entitlements_payload
 from mobile_api.errors import MobileAPIError
 from mobile_api.schema_domains.billing import (
-    AppleTransactionInput,
     EntitlementsEnvelope,
     SubscriptionEnvelope,
 )
+from mobile_api.schema_domains.billing_purchases import SubscriptionPurchaseEnvelope
+from mobile_api.schema_domains.store_billing import AppleTransactionInput
 from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
@@ -49,7 +50,7 @@ def subscriptions(request):
     operation_id="mobile_api_api_apple_transaction",
     auth=mobile_bearer,
     response={
-        200: SubscriptionEnvelope,
+        200: SubscriptionPurchaseEnvelope,
         403: ErrorEnvelope,
         409: ErrorEnvelope,
         422: ErrorEnvelope,
@@ -59,14 +60,12 @@ def subscriptions(request):
 def apple_transaction(request, payload: AppleTransactionInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     if not apple_purchases_enabled_for_user(request.auth.user):
-        raise MobileAPIError(
-            code="apple_purchases_disabled",
-            message="Apple purchases are not enabled.",
-            status_code=403,
-        )
+        raise MobileAPIError("apple_purchases_disabled", "Apple purchases are not enabled.", 403)
     try:
         evidence = verify_apple_transaction_for_user(payload.signed_transaction, user=request.auth.user)
-        sync_apple_transaction(evidence, expected_user=request.auth.user, source="mobile_storekit")
+        if payload.product_id and payload.product_id != evidence.product_id:
+            raise AppleEvidenceError("The submitted product differs from the signed Apple product.")
+        provider = sync_apple_transaction(evidence, expected_user=request.auth.user, source="mobile_storekit")
     except InvalidAppleSignedData as exc:
         raise MobileAPIError(
             code="apple_transaction_invalid",
@@ -85,4 +84,8 @@ def apple_transaction(request, payload: AppleTransactionInput):
             message="Apple purchase verification is temporarily unavailable.",
             status_code=503,
         ) from exc
-    return success(subscription_payload(request.auth.user))
+    transaction_status = "superseded" if provider.metadata.get("apple_latest_transaction_id") != evidence.transaction_id else (
+        "current" if provider.status == "authorized" else "inactive"
+    )
+    return success({**subscription_payload(request.auth.user), "entitlements": entitlements_payload(request.auth.user),
+                    "transaction_status": transaction_status})

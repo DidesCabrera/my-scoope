@@ -1285,6 +1285,12 @@
       },
       "AppleTransactionInput": {
         "properties": {
+          "product_id": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Product Id",
+            "type": "string"
+          },
           "signed_transaction": {
             "maxLength": 20000,
             "minLength": 20,
@@ -3087,6 +3093,128 @@
         "title": "CreditPackProductData",
         "type": "object"
       },
+      "CreditPackPurchaseData": {
+        "properties": {
+          "available_credits": {
+            "title": "Available Credits",
+            "type": "integer"
+          },
+          "credit_status": {
+            "default": "ready",
+            "enum": [
+              "ready",
+              "pending_reservation",
+              "frozen"
+            ],
+            "title": "Credit Status",
+            "type": "string"
+          },
+          "daily_credit_limit": {
+            "title": "Daily Credit Limit",
+            "type": "integer"
+          },
+          "included_monthly_credits": {
+            "default": 0,
+            "title": "Included Monthly Credits",
+            "type": "integer"
+          },
+          "monthly_credit_limit": {
+            "title": "Monthly Credit Limit",
+            "type": "integer"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "plan_slug": {
+            "title": "Plan Slug",
+            "type": "string"
+          },
+          "purchase_status": {
+            "enum": [
+              "approved",
+              "refunded"
+            ],
+            "title": "Purchase Status",
+            "type": "string"
+          },
+          "purchased_credits": {
+            "default": 0,
+            "title": "Purchased Credits",
+            "type": "integer"
+          },
+          "reserved_credits": {
+            "title": "Reserved Credits",
+            "type": "integer"
+          },
+          "subscription_status": {
+            "title": "Subscription Status",
+            "type": "string"
+          },
+          "workspace_limits": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "default": {},
+            "title": "Workspace Limits",
+            "type": "object"
+          },
+          "workspace_usage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "default": {},
+            "title": "Workspace Usage",
+            "type": "object"
+          }
+        },
+        "required": [
+          "plan_name",
+          "plan_slug",
+          "subscription_status",
+          "period",
+          "available_credits",
+          "reserved_credits",
+          "monthly_credit_limit",
+          "daily_credit_limit",
+          "purchase_status"
+        ],
+        "title": "CreditPackPurchaseData",
+        "type": "object"
+      },
+      "CreditPackPurchaseEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CreditPackPurchaseData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CreditPackPurchaseEnvelope",
+        "type": "object"
+      },
       "DailyPlanMealUpdateInput": {
         "properties": {
           "hour": {
@@ -3171,6 +3299,16 @@
           "available_credits": {
             "title": "Available Credits",
             "type": "integer"
+          },
+          "credit_status": {
+            "default": "ready",
+            "enum": [
+              "ready",
+              "pending_reservation",
+              "frozen"
+            ],
+            "title": "Credit Status",
+            "type": "string"
           },
           "daily_credit_limit": {
             "title": "Daily Credit Limit",
@@ -8827,6 +8965,14 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "transaction_products": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TransactionProductData"
+            },
+            "title": "Transaction Products",
+            "type": "array"
           }
         },
         "required": [
@@ -8867,6 +9013,16 @@
       },
       "SubscriptionEvidenceData": {
         "properties": {
+          "cancel_at_period_end": {
+            "default": false,
+            "title": "Cancel At Period End",
+            "type": "boolean"
+          },
+          "next_product_id": {
+            "default": "",
+            "title": "Next Product Id",
+            "type": "string"
+          },
           "period_end": {
             "anyOf": [
               {
@@ -8878,6 +9034,11 @@
               }
             ],
             "title": "Period End"
+          },
+          "product_id": {
+            "default": "",
+            "title": "Product Id",
+            "type": "string"
           },
           "provider": {
             "title": "Provider",
@@ -8926,6 +9087,122 @@
           "interval"
         ],
         "title": "SubscriptionProductData",
+        "type": "object"
+      },
+      "SubscriptionPurchaseData": {
+        "properties": {
+          "app_account_token": {
+            "title": "App Account Token",
+            "type": "string"
+          },
+          "can_buy_credit_packs": {
+            "default": false,
+            "title": "Can Buy Credit Packs",
+            "type": "boolean"
+          },
+          "credit_packs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/CreditPackProductData"
+            },
+            "title": "Credit Packs",
+            "type": "array"
+          },
+          "duplicate_active_providers": {
+            "title": "Duplicate Active Providers",
+            "type": "boolean"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "entitlements": {
+            "$ref": "#/components/schemas/EntitlementsData"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionEvidenceData"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "google_obfuscated_account_id": {
+            "title": "Google Obfuscated Account Id",
+            "type": "string"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionProductData"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "purchases_enabled": {
+            "title": "Purchases Enabled",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "transaction_products": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TransactionProductData"
+            },
+            "title": "Transaction Products",
+            "type": "array"
+          },
+          "transaction_status": {
+            "default": "current",
+            "enum": [
+              "current",
+              "superseded",
+              "inactive"
+            ],
+            "title": "Transaction Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eligible",
+          "purchases_enabled",
+          "app_account_token",
+          "plan_name",
+          "status",
+          "google_obfuscated_account_id",
+          "products",
+          "evidence",
+          "duplicate_active_providers",
+          "entitlements"
+        ],
+        "title": "SubscriptionPurchaseData",
+        "type": "object"
+      },
+      "SubscriptionPurchaseEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SubscriptionPurchaseData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SubscriptionPurchaseEnvelope",
         "type": "object"
       },
       "TodayData": {
@@ -9057,6 +9334,38 @@
           "data"
         ],
         "title": "TodayEnvelope",
+        "type": "object"
+      },
+      "TransactionProductData": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "subscription",
+              "credit_pack"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "plan_name": {
+            "default": "",
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "provider",
+          "kind"
+        ],
+        "title": "TransactionProductData",
         "type": "object"
       },
       "UsernameRenameInput": {
@@ -10796,7 +11105,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EntitlementsEnvelope"
+                  "$ref": "#/components/schemas/CreditPackPurchaseEnvelope"
                 }
               }
             },
@@ -10870,7 +11179,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EntitlementsEnvelope"
+                  "$ref": "#/components/schemas/CreditPackPurchaseEnvelope"
                 }
               }
             },
@@ -18563,6 +18872,80 @@
         "summary": "Subscriptions"
       }
     },
+    "/api/v1/subscriptions/apple/reconcile": {
+      "post": {
+        "operationId": "mobile_api_api_apple_reconcile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionPurchaseEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Apple Reconcile"
+      }
+    },
     "/api/v1/subscriptions/apple/transactions": {
       "post": {
         "operationId": "mobile_api_api_apple_transaction",
@@ -18582,7 +18965,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscriptionEnvelope"
+                  "$ref": "#/components/schemas/SubscriptionPurchaseEnvelope"
                 }
               }
             },
@@ -18656,7 +19039,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscriptionEnvelope"
+                  "$ref": "#/components/schemas/SubscriptionPurchaseEnvelope"
                 }
               }
             },

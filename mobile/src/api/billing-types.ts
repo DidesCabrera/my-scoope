@@ -22,10 +22,19 @@ export type SubscriptionData = {
   }[];
   credit_packs: SubscriptionCreditPack[];
   can_buy_credit_packs: boolean;
+  transaction_products?: {
+    product_id: string;
+    provider: string;
+    kind: "subscription" | "credit_pack";
+    plan_name: string;
+  }[];
   evidence: {
     provider: string;
     status: string;
     period_end: string | null;
+    product_id?: string;
+    next_product_id?: string;
+    cancel_at_period_end?: boolean;
   }[];
   duplicate_active_providers: boolean;
 };
@@ -36,6 +45,7 @@ export type EntitlementsData = {
   subscription_status: string;
   period: string;
   available_credits: number;
+  credit_status?: "ready" | "pending_reservation" | "frozen";
   reserved_credits: number;
   monthly_credit_limit: number;
   daily_credit_limit: number;

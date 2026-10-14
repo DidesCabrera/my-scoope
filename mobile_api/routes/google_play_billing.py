@@ -12,7 +12,7 @@ from mobile_api.auth import mobile_bearer
 from mobile_api.billing_selector import subscription_payload
 from mobile_api.entitlements_selector import entitlements_payload
 from mobile_api.errors import MobileAPIError
-from mobile_api.schema_domains.billing import EntitlementsEnvelope, SubscriptionEnvelope
+from mobile_api.schema_domains.billing_purchases import CreditPackPurchaseEnvelope, SubscriptionPurchaseEnvelope
 from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
@@ -29,7 +29,7 @@ class GooglePlayPurchaseInput(Schema):
     operation_id="mobile_api_api_google_play_purchase",
     auth=mobile_bearer,
     response={
-        200: SubscriptionEnvelope,
+        200: SubscriptionPurchaseEnvelope,
         403: ErrorEnvelope,
         409: ErrorEnvelope,
         422: ErrorEnvelope,
@@ -67,14 +67,14 @@ def google_play_purchase(request, payload: GooglePlayPurchaseInput):
             message="Google Play purchase verification is temporarily unavailable.",
             status_code=503,
         ) from exc
-    return success(subscription_payload(request.auth.user))
+    return success({**subscription_payload(request.auth.user), "entitlements": entitlements_payload(request.auth.user)})
 
 
 @router.post(
     "/credit-packs/google-play/purchases",
     operation_id="mobile_api_google_play_credit_pack_purchase",
     auth=mobile_bearer,
-    response={200: EntitlementsEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope, 503: ErrorEnvelope},
+    response={200: CreditPackPurchaseEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope, 503: ErrorEnvelope},
 )
 def google_play_credit_pack_purchase(request, payload: GooglePlayPurchaseInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
@@ -82,7 +82,7 @@ def google_play_credit_pack_purchase(request, payload: GooglePlayPurchaseInput):
         raise MobileAPIError("google_play_purchases_disabled", "Google Play purchases are not enabled.", 403)
     try:
         evidence = build_google_play_gateway().verify_product(payload.purchase_token)
-        settle_google_play_credit_pack(
+        purchase = settle_google_play_credit_pack(
             user=request.auth.user,
             evidence=evidence,
             expected_environment=settings.BILLING_GOOGLE_PLAY_ENVIRONMENT,
@@ -101,4 +101,4 @@ def google_play_credit_pack_purchase(request, payload: GooglePlayPurchaseInput):
         raise MobileAPIError(
             "google_play_billing_unavailable", "Google Play verification is temporarily unavailable.", 503
         ) from exc
-    return success(entitlements_payload(request.auth.user))
+    return success({**entitlements_payload(request.auth.user), "purchase_status": purchase.status})

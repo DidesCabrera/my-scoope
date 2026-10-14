@@ -88,12 +88,15 @@ def sync_paddle_subscription(data: Mapping[str, Any], *, environment: str) -> Pr
         raise PaddleEventError("Unsupported Paddle subscription status.")
 
     existing = (
-        ProviderSubscription.objects.select_for_update()
+        ProviderSubscription.objects
         .filter(provider=PaymentProvider.PADDLE, external_subscription_id=subscription_id)
         .first()
     )
     product = _resolve_product(data, environment=environment, existing=existing)
     user = _resolve_user(data, product=product, environment=environment, existing=existing)
+    get_user_model().objects.select_for_update().get(pk=user.pk)
+    if existing is not None:
+        existing = ProviderSubscription.objects.select_for_update().get(pk=existing.pk)
     period = data.get("current_billing_period") if isinstance(data.get("current_billing_period"), dict) else {}
     scheduled_change = data.get("scheduled_change") if isinstance(data.get("scheduled_change"), dict) else {}
     metadata = dict(existing.metadata or {}) if existing is not None else {}
@@ -224,12 +227,14 @@ def sync_paddle_adjustment(data: Mapping[str, Any], *, environment: str) -> Bill
     adjustment_id = _required_string(data, "id")
     transaction_id = _required_string(data, "transaction_id")
     payment = (
-        BillingPayment.objects.select_for_update()
+        BillingPayment.objects
         .filter(provider=PaymentProvider.PADDLE, external_payment_id=transaction_id)
         .first()
     )
     if payment is None:
         raise PaddleEventError("Paddle adjustment references an unknown transaction.")
+    get_user_model().objects.select_for_update().get(pk=payment.user_id)
+    payment = BillingPayment.objects.select_for_update().get(pk=payment.pk)
 
     action = _required_string(data, "action").lower()
     adjustment_type = _required_string(data, "type").lower()

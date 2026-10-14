@@ -160,6 +160,27 @@ localized price and currency are StoreKit authority. The second accepts StoreKit
 updates billing evidence before the native client may finish the transaction.
 Nutritionist accounts receive no consumer purchase offer.
 
+The purchase response includes `entitlements` from the effective account state,
+plus `transaction_status` (`current`, `superseded`, or `inactive`) so an old restore
+does not wait for obsolete benefits. Apple requests may also send `product_id`;
+when present it must match the signed product. `transaction_products` supplies
+historical mapped identities for receipt routing without offering retired rows
+for sale. Provider evidence includes the current product, verified next-renewal
+product and cancellation-at-period-end flag.
+
+`POST /subscriptions/apple/reconcile` requires `mobile:write` and reads current
+Apple Server API evidence bound to the authenticated account. It makes at most
+one provider request per stored environment, limits each user to ten attempts
+per minute and returns effective entitlements. Temporary provider failure is
+503, ownership mismatch is 409, and excessive refresh is 429. It never exposes
+the underlying signed payload or provider exception text.
+
+Consumable purchase responses add `purchase_status` (`approved` or `refunded`)
+to the current entitlement balance. Entitlements add `credit_status` (`ready`,
+`pending_reservation`, or `frozen`). A plan or month transition blocked by a prior
+reservation reports zero spendable credits until that reservation closes; a
+frozen wallet also reports zero rather than offering an unusable balance.
+
 MCE02 completes the native lived-program boundary. An owned Program can be
 activated with explicit confirmation for empty days and replacement of the current
 calendarization. The API exposes the complete dated-day summary, owner-scoped day

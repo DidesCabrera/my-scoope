@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from django.db import transaction
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -39,6 +40,7 @@ def sync_google_play_subscription(
     expected_user,
     expected_environment: str | None = None,
 ):
+    get_user_model().objects.select_for_update().get(pk=expected_user.pk)
     account_token = get_or_create_google_play_account_token(expected_user)
     if evidence.obfuscated_account_id != account_token.token:
         raise GooglePlayEvidenceError("The Google Play purchase belongs to another account.")

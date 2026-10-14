@@ -1121,7 +1121,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /id="continue-chip-border"/);
   assertSourceMatch(journey, /continueChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34/);
   assertSourceMatch(journey, /continueChipInset: \{[^}]*bottom: 2, left: 2[^}]*right: 2, top: 2/);
-  assertSourceMatch(journey, /<Button disabled=\{controller\.loginDisabled\} label="Iniciar sesión o crear cuenta" loading=\{controller\.busy\} multicolorSurface="app" onPress=\{controller\.onLogin \?\? noop\} variant="multicolor" \/>/);
+  assertSourceMatch(journey, /<Button disabled=\{controller\.loginDisabled\} label=\{controller\.loginLabel \?\? "Iniciar sesión o crear cuenta"\} loading=\{controller\.busy\} multicolorSurface="app" onPress=\{controller\.onLogin \?\? noop\} variant="multicolor" \/>/);
   assertSourceMatch(journey, /\{action \? <View style=\{styles\.explanationFooterAction\}>\{action\}<\/View> : null\}/);
   assertSourceMatch(journey, /explanationFooterWithAction: \{ position: "relative", width: "100%" \}/);
   assertSourceMatch(journey, /explanationFooterAction: \{ position: "absolute", right: 0, top: 3 \}/);

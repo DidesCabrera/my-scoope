@@ -1,4 +1,4 @@
-import type { PickerKind } from "./composition-picker-screen";
+import type { PickerKind } from "./picker-routes";
 import { portionGrams } from "./food-portion-nutrition";
 
 type PickerPayloadInput = {

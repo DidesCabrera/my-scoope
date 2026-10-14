@@ -25,6 +25,7 @@ def entitlements_payload(user) -> dict:
         "subscription_status": account.subscription_status,
         "period": account.period,
         "available_credits": account.available_credits,
+        "credit_status": account.credit_status,
         "reserved_credits": account.reserved_credits,
         "monthly_credit_limit": account.monthly_credit_limit,
         "daily_credit_limit": account.daily_credit_limit,

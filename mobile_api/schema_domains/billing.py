@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import Literal
 
-from ninja import Field, Schema
+from ninja import Schema
 
 from mobile_api.schema_domains.store_billing import (
     CreditPackProductData,
     SubscriptionEvidenceData,
     SubscriptionProductData,
+    TransactionProductData,
 )
 
 
@@ -17,6 +18,7 @@ class EntitlementsData(Schema):
     subscription_status: str
     period: str
     available_credits: int
+    credit_status: Literal["ready", "pending_reservation", "frozen"] = "ready"
     reserved_credits: int
     monthly_credit_limit: int
     daily_credit_limit: int
@@ -44,13 +46,10 @@ class SubscriptionData(Schema):
     duplicate_active_providers: bool
     credit_packs: list[CreditPackProductData] = []
     can_buy_credit_packs: bool = False
+    transaction_products: list[TransactionProductData] = []
 
 
 class SubscriptionEnvelope(Schema):
     ok: Literal[True] = True
     data: SubscriptionData
     error: None = None
-
-
-class AppleTransactionInput(Schema):
-    signed_transaction: str = Field(min_length=20, max_length=20000)

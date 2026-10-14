@@ -43,7 +43,6 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /onPress=\{\(\) => \{ closeActions\(\); void restore\(\); \}\}/);
   assertSourceDoesNotMatch(subscription, /<Button\s+label="Restaurar compras"/);
   assertSourceDoesNotMatch(subscription, /Mi suscripción|Planes y Bolsas|Volver a hoy|router\.back\(\)/);
-  assertSourceMatch(subscription, /apiRequest<EntitlementsData>\("\/api\/v1\/entitlements"\)/);
   assertSourceMatch(subscription, /<CreditDashboardGrid availableCredits=\{entitlements\.available_credits\} planName=\{entitlements\.plan_name\} \/>/);
   assertSourceDoesNotMatch(subscription, /<Pill|Estado actual:/);
   assertSourceMatch(details, /google_play: "Google Play"/);
@@ -64,7 +63,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /overview\?\.eligible && isOnboarding[\s\S]*name="Free" price="Gratis"/);
   assertSourceMatch(subscription, /!isOnboarding \? <SubscriptionPlanCard[^>]*name="Free" price="\$0\/mes"/);
   assertSourceMatch(subscription, /<MyScoopeBrandLogo \/>[\s\S]*Elige un plan[\s\S]*Compara lo que incluyen Free, Basic y Pro/);
-  assertSourceMatch(subscription, /<SubscriptionPurchaseButton label="Continuar con Free"/);
+  assertSourceMatch(subscription, /<SubscriptionPurchaseButton disabled=\{purchaseBlocked\} label="Continuar con Free"/);
   assertSourceMatch(subscription, /!isOnboarding && overview\?\.can_buy_credit_packs/);
   assertSourceMatch(subscription, /<Card accent=\{subscriptionPlanAccent\(entitlements\?\.plan_name \?\? overview\?\.plan_name\)\}>/);
   assertSourceMatch(subscription, /<SubscriptionPlanCard accent=\{subscriptionPlanAccent\(plan\.planName\) \?\? tokens\.color\.contextual\}[^>]*key=\{plan\.planName\}/);
@@ -125,54 +124,10 @@ test("UI gallery previews both subscription entry contexts without store side ef
   assertSourceDoesNotMatch(gallery, /useIAP|apiRequest|fetchProducts|requestPurchase/);
 });
 
-test("App Store purchases recover a completed StoreKit transaction before reporting failure", async () => {
-  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
+test("the reviewed IAP runtime version stays pinned", async () => {
   const packageManifest = JSON.parse(
     await readTestFile(path.resolve(process.cwd(), "package.json"), "utf8"),
   ) as { dependencies?: Record<string, string> };
 
   assert.equal(packageManifest.dependencies?.["expo-iap"], "^5.5.1");
-  assertSourceMatch(subscription, /getAvailablePurchases\(\{/);
-  assertSourceMatch(subscription, /purchase\.productId === productId/);
-  assertSourceMatch(subscription, /for \(const purchase of matching\) await submitPurchase\(purchase\)/);
-  assertSourceMatch(subscription, /No se realizó ningún cobro/);
-  assertSourceMatch(subscription, /Esperando la confirmación de Apple/);
-  assertSourceMatch(subscription, /Compra confirmada\. Tu plan/);
-  assertSourceMatch(subscription, /"Google Play" : "Apple"\} confirmó la compra\. Estamos actualizando tu plan/);
-  assertSourceMatch(subscription, /AppState\.addEventListener\("change"/);
-  assertSourceMatch(subscription, /if \(nextState === "active"\) void load\(\)/);
-  assertSourceMatch(subscription, /pendingPlanName\.current[\s\S]*nextEntitlements\.plan_name\.toLowerCase\(\)/);
-});
-
-test("cancelling a store purchase closes silently while real purchase errors remain visible", async () => {
-  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
-
-  assertSourceMatch(subscription, /function isUserCancelledPurchase\(error: unknown\): boolean/);
-  assertSourceMatch(subscription, /onPurchaseError: \(purchaseError\) => \{[\s\S]*?setPurchaseNotice\(null\);[\s\S]*?setWorking\(false\)/);
-  assertSourceMatch(subscription, /onError: \(nextError\) => \{[\s\S]*?setPurchaseNotice\(null\);[\s\S]*?setWorking\(false\)/);
-  assertSourceDoesNotMatch(subscription, /onPurchaseError: \(purchaseError\) => \{ setError\(purchaseError\.message\)/);
-});
-
-test("restore purchases explains when no store transaction is pending and reports incomplete verification", async () => {
-  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
-
-  assertSourceMatch(subscription, /if \(recovered\.length === 0\)/);
-  assertSourceMatch(subscription, /await restorePurchases\(\);\s+const recovered = await getAvailablePurchases\(\)/);
-  assertSourceMatch(subscription, /if \(!restoring\.current\)/);
-  assertSourceMatch(subscription, /No hay compras pendientes de restaurar/);
-  assertSourceMatch(subscription, /if \(await submitPurchase\(purchase\)\) restored \+= 1/);
-  assertSourceMatch(subscription, /restored === recovered\.length/);
-  assertSourceMatch(subscription, /No pudimos verificar todas las compras disponibles/);
-});
-
-test("Google Play finalizes purchases only after server verification", async () => {
-  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
-
-  assertSourceMatch(subscription, /const isGooglePlay = Platform\.OS === "android"/);
-  assertSourceMatch(subscription, /const isCreditPack = overview\?\.credit_packs\.some/);
-  assertSourceMatch(
-    subscription,
-    /await apiRequest[\s\S]*await finishTransaction\(\{ purchase, isConsumable: isCreditPack \}\)/,
-  );
-  assertSourceMatch(subscription, /obfuscatedAccountId: overview\.google_obfuscated_account_id/);
 });

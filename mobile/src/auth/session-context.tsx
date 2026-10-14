@@ -4,7 +4,7 @@ import type { Href } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
-import { userFacingError } from "@/api/errors";
+import { MobileApiError, userFacingError } from "@/api/errors";
 import type { ProfileData, SessionData } from "@/api/types";
 import { appConfig } from "@/config/app-config";
 import { recordMobileRequestMetric } from "@/observability/network-performance";
@@ -20,6 +20,7 @@ type SessionContextValue = {
   profile: ProfileData | null;
   authBusy: boolean;
   authError: string | null;
+  authRestorePending: boolean;
   authReady: boolean;
   authReturnTo: Href | null;
   startSignIn(returnTo?: Href): Promise<void>;
@@ -27,6 +28,7 @@ type SessionContextValue = {
   refreshProfile(): Promise<ProfileData>;
   refreshSession(): Promise<SessionData>;
   signOut(): Promise<void>;
+  retrySessionRestore(): void;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -50,6 +52,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authRestorePending, setAuthRestorePending] = useState(false);
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [authReturnTo, setAuthReturnTo] = useState<Href | null>(null);
   const handledCode = useRef<string | null>(null);
   const [authRequest, authResponse, promptAsync] = useAuthRequest(
@@ -74,10 +78,26 @@ export function SessionProvider({ children }: PropsWithChildren) {
     setSession(nextSession);
     return nextSession;
   }, [manager]);
+  const apiRequest = useCallback(async <T,>(path: string, init?: RequestInit): Promise<T> => {
+    try { return await manager.request<T>(path, init); }
+    catch (error) {
+      if (!manager.hasCredentials && !(error instanceof MobileApiError && error.code === "mobile_session_changed")) {
+        setSession(null);
+        setProfile(null);
+        setStatus("anonymous");
+        setAuthRestorePending(false);
+        setAuthError(userFacingError(error));
+      }
+      throw error;
+    }
+  }, [manager]);
 
   useEffect(() => {
     let active = true;
     void (async () => {
+      setStatus("booting");
+      setAuthRestorePending(false);
+      setAuthError(null);
       try {
         const restored = await manager.restore();
         if (!active) return;
@@ -88,9 +108,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
         setSession(restored);
         await loadProfile();
         if (active) setStatus("authenticated");
-      } catch {
-        await manager.clear();
+      } catch (error) {
+        const invalidCredentials = error instanceof MobileApiError && [400, 401, 403].includes(error.status);
+        if (invalidCredentials && active) await manager.clear();
         if (active) {
+          setAuthError(userFacingError(error));
+          setAuthRestorePending(!invalidCredentials);
           setSession(null);
           setProfile(null);
           setStatus("anonymous");
@@ -100,7 +123,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [loadProfile, manager]);
+  }, [loadProfile, manager, restoreAttempt]);
 
   const completeAuthorization = useCallback((code: string, codeVerifier: string) => {
     if (handledCode.current === code) return;
@@ -148,6 +171,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       profile,
       authBusy,
       authError,
+      authRestorePending,
       authReady: Boolean(authRequest),
       authReturnTo,
       async startSignIn(returnTo) {
@@ -171,7 +195,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
           setAuthBusy(false);
         }
       },
-      apiRequest: (path, init) => manager.request(path, init),
+      apiRequest,
+      retrySessionRestore: () => setRestoreAttempt((attempt) => attempt + 1),
       refreshProfile: loadProfile,
       refreshSession: loadSession,
       async signOut() {
@@ -181,7 +206,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         setStatus("anonymous");
       },
     }),
-    [authBusy, authError, authRequest, authReturnTo, loadProfile, loadSession, manager, profile, promptAsync, session, status],
+    [apiRequest, authBusy, authError, authRequest, authRestorePending, authReturnTo, loadProfile, loadSession, manager, profile, promptAsync, session, status],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 
 from django.db import transaction
+from django.contrib.auth import get_user_model
 
 from accounts.models import CreditLedger, CreditWallet
 from accounts.services.credits import (
@@ -110,6 +111,8 @@ def settle_credit_pack_purchase(
 ) -> CreditPackPurchase:
     """Call only after server-side provider verification and account binding."""
 
+    user = get_user_model().objects.select_for_update().get(pk=user.pk)
+
     purchase_id = str(external_purchase_id or "").strip()
     if not purchase_id:
         raise CreditPackUnavailable("credit_pack_purchase_id_missing")
@@ -133,6 +136,8 @@ def settle_credit_pack_purchase(
         raise CreditPackUnavailable("credit_pack_purchase_owner_mismatch")
     if not created:
         return purchase
+    if not user.is_active:
+        raise CreditPackUnavailable("credit_pack_account_inactive")
     grant_purchased_credits(
         user=user, credits=product.credits_snapshot,
         provider=product.provider, purchase_id=purchase_id,
@@ -140,7 +145,7 @@ def settle_credit_pack_purchase(
     return purchase
 
 
-def settle_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
+def _apple_credit_pack_product(*, user, evidence, refund=False) -> ProviderCreditPack:
     from billing.application.services.apple_environment import (
         UnauthorizedAppleSandboxAccess,
         UnsupportedAppleEnvironment,
@@ -151,7 +156,7 @@ def settle_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
     token, _ = AppleAppAccountToken.objects.get_or_create(user=user)
     if str(evidence.app_account_token or "").lower() != str(token.token).lower():
         raise CreditPackUnavailable("credit_pack_apple_account_mismatch")
-    if evidence.revocation_date or evidence.expires_date:
+    if evidence.expires_date or (evidence.revocation_date and not refund):
         raise CreditPackUnavailable("credit_pack_apple_transaction_not_consumable")
     if str(evidence.ownership_type or "").upper() not in {"PURCHASED", ""}:
         raise CreditPackUnavailable("credit_pack_apple_ownership_invalid")
@@ -160,21 +165,49 @@ def settle_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
     except UnsupportedAppleEnvironment as exc:
         raise CreditPackUnavailable("credit_pack_apple_environment_invalid") from exc
     try:
-        require_apple_sandbox_access_in_production(user, catalog_environment=environment)
+        if not refund:
+            require_apple_sandbox_access_in_production(user, catalog_environment=environment)
     except UnauthorizedAppleSandboxAccess as exc:
         raise CreditPackUnavailable("credit_pack_apple_sandbox_unauthorized") from exc
     product = ProviderCreditPack.objects.filter(
         provider=PaymentProvider.APPLE_APP_STORE,
         environment=environment,
         external_product_id=evidence.product_id,
-        active=True,
     ).first()
     if product is None:
         raise CreditPackUnavailable("credit_pack_apple_product_unmapped")
+    return product
+
+
+def settle_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
+    if evidence.revocation_date is not None:
+        return refund_apple_credit_pack(user=user, evidence=evidence)
+    product = _apple_credit_pack_product(user=user, evidence=evidence)
     return settle_credit_pack_purchase(
         user=user, product=product, external_purchase_id=evidence.transaction_id,
-        evidence={"source": "apple_verified_jws", "product_id": evidence.product_id, "environment": environment},
+        evidence={"source": "apple_verified_jws", "product_id": evidence.product_id, "environment": product.environment},
     )
+
+
+@transaction.atomic
+def refund_apple_credit_pack(*, user, evidence) -> CreditPackPurchase:
+    user = get_user_model().objects.select_for_update().get(pk=user.pk)
+    product = _apple_credit_pack_product(user=user, evidence=evidence, refund=True)
+    if not evidence.transaction_id:
+        raise CreditPackUnavailable("credit_pack_purchase_id_missing")
+    # Record even a refund delivered before the purchase webhook. The unique
+    # receipt then prevents a delayed purchase or restore from granting credits.
+    purchase, created = CreditPackPurchase.objects.get_or_create(
+        provider=PaymentProvider.APPLE_APP_STORE, external_purchase_id=evidence.transaction_id,
+        defaults={"user": user, "product": product, "credits_granted": 0,
+                  "status": CreditPackPurchase.Status.REFUNDED,
+                  "evidence": {"source": "apple_refund", "environment": product.environment}},
+    )
+    if purchase.user_id != user.pk or purchase.product_id != product.pk:
+        raise CreditPackUnavailable("credit_pack_purchase_owner_mismatch")
+    if created:
+        return purchase
+    return refund_credit_pack_purchase(provider=PaymentProvider.APPLE_APP_STORE, external_purchase_id=evidence.transaction_id)
 
 
 def settle_google_play_credit_pack(*, user, evidence, expected_environment: str | None = None) -> CreditPackPurchase:
@@ -224,12 +257,22 @@ def settle_google_play_credit_pack(*, user, evidence, expected_environment: str 
 @transaction.atomic
 def refund_credit_pack_purchase(*, provider: str, external_purchase_id: str) -> CreditPackPurchase:
     purchase_id = _stored_purchase_id(provider=provider, purchase_id=external_purchase_id)
+    owner_id = CreditPackPurchase.objects.values_list("user_id", flat=True).get(
+        provider=provider, external_purchase_id=purchase_id
+    )
+    owner = get_user_model().objects.select_for_update().get(pk=owner_id)
     purchase = CreditPackPurchase.objects.select_for_update().get(
         provider=provider, external_purchase_id=purchase_id
     )
     if purchase.status == CreditPackPurchase.Status.REFUNDED:
         return purchase
-    wallet = CreditWallet.objects.select_for_update().get(user=purchase.user)
+    wallet = CreditWallet.objects.select_for_update().filter(user=owner).first()
+    if wallet is None and not owner.is_active:
+        purchase.status = CreditPackPurchase.Status.REFUNDED
+        purchase.save(update_fields=["status", "updated_at"])
+        return purchase
+    if wallet is None:
+        raise CreditWallet.DoesNotExist("An active credit purchase owner requires its wallet.")
     recoverable = min(wallet.available_purchased_credits, purchase.credits_granted)
     deficit = purchase.credits_granted - recoverable
     wallet.purchased_balance -= recoverable

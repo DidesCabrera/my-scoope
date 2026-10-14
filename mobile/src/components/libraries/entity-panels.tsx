@@ -9,7 +9,7 @@ import { MealCompletionToggleCard } from "@/components/calendarization/meal-adhe
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
-import { pickerHref } from "@/components/pickers/composition-picker-screen";
+import { pickerHref } from "@/components/pickers/picker-routes";
 import {
   FoodPanels as SharedFoodPanels,
   type FoodPanelEditing,

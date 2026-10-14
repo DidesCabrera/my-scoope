@@ -2,13 +2,14 @@ import { type Href, Redirect, Stack, useLocalSearchParams } from "expo-router";
 
 import { useSession } from "@/auth/session-context";
 import { OnboardingJourneyView, onboardingJourneyPreviewValues } from "@/components/onboarding";
-import { Screen } from "@/components/ui";
+import { LoadingState, Screen } from "@/components/ui";
 import { internalHref } from "@/navigation/internal-href";
 
 export default function LoginScreen() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const returnHref = internalHref(returnTo);
-  const { status, profile, authBusy, authError, authReady, startSignIn } = useSession();
+  const { status, profile, authBusy, authError, authReady, authRestorePending, retrySessionRestore, startSignIn } = useSession();
+  if (status === "booting") return <LoadingState label="Reconectando tu cuenta…" />;
 
   if (status === "authenticated") {
     if (!profile?.onboarding_completed) return <Redirect href={{ pathname: "/onboarding", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
@@ -24,8 +25,9 @@ export default function LoginScreen() {
           controller={{
             busy: authBusy,
             error: authError,
-            loginDisabled: !authReady,
-            onLogin: () => void startSignIn(returnHref),
+            loginDisabled: !authReady && !authRestorePending,
+            loginLabel: authRestorePending ? "Reintentar conexión" : undefined,
+            onLogin: () => authRestorePending ? retrySessionRestore() : void startSignIn(returnHref),
             values: onboardingJourneyPreviewValues,
           }}
           step="login"

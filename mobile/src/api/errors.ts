@@ -15,6 +15,10 @@ export function userFacingError(error: unknown): string {
     const messages: Record<string, string> = {
       ai_async_unavailable: "El Asistente no está disponible en este momento. Tu conversación guardada no se perderá.",
       ai_turn_rate_limited: "Has enviado varios mensajes seguidos. Espera un momento e inténtalo nuevamente.",
+      apple_reconciliation_rate_limited: "Espera un momento antes de consultar nuevamente tu suscripción con Apple.",
+      apple_transaction_mismatch: "La transacción no corresponde a esta cuenta, producto o entorno de la tienda.",
+      apple_transaction_invalid: "No pudimos verificar el comprobante de Apple. Usa Restaurar compras para recuperarlo.",
+      apple_billing_unavailable: "No pudimos consultar Apple en este momento. Tu compra sigue pendiente de verificación; no vuelvas a comprar.",
       assistant_turn_failed: "El turno no pudo completarse. La conversación anterior sigue guardada y puedes reintentarlo.",
       assistant_turn_pending: "El Asistente ya está procesando un mensaje en esta conversación.",
       account_username_invalid: "Usa sólo letras, números y los caracteres @, punto, +, guion o guion bajo.",

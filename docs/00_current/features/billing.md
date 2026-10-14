@@ -1,7 +1,7 @@
 # Billing
 
 Status: current BILL00-BILL09 + CML06 repository implementation
-Last updated: 2026-10-05
+Last updated: 2026-10-14
 
 `billing` is the provider-integration boundary between external collection/tax systems
 and the commercial state owned by `accounts`.
@@ -63,6 +63,48 @@ flag is enabled and the authenticated account has active, unexpired
 `AppleSandboxAccess`. This supports TestFlight/App Review without allowing
 sandbox evidence for ordinary production accounts. The inbox stores normalized
 evidence, never the raw JWS.
+
+Apple subscription writes serialize on the account before locking provider
+evidence. A delayed transaction from before an upgrade cannot replace a newer
+period, and a mobile receipt alone cannot undo authoritative refund, retry,
+grace or renewal-preference evidence for the same transaction. Event claiming,
+settlement and final status share one transaction, so duplicate notification
+delivery cannot settle twice. Grace access requires the separately verified
+renewal deadline. Past-period evidence is expired before selecting the effective
+provider; entitlement reads also stop paid access at the stored deadline.
+Restoring stale evidence also expires an authorization whose deadline passed
+since its last authoritative update. Deleted accounts do not regain account
+entitlements from late renewals, and new credit-pack deliveries to inactive
+accounts fail closed. Retained credit receipts can still be marked refunded
+after account deletion without recreating their erased wallet. Settlement and
+refund lock the account before the receipt, including refund tombstones.
+Retryable online certificate failures from Apple's SDK return unavailable/503;
+invalid signatures remain invalid and neither grants access.
+
+When live purchases are disabled, an authorized production Sandbox account is
+verified directly with the Sandbox verifier; it cannot submit production
+evidence through that exception. When live purchases are enabled, the existing
+authorized Sandbox fallback remains available.
+
+Purchase responses include the effective account entitlements from the same
+accepted write. `POST /api/v1/subscriptions/apple/reconcile` reads Apple's current
+subscription status for this authenticated account, at most once per stored
+environment, with a per-user limit of ten requests per minute. It preserves
+existing access on a temporary provider failure. `transaction_products` exposes
+mapped historical product identities for receipt routing; purchasable offers
+remain limited to active catalog rows. Verified retired Apple consumable mappings
+can settle an already charged receipt. Refunds delivered before purchases create
+a refunded receipt that prevents a later grant.
+
+The mobile StoreKit listener belongs to the authenticated account's root
+provider, so leaving the purchase screen does not lose unfinished transactions.
+It serializes distinct receipts, shares duplicate callbacks, and finishes only
+after server acceptance. Normal confirmation uses one purchase POST without
+polling. A delayed benefit projection uses four bounded fresh-snapshot retries;
+request deadlines, explicit restore/retry and account disposal prevent indefinite
+busy states or applying a late response to another account. A success message
+requires matching plan evidence and usable credits. `credit_status` distinguishes
+ready balances from a pending previous reservation and a frozen wallet.
 
 Google Play purchases are environment-scoped from catalog exposure through
 server verification. `subscriptionsv2` and `productsv2` determine sandbox/live
@@ -129,3 +171,6 @@ payment and reuse the stored `TaxDocument.idempotency_key`.
 
 Operational activation and rollback are defined in
 `docs/40_technical/operations/billing_providers_runbook.md`.
+
+The dated App Review evidence and the remaining physical-device/Connect gates are
+in `docs/40_technical/qa/app_review_audit_2026_10_13.md`.

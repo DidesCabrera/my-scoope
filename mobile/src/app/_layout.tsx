@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SessionProvider, useSession } from "@/auth/session-context";
+import { StoreBillingProvider } from "@/billing/store-billing-context";
 import { ComparatorSelectionProvider } from "@/components/comparisons/comparator-selection-context";
 import { AppNavigationHeader, AppNavigationProvider } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
@@ -126,7 +127,7 @@ function RootLayout() {
       <SafeAreaProvider>
         <SessionProvider>
           <SplashCoordinator />
-          <AppNavigationProvider>
+          <StoreBillingProvider><AppNavigationProvider>
             <ComparatorSelectionProvider>
               <AuthenticatedRouteGate />
               <NativeReminderReconciler />
@@ -140,7 +141,7 @@ function RootLayout() {
                 }}
               />
             </ComparatorSelectionProvider>
-          </AppNavigationProvider>
+          </AppNavigationProvider></StoreBillingProvider>
           <StatusBar style="light" />
         </SessionProvider>
       </SafeAreaProvider>
