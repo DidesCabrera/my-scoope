@@ -179,6 +179,8 @@ function AccountStoreBilling({ children }: PropsWithChildren) {
     priceDiagnostics: () => catalog.diagnostics,
     catalogError: catalogState.failed ? catalog.failureReason === "currency_mismatch"
       ? "Los precios recibidos no coinciden con tu tienda. Reintenta consultar los precios antes de comprar."
+      : catalog.failureReason === "timeout"
+        ? "La tienda tardó demasiado en responder. Vuelve a consultar los precios."
       : "No pudimos consultar los precios actuales de la tienda. Inténtalo nuevamente." : null,
     refresh: () => foreground.refresh(), refreshCatalog, restore, buy,
   }}>{children}</Context.Provider>;

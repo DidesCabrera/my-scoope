@@ -46,9 +46,9 @@ export default function SubscriptionScreen() {
   const overview = billing?.state.overview ?? fallbackOverview;
   const entitlements = billing?.state.entitlements ?? fallbackEntitlements;
   const working = localWorking || Boolean(billing?.state.busy);
-  const error = localError ?? (restoreNotice ? null : billing?.state.error ?? billing?.catalogError);
+  const error = localError ?? (restoreNotice ? null : billing?.state.error);
   const activatingPlan = !restoreNotice && billing && ["verifying", "activating", "pending"].includes(billing.state.phase) ? billing.state.planName : null;
-  const purchaseNotice = error || restoreNotice ? null : billing?.state.message
+  const purchaseNotice = error || billing?.catalogError || restoreNotice ? null : billing?.state.message
     ?? (activatingPlan ? "Estamos verificando los beneficios de tu compra. Puedes reintentar la verificación o restaurar tus compras." : null);
   const creditBlocked = entitlements?.credit_status === "frozen" || entitlements?.credit_status === "pending_reservation";
   const purchaseBlocked = working || Boolean(billing?.catalogBusy) || creditBlocked || Boolean(billing && ["pending", "activating"].includes(billing.state.phase));
@@ -56,6 +56,7 @@ export default function SubscriptionScreen() {
   const products = billing?.store.products ?? [];
   const subscriptions = billing?.store.subscriptions ?? [];
   const refreshCatalog = billing?.refreshCatalog;
+  const unavailablePrice = billing?.catalogBusy ? "Consultando…" : "No disponible";
 
   const finishOnboarding = useCallback(async () => {
     if (onboardingFinishing.current) return;
@@ -191,7 +192,8 @@ export default function SubscriptionScreen() {
         <Button disabled={working} label="Reintentar actualización" onPress={() => void load()} variant="secondary" />
       </> : null}
       {billing?.catalogError ? <>
-        <Button disabled={working} label="Reintentar precios" loading={billing.catalogBusy} onPress={() => void refreshCatalog?.()} variant="secondary" />
+        <InlineNotice tone="error">{billing.catalogError}</InlineNotice>
+        <Button disabled={working || billing.catalogBusy} label="Reintentar precios" loading={billing.catalogBusy} onPress={() => void refreshCatalog?.("manual_retry")} variant="secondary" />
       </> : null}
       {purchaseNotice && !activatingPlan ? <InlineNotice>{purchaseNotice}</InlineNotice> : null}
       {overview.evidence.some((item) => item.status === "authorized" && item.cancel_at_period_end) ?
@@ -247,7 +249,7 @@ export default function SubscriptionScreen() {
             const monthlyDisplayPrice = Platform.OS === "android" ? monthlyAndroidOffer?.displayPrice : monthlyStoreProduct?.displayPrice;
             const monthlyNumericPrice = Platform.OS === "android" ? monthlyAndroidOffer?.price : monthlyStoreProduct?.price;
             return (
-            <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? []} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : "Consultando…"}>
+            <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? []} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : unavailablePrice}>
               <Text style={textStyles.caption}>Elige la modalidad de tu suscripción.</Text>
               {plan.products.map((configured) => {
                   const storeProduct = subscriptions.find((item) => item.id === configured.product_id);
@@ -256,20 +258,18 @@ export default function SubscriptionScreen() {
                   );
                   const androidUnavailable = storeProduct && "productStatusAndroid" in storeProduct
                     && storeProduct.productStatusAndroid === "not-found";
-                  const price = Platform.OS === "android"
-                    ? androidOffer?.displayPrice ?? (androidUnavailable ? "No disponible" : "Consultando…")
-                    : storeProduct?.displayPrice ?? "Consultando…";
+                  const price = Platform.OS === "android" ? androidOffer?.displayPrice : storeProduct?.displayPrice;
                   const numericPrice = Platform.OS === "android" ? androidOffer?.price : storeProduct?.price;
                   const interval = configured.interval === "year" ? "Anual" : "Mensual";
                   const annualDiscount = configured.interval === "year" && monthlyNumericPrice && numericPrice
                     ? Math.max(0, Math.round((1 - (numericPrice / (monthlyNumericPrice * 12))) * 100))
                     : 0;
-                  const priceExplanation = configured.interval === "year"
+                  const priceExplanation = !price ? androidUnavailable ? "No disponible" : unavailablePrice : configured.interval === "year"
                     ? `${price}/año${annualDiscount > 0 ? ` · Ahorra ${annualDiscount}%` : ""}`
                     : `${price}/mes`;
                   return (
                     <SubscriptionPurchaseButton
-                      disabled={purchaseBlocked || !connected || !storeProduct || (Platform.OS === "android" && !androidOffer)}
+                      disabled={purchaseBlocked || !connected || !storeProduct || !price || (Platform.OS === "android" && !androidOffer)}
                       key={configured.product_id}
                       label={`${interval} · ${priceExplanation}`}
                       loading={working}
@@ -312,10 +312,10 @@ export default function SubscriptionScreen() {
                     <Text style={styles.productName}>{configured.credits.toLocaleString("es-CL")} créditos</Text>
                     <Text style={textStyles.caption}>Permanecen en tu cuenta si cambias de plan.</Text>
                   </View>
-                  <CreditPackPriceChip label={storeProduct?.displayPrice ?? "Consultando…"} />
+                  <CreditPackPriceChip label={storeProduct?.displayPrice ?? unavailablePrice} />
                 </View>
                 <SubscriptionPurchaseButton
-                  disabled={purchaseBlocked || !connected || !storeProduct}
+                  disabled={purchaseBlocked || !connected || !storeProduct?.displayPrice}
                   label={`Comprar ${configured.credits.toLocaleString("es-CL")} créditos`}
                   loading={working}
                   onPress={() => void buyCreditPack(configured.product_id)}
