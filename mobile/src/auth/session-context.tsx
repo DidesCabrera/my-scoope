@@ -79,7 +79,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const loadProfile = useCallback(async () => {
     const version = authorizationFlow.version;
-    const nextProfile = await manager.request<ProfileData>("/api/v1/me");
+    const nextProfile = await manager.request<ProfileData>("/api/v1/me", { cache: "no-store" });
     if (version === authorizationFlow.version) setProfile(nextProfile);
     return nextProfile;
   }, [authorizationFlow, manager]);

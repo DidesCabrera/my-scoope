@@ -82,7 +82,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(account, /<AppHeader eyebrow="Mi cuenta" eyebrowIcon=\{<SectionIcon color=\{tokens\.color\.textSoft\} section="profile" \/>\}/);
   assertSourceDoesNotMatch(account, /eyebrow="Tu cuenta"/);
   assertSourceMatch(account, /router\.push\("\/subscription" as Href\)/);
-  assertSourceMatch(account, /apiRequest<EntitlementsData>\("\/api\/v1\/entitlements"\)/);
+  assertSourceMatch(account, /apiRequest<EntitlementsData>\("\/api\/v1\/entitlements", \{ cache: "no-store" \}\)/);
   assertSourceMatch(account, /entitlements\?\.plan_name/);
   assertSourceMatch(account, /<Card accent=\{subscriptionPlanAccent\(entitlements\?\.plan_name\)\}>/);
   assertSourceMatch(account, /<CreditDashboardGrid availableCredits=\{entitlements\.available_credits\} planName=\{entitlements\.plan_name\} \/>/);

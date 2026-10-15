@@ -1,11 +1,14 @@
-import { ErrorCode, fetchProducts as fetchNativeProducts, finishTransaction, getAvailablePurchases, getPendingTransactionsIOS, getStorefront, syncIOS, type Product, type ProductOrSubscription, type ProductSubscription, type Purchase, useIAP } from "expo-iap";
+import { ErrorCode, fetchProducts as fetchNativeProducts, finishTransaction, getAvailablePurchases, getPendingTransactionsIOS, syncIOS, type Product, type ProductOrSubscription, type ProductSubscription, type Purchase, useIAP } from "expo-iap";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 
 import { useSession } from "@/auth/session-context";
+import { isConnectionError, MobileApiError, userFacingError } from "@/api/errors";
+import { ForegroundRefresh } from "./foreground-refresh";
 import { PurchaseCoordinator, type BillingState } from "./purchase-coordinator";
 import { restoreAccountPurchases } from "./restore-purchases";
-import { StoreCatalog } from "./store-catalog";
+import { StoreCatalog, type PriceDiagnostic } from "./store-catalog";
+import { listenForStorefrontChange, readStorefront } from "./storefront";
 import { storeBillingError } from "./store-errors";
 
 type StoreBilling = {
@@ -14,7 +17,10 @@ type StoreBilling = {
   store: ReturnType<typeof useIAP>;
   catalogBusy: boolean;
   catalogError: string | null;
-  refreshCatalog(): Promise<ProductOrSubscription[] | null>;
+  canInspectPrices: boolean;
+  priceDiagnostics(): PriceDiagnostic[];
+  refresh(): Promise<void>;
+  refreshCatalog(reason?: string): Promise<ProductOrSubscription[] | null>;
   restore(): Promise<{ found: number; verified: number } | undefined>;
   buy(productId: string, basePlanId?: string, pack?: boolean): Promise<void>;
 };
@@ -27,15 +33,15 @@ export function StoreBillingProvider({ children }: PropsWithChildren) {
 }
 
 function AccountStoreBilling({ children }: PropsWithChildren) {
-  const { apiRequest } = useSession();
+  const { apiRequest, refreshProfile } = useSession();
   const provider = Platform.OS === "android" ? "google_play" : "apple_app_store";
   const coordinator = useMemo(() => new PurchaseCoordinator({
-    provider, apiRequest, errorMessage: (error) => storeBillingError(error, "verify"),
+    provider, apiRequest, errorMessage: userFacingError,
     finish: (purchase, isConsumable) => finishTransaction({ purchase: purchase as Purchase, isConsumable }),
   }), [apiRequest, provider]);
   const [state, setState] = useState(coordinator.state);
   const catalog = useMemo(() => new StoreCatalog<ProductOrSubscription>({
-    storefront: () => Platform.OS === "ios" ? getStorefront() : Promise.resolve("google_play"),
+    storefront: readStorefront,
     fetch: async (skus) => await fetchNativeProducts({ skus, type: "all" }) ?? [],
   }), []);
   const [catalogState, setCatalogState] = useState(catalog.state);
@@ -62,29 +68,43 @@ function AccountStoreBilling({ children }: PropsWithChildren) {
   const catalogIds = [...new Set([
     ...(state.overview?.products ?? []), ...(state.overview?.credit_packs ?? []),
   ].filter((product) => product.provider === provider).map((product) => product.product_id))].sort().join(",");
-  const refreshCatalog = useCallback(() => catalog.refresh(catalogIds ? catalogIds.split(",") : []), [catalog, catalogIds]);
+  const refreshCatalog = useCallback((reason = "focus") => catalog.refresh(catalogIds ? catalogIds.split(",") : [], reason), [catalog, catalogIds]);
+  useEffect(() => listenForStorefrontChange(() => {
+    catalog.invalidate();
+    void refreshCatalog("storefront_changed");
+  }), [catalog, refreshCatalog]);
   const recoverPending = useCallback(async (retry = false) => {
     const pending = Platform.OS === "ios" ? await getPendingTransactionsIOS() : await getAvailablePurchases();
     for (const purchase of pending) await coordinator.submit(purchase, retry, "recovery");
   }, [coordinator]);
+  const foreground = useMemo(() => new ForegroundRefresh({
+    refresh: async (signal) => {
+      if (store.connected) void refreshCatalog("foreground_or_reconnect");
+      const snapshot = Promise.allSettled([coordinator.refresh()]);
+      // Recovery can enqueue receipts. Reconcile after recovery so these writes
+      // use one coordinator queue, independently of the screen currently open.
+      if (store.connected) await recoverPending(true)
+        .then(() => { if (!signal.aborted) setStoreError(null); })
+        .catch(() => undefined);
+      if (signal.aborted) return;
+      const results = await Promise.allSettled([snapshot, coordinator.reconcile()]);
+      if (signal.aborted) return;
+      if (results[1].status === "rejected") throw results[1].reason;
+      await refreshProfile();
+    },
+    retry: (error) => isConnectionError(error) || error instanceof MobileApiError && (error.status >= 500 || error.status === 429),
+  }, AppState.currentState), [coordinator, recoverPending, refreshCatalog, refreshProfile, store.connected]);
   useEffect(() => {
-    let active = true;
-    if (store.connected) {
-      void recoverPending().then(() => { if (active) setStoreError(null); })
-        .catch(() => { if (active) setStoreError("No pudimos consultar las transacciones pendientes. Puedes reintentarlo con Restaurar compras."); });
-    }
-    return () => { active = false; };
-  }, [recoverPending, store.connected]);
-  useEffect(() => {
+    void foreground.refresh().catch(() => undefined);
     const listener = AppState.addEventListener("change", (next) => {
-      if (next === "active" && store.connected) {
-        void refreshCatalog();
-        void recoverPending(true).catch(() => undefined);
-        if (["pending", "activating"].includes(coordinator.state.phase)) void coordinator.refresh().catch(() => undefined);
-      }
+      if (next !== "active") catalog.invalidate();
+      foreground.transition(next);
     });
-    return () => listener.remove();
-  }, [coordinator, recoverPending, refreshCatalog, store.connected]);
+    return () => { listener.remove(); foreground.dispose(); };
+  }, [catalog, foreground]);
+  useEffect(() => {
+    if (store.connected) void refreshCatalog("catalog_or_connection");
+  }, [refreshCatalog, store.connected]);
 
   const restore = async () => {
     if (restoreLock.current || coordinator.state.busy) return;
@@ -101,12 +121,12 @@ function AccountStoreBilling({ children }: PropsWithChildren) {
         pending: () => Platform.OS === "ios" ? getPendingTransactionsIOS() : Promise.resolve([]),
         submit: (purchase, retry) => coordinator.submit(purchase, retry, "restore"), refresh: () => coordinator.reconcile(),
       });
-    } finally { restoreLock.current = false; setRestoring(false); void refreshCatalog(); }
+    } finally { restoreLock.current = false; setRestoring(false); void refreshCatalog("restore_complete"); }
   };
   const buy = async (productId: string, basePlanId = "", pack = false) => {
     coordinator.clearMessages();
     setStoreError(null);
-    const fresh = await refreshCatalog();
+    const fresh = await refreshCatalog("before_purchase");
     if (!fresh?.some((product) => product.id === productId)) {
       setStoreError("No pudimos actualizar el precio de la tienda. Reintenta consultar los precios antes de comprar.");
       return;
@@ -148,15 +168,19 @@ function AccountStoreBilling({ children }: PropsWithChildren) {
         }
       } catch { /* Retain the original error, without claiming that no charge occurred. */ }
       coordinator.storeFailed("No pudimos confirmar el resultado con la tienda. Revisa tu suscripción o usa Restaurar compras antes de volver a comprar.");
-    } finally { void refreshCatalog(); }
+    } finally { void refreshCatalog("purchase_complete"); }
   };
   return <Context.Provider value={{
-    state: { ...state, error: state.error ?? storeError, busy: state.busy || restoring }, coordinator,
+    state: { ...state, error: state.error ?? storeError ?? state.refreshError, busy: state.busy || restoring }, coordinator,
     store: { ...store, products: catalogState.items.filter((item) => item.type === "in-app") as Product[],
       subscriptions: catalogState.items.filter((item) => item.type === "subs") as ProductSubscription[] },
     catalogBusy: catalogState.loading,
-    catalogError: catalogState.failed ? "No pudimos consultar los precios actuales de la tienda. Inténtalo nuevamente." : null,
-    refreshCatalog, restore, buy,
+    canInspectPrices: __DEV__ || catalog.diagnostics.some((sample) => sample.after?.environment === "sandbox"),
+    priceDiagnostics: () => catalog.diagnostics,
+    catalogError: catalogState.failed ? catalog.failureReason === "currency_mismatch"
+      ? "Los precios recibidos no coinciden con tu tienda. Reintenta consultar los precios antes de comprar."
+      : "No pudimos consultar los precios actuales de la tienda. Inténtalo nuevamente." : null,
+    refresh: () => foreground.refresh(), refreshCatalog, restore, buy,
   }}>{children}</Context.Provider>;
 }
 
