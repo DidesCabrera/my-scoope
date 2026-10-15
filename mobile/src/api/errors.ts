@@ -10,7 +10,35 @@ export class MobileApiError extends Error {
   }
 }
 
+const connectionMessage = "No pudimos conectarnos. Revisa tu conexión e inténtalo nuevamente.";
+const genericMessage = "No pudimos completar la acción. Inténtalo nuevamente.";
+
+/** Expo can wrap fetch failures in Error, nativeError or cause. Read only the
+ * bounded diagnostic fields; never stringify an arbitrary native exception. */
+export function isConnectionError(error: unknown): boolean {
+  const seen = new Set<unknown>();
+  const pending: unknown[] = [error];
+  for (let index = 0; index < pending.length && index < 12; index += 1) {
+    const item = pending[index];
+    if (seen.has(item)) continue;
+    seen.add(item);
+    if (typeof item === "string" && /fetch failed|failed to fetch|network request failed|networkerror|network_error|e_network|err_network|nsurlerrordomain|internet|offline|sin conexi[oó]n|conexi[oó]n.*(?:desactivada|perdida|interrumpida)/i.test(item)) return true;
+    if (item && typeof item === "object") {
+      const fields = item as Record<string, unknown>;
+      if (item instanceof MobileApiError && item.status === 0) return true;
+      pending.push(fields.message, fields.code, fields.cause, fields.nativeError);
+    }
+  }
+  return false;
+}
+
+function safeMessage(message: string): string {
+  return !message || message.length > 300 || /[\r\n]|Exception|NS\w*Domain|ExpoModulesCore|ConcurrentFunctionDefinition|Promise\.swift|\bSwift\b|\.(?:swift|kt|java):\d|(?:Type|Syntax|Reference)Error|stack\s?trace|\bat\s+\S+\s*\(/i.test(message)
+    ? genericMessage : message;
+}
+
 export function userFacingError(error: unknown): string {
+  if (isConnectionError(error)) return connectionMessage;
   if (error instanceof MobileApiError) {
     const messages: Record<string, string> = {
       ai_async_unavailable: "El Asistente no está disponible en este momento. Tu conversación guardada no se perderá.",
@@ -31,7 +59,7 @@ export function userFacingError(error: unknown): string {
       library_share_email_invalid: "Ingresa un correo válido para compartir.",
       library_share_subject_too_long: "El asunto es demasiado largo.",
       mobile_auth_required: "Tu sesión necesita renovarse. Inicia sesión nuevamente.",
-      mobile_api_invalid_response: error.message,
+      mobile_api_invalid_response: safeMessage(error.message),
       nutrition_label_could_not_resolve: "No pudimos leer esta etiqueta con suficiente seguridad. Prueba otra foto.",
       nutrition_label_insufficient_credits: "No tienes créditos suficientes para digitalizar esta etiqueta. Puedes ingresarla manualmente.",
       food_label_volume_weight_required: "Indica cuánto pesan 100 ml antes de guardar este alimento.",
@@ -53,10 +81,10 @@ export function userFacingError(error: unknown): string {
     if (error.status === 422) return "No pudimos validar esta solicitud. Revisa los datos e inténtalo nuevamente.";
     if (error.status === 429) return "Has realizado varias solicitudes seguidas. Espera un momento e inténtalo nuevamente.";
     if (error.status === 503) return "Este servicio no está disponible en este momento. Inténtalo más tarde.";
-    return error.message;
+    return error.status >= 500 ? genericMessage : safeMessage(error.message);
   }
   if (error instanceof Error && error.message) {
-    return error.message;
+    return safeMessage(error.message);
   }
-  return "No pudimos completar la acción. Inténtalo nuevamente.";
+  return genericMessage;
 }

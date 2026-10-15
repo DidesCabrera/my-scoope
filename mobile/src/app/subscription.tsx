@@ -1,8 +1,9 @@
 import { type Href, Redirect, Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
+import * as Clipboard from "expo-clipboard";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Info, RefreshCcw, Sparkles, WalletCards } from "lucide-react-native";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -36,6 +37,7 @@ export default function SubscriptionScreen() {
   const [localError, setLocalError] = useState<string | null>(null);
   const [restoreNotice, setRestoreNotice] = useState<string | null>(null);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [pricesVisible, setPricesVisible] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const onboardingFinishing = useRef(false);
   const noticeGeneration = useRef(0);
@@ -79,11 +81,11 @@ export default function SubscriptionScreen() {
         setFallbackEntitlements(nextEntitlements);
       }
       setLocalError(null);
-    } catch (nextError) { setLocalError(userFacingError(nextError)); }
+    } catch (nextError) { if (!coordinator) setLocalError(userFacingError(nextError)); }
     finally { setLoading(false); }
   }, [apiRequest, coordinator, status]);
   const openActions = useCallback(() => setActionsVisible(true), []);
-  const closeActions = useCallback(() => setActionsVisible(false), []);
+  const closeActions = useCallback(() => { setActionsVisible(false); setPricesVisible(false); }, []);
   useFocusEffect(useCallback(() => {
     setHeaderPresentation(isOnboarding
       ? { action: { icon: "more", label: "Acciones de suscripciones y bolsas", onPress: openActions }, identityVisible: compactHeaderVisible, mode: "default", title: "Elige un plan" }
@@ -184,7 +186,10 @@ export default function SubscriptionScreen() {
           </View>
         </View>
       )}
-      {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+      {error ? <>
+        <InlineNotice tone="error">{error}</InlineNotice>
+        <Button disabled={working} label="Reintentar actualización" onPress={() => void load()} variant="secondary" />
+      </> : null}
       {billing?.catalogError ? <>
         <Button disabled={working} label="Reintentar precios" loading={billing.catalogBusy} onPress={() => void refreshCatalog?.()} variant="secondary" />
       </> : null}
@@ -323,12 +328,17 @@ export default function SubscriptionScreen() {
 
       <ActionSheetModal onRequestClose={closeActions} visible={actionsVisible}>
         <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
-          <ActionSheetHeader icon={WalletCards} onClose={closeActions} title="Suscripciones y Bolsas" />
+          <ActionSheetHeader icon={WalletCards} onClose={closeActions} title={pricesVisible ? "Diagnóstico de precios" : "Suscripciones y Bolsas"} />
           <View style={styles.sheetContent}>
+            {pricesVisible ? <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
+              <Button label="Copiar diagnóstico" onPress={() => void Clipboard.setStringAsync(JSON.stringify(billing?.priceDiagnostics(), null, 2))} variant="secondary" />
+              <Text selectable style={textStyles.caption}>{JSON.stringify(billing?.priceDiagnostics(), null, 2)}</Text>
+            </ScrollView> :
             <ActionSheetActions>
               <ActionSheetAction icon={Info} label="Ver detalles de Suscripciones y Bolsas" onPress={() => { closeActions(); router.push("/subscription-details" as Href); }} />
               <ActionSheetAction disabled={working} icon={RefreshCcw} label="Restaurar compras" onPress={() => { closeActions(); void restore(); }} />
-            </ActionSheetActions>
+              {billing?.canInspectPrices ? <ActionSheetAction icon={Info} label="Diagnóstico de precios" onPress={() => setPricesVisible(true)} /> : null}
+            </ActionSheetActions>}
           </View>
         </SafeAreaView>
       </ActionSheetModal>

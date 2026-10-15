@@ -1,0 +1,162 @@
+{
+  "scope": "Local development-signed iPhone query against real Apple Sandbox; not TestFlight certification",
+  "appId": "6804048394",
+  "bundleId": "com.myscoope.app",
+  "sourceCommit": "02087fbc",
+  "iosVersion": "18.7.10",
+  "nativeSourceSha256": "bc2ad1215e2bc9cbf8bf348d9fc0c92c0389d606206b8019c470514679ccbea2",
+  "capturedAt": "2026-10-15T13:03:04.687Z",
+  "recordedAt": "2026-10-15T13:08:00.849Z",
+  "appleCatalogCheckedAt": "2026-10-15T04:48:39.883Z",
+  "visualConfirmation": "Felipe abrió Prueba local de precios, consultó Apple y confirmó valores correctos en las cards.",
+  "before": {
+    "currency": "CLP",
+    "environment": "sandbox",
+    "id": "143483",
+    "countryCode": "CHL",
+    "observedAt": 1792069384571.244
+  },
+  "after": {
+    "id": "143483",
+    "environment": "sandbox",
+    "currency": "CLP",
+    "countryCode": "CHL",
+    "observedAt": 1792069384687.01
+  },
+  "requestedIds": [
+    "com.myscoope.basic.annual",
+    "com.myscoope.basic.monthly",
+    "com.myscoope.pro.annual",
+    "com.myscoope.pro.monthly",
+    "com.myscoope.credits.1000",
+    "com.myscoope.credits.2000",
+    "com.myscoope.credits.500"
+  ],
+  "nativeProducts": [
+    {
+      "id": "com.myscoope.credits.2000",
+      "displayPrice": "$9.990",
+      "price": 9990,
+      "currency": "CLP"
+    },
+    {
+      "id": "com.myscoope.credits.500",
+      "displayPrice": "$2.990",
+      "price": 2990,
+      "currency": "CLP"
+    },
+    {
+      "id": "com.myscoope.basic.monthly",
+      "displayPrice": "$3.990",
+      "price": 3990,
+      "currency": "CLP"
+    },
+    {
+      "id": "com.myscoope.pro.monthly",
+      "displayPrice": "$6.990",
+      "price": 6990,
+      "currency": "CLP"
+    },
+    {
+      "id": "com.myscoope.basic.annual",
+      "displayPrice": "$34.990",
+      "price": 34990,
+      "currency": "CLP"
+    },
+    {
+      "id": "com.myscoope.pro.annual",
+      "displayPrice": "$59.990",
+      "price": 59990,
+      "currency": "CLP"
+    },
+    {
+      "id": "com.myscoope.credits.1000",
+      "displayPrice": "$5.990",
+      "price": 5990,
+      "currency": "CLP"
+    }
+  ],
+  "appleCustomerPrices": [
+    {
+      "id": "com.myscoope.basic.annual",
+      "name": "My Scoope Basic Annual",
+      "territory": "CHL",
+      "currency": "CLP",
+      "price": "34990"
+    },
+    {
+      "id": "com.myscoope.basic.monthly",
+      "name": "My Scoope Basic Monthly",
+      "territory": "CHL",
+      "currency": "CLP",
+      "price": "3990"
+    },
+    {
+      "id": "com.myscoope.pro.annual",
+      "name": "My Scoope Pro Annual",
+      "territory": "CHL",
+      "currency": "CLP",
+      "price": "59990"
+    },
+    {
+      "id": "com.myscoope.pro.monthly",
+      "name": "My Scoope Pro Monthly",
+      "territory": "CHL",
+      "currency": "CLP",
+      "price": "6990"
+    },
+    {
+      "id": "com.myscoope.credits.1000",
+      "name": "My Scoope · 1000 créditos",
+      "territory": "CHL",
+      "currency": "CLP",
+      "price": "5990"
+    },
+    {
+      "id": "com.myscoope.credits.2000",
+      "name": "My Scoope · 2000 créditos",
+      "territory": "CHL",
+      "currency": "CLP",
+      "price": "9990"
+    },
+    {
+      "id": "com.myscoope.credits.500",
+      "name": "My Scoope · 500 créditos",
+      "territory": "CHL",
+      "currency": "CLP",
+      "price": "2990"
+    }
+  ],
+  "comparison": {
+    "result": "pass",
+    "matched": 7,
+    "total": 7
+  },
+  "historySummary": [
+    {
+      "loadedAt": "2026-10-15T12:53:21.622Z",
+      "result": "superseded",
+      "products": 7
+    },
+    {
+      "loadedAt": "2026-10-15T12:53:47.646Z",
+      "result": "accepted",
+      "products": 7
+    },
+    {
+      "loadedAt": "2026-10-15T12:53:50.952Z",
+      "result": "accepted",
+      "products": 7
+    },
+    {
+      "loadedAt": "2026-10-15T13:02:54.157Z",
+      "result": "accepted",
+      "products": 7
+    },
+    {
+      "loadedAt": "2026-10-15T13:03:04.687Z",
+      "result": "accepted",
+      "products": 7
+    }
+  ]
+}

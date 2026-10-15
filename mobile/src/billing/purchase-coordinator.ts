@@ -11,7 +11,7 @@ export type BillingState = {
   overview: SubscriptionData | null; entitlements: EntitlementsData | null;
   phase: "idle" | "store" | "verifying" | "activating" | "pending" | "active" | "scheduled" | "credited" | "refunded";
   productId: string; planName: string | null; busy: boolean;
-  message: string | null; error: string | null; finishPending: boolean;
+  message: string | null; error: string | null; refreshError: string | null; finishPending: boolean;
 };
 type Dependencies = {
   provider: "apple_app_store" | "google_play";
@@ -27,7 +27,7 @@ type TransactionRecord = { task: Promise<boolean>; accepted: boolean; finished: 
 const activationDelays = [1_500, 3_000, 6_000, 12_000];
 const initialState: BillingState = {
   overview: null, entitlements: null, phase: "idle", productId: "", planName: null,
-  busy: false, message: null, error: null, finishPending: false,
+  busy: false, message: null, error: null, refreshError: null, finishPending: false,
 };
 function wait(milliseconds: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -125,21 +125,33 @@ export class PurchaseCoordinator {
     this.update({ phase: "idle", busy: false,
       message: "La tienda aún no entregó una transacción nueva. Si solicitaste un cambio de modalidad o aprobación, revisa su estado en la tienda." });
   }
+  private applySnapshot(overview: SubscriptionData, entitlements: EntitlementsData): void {
+    this.update({ overview, entitlements, refreshError: null });
+    if (this.state.phase === "active" && entitlements.plan_name !== this.state.planName
+      || this.state.phase === "scheduled" && !overview.evidence.some((item) =>
+        item.provider === this.deps.provider && item.next_product_id === this.state.productId && item.status === "authorized" && !item.cancel_at_period_end)) {
+      this.update({ phase: "idle", message: null, planName: null, productId: "" });
+    }
+  }
   async reconcile(storeRequestCompleted = false): Promise<void> {
     if (storeRequestCompleted && this.action) this.action.sheetCompleted = true;
     if (!this.alive || this.deps.provider !== "apple_app_store") return this.refresh();
     if (this.reconciliation) return this.reconciliation;
-    const task = (async () => {
+    // Reconciliation and receipt acceptance share the same write queue. A slow
+    // pre-purchase reconciliation must never overwrite a newer accepted plan.
+    const task = this.queue.then(async () => {
+      if (!this.alive) return;
       const result = await this.request<SubscriptionData & { entitlements: EntitlementsData }>(
         "/api/v1/subscriptions/apple/reconcile", { method: "POST" },
       );
       if (!this.alive) return;
       this.snapshotVersion += 1;
-      this.update({ overview: result, entitlements: result.entitlements });
+      this.applySnapshot(result, result.entitlements);
       if (["store", "pending", "activating"].includes(this.state.phase) && this.confirmBenefits() && this.queued === 0) {
         this.update({ busy: false });
       }
-    })();
+    });
+    this.queue = task.catch(() => undefined);
     this.reconciliation = task;
     try { await task; } finally { if (this.reconciliation === task) this.reconciliation = null; }
   }
@@ -155,14 +167,11 @@ export class PurchaseCoordinator {
           this.request<EntitlementsData>("/api/v1/entitlements", { cache: "no-store", signal: snapshot.signal }),
         ]);
         if (!this.alive || snapshotVersion !== this.snapshotVersion) return;
-        this.update({ overview, entitlements });
+        this.applySnapshot(overview, entitlements);
         if (["pending", "activating"].includes(this.state.phase)) this.confirmBenefits();
-        else if (this.state.phase === "active" && entitlements.plan_name !== this.state.planName) {
-          this.update({ phase: "idle", message: null, planName: null, productId: "" });
-        } else if (this.state.phase === "scheduled" && !overview.evidence.some((item) =>
-          item.provider === this.deps.provider && item.next_product_id === this.state.productId && item.status === "authorized" && !item.cancel_at_period_end)) {
-          this.update({ phase: "idle", message: null, planName: null, productId: "" });
-        }
+      } catch (error) {
+        if (this.alive && snapshotVersion === this.snapshotVersion) this.update({ refreshError: this.deps.errorMessage(error) });
+        throw error;
       } finally { snapshot.abort(); }
     })();
     this.read = task;

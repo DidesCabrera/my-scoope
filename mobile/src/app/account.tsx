@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { userFacingError } from "@/api/errors";
 import type { AccountDeletionData, EntitlementsData, SessionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { useStoreBilling } from "@/billing/store-billing-context";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProposalReviewSection } from "@/components/proposals/proposal-detail";
@@ -34,7 +35,10 @@ export default function AccountScreen() {
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [entitlements, setEntitlements] = useState<EntitlementsData | null>(null);
+  const billing = useStoreBilling();
+  const coordinator = billing?.coordinator;
+  const [fallbackEntitlements, setEntitlements] = useState<EntitlementsData | null>(null);
+  const entitlements = billing?.state.entitlements ?? fallbackEntitlements;
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const [accountActions, setAccountActions] = useState<"menu" | "rename" | "delete" | null>(null);
   const [accountActionsVisible, setAccountActionsVisible] = useState(false);
@@ -75,10 +79,13 @@ export default function AccountScreen() {
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated") return;
     setSubscriptionError(null);
-    void apiRequest<EntitlementsData>("/api/v1/entitlements")
-      .then(setEntitlements)
-      .catch((nextError) => setSubscriptionError(userFacingError(nextError)));
-  }, [apiRequest, status]));
+    let active = true;
+    if (coordinator) void coordinator.refresh().catch(() => undefined);
+    else void apiRequest<EntitlementsData>("/api/v1/entitlements", { cache: "no-store" })
+      .then((next) => { if (active) setEntitlements(next); })
+      .catch((nextError) => { if (active) setSubscriptionError(userFacingError(nextError)); });
+    return () => { active = false; };
+  }, [apiRequest, coordinator, status]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
 
@@ -125,7 +132,10 @@ export default function AccountScreen() {
       <AppHeader eyebrow="Mi cuenta" eyebrowIcon={<SectionIcon color={tokens.color.textSoft} section="profile" />} title={session?.display_name || session?.username || "My Scoope"} />
       <Card accent={subscriptionPlanAccent(entitlements?.plan_name)}>
         {entitlements ? <CreditDashboardGrid availableCredits={entitlements.available_credits} planName={entitlements.plan_name} /> : null}
-        {subscriptionError ? <InlineNotice tone="error">{subscriptionError}</InlineNotice> : null}
+        {subscriptionError || billing?.state.refreshError ? <>
+          <InlineNotice tone="error">{subscriptionError ?? billing?.state.refreshError}</InlineNotice>
+          <Button label="Reintentar saldo" onPress={() => void (coordinator ? coordinator.refresh().catch(() => undefined) : apiRequest<EntitlementsData>("/api/v1/entitlements", { cache: "no-store" }).then((next) => { setEntitlements(next); setSubscriptionError(null); }).catch((nextError) => setSubscriptionError(userFacingError(nextError))))} variant="secondary" />
+        </> : null}
         <Button label="Mejorar mi suscripción" onPress={() => router.push("/subscription" as Href)} variant="multicolor" />
       </Card>
       <ProposalReviewSection eyebrow="INFORMACIÓN DE LA CUENTA">
