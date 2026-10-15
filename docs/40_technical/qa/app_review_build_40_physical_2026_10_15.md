@@ -101,9 +101,42 @@ TestFlight, por lo que se conserva una única comprobación final de distribuci�
 Si falla sólo allí con los mismos metadatos, no se generarán candidatos repetidos
 sin una hipótesis nueva y evidencia que justifique el cambio.
 
-El iPhone Dides seguía figurando `unavailable` al comprobar esta vía. No se pudo
-capturar StoreKit real ni se reemplazó su app. El precio configurado en Apple
-queda confirmado; la coincidencia en ejecución sigue pendiente.
+Felipe conectó después el iPhone Dides por cable. El dispositivo quedó disponible,
+con iOS 18.7.10 y modo de desarrollo habilitado. Se preparó una copia aislada de
+`mobile/` del commit `02087fbc` en
+`/private/tmp/my-scoope-device-price-mobile`, conservando intactos los checkouts
+y dependencias compartidas. Las dependencias y lockfiles coinciden con los ya
+validados. Se aplicaron los parches en esa copia, incluido expo-iap 5.5.1.
+
+El proyecto nativo local antiguo apuntaba al equipo personal de Xcode. La primera
+firma falló porque ese equipo no admite las capacidades de la app. Se utilizó el
+equipo correcto de My Scoope, `CW5B8SKS47`, sin retirar capacidades del producto.
+Xcode completó la compilación Debug, el enlace y la firma, y el cliente se instaló
+por cable con bundle `com.myscoope.app` y versión local de build `1`. No se creó
+un candidato ni se cambió el contador remoto de TestFlight. La app local ocupa
+en el iPhone el lugar de la versión TestFlight; la versión 40 permanece disponible
+en TestFlight para reinstalarla.
+
+El archivo Swift compilado coincide byte por byte con el parche auditado; SHA256
+`bc2ad1215e2bc9cbf8bf348d9fc0c92c0389d606206b8019c470514679ccbea2`.
+La copia conserva sin cambios `storefront.ts`, `store-catalog.ts` y el componente
+real de cards. El log de compilación está en
+`/private/tmp/my-scoope-device-price-native-build.log`.
+
+Para esta consulta se preparó un entry local `price-probe-entry.tsx` únicamente
+en la copia aislada. Usa los siete IDs leídos de Apple y las clases/componentes
+auditados, pero los precios proceden del StoreKit del dispositivo. No necesita
+sesión My Scoope, no pide recibos, no llama a su backend y deshabilita comprar.
+Guarda sólo las muestras de precios en la caché local para recuperarlas por
+cable. Mantiene la pantalla encendida una vez abierta. Lint dirigido pasó y
+Metro compiló el entry para iOS. No se modifica el entry de la app de producción.
+
+Metro está disponible en el Mac por el puerto 8083. El lanzamiento solicitado
+fue `exp+my-scoope://expo-development-client/?url=http%3A%2F%2F192.168.0.13%3A8083`.
+iOS rechazó abrirlo con `FBSOpenApplicationErrorDomain / Locked`: exige que el
+propietario desbloquee el teléfono. Se solicitó sólo ese paso a Felipe. No se
+intentó eludir el bloqueo ni se pidió su código. **Todavía no hay una muestra
+nativa del iPhone, por lo que el precio mostrado sigue pendiente.**
 
 Fuentes primarias: [precios de suscripciones](https://developer.apple.com/documentation/appstoreconnectapi/get-v1-subscriptions-_id_-prices),
 [precios de bolsas](https://developer.apple.com/documentation/appstoreconnectapi/get-v2-inapppurchases-_id_-iappriceschedule),
@@ -137,8 +170,9 @@ Se preparó instrumentación específica y protección para la siguiente validac
 sheet Apple para el mismo SKU/storefront. Ocultar una cotización inconsistente
 es una protección, no satisface por sí solo el criterio de mostrar el precio
 correcto. La causa del precio en ese dispositivo sigue sin confirmación de
-ejecución; este punto permanece abierto. El iPhone físico disponible para
-desarrollo figuraba `unavailable`; no se generó otra app para investigarlo.
+ejecución; este punto permanece abierto. La preparación local posterior ya
+compiló e instaló el cliente por cable, como se describe arriba; falta ejecutarlo
+con el iPhone desbloqueado.
 
 ## 2. Errores crudos al navegar sin conexión
 
@@ -204,8 +238,10 @@ usan datos controlados y **no equivalen a evidencia del StoreKit del iPhone**.
 
 El parche se comprobó contra el archivo exacto de expo-iap 5.5.1 sin modificar
 las dependencias compartidas. Su sintaxis Swift y los tipos/disponibilidad del
-probe se comprobaron contra el SDK real de iOS 26 para destino iOS 16.4. No se
-ha enlazado, firmado ni instalado una app con el parche.
+probe se comprobaron contra el SDK real de iOS 26 para destino iOS 16.4. Después
+de conectar el iPhone también pasó la compilación nativa completa Debug, incluido
+el enlace, firma e instalación con ese parche. Su ejecución queda pendiente del
+desbloqueo del teléfono.
 
 El gate móvil completo se ejecutó una vez. Auditoría de dependencias, presupuesto
 de pruebas, lint global y tipos aprobaron. La suite ejecutó 301 casos: 299
