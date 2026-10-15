@@ -11,7 +11,8 @@ La investigación y los cambios siguientes son locales, en
 `codex/build-40-physical-fixes`. La rama se creó desde `origin/staging`
 `45233cd3ad0d49126934e13043367abcda73e937` y se avanzó localmente hasta
 `origin/main` `19384f5` para conservar íntegra PR 112, que staging aún no contenía.
-No se cambió ninguna rama remota ni se inició otra build. Inicialmente se pausó
+Durante la investigación no se cambió ninguna rama remota ni se inició otro
+candidato TestFlight. Inicialmente se pausó
 la integración por trabajo paralelo. Felipe confirmó después que no había otros
 cambios y autorizó continuar; su siguiente instrucción fue resolver la validación
 de precios antes de gastar otro ciclo TestFlight. Se conserva esa prioridad y se
@@ -90,9 +91,8 @@ El bucle de corrección queda así: catálogo real → cliente de desarrollo/San
 → comparación automática → pantalla local → integración y un candidato final.
 Apple permite usar el Sandbox real con una app firmada para desarrollo, sin
 TestFlight. Con el cliente ya instalado, los cambios JavaScript usan Fast
-Refresh. Los cambios nativos requieren recompilar localmente ese cliente; el
-probe nuevo de esta rama aún necesita esa compilación. No se promete que el
-cliente viejo pueda ejecutar un método nativo que no contiene.
+Refresh. Los cambios nativos requieren recompilar localmente ese cliente;
+el probe de esta rama ya compiló e instaló como se detalla a continuación.
 
 El simulador/StoreKit local sirve para revisar presentación, cambios de moneda
 y errores. Sus datos controlados **no prueban el storefront real**. Una captura
@@ -133,10 +133,27 @@ Metro compiló el entry para iOS. No se modifica el entry de la app de producci�
 
 Metro está disponible en el Mac por el puerto 8083. El lanzamiento solicitado
 fue `exp+my-scoope://expo-development-client/?url=http%3A%2F%2F192.168.0.13%3A8083`.
-iOS rechazó abrirlo con `FBSOpenApplicationErrorDomain / Locked`: exige que el
-propietario desbloquee el teléfono. Se solicitó sólo ese paso a Felipe. No se
-intentó eludir el bloqueo ni se pidió su código. **Todavía no hay una muestra
-nativa del iPhone, por lo que el precio mostrado sigue pendiente.**
+iOS rechazó inicialmente abrirlo con `FBSOpenApplicationErrorDomain / Locked`.
+Después Felipe abrió el cliente por Wi-Fi, seleccionó el servidor local, pulsó
+consultar Apple y confirmó que las cards mostraban los valores correctos.
+Reconectó el cable y se recuperó el archivo de diagnóstico existente, sin
+repetir su prueba.
+
+**La comprobación local quedó aprobada: 7/7 productos.** La última muestra fue
+capturada el 15 de octubre a las 13:03:04.687 UTC: storefront `143483`, país
+`CHL`, moneda `CLP`, entorno `sandbox`, estables antes y después de la consulta.
+Los siete importes numéricos y monedas coinciden con App Store Connect y los
+textos recibidos son `$3.990`, `$34.990`, `$6.990`, `$59.990`, `$2.990`, `$5.990`
+y `$9.990`. El comprobador ejecutó satisfactoriamente la comparación de la
+captura real con el catálogo. Las cinco consultas del historial terminaron
+aceptadas, con los siete productos cada una.
+
+La evidencia mínima sin datos personales se conserva en
+[`evidence/app_review_local_prices_2026_10_15.json`](evidence/app_review_local_prices_2026_10_15.json).
+Esto demuestra la consulta nativa y presentación local; no demuestra aún el
+comportamiento de StoreKit en la distribución TestFlight. Se mantiene sólo esa
+confirmación final, junto con los dos fallos restantes, sin repetir el recorrido
+1–12 ni generar candidatos para tantear precios.
 
 Fuentes primarias: [precios de suscripciones](https://developer.apple.com/documentation/appstoreconnectapi/get-v1-subscriptions-_id_-prices),
 [precios de bolsas](https://developer.apple.com/documentation/appstoreconnectapi/get-v2-inapppurchases-_id_-iappriceschedule),
@@ -166,13 +183,10 @@ Se preparó instrumentación específica y protección para la siguiente validac
   un aviso humano y se bloquea comprar con ese precio. No se convierte ni se
   sustituye por CLP fijo o una tabla propia.
 
-**Pendiente:** capturar esas muestras en el iPhone y comparar cada card con el
-sheet Apple para el mismo SKU/storefront. Ocultar una cotización inconsistente
-es una protección, no satisface por sí solo el criterio de mostrar el precio
-correcto. La causa del precio en ese dispositivo sigue sin confirmación de
-ejecución; este punto permanece abierto. La preparación local posterior ya
-compiló e instaló el cliente por cable, como se describe arriba; falta ejecutarlo
-con el iPhone desbloqueado.
+**Cerrado en desarrollo:** consulta nativa y cards con precios correctos, 7/7,
+confirmadas por Felipe y por la comparación automática. **Pendiente en
+distribución:** confirmar una vez el mismo resultado en TestFlight. El éxito
+local no establece por sí solo la causa del USD observado en el build 40.
 
 ## 2. Errores crudos al navegar sin conexión
 
@@ -240,8 +254,8 @@ El parche se comprobó contra el archivo exacto de expo-iap 5.5.1 sin modificar
 las dependencias compartidas. Su sintaxis Swift y los tipos/disponibilidad del
 probe se comprobaron contra el SDK real de iOS 26 para destino iOS 16.4. Después
 de conectar el iPhone también pasó la compilación nativa completa Debug, incluido
-el enlace, firma e instalación con ese parche. Su ejecución queda pendiente del
-desbloqueo del teléfono.
+el enlace, firma e instalación con ese parche. La ejecución posterior en el
+iPhone pasó la consulta de los siete precios y su presentación visual.
 
 El gate móvil completo se ejecutó una vez. Auditoría de dependencias, presupuesto
 de pruebas, lint global y tipos aprobaron. La suite ejecutó 301 casos: 299
@@ -252,7 +266,11 @@ exportación web. El último ajuste para retirar el aviso de tienda al recuperar
 conexión aprobó sus seis casos relacionados y lint. No se repitieron tipos ni
 las 301 pruebas por ese ajuste acotado. El presupuesto no se amplió.
 
-No hay evidencia nueva de ejecución física de los tres puntos. No se solicitó
-CI remota, PR, merge, despliegue ni candidato adicional. La siguiente revisión
-física queda limitada a estos tres fallos. La petición más reciente prioriza
-la comprobación local de precios antes de generar cualquier candidato adicional.
+Hay evidencia nueva de ejecución física de precios en el cliente local. Los
+otros dos fallos conservan las comprobaciones locales anteriores y quedan para
+la revisión física final. Esta aprobación cierra la iteración local y permite
+iniciar una única integración por PR a main, con tier `full` y los ocho checks
+obligatorios. No se repite el gate móvil local ya realizado: no hubo cambios de
+producto desde esa validación; se añaden la compilación nativa, consulta real y
+confirmación visual. La CI exigida aporta evidencia de integración del commit
+final. No se ha generado otro candidato TestFlight.
