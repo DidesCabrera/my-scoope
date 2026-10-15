@@ -11,9 +11,11 @@ La investigación y los cambios siguientes son locales, en
 `codex/build-40-physical-fixes`. La rama se creó desde `origin/staging`
 `45233cd3ad0d49126934e13043367abcda73e937` y se avanzó localmente hasta
 `origin/main` `19384f5` para conservar íntegra PR 112, que staging aún no contenía.
-No se cambió ninguna rama remota ni se inició otra build. Felipe está trabajando
-en paralelo; la integración requiere nueva autorización y volver a comprobar
-el staging más reciente antes de coordinarla. No se modificó el Knowledge Center.
+No se cambió ninguna rama remota ni se inició otra build. Inicialmente se pausó
+la integración por trabajo paralelo. Felipe confirmó después que no había otros
+cambios y autorizó continuar; su siguiente instrucción fue resolver la validación
+de precios antes de gastar otro ciclo TestFlight. Se conserva esa prioridad y se
+volverá a comprobar staging antes de integrar. No se modificó el Knowledge Center.
 
 ## 1. Precio de las cards distinto de Apple
 
@@ -32,6 +34,82 @@ Hay un [reporte primario con el mismo síntoma en StoreKit 2/TestFlight](https:/
 incluyendo storefront FRA/EUR estable con productos USD y una reproducción
 nativa. Es evidencia de una hipótesis; no prueba por sí sola la causa del iPhone
 de Felipe. No se afirma que publicar en producción lo solucione.
+
+### Comprobación anterior a TestFlight
+
+Se consultó la API real de App Store Connect, sólo con GET y con el acceso
+existente de EAS, el 15 de octubre de 2026 a las 04:48:39 UTC. Se verificaron los
+siete productos en CHL, USA, FRA y JPN. El catálogo chileno confirma:
+
+| Producto | ID Apple | Precio de cliente en CLP |
+| --- | --- | ---: |
+| Basic mensual | `com.myscoope.basic.monthly` | 3.990 |
+| Basic anual | `com.myscoope.basic.annual` | 34.990 |
+| Pro mensual | `com.myscoope.pro.monthly` | 6.990 |
+| Pro anual | `com.myscoope.pro.annual` | 59.990 |
+| Bolsa 500 | `com.myscoope.credits.500` | 2.990 |
+| Bolsa 1.000 | `com.myscoope.credits.1000` | 5.990 |
+| Bolsa 2.000 | `com.myscoope.credits.2000` | 9.990 |
+
+La evidencia normalizada se guardó en
+`/private/tmp/my-scoope-apple-price-catalog-2026-10-15.json`. Es una captura
+de QA, no una tabla que la app utilice para mostrar/cobrar precios. Sólo contiene
+productos y precios públicos, sin claves, tokens, recibos o datos personales.
+
+`scripts/apple_price_preflight.cjs` permite repetir la consulta y comparar el
+resultado con el JSON de Diagnóstico de precios del cliente de desarrollo:
+
+```sh
+node scripts/apple_price_preflight.cjs read \
+  --eas-cli-root /ruta/al/paquete/eas-cli \
+  --project-dir /ruta/al/checkout/mobile \
+  --out /private/tmp/my-scoope-apple-price-catalog.json
+
+node scripts/apple_price_preflight.cjs check \
+  --catalog /private/tmp/my-scoope-apple-price-catalog.json \
+  --diagnostics /private/tmp/my-scoope-native-price-diagnostics.json \
+  --territory CHL
+```
+
+La lectura reutiliza el contexto autenticado oficial de EAS; no compila, sube,
+envía a revisión ni modifica precios. No se crean credenciales nuevas. Exige
+que proyecto, app y bundle coincidan. Pagina respuestas y valida los cuatro
+catálogos antes de guardar. La comparación exige los mismos siete IDs, moneda,
+importe exacto, texto nativo no vacío, storefront estable y datos recientes.
+Descarta precios preservados para clientes antiguos y cambios futuros. Un
+catálogo sin captura nativa termina con error: **no declara cerrado el precio**.
+
+La consulta real de la herramienta pasó. Sus siete pruebas dirigidas cubren el
+fallo USD/CLP, otro importe en la misma moneda, IDs faltantes/duplicados, última
+consulta fallida, storefront cambiado, datos obsoletos, precios programados y
+otras monedas sin conversión. Se comprobó también que la ejecución sin captura
+nativa termina con código 1. No se repitieron las suites completas de la app;
+esta herramienta de QA no cambia el código del producto.
+
+El bucle de corrección queda así: catálogo real → cliente de desarrollo/Sandbox
+→ comparación automática → pantalla local → integración y un candidato final.
+Apple permite usar el Sandbox real con una app firmada para desarrollo, sin
+TestFlight. Con el cliente ya instalado, los cambios JavaScript usan Fast
+Refresh. Los cambios nativos requieren recompilar localmente ese cliente; el
+probe nuevo de esta rama aún necesita esa compilación. No se promete que el
+cliente viejo pueda ejecutar un método nativo que no contiene.
+
+El simulador/StoreKit local sirve para revisar presentación, cambios de moneda
+y errores. Sus datos controlados **no prueban el storefront real**. Una captura
+del cliente de desarrollo tampoco certifica un comportamiento exclusivo de
+TestFlight, por lo que se conserva una única comprobación final de distribución.
+Si falla sólo allí con los mismos metadatos, no se generarán candidatos repetidos
+sin una hipótesis nueva y evidencia que justifique el cambio.
+
+El iPhone Dides seguía figurando `unavailable` al comprobar esta vía. No se pudo
+capturar StoreKit real ni se reemplazó su app. El precio configurado en Apple
+queda confirmado; la coincidencia en ejecución sigue pendiente.
+
+Fuentes primarias: [precios de suscripciones](https://developer.apple.com/documentation/appstoreconnectapi/get-v1-subscriptions-_id_-prices),
+[precios de bolsas](https://developer.apple.com/documentation/appstoreconnectapi/get-v2-inapppurchases-_id_-iappriceschedule),
+[Sandbox con app de desarrollo](https://developer.apple.com/help/app-store-connect/test-in-app-purchases/overview-of-testing-in-sandbox/),
+[alcance de StoreKit local](https://developer.apple.com/documentation/xcode/setting-up-storekit-testing-in-xcode)
+y [bucle de desarrollo Expo](https://docs.expo.dev/develop/development-builds/faq/).
 
 Se preparó instrumentación específica y protección para la siguiente validación:
 
@@ -140,5 +218,5 @@ las 301 pruebas por ese ajuste acotado. El presupuesto no se amplió.
 
 No hay evidencia nueva de ejecución física de los tres puntos. No se solicitó
 CI remota, PR, merge, despliegue ni candidato adicional. La siguiente revisión
-física queda limitada a estos tres fallos y exige nueva autorización antes de
-integrar o compilar.
+física queda limitada a estos tres fallos. La petición más reciente prioriza
+la comprobación local de precios antes de generar cualquier candidato adicional.
