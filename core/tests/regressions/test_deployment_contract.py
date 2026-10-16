@@ -77,7 +77,7 @@ class DeploymentContractTests(SimpleTestCase):
         production = (ROOT / "render.yaml").read_text()
 
         self.assertIn("- key: BILLING_GOOGLE_PLAY_ENVIRONMENT\n        value: sandbox", staging)
-        self.assertIn("- key: BILLING_GOOGLE_PLAY_RTDN_ENABLED\n        value: \"false\"", staging)
+        self.assertIn("- key: BILLING_GOOGLE_PLAY_RTDN_ENABLED\n        value: \"true\"", staging)
         self.assertIn(
             "- key: BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE\n"
             "        value: https://myscoope-staging.onrender.com/billing/webhooks/google-play/",

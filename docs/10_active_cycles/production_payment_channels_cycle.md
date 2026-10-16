@@ -114,6 +114,35 @@ commit no son evidencia de una transacción ni de una liquidación.
   sesiones actuales requieren que el titular inicie sesión. Ningún checkout
   real ni flag de compra productiva se activó.
 
+### Avance Google Play (2026-10-16)
+
+- La [PR #114](https://github.com/DidesCabrera/my-scoope/pull/114) pasó el gate
+  remoto `full` y se integró en `staging` como `c050116`. El despliegue automático
+  de Render terminó correctamente; `billing.0011` se aplicó y `/healthz/`
+  respondió 200. Este despliegue incorpora el manejo de reemplazos de
+  suscripciones y notificaciones de compras anuladas, con pruebas locales y CI.
+- Play Console conserva la app en borrador. Se verificaron los cuatro precios de
+  suscripción y las tres bolsas activos para Chile. La ficha en español tiene
+  texto guardado como borrador; faltan icono, gráfico destacado y capturas Android.
+  La información de la app registra 6 de 11 tareas completas. Seguridad de datos
+  e IARC están en curso; el acceso para revisión requiere una cuenta de prueba
+  reutilizable con contenido premium disponible.
+- La audiencia incluye adolescentes de 13 a 17 años según decisión de Felipe.
+  El onboarding rechaza a menores de 13 años, pero todavía no existe un flujo
+  comprobado de autorización de representante legal. Resolver la política por
+  mercado y reflejarla en el producto, las declaraciones y los textos legales
+  antes de solicitar publicación.
+- La suscripción Pub/Sub de staging usa entrega push autenticada hacia
+  `/billing/webhooks/google-play/` con audiencia y cuenta de servicio coincidentes
+  con Render. Una notificación de prueba llegó a staging pero recibió 404:
+  `render.staging.yaml` mantenía el flag RTDN en `false` y el Blueprint revirtió
+  el cambio hecho en el panel. Se prepara su activación en la fuente de
+  configuración; faltan entrega y acuse 200 antes de habilitar conciliaciones.
+- La build interna Android actualizada sigue pendiente: la revisión automática
+  bloqueó la subida del código privado a Expo EAS y el posible uso de minutos
+  pagos. Se solicitó autorización específica al titular; no hay evidencia de
+  compras de suscripción ni de la nueva build en un dispositivo Android.
+
 ### Revisión Google Play (2026-10-15)
 
 - Play Console, cuenta de organización My Scoope: la app `com.myscoope.app`
