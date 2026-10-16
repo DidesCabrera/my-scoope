@@ -134,14 +134,17 @@ commit no son evidencia de una transacción ni de una liquidación.
   antes de solicitar publicación.
 - La suscripción Pub/Sub de staging usa entrega push autenticada hacia
   `/billing/webhooks/google-play/` con audiencia y cuenta de servicio coincidentes
-  con Render. Una notificación de prueba llegó a staging pero recibió 404:
-  `render.staging.yaml` mantenía el flag RTDN en `false` y el Blueprint revirtió
-  el cambio hecho en el panel. Se prepara su activación en la fuente de
-  configuración; faltan entrega y acuse 200 antes de habilitar conciliaciones.
+  con Render. La primera notificación de prueba recibió 404 por el flag RTDN
+  desactivado en el Blueprint. El cambio se integró en `staging` como `e97ef5c`
+  y se desplegó. La siguiente prueba desde Play Console recibió 200 en Render
+  el 16 de octubre. Quedan las compras y los reembolsos reales de prueba antes
+  de habilitar las conciliaciones automáticas.
 - La build interna Android actualizada sigue pendiente: la revisión automática
   bloqueó la subida del código privado a Expo EAS y el posible uso de minutos
-  pagos. Se solicitó autorización específica al titular; no hay evidencia de
-  compras de suscripción ni de la nueva build en un dispositivo Android.
+  pagos. La cuenta Expo está en Free, registra 0 de 30 builds Android usadas y
+  una factura prevista de US$0. Se solicitó autorización específica al titular
+  para subir el código; no hay evidencia de compras de suscripción ni de la nueva
+  build en un dispositivo Android.
 
 ### Revisión Google Play (2026-10-15)
 
