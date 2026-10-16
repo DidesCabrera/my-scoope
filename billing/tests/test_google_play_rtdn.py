@@ -12,10 +12,11 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import CreditLedger, CreditWallet
 from accounts.seed_plans import seed_account_plans
 from billing.application.contracts import GooglePlayProductEvidence, GooglePlaySubscriptionEvidence
 from billing.application.services.catalog import GooglePlayCatalogReference, configure_google_play_catalog
-from billing.application.services.credit_packs import configure_credit_pack_product
+from billing.application.services.credit_packs import configure_credit_pack_product, settle_google_play_credit_pack
 from billing.application.services.google_play import (
     GooglePlayEvidenceError,
     get_or_create_google_play_account_token,
@@ -60,6 +61,20 @@ class GooglePubSubPushTests(SimpleTestCase):
         self.assertEqual(notification.kind, "subscription")
         self.assertEqual(notification.product_id, "myscoope_basic")
         self.assertEqual(notification.purchase_token, "purchase-token")
+
+    def test_voided_purchase_requires_order_and_product_type(self):
+        payload = {
+            "packageName": "com.myscoope.app",
+            "voidedPurchaseNotification": {
+                "purchaseToken": "purchase-token", "orderId": "GPA.123", "productType": 2,
+            },
+        }
+        notification = decode_google_play_notification(_envelope(payload))
+        self.assertEqual((notification.kind, notification.order_id, notification.product_type),
+                         ("voided_purchase", "GPA.123", 2))
+        payload["voidedPurchaseNotification"]["productType"] = 3
+        with self.assertRaises(InvalidGooglePubSubPush):
+            decode_google_play_notification(_envelope(payload))
 
     def test_authorization_requires_expected_verified_service_account(self):
         client = Mock()
@@ -263,6 +278,72 @@ class GooglePlayRTDNTests(TestCase):
         )
         self.assertEqual(subscription.user, self.user)
 
+    def test_replacement_retires_linked_token_and_old_notification_cannot_restore_it(self):
+        configure_google_play_catalog(environment="sandbox", references=(
+            GooglePlayCatalogReference("basic-monthly", "myscoope_basic", "monthly"),
+            GooglePlayCatalogReference("pro-monthly", "myscoope_pro", "monthly"),
+        ))
+        old = GooglePlaySubscriptionEvidence(
+            purchase_token="old-basic-token", product_id="myscoope_basic", base_plan_id="monthly",
+            status="SUBSCRIPTION_STATE_ACTIVE", environment="sandbox",
+            expiry_time=(timezone.now() + timedelta(days=30)).isoformat(),
+            obfuscated_account_id=self.account_token.token,
+        )
+        sync_google_play_subscription(old, expected_user=self.user, expected_environment="sandbox")
+        new = GooglePlaySubscriptionEvidence(
+            purchase_token="new-pro-token", product_id="myscoope_pro", base_plan_id="monthly",
+            status="SUBSCRIPTION_STATE_ACTIVE", environment="sandbox",
+            expiry_time=(timezone.now() + timedelta(days=30)).isoformat(),
+            obfuscated_account_id=self.account_token.token,
+            metadata={"linkedPurchaseToken": old.purchase_token},
+        )
+        sync_google_play_subscription(new, expected_user=self.user, expected_environment="sandbox")
+        sync_google_play_subscription(old, expected_user=self.user, expected_environment="sandbox")
+        sync_google_play_subscription(old, expected_user=self.user, expected_environment="sandbox")
+
+        self.assertEqual(ProviderSubscription.objects.get(external_subscription_id=old.purchase_token).status,
+                         ProviderSubscription.Status.EXPIRED)
+        self.assertEqual(ProviderSubscription.objects.get(external_subscription_id=new.purchase_token).status,
+                         ProviderSubscription.Status.AUTHORIZED)
+
+    def test_replacement_cannot_retire_another_users_purchase(self):
+        configure_google_play_catalog(environment="sandbox", references=(
+            GooglePlayCatalogReference("basic-monthly", "myscoope_basic", "monthly"),
+            GooglePlayCatalogReference("pro-monthly", "myscoope_pro", "monthly"),
+        ))
+        old = GooglePlaySubscriptionEvidence(
+            purchase_token="other-basic-token", product_id="myscoope_basic", base_plan_id="monthly",
+            status="SUBSCRIPTION_STATE_ACTIVE", environment="sandbox",
+            expiry_time=(timezone.now() + timedelta(days=30)).isoformat(),
+            obfuscated_account_id=self.account_token.token,
+        )
+        sync_google_play_subscription(old, expected_user=self.user, expected_environment="sandbox")
+        other = get_user_model().objects.create_user(username="play-replacement-other")
+        other_token = get_or_create_google_play_account_token(other)
+        new = GooglePlaySubscriptionEvidence(
+            purchase_token="other-pro-token", product_id="myscoope_pro", base_plan_id="monthly",
+            status="SUBSCRIPTION_STATE_ACTIVE", environment="sandbox",
+            obfuscated_account_id=other_token.token,
+            metadata={"linkedPurchaseToken": old.purchase_token},
+        )
+        with self.assertRaises(GooglePlayEvidenceError):
+            sync_google_play_subscription(new, expected_user=other, expected_environment="sandbox")
+        self.assertEqual(ProviderSubscription.objects.get().status, ProviderSubscription.Status.AUTHORIZED)
+
+    def test_long_google_purchase_token_is_stored_for_lifecycle_reconciliation(self):
+        configure_google_play_catalog(environment="sandbox", references=(
+            GooglePlayCatalogReference("basic-monthly", "myscoope_basic", "monthly"),
+        ))
+        token = "g" * 512
+        evidence = GooglePlaySubscriptionEvidence(
+            purchase_token=token, product_id="myscoope_basic", base_plan_id="monthly",
+            status="SUBSCRIPTION_STATE_ACTIVE", environment="sandbox",
+            expiry_time=(timezone.now() + timedelta(days=30)).isoformat(),
+            obfuscated_account_id=self.account_token.token,
+        )
+        sync_google_play_subscription(evidence, expected_user=self.user, expected_environment="sandbox")
+        self.assertEqual(ProviderSubscription.objects.get().external_subscription_id, token)
+
     def test_one_time_product_rtdn_grants_once_after_server_verification(self):
         configure_credit_pack_product(
             provider=PaymentProvider.GOOGLE_PLAY,
@@ -301,3 +382,109 @@ class GooglePlayRTDNTests(TestCase):
         gateway.verify_product.assert_called_once_with("product-token")
         self.assertEqual(CreditPackPurchase.objects.count(), 1)
         self.assertEqual(CreditPackPurchase.objects.get().credits_granted, 500)
+
+    def test_voided_credit_pack_reverses_once_after_full_server_verification(self):
+        configure_credit_pack_product(
+            provider=PaymentProvider.GOOGLE_PLAY,
+            environment="sandbox",
+            offer_code="credits-500",
+            external_product_id="myscoope.credits.500",
+        )
+        settled = GooglePlayProductEvidence(
+            purchase_token="voided-product-token", product_id="myscoope.credits.500",
+            status="PURCHASED", obfuscated_account_id=self.account_token.token,
+            order_id="GPA.voided", environment="sandbox",
+        )
+        settle_google_play_credit_pack(user=self.user, evidence=settled)
+        self.assertEqual(CreditWallet.objects.get(user=self.user).purchased_balance, 500)
+        verified = GooglePlayProductEvidence(
+            **{**settled.__dict__, "status": "CANCELLED", "metadata": {"productLineItem": [{
+                "productId": settled.product_id,
+                "productOfferDetails": {"quantity": 1, "refundableQuantity": 0},
+            }]}}
+        )
+        gateway = SimpleNamespace(verify_product=Mock(return_value=verified))
+        payload = {
+            "packageName": "com.myscoope.app",
+            "voidedPurchaseNotification": {
+                "purchaseToken": settled.purchase_token, "orderId": settled.order_id,
+                "productType": 2, "refundType": 1,
+            },
+        }
+        with (
+            patch("billing.interface.views.verify_google_pubsub_authorization"),
+            patch("billing.interface.views.build_google_play_gateway", return_value=gateway),
+        ):
+            first = self._post(payload, message_id="voided-product-1")
+            repeated = self._post(payload, message_id="voided-product-2")
+
+        self.assertEqual((first.status_code, repeated.status_code), (200, 200))
+        self.assertEqual(CreditPackPurchase.objects.get().status, CreditPackPurchase.Status.REFUNDED)
+        self.assertEqual(CreditWallet.objects.get(user=self.user).purchased_balance, 0)
+        self.assertEqual(CreditLedger.objects.filter(user=self.user, reference_type="credit_pack_refund").count(), 1)
+
+    def test_voided_credit_pack_with_unmatched_order_keeps_credits(self):
+        configure_credit_pack_product(
+            provider=PaymentProvider.GOOGLE_PLAY, environment="sandbox",
+            offer_code="credits-500", external_product_id="myscoope.credits.500",
+        )
+        settled = GooglePlayProductEvidence(
+            purchase_token="mismatched-product-token", product_id="myscoope.credits.500",
+            status="PURCHASED", obfuscated_account_id=self.account_token.token,
+            order_id="GPA.original", environment="sandbox",
+        )
+        settle_google_play_credit_pack(user=self.user, evidence=settled)
+        gateway = SimpleNamespace(verify_product=Mock(return_value=GooglePlayProductEvidence(
+            **{**settled.__dict__, "status": "CANCELLED", "order_id": "GPA.other",
+               "metadata": {"productLineItem": [{"productOfferDetails": {"quantity": 1, "refundableQuantity": 0}}]}},
+        )))
+        payload = {
+            "packageName": "com.myscoope.app",
+            "voidedPurchaseNotification": {
+                "purchaseToken": settled.purchase_token, "orderId": "GPA.other",
+                "productType": 2, "refundType": 1,
+            },
+        }
+        with (
+            patch("billing.interface.views.verify_google_pubsub_authorization"),
+            patch("billing.interface.views.build_google_play_gateway", return_value=gateway),
+        ):
+            response = self._post(payload, message_id="voided-mismatch")
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(CreditWallet.objects.get(user=self.user).purchased_balance, 500)
+        self.assertEqual(BillingEvent.objects.get().status, BillingEvent.Status.FAILED)
+
+    def test_voided_subscription_refreshes_subscription_state(self):
+        configure_google_play_catalog(environment="sandbox", references=(
+            GooglePlayCatalogReference(
+                offer_code="basic-monthly", product_id="myscoope_basic", base_plan_id="monthly",
+            ),
+        ))
+        active = GooglePlaySubscriptionEvidence(
+            purchase_token="voided-subscription-token", product_id="myscoope_basic",
+            base_plan_id="monthly", status="SUBSCRIPTION_STATE_ACTIVE",
+            environment="sandbox", expiry_time=(timezone.now() + timedelta(days=30)).isoformat(),
+            obfuscated_account_id=self.account_token.token,
+        )
+        sync_google_play_subscription(active, expected_user=self.user, expected_environment="sandbox")
+        expired = GooglePlaySubscriptionEvidence(**{
+            **active.__dict__, "status": "SUBSCRIPTION_STATE_EXPIRED",
+            "expiry_time": (timezone.now() - timedelta(days=1)).isoformat(),
+        })
+        gateway = SimpleNamespace(verify_subscription=Mock(return_value=expired), verify_product=Mock())
+        payload = {
+            "packageName": "com.myscoope.app",
+            "voidedPurchaseNotification": {
+                "purchaseToken": active.purchase_token, "orderId": "GPA.subscription.0",
+                "productType": 1, "refundType": 1,
+            },
+        }
+        with (
+            patch("billing.interface.views.verify_google_pubsub_authorization"),
+            patch("billing.interface.views.build_google_play_gateway", return_value=gateway),
+        ):
+            response = self._post(payload, message_id="voided-subscription")
+        self.assertEqual(response.status_code, 200)
+        gateway.verify_subscription.assert_called_once_with(active.purchase_token)
+        gateway.verify_product.assert_not_called()
+        self.assertEqual(ProviderSubscription.objects.get().status, ProviderSubscription.Status.EXPIRED)

@@ -57,12 +57,28 @@ def sync_google_play_subscription(
     if product is None:
         raise GooglePlayEvidenceError("The Google Play product is not mapped to a My Scoope plan.")
     status = _status(evidence.status, expiry_time=evidence.expiry_time)
+    linked_token = str((evidence.metadata or {}).get("linkedPurchaseToken") or "").strip()
+    if linked_token == evidence.purchase_token:
+        raise GooglePlayEvidenceError("Google Play linked a purchase token to itself.")
+    replaced = None
+    if linked_token:
+        replaced = ProviderSubscription.objects.select_for_update().filter(
+            provider=PaymentProvider.GOOGLE_PLAY,
+            external_subscription_id=linked_token,
+        ).first()
+        if replaced is not None and replaced.user_id != expected_user.pk:
+            raise GooglePlayEvidenceError("The linked Google Play purchase belongs to another account.")
+        if replaced is not None and replaced.product.environment != environment:
+            raise GooglePlayEvidenceError("The linked Google Play purchase belongs to another environment.")
     existing = ProviderSubscription.objects.select_for_update().filter(
         provider=PaymentProvider.GOOGLE_PLAY,
         external_subscription_id=evidence.purchase_token,
     ).first()
     if existing is not None and existing.user_id != expected_user.pk:
         raise GooglePlayEvidenceError("The Google Play purchase token is already assigned.")
+    was_replaced = bool(existing is not None and (existing.metadata or {}).get("google_play_replaced"))
+    if was_replaced:
+        status = ProviderSubscription.Status.EXPIRED
     subscription, _ = ProviderSubscription.objects.update_or_create(
         provider=PaymentProvider.GOOGLE_PLAY,
         external_subscription_id=evidence.purchase_token,
@@ -77,9 +93,18 @@ def sync_google_play_subscription(
                 "google_play": dict(evidence.metadata or {}),
                 "google_play_environment": environment,
                 "google_play_acknowledged": evidence.acknowledged,
+                **({"google_play_replaced": True} if was_replaced else {}),
             },
         },
     )
+    if replaced is not None:
+        replaced.status = ProviderSubscription.Status.EXPIRED
+        replaced.cancel_at_period_end = False
+        replaced.metadata = {
+            **(replaced.metadata or {}),
+            "google_play_replaced": True,
+        }
+        replaced.save(update_fields=["status", "cancel_at_period_end", "metadata", "updated_at"])
     project_provider_subscription(subscription)
     return subscription
 
@@ -95,7 +120,9 @@ def process_google_play_notification(*, event: BillingEvent, notification, gatew
     try:
         if notification.kind == "test":
             return finish_billing_event(claimed.pk, status=BillingEvent.Status.PROCESSED)
-        if notification.kind == "subscription":
+        if notification.kind == "subscription" or (
+            notification.kind == "voided_purchase" and notification.product_type == 1
+        ):
             evidence = gateway.verify_subscription(notification.purchase_token)
             if notification.product_id and evidence.product_id != notification.product_id:
                 raise GooglePlayEvidenceError("Google Play RTDN subscription product does not match.")
@@ -111,12 +138,16 @@ def process_google_play_notification(*, event: BillingEvent, notification, gatew
                 expected_user=owner,
                 expected_environment=expected_environment,
             )
-        else:
+        elif notification.kind == "one_time_product" or (
+            notification.kind == "voided_purchase" and notification.product_type == 2
+        ):
             _process_google_play_product_notification(
                 notification=notification,
                 gateway=gateway,
                 expected_environment=expected_environment,
             )
+        else:
+            raise GooglePlayEvidenceError("Google Play returned an unsupported notification type.")
     except Exception as exc:
         finish_billing_event(claimed.pk, status=BillingEvent.Status.FAILED, last_error=type(exc).__name__)
         raise
@@ -133,6 +164,19 @@ def _process_google_play_product_notification(*, notification, gateway, expected
     evidence = gateway.verify_product(notification.purchase_token)
     if notification.product_id and evidence.product_id != notification.product_id:
         raise GooglePlayEvidenceError("Google Play RTDN product does not match.")
+    if notification.kind == "voided_purchase":
+        if notification.refund_type != 1:
+            raise GooglePlayEvidenceError("A partial Google Play refund needs manual review.")
+        line_items = (evidence.metadata or {}).get("productLineItem") or []
+        offer = line_items[0].get("productOfferDetails") if len(line_items) == 1 and isinstance(line_items[0], dict) else None
+        if (
+            evidence.order_id != notification.order_id
+            or evidence.status != "CANCELLED"
+            or not isinstance(offer, dict)
+            or offer.get("quantity", 1) != 1
+            or offer.get("refundableQuantity") != 0
+        ):
+            raise GooglePlayEvidenceError("Google Play voided purchase is not fully verified.")
     environment = google_play_environment(evidence.environment)
     if environment != google_play_environment(expected_environment):
         raise GooglePlayEvidenceError("Google Play RTDN belongs to another environment.")
@@ -142,7 +186,14 @@ def _process_google_play_product_notification(*, notification, gateway, expected
             provider=PaymentProvider.GOOGLE_PLAY,
             purchase_id=notification.purchase_token,
         ),
-    ).select_related("user").first()
+    ).select_related("user", "product").first()
+    if purchase is not None and (
+        evidence.product_id != purchase.product.external_product_id
+        or evidence.obfuscated_account_id != google_play_account_id(purchase.user)
+        or evidence.environment != purchase.product.environment
+        or evidence.order_id != str((purchase.evidence or {}).get("order_id") or "")
+    ):
+        raise GooglePlayEvidenceError("Google Play RTDN product ownership does not match.")
     if evidence.status == "PURCHASED":
         owner = purchase.user if purchase is not None else google_play_user_for_account_id(
             evidence.obfuscated_account_id

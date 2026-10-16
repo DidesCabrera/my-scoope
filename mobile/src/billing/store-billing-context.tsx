@@ -1,10 +1,11 @@
-import { ErrorCode, finishTransaction, getAvailablePurchases, getPendingTransactionsIOS, syncIOS, type Purchase, useIAP } from "expo-iap";
+import { ErrorCode, finishTransaction, getActiveSubscriptions, getAvailablePurchases, getPendingTransactionsIOS, syncIOS, type Purchase, useIAP } from "expo-iap";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { PurchaseCoordinator, type BillingState } from "./purchase-coordinator";
+import { googlePlayReplacement } from "./google-play-replacement";
 import { restoreAccountPurchases } from "./restore-purchases";
 
 type StoreBilling = {
@@ -88,17 +89,22 @@ function AccountStoreBilling({ children }: PropsWithChildren) {
   const buy = async (productId: string, basePlanId = "", pack = false) => {
     if (!coordinator.begin(productId)) return;
     const overview = coordinator.state.overview!;
+    let requested = false;
     try {
       let result: Awaited<ReturnType<typeof store.requestPurchase>>;
       if (Platform.OS === "android") {
         const product = store.subscriptions.find((item) => item.id === productId);
         const offer = product?.subscriptionOffers?.find((item) => item.basePlanIdAndroid === basePlanId && item.offerTokenAndroid);
         if (!pack && !offer?.offerTokenAndroid) throw new Error("El plan no está disponible en Google Play.");
+        const replacement = !pack ? googlePlayReplacement(overview, await getActiveSubscriptions(), productId, basePlanId) : null;
+        requested = true;
         result = await store.requestPurchase({ type: pack ? "in-app" : "subs", request: { google: {
           skus: [productId], obfuscatedAccountId: overview.google_obfuscated_account_id,
           ...(!pack ? { subscriptionOffers: [{ sku: productId, offerToken: offer!.offerTokenAndroid! }] } : {}),
+          ...(replacement ?? {}),
         } } });
       } else {
+        requested = true;
         result = await store.requestPurchase({ type: pack ? "in-app" : "subs", request: { apple: {
           sku: productId, appAccountToken: overview.app_account_token, andDangerouslyFinishTransactionAutomatically: false,
         } } });
@@ -111,6 +117,7 @@ function AccountStoreBilling({ children }: PropsWithChildren) {
         coordinator.awaitingApproval();
       }
     } catch (error) {
+      if (!requested) { coordinator.storeFailed(userFacingError(error)); return; }
       const code = error && typeof error === "object" && "code" in error ? error.code : null;
       if (code === ErrorCode.UserCancelled) { coordinator.storeFailed(null); return; }
       try {

@@ -114,6 +114,71 @@ commit no son evidencia de una transacción ni de una liquidación.
   sesiones actuales requieren que el titular inicie sesión. Ningún checkout
   real ni flag de compra productiva se activó.
 
+### Revisión Google Play (2026-10-15)
+
+- Play Console, cuenta de organización My Scoope: la app `com.myscoope.app`
+  continúa en **borrador** y producción está inactiva. La prueba interna activa
+  todavía distribuye la versión 7 (`1.0.0 - staging acceso`), lanzada el
+  28 de septiembre; esta no contiene las correcciones posteriores del cliente.
+- `myscoope_basic` y `myscoope_pro` tienen cada uno planes `monthly` y `annual`
+  activos para Chile. Los tres productos únicos `myscoope.credits.500`,
+  `.1000` y `.2000` tienen una opción de compra activa para Chile. Los siete
+  precios se cotejaron en Play Console con la decisión 0201: Basic mensual y
+  anual CLP 3.990/34.990, Pro mensual y anual CLP 6.990/59.990, y bolsas de
+  500/1.000/2.000 créditos CLP 2.990/5.990/9.990. Las pantallas muestran
+  «Sin IVA» para Chile; queda verificar cómo aparece el importe final al
+  comprador antes de venta pública.
+- Las notificaciones en tiempo real están habilitadas en Play Console con el
+  tema `projects/my-scoope/topics/myscoope-play-rtdn` y la opción de incluir
+  suscripciones, anulaciones y todos los productos únicos. El 15 de octubre,
+  la consola confirmó **«Se envió la notificación de prueba»**. Esto prueba el
+  envío desde Play al tema, pero **no** la recepción por la suscripción push,
+  firma, webhook ni flags de staging de extremo a extremo.
+- El panel pasó de **0 a 6 de 11** tareas de información/ficha completadas:
+  privacidad, ausencia de anuncios, no gubernamental, ausencia de funciones
+  financieras y declaración de actividad física/nutrición. Se guardó la
+  categoría «Salud y deportes» y se publicó el contacto de tienda
+  `felipe@myscoope.com` con `https://www.myscoope.com`. También se declaró que
+  la app no usa el ID de publicidad. Estas modificaciones no son aprobación de
+  Google ni activan producción.
+- Seguridad de los datos quedó como **borrador**: se declararon recopilación,
+  cifrado en tránsito, creación de cuenta y la URL pública de solicitud de
+  eliminación. Se seleccionaron los tipos de datos detectados en código y
+  política; falta completar y cotejar el uso/compartición de cada tipo antes
+  de enviarla. La página pública de soporte todavía requiere desplegar la
+  explicación ampliada sobre eliminación y conservación preparada en esta rama.
+- La ficha de Play Store tiene nombre y descripciones breve/completa guardados
+  como borrador. Para completarla faltan un ícono de 512 px, un gráfico de
+  1.024 × 500 px y al menos dos capturas de teléfono o tablet de la build
+  aprobada, sin datos personales reales.
+- Felipe confirmó público objetivo **13 años o más**, incluidos adolescentes
+  de 13 a 17. La declaración de edad está bloqueada por «Detalles de acceso»:
+  Google exige credenciales reutilizables de una cuenta de revisión que acceda
+  también al contenido premium. No declarar acceso irrestricto ni proporcionar
+  una cuenta personal. Revisar antes de publicación el tratamiento y eventual
+  consentimiento de adolescentes por país; el onboarding actual impide menores
+  de 13, pero no implementa autorización de representante para 13–17.
+- La clasificación de contenido requiere aceptar las condiciones de IARC; se
+  dejó pendiente esa aceptación. Google Cloud muestra la suscripción push
+  `myscoope-play-rtdn-staging` disponible y unida al tema RTDN correcto.
+  El detalle confirma el endpoint HTTPS de staging, autenticación de envío,
+  cuenta de servicio y audiencia coincidentes con Render. Render tiene compras
+  Play habilitadas en `sandbox`, pero RTDN y las dos conciliaciones aún están
+  desactivadas. La métrica de Pub/Sub muestra un mensaje de prueba sin
+  confirmar: el envío al tema no demuestra entrega al webhook. Activar RTDN
+  después de integrar el código, comprobar recepción y luego habilitar los
+  jobs de conciliación.
+- Se preparó en una rama aislada la distinción de RTDN anuladas por tipo de
+  producto, reversión verificada e idempotente de bolsas y reemplazo explícito
+  de suscripciones Android con retiro del token anterior verificado por Google.
+  Una migración amplía el identificador persistido de suscripción para aceptar
+  tokens de compra largos de Google Play.
+  La suite focalizada y el gate completo móvil pasan localmente. El gate
+  completo Django pasó antes del último ajuste de importación y la plantilla
+  de soporte; debe repetirse sobre el contenido final antes de integrar.
+  Faltan build distribuida desde Play y pruebas reales de ciclo de vida en
+  staging.
+
 ## Lo que Felipe debe tener o resolver
 
 | Necesidad | Para qué | Quién la verifica |
