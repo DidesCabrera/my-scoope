@@ -322,7 +322,7 @@ class ProviderSubscription(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="billing_subscriptions")
     product = models.ForeignKey(BillingProduct, on_delete=models.PROTECT, related_name="subscriptions")
     provider = models.CharField(max_length=32, choices=PaymentProvider.choices, db_index=True)
-    external_subscription_id = models.CharField(max_length=160)
+    external_subscription_id = models.CharField(max_length=2048)
     status = models.CharField(max_length=24, choices=Status.choices, default=Status.PENDING, db_index=True)
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
