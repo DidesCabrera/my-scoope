@@ -101,7 +101,8 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /assignmentDay: \{[^}]*borderStyle: "dashed"[^}]*height: 44[^}]*width: 44/);
   omits(picker, /assignmentSelector/);
   matches(picker, /contentContainerStyle=\{\[styles\.configurationScrollContent, kind === "dailyplan-to-program" && styles\.programConfigurationScrollContent\]\}/);
-  matches(picker, /programConfigurationScrollContent: \{ paddingTop: tokens\.spacing\.sm \}/);
+  matches(picker, /programConfigurationAction: \{ marginTop: 16 \}/);
+  matches(picker, /programConfigurationScrollContent: \{ paddingBottom: 96, paddingTop: 0 \}/);
   matches(picker, /configurationSticky: \{[^}]*paddingBottom: tokens\.spacing\.sm/);
   omits(picker, /function toggleDay\(day: number\) \{[^}]*setPreview\(null\)/s);
   matches(payload, /day_numbers/);
@@ -189,7 +190,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(resultCard, /preview\.selection\.entity === "food"/);
   matches(resultCard, /projectedMeal\.foods\.map\(foodPanelItem\)/);
   matches(resultCard, /result\.entity === "week" && week/);
-  matches(resultCard, /<ProgramWeekHeading title=\{`Previsualización Semana \$\{week\.week_number\}`\} week=\{week\.week_number\} \/>/);
+  matches(resultCard, /<EntityHeading[\s\S]*eyebrow="Previsualización semana"[\s\S]*identityIcon=\{CalendarRange\}[\s\S]*title=\{`Semana \$\{week\.week_number\}`\}/);
   matches(resultCard, /<Card accent=\{tokens\.color\.program\} style=\{styles\.weekResult\}>/);
   matches(resultCard, /useState<WeekMetricFilter>\("calories"\)/);
   matches(resultCard, /<EntityPanelTabs activeTab=\{activeMetricTab\} onChange=\{setActiveMetricTab\} tabs=\{weekMetricTabs\} \/>/);

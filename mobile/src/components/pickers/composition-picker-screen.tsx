@@ -579,7 +579,7 @@ export function CompositionPickerScreen({
       ) : null}
 
       {isMealPicker ? mealNoteCard : null}
-      {!isMealPicker && !isFoodPicker ? configurationAction : null}
+      {!isMealPicker && !isFoodPicker && configurationAction ? <View style={styles.programConfigurationAction}>{configurationAction}</View> : null}
       </ScrollView>
       {(isMealPicker || isFoodPicker) && configurationAction ? <View style={styles.fixedPickerFooter}>{configurationAction}</View> : null}
     </SafeAreaView>
@@ -611,7 +611,8 @@ const styles = StyleSheet.create({
   previewActivity: { alignSelf: "center", marginVertical: tokens.spacing.xs },
   previewSection: { gap: tokens.spacing.lg },
   pressed: { opacity: 0.68 },
-  programConfigurationScrollContent: { paddingTop: tokens.spacing.sm },
+  programConfigurationAction: { marginTop: 16 },
+  programConfigurationScrollContent: { paddingBottom: 96, paddingTop: 0 },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },

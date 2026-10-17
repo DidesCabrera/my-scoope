@@ -1,12 +1,12 @@
 import type { LibraryFoodPanelItem, LibraryMealPanelItem, PickerPreview } from "@/api/types";
 import { useState } from "react";
+import { CalendarRange } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { programDailyMetricData, WeekMetricPreview, type WeekMetricFilter } from "@/components/libraries/program-child-card";
-import { ProgramWeekHeading } from "@/components/libraries/program-planning-controls";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { EntityPanelTabs, FoodPanels, MealPanels, PanelSurface, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
-import { Card } from "@/components/ui";
+import { Card, EntityHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 const weekMetricTabs: { key: WeekMetricFilter; label: string }[] = [
@@ -72,7 +72,12 @@ export function PickerResultCard({ preview }: { preview: PickerPreview }) {
     return (
       <Card accent={tokens.color.program} style={styles.weekResult}>
         <View accessibilityLabel={`Previsualización Semana ${week.week_number}`}>
-        <ProgramWeekHeading title={`Previsualización Semana ${week.week_number}`} week={week.week_number} />
+          <EntityHeading
+            entity="program"
+            eyebrow="Previsualización semana"
+            identityIcon={CalendarRange}
+            title={`Semana ${week.week_number}`}
+          />
         </View>
         <View style={styles.weekChartGroup}>
           <View style={styles.weekTabsBleed}>
