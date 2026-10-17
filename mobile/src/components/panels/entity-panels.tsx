@@ -8,6 +8,7 @@ import ReanimatedSwipeable, { SwipeDirection, type SwipeableMethods } from "reac
 import Animated, { type SharedValue, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
+import { FoodVisualIcon } from "@/components/nutrition/food-visual-icon";
 import { EntityIcon, type EntityKind } from "@/components/ui";
 import { useScreenScrollControl } from "@/components/ui/layout";
 import { tokens } from "@/design/tokens";
@@ -32,6 +33,8 @@ export type FoodPanelItem = NutritionPanelValues & {
   detailId?: number | null;
   id: string;
   name: string;
+  emoji?: string | null;
+  visualKey?: string | null;
   quantity: number;
   quantityUnit: string;
   relationId?: number | null;
@@ -327,7 +330,7 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 }
 
 function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteraction, item, itemNameStyle, onOpenItem, showFoodPortion = false, showNutritionSummary = false, style = styles.gridLeadingCell }: { dragInteraction?: PanelRowDragInteraction; item: T; itemNameStyle?: StyleProp<TextStyle>; onOpenItem?: (item: T) => void; showFoodPortion?: boolean; showNutritionSummary?: boolean; style?: StyleProp<ViewStyle> }) {
-  const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>{showNutritionSummary ? <NutritionSummary item={item} /> : null}{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>;
+  const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}><FoodVisualIcon emoji={item.emoji} name={item.name} visualKey={item.visualKey} /><View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>{showNutritionSummary ? <NutritionSummary item={item} /> : null}{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View></View>;
   const canOpen = Boolean(onOpenItem && (item.detailId != null || (isMealPanelItem(item) && item.canOpen)));
   if (!canOpen) return <View style={style}>{content}</View>;
   return <Pressable {...dragInteraction} accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => runGuardedNavigation(() => onOpenItem?.(item))} style={style}>{content}</Pressable>;
@@ -651,7 +654,7 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
           <View style={[styles.editItem, isActive && styles.gestureRowActive, index === draftItems.length - 1 && styles.rowLast]}>
           <View style={[styles.row, styles.editRow]}>
             <EditDragHandle disabled={busy} drag={drag} label={`Reordenar ${item.name}`} />
-            <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}<Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text></Text></View>
+            <View style={[styles.editIdentity, styles.foodIdentity]}><FoodVisualIcon emoji={item.emoji} name={item.name} visualKey={item.visualKey} /><Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}<Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text></Text></View>
             <Text style={[styles.cell, styles.editValue, styles.editPortionValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
             <View style={[styles.editActions, styles.foodEditActions]}>
               <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
@@ -814,6 +817,7 @@ const styles = StyleSheet.create({
   menuAction: { alignItems: "center", alignSelf: "stretch", borderRadius: tokens.radius.pill, justifyContent: "center", minWidth: 24 },
   menuTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
+  foodIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: 2, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
   mealIdentityTitleRow: { alignItems: "center", alignSelf: "stretch", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentityName: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18, minWidth: 0 },

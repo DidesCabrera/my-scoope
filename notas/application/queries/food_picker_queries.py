@@ -3,6 +3,7 @@ from dataclasses import asdict, dataclass
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 
+from core.food_visual_identity import resolved_food_visual_identity
 from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
@@ -26,6 +27,8 @@ class FoodPickerItemDTO:
     fat: float
     total_kcal: float
     quantity_unit: str
+    emoji: str
+    visual_key: str
     alloc: dict
     picker_source: str
     picker_label: str
@@ -288,16 +291,26 @@ def build_food_picker_item_dto(
         food=food,
         user=user,
     )
+    display_name = resolve_food_picker_display_name(food)
+    visual = resolved_food_visual_identity(
+        display_name,
+        emoji=food.emoji,
+        visual_key=food.visual_key,
+        food_group=food.food_group,
+        food_subgroup=food.food_subgroup,
+    )
 
     return FoodPickerItemDTO(
         id=food.id,
         name=food.name,
-        display_name=resolve_food_picker_display_name(food),
+        display_name=display_name,
         protein=float(food.protein),
         carbs=float(food.carbs),
         fat=float(food.fat),
         total_kcal=float(food.total_kcal),
         quantity_unit=food.portion_unit,
+        emoji=visual.emoji,
+        visual_key=visual.visual_key,
         alloc=food.alloc,
         picker_source=picker_source,
         picker_label=resolve_food_picker_label(picker_source),

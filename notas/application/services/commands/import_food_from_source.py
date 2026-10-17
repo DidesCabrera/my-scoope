@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from django.db import transaction
 
+from core.food_visual_identity import infer_food_visual_identity
 from notas.application.dto.imported_food_dto import ImportedFoodDTO
 from notas.application.services.food_imports.normalization import normalize_imported_food
 from notas.application.services.food_imports.quality import evaluate_imported_food_quality
@@ -64,8 +65,15 @@ def import_food_from_source(dto: ImportedFoodDTO) -> ImportFoodFromSourceResult:
         )
 
     with transaction.atomic():
+        visual = infer_food_visual_identity(
+            normalized_dto.name,
+            food_group=normalized_dto.food_group,
+            food_subgroup=normalized_dto.food_subgroup,
+        )
         food = Food.objects.create(
             name=normalized_dto.name,
+            emoji=visual.emoji,
+            visual_key=visual.visual_key,
             canonical_name=normalized_dto.canonical_name,
             protein=float(normalized_dto.protein),
             carbs=float(normalized_dto.carbs),

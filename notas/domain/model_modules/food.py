@@ -63,6 +63,18 @@ class Food(models.Model):
 
     name = models.CharField(max_length=100)
 
+    emoji = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text="Optional visual copied from the Food Catalog or inferred for user foods.",
+    )
+
+    visual_key = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text="Stable semantic key for a future My Scoope custom food icon.",
+    )
+
     portion_unit = models.CharField(
         max_length=2,
         choices=PORTION_UNIT_CHOICES,

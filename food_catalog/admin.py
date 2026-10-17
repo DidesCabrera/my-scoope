@@ -135,6 +135,7 @@ class CatalogFoodAdmin(admin.ModelAdmin):
         "mark_as_archived",
     )
     list_display = (
+        "emoji",
         "display_name",
         "brand_name",
         "status",
@@ -157,6 +158,8 @@ class CatalogFoodAdmin(admin.ModelAdmin):
                     "catalog_ref",
                     "catalog_version",
                     "display_name",
+                    "emoji",
+                    "visual_key",
                     "canonical_name",
                     "brand_name",
                     "is_branded",

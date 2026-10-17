@@ -89,7 +89,7 @@ def _food_picker_item_payload(item):
         "is_user_food": item.is_user_food,
         "is_verified": item.is_verified,
         "data_quality_score": item.data_quality_score,
-        "quantity_unit": item.quantity_unit,
+        "quantity_unit": item.quantity_unit, "emoji": item.emoji, "visual_key": item.visual_key,
     }
 
 

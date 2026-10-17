@@ -33,7 +33,7 @@ import { LibraryActions } from "./library-actions";
 const sectionTitles = { foods: "Composición comida", meals: "Composición plan diario", weeks: "Semanas del programa" } as const;
 
 function foodPanelItem(item: LibraryItem["panel"]["foods"][number]): FoodPanelItem {
-  return { id: item.id, detailId: item.detail_id, relationId: item.relation_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, detailId: item.detail_id, relationId: item.relation_id, name: item.name, emoji: item.emoji, visualKey: item.visual_key, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelItem {
@@ -400,6 +400,8 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     afterNutrition={isPinnedPlan && item.panel.meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={item.panel.meals.map((meal) => meal.id)} /> : isPinnedMealContext ? <MealCompletionCard controller={pinnedMealAdherence} /> : undefined}
     completion={isPinnedPlan ? { noteCount: mealExecution.filter((entry) => entry.note.trim()).length } : isPinnedMealContext ? { noteCount: normalizedPinnedMealExecution?.note.trim() ? 1 : 0 } : undefined}
     entity={item.entity}
+    foodEmoji={item.emoji}
+    foodVisualKey={item.visual_key}
     eyebrowAccessory={item.entity === "meal" && hasMealTimeContext && contextTime ? <HeaderMetadataChip kind="time" value={contextTime} /> : undefined}
     indicators={detailIndicators}
     nutrition={libraryNutrition(item.nutrition)}

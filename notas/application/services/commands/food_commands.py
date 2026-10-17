@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from django.db import IntegrityError, transaction
 from django.db.models import Max
 
+from core.food_visual_identity import infer_food_visual_identity
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.domain.models import Food, FoodLabelCaptureReceipt, Meal, MealFood
@@ -204,8 +205,11 @@ def create_food_from_label_capture(
 
     try:
         with transaction.atomic():
+            visual = infer_food_visual_identity(clean_name)
             food = Food.objects.create(
                 name=clean_name,
+                emoji=visual.emoji,
+                visual_key=visual.visual_key,
                 protein=confirmed["protein_g"],
                 carbs=confirmed["carbs_g"],
                 fat=confirmed["fat_g"],
@@ -273,8 +277,12 @@ def create_food(
 ) -> FoodCreateResult:
     if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
         raise ValueError("food_portion_unit_invalid")
+    clean_name = (name or "").strip()
+    visual = infer_food_visual_identity(clean_name)
     food = Food.objects.create(
-        name=(name or "").strip(),
+        name=clean_name,
+        emoji=visual.emoji,
+        visual_key=visual.visual_key,
         protein=protein,
         carbs=carbs,
         fat=fat,
@@ -302,6 +310,9 @@ def update_food(
     if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
         raise ValueError("food_portion_unit_invalid")
     food.name = (name or "").strip()
+    visual = infer_food_visual_identity(food.name)
+    food.emoji = visual.emoji
+    food.visual_key = visual.visual_key
     food.protein = protein
     food.carbs = carbs
     food.fat = fat
@@ -310,6 +321,8 @@ def update_food(
     food.save(
         update_fields=[
             "name",
+            "emoji",
+            "visual_key",
             "protein",
             "carbs",
             "fat",
@@ -348,8 +361,12 @@ def bulk_create_foods(
         portion_unit = row.get("portion_unit", Food.PORTION_UNIT_GRAMS)
         if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
             raise ValueError("food_portion_unit_invalid")
+        clean_name = (row["name"] or "").strip()
+        visual = infer_food_visual_identity(clean_name)
         food = Food.objects.create(
-            name=(row["name"] or "").strip(),
+            name=clean_name,
+            emoji=visual.emoji,
+            visual_key=visual.visual_key,
             protein=row["protein"],
             carbs=row["carbs"],
             fat=row["fat"],

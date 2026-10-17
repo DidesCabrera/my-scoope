@@ -17,6 +17,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
+from core.food_visual_identity import resolved_food_visual_identity
 from food_catalog.application.contracts import (
     CandidateSourceType,
     CatalogEvidenceItem,
@@ -74,11 +75,20 @@ def build_operational_food_snapshot_payload(
     _ensure_published(catalog_food)
 
     solver_profile = build_catalog_solver_profile(catalog_food)
+    visual = resolved_food_visual_identity(
+        catalog_food.display_name,
+        emoji=catalog_food.emoji,
+        visual_key=catalog_food.visual_key,
+        food_group=catalog_food.food_group,
+        food_subgroup=catalog_food.food_subgroup,
+    )
 
     snapshot = PublishedFoodSnapshot(
         catalog_ref=str(catalog_food.catalog_ref),
         catalog_version=catalog_food.catalog_version,
         display_name=catalog_food.display_name,
+        emoji=visual.emoji,
+        visual_key=visual.visual_key,
         canonical_name=catalog_food.canonical_name,
         food_group=catalog_food.food_group,
         food_subgroup=catalog_food.food_subgroup,

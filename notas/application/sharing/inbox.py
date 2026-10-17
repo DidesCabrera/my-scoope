@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from django.db import transaction
 from django.utils import timezone
 
+from core.food_visual_identity import infer_food_visual_identity
 from notas.application.commercial.limits import (
     CommercialLimitReached,
     require_new_workspace_item,
@@ -63,8 +64,12 @@ def _food_from_snapshot(*, snapshot: dict, actor, quantity_grams: float = 100) -
         raise ShareUnavailable("share_snapshot_invalid")
     quantity = _number(quantity_grams)
     factor = 100 / quantity if quantity > 0 else 0
+    name = _clean_name(snapshot.get("name"), "") or _snapshot_title(snapshot, "Alimento compartido")
+    visual = infer_food_visual_identity(name)
     return Food.objects.create(
-        name=_clean_name(snapshot.get("name"), "") or _snapshot_title(snapshot, "Alimento compartido"),
+        name=name,
+        emoji=visual.emoji,
+        visual_key=visual.visual_key,
         protein=_number(nutrition.get("protein_grams")) * factor,
         carbs=_number(nutrition.get("carbs_grams")) * factor,
         fat=_number(nutrition.get("fat_grams")) * factor,

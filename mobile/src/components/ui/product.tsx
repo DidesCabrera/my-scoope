@@ -242,6 +242,7 @@ export function CompletionIndicators({ completedCount = 0, noteCount = 0, summar
 
 export function EntityHeading({
   title,
+  titleIcon,
   entity,
   eyebrow,
   subtitle,
@@ -255,6 +256,7 @@ export function EntityHeading({
   variant = "card",
 }: {
   title: string;
+  titleIcon?: ReactNode;
   entity: EntityKind;
   eyebrow?: string;
   subtitle?: string;
@@ -281,7 +283,10 @@ export function EntityHeading({
         </View>
         {eyebrowAccessory}
       </View>
-      <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
+      <View style={styles.headingTitleRow}>
+        {titleIcon}
+        <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
+      </View>
       {subtitle ? entity === "food" && isGramQuantity(subtitle) ? <FoodGramChip value={subtitle} /> : <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
       {indicators || completion ? (
         <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
@@ -312,6 +317,7 @@ export function EntityCard({
   entity,
   accent,
   title,
+  titleIcon,
   eyebrow,
   eyebrowAccessory,
   subtitle,
@@ -328,6 +334,7 @@ export function EntityCard({
   entity: EntityKind;
   accent?: string;
   title: string;
+  titleIcon?: ReactNode;
   eyebrow?: string;
   eyebrowAccessory?: ReactNode;
   subtitle?: string;
@@ -342,7 +349,7 @@ export function EntityCard({
 }>) {
   const content = (
     <Card accent={accent ?? tokens.color[entity]} style={[actions ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
-      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} identityColor={identityColor} indicators={indicators} subtitle={subtitle} title={title} />
+      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} identityColor={identityColor} indicators={indicators} subtitle={subtitle} title={title} titleIcon={titleIcon} />
       {children}
       {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
     </Card>
@@ -519,7 +526,8 @@ const styles = StyleSheet.create({
   sectionIconCompact: { height: 18, width: 18 },
   sectionIconHero: { height: 40, width: 40 },
   eyebrow: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
-  headingTitle: { color: tokens.color.textMain, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.bold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop },
+  headingTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.bold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop, minWidth: 0 },
+  headingTitleRow: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0 },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
   completionIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },

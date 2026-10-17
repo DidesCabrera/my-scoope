@@ -104,6 +104,8 @@ class FoodCatalogContractTests(TestCase):
             catalog_ref="catalog-food:chicken-breast-cooked",
             catalog_version="v1",
             display_name="Pechuga de pollo cocida",
+            emoji="🍗",
+            visual_key="chicken_breast",
             canonical_name="pechuga pollo cocida",
             food_group="meats",
             food_subgroup="poultry",
@@ -131,6 +133,8 @@ class FoodCatalogContractTests(TestCase):
             payload.food_defaults(),
             {
                 "name": "Pechuga de pollo cocida",
+                "emoji": "🍗",
+                "visual_key": "chicken_breast",
                 "protein": 31.0,
                 "carbs": 0.0,
                 "fat": 3.6,

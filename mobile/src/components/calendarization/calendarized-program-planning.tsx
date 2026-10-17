@@ -46,6 +46,8 @@ function foodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
     detailId: item.detail_id,
     id: item.id,
     name: item.name,
+    emoji: item.emoji,
+    visualKey: item.visual_key,
     quantity: item.quantity,
     quantityUnit: item.quantity_unit,
     calories: item.calories,
