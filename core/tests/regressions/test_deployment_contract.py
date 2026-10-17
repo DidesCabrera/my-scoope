@@ -42,6 +42,18 @@ class DeploymentContractTests(SimpleTestCase):
         self.assertIn("python manage.py seed_billing_catalog", predeploy)
         self.assertIn("--environment \"${catalog_environment}\"", predeploy)
 
+    def test_web_memory_plan_and_worker_recycling_are_scoped_to_web(self):
+        production = (ROOT / "render.yaml").read_text()
+        staging = (ROOT / "render.staging.yaml").read_text()
+        prod_web = production.split("  - type: web\n    name: my-scoope\n", 1)[1].split("  - type:", 1)[0]
+        staging_web = staging.split("  - type: web\n    name: myscoope-staging\n", 1)[1].split("  - type:", 1)[0]
+
+        self.assertIn("    plan: 1c-2g\n", prod_web)
+        self.assertIn("--workers 2 --timeout 120 --max-requests 500 --max-requests-jitter 100", prod_web)
+        self.assertIn("    plan: starter\n", staging_web)
+        self.assertIn("--workers 1 --timeout 120 --max-requests 500 --max-requests-jitter 100", staging_web)
+        self.assertIn("name: myscoope-cache\n    plan: starter", production)
+
     def test_render_blueprint_references_managed_data_services(self):
         blueprint = (ROOT / "render.yaml").read_text()
 

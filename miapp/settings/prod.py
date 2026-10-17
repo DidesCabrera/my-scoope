@@ -30,6 +30,10 @@ DATABASES = {"default": PRODUCTION_DATABASE}
 
 DEBUG = False
 
+# Per-worker high-water logging makes memory growth diagnosable without
+# retaining request data or adding any work to the response path.
+MIDDLEWARE = [*MIDDLEWARE, "core.memory_monitor.WorkerMemoryHighWaterMiddleware"]
+
 ALLOWED_HOSTS = _env_csv(
     "ALLOWED_HOSTS",
     ("www.myscoope.com", "myscoope.com", "my-scoope.onrender.com"),
