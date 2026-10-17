@@ -78,6 +78,18 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(food.portion_step_g, Decimal("10.000"))
         self.assertEqual(food.aliases.get().normalized_name, "pollo cocido")
 
+    def test_create_operational_snapshot_accepts_usda_catalog_evidence(self):
+        catalog_food = self._create_published_catalog_food()
+        source = catalog_food.sources.get()
+        source.source_type = CatalogFood.SOURCE_USDA
+        source.save(update_fields=["source_type"])
+
+        result = create_operational_food_snapshot_from_catalog(catalog_food)
+
+        self.assertEqual(result.food.catalog_food_id, catalog_food.id)
+        evidence = result.food.catalog_snapshot_payload["contract"]["snapshot_metadata"]["evidence"]
+        self.assertEqual(evidence[0]["source"], CatalogFood.SOURCE_USDA)
+
     def test_catalog_trace_fields_are_not_foreign_keys(self):
         catalog_food_id_field = Food._meta.get_field("catalog_food_id")
         catalog_food_ref_field = Food._meta.get_field("catalog_food_ref")
