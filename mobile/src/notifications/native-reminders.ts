@@ -11,9 +11,10 @@ import {
   shouldScheduleNativeReminders,
 } from "@/notifications/reminder-schedule";
 import { notificationRouteForReminder } from "@/notifications/notification-navigation";
+import type { ReminderPermission } from "./reminder-permissions";
 
 export type NativeReminderState = {
-  permission: "granted" | "denied" | "undetermined" | "unavailable";
+  permission: ReminderPermission;
   deliveryMode: "apns" | "local" | "none";
   scheduledCount: number;
 };
@@ -101,7 +102,7 @@ async function registerWithApns(apiRequest: AuthenticatedRequest): Promise<Apple
 }
 
 async function performNativeReminderSync(
-  reminders: ReminderSettings,
+  reminders: ReminderSettings | null,
   apiRequest: AuthenticatedRequest,
   { requestPermission = false }: NativeReminderSyncOptions = {},
 ): Promise<NativeReminderState> {
@@ -117,6 +118,10 @@ async function performNativeReminderSync(
   }
   const permission = permissionState(permissions);
   if (permission !== "granted") {
+    await cancelOwnedNotifications();
+    return { permission, deliveryMode: "none", scheduledCount: 0 };
+  }
+  if (!reminders) {
     await cancelOwnedNotifications();
     return { permission, deliveryMode: "none", scheduledCount: 0 };
   }
@@ -160,8 +165,9 @@ export function syncNativeRemindersForProgram(
   apiRequest: AuthenticatedRequest,
   options: NativeReminderSyncOptions = {},
 ): Promise<NativeReminderState> {
-  if (!reminders || !shouldScheduleNativeReminders(status)) return clearNativeReminders();
-  return syncNativeReminders(reminders, apiRequest, options);
+  return serializeNativeSync(() => performNativeReminderSync(
+    shouldScheduleNativeReminders(status) ? reminders : null, apiRequest, options,
+  ));
 }
 
 export async function refreshNativeReminders(

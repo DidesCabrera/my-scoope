@@ -106,6 +106,21 @@ busy states or applying a late response to another account. A success message
 requires matching plan evidence and usable credits. `credit_status` distinguishes
 ready balances from a pending previous reservation and a frozen wallet.
 
+Returning to Free removes the included monthly allowance, but preserves purchased
+credits as a visible, spendable balance. A Free account can reserve only its
+available purchased credits; it cannot obtain a new monthly grant or buy a new
+pack without Basic or Pro. Wallet freezes and reservations still block spending
+and protect plan transitions.
+
+The mobile price catalog reads fresh native product metadata on screen focus,
+foreground return, restore and purchase. It replaces previously quoted product
+IDs, including consumables, and discards a query if the storefront changes during
+the read. Failed price queries remove stale offers and expose a retry action.
+Transient purchase confirmations require a receipt from the current purchase
+attempt. Historical deliveries, automatic renewals and manual restore update
+financial state without repeating purchase success; restore owns one summary,
+cancellation is silent, and leaving the screen clears transient notices.
+
 Google Play purchases are environment-scoped from catalog exposure through
 server verification. `subscriptionsv2` and `productsv2` determine sandbox/live
 from Google's verified `testPurchase` context; evidence from the other

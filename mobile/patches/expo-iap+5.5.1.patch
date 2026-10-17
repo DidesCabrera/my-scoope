@@ -1,0 +1,78 @@
+diff --git a/node_modules/expo-iap/ios/ExpoIapModule.swift b/node_modules/expo-iap/ios/ExpoIapModule.swift
+--- a/node_modules/expo-iap/ios/ExpoIapModule.swift
++++ b/node_modules/expo-iap/ios/ExpoIapModule.swift
+@@ -1,6 +1,7 @@
+ import ExpoModulesCore
+ import Foundation
+ import OpenIAP
++import StoreKit
+ #if canImport(UIKit)
+ import UIKit
+ #endif
+@@ -11,6 +12,22 @@
+ public final class ExpoIapModule: Module {
+     private var isInitialized = false
+     private var listenerGeneration: UInt64?
++    private var myScoopeStorefrontTask: Task<Void, Never>?
++
++    // Ephemeral quote context only. Never attach storefront data to an account.
++    private nonisolated static func myScoopeStorefrontContext(_ storefront: Storefront) -> [String: Any] {
++        var currency: String?
++        if #available(iOS 17.0, tvOS 17.0, *) {
++            currency = storefront.currency?.identifier
++        }
++        return [
++            "id": storefront.id,
++            "countryCode": storefront.countryCode,
++            "currency": (currency as Any?) ?? NSNull(),
++            "observedAt": Date().timeIntervalSince1970 * 1000,
++            "environment": Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" ? "sandbox" : "unknown"
++        ]
++    }
+
+     nonisolated public func definition() -> ModuleDefinition {
+         Name("ExpoIap")
+@@ -23,19 +40,28 @@
+             IapEvent.purchaseUpdated.rawValue,
+             IapEvent.purchaseError.rawValue,
+             IapEvent.promotedProductIos.rawValue,
+-            IapEvent.subscriptionBillingIssue.rawValue
++            IapEvent.subscriptionBillingIssue.rawValue,
++            "myscoopeStorefrontChanged"
+         )
+
+         OnCreate { [weak self] in
+             Task { @MainActor [weak self] in
+                 guard let self else { return }
+                 self.listenerGeneration = ExpoIapHelper.setupStore(module: self)
++                self.myScoopeStorefrontTask = Task { @MainActor [weak self] in
++                    for await storefront in Storefront.updates {
++                        guard !Task.isCancelled, let self else { return }
++                        self.sendEvent("myscoopeStorefrontChanged", Self.myScoopeStorefrontContext(storefront))
++                    }
++                }
+             }
+         }
+
+         OnDestroy { [weak self] in
+             guard let self else { return }
+             Task { @MainActor [self] in
++                self.myScoopeStorefrontTask?.cancel()
++                self.myScoopeStorefrontTask = nil
+                 guard let listenerGeneration = self.listenerGeneration else { return }
+                 self.listenerGeneration = nil
+                 await ExpoIapHelper.cleanupStore(listenerGeneration: listenerGeneration)
+@@ -319,6 +345,13 @@
+             return nil
+         }
+
++        AsyncFunction("getMyScoopeStorefront") { () async throws -> [String: Any] in
++            guard let storefront = await Storefront.current else {
++                throw IapException.from(PurchaseError.make(code: .unknown, message: "Storefront unavailable"))
++            }
++            return Self.myScoopeStorefrontContext(storefront)
++        }
++
+         AsyncFunction("getStorefront") { () async throws -> String in
+             ExpoIapLog.payload("getStorefront", payload: nil)
+             let storefront = try await OpenIapModule.shared.getStorefront()

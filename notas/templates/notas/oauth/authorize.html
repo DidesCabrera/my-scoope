@@ -100,6 +100,13 @@
             para ayudarte a crear propuestas de dieta.
         </p>
 
+        <p>Cuenta: <strong>{{ request.user.email|default:request.user.username }}</strong></p>
+        <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="btn btn-secondary" type="submit">Usar otra cuenta</button>
+        </form>
+
         <p>Permisos solicitados:</p>
 
         <ul class="scope-list">

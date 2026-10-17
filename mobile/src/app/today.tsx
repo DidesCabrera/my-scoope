@@ -327,7 +327,10 @@ export default function TodayScreen() {
       <HomeLibraryGrid counts={libraryCounts} />
 
       {error ? (
-        <InlineNotice tone="error">{error}</InlineNotice>
+        <>
+          <InlineNotice tone="error">{error}</InlineNotice>
+          <Button label="Reintentar" loading={loading} onPress={() => void load()} variant="secondary" />
+        </>
       ) : null}
 
       {today?.measurements?.latest_weight_kg != null ? (

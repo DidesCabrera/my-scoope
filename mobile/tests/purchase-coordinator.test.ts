@@ -20,12 +20,13 @@ function overview(name = "Basic", product = basicId): SubscriptionData {
     can_buy_credit_packs: true, duplicate_active_providers: false,
     evidence: [{ provider: "apple_app_store", status: "authorized", period_end: null, product_id: product }] };
 }
-const purchase: StorePurchase = { id: "receipt-1", productId: proId, purchaseToken: "signed-receipt", purchaseState: "purchased", appAccountToken: "account-a" };
+const purchase: StorePurchase = { id: "receipt-1", productId: proId, purchaseToken: "signed-receipt", purchaseState: "purchased", appAccountToken: "account-a", transactionDate: 2000 };
 async function fixture(options: { provider?: "apple_app_store" | "google_play"; post?: (path: string) => Promise<unknown>; finish?: () => Promise<void>; wait?: (ms: number) => Promise<void> } = {}) {
   const calls: string[] = [];
   let server = overview();
   let serverCredits = entitlements(server.plan_name);
   const coordinator = new PurchaseCoordinator({ provider: options.provider ?? "apple_app_store", errorMessage: String,
+    now: () => 1000,
     finish: async (_purchase, consumable) => { calls.push(`finish:${consumable}`); await options.finish?.(); },
     wait: options.wait ?? (async () => undefined),
     apiRequest: async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -39,6 +40,41 @@ async function fixture(options: { provider?: "apple_app_store" | "google_play"; 
   return { coordinator, calls, setServer: (next: SubscriptionData, credits = entitlements(next.plan_name)) => { server = next; serverCredits = credits; } };
 }
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+test("foreground reconciliation expires an idle Pro plan, keeps purchased credits and clears its old notice", async () => {
+  let expired = false;
+  const purchased = (name: string, credits: number) => ({ ...entitlements(name), available_credits: credits, purchased_credits: 3000 });
+  const f = await fixture({ post: async () => ({ ...overview(expired ? "Free" : "Pro", proId), entitlements: purchased(expired ? "Free" : "Pro", expired ? 3000 : 3988) }) });
+  f.coordinator.begin(proId);
+  await f.coordinator.submit(purchase);
+  assert.equal(f.coordinator.state.phase, "active");
+  expired = true;
+  f.setServer(overview("Free"), purchased("Free", 3000));
+  await f.coordinator.reconcile();
+  assert.equal(f.coordinator.state.entitlements?.plan_name, "Free");
+  assert.equal(f.coordinator.state.entitlements?.available_credits, 3000);
+  assert.equal(f.coordinator.state.entitlements?.purchased_credits, 3000);
+  assert.equal(f.coordinator.state.phase, "idle");
+  assert.equal(f.coordinator.state.message, null);
+  f.coordinator.dispose();
+});
+
+test("a slow pre-purchase reconciliation cannot overwrite the later accepted purchase", async () => {
+  let release!: (value: unknown) => void;
+  const f = await fixture({ post: async (path) => path.endsWith("reconcile") ? new Promise((resolve) => { release = resolve; }) : ({ ...overview("Pro", proId), entitlements: entitlements("Pro") }) });
+  const reconciliation = f.coordinator.reconcile();
+  await flush();
+  f.coordinator.begin(proId);
+  const verification = f.coordinator.submit(purchase);
+  await flush();
+  assert.equal(f.calls.filter((call) => call.includes("/transactions")).length, 0);
+  release({ ...overview("Basic"), entitlements: entitlements("Basic") });
+  await reconciliation;
+  await verification;
+  assert.equal(f.coordinator.state.entitlements?.plan_name, "Pro");
+  assert.equal(f.calls.filter((call) => call.includes("/transactions")).length, 1);
+  f.coordinator.dispose();
+});
 
 test("an upgrade exposes the accepted benefits before completion, with one POST and no polling", async () => {
   const f = await fixture();
@@ -235,6 +271,7 @@ test("a purchased receipt without its signed token remains recoverable rather th
 test("a request deadline leaves the transaction unfinished and offers verification retry", async () => {
   let finished = 0;
   const coordinator = new PurchaseCoordinator({ provider: "apple_app_store", errorMessage: String,
+    now: () => 1000,
     requestTimeoutMs: 5, finish: async () => { finished++; },
     apiRequest: async <T,>(path: string, init?: RequestInit): Promise<T> => {
       if (init?.method !== "POST") return (path.endsWith("/entitlements") ? entitlements("Basic") : overview()) as T;
