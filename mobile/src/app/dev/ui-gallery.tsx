@@ -2,7 +2,6 @@ import { Redirect } from "expo-router";
 import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { useState } from "react";
 import { Image, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-
 import {
   ComparisonBuilder,
   ComparisonEditorCard,
@@ -105,13 +104,11 @@ const surfaces = [
   { key: "surfaceMuted", label: "Muted", role: "Paneles secundarios y campos" },
   { key: "surfaceElevated", label: "Elevated", role: "Controles activos y capas superiores" },
 ] as const;
-
 const foodPanelItems: FoodPanelItem[] = [
   { id: "oats", name: "Avena integral", quantity: 80, quantityUnit: "g", calories: 311, calorieShare: 34, proteinGrams: 10.5, carbsGrams: 52.8, fatGrams: 5.5, proteinAllocation: 14, carbsAllocation: 71, fatAllocation: 15 },
   { id: "yogurt", name: "Yogur griego", quantity: 180, quantityUnit: "g", calories: 176, calorieShare: 19, proteinGrams: 18, carbsGrams: 8.2, fatGrams: 7.1, proteinAllocation: 41, carbsAllocation: 19, fatAllocation: 40 },
   { id: "banana", name: "Plátano", quantity: 120, quantityUnit: "g", calories: 107, calorieShare: 12, proteinGrams: 1.3, carbsGrams: 27.4, fatGrams: 0.4, proteinAllocation: 5, carbsAllocation: 92, fatAllocation: 3 },
 ];
-
 const comparisonFoodItems: FoodPanelItem[] = [
   { id: "comparison-yogurt", name: "Yogur griego natural", quantity: 100, quantityUnit: "g", calories: 97, calorieShare: 61, proteinGrams: 9, carbsGrams: 3.8, fatGrams: 5, proteinAllocation: 37, carbsAllocation: 16, fatAllocation: 47 },
   { id: "comparison-skyr", name: "Skyr natural", quantity: 100, quantityUnit: "g", calories: 62, calorieShare: 39, proteinGrams: 12, carbsGrams: 4, fatGrams: 0.2, proteinAllocation: 75, carbsAllocation: 24, fatAllocation: 1 },
@@ -121,7 +118,6 @@ const mealPanelItems: MealPanelItem[] = [
   { id: "lunch", name: "Almuerzo", time: "13:30", foods: [{ name: "Arroz", quantity: 180, quantityUnit: "g" }, { name: "Pollo", quantity: 160, quantityUnit: "g" }, { name: "Ensalada", quantity: 120, quantityUnit: "g" }], calories: 720, calorieShare: 34, proteinGrams: 52, carbsGrams: 82, fatGrams: 20, proteinAllocation: 29, carbsAllocation: 46, fatAllocation: 25 },
   { id: "dinner", name: "Cena", time: "20:00", foods: [{ name: "Salmón", quantity: 170, quantityUnit: "g" }, { name: "Papas", quantity: 220, quantityUnit: "g" }, { name: "Verduras", quantity: 140, quantityUnit: "g" }], calories: 610, calorieShare: 29, proteinGrams: 43, carbsGrams: 58, fatGrams: 23, proteinAllocation: 28, carbsAllocation: 38, fatAllocation: 34 },
 ];
-
 const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
   {
     id: "breakfast-detail",
@@ -168,20 +164,16 @@ const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
     },
   },
 ];
-
 type Choice = "daily" | "weekly";
-
 const comparisonExamples: Record<ComparisonScope, { label: string }> = {
   food: { label: "Yogur griego natural" },
   meal: { label: "Desayuno proteico" },
   dailyPlan: { label: "Plan semanal equilibrado" },
 };
-
 const calendarPreviewWidths = [
   { label: "iPhone XR", width: 414 },
   { label: "Teléfono compacto", width: 375 },
 ] as const;
-
 const programDayExamples = [
   { filled: true, id: "mon", label: "L" },
   { filled: true, id: "tue", label: "M" },
@@ -191,7 +183,6 @@ const programDayExamples = [
   { filled: false, id: "sat", label: "S" },
   { filled: true, id: "sun", label: "D" },
 ];
-
 const activeProgramDayExamples = [
   { dayOfMonth: 8, filled: true, id: "active-tue", isToday: true, label: "M", monthLabel: "Sep" },
   { dayOfMonth: 9, filled: true, id: "active-wed", label: "X", monthLabel: "Sep" },
@@ -201,7 +192,6 @@ const activeProgramDayExamples = [
   { dayOfMonth: 13, filled: true, id: "active-sun", label: "D", monthLabel: "Sep" },
   { dayOfMonth: 14, filled: true, id: "active-mon", label: "L", monthLabel: "Sep" },
 ];
-
 export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
   const [tab, setTab] = useState<GalleryTab>("components");
