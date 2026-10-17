@@ -1,9 +1,10 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { CalendarDays, NotebookPen, Pencil, Scale } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ClipboardList, NotebookPen, Pencil, Plus, Scale } from "lucide-react-native";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
 import { MobileApiError, userFacingError } from "@/api/errors";
 import type {
@@ -25,7 +26,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, MealPanels } from "@/components/libraries/entity-panels";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, InlineNotice, LoadingState, NativeDateTimeField, SearchField, SectionTitle, textStyles } from "@/components/ui";
+import { Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
@@ -133,6 +134,41 @@ const dayOptions = [
   { id: 7, short: "D", label: "Domingo" },
 ];
 
+function MulticolorDayIcon({ kind }: { kind: "check" | "refresh" }) {
+  const gradientId = useId().replace(/:/g, "");
+  return (
+    <Svg height={24} pointerEvents="none" viewBox="0 0 24 24" width={24}>
+      <Defs>
+        <LinearGradient id={gradientId} x1="0" x2="1" y1="1" y2="0">
+          <Stop offset="0" stopColor={tokens.color.protein} />
+          <Stop offset="0.5" stopColor={tokens.color.carbs} />
+          <Stop offset="1" stopColor={tokens.color.fat} />
+        </LinearGradient>
+      </Defs>
+      {kind === "check"
+        ? <Path d="M20 6 9 17l-5-5" fill="none" stroke={`url(#${gradientId})`} strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} />
+        : <><Path d="M21 12a9 9 0 0 0-15.5-6.2L3 8" fill="none" stroke={`url(#${gradientId})`} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.6} /><Path d="M3 3v5h5" fill="none" stroke={`url(#${gradientId})`} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.6} /><Path d="M3 12a9 9 0 0 0 15.5 6.2L21 16" fill="none" stroke={`url(#${gradientId})`} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.6} /><Path d="M16 16h5v5" fill="none" stroke={`url(#${gradientId})`} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.6} /></>}
+    </Svg>
+  );
+}
+
+function AssignmentDayOption({ day, occupied, selected, onPress }: { day: (typeof dayOptions)[number]; occupied: boolean; selected: boolean; onPress(): void }) {
+  const { compact } = useWeekDayLayout();
+  return (
+    <WeekDayCell label={day.short}>
+      <Pressable
+        accessibilityLabel={`${day.label}: ${selected ? occupied ? "reemplazar plan diario" : "asignar plan diario" : occupied ? "plan diario asignado" : "agregar plan diario"}`}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: selected }}
+        hitSlop={compact ? 2 : undefined}
+        onPress={onPress}
+        style={({ pressed }) => [styles.assignmentDay, compact && styles.assignmentDayCompact, selected && styles.assignmentDaySelected, pressed && styles.pressed]}>
+        {selected ? <MulticolorDayIcon kind={occupied ? "refresh" : "check"} /> : occupied ? <View style={styles.assignmentPlanIcon}><ClipboardList color={tokens.color.entityIconForeground} size={15} strokeWidth={2.2} /></View> : <Plus color={tokens.color.textMain} size={25} strokeWidth={2.2} />}
+      </Pressable>
+    </WeekDayCell>
+  );
+}
+
 function optionFromLibrary(item: LibraryItem | CompositionOption): PickerOption {
   return {
     id: item.id,
@@ -162,7 +198,7 @@ function optionFromFood(item: FoodPickerOption): PickerOption {
   };
 }
 
-function PickerOptionCard({ actionLabel, onAction, option }: { actionLabel?: string; onAction?(): void; option: PickerOption }) {
+function PickerOptionCard({ actionLabel, onAction, option, showPanels = true }: { actionLabel?: string; onAction?(): void; option: PickerOption; showPanels?: boolean }) {
   return (
     <NutritionEntityCard
       actions={actionLabel && onAction ? (
@@ -173,8 +209,8 @@ function PickerOptionCard({ actionLabel, onAction, option }: { actionLabel?: str
       nutrition={libraryNutrition(option.nutrition)}
       subtitle={option.subtitle}
       title={option.name}>
-      {option.panel?.kind === "foods" ? <FoodPanels items={option.panel.foods} /> : null}
-      {option.panel?.kind === "meals" ? <MealPanels items={option.panel.meals} /> : null}
+      {showPanels && option.panel?.kind === "foods" ? <FoodPanels items={option.panel.foods} /> : null}
+      {showPanels && option.panel?.kind === "meals" ? <MealPanels items={option.panel.meals} /> : null}
     </NutritionEntityCard>
   );
 }
@@ -340,6 +376,11 @@ export function CompositionPickerScreen({
   }, [contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, relationKey, selected, weekNumber]);
   const payloadKey = payload ? JSON.stringify(payload) : null;
   const previewing = configurationValid && previewRequestKey === payloadKey;
+  const occupiedDayNumbers = useMemo(() => {
+    if (preview?.result?.entity !== "week" || preview.result.panel.kind !== "weeks") return new Set<number>();
+    const week = preview.result.panel.weeks[0];
+    return new Set(week?.days.flatMap((day) => day.plan_name && day.projected_label !== "Por agregar" ? [day.day_number ?? 1] : []) ?? []);
+  }, [preview]);
 
   useEffect(() => {
     if (!configurationValid || !payload || !payloadKey) return;
@@ -436,7 +477,7 @@ export function CompositionPickerScreen({
 
   const selectedCard = (
     <View>
-      {configuredSelection ? <PickerOptionCard option={configuredSelection} /> : null}
+      {configuredSelection ? <PickerOptionCard option={configuredSelection} showPanels={kind !== "dailyplan-to-program"} /> : null}
     </View>
   );
   const mealTimeCard = isMealPicker && selected ? (
@@ -479,33 +520,19 @@ export function CompositionPickerScreen({
   const configurationCard = (
     <View style={styles.configurationSticky}>
       {selected ? (
-        <Card>
+        <View>
           {kind === "dailyplan-to-program" ? (
             <View style={styles.daysBlock}>
-              <View style={styles.configurationLabel}>
-                <CalendarDays color={tokens.color.textMuted} size={18} />
-                <Text style={styles.fieldLabel}>Días de la Semana {weekNumber}</Text>
-              </View>
-              <View accessibilityRole="radiogroup" style={styles.days}>
+              <WeekDayGrid accessibilityLabel={`Días de la Semana ${weekNumber}`}>
                 {dayOptions.map((day) => {
                   const isSelected = dayNumbers.includes(day.id);
-                  return (
-                    <Pressable
-                      accessibilityLabel={day.label}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: isSelected }}
-                      key={day.id}
-                      onPress={() => toggleDay(day.id)}
-                      style={[styles.day, isSelected && styles.daySelected]}>
-                      <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{day.short}</Text>
-                    </Pressable>
-                  );
+                  return <AssignmentDayOption day={day} key={day.id} occupied={occupiedDayNumbers.has(day.id)} onPress={() => toggleDay(day.id)} selected={isSelected} />;
                 })}
-              </View>
+              </WeekDayGrid>
               {!dayNumbers.length ? <InlineNotice tone="warning">Selecciona al menos un día.</InlineNotice> : null}
             </View>
           ) : null}
-        </Card>
+        </View>
       ) : null}
     </View>
   );
@@ -524,7 +551,7 @@ export function CompositionPickerScreen({
       disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
       label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
       loading={submitting}
-      onPress={() => preview.confirmation_required ? setConfirming(true) : void commit()}
+      onPress={() => preview.confirmation_required && kind !== "dailyplan-to-program" ? setConfirming(true) : void commit(preview.confirmation_required)}
     />
   ) : null;
 
@@ -533,22 +560,19 @@ export function CompositionPickerScreen({
       {isFoodPicker ? foodPortionCard : mealTimeCard}
       <ScrollView
         automaticallyAdjustKeyboardInsets
-        contentContainerStyle={styles.configurationScrollContent}
+        contentContainerStyle={[styles.configurationScrollContent, kind === "dailyplan-to-program" && styles.programConfigurationScrollContent]}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={kind === "dailyplan-to-program" ? [1] : undefined}>
-        {selectedCard}
+        stickyHeaderIndices={kind === "dailyplan-to-program" ? [0] : undefined}>
         {kind === "dailyplan-to-program" ? configurationCard : null}
+        {selectedCard}
 
       {error ? <RecoverableErrorState message={error} onRetry={() => { setError(null); setRetryNonce((value) => value + 1); }} /> : null}
 
       {previewing || preview?.result ? (
         <View style={styles.previewSection}>
-          <View style={styles.previewHeading}>
-            <SectionTitle title="Previsualización del impacto" />
-            {previewing ? <ActivityIndicator color={tokens.color.interactivePrimary} size="small" /> : null}
-          </View>
+          {previewing ? <MacroLoadingIndicator accessibilityLabel="Actualizando previsualización" size="small" style={styles.previewActivity} /> : null}
           {preview?.result ? <PickerResultCard preview={preview} /> : null}
           {preview?.replacements.length ? <InlineNotice tone="warning">Se reemplazarán: {preview.replacements.join(", ")}.</InlineNotice> : null}
         </View>
@@ -570,14 +594,12 @@ const styles = StyleSheet.create({
   configurationLabel: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   configurationSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   configurationScrollContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
-  configurationSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
-  day: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 34, justifyContent: "center", width: 34 },
-  daySelected: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
-  dayText: { color: tokens.color.textMuted, fontSize: 14, fontWeight: "800" },
-  dayTextSelected: { color: tokens.color.surfaceApp },
-  days: { flexDirection: "row", gap: tokens.spacing.xs, justifyContent: "space-between" },
+  configurationSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
+  assignmentDay: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderStyle: "dashed", borderWidth: 1, height: 44, justifyContent: "center", overflow: "hidden", width: 44 },
+  assignmentDayCompact: { height: 40, width: 40 },
+  assignmentDaySelected: { borderStyle: "solid" },
+  assignmentPlanIcon: { alignItems: "center", backgroundColor: tokens.color.dailyPlan, borderRadius: tokens.spacing.compact, height: 26, justifyContent: "center", width: 26 },
   daysBlock: { gap: tokens.spacing.sm },
-  fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   foodFixedPortion: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 8, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
   fixedPickerFooter: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 68, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.sm },
   mealFixedTime: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 8, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
@@ -586,8 +608,10 @@ const styles = StyleSheet.create({
   noteHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 32 },
   noteInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 42, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
-  previewHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", width: "100%" },
+  previewActivity: { alignSelf: "center", marginVertical: tokens.spacing.xs },
   previewSection: { gap: tokens.spacing.lg },
+  pressed: { opacity: 0.68 },
+  programConfigurationScrollContent: { paddingTop: tokens.spacing.sm },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },

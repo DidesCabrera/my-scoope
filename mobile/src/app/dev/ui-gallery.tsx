@@ -683,7 +683,14 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Animación de proteína, carbos y grasas" title="Carga entre vistas" />
           <Card>
             <View style={styles.loadingPreview}>
-              <MacroLoadingIndicator accessibilityLabel="Preparando tu día" />
+              <View style={styles.loadingVariant}>
+                <Text style={styles.loadingVariantLabel}>Regular · transición de vista</Text>
+                <MacroLoadingIndicator accessibilityLabel="Preparando tu día" />
+              </View>
+              <View style={styles.loadingVariant}>
+                <Text style={styles.loadingVariantLabel}>Compacta · actualización en contexto</Text>
+                <MacroLoadingIndicator accessibilityLabel="Actualizando contenido" size="small" />
+              </View>
             </View>
           </Card>
           <SectionTitle detail="Interactivos" title="Controles" />
@@ -823,7 +830,9 @@ const styles = StyleSheet.create({
   allocationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   allocationLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", width: 96 },
   allocationBarInRow: { flex: 1, minWidth: 0, width: "auto" },
-  loadingPreview: { alignItems: "center", justifyContent: "center", minHeight: 180 },
+  loadingPreview: { gap: tokens.spacing.xl, minHeight: 180, paddingVertical: tokens.spacing.md },
+  loadingVariant: { alignItems: "center", gap: tokens.spacing.md, justifyContent: "center" },
+  loadingVariantLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   launchPreview: { alignItems: "center", aspectRatio: 9 / 16, backgroundColor: "#000000", borderColor: tokens.color.borderStrong, borderRadius: 30, borderWidth: 1, justifyContent: "center", maxHeight: 560, overflow: "hidden", width: "100%" },
   launchImageFrame: { aspectRatio: 1052 / 296, width: "50%" },
   launchImage: { height: "100%", width: "100%" },

@@ -1,9 +1,21 @@
 import type { LibraryFoodPanelItem, LibraryMealPanelItem, PickerPreview } from "@/api/types";
-import { ProgramDayComparisonPanels, type ProgramDayNutrition } from "@/components/libraries/program-day-comparison-panels";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { programDailyMetricData, WeekMetricPreview, type WeekMetricFilter } from "@/components/libraries/program-child-card";
+import { ProgramWeekHeading } from "@/components/libraries/program-planning-controls";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
-import { EntityCard, EntityCardPanelSlot } from "@/components/ui";
+import { EntityPanelTabs, FoodPanels, MealPanels, PanelSurface, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
+import { Card } from "@/components/ui";
+import { tokens } from "@/design/tokens";
+
+const weekMetricTabs: { key: WeekMetricFilter; label: string }[] = [
+  { key: "calories", label: "Calorías" },
+  { key: "ppk", label: "PPK" },
+  { key: "macros", label: "Macros" },
+  { key: "allocation", label: "Alloc" },
+  { key: "all", label: "Todos" },
+];
 
 function foodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return {
@@ -47,31 +59,8 @@ function mealPanelItem(item: LibraryMealPanelItem): MealPanelItem {
   };
 }
 
-function weekRows(preview: PickerPreview): ProgramDayNutrition[] {
-  const week = preview.result?.panel.weeks[0];
-  if (!week) return [];
-  return week.days.map((day) => ({
-    allocation: {
-      protein: day.nutrition?.protein.allocation ?? 0,
-      carbs: day.nutrition?.carbs.allocation ?? 0,
-      fat: day.nutrition?.fat.allocation ?? 0,
-    },
-    calorieShare: day.nutrition ? day.nutrition.calories / Math.max(week.calories, 1) * 100 : 0,
-    calories: day.nutrition?.calories ?? 0,
-    carbsGrams: day.nutrition?.carbs.grams ?? 0,
-    day: day.day_label,
-    dayNumber: day.day_number ?? 1,
-    fatGrams: day.nutrition?.fat.grams ?? 0,
-    id: day.id ?? `${week.id}:${day.day_number ?? day.day_label}`,
-    planName: day.plan_name,
-    ppk: day.nutrition?.protein.per_kilogram ?? 0,
-    projectedLabel: day.projected_label,
-    proteinGrams: day.nutrition?.protein.grams ?? 0,
-    week: week.week_number,
-  }));
-}
-
 export function PickerResultCard({ preview }: { preview: PickerPreview }) {
+  const [activeMetricTab, setActiveMetricTab] = useState<WeekMetricFilter>("calories");
   const result = preview.result;
   if (!result) return null;
   const week = result.panel.weeks[0];
@@ -81,11 +70,26 @@ export function PickerResultCard({ preview }: { preview: PickerPreview }) {
     : undefined;
   if (result.entity === "week" && week) {
     return (
-      <EntityCard entity="program" eyebrow="Resultado proyectado" title={result.name}>
-        <EntityCardPanelSlot>
-          <ProgramDayComparisonPanels rows={weekRows(preview)} week={week.week_number} />
-        </EntityCardPanelSlot>
-      </EntityCard>
+      <Card accent={tokens.color.program} style={styles.weekResult}>
+        <View accessibilityLabel={`Previsualización Semana ${week.week_number}`}>
+        <ProgramWeekHeading title={`Previsualización Semana ${week.week_number}`} week={week.week_number} />
+        </View>
+        <View style={styles.weekChartGroup}>
+          <View style={styles.weekTabsBleed}>
+            <EntityPanelTabs activeTab={activeMetricTab} onChange={setActiveMetricTab} tabs={weekMetricTabs} />
+          </View>
+          <PanelSurface style={styles.weekChartPanel}>
+            <View style={styles.weekChartPanelBody}>
+              <WeekMetricPreview
+                axisLabels={week.days.map((day) => day.day_label.slice(0, 1).toUpperCase())}
+                data={programDailyMetricData([week])}
+                days={7}
+                filter={activeMetricTab}
+              />
+            </View>
+          </PanelSurface>
+        </View>
+      </Card>
     );
   }
   return (
@@ -117,3 +121,11 @@ export function PickerResultCard({ preview }: { preview: PickerPreview }) {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  weekResult: { gap: tokens.spacing.lg, minWidth: 0 },
+  weekChartGroup: { gap: 0 },
+  weekTabsBleed: { marginHorizontal: -(6 + tokens.spacing.sm) },
+  weekChartPanel: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.card.outerPadding },
+  weekChartPanelBody: { paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.layout.reducedInset, paddingTop: tokens.spacing.sm },
+});

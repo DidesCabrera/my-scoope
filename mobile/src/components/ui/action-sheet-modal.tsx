@@ -6,6 +6,7 @@ import { BlurView } from "expo-blur";
 import { requireOptionalNativeModule } from "expo-modules-core";
 import {
   Animated,
+  ActivityIndicator,
   Easing,
   KeyboardAvoidingView,
   Modal,
@@ -160,12 +161,13 @@ export function ActionSheetActions({ children }: PropsWithChildren) {
   );
 }
 
-export function ActionSheetAction({ destructive = false, disabled = false, icon: Icon, iconNode, label, onPress }: { destructive?: boolean; disabled?: boolean; icon?: LucideIcon; iconNode?: ReactNode; label: string; onPress(): void }) {
+export function ActionSheetAction({ destructive = false, disabled = false, icon: Icon, iconNode, label, loading = false, onPress }: { destructive?: boolean; disabled?: boolean; icon?: LucideIcon; iconNode?: ReactNode; label: string; loading?: boolean; onPress(): void }) {
   const color = destructive ? tokens.color.danger : tokens.color.textMain;
   return (
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.actionRow, (pressed || disabled) && styles.pressed]}>
       <View style={styles.actionIcon}>{iconNode ?? (Icon ? <Icon color={color} size={18} /> : null)}</View>
       <Text style={[styles.actionLabel, destructive && styles.actionLabelDanger]}>{label}</Text>
+      {loading ? <ActivityIndicator color={tokens.color.interactivePrimary} size="small" /> : null}
     </Pressable>
   );
 }

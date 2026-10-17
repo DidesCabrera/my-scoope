@@ -28,10 +28,9 @@ test("the macro loading proposal uses trackless KPI allocation bars and respects
     "withSequence(",
     "Easing.linear",
     "transitionDuration(values[index], value)",
-    "transform: [{ scaleX: width.get() }]",
+    "width: width.get()",
     "width.set(withDelay(",
-    'transformOrigin: "left"',
-    'width: "100%"',
+    "availableWidth * value / 100",
     "useFocusEffect(useCallback(",
     'AppState.currentState === "active"',
     'AppState.addEventListener("change"',
@@ -43,10 +42,15 @@ test("the macro loading proposal uses trackless KPI allocation bars and respects
     "barHeight * 0.72",
     "contentGap * 0.72",
     "width: 79.2",
+    'size?: "regular" | "small"',
+    "barSlotSmall: { height: 5 }",
+    'containerSmall: { gap: 2, transform: [{ translateX: 0 }], width: 32 }',
   ];
   const galleryContracts = [
     'title="Carga entre vistas"',
     '<MacroLoadingIndicator accessibilityLabel="Preparando tu día"',
+    'Compacta · actualización en contexto',
+    '<MacroLoadingIndicator accessibilityLabel="Actualizando contenido" size="small"',
   ];
 
   assert.equal(componentContracts.every((contract) => component.includes(contract)), true);
@@ -55,6 +59,8 @@ test("the macro loading proposal uses trackless KPI allocation bars and respects
   assert.equal(productSources.every((source) => source.includes("surfaceApp") || source.includes("<LoadingState")), true);
   assert.equal(productSources[3].includes('if (loading && mode === "list" && !page) return <LoadingState'), true);
   assert.equal(component.includes("allocationPanelTrack"), false);
+  assert.equal(component.includes("scaleX"), false);
+  assert.equal(component.includes("transformOrigin"), false);
   assert.equal(component.includes("Easing.inOut"), false);
   assert.equal(component.includes("withDelay("), true);
   assert.equal(component.includes("const cycle"), false);

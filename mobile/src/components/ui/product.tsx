@@ -27,6 +27,7 @@ import {
 import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
+import { runGuardedNavigation } from "@/navigation/navigation-press-guard";
 import { Chip } from "./chip";
 import { Button } from "./controls";
 import { Card } from "./surfaces";
@@ -297,7 +298,7 @@ export function EntityHeading({
           accessibilityLabel={headingLink.label}
           accessibilityRole="link"
           hitSlop={4}
-          onPress={headingLink.onPress}
+          onPress={() => runGuardedNavigation(headingLink.onPress)}
           style={({ pressed }) => [styles.headingCopy, styles.headingLink, pressed && styles.pressed]}>
           {copy}
         </Pressable>
@@ -364,7 +365,7 @@ export function EntityCardAction({ children, label, onPress, role = "button" }: 
       accessibilityLabel={label}
       accessibilityRole={role}
       hitSlop={8}
-      onPress={onPress}
+      onPress={() => role === "link" ? runGuardedNavigation(onPress) : onPress()}
       style={({ pressed }) => [styles.entityCardAction, pressed && styles.pressed]}>
       {children}
     </Pressable>
