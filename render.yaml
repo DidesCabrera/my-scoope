@@ -146,6 +146,10 @@ services:
         value: CW5B8SKS47
       - key: MYSCOOPE_ANDROID_SHA256_CERT_FINGERPRINTS
         sync: false
+      - key: FOOD_CATALOG_RELEASE_URL
+        value: https://myscoope-food-catalog.onrender.com
+      - key: FOOD_CATALOG_RELEASE_TOKEN
+        sync: false
 
   - type: worker
     name: my-scoope-ai-jobs
