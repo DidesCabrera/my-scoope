@@ -30,7 +30,6 @@ test("program week cards expose duplicate and conditionally expose delete", asyn
 
   assert.match(program, /<ContextCardActions/);
   assert.match(program, /label: "Duplicar semana"/);
-  assert.match(program, /label: "Editar semana"/);
   assert.match(program, /canRemoveWeek && onRemoveWeek/);
   assert.match(program, /label: "Eliminar semana"/);
   assert.match(program, /canRemoveWeek=\{weeksCount > 1\}/);

@@ -355,11 +355,6 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       onAddWeek={item.can_calendarize ? () => router.push(`/pickers/week-to-program?programId=${item.id}` as Href) : undefined}
       onAssignDailyPlan={item.can_calendarize ? (week, day) => router.push(pickerHref("dailyplan-to-program", { programId: item.id, weekNumber: week, dayNumber: day })) : undefined}
       onDuplicateWeek={item.can_calendarize ? async (week) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/duplicate`, { method: "POST" }); } : undefined}
-      onEditWeek={item.can_calendarize ? (week) => {
-        const assignedDay = item.panel.weeks.find((candidate) => candidate.week_number === week)?.days.find((day) => day.dailyplan_id);
-        if (!assignedDay?.dailyplan_id) return;
-        router.push(pickerConfigureHref("dailyplan-to-program", { dayNumber: assignedDay.day_number, selectedId: assignedDay.dailyplan_id, targetId: item.id, weekNumber: week }));
-      } : undefined}
       onHeaderVisibilityChange={setCompactHeaderVisible}
       onOpenDailyPlan={(week, day) => {
         const programDay = item.panel.weeks.find((candidate) => candidate.week_number === week)?.days.find((candidate) => candidate.day_number === day);

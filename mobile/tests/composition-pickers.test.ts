@@ -171,9 +171,6 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /refreshNativeReminders/);
   matches(picker, /idempotency_key: idempotencyKey\.current/);
   matches(picker, /confirm_replacement: confirmReplacements/);
-  const libraryDetail = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
-  matches(libraryDetail, /onEditWeek=\{item\.can_calendarize \? \(week\) =>/);
-  matches(libraryDetail, /pickerConfigureHref\("dailyplan-to-program", \{ dayNumber: assignedDay\.day_number, selectedId: assignedDay\.dailyplan_id, targetId: item\.id, weekNumber: week \}\)/);
   const configureRoute = await readFile(path.resolve(process.cwd(), "src/app/pickers/configure.tsx"), "utf8");
   matches(configureRoute, /selectedId/);
   matches(configureRoute, /CompositionPickerScreen/);
