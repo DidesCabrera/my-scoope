@@ -1,23 +1,23 @@
 import { type Href, useRouter } from "expo-router";
-import { Copy, MoreHorizontal, Trash2 } from "lucide-react-native";
+import { Calendar1, Carrot, ClipboardList, Copy, MoreHorizontal, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
-import { GroupedFoodsCard, type FoodPanelItem } from "@/components/panels";
+import { EntityPanelTabs, GroupedFoodsCard, PanelSurface, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
-import { EntityHeading, layoutStyles, SectionDivider, StructuralIndicators } from "@/components/ui";
+import { EntityHeading, layoutStyles, StructuralIndicators } from "@/components/ui";
 import { Button } from "@/components/ui/controls";
-import { ProgramMetricPreview, programDailyMetricData } from "./program-child-card";
+import { ProgramMetricPreview, programDailyMetricData, WeekMetricPreview, type WeekMetricFilter } from "./program-child-card";
 import { ProgramDailyPlanPreview } from "./program-daily-plan-preview";
 import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "./program-planning-controls";
-import { ProgramDayComparisonPanels, type ProgramDayNutrition } from "./program-day-comparison-panels";
 import { ProgramWeekComparisonPanels, type ProgramWeekSummary } from "./program-week-comparison-panels";
 import { ContextCardActions, type ContextCardAction } from "./context-card-actions";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 
 const weekSummaries: ProgramWeekSummary[] = [
   { allocation: { carbs: 47, fat: 29, protein: 24 }, averageCalories: 2040, calories: 14280, carbsGrams: 1546, dailyPlans: 7, fatGrams: 427, id: "week-1", ppk: 1.9, proteinGrams: 1064, week: 1 },
@@ -25,6 +25,13 @@ const weekSummaries: ProgramWeekSummary[] = [
 ];
 
 const dayLabels = ["L", "M", "X", "J", "V", "S", "D"];
+const weekMetricTabs: { key: WeekMetricFilter; label: string }[] = [
+  { key: "calories", label: "Calorías" },
+  { key: "ppk", label: "PPK" },
+  { key: "macros", label: "Macros" },
+  { key: "allocation", label: "Alloc" },
+  { key: "all", label: "Todos" },
+];
 
 const weekFoodItems: FoodPanelItem[] = [
   { calories: 1210, calorieShare: 21, carbsAllocation: 75, carbsGrams: 226, fatAllocation: 12, fatGrams: 16, id: "week-rice", name: "Arroz cocido", proteinAllocation: 13, proteinGrams: 39, quantity: 1260, quantityUnit: "g" },
@@ -73,33 +80,13 @@ function ProgramDaysGrid({ onAssignDailyPlan, onOpenDailyPlan, onOpenMeal, onRem
   );
 }
 
-function dayRows(week: LibraryWeekPanelItem): ProgramDayNutrition[] {
-  return week.days.map((day) => ({
-    allocation: {
-      protein: day.nutrition?.protein.allocation ?? 0,
-      carbs: day.nutrition?.carbs.allocation ?? 0,
-      fat: day.nutrition?.fat.allocation ?? 0,
-    },
-    calorieShare: day.nutrition ? day.nutrition.calories / Math.max(week.calories, 1) * 100 : 0,
-    calories: day.nutrition?.calories ?? 0,
-    carbsGrams: day.nutrition?.carbs.grams ?? 0,
-    day: day.day_label,
-    dayNumber: day.day_number ?? 1,
-    fatGrams: day.nutrition?.fat.grams ?? 0,
-    id: day.id ?? `${week.id}:day:${day.day_number ?? day.day_label}`,
-    planName: day.plan_name,
-    ppk: day.nutrition?.protein.per_kilogram ?? 0,
-    proteinGrams: day.nutrition?.protein.grams ?? 0,
-    week: week.week_number,
-  }));
-}
-
 function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return { id: item.id, detailId: item.detail_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
-export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onOpenDailyPlan, onOpenFood, onOpenMeal, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onSaveDailyPlan, showHeading = true, showWeekAnalytics = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onOpenDailyPlan?: (week: number, day: number) => void; onOpenFood?: (foodId: number) => void; onOpenMeal?: (week: number, day: number, mealIndex: number) => void; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>; onSaveDailyPlan?: (week: number, day: number) => Promise<void>; showHeading?: boolean; showWeekAnalytics?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
+export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onOpenDailyPlan, onOpenFood, onOpenMeal, onRemoveDailyPlan, onRemoveWeek, onSaveDailyPlan, showHeading = true, showWeekAnalytics = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onOpenDailyPlan?: (week: number, day: number) => void; onOpenFood?: (foodId: number) => void; onOpenMeal?: (week: number, day: number, mealIndex: number) => void; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>; onSaveDailyPlan?: (week: number, day: number) => Promise<void>; showHeading?: boolean; showWeekAnalytics?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
   const router = useRouter();
+  const [activeMetricTab, setActiveMetricTab] = useState<WeekMetricFilter>("calories");
   const liveMetricData = weekData ? programDailyMetricData([weekData]) : undefined;
   const filledDaysCount = weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6;
   const hasPlans = filledDaysCount > 0;
@@ -140,28 +127,36 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
         />
       </View> : null}
 
-      {hasPlans ? <SectionHeading detail={`${filledDaysCount} asignados`} title="Planes diarios esta semana" /> : null}
+      {hasPlans && showWeekAnalytics ? <>
+        <View style={styles.weekChartSection}>
+          <View style={styles.weekChartPanelGroup}>
+            <View style={styles.metricTabsBleed}>
+              <EntityPanelTabs activeTab={activeMetricTab} onChange={setActiveMetricTab} tabs={weekMetricTabs} />
+            </View>
+            <PanelSurface style={styles.weekChartPanel}>
+              <View style={styles.weekChartPanelBody}>
+                <WeekMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} filter={activeMetricTab} />
+              </View>
+            </PanelSurface>
+          </View>
+        </View>
+      </> : null}
+
+      <View style={styles.dailyPlansSectionHeading}>
+        <SectionHeading icon={<ClipboardList color={tokens.color.entityIconForeground} size={18} />} title={`Planes diarios en Semana ${week}`} />
+      </View>
       <ProgramDaysGrid key={`${week}:${weekData?.days.map((day) => Number(Boolean(day.plan_name))).join("") ?? "demo"}`} onAssignDailyPlan={onAssignDailyPlan} onOpenDailyPlan={onOpenDailyPlan} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onSaveDailyPlan={onSaveDailyPlan} week={week} weekData={weekData} />
 
       {hasPlans ? <>
-        <SectionDivider spacing="compact" tone="soft" />
-        <SectionHeading detail={`${weekData?.foods_count ?? weekData?.foods?.length ?? 28} alimentos`} title="Alimentos en esta semana" />
+        <View style={styles.foodsSectionHeading}>
+          <SectionHeading icon={<Carrot color={tokens.color.entityIconForeground} size={18} />} title={`Alimentos en Semana ${week}`} />
+        </View>
         <GroupedFoodsCard title={`Alimentos semana ${week}`} items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} onOpenItem={(food) => {
           if (food.detailId == null) return;
           if (onOpenFood) onOpenFood(food.detailId);
           else router.push(`/libraries/foods/${food.detailId}` as Href);
         }} />
 
-        {showWeekAnalytics ? <>
-          <SectionDivider spacing="compact" tone="soft" />
-          <View style={styles.weekChartSection}>
-            <SectionHeading title="Gráfico de la semana" />
-            <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
-          </View>
-
-          <SectionHeading title="Composición semana" />
-          <ProgramDayComparisonPanels key={`comparison-${week}`} onAssign={onAssignDailyPlan} onDelete={onRemoveDailyPlan} onReorder={onReorderDailyPlans} rows={weekData ? dayRows(weekData) : undefined} week={week} />
-        </> : null}
       </> : null}
     </View>
   );
@@ -170,6 +165,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
 type ProgramDetailPreviewProps = {
   fallbackWeeksCount?: number;
   footer?: ReactNode;
+  footerTopSpacing?: number;
   item?: LibraryItem;
   onAddWeek?: () => void;
   onAssignDailyPlan?: (week: number, day: number) => void;
@@ -188,7 +184,7 @@ type ProgramDetailPreviewProps = {
   showWeekAnalytics?: boolean;
 };
 
-export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onHeaderVisibilityChange, onOpenDailyPlan, onOpenFood, onOpenMeal, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, onSaveDailyPlan, renderWeekContext, scrollable = false, showWeekAnalytics = true }: ProgramDetailPreviewProps = {}) {
+export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTopSpacing = tokens.spacing.xl, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onHeaderVisibilityChange, onOpenDailyPlan, onOpenFood, onOpenMeal, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, onSaveDailyPlan, renderWeekContext, scrollable = false, showWeekAnalytics = true }: ProgramDetailPreviewProps = {}) {
   const [activeWeek, setActiveWeek] = useState(1);
   const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
   const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : item ? [1] : Array.from({ length: fallbackWeeksCount }, (_, index) => index + 1);
@@ -227,16 +223,17 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onA
   );
 
   const planningHeader = (
-    <SectionHeading
-      detail={`${weeksCount} ${weeksCount === 1 ? "semana" : "semanas"}`}
-      title="Planificación semanal"
+    <ProgramSectionHeader
+      icon={Calendar1}
+      subtitle="Recorre las semanas de tu programa y conoce los planes diarios y alimentos de cada una de ellas."
+      title="Planificación Semanal"
     />
   );
 
   const weekTabs = (
     <View
       style={scrollable ? styles.weekTabsSticky : styles.weekTabsEmbedded}>
-      <ProgramWeekTabs activeWeek={displayedActiveWeek} onChange={setActiveWeek} weeks={displayedWeeks} />
+      <ProgramWeekTabs activeWeek={displayedActiveWeek} onChange={setActiveWeek} style={styles.weekTabsBarBleed} weeks={displayedWeeks} />
     </View>
   );
 
@@ -247,15 +244,14 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onA
         onScroll={({ nativeEvent }) => onHeaderVisibilityChange?.(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[3]}
+        stickyHeaderIndices={[2]}
         style={styles.screen}>
         {overview}
-        <SectionDivider spacing="wide" />
         <View style={styles.planningHeaderScreen}>{planningHeader}</View>
         {weekTabs}
         {renderWeekContext?.(displayedActiveWeek)}
         <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} onSaveDailyPlan={onSaveDailyPlan} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
-        {footer ? <View style={styles.footer}>{footer}</View> : null}
+        {footer ? <View style={[styles.footer, { marginTop: footerTopSpacing }]}>{footer}</View> : null}
       </NestableScrollContainer>
     );
   }
@@ -263,13 +259,12 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onA
   return (
     <View style={styles.page}>
       {overview}
-      <SectionDivider />
       <View style={styles.planningSection}>
         {planningHeader}
         {weekTabs}
         {renderWeekContext?.(displayedActiveWeek)}
         <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} onSaveDailyPlan={onSaveDailyPlan} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
-        {footer ? <View style={styles.footer}>{footer}</View> : null}
+        {footer ? <View style={[styles.footer, { marginTop: footerTopSpacing }]}>{footer}</View> : null}
       </View>
     </View>
   );
@@ -277,18 +272,25 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, item, onA
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  screenContent: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  screenContent: { flexGrow: 1, paddingBottom: 96, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   page: { gap: tokens.spacing.xl, minWidth: 0, width: "100%" },
   overview: { gap: tokens.spacing.lg, minWidth: 0 },
-  planningSection: { gap: tokens.spacing.md, minWidth: 0 },
-  planningHeaderScreen: { marginBottom: tokens.spacing.md },
+  planningSection: { gap: 0, minWidth: 0 },
+  planningHeaderScreen: { marginTop: tokens.spacing.lg + 24 },
   weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
   weekTabsEmbedded: { paddingBottom: tokens.spacing.sm },
-  footer: { gap: tokens.spacing.lg, marginTop: tokens.spacing.xl },
-  weekContent: { gap: tokens.spacing.lg, minWidth: 0, paddingTop: tokens.spacing.md, width: "100%" },
+  weekTabsBarBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
+  footer: { gap: tokens.spacing.lg },
+  weekContent: { gap: tokens.spacing.lg, minWidth: 0, paddingTop: tokens.spacing.md + tokens.spacing.sm, width: "100%" },
   weekChartSection: { gap: tokens.spacing.md, minWidth: 0 },
+  weekChartPanelGroup: { gap: tokens.spacing.xs },
+  metricTabsBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding - tokens.spacing.sm },
+  weekChartPanel: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen },
+  weekChartPanelBody: { paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.layout.reducedInset, paddingTop: tokens.spacing.sm },
   weekCardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   weekIdentity: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
+  dailyPlansSectionHeading: { marginTop: tokens.spacing.md },
+  foodsSectionHeading: { marginTop: tokens.spacing.xxl },
   compactAction: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
   pressed: { opacity: 0.68 },
 });

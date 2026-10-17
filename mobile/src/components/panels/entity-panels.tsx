@@ -11,6 +11,7 @@ import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, Prote
 import { EntityIcon, type EntityKind } from "@/components/ui";
 import { useScreenScrollControl } from "@/components/ui/layout";
 import { tokens } from "@/design/tokens";
+import { runGuardedNavigation } from "@/navigation/navigation-press-guard";
 import { contextualMacroAllocations } from "./contextual-allocation";
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface, SortablePanelHeaderCell } from "./panel-surface";
 import { type PanelSortState, useTemporaryPanelSort } from "./temporary-panel-sort";
@@ -114,6 +115,14 @@ function rounded(value: number): string {
 
 function decimal(value: number): string {
   return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "0";
+}
+
+function NutritionSummary({ item }: { item: NutritionPanelValues }) {
+  return (
+    <Text style={styles.nutritionSummary}>
+      {`${rounded(item.calories)} cal · P ${rounded(item.proteinGrams)}g · C ${rounded(item.carbsGrams)}g · G ${rounded(item.fatGrams)}g`}
+    </Text>
+  );
 }
 
 function SwipeAction({ children, label, onPress, tone = "default" }: { children: ReactNode; label: string; onPress(): void; tone?: "default" | "destructive" | "edit" | "meal" | "time" }) {
@@ -317,12 +326,11 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
   return "foods" in item;
 }
 
-function PanelItemName({ item, itemNameStyle, showFoodPortion = false, style = styles.gridLeadingCell }: { item: FoodPanelItem | MealPanelItem; itemNameStyle?: StyleProp<TextStyle>; showFoodPortion?: boolean; style?: StyleProp<ViewStyle> }) {
-  return (
-    <View style={style}>
-      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
-    </View>
-  );
+function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteraction, item, itemNameStyle, onOpenItem, showFoodPortion = false, showNutritionSummary = false, style = styles.gridLeadingCell }: { dragInteraction?: PanelRowDragInteraction; item: T; itemNameStyle?: StyleProp<TextStyle>; onOpenItem?: (item: T) => void; showFoodPortion?: boolean; showNutritionSummary?: boolean; style?: StyleProp<ViewStyle> }) {
+  const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>{showNutritionSummary ? <NutritionSummary item={item} /> : null}{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>;
+  const canOpen = Boolean(onOpenItem && (item.detailId != null || (isMealPanelItem(item) && item.canOpen)));
+  if (!canOpen) return <View style={style}>{content}</View>;
+  return <Pressable {...dragInteraction} accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => runGuardedNavigation(() => onOpenItem?.(item))} style={style}>{content}</Pressable>;
 }
 
 type HeaderSortProps<Key extends string> = { onSort(key: Key): void; sort: PanelSortState<Key> };
@@ -404,8 +412,8 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: {
       <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} trailingLabel="Qty" {...sorting} />
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => {
         const canOpen = item.detailId != null && Boolean(onOpenItem);
-        return <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          {canOpen ? <Pressable {...dragInteraction} accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={styles.quantityLeadingCell}><PanelItemName item={item} itemNameStyle={styles.quantityItemText} style={styles.foodDetailCopy} /></Pressable> : <PanelItemName item={item} itemNameStyle={styles.quantityItemText} style={styles.quantityLeadingCell} />}
+        return <View key={item.id} style={[styles.row, styles.foodQuantityRow, index === visibleItems.length - 1 && styles.rowLast]}>
+          <PanelItemName dragInteraction={dragInteraction} item={item} itemNameStyle={styles.quantityItemText} onOpenItem={canOpen ? onOpenItem : undefined} showNutritionSummary style={styles.quantityLeadingCell} />
           <Text style={[styles.cell, styles.quantityValue, styles.quantityItemText]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
           {preparation ? (
             <Pressable
@@ -445,7 +453,7 @@ export function EntityNamePanel({ entity, items, label }: { entity: Extract<Enti
   );
 }
 
-export function NutritionMacrosPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
+export function NutritionMacrosPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel, onOpenItem }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string; onOpenItem?: (item: T) => void }) {
   const sorting = useTemporaryPanelSort(items, {
     carbs: (item) => item.carbsGrams,
     fat: (item) => item.fatGrams,
@@ -458,9 +466,9 @@ export function NutritionMacrosPanel<T extends FoodPanelItem | MealPanelItem>({ 
   return (
     <PanelBody>
       <MacrosHeader leadingLabel={leadingLabel} {...sorting} />
-      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => (
+      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => (
         <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} showFoodPortion={leadingLabel === "Alimentos"} />
+          <PanelItemName dragInteraction={dragInteraction} item={item} onOpenItem={onOpenItem} showFoodPortion={leadingLabel === "Alimentos"} />
           <View style={[styles.ppkValue, styles.ppkCell]}>
             {item.proteinPerKilogram == null ? <Text style={styles.unavailableValue}>—</Text> : <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={item.proteinPerKilogram} />}
           </View>
@@ -473,7 +481,7 @@ export function NutritionMacrosPanel<T extends FoodPanelItem | MealPanelItem>({ 
   );
 }
 
-export function NutritionDistributionPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
+export function NutritionDistributionPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel, onOpenItem }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string; onOpenItem?: (item: T) => void }) {
   const sorting = useTemporaryPanelSort(items, {
     carbs: (item) => macroCalorieShares(item).carbs,
     fat: (item) => macroCalorieShares(item).fat,
@@ -485,11 +493,11 @@ export function NutritionDistributionPanel<T extends FoodPanelItem | MealPanelIt
   return (
     <PanelBody>
       <DistributionHeader leadingLabel={leadingLabel} {...sorting} />
-      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => {
+      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => {
         const distribution = macroCalorieShares(item);
         return (
           <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-            <PanelItemName item={item} showFoodPortion={leadingLabel === "Alimentos"} />
+            <PanelItemName dragInteraction={dragInteraction} item={item} onOpenItem={onOpenItem} showFoodPortion={leadingLabel === "Alimentos"} />
             <Text style={[styles.cell, styles.distributionValue, styles.proteinDistribution]}>{distribution.protein}%</Text>
             <Text style={[styles.cell, styles.distributionValue, styles.carbsDistribution]}>{distribution.carbs}%</Text>
             <Text style={[styles.cell, styles.distributionValue, styles.fatDistribution]}>{distribution.fat}%</Text>
@@ -501,7 +509,7 @@ export function NutritionDistributionPanel<T extends FoodPanelItem | MealPanelIt
   );
 }
 
-export function NutritionCaloriesPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
+export function NutritionCaloriesPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel, onOpenItem }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string; onOpenItem?: (item: T) => void }) {
   const sorting = useTemporaryPanelSort(items, {
     calories: (item) => item.calories,
     name: (item) => item.name,
@@ -512,9 +520,9 @@ export function NutritionCaloriesPanel<T extends FoodPanelItem | MealPanelItem>(
   return (
     <PanelBody>
       <CaloriesHeader leadingLabel={leadingLabel} {...sorting} />
-      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => (
+      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => (
         <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} showFoodPortion={leadingLabel === "Alimentos"} style={styles.calorieLeadingCell} />
+          <PanelItemName dragInteraction={dragInteraction} item={item} onOpenItem={onOpenItem} showFoodPortion={leadingLabel === "Alimentos"} style={styles.calorieLeadingCell} />
           <Text style={[styles.cell, styles.calorieValue]}>{rounded(item.calories)}</Text>
           <View style={styles.calorieShare}>
             <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calorieShare)}% de las calorías`} tone="calories" value={item.calorieShare} />
@@ -525,7 +533,7 @@ export function NutritionCaloriesPanel<T extends FoodPanelItem | MealPanelItem>(
   );
 }
 
-export function NutritionAllocationPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
+export function NutritionAllocationPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel, onOpenItem }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string; onOpenItem?: (item: T) => void }) {
   const sourceAllocations = contextualMacroAllocations(items);
   const allocationById = new Map(items.map((item, index) => [item.id, sourceAllocations[index]]));
   const sorting = useTemporaryPanelSort(items, {
@@ -540,9 +548,9 @@ export function NutritionAllocationPanel<T extends FoodPanelItem | MealPanelItem
   return (
     <PanelBody>
       <AllocationHeader leadingLabel={leadingLabel} {...sorting} />
-      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => (
+      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => (
         <View key={item.id} style={[styles.row, styles.allocationRow, index === visibleItems.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} showFoodPortion={leadingLabel === "Alimentos"} />
+          <PanelItemName dragInteraction={dragInteraction} item={item} onOpenItem={onOpenItem} showFoodPortion={leadingLabel === "Alimentos"} />
           <PanelAllocationBar style={styles.allocationCell} tone="protein" value={allocations[index].protein} />
           <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={allocations[index].carbs} />
           <PanelAllocationBar style={styles.allocationCell} tone="fat" value={allocations[index].fat} />
@@ -566,7 +574,7 @@ export function MealMenuPanel({ editing, items, onOpenItem }: { editing?: PanelR
           disabled={!canOpen && !dragInteraction}
           key={item.id}
           onLongPress={dragInteraction?.onLongPress}
-          onPress={() => onOpenItem?.(item)}
+          onPress={() => runGuardedNavigation(() => onOpenItem?.(item))}
           style={[styles.menuRow, index === items.length - 1 && styles.rowLast]}>
           <View style={styles.menuCopy}>
             <View style={styles.menuTitleRow}>
@@ -581,6 +589,7 @@ export function MealMenuPanel({ editing, items, onOpenItem }: { editing?: PanelR
             <Text style={styles.menuFoods}>
               {item.foods.map((food) => `${food.name} (${decimal(food.quantity)}${food.quantityUnit})`).join(", ")}
             </Text>
+            <NutritionSummary item={item} />
           </View>
           {canOpen ? (
             <View style={styles.menuAction}>
@@ -710,10 +719,10 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
     <NestedPanelScrollContext.Provider value={nestedScroll}><PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing && showEditTab ? [...foodTabs, editTab] : foodTabs} />
       {activeTab === "quantity" ? <FoodQuantityPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} preparation={preparation} /> : null}
-      {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
-      {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
-      {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
-      {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
+      {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
+      {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
+      {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
+      {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={orderedItems} key={orderedItems.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} /> : null}
     </PanelSurface></NestedPanelScrollContext.Provider>
   );
@@ -752,19 +761,19 @@ export function MealPanels({ editing, items, nestedScroll = false, onOpenItem, s
     <NestedPanelScrollContext.Provider value={nestedScroll}><PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing && showEditTab ? [...mealTabs, editTab] : mealTabs} />
       {activeTab === "menu" ? <MealMenuPanel editing={rowEditing} items={orderedItems} onOpenItem={openItem} /> : null}
-      {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
-      {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
-      {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
-      {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
+      {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" onOpenItem={openItem} /> : null}
+      {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" onOpenItem={openItem} /> : null}
+      {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" onOpenItem={openItem} /> : null}
+      {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" onOpenItem={openItem} /> : null}
       {activeTab === "edit" && editing ? <MealEditPanel editing={editing} items={orderedItems} key={orderedItems.map(({ id, time }) => `${id}:${time ?? ""}`).join("|")} /> : null}
     </PanelSurface></NestedPanelScrollContext.Provider>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 44, paddingHorizontal: tokens.spacing.sm },
+  row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 50, paddingHorizontal: tokens.spacing.sm },
   rowLast: { borderBottomWidth: 0 },
-  header: { minHeight: 32 },
+  header: { minHeight: 40 },
   headerCell: { alignSelf: "stretch", justifyContent: "center", minWidth: 0 },
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, letterSpacing: 0, textAlign: "center", textTransform: "uppercase" },
   headerTextLeft: { paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
@@ -779,6 +788,7 @@ const styles = StyleSheet.create({
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
   foodDetailCopy: { flex: 1, justifyContent: "center", minWidth: 0 },
   quantityItemText: { fontSize: tokens.type.caption + 1 },
+  foodQuantityRow: { minHeight: 60 },
   quantityValue: { textAlign: "center", width: 56 },
   preparationValue: { width: 48 },
   preparationButton: { alignItems: "center", alignSelf: "stretch", justifyContent: "center" },
@@ -813,6 +823,7 @@ const styles = StyleSheet.create({
   menuTimeGroup: { alignItems: "center", backgroundColor: "transparent", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", flexShrink: 0, gap: 4, marginTop: -2, minHeight: 23, paddingHorizontal: tokens.spacing.sm, paddingVertical: 2 },
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
   menuFoods: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 21, paddingHorizontal: tokens.spacing.xs },
+  nutritionSummary: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: "300", letterSpacing: 0, lineHeight: 17, paddingHorizontal: tokens.spacing.xs },
   gestureRow: { backgroundColor: tokens.color.surfaceMuted },
   gestureRowActive: {
     backgroundColor: "#3a3a3a",

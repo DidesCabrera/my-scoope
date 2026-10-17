@@ -46,7 +46,7 @@ services:
       - key: BILLING_GOOGLE_PLAY_PURCHASES_ENABLED
         value: "true"
       - key: BILLING_GOOGLE_PLAY_RTDN_ENABLED
-        value: "false"
+        value: "true"
       - key: BILLING_GOOGLE_PLAY_ENVIRONMENT
         value: sandbox
       - key: BILLING_GOOGLE_PLAY_PUBSUB_AUDIENCE

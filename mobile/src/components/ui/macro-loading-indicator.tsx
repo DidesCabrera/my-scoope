@@ -5,7 +5,7 @@ import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, 
 
 import { tokens } from "@/design/tokens";
 
-type MacroLoadingIndicatorProps = { accessibilityLabel?: string; style?: StyleProp<ViewStyle> };
+type MacroLoadingIndicatorProps = { accessibilityLabel?: string; size?: "regular" | "small"; style?: StyleProp<ViewStyle> };
 
 const MOTION = {
   protein: [45, 70, 35, 45],
@@ -19,19 +19,20 @@ function transitionDuration(from: number, to: number): number {
   return Math.abs(to - from) / SPEED_PERCENT_PER_SECOND * 1000;
 }
 
-function MacroBar({ active, color, delay, values }: { active: boolean; color: string; delay: number; values: readonly number[] }) {
+function MacroBar({ active, color, compact, delay, values }: { active: boolean; color: string; compact: boolean; delay: number; values: readonly number[] }) {
   const reducedMotion = useReducedMotion();
-  const width = useSharedValue(values[0] / 100);
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: width.get() }] }));
+  const availableWidth = compact ? 32 : 79.2;
+  const width = useSharedValue(availableWidth * values[0] / 100);
+  const animatedStyle = useAnimatedStyle(() => ({ width: width.get() }));
 
   useEffect(() => {
     cancelAnimation(width);
-    width.set(values[0] / 100);
+    width.set(availableWidth * values[0] / 100);
     if (!active || reducedMotion) return;
     width.set(withDelay(
       delay,
       withRepeat(
-        withSequence(...values.slice(1).map((value, index) => withTiming(value / 100, {
+        withSequence(...values.slice(1).map((value, index) => withTiming(availableWidth * value / 100, {
           duration: transitionDuration(values[index], value),
           easing: Easing.linear,
         }))),
@@ -40,12 +41,12 @@ function MacroBar({ active, color, delay, values }: { active: boolean; color: st
       ),
     ));
     return () => cancelAnimation(width);
-  }, [active, delay, reducedMotion, values, width]);
+  }, [active, availableWidth, delay, reducedMotion, values, width]);
 
-  return <View style={styles.barSlot}><Animated.View style={[styles.fill, { backgroundColor: color }, animatedStyle]} /></View>;
+  return <View style={[styles.barSlot, compact && styles.barSlotSmall]}><Animated.View style={[styles.fill, { backgroundColor: color }, animatedStyle]} /></View>;
 }
 
-export function MacroLoadingIndicator({ accessibilityLabel = "Cargando contenido", style }: MacroLoadingIndicatorProps) {
+export function MacroLoadingIndicator({ accessibilityLabel = "Cargando contenido", size = "regular", style }: MacroLoadingIndicatorProps) {
   const [focused, setFocused] = useState(false);
   const [appActive, setAppActive] = useState(AppState.currentState === "active");
 
@@ -60,18 +61,21 @@ export function MacroLoadingIndicator({ accessibilityLabel = "Cargando contenido
   }, []);
 
   const active = focused && appActive;
+  const compact = size === "small";
 
   return (
-    <View accessibilityLabel={accessibilityLabel} accessibilityLiveRegion="polite" accessibilityRole="progressbar" style={[styles.container, style]}>
-      <MacroBar active={active} color={tokens.color.protein} delay={START_DELAY.protein} values={MOTION.protein} />
-      <MacroBar active={active} color={tokens.color.carbs} delay={START_DELAY.carbs} values={MOTION.carbs} />
-      <MacroBar active={active} color={tokens.color.fat} delay={START_DELAY.fat} values={MOTION.fat} />
+    <View accessibilityLabel={accessibilityLabel} accessibilityLiveRegion="polite" accessibilityRole="progressbar" style={[styles.container, compact && styles.containerSmall, style]}>
+      <MacroBar active={active} color={tokens.color.protein} compact={compact} delay={START_DELAY.protein} values={MOTION.protein} />
+      <MacroBar active={active} color={tokens.color.carbs} compact={compact} delay={START_DELAY.carbs} values={MOTION.carbs} />
+      <MacroBar active={active} color={tokens.color.fat} compact={compact} delay={START_DELAY.fat} values={MOTION.fat} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   barSlot: { height: tokens.component.nutritionKpi.regular.barHeight * 0.72, width: "100%" },
+  barSlotSmall: { height: 5 },
   container: { gap: tokens.component.nutritionKpi.regular.contentGap * 0.72, transform: [{ translateX: 18 }], width: 79.2 },
-  fill: { borderRadius: tokens.component.nutritionKpi.regular.barRadius, height: "100%", transformOrigin: "left", width: "100%" },
+  containerSmall: { gap: 2, transform: [{ translateX: 0 }], width: 32 },
+  fill: { borderRadius: tokens.component.nutritionKpi.regular.barRadius, height: "100%" },
 });

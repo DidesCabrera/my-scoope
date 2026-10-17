@@ -36,6 +36,17 @@ test("program week cards expose duplicate and conditionally expose delete", asyn
   assert.doesNotMatch(program, /onPress=\{\(\) => undefined\}/);
 });
 
+test("context card actions use the shared popup action standard", async () => {
+  const actions = await source("src/components/libraries/context-card-actions.tsx");
+  const actionSheet = await source("src/components/ui/action-sheet-modal.tsx");
+
+  assert.match(actions, /<ActionSheetAction[\s\S]*icon=\{action\.icon\}[\s\S]*label=\{action\.label\}/);
+  assert.doesNotMatch(actions, /styles\.actionIcon|styles\.actionRow|styles\.actionLabel/);
+  assert.match(actionSheet, /actionIcon: \{ alignItems: "center", justifyContent: "center", width: 20 \}/);
+  assert.match(actionSheet, /actionRow: \{[^}]*paddingHorizontal: tokens\.spacing\.lg/);
+  assert.match(actionSheet, /loading \? <ActivityIndicator/);
+});
+
 test("assigned daily plan cards expose replace, remove, and detail", async () => {
   const card = await source("src/components/libraries/program-daily-plan-preview.tsx");
   const parent = await source("src/components/libraries/program-detail-preview.tsx");

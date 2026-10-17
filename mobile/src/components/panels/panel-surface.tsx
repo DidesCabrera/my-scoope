@@ -32,8 +32,8 @@ export function EntityPanelTabs<T extends string>({ activeTab, onChange, tabs }:
   );
 }
 
-export function PanelSurface({ children }: PropsWithChildren) {
-  return <View style={styles.surface}>{children}</View>;
+export function PanelSurface({ children, style }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
+  return <View style={[styles.surface, style]}>{children}</View>;
 }
 
 export function PanelBody({ children }: PropsWithChildren) {

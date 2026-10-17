@@ -1,5 +1,6 @@
 export const HEIGHT_VALUES = Array.from({ length: 171 }, (_, index) => 80 + index);
 export const WEIGHT_KILOGRAM_VALUES = Array.from({ length: 326 }, (_, index) => 25 + index);
+export const PORTION_VALUES = Array.from({ length: 2000 }, (_, index) => index + 1);
 export const WEIGHT_GRAM_VALUES = Array.from({ length: 10 }, (_, index) => index * 100);
 
 export function heightFromValue(value: string): number {
@@ -18,4 +19,11 @@ export function weightPartsFromValue(value: string): { grams: number; kilograms:
 export function weightValueFromParts(kilograms: number, grams: number): string {
   if (kilograms >= 350) return "350";
   return String(kilograms + grams / 1000);
+}
+
+export function portionFromValue(value: string): number {
+  const normalized = value.trim().replace(",", ".");
+  if (!normalized) return 100;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? Math.min(2000, Math.max(1, Math.round(parsed))) : 100;
 }

@@ -1,6 +1,6 @@
 import { DateTimePickerAndroid, type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import { CalendarDays, ChevronDown, Clock3 } from "lucide-react-native";
+import { CalendarDays, Check, ChevronDown, Clock3 } from "lucide-react-native";
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -21,6 +21,7 @@ export function NativeDateTimeField({
   containerStyle,
   disabled = false,
   hideLabel = false,
+  iconColor = tokens.color.textMuted,
   iconInLabel = false,
   inputStyle,
   inlineLabel = false,
@@ -91,7 +92,7 @@ export function NativeDateTimeField({
         disabled={disabled}
         onPress={open}
         style={({ pressed }) => [styles.input, containerStyle, disabled && styles.disabled, pressed && styles.pressed]}>
-        {!iconInLabel ? <Icon color={tokens.color.textMuted} size={18} /> : null}
+        {!iconInLabel ? <Icon color={iconColor} size={18} /> : null}
         <Text style={[styles.value, inputStyle]}>{displayValue(value, mode)}</Text>
         <ChevronDown color={tokens.color.textSoft} size={18} />
     </Pressable>
@@ -101,7 +102,7 @@ export function NativeDateTimeField({
     <View style={styles.field}>
       {inlineLabel ? (
         <View style={styles.inlineHeader}>
-          {!hideLabel ? <View style={styles.inlineLabelGroup}>{iconInLabel ? <Icon color={tokens.color.textMuted} size={18} /> : null}<Text style={[styles.label, labelStyle]}>{label}</Text></View> : null}
+          {!hideLabel ? <View style={styles.inlineLabelGroup}>{iconInLabel ? <Icon color={iconColor} size={18} /> : null}<Text style={[styles.label, labelStyle]}>{label}</Text></View> : null}
           {input}
         </View>
       ) : (
@@ -135,8 +136,8 @@ export function NativeDateTimeField({
               </Picker>
             </View>
           )}
-          <Pressable accessibilityRole="button" onPress={() => setExpanded(false)} style={styles.doneButton}>
-            <Text style={styles.doneLabel}>Listo</Text>
+          <Pressable accessibilityLabel="Listo" accessibilityRole="button" onPress={() => setExpanded(false)} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
+            <Check color={tokens.color.interactivePrimary} size={22} strokeWidth={2.6} />
           </Pressable>
         </View>
       ) : null}
@@ -146,10 +147,9 @@ export function NativeDateTimeField({
 
 const styles = StyleSheet.create({
   disabled: { opacity: 0.45 },
-  doneButton: { alignItems: "center", alignSelf: "flex-end", minHeight: 44, justifyContent: "center", paddingHorizontal: tokens.spacing.lg },
-  doneLabel: { color: tokens.color.interactivePrimary, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
+  doneButton: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.pill, bottom: tokens.spacing.sm, height: 40, justifyContent: "center", position: "absolute", right: tokens.spacing.sm, width: 40, zIndex: 2 },
   field: { gap: 7 },
-  inlinePicker: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden", paddingBottom: tokens.spacing.xs },
+  inlinePicker: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden", position: "relative" },
   inlineHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   inlineLabelGroup: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm },
   input: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: tokens.spacing.lg },

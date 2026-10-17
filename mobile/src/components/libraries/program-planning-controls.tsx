@@ -15,14 +15,14 @@ export type ProgramPlanningDay = {
   monthLabel?: string;
 };
 
-export function ProgramWeekHeading({ detail, week }: { detail?: string; week: number }) {
+export function ProgramWeekHeading({ detail, title, week }: { detail?: string; title?: string; week: number }) {
   return (
     <View style={styles.weekHeading}>
       <View style={styles.weekHeadingIdentity}>
         <View style={styles.weekHeadingIcon}>
           <CalendarRange color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} />
         </View>
-        <Text style={styles.weekHeadingTitle}>Semana {week}</Text>
+        <Text style={styles.weekHeadingTitle}>{title ?? `Semana ${week}`}</Text>
       </View>
       {detail ? <HeaderMetadataChip kind="date" value={detail} /> : null}
     </View>

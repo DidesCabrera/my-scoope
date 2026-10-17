@@ -3,8 +3,8 @@ import { useState } from "react";
 import { Alert, Pressable, type StyleProp, StyleSheet, Text, type TextStyle, View, type ViewStyle } from "react-native";
 import { NestableDraggableFlatList, ScaleDecorator } from "react-native-draggable-flatlist";
 
-import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
-import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
+import { MacroCalorieDistribution, macroCalorieShares, ProteinPerKilogramBadge } from "@/components/nutrition";
+import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
 import { beginComparisonPanelDrag, ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
@@ -22,13 +22,12 @@ export type ProgramWeekSummary = {
   week: number;
 };
 
-type ProgramWeekPanelTab = "calories" | "macros" | "distribution" | "allocation" | "edit";
+type ProgramWeekPanelTab = "calories" | "macros" | "distribution" | "edit";
 
 const tabs = [
   { key: "calories", label: "Calorías" },
   { key: "macros", label: "Macros" },
   { key: "distribution", label: "Dist" },
-  { key: "allocation", label: "Alloc" },
   { icon: (selected: boolean) => <Pencil color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={15} />, iconOnly: true, key: "edit", label: "Editar" },
 ] satisfies Parameters<typeof EntityPanelTabs<ProgramWeekPanelTab>>[0]["tabs"];
 
@@ -146,28 +145,6 @@ function DistributionPanel({ gestures, weeks }: { gestures?: WeekRowGestures; we
   );
 }
 
-function AllocationPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
-  const sourceAllocations = contextualMacroAllocations(weeks);
-  const allocationById = new Map(weeks.map((week, index) => [week.id, sourceAllocations[index]]));
-  const sorting = useTemporaryPanelSort(weeks, { carbs: (week) => allocationById.get(week.id)?.carbs, fat: (week) => allocationById.get(week.id)?.fat, protein: (week) => allocationById.get(week.id)?.protein, week: (item) => item.week });
-  const visibleWeeks = sorting.items;
-  if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
-  const allocations = contextualMacroAllocations(visibleWeeks);
-  return (
-    <PanelBody>
-      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }]} leadingKey="week" {...sorting} />
-      <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => (
-        <View key={week.id} style={[styles.row, styles.allocationRow, index === visibleWeeks.length - 1 && styles.rowLast]}>
-          <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
-          <PanelAllocationBar style={styles.dataCell} tone="protein" value={allocations[index].protein} />
-          <PanelAllocationBar style={styles.dataCell} tone="carbs" value={allocations[index].carbs} />
-          <PanelAllocationBar style={styles.dataCell} tone="fat" value={allocations[index].fat} />
-        </View>
-      )} />
-    </PanelBody>
-  );
-}
-
 function IconAction({ disabled = false, label, onPress, children }: { children: React.ReactNode; disabled?: boolean; label: string; onPress(): void }) {
   return (
     <Pressable
@@ -263,7 +240,6 @@ export function ProgramWeekComparisonPanels({ onDelete, onDuplicate, onReorder, 
       {activeTab === "calories" ? <CaloriesPanel gestures={gestures} weeks={orderedWeeks} /> : null}
       {activeTab === "macros" ? <MacrosPanel gestures={gestures} weeks={orderedWeeks} /> : null}
       {activeTab === "distribution" ? <DistributionPanel gestures={gestures} weeks={orderedWeeks} /> : null}
-      {activeTab === "allocation" ? <AllocationPanel gestures={gestures} weeks={orderedWeeks} /> : null}
       {activeTab === "edit" && onDelete && onDuplicate && onReorder ? <EditPanel initialWeeks={orderedWeeks} key={orderedWeeks.map(({ id }) => id).join("|")} onDelete={onDelete} onDuplicate={onDuplicate} onReorder={onReorder} /> : null}
     </PanelSurface>
   );
@@ -283,7 +259,6 @@ const styles = StyleSheet.create({
   calorieVariationCell: { alignItems: "stretch", justifyContent: "center", paddingHorizontal: 2 },
   calorieVariationBadge: { alignItems: "center", backgroundColor: tokens.color.kcalBorder, borderRadius: 5, justifyContent: "center", minHeight: 22, paddingHorizontal: 3 },
   calorieVariationBadgeText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0 },
-  allocationRow: { gap: tokens.spacing.sm },
   ppkCell: { alignItems: "stretch", justifyContent: "center", paddingHorizontal: 2 },
   ppkBadge: { height: 22, minHeight: 22 },
   emptyValue: { color: tokens.color.textMuted, fontSize: tokens.type.caption, textAlign: "center" },

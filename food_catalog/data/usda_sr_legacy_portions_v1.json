@@ -1,18 +1,3571 @@
 {
+  "archive_url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip",
   "dataset": "USDA FoodData Central SR Legacy",
-  "version": "2018-04",
   "evidence_url_template": "https://fdc.nal.usda.gov/fdc-app.html#/food-details/{fdc_id}/nutrients",
+  "fallbacks": {
+    "167714": {
+      "amount": "100",
+      "grams": "100.000",
+      "measure_unit": "g",
+      "modifier": "g (base nutricional)",
+      "rationale": "USDA SR Legacy publishes nutrients per 100 g but no household portion for this food."
+    },
+    "170378": {
+      "amount": "100",
+      "grams": "100.000",
+      "measure_unit": "g",
+      "modifier": "g (base nutricional)",
+      "rationale": "USDA SR Legacy publishes nutrients per 100 g but no household portion for this food."
+    },
+    "172467": {
+      "amount": "100",
+      "grams": "100.000",
+      "measure_unit": "g",
+      "modifier": "g (base nutricional)",
+      "rationale": "USDA SR Legacy publishes nutrients per 100 g but no household portion for this food."
+    }
+  },
   "portions": {
-    "168463": [{"amount": "1", "grams": "180.000", "modifier": "cup, cooked", "measure_unit": "cup"}],
-    "168389": [{"amount": "1", "grams": "134.000", "modifier": "cup", "measure_unit": "cup"}],
-    "169291": [{"amount": "1", "grams": "124.000", "modifier": "cup, chopped", "measure_unit": "cup"}],
-    "169118": [{"amount": "1", "grams": "178.000", "modifier": "medium pear", "measure_unit": "item"}],
-    "169124": [{"amount": "1", "grams": "165.000", "modifier": "cup, chunks", "measure_unit": "cup"}],
-    "169910": [{"amount": "1", "grams": "165.000", "modifier": "cup, pieces", "measure_unit": "cup"}],
-    "168153": [{"amount": "1", "grams": "148.000", "modifier": "NLEA serving", "measure_unit": "serving"}],
-    "169097": [{"amount": "1", "grams": "131.000", "modifier": "medium orange", "measure_unit": "item"}],
-    "167762": [{"amount": "1", "grams": "147.000", "modifier": "NLEA serving", "measure_unit": "serving"}],
-    "167755": [{"amount": "1", "grams": "123.000", "modifier": "cup", "measure_unit": "cup"}],
-    "175180": [{"amount": "3", "grams": "85.000", "modifier": "oz", "measure_unit": "oz"}]
-  }
+    "167742": [
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "167746": [
+      {
+        "amount": "1",
+        "grams": "212.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sections"
+      },
+      {
+        "amount": "1",
+        "grams": "58.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit (2-1/8\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "84.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit (2-3/8\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "7.000",
+        "measure_unit": "undetermined",
+        "modifier": "wedge or slice (1/8 of one 2-1/8\" dia lemon)"
+      },
+      {
+        "amount": "1",
+        "grams": "58.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "167755": [
+      {
+        "amount": "1",
+        "grams": "123.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "312.000",
+        "measure_unit": "undetermined",
+        "modifier": "pint as purchased, yields"
+      },
+      {
+        "amount": "10",
+        "grams": "19.000",
+        "measure_unit": "undetermined",
+        "modifier": "raspberries"
+      }
+    ],
+    "167762": [
+      {
+        "amount": "1",
+        "grams": "152.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, halves"
+      },
+      {
+        "amount": "1",
+        "grams": "232.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, pureed"
+      },
+      {
+        "amount": "1",
+        "grams": "166.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "144.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, whole"
+      },
+      {
+        "amount": "1",
+        "grams": "27.000",
+        "measure_unit": "undetermined",
+        "modifier": "extra large (1-5/8\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "18.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (1-3/8\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "12.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (1-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "357.000",
+        "measure_unit": "undetermined",
+        "modifier": "pint as purchased, yields"
+      },
+      {
+        "amount": "1",
+        "grams": "7.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (1\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "147.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "167765": [
+      {
+        "amount": "1",
+        "grams": "154.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, balls"
+      },
+      {
+        "amount": "1",
+        "grams": "152.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, diced"
+      },
+      {
+        "amount": "1",
+        "grams": "4518.000",
+        "measure_unit": "undetermined",
+        "modifier": "melon (15\" long x 7-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "286.000",
+        "measure_unit": "undetermined",
+        "modifier": "wedge (approx 1/16 of melon)"
+      },
+      {
+        "amount": "10",
+        "grams": "122.000",
+        "measure_unit": "undetermined",
+        "modifier": "watermelon balls"
+      },
+      {
+        "amount": "1",
+        "grams": "280.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "167812": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "453.600",
+        "measure_unit": "undetermined",
+        "modifier": "lb"
+      }
+    ],
+    "167818": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "117.000",
+        "measure_unit": "undetermined",
+        "modifier": "chop, excluding refuse (yield from 1 raw chop, with refuse, weighing 151 g)"
+      }
+    ],
+    "167843": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "453.600",
+        "measure_unit": "undetermined",
+        "modifier": "lb"
+      }
+    ],
+    "167853": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "168153": [
+      {
+        "amount": "1",
+        "grams": "180.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "69.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit (2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "148.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "168155": [
+      {
+        "amount": "1",
+        "grams": "67.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit (2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "67.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "168162": [
+      {
+        "amount": "1",
+        "grams": "174.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, pitted"
+      },
+      {
+        "amount": "1",
+        "grams": "9.500",
+        "measure_unit": "undetermined",
+        "modifier": "prune, pitted"
+      }
+    ],
+    "168163": [
+      {
+        "amount": "1",
+        "grams": "92.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit without refuse"
+      }
+    ],
+    "168191": [
+      {
+        "amount": "1",
+        "grams": "24.000",
+        "measure_unit": "undetermined",
+        "modifier": "date, pitted"
+      }
+    ],
+    "168195": [
+      {
+        "amount": "1",
+        "grams": "74.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit"
+      }
+    ],
+    "168222": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "453.600",
+        "measure_unit": "undetermined",
+        "modifier": "lb"
+      }
+    ],
+    "168386": [
+      {
+        "amount": "1",
+        "grams": "120.000",
+        "measure_unit": "undetermined",
+        "modifier": "artichoke, medium"
+      },
+      {
+        "amount": "0.5",
+        "grams": "84.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup hearts"
+      }
+    ],
+    "168389": [
+      {
+        "amount": "1",
+        "grams": "134.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "12.000",
+        "measure_unit": "undetermined",
+        "modifier": "spear, small (5\" long or less)"
+      },
+      {
+        "amount": "1",
+        "grams": "16.000",
+        "measure_unit": "undetermined",
+        "modifier": "spear, medium (5-1/4\" to 7\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "20.000",
+        "measure_unit": "undetermined",
+        "modifier": "spear, large (7-1/4\" to 8-1/2\")"
+      },
+      {
+        "amount": "1",
+        "grams": "24.000",
+        "measure_unit": "undetermined",
+        "modifier": "spear, extra large (8-3/4\" to 10\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "3.500",
+        "measure_unit": "undetermined",
+        "modifier": "spear tip (2\" long or less)"
+      }
+    ],
+    "168390": [
+      {
+        "amount": "0.5",
+        "grams": "90.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "4",
+        "grams": "60.000",
+        "measure_unit": "undetermined",
+        "modifier": "spears (1/2\" base)"
+      }
+    ],
+    "168409": [
+      {
+        "amount": "0.5",
+        "grams": "52.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      },
+      {
+        "amount": "1",
+        "grams": "301.000",
+        "measure_unit": "undetermined",
+        "modifier": "cucumber (8-1/4\")"
+      }
+    ],
+    "168412": [
+      {
+        "amount": "0.5",
+        "grams": "25.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "513.000",
+        "measure_unit": "undetermined",
+        "modifier": "head"
+      }
+    ],
+    "168421": [
+      {
+        "amount": "1",
+        "grams": "21.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "168423": [
+      {
+        "amount": "1",
+        "grams": "66.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "12.900",
+        "measure_unit": "undetermined",
+        "modifier": "piece"
+      }
+    ],
+    "168424": [
+      {
+        "amount": "1",
+        "grams": "135.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "16.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice"
+      }
+    ],
+    "168426": [
+      {
+        "amount": "1",
+        "grams": "124.000",
+        "measure_unit": "undetermined",
+        "modifier": "leek"
+      },
+      {
+        "amount": "0.25",
+        "grams": "26.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped or diced"
+      }
+    ],
+    "168429": [
+      {
+        "amount": "1",
+        "grams": "55.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded or chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "163.000",
+        "measure_unit": "undetermined",
+        "modifier": "head (5\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf, large"
+      },
+      {
+        "amount": "1",
+        "grams": "7.500",
+        "measure_unit": "undetermined",
+        "modifier": "leaf, medium"
+      },
+      {
+        "amount": "1",
+        "grams": "5.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf"
+      }
+    ],
+    "168431": [
+      {
+        "amount": "1",
+        "grams": "28.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup shredded"
+      },
+      {
+        "amount": "1",
+        "grams": "2.600",
+        "measure_unit": "undetermined",
+        "modifier": "leaf inner"
+      },
+      {
+        "amount": "1",
+        "grams": "17.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf outer"
+      },
+      {
+        "amount": "1",
+        "grams": "309.000",
+        "measure_unit": "undetermined",
+        "modifier": "head"
+      },
+      {
+        "amount": "1",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "168434": [
+      {
+        "amount": "1",
+        "grams": "87.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup whole"
+      },
+      {
+        "amount": "1",
+        "grams": "72.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "20.000",
+        "measure_unit": "undetermined",
+        "modifier": "piece whole"
+      }
+    ],
+    "168436": [
+      {
+        "amount": "1",
+        "grams": "3.600",
+        "measure_unit": "undetermined",
+        "modifier": "mushroom"
+      },
+      {
+        "amount": "4",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "mushrooms"
+      }
+    ],
+    "168448": [
+      {
+        "amount": "1",
+        "grams": "116.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup (1\" cubes)"
+      }
+    ],
+    "168449": [
+      {
+        "amount": "1",
+        "grams": "245.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, mashed"
+      }
+    ],
+    "168457": [
+      {
+        "amount": "2",
+        "grams": "10.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp (1/8 cup)"
+      }
+    ],
+    "168463": [
+      {
+        "amount": "1",
+        "grams": "180.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "168482": [
+      {
+        "amount": "1",
+        "grams": "133.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      },
+      {
+        "amount": "1",
+        "grams": "130.000",
+        "measure_unit": "undetermined",
+        "modifier": "sweetpotato, 5\" long"
+      }
+    ],
+    "168486": [
+      {
+        "amount": "1",
+        "grams": "132.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      }
+    ],
+    "168580": [
+      {
+        "amount": "1",
+        "grams": "148.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "1",
+        "grams": "86.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup sliced"
+      }
+    ],
+    "169092": [
+      {
+        "amount": "1",
+        "grams": "177.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, balls"
+      },
+      {
+        "amount": "1",
+        "grams": "160.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      },
+      {
+        "amount": "1",
+        "grams": "156.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, diced"
+      },
+      {
+        "amount": "1",
+        "grams": "814.000",
+        "measure_unit": "undetermined",
+        "modifier": "melon, large (about 6-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "102.000",
+        "measure_unit": "undetermined",
+        "modifier": "wedge, large (1/8 of large melon)"
+      },
+      {
+        "amount": "1",
+        "grams": "552.000",
+        "measure_unit": "undetermined",
+        "modifier": "melon, medium (about 5\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "69.000",
+        "measure_unit": "undetermined",
+        "modifier": "wedge, medium (1/8 of medium melon)"
+      },
+      {
+        "amount": "1",
+        "grams": "441.000",
+        "measure_unit": "undetermined",
+        "modifier": "melon, small (about 4-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "55.000",
+        "measure_unit": "undetermined",
+        "modifier": "wedge, small (1/8 of small melon)"
+      },
+      {
+        "amount": "10",
+        "grams": "138.000",
+        "measure_unit": "undetermined",
+        "modifier": "cantaloupe balls"
+      },
+      {
+        "amount": "1",
+        "grams": "134.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "169097": [
+      {
+        "amount": "1",
+        "grams": "180.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sections"
+      },
+      {
+        "amount": "1",
+        "grams": "184.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (3-1/16\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "96.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (2-3/8\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "131.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit (2-5/8\" dia)"
+      }
+    ],
+    "169105": [
+      {
+        "amount": "1",
+        "grams": "195.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sections"
+      },
+      {
+        "amount": "1",
+        "grams": "76.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (2-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "88.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (2-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "120.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (2-3/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "109.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "169108": [
+      {
+        "amount": "1",
+        "grams": "236.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "18.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit without refuse"
+      }
+    ],
+    "169118": [
+      {
+        "amount": "1",
+        "grams": "140.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, slices"
+      },
+      {
+        "amount": "1",
+        "grams": "161.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      },
+      {
+        "amount": "1",
+        "grams": "148.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "1",
+        "grams": "178.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium"
+      },
+      {
+        "amount": "1",
+        "grams": "230.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      },
+      {
+        "amount": "1",
+        "grams": "166.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "169124": [
+      {
+        "amount": "1",
+        "grams": "165.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chunks"
+      },
+      {
+        "amount": "1",
+        "grams": "905.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit"
+      },
+      {
+        "amount": "1",
+        "grams": "166.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice (4-2/3\" dia x 3/4\" thick)"
+      },
+      {
+        "amount": "1",
+        "grams": "84.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice (3-1/2\" dia x 3/4\" thick)"
+      },
+      {
+        "amount": "1",
+        "grams": "56.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice, thin (3-1/2\" dia x 1/2\" thick)"
+      }
+    ],
+    "169134": [
+      {
+        "amount": "0.5",
+        "grams": "87.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup arils (seed/juice sacs)"
+      },
+      {
+        "amount": "1",
+        "grams": "282.000",
+        "measure_unit": "undetermined",
+        "modifier": "pomegranate (4\" dia)"
+      }
+    ],
+    "169145": [
+      {
+        "amount": "1",
+        "grams": "136.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "82.000",
+        "measure_unit": "undetermined",
+        "modifier": "beet (2\" dia)"
+      }
+    ],
+    "169146": [
+      {
+        "amount": "0.5",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      },
+      {
+        "amount": "2",
+        "grams": "100.000",
+        "measure_unit": "undetermined",
+        "modifier": "beets (2\" dia, sphere)"
+      }
+    ],
+    "169228": [
+      {
+        "amount": "1",
+        "grams": "82.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      },
+      {
+        "amount": "1",
+        "grams": "458.000",
+        "measure_unit": "undetermined",
+        "modifier": "eggplant, peeled (yield from 1-1/4 lb)"
+      },
+      {
+        "amount": "1",
+        "grams": "548.000",
+        "measure_unit": "undetermined",
+        "modifier": "eggplant, unpeeled (approx 1-1/4 lb)"
+      }
+    ],
+    "169229": [
+      {
+        "amount": "1",
+        "grams": "99.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup (1\" cubes)"
+      }
+    ],
+    "169230": [
+      {
+        "amount": "1",
+        "grams": "136.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "2.800",
+        "measure_unit": "undetermined",
+        "modifier": "tsp"
+      },
+      {
+        "amount": "1",
+        "grams": "3.000",
+        "measure_unit": "undetermined",
+        "modifier": "clove"
+      },
+      {
+        "amount": "3",
+        "grams": "9.000",
+        "measure_unit": "undetermined",
+        "modifier": "cloves"
+      }
+    ],
+    "169238": [
+      {
+        "amount": "1",
+        "grams": "118.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "169242": [
+      {
+        "amount": "1",
+        "grams": "19.000",
+        "measure_unit": "undetermined",
+        "modifier": "piece whole"
+      }
+    ],
+    "169246": [
+      {
+        "amount": "1",
+        "grams": "89.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "89.000",
+        "measure_unit": "undetermined",
+        "modifier": "leek"
+      },
+      {
+        "amount": "1",
+        "grams": "6.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice"
+      }
+    ],
+    "169247": [
+      {
+        "amount": "1",
+        "grams": "47.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup shredded"
+      },
+      {
+        "amount": "1",
+        "grams": "6.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf inner"
+      },
+      {
+        "amount": "1",
+        "grams": "28.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf outer"
+      },
+      {
+        "amount": "1",
+        "grams": "626.000",
+        "measure_unit": "undetermined",
+        "modifier": "head"
+      },
+      {
+        "amount": "1",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "169251": [
+      {
+        "amount": "1",
+        "grams": "70.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, pieces or slices"
+      },
+      {
+        "amount": "1",
+        "grams": "96.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, whole"
+      },
+      {
+        "amount": "1",
+        "grams": "23.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      },
+      {
+        "amount": "1",
+        "grams": "18.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium"
+      },
+      {
+        "amount": "1",
+        "grams": "6.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice"
+      },
+      {
+        "amount": "1",
+        "grams": "10.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "0.5",
+        "grams": "35.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup pieces"
+      }
+    ],
+    "169252": [
+      {
+        "amount": "1",
+        "grams": "156.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup pieces"
+      },
+      {
+        "amount": "1",
+        "grams": "9.800",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "1",
+        "grams": "12.000",
+        "measure_unit": "undetermined",
+        "modifier": "mushroom"
+      }
+    ],
+    "169260": [
+      {
+        "amount": "1",
+        "grams": "100.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "8",
+        "grams": "95.000",
+        "measure_unit": "undetermined",
+        "modifier": "pods (3\" long)"
+      }
+    ],
+    "169276": [
+      {
+        "amount": "1",
+        "grams": "116.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      },
+      {
+        "amount": "1",
+        "grams": "9.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (1\" to 1-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "4.500",
+        "measure_unit": "undetermined",
+        "modifier": "medium (3/4\" to 1\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "1.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice"
+      },
+      {
+        "amount": "1",
+        "grams": "2.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "0.5",
+        "grams": "58.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      }
+    ],
+    "169291": [
+      {
+        "amount": "1",
+        "grams": "124.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "323.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      },
+      {
+        "amount": "1",
+        "grams": "196.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium"
+      },
+      {
+        "amount": "1",
+        "grams": "9.900",
+        "measure_unit": "undetermined",
+        "modifier": "slice"
+      },
+      {
+        "amount": "1",
+        "grams": "118.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      }
+    ],
+    "169292": [
+      {
+        "amount": "1",
+        "grams": "180.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "0.5",
+        "grams": "120.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, mashed"
+      }
+    ],
+    "169295": [
+      {
+        "amount": "1",
+        "grams": "140.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      }
+    ],
+    "169296": [
+      {
+        "amount": "1",
+        "grams": "205.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      }
+    ],
+    "169383": [
+      {
+        "amount": "1",
+        "grams": "186.000",
+        "measure_unit": "undetermined",
+        "modifier": "pepper, large (3-3/4\" long, 3\" dia)"
+      },
+      {
+        "amount": "10",
+        "grams": "52.000",
+        "measure_unit": "undetermined",
+        "modifier": "strips"
+      }
+    ],
+    "169385": [
+      {
+        "amount": "1",
+        "grams": "87.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "234.000",
+        "measure_unit": "undetermined",
+        "modifier": "bulb"
+      }
+    ],
+    "169387": [
+      {
+        "amount": "1",
+        "grams": "2.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf"
+      },
+      {
+        "amount": "0.5",
+        "grams": "10.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "169910": [
+      {
+        "amount": "1",
+        "grams": "165.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup pieces"
+      },
+      {
+        "amount": "1",
+        "grams": "336.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit without refuse"
+      }
+    ],
+    "169911": [
+      {
+        "amount": "1",
+        "grams": "170.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, diced (approx 20 pieces per cup)"
+      },
+      {
+        "amount": "1",
+        "grams": "177.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, balls"
+      },
+      {
+        "amount": "1",
+        "grams": "1000.000",
+        "measure_unit": "undetermined",
+        "modifier": "melon (5-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "1280.000",
+        "measure_unit": "undetermined",
+        "modifier": "melon (6\" - 7\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "125.000",
+        "measure_unit": "undetermined",
+        "modifier": "wedge (1/8 of 5-1/4\" dia melon)"
+      },
+      {
+        "amount": "1",
+        "grams": "160.000",
+        "measure_unit": "undetermined",
+        "modifier": "wedge (1/8 of 6\" to 7\" dia melon)"
+      },
+      {
+        "amount": "10",
+        "grams": "138.000",
+        "measure_unit": "undetermined",
+        "modifier": "honeydew balls"
+      },
+      {
+        "amount": "1",
+        "grams": "134.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "169914": [
+      {
+        "amount": "1",
+        "grams": "143.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      },
+      {
+        "amount": "1",
+        "grams": "129.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (2-1/3\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "142.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (2-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "156.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (2-3/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "140.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "169926": [
+      {
+        "amount": "1",
+        "grams": "145.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup 1\" pieces"
+      },
+      {
+        "amount": "1",
+        "grams": "230.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, mashed"
+      },
+      {
+        "amount": "1",
+        "grams": "157.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit, small"
+      },
+      {
+        "amount": "1",
+        "grams": "781.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit, large"
+      }
+    ],
+    "169928": [
+      {
+        "amount": "1",
+        "grams": "154.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      },
+      {
+        "amount": "1",
+        "grams": "130.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (2-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "150.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (2-2/3\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "175.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (2-3/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "224.000",
+        "measure_unit": "undetermined",
+        "modifier": "extra large (3\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "147.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "169941": [
+      {
+        "amount": "1",
+        "grams": "168.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit (2-1/2\" dia)"
+      }
+    ],
+    "169949": [
+      {
+        "amount": "1",
+        "grams": "165.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "66.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit (2-1/8\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "151.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "169971": [
+      {
+        "amount": "1",
+        "grams": "21.000",
+        "measure_unit": "undetermined",
+        "modifier": "sprout"
+      },
+      {
+        "amount": "0.5",
+        "grams": "78.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "169975": [
+      {
+        "amount": "1",
+        "grams": "89.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "70.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded"
+      },
+      {
+        "amount": "1",
+        "grams": "1248.000",
+        "measure_unit": "undetermined",
+        "modifier": "head, large (about 7\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "33.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf, large"
+      },
+      {
+        "amount": "1",
+        "grams": "908.000",
+        "measure_unit": "undetermined",
+        "modifier": "head, medium (about 5-3/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "23.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf, medium"
+      },
+      {
+        "amount": "1",
+        "grams": "714.000",
+        "measure_unit": "undetermined",
+        "modifier": "head, small (about 4-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf"
+      }
+    ],
+    "169977": [
+      {
+        "amount": "1",
+        "grams": "89.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "70.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded"
+      },
+      {
+        "amount": "1",
+        "grams": "1134.000",
+        "measure_unit": "undetermined",
+        "modifier": "head, large (about 5-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "23.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf"
+      },
+      {
+        "amount": "1",
+        "grams": "839.000",
+        "measure_unit": "undetermined",
+        "modifier": "head, medium (about 5\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "567.000",
+        "measure_unit": "undetermined",
+        "modifier": "head, small (4\" dia)"
+      }
+    ],
+    "169978": [
+      {
+        "amount": "1",
+        "grams": "22.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf"
+      },
+      {
+        "amount": "0.5",
+        "grams": "75.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded"
+      }
+    ],
+    "169985": [
+      {
+        "amount": "1",
+        "grams": "206.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "408.000",
+        "measure_unit": "undetermined",
+        "modifier": "root"
+      }
+    ],
+    "169986": [
+      {
+        "amount": "1",
+        "grams": "107.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup chopped (1/2\" pieces)"
+      },
+      {
+        "amount": "1",
+        "grams": "13.000",
+        "measure_unit": "undetermined",
+        "modifier": "floweret"
+      },
+      {
+        "amount": "1",
+        "grams": "840.000",
+        "measure_unit": "undetermined",
+        "modifier": "head large (6-7\" dia.)"
+      },
+      {
+        "amount": "1",
+        "grams": "588.000",
+        "measure_unit": "undetermined",
+        "modifier": "head medium (5-6\" dia.)"
+      },
+      {
+        "amount": "1",
+        "grams": "265.000",
+        "measure_unit": "undetermined",
+        "modifier": "head small (4\" dia.)"
+      }
+    ],
+    "169988": [
+      {
+        "amount": "1",
+        "grams": "101.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "110.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      },
+      {
+        "amount": "1",
+        "grams": "7.500",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "1",
+        "grams": "64.000",
+        "measure_unit": "undetermined",
+        "modifier": "stalk, large (11\"-12\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "40.000",
+        "measure_unit": "undetermined",
+        "modifier": "stalk, medium (7-1/2\" - 8\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "17.000",
+        "measure_unit": "undetermined",
+        "modifier": "stalk, small (5\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "4.000",
+        "measure_unit": "undetermined",
+        "modifier": "strip (4\" long)"
+      }
+    ],
+    "169991": [
+      {
+        "amount": "1",
+        "grams": "36.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "48.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf"
+      }
+    ],
+    "169998": [
+      {
+        "amount": "1",
+        "grams": "145.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "143.000",
+        "measure_unit": "undetermined",
+        "modifier": "ear, large (7-3/4\" to 9\" long) yields"
+      },
+      {
+        "amount": "1",
+        "grams": "102.000",
+        "measure_unit": "undetermined",
+        "modifier": "ear, medium (6-3/4\" to 7-1/2\" long) yields"
+      },
+      {
+        "amount": "1",
+        "grams": "73.000",
+        "measure_unit": "undetermined",
+        "modifier": "ear, small (5-1/2\" to 6-1/2\" long)"
+      }
+    ],
+    "169999": [
+      {
+        "amount": "1",
+        "grams": "89.000",
+        "measure_unit": "undetermined",
+        "modifier": "ear small (5-1/2\" to 6-1/2\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "103.000",
+        "measure_unit": "undetermined",
+        "modifier": "ear medium (6-3/4\" to 7-1/2\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "118.000",
+        "measure_unit": "undetermined",
+        "modifier": "ear large (7-3/4\" to 9\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "149.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup cut"
+      },
+      {
+        "amount": "1",
+        "grams": "8.000",
+        "measure_unit": "undetermined",
+        "modifier": "baby ear"
+      }
+    ],
+    "170000": [
+      {
+        "amount": "1",
+        "grams": "160.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "115.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "10.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "150.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      },
+      {
+        "amount": "1",
+        "grams": "38.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice, large (1/4\" thick)"
+      },
+      {
+        "amount": "1",
+        "grams": "110.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (2-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "14.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice, medium (1/8\" thick)"
+      },
+      {
+        "amount": "1",
+        "grams": "70.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "1",
+        "grams": "9.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice, thin"
+      },
+      {
+        "amount": "10",
+        "grams": "60.000",
+        "measure_unit": "undetermined",
+        "modifier": "rings"
+      }
+    ],
+    "170001": [
+      {
+        "amount": "1",
+        "grams": "210.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "128.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      },
+      {
+        "amount": "1",
+        "grams": "32.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice, large (1/4\" thick)"
+      },
+      {
+        "amount": "1",
+        "grams": "94.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium"
+      },
+      {
+        "amount": "1",
+        "grams": "12.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice, medium (1/8\" thick)"
+      },
+      {
+        "amount": "1",
+        "grams": "60.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "1",
+        "grams": "8.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice, thin"
+      }
+    ],
+    "170005": [
+      {
+        "amount": "1",
+        "grams": "100.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "6.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "25.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (4-1/8\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "5.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (3\" long)"
+      }
+    ],
+    "170009": [
+      {
+        "amount": "0.5",
+        "grams": "78.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      },
+      {
+        "amount": "1",
+        "grams": "160.000",
+        "measure_unit": "undetermined",
+        "modifier": "parsnip (9\" long)"
+      }
+    ],
+    "170026": [
+      {
+        "amount": "0.5",
+        "grams": "75.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, diced"
+      },
+      {
+        "amount": "1",
+        "grams": "369.000",
+        "measure_unit": "undetermined",
+        "modifier": "Potato large (3\" to 4-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "213.000",
+        "measure_unit": "undetermined",
+        "modifier": "Potato medium (2-1/4\" to 3-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "170.000",
+        "measure_unit": "undetermined",
+        "modifier": "Potato small (1-3/4\" to 2-1/2\" dia)"
+      }
+    ],
+    "170050": [
+      {
+        "amount": "1",
+        "grams": "240.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "2",
+        "grams": "246.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium"
+      }
+    ],
+    "170058": [
+      {
+        "amount": "1",
+        "grams": "156.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      },
+      {
+        "amount": "1",
+        "grams": "230.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, mashed"
+      }
+    ],
+    "170068": [
+      {
+        "amount": "1",
+        "grams": "34.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "2.500",
+        "measure_unit": "undetermined",
+        "modifier": "sprig"
+      },
+      {
+        "amount": "10",
+        "grams": "25.000",
+        "measure_unit": "undetermined",
+        "modifier": "sprigs"
+      }
+    ],
+    "170072": [
+      {
+        "amount": "1",
+        "grams": "136.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      },
+      {
+        "amount": "0.5",
+        "grams": "68.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      }
+    ],
+    "170108": [
+      {
+        "amount": "1",
+        "grams": "149.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "92.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "9.300",
+        "measure_unit": "undetermined",
+        "modifier": "tablespoon"
+      },
+      {
+        "amount": "1",
+        "grams": "164.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (2-1/4 per pound, approx 3-3/4\" long, 3\" dia.)"
+      },
+      {
+        "amount": "1",
+        "grams": "119.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (approx 2-3/4\" long, 2-1/2 dia.)"
+      },
+      {
+        "amount": "1",
+        "grams": "74.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "1",
+        "grams": "10.000",
+        "measure_unit": "undetermined",
+        "modifier": "ring (3\" dia., 1/4\" thick)"
+      }
+    ],
+    "170379": [
+      {
+        "amount": "1",
+        "grams": "91.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "608.000",
+        "measure_unit": "undetermined",
+        "modifier": "bunch"
+      },
+      {
+        "amount": "1",
+        "grams": "31.000",
+        "measure_unit": "undetermined",
+        "modifier": "spear (about 5\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "151.000",
+        "measure_unit": "undetermined",
+        "modifier": "stalk"
+      },
+      {
+        "amount": "0.5",
+        "grams": "44.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped or diced"
+      },
+      {
+        "amount": "1",
+        "grams": "148.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "170383": [
+      {
+        "amount": "1",
+        "grams": "88.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "19.000",
+        "measure_unit": "undetermined",
+        "modifier": "sprout"
+      }
+    ],
+    "170390": [
+      {
+        "amount": "1",
+        "grams": "70.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded"
+      },
+      {
+        "amount": "1",
+        "grams": "840.000",
+        "measure_unit": "undetermined",
+        "modifier": "head"
+      },
+      {
+        "amount": "1",
+        "grams": "14.000",
+        "measure_unit": "undetermined",
+        "modifier": "leaf"
+      }
+    ],
+    "170391": [
+      {
+        "amount": "1",
+        "grams": "170.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded"
+      }
+    ],
+    "170394": [
+      {
+        "amount": "1",
+        "grams": "9.700",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "0.5",
+        "grams": "78.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      },
+      {
+        "amount": "1",
+        "grams": "46.000",
+        "measure_unit": "undetermined",
+        "modifier": "carrot"
+      }
+    ],
+    "170397": [
+      {
+        "amount": "0.5",
+        "grams": "62.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup (1\" pieces)"
+      },
+      {
+        "amount": "3",
+        "grams": "54.000",
+        "measure_unit": "undetermined",
+        "modifier": "flowerets"
+      }
+    ],
+    "170400": [
+      {
+        "amount": "1",
+        "grams": "156.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "170401": [
+      {
+        "amount": "1",
+        "grams": "175.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      }
+    ],
+    "170417": [
+      {
+        "amount": "1",
+        "grams": "133.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      }
+    ],
+    "170420": [
+      {
+        "amount": "1",
+        "grams": "160.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "170427": [
+      {
+        "amount": "1",
+        "grams": "149.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "92.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "9.300",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "1",
+        "grams": "164.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (2-1/4 per lb, approx 3-3/4\" long, 3\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "119.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (approx 2-3/4\" long, 2-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "10.000",
+        "measure_unit": "undetermined",
+        "modifier": "ring (3\" dia, 1/4\" thick)"
+      },
+      {
+        "amount": "1",
+        "grams": "74.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "10",
+        "grams": "27.000",
+        "measure_unit": "undetermined",
+        "modifier": "strips"
+      }
+    ],
+    "170435": [
+      {
+        "amount": "1",
+        "grams": "299.000",
+        "measure_unit": "undetermined",
+        "modifier": "potato large (3\" to 4-1/4\" dia."
+      },
+      {
+        "amount": "1",
+        "grams": "173.000",
+        "measure_unit": "undetermined",
+        "modifier": "potato medium (2-1/4\" to 3-1/4\" dia.)"
+      },
+      {
+        "amount": "1",
+        "grams": "138.000",
+        "measure_unit": "undetermined",
+        "modifier": "potato small (1-3/4\" to 2-1/2\" dia.)"
+      }
+    ],
+    "170465": [
+      {
+        "amount": "1",
+        "grams": "130.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      },
+      {
+        "amount": "1",
+        "grams": "183.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      },
+      {
+        "amount": "1",
+        "grams": "122.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice"
+      },
+      {
+        "amount": "1",
+        "grams": "61.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "0.5",
+        "grams": "65.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      }
+    ],
+    "170497": [
+      {
+        "amount": "1",
+        "grams": "45.000",
+        "measure_unit": "undetermined",
+        "modifier": "pepper"
+      },
+      {
+        "amount": "0.5",
+        "grams": "75.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped or diced"
+      }
+    ],
+    "170845": [
+      {
+        "amount": "1",
+        "grams": "112.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded"
+      },
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "6",
+        "grams": "170.000",
+        "measure_unit": "undetermined",
+        "modifier": "slices"
+      }
+    ],
+    "170848": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "10.300",
+        "measure_unit": "undetermined",
+        "modifier": "cubic inch"
+      },
+      {
+        "amount": "5",
+        "grams": "142.000",
+        "measure_unit": "undetermined",
+        "modifier": "package (5 oz)"
+      }
+    ],
+    "170851": [
+      {
+        "amount": "0.5",
+        "grams": "124.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "246.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "170859": [
+      {
+        "amount": "1",
+        "grams": "120.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, whipped"
+      },
+      {
+        "amount": "1",
+        "grams": "238.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, fluid (yields 2 cups whipped)"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "1",
+        "grams": "29.800",
+        "measure_unit": "undetermined",
+        "modifier": "fl oz"
+      }
+    ],
+    "170887": [
+      {
+        "amount": "1",
+        "grams": "170.000",
+        "measure_unit": "undetermined",
+        "modifier": "container (6 oz)"
+      },
+      {
+        "amount": "1",
+        "grams": "227.000",
+        "measure_unit": "undetermined",
+        "modifier": "container (8 oz)"
+      },
+      {
+        "amount": "1",
+        "grams": "245.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup (8 fl oz)"
+      }
+    ],
+    "171060": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "44.000",
+        "measure_unit": "undetermined",
+        "modifier": "liver"
+      }
+    ],
+    "171077": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "272.000",
+        "measure_unit": "undetermined",
+        "modifier": "piece"
+      },
+      {
+        "amount": "1",
+        "grams": "926.000",
+        "measure_unit": "undetermined",
+        "modifier": "package"
+      }
+    ],
+    "171116": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz crumbled"
+      }
+    ],
+    "171241": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "198.000",
+        "measure_unit": "undetermined",
+        "modifier": "package (7 oz)"
+      }
+    ],
+    "171251": [
+      {
+        "amount": "1",
+        "grams": "132.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, diced"
+      },
+      {
+        "amount": "1",
+        "grams": "244.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, melted"
+      },
+      {
+        "amount": "1",
+        "grams": "108.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded"
+      },
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "cubic inch"
+      },
+      {
+        "amount": "1",
+        "grams": "28.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice (1 oz)"
+      }
+    ],
+    "171257": [
+      {
+        "amount": "1",
+        "grams": "12.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "1",
+        "grams": "230.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "171284": [
+      {
+        "amount": "1",
+        "grams": "170.000",
+        "measure_unit": "undetermined",
+        "modifier": "container (6 oz)"
+      },
+      {
+        "amount": "1",
+        "grams": "227.000",
+        "measure_unit": "undetermined",
+        "modifier": "container (8 oz)"
+      },
+      {
+        "amount": "0.5",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "container (4 oz)"
+      },
+      {
+        "amount": "1",
+        "grams": "245.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup (8 fl oz)"
+      }
+    ],
+    "171447": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "276.000",
+        "measure_unit": "undetermined",
+        "modifier": "unit (yield from 1 lb ready-to-cook chicken)"
+      },
+      {
+        "amount": "0.5",
+        "grams": "460.000",
+        "measure_unit": "undetermined",
+        "modifier": "chicken, bone removed"
+      }
+    ],
+    "171505": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "453.600",
+        "measure_unit": "undetermined",
+        "modifier": "lb"
+      },
+      {
+        "amount": "1",
+        "grams": "114.000",
+        "measure_unit": "undetermined",
+        "modifier": "patty, 4 oz"
+      }
+    ],
+    "171688": [
+      {
+        "amount": "1",
+        "grams": "125.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, quartered or chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "109.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup slices"
+      },
+      {
+        "amount": "1",
+        "grams": "223.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (3-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "182.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (3\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "149.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (2-3/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "101.000",
+        "measure_unit": "undetermined",
+        "modifier": "extra small (2-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "242.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "171697": [
+      {
+        "amount": "1",
+        "grams": "155.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, halves"
+      },
+      {
+        "amount": "1",
+        "grams": "165.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "35.000",
+        "measure_unit": "undetermined",
+        "modifier": "apricot"
+      }
+    ],
+    "171715": [
+      {
+        "amount": "1",
+        "grams": "132.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, cubes"
+      },
+      {
+        "amount": "1",
+        "grams": "108.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, sliced"
+      },
+      {
+        "amount": "1",
+        "grams": "124.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (4-1/2\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "91.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (3-5/8\" long)"
+      },
+      {
+        "amount": "1",
+        "grams": "70.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (3-1/8\" long)"
+      }
+    ],
+    "171719": [
+      {
+        "amount": "1",
+        "grams": "138.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, with pits, yields"
+      },
+      {
+        "amount": "1",
+        "grams": "154.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, without pits"
+      },
+      {
+        "amount": "1",
+        "grams": "8.200",
+        "measure_unit": "undetermined",
+        "modifier": "cherry"
+      },
+      {
+        "amount": "1",
+        "grams": "140.000",
+        "measure_unit": "undetermined",
+        "modifier": "NLEA serving"
+      }
+    ],
+    "171722": [
+      {
+        "amount": "1",
+        "grams": "110.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, chopped"
+      },
+      {
+        "amount": "1",
+        "grams": "100.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, whole"
+      }
+    ],
+    "171955": [
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "231.000",
+        "measure_unit": "undetermined",
+        "modifier": "fillet"
+      }
+    ],
+    "171975": [
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "20",
+        "grams": "190.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      }
+    ],
+    "172175": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "17.000",
+        "measure_unit": "undetermined",
+        "modifier": "cubic inch"
+      },
+      {
+        "amount": "1",
+        "grams": "135.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, crumbled, not packed"
+      }
+    ],
+    "172205": [
+      {
+        "amount": "1",
+        "grams": "246.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "984.000",
+        "measure_unit": "undetermined",
+        "modifier": "quart"
+      }
+    ],
+    "172217": [
+      {
+        "amount": "1",
+        "grams": "244.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "15.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "1",
+        "grams": "30.500",
+        "measure_unit": "undetermined",
+        "modifier": "fl oz"
+      },
+      {
+        "amount": "1",
+        "grams": "976.000",
+        "measure_unit": "undetermined",
+        "modifier": "quart"
+      }
+    ],
+    "172385": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "193.000",
+        "measure_unit": "undetermined",
+        "modifier": "thigh with skin"
+      }
+    ],
+    "172390": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "107.000",
+        "measure_unit": "undetermined",
+        "modifier": "piece"
+      },
+      {
+        "amount": "1",
+        "grams": "1150.000",
+        "measure_unit": "undetermined",
+        "modifier": "package"
+      }
+    ],
+    "172408": [
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "287.000",
+        "measure_unit": "undetermined",
+        "modifier": "unit (yield from 1 lb ready-to-cook duck)"
+      },
+      {
+        "amount": "0.5",
+        "grams": "634.000",
+        "measure_unit": "undetermined",
+        "modifier": "duck"
+      }
+    ],
+    "172420": [
+      {
+        "amount": "1",
+        "grams": "192.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "12.000",
+        "measure_unit": "undetermined",
+        "modifier": "tablespoon"
+      }
+    ],
+    "172424": [
+      {
+        "amount": "1",
+        "grams": "166.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "172429": [
+      {
+        "amount": "1",
+        "grams": "196.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "12.200",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "172448": [
+      {
+        "amount": "0.5",
+        "grams": "126.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "0.25",
+        "grams": "81.000",
+        "measure_unit": "undetermined",
+        "modifier": "block"
+      },
+      {
+        "amount": "0.2",
+        "grams": "91.000",
+        "measure_unit": "undetermined",
+        "modifier": "block"
+      }
+    ],
+    "172449": [
+      {
+        "amount": "1",
+        "grams": "120.000",
+        "measure_unit": "undetermined",
+        "modifier": "piece (2-1/2\" x 2-3/4\" x 1\")"
+      },
+      {
+        "amount": "1",
+        "grams": "248.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup (1/2\" cubes)"
+      },
+      {
+        "amount": "1",
+        "grams": "18.000",
+        "measure_unit": "undetermined",
+        "modifier": "cubic inch"
+      },
+      {
+        "amount": "0.25",
+        "grams": "116.000",
+        "measure_unit": "undetermined",
+        "modifier": "block"
+      },
+      {
+        "amount": "0.2",
+        "grams": "90.000",
+        "measure_unit": "undetermined",
+        "modifier": "block"
+      }
+    ],
+    "172521": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "453.600",
+        "measure_unit": "undetermined",
+        "modifier": "lb"
+      }
+    ],
+    "173021": [
+      {
+        "amount": "1",
+        "grams": "64.000",
+        "measure_unit": "undetermined",
+        "modifier": "large (2-1/2\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "50.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium (2-1/4\" dia)"
+      },
+      {
+        "amount": "1",
+        "grams": "40.000",
+        "measure_unit": "undetermined",
+        "modifier": "small (1-1/2\" dia)"
+      }
+    ],
+    "173034": [
+      {
+        "amount": "1",
+        "grams": "230.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup sections, with juice"
+      },
+      {
+        "amount": "0.5",
+        "grams": "118.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit (3-3/4\" dia)"
+      }
+    ],
+    "173044": [
+      {
+        "amount": "1",
+        "grams": "165.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "55.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit, without refuse"
+      }
+    ],
+    "173410": [
+      {
+        "amount": "1",
+        "grams": "5.000",
+        "measure_unit": "undetermined",
+        "modifier": "pat (1\" sq, 1/3\" high)"
+      },
+      {
+        "amount": "1",
+        "grams": "14.200",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "1",
+        "grams": "227.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "stick"
+      }
+    ],
+    "173414": [
+      {
+        "amount": "1",
+        "grams": "132.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, diced"
+      },
+      {
+        "amount": "1",
+        "grams": "244.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, melted"
+      },
+      {
+        "amount": "1",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, shredded"
+      },
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "17.000",
+        "measure_unit": "undetermined",
+        "modifier": "cubic inch"
+      },
+      {
+        "amount": "1",
+        "grams": "28.000",
+        "measure_unit": "undetermined",
+        "modifier": "slice (1 oz)"
+      }
+    ],
+    "173417": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "226.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup (not packed)"
+      }
+    ],
+    "173430": [
+      {
+        "amount": "1",
+        "grams": "5.000",
+        "measure_unit": "undetermined",
+        "modifier": "pat (1\" sq, 1/3\" high)"
+      },
+      {
+        "amount": "1",
+        "grams": "14.200",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      },
+      {
+        "amount": "1",
+        "grams": "227.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "stick"
+      }
+    ],
+    "173433": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "173626": [
+      {
+        "amount": "1",
+        "grams": "41.000",
+        "measure_unit": "undetermined",
+        "modifier": "unit (yield from 1 lb ready-to-cook chicken)"
+      },
+      {
+        "amount": "1",
+        "grams": "68.000",
+        "measure_unit": "undetermined",
+        "modifier": "thigh, bone removed"
+      }
+    ],
+    "173686": [
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "0.5",
+        "grams": "198.000",
+        "measure_unit": "undetermined",
+        "modifier": "fillet"
+      }
+    ],
+    "173717": [
+      {
+        "amount": "1",
+        "grams": "79.000",
+        "measure_unit": "undetermined",
+        "modifier": "fillet"
+      },
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "173727": [
+      {
+        "amount": "1",
+        "grams": "197.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "173728": [
+      {
+        "amount": "1",
+        "grams": "230.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "173734": [
+      {
+        "amount": "1",
+        "grams": "194.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "12.100",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "173736": [
+      {
+        "amount": "1",
+        "grams": "177.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "173744": [
+      {
+        "amount": "1",
+        "grams": "184.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "12.200",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "173745": [
+      {
+        "amount": "1",
+        "grams": "208.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "173746": [
+      {
+        "amount": "1",
+        "grams": "182.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "173756": [
+      {
+        "amount": "1",
+        "grams": "200.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "12.500",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "173758": [
+      {
+        "amount": "1",
+        "grams": "167.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "10.500",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "173759": [
+      {
+        "amount": "1",
+        "grams": "171.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "173941": [
+      {
+        "amount": "1",
+        "grams": "130.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, halves"
+      },
+      {
+        "amount": "1",
+        "grams": "3.500",
+        "measure_unit": "undetermined",
+        "modifier": "half"
+      }
+    ],
+    "173946": [
+      {
+        "amount": "1",
+        "grams": "144.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "173953": [
+      {
+        "amount": "1",
+        "grams": "160.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, pieces"
+      },
+      {
+        "amount": "1",
+        "grams": "235.000",
+        "measure_unit": "undetermined",
+        "modifier": "fruit without skin and seeds"
+      }
+    ],
+    "173954": [
+      {
+        "amount": "1",
+        "grams": "155.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, without pits"
+      },
+      {
+        "amount": "1",
+        "grams": "103.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup, with pits, yields"
+      }
+    ],
+    "173964": [
+      {
+        "amount": "1",
+        "grams": "112.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "174030": [
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "174182": [
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "174196": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz, boneless"
+      },
+      {
+        "amount": "1",
+        "grams": "163.000",
+        "measure_unit": "undetermined",
+        "modifier": "fillet"
+      },
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "174202": [
+      {
+        "amount": "1",
+        "grams": "134.000",
+        "measure_unit": "undetermined",
+        "modifier": "leg"
+      },
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "174209": [
+      {
+        "amount": "1",
+        "grams": "145.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "174210": [
+      {
+        "amount": "1",
+        "grams": "6.000",
+        "measure_unit": "undetermined",
+        "modifier": "medium"
+      },
+      {
+        "amount": "1",
+        "grams": "5.000",
+        "measure_unit": "undetermined",
+        "modifier": "small"
+      },
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "4",
+        "grams": "28.000",
+        "measure_unit": "undetermined",
+        "modifier": "large"
+      }
+    ],
+    "174223": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz, boneless"
+      },
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "174249": [
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "174256": [
+      {
+        "amount": "1",
+        "grams": "207.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "13.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "174257": [
+      {
+        "amount": "1",
+        "grams": "202.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "174270": [
+      {
+        "amount": "1",
+        "grams": "186.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "174271": [
+      {
+        "amount": "1",
+        "grams": "172.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "10.700",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "174284": [
+      {
+        "amount": "1",
+        "grams": "192.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "174370": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "4",
+        "grams": "113.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "174665": [
+      {
+        "amount": "1",
+        "grams": "149.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "8.400",
+        "measure_unit": "undetermined",
+        "modifier": "fig"
+      }
+    ],
+    "175176": [
+      {
+        "amount": "1",
+        "grams": "116.000",
+        "measure_unit": "undetermined",
+        "modifier": "fillet"
+      }
+    ],
+    "175180": [
+      {
+        "amount": "3",
+        "grams": "85.000",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      }
+    ],
+    "175189": [
+      {
+        "amount": "1",
+        "grams": "195.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      }
+    ],
+    "175194": [
+      {
+        "amount": "1",
+        "grams": "177.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "11.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "175199": [
+      {
+        "amount": "1",
+        "grams": "193.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "12.000",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "175200": [
+      {
+        "amount": "1",
+        "grams": "171.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "10.600",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "175205": [
+      {
+        "amount": "1",
+        "grams": "150.000",
+        "measure_unit": "undetermined",
+        "modifier": "cup"
+      },
+      {
+        "amount": "1",
+        "grams": "9.400",
+        "measure_unit": "undetermined",
+        "modifier": "tbsp"
+      }
+    ],
+    "175303": [
+      {
+        "amount": "1",
+        "grams": "28.350",
+        "measure_unit": "undetermined",
+        "modifier": "oz"
+      },
+      {
+        "amount": "1",
+        "grams": "453.600",
+        "measure_unit": "undetermined",
+        "modifier": "lb"
+      }
+    ]
+  },
+  "version": "2018-04"
 }

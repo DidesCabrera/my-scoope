@@ -350,6 +350,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   if (item.entity === "program") {
     return <><ProgramDetailPreview
       footer={item.can_calendarize && !item.is_draft ? <Button bleed label="Calendarizar este programa" onPress={() => router.push(`/program/activate?programId=${item.id}` as Href)} /> : undefined}
+      footerTopSpacing={68}
       item={item}
       onAddWeek={item.can_calendarize ? () => router.push(`/pickers/week-to-program?programId=${item.id}` as Href) : undefined}
       onAssignDailyPlan={item.can_calendarize ? (week, day) => router.push(pickerHref("dailyplan-to-program", { programId: item.id, weekNumber: week, dayNumber: day })) : undefined}

@@ -102,8 +102,8 @@ test("a store-confirmed scheduled change shows its renewal date without claiming
   f.coordinator.begin(annual);
   await f.coordinator.reconcile(true);
   assert.equal(f.coordinator.state.phase, "scheduled");
-  assert.match(f.coordinator.state.message ?? "", /noviembre/);
-  assert.doesNotMatch(f.coordinator.state.message ?? "", /ya está activo/);
+  assert.equal(f.coordinator.state.message?.includes("noviembre"), true);
+  assert.equal(f.coordinator.state.message?.includes("ya está activo"), false);
   f.coordinator.dispose();
 });
 

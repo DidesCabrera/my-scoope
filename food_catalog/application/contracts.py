@@ -25,9 +25,12 @@ class CandidateSourceType(StrEnum):
     """Supported high-level origin categories for catalog candidates."""
 
     NATURAL_VERIFIED = "natural_verified"
+    USDA = "usda"
     BRAND_SUBMITTED = "brand_submitted"
     USER_CREATED = "user_created"
     EXTERNAL_TEMPORARY = "external_temporary"
+    FATSECRET = "fatsecret"
+    OPEN_FOOD_FACTS = "open_food_facts"
     ADMIN_IMPORT = "admin_import"
 
 

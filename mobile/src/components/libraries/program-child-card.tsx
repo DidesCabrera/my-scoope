@@ -1,7 +1,7 @@
 import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { Pressable, ScrollView, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 import { useState } from "react";
-import Svg, { Defs, Line, LinearGradient, Polygon, Polyline, Stop } from "react-native-svg";
+import Svg, { Defs, Line, LinearGradient, Polygon, Polyline, Rect, Stop } from "react-native-svg";
 
 import type { LibraryNutrition } from "@/api/types";
 import { Card, EntityHeading, type EntityHeadingLink, layoutStyles } from "@/components/ui";
@@ -21,15 +21,16 @@ type MetricRow = {
   label: string;
   range: string;
   color: string;
+  unit: "kcal" | "g/kg" | "g";
   values: number[];
 };
 
 const metricRows: MetricRow[] = [
-  { key: "calories", label: "Calorías", range: "1840 - 2260 cal", color: tokens.color.kcalBorder, values: [60, 82, 56, 88, 71, 66, 48, 74, 92, 62, 79, 69, 86, 53] },
-  { key: "ppk", label: "PPK", range: "1,55 - 1,92 g/kg", color: tokens.color.ppk, values: [55, 76, 69, 87, 73, 82, 51, 70, 91, 64, 80, 75, 85, 58] },
-  { key: "protein", label: "Proteína", range: "132 - 168 g", color: tokens.color.protein, values: [57, 78, 68, 90, 74, 84, 52, 72, 94, 63, 82, 77, 88, 56] },
-  { key: "carbs", label: "Carbos", range: "196 - 254 g", color: tokens.color.carbs, values: [70, 91, 52, 84, 63, 72, 45, 87, 78, 58, 93, 67, 76, 49] },
-  { key: "fat", label: "Grasas", range: "52 - 73 g", color: tokens.color.fat, values: [48, 66, 85, 59, 75, 51, 64, 81, 55, 73, 62, 89, 68, 47] },
+  { key: "calories", label: "Calorías", range: "1840 - 2260 cal", color: tokens.color.kcalBorder, unit: "kcal", values: [60, 82, 56, 88, 71, 66, 48, 74, 92, 62, 79, 69, 86, 53] },
+  { key: "ppk", label: "PPK", range: "1,55 - 1,92 g/kg", color: tokens.color.ppk, unit: "g/kg", values: [55, 76, 69, 87, 73, 82, 51, 70, 91, 64, 80, 75, 85, 58] },
+  { key: "protein", label: "Proteína", range: "132 - 168 g", color: tokens.color.protein, unit: "g", values: [57, 78, 68, 90, 74, 84, 52, 72, 94, 63, 82, 77, 88, 56] },
+  { key: "carbs", label: "Carbos", range: "196 - 254 g", color: tokens.color.carbs, unit: "g", values: [70, 91, 52, 84, 63, 72, 45, 87, 78, 58, 93, 67, 76, 49] },
+  { key: "fat", label: "Grasas", range: "52 - 73 g", color: tokens.color.fat, unit: "g", values: [48, 66, 85, 59, 75, 51, 64, 81, 55, 73, 62, 89, 68, 47] },
 ];
 
 const allocationValues = [
@@ -100,53 +101,139 @@ function MetricIdentity({ metricKey, label, range, color }: Pick<MetricRow, "lab
   );
 }
 
-function MetricPlot({ days, metric, values: providedValues }: { days: number; metric: MetricRow; values?: number[] }) {
+function InlineDayLabels({ labels }: { labels: string[] }) {
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={styles.inlineDayLabels}>
+      {labels.map((label, index) => <Text key={`${label}-${index}`} style={styles.inlineDayLabel}>{label}</Text>)}
+    </View>
+  );
+}
+
+function AllocationSegment({ color, fullWidth, id, value }: { color: string; fullWidth: boolean; id: string; value: number }) {
+  return (
+    <View style={[styles.allocationSegment, { backgroundColor: fullWidth ? "transparent" : color, flex: value }, fullWidth && styles.weekAllocationSegment]}>
+      {fullWidth ? (
+        <Svg height="100%" pointerEvents="none" preserveAspectRatio="none" style={StyleSheet.absoluteFill} width="100%">
+          <Defs>
+            <LinearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+              <Stop offset="0" stopColor={color} stopOpacity={1} />
+              <Stop offset="1" stopColor={color} stopOpacity={0.8} />
+            </LinearGradient>
+          </Defs>
+          <Rect fill={`url(#${id})`} height="100%" width="100%" x="0" y="0" />
+        </Svg>
+      ) : null}
+      {fullWidth ? <Text numberOfLines={1} style={styles.allocationSegmentLabel}>{Math.round(value)}%</Text> : null}
+    </View>
+  );
+}
+
+function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: providedValues }: { axisLabels?: string[]; days: number; fullWidth?: boolean; metric: MetricRow; values?: number[] }) {
+  const [renderedSize, setRenderedSize] = useState({ height: 116, width: 320 });
   const rawValues = (providedValues ?? metric.values).slice(0, days);
   const maximum = Math.max(...rawValues, 1);
   const values = providedValues ? rawValues.map((value) => 12 + (value / maximum) * 82) : rawValues;
   const slotCount = Math.max(values.length, 1);
-  const coordinates = values.map((value, index) => ({ x: (index + 0.5) * (140 / slotCount), y: 43 - value * 0.4 }));
+  const plotHeight = fullWidth ? 84 : 44;
+  const plotBaseline = fullWidth ? 66 : 44;
+  const coordinates = values.map((value, index) => ({
+    x: (index + 0.5) * (140 / slotCount),
+    y: fullWidth ? 62 - value * 0.3 : 43 - value * 0.4,
+  }));
   const weekDividers = Array.from(
     { length: Math.max(0, Math.ceil(values.length / 7) - 1) },
     (_, index) => (index + 1) * 7 * (140 / slotCount),
   );
   const points = coordinates.map(({ x, y }) => `${x},${y}`).join(" ");
+  const barWidth = Math.max(1, (140 / slotCount) - 1);
+  const barCornerRadius = 8;
+  const barRadiusX = barCornerRadius * 140 / renderedSize.width;
+  const barRadiusY = barCornerRadius * plotHeight / renderedSize.height;
   const areaPoints = coordinates.length > 1
-    ? `${coordinates[0].x},44 ${points} ${coordinates[coordinates.length - 1].x},44`
+    ? `${coordinates[0].x},${plotBaseline} ${points} ${coordinates[coordinates.length - 1].x},${plotBaseline}`
     : "";
+  const formatPointValue = (value: number) => metric.key === "ppk"
+    ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 })
+    : Math.round(value).toLocaleString("es-CL");
   return (
-    <View accessibilityLabel={`${metric.label}: ${metric.range}`} style={styles.metricPlot}>
-      <Svg height="100%" preserveAspectRatio="none" viewBox="0 0 140 44" width="100%">
+    <View
+      accessibilityLabel={`${metric.label}: ${metric.range}`}
+      onLayout={fullWidth ? ({ nativeEvent }) => setRenderedSize(nativeEvent.layout) : undefined}
+      style={[styles.metricPlot, fullWidth && styles.weekFullWidthPlot, fullWidth && styles.weekMetricPlot]}>
+      {fullWidth ? <Text style={styles.inlineChartTitle}>{metric.label}</Text> : null}
+      {fullWidth ? <Text style={styles.inlineChartUnit}>{metric.unit}</Text> : null}
+      <Svg height="100%" preserveAspectRatio="none" viewBox={`0 0 140 ${plotHeight}`} width="100%">
         <Defs>
-          <LinearGradient gradientUnits="userSpaceOnUse" id={`metric-area-${metric.key}`} x1="0" x2="0" y1="0" y2="44">
+          <LinearGradient gradientUnits="userSpaceOnUse" id={`metric-area-${metric.key}`} x1="0" x2="0" y1="0" y2={plotHeight}>
             <Stop offset="0" stopColor={metric.color} stopOpacity={0.44} />
             <Stop offset="1" stopColor={metric.color} stopOpacity={0} />
           </LinearGradient>
+          <LinearGradient id={`metric-bar-${metric.key}`} x1="0" x2="0" y1="0" y2="1">
+            <Stop offset="0" stopColor={metric.color} stopOpacity={1} />
+            <Stop offset="1" stopColor={metric.color} stopOpacity={0.5} />
+          </LinearGradient>
         </Defs>
-        {weekDividers.map((x, index) => <Line key={`week-divider-${index}`} stroke={tokens.color.borderSoft} strokeWidth="0.8" x1={x} x2={x} y1="0" y2="44" />)}
-        {areaPoints ? <Polygon fill={`url(#metric-area-${metric.key})`} points={areaPoints} /> : null}
-        <Polyline fill="none" points={points} stroke={metric.color} strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-        {coordinates.map(({ x, y }, index) => <Line key={`${metric.key}-point-${index}`} stroke={metric.color} strokeLinecap="round" strokeWidth="3" vectorEffect="non-scaling-stroke" x1={x} x2={x} y1={y} y2={y} />)}
+        {weekDividers.map((x, index) => <Line key={`week-divider-${index}`} stroke={tokens.color.borderSoft} strokeWidth="0.8" x1={x} x2={x} y1="0" y2={plotHeight} />)}
+        {fullWidth ? coordinates.map(({ x, y }, index) => (
+          <Rect
+            fill={`url(#metric-bar-${metric.key})`}
+            height={Math.max(1, plotBaseline - y)}
+            key={`${metric.key}-bar-${index}`}
+            rx={barRadiusX}
+            ry={barRadiusY}
+            width={barWidth}
+            x={x - barWidth / 2}
+            y={y}
+          />
+        )) : (
+          <>
+            {areaPoints ? <Polygon fill={`url(#metric-area-${metric.key})`} points={areaPoints} /> : null}
+            <Polyline fill="none" points={points} stroke={metric.color} strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+            {coordinates.map(({ x, y }, index) => <Line key={`${metric.key}-point-${index}`} stroke={metric.color} strokeLinecap="round" strokeWidth="3" vectorEffect="non-scaling-stroke" x1={x} x2={x} y1={y} y2={y} />)}
+          </>
+        )}
       </Svg>
+      {fullWidth ? (
+        <View pointerEvents="none" style={styles.pointLabels}>
+          {coordinates.map(({ y }, index) => (
+            <Text
+              key={`${metric.key}-value-${index}`}
+              numberOfLines={1}
+              style={[
+                styles.pointLabel,
+                {
+                  left: `${((index + 0.5) / slotCount) * 100}%`,
+                  top: `${Math.max(0, (y / plotHeight) * 100 - 12)}%`,
+                },
+              ]}>
+              {formatPointValue(rawValues[index])}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+      {fullWidth && axisLabels ? <InlineDayLabels labels={axisLabels.slice(0, days)} /> : null}
     </View>
   );
 }
 
-function AllocationPlot({ days, values = allocationValues }: { days: number; values?: number[][] }) {
+function AllocationPlot({ axisLabels, days, fullWidth = false, values = allocationValues }: { axisLabels?: string[]; days: number; fullWidth?: boolean; values?: number[][] }) {
   return (
-    <View accessibilityLabel="Distribución de macronutrientes por día" style={[styles.metricPlot, styles.allocationPlot]}>
+    <View accessibilityLabel="Distribución de macronutrientes por día" style={[styles.metricPlot, styles.allocationPlot, fullWidth && styles.weekFullWidthPlot, fullWidth && styles.weekAllocationPlot]}>
+      {fullWidth ? <Text style={styles.inlineChartTitle}>Alloc</Text> : null}
+      {fullWidth ? <Text style={styles.inlineChartUnit}>%</Text> : null}
       {values.slice(0, days).map(([protein, carbs, fat], index) => {
         const hasAllocation = protein + carbs + fat > 0;
         return (
           <View key={`allocation-${index}`} style={[styles.allocationSlot, index > 0 && index % 7 === 0 && styles.weekDivider]}>
             {hasAllocation ? <>
-              <View style={[styles.allocationSegment, { backgroundColor: tokens.color.protein, flex: protein }]} />
-              <View style={[styles.allocationSegment, { backgroundColor: tokens.color.carbs, flex: carbs }]} />
-              <View style={[styles.allocationSegment, { backgroundColor: tokens.color.fat, flex: fat }]} />
+              <AllocationSegment color={tokens.color.protein} fullWidth={fullWidth} id={`allocation-protein-${index}`} value={protein} />
+              <AllocationSegment color={tokens.color.carbs} fullWidth={fullWidth} id={`allocation-carbs-${index}`} value={carbs} />
+              <AllocationSegment color={tokens.color.fat} fullWidth={fullWidth} id={`allocation-fat-${index}`} value={fat} />
             </> : null}
           </View>
         );
       })}
+      {fullWidth && axisLabels ? <InlineDayLabels labels={axisLabels.slice(0, days)} /> : null}
     </View>
   );
 }
@@ -157,19 +244,25 @@ function allocationRange(values: number[][] | undefined, index: number, fallback
   return `${Math.round(Math.min(...finite))} - ${Math.round(Math.max(...finite))}%`;
 }
 
-export function ProgramMetricPreview({
-  axisLeadingLabel,
-  axisLabels = ["S1", "S2"],
-  data,
-  days = 14,
-  style,
-}: {
+type MetricPreviewProps = {
   axisLeadingLabel?: string;
   axisLabels?: string[];
   data?: ProgramMetricDatum[];
   days?: number;
   style?: StyleProp<ViewStyle>;
-}) {
+};
+
+export type WeekMetricFilter = "all" | "calories" | "ppk" | "macros" | "allocation";
+
+function MetricPreview({
+  axisLeadingLabel,
+  axisLabels = ["S1", "S2"],
+  data,
+  days = 14,
+  filter = "all",
+  scope,
+  style,
+}: MetricPreviewProps & { filter?: WeekMetricFilter; scope: "program" | "week" }) {
   const { width } = useWindowDimensions();
   const [plotViewportWidth, setPlotViewportWidth] = useState(0);
   const metricColumnStyle = width < 600
@@ -188,8 +281,31 @@ export function ProgramMetricPreview({
   } : undefined;
   const liveAllocationValues = data?.map(({ allocation }) => [allocation.protein, allocation.carbs, allocation.fat]);
 
+  if (scope === "week") {
+    const visibleMetrics = filter === "all"
+      ? metricRows
+      : filter === "macros"
+        ? metricRows.filter(({ key }) => key === "protein" || key === "carbs" || key === "fat")
+        : metricRows.filter(({ key }) => key === filter);
+    const showAllocation = filter === "all" || filter === "allocation";
+    return (
+      <View accessibilityLabel="Gráficos de KPI de la semana" style={[styles.chartPreview, styles.weekChartPreview, style]}>
+        {visibleMetrics.map((metric, index) => (
+          <View key={metric.key} style={[styles.weekMetricRow, index > 0 && styles.weekMetricRowSeparated]}>
+            {index > 0 ? <View pointerEvents="none" style={styles.weekMetricSeparator} /> : null}
+            <MetricPlot axisLabels={axisLabels} days={days} fullWidth metric={metric} values={metricValues?.[metric.key]} />
+          </View>
+        ))}
+        {showAllocation ? <View style={[styles.weekMetricRow, visibleMetrics.length > 0 && styles.weekMetricRowSeparated]}>
+          {visibleMetrics.length > 0 ? <View pointerEvents="none" style={styles.weekMetricSeparator} /> : null}
+          <AllocationPlot axisLabels={axisLabels} days={days} fullWidth values={liveAllocationValues} />
+        </View> : null}
+      </View>
+    );
+  }
+
   return (
-    <View accessibilityLabel="Gráficos de KPI del programa" style={[styles.chartPreview, style]}>
+    <View accessibilityLabel="Gráficos de KPI del programa" style={[styles.chartPreview, styles.programChartPreview, style]}>
       <View style={[styles.metricColumn, metricColumnStyle]}>
         <View style={styles.axisLeadingCell}>
           <Text style={[styles.axisChip, styles.axisLeadingChip]}>{axisLeadingLabel ?? programWeekRangeLabel(axisLabels)}</Text>
@@ -224,6 +340,14 @@ export function ProgramMetricPreview({
       </View>
     </View>
   );
+}
+
+export function ProgramMetricPreview(props: MetricPreviewProps) {
+  return <MetricPreview {...props} scope="program" />;
+}
+
+export function WeekMetricPreview(props: MetricPreviewProps & { filter?: WeekMetricFilter }) {
+  return <MetricPreview {...props} scope="week" />;
 }
 
 export function ProgramChildCard({
@@ -282,7 +406,12 @@ export function ProgramChildCard({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.62 },
-  chartPreview: { alignItems: "stretch", flexDirection: "row", marginTop: tokens.spacing.sm },
+  chartPreview: { alignItems: "stretch" },
+  programChartPreview: { flexDirection: "row", marginTop: tokens.spacing.sm },
+  weekChartPreview: { gap: tokens.spacing.lg, marginTop: tokens.spacing.sm },
+  weekMetricRow: { gap: tokens.spacing.xs, width: "100%" },
+  weekMetricRowSeparated: { paddingTop: tokens.spacing.lg },
+  weekMetricSeparator: { backgroundColor: tokens.color.borderSoft, height: 1, left: -tokens.layout.reducedInset, position: "absolute", right: -tokens.layout.reducedInset, top: 0 },
   metricColumn: { flexGrow: 0, flexShrink: 0, gap: tokens.spacing.compact },
   axisLeadingCell: { alignItems: "stretch", justifyContent: "center", minHeight: 22 },
   axisChip: { backgroundColor: "transparent", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, minHeight: 22, paddingTop: tokens.spacing.xs, textAlign: "center" },
@@ -300,12 +429,23 @@ const styles = StyleSheet.create({
   rangeBadgeCalories: { backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderWidth: 1 },
   rangeBadgeDarkText: { color: tokens.color.surfaceApp },
   metricPlot: { backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.surfaceMuted, borderTopRightRadius: tokens.radius.md, borderBottomRightRadius: tokens.radius.md, borderWidth: 1, height: 58, minWidth: 0, overflow: "hidden", paddingVertical: tokens.spacing.compact, width: "100%" },
+  weekFullWidthPlot: { backgroundColor: "transparent", borderRadius: tokens.radius.md, borderWidth: 0, height: 116 },
+  weekMetricPlot: { height: 116, paddingVertical: 0 },
+  pointLabels: { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
+  pointLabel: { color: tokens.color.textMain, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, marginLeft: -25, position: "absolute", textAlign: "center", transform: [{ translateY: -2 }], width: 50 },
+  inlineDayLabels: { alignItems: "flex-end", bottom: 3, flexDirection: "row", left: 0, position: "absolute", right: 0 },
+  inlineDayLabel: { color: tokens.color.textMuted, flex: 1, fontSize: 10, fontWeight: tokens.weight.medium, textAlign: "center" },
+  inlineChartTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, left: tokens.spacing.xs, lineHeight: 20, position: "absolute", top: tokens.spacing.xs, zIndex: 1 },
+  inlineChartUnit: { borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, lineHeight: 18, minWidth: 34, paddingHorizontal: tokens.spacing.sm, position: "absolute", right: tokens.spacing.xs, textAlign: "center", top: tokens.spacing.xs, zIndex: 1 },
   allocationIdentity: { height: 94, paddingVertical: tokens.spacing.sm },
   allocationRanges: { alignItems: "flex-start", gap: 3 },
   allocationRange: { borderRadius: tokens.radius.sm, color: tokens.color.surfaceApp, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, overflow: "hidden", paddingHorizontal: tokens.spacing.compact, paddingVertical: 2 },
   allocationPlot: { alignItems: "stretch", flexDirection: "row", height: 94, paddingVertical: tokens.spacing.sm },
+  weekAllocationPlot: { height: 198, paddingBottom: tokens.spacing.xl, paddingTop: 28 },
   allocationSlot: { flex: 1, flexDirection: "column-reverse", gap: 2, minWidth: 0, paddingHorizontal: 1 },
-  allocationSegment: { borderRadius: 2, minHeight: 1 },
+  allocationSegment: { alignItems: "center", borderRadius: 4, justifyContent: "center", minHeight: 1 },
+  weekAllocationSegment: { borderRadius: 8, overflow: "hidden" },
+  allocationSegmentLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: "900", zIndex: 1 },
   weekDivider: { borderLeftColor: tokens.color.borderSoft, borderLeftWidth: 1 },
   footer: { alignItems: "center", flexDirection: "row", justifyContent: "flex-end", marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.md },
   actions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },

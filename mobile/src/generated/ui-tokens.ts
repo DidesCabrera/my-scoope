@@ -100,7 +100,7 @@ export const tokens = {
       "card": {
         "fontSize": 23,
         "lineHeight": 29,
-        "indicatorMarginTop": 6,
+        "indicatorMarginTop": 2,
         "marginTop": 2
       },
       "pageCompact": {

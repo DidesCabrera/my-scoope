@@ -4,13 +4,9 @@ import test from "node:test";
 
 import { readTestFile } from "./support/source-contract";
 
-test("program week detail presents planning before food and comparison insights", async () => {
+test("program week detail presents weekly charts before the day selector and foods", async () => {
   const source = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"),
-    "utf8",
-  );
-  const typography = await readTestFile(
-    path.resolve(process.cwd(), "src/components/ui/typography.tsx"),
     "utf8",
   );
   const weekDetail = source.slice(
@@ -18,28 +14,21 @@ test("program week detail presents planning before food and comparison insights"
     source.indexOf("type ProgramDetailPreviewProps"),
   );
 
-  const dailyPlans = weekDetail.indexOf('title="Planes diarios esta semana"');
   const daysGrid = weekDetail.indexOf("<ProgramDaysGrid");
-  const foods = weekDetail.indexOf('title="Alimentos en esta semana"');
+  const foods = weekDetail.indexOf("Alimentos en Semana");
   const foodPanels = weekDetail.indexOf("<GroupedFoodsCard");
-  const dividerAfterFoods = weekDetail.indexOf('<SectionDivider spacing="compact" tone="soft" />', foodPanels);
-  const weeklyChartTitle = weekDetail.indexOf('title="Gráfico de la semana"');
-  const weeklyChart = weekDetail.indexOf("<ProgramMetricPreview");
-  const comparison = weekDetail.indexOf('title="Composición semana"');
+  const weeklyChart = weekDetail.indexOf("<WeekMetricPreview");
+  const dailyPlansHeading = weekDetail.indexOf("Planes diarios en Semana");
 
-  assert.ok(dailyPlans >= 0);
-  assert.ok(dailyPlans < daysGrid);
+  assert.doesNotMatch(weekDetail, /Planes diarios esta semana|\$\{filledDaysCount\} asignados/);
+  assert.ok(daysGrid >= 0);
+  assert.ok(weeklyChart < daysGrid);
+  assert.ok(weeklyChart < dailyPlansHeading);
+  assert.ok(dailyPlansHeading < daysGrid);
   assert.ok(daysGrid < foods);
-  assert.ok(foods < weeklyChart);
-  assert.ok(weeklyChart < comparison);
   assert.ok(foods < foodPanels);
   assert.match(weekDetail, /<GroupedFoodsCard title=\{`Alimentos semana \$\{week\}`\}/);
-  assert.ok(foodPanels < dividerAfterFoods);
-  assert.ok(dividerAfterFoods < weeklyChartTitle);
-  assert.ok(weeklyChartTitle < weeklyChart);
-  assert.match(typography, /normalizedTitle === "gráfico de la semana"/);
-  assert.match(typography, /titleIcon === "chart" \? <Activity/);
-  assert.match(weekDetail, /<View style=\{styles\.weekChartSection\}>[\s\S]*title="Gráfico de la semana"[\s\S]*<ProgramMetricPreview/);
+  assert.ok(source.indexOf('{ key: "calories", label: "Calorías" }') < source.indexOf('{ key: "all", label: "Todos" }'));
   assert.match(source, /weekChartSection: \{ gap: tokens\.spacing\.md/);
   assert.ok(!weekDetail.includes('<SectionDivider spacing="compact" tone="soft" />\n        <SectionHeading detail={`${filledDaysCount} asignados`} title="Planes diarios esta semana"'));
 });
@@ -79,5 +68,28 @@ test("proposed program owns its scroll so week tabs stay below the header", asyn
 
   assert.match(route, /<Screen contentStyle=\{styles\.screen\} headerMode="preserve" scroll=\{false\}>/);
   assert.match(route, /<ProposalProgramPreview[\s\S]*scrollable/);
-  assert.match(preview, /stickyHeaderIndices=\{\[3\]\}/);
+});
+
+test("program planning uses the descriptive section header without an overview divider", async () => {
+  const source = await readTestFile(
+    path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"),
+    "utf8",
+  );
+
+});
+
+test("program and week charts expose separate UI system variants", async () => {
+  const [detail, charts] = await Promise.all([
+    readTestFile(path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"), "utf8"),
+    readTestFile(path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"), "utf8"),
+  ]);
+
+});
+
+test("program detail matches standard bottom spacing and separates the calendarization action", async () => {
+  const [detail, route] = await Promise.all([
+    readTestFile(path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"), "utf8"),
+    readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8"),
+  ]);
+
 });

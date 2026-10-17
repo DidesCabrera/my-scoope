@@ -44,7 +44,7 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, variant, fontSi
           <ProteinPerKilogramBadge density={density} textSize={12} value={perKilogram} />
         ) : null}
       </View>
-      <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)} g</Text>
+      <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)}g</Text>
       <KpiAllocationBar
         accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribución`}
         size={density}
@@ -75,16 +75,17 @@ export function NutritionKpiSection({
         accessibilityLabel={`${rounded(calories)} calorías`}
         accessible
         style={[styles.calories, nested && styles.caloriesNested]}>
-        <Text
-          style={[
-            styles.caloriesLabel,
-            nested && styles.caloriesLabelNested,
-            !nested && styles.caloriesLabelRegular,
-          ]}>
-          Calorías
-        </Text>
-        <CalorieValue compact={nested} value={rounded(calories)} />
-        <Text style={[styles.caloriesUnit, nested && styles.caloriesLabelNested]}>kcal</Text>
+        <View style={styles.caloriesContent}>
+          <Text
+            style={[
+              styles.caloriesLabel,
+              nested && styles.caloriesLabelNested,
+              !nested && styles.caloriesLabelRegular,
+            ]}>
+            Calorías
+          </Text>
+          <CalorieValue compact={nested} value={rounded(calories)} />
+        </View>
       </View>
       <View style={styles.macros}>
         <MacroRow fontSize={macroFontSize} label="Proteína" refined={refined} tone="protein" variant={variant} {...protein} />
@@ -100,11 +101,11 @@ const styles = StyleSheet.create({
   containerRegular: { alignSelf: "stretch", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, width: "auto" },
   containerNested: { gap: tokens.component.nutritionKpi.nested.contentGap },
   calories: { alignItems: "center", alignSelf: "center", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.component.nutritionKpi.regular.totalRadius, borderWidth: tokens.component.nutritionKpi.regular.totalBorderWidth, flexShrink: 0, height: tokens.component.nutritionKpi.regular.totalSize, justifyContent: "center", paddingHorizontal: 5, width: tokens.component.nutritionKpi.regular.totalSize },
+  caloriesContent: { alignItems: "center", gap: 1, transform: [{ translateY: -6 }] },
   caloriesNested: { borderRadius: tokens.component.nutritionKpi.nested.totalRadius, borderWidth: tokens.component.nutritionKpi.nested.totalBorderWidth, height: tokens.component.nutritionKpi.nested.totalSize, width: tokens.component.nutritionKpi.nested.totalSize },
   caloriesLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   caloriesLabelNested: { fontSize: tokens.type.label },
   caloriesLabelRegular: { fontSize: 10 },
-  caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   macros: { flex: 1, justifyContent: "center", minWidth: 0 },
   macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0, paddingVertical: 5 },
   macroRowSlightlyTight: { paddingVertical: tokens.spacing.xs },

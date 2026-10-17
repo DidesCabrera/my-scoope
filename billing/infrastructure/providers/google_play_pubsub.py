@@ -28,6 +28,9 @@ class GooglePlayNotification:
     notification_type: str
     purchase_token: str = ""
     product_id: str = ""
+    order_id: str = ""
+    product_type: int = 0
+    refund_type: int = 0
     published_at: str = ""
 
 
@@ -107,6 +110,15 @@ def decode_google_play_notification(envelope: object) -> GooglePlayNotification:
     product_id = str(detail.get("subscriptionId") or detail.get("sku") or "").strip()
     if kind != "test" and not purchase_token:
         raise InvalidGooglePubSubPush("Google Play purchase token is missing.")
+    order_id = ""
+    product_type = 0
+    refund_type = 0
+    if kind == "voided_purchase":
+        order_id = str(detail.get("orderId") or "").strip()
+        product_type = detail.get("productType")
+        refund_type = detail.get("refundType", 1)
+        if not order_id or product_type not in (1, 2) or refund_type not in (1, 2):
+            raise InvalidGooglePubSubPush("Google Play voided purchase details are invalid.")
     return GooglePlayNotification(
         message_id=message_id,
         package_name=str(payload.get("packageName") or "").strip(),
@@ -115,5 +127,8 @@ def decode_google_play_notification(envelope: object) -> GooglePlayNotification:
         notification_type=str(detail.get("notificationType") or "test").strip(),
         purchase_token=purchase_token,
         product_id=product_id,
+        order_id=order_id,
+        product_type=product_type,
+        refund_type=refund_type,
         published_at=str(message.get("publishTime") or "").strip(),
     )

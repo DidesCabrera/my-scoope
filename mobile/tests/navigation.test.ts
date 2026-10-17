@@ -258,7 +258,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(screenLayout, /identityVisible: compactHeaderVisible/);
   assertSourceMatch(libraryList, /stickyHeaderIndices=\{mode === "list" \? \[1\] : undefined\}/);
   assertSourceDoesNotMatch(libraryList, /searchOffset/);
-  assertSourceMatch(libraryList, /stickySearch: \{ backgroundColor: tokens\.color\.surfaceApp, marginHorizontal:/);
+  assertSourceMatch(libraryList, /stickySearch: \{ backgroundColor: tokens\.color\.surfaceApp, marginHorizontal: -tokens\.spacing\.screen, marginTop: -8/);
   assertSourceDoesNotMatch(libraryList, /stickySearchPinned|searchPinned/);
   assertSourceMatch(navigation, /<Plus color=\{tokens\.color\.textMuted\}/);
   assertSourceMatch(navigation, /headerPresentation\.createAction/);

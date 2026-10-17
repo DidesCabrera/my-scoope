@@ -44,7 +44,13 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
     <View style={styles.form}>
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       <NativeDateTimeField
+        containerStyle={styles.timeInput}
+        iconColor={tokens.color.textMain}
+        iconInLabel
+        inlineLabel
+        inputStyle={styles.timeValue}
         label="Hora de la comida"
+        labelStyle={styles.timeLabel}
         minuteInterval={5}
         mode="time"
         onChange={(value) => setHour(value)}
@@ -110,9 +116,9 @@ export function CalendarizedEntityActions({ entityName, initialAction, onOpenInf
   return (
     <ActionSheetModal onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
-        <ActionSheetHeader icon={CalendarClock} onClose={close} title={title} />
+        <ActionSheetHeader entity={selected === "change-time" ? "meal" : undefined} icon={CalendarClock} onClose={close} title={title} />
         <ScrollView
-          automaticallyAdjustKeyboardInsets
+          automaticallyAdjustKeyboardInsets={false}
           contentContainerStyle={styles.sheetContent}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
@@ -145,4 +151,7 @@ const styles = StyleSheet.create({
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   form: { gap: tokens.spacing.md },
+  timeInput: { marginHorizontal: 0, width: 120 },
+  timeLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold },
+  timeValue: { textAlign: "center" },
 });
