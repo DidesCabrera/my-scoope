@@ -173,6 +173,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(nutritionKpi, /const macroFontSize = width < 420 \? 13 : 14/);
   assertSourceMatch(nutritionKpi, /<ProteinPerKilogramBadge density=\{density\} textSize=\{12\}/);
   assertSourceMatch(nutritionKpi, /\{rounded\(grams\)\}g<\/Text>/);
+  assertSourceDoesNotMatch(nutritionKpi, />kcal<|caloriesUnit/);
+  assertSourceMatch(nutritionKpi, /caloriesContent: \{ alignItems: "center", gap: 1, transform: \[\{ translateY: -6 \}\] \}/);
   assertSourceDoesNotMatch(nutritionKpi, /density\?: "compact" \| "regular"/);
   assertSourceDoesNotMatch(nutritionKpi, /height: compact \? "100%"/);
 
@@ -219,6 +221,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(collectionPageHeader, /subtitle: \{ color: tokens\.color\.textMuted, fontSize: tokens\.type\.caption, lineHeight: 20 \}/);
   assertSourceDoesNotMatch(collectionPageHeader, /Bookmark|Mis librerías|eyebrow/);
   assertSourceMatch(collectionPageHeader, /<Chip[\s\S]*backgroundColor=\{`\$\{tokens\.color\[entity\]\}1A`\}[\s\S]*borderColor=\{tokens\.color\[entity\]\}[\s\S]*label=\{`\$\{count\} \$\{collectionCountLabels\[entity\]\[count === 1 \? "singular" : "plural"\]\}`\}/);
+
+  const chip = await readTestFile(
+    path.resolve(process.cwd(), "src/components/ui/chip.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(chip, /label: \{[^}]*fontWeight: tokens\.weight\.semibold/);
   assertSourceMatch(collectionPageHeader, /export function SectionPageHeader/);
   assertSourceMatch(collectionPageHeader, /<SectionIcon section=\{section\} size="hero" \/>/);
   assertSourceMatch(collectionPageHeader, /style=\{styles\.countChip\}/);

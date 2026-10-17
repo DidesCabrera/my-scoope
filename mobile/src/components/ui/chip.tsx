@@ -27,5 +27,5 @@ export function Chip({
 
 const styles = StyleSheet.create({
   chip: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
-  label: { fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 0.4 },
+  label: { fontSize: tokens.type.label, fontWeight: tokens.weight.semibold, letterSpacing: 0.4 },
 });
