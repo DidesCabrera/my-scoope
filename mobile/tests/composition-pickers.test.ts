@@ -40,6 +40,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /pickerTargetId: String\(targetId\)/);
   matches(picker, /returnTo: String\(detailHref\)/);
   assert.ok(picker.indexOf("<PickerEntryTabs") < picker.indexOf("<SearchField"));
+  matches(picker, /selectionSticky: \{[^}]*gap: tokens\.spacing\.xs \+ 4/);
   matches(picker, /NutritionEntityCard/);
   matches(picker, /import \{ PickerCardAction \} from "\.\/picker-card-action"/);
   matches(picker, /<PickerCardAction label=\{actionLabel\} onPress=\{onAction\} subject=\{option\.name\} \/>/);
@@ -50,7 +51,8 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /\/composition-options\?limit=50/);
   matches(picker, /nextError instanceof MobileApiError[^\n]*!\[404, 422\]\.includes\(nextError\.status\)/);
   matches(picker, /onPress: \(\) => router\.dismissTo\(detailHref\)/);
-  matches(picker, /<PickerOptionCard option=\{configuredSelection\} showPanels=\{kind !== "dailyplan-to-program"\}/);
+  matches(picker, /<PickerOptionCard eyebrow=\{isFoodPicker \? "ALIMENTO SELECCIONADO" : isMealPicker \? "COMIDA SELECCIONADA" : undefined\} option=\{configuredSelection\} showPanels=\{!isMealPicker && kind !== "dailyplan-to-program"\}/);
+  matches(picker, /eyebrow=\{eyebrow\}/);
   matches(picker, /\{kind === "dailyplan-to-program" \? configurationCard : null\}\s*\{selectedCard\}/);
   matches(picker, /showPanels && option\.panel\?\.kind === "foods"/);
   matches(picker, /showPanels && option\.panel\?\.kind === "meals"/);
@@ -67,15 +69,12 @@ test("composition pickers use independent native routes and one shared flow", as
   const selectedCard = picker.indexOf("option={configuredSelection}");
   const impactPreview = picker.indexOf("<PickerResultCard preview={preview}");
   assert.ok(selectedCard < impactPreview);
-  matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView[\s\S]*\{selectedCard\}[\s\S]*\{isMealPicker \? mealNoteCard : null\}[\s\S]*\{\(isMealPicker \|\| isFoodPicker\) && configurationAction \? <View style=\{styles\.fixedPickerFooter\}>\{configurationAction\}<\/View> : null\}/);
-  matches(picker, /Porción \(\{selected\.quantityUnit \?\? "g"\}\)/);
-  matches(picker, /<Scale color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
+  matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView[\s\S]*\{selectedCard\}[\s\S]*\{isMealPicker \? mealNoteCard : null\}[\s\S]*\{configurationAction \? <View style=\{styles\.scrollableAction\}>\{configurationAction\}<\/View> : null\}/);
   matches(picker, /<NativeDateTimeField[^>]*iconInLabel[^>]*inlineLabel[^>]*mode="time"/);
-  matches(picker, /compactControlField: \{[^}]*marginRight: -8[^}]*maxWidth: 120[^}]*minHeight: 36[^}]*minWidth: 120[^}]*width: "40%"/);
+  matches(picker, /compactControlField: \{[^}]*marginHorizontal: 0[^}]*marginRight: -8[^}]*minHeight: 36[^}]*width: 120/);
   matches(picker, /<NotebookPen color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   omits(picker, /<CalendarDays|Días de la Semana \{weekNumber\}<\/Text>/);
-  matches(picker, /<Text style=\{styles\.compactFieldLabel\}>Porción \(\{selected\.quantityUnit \?\? "g"\}\)<\/Text>/);
-  matches(picker, /style=\{\[styles\.compactFieldInput, styles\.compactControlField\]\} value=\{quantity\}/);
+  matches(picker, /<NativeMeasurementField[\s\S]*containerStyle=\{styles\.compactControlField\}[\s\S]*iconColor=\{tokens\.color\.textMain\}[\s\S]*inputStyle=\{styles\.mealTimeValue\}[\s\S]*kind="portion"[\s\S]*label="Porción del alimento"[\s\S]*labelStyle=\{styles\.mealTimeLabel\}[\s\S]*unit=\{selected\.quantityUnit \?\? "g"\}[\s\S]*value=\{quantity\}/);
   matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView/);
   matches(picker, /foodFixedPortion: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
   omits(picker, /setQuantity\(value\); setPreview\(null\)/);
@@ -83,11 +82,11 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /disabled=\{!configurationValid \|\| previewing \|\| previewPayloadKey !== payloadKey\}/);
   matches(picker, /<MacroLoadingIndicator accessibilityLabel="Actualizando previsualización" size="small" style=\{styles\.previewActivity\} \/>/);
   matches(picker, /previewActivity: \{ alignSelf: "center", marginVertical: tokens\.spacing\.xs \}/);
-  matches(picker, /label="Hora"/);
+  matches(picker, /label="Hora de la comida"/);
   matches(picker, /accessibilityLabel=\{noteEditing \? "Ocultar edición de nota" : "Editar nota"\}/);
   matches(picker, /noteEditing \? <TextInput/);
   matches(picker, /mealFixedTime: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
-  matches(picker, /fixedPickerFooter: \{[^}]*paddingBottom: 68[^}]*paddingHorizontal: tokens\.spacing\.screen/);
+  omits(picker, /fixedPickerFooter/);
   matches(picker, /fixedControlCard: \{ borderRadius: 18, minHeight: 52, paddingVertical: 6 \}/);
   matches(picker, /configurationSticky: \{[^}]*marginHorizontal: -tokens\.spacing\.screen[^}]*paddingHorizontal: tokens\.spacing\.screen/);
   matches(picker, /<WeekDayGrid accessibilityLabel=\{`Días de la Semana \$\{weekNumber\}`\}>/);
@@ -100,9 +99,10 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /day\.plan_name && day\.projected_label !== "Por agregar"/);
   matches(picker, /assignmentDay: \{[^}]*borderStyle: "dashed"[^}]*height: 44[^}]*width: 44/);
   omits(picker, /assignmentSelector/);
-  matches(picker, /contentContainerStyle=\{\[styles\.configurationScrollContent, kind === "dailyplan-to-program" && styles\.programConfigurationScrollContent\]\}/);
-  matches(picker, /programConfigurationAction: \{ marginTop: 16 \}/);
-  matches(picker, /programConfigurationScrollContent: \{ paddingBottom: 96, paddingTop: 0 \}/);
+  matches(picker, /contentContainerStyle=\{\[styles\.configurationScrollContent, \(isMealPicker \|\| isFoodPicker \|\| kind === "dailyplan-to-program"\) && styles\.scrollableActionContent, kind === "dailyplan-to-program" && styles\.programConfigurationScrollContent\]\}/);
+  matches(picker, /scrollableAction: \{ marginTop: 16 \}/);
+  matches(picker, /scrollableActionContent: \{ paddingBottom: 96 \}/);
+  matches(picker, /programConfigurationScrollContent: \{ paddingTop: 0 \}/);
   matches(picker, /configurationSticky: \{[^}]*paddingBottom: tokens\.spacing\.sm/);
   omits(picker, /function toggleDay\(day: number\) \{[^}]*setPreview\(null\)/s);
   matches(payload, /day_numbers/);
@@ -185,8 +185,8 @@ test("composition pickers use independent native routes and one shared flow", as
     path.resolve(process.cwd(), "src/components/pickers/picker-result-card.tsx"),
     "utf8",
   );
-  matches(resultCard, /Comida resultante/);
-  matches(resultCard, /Plan diario resultante/);
+  matches(resultCard, /Previsualización Comida/);
+  matches(resultCard, /Previsualización Plan Diario/);
   matches(resultCard, /preview\.selection\.entity === "food"/);
   matches(resultCard, /projectedMeal\.foods\.map\(foodPanelItem\)/);
   matches(resultCard, /result\.entity === "week" && week/);

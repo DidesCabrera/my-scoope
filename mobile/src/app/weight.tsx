@@ -209,7 +209,7 @@ export default function WeightScreen() {
       <ActionSheetModal onRequestClose={closeEdit} visible={historyFormMode != null}>
         <ActionSheetHeader icon={historyFormMode === "create" ? Plus : Pencil} onClose={closeEdit} title={historyFormMode === "create" ? "Agregar medición anterior" : "Editar peso"} />
         <ScrollView
-          automaticallyAdjustKeyboardInsets
+          automaticallyAdjustKeyboardInsets={false}
           contentContainerStyle={styles.editForm}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled

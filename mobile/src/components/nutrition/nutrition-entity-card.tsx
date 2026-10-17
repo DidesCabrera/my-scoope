@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { StyleProp, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 import {
   EntityCard,
@@ -51,6 +51,8 @@ export function NutritionEntityCard({
   subtitle,
   title,
 }: NutritionEntityCardProps) {
+  const hasEntityIndicatorSpacing = Boolean(indicators?.length) && (entity === "food" || entity === "meal" || entity === "dailyPlan");
+  const hasPanelSpacing = entity === "meal" || entity === "dailyPlan";
   return (
     <EntityCard
       accessory={accessory}
@@ -65,11 +67,16 @@ export function NutritionEntityCard({
       style={style}
       subtitle={subtitle}
       title={title}>
-      <View>
+      <View style={hasEntityIndicatorSpacing ? styles.nutritionAfterIndicators : undefined}>
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />
       </View>
       {afterNutrition}
-      {children ? <EntityCardPanelSlot>{children}</EntityCardPanelSlot> : null}
+      {children ? <View style={hasPanelSpacing ? styles.panelsAfterNutrition : undefined}><EntityCardPanelSlot>{children}</EntityCardPanelSlot></View> : null}
     </EntityCard>
   );
 }
+
+const styles = StyleSheet.create({
+  nutritionAfterIndicators: { marginTop: 4 },
+  panelsAfterNutrition: { marginTop: 4 },
+});

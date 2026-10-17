@@ -32,7 +32,7 @@ export function ProteinPerKilogramBadge({
       <Text
         numberOfLines={1}
         style={[styles.text, { fontSize: textSize }]}>
-        {formattedValue(value)}{showUnit ? " g/kg" : ""}
+        {formattedValue(value)}{showUnit ? "g/kg" : ""}
       </Text>
     </View>
   );

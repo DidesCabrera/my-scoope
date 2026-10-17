@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { ClipboardList, NotebookPen, Pencil, Plus, Scale } from "lucide-react-native";
+import { ClipboardList, NotebookPen, Pencil, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,7 +26,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, MealPanels } from "@/components/libraries/entity-panels";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
+import { Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, NativeMeasurementField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
@@ -198,13 +198,14 @@ function optionFromFood(item: FoodPickerOption): PickerOption {
   };
 }
 
-function PickerOptionCard({ actionLabel, onAction, option, showPanels = true }: { actionLabel?: string; onAction?(): void; option: PickerOption; showPanels?: boolean }) {
+function PickerOptionCard({ actionLabel, eyebrow, onAction, option, showPanels = true }: { actionLabel?: string; eyebrow?: string; onAction?(): void; option: PickerOption; showPanels?: boolean }) {
   return (
     <NutritionEntityCard
       actions={actionLabel && onAction ? (
         <PickerCardAction label={actionLabel} onPress={onAction} subject={option.name} />
       ) : undefined}
       entity={option.entity}
+      eyebrow={eyebrow}
       indicators={option.indicators}
       nutrition={libraryNutrition(option.nutrition)}
       subtitle={option.subtitle}
@@ -477,13 +478,13 @@ export function CompositionPickerScreen({
 
   const selectedCard = (
     <View>
-      {configuredSelection ? <PickerOptionCard option={configuredSelection} showPanels={kind !== "dailyplan-to-program"} /> : null}
+      {configuredSelection ? <PickerOptionCard eyebrow={isFoodPicker ? "ALIMENTO SELECCIONADO" : isMealPicker ? "COMIDA SELECCIONADA" : undefined} option={configuredSelection} showPanels={!isMealPicker && kind !== "dailyplan-to-program"} /> : null}
     </View>
   );
   const mealTimeCard = isMealPicker && selected ? (
     <View style={styles.mealFixedTime}>
       <Card style={styles.fixedControlCard}>
-        <NativeDateTimeField containerStyle={styles.compactControlField} iconInLabel inlineLabel label="Hora" minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
+        <NativeDateTimeField containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
         {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
       </Card>
     </View>
@@ -507,13 +508,18 @@ export function CompositionPickerScreen({
   const foodPortionCard = isFoodPicker && selected ? (
     <View style={styles.foodFixedPortion}>
       <Card style={styles.fixedControlCard}>
-        <View style={styles.compactFieldRow}>
-          <View style={styles.configurationLabel}>
-            <Scale color={tokens.color.textMuted} size={18} />
-            <Text style={styles.compactFieldLabel}>Porción ({selected.quantityUnit ?? "g"})</Text>
-          </View>
-          <TextInput keyboardType="decimal-pad" onChangeText={setQuantity} selectionColor={tokens.color.interactivePrimary} style={[styles.compactFieldInput, styles.compactControlField]} value={quantity} />
-        </View>
+        <NativeMeasurementField
+          containerStyle={styles.compactControlField}
+          iconColor={tokens.color.textMain}
+          inlineLabel
+          inputStyle={styles.mealTimeValue}
+          kind="portion"
+          label="Porción del alimento"
+          labelStyle={styles.mealTimeLabel}
+          onChange={setQuantity}
+          unit={selected.quantityUnit ?? "g"}
+          value={quantity}
+        />
       </Card>
     </View>
   ) : null;
@@ -560,7 +566,7 @@ export function CompositionPickerScreen({
       {isFoodPicker ? foodPortionCard : mealTimeCard}
       <ScrollView
         automaticallyAdjustKeyboardInsets
-        contentContainerStyle={[styles.configurationScrollContent, kind === "dailyplan-to-program" && styles.programConfigurationScrollContent]}
+        contentContainerStyle={[styles.configurationScrollContent, (isMealPicker || isFoodPicker || kind === "dailyplan-to-program") && styles.scrollableActionContent, kind === "dailyplan-to-program" && styles.programConfigurationScrollContent]}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -579,18 +585,15 @@ export function CompositionPickerScreen({
       ) : null}
 
       {isMealPicker ? mealNoteCard : null}
-      {!isMealPicker && !isFoodPicker && configurationAction ? <View style={styles.programConfigurationAction}>{configurationAction}</View> : null}
+      {configurationAction ? <View style={styles.scrollableAction}>{configurationAction}</View> : null}
       </ScrollView>
-      {(isMealPicker || isFoodPicker) && configurationAction ? <View style={styles.fixedPickerFooter}>{configurationAction}</View> : null}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  compactControlField: { borderRadius: tokens.radius.md, marginHorizontal: 0, marginRight: -8, maxWidth: 120, minHeight: 36, minWidth: 120, width: "40%" },
-  compactFieldInput: { backgroundColor: tokens.color.surfaceMuted, color: tokens.color.textMain, fontSize: 16, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs, textAlign: "right" },
+  compactControlField: { borderRadius: tokens.radius.md, marginHorizontal: 0, marginRight: -8, minHeight: 36, width: 120 },
   compactFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
-  compactFieldRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   configurationLabel: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   configurationSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   configurationScrollContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
@@ -601,7 +604,8 @@ const styles = StyleSheet.create({
   assignmentPlanIcon: { alignItems: "center", backgroundColor: tokens.color.dailyPlan, borderRadius: tokens.spacing.compact, height: 26, justifyContent: "center", width: 26 },
   daysBlock: { gap: tokens.spacing.sm },
   foodFixedPortion: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 8, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
-  fixedPickerFooter: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 68, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.sm },
+  mealTimeLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold },
+  mealTimeValue: { textAlign: "center" },
   mealFixedTime: { backgroundColor: tokens.color.surfaceApp, paddingBottom: 8, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
   fixedControlCard: { borderRadius: 18, minHeight: 52, paddingVertical: 6 },
   noteBlock: { gap: tokens.spacing.sm },
@@ -611,9 +615,10 @@ const styles = StyleSheet.create({
   previewActivity: { alignSelf: "center", marginVertical: tokens.spacing.xs },
   previewSection: { gap: tokens.spacing.lg },
   pressed: { opacity: 0.68 },
-  programConfigurationAction: { marginTop: 16 },
-  programConfigurationScrollContent: { paddingBottom: 96, paddingTop: 0 },
+  scrollableAction: { marginTop: 16 },
+  scrollableActionContent: { paddingBottom: 96 },
+  programConfigurationScrollContent: { paddingTop: 0 },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
-  selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
+  selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs + 4, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

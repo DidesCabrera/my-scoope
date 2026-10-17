@@ -102,7 +102,7 @@ export function PickerResultCard({ preview }: { preview: PickerPreview }) {
       {projectedMeal ? (
         <NutritionEntityCard
           entity="meal"
-          eyebrow="Comida resultante"
+          eyebrow="Previsualización Comida"
           indicators={[{ icon: "food", label: "alimentos", value: projectedMeal.foods.length }]}
           nutrition={libraryNutrition({
             calories: projectedMeal.calories,
@@ -116,7 +116,7 @@ export function PickerResultCard({ preview }: { preview: PickerPreview }) {
       ) : null}
       <NutritionEntityCard
         entity={entity}
-        eyebrow={result.entity === "meal" ? "Comida resultante" : result.entity === "dailyPlan" ? "Plan diario resultante" : "Resultado proyectado"}
+        eyebrow={result.entity === "meal" ? "Previsualización Comida" : result.entity === "dailyPlan" ? "Previsualización Plan Diario" : "Resultado proyectado"}
         indicators={result.indicators}
         nutrition={libraryNutrition(result.nutrition)}
         title={result.name}>

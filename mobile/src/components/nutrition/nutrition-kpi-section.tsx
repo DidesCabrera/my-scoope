@@ -44,7 +44,7 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, variant, fontSi
           <ProteinPerKilogramBadge density={density} textSize={12} value={perKilogram} />
         ) : null}
       </View>
-      <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)} g</Text>
+      <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)}g</Text>
       <KpiAllocationBar
         accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribución`}
         size={density}

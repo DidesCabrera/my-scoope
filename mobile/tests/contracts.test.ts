@@ -29,7 +29,7 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   });
   assert.equal(tokens.component.nutritionKpi.nested.totalSize, 76);
   assert.deepEqual(tokens.component.entityHeading, {
-    card: { fontSize: 23, lineHeight: 29, indicatorMarginTop: 6, marginTop: 2 },
+    card: { fontSize: 23, lineHeight: 29, indicatorMarginTop: 2, marginTop: 2 },
     pageCompact: { fontSize: 26, lineHeight: 34, marginTop: 2 },
     pageRegular: { fontSize: 28, lineHeight: 36, marginTop: 2 },
   });
@@ -67,7 +67,7 @@ test("editable text inputs use borderless surfaces throughout the mobile system"
     ["src/components/ui/search-field.tsx", ["field"]],
     ["src/components/ui/primitives.tsx", ["input"]],
     ["src/components/comparisons/comparison-components.tsx", ["quantityInput"]],
-    ["src/components/pickers/composition-picker-screen.tsx", ["compactFieldInput", "noteInput"]],
+    ["src/components/pickers/composition-picker-screen.tsx", ["noteInput"]],
     ["src/components/assistant/chat-composer.tsx", ["composer"]],
     ["src/components/calendarization/meal-adherence-check-in.tsx", ["noteInput"]],
   ];
@@ -172,14 +172,25 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(nutritionKpi, /grams: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
   assertSourceMatch(nutritionKpi, /const macroFontSize = width < 420 \? 13 : 14/);
   assertSourceMatch(nutritionKpi, /<ProteinPerKilogramBadge density=\{density\} textSize=\{12\}/);
+  assertSourceMatch(nutritionKpi, /\{rounded\(grams\)\}g<\/Text>/);
   assertSourceDoesNotMatch(nutritionKpi, /density\?: "compact" \| "regular"/);
   assertSourceDoesNotMatch(nutritionKpi, /height: compact \? "100%"/);
+
+  const nutritionEntityCard = await readTestFile(
+    path.resolve(process.cwd(), "src/components/nutrition/nutrition-entity-card.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(nutritionEntityCard, /Boolean\(indicators\?\.length\) && \(entity === "food" \|\| entity === "meal" \|\| entity === "dailyPlan"\)/);
+  assertSourceMatch(nutritionEntityCard, /nutritionAfterIndicators: \{ marginTop: 4 \}/);
+  assertSourceMatch(nutritionEntityCard, /const hasPanelSpacing = entity === "meal" \|\| entity === "dailyPlan"/);
+  assertSourceMatch(nutritionEntityCard, /panelsAfterNutrition: \{ marginTop: 4 \}/);
 
   const proteinPerKilogramBadge = await readTestFile(
     path.resolve(process.cwd(), "src/components/nutrition/protein-per-kilogram-badge.tsx"),
     "utf8",
   );
   assertSourceMatch(proteinPerKilogramBadge, /text: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
+  assertSourceMatch(proteinPerKilogramBadge, /showUnit \? "g\/kg" : ""/);
 
   const allocationBar = await readTestFile(
     path.resolve(process.cwd(), "src/components/nutrition/allocation-bar.tsx"),
@@ -271,8 +282,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programWeekPanels, /EntityPanelTabs/);
   assertSourceMatch(programWeekPanels, /PanelSurface/);
   assertSourceMatch(programWeekPanels, /MacroCalorieDistribution/);
-  assertSourceMatch(programWeekPanels, /PanelAllocationBar/);
-  for (const tab of ["Calorías", "Macros", "Dist", "Alloc", "Editar"]) assertSourceMatch(programWeekPanels, new RegExp(tab));
+  for (const tab of ["Calorías", "Macros", "Dist", "Editar"]) assertSourceMatch(programWeekPanels, new RegExp(tab));
   assertSourceDoesNotMatch(programWeekPanels, /label: "Semanas"/);
   assertSourceMatch(programWeekPanels, /<Pencil/);
   assertSourceMatch(programWeekPanels, /weekName: \{ color: tokens\.color\.textMain/);
@@ -280,8 +290,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programWeekPanels, /row: \{[^}]*minHeight: 48/);
   assertSourceMatch(programWeekPanels, /leadingCell: \{ flexBasis: "38%", flexGrow: 0, flexShrink: 0/);
   assertSourceDoesNotMatch(programWeekPanels, /cell: \{[^}]*fontSize: 11/);
-  assertSourceDoesNotMatch(programWeekPanels, /<PanelAllocationBar size="compact"/);
-  assertSourceMatch(programWeekPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
+  assertSourceDoesNotMatch(programWeekPanels, /label: "Alloc"|function AllocationPanel|PanelAllocationBar/);
   assertSourceDoesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.(?:protein|carbs|fat)(?:[,}\]])/);
   assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK" \}, \{ key: "protein", label: "Pg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "carbs", label: "Cg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "fat", label: "Fg", textStyle: styles\.mixedCaseHeaderText \}\]\}/);
   assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "F%" \}, \{ key: "protein", label: "P\|C\|F"/);
