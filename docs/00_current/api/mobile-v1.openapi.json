@@ -3516,6 +3516,11 @@
             "title": "Display Name",
             "type": "string"
           },
+          "emoji": {
+            "default": "",
+            "title": "Emoji",
+            "type": "string"
+          },
           "fat": {
             "title": "Fat",
             "type": "number"
@@ -3564,6 +3569,11 @@
           "total_kcal": {
             "title": "Total Kcal",
             "type": "number"
+          },
+          "visual_key": {
+            "default": "",
+            "title": "Visual Key",
+            "type": "string"
           }
         },
         "required": [
@@ -4977,6 +4987,11 @@
             ],
             "title": "Detail Id"
           },
+          "emoji": {
+            "default": "",
+            "title": "Emoji",
+            "type": "string"
+          },
           "fat_allocation": {
             "title": "Fat Allocation",
             "type": "number"
@@ -5046,6 +5061,11 @@
               }
             ],
             "title": "Relation Id"
+          },
+          "visual_key": {
+            "default": "",
+            "title": "Visual Key",
+            "type": "string"
           }
         },
         "required": [
@@ -5143,6 +5163,17 @@
             ],
             "title": "Default Portion"
           },
+          "emoji": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emoji"
+          },
           "entity": {
             "enum": [
               "food",
@@ -5223,6 +5254,17 @@
           "subtitle": {
             "title": "Subtitle",
             "type": "string"
+          },
+          "visual_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Key"
           }
         },
         "required": [

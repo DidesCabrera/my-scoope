@@ -26,6 +26,8 @@ export function FoodDetailCardList({ items, onOpenFood }: { items: FoodPanelItem
             ) : undefined}
             entity="food"
             eyebrow="Alimento"
+            foodEmoji={item.emoji}
+            foodVisualKey={item.visualKey}
             headingLink={openDetail ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined}
             key={item.id}
             nutrition={{

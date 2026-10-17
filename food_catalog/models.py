@@ -152,6 +152,18 @@ class CatalogFood(models.Model):
         help_text="Human-friendly name for curators and eventual publication.",
     )
 
+    emoji = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text="Optional Unicode emoji displayed beside the food name.",
+    )
+
+    visual_key = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text="Stable semantic key for a future My Scoope custom food icon.",
+    )
+
     canonical_name = models.CharField(
         max_length=255,
         blank=True,

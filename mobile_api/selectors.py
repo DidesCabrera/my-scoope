@@ -14,6 +14,7 @@ from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api import library_projections
 from mobile_api.errors import MobileAPIError
+from mobile_api.food_visuals import food_visual_payload
 from mobile_api.library_actions import library_actions_payload, library_list_actions_projector
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_measurement_summary,
@@ -93,7 +94,7 @@ def _food_panel_item(meal_food, current_weight=None) -> dict:
         "id": f"meal-food:{meal_food.id}",
         "relation_id": meal_food.id,
         "detail_id": meal_food.food_id,
-        "name": resolve_food_display_name(meal_food.food),
+        **food_visual_payload(meal_food.food),
         "quantity": _safe_number(meal_food.quantity),
         "quantity_unit": meal_food.food.portion_unit,
         "calories": _safe_number(meal_food.total_kcal),
@@ -143,7 +144,7 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str, current_weight=None) -
             "id": f"{id_prefix}:{row['child']['id']}",
             "detail_id": row["child"].get("detail_id")
             or (row["child"]["id"] if isinstance(row["child"]["id"], int) else None),
-            "name": row["rel"]["name"],
+            **food_visual_payload(name=row["rel"]["name"]),
             "quantity": _safe_number(row["rel"]["quantity"]),
             "quantity_unit": row["rel"]["quantity_unit"],
             "calories": _safe_number(row["rel"]["total_kcal"]),
@@ -343,7 +344,7 @@ def library_foods_payload(user, *, search=None, offset=0, limit=30, include_draf
         builder=lambda food: {
             "id": food.id,
             "entity": "food",
-            "name": resolve_food_display_name(food),
+            **food_visual_payload(food),
             "quantity_unit": food.portion_unit,
             "subtitle": "",
             "nutrition": _library_nutrition_payload(food, current_weight),
@@ -619,7 +620,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
             return {
                 "id": item.id,
                 "entity": "food",
-                "name": resolve_food_display_name(item),
+                **food_visual_payload(item),
                 "quantity_unit": item.portion_unit,
                 "default_portion": round(float(item.default_portion_g), 1) if item.default_portion_g is not None else None,
                 "subtitle": "",

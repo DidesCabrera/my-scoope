@@ -6,6 +6,7 @@ import {
   type NutritionEntityCardProps,
   NutritionKpiSection,
 } from "@/components/nutrition";
+import { FoodVisualIcon } from "@/components/nutrition/food-visual-icon";
 import { ContentPanel, EntityHeading, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -29,6 +30,8 @@ export function EntityDetailPage({
   completion,
   kpiVariant = "regular",
   entity,
+  foodEmoji,
+  foodVisualKey,
   eyebrow,
   eyebrowAccessory,
   indicators,
@@ -68,6 +71,7 @@ export function EntityDetailPage({
             indicators={indicators}
             subtitle={subtitle}
             title={title}
+            titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
             variant="page"
           />
           {showNutrition && nutrition ? <View style={styles.kpiSection}><NutritionKpiSection variant={kpiVariant} {...nutrition} /></View> : null}

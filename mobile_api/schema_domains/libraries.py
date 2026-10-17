@@ -5,10 +5,13 @@ from typing import Literal
 
 from ninja import Field, Schema
 
-from mobile_api.schema_domains.library_common import FoodNutritionFactsData, OptionalPortionUnitData
+from mobile_api.schema_domains import library_common
+
+OptionalPortionUnitData = library_common.OptionalPortionUnitData
+LibraryMacroData = library_common.LibraryMacroData
 
 
-class FoodItem(Schema):
+class FoodItem(library_common.FoodVisualIdentityData):
     id: int
     name: str
     display_name: str
@@ -46,17 +49,11 @@ class FoodItemEnvelope(Schema):
     error: None = None
 
 
-class LibraryMacroData(Schema):
-    grams: float
-    allocation: float
-    per_kilogram: float | None = None
-
-
 class LibraryNutritionData(Schema):
     calories: float
-    protein: LibraryMacroData
-    carbs: LibraryMacroData
-    fat: LibraryMacroData
+    protein: library_common.LibraryMacroData
+    carbs: library_common.LibraryMacroData
+    fat: library_common.LibraryMacroData
 
 
 class LibraryIndicatorData(Schema):
@@ -71,7 +68,7 @@ class LibraryCalorieDistributionData(Schema):
     fat: float
 
 
-class LibraryFoodPanelItemData(Schema):
+class LibraryFoodPanelItemData(library_common.FoodVisualIdentityData):
     id: str
     relation_id: int | None = None
     detail_id: int | None = None
@@ -172,7 +169,7 @@ class NamedLibraryCreateInput(Schema):
     name: str = Field(min_length=1, max_length=100)
 
 
-class LibraryItemData(Schema):
+class LibraryItemData(library_common.OptionalFoodVisualIdentityData):
     id: int
     entity: Literal["food", "meal", "dailyPlan", "program"]
     name: str
@@ -180,7 +177,7 @@ class LibraryItemData(Schema):
     quantity_unit: Literal["g", "ml"] | None = None
     default_portion: float | None = None
     nutrition: LibraryNutritionData
-    food_nutrition: FoodNutritionFactsData | None = None
+    food_nutrition: library_common.FoodNutritionFactsData | None = None
     indicators: list[LibraryIndicatorData]
     panel: LibraryPanelData
     creator: str

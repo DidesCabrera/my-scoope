@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from core.food_visual_identity import resolved_food_visual_identity
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.domain.models import ProgramDay
 from notas.domain.services.nutrition import macro_kcal_distribution
@@ -69,11 +70,21 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, current_weight=None, 
     kcal = tuple(value * factor for value in _kcal(food))
     total = sum(kcal)
     distribution = macro_kcal_distribution(*kcal)
+    name = resolve_food_display_name(food)
+    visual = resolved_food_visual_identity(
+        name,
+        emoji=food.emoji,
+        visual_key=food.visual_key,
+        food_group=food.food_group,
+        food_subgroup=food.food_subgroup,
+    )
     return {
         "id": row_id or (f"meal-food:{relation_id}" if relation_id else f"projected-food:{food.id}"),
         "relation_id": relation_id,
         "detail_id": food.id,
-        "name": resolve_food_display_name(food),
+        "name": name,
+        "emoji": visual.emoji,
+        "visual_key": visual.visual_key,
         "quantity": _number(quantity),
         "quantity_unit": food.portion_unit,
         "calories": _number(total),

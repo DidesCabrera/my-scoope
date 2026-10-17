@@ -13,6 +13,7 @@ import {
   NutritionKpiSection,
   type NutritionKpiSectionProps,
 } from "./nutrition-kpi-section";
+import { FoodVisualIcon } from "./food-visual-icon";
 
 export type NutritionEntityCardProps = {
   accessory?: ReactNode;
@@ -22,6 +23,8 @@ export type NutritionEntityCardProps = {
   completion?: CompletionIndicatorCounts;
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
+  foodEmoji?: string | null;
+  foodVisualKey?: string | null;
   eyebrow?: string;
   eyebrowAccessory?: ReactNode;
   headingLink?: EntityHeadingLink;
@@ -41,6 +44,8 @@ export function NutritionEntityCard({
   completion,
   kpiVariant = "regular",
   entity,
+  foodEmoji,
+  foodVisualKey,
   eyebrow,
   eyebrowAccessory,
   headingLink,
@@ -66,7 +71,8 @@ export function NutritionEntityCard({
       onPress={onPress}
       style={style}
       subtitle={subtitle}
-      title={title}>
+      title={title}
+      titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}>
       <View style={hasEntityIndicatorSpacing ? styles.nutritionAfterIndicators : undefined}>
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />
       </View>

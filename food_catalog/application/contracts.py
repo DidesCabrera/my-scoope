@@ -285,6 +285,8 @@ class PublishedFoodSnapshot:
     catalog_version: str
     display_name: str
     nutrients_per_100g: NutrientProfilePer100g
+    emoji: str = ""
+    visual_key: str = ""
     portion_unit: PortionUnit | str = PortionUnit.GRAMS
     canonical_name: str = ""
     food_group: str = ""
@@ -326,6 +328,8 @@ class PublishedFoodSnapshot:
             source_catalog_ref=self.catalog_ref,
             source_catalog_version=self.catalog_version,
             name=self.display_name.strip(),
+            emoji=self.emoji.strip(),
+            visual_key=self.visual_key.strip(),
             canonical_name=self.canonical_name.strip(),
             food_group=self.food_group.strip(),
             food_subgroup=self.food_subgroup.strip(),
@@ -358,6 +362,8 @@ class OperationalFoodSnapshotPayload:
     food_group: str
     food_subgroup: str
     nutrients_per_100g: NutrientProfilePer100g
+    emoji: str = ""
+    visual_key: str = ""
     portion_unit: PortionUnit | str = PortionUnit.GRAMS
     data_quality_score: int = 0
     visibility: OperationalVisibility | str = OperationalVisibility.EXTENDED
@@ -394,6 +400,8 @@ class OperationalFoodSnapshotPayload:
 
         return {
             "name": self.name.strip(),
+            "emoji": self.emoji.strip(),
+            "visual_key": self.visual_key.strip(),
             **self.nutrients_per_100g.operational_macro_defaults(),
             "canonical_name": self.canonical_name.strip(),
             "is_verified": self.is_verified,
@@ -422,6 +430,8 @@ class OperationalFoodSnapshotPayload:
         return {
             "source_catalog_ref": self.source_catalog_ref,
             "source_catalog_version": self.source_catalog_version,
+            "emoji": self.emoji,
+            "visual_key": self.visual_key,
             "preparation_state": self.preparation_state.value,
             "solver_enabled": self.solver_enabled,
             "portion_unit": self.portion_unit.value,

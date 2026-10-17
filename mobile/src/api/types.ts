@@ -286,7 +286,7 @@ export type LibraryFoodPanelItem = {
   id: string;
   relation_id: number | null;
   detail_id?: number | null;
-  name: string;
+  name: string; emoji?: string; visual_key?: string;
   quantity: number;
   quantity_unit: string;
   calories: number;
@@ -371,7 +371,7 @@ export type LibraryPanel = {
 export type LibraryItem = {
   id: number;
   entity: LibraryEntity;
-  name: string;
+  name: string; emoji?: string | null; visual_key?: string | null;
   subtitle: string;
   quantity_unit?: "g" | "ml" | null;
   default_portion?: number | null;
@@ -434,7 +434,7 @@ export type HomeData = {
 export type FoodPickerOption = {
   id: number;
   name: string;
-  display_name: string;
+  display_name: string; emoji: string; visual_key: string;
   protein: number;
   carbs: number;
   fat: number;

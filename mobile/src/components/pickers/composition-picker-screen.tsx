@@ -43,6 +43,8 @@ type PickerOption = {
   id: number;
   name: string;
   entity: "food" | "meal" | "dailyPlan";
+  foodEmoji?: string;
+  foodVisualKey?: string;
   indicators?: LibraryIndicator[];
   nutrition: LibraryNutrition;
   panel?: LibraryItem["panel"];
@@ -187,6 +189,8 @@ function optionFromFood(item: FoodPickerOption): PickerOption {
     id: item.id,
     name: item.display_name,
     entity: "food",
+    foodEmoji: item.emoji,
+    foodVisualKey: item.visual_key,
     indicators: [{ label: "base nutricional", value: `100 ${item.quantity_unit}` }],
     quantityUnit: item.quantity_unit,
     nutrition: {
@@ -205,6 +209,8 @@ function PickerOptionCard({ actionLabel, eyebrow, onAction, option, showPanels =
         <PickerCardAction label={actionLabel} onPress={onAction} subject={option.name} />
       ) : undefined}
       entity={option.entity}
+      foodEmoji={option.foodEmoji}
+      foodVisualKey={option.foodVisualKey}
       eyebrow={eyebrow}
       indicators={option.indicators}
       nutrition={libraryNutrition(option.nutrition)}

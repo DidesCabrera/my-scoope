@@ -44,6 +44,8 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
 
         self.assertIsInstance(food, Food)
         self.assertEqual(food.name, "Pechuga de pollo cocida")
+        self.assertEqual(food.emoji, "🍗")
+        self.assertEqual(food.visual_key, "chicken_breast")
         self.assertEqual(food.protein, 31.0)
         self.assertEqual(food.carbs, 0.0)
         self.assertEqual(food.fat, 3.6)
@@ -64,6 +66,7 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(food.catalog_snapshot_payload["source"], "food_catalog")
         self.assertEqual(food.catalog_snapshot_payload["catalog_food_id"], catalog_food.id)
         self.assertEqual(food.catalog_snapshot_payload["contract"]["food_defaults"]["preparation_state"], "cooked")
+        self.assertEqual(food.catalog_snapshot_payload["contract"]["food_defaults"]["emoji"], "🍗")
         self.assertTrue(food.catalog_snapshot_payload["contract"]["food_defaults"]["solver_enabled"])
         self.assertNotIn("food_id", food.catalog_snapshot_payload)
         self.assertAlmostEqual(food.total_kcal, 156.4)
