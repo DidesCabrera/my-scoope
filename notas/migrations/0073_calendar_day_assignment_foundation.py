@@ -31,7 +31,8 @@ def backfill_calendar_day_ownership(apps, schema_editor):
         candidates.setdefault((day.user_id, day.calendar_date), []).append(day)
 
     for same_date in candidates.values():
-        # Existing data can contain overlapping former programs. The latest
+        # Existing data can contain overlapping former programs. Preserve every
+        # historical snapshot while choosing one visible date slot. The latest
         # assignment with execution is the visible slot. Without execution,
         # the latest snapshot wins. Earlier snapshots remain intact.
         same_date.sort(key=lambda day: (day.id in executed_ids, day.created_at, day.id))
