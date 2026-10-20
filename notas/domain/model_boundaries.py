@@ -115,6 +115,7 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
             "ProgramCalendarization",
             "CalendarizedDay",
             "CalendarizedMealExecution",
+            "CalendarProgressPeriod",
             "CalendarizationMeasurementContext",
             "CalendarizationReview",
             "CalendarizationRevision",

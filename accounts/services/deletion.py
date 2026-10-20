@@ -88,6 +88,7 @@ MODEL_RETENTION_POLICY = {
     "notas.ApplePushSubscription": RetentionAction.ERASE,
     "notas.CalendarizedDay": RetentionAction.FOLLOW_PARENT,
     "notas.CalendarizedMealExecution": RetentionAction.FOLLOW_PARENT,
+    "notas.CalendarProgressPeriod": RetentionAction.ERASE,
     "notas.CalendarizationMeasurementContext": RetentionAction.FOLLOW_PARENT,
     "notas.CalendarizationReview": RetentionAction.FOLLOW_PARENT,
     "notas.CalendarizationRevision": RetentionAction.FOLLOW_PARENT,

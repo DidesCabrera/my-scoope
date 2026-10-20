@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta
 from datetime import timezone as dt_timezone
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -8,7 +9,8 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from notas.application.services.calendarization.scheduling import local_datetime_to_utc
+from notas.application.services.calendarization.scheduling import local_date_for_timezone, local_datetime_to_utc
+from notas.application.services.commands.calendar_day_commands import assign_dailyplan_to_calendar_date
 from notas.application.services.commands.calendarization_commands import (
     _push_payload,
     activate_program_calendarization,
@@ -21,6 +23,7 @@ from notas.application.services.commands.calendarization_commands import (
     update_calendarization_preferences,
     update_calendarized_meal_hour,
 )
+from notas.application.services.commands.calendarization_execution_commands import record_meal_execution
 from notas.application.services.notifications.apple_push import ApplePushSendResult
 from notas.application.services.notifications.web_push import (
     WebPushSendResult,
@@ -156,6 +159,72 @@ class CalendarizationCommandTests(CalendarizationFixtureMixin, TestCase):
         self.assertEqual(first.status, ProgramCalendarization.STATUS_CANCELLED)
         self.assertTrue(second.is_current)
 
+    def test_overlapping_replacement_keeps_previous_snapshot_as_superseded(self):
+        first = self.activate().calendarization
+        previous_day = first.days.get(day_number=1)
+        second = self.activate(replace_current=True).calendarization
+        previous_day.refresh_from_db()
+        self.assertEqual(previous_day.assignment_state, CalendarizedDay.STATE_SUPERSEDED)
+        self.assertEqual(previous_day.plan_snapshot["name"], "Día original")
+        self.assertEqual(second.days.get(day_number=1).assignment_state, CalendarizedDay.STATE_CURRENT)
+
+    def test_replacing_after_four_days_preserves_interim_plan_and_evidence(self):
+        meal = Meal.objects.create(name="Comida del programa", created_by=self.user)
+        relation = DailyPlanMeal.objects.create(dailyplan=self.dailyplan, meal=meal, hour=time(9))
+        for day_number in range(2, 8):
+            ProgramDay.objects.create(
+                program=self.program, dailyplan=self.dailyplan, week_number=1, day_number=day_number,
+            )
+        first = self.activate(timezone_name="UTC").calendarization
+        interim = first.days.get(day_number=4)
+        replaced = first.days.get(day_number=5)
+
+        second = self.activate(
+            start_date=date(2026, 7, 24), timezone_name="UTC", replace_current=True,
+            now=datetime(2026, 7, 23, 12, tzinfo=UTC),
+        ).calendarization
+
+        first.refresh_from_db()
+        interim.refresh_from_db()
+        replaced.refresh_from_db()
+        self.assertEqual(first.replaced_by_id, second.id)
+        self.assertEqual(first.replacement_effective_on, date(2026, 7, 24))
+        self.assertEqual(interim.assignment_state, CalendarizedDay.STATE_CURRENT)
+        self.assertEqual(replaced.assignment_state, CalendarizedDay.STATE_SUPERSEDED)
+        self.assertEqual(replaced.superseded_by_id, second.days.get(day_number=1).id)
+        self.assertTrue(interim.notification_events.filter(status=ScheduledNotificationEvent.STATUS_PENDING).exists())
+        self.assertFalse(replaced.notification_events.filter(status=ScheduledNotificationEvent.STATUS_PENDING).exists())
+        with patch(
+            "notas.application.services.commands.calendarization_execution_commands.local_date_for_timezone",
+            return_value=date(2026, 7, 23),
+        ):
+            event = record_meal_execution(
+                user=self.user, day_id=interim.id,
+                meal_snapshot_key=f"dailyplan_meal:{relation.id}",
+                action="completed", idempotency_key="interim-program-check-in",
+            )
+        self.assertEqual(event.calendarized_day_id, interim.id)
+
+    def test_program_replacement_never_overwrites_an_individual_date(self):
+        first = self.activate().calendarization
+        manual = assign_dailyplan_to_calendar_date(
+            user=self.user,
+            dailyplan_id=self.dailyplan.id,
+            local_date=date(2026, 7, 27),
+            assignment_key="manual-before-program-replacement",
+            now=datetime(2026, 7, 19, 12, tzinfo=UTC),
+        )
+        with self.assertRaisesMessage(ValueError, "calendarization_current_conflict"):
+            self.activate(
+                start_date=date(2026, 7, 24), replace_current=True,
+                now=datetime(2026, 7, 23, 12, tzinfo=UTC),
+            )
+        first.refresh_from_db()
+        manual.refresh_from_db()
+        self.assertTrue(first.is_current)
+        self.assertEqual(manual.assignment_state, CalendarizedDay.STATE_CURRENT)
+        self.assertIsNone(first.replaced_by_id)
+
     def test_database_enforces_one_current_calendarization_per_user(self):
         self.activate()
         with self.assertRaises(IntegrityError), transaction.atomic():
@@ -181,6 +250,31 @@ class CalendarizationCommandTests(CalendarizationFixtureMixin, TestCase):
         cancel_calendarization(user=self.user, calendarization_id=calendarization.id)
         calendarization.refresh_from_db()
         self.assertEqual(calendarization.status, ProgramCalendarization.STATUS_CANCELLED)
+
+    def test_cancel_keeps_executed_day_but_retires_unexecuted_future_plan(self):
+        ProgramDay.objects.create(program=self.program, dailyplan=self.dailyplan, week_number=1, day_number=2)
+        calendarization = self.activate(timezone_name="UTC").calendarization
+        today_day = calendarization.days.get(day_number=1)
+        future_day = calendarization.days.get(day_number=2)
+        CalendarizedMealExecution.objects.create(
+            calendarized_day=today_day,
+            meal_snapshot_key="legacy-check-in",
+            action=CalendarizedMealExecution.ACTION_COMPLETED,
+            idempotency_key="cancelled-program-check-in",
+        )
+
+        cancel_calendarization(
+            user=self.user,
+            calendarization_id=calendarization.id,
+            now=datetime(2026, 7, 20, 12, tzinfo=UTC),
+        )
+
+        today_day.refresh_from_db()
+        future_day.refresh_from_db()
+        self.assertEqual(today_day.assignment_state, CalendarizedDay.STATE_CURRENT)
+        self.assertEqual(future_day.assignment_state, CalendarizedDay.STATE_SUPERSEDED)
+        self.assertEqual(future_day.change_reason, "program_cancelled")
+        self.assertEqual(future_day.plan_snapshot["name"], "Día original")
 
     def test_timezone_changes_utc_schedule_and_is_saved_to_profile(self):
         calendarization = self.activate().calendarization
@@ -403,6 +497,56 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, "Historial")
         self.assertContains(response, "Calendarizador")
 
+    def test_calendar_preview_reads_manual_dated_snapshot_without_program(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        assign_dailyplan_to_calendar_date(
+            user=self.user,
+            dailyplan_id=self.dailyplan.id,
+            local_date=today,
+            assignment_key="web-preview-assignment-0001",
+        )
+        response = self.client.get(reverse("calendar_preview"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Próximas cuatro semanas")
+        self.assertContains(response, "Día original")
+        self.assertNotContains(response, "calendarization-current__overview")
+
+    def test_calendar_preview_assigns_and_moves_a_snapshot_with_history(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        source_date = today + timedelta(days=2)
+        target_date = today + timedelta(days=3)
+        action_url = reverse("calendar_preview_action")
+        assigned = self.client.post(action_url, {
+            "action": "assign", "date": source_date.isoformat(), "dailyplan_id": self.dailyplan.id,
+        })
+        self.assertEqual(assigned.status_code, 302)
+        original = CalendarizedDay.objects.get(user=self.user, calendar_date=source_date)
+        self.assertEqual(original.plan_snapshot["name"], "Día original")
+        self.dailyplan.name = "Nombre posterior"
+        self.dailyplan.save(update_fields=["name"])
+        self.assertEqual(self.client.get(reverse("calendar_preview"), {"date": source_date}).status_code, 200)
+        original.refresh_from_db()
+        self.assertEqual(original.plan_snapshot["name"], "Día original")
+        moved = self.client.post(action_url, {
+            "action": "move", "date": source_date.isoformat(), "target_date": target_date.isoformat(),
+        })
+        self.assertEqual(moved.status_code, 302)
+        original.refresh_from_db()
+        successor = CalendarizedDay.objects.get(user=self.user, calendar_date=target_date)
+        self.assertEqual(original.assignment_state, CalendarizedDay.STATE_SUPERSEDED)
+        self.assertEqual(original.superseded_by_id, successor.id)
+        self.assertEqual(successor.plan_snapshot["name"], "Día original")
+
+    def test_calendar_preview_manual_day_detail_allows_today_execution(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        day = assign_dailyplan_to_calendar_date(
+            user=self.user, dailyplan_id=self.dailyplan.id, local_date=today,
+            assignment_key="web-detail-manual-0001",
+        )
+        response = self.client.get(reverse("calendarization_day_detail", args=[day.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["vm"]["content"]["can_check_in"])
+
     def test_dashboard_with_current_uses_home_calendar_layout_without_replacement_card(self):
         self.activate()
         response = self.client.get(
@@ -412,6 +556,8 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="home-calendar calendarization-current"')
+        self.assertContains(response, 'name="replace_current" required')
+        self.assertContains(response, "Los días anteriores y su cumplimiento se conservarán")
         self.assertContains(response, 'class="calendarization-current__overview"')
         self.assertContains(
             response,

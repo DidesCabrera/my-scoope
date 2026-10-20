@@ -1,7 +1,9 @@
 import type { ProposalMeal, ProposalDailyPlan, ProposalProgram } from "./proposal-entities";
 import type { OnboardingStage } from "./onboarding-types";
+import type { ActiveProgramDay } from "./calendar-types";
 
 export type { EntitlementsData, SubscriptionData } from "./billing-types";
+export type { ActiveProgramDay, CalendarDay, CalendarDayDetailData, CalendarDayHistoryData, CalendarOverviewData, CalendarProgressData } from "./calendar-types";
 export type { OnboardingAnalyzeInput, OnboardingEstimate, OnboardingInput, OnboardingStage, OnboardingStateData } from "./onboarding-types";
 export type ApiErrorDetail = {
   code: string;
@@ -68,15 +70,6 @@ export type CalendarizationData = {
 
 export type CalendarizationStatus = "scheduled" | "active" | "paused" | "completed" | "cancelled";
 
-export type ActiveProgramDay = {
-  id: number;
-  calendar_date: string;
-  week_number: number;
-  day_number: number;
-  has_plan: boolean;
-  plan_name: string;
-};
-
 export type ActiveProgramData = {
   calendarization: CalendarizationData | null;
   weeks_count: number;
@@ -128,6 +121,7 @@ export type TodayData = {
   local_date: string;
   calendarization: CalendarizationData | null;
   day_id: number | null;
+  source_dailyplan_id?: number | null;
   has_plan: boolean;
   plan_snapshot: DailyPlanSnapshot | null;
   meal_execution?: MealExecutionItem[] | null;

@@ -50,6 +50,10 @@ class ProgramCalendarization(models.Model):
     paused_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    replaced_by = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="replaced_calendarizations"
+    )
+    replacement_effective_on = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -86,16 +90,54 @@ class ProgramCalendarization(models.Model):
 
 
 class CalendarizedDay(models.Model):
+    SOURCE_PROGRAM = "program"
+    SOURCE_MANUAL = "manual"
+    SOURCE_CHOICES = ((SOURCE_PROGRAM, "Program"), (SOURCE_MANUAL, "Manual"))
+    STATE_CURRENT = "current"
+    STATE_EMPTY = "empty"
+    STATE_SUPERSEDED = "superseded"
+    STATE_REMOVED = "removed"
+    STATE_CHOICES = (
+        (STATE_CURRENT, "Current"),
+        (STATE_EMPTY, "Empty"),
+        (STATE_SUPERSEDED, "Superseded"),
+        (STATE_REMOVED, "Removed"),
+    )
+
     calendarization = models.ForeignKey(
         ProgramCalendarization,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="days",
     )
+    origin_calendarization = models.ForeignKey(
+        ProgramCalendarization,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="originated_days",
+    )
+    user = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="calendarized_days",
+    )
     calendar_date = models.DateField()
-    week_number = models.PositiveSmallIntegerField()
-    day_number = models.PositiveSmallIntegerField()
+    week_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    day_number = models.PositiveSmallIntegerField(null=True, blank=True)
     source_program_day_id = models.PositiveBigIntegerField(null=True, blank=True)
     source_dailyplan_id = models.PositiveBigIntegerField(null=True, blank=True)
+    source_kind = models.CharField(max_length=12, choices=SOURCE_CHOICES, default=SOURCE_PROGRAM)
+    assignment_state = models.CharField(max_length=12, choices=STATE_CHOICES, default=STATE_CURRENT)
+    superseded_by = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="superseded_days"
+    )
+    state_changed_at = models.DateTimeField(null=True, blank=True)
+    change_reason = models.CharField(max_length=80, blank=True)
+    assignment_key = models.CharField(max_length=120, null=True, blank=True, unique=True)
     plan_snapshot = models.JSONField(null=True, blank=True)
     snapshot_hash = models.CharField(max_length=64, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -103,6 +145,11 @@ class CalendarizedDay(models.Model):
     class Meta:
         ordering = ["calendar_date", "id"]
         constraints = [
+            models.UniqueConstraint(
+                fields=["user", "calendar_date"],
+                condition=Q(assignment_state="current", user__isnull=False),
+                name="cal_one_current_plan_per_date",
+            ),
             models.UniqueConstraint(
                 fields=["calendarization", "calendar_date"],
                 name="cal_unique_calendar_date",
@@ -118,13 +165,17 @@ class CalendarizedDay(models.Model):
         ]
         indexes = [
             models.Index(
+                fields=["user", "calendar_date", "assignment_state"],
+                name="cal_user_date_state_idx",
+            ),
+            models.Index(
                 fields=["calendarization", "calendar_date"],
                 name="cal_day_lookup_idx",
             ),
         ]
 
     def __str__(self):
-        return f"{self.calendarization} · {self.calendar_date}"
+        return f"{self.calendarization or self.user_id} · {self.calendar_date}"
 
     @property
     def has_plan(self):
@@ -171,6 +222,30 @@ class CalendarizedMealExecution(models.Model):
 
     def __str__(self):
         return f"{self.calendarized_day_id} · {self.meal_snapshot_key} · {self.action}"
+
+
+class CalendarProgressPeriod(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="calendar_progress_periods")
+    starts_on = models.DateField()
+    ends_on = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-starts_on", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"], condition=Q(ends_on__isnull=True), name="cal_one_open_progress_period"
+            ),
+            models.CheckConstraint(
+                condition=Q(ends_on__isnull=True) | Q(ends_on__gte=models.F("starts_on")),
+                name="cal_progress_period_valid_range",
+            ),
+        ]
+        indexes = [models.Index(fields=["user", "starts_on"], name="cal_progress_user_start_idx")]
+
+    def __str__(self):
+        return f"{self.user_id} · {self.starts_on}"
 
 
 class CalendarizationMeasurementContext(models.Model):

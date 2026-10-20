@@ -18,6 +18,7 @@ class TodayData(Schema):
     local_date: date
     calendarization: CalendarizationData | None = None
     day_id: int | None = None
+    source_dailyplan_id: int | None = None
     has_plan: bool
     plan_snapshot: dict[str, Any] | None = None
     meal_execution: list[MealExecutionData] = Field(default_factory=list)

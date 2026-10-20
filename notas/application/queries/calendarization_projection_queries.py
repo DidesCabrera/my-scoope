@@ -177,7 +177,7 @@ def snapshot_food_aggregation_rows(snapshots: list[dict], totals: dict) -> list[
 
 
 def build_calendarization_snapshot_projection(calendarization) -> dict:
-    days = list(calendarization.days.all())
+    days = [day for day in calendarization.days.all() if day.assignment_state == day.STATE_CURRENT]
     slots = {(day.week_number, day.day_number): day for day in days}
     duration_weeks = max(
         1,

@@ -1,17 +1,19 @@
 from ninja import NinjaAPI
-from ninja.errors import AuthenticationError, ValidationError as NinjaValidationError
+from ninja.errors import AuthenticationError
+from ninja.errors import ValidationError as NinjaValidationError
 
 from mobile_api.api_support import success as _success
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.routes.assistant import router as assistant_router
+from mobile_api.routes.calendar import router as calendar_router
 from mobile_api.routes.calendarization import router as calendarization_router
 from mobile_api.routes.calendarization_edits import router as calendarization_edits_router
 from mobile_api.routes.comparison_edits import router as comparison_edits_router
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.composition import router as composition_router
 from mobile_api.routes.label_capture import router as label_capture_router
-from mobile_api.routes.list_actions import router as list_actions_router
 from mobile_api.routes.libraries import router as libraries_router
+from mobile_api.routes.list_actions import router as list_actions_router
 from mobile_api.routes.proposals import router as proposals_router
 from mobile_api.routes.root import router as identity_router
 from mobile_api.routes.sharing import router as sharing_router
@@ -44,11 +46,7 @@ def handle_validation_error(request, exc):
 
 @api.exception_handler(AuthenticationError)
 def handle_authentication_error(request, exc):
-    error = MobileAPIError(
-        code="mobile_auth_required",
-        message="A valid mobile bearer token is required.",
-        status_code=401,
-    )
+    error = MobileAPIError(code="mobile_auth_required", message="A valid mobile bearer token is required.", status_code=401)
     return api.create_response(request, error_envelope(error), status=401)
 
 
@@ -59,6 +57,7 @@ def health(request):
 api.add_router("", identity_router)
 api.add_router("", billing_router)
 api.add_router("", calendarization_router)
+api.add_router("", calendar_router)
 api.add_router("", calendarization_edits_router)
 api.add_router("", list_actions_router)
 api.add_router("", proposals_router)

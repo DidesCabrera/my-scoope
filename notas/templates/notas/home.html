@@ -154,6 +154,18 @@
     {% endfor %}
   </section>
 
+  <section class="home-active-program" aria-labelledby="home-calendar-progress-title">
+    {% url 'calendar_preview' as calendar_preview_url %}
+    <h2 id="home-calendar-progress-title" class="home-calendar__today-title">Cumplimiento del calendario</h2>
+    <div class="home-active-program__card">
+      {% if vm.content.calendar_progress.elapsed_meals %}
+        <strong>{{ vm.content.calendar_progress.adherence_percent }}%</strong>
+        <p>{{ vm.content.calendar_progress.completed_meals }} de {{ vm.content.calendar_progress.elapsed_meals }} comidas transcurridas desde {{ vm.content.calendar_progress.period_start|date:"j M Y" }}.</p>
+      {% else %}<p>Aún no hay comidas transcurridas en este periodo.</p>{% endif %}
+      {% include "components/detail_link_row.html" with label="Ver Calendario" url=calendar_preview_url accessibility_label="Ver Calendario" standalone=True %}
+    </div>
+  </section>
+
   <section class="home-active-program" aria-labelledby="home-active-program-title">
     <h2 id="home-active-program-title" class="home-calendar__today-title">Tu Programa Activo</h2>
     <div class="home-active-program__card">
@@ -170,7 +182,6 @@
             <span>{{ vm.content.calendarization.start_label }} — {{ vm.content.calendarization.end_label }}</span>
           </div>
         </div>
-        {% include "components/program_active_kpis.html" with program_kpis=vm.content.calendarization standalone=True metric_cards=True %}
         {% include "components/detail_link_row.html" with label="Ir a Mi programa activo" url=vm.content.calendarization.dashboard_url accessibility_label="Ir a Mi programa activo" standalone=True %}
       {% else %}
         <div class="home-active-program__identity">

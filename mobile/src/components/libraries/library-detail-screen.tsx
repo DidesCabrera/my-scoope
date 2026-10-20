@@ -107,6 +107,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const headerEntity = entitySlug === "daily-plans" ? "dailyPlan" : entitySlug === "programs" ? "program" : entitySlug === "meals" ? "meal" : "food";
   const fallbackTitle = entitySlug === "daily-plans" ? "Plan diario" : entitySlug === "programs" ? "Programa" : entitySlug === "meals" ? "Comida" : "Alimento";
   const isPinnedPlan = item?.entity === "dailyPlan" && todayContext?.calendarization == null && todayContext?.pinned_plan?.id === item.id;
+  const isCalendarPlan = item?.entity === "dailyPlan" && todayContext?.day_id != null && todayContext.source_dailyplan_id === item.id;
   const openActions = useCallback(() => setActionSheet("menu"), []);
   const openTimeChange = useCallback(() => setActionSheet("change-time"), []);
   const openComparison = useCallback(() => {
@@ -127,30 +128,33 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     });
     router.push({ pathname: "/comparator", params: { create: "1", kind } } as Href);
   }, [item, publishSelection, router]);
-  const setPinnedPlan = useCallback(async (nextPinned: boolean) => {
-    if (!item || item.entity !== "dailyPlan") return;
+  const setCalendarPlan = useCallback(async (assign: boolean) => {
+    if (!item || item.entity !== "dailyPlan" || !todayContext) return;
     setError(null);
     try {
-      const updated = await apiRequest<TodayData>("/api/v1/today/pinned-plan", nextPinned
-        ? { body: JSON.stringify({ dailyplan_id: item.id }), method: "PUT" }
+      const path = `/api/v1/calendar/days/${todayContext.local_date}/plan`;
+      await apiRequest(path, assign
+        ? { body: JSON.stringify({ assignment_key: Crypto.randomUUID(), dailyplan_id: item.id, replace_existing: todayContext.day_id != null }), method: "PUT" }
         : { method: "DELETE" });
-      setTodayContext(updated);
+      setTodayContext(await apiRequest<TodayData>("/api/v1/today"));
     } catch (nextError) {
       setError(userFacingError(nextError));
     }
-  }, [apiRequest, item]);
-  const confirmPinnedPlan = useCallback((nextPinned: boolean) => {
+  }, [apiRequest, item, todayContext]);
+  const confirmCalendarPlan = useCallback((assign: boolean) => {
     Alert.alert(
-      nextPinned ? "¿Fijar este plan para hoy?" : "¿Dejar de fijar este plan?",
-      nextPinned
-        ? "Este plan diario aparecerá como tu Plan de hoy."
-        : "El plan dejará de aparecer como tu Plan de hoy.",
+      assign ? "¿Asignar este plan a hoy?" : "¿Quitar este plan de hoy?",
+      assign
+        ? todayContext?.day_id != null
+          ? "La asignación actual se conservará en el historial. No se puede reemplazar un día con cumplimiento registrado."
+          : "Se guardará una copia de este plan para la fecha de hoy; los cambios futuros en la biblioteca no la modificarán."
+        : "La asignación quedará en el historial. No se puede quitar un día con cumplimiento registrado.",
       [
         { style: "cancel", text: "Cancelar" },
-        { onPress: () => void setPinnedPlan(nextPinned), text: nextPinned ? "Fijar" : "Dejar de fijar" },
+        { onPress: () => void setCalendarPlan(assign), text: assign ? "Asignar" : "Quitar" },
       ],
     );
-  }, [setPinnedPlan]);
+  }, [setCalendarPlan, todayContext?.day_id]);
   const cancelContextualCreation = useCallback(() => { if (pickerEntryHref) router.dismissTo(pickerEntryHref); }, [pickerEntryHref, router]);
   const continueContextualCreation = useCallback(() => {
     if (!contextualPickerKind || !returnHref || !isContextualMealCreation) return;
@@ -179,8 +183,8 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
         identityVisible: compactHeaderVisible,
         secondaryAction: hasMealTimeContext
           ? { icon: "clock", label: "Cambiar hora", onPress: openTimeChange }
-          : item?.entity === "dailyPlan" && todayContext?.calendarization == null
-            ? { icon: "pin", label: isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy", onPress: () => confirmPinnedPlan(!isPinnedPlan) }
+          : item?.entity === "dailyPlan"
+            ? { icon: "pin", label: isCalendarPlan ? "Quitar del calendario de hoy" : "Asignar al calendario de hoy", onPress: () => confirmCalendarPlan(!isCalendarPlan) }
             : item?.entity === "program" && item.can_calendarize && !item.is_draft
               ? { icon: "calendar-clock", label: "Calendarizar este programa", onPress: () => router.push(`/program/activate?programId=${item.id}` as Href) }
               : undefined,
@@ -188,7 +192,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       });
     }
     return () => setHeaderPresentation({ mode: "default" });
-  }, [cancelContextualCreation, compactHeaderVisible, confirmPinnedPlan, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isContextualMealCreation, isPinnedPlan, item, openActions, openTimeChange, pickerEntryHref, router, setHeaderPresentation, todayContext?.calendarization]));
+  }, [cancelContextualCreation, compactHeaderVisible, confirmCalendarPlan, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isCalendarPlan, isContextualMealCreation, item, openActions, openTimeChange, pickerEntryHref, router, setHeaderPresentation]));
   const load = useCallback(async () => { setLoading(true); setError(null); try {
     const [nextItem, nextToday] = await Promise.all([
       apiRequest<LibraryItem>(`/api/v1/library/${entitySlug}/${id}`),
@@ -422,7 +426,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     {item.entity === "meal" && !isPinnedMealContext && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" /><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onChanged={load} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></> : null}
     {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en este plan diario" /><GroupedFoodsCard items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} title="Alimentos plan diario" /></> : null}
-    {item.entity === "dailyPlan" && todayContext?.calendarization == null ? <Button bleed label={isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"} onPress={() => confirmPinnedPlan(!isPinnedPlan)} variant={isPinnedPlan ? "secondary" : "primary"} /> : null}
+    {item.entity === "dailyPlan" ? <Button bleed label={isCalendarPlan ? "Quitar del calendario de hoy" : "Asignar al calendario de hoy"} onPress={() => confirmCalendarPlan(!isCalendarPlan)} variant={isCalendarPlan ? "secondary" : "primary"} /> : null}
   </EntityDetailPage></NestableScrollContainer>{actionsModal}{mutationStatusModal}<CalendarizedEntityActions
     entityName={panelTimeMeal?.name ?? "Comida"}
     initialAction="change-time"

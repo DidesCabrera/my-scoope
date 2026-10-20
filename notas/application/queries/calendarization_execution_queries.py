@@ -8,6 +8,7 @@ from django.utils import timezone
 from notas.domain.models import (
     CalendarizationMeasurementContext,
     CalendarizationRevision,
+    CalendarizedDay,
     CalendarizedMealExecution,
     PinnedDailyPlanMealExecution,
 )
@@ -125,6 +126,7 @@ def calendarization_progress_summary(calendarization, *, period_start: date, per
         calendarization.days.filter(
             calendar_date__gte=period_start,
             calendar_date__lte=period_end,
+            assignment_state=CalendarizedDay.STATE_CURRENT,
         ).prefetch_related("meal_execution_events")
     )
     scheduled = elapsed = completed = skipped = 0

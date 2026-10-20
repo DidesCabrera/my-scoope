@@ -1347,6 +1347,509 @@
         "title": "AssistantAvailabilityData",
         "type": "object"
       },
+      "CalendarAssignmentInput": {
+        "properties": {
+          "assignment_key": {
+            "maxLength": 120,
+            "minLength": 8,
+            "title": "Assignment Key",
+            "type": "string"
+          },
+          "dailyplan_id": {
+            "exclusiveMinimum": 0,
+            "title": "Dailyplan Id",
+            "type": "integer"
+          },
+          "replace_existing": {
+            "default": false,
+            "title": "Replace Existing",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dailyplan_id",
+          "assignment_key"
+        ],
+        "title": "CalendarAssignmentInput",
+        "type": "object"
+      },
+      "CalendarDayData": {
+        "properties": {
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          },
+          "has_execution": {
+            "default": false,
+            "title": "Has Execution",
+            "type": "boolean"
+          },
+          "has_plan": {
+            "title": "Has Plan",
+            "type": "boolean"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "plan_name": {
+            "default": "",
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "source_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Kind"
+          },
+          "source_program_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Program Name"
+          }
+        },
+        "required": [
+          "calendar_date",
+          "has_plan"
+        ],
+        "title": "CalendarDayData",
+        "type": "object"
+      },
+      "CalendarDayDetailData": {
+        "properties": {
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          },
+          "has_execution": {
+            "default": false,
+            "title": "Has Execution",
+            "type": "boolean"
+          },
+          "has_plan": {
+            "title": "Has Plan",
+            "type": "boolean"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "meal_execution": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Meal Execution",
+            "type": "array"
+          },
+          "plan_name": {
+            "default": "",
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "plan_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Snapshot"
+          },
+          "source_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Kind"
+          },
+          "source_program_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Program Name"
+          }
+        },
+        "required": [
+          "calendar_date",
+          "has_plan"
+        ],
+        "title": "CalendarDayDetailData",
+        "type": "object"
+      },
+      "CalendarDayDetailEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarDayDetailData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarDayDetailEnvelope",
+        "type": "object"
+      },
+      "CalendarDayHistoryData": {
+        "properties": {
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarDayHistoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "calendar_date",
+          "items"
+        ],
+        "title": "CalendarDayHistoryData",
+        "type": "object"
+      },
+      "CalendarDayHistoryEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarDayHistoryData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarDayHistoryEnvelope",
+        "type": "object"
+      },
+      "CalendarDayHistoryItem": {
+        "properties": {
+          "assignment_state": {
+            "title": "Assignment State",
+            "type": "string"
+          },
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          },
+          "change_reason": {
+            "default": "",
+            "title": "Change Reason",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "execution_events": {
+            "default": 0,
+            "title": "Execution Events",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "source_kind": {
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "source_program_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Program Name"
+          },
+          "state_changed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State Changed At"
+          },
+          "superseded_by_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded By Id"
+          }
+        },
+        "required": [
+          "id",
+          "calendar_date",
+          "plan_name",
+          "source_kind",
+          "assignment_state",
+          "created_at"
+        ],
+        "title": "CalendarDayHistoryItem",
+        "type": "object"
+      },
+      "CalendarDraftInput": {
+        "properties": {
+          "assignment_key": {
+            "maxLength": 120,
+            "minLength": 8,
+            "title": "Assignment Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assignment_key"
+        ],
+        "title": "CalendarDraftInput",
+        "type": "object"
+      },
+      "CalendarMoveInput": {
+        "properties": {
+          "assignment_key": {
+            "maxLength": 120,
+            "minLength": 8,
+            "title": "Assignment Key",
+            "type": "string"
+          },
+          "replace_existing": {
+            "default": false,
+            "title": "Replace Existing",
+            "type": "boolean"
+          },
+          "target_date": {
+            "format": "date",
+            "title": "Target Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_date",
+          "assignment_key"
+        ],
+        "title": "CalendarMoveInput",
+        "type": "object"
+      },
+      "CalendarOverviewData": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarDayData"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "local_date": {
+            "format": "date",
+            "title": "Local Date",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "local_date",
+          "start_date",
+          "end_date",
+          "days"
+        ],
+        "title": "CalendarOverviewData",
+        "type": "object"
+      },
+      "CalendarOverviewEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarOverviewData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarOverviewEnvelope",
+        "type": "object"
+      },
+      "CalendarProgressData": {
+        "properties": {
+          "adherence_percent": {
+            "title": "Adherence Percent",
+            "type": "integer"
+          },
+          "completed_meals": {
+            "title": "Completed Meals",
+            "type": "integer"
+          },
+          "days_with_plan": {
+            "title": "Days With Plan",
+            "type": "integer"
+          },
+          "elapsed_meals": {
+            "title": "Elapsed Meals",
+            "type": "integer"
+          },
+          "period_end": {
+            "format": "date",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Id"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "scheduled_meals": {
+            "title": "Scheduled Meals",
+            "type": "integer"
+          },
+          "skipped_meals": {
+            "title": "Skipped Meals",
+            "type": "integer"
+          },
+          "unrecorded_meals": {
+            "title": "Unrecorded Meals",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "period_start",
+          "period_end",
+          "days_with_plan",
+          "scheduled_meals",
+          "elapsed_meals",
+          "completed_meals",
+          "skipped_meals",
+          "unrecorded_meals",
+          "adherence_percent"
+        ],
+        "title": "CalendarProgressData",
+        "type": "object"
+      },
+      "CalendarProgressEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarProgressData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarProgressEnvelope",
+        "type": "object"
+      },
       "CalendarizationActivationData": {
         "properties": {
           "adherence": {
@@ -9347,6 +9850,17 @@
                 "type": "null"
               }
             ]
+          },
+          "source_dailyplan_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Dailyplan Id"
           }
         },
         "required": [
@@ -10493,6 +11007,614 @@
           }
         ],
         "summary": "Submit Ai Turn"
+      }
+    },
+    "/api/v1/calendar": {
+      "get": {
+        "operationId": "mobile_api_api_calendar_overview",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 28,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarOverviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendar Overview"
+      }
+    },
+    "/api/v1/calendar/days/{local_date}": {
+      "get": {
+        "operationId": "mobile_api_api_calendar_day",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "local_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Local Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendar Day"
+      }
+    },
+    "/api/v1/calendar/days/{local_date}/history": {
+      "get": {
+        "operationId": "mobile_api_api_calendar_day_history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "local_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Local Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarDayHistoryEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendar Day History"
+      }
+    },
+    "/api/v1/calendar/days/{local_date}/move": {
+      "post": {
+        "operationId": "mobile_api_api_move_calendar_day_plan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "local_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Local Date",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarMoveInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Move Calendar Day Plan"
+      }
+    },
+    "/api/v1/calendar/days/{local_date}/plan": {
+      "delete": {
+        "operationId": "mobile_api_api_remove_calendar_day_plan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "local_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Local Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Remove Calendar Day Plan"
+      },
+      "put": {
+        "operationId": "mobile_api_api_assign_calendar_day_plan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "local_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Local Date",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarAssignmentInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Assign Calendar Day Plan"
+      }
+    },
+    "/api/v1/calendar/days/{local_date}/plan/draft": {
+      "post": {
+        "operationId": "mobile_api_api_create_calendar_day_draft",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "local_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Local Date",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarDraftInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Calendar Day Draft"
+      }
+    },
+    "/api/v1/calendar/progress": {
+      "get": {
+        "operationId": "mobile_api_api_calendar_progress",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarProgressEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendar Progress"
+      }
+    },
+    "/api/v1/calendar/progress/periods": {
+      "post": {
+        "operationId": "mobile_api_api_start_calendar_progress_period",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarProgressEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Start Calendar Progress Period"
       }
     },
     "/api/v1/comparisons/compare": {

@@ -190,11 +190,13 @@ def _sync_day_events(*, calendarization: ProgramCalendarization, day: Calendariz
 
 def reschedule_calendarized_days(
     *,
-    calendarization: ProgramCalendarization,
+    calendarization: ProgramCalendarization | None,
     days: list[CalendarizedDay],
     now: datetime,
     reason: str,
 ) -> None:
+    if calendarization is None:
+        return
     day_ids = [day.id for day in days]
     if not day_ids:
         return
@@ -218,12 +220,19 @@ def _calendarized_day_for_snapshot_update(*, user, day_id: int) -> CalendarizedD
         day = (
             CalendarizedDay.objects.select_for_update()
             .select_related("calendarization")
-            .get(pk=day_id, calendarization__user=user)
+            .get(Q(user=user) | Q(user__isnull=True, calendarization__user=user), pk=day_id)
         )
     except CalendarizedDay.DoesNotExist as exc:
         raise ValueError("calendarized_day_not_found") from exc
 
-    if day.calendarization.status not in ProgramCalendarization.CURRENT_STATUSES:
+    if day.assignment_state != CalendarizedDay.STATE_CURRENT:
+        raise ValueError("calendarization_not_current")
+    if day.calendarization and day.calendarization.status not in ProgramCalendarization.CURRENT_STATUSES and not (
+        day.calendarization.status == ProgramCalendarization.STATUS_CANCELLED
+        and day.calendarization.replaced_by_id is not None
+        and day.calendarization.replacement_effective_on is not None
+        and day.calendar_date < day.calendarization.replacement_effective_on
+    ):
         raise ValueError("calendarization_not_current")
     return day
 
@@ -601,13 +610,18 @@ def update_calendarized_meal_hour(
     return day
 
 
-def _cancel_pending_events(calendarization: ProgramCalendarization, *, reason: str) -> None:
-    calendarization.notification_events.filter(
+def _cancel_pending_events(
+    calendarization: ProgramCalendarization, *, reason: str, from_date: date | None = None
+) -> None:
+    events = calendarization.notification_events.filter(
         status__in=(
             ScheduledNotificationEvent.STATUS_PENDING,
             ScheduledNotificationEvent.STATUS_PROCESSING,
         )
-    ).update(
+    )
+    if from_date is not None:
+        events = events.filter(calendarized_day__calendar_date__gte=from_date)
+    events.update(
         status=ScheduledNotificationEvent.STATUS_CANCELLED,
         skip_reason=reason,
         claimed_at=None,
@@ -644,22 +658,50 @@ def activate_program_calendarization(
     if empty_dates and not confirm_incomplete:
         raise ValueError("calendarization_incomplete_confirmation_required")
 
+    end_date = start_date + timedelta(days=program.duration_days - 1)
+
     current = (
         ProgramCalendarization.objects.select_for_update()
         .filter(user=user, status__in=ProgramCalendarization.CURRENT_STATUSES)
         .first()
     )
     replaced_id = None
+    replaced_days_by_date = {}
     if current:
         if not replace_current:
             raise ValueError("calendarization_replacement_confirmation_required")
+        previous_today = local_date_for_timezone(current.timezone_name, now=current_time)
+        future_days = list(
+            current.days.select_for_update().filter(
+                calendar_date__gte=start_date,
+                assignment_state=CalendarizedDay.STATE_CURRENT,
+            ).prefetch_related("meal_execution_events")
+        )
+        for previous_day in future_days:
+            if previous_day.calendar_date < previous_today or previous_day.meal_execution_events.exists():
+                raise ValueError("calendarization_day_has_execution")
         replaced_id = current.id
-        _cancel_pending_events(current, reason="calendarization_replaced")
+        _cancel_pending_events(
+            current,
+            reason="calendarization_replaced",
+            from_date=start_date if current.status != ProgramCalendarization.STATUS_PAUSED else None,
+        )
+        for previous_day in future_days:
+            previous_day.assignment_state = CalendarizedDay.STATE_SUPERSEDED
+            previous_day.change_reason = "legacy_program_replaced"
+            previous_day.state_changed_at = current_time
+            previous_day.save(update_fields=["assignment_state", "change_reason", "state_changed_at"])
+            replaced_days_by_date[previous_day.calendar_date] = previous_day
         current.status = ProgramCalendarization.STATUS_CANCELLED
         current.cancelled_at = current_time
         current.save(update_fields=["status", "cancelled_at", "updated_at"])
 
-    end_date = start_date + timedelta(days=program.duration_days - 1)
+    if CalendarizedDay.objects.filter(
+        user=user,
+        calendar_date__range=(start_date, end_date),
+        assignment_state=CalendarizedDay.STATE_CURRENT,
+    ).exists():
+        raise ValueError("calendarization_current_conflict")
     try:
         calendarization = ProgramCalendarization.objects.create(
             user=user,
@@ -677,6 +719,11 @@ def activate_program_calendarization(
     except IntegrityError as exc:
         raise ValueError("calendarization_current_conflict") from exc
 
+    if current is not None:
+        current.replaced_by = calendarization
+        current.replacement_effective_on = start_date
+        current.save(update_fields=["replaced_by", "replacement_effective_on", "updated_at"])
+
     for offset in range(program.duration_days):
         week_number = (offset // 7) + 1
         day_number = (offset % 7) + 1
@@ -684,14 +731,21 @@ def activate_program_calendarization(
         snapshot = build_dailyplan_snapshot(program_day) if program_day else None
         day = CalendarizedDay.objects.create(
             calendarization=calendarization,
+            origin_calendarization=calendarization,
+            user=user,
             calendar_date=start_date + timedelta(days=offset),
             week_number=week_number,
             day_number=day_number,
             source_program_day_id=program_day.id if program_day else None,
             source_dailyplan_id=program_day.dailyplan_id if program_day else None,
+            assignment_state=CalendarizedDay.STATE_CURRENT if snapshot else CalendarizedDay.STATE_EMPTY,
             plan_snapshot=snapshot.payload if snapshot else None,
             snapshot_hash=snapshot.content_hash if snapshot else "",
         )
+        previous_day = replaced_days_by_date.get(day.calendar_date)
+        if previous_day is not None:
+            previous_day.superseded_by = day
+            previous_day.save(update_fields=["superseded_by"])
         _sync_day_events(calendarization=calendarization, day=day, now=current_time)
 
     profile = user.profile
@@ -756,9 +810,21 @@ def cancel_calendarization(*, user, calendarization_id: int, now: datetime | Non
     calendarization = _owned_current_calendarization(user=user, calendarization_id=calendarization_id, for_update=True)
     if calendarization.status not in ProgramCalendarization.CURRENT_STATUSES:
         raise ValueError("calendarization_cannot_cancel")
+    current_time = now or timezone.now()
+    today = local_date_for_timezone(calendarization.timezone_name, now=current_time)
     _cancel_pending_events(calendarization, reason="calendarization_cancelled")
+    for day in calendarization.days.select_for_update().filter(
+        calendar_date__gte=today,
+        assignment_state=CalendarizedDay.STATE_CURRENT,
+    ).prefetch_related("meal_execution_events"):
+        if day.meal_execution_events.all():
+            continue
+        day.assignment_state = CalendarizedDay.STATE_SUPERSEDED
+        day.change_reason = "program_cancelled"
+        day.state_changed_at = current_time
+        day.save(update_fields=["assignment_state", "change_reason", "state_changed_at"])
     calendarization.status = ProgramCalendarization.STATUS_CANCELLED
-    calendarization.cancelled_at = now or timezone.now()
+    calendarization.cancelled_at = current_time
     calendarization.save(update_fields=["status", "cancelled_at", "updated_at"])
     return calendarization
 
@@ -974,7 +1040,14 @@ def dispatch_due_notifications(
             _mark_event(event, status=ScheduledNotificationEvent.STATUS_SKIPPED, reason="calendarization_paused", now=current_time)
             skipped += 1
             continue
-        if calendarization.status in {ProgramCalendarization.STATUS_CANCELLED, ProgramCalendarization.STATUS_COMPLETED}:
+        if calendarization.status in {ProgramCalendarization.STATUS_CANCELLED, ProgramCalendarization.STATUS_COMPLETED} and not (
+            calendarization.status == ProgramCalendarization.STATUS_CANCELLED
+            and calendarization.replaced_by_id is not None
+            and calendarization.replacement_effective_on is not None
+            and event.calendarized_day.assignment_state == CalendarizedDay.STATE_CURRENT
+            and event.calendarized_day.calendar_date == today
+            and today < calendarization.replacement_effective_on
+        ):
             _mark_event(event, status=ScheduledNotificationEvent.STATUS_CANCELLED, reason="calendarization_not_current", now=current_time)
             skipped += 1
             continue

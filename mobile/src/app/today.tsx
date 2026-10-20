@@ -1,11 +1,11 @@
 import { type Href, Redirect, Stack, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { CalendarClock, Camera, Pin, Scale, Weight } from "lucide-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, CalendarizedDayDetail, ComparisonKind, HomeData, MealCheckInInput, TodayData } from "@/api/types";
+import type { ActiveProgramData, CalendarDayDetailData, CalendarProgressData, CalendarizedDayDetail, ComparisonKind, HomeData, MealCheckInInput, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { subscribeToCalendarizedDayUpdates } from "@/components/calendarization/calendarized-day-updates";
@@ -18,7 +18,6 @@ import { ComparisonCreateActions } from "@/components/comparisons";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
 import type { MealPanelEditing, MealPanelItem } from "@/components/panels";
 import { Button, Card, Chip, GuideMetric, InlineNotice, LoadingState, MutationStatusModal, Screen, SectionTitle, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -40,20 +39,6 @@ function optimisticMealExecution(data: TodayData, mealKey: string, completed: bo
   };
 }
 
-function optimisticProgramAdherence(program: ActiveProgramData | null, previousCompleted: boolean, completed: boolean): ActiveProgramData | null {
-  if (!program?.adherence || previousCompleted === completed) return program;
-  const completedMeals = Math.max(0, program.adherence.completed_meals + (completed ? 1 : -1));
-  const elapsedMeals = Math.max(program.adherence.elapsed_meals ?? program.adherence.planned_meals, completedMeals);
-  return {
-    ...program,
-    adherence: {
-      ...program.adherence,
-      adherence_percent: elapsedMeals ? Math.round((completedMeals / elapsedMeals) * 100) : 0,
-      completed_meals: completedMeals,
-    },
-  };
-}
-
 function HomeSectionTitle({ children, pinned = false }: { children: string; pinned?: boolean }) {
   return <View style={styles.homeSectionHeading}>
     {pinned ? <Pin color={tokens.color.textMain} size={18} strokeWidth={2.2} /> : null}
@@ -68,7 +53,7 @@ function ActiveProgramSectionHeader() {
         <CalendarClock color={tokens.color.textMain} size={19} strokeWidth={2.2} />
         <Text accessibilityRole="header" style={styles.activeProgramSectionTitle}>Tu programa en curso</Text>
       </View>
-      <Text style={styles.activeProgramSectionSubtitle}>Tu plan de hoy pertenece a este programa en curso. Revisa tu adherencia y consulta los otros planes de tu programa.</Text>
+      <Text style={styles.activeProgramSectionSubtitle}>Usa el programa para planificar fechas. El cumplimiento principal se mide en tu calendario.</Text>
     </View>
   );
 }
@@ -78,6 +63,7 @@ export default function TodayScreen() {
   const { status, session, profile, apiRequest } = useSession();
   const [today, setToday] = useState<TodayData | null>(null);
   const [activeProgram, setActiveProgram] = useState<ActiveProgramData | null>(null);
+  const [calendarProgress, setCalendarProgress] = useState<CalendarProgressData | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +73,6 @@ export default function TodayScreen() {
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
   const [savingCompletionMealKey, setSavingCompletionMealKey] = useState<string | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
-  const adherenceMutationIdRef = useRef(0);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
   const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
@@ -100,10 +85,14 @@ export default function TodayScreen() {
     setLoading(true);
     setError(null);
     try {
-      const home = await apiRequest<HomeData>("/api/v1/home");
+      const [home, nextProgress] = await Promise.all([
+        apiRequest<HomeData>("/api/v1/home"),
+        apiRequest<CalendarProgressData>("/api/v1/calendar/progress").catch(() => null),
+      ]);
       const nextToday = home.today;
       setToday(nextToday);
       setActiveProgram(home.active_program);
+      setCalendarProgress(nextProgress);
       setLatestWeightKg(home.latest_weight?.weight_kg ?? null);
       setLibraryCounts({
         dailyPlan: home.library_counts.daily_plan,
@@ -156,15 +145,22 @@ export default function TodayScreen() {
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? today?.measurements?.latest_weight_kg;
   const planContext = today?.calendarization
     ? { color: tokens.color.program, label: "Programa en curso" }
+    : today?.day_id
+      ? { color: tokens.color.dailyPlan, label: "Plan del calendario" }
     : today?.pinned_plan
       ? { color: tokens.color.dailyPlan, label: "Plan calendarizado" }
       : null;
 
   async function createTodayPlan() {
+    if (!today) return;
     setCreatingTodayPlan(true);
     setError(null);
     try {
-      setToday(await apiRequest<TodayData>("/api/v1/today/pinned-plan", { method: "POST" }));
+      await apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${today.local_date}/plan/draft`, {
+        body: JSON.stringify({ assignment_key: Crypto.randomUUID() }),
+        method: "POST",
+      });
+      await load();
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -175,13 +171,9 @@ export default function TodayScreen() {
   async function toggleTodayMealCompletion(mealKey: string, completed: boolean, mode: "calendarized" | "pinned") {
     if (savingCompletionMealKey || (mode === "calendarized" && todayDayId == null)) return;
     const previousToday = today;
-    const previousProgram = activeProgram;
-    const previousCompleted = normalizeMealExecution(today?.meal_execution).find((item) => item.meal_key === mealKey)?.status === "completed";
-    const adherenceMutationId = mode === "calendarized" ? ++adherenceMutationIdRef.current : adherenceMutationIdRef.current;
     setSavingCompletionMealKey(mealKey);
     setError(null);
     if (today) setToday(optimisticMealExecution(today, mealKey, completed));
-    if (mode === "calendarized") setActiveProgram((current) => optimisticProgramAdherence(current, previousCompleted, completed));
     try {
       const payload: MealCheckInInput = {
         action: completed ? "completed" : "skipped",
@@ -191,14 +183,10 @@ export default function TodayScreen() {
         ? `/api/v1/today/pinned-plan/meals/${encodeURIComponent(mealKey)}/check-ins`
         : `/api/v1/days/${todayDayId}/meals/${encodeURIComponent(mealKey)}/check-ins`;
       setToday(await apiRequest<TodayData>(path, { body: JSON.stringify(payload), method: "POST" }));
-      if (mode === "calendarized") {
-        void apiRequest<HomeData>("/api/v1/home")
-          .then((home) => { if (adherenceMutationIdRef.current === adherenceMutationId) setActiveProgram(home.active_program); })
-          .catch(() => undefined);
-      }
+      if (mode === "calendarized") void apiRequest<CalendarProgressData>("/api/v1/calendar/progress")
+        .then(setCalendarProgress).catch(() => undefined);
     } catch (nextError) {
       setToday(previousToday);
-      setActiveProgram(previousProgram);
       setError(userFacingError(nextError));
     } finally {
       setSavingCompletionMealKey(null);
@@ -275,9 +263,9 @@ export default function TodayScreen() {
         </View>
         {planContext ? <View style={styles.planContext}><Chip backgroundColor={`${planContext.color}4D`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
       </View>
-      {today?.calendarization ? <HomeSectionTitle pinned>Tu plan de alimentación para hoy</HomeSectionTitle> : null}
+      {today?.day_id != null ? <HomeSectionTitle pinned>Tu plan de alimentación para hoy</HomeSectionTitle> : null}
 
-      {today?.calendarization && today.has_plan && snapshot ? (
+      {today?.day_id != null && today.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
           apiRequest={apiRequest}
           dayId={todayDayId ?? null}
@@ -317,10 +305,19 @@ export default function TodayScreen() {
         </>
       ) : null}
 
+      {calendarProgress ? <Card accent={tokens.color.dailyPlan}>
+        <SectionTitle detail={calendarProgress.elapsed_meals ? `${calendarProgress.adherence_percent}%` : "Sin registros"} title="Cumplimiento del calendario" />
+        <Text style={textStyles.muted}>{calendarProgress.elapsed_meals ? `${calendarProgress.completed_meals} de ${calendarProgress.elapsed_meals} comidas transcurridas` : "Aún no hay comidas transcurridas"} desde {compactDateLabel(calendarProgress.period_start)}.</Text>
+        <Button label="Ver calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
+      </Card> : null}
+
       {activeProgram?.calendarization ? (
         <>
           <ActiveProgramSectionHeader />
-          <ProgramActiveHomeOverview calendarization={activeProgram.calendarization} program={activeProgram} />
+          <Card accent={tokens.color.program}>
+            <SectionTitle title={activeProgram.calendarization.program_name} />
+            <Button label="Ver programa en curso" onPress={() => router.push("/program" as Href)} variant="secondary" />
+          </Card>
         </>
       ) : null}
 

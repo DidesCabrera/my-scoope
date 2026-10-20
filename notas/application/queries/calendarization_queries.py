@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from zoneinfo import ZoneInfo
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from notas.domain.models import CalendarizedDay, Program, ProgramCalendarization
@@ -35,7 +35,8 @@ def calendarization_history_for_user(user, *, limit=10):
 def calendarized_day_for_user(user, day_id):
     return CalendarizedDay.objects.select_related("calendarization").filter(
         id=day_id,
-        calendarization__user=user,
+    ).filter(
+        Q(user=user) | Q(user__isnull=True, calendarization__user=user),
     ).first()
 
 

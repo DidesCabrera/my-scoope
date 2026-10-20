@@ -14,6 +14,7 @@
       <h1 class="list-page-header__title">Calendarizador</h1>
     </div>
   </div>
+  <p><a href="{% url 'calendar_preview' %}">Vista previa del Calendario</a></p>
 
   {% if vm.content.current %}
   <section class="home-calendar calendarization-current" aria-labelledby="calendarization-current-title" data-calendarization-controller>
@@ -147,9 +148,9 @@
       </div>
     </div>
   </form>
-  {% else %}
+  {% endif %}
   <section class="calendarization-card">
-    <h2>Nueva calendarización</h2>
+    <h2>{% if vm.content.current %}Cambiar programa desde una fecha{% else %}Nueva calendarización{% endif %}</h2>
     {% if vm.content.programs %}
     <form method="post" action="{% url 'calendarization_activate' %}" class="calendarization-form" data-activation-form>
       {% csrf_token %}
@@ -162,6 +163,7 @@
         </select>
       </label>
       <label>Fecha de inicio <input type="date" name="start_date" required data-start-date></label>
+      {% if vm.content.current %}<label class="calendarization-check"><input type="checkbox" name="replace_current" required> Confirmo que desde la fecha indicada se reemplazarán los días restantes de “{{ vm.content.current.program_name_snapshot }}”. Los días anteriores y su cumplimiento se conservarán. Los planes asignados individualmente no se sobrescriben.</label>{% endif %}
       <div class="calendarization-preview" data-date-preview hidden>
         <div class="calendarization-preview__heading">
           <p class="home-calendar__program-eyebrow">
@@ -210,7 +212,6 @@
     <div class="calendarization-empty"><p>Primero necesitas crear un programa semanal propio.</p><a class="btn-primary calendarization-button" href="{% url 'program_create' %}">Crear programa</a></div>
     {% endif %}
   </section>
-  {% endif %}
 
 </div>
 {% if vm.content.current %}<script src="{% static 'notas/js/calendarization_days.js' %}" defer></script>{% endif %}

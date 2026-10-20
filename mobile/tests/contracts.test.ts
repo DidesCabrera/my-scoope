@@ -659,11 +659,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /eyebrow="PLAN DEL DÍA"/);
   assertSourceMatch(todayScreen, /greetingRow: \{ gap: 0, marginBottom: 0 \}/);
   assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm \}/);
-  assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf("<ProgramActiveHomeOverview"));
-  assertSourceMatch(todayScreen, /<CalendarizedDailyPlanCard[\s\S]*?<ActiveProgramSectionHeader \/>[\s\S]*?<ProgramActiveHomeOverview/);
+  assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf("Cumplimiento del calendario"));
+  assertSourceMatch(todayScreen, /<CalendarizedDailyPlanCard[\s\S]*?Cumplimiento del calendario[\s\S]*?<ActiveProgramSectionHeader \/>/);
   assertSourceMatch(todayScreen, /<CalendarClock color=\{tokens\.color\.textMain\} size=\{19\} strokeWidth=\{2\.2\} \/>/);
   assertSourceMatch(todayScreen, /Tu programa en curso/);
-  assertSourceMatch(todayScreen, /Tu plan de hoy pertenece a este programa en curso\. Revisa tu adherencia y consulta los otros planes de tu programa\./);
+  assertSourceMatch(todayScreen, /Ver programa en curso/);
   assertSourceMatch(todayScreen, /activeProgramSectionTitle: \{[^}]*fontSize: 20[^}]*fontWeight: tokens\.weight\.extraBold/);
   assertSourceMatch(todayScreen, /activeProgramSectionHeader: \{[^}]*marginTop: tokens\.spacing\.xxl/);
   assertSourceMatch(todayScreen, /homeSectionHeading: \{[^}]*marginTop: tokens\.spacing\.sm/);
@@ -702,7 +702,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /<GuideMetric label="Peso actual" value="85,0kg" \/>/);
   assertSourceMatch(gallery, /<ProgramDaySelector/);
   assertSourceMatch(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
-  assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
+  assertSourceMatch(todayScreen, /<SectionTitle detail=\{calendarProgress\.elapsed_meals \? `\$\{calendarProgress\.adherence_percent\}%` : "Sin registros"\} title="Cumplimiento del calendario" \/>/);
   assertSourceMatch(todayScreen, /greetingHeading: \{ alignItems: "center", flexDirection: "row"/);
   assertSourceMatch(todayScreen, /<GuideMetric onPress=\{\(\) => router\.push\("\/weight" as Href\)\} tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assertSourceMatch(todayScreen, /<View style=\{styles\.homeQuickActions\}>[\s\S]*<HomeSectionTitle>Accesos rápidos<\/HomeSectionTitle>[\s\S]*<View style=\{styles\.homeFooterActions\}>/);
@@ -758,11 +758,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(libraryDetail, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Alimentos en este plan diario" \/><GroupedFoodsCard/);
   assertSourceMatch(libraryDetail, /hasMealTimeContext[\s\S]*?\? \{ icon: "clock", label: "Cambiar hora"/);
   assertSourceMatch(libraryDetail, /eyebrowAccessory=\{item\.entity === "meal" && hasMealTimeContext && contextTime \? <HeaderMetadataChip kind="time" value=\{contextTime\} \/> : undefined\}/);
-  assertSourceMatch(libraryDetail, /item\?\.entity === "dailyPlan"[\s\S]*?\{ icon: "pin", label: isPinnedPlan \? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"/);
+  assertSourceMatch(libraryDetail, /item\?\.entity === "dailyPlan"[\s\S]*?\{ icon: "pin", label: isCalendarPlan \? "Quitar del calendario de hoy" : "Asignar al calendario de hoy"/);
   assertSourceMatch(libraryDetail, /item\?\.entity === "program"[\s\S]*?\{ icon: "calendar-clock", label: "Calendarizar este programa"/);
-  assertSourceMatch(libraryDetail, /Alert\.alert\([\s\S]*?\? "¿Fijar este plan para hoy\?" : "¿Dejar de fijar este plan\?"/);
+  assertSourceMatch(libraryDetail, /Alert\.alert\([\s\S]*?\? "¿Asignar este plan a hoy\?" : "¿Quitar este plan de hoy\?"/);
   assertSourceMatch(libraryDetail, /<Button bleed label="Calendarizar este programa"/);
-  assertSourceMatch(libraryDetail, /<Button bleed label=\{isPinnedPlan \? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"\}/);
+  assertSourceMatch(libraryDetail, /<Button bleed label=\{isCalendarPlan \? "Quitar del calendario de hoy" : "Asignar al calendario de hoy"\}/);
   assertSourceMatch(libraryDetail, /mealTimeInMenu=\{false\}/);
 
   assertSourceMatch(appNavigation, /headerPresentation\.secondaryAction[\s\S]*<Pin/);

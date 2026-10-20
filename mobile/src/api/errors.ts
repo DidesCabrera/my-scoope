@@ -41,6 +41,13 @@ export function userFacingError(error: unknown): string {
   if (isConnectionError(error)) return connectionMessage;
   if (error instanceof MobileApiError) {
     const messages: Record<string, string> = {
+      calendar_replacement_confirmation_required: "Ya hay un plan en esa fecha. Confirma su reemplazo para conservar la versión anterior en el historial.",
+      calendar_day_has_execution: "No se puede cambiar un día pasado o con cumplimiento registrado.",
+      calendar_date_in_past: "No se puede modificar una fecha pasada.",
+      calendar_move_program_day_unsupported: "Por ahora, solo se pueden mover planes asignados individualmente.",
+      calendar_progress_no_prior_period: "Aún no hay un periodo anterior para reiniciar el contador.",
+      calendar_progress_period_already_started_today: "El nuevo periodo de progreso ya comenzó hoy.",
+      calendarization_current_conflict: "Ese programa coincide con planes ya asignados individualmente. Revisa esas fechas antes de activarlo.",
       ai_async_unavailable: "El Asistente no está disponible en este momento. Tu conversación guardada no se perderá.",
       ai_turn_rate_limited: "Has enviado varios mensajes seguidos. Espera un momento e inténtalo nuevamente.",
       apple_reconciliation_rate_limited: "Espera un momento antes de consultar nuevamente tu suscripción con Apple.",
