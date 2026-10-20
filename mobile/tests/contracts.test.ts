@@ -352,7 +352,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(planningControls, /<ClipboardList color=\{tokens\.color\.entityIconForeground\} size=\{14\}/);
   assertSourceMatch(planningControls, /<Plus color=\{tokens\.color\.textMain\} size=\{24\} \/>/);
   assertSourceMatch(planningControls, /borderRadius: tokens\.spacing\.compact, height: 24/);
-  assertSourceMatch(planningControls, /dayCircle: \{[^}]*borderWidth: 1[^}]*height: 44[^}]*width: 44/);
+  assertSourceMatch(planningControls, /dayCircle: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*height: 44[^}]*width: 44/);
+  assertSourceDoesNotMatch(planningControls, /dayCircle: \{[^}]*(?:borderColor|borderStyle|borderWidth)/);
+  assertSourceDoesNotMatch(planningControls, /dayCircleSelected|dayCircleEmpty: \{[^}]*borderStyle|dayCircleToday: \{[^}]*borderStyle/);
   assertSourceMatch(planningControls, /dayCircleCompact: \{ height: 40, width: 40 \}/);
   assertSourceMatch(planningControls, /hitSlop=\{compact \? 2 : undefined\}/);
   assertSourceMatch(planningControls, /<ScrollableTabBar[\s\S]*?tabs=\{weeks\.map/);
@@ -690,6 +692,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(currentWeek, /monthLabelToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.semibold \}/);
   assertSourceMatch(currentWeek, /<WeekDaySelectionRing \/>/);
   assertSourceMatch(currentWeek, /dayCircleToday: \{ backgroundColor: tokens\.color\.entityIconForeground \}/);
+  assertSourceDoesNotMatch(currentWeek, /dayCircle: \{[^}]*(?:borderColor|borderStyle|borderWidth)/);
   assertSourceMatch(currentWeek, /dayNumberToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.bold \}/);
   assertSourceMatch(currentWeek, /compact && styles\.dayCircleCompact/);
   assertSourceMatch(currentWeek, /dayCircleCompact: \{ height: 40, width: 40 \}/);

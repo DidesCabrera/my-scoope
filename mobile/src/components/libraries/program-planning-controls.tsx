@@ -40,7 +40,7 @@ function ProgramDayCell({ allowEmptySelection, day, onSelect, selected }: { allo
         disabled={day.disabled || (!day.filled && !allowEmptySelection)}
         hitSlop={compact ? 2 : undefined}
         onPress={() => onSelect(day)}
-        style={({ pressed }) => [styles.dayCircle, compact && styles.dayCircleCompact, !day.filled && styles.dayCircleEmpty, day.isToday && styles.dayCircleToday, selected && styles.dayCircleSelected, pressed && styles.pressed]}>
+        style={({ pressed }) => [styles.dayCircle, compact && styles.dayCircleCompact, !day.filled && styles.dayCircleEmpty, day.isToday && styles.dayCircleToday, pressed && styles.pressed]}>
         {selected ? <WeekDaySelectionRing /> : null}
         {day.dayOfMonth != null && day.monthLabel ? (
           <>
@@ -114,11 +114,10 @@ export function ProgramDaySelector({
 }
 
 const styles = StyleSheet.create({
-  dayCircle: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 44, justifyContent: "center", overflow: "visible", position: "relative", width: 44 },
+  dayCircle: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.pill, height: 44, justifyContent: "center", overflow: "visible", position: "relative", width: 44 },
   dayCircleCompact: { height: 40, width: 40 },
-  dayCircleEmpty: { borderStyle: "dashed", opacity: 0.65 },
-  dayCircleSelected: { borderColor: tokens.color.surfaceApp },
-  dayCircleToday: { backgroundColor: tokens.color.entityIconForeground, borderStyle: "solid", opacity: 1 },
+  dayCircleEmpty: { opacity: 0.65 },
+  dayCircleToday: { backgroundColor: tokens.color.entityIconForeground, opacity: 1 },
   dayAddBadge: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: 8, borderWidth: 1, bottom: -3, height: 16, justifyContent: "center", position: "absolute", right: -3, width: 16 },
   dayDateMonth: { color: tokens.color.textMuted, fontSize: 8, fontWeight: tokens.weight.medium, lineHeight: 9 },
   dayDateMonthSelected: { fontWeight: tokens.weight.semibold },
