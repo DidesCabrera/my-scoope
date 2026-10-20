@@ -45,7 +45,7 @@ def _clean_idempotency_key(value: str) -> str:
 def _owned_day(*, user, day_id: int, for_update: bool = False) -> CalendarizedDay:
     queryset = CalendarizedDay.objects.select_related("calendarization")
     if for_update:
-        queryset = queryset.select_for_update()
+        queryset = queryset.select_for_update(of=("self",))
     try:
         return queryset.get(
             Q(user=user) | Q(user__isnull=True, calendarization__user=user),

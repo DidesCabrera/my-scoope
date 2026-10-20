@@ -218,7 +218,7 @@ def reschedule_calendarized_days(
 def _calendarized_day_for_snapshot_update(*, user, day_id: int) -> CalendarizedDay:
     try:
         day = (
-            CalendarizedDay.objects.select_for_update()
+            CalendarizedDay.objects.select_for_update(of=("self",))
             .select_related("calendarization")
             .get(Q(user=user) | Q(user__isnull=True, calendarization__user=user), pk=day_id)
         )
