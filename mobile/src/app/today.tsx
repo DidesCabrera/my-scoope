@@ -258,9 +258,6 @@ export default function TodayScreen() {
           <Text style={styles.greetingTitle}>{`💪🏻Vamos ${firstName}!`}</Text>
           {currentWeightKg != null ? <GuideMetric onPress={() => router.push("/weight" as Href)} tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} /> : null}
         </View>
-        <View style={styles.greetingSubtitle}>
-          <Text style={styles.greetingSubtitleText}>Fallar en planificar, es planificar fallar</Text>
-        </View>
         {planContext ? <View style={styles.planContext}><Chip backgroundColor={`${planContext.color}4D`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
       </View>
       {today?.day_id != null ? <HomeSectionTitle pinned>Tu plan de alimentación para hoy</HomeSectionTitle> : null}
@@ -396,8 +393,6 @@ const styles = StyleSheet.create({
   greetingRow: { gap: 0, marginBottom: 0 },
   greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   greetingTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5 },
-  greetingSubtitle: { alignItems: "center", flexDirection: "row", marginTop: tokens.spacing.xs },
-  greetingSubtitleText: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, lineHeight: 20 },
   planContext: { alignSelf: "flex-start", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: tokens.spacing.sm },
   weekRow: { marginBottom: tokens.spacing.sm },
   measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },

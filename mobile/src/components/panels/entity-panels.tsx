@@ -123,7 +123,10 @@ function decimal(value: number): string {
 function NutritionSummary({ item }: { item: NutritionPanelValues }) {
   return (
     <Text style={styles.nutritionSummary}>
-      {`${rounded(item.calories)} cal · P ${rounded(item.proteinGrams)}g · C ${rounded(item.carbsGrams)}g · G ${rounded(item.fatGrams)}g`}
+      <Text style={styles.nutritionSummaryValue}>{rounded(item.calories)}</Text>
+      {"kcal   P:"}<Text style={styles.nutritionSummaryValue}>{rounded(item.proteinGrams)}</Text>
+      {"g   C:"}<Text style={styles.nutritionSummaryValue}>{rounded(item.carbsGrams)}</Text>
+      {"g   G:"}<Text style={styles.nutritionSummaryValue}>{rounded(item.fatGrams)}</Text>{"g"}
     </Text>
   );
 }
@@ -330,7 +333,7 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 }
 
 function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteraction, item, itemNameStyle, onOpenItem, showFoodPortion = false, showNutritionSummary = false, style = styles.gridLeadingCell }: { dragInteraction?: PanelRowDragInteraction; item: T; itemNameStyle?: StyleProp<TextStyle>; onOpenItem?: (item: T) => void; showFoodPortion?: boolean; showNutritionSummary?: boolean; style?: StyleProp<ViewStyle> }) {
-  const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}><FoodVisualIcon emoji={item.emoji} name={item.name} visualKey={item.visualKey} /><View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>{showNutritionSummary ? <NutritionSummary item={item} /> : null}{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View></View>;
+  const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}><View style={styles.foodIdentityTitleRow}><FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} /><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text></View>{showNutritionSummary ? <NutritionSummary item={item} /> : null}{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>;
   const canOpen = Boolean(onOpenItem && (item.detailId != null || (isMealPanelItem(item) && item.canOpen)));
   if (!canOpen) return <View style={style}>{content}</View>;
   return <Pressable {...dragInteraction} accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => runGuardedNavigation(() => onOpenItem?.(item))} style={style}>{content}</Pressable>;
@@ -695,7 +698,7 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
   );
 }
 
-export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation, showEditTab = true }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; showEditTab?: boolean }) {
+export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation, showEditTab = true, showPreparationColumn = false }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; showEditTab?: boolean; showPreparationColumn?: boolean }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
   const itemSignature = items.map(({ id, name, quantity }) => `${id}:${name}:${quantity}`).join("|");
   const [optimisticOrder, setOptimisticOrder] = useState<{ items: FoodPanelItem[]; sourceSignature: string } | null>(null);
@@ -721,7 +724,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
   return (
     <NestedPanelScrollContext.Provider value={nestedScroll}><PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing && showEditTab ? [...foodTabs, editTab] : foodTabs} />
-      {activeTab === "quantity" ? <FoodQuantityPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} preparation={preparation} /> : null}
+      {activeTab === "quantity" ? <FoodQuantityPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} preparation={showPreparationColumn ? preparation : undefined} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
@@ -791,7 +794,7 @@ const styles = StyleSheet.create({
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
   foodDetailCopy: { flex: 1, justifyContent: "center", minWidth: 0 },
   quantityItemText: { fontSize: tokens.type.caption + 1 },
-  foodQuantityRow: { minHeight: 60 },
+  foodQuantityRow: { minHeight: 76, paddingVertical: tokens.spacing.sm },
   quantityValue: { textAlign: "center", width: 56 },
   preparationValue: { width: 48 },
   preparationButton: { alignItems: "center", alignSelf: "stretch", justifyContent: "center" },
@@ -817,7 +820,8 @@ const styles = StyleSheet.create({
   menuAction: { alignItems: "center", alignSelf: "stretch", borderRadius: tokens.radius.pill, justifyContent: "center", minWidth: 24 },
   menuTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
-  foodIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: 2, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
+  foodIdentity: { alignItems: "stretch", flex: 1, gap: tokens.spacing.sm, justifyContent: "center", minWidth: 0, paddingHorizontal: tokens.spacing.xs },
+  foodIdentityTitleRow: { alignItems: "center", flexDirection: "row", gap: 2, minWidth: 0 },
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
   mealIdentityTitleRow: { alignItems: "center", alignSelf: "stretch", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentityName: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18, minWidth: 0 },
@@ -828,6 +832,7 @@ const styles = StyleSheet.create({
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
   menuFoods: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 21, paddingHorizontal: tokens.spacing.xs },
   nutritionSummary: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: "300", letterSpacing: 0, lineHeight: 17, paddingHorizontal: tokens.spacing.xs },
+  nutritionSummaryValue: { fontWeight: tokens.weight.semibold },
   gestureRow: { backgroundColor: tokens.color.surfaceMuted },
   gestureRowActive: {
     backgroundColor: "#3a3a3a",

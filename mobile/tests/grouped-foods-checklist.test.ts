@@ -7,7 +7,7 @@ test("accumulated food lists expose the shared check column in active and librar
   const groupedFoods = await readFile(path.resolve(process.cwd(), "src/components/panels/grouped-foods-card.tsx"), "utf8");
   assert.match(groupedFoods, /useState<Set<string>>/);
   assert.match(groupedFoods, /const checklist = preparation \?\?/);
-  assert.match(groupedFoods, /<FoodPanels items=\{items\} preparation=\{checklist\}/);
+  assert.match(groupedFoods, /<FoodPanels items=\{items\} preparation=\{checklist\} showPreparationColumn/);
 
   const accumulatedListSurfaces = [
     "src/components/libraries/library-detail-screen.tsx",

@@ -25,7 +25,7 @@ export function GroupedFoodsCard({ items, preparation, title, ...panelProps }: G
     <Card accent={tokens.color.food}>
       <EntityHeading entity="food" eyebrow="LISTA DE ALIMENTOS" title={title} />
       <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={countLabel} textColor={tokens.color.textMain} />
-      <FoodPanels items={items} preparation={checklist} {...panelProps} />
+      <FoodPanels items={items} preparation={checklist} showPreparationColumn {...panelProps} />
     </Card>
   );
 }

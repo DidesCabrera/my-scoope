@@ -111,7 +111,9 @@ export function MealCompletionToggleCard({ available = true, completed, error, o
         onToggle(!completed);
       }}
       style={styles.completionRow}>
-      <CheckCheck color={tokens.color.textMain} size={18} strokeWidth={2.2} />
+      <View style={styles.completionIcon}>
+        <CheckCheck color={tokens.color.entityIconForeground} size={16} strokeWidth={2.2} />
+      </View>
       <Text style={styles.completionLabel}>¿Cumpliste con tu comida?</Text>
       <View style={[styles.checkbox, completed && styles.checkboxChecked]}>{completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
     </Pressable>
@@ -150,6 +152,7 @@ export function MealAdherenceCheckIn(props: Props) {
 const styles = StyleSheet.create({
   checkbox: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 2, height: 26, justifyContent: "center", width: 26 },
   checkboxChecked: { backgroundColor: tokens.color.meal, borderColor: tokens.color.meal },
+  completionIcon: { alignItems: "center", backgroundColor: tokens.color.meal, borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
   completionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.bold, minWidth: 0 },
   completionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52 },
   noteBlock: { gap: tokens.spacing.xs },
