@@ -83,7 +83,7 @@
     <p class="auth-links">
 
     ¿No tienes cuenta?
-    <a href="{% url 'account_signup' %}">
+    <a href="{% url 'account_signup' %}{% if redirect_field_value %}?{{ redirect_field_name }}={{ redirect_field_value|urlencode }}{% endif %}">
     Crear cuenta
     </a>
 

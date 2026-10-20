@@ -1,4 +1,6 @@
 import re
+from html import unescape
+from urllib.parse import parse_qs, urlparse
 
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 from allauth.socialaccount.models import SocialApp
@@ -10,6 +12,47 @@ from django.urls import reverse
 
 
 class AuthProviderRenderingTests(TestCase):
+    @staticmethod
+    def _link_href(response, css_class):
+        content = response.content.decode()
+        match = re.search(
+            rf'<a class="[^"]*\b{re.escape(css_class)}\b[^"]*" href="([^"]+)"',
+            content,
+        )
+        if match is None:
+            raise AssertionError(f"No link found for class {css_class}")
+        return unescape(match.group(1))
+
+    @staticmethod
+    def _link_href_by_text(response, text):
+        content = response.content.decode()
+        match = re.search(
+            rf'<a href="([^"]+)">\s*{re.escape(text)}\s*</a>',
+            content,
+        )
+        if match is None:
+            raise AssertionError(f"No link found for text {text}")
+        return unescape(match.group(1))
+
+    def _configure_social_apps(self):
+        site = Site.objects.get_current()
+        google_app = SocialApp.objects.create(
+            provider="google",
+            name="Google",
+            client_id="test-client-id",
+            secret="test-client-secret",
+        )
+        google_app.sites.add(site)
+        apple_app = SocialApp.objects.create(
+            provider="apple",
+            name="Apple",
+            client_id="com.myscoope.web",
+            secret="TESTKEYID",
+            key="TESTTEAMID",
+            settings={"certificate_key": "test-private-key"},
+        )
+        apple_app.sites.add(site)
+
     def test_login_and_signup_render_without_social_apps(self):
         login_response = self.client.get(reverse("account_login"))
         signup_response = self.client.get(reverse("account_signup"))
@@ -52,6 +95,32 @@ class AuthProviderRenderingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Continuar con Apple")
         self.assertContains(response, reverse("apple_login"))
+
+    def test_mobile_oauth_return_survives_login_signup_and_social_provider(self):
+        self._configure_social_apps()
+        oauth_return = (
+            f'{reverse("oauth_authorize")}?client_id=myscoope-ios'
+            "&redirect_uri=myscoope%3A%2F%2Foauth%2Fcallback"
+            "&response_type=code&scope=mobile%3Aread"
+        )
+
+        login_response = self.client.get(
+            reverse("account_login"),
+            {"next": oauth_return},
+        )
+        signup_href = self._link_href_by_text(login_response, "Crear cuenta")
+        self.assertEqual(parse_qs(urlparse(signup_href).query)["next"], [oauth_return])
+
+        signup_response = self.client.get(signup_href)
+        for css_class in ("btn-google", "btn-apple"):
+            provider_href = self._link_href(signup_response, css_class)
+            self.assertEqual(
+                parse_qs(urlparse(provider_href).query)["next"],
+                [oauth_return],
+            )
+
+        login_href = self._link_href_by_text(signup_response, "Iniciar sesión")
+        self.assertEqual(parse_qs(urlparse(login_href).query)["next"], [oauth_return])
 
 
 class EmailVerificationRenderingTests(TestCase):

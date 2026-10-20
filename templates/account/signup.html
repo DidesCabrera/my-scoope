@@ -120,7 +120,7 @@
 
             ¿Ya tienes cuenta?
 
-            <a href="{% url 'account_login' %}">
+            <a href="{% url 'account_login' %}{% if redirect_field_value %}?{{ redirect_field_name }}={{ redirect_field_value|urlencode }}{% endif %}">
                 Iniciar sesión
             </a>
 
