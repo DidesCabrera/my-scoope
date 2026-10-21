@@ -39,6 +39,7 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
+      "uploadSourceMaps": true,
       "env": {
         "MYSCOOPE_BUILD_TARGET": "staging",
         "EXPO_PUBLIC_DEPLOYMENT_ENV": "staging",
@@ -46,12 +47,13 @@
         "EXPO_PUBLIC_APNS_ENVIRONMENT": "production",
         "EXPO_PUBLIC_OAUTH_CLIENT_ID": "myscoope-ios",
         "EXPO_PUBLIC_OAUTH_REDIRECT_URI": "myscoope://oauth/callback",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE": "1"
       }
     },
     "android-alpha": {
       "autoIncrement": true,
       "environment": "preview",
+      "uploadSourceMaps": true,
       "android": {
         "buildType": "app-bundle"
       },
@@ -62,12 +64,13 @@
         "EXPO_PUBLIC_APNS_ENVIRONMENT": "production",
         "EXPO_PUBLIC_OAUTH_CLIENT_ID": "myscoope-ios",
         "EXPO_PUBLIC_OAUTH_REDIRECT_URI": "myscoope://oauth/callback",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE": "1"
       }
     },
     "testflight-production": {
       "autoIncrement": true,
       "environment": "production",
+      "uploadSourceMaps": true,
       "env": {
         "MYSCOOPE_BUILD_TARGET": "production",
         "EXPO_PUBLIC_DEPLOYMENT_ENV": "production",
@@ -75,7 +78,7 @@
         "EXPO_PUBLIC_APNS_ENVIRONMENT": "production",
         "EXPO_PUBLIC_OAUTH_CLIENT_ID": "myscoope-ios",
         "EXPO_PUBLIC_OAUTH_REDIRECT_URI": "myscoope://oauth/callback",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE": "1"
       }
     },
     "testflight-staging": {
@@ -88,7 +91,7 @@
         "EXPO_PUBLIC_APNS_ENVIRONMENT": "production",
         "EXPO_PUBLIC_OAUTH_CLIENT_ID": "myscoope-ios",
         "EXPO_PUBLIC_OAUTH_REDIRECT_URI": "myscoope://oauth/callback",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE": "1"
       }
     },
     "production": {

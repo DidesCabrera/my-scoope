@@ -205,6 +205,29 @@ test("non-JSON API responses become a bounded product error", async () => {
   );
 });
 
+test("request metrics keep a safe server correlation id and normalized route", async () => {
+  const saved = storage({
+    accessToken: "access-current",
+    refreshToken: "refresh-current",
+    accessExpiresAt: now + 100_000,
+    refreshExpiresAt: now + 200_000,
+    scope: "mobile:read",
+    deviceSessionId: "device-session-1",
+  });
+  const manager = new MobileSessionManager(config, saved, async () => ({ id: "unused", name: "unused", platform: "ios" }),
+    (async (input) => new Response(JSON.stringify({ ok: true, data: String(input).endsWith("/session") ? sessionData : { value: 1 }, error: null }), {
+      headers: { "Content-Type": "application/json", "Rndr-Id": "req-beta_123" },
+    })) as typeof fetch, () => now);
+  const metrics: Parameters<Parameters<typeof manager.setRequestMetricObserver>[0]>[0][] = [];
+  manager.setRequestMetricObserver((metric) => metrics.push(metric));
+  await manager.restore();
+  await manager.request("/api/v1/program/days/42?private=secret", { cache: "no-store" });
+
+  assert.equal(metrics.at(-1)?.path, "/api/v1/program/days/:id");
+  assert.equal(metrics.at(-1)?.requestId, "req-beta_123");
+  assert.equal(metrics.at(-1)?.outcome, "success");
+});
+
 test("concurrent reads are deduplicated and fresh data is reused", async () => {
   const saved = storage({
     accessToken: "access-current",

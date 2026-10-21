@@ -4,6 +4,7 @@ export class MobileApiError extends Error {
     readonly code: string,
     readonly status: number,
     readonly details: Record<string, unknown> = {},
+    readonly requestId: string | null = null,
   ) {
     super(message);
     this.name = "MobileApiError";
@@ -81,14 +82,24 @@ export function userFacingError(error: unknown): string {
       share_resource_not_active: "Este enlace compartido fue revocado.",
       sharing_inbox_item_not_found: "Este elemento ya no está disponible en tu Inbox.",
     };
-    if (messages[error.code]) return messages[error.code];
+    if (messages[error.code]) {
+      return error.status >= 500 && error.requestId
+        ? `${messages[error.code]} Código de soporte: ${error.requestId}.`
+        : messages[error.code];
+    }
     if (error.status === 403) return "Tu cuenta no tiene permiso para realizar esta acción.";
     if (error.status === 404) return "Este contenido ya no está disponible o no pertenece a tu cuenta.";
     if (error.status === 409) return "El contenido cambió mientras lo revisabas. Actualiza la pantalla e inténtalo nuevamente.";
     if (error.status === 422) return "No pudimos validar esta solicitud. Revisa los datos e inténtalo nuevamente.";
     if (error.status === 429) return "Has realizado varias solicitudes seguidas. Espera un momento e inténtalo nuevamente.";
-    if (error.status === 503) return "Este servicio no está disponible en este momento. Inténtalo más tarde.";
-    return error.status >= 500 ? genericMessage : safeMessage(error.message);
+    if (error.status === 503) {
+      const message = "Este servicio no está disponible en este momento. Inténtalo más tarde.";
+      return error.requestId ? `${message} Código de soporte: ${error.requestId}.` : message;
+    }
+    if (error.status >= 500) {
+      return error.requestId ? `${genericMessage} Código de soporte: ${error.requestId}.` : genericMessage;
+    }
+    return safeMessage(error.message);
   }
   if (error instanceof Error && error.message) {
     return safeMessage(error.message);

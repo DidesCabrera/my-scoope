@@ -43,6 +43,13 @@ class MobileHomeAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(second.headers["ETag"], etag)
         self.assertEqual(second.headers["Cache-Control"], "private, no-cache")
         self.assertIn("app;dur=", second.headers["Server-Timing"])
+        self.assertRegex(second.headers["X-Request-ID"], r"^[A-Za-z0-9._:-]{1,128}$")
+
+    def test_mobile_responses_preserve_render_request_correlation(self) -> None:
+        response = self.client.get("/api/v1/home", HTTP_RNDR_ID="req-beta_123")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.headers["X-Request-ID"], "req-beta_123")
 
     def test_successful_mobile_write_invalidates_cached_home(self) -> None:
         self.client.get("/api/v1/home")
