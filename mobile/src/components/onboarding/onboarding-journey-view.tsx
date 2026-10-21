@@ -181,12 +181,13 @@ function useProfileQuestionStyle() {
   return [styles.profileQuestion, profileEyebrowsMuted && styles.profileQuestionMuted];
 }
 
-function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, title, titleAccessory, titleTopSpacingReduction = 0, description }: {
+function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, showProgress = true, title, titleAccessory, titleTopSpacingReduction = 0, description }: {
   brandedCentered?: boolean;
   description: ReactNode;
   eyebrow: string;
   icon: Icon;
   index: number;
+  showProgress?: boolean;
   title: string;
   titleAccessory?: ReactNode;
   titleTopSpacingReduction?: number;
@@ -199,7 +200,7 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
   const usesCenteredTitleSpacing = (index <= 6 || brandedCentered) && !externalExplanationChrome;
   return (
     <View style={[styles.intro, isCenteredIntro && styles.introCentered, isProfileStep && fixedProfileChrome && profileTitleBottomSpacingReduction > 0 && { marginBottom: -profileTitleBottomSpacingReduction }]}>
-      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={styles.centeredLogo}><MyScoopeBrandLogo /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 6 ? null : (
+      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={styles.centeredLogo}><MyScoopeBrandLogo /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 6 || !showProgress ? null : (
         <View style={styles.stepMeta}>
           <Text style={styles.stepCount}>{String(index + 1).padStart(2, "0")} / {onboardingJourneySteps.length}</Text>
           <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.progressTrack}>
@@ -999,8 +1000,8 @@ function GeneratedDailyPlanView() {
   if (controller.proposal?.dailyplan) {
     return (
       <>
-        <StepHeader description="Revisa el plan generado antes de guardarlo en tu biblioteca." eyebrow="Plan del día" icon={BookOpen} index={13} title="Tu primer plan diario" />
-        <ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} />
+        <StepHeader description="Revisa el plan generado antes de guardarlo en tu biblioteca." eyebrow="Plan del día" icon={BookOpen} index={13} showProgress={false} title="Tu primer plan diario" />
+        <ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} showNutrition={false} />
         {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
         <CreditContinueButton />
         <View style={styles.generatedDailyPlanBottomSpacing} />

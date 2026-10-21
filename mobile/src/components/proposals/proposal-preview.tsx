@@ -163,7 +163,7 @@ export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, 
   );
 }
 
-export function ProposalDailyPlanCard({ actions, dailyplan, onOpen, onOpenMeal }: { actions?: ReactNode; dailyplan: ProposalDailyPlan; onOpen?: () => void; onOpenMeal?(index: number): void }) {
+export function ProposalDailyPlanCard({ actions, dailyplan, onOpen, onOpenMeal, showNutrition = true }: { actions?: ReactNode; dailyplan: ProposalDailyPlan; onOpen?: () => void; onOpenMeal?(index: number): void; showNutrition?: boolean }) {
   return (
     <NutritionEntityCard
       actions={actions}
@@ -175,6 +175,7 @@ export function ProposalDailyPlanCard({ actions, dailyplan, onOpen, onOpenMeal }
         { icon: "food", label: "alimentos", value: dailyplan.meals.reduce((total, item) => total + item.meal.foods.length, 0) },
       ]}
       nutrition={nutrition(dailyplan.kpis)}
+      showNutrition={showNutrition}
       title={dailyplan.name || "Plan diario"}>
       <MealPanels items={mealPanelItems(dailyplan)} onOpenItem={onOpenMeal ? (item) => onOpenMeal(Number(item.id)) : undefined} />
     </NutritionEntityCard>

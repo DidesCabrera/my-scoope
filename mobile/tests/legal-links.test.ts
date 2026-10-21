@@ -49,6 +49,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(details, /paddle: "Paddle"/);
   assertSourceDoesNotMatch(details, /mercado_pago: "Mercado Pago"/);
   assertSourceMatch(subscription, /<SectionTitle title="Suscripciones disponibles" titleStyle=\{styles\.commercialSectionTitle\} \/>/);
+  assertSourceMatch(subscription, /commercialCardList: \{ gap: 36 \}/);
   assertSourceDoesNotMatch(subscription, /Precio oficial de/);
   assertSourceMatch(subscription, /<SectionDivider \/>\s*<SectionHeading[\s\S]*icon=\{<Sparkles color=\{tokens\.color\.entityIconForeground\} size=\{18\} \/>\}[\s\S]*title="Bolsas de créditos"[\s\S]*titleStyle=\{styles\.commercialSectionTitle\}/);
   assertSourceDoesNotMatch(subscription, /detail=\{Platform\.OS === "android" \? "Google Play" : "App Store"\}/);

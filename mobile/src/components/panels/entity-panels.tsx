@@ -640,7 +640,7 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
   if (!draftItems.length) return <PanelEmptyState label="Todavía no hay alimentos para editar." />;
   return (
     <PanelBody>
-      <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Alimentos</Text><Text style={[styles.headerText, styles.editValue]}>Porción</Text><Text style={[styles.headerText, styles.foodEditActions]}>Acciones</Text></View>
+      <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Alimentos</Text><Text style={[styles.headerText, styles.foodEditActions]}>Acciones</Text></View>
       <NestableDraggableFlatList
         activationDistance={12}
         data={draftItems}
@@ -658,7 +658,6 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
           <View style={[styles.row, styles.editRow]}>
             <EditDragHandle disabled={busy} drag={drag} label={`Reordenar ${item.name}`} />
             <View style={[styles.editIdentity, styles.foodIdentity]}><FoodVisualIcon emoji={item.emoji} name={item.name} visualKey={item.visualKey} /><Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}<Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text></Text></View>
-            <Text style={[styles.cell, styles.editValue, styles.editPortionValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
             <View style={[styles.editActions, styles.foodEditActions]}>
               <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
               <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMain} size={16} /></IconAction>
@@ -871,7 +870,6 @@ const styles = StyleSheet.create({
   editIdentity: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
   editName: { paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   editValue: { color: tokens.color.textMuted, paddingHorizontal: 2, textAlign: "center", width: 54 },
-  editPortionValue: { color: tokens.color.textMain },
   editTimeValue: { color: tokens.color.textMain },
   editActions: { flexDirection: "row", justifyContent: "flex-end" },
   foodEditActions: { width: 102 },

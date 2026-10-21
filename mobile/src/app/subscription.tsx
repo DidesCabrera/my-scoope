@@ -237,19 +237,20 @@ export default function SubscriptionScreen() {
       {overview?.purchases_enabled && (Platform.OS === "ios" || Platform.OS === "android") ? (
         <>
           {!isOnboarding ? <SectionTitle title="Suscripciones disponibles" titleStyle={styles.commercialSectionTitle} /> : null}
-          {!isOnboarding ? <SubscriptionPlanCard accent={tokens.color.fat} benefits={commercialPlanBenefits.Free} caption="Incluido sin costo." name="Free" price="Gratis" /> : null}
-          {subscriptionPlans.map((plan) => {
-            const monthlyProduct = plan.products.find((item) => item.interval === "month");
-            const monthlyStoreProduct = subscriptions.find((item) => item.id === monthlyProduct?.product_id);
-            const monthlyAndroidOffer = monthlyStoreProduct?.subscriptionOffers?.find(
-              (item) => item.basePlanIdAndroid === monthlyProduct?.base_plan_id,
-            );
-            const monthlyDisplayPrice = Platform.OS === "android" ? monthlyAndroidOffer?.displayPrice : monthlyStoreProduct?.displayPrice;
-            const monthlyNumericPrice = Platform.OS === "android" ? monthlyAndroidOffer?.price : monthlyStoreProduct?.price;
-            return (
-            <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? []} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : "Consultando…"}>
-              <Text style={textStyles.caption}>Elige la modalidad de tu suscripción.</Text>
-              {plan.products.map((configured) => {
+          <View style={styles.commercialCardList}>
+            {!isOnboarding ? <SubscriptionPlanCard accent={tokens.color.fat} benefits={commercialPlanBenefits.Free} caption="Incluido sin costo." name="Free" price="Gratis" /> : null}
+            {subscriptionPlans.map((plan) => {
+              const monthlyProduct = plan.products.find((item) => item.interval === "month");
+              const monthlyStoreProduct = subscriptions.find((item) => item.id === monthlyProduct?.product_id);
+              const monthlyAndroidOffer = monthlyStoreProduct?.subscriptionOffers?.find(
+                (item) => item.basePlanIdAndroid === monthlyProduct?.base_plan_id,
+              );
+              const monthlyDisplayPrice = Platform.OS === "android" ? monthlyAndroidOffer?.displayPrice : monthlyStoreProduct?.displayPrice;
+              const monthlyNumericPrice = Platform.OS === "android" ? monthlyAndroidOffer?.price : monthlyStoreProduct?.price;
+              return (
+              <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? []} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : "Consultando…"}>
+                <Text style={textStyles.caption}>Elige la modalidad de tu suscripción.</Text>
+                {plan.products.map((configured) => {
                   const storeProduct = subscriptions.find((item) => item.id === configured.product_id);
                   const androidOffer = storeProduct?.subscriptionOffers?.find(
                     (item) => item.basePlanIdAndroid === configured.base_plan_id,
@@ -276,10 +277,11 @@ export default function SubscriptionScreen() {
                       onPress={() => void buy(configured.product_id, configured.base_plan_id)}
                     />
                   );
-                })}
-            </SubscriptionPlanCard>
-            );
-          })}
+                  })}
+              </SubscriptionPlanCard>
+              );
+            })}
+          </View>
           <Card style={styles.subscriptionInformationCard}>
             <SectionTitle title="Información de la suscripción" />
             <Text style={textStyles.muted}>{Platform.OS === "android"
@@ -302,27 +304,29 @@ export default function SubscriptionScreen() {
             titleStyle={styles.commercialSectionTitle}
           />
           <Text style={textStyles.muted}>Compra disponible en Basic y Pro.</Text>
-          {overview.credit_packs.filter((item) => item.provider === (Platform.OS === "android" ? "google_play" : "apple_app_store")).map((configured) => {
-            const storeProduct = products.find((item) => item.id === configured.product_id);
-            return (
-              <Card accent={tokens.color.carbs} key={configured.product_id}>
-                <View style={styles.row}>
-                  <View style={styles.copy}>
-                    <Text style={styles.eyebrow}>BOLSA DE CRÉDITOS</Text>
-                    <Text style={styles.productName}>{configured.credits.toLocaleString("es-CL")} créditos</Text>
-                    <Text style={textStyles.caption}>Permanecen en tu cuenta si cambias de plan.</Text>
+          <View style={styles.commercialCardList}>
+            {overview.credit_packs.filter((item) => item.provider === (Platform.OS === "android" ? "google_play" : "apple_app_store")).map((configured) => {
+              const storeProduct = products.find((item) => item.id === configured.product_id);
+              return (
+                <Card accent={tokens.color.carbs} key={configured.product_id}>
+                  <View style={styles.row}>
+                    <View style={styles.copy}>
+                      <Text style={styles.eyebrow}>BOLSA DE CRÉDITOS</Text>
+                      <Text style={styles.productName}>{configured.credits.toLocaleString("es-CL")} créditos</Text>
+                      <Text style={textStyles.caption}>Permanecen en tu cuenta si cambias de plan.</Text>
+                    </View>
+                    <CreditPackPriceChip label={storeProduct?.displayPrice ?? "Consultando…"} />
                   </View>
-                  <CreditPackPriceChip label={storeProduct?.displayPrice ?? "Consultando…"} />
-                </View>
-                <SubscriptionPurchaseButton
-                  disabled={purchaseBlocked || !connected || !storeProduct}
-                  label={`Comprar ${configured.credits.toLocaleString("es-CL")} créditos`}
-                  loading={working}
-                  onPress={() => void buyCreditPack(configured.product_id)}
-                />
-              </Card>
-            );
-          })}
+                  <SubscriptionPurchaseButton
+                    disabled={purchaseBlocked || !connected || !storeProduct}
+                    label={`Comprar ${configured.credits.toLocaleString("es-CL")} créditos`}
+                    loading={working}
+                    onPress={() => void buyCreditPack(configured.product_id)}
+                  />
+                </Card>
+              );
+            })}
+          </View>
         </>
       ) : null}
 
@@ -367,6 +371,7 @@ function CreditPackPriceChip({ label }: { label: string }) {
 
 const styles = StyleSheet.create({
   closeButton: { alignItems: "center", height: 40, justifyContent: "center", width: 40 },
+  commercialCardList: { gap: 36 },
   commercialSectionTitle: { fontSize: tokens.type.section, lineHeight: 26 },
   creditPackPriceChip: { overflow: "hidden" },
   row: { alignItems: "center", flexDirection: "row", gap: 16, justifyContent: "space-between" },

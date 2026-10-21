@@ -185,6 +185,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(nutritionEntityCard, /Boolean\(indicators\?\.length\) && \(entity === "food" \|\| entity === "meal" \|\| entity === "dailyPlan"\)/);
   assertSourceMatch(nutritionEntityCard, /nutritionAfterIndicators: \{ marginTop: 4 \}/);
   assertSourceMatch(nutritionEntityCard, /const hasPanelSpacing = entity === "meal" \|\| entity === "dailyPlan"/);
+  assertSourceMatch(nutritionEntityCard, /showNutrition \? <View[\s\S]*<NutritionKpiSection/);
   assertSourceMatch(nutritionEntityCard, /panelsAfterNutrition: \{ marginTop: 4 \}/);
 
   const proteinPerKilogramBadge = await readTestFile(
@@ -513,6 +514,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} itemNameStyle=\{styles\.quantityItemText\}/);
   assertSourceMatch(sharedEntityPanels, /styles\.quantityValue, styles\.quantityItemText/);
   assertSourceMatch(sharedEntityPanels, /<Text numberOfLines=\{2\} style=\{\[styles\.cell, styles\.editName\]\}>\{item\.name\}<Text style=\{styles\.foodPortionSuffix\}>/);
+  assertSourceDoesNotMatch(sharedEntityPanels, />Porción<|styles\.editPortionValue/);
   assertSourceMatch(sharedEntityPanels, /editIdentity: \{ alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 \}/);
   assertSourceMatch(sharedEntityPanels, /editName: \{ paddingHorizontal: tokens\.spacing\.xs, textAlign: "left" \}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /editValue: \{[^}]*fontSize/);
@@ -1178,7 +1180,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /!isProfileStep \? <Text style=\{\[styles\.description, isExplanation && styles\.explanationDescription, isCenteredIntro && styles\.centeredText\]\}>\{description\}<\/Text> : null/);
   assertSourceMatch(journey, /explanationDescription: \{ color: tokens\.color\.textMain \}/);
   assertSourceMatch(journey, /!usesBrandedHeader && !isProfileStep \? <Text/);
-  assertSourceMatch(journey, /isProfileStep \? \(!fixedProfileChrome \? <ProfileProgress index=\{index\} \/> : null\) : index === 6 \? null/);
+  assertSourceMatch(journey, /isProfileStep \? \(!fixedProfileChrome \? <ProfileProgress index=\{index\} \/> : null\) : index === 6 \|\| !showProgress \? null/);
   assertSourceMatch(journey, /<Text style=\{\[styles\.profileProgressEyebrow, index >= 8 && styles\.profileProgressEyebrowTextMain,[^\]]*profileProgressEyebrowBottomSpacing[^\]]*\]\}>OBJETIVO Y PLANIFICACIÓN<\/Text>/);
   assertSourceMatch(journey, /const isCenteredIntro = index <= 12 \|\| brandedCentered/);
   assertSourceMatch(journey, /if \(index >= 7 && index <= 12\)[\s\S]*styles\.profileFooter[\s\S]*styles\.profileBackAction[\s\S]*styles\.profilePrimaryAction/);
