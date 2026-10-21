@@ -20,3 +20,14 @@ test("accumulated food lists expose the shared check column in active and librar
     assert.match(source, /<GroupedFoodsCard/);
   }
 });
+
+test("shopping commitment previews and saved lists use the shared check column", async () => {
+  for (const relativePath of [
+    "src/app/calendar/commitments.tsx",
+    "src/components/calendarization/calendar-plan-editor.tsx",
+  ]) {
+    const source = await readFile(path.resolve(process.cwd(), relativePath), "utf8");
+    assert.ok(source.includes("<GroupedFoodsCard"));
+    assert.ok(!source.includes("showChecklist={false}"));
+  }
+});

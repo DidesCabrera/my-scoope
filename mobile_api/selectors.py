@@ -17,6 +17,7 @@ from mobile_api.errors import MobileAPIError
 from mobile_api.food_visuals import food_visual_payload
 from mobile_api.identity_selectors import local_date_for_user, profile_payload, session_payload
 from mobile_api.library_actions import library_actions_payload, library_list_actions_projector
+from notas.application.queries.calendar_foods import calendar_foods_for_period
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_measurement_summary,
     calendarization_progress_summary,
@@ -176,6 +177,20 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str, current_weight=None) -
         }
         for row in rows
     ]
+
+
+def calendar_period_foods_payload(user, *, start_date, end_date) -> dict:
+    period = calendar_foods_for_period(user, start_date=start_date, end_date=end_date)
+    return {
+        "start_date": period["start_date"],
+        "end_date": period["end_date"],
+        "plans_count": period["plans_count"],
+        "foods": _aggregated_food_panel_items(
+            period["foods_aggregation_table"],
+            id_prefix="calendar-period-food",
+            current_weight=get_current_weight(user),
+        ),
+    }
 
 
 def _program_week_panel_items(program, current_weight=None) -> list[dict]:

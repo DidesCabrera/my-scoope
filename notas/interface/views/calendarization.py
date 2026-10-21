@@ -16,6 +16,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 
 from mobile_api.read_cache import invalidate_mobile_read_cache
+from notas.application.queries.calendar_foods import calendar_foods_for_period
 from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
 from notas.application.queries.calendarization_execution_queries import (
     meal_execution_state_for_day,
@@ -28,6 +29,7 @@ from notas.application.queries.calendarization_queries import (
     today_for_calendarization,
 )
 from notas.application.services.calendarization.scheduling import local_date_for_timezone
+from notas.application.services.commands.calendar_commitment_commands import register_calendar_commitments
 from notas.application.services.commands.calendar_day_commands import (
     assign_dailyplan_to_calendar_date,
     move_calendar_date_plan,
@@ -49,7 +51,7 @@ from notas.application.services.commands.calendarization_commands import (
 from notas.application.services.commands.calendarization_execution_commands import (
     record_meal_execution,
 )
-from notas.domain.models import CalendarizedDay, DailyPlan, Program, WebPushSubscription
+from notas.domain.models import CalendarCommitment, CalendarizedDay, DailyPlan, Program, WebPushSubscription
 from notas.interface.forms.calendarization_forms import (
     CalendarizationActivationForm,
     CalendarizationPreferencesForm,
@@ -183,6 +185,11 @@ def calendar_preview(request):
         calendar_date__range=(monday, end_date),
     ).select_related("calendarization", "origin_calendarization")
     by_date = {day.calendar_date: day for day in rows}
+    commitments_by_date = {}
+    for commitment in CalendarCommitment.objects.filter(
+        user=request.user, calendar_date__range=(monday, end_date)
+    ):
+        commitments_by_date.setdefault(commitment.calendar_date, []).append(commitment)
     dates = []
     for offset in range(35):
         current_date = monday + timedelta(days=offset)
@@ -196,6 +203,7 @@ def calendar_preview(request):
             "is_today": current_date == today,
             "is_selected": current_date == selected_date,
             "detail_url": reverse("calendarization_day_detail", args=[day.id]) if day and day.has_plan else "",
+            "commitments": commitments_by_date.get(current_date, []),
         })
     selected_day = by_date.get(selected_date)
     return render(request, "notas/calendarization/calendar_preview.html", _context(
@@ -205,6 +213,7 @@ def calendar_preview(request):
             "today": today,
             "selected_date": selected_date,
             "selected_day": selected_day,
+            "selected_commitments": commitments_by_date.get(selected_date, []),
             "selected_day_has_execution": bool(selected_day and selected_day.meal_execution_events.exists()),
             "selected_history": CalendarizedDay.objects.filter(
                 user=request.user, calendar_date=selected_date
@@ -221,6 +230,82 @@ def calendar_preview(request):
             "schedule_summary": calendar_future_schedule_summary(request.user, today=today),
         },
     ))
+
+
+@login_required
+def calendar_commitments(request, kind):
+    labels = dict(CalendarCommitment.KIND_CHOICES)
+    if kind not in labels:
+        raise Http404
+    today = local_date_for_timezone(request.user.profile.timezone_name or "UTC")
+    if request.method == "POST":
+        try:
+            dates = [date.fromisoformat(value) for value in request.POST.getlist("dates")]
+            register_calendar_commitments(
+                user=request.user,
+                kind=kind,
+                dates=dates,
+                note=request.POST.get("note", ""),
+                food_period_start=(
+                    date.fromisoformat(request.POST["food_period_start"])
+                    if request.POST.get("food_period_start") else None
+                ),
+                food_period_end=(
+                    date.fromisoformat(request.POST["food_period_end"])
+                    if request.POST.get("food_period_end") else None
+                ),
+            )
+        except (ValueError, TypeError) as exc:
+            errors = {
+                "calendar_commitment_kind_invalid": "Elige un tipo de compromiso válido.",
+                "calendar_commitment_dates_invalid": "Elige entre 1 y 62 fechas distintas.",
+                "calendar_commitment_date_in_past": "No puedes registrar compromisos en fechas pasadas.",
+                "calendar_commitment_note_too_long": "La nota no puede superar los 500 caracteres.",
+                "calendar_commitment_already_exists": "Una de las fechas ya tiene ese compromiso. Revisa tu selección.",
+                "calendar_food_period_invalid": "Elige un periodo válido de hasta 366 días.",
+                "calendar_food_period_incomplete": "Elige ambas fechas del periodo o deja ambas vacías.",
+                "calendar_food_period_wrong_kind": "La lista de alimentos solo corresponde a Hacer compras.",
+            }
+            messages.error(request, errors.get(str(exc), "No pudimos registrar los compromisos."))
+        else:
+            invalidate_mobile_read_cache(request.user.id)
+            messages.success(request, "Compromisos registrados en el calendario.")
+            return redirect("calendar_preview")
+        return redirect("calendar_commitments", kind=kind)
+    if request.method != "GET":
+        return HttpResponseBadRequest()
+    existing_dates = list(
+        CalendarCommitment.objects.filter(user=request.user, kind=kind, calendar_date__gte=today)
+        .values_list("calendar_date", flat=True)
+    )
+    return render(request, "notas/calendarization/calendar_commitments.html", {
+        "kind": kind,
+        "kind_label": labels[kind],
+        "today": today,
+        "existing_dates": [value.isoformat() for value in existing_dates],
+    })
+
+
+@login_required
+@require_GET
+def calendar_commitment_foods(request):
+    try:
+        start_date = date.fromisoformat(request.GET.get("start_date", ""))
+        end_date = date.fromisoformat(request.GET.get("end_date", ""))
+        period = calendar_foods_for_period(request.user, start_date=start_date, end_date=end_date)
+    except ValueError:
+        return JsonResponse({"error": "Elige un periodo válido de hasta 366 días."}, status=422)
+    return JsonResponse({
+        "plans_count": period["plans_count"],
+        "foods": [
+            {
+                "name": row["rel"]["name"],
+                "quantity": row["rel"]["quantity"],
+                "quantity_unit": row["rel"]["quantity_unit"],
+            }
+            for row in period["foods_aggregation_table"]
+        ],
+    })
 
 
 @login_required

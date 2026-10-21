@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
-export function ProgramSectionHeader({ action, icon: Icon, subtitle, title }: { action?: ReactNode; icon: LucideIcon; subtitle: string; title: string }) {
+export function ProgramSectionHeader({ action, detail, icon: Icon, subtitle, title }: { action?: ReactNode; detail?: ReactNode; icon: LucideIcon; subtitle?: string; title: string }) {
   return (
     <View style={styles.header}>
       <View style={styles.headerRow}>
@@ -14,7 +14,7 @@ export function ProgramSectionHeader({ action, icon: Icon, subtitle, title }: { 
         </View>
         {action}
       </View>
-      <Text style={styles.subtitle}>{subtitle}</Text>
+      {detail ?? (subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null)}
     </View>
   );
 }

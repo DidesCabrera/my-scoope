@@ -1,10 +1,12 @@
 from datetime import timedelta
 
+from django.contrib.auth.models import User
 from django.test import override_settings
 
 from mobile_api.selectors import local_date_for_user
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.domain.models import (
+    CalendarCommitment,
     CalendarizedDay,
     CalendarizedMealExecution,
     CalendarProgressPeriod,
@@ -23,6 +25,169 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.meal = Meal.objects.create(name="Comida inicial", created_by=self.user)
         self.meal_relation = DailyPlanMeal.objects.create(dailyplan=self.plan, meal=self.meal)
         self.today = local_date_for_user(self.user)
+
+    def test_register_commitments_on_multiple_dates_and_show_them_alongside_plans(self):
+        tomorrow = self.today + timedelta(days=1)
+        CalendarizedDay.objects.create(
+            user=self.user,
+            calendar_date=self.today,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={"name": "Plan de hoy", "meals": []},
+        )
+        response = self.client.post(
+            "/api/v1/calendar/commitments",
+            data={"kind": "shopping", "dates": [self.today.isoformat(), tomorrow.isoformat()], "note": "Comprar verduras"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["data"]["items"]), 2)
+        self.assertEqual(CalendarCommitment.objects.filter(user=self.user).count(), 2)
+
+        cooking = self.client.post(
+            "/api/v1/calendar/commitments",
+            data={"kind": "cooking", "dates": [self.today.isoformat()], "note": "Preparar almuerzo"},
+            content_type="application/json",
+        )
+        self.assertEqual(cooking.status_code, 200)
+        overview = self.client.get("/api/v1/calendar").json()["data"]
+        days = {item["calendar_date"]: item for item in overview["days"]}
+        self.assertTrue(days[self.today.isoformat()]["has_plan"])
+        self.assertEqual({item["kind"] for item in days[self.today.isoformat()]["commitments"]}, {"shopping", "cooking"})
+        self.assertFalse(days[tomorrow.isoformat()]["has_plan"])
+        self.assertEqual(days[tomorrow.isoformat()]["commitments"][0]["note"], "Comprar verduras")
+        day_without_plan = self.client.get(f"/api/v1/calendar/days/{tomorrow}").json()["data"]
+        self.assertEqual(day_without_plan["commitments"][0]["kind"], "shopping")
+
+    def test_commitment_batch_rejects_duplicates_and_past_dates_without_partial_write(self):
+        tomorrow = self.today + timedelta(days=1)
+        later = self.today + timedelta(days=2)
+        CalendarCommitment.objects.create(user=self.user, calendar_date=tomorrow, kind="training", note="Original")
+        conflict = self.client.post(
+            "/api/v1/calendar/commitments",
+            data={"kind": "training", "dates": [tomorrow.isoformat(), later.isoformat()], "note": "Nuevo"},
+            content_type="application/json",
+        )
+        self.assertEqual(conflict.status_code, 409)
+        self.assertFalse(CalendarCommitment.objects.filter(user=self.user, calendar_date=later).exists())
+        self.assertEqual(CalendarCommitment.objects.get(user=self.user, calendar_date=tomorrow).note, "Original")
+
+        past = self.client.post(
+            "/api/v1/calendar/commitments",
+            data={"kind": "shopping", "dates": [(self.today - timedelta(days=1)).isoformat(), later.isoformat()]},
+            content_type="application/json",
+        )
+        self.assertEqual(past.status_code, 422)
+        self.assertFalse(CalendarCommitment.objects.filter(user=self.user, calendar_date=later).exists())
+
+    def test_calendar_foods_sum_current_snapshots_in_inclusive_period(self):
+        def snapshot(quantity):
+            return {
+                "name": "Plan guardado",
+                "totals": {"total_kcal": 100, "protein_g": 10, "carbs_g": 10, "fat_g": 2},
+                "meals": [{"foods": [{
+                    "name": "Avena", "quantity_g": quantity, "quantity_unit": "g",
+                    "protein_g": 5, "carbs_g": 8, "fat_g": 1, "total_kcal": 61,
+                }]}],
+            }
+
+        tomorrow = self.today + timedelta(days=1)
+        CalendarizedDay.objects.create(user=self.user, calendar_date=self.today,
+            source_kind=CalendarizedDay.SOURCE_MANUAL, plan_snapshot=snapshot(70))
+        CalendarizedDay.objects.create(user=self.user, calendar_date=tomorrow,
+            source_kind=CalendarizedDay.SOURCE_MANUAL, plan_snapshot=snapshot(80))
+        CalendarizedDay.objects.create(user=self.user, calendar_date=tomorrow,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            assignment_state=CalendarizedDay.STATE_SUPERSEDED, plan_snapshot=snapshot(900))
+        CalendarizedDay.objects.create(user=User.objects.create_user(username="other-foods"),
+            calendar_date=self.today, source_kind=CalendarizedDay.SOURCE_MANUAL, plan_snapshot=snapshot(400))
+        program_date = tomorrow + timedelta(days=1)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user, program_name_snapshot="Programa previo",
+            start_date=self.today, end_date=program_date,
+        )
+        CalendarizedDay.objects.create(calendarization=calendarization, calendar_date=program_date,
+            source_kind=CalendarizedDay.SOURCE_PROGRAM, week_number=1, day_number=3,
+            plan_snapshot=snapshot(50))
+        CalendarizedDay.objects.create(user=self.user, calendar_date=program_date + timedelta(days=1),
+            source_kind=CalendarizedDay.SOURCE_MANUAL, plan_snapshot=snapshot(500))
+
+        response = self.client.get("/api/v1/calendar/foods", {
+            "start_date": self.today.isoformat(), "end_date": program_date.isoformat(),
+        })
+        self.assertEqual(response.status_code, 200)
+        result = response.json()["data"]
+        self.assertEqual(result["plans_count"], 3)
+        self.assertEqual(len(result["foods"]), 1)
+        self.assertEqual(result["foods"][0]["name"], "Avena")
+        self.assertEqual(result["foods"][0]["quantity"], 200)
+        self.assertEqual(result["foods"][0]["quantity_unit"], "g")
+
+    def test_calendar_foods_validates_period_and_handles_empty_dates(self):
+        empty = self.client.get("/api/v1/calendar/foods", {
+            "start_date": self.today.isoformat(), "end_date": self.today.isoformat(),
+        })
+        self.assertEqual(empty.status_code, 200)
+        self.assertEqual(empty.json()["data"]["foods"], [])
+        reversed_period = self.client.get("/api/v1/calendar/foods", {
+            "start_date": (self.today + timedelta(days=1)).isoformat(), "end_date": self.today.isoformat(),
+        })
+        self.assertEqual(reversed_period.status_code, 422)
+        too_long = self.client.get("/api/v1/calendar/foods", {
+            "start_date": self.today.isoformat(),
+            "end_date": (self.today + timedelta(days=366)).isoformat(),
+        })
+        self.assertEqual(too_long.status_code, 422)
+
+    def test_shopping_commitment_saves_food_period_and_immutable_list_for_each_date(self):
+        tomorrow = self.today + timedelta(days=1)
+        snapshot = {
+            "name": "Plan para compras",
+            "totals": {"total_kcal": 124, "protein_g": 1, "carbs_g": 30, "fat_g": 0},
+            "meals": [{"foods": [{
+                "name": "Plátano", "quantity_g": 140, "quantity_unit": "g",
+                "protein_g": 1, "carbs_g": 30, "fat_g": 0, "total_kcal": 124,
+            }]}],
+        }
+        day = CalendarizedDay.objects.create(
+            user=self.user, calendar_date=tomorrow,
+            source_kind=CalendarizedDay.SOURCE_MANUAL, plan_snapshot=snapshot,
+        )
+        payload = {
+            "kind": "shopping", "dates": [self.today.isoformat(), tomorrow.isoformat()],
+            "food_period_start": tomorrow.isoformat(), "food_period_end": tomorrow.isoformat(),
+        }
+        response = self.client.post("/api/v1/calendar/commitments", data=payload, content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        items = response.json()["data"]["items"]
+        self.assertEqual([item["food_plans_count"] for item in items], [1, 1])
+        self.assertEqual([item["foods"][0]["quantity"] for item in items], [140, 140])
+        self.assertEqual(items[0]["food_period_start"], tomorrow.isoformat())
+        self.assertEqual(items[0]["food_period_end"], tomorrow.isoformat())
+
+        day.plan_snapshot = {"name": "Plan modificado", "meals": []}
+        day.save(update_fields=["plan_snapshot"])
+        saved = CalendarCommitment.objects.get(user=self.user, calendar_date=self.today, kind="shopping")
+        self.assertEqual(saved.foods_snapshot[0]["rel"]["quantity"], 140)
+        detail = self.client.get(f"/api/v1/calendar/days/{self.today}").json()["data"]
+        self.assertEqual(detail["commitments"][0]["foods"][0]["quantity"], 140)
+        overview = self.client.get("/api/v1/calendar").json()["data"]
+        selected = next(item for item in overview["days"] if item["calendar_date"] == self.today.isoformat())
+        self.assertEqual(selected["commitments"][0]["foods"][0]["name"], "Plátano")
+
+    def test_shopping_period_must_be_a_valid_pair_and_other_kinds_cannot_use_it(self):
+        tomorrow = self.today + timedelta(days=1)
+        for kind, start, end in (
+            ("shopping", tomorrow, None),
+            ("shopping", tomorrow, self.today),
+            ("cooking", self.today, self.today),
+        ):
+            response = self.client.post("/api/v1/calendar/commitments", data={
+                "kind": kind, "dates": [self.today.isoformat()],
+                "food_period_start": start.isoformat(),
+                "food_period_end": end.isoformat() if end else None,
+            }, content_type="application/json")
+            self.assertEqual(response.status_code, 422)
+        self.assertFalse(CalendarCommitment.objects.filter(user=self.user).exists())
 
     def test_overview_summarizes_all_future_current_plans_beyond_visible_month(self):
         empty = self.client.get("/api/v1/calendar").json()["data"]
@@ -215,6 +380,7 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(check_in.status_code, 200)
         before = self.client.get("/api/v1/calendar/progress").json()["data"]
         self.assertEqual(before["adherence_percent"], 50)
+        self.assertEqual(before["scheduled_meals"], 2)
         self.assertEqual(before["days_with_plan"], 2)
         self.assertEqual(before["completed_meals"], 1)
         self.assertEqual(before["elapsed_meals"], 2)
@@ -223,6 +389,7 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(reset.status_code, 200)
         self.assertEqual(reset.json()["data"]["adherence_percent"], 100)
         self.assertEqual(reset.json()["data"]["period_start"], self.today.isoformat())
+        self.assertEqual(reset.json()["data"]["scheduled_meals"], 1)
         self.assertEqual(reset.json()["data"]["days_with_plan"], 1)
         self.assertEqual(reset.json()["data"]["completed_meals"], 1)
         self.assertEqual(reset.json()["data"]["elapsed_meals"], 1)
@@ -239,8 +406,89 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
             plan_snapshot={},
         )
         progress = self.client.get("/api/v1/calendar/progress").json()["data"]
+        self.assertEqual(progress["scheduled_meals"], 0)
         self.assertEqual(progress["days_with_plan"], 0)
         self.assertEqual(progress["elapsed_meals"], 0)
+
+    def test_progress_totals_include_future_plans_and_meals_in_current_period(self):
+        tomorrow = self.today + timedelta(days=1)
+        CalendarProgressPeriod.objects.create(user=self.user, starts_on=self.today)
+        CalendarizedDay.objects.create(
+            user=self.user,
+            calendar_date=self.today,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={"name": "Hoy", "meals": [{"key": "breakfast", "hour": "08:00"}]},
+        )
+        CalendarizedDay.objects.create(
+            user=self.user,
+            calendar_date=tomorrow,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={"name": "Mañana", "meals": [{"key": "lunch", "hour": "13:00"}, {"key": "dinner", "hour": "20:00"}]},
+        )
+
+        progress = self.client.get("/api/v1/calendar/progress").json()["data"]
+        self.assertEqual(progress["days_with_plan"], 1)
+        self.assertEqual(progress["scheduled_meals"], 3)
+        self.assertEqual(progress["elapsed_meals"], 1)
+
+    def test_adjust_progress_start_recalculates_range_and_keeps_prior_period(self):
+        yesterday = self.today - timedelta(days=1)
+        CalendarizedDay.objects.create(
+            user=self.user,
+            calendar_date=yesterday,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={"name": "Ayer", "meals": [{"key": "old-meal", "hour": "08:00"}]},
+        )
+        CalendarizedDay.objects.create(
+            user=self.user,
+            calendar_date=self.today,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={"name": "Hoy", "meals": [{"key": "new-meal", "hour": "08:00"}]},
+        )
+        previous_period = CalendarProgressPeriod.objects.create(user=self.user, starts_on=self.today)
+
+        response = self.client.put(
+            "/api/v1/calendar/progress/periods/current",
+            data={"start_date": yesterday.isoformat()},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"]["period_start"], yesterday.isoformat())
+        self.assertEqual(response.json()["data"]["days_with_plan"], 2)
+        self.assertEqual(response.json()["data"]["scheduled_meals"], 2)
+        previous_period.refresh_from_db()
+        self.assertIsNotNone(previous_period.closed_at)
+        self.assertEqual(CalendarProgressPeriod.objects.filter(user=self.user).count(), 2)
+
+        repeated = self.client.put(
+            "/api/v1/calendar/progress/periods/current",
+            data={"start_date": yesterday.isoformat()},
+            content_type="application/json",
+        )
+        self.assertEqual(repeated.status_code, 200)
+        self.assertEqual(CalendarProgressPeriod.objects.filter(user=self.user).count(), 2)
+
+        narrower = self.client.put(
+            "/api/v1/calendar/progress/periods/current",
+            data={"start_date": self.today.isoformat()},
+            content_type="application/json",
+        )
+        self.assertEqual(narrower.status_code, 200)
+        self.assertEqual(narrower.json()["data"]["days_with_plan"], 1)
+        self.assertEqual(narrower.json()["data"]["scheduled_meals"], 1)
+        self.assertEqual(CalendarProgressPeriod.objects.filter(user=self.user).count(), 3)
+
+    def test_adjust_progress_start_rejects_future_date_without_changing_period(self):
+        current = CalendarProgressPeriod.objects.create(user=self.user, starts_on=self.today)
+        response = self.client.put(
+            "/api/v1/calendar/progress/periods/current",
+            data={"start_date": (self.today + timedelta(days=1)).isoformat()},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 422)
+        current.refresh_from_db()
+        self.assertIsNone(current.ends_on)
+        self.assertEqual(CalendarProgressPeriod.objects.filter(user=self.user).count(), 1)
 
     def test_move_manual_plan_keeps_original_snapshot(self):
         source_date = self.today + timedelta(days=1)

@@ -32,6 +32,7 @@ from notas.application.services.notifications.web_push import (
 )
 from notas.domain.models import (
     ApplePushSubscription,
+    CalendarCommitment,
     CalendarizedDay,
     CalendarizedMealExecution,
     DailyPlan,
@@ -513,6 +514,99 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, "Próximas cuatro semanas")
         self.assertContains(response, "Día original")
         self.assertNotContains(response, "calendarization-current__overview")
+
+    def test_calendar_commitments_can_register_multiple_dates_and_show_in_preview(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        dates = [today, today + timedelta(days=2)]
+        response = self.client.post(reverse("calendar_commitments", args=["shopping"]), {
+            "dates": [day.isoformat() for day in dates], "note": "Mercado del barrio",
+        })
+        self.assertRedirects(response, reverse("calendar_preview"))
+        self.assertEqual(
+            list(CalendarCommitment.objects.filter(user=self.user).values_list("calendar_date", flat=True)),
+            dates,
+        )
+        preview = self.client.get(reverse("calendar_preview"), {"date": today.isoformat()})
+        self.assertContains(preview, "Hacer compras")
+        self.assertContains(preview, "Mercado del barrio")
+        self.assertContains(preview, "Registrar compromisos")
+
+    def test_calendar_commitments_reject_duplicate_batch_without_partial_write(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        CalendarCommitment.objects.create(user=self.user, kind="cooking", calendar_date=today)
+        response = self.client.post(reverse("calendar_commitments", args=["cooking"]), {
+            "dates": [today.isoformat(), (today + timedelta(days=1)).isoformat()],
+        })
+        self.assertRedirects(response, reverse("calendar_commitments", args=["cooking"]))
+        self.assertEqual(CalendarCommitment.objects.filter(user=self.user).count(), 1)
+
+    def test_calendar_commitments_are_private_and_allow_other_kind_same_date(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        CalendarCommitment.objects.create(user=self.other, kind="training", calendar_date=today, note="Privada")
+        page = self.client.get(reverse("calendar_commitments", args=["training"]))
+        self.assertNotContains(page, "Privada")
+        self.assertEqual(page.context["existing_dates"], [])
+        response = self.client.post(reverse("calendar_commitments", args=["shopping"]), {
+            "dates": [today.isoformat()],
+        })
+        self.assertRedirects(response, reverse("calendar_preview"))
+        self.assertEqual(CalendarCommitment.objects.filter(calendar_date=today).count(), 2)
+
+    def test_shopping_commitment_previews_foods_from_current_calendar_plans(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        snapshot = {
+            "name": "Plan de compra",
+            "totals": {"total_kcal": 80, "protein_g": 3, "carbs_g": 12, "fat_g": 1},
+            "meals": [{"foods": [{
+                "name": "Plátano", "quantity_g": 140, "quantity_unit": "g",
+                "protein_g": 1, "carbs_g": 30, "fat_g": 0, "total_kcal": 124,
+            }]}],
+        }
+        CalendarizedDay.objects.create(user=self.user, calendar_date=today,
+            source_kind=CalendarizedDay.SOURCE_MANUAL, plan_snapshot=snapshot)
+        page = self.client.get(reverse("calendar_commitments", args=["shopping"]))
+        self.assertContains(page, "Periodo para la lista de alimentos")
+        self.assertContains(page, "Fecha de inicio")
+        self.assertNotContains(self.client.get(reverse("calendar_commitments", args=["cooking"])),
+            "Periodo para la lista de alimentos")
+
+        response = self.client.get(reverse("calendar_commitment_foods"), {
+            "start_date": today.isoformat(), "end_date": today.isoformat(),
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["plans_count"], 1)
+        self.assertEqual(response.json()["foods"], [{"name": "Plátano", "quantity": 140.0, "quantity_unit": "g"}])
+
+    def test_shopping_commitment_keeps_food_list_when_calendar_plan_changes(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        plan_day = CalendarizedDay.objects.create(
+            user=self.user, calendar_date=today,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={
+                "name": "Plan de compra",
+                "totals": {"total_kcal": 124, "protein_g": 1, "carbs_g": 30, "fat_g": 0},
+                "meals": [{"foods": [{
+                    "name": "Plátano", "quantity_g": 140, "quantity_unit": "g",
+                    "protein_g": 1, "carbs_g": 30, "fat_g": 0, "total_kcal": 124,
+                }]}],
+            },
+        )
+        response = self.client.post(reverse("calendar_commitments", args=["shopping"]), {
+            "dates": [today.isoformat()],
+            "food_period_start": today.isoformat(),
+            "food_period_end": today.isoformat(),
+        })
+        self.assertRedirects(response, reverse("calendar_preview"))
+        saved = CalendarCommitment.objects.get(user=self.user, calendar_date=today, kind="shopping")
+        self.assertEqual(saved.food_plans_count, 1)
+        self.assertEqual(saved.foods_snapshot[0]["rel"]["name"], "Plátano")
+        plan_day.plan_snapshot = {"name": "Plan actualizado", "meals": []}
+        plan_day.save(update_fields=["plan_snapshot"])
+        preview = self.client.get(reverse("calendar_preview"), {"date": today.isoformat()})
+        self.assertContains(preview, "Lista guardada")
+        self.assertContains(preview, "Plátano")
+        self.assertContains(preview, "140,0 g")
+        self.assertContains(preview, "calendar-commitments__food-check")
 
     def test_calendar_preview_assigns_and_moves_a_snapshot_with_history(self):
         today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
