@@ -24,6 +24,8 @@ export type CalendarOverviewData = {
   start_date: string;
   end_date: string;
   days: CalendarDay[];
+  future_plans_count?: number;
+  last_scheduled_date?: string | null;
 };
 
 export type CalendarDayDetailData = CalendarDay & {

@@ -17,7 +17,7 @@ from mobile_api.schema_domains.calendar import (
 )
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import _calendarized_snapshot_with_meal_links, local_date_for_user
-from notas.application.queries.calendar_metrics import calendar_adherence_summary
+from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
 from notas.application.queries.calendarization_execution_queries import meal_execution_state_for_day
 from notas.application.services.commands.calendar_day_commands import (
     assign_dailyplan_to_calendar_date,
@@ -96,7 +96,13 @@ def calendar_overview(request, start_date: date | None = None, days: int = 28):
             "source_program_name": (day.origin_calendarization or day.calendarization).program_name_snapshot if day and (day.origin_calendarization or day.calendarization) else None,
             "has_execution": bool(day.meal_execution_events.all()) if day else False,
         })
-    return success({"local_date": local_today, "start_date": first, "end_date": last, "days": items})
+    return success({
+        "local_date": local_today,
+        "start_date": first,
+        "end_date": last,
+        "days": items,
+        **calendar_future_schedule_summary(request.auth.user, today=local_today),
+    })
 
 
 @router.get(

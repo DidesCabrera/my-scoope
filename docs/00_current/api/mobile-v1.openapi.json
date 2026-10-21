@@ -1720,6 +1720,22 @@
             "title": "End Date",
             "type": "string"
           },
+          "future_plans_count": {
+            "title": "Future Plans Count",
+            "type": "integer"
+          },
+          "last_scheduled_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scheduled Date"
+          },
           "local_date": {
             "format": "date",
             "title": "Local Date",
@@ -1735,7 +1751,8 @@
           "local_date",
           "start_date",
           "end_date",
-          "days"
+          "days",
+          "future_plans_count"
         ],
         "title": "CalendarOverviewData",
         "type": "object"

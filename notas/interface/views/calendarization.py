@@ -16,7 +16,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 
 from mobile_api.read_cache import invalidate_mobile_read_cache
-from notas.application.queries.calendar_metrics import calendar_adherence_summary
+from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
 from notas.application.queries.calendarization_execution_queries import (
     meal_execution_state_for_day,
 )
@@ -218,6 +218,7 @@ def calendar_preview(request):
                 source=DailyPlan.SOURCE_PROGRAM
             ).order_by("name", "id"),
             "progress": calendar_adherence_summary(request.user),
+            "schedule_summary": calendar_future_schedule_summary(request.user, today=today),
         },
     ))
 

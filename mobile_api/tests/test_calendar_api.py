@@ -24,6 +24,33 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.meal_relation = DailyPlanMeal.objects.create(dailyplan=self.plan, meal=self.meal)
         self.today = local_date_for_user(self.user)
 
+    def test_overview_summarizes_all_future_current_plans_beyond_visible_month(self):
+        empty = self.client.get("/api/v1/calendar").json()["data"]
+        self.assertEqual(empty["future_plans_count"], 0)
+        self.assertIsNone(empty["last_scheduled_date"])
+
+        last_date = self.today + timedelta(days=90)
+        for offset, state, snapshot in (
+            (-1, CalendarizedDay.STATE_CURRENT, {"name": "Pasado"}),
+            (0, CalendarizedDay.STATE_CURRENT, {"name": "Hoy"}),
+            (10, CalendarizedDay.STATE_CURRENT, {}),
+            (30, CalendarizedDay.STATE_SUPERSEDED, {"name": "Sustituido"}),
+            (90, CalendarizedDay.STATE_CURRENT, {"name": "Último"}),
+        ):
+            CalendarizedDay.objects.create(
+                user=self.user,
+                calendar_date=self.today + timedelta(days=offset),
+                source_kind=CalendarizedDay.SOURCE_MANUAL,
+                assignment_state=state,
+                plan_snapshot=snapshot,
+            )
+
+        response = self.client.get("/api/v1/calendar", {"start_date": self.today.isoformat(), "days": 7})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertEqual(data["future_plans_count"], 2)
+        self.assertEqual(data["last_scheduled_date"], last_date.isoformat())
+
     def test_assigning_a_date_materializes_snapshot_and_today_reads_it(self):
         response = self.client.put(
             f"/api/v1/calendar/days/{self.today}/plan",
@@ -188,15 +215,32 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(check_in.status_code, 200)
         before = self.client.get("/api/v1/calendar/progress").json()["data"]
         self.assertEqual(before["adherence_percent"], 50)
+        self.assertEqual(before["days_with_plan"], 2)
+        self.assertEqual(before["completed_meals"], 1)
+        self.assertEqual(before["elapsed_meals"], 2)
 
         reset = self.client.post("/api/v1/calendar/progress/periods", data={}, content_type="application/json")
         self.assertEqual(reset.status_code, 200)
         self.assertEqual(reset.json()["data"]["adherence_percent"], 100)
         self.assertEqual(reset.json()["data"]["period_start"], self.today.isoformat())
+        self.assertEqual(reset.json()["data"]["days_with_plan"], 1)
+        self.assertEqual(reset.json()["data"]["completed_meals"], 1)
+        self.assertEqual(reset.json()["data"]["elapsed_meals"], 1)
         periods = list(CalendarProgressPeriod.objects.filter(user=self.user).order_by("starts_on"))
         self.assertEqual(len(periods), 2)
         self.assertEqual(periods[0].ends_on, yesterday)
         self.assertEqual(CalendarizedMealExecution.objects.filter(calendarized_day=previous).count(), 1)
+
+    def test_progress_does_not_count_calendar_days_without_a_plan(self):
+        CalendarizedDay.objects.create(
+            user=self.user,
+            calendar_date=self.today,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={},
+        )
+        progress = self.client.get("/api/v1/calendar/progress").json()["data"]
+        self.assertEqual(progress["days_with_plan"], 0)
+        self.assertEqual(progress["elapsed_meals"], 0)
 
     def test_move_manual_plan_keeps_original_snapshot(self):
         source_date = self.today + timedelta(days=1)

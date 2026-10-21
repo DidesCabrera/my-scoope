@@ -19,6 +19,8 @@ class CalendarOverviewData(Schema):
     start_date: date
     end_date: date
     days: list[CalendarDayData]
+    future_plans_count: int
+    last_scheduled_date: date | None = None
 
 
 class CalendarOverviewEnvelope(Schema):

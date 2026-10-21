@@ -10,6 +10,18 @@
       <h1 class="list-page-header__title">Calendario</h1>
     </div>
   </div>
+  <div class="calendar-preview__summary" aria-label="Resumen de planes programados">
+    <div class="calendar-preview__summary-card">
+      <span>Planes programados</span>
+      <strong>{{ vm.content.schedule_summary.future_plans_count }}</strong>
+      <small>Desde hoy</small>
+    </div>
+    <div class="calendar-preview__summary-card">
+      <span>Última fecha con plan</span>
+      <strong>{% if vm.content.schedule_summary.last_scheduled_date %}{{ vm.content.schedule_summary.last_scheduled_date|date:"j M Y" }}{% else %}Sin fecha{% endif %}</strong>
+      <small>Horizonte programado</small>
+    </div>
+  </div>
   <p class="calendar-preview__notice">Organiza un plan por fecha. Cada asignación conserva una copia independiente de tu biblioteca y los cambios quedan en el historial.</p>
 
   {% if not vm.content.extended %}

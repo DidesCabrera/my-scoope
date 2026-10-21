@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.db.models import Count, Max
 from django.utils import timezone
 
 from notas.application.queries.calendarization_execution_queries import (
@@ -15,6 +16,20 @@ from notas.domain.models import CalendarizedDay, CalendarProgressPeriod
 
 def calendar_progress_period_for_user(user) -> CalendarProgressPeriod | None:
     return CalendarProgressPeriod.objects.filter(user=user, ends_on__isnull=True).first()
+
+
+def calendar_future_schedule_summary(user, *, today: date) -> dict:
+    current_plans = (
+        CalendarizedDay.objects.filter(
+            user=user,
+            assignment_state=CalendarizedDay.STATE_CURRENT,
+            calendar_date__gte=today,
+        )
+        .exclude(plan_snapshot__isnull=True)
+        .exclude(plan_snapshot={})
+    )
+    summary = current_plans.aggregate(future_plans_count=Count("id"), last_scheduled_date=Max("calendar_date"))
+    return summary
 
 
 def calendar_adherence_summary(
@@ -36,6 +51,7 @@ def calendar_adherence_summary(
         CalendarizedDay.objects.filter(
             user=user, assignment_state=CalendarizedDay.STATE_CURRENT, plan_snapshot__isnull=False
         )
+        .exclude(plan_snapshot={})
         .order_by("calendar_date")
         .values_list("calendar_date", flat=True)
         .first()
@@ -49,7 +65,7 @@ def calendar_adherence_summary(
             plan_snapshot__isnull=False,
             calendar_date__gte=start,
             calendar_date__lte=end,
-        ).prefetch_related("meal_execution_events").order_by("calendar_date")
+        ).exclude(plan_snapshot={}).prefetch_related("meal_execution_events").order_by("calendar_date")
     ) if start <= end else []
     scheduled = elapsed = completed = skipped = 0
     for day in days:
