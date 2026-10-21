@@ -8,6 +8,7 @@ from django.db import transaction
 from core.rate_limits import is_sharing_create_rate_limited
 from email_delivery.services import deliver_share_invitation
 from mobile_api.errors import MobileAPIError
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.dailyplan_commands import (
     delete_dailyplan,
@@ -188,12 +189,19 @@ def _rename(item, name: str) -> None:
 
 
 def _duplicate(item, user):
-    if isinstance(item, Meal):
-        return fork_meal_for_library(item, user)
-    if isinstance(item, DailyPlan):
-        return fork_dailyplan(item, user)
-    if isinstance(item, Program):
-        return fork_program(item, user)
+    try:
+        if isinstance(item, Meal):
+            return fork_meal_for_library(item, user)
+        if isinstance(item, DailyPlan):
+            return fork_dailyplan(item, user)
+        if isinstance(item, Program):
+            return fork_program(item, user)
+    except CommercialLimitReached as exc:
+        raise MobileAPIError(
+            code=str(exc),
+            message="Tu plan actual no permite duplicar más elementos de este tipo.",
+            status_code=409,
+        ) from exc
     raise MobileAPIError(
         code="library_action_not_allowed",
         message="This item cannot be duplicated.",

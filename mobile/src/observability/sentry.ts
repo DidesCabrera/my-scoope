@@ -35,3 +35,15 @@ Sentry.setTags({
   "app.version": Application.nativeApplicationVersion ?? "development",
   "deployment.environment": appConfig.deploymentEnvironment,
 });
+
+export type WheelPickerKind = "date" | "height" | "portion" | "time" | "weight";
+export type WheelPickerAction = "cancel" | "commit" | "open";
+
+/** Record only the picker surface and lifecycle; selected values are deliberately excluded. */
+export function recordWheelPickerInteraction(kind: WheelPickerKind, action: WheelPickerAction): void {
+  Sentry.addBreadcrumb({
+    category: "ui.wheel-picker",
+    level: "info",
+    message: `${kind}.${action}`,
+  });
+}

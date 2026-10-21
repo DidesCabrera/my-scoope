@@ -114,6 +114,15 @@ class DeploymentContractTests(SimpleTestCase):
         self.assertIn("collectstatic --noinput", build_script)
         self.assertNotIn("manage.py migrate", build_script)
 
+    def test_notification_worker_waits_for_the_release_schema(self):
+        for filename in ("render.yaml", "render.staging.yaml"):
+            with self.subTest(filename=filename):
+                blueprint = (ROOT / filename).read_text()
+                self.assertIn(
+                    "startCommand: python manage.py wait_for_migrations --timeout 600 --interval 5 && python manage.py run_calendar_notification_worker",
+                    blueprint,
+                )
+
     def test_all_django_processes_share_one_generated_secret_key(self):
         blueprint = (ROOT / "render.yaml").read_text()
 

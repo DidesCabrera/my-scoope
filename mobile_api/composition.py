@@ -8,6 +8,7 @@ responsive web application.
 from __future__ import annotations
 
 from django.db import transaction
+from django.db.models import prefetch_related_objects
 
 from mobile_api.composition_projections import (
     project_dailyplan_food_result,
@@ -369,6 +370,10 @@ def add_meal_from_picker(
 def _program_selection_context(*, user, program_id: int, dailyplan_id: int, week_number, day_numbers):
     program = _owned_program(user, program_id)
     dailyplan = _library_dailyplan(user, dailyplan_id)
+    prefetch_related_objects(
+        [dailyplan],
+        "dailyplan_meals__meal__meal_food_set__food__localized_names",
+    )
     try:
         week = int(week_number)
         days = sorted({int(day) for day in day_numbers})

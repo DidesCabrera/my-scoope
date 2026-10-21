@@ -18,7 +18,15 @@ def pinned_dailyplan_execution_state(pinned, local_date: date) -> list[dict]:
     latest_status_by_key: dict[str, PinnedDailyPlanMealExecution] = {}
     latest_note_by_key: dict[str, PinnedDailyPlanMealExecution] = {}
     prepared_foods_by_meal: dict[str, set[str]] = {}
-    events = pinned.meal_execution_events.filter(local_date=local_date).order_by("created_at", "id")
+    prefetched_events = getattr(pinned, "_prefetched_objects_cache", {}).get("meal_execution_events")
+    events = (
+        sorted(
+            (event for event in prefetched_events if event.local_date == local_date),
+            key=lambda event: (event.created_at, event.id),
+        )
+        if prefetched_events is not None
+        else pinned.meal_execution_events.filter(local_date=local_date).order_by("created_at", "id")
+    )
     for event in events:
         if event.action in {
             PinnedDailyPlanMealExecution.ACTION_FOOD_PREPARED,
@@ -58,7 +66,12 @@ def meal_execution_state_for_day(day) -> list[dict]:
     latest_status_by_key: dict[str, CalendarizedMealExecution] = {}
     latest_note_by_key: dict[str, CalendarizedMealExecution] = {}
     prepared_foods_by_meal: dict[str, set[str]] = {}
-    events = day.meal_execution_events.all().order_by("created_at", "id")
+    prefetched_events = getattr(day, "_prefetched_objects_cache", {}).get("meal_execution_events")
+    events = (
+        sorted(prefetched_events, key=lambda event: (event.created_at, event.id))
+        if prefetched_events is not None
+        else day.meal_execution_events.all().order_by("created_at", "id")
+    )
     for event in events:
         if event.action in {
             CalendarizedMealExecution.ACTION_FOOD_PREPARED,

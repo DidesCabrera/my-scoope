@@ -77,7 +77,7 @@ export default function RegisterCommitmentsScreen() {
 
   const selected = useMemo(() => [...selectedDates].sort(), [selectedDates]);
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (!kind) return <Redirect href="/calendar" />;
+  if (!kind) return <Redirect href={"/calendar" as Href} />;
   const presentation = commitmentPresentation[kind];
 
   function changeFoodPeriod(start: string, end: string) {
