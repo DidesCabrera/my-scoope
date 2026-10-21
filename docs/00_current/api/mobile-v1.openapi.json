@@ -1373,12 +1373,186 @@
         "title": "CalendarAssignmentInput",
         "type": "object"
       },
+      "CalendarCommitmentBatchData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarCommitmentData"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "CalendarCommitmentBatchData",
+        "type": "object"
+      },
+      "CalendarCommitmentBatchEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarCommitmentBatchData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarCommitmentBatchEnvelope",
+        "type": "object"
+      },
+      "CalendarCommitmentBatchInput": {
+        "properties": {
+          "dates": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "maxItems": 62,
+            "minItems": 1,
+            "title": "Dates",
+            "type": "array"
+          },
+          "food_period_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Period End"
+          },
+          "food_period_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Period Start"
+          },
+          "kind": {
+            "enum": [
+              "shopping",
+              "cooking",
+              "training"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "dates"
+        ],
+        "title": "CalendarCommitmentBatchInput",
+        "type": "object"
+      },
+      "CalendarCommitmentData": {
+        "properties": {
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          },
+          "food_period_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Period End"
+          },
+          "food_period_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Period Start"
+          },
+          "food_plans_count": {
+            "default": 0,
+            "title": "Food Plans Count",
+            "type": "integer"
+          },
+          "foods": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryFoodPanelItemData"
+            },
+            "title": "Foods",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "shopping",
+              "cooking",
+              "training"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "calendar_date",
+          "kind",
+          "note"
+        ],
+        "title": "CalendarCommitmentData",
+        "type": "object"
+      },
       "CalendarDayData": {
         "properties": {
           "calendar_date": {
             "format": "date",
             "title": "Calendar Date",
             "type": "string"
+          },
+          "commitments": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarCommitmentData"
+            },
+            "title": "Commitments",
+            "type": "array"
           },
           "has_execution": {
             "default": false,
@@ -1441,6 +1615,13 @@
             "format": "date",
             "title": "Calendar Date",
             "type": "string"
+          },
+          "commitments": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarCommitmentData"
+            },
+            "title": "Commitments",
+            "type": "array"
           },
           "has_execution": {
             "default": false,
@@ -1779,6 +1960,61 @@
         "title": "CalendarOverviewEnvelope",
         "type": "object"
       },
+      "CalendarPeriodFoodsData": {
+        "properties": {
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "foods": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryFoodPanelItemData"
+            },
+            "title": "Foods",
+            "type": "array"
+          },
+          "plans_count": {
+            "title": "Plans Count",
+            "type": "integer"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start_date",
+          "end_date",
+          "plans_count",
+          "foods"
+        ],
+        "title": "CalendarPeriodFoodsData",
+        "type": "object"
+      },
+      "CalendarPeriodFoodsEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarPeriodFoodsData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarPeriodFoodsEnvelope",
+        "type": "object"
+      },
       "CalendarProgressData": {
         "properties": {
           "adherence_percent": {
@@ -1865,6 +2101,20 @@
           "data"
         ],
         "title": "CalendarProgressEnvelope",
+        "type": "object"
+      },
+      "CalendarProgressStartInput": {
+        "properties": {
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start_date"
+        ],
+        "title": "CalendarProgressStartInput",
         "type": "object"
       },
       "CalendarizationActivationData": {
@@ -11108,6 +11358,70 @@
         "summary": "Calendar Overview"
       }
     },
+    "/api/v1/calendar/commitments": {
+      "post": {
+        "operationId": "mobile_api_api_register_calendar_commitments",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarCommitmentBatchInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarCommitmentBatchEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Register Commitments"
+      }
+    },
     "/api/v1/calendar/days/{local_date}": {
       "get": {
         "operationId": "mobile_api_api_calendar_day",
@@ -11546,6 +11860,81 @@
         "summary": "Create Calendar Day Draft"
       }
     },
+    "/api/v1/calendar/foods": {
+      "get": {
+        "operationId": "mobile_api_api_calendar_period_foods",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Start Date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "End Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarPeriodFoodsEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendar Period Foods"
+      }
+    },
     "/api/v1/calendar/progress": {
       "get": {
         "operationId": "mobile_api_api_calendar_progress",
@@ -11632,6 +12021,60 @@
           }
         ],
         "summary": "Start Calendar Progress Period"
+      }
+    },
+    "/api/v1/calendar/progress/periods/current": {
+      "put": {
+        "operationId": "mobile_api_api_adjust_calendar_progress_period_start",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarProgressStartInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarProgressEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Adjust Calendar Progress Period"
       }
     },
     "/api/v1/comparisons/compare": {

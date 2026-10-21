@@ -1,0 +1,62 @@
+{% extends "notas/base.html" %}
+{% load static %}
+{% block title %}{{ kind_label }} · Calendario · MyScoope{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/calendar_preview.css' %}">{% endblock %}
+{% block content %}
+<div class="calendar-preview page list calendar-commitments" data-today="{{ today|date:'Y-m-d' }}">
+  <div class="list-page-header list-page-header--calendarization js-header-meta-sentinel">
+    <div class="list-page-header__identity">
+      <i data-lucide="calendar-days" class="list-page-header__icon list-page-header__icon--calendarization"></i>
+      <h1 class="list-page-header__title">{{ kind_label }}</h1>
+    </div>
+  </div>
+  <p class="calendar-preview__notice">Marca varios días; puedes cambiar de mes sin perder tu selección.</p>
+  <form action="{% url 'calendar_commitments' kind %}" method="post" id="calendar-commitments-form">
+    {% csrf_token %}
+    <section class="calendar-preview__section" aria-labelledby="calendar-commitments-month-title">
+      <div class="calendar-commitments__month-navigation">
+        <button type="button" id="calendar-commitments-previous" aria-label="Mes anterior">‹</button>
+        <h2 id="calendar-commitments-month-title"></h2>
+        <button type="button" id="calendar-commitments-next" aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="calendar-commitments__grid" id="calendar-commitments-grid" aria-label="Selecciona las fechas"></div>
+      <p class="calendar-preview__notice">Los días con un punto ya tienen este compromiso registrado.</p>
+    </section>
+    <section class="calendar-preview__section" aria-labelledby="calendar-commitments-selected-title">
+      <h2 id="calendar-commitments-selected-title">Fechas elegidas · <span id="calendar-commitments-count">0</span></h2>
+      <div class="calendar-commitments__selected" id="calendar-commitments-selected">Toca las fechas del calendario para seleccionarlas.</div>
+      <div id="calendar-commitments-inputs"></div>
+      <p class="calendar-commitments__error" id="calendar-commitments-error" role="alert" hidden></p>
+    </section>
+    {% if kind == 'shopping' %}
+    <section class="calendar-preview__section" aria-labelledby="calendar-commitments-food-period-title">
+      <h2 id="calendar-commitments-food-period-title">Periodo para la lista de alimentos</h2>
+      <p class="calendar-preview__notice">Elige un periodo para guardar una copia de esta lista con cada compromiso. Puedes dejarlo vacío si no necesitas una lista.</p>
+      <div class="calendar-commitments__period-fields" data-foods-url="{% url 'calendar_commitment_foods' %}">
+        <label for="calendar-commitments-food-start">Fecha de inicio<input id="calendar-commitments-food-start" name="food_period_start" type="date"></label>
+        <label for="calendar-commitments-food-end">Fecha de término<input id="calendar-commitments-food-end" name="food_period_end" type="date"></label>
+      </div>
+      <p class="calendar-commitments__error" id="calendar-commitments-food-error" role="alert" hidden></p>
+      <p class="calendar-preview__notice" id="calendar-commitments-food-loading" hidden>Calculando alimentos…</p>
+    </section>
+    <section class="calendar-preview__section calendar-commitments__food-card" id="calendar-commitments-food-card" aria-labelledby="calendar-commitments-food-card-title" hidden>
+      <p class="calendar-preview__eyebrow">LISTA DE ALIMENTOS</p>
+      <h2 id="calendar-commitments-food-card-title">Alimentos para comprar</h2>
+      <p class="calendar-preview__notice" id="calendar-commitments-food-count"></p>
+      <div class="calendar-commitments__food-list" id="calendar-commitments-food-list"></div>
+    </section>
+    {% endif %}
+    <section class="calendar-preview__section" aria-labelledby="calendar-commitments-note-title">
+      <h2 id="calendar-commitments-note-title">Nota (opcional)</h2>
+      <p class="calendar-preview__notice">Se registrará en todas las fechas elegidas.</p>
+      <textarea id="calendar-commitments-note" name="note" maxlength="500" rows="4" placeholder="Agrega una nota para recordar los detalles…"></textarea>
+    </section>
+    <div class="calendar-commitments__actions">
+      <button type="submit" id="calendar-commitments-submit" disabled>Registrar en el calendario</button>
+      <a href="{% url 'calendar_preview' %}">Volver al calendario</a>
+    </div>
+  </form>
+</div>
+{{ existing_dates|json_script:"calendar-commitments-existing" }}
+<script src="{% static 'notas/js/calendar_commitments.js' %}" defer></script>
+{% endblock %}

@@ -1,4 +1,4 @@
-import type { DailyPlanSnapshot, MealExecutionItem } from "./types";
+import type { DailyPlanSnapshot, LibraryFoodPanelItem, MealExecutionItem } from "./types";
 
 export type ActiveProgramDay = {
   id: number;
@@ -9,6 +9,26 @@ export type ActiveProgramDay = {
   plan_name: string;
 };
 
+export type CalendarCommitmentKind = "shopping" | "cooking" | "training";
+
+export type CalendarCommitment = {
+  id: number;
+  calendar_date: string;
+  kind: CalendarCommitmentKind;
+  note: string;
+  food_period_start: string | null;
+  food_period_end: string | null;
+  food_plans_count: number;
+  foods: LibraryFoodPanelItem[];
+};
+
+export type CalendarPeriodFoodsData = {
+  start_date: string;
+  end_date: string;
+  plans_count: number;
+  foods: LibraryFoodPanelItem[];
+};
+
 export type CalendarDay = {
   id: number | null;
   calendar_date: string;
@@ -17,6 +37,7 @@ export type CalendarDay = {
   source_kind: "program" | "manual" | null;
   source_program_name: string | null;
   has_execution: boolean;
+  commitments?: CalendarCommitment[];
 };
 
 export type CalendarOverviewData = {

@@ -3,6 +3,52 @@ from typing import Any, Literal
 
 from ninja import Field, Schema
 
+from mobile_api.schema_domains.libraries import LibraryFoodPanelItemData
+
+CalendarCommitmentKind = Literal["shopping", "cooking", "training"]
+
+
+class CalendarCommitmentData(Schema):
+    id: int
+    calendar_date: date
+    kind: CalendarCommitmentKind
+    note: str
+    food_period_start: date | None = None
+    food_period_end: date | None = None
+    food_plans_count: int = 0
+    foods: list[LibraryFoodPanelItemData] = Field(default_factory=list)
+
+
+class CalendarCommitmentBatchInput(Schema):
+    kind: CalendarCommitmentKind
+    dates: list[date] = Field(min_length=1, max_length=62)
+    note: str = Field(default="", max_length=500)
+    food_period_start: date | None = None
+    food_period_end: date | None = None
+
+
+class CalendarCommitmentBatchData(Schema):
+    items: list[CalendarCommitmentData]
+
+
+class CalendarCommitmentBatchEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CalendarCommitmentBatchData
+    error: None = None
+
+
+class CalendarPeriodFoodsData(Schema):
+    start_date: date
+    end_date: date
+    plans_count: int
+    foods: list[LibraryFoodPanelItemData]
+
+
+class CalendarPeriodFoodsEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CalendarPeriodFoodsData
+    error: None = None
+
 
 class CalendarDayData(Schema):
     id: int | None = None
@@ -12,6 +58,7 @@ class CalendarDayData(Schema):
     source_kind: str | None = None
     source_program_name: str | None = None
     has_execution: bool = False
+    commitments: list[CalendarCommitmentData] = Field(default_factory=list)
 
 
 class CalendarOverviewData(Schema):
@@ -92,6 +139,10 @@ class CalendarProgressData(Schema):
     skipped_meals: int
     unrecorded_meals: int
     adherence_percent: int
+
+
+class CalendarProgressStartInput(Schema):
+    start_date: date
 
 
 class CalendarProgressEnvelope(Schema):

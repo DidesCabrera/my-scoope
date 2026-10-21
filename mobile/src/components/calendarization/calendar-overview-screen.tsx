@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { CalendarDays, ChevronLeft, ChevronRight, Ellipsis, RotateCcw } from "lucide-react-native";
+import { CalendarDays, ChefHat, ChevronLeft, ChevronRight, Dumbbell, Ellipsis, ShoppingCart } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,14 +8,14 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarDay, CalendarDayDetailData, CalendarOverviewData, CalendarProgressData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
+import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarPlanEditor } from "@/components/calendarization/calendar-plan-editor";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { ProgramActiveKpis } from "@/components/programs/program-active-kpis";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Card, InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
-import { ConfirmationState } from "@/components/ui/screen-states";
+import { Button, Card, Chip, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function dateLabel(value: string, options: Intl.DateTimeFormatOptions): string {
@@ -28,11 +28,6 @@ function compactDate(value: string): string {
 
 function weekDay(value: string): string {
   return dateLabel(value, { weekday: "narrow" }).toUpperCase();
-}
-
-function inclusiveDays(start: string, end: string): number {
-  const toUtc = (value: string) => Date.UTC(Number(value.slice(0, 4)), Number(value.slice(5, 7)) - 1, Number(value.slice(8, 10)));
-  return Math.max(1, Math.round((toUtc(end) - toUtc(start)) / 86_400_000) + 1);
 }
 
 function CalendarDateRow({ day, onEdit, onPress }: { day: CalendarDay; onEdit(): void; onPress?(): void }) {
@@ -68,10 +63,12 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingDate, setEditingDate] = useState<string | null>(null);
-  const [confirmReset, setConfirmReset] = useState(false);
   const [progressMenuVisible, setProgressMenuVisible] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
-  const [resetBusy, setResetBusy] = useState(false);
+  const [commitmentMenuVisible, setCommitmentMenuVisible] = useState(false);
+  const [progressMenuStage, setProgressMenuStage] = useState<"actions" | "date">("actions");
+  const [progressStartDate, setProgressStartDate] = useState("");
+  const [progressDateError, setProgressDateError] = useState<string | null>(null);
+  const [progressDateBusy, setProgressDateBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -124,28 +121,36 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const selectedDetail = detail?.calendar_date === selectedDate ? detail : null;
   const editorDay = monthDays.find((day) => day.calendar_date === editingDate)
     ?? overview?.days.find((day) => day.calendar_date === editingDate);
-  const elapsedCalendarDays = progress ? inclusiveDays(progress.period_start, progress.period_end) : 0;
-  const calendarCoverage = progress ? Math.round(progress.days_with_plan / elapsedCalendarDays * 100) : 0;
-  const canResetProgress = Boolean(progress && overview && progress.period_start < overview.local_date);
-  async function resetProgress() {
-    setResetBusy(true);
-    setResetError(null);
+  const futurePlansCount = overview?.future_plans_count ?? 0;
+  const calendarCoverage = progress && futurePlansCount ? Math.round(progress.days_with_plan / futurePlansCount * 100) : 0;
+  const mealCoverage = progress?.scheduled_meals ? Math.round(progress.completed_meals / progress.scheduled_meals * 100) : 0;
+  async function adjustProgressStart() {
+    setProgressDateBusy(true);
+    setProgressDateError(null);
     try {
-      await apiRequest<CalendarProgressData>("/api/v1/calendar/progress/periods", { body: "{}", method: "POST" });
-      await load();
-      setConfirmReset(false);
+      const nextProgress = await apiRequest<CalendarProgressData>("/api/v1/calendar/progress/periods/current", {
+        body: JSON.stringify({ start_date: progressStartDate }),
+        method: "PUT",
+      });
+      setProgress(nextProgress);
       setProgressMenuVisible(false);
+      setProgressMenuStage("actions");
     } catch (nextError) {
-      setResetError(userFacingError(nextError));
+      setProgressDateError(userFacingError(nextError));
     } finally {
-      setResetBusy(false);
+      setProgressDateBusy(false);
     }
   }
   function closeProgressMenu() {
-    if (resetBusy) return;
+    if (progressDateBusy) return;
     setProgressMenuVisible(false);
-    setConfirmReset(false);
-    setResetError(null);
+    setProgressMenuStage("actions");
+    setProgressDateError(null);
+  }
+  function openProgressDatePicker() {
+    setProgressStartDate(progress?.period_start ?? overview?.local_date ?? "");
+    setProgressDateError(null);
+    setProgressMenuStage("date");
   }
   async function refreshCalendar() {
     await load();
@@ -190,34 +195,39 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
               {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
               {monthDays.map((day) => (
                 <Pressable
-                  accessibilityLabel={`${dateLabel(day.calendar_date, { day: "numeric", month: "long", year: "numeric" })}: ${day.has_plan ? "Con plan" : "Sin plan"}`}
+                  accessibilityLabel={`${dateLabel(day.calendar_date, { day: "numeric", month: "long", year: "numeric" })}: ${day.has_plan ? "Con plan" : "Sin plan"}${day.commitments?.length ? `; ${day.commitments.map((item) => commitmentPresentation[item.kind].label).join(", ")}` : ""}`}
                   accessibilityRole="button"
                   key={day.calendar_date}
                   onPress={() => setEditingDate(day.calendar_date)}
                   style={[styles.gridDate, day.has_plan && styles.gridDateFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, day.calendar_date === overview?.local_date && styles.gridDateToday]}>
                   <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan]}>{day.calendar_date.slice(8, 10)}</Text>
+                  {day.commitments?.length ? <View style={styles.gridCommitmentDots}>{day.commitments.map((item) => <View key={item.id} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
                 </Pressable>
               ))}
             </View>
           </Card>
+          <Button label="Registrar compromisos" onPress={() => setCommitmentMenuVisible(true)} variant="secondary" />
 
           {progress ? <>
-            <ProgramSectionHeader
-              action={<Pressable accessibilityLabel="Opciones de progreso" accessibilityRole="button" onPress={() => setProgressMenuVisible(true)} style={styles.progressMenuButton}><Ellipsis color={tokens.color.textMain} size={24} /></Pressable>}
-              icon={CalendarDays}
-              subtitle={`Desde el ${dateLabel(progress.period_start, { day: "numeric", month: "long" })}`}
-              title="Progreso"
-            />
+            <View style={styles.progressHeaderSpacing}>
+              <ProgramSectionHeader
+                action={<Pressable accessibilityLabel="Opciones de progreso" accessibilityRole="button" onPress={() => setProgressMenuVisible(true)} style={styles.progressMenuButton}><Ellipsis color={tokens.color.textMain} size={24} /></Pressable>}
+                detail={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`Inicio el ${dateLabel(progress.period_start, { day: "numeric", month: "long" })}`} textColor={tokens.color.textMuted} />}
+                icon={CalendarDays}
+                title="Progreso"
+              />
+            </View>
             <ProgramActiveKpis
               adheredDays={progress.completed_meals}
-              adherence={progress.adherence_percent}
+              adherence={mealCoverage}
               bleed={false}
               elapsedDays={progress.days_with_plan}
-              planLabel="Días con plan"
-              plannedAdherenceDays={progress.elapsed_meals}
+              mealLabel="Comidas cumplidas"
+              planLabel={"Planes\nrecorridos"}
+              plannedAdherenceDays={progress.scheduled_meals}
               progress={calendarCoverage}
               standalone
-              totalDays={elapsedCalendarDays}
+              totalDays={futurePlansCount}
             />
           </> : null}
 
@@ -261,16 +271,32 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
       {!extended ? <Button label="Ver más fechas" onPress={() => router.push("/calendar/future" as Href)} variant="secondary" /> : null}
       {!extended ? <Button label="Planificar con un programa" onPress={() => router.push("/program" as Href)} variant="secondary" /> : null}
     </Screen>
+    <ActionSheetModal onRequestClose={() => setCommitmentMenuVisible(false)} visible={commitmentMenuVisible}>
+      <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
+        <ActionSheetHeader icon={CalendarDays} onClose={() => setCommitmentMenuVisible(false)} title="Registrar compromisos" />
+        <View style={styles.progressSheetContent}>
+          <ActionSheetActions>
+            <ActionSheetAction icon={ShoppingCart} label="Hacer compras" onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=shopping" as Href); }} />
+            <ActionSheetAction icon={ChefHat} label="Cocinar" onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=cooking" as Href); }} />
+            <ActionSheetAction icon={Dumbbell} label="Entrenar" onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=training" as Href); }} />
+          </ActionSheetActions>
+        </View>
+      </SafeAreaView>
+    </ActionSheetModal>
     <ActionSheetModal onRequestClose={closeProgressMenu} visible={progressMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
-        <ActionSheetHeader icon={CalendarDays} onClose={closeProgressMenu} title={confirmReset ? "Reiniciar periodo" : "Progreso"} />
+        <ActionSheetHeader icon={CalendarDays} onClose={closeProgressMenu} title={progressMenuStage === "date" ? "Ajustar inicio del periodo" : "Progreso"} />
         <ScrollView contentContainerStyle={styles.progressSheetContent} showsVerticalScrollIndicator={false}>
-          {resetError ? <InlineNotice tone="error">{resetError}</InlineNotice> : null}
-          {confirmReset ? <ConfirmationState busy={resetBusy} confirmLabel="Reiniciar periodo de progreso" message="El nuevo periodo comenzará hoy. Tus registros y periodos anteriores se conservarán." onCancel={() => setConfirmReset(false)} onConfirm={() => void resetProgress()} title="¿Reiniciar el periodo de progreso?" /> : <>
+          {progressDateError ? <InlineNotice tone="error">{progressDateError}</InlineNotice> : null}
+          {progressMenuStage === "date" ? <>
+            <Text style={styles.progressDateHelp}>Elige desde qué fecha quieres revisar tu progreso. Los registros anteriores permanecerán intactos.</Text>
+            <NativeDateTimeField label="Fecha de inicio" maximumValue={overview?.local_date} mode="date" onChange={setProgressStartDate} value={progressStartDate} />
+            <Button disabled={!progressStartDate || progressStartDate === progress?.period_start} label="Guardar fecha de inicio" loading={progressDateBusy} onPress={() => void adjustProgressStart()} />
+            <Button label="Volver" onPress={() => setProgressMenuStage("actions")} variant="secondary" />
+          </> : <>
             <ActionSheetActions>
-              <ActionSheetAction disabled={!canResetProgress} icon={RotateCcw} label="Reiniciar periodo de progreso" onPress={() => setConfirmReset(true)} />
+              <ActionSheetAction icon={CalendarDays} label="Ajustar inicio periodo progreso" onPress={openProgressDatePicker} />
             </ActionSheetActions>
-            {!canResetProgress ? <InlineNotice>Este periodo comenzó hoy. Podrás reiniciarlo a partir de mañana.</InlineNotice> : null}
           </>}
         </ScrollView>
       </SafeAreaView>
@@ -303,6 +329,8 @@ const styles = StyleSheet.create({
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 38, width: "13.5%" },
   gridDateAdjacent: { opacity: 0.5 },
   gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}33` },
+  gridCommitmentDots: { bottom: 2, flexDirection: "row", gap: 2, position: "absolute" },
+  gridCommitmentDot: { borderRadius: 3, height: 4, width: 4 },
   gridDateToday: { borderColor: tokens.color.success },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
@@ -312,6 +340,8 @@ const styles = StyleSheet.create({
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
   monthTodayLink: { color: tokens.color.interactivePrimary, fontSize: 13, marginBottom: tokens.spacing.sm, textAlign: "center" },
   progressMenuButton: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
+  progressHeaderSpacing: { marginTop: -32 },
+  progressDateHelp: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   progressSheet: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   progressSheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   summaryCard: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.panel, flex: 1, gap: tokens.spacing.xs, justifyContent: "space-between", minHeight: 122, padding: tokens.spacing.md },

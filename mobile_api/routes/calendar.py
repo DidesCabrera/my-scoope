@@ -8,35 +8,57 @@ from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
 from mobile_api.schema_domains.calendar import (
     CalendarAssignmentInput,
+    CalendarCommitmentBatchEnvelope,
+    CalendarCommitmentBatchInput,
     CalendarDayDetailEnvelope,
     CalendarDayHistoryEnvelope,
     CalendarDraftInput,
     CalendarMoveInput,
     CalendarOverviewEnvelope,
+    CalendarPeriodFoodsEnvelope,
     CalendarProgressEnvelope,
+    CalendarProgressStartInput,
 )
 from mobile_api.schemas import ErrorEnvelope
-from mobile_api.selectors import _calendarized_snapshot_with_meal_links, local_date_for_user
+from mobile_api.selectors import (
+    _aggregated_food_panel_items,
+    _calendarized_snapshot_with_meal_links,
+    calendar_period_foods_payload,
+    local_date_for_user,
+)
 from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
 from notas.application.queries.calendarization_execution_queries import meal_execution_state_for_day
+from notas.application.services.commands.calendar_commitment_commands import register_calendar_commitments
 from notas.application.services.commands.calendar_day_commands import (
     assign_dailyplan_to_calendar_date,
     create_and_assign_draft_to_calendar_date,
     move_calendar_date_plan,
     remove_calendar_date_plan,
 )
-from notas.application.services.commands.calendar_progress_commands import start_new_calendar_progress_period
+from notas.application.services.commands.calendar_progress_commands import (
+    adjust_calendar_progress_period_start,
+    start_new_calendar_progress_period,
+)
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
-from notas.domain.models import CalendarizedDay
+from notas.domain.models import CalendarCommitment, CalendarizedDay
 
 router = Router()
 
 
 def _error(exc: ValueError) -> MobileAPIError:
     code = str(exc)
+    message = {
+        "calendar_commitment_already_exists": "Una o más fechas ya tienen ese compromiso. Revisa tu selección.",
+        "calendar_commitment_date_in_past": "Elige fechas de hoy en adelante.",
+        "calendar_commitment_dates_invalid": "Selecciona entre 1 y 62 fechas distintas.",
+        "calendar_commitment_note_too_long": "La nota puede tener hasta 500 caracteres.",
+        "calendar_food_period_invalid": "Elige un periodo válido de hasta 366 días.",
+        "calendar_food_period_incomplete": "Elige ambas fechas del periodo o deja ambas vacías.",
+        "calendar_food_period_wrong_kind": "La lista de alimentos solo corresponde a Hacer compras.",
+    }.get(code, "No pudimos actualizar el calendario.")
     return MobileAPIError(
         code=code,
-        message="No pudimos actualizar el calendario.",
+        message=message,
         status_code=(
             404 if code in {"calendar_dailyplan_not_owned", "calendar_day_not_found"}
             else 409 if code in {
@@ -44,14 +66,32 @@ def _error(exc: ValueError) -> MobileAPIError:
                 "calendar_assignment_key_conflict", "calendar_date_in_past",
                 "calendar_move_program_day_unsupported",
                 "calendar_progress_no_prior_period", "calendar_progress_period_already_started_today",
+                "calendar_commitment_already_exists",
             }
             else 422
         ),
     )
 
 
+def _commitment_payload(commitment: CalendarCommitment) -> dict:
+    return {
+        "id": commitment.id,
+        "calendar_date": commitment.calendar_date,
+        "kind": commitment.kind,
+        "note": commitment.note,
+        "food_period_start": commitment.food_period_start,
+        "food_period_end": commitment.food_period_end,
+        "food_plans_count": commitment.food_plans_count,
+        "foods": _aggregated_food_panel_items(
+            commitment.foods_snapshot,
+            id_prefix=f"calendar-commitment-{commitment.id}",
+        ),
+    }
+
+
 def _day_payload(user, day: CalendarizedDay) -> dict:
     origin = day.origin_calendarization or day.calendarization
+    commitments = CalendarCommitment.objects.filter(user=user, calendar_date=day.calendar_date)
     return {
         "id": day.id,
         "calendar_date": day.calendar_date,
@@ -62,6 +102,7 @@ def _day_payload(user, day: CalendarizedDay) -> dict:
         "has_execution": day.meal_execution_events.exists(),
         "plan_snapshot": _calendarized_snapshot_with_meal_links(user, day.plan_snapshot),
         "meal_execution": meal_execution_state_for_day(day),
+        "commitments": [_commitment_payload(item) for item in commitments],
     }
 
 
@@ -83,6 +124,11 @@ def calendar_overview(request, start_date: date | None = None, days: int = 28):
         calendar_date__range=(first, last),
     ).select_related("calendarization", "origin_calendarization").prefetch_related("meal_execution_events").order_by("calendar_date")
     by_date = {row.calendar_date: row for row in rows}
+    commitments_by_date: dict[date, list[dict]] = {}
+    for commitment in CalendarCommitment.objects.filter(
+        user=request.auth.user, calendar_date__range=(first, last)
+    ):
+        commitments_by_date.setdefault(commitment.calendar_date, []).append(_commitment_payload(commitment))
     items = []
     for offset in range(days):
         current_date = first + timedelta(days=offset)
@@ -95,6 +141,7 @@ def calendar_overview(request, start_date: date | None = None, days: int = 28):
             "source_kind": day.source_kind if day else None,
             "source_program_name": (day.origin_calendarization or day.calendarization).program_name_snapshot if day and (day.origin_calendarization or day.calendarization) else None,
             "has_execution": bool(day.meal_execution_events.all()) if day else False,
+            "commitments": commitments_by_date.get(current_date, []),
         })
     return success({
         "local_date": local_today,
@@ -103,6 +150,40 @@ def calendar_overview(request, start_date: date | None = None, days: int = 28):
         "days": items,
         **calendar_future_schedule_summary(request.auth.user, today=local_today),
     })
+
+
+@router.post(
+    "/calendar/commitments",
+    operation_id="mobile_api_api_register_calendar_commitments",
+    auth=mobile_bearer,
+    response={200: CalendarCommitmentBatchEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def register_commitments(request, payload: CalendarCommitmentBatchInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        items = register_calendar_commitments(
+            user=request.auth.user, kind=payload.kind, dates=payload.dates, note=payload.note,
+            food_period_start=payload.food_period_start, food_period_end=payload.food_period_end,
+        )
+    except ValueError as exc:
+        raise _error(exc) from exc
+    return success({"items": [_commitment_payload(item) for item in items]})
+
+
+@router.get(
+    "/calendar/foods",
+    operation_id="mobile_api_api_calendar_period_foods",
+    auth=mobile_bearer,
+    response={200: CalendarPeriodFoodsEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendar_period_foods(request, start_date: date, end_date: date):
+    try:
+        result = calendar_period_foods_payload(
+            request.auth.user, start_date=start_date, end_date=end_date
+        )
+    except ValueError as exc:
+        raise _error(exc) from exc
+    return success(result)
 
 
 @router.get(
@@ -130,6 +211,21 @@ def start_calendar_progress_period(request):
     return success(calendar_adherence_summary(request.auth.user))
 
 
+@router.put(
+    "/calendar/progress/periods/current",
+    operation_id="mobile_api_api_adjust_calendar_progress_period_start",
+    auth=mobile_bearer,
+    response={200: CalendarProgressEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def adjust_calendar_progress_period(request, payload: CalendarProgressStartInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        adjust_calendar_progress_period_start(user=request.auth.user, starts_on=payload.start_date)
+    except ValueError as exc:
+        raise _error(exc) from exc
+    return success(calendar_adherence_summary(request.auth.user))
+
+
 @router.get(
     "/calendar/days/{local_date}",
     operation_id="mobile_api_api_calendar_day",
@@ -151,6 +247,9 @@ def calendar_day(request, local_date: date):
             "has_execution": False,
             "plan_snapshot": None,
             "meal_execution": [],
+            "commitments": [_commitment_payload(item) for item in CalendarCommitment.objects.filter(
+                user=request.auth.user, calendar_date=local_date
+            )],
         })
     return success(_day_payload(request.auth.user, day))
 
@@ -245,6 +344,9 @@ def remove_calendar_day_plan(request, local_date: date):
         "has_execution": False,
         "plan_snapshot": None,
         "meal_execution": [],
+        "commitments": [_commitment_payload(item) for item in CalendarCommitment.objects.filter(
+            user=request.auth.user, calendar_date=local_date
+        )],
     })
 
 

@@ -248,6 +248,39 @@ class CalendarProgressPeriod(models.Model):
         return f"{self.user_id} · {self.starts_on}"
 
 
+class CalendarCommitment(models.Model):
+    KIND_SHOPPING = "shopping"
+    KIND_COOKING = "cooking"
+    KIND_TRAINING = "training"
+    KIND_CHOICES = (
+        (KIND_SHOPPING, "Hacer compras"),
+        (KIND_COOKING, "Cocinar"),
+        (KIND_TRAINING, "Entrenar"),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="calendar_commitments")
+    calendar_date = models.DateField()
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES)
+    note = models.CharField(max_length=500, blank=True)
+    food_period_start = models.DateField(null=True, blank=True)
+    food_period_end = models.DateField(null=True, blank=True)
+    food_plans_count = models.PositiveIntegerField(default=0)
+    foods_snapshot = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["calendar_date", "kind", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "calendar_date", "kind"], name="cal_unique_commitment_kind_date"
+            ),
+        ]
+        indexes = [models.Index(fields=["user", "calendar_date"], name="cal_commitment_user_date_idx")]
+
+    def __str__(self):
+        return f"{self.user_id} · {self.calendar_date} · {self.kind}"
+
+
 class CalendarizationMeasurementContext(models.Model):
     calendarization = models.ForeignKey(
         ProgramCalendarization,

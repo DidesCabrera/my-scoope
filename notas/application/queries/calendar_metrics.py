@@ -58,6 +58,16 @@ def calendar_adherence_summary(
     )
     start = period_start or (current_period.starts_on if current_period else first_day or today)
     end = min(period_end or today, today)
+    planned_days_query = CalendarizedDay.objects.filter(
+        user=user,
+        assignment_state=CalendarizedDay.STATE_CURRENT,
+        plan_snapshot__isnull=False,
+        calendar_date__gte=start,
+    ).exclude(plan_snapshot={})
+    if period_end is not None:
+        planned_days_query = planned_days_query.filter(calendar_date__lte=period_end)
+    planned_snapshots = list(planned_days_query.values_list("plan_snapshot", flat=True))
+    scheduled = sum(len(snapshot.get("meals", [])) for snapshot in planned_snapshots)
     days = list(
         CalendarizedDay.objects.filter(
             user=user,
@@ -67,10 +77,9 @@ def calendar_adherence_summary(
             calendar_date__lte=end,
         ).exclude(plan_snapshot={}).prefetch_related("meal_execution_events").order_by("calendar_date")
     ) if start <= end else []
-    scheduled = elapsed = completed = skipped = 0
+    elapsed = completed = skipped = 0
     for day in days:
         meals = (day.plan_snapshot or {}).get("meals", [])
-        scheduled += len(meals)
         state = {item["meal_key"]: item["status"] for item in meal_execution_state_for_day(day)}
         for meal in meals:
             status = state.get(meal.get("key") or "", "planned")

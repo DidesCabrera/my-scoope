@@ -5,6 +5,8 @@ from notas.interface.views import calendarization
 urlpatterns = [
     path("calendar/preview/", calendarization.calendar_preview, name="calendar_preview"),
     path("calendar/preview/action/", calendarization.calendar_preview_action, name="calendar_preview_action"),
+    path("calendar/commitments/foods/", calendarization.calendar_commitment_foods, name="calendar_commitment_foods"),
+    path("calendar/commitments/<str:kind>/", calendarization.calendar_commitments, name="calendar_commitments"),
     path("calendarization/", calendarization.dashboard, name="calendarization_dashboard"),
     path("calendarization/history/", calendarization.history, name="calendarization_history"),
     path("calendarization/activate/", calendarization.activate, name="calendarization_activate"),
