@@ -1,0 +1,18 @@
+interface:
+  display_name: "Observability Lead"
+  short_description: "Triage and coordinate My Scoope incidents"
+  default_prompt: "Use $observability-lead to review current beta health and prioritize actionable incidents."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "sentry-my-scoope"
+      description: "Read My Scoope mobile and backend incidents from Sentry"
+      transport: "streamable_http"
+      url: "https://mcp.sentry.dev/mcp/my-scoope"
+    - type: "mcp"
+      value: "expo"
+      description: "Inspect EAS builds and TestFlight crashes and feedback"
+      transport: "streamable_http"
+      url: "https://mcp.expo.dev/mcp"
