@@ -11,9 +11,11 @@ import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { CollectionPageHeader, LoadingState, MacroLoadingIndicator, MutationStatusModal, SearchField, useMutationStatus } from "@/components/ui";
 import { Button, Card, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
+import { recordLibraryEditInteraction } from "@/observability/sentry";
 
 import { LibraryCard } from "./library-card";
 import { LibraryListActions } from "./library-list-actions";
+import { applyLibraryDeletion, containsSameLibraryItems } from "./library-list-edit-state";
 import { LibraryListEditor } from "./library-list-editor";
 
 type LibraryListScreenProps = {
@@ -57,9 +59,14 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const [mode, setMode] = useState<"list" | "edit">("list");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const mutationInFlightRef = useRef(false);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const cancelSelection = useCallback(() => setSelectedIds(new Set()), []);
-  const finishEdit = useCallback(() => { setSelectedIds(new Set()); setMode("list"); }, []);
+  const finishEdit = useCallback(() => {
+    recordLibraryEditInteraction(entity, "finish", page?.items.length ?? 0);
+    setSelectedIds(new Set());
+    setMode("list");
+  }, [entity, page?.items.length]);
 
   const load = useCallback(async ({ append = false, offset = 0 } = {}) => {
     if (append) {
@@ -114,15 +121,25 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       total = next.total;
     } while (items.length < total);
     setPage({ items, limit: items.length, offset: 0, search: null, total });
+    return items.length;
   };
 
   const beginEdit = async () => {
     setActionsVisible(false); setMode("edit"); setSelectedIds(new Set()); setLoading(true); setError(null); setQuery(""); setSubmittedQuery("");
-    try { await loadAll(); } catch (nextError) { setMode("list"); setError(userFacingError(nextError)); } finally { setLoading(false); }
+    try {
+      const itemCount = await loadAll();
+      recordLibraryEditInteraction(entity, "open", itemCount);
+    } catch (nextError) { setMode("list"); setError(userFacingError(nextError)); } finally { setLoading(false); }
   };
 
   const saveOrder = async (items: LibraryPageData["items"]) => {
     const previousItems = page?.items ?? [];
+    if (!containsSameLibraryItems(previousItems, items)) {
+      recordLibraryEditInteraction(entity, "stale-reorder-dropped", previousItems.length);
+      return;
+    }
+    if (mutationInFlightRef.current) return;
+    mutationInFlightRef.current = true;
     setPage((current) => current ? { ...current, items } : current);
     setSubmitting(true);
     setError(null);
@@ -134,21 +151,26 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     } catch (nextError) {
       setPage((current) => current ? { ...current, items: previousItems } : current);
       setError(userFacingError(nextError));
-    } finally { setSubmitting(false); }
+    } finally { mutationInFlightRef.current = false; setSubmitting(false); }
   };
 
   const deleteItems = useCallback(async (itemIds: number[]) => {
-    if (!itemIds.length) return;
+    if (!itemIds.length || mutationInFlightRef.current) return;
+    mutationInFlightRef.current = true;
     setSubmitting(true);
     setError(null);
     try {
       const result = await apiRequest<LibraryListActionResult>(`${endpoint}/bulk-delete`, { body: JSON.stringify({ item_ids: itemIds }), headers: { "Content-Type": "application/json" }, method: "POST" });
-      const affectedIds = new Set(result.affected_ids);
-      setPage((current) => current ? { ...current, items: current.items.filter(({ id }) => !affectedIds.has(id)), total: Math.max(0, current.total - affectedIds.size) } : current);
-      setSelectedIds((current) => new Set([...current].filter((id) => !affectedIds.has(id))));
+      const deletion = page ? applyLibraryDeletion(page, selectedIds, result.affected_ids) : null;
+      if (deletion) {
+        setPage(deletion.page);
+        setSelectedIds(deletion.selectedIds);
+        if (deletion.empty) finishEdit();
+      }
+      recordLibraryEditInteraction(entity, "delete", result.affected_ids.length);
       Alert.alert(result.affected_ids.length === 1 ? "Elemento eliminado" : "Elementos eliminados", result.message);
-    } catch (nextError) { setError(userFacingError(nextError)); } finally { setSubmitting(false); }
-  }, [apiRequest, endpoint]);
+    } catch (nextError) { setError(userFacingError(nextError)); } finally { mutationInFlightRef.current = false; setSubmitting(false); }
+  }, [apiRequest, endpoint, entity, finishEdit, page, selectedIds]);
 
   const deleteSelected = useCallback(() => deleteItems([...selectedIds]), [deleteItems, selectedIds]);
 
