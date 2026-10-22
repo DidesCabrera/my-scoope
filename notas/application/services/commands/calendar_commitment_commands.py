@@ -11,6 +11,15 @@ from notas.application.services.calendarization.scheduling import local_date_for
 from notas.domain.models import CalendarCommitment
 
 
+def _validated_day_notes(notes_by_date: dict[date, str] | None, dates: list[date]) -> dict[date, str]:
+    day_notes = {day: value.strip() for day, value in (notes_by_date or {}).items()}
+    if not set(day_notes).issubset(dates):
+        raise ValueError("calendar_commitment_note_dates_invalid")
+    if any(len(value) > 500 for value in day_notes.values()):
+        raise ValueError("calendar_commitment_note_too_long")
+    return day_notes
+
+
 @transaction.atomic
 def register_calendar_commitments(
     *, user: User, kind: str, dates: list[date], note: str = "",
@@ -28,11 +37,7 @@ def register_calendar_commitments(
     clean_note = note.strip()
     if len(clean_note) > 500:
         raise ValueError("calendar_commitment_note_too_long")
-    day_notes = {day: value.strip() for day, value in (notes_by_date or {}).items()}
-    if not set(day_notes).issubset(dates):
-        raise ValueError("calendar_commitment_note_dates_invalid")
-    if any(len(value) > 500 for value in day_notes.values()):
-        raise ValueError("calendar_commitment_note_too_long")
+    day_notes = _validated_day_notes(notes_by_date, dates)
     if (food_period_start is None) != (food_period_end is None):
         raise ValueError("calendar_food_period_incomplete")
     attachments = list(food_attachments or [])
