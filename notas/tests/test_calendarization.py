@@ -563,6 +563,24 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertRedirects(response, reverse("calendar_preview"))
         self.assertEqual(CalendarCommitment.objects.filter(calendar_date=today).count(), 2)
 
+    def test_commitment_month_selector_returns_each_kind_for_owned_dates(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        CalendarCommitment.objects.create(user=self.user, kind="shopping", calendar_date=today)
+        CalendarCommitment.objects.create(user=self.user, kind="training", calendar_date=today)
+        CalendarCommitment.objects.create(user=self.other, kind="cooking", calendar_date=today)
+        CalendarizedDay.objects.create(user=self.user, calendar_date=today,
+            source_kind=CalendarizedDay.SOURCE_MANUAL, plan_snapshot={"name": "Plan del día"})
+        url = reverse("calendar_commitments", args=["cooking"])
+        response = self.client.get(url, {"month": today.strftime("%Y-%m")})
+        self.assertEqual(response.status_code, 200)
+        self.assertCountEqual(response.json()["commitments"][today.isoformat()], ["shopping", "training"])
+        self.assertEqual(response.json()["plans"], [today.isoformat()])
+        self.assertEqual(self.client.get(url, {"month": "2026-99"}).status_code, 400)
+        preview = self.client.get(reverse("calendar_preview"))
+        self.assertContains(preview, "calendar-preview__commitment-dot--shopping")
+        self.assertContains(preview, "calendar-preview__commitment-dot--training")
+        self.assertNotContains(preview, "calendar-preview__commitment-dot--cooking")
+
     def test_shopping_commitment_previews_foods_from_current_calendar_plans(self):
         today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
         snapshot = {

@@ -24,6 +24,44 @@
   const todayDate = new Date(`${today}T12:00:00Z`);
   let year = todayDate.getUTCFullYear();
   let month = todayDate.getUTCMonth();
+  const commitmentMonths = new Map();
+  const commitmentRequests = new Set();
+  const kindLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar" };
+  let refreshFoodCommitments = () => {};
+
+  function monthKey(targetYear, targetMonth) { return `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}`; }
+  function kindsOn(value) {
+    const monthData = commitmentMonths.get(value.slice(0, 7));
+    return monthData ? monthData.commitments[value] ?? [] : existing.has(value) ? [page.dataset.kind] : [];
+  }
+  function hasPlan(value) { return commitmentMonths.get(value.slice(0, 7))?.plans.includes(value) ?? false; }
+  function loadCommitmentMonth(targetYear, targetMonth) {
+    const key = monthKey(targetYear, targetMonth);
+    if (commitmentMonths.has(key) || commitmentRequests.has(key)) return;
+    commitmentRequests.add(key);
+    fetch(`${window.location.pathname}?month=${encodeURIComponent(key)}`, { headers: { Accept: "application/json" } })
+      .then((response) => { if (!response.ok) throw new Error("commitments_unavailable"); return response.json(); })
+      .then((data) => {
+        commitmentMonths.set(key, data);
+        if (monthKey(year, month) === key) render();
+        refreshFoodCommitments(key);
+      })
+      .catch(() => {})
+      .finally(() => commitmentRequests.delete(key));
+  }
+  function addCommitmentDots(button, value, draftShopping = false) {
+    const kinds = [...new Set([...kindsOn(value), ...(draftShopping ? ["shopping"] : [])])];
+    if (!kinds.length) return;
+    const dots = document.createElement("span");
+    dots.className = "calendar-commitments__dots";
+    dots.setAttribute("aria-hidden", "true");
+    for (const commitmentKind of kinds) {
+      const dot = document.createElement("span");
+      dot.className = `calendar-commitments__dot calendar-commitments__dot--${commitmentKind}`;
+      dots.appendChild(dot);
+    }
+    button.appendChild(dots);
+  }
 
   function iso(date) { return date.toISOString().slice(0, 10); }
   function dateLabel(value) {
@@ -76,6 +114,7 @@
     if (window.lucide) window.lucide.createIcons();
   }
   function render() {
+    loadCommitmentMonth(year, month);
     title.textContent = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric", timeZone: "UTC" })
       .format(new Date(Date.UTC(year, month, 1)));
     previous.disabled = year === todayDate.getUTCFullYear() && month === todayDate.getUTCMonth();
@@ -103,11 +142,12 @@
       button.type = "button";
       button.className = "calendar-commitments__date";
       button.textContent = String(day);
-      button.setAttribute("aria-label", `${dateLabel(value)}: ${isExisting ? "ya registrado" : selected.has(value) ? "seleccionado" : "sin seleccionar"}`);
+      button.setAttribute("aria-label", `${dateLabel(value)}: ${isExisting ? "ya registrado" : selected.has(value) ? "seleccionado" : "sin seleccionar"}${kindsOn(value).length ? `; ${kindsOn(value).map((kind) => kindLabels[kind]).join(", ")}` : ""}`);
       button.setAttribute("aria-pressed", selected.has(value) ? "true" : "false");
       button.disabled = value < today || isExisting;
-      if (isExisting) button.classList.add("is-existing");
+      addCommitmentDots(button, value);
       if (selected.has(value)) button.classList.add("is-selected");
+      if (hasPlan(value)) button.classList.add("has-plan");
       button.addEventListener("click", () => {
         if (selected.has(value)) {
           selected.delete(value);
@@ -189,6 +229,7 @@
     let foodPending = false;
     let foodPreviewReady = false;
     let editingDate = null;
+    refreshFoodCommitments = (key) => { if (editingDate && monthKey(foodYear, foodMonth) === key) renderFoodRange(); };
 
     function closeFoodEditor() {
       if (editingDate) notesByDate.set(editingDate, dayNote.value);
@@ -234,6 +275,7 @@
     };
 
     function renderFoodRange() {
+      loadCommitmentMonth(foodYear, foodMonth);
       const start = startInput.value;
       const end = endInput.value;
       foodMonthTitle.textContent = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric", timeZone: "UTC" })
@@ -268,12 +310,13 @@
         button.className = "calendar-commitments__date";
         button.textContent = String(position - leading + 1);
         const shoppingDate = page.dataset.kind === "shopping" && value === editingDate;
-        button.setAttribute("aria-label", `${dateLabel(value)}: ${shoppingDate ? "día para hacer compras, " : ""}${role}`);
+        button.setAttribute("aria-label", `${dateLabel(value)}: ${shoppingDate ? "día para hacer compras, " : ""}${role}${kindsOn(value).length ? `; ${kindsOn(value).map((kind) => kindLabels[kind]).join(", ")}` : ""}`);
         button.setAttribute("aria-pressed", endpoint || middle ? "true" : "false");
         button.disabled = foodPending || foodPreviewReady;
         if (endpoint) button.classList.add("is-range-endpoint");
         if (middle) button.classList.add("is-range-middle");
-        if (shoppingDate) button.classList.add("is-shopping-day");
+        if (hasPlan(value)) button.classList.add("has-plan");
+        addCommitmentDots(button, value, shoppingDate);
         button.addEventListener("click", () => {
           if (!start || end || value < start) {
             startInput.value = value;

@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { CalendarDays, ChevronLeft, ChevronRight, Ellipsis } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -9,7 +9,6 @@ import type { CalendarDay, CalendarDayDetailData, CalendarOverviewData, Calendar
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
-import { CalendarPlanEditor } from "@/components/calendarization/calendar-plan-editor";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
@@ -54,15 +53,13 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const { apiRequest, status } = useSession();
   const [overview, setOverview] = useState<CalendarOverviewData | null>(null);
   const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
-  const [monthOverview, setMonthOverview] = useState<{ key: string; revision: number; data: CalendarOverviewData } | null>(null);
+  const [monthOverview, setMonthOverview] = useState<{ key: string; data: CalendarOverviewData } | null>(null);
   const [monthError, setMonthError] = useState<string | null>(null);
-  const [monthRevision, setMonthRevision] = useState(0);
   const [detail, setDetail] = useState<CalendarDayDetailData | null>(null);
   const [progress, setProgress] = useState<CalendarProgressData | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingDate, setEditingDate] = useState<string | null>(null);
   const [progressMenuVisible, setProgressMenuVisible] = useState(false);
   const [commitmentMenuVisible, setCommitmentMenuVisible] = useState(false);
   const [progressMenuStage, setProgressMenuStage] = useState<"actions" | "date">("actions");
@@ -97,10 +94,10 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     const window = monthWindow(visibleMonth);
     setMonthError(null);
     void apiRequest<CalendarOverviewData>(`/api/v1/calendar?start_date=${window.startDate}&days=${window.days}`)
-      .then((data) => { if (active) setMonthOverview({ key: visibleMonth, revision: monthRevision, data }); })
+      .then((data) => { if (active) setMonthOverview({ key: visibleMonth, data }); })
       .catch((nextError) => { if (active) setMonthError(userFacingError(nextError)); });
     return () => { active = false; };
-  }, [apiRequest, extended, monthRevision, status, visibleMonth]));
+  }, [apiRequest, extended, status, visibleMonth]));
   useEffect(() => {
     if (!selectedDate || status !== "authenticated") return;
     let active = true;
@@ -111,7 +108,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   }, [apiRequest, selectedDate, status]);
 
   const week = useMemo(() => overview?.days.slice(0, 7) ?? [], [overview]);
-  const monthDays = monthOverview?.key === visibleMonth && monthOverview.revision === monthRevision ? monthOverview.data.days : [];
+  const monthDays = monthOverview?.key === visibleMonth ? monthOverview.data.days : [];
   const upcoming = useMemo(() => {
     if (!overview) return [];
     if (extended) return overview.days;
@@ -119,8 +116,6 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     return future.slice(0, 7);
   }, [extended, overview]);
   const selectedDetail = detail?.calendar_date === selectedDate ? detail : null;
-  const editorDay = monthDays.find((day) => day.calendar_date === editingDate)
-    ?? overview?.days.find((day) => day.calendar_date === editingDate);
   const futurePlansCount = overview?.future_plans_count ?? 0;
   const calendarCoverage = progress && futurePlansCount ? Math.round(progress.days_with_plan / futurePlansCount * 100) : 0;
   const mealCoverage = progress?.scheduled_meals ? Math.round(progress.completed_meals / progress.scheduled_meals * 100) : 0;
@@ -152,9 +147,8 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     setProgressDateError(null);
     setProgressMenuStage("date");
   }
-  async function refreshCalendar() {
-    await load();
-    setMonthRevision((previous) => previous + 1);
+  function openDay(date: string) {
+    router.push(`/calendar/days/${date}` as Href);
   }
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !overview) return <LoadingState label="Preparando tu calendario…" />;
@@ -198,7 +192,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
                   accessibilityLabel={`${dateLabel(day.calendar_date, { day: "numeric", month: "long", year: "numeric" })}: ${day.has_plan ? "Con plan" : "Sin plan"}${day.commitments?.length ? `; ${day.commitments.map((item) => commitmentPresentation[item.kind].label).join(", ")}` : ""}`}
                   accessibilityRole="button"
                   key={day.calendar_date}
-                  onPress={() => setEditingDate(day.calendar_date)}
+                  onPress={() => openDay(day.calendar_date)}
                   style={[styles.gridDate, day.has_plan && styles.gridDateFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, day.calendar_date === overview?.local_date && styles.gridDateToday]}>
                   <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan]}>{day.calendar_date.slice(8, 10)}</Text>
                   {day.commitments?.length ? <View style={styles.gridCommitmentDots}>{day.commitments.map((item) => <View key={item.id} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
@@ -206,7 +200,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
               ))}
             </View>
           </Card>
-          <Button label="Registrar compromisos" onPress={() => setCommitmentMenuVisible(true)} variant="secondary" />
+          <Button label="Calendarizar compromisos" onPress={() => setCommitmentMenuVisible(true)} variant="secondary" />
 
           {progress ? <>
             <View style={styles.progressHeaderSpacing}>
@@ -258,14 +252,14 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
               />
             ) : selectedDetail ? <InlineNotice>No hay un plan asignado a esta fecha.</InlineNotice> : null}
           </ProgramDaySelector>
-          {selectedDetail && !selectedDetail.has_execution ? <Button label={selectedDetail.has_plan ? "Cambiar plan de esta fecha" : "Asignar plan a esta fecha"} onPress={() => setEditingDate(selectedDetail.calendar_date)} variant="secondary" /> : null}
+          {selectedDetail && !selectedDetail.has_execution ? <Button label={selectedDetail.has_plan ? "Cambiar plan de esta fecha" : "Asignar plan a esta fecha"} onPress={() => openDay(selectedDetail.calendar_date)} variant="secondary" /> : null}
 
         </>
       ) : null}
 
       <ProgramSectionHeader icon={CalendarDays} subtitle={extended ? "Planes ordenados por fecha." : "Los próximos siete días, con el nombre de cada plan."} title="Próximas fechas" />
       <Card>
-        {upcoming.map((day) => <CalendarDateRow day={day} key={day.calendar_date} onEdit={() => setEditingDate(day.calendar_date)} onPress={day.id
+        {upcoming.map((day) => <CalendarDateRow day={day} key={day.calendar_date} onEdit={() => openDay(day.calendar_date)} onPress={day.id
           ? () => router.push(`/program/days/${day.id}` as Href) : undefined} />)}
       </Card>
       {!extended ? <Button label="Ver más fechas" onPress={() => router.push("/calendar/future" as Href)} variant="secondary" /> : null}
@@ -273,7 +267,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     </Screen>
     <ActionSheetModal onRequestClose={() => setCommitmentMenuVisible(false)} visible={commitmentMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
-        <ActionSheetHeader icon={CalendarDays} onClose={() => setCommitmentMenuVisible(false)} title="Registrar compromisos" />
+        <ActionSheetHeader icon={CalendarDays} onClose={() => setCommitmentMenuVisible(false)} title="Calendarizar compromisos" />
         <View style={styles.progressSheetContent}>
           <ActionSheetActions>
             <ActionSheetAction icon={commitmentPresentation.shopping.icon} label={commitmentRegistrationTitle.shopping} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=shopping" as Href); }} />
@@ -301,13 +295,6 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         </ScrollView>
       </SafeAreaView>
     </ActionSheetModal>
-    <Modal animationType="slide" onRequestClose={() => setEditingDate(null)} visible={Boolean(editorDay)}>
-      <SafeAreaView style={styles.editorSafeArea}>
-        <ScrollView contentContainerStyle={styles.editorContent} showsVerticalScrollIndicator={false}>
-          {editorDay && overview ? <CalendarPlanEditor apiRequest={apiRequest} day={editorDay} key={editorDay.calendar_date} localToday={overview.local_date} onChanged={refreshCalendar} onClose={() => setEditingDate(null)} /> : null}
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
     </>
   );
 }
@@ -323,8 +310,6 @@ const styles = StyleSheet.create({
   agendaRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 68, paddingVertical: tokens.spacing.sm },
   agendaSource: { color: tokens.color.textMuted, fontSize: 12 },
   content: { gap: tokens.spacing.lg },
-  editorContent: { gap: tokens.spacing.lg, padding: tokens.spacing.screen },
-  editorSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 38, width: "13.5%" },
   gridDateAdjacent: { opacity: 0.5 },
@@ -340,7 +325,7 @@ const styles = StyleSheet.create({
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
   monthTodayLink: { color: tokens.color.interactivePrimary, fontSize: 13, marginBottom: tokens.spacing.sm, textAlign: "center" },
   progressMenuButton: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
-  progressHeaderSpacing: { marginTop: -32 },
+  progressHeaderSpacing: { marginTop: 0 },
   progressDateHelp: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   progressSheet: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   progressSheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },

@@ -5,6 +5,11 @@ export function validCalendarFoodPeriod(start: string, end: string): boolean {
   return Number.isFinite(startTime) && Number.isFinite(endTime) && endTime - startTime < 366 * 86_400_000;
 }
 
+export function calendarFoodPeriodDayCount(start: string, end: string): number {
+  if (!validCalendarFoodPeriod(start, end)) return 0;
+  return Math.round((Date.parse(`${end}T12:00:00Z`) - Date.parse(`${start}T12:00:00Z`)) / 86_400_000) + 1;
+}
+
 export function selectCalendarFoodDate(start: string, end: string, day: string): { start: string; end: string; tooLong: boolean } {
   if (!start || end || day < start) return { start: day, end: "", tooLong: false };
   if (!validCalendarFoodPeriod(start, day)) return { start, end: "", tooLong: true };

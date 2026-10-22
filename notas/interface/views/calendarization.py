@@ -296,6 +296,30 @@ def calendar_commitments(request, kind):
         return redirect("calendar_commitments", kind=kind)
     if request.method != "GET":
         return HttpResponseBadRequest()
+    month_key = request.GET.get("month")
+    if month_key is not None:
+        try:
+            if len(month_key) != 7:
+                raise ValueError("invalid month")
+            first_day = date.fromisoformat(f"{month_key}-01")
+            if first_day.year == 9999 and first_day.month == 12:
+                raise ValueError("invalid month")
+        except ValueError:
+            return HttpResponseBadRequest()
+        next_month = date(first_day.year + (first_day.month == 12), first_day.month % 12 + 1, 1)
+        commitments = {}
+        for calendar_date, commitment_kind in CalendarCommitment.objects.filter(
+            user=request.user, calendar_date__gte=first_day, calendar_date__lt=next_month
+        ).values_list("calendar_date", "kind"):
+            commitments.setdefault(calendar_date.isoformat(), []).append(commitment_kind)
+        plans = [calendar_date.isoformat() for calendar_date in CalendarizedDay.objects.filter(
+            Q(user=request.user) | Q(user__isnull=True, calendarization__user=request.user),
+            assignment_state=CalendarizedDay.STATE_CURRENT,
+            plan_snapshot__isnull=False,
+            calendar_date__gte=first_day,
+            calendar_date__lt=next_month,
+        ).exclude(plan_snapshot={}).values_list("calendar_date", flat=True).distinct()]
+        return JsonResponse({"commitments": commitments, "plans": plans})
     existing_dates = list(
         CalendarCommitment.objects.filter(user=request.user, kind=kind, calendar_date__gte=today)
         .values_list("calendar_date", flat=True)

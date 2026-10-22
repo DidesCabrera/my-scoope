@@ -194,6 +194,63 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual([item["note"] for item in response.json()["data"]["items"]], ["Fuerza", "Cardio"])
         self.assertEqual(list(CalendarCommitment.objects.filter(user=self.user, kind="training").order_by("calendar_date").values_list("note", flat=True)), ["Fuerza", "Cardio"])
 
+    def test_saved_commitment_can_update_note_and_food_period_independently(self):
+        tomorrow = self.today + timedelta(days=1)
+        CalendarizedDay.objects.create(
+            user=self.user, calendar_date=tomorrow,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={
+                "name": "Plan para compras",
+                "meals": [{"foods": [{
+                    "name": "Plátano", "quantity_g": 140, "quantity_unit": "g",
+                    "protein_g": 1, "carbs_g": 30, "fat_g": 0, "total_kcal": 124,
+                }]}],
+            },
+        )
+        commitment = CalendarCommitment.objects.create(
+            user=self.user, kind="shopping", calendar_date=self.today, note="Original",
+        )
+        url = f"/api/v1/calendar/commitments/{commitment.id}"
+        period = self.client.patch(url, data={
+            "update_food_period": True,
+            "food_period_start": self.today.isoformat(),
+            "food_period_end": tomorrow.isoformat(),
+        }, content_type="application/json")
+        self.assertEqual(period.status_code, 200)
+        self.assertEqual(period.json()["data"]["foods"][0]["quantity"], 140)
+        self.assertEqual(period.json()["data"]["note"], "Original")
+        note = self.client.patch(url, data={"note": "  Comprar fruta  "}, content_type="application/json")
+        self.assertEqual(note.status_code, 200)
+        self.assertEqual(note.json()["data"]["note"], "Comprar fruta")
+        self.assertEqual(note.json()["data"]["foods"][0]["quantity"], 140)
+        self.assertEqual(CalendarCommitment.objects.filter(user=self.user, kind="shopping").count(), 1)
+        cleared = self.client.patch(url, data={"update_food_period": True}, content_type="application/json")
+        self.assertEqual(cleared.status_code, 200)
+        self.assertIsNone(cleared.json()["data"]["food_period_start"])
+        self.assertEqual(cleared.json()["data"]["foods"], [])
+        self.assertEqual(cleared.json()["data"]["note"], "Comprar fruta")
+
+    def test_saved_commitment_update_is_owner_scoped_and_validates_period(self):
+        commitment = CalendarCommitment.objects.create(
+            user=self.user, kind="training", calendar_date=self.today,
+        )
+        url = f"/api/v1/calendar/commitments/{commitment.id}"
+        wrong_kind = self.client.patch(url, data={
+            "update_food_period": True,
+            "food_period_start": self.today.isoformat(),
+            "food_period_end": self.today.isoformat(),
+        }, content_type="application/json")
+        self.assertEqual(wrong_kind.status_code, 422)
+        other = User.objects.create_user(username="other-commitment")
+        other_commitment = CalendarCommitment.objects.create(
+            user=other, kind="shopping", calendar_date=self.today,
+        )
+        hidden = self.client.patch(f"/api/v1/calendar/commitments/{other_commitment.id}",
+            data={"note": "No permitido"}, content_type="application/json")
+        self.assertEqual(hidden.status_code, 404)
+        other_commitment.refresh_from_db()
+        self.assertEqual(other_commitment.note, "")
+
     def test_cooking_commitment_saves_foods_for_entire_period_including_intermediate_days(self):
         middle = self.today + timedelta(days=1)
         end = self.today + timedelta(days=2)

@@ -50,6 +50,19 @@ class CalendarCommitmentBatchEnvelope(Schema):
     error: None = None
 
 
+class CalendarCommitmentUpdateInput(Schema):
+    note: str | None = Field(default=None, max_length=500)
+    update_food_period: bool = False
+    food_period_start: date | None = None
+    food_period_end: date | None = None
+
+
+class CalendarCommitmentEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CalendarCommitmentData
+    error: None = None
+
+
 class CalendarPeriodFoodsData(Schema):
     start_date: date
     end_date: date

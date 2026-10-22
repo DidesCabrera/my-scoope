@@ -29,7 +29,7 @@
     <div class="calendar-preview__week" aria-label="Fechas de la semana actual">
       {% for day in vm.content.week %}
         <a class="calendar-preview__date{% if day.is_selected %} is-selected{% endif %}{% if day.has_plan %} has-plan{% endif %}" href="?date={{ day.date|date:'Y-m-d' }}" aria-label="{{ day.date|date:'l j F' }}{% if day.has_plan %}: con plan{% else %}: sin plan{% endif %}{% for commitment in day.commitments %}, {{ commitment.get_kind_display }}{% endfor %}" {% if day.is_selected %}aria-current="date"{% endif %}>
-          <span>{{ day.weekday }}</span><strong>{{ day.date|date:"j" }}</strong><small>{{ day.date|date:"M" }}</small>{% if day.commitments %}<i class="calendar-preview__commitment-dot" aria-hidden="true"></i>{% endif %}
+          <span>{{ day.weekday }}</span><strong>{{ day.date|date:"j" }}</strong><small>{{ day.date|date:"M" }}</small>{% if day.commitments %}<span class="calendar-preview__commitment-dots" aria-hidden="true">{% for commitment in day.commitments %}<i class="calendar-preview__commitment-dot calendar-preview__commitment-dot--{{ commitment.kind }}"></i>{% endfor %}</span>{% endif %}
         </a>
       {% endfor %}
     </div>
@@ -100,7 +100,7 @@
     <p>Los días destacados tienen un plan asignado.</p>
     <div class="calendar-preview__grid">
       {% for day in vm.content.grid %}
-        <div class="calendar-preview__grid-date{% if day.has_plan %} has-plan{% endif %}" aria-label="{{ day.date|date:'l j F' }}{% if day.has_plan %}: con plan{% else %}: sin plan{% endif %}{% for commitment in day.commitments %}, {{ commitment.get_kind_display }}{% endfor %}"><small>{{ day.weekday }}</small><strong>{{ day.date|date:"j" }}</strong>{% if day.commitments %}<i class="calendar-preview__commitment-dot" aria-hidden="true"></i>{% endif %}</div>
+        <div class="calendar-preview__grid-date{% if day.has_plan %} has-plan{% endif %}" aria-label="{{ day.date|date:'l j F' }}{% if day.has_plan %}: con plan{% else %}: sin plan{% endif %}{% for commitment in day.commitments %}, {{ commitment.get_kind_display }}{% endfor %}"><small>{{ day.weekday }}</small><strong>{{ day.date|date:"j" }}</strong>{% if day.commitments %}<span class="calendar-preview__commitment-dots" aria-hidden="true">{% for commitment in day.commitments %}<i class="calendar-preview__commitment-dot calendar-preview__commitment-dot--{{ commitment.kind }}"></i>{% endfor %}</span>{% endif %}</div>
       {% endfor %}
     </div>
   </section>

@@ -7,7 +7,7 @@ test("accumulated food lists expose the shared check column in active and librar
   const groupedFoods = await readFile(path.resolve(process.cwd(), "src/components/panels/grouped-foods-card.tsx"), "utf8");
   assert.match(groupedFoods, /useState<Set<string>>/);
   assert.match(groupedFoods, /const checklist = preparation \?\?/);
-  assert.match(groupedFoods, /<FoodPanels items=\{items\} preparation=\{checklist\} showPreparationColumn/);
+  assert.match(groupedFoods, /<FoodPanels items=\{items\} preparation=\{checklist\} preparationFirst=\{preparationFirst\} showPreparationColumn/);
 
   const accumulatedListSurfaces = [
     "src/components/libraries/library-detail-screen.tsx",
@@ -24,7 +24,7 @@ test("accumulated food lists expose the shared check column in active and librar
 test("shopping and cooking commitment lists use the shared check column", async () => {
   for (const relativePath of [
     "src/app/calendar/commitments.tsx",
-    "src/components/calendarization/calendar-plan-editor.tsx",
+    "src/app/calendar/commitments/[id].tsx",
   ]) {
     const source = await readFile(path.resolve(process.cwd(), relativePath), "utf8");
     assert.ok(source.includes("<GroupedFoodsCard"));

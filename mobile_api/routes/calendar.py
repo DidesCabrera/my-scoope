@@ -10,6 +10,8 @@ from mobile_api.schema_domains.calendar import (
     CalendarAssignmentInput,
     CalendarCommitmentBatchEnvelope,
     CalendarCommitmentBatchInput,
+    CalendarCommitmentEnvelope,
+    CalendarCommitmentUpdateInput,
     CalendarDayDetailEnvelope,
     CalendarDayHistoryEnvelope,
     CalendarDraftInput,
@@ -28,7 +30,7 @@ from mobile_api.selectors import (
 )
 from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
 from notas.application.queries.calendarization_execution_queries import meal_execution_state_for_day
-from notas.application.services.commands.calendar_commitment_commands import register_calendar_commitments
+from notas.application.services.commands.calendar_commitment_commands import register_calendar_commitments, update_calendar_commitment
 from notas.application.services.commands.calendar_day_commands import (
     assign_dailyplan_to_calendar_date,
     create_and_assign_draft_to_calendar_date,
@@ -49,6 +51,7 @@ def _error(exc: ValueError) -> MobileAPIError:
     code = str(exc)
     message = {
         "calendar_commitment_already_exists": "Una o más fechas ya tienen ese compromiso. Revisa tu selección.",
+        "calendar_commitment_not_found": "Este compromiso ya no está disponible.",
         "calendar_commitment_date_in_past": "Elige fechas de hoy en adelante.",
         "calendar_commitment_dates_invalid": "Selecciona entre 1 y 62 fechas distintas.",
         "calendar_commitment_note_too_long": "La nota puede tener hasta 500 caracteres.",
@@ -62,7 +65,7 @@ def _error(exc: ValueError) -> MobileAPIError:
         code=code,
         message=message,
         status_code=(
-            404 if code in {"calendar_dailyplan_not_owned", "calendar_day_not_found"}
+            404 if code in {"calendar_dailyplan_not_owned", "calendar_day_not_found", "calendar_commitment_not_found"}
             else 409 if code in {
                 "calendar_replacement_confirmation_required", "calendar_day_has_execution",
                 "calendar_assignment_key_conflict", "calendar_date_in_past",
@@ -175,6 +178,26 @@ def register_commitments(request, payload: CalendarCommitmentBatchInput):
     except ValueError as exc:
         raise _error(exc) from exc
     return success({"items": [_commitment_payload(item) for item in items]})
+
+
+@router.patch(
+    "/calendar/commitments/{commitment_id}",
+    operation_id="mobile_api_api_update_calendar_commitment",
+    auth=mobile_bearer,
+    response={200: CalendarCommitmentEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_commitment(request, commitment_id: int, payload: CalendarCommitmentUpdateInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        item = update_calendar_commitment(
+            user=request.auth.user, commitment_id=commitment_id, note=payload.note,
+            update_food_period=payload.update_food_period,
+            food_period_start=payload.food_period_start,
+            food_period_end=payload.food_period_end,
+        )
+    except ValueError as exc:
+        raise _error(exc) from exc
+    return success(_commitment_payload(item))
 
 
 @router.get(

@@ -1,4 +1,5 @@
 import { type ComponentProps, type ReactNode, useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 import { Card, Chip, EntityHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -8,10 +9,11 @@ import { FoodPanels } from "./entity-panels";
 type GroupedFoodsCardProps = ComponentProps<typeof FoodPanels> & {
   title: string;
   intro?: ReactNode;
+  summaryChips?: ReactNode;
   showContents?: boolean;
 };
 
-export function GroupedFoodsCard({ items, preparation, title, intro, showContents = true, ...panelProps }: GroupedFoodsCardProps) {
+export function GroupedFoodsCard({ items, preparation, preparationFirst = false, title, intro, summaryChips, showContents = true, ...panelProps }: GroupedFoodsCardProps) {
   const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
   const countLabel = `${items.length} ${items.length === 1 ? "alimento" : "alimentos"}`;
   const checklist = preparation ?? {
@@ -28,9 +30,17 @@ export function GroupedFoodsCard({ items, preparation, title, intro, showContent
       <EntityHeading entity="food" eyebrow="LISTA DE ALIMENTOS" title={title} />
       {intro}
       {showContents ? <>
-        <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={countLabel} textColor={tokens.color.textMain} />
-        <FoodPanels items={items} preparation={checklist} showPreparationColumn {...panelProps} />
+        <View style={[styles.chips, summaryChips ? styles.chipsWithSummary : null]}>
+          <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={countLabel} textColor={tokens.color.textMain} />
+          {summaryChips}
+        </View>
+        <FoodPanels items={items} preparation={checklist} preparationFirst={preparationFirst} showPreparationColumn {...panelProps} />
       </> : null}
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  chips: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },
+  chipsWithSummary: { marginTop: 8 - tokens.card.gap },
+});

@@ -352,12 +352,13 @@ type FoodPreparation = {
 };
 
 type QuantitySortKey = "name" | "prepared" | "quantity";
-function QuantityHeader({ leadingLabel, preparation, trailingLabel, ...sorting }: HeaderSortProps<QuantitySortKey> & { leadingLabel: string; preparation?: boolean; trailingLabel: string }) {
+function QuantityHeader({ leadingLabel, preparation, preparationFirst = false, trailingLabel, ...sorting }: HeaderSortProps<QuantitySortKey> & { leadingLabel: string; preparation?: boolean; preparationFirst?: boolean; trailingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
+      {preparation && preparationFirst ? <SortablePanelHeaderCell direction={sorting.sort?.key === "prepared" ? sorting.sort.direction : undefined} icon={<View style={styles.preparationHeaderIcon}><Check color={tokens.color.surfaceApp} size={12} strokeWidth={3.3} /></View>} label="Listo" onPress={() => sorting.onSort("prepared")} style={styles.preparationValueFirst} /> : null}
       <PanelHeaderCell {...sorting} align="left" sortKey="name" style={styles.quantityLeadingCell}>{leadingLabel}</PanelHeaderCell>
       <PanelHeaderCell {...sorting} sortKey="quantity" style={styles.quantityValue}>{trailingLabel}</PanelHeaderCell>
-      {preparation ? <PanelHeaderCell {...sorting} sortKey="prepared" style={styles.preparationValue}>Listo</PanelHeaderCell> : null}
+      {preparation && !preparationFirst ? <PanelHeaderCell {...sorting} sortKey="prepared" style={styles.preparationValue}>Listo</PanelHeaderCell> : null}
     </View>
   );
 }
@@ -405,7 +406,7 @@ function AllocationHeader({ leadingLabel, ...sorting }: HeaderSortProps<Allocati
   );
 }
 
-export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: { editing?: PanelRowEditing<FoodPanelItem>; items: FoodPanelItem[]; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation }) {
+export function FoodQuantityPanel({ editing, items, onOpenItem, preparation, preparationFirst = false }: { editing?: PanelRowEditing<FoodPanelItem>; items: FoodPanelItem[]; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; preparationFirst?: boolean }) {
   const sorting = useTemporaryPanelSort(items, {
     name: (item) => item.name,
     prepared: (item) => preparation?.isPrepared(item) ?? false,
@@ -415,24 +416,26 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay alimentos." />;
   return (
     <PanelBody>
-      <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} trailingLabel="Qty" {...sorting} />
+      <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} preparationFirst={preparationFirst} trailingLabel="Qty" {...sorting} />
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => {
         const canOpen = item.detailId != null && Boolean(onOpenItem);
+        const preparationCell = preparation ? (
+          <Pressable
+            accessibilityLabel={`${preparation.isPrepared(item) ? "Desmarcar" : "Marcar"} ${item.name} como preparado`}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: preparation.isPrepared(item), disabled: preparation.disabled }}
+            disabled={preparation.disabled}
+            hitSlop={8}
+            onPress={() => preparation.onToggle(item)}
+            style={[styles.preparationValue, preparationFirst && styles.preparationValueFirst, styles.preparationButton]}>
+            <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
+          </Pressable>
+        ) : null;
         return <View key={item.id} style={[styles.row, styles.foodQuantityRow, index === visibleItems.length - 1 && styles.rowLast]}>
+          {preparationFirst ? preparationCell : null}
           <PanelItemName dragInteraction={dragInteraction} item={item} itemNameStyle={styles.quantityItemText} onOpenItem={canOpen ? onOpenItem : undefined} showNutritionSummary style={styles.quantityLeadingCell} />
           <Text style={[styles.cell, styles.quantityValue, styles.quantityItemText]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
-          {preparation ? (
-            <Pressable
-              accessibilityLabel={`${preparation.isPrepared(item) ? "Desmarcar" : "Marcar"} ${item.name} como preparado`}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: preparation.isPrepared(item), disabled: preparation.disabled }}
-              disabled={preparation.disabled}
-              hitSlop={8}
-              onPress={() => preparation.onToggle(item)}
-              style={[styles.preparationValue, styles.preparationButton]}>
-              <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
-            </Pressable>
-          ) : null}
+          {!preparationFirst ? preparationCell : null}
         </View>
       }} />
     </PanelBody>
@@ -697,7 +700,7 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
   );
 }
 
-export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation, showEditTab = true, showPreparationColumn = false }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; showEditTab?: boolean; showPreparationColumn?: boolean }) {
+export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation, preparationFirst = false, showEditTab = true, showPreparationColumn = false }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; preparationFirst?: boolean; showEditTab?: boolean; showPreparationColumn?: boolean }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
   const itemSignature = items.map(({ id, name, quantity }) => `${id}:${name}:${quantity}`).join("|");
   const [optimisticOrder, setOptimisticOrder] = useState<{ items: FoodPanelItem[]; sourceSignature: string } | null>(null);
@@ -723,7 +726,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
   return (
     <NestedPanelScrollContext.Provider value={nestedScroll}><PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing && showEditTab ? [...foodTabs, editTab] : foodTabs} />
-      {activeTab === "quantity" ? <FoodQuantityPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} preparation={showPreparationColumn ? preparation : undefined} /> : null}
+      {activeTab === "quantity" ? <FoodQuantityPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} preparation={showPreparationColumn ? preparation : undefined} preparationFirst={preparationFirst} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
@@ -796,6 +799,8 @@ const styles = StyleSheet.create({
   foodQuantityRow: { minHeight: 76, paddingVertical: tokens.spacing.sm },
   quantityValue: { textAlign: "center", width: 56 },
   preparationValue: { width: 48 },
+  preparationValueFirst: { width: 26 },
+  preparationHeaderIcon: { alignItems: "center", backgroundColor: tokens.color.food, borderColor: tokens.color.borderDefault, borderRadius: 9, borderWidth: 1, height: 18, justifyContent: "center", width: 18 },
   preparationButton: { alignItems: "center", alignSelf: "stretch", justifyContent: "center" },
   preparationMarker: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 2, height: 20, justifyContent: "center", width: 20 },
   preparationMarkerChecked: { backgroundColor: tokens.color.food, borderRadius: 5, height: 10, width: 10 },

@@ -1554,6 +1554,28 @@
         "title": "CalendarCommitmentData",
         "type": "object"
       },
+      "CalendarCommitmentEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarCommitmentData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarCommitmentEnvelope",
+        "type": "object"
+      },
       "CalendarCommitmentFoodAttachmentInput": {
         "properties": {
           "calendar_date": {
@@ -1598,6 +1620,53 @@
           "note"
         ],
         "title": "CalendarCommitmentNoteInput",
+        "type": "object"
+      },
+      "CalendarCommitmentUpdateInput": {
+        "properties": {
+          "food_period_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Period End"
+          },
+          "food_period_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Period Start"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "update_food_period": {
+            "default": false,
+            "title": "Update Food Period",
+            "type": "boolean"
+          }
+        },
+        "title": "CalendarCommitmentUpdateInput",
         "type": "object"
       },
       "CalendarDayData": {
@@ -11485,6 +11554,80 @@
           }
         ],
         "summary": "Register Commitments"
+      }
+    },
+    "/api/v1/calendar/commitments/{commitment_id}": {
+      "patch": {
+        "operationId": "mobile_api_api_update_calendar_commitment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "commitment_id",
+            "required": true,
+            "schema": {
+              "title": "Commitment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarCommitmentUpdateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarCommitmentEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Commitment"
       }
     },
     "/api/v1/calendar/days/{local_date}": {

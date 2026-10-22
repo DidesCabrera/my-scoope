@@ -505,7 +505,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /preparationMarker: \{[^}]*borderColor: tokens\.color\.borderDefault/);
   assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked: \{ backgroundColor: tokens\.color\.food, borderRadius: 5, height: 10, width: 10 \}/);
   assertSourceMatch(sharedEntityPanels, /accessibilityRole="checkbox"/);
-  assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.preparationValue, styles\.preparationButton\]\}/);
+  assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.preparationValue, preparationFirst && styles\.preparationValueFirst, styles\.preparationButton\]\}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /styles\.preparationButton, preparation\.disabled && styles\.disabled/);
   assertSourceMatch(sharedEntityPanels, /quantityItemText: \{ fontSize: tokens\.type\.caption \+ 1 \}/);
   assertSourceMatch(sharedEntityPanels, /sortKey="name" style=\{styles\.quantityLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);

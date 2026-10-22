@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { calendarFoodDayRole, selectCalendarFoodDate, validCalendarFoodPeriod } from "../src/components/calendarization/calendar-food-period";
+import { calendarFoodDayRole, calendarFoodPeriodDayCount, selectCalendarFoodDate, validCalendarFoodPeriod } from "../src/components/calendarization/calendar-food-period";
 
 test("shopping food period requires two ordered dates", () => {
   assert.equal(validCalendarFoodPeriod("", "2026-10-21"), false);
@@ -12,6 +12,12 @@ test("shopping food period requires two ordered dates", () => {
 test("shopping food period accepts up to 366 inclusive days", () => {
   assert.equal(validCalendarFoodPeriod("2026-01-01", "2027-01-01"), true);
   assert.equal(validCalendarFoodPeriod("2026-01-01", "2027-01-02"), false);
+});
+
+test("food period day count includes both endpoints across month boundaries", () => {
+  assert.equal(calendarFoodPeriodDayCount("2026-10-23", "2026-11-01"), 10);
+  assert.equal(calendarFoodPeriodDayCount("2026-10-23", "2026-10-23"), 1);
+  assert.equal(calendarFoodPeriodDayCount("2026-11-01", "2026-10-23"), 0);
 });
 
 test("calendar range chooses start, inclusive end, then starts a new range", () => {

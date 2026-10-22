@@ -78,3 +78,45 @@ def register_calendar_commitments(
         return CalendarCommitment.objects.bulk_create(commitments)
     except IntegrityError as exc:
         raise ValueError("calendar_commitment_already_exists") from exc
+
+
+@transaction.atomic
+def update_calendar_commitment(
+    *, user: User, commitment_id: int, note: str | None = None,
+    update_food_period: bool = False,
+    food_period_start: date | None = None, food_period_end: date | None = None,
+) -> CalendarCommitment:
+    commitment = CalendarCommitment.objects.select_for_update().filter(
+        pk=commitment_id, user=user,
+    ).first()
+    if commitment is None:
+        raise ValueError("calendar_commitment_not_found")
+    update_fields = []
+    if note is not None:
+        clean_note = note.strip()
+        if len(clean_note) > 500:
+            raise ValueError("calendar_commitment_note_too_long")
+        commitment.note = clean_note
+        update_fields.append("note")
+    if update_food_period:
+        if commitment.kind not in {CalendarCommitment.KIND_SHOPPING, CalendarCommitment.KIND_COOKING}:
+            raise ValueError("calendar_food_period_wrong_kind")
+        if (food_period_start is None) != (food_period_end is None):
+            raise ValueError("calendar_food_period_incomplete")
+        if food_period_start is None:
+            commitment.food_period_start = None
+            commitment.food_period_end = None
+            commitment.food_plans_count = 0
+            commitment.foods_snapshot = []
+        else:
+            foods = calendar_foods_for_period(
+                user, start_date=food_period_start, end_date=food_period_end,
+            )
+            commitment.food_period_start = food_period_start
+            commitment.food_period_end = food_period_end
+            commitment.food_plans_count = foods["plans_count"]
+            commitment.foods_snapshot = deepcopy(foods["foods_aggregation_table"])
+        update_fields.extend(("food_period_start", "food_period_end", "food_plans_count", "foods_snapshot"))
+    if update_fields:
+        commitment.save(update_fields=update_fields)
+    return commitment
