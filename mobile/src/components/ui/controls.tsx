@@ -18,14 +18,15 @@ export function Button({
   icon?: ReactNode;
   label: string;
   onPress(): void;
-  variant?: "primary" | "secondary" | "danger" | "multicolor";
+  variant?: "primary" | "secondary" | "danger" | "gradient" | "multicolor";
   multicolorSurface?: "app" | "muted";
   disabled?: boolean;
   loading?: boolean;
 }) {
-  const multicolor = variant === "multicolor";
+  const gradient = variant === "gradient";
+  const multicolor = variant === "multicolor" || gradient;
   const buttonStyle = variant === "primary" ? styles.buttonPrimary : multicolor ? styles.buttonMulticolor : styles.buttonSecondary;
-  const textStyle = variant === "primary" ? styles.buttonPrimaryText : styles.buttonSecondaryText;
+  const textStyle = variant === "primary" || gradient ? styles.buttonPrimaryText : styles.buttonSecondaryText;
   return (
     <Pressable
       accessibilityRole="button"
@@ -52,9 +53,9 @@ export function Button({
           </Defs>
           <Rect fill="url(#button-border-macros)" height="100%" width="100%" />
         </Svg>
-        <View style={[styles.buttonMulticolorInset, multicolorSurface === "app" && styles.buttonMulticolorInsetApp]} />
+        {!gradient ? <View style={[styles.buttonMulticolorInset, multicolorSurface === "app" && styles.buttonMulticolorInsetApp]} /> : null}
       </> : null}
-      {loading ? <ActivityIndicator color={variant === "primary" ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
+      {loading ? <ActivityIndicator color={variant === "primary" || gradient ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
       {!loading ? icon : null}
       <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{label}</Text>
     </Pressable>

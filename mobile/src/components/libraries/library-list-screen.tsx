@@ -4,10 +4,12 @@ import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, T
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
-import type { LibraryEntity, LibraryListActionResult, LibraryPageData } from "@/api/types";
+import type { EntitlementsData, LibraryEntity, LibraryListActionResult, LibraryPageData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
+import { reachedCommercialLimit } from "@/components/subscriptions/commercial-limit";
+import { CommercialLimitSheet, type CommercialLimitState } from "@/components/subscriptions/commercial-limit-sheet";
 import { CollectionPageHeader, LoadingState, MacroLoadingIndicator, MutationStatusModal, SearchField, useMutationStatus } from "@/components/ui";
 import { Button, Card, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -57,9 +59,29 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const [mode, setMode] = useState<"list" | "edit">("list");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [commercialLimit, setCommercialLimit] = useState<CommercialLimitState | null>(null);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const cancelSelection = useCallback(() => setSelectedIds(new Set()), []);
   const finishEdit = useCallback(() => { setSelectedIds(new Set()); setMode("list"); }, []);
+
+  const openCreate = useCallback(async () => {
+    if (entity === "food") {
+      router.push({ pathname: "/libraries/create", params: { entity } });
+      return;
+    }
+    setError(null);
+    try {
+      const entitlements = await apiRequest<EntitlementsData>("/api/v1/entitlements", { cache: "no-store" });
+      const reachedLimit = reachedCommercialLimit(entitlements, entity);
+      if (reachedLimit) {
+        setCommercialLimit(reachedLimit);
+        return;
+      }
+      router.push({ pathname: "/libraries/create", params: { entity } });
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    }
+  }, [apiRequest, entity, router]);
 
   const load = useCallback(async ({ append = false, offset = 0 } = {}) => {
     if (append) {
@@ -191,14 +213,14 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
         action: mode === "list"
           ? { icon: "more", label: `Acciones de ${title}`, onPress: () => setActionsVisible(true) }
           : { disabled: loading || submitting, label: "Listo", onPress: finishEdit },
-        createAction: mode === "list" ? { label: createLabels[entity], onPress: () => router.push({ pathname: "/libraries/create", params: { entity } }) } : undefined,
+        createAction: mode === "list" ? { label: createLabels[entity], onPress: () => void openCreate() } : undefined,
         entity,
         identityVisible: compactHeaderVisible,
         title,
       });
     }
     return () => setHeaderPresentation({ mode: "default" });
-  }, [cancelSelection, compactHeaderVisible, confirmDeleteSelected, entity, finishEdit, loading, mode, router, selectedIds.size, setHeaderPresentation, submitting, title]));
+  }, [cancelSelection, compactHeaderVisible, confirmDeleteSelected, entity, finishEdit, loading, mode, openCreate, selectedIds.size, setHeaderPresentation, submitting, title]));
 
   useFocusEffect(useCallback(() => {
     if (mode === "list") void load();
@@ -250,6 +272,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
         />
       ) : null}
       <LibraryListActions canCompare={entity !== "program"} entity={entity} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onEdit={() => void beginEdit()} title={title} visible={actionsVisible} />
+      {commercialLimit ? <CommercialLimitSheet {...commercialLimit} onClose={() => setCommercialLimit(null)} onUpgrade={() => { setCommercialLimit(null); router.push("/subscription"); }} visible /> : null}
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </NestableScrollContainer>
   );
