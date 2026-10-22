@@ -533,14 +533,32 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(preview, "Registrar compromisos")
 
     def test_commitment_views_use_kind_specific_icons(self):
-        for kind, icon in (("shopping", "shopping-basket"), ("cooking", "cooking-pot"), ("training", "dumbbell")):
+        for kind, icon in (("shopping", "shopping-basket"), ("cooking", "cooking-pot"), ("training", "dumbbell"), ("nutritionist", "stethoscope")):
             with self.subTest(kind=kind):
                 response = self.client.get(reverse("calendar_commitments", args=[kind]))
                 self.assertContains(response, f'data-kind="{kind}"')
                 self.assertContains(response, f'data-lucide="{icon}"')
         preview = self.client.get(reverse("calendar_preview"))
-        for icon in ("shopping-basket", "cooking-pot", "dumbbell"):
+        for icon in ("shopping-basket", "cooking-pot", "dumbbell", "stethoscope"):
             self.assertContains(preview, f'data-lucide="{icon}"')
+
+    def test_nutritionist_commitment_uses_note_only_editor(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        page = self.client.get(reverse("calendar_commitments", args=["nutritionist"]))
+        self.assertContains(page, "Registrar citas con nutricionista")
+        self.assertContains(page, 'id="calendar-commitments-food-card"')
+        self.assertContains(page, 'hidden>')
+        response = self.client.post(reverse("calendar_commitments", args=["nutritionist"]), {
+            "dates": [today.isoformat()], "note": "Revisar avances",
+        })
+        self.assertRedirects(response, reverse("calendar_preview"))
+        commitment = CalendarCommitment.objects.get(user=self.user, kind="nutritionist")
+        self.assertEqual(commitment.note, "Revisar avances")
+        self.assertIsNone(commitment.food_period_start)
+        self.assertEqual(commitment.foods_snapshot, [])
+        preview = self.client.get(reverse("calendar_preview"), {"date": today.isoformat()})
+        self.assertContains(preview, "Cita nutricionista")
+        self.assertContains(preview, "Revisar avances")
 
     def test_calendar_commitments_reject_duplicate_batch_without_partial_write(self):
         today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")

@@ -38,6 +38,7 @@ Sentry.setTags({
 
 export type WheelPickerKind = "date" | "height" | "portion" | "time" | "weight";
 export type WheelPickerAction = "cancel" | "commit" | "open";
+export type LibraryEditAction = "delete" | "finish" | "open" | "stale-reorder-dropped";
 
 /** Record only the picker surface and lifecycle; selected values are deliberately excluded. */
 export function recordWheelPickerInteraction(kind: WheelPickerKind, action: WheelPickerAction): void {
@@ -45,5 +46,15 @@ export function recordWheelPickerInteraction(kind: WheelPickerKind, action: Whee
     category: "ui.wheel-picker",
     level: "info",
     message: `${kind}.${action}`,
+  });
+}
+
+/** Record only the library kind, lifecycle action and item count; names and item IDs are excluded. */
+export function recordLibraryEditInteraction(entity: "dailyPlan" | "food" | "meal" | "program", action: LibraryEditAction, itemCount: number): void {
+  Sentry.addBreadcrumb({
+    category: "ui.library-edit",
+    data: { entity, item_count: Math.max(0, itemCount) },
+    level: "info",
+    message: action,
   });
 }

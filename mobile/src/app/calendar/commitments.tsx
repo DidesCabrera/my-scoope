@@ -6,7 +6,7 @@ import { BackHandler, Pressable, StyleSheet, Text, TextInput, View } from "react
 import { userFacingError } from "@/api/errors";
 import type { CalendarCommitment, CalendarCommitmentKind, CalendarOverviewData, CalendarPeriodFoodsData } from "@/api/calendar-types";
 import { useSession } from "@/auth/session-context";
-import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
+import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentRegistrationTitle, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
 import { calendarFoodDayRole, calendarFoodPeriodDayCount, selectCalendarFoodDate, validCalendarFoodPeriod } from "@/components/calendarization/calendar-food-period";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
@@ -18,7 +18,7 @@ import { Chip } from "@/components/ui/chip";
 import { tokens } from "@/design/tokens";
 
 function isCommitmentKind(value: string | undefined): value is CalendarCommitmentKind {
-  return value === "shopping" || value === "cooking" || value === "training";
+  return value === "shopping" || value === "cooking" || value === "training" || value === "nutritionist";
 }
 
 function shortDate(value: string): string {
@@ -286,7 +286,7 @@ export default function RegisterCommitmentsScreen() {
 
   if (editingFoodDate) return <Screen contentStyle={styles.content} headerMode="preserve" key={`commitment-detail-${editingFoodDate}`}>
     <SectionPageHeader icon={pageIcon} indicator={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={shortDate(editingFoodDate)} textColor={tokens.color.textMain} />} section="calendarization" title={commitmentDayTitle[kind]} />
-    {kind !== "training" ? <View style={styles.foodPeriodControls}>
+    {commitmentSupportsFoods(kind) ? <View style={styles.foodPeriodControls}>
           <Text style={styles.foodInstruction}>Selecciona una fecha de inicio y de término.</Text>
           <View style={styles.monthNavigation}>
             <Pressable accessibilityLabel="Mes anterior del periodo" accessibilityRole="button" accessibilityState={{ disabled: foodRangeLocked }} disabled={foodRangeLocked} onPress={() => { if (foodMonth) setFoodMonth(shiftMonth(foodMonth, -1)); }} style={styles.monthArrow}>
@@ -324,9 +324,9 @@ export default function RegisterCommitmentsScreen() {
               : <Button disabled={!validCalendarFoodPeriod(foodStartDate, foodEndDate) || foodLoading} label="Calcular lista de alimentos" loading={foodLoading} onPress={() => void calculateFoodList()} />}
           </View>
       </View> : null}
-    {kind !== "training" && foodError ? <InlineNotice tone="error">{foodError}</InlineNotice> : null}
-    {kind !== "training" && foodLoading ? <LoadingState label="Calculando alimentos…" /> : null}
-    {kind !== "training" && foodPreview ? <GroupedFoodsCard
+    {commitmentSupportsFoods(kind) && foodError ? <InlineNotice tone="error">{foodError}</InlineNotice> : null}
+    {commitmentSupportsFoods(kind) && foodLoading ? <LoadingState label="Calculando alimentos…" /> : null}
+    {commitmentSupportsFoods(kind) && foodPreview ? <GroupedFoodsCard
       intro={<Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={`${shortDate(foodStartDate)} – ${shortDate(foodEndDate)}`} textColor={tokens.color.textMain} />}
       items={foodPreview?.foods.map(commitmentFoodPanelItem) ?? []}
       key={`${editingFoodDate}:${foodStartDate}:${foodEndDate}`}
@@ -341,7 +341,7 @@ export default function RegisterCommitmentsScreen() {
     /> : null}
     <Card>
       <Text style={styles.sectionTitle}>Nota (opcional)</Text>
-      <TextInput accessibilityLabel={`Nota del ${commitmentDayTitle[kind].toLowerCase()} del ${shortDate(editingFoodDate)}`} maxLength={500} multiline onChangeText={(value) => setNotesByDate((current) => ({ ...current, [editingFoodDate]: value }))} placeholder="Agrega una nota para recordar los detalles…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={notesByDate[editingFoodDate] ?? ""} />
+      <TextInput accessibilityLabel={`Nota de ${kind === "nutritionist" ? "la cita nutricionista" : `el ${commitmentDayTitle[kind].toLowerCase()}`} del ${shortDate(editingFoodDate)}`} maxLength={500} multiline onChangeText={(value) => setNotesByDate((current) => ({ ...current, [editingFoodDate]: value }))} placeholder="Agrega una nota para recordar los detalles…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={notesByDate[editingFoodDate] ?? ""} />
       <Text style={styles.noteCount}>{(notesByDate[editingFoodDate] ?? "").length}/500</Text>
     </Card>
   </Screen>;
@@ -391,7 +391,7 @@ export default function RegisterCommitmentsScreen() {
           <Text style={styles.selectedDateEyebrowText}>{commitmentDayTitle[kind].toUpperCase()}</Text>
         </View>
         <Text style={styles.selectedDateTitle}>{shortDate(date)}</Text>
-        {kind !== "training" ? <Text style={styles.helper}>{foodAttachments[date]
+        {commitmentSupportsFoods(kind) ? <Text style={styles.helper}>{foodAttachments[date]
           ? `Lista: ${shortDate(foodAttachments[date].start)} – ${shortDate(foodAttachments[date].end)}`
           : "Sin lista de alimentos adjunta"}</Text> : null}
         {foodAttachments[date] && calculatedFoodsByDate[date] ? <View style={styles.selectedDateChips}>
@@ -402,7 +402,7 @@ export default function RegisterCommitmentsScreen() {
         {notesByDate[date]?.trim() ? <Text numberOfLines={1} style={styles.helper}>{notesByDate[date].trim()}</Text> : null}
         </Pressable>
         <View style={styles.selectedDateFooter}>
-          {kind !== "training" && !foodAttachments[date]
+          {commitmentSupportsFoods(kind) && !foodAttachments[date]
             ? <PickerCardAction label={kind === "shopping" ? "Crear lista de compras" : "Crear lista para cocinar"} onPress={() => openFoodEditor(date)} subject={shortDate(date)} />
             : <Pressable accessibilityLabel={`Ver detalle: ${shortDate(date)}`} accessibilityRole="button" onPress={() => openFoodEditor(date)}><ChevronRight color={tokens.color.textMuted} size={22} /></Pressable>}
         </View>

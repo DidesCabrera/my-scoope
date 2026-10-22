@@ -30,6 +30,11 @@ while IFS= read -r changed_path; do
       tier=full
       break
       ;;
+    notas/application/services/commands/calendar_day_commands.py)
+      # Calendar date moves lock rows and preserve dated history; exercise PostgreSQL.
+      tier=full
+      break
+      ;;
     scripts/ci_mobile_iteration.sh)
       if [[ "$tier" == "docs" ]]; then
         tier=mobile

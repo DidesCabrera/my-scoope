@@ -112,8 +112,8 @@ export default function ActivateProgramScreen() {
     setTimezoneName(detectedTimezone(profile?.timezone_name));
   }, [profile?.timezone_name]));
   useFocusEffect(useCallback(() => {
-    const cancel = () => router.dismissTo("/program" as Href);
-    setHeaderPresentation({ action: { label: "Cancelar", onPress: cancel }, fallback: "/program", mode: "back", title: "Calendarizar programa" });
+    const cancel = () => router.dismissTo("/calendar" as Href);
+    setHeaderPresentation({ action: { label: "Cancelar", onPress: cancel }, fallback: "/calendar", mode: "back", title: "Calendarizar programa" });
     return () => setHeaderPresentation({ mode: "default" });
   }, [router, setHeaderPresentation]));
 
@@ -190,7 +190,7 @@ export default function ActivateProgramScreen() {
         router.replace("/reminders" as Href);
         return;
       }
-      router.replace("/program" as Href);
+      router.replace("/calendar" as Href);
     } catch (nextError) {
       if (nextError instanceof MobileApiError && nextError.code === "calendarization_incomplete_confirmation_required") {
         const count = Number(nextError.details.empty_count ?? 0);

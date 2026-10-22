@@ -6,5 +6,6 @@ import { commitmentDotKinds } from "../src/components/calendarization/calendar-c
 test("calendar dots show every kind once, including a draft shopping day", () => {
   assert.deepEqual(commitmentDotKinds([{ kind: "cooking" }, { kind: "training" }], "shopping"), ["cooking", "training", "shopping"]);
   assert.deepEqual(commitmentDotKinds([{ kind: "shopping" }], "shopping"), ["shopping"]);
+  assert.deepEqual(commitmentDotKinds([{ kind: "nutritionist" }, { kind: "training" }, { kind: "nutritionist" }]), ["nutritionist", "training"]);
   assert.deepEqual(commitmentDotKinds(undefined), []);
 });

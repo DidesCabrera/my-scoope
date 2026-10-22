@@ -34,7 +34,7 @@
       {% endfor %}
     </div>
     {% if vm.content.selected_commitments %}<div class="calendar-preview__selected-commitments"><h3>Compromisos de esta fecha</h3><ul>{% for commitment in vm.content.selected_commitments %}<li>
-      <strong class="calendar-preview__commitment-label"><i data-lucide="{% if commitment.kind == 'shopping' %}shopping-basket{% elif commitment.kind == 'cooking' %}cooking-pot{% else %}dumbbell{% endif %}" aria-hidden="true"></i>{{ commitment.get_kind_display }}</strong>{% if commitment.note %} · {{ commitment.note }}{% endif %}
+      <strong class="calendar-preview__commitment-label"><i data-lucide="{% if commitment.kind == 'shopping' %}shopping-basket{% elif commitment.kind == 'cooking' %}cooking-pot{% elif commitment.kind == 'training' %}dumbbell{% else %}stethoscope{% endif %}" aria-hidden="true"></i>{{ commitment.get_kind_display }}</strong>{% if commitment.note %} · {{ commitment.note }}{% endif %}
       {% if commitment.food_period_start and commitment.food_period_end %}
         <p>Lista guardada · {{ commitment.food_period_start|date:"j M Y" }} al {{ commitment.food_period_end|date:"j M Y" }} · {{ commitment.food_plans_count }} plan{{ commitment.food_plans_count|pluralize:"es" }}</p>
         <div class="calendar-commitments__food-list">
@@ -114,6 +114,7 @@
         <a href="{% url 'calendar_commitments' 'shopping' %}"><i data-lucide="shopping-basket" aria-hidden="true"></i>Registrar días de compras</a>
         <a href="{% url 'calendar_commitments' 'cooking' %}"><i data-lucide="cooking-pot" aria-hidden="true"></i>Registrar días de cocinar</a>
         <a href="{% url 'calendar_commitments' 'training' %}"><i data-lucide="dumbbell" aria-hidden="true"></i>Registrar días de entrenamiento</a>
+        <a href="{% url 'calendar_commitments' 'nutritionist' %}"><i data-lucide="stethoscope" aria-hidden="true"></i>Cita nutricionista</a>
       </div>
       <form method="dialog"><button type="submit">Cancelar</button></form>
     </dialog>

@@ -5,7 +5,7 @@ from ninja import Field, Schema
 
 from mobile_api.schema_domains.libraries import LibraryFoodPanelItemData
 
-CalendarCommitmentKind = Literal["shopping", "cooking", "training"]
+CalendarCommitmentKind = Literal["shopping", "cooking", "training", "nutritionist"]
 
 
 class CalendarCommitmentData(Schema):
@@ -82,6 +82,11 @@ class CalendarDayData(Schema):
     calendar_date: date
     has_plan: bool
     plan_name: str = ""
+    plan_calories: float | None = None
+    plan_protein_grams: float | None = None
+    plan_carbs_grams: float | None = None
+    plan_fat_grams: float | None = None
+    plan_protein_per_kilogram: float | None = None
     source_kind: str | None = None
     source_program_name: str | None = None
     has_execution: bool = False
@@ -149,6 +154,17 @@ class CalendarMoveInput(Schema):
     target_date: date
     assignment_key: str = Field(min_length=8, max_length=120)
     replace_existing: bool = False
+
+
+class CalendarReorderInput(Schema):
+    dates: list[date] = Field(min_length=2, max_length=42)
+    ordered_day_ids: list[int | None] = Field(min_length=2, max_length=42)
+
+
+class CalendarReorderEnvelope(Schema):
+    ok: Literal[True] = True
+    data: dict[str, bool]
+    error: None = None
 
 
 class CalendarDraftInput(Schema):

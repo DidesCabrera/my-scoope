@@ -326,7 +326,7 @@ def calendar_commitments(request, kind):
     )
     return render(request, "notas/calendarization/calendar_commitments.html", {
         "kind": kind,
-        "kind_label": {"shopping": "Registrar días de compras", "cooking": "Registrar días de cocinar", "training": "Registrar días de entrenamiento"}[kind],
+        "kind_label": {"shopping": "Registrar días de compras", "cooking": "Registrar días de cocinar", "training": "Registrar días de entrenamiento", "nutritionist": "Registrar citas con nutricionista"}[kind],
         "today": today,
         "existing_dates": [value.isoformat() for value in existing_dates],
     })

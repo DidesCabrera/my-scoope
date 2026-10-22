@@ -252,10 +252,12 @@ class CalendarCommitment(models.Model):
     KIND_SHOPPING = "shopping"
     KIND_COOKING = "cooking"
     KIND_TRAINING = "training"
+    KIND_NUTRITIONIST = "nutritionist"
     KIND_CHOICES = (
         (KIND_SHOPPING, "Hacer compras"),
         (KIND_COOKING, "Cocinar"),
         (KIND_TRAINING, "Entrenar"),
+        (KIND_NUTRITIONIST, "Cita nutricionista"),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="calendar_commitments")

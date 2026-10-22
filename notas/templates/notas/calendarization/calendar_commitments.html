@@ -7,7 +7,7 @@
   <div class="list-page-header list-page-header--calendarization js-header-meta-sentinel">
     <div class="list-page-header__identity">
       <button type="button" class="calendar-commitments__header-back" id="calendar-commitments-editor-back" aria-label="Volver a las fechas" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
-      <i data-lucide="{% if kind == 'shopping' %}shopping-basket{% elif kind == 'cooking' %}cooking-pot{% else %}dumbbell{% endif %}" class="list-page-header__icon list-page-header__icon--calendarization"></i>
+      <i data-lucide="{% if kind == 'shopping' %}shopping-basket{% elif kind == 'cooking' %}cooking-pot{% elif kind == 'training' %}dumbbell{% else %}stethoscope{% endif %}" class="list-page-header__icon list-page-header__icon--calendarization"></i>
       <h1 class="list-page-header__title" id="calendar-commitments-page-title">{{ kind_label }}</h1>
     </div>
     <span class="calendar-commitments__date-chip" id="calendar-commitments-date-chip" hidden></span>
@@ -37,7 +37,7 @@
     </div>
     </div>
     <div class="calendar-commitments__view" id="calendar-commitments-editor-view" hidden>
-      <section class="calendar-preview__section calendar-commitments__food-card" id="calendar-commitments-food-card" aria-labelledby="calendar-commitments-food-card-title" {% if kind == 'training' %}hidden{% endif %}>
+      <section class="calendar-preview__section calendar-commitments__food-card" id="calendar-commitments-food-card" aria-labelledby="calendar-commitments-food-card-title" {% if kind != 'shopping' and kind != 'cooking' %}hidden{% endif %}>
       <p class="calendar-preview__eyebrow">LISTA DE ALIMENTOS</p>
       <h2 id="calendar-commitments-food-card-title">Alimentos para {% if kind == 'cooking' %}cocinar{% else %}comprar{% endif %}</h2>
       <div class="calendar-commitments__period-fields" data-foods-url="{% url 'calendar_commitment_foods' %}">

@@ -553,12 +553,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealCompletionSummary, /mealNutrition\.reduce\([\s\S]*completedKeys\.has\(meal\.key\)/);
 
   const activeProgram = await readTestFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
-  assertSourceMatch(activeProgram, /<SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" \/>/);
+  assertSourceMatch(activeProgram, /<SectionPageHeader countLabel="semanas" section="calendarization" title="Programa en curso" \/>/);
   assertSourceDoesNotMatch(activeProgram, /<SectionPageHeader count=\{weekCount\}/);
   assertSourceDoesNotMatch(activeProgram, /<CollectionPageHeader/);
 
   const appNavigation = await readTestFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
-  assertSourceMatch(appNavigation, /program: CalendarClock/);
+  assertSourceMatch(appNavigation, /calendar: CalendarClock/);
   assertSourceMatch(appNavigation, /pathname\.startsWith\("\/program"\).*icon: CalendarClock/);
   assertSourceMatch(activeProgram, /stickyHeaderIndices=\{\[1\]\}/);
   assertSourceDoesNotMatch(activeProgram, /weekTabsStickyPinned/);
@@ -601,7 +601,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgramOverview, /eyebrow="Programa activo"/);
   assertSourceDoesNotMatch(activeProgramOverview, /eyebrow="Programa en curso"/);
   assertSourceDoesNotMatch(activeProgramOverview, /Métricas de activación|SectionHeading|Activity/);
-  assertSourceMatch(activeProgramOverview, /embedded \? <DetailLinkRow[\s\S]*router\.push\("\/program" as Href\)/);
+  assertSourceMatch(activeProgramOverview, /embedded \? <DetailLinkRow[\s\S]*router\.push\("\/calendar" as Href\)/);
   assertSourceMatch(activeProgramOverview, /activeIndicators = program\.indicators\.map/);
   assertSourceMatch(activeProgramOverview, /indicator\.icon === "week"[\s\S]*?icon: undefined[\s\S]*?Number\(indicator\.value\) === 1 \? "SEMANA" : "SEMANAS"/);
   assertSourceMatch(activeProgramOverview, /eyebrowAccessory=\{<HeaderMetadataChip kind="date" value=\{`\$\{compactDateLabel\(calendarization\.start_date\)\} — \$\{compactDateLabel\(calendarization\.end_date\)\}`\} \/>\}/);
@@ -677,7 +677,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /<CalendarizedDailyPlanCard[\s\S]*?Cumplimiento del calendario[\s\S]*?<ActiveProgramSectionHeader \/>/);
   assertSourceMatch(todayScreen, /<CalendarClock color=\{tokens\.color\.textMain\} size=\{19\} strokeWidth=\{2\.2\} \/>/);
   assertSourceMatch(todayScreen, /Tu programa en curso/);
-  assertSourceMatch(todayScreen, /Ver programa en curso/);
+  assertSourceMatch(todayScreen, /<Button label="Ver calendario" onPress=\{\(\) => router\.push\("\/calendar" as Href\)\} variant="secondary" \/>/);
   assertSourceMatch(todayScreen, /activeProgramSectionTitle: \{[^}]*fontSize: 20[^}]*fontWeight: tokens\.weight\.extraBold/);
   assertSourceMatch(todayScreen, /activeProgramSectionHeader: \{[^}]*marginTop: tokens\.spacing\.xxl/);
   assertSourceMatch(todayScreen, /homeSectionHeading: \{[^}]*marginTop: tokens\.spacing\.sm/);

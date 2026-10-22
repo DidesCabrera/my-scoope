@@ -168,7 +168,7 @@ export default function RemindersScreen() {
       ) : (
         <Card>
           <Text style={textStyles.muted}>Puedes activar los avisos ahora. Para recibir recordatorios de comidas y planes diarios, activa y calendariza un programa.</Text>
-          <Button label="Ver mis programas" onPress={() => router.push("/program")} variant="secondary" />
+          <Button label="Ver calendario" onPress={() => router.push("/calendar")} variant="secondary" />
         </Card>
       )}
       <Button label="Volver a Today" onPress={() => router.back()} variant="secondary" />

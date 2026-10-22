@@ -20,13 +20,14 @@ function dayLabel(value: string): string {
 }
 
 export default function CalendarDayScreen() {
-  const { date } = useLocalSearchParams<{ date: string }>();
+  const { date, section: initialSection } = useLocalSearchParams<{ date: string; section?: string }>();
   const router = useRouter();
   const { apiRequest, status } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [day, setDay] = useState<CalendarDayDetailData | null>(null);
   const [localToday, setLocalToday] = useState("");
-  const [section, setSection] = useState<DaySection>(null);
+  const [sectionOverride, setSection] = useState<DaySection | undefined>(undefined);
+  const section = sectionOverride === undefined ? (initialSection === "replace" ? "replace" : null) : sectionOverride;
   const [menuVisible, setMenuVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

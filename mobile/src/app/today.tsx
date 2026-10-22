@@ -313,7 +313,7 @@ export default function TodayScreen() {
           <ActiveProgramSectionHeader />
           <Card accent={tokens.color.program}>
             <SectionTitle title={activeProgram.calendarization.program_name} />
-            <Button label="Ver programa en curso" onPress={() => router.push("/program" as Href)} variant="secondary" />
+            <Button label="Ver calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
           </Card>
         </>
       ) : null}

@@ -34,6 +34,7 @@ assert_tier full scripts/ci_mobile_checks.sh
 assert_tier full scripts/check_dependency_audits.mjs
 assert_tier full mobile/patches/braces+3.0.3.patch
 assert_tier full notas/application/culinary_library.py
+assert_tier full notas/application/services/commands/calendar_day_commands.py
 assert_tier full nutrition_solver/application/culinary_planner.py
 assert_tier full notas/tests/test_culinary_program.py
 
