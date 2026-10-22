@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth.models import User
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 
 from food_catalog.models import (
@@ -13,6 +14,7 @@ from notas.application.queries.food_catalog_queries import list_food_catalog_for
 from notas.application.services.food_catalog_snapshots import (
     FOOD_CATALOG_PORTION_SOURCE,
     CatalogFoodNotPublishedError,
+    FoodCatalogSnapshotError,
     build_operational_food_snapshot_payload,
     create_operational_food_snapshot_from_catalog,
     mark_operational_food_catalog_snapshot_stale,
@@ -92,6 +94,112 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(result.food.catalog_food_id, catalog_food.id)
         evidence = result.food.catalog_snapshot_payload["contract"]["snapshot_metadata"]["evidence"]
         self.assertEqual(evidence[0]["source"], CatalogFood.SOURCE_USDA)
+
+    def test_global_snapshot_creation_is_idempotent(self):
+        catalog_food = self._create_published_catalog_food()
+
+        first = create_operational_food_snapshot_from_catalog(catalog_food)
+        second = create_operational_food_snapshot_from_catalog(catalog_food)
+
+        self.assertTrue(first.created)
+        self.assertFalse(second.created)
+        self.assertEqual(second.food.pk, first.food.pk)
+        self.assertEqual(Food.objects.filter(is_global=True, catalog_food_ref=catalog_food.catalog_ref).count(), 1)
+
+    def test_global_snapshot_rejects_another_active_public_name(self):
+        first_catalog = self._create_published_catalog_food()
+        first = create_operational_food_snapshot_from_catalog(first_catalog).food
+        second_catalog = CatalogFood.objects.create(
+            display_name=" PECHUGA DE POLLO COCIDA ",
+            canonical_name="otra pechuga de pollo cocida",
+            protein_g_per_100g=Decimal("31.000"),
+            carbs_g_per_100g=Decimal("0.000"),
+            fat_g_per_100g=Decimal("3.600"),
+            status=CatalogFood.STATUS_PUBLISHED,
+        )
+
+        with self.assertRaises(FoodCatalogSnapshotError):
+            create_operational_food_snapshot_from_catalog(second_catalog)
+        self.assertEqual(Food.objects.filter(is_global=True).count(), 1)
+        self.assertEqual(first.catalog_food_id, first_catalog.pk)
+
+    def test_refresh_inactive_snapshot_rejects_public_name_collision(self):
+        first_catalog = self._create_published_catalog_food()
+        create_operational_food_snapshot_from_catalog(first_catalog)
+        second_catalog = CatalogFood.objects.create(
+            display_name="Otro alimento",
+            canonical_name="otro alimento",
+            protein_g_per_100g=Decimal("1.000"),
+            carbs_g_per_100g=Decimal("2.000"),
+            fat_g_per_100g=Decimal("3.000"),
+            status=CatalogFood.STATUS_PUBLISHED,
+        )
+        second = create_operational_food_snapshot_from_catalog(second_catalog).food
+        second.is_active = False
+        second.save(update_fields=["is_active"])
+        second_catalog.display_name = " PECHUGA DE POLLO COCIDA "
+        second_catalog.save(update_fields=["display_name"])
+
+        with self.assertRaises(FoodCatalogSnapshotError):
+            refresh_operational_food_snapshot_from_catalog(second)
+        second.refresh_from_db()
+        self.assertFalse(second.is_active)
+        self.assertEqual(second.name, "Otro alimento")
+
+    def test_database_rejects_second_global_link_but_allows_private_duplicate(self):
+        catalog_food = self._create_published_catalog_food()
+        original = create_operational_food_snapshot_from_catalog(catalog_food).food
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Food.objects.create(
+                name=original.name,
+                protein=original.protein,
+                carbs=original.carbs,
+                fat=original.fat,
+                is_global=True,
+                catalog_food_id=catalog_food.pk,
+                catalog_food_ref=catalog_food.catalog_ref,
+            )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Food.objects.create(
+                name="Incomplete snapshot",
+                protein=1,
+                carbs=2,
+                fat=3,
+                is_global=True,
+                catalog_food_id=catalog_food.pk,
+                catalog_sync_status=Food.CATALOG_SYNC_SNAPSHOT,
+            )
+
+        private = Food.objects.create(
+            name=original.name,
+            protein=original.protein,
+            carbs=original.carbs,
+            fat=original.fat,
+            created_by=User.objects.create_user(username="private-owner"),
+            is_global=False,
+            catalog_food_id=catalog_food.pk,
+            catalog_food_ref=catalog_food.catalog_ref,
+        )
+        self.assertNotEqual(private.pk, original.pk)
+
+    def test_refresh_cannot_reassign_snapshot_to_another_catalog_food(self):
+        original_catalog = self._create_published_catalog_food()
+        food = create_operational_food_snapshot_from_catalog(original_catalog).food
+        other_catalog = CatalogFood.objects.create(
+            display_name="Otro alimento",
+            canonical_name="otro alimento",
+            protein_g_per_100g=Decimal("1.000"),
+            carbs_g_per_100g=Decimal("2.000"),
+            fat_g_per_100g=Decimal("3.000"),
+            status=CatalogFood.STATUS_PUBLISHED,
+        )
+
+        with self.assertRaises(FoodCatalogSnapshotError):
+            refresh_operational_food_snapshot_from_catalog(food, catalog_food=other_catalog)
+        food.refresh_from_db()
+        self.assertEqual(food.catalog_food_ref, original_catalog.catalog_ref)
 
     def test_catalog_trace_fields_are_not_foreign_keys(self):
         catalog_food_id_field = Food._meta.get_field("catalog_food_id")

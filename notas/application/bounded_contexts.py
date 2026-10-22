@@ -173,7 +173,7 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
     ApplicationServiceArea(
         slug="food_catalog",
         label="Food Catalog",
-        entries=("food_imports", "food_catalog_snapshots"),
+        entries=("food_imports", "food_catalog_snapshots", "food_catalog_duplicate_cleanup"),
         responsibility=(
             "Core-food catalog, import normalization, USDA mapping, "
             "snapshot publication helpers and visibility policy."

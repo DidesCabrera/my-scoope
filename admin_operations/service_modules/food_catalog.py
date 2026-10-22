@@ -2037,7 +2037,9 @@ def perform_catalog_food_bulk_review(*, actor, reason: str = "", query: str = ""
 def perform_catalog_food_snapshot(*, catalog_food_id: int, actor, reason: str) -> AdminOperationResult:
     normalized_reason = (reason or "").strip()
     catalog_food = _get_operation_target(CatalogFood, pk=catalog_food_id)
-    if Food.objects.filter(catalog_food_id=catalog_food.pk).exists():
+    if Food.objects.filter(is_global=True, catalog_food_ref=catalog_food.catalog_ref).exists() or Food.objects.filter(
+        is_global=True, catalog_food_id=catalog_food.pk
+    ).exists():
         return AdminOperationResult(False, "Ya existe un snapshot operacional para este CatalogFood; usa refresh explícito.")
     try:
         result = create_operational_food_snapshot_from_catalog(catalog_food, created_by=actor, is_global=True)

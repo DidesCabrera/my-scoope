@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 
 from food_catalog.models import (
@@ -13,6 +14,29 @@ from food_catalog.models import (
 
 
 class CatalogFoodModelTests(TestCase):
+    def test_catalog_identity_is_unique_ignoring_case_and_edge_spaces(self):
+        common = {
+            "protein_g_per_100g": Decimal("10.000"),
+            "carbs_g_per_100g": Decimal("20.000"),
+            "fat_g_per_100g": Decimal("3.000"),
+        }
+        CatalogFood.objects.create(
+            display_name="Avena",
+            canonical_name="avena integral",
+            brand_name="Marca A",
+            country="CL",
+            **common,
+        )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            CatalogFood.objects.create(
+                display_name="Otra avena",
+                canonical_name=" AVENA INTEGRAL ",
+                brand_name=" marca a ",
+                country=" cl ",
+                **common,
+            )
+
     def test_catalog_food_is_master_record_not_operational_food(self):
         food = CatalogFood.objects.create(
             display_name="Pechuga de pollo cocida",

@@ -7,6 +7,7 @@ from pathlib import Path
 import requests
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.models import Q
 
 from food_catalog.infrastructure.releases import (
     CatalogReleaseError,
@@ -118,14 +119,16 @@ def _materialize_release(*, version: str) -> dict[str, int]:
         status=CatalogFood.STATUS_PUBLISHED,
     ).order_by("id")
     for catalog_food in published_foods:
-        operational = Food.objects.filter(catalog_food_id=catalog_food.pk).order_by("id").first()
+        operational = Food.objects.filter(is_global=True).filter(
+            Q(catalog_food_ref=catalog_food.catalog_ref) | Q(catalog_food_id=catalog_food.pk)
+        ).order_by("id").first()
         if operational is None:
-            create_operational_food_snapshot_from_catalog(
+            snapshot_result = create_operational_food_snapshot_from_catalog(
                 catalog_food,
                 created_by=None,
                 is_global=True,
             )
-            created += 1
+            created += int(snapshot_result.created)
             continue
         if (
             operational.catalog_snapshot_version != catalog_food.catalog_version

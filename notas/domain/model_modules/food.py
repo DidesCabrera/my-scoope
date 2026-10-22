@@ -2,6 +2,7 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.functions import Lower, Trim
 
 from notas.domain.constants.nutrition import (
     CARBS_KCAL_PER_GRAM,
@@ -121,6 +122,32 @@ class Food(models.Model):
             models.Index(
                 fields=["created_by", "is_active", "list_order", "name"],
                 name="food_mobile_library_idx",
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                Lower(Trim("name")),
+                condition=models.Q(is_global=True, is_active=True),
+                name="unique_active_global_food_normalized_name",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(is_global=False)
+                    | ~models.Q(catalog_sync_status="snapshot")
+                    | models.Q(catalog_food_id__isnull=True, catalog_food_ref__isnull=True)
+                    | models.Q(catalog_food_id__isnull=False, catalog_food_ref__isnull=False)
+                ),
+                name="global_food_catalog_trace_pair",
+            ),
+            models.UniqueConstraint(
+                fields=["catalog_food_ref"],
+                condition=models.Q(is_global=True, catalog_food_ref__isnull=False),
+                name="unique_global_food_catalog_ref",
+            ),
+            models.UniqueConstraint(
+                fields=["catalog_food_id"],
+                condition=models.Q(is_global=True, catalog_food_id__isnull=False),
+                name="unique_global_food_catalog_id",
             ),
         ]
 
