@@ -123,6 +123,27 @@ class Food(models.Model):
                 name="food_mobile_library_idx",
             ),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(is_global=False)
+                    | ~models.Q(catalog_sync_status="snapshot")
+                    | models.Q(catalog_food_id__isnull=True, catalog_food_ref__isnull=True)
+                    | models.Q(catalog_food_id__isnull=False, catalog_food_ref__isnull=False)
+                ),
+                name="global_food_catalog_trace_pair",
+            ),
+            models.UniqueConstraint(
+                fields=["catalog_food_ref"],
+                condition=models.Q(is_global=True, catalog_food_ref__isnull=False),
+                name="unique_global_food_catalog_ref",
+            ),
+            models.UniqueConstraint(
+                fields=["catalog_food_id"],
+                condition=models.Q(is_global=True, catalog_food_id__isnull=False),
+                name="unique_global_food_catalog_id",
+            ),
+        ]
 
     food_group = models.CharField(
         max_length=120,

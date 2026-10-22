@@ -14,7 +14,7 @@ from typing import Any
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.utils import timezone
 
 from core.food_visual_identity import resolved_food_visual_identity
@@ -53,6 +53,7 @@ class OperationalFoodSnapshotResult:
     created_portions: int
     created_aliases: int
     skipped_aliases: int
+    created: bool = True
 
 
 @dataclass(frozen=True)
@@ -137,6 +138,35 @@ def create_operational_food_snapshot_from_catalog(
     payload = build_operational_food_snapshot_payload(catalog_food)
     snapshot_created_at = timezone.now()
 
+    if is_global:
+        # Lock the master row so concurrent publishers serialize before checking
+        # for an existing operational copy. The database constraints are the
+        # final guard for writers that do not use this service.
+        CatalogFood.objects.select_for_update().get(pk=catalog_food.pk)
+        existing = list(
+            Food.objects.filter(is_global=True).filter(
+                Q(catalog_food_ref=catalog_food.catalog_ref)
+                | Q(catalog_food_id=catalog_food.pk)
+            ).order_by("pk")[:2]
+        )
+        if len(existing) > 1 or (
+            existing and (
+                existing[0].catalog_food_ref not in (None, catalog_food.catalog_ref)
+                or existing[0].catalog_food_id not in (None, catalog_food.pk)
+            )
+        ):
+            raise FoodCatalogSnapshotError(
+                "Conflicting operational snapshots exist for this CatalogFood; run the duplicate audit."
+            )
+        if existing:
+            return OperationalFoodSnapshotResult(
+                food=existing[0],
+                created_portions=0,
+                created_aliases=0,
+                skipped_aliases=0,
+                created=False,
+            )
+
     food = Food.objects.create(
         **payload.food_defaults(),
         created_by=created_by,
@@ -178,6 +208,10 @@ def refresh_operational_food_snapshot_from_catalog(
         catalog_food = food.catalog_food_id
 
     catalog_food = _resolve_catalog_food(catalog_food)
+    if food.catalog_food_ref not in (None, catalog_food.catalog_ref) or food.catalog_food_id not in (
+        None, catalog_food.pk
+    ):
+        raise FoodCatalogSnapshotError("A catalog snapshot cannot be reassigned to another CatalogFood.")
     payload = build_operational_food_snapshot_payload(catalog_food)
     snapshot_created_at = timezone.now()
 
@@ -211,6 +245,7 @@ def refresh_operational_food_snapshot_from_catalog(
         created_portions=portion_count,
         created_aliases=alias_result.created_count,
         skipped_aliases=alias_result.skipped_count,
+        created=False,
     )
 
 
@@ -233,6 +268,12 @@ def _resolve_catalog_food(catalog_food: CatalogFood | int) -> CatalogFood:
     if isinstance(catalog_food, CatalogFood):
         return catalog_food
     return CatalogFood.objects.get(pk=catalog_food)
+
+
+def get_catalog_food_refs_by_id(ids: set[int]) -> dict[int, UUID]:
+    """Expose only catalog identities to operational duplicate auditing."""
+
+    return dict(CatalogFood.objects.filter(pk__in=ids).values_list("pk", "catalog_ref"))
 
 
 def _ensure_published(catalog_food: CatalogFood) -> None:
@@ -400,6 +441,7 @@ __all__ = [
     "OperationalFoodSnapshotResult",
     "build_operational_food_snapshot_payload",
     "create_operational_food_snapshot_from_catalog",
+    "get_catalog_food_refs_by_id",
     "mark_operational_food_catalog_snapshot_stale",
     "refresh_operational_food_snapshot_from_catalog",
 ]

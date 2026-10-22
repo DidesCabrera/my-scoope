@@ -14,6 +14,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.functions import Lower, Trim
 
 
 class CatalogFood(models.Model):
@@ -430,6 +431,13 @@ class CatalogFood(models.Model):
                 fields=["canonical_name", "brand_name", "country"],
                 condition=~models.Q(canonical_name=""),
                 name="unique_catalog_food_canonical_brand_country",
+            ),
+            models.UniqueConstraint(
+                Lower(Trim("canonical_name")),
+                Lower(Trim("brand_name")),
+                Lower(Trim("country")),
+                condition=~models.Q(canonical_name=""),
+                name="unique_catalog_food_normalized_identity",
             ),
         ]
 
