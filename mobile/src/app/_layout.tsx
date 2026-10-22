@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react-native";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
-import { type ErrorBoundaryProps, type Href, Stack, useGlobalSearchParams, usePathname, useRouter } from "expo-router";
+import { type ErrorBoundaryProps, type Href, Stack, useGlobalSearchParams, useNavigationContainerRef, usePathname, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
 import { AppState, Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -15,7 +15,9 @@ import { AppNavigationHeader, AppNavigationProvider } from "@/components/navigat
 import { tokens } from "@/design/tokens";
 import { clearNativeReminders, refreshNativeReminders } from "@/notifications/native-reminders";
 import { notificationRoute } from "@/notifications/notification-navigation";
-import "@/observability/sentry";
+import { recordNavigationRedirect, recordNavigationTransition } from "@/observability/navigation";
+import { routeTemplateFromSegments } from "@/observability/sanitize";
+import { sentryNavigationIntegration } from "@/observability/sentry";
 
 if (Platform.OS !== "web") void SplashScreen.preventAutoHideAsync();
 
@@ -41,6 +43,8 @@ function ScreenErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 function AuthenticatedRouteGate() {
   const pathname = usePathname();
+  const segments = useSegments();
+  const routeTemplate = routeTemplateFromSegments(segments);
   const { origin } = useGlobalSearchParams<{ origin?: string }>();
   const router = useRouter();
   const { status, profile } = useSession();
@@ -49,14 +53,16 @@ function AuthenticatedRouteGate() {
     if (status !== "authenticated" || !profile) return;
     const returnTo = pathname.startsWith("/share/") || pathname.startsWith("/s/") ? pathname : undefined;
     if (profile.review_disclosure_required && pathname !== "/disclosures" && pathname !== "/onboarding") {
+      recordNavigationRedirect(routeTemplate, "/disclosures", "disclosure_required");
       router.replace(returnTo ? { pathname: "/disclosures", params: { returnTo } } : "/disclosures" as Href);
       return;
     }
     const isOnboardingSubscription = pathname === "/subscription" && origin === "onboarding";
     if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding" && !isOnboardingSubscription) {
+      recordNavigationRedirect(routeTemplate, "/onboarding", "onboarding_required");
       router.replace(returnTo ? { pathname: "/onboarding", params: { returnTo } } : "/onboarding" as Href);
     }
-  }, [origin, pathname, profile, router, status]);
+  }, [origin, pathname, profile, routeTemplate, router, status]);
 
   return null;
 }
@@ -104,11 +110,29 @@ function NativeReminderReconciler() {
 
 function RootLayout() {
   const router = useRouter();
+  const navigationRef = useNavigationContainerRef();
+  const segments = useSegments();
+  const routeTemplate = routeTemplateFromSegments(segments);
+  const previousRoute = useRef<string | null>(null);
+  const currentRoute = useRef(routeTemplate);
+
+  useEffect(() => {
+    sentryNavigationIntegration.registerNavigationContainer(navigationRef);
+  }, [navigationRef]);
+
+  useEffect(() => {
+    if (previousRoute.current === routeTemplate) return;
+    recordNavigationTransition(previousRoute.current, routeTemplate);
+    previousRoute.current = routeTemplate;
+    currentRoute.current = routeTemplate;
+  }, [routeTemplate]);
 
   useEffect(() => {
     if (Platform.OS === "web") return;
     const openNotification = (notification: Notifications.Notification) => {
-      router.push(notificationRoute(notification.request.content.data));
+      const target = notificationRoute(notification.request.content.data);
+      recordNavigationRedirect(currentRoute.current, String(target), "notification_open");
+      router.push(target);
     };
     const lastResponse = Notifications.getLastNotificationResponse();
     if (lastResponse?.notification) {

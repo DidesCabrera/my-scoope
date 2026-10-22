@@ -102,6 +102,13 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, current_weight=None, 
     }
 
 
+def _ordered_meal_foods(meal):
+    prefetched = getattr(meal, "_prefetched_objects_cache", {}).get("meal_food_set")
+    if prefetched is not None:
+        return sorted(prefetched, key=lambda relation: (relation.order, relation.id))
+    return meal.meal_food_set.select_related("food").prefetch_related("food__localized_names").order_by("order", "id")
+
+
 def _meal_food_rows(meal, parent_kcal, current_weight=None):
     return [
         _food_row(
@@ -111,7 +118,7 @@ def _meal_food_rows(meal, parent_kcal, current_weight=None):
             parent_kcal=parent_kcal,
             current_weight=current_weight,
         )
-        for relation in meal.meal_food_set.select_related("food").order_by("order", "id")
+        for relation in _ordered_meal_foods(meal)
     ]
 
 
@@ -326,7 +333,7 @@ def project_program_week_result(*, program, dailyplan, week_number, day_numbers,
     program_days = list(
         ProgramDay.objects.filter(program=program)
         .select_related("dailyplan")
-        .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food")
+        .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food__localized_names")
         .order_by("week_number", "day_number")
     )
     existing_by_slot = {(row.week_number, row.day_number): row for row in program_days}

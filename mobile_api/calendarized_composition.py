@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 
 from mobile_api.api_support import calendarization_error
 from mobile_api.errors import MobileAPIError
@@ -255,12 +255,12 @@ def _meal_result(*, day_id: int, meal: dict, current_weight, projected_food_key:
 def _day_context(*, user, day_id: int) -> tuple[CalendarizedDay, dict]:
     day = (
         CalendarizedDay.objects.select_related("calendarization")
-        .filter(pk=day_id, calendarization__user=user)
+        .filter(Q(user=user) | Q(user__isnull=True, calendarization__user=user), pk=day_id)
         .first()
     )
     if day is None:
         raise calendarization_error(ValueError("calendarized_day_not_found"))
-    if day.calendarization.status not in ProgramCalendarization.CURRENT_STATUSES:
+    if day.assignment_state != CalendarizedDay.STATE_CURRENT or (day.calendarization and day.calendarization.status not in ProgramCalendarization.CURRENT_STATUSES):
         raise calendarization_error(ValueError("calendarization_not_current"))
     if not isinstance(day.plan_snapshot, dict):
         raise calendarization_error(ValueError("calendarized_plan_snapshot_invalid"))

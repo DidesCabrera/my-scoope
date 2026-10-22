@@ -36,6 +36,11 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `calendar_as_planning_spine_cycle.md`: ciclo CALV00-CALV07 para convertir el
+  calendario en autoridad de un plan snapshot por fecha, proyectar programas sin
+  perder días cumplidos y medir la adherencia por periodos elegidos por el usuario.
+  La base aditiva de días y periodos está en desarrollo; el cutover web/móvil y la
+  migración de la exclusividad de programas siguen pendientes.
 - `onboarding_flow_normalization_cycle.md`: ciclo planificado OFN00-OFN08 para
   diseñar el recorrido inicial como storyboard en las galerías Web y Native,
   normalizar contenido y estética, resolver la semántica de `training_frequency` y

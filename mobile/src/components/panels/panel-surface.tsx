@@ -44,9 +44,10 @@ export function PanelEmptyState({ label }: { label: string }) {
   return <Text style={styles.empty}>{label}</Text>;
 }
 
-export function SortablePanelHeaderCell({ align = "center", direction, label, onPress, style, textStyle }: {
+export function SortablePanelHeaderCell({ align = "center", direction, icon, label, onPress, style, textStyle }: {
   align?: "center" | "left";
   direction?: "asc" | "desc";
+  icon?: ReactNode;
   label: string;
   onPress(): void;
   style?: StyleProp<ViewStyle>;
@@ -61,7 +62,7 @@ export function SortablePanelHeaderCell({ align = "center", direction, label, on
       onPress={onPress}
       style={({ pressed }) => [styles.sortHeaderCell, style, pressed && styles.sortHeaderPressed]}>
       <View style={[styles.sortHeaderContent, align === "left" && styles.sortHeaderContentLeft]}>
-        <Text numberOfLines={1} style={[styles.sortHeaderText, textStyle]}>{label}</Text>
+        {icon ?? <Text numberOfLines={1} style={[styles.sortHeaderText, textStyle]}>{label}</Text>}
         {direction === "asc" ? <ChevronUp color={tokens.color.textMuted} size={12} strokeWidth={2.4} /> : null}
         {direction === "desc" ? <ChevronDown color={tokens.color.textMuted} size={12} strokeWidth={2.4} /> : null}
       </View>

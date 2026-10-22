@@ -13,11 +13,13 @@ from notas.domain.model_modules.auth_integration import (
     OAuthRefreshToken,
 )
 from notas.domain.model_modules.calendarization import (
+    CalendarCommitment,
     CalendarizationMeasurementContext,
     CalendarizationReview,
     CalendarizationRevision,
     CalendarizedDay,
     CalendarizedMealExecution,
+    CalendarProgressPeriod,
     ProgramCalendarization,
 )
 from notas.domain.model_modules.comparisons import SavedComparison
@@ -75,9 +77,8 @@ from notas.domain.model_modules.sharing import (
 __all__ = [
     "CulinaryTemplate", "CulinaryVariant",
     "AiAssistantMessageFeedback", "AiNutritionChat", "ApplePushSubscription",
-    "CalendarizedDay", "CalendarizedMealExecution",
-    "CalendarizationMeasurementContext", "CalendarizationReview",
-    "CalendarizationRevision", "DailyPlan",
+    "CalendarizedDay", "CalendarizedMealExecution", "CalendarCommitment", "CalendarProgressPeriod",
+    "CalendarizationMeasurementContext", "CalendarizationReview", "CalendarizationRevision", "DailyPlan",
     "DailyPlanMeal", "DailyPlanMealShare",
     "PinnedDailyPlan", "PinnedDailyPlanMealExecution",
     "DailyPlanShare", "Food",
@@ -96,5 +97,4 @@ __all__ = [
     "ShareResource", "SavedComparison",
     "ScheduledNotificationEvent",
     "Subscription",
-    "WebPushSubscription",
-    "WeightLog", ]
+    "WebPushSubscription", "WeightLog", ]

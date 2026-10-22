@@ -86,8 +86,10 @@ MODEL_RETENTION_POLICY = {
     "notas.AiAssistantMessageFeedback": RetentionAction.ERASE,
     "notas.AiNutritionChat": RetentionAction.ERASE,
     "notas.ApplePushSubscription": RetentionAction.ERASE,
+    "notas.CalendarCommitment": RetentionAction.ERASE,
     "notas.CalendarizedDay": RetentionAction.FOLLOW_PARENT,
     "notas.CalendarizedMealExecution": RetentionAction.FOLLOW_PARENT,
+    "notas.CalendarProgressPeriod": RetentionAction.ERASE,
     "notas.CalendarizationMeasurementContext": RetentionAction.FOLLOW_PARENT,
     "notas.CalendarizationReview": RetentionAction.FOLLOW_PARENT,
     "notas.CalendarizationRevision": RetentionAction.FOLLOW_PARENT,
@@ -378,6 +380,7 @@ def _delete_user_account_data(*, user, source: str) -> AccountDeletionResult:
     _delete_queryset(Food.objects.filter(created_by=user, is_global=False), deleted_counts)
 
     for label, field in (
+        ("notas.CalendarCommitment", "user"),
         ("notas.SavedComparison", "owner"),
         ("notas.MCPUserToken", "user"),
         ("notas.OAuthAuthorizationCode", "user"),

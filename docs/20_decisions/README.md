@@ -247,3 +247,6 @@ Consequences
 - `0204-culinary-variants-as-primary-solver-unit.md`: adopta variantes culinarias
   validadas como unidad primaria para comidas, planes diarios y programas, modela
   cursos y conserva el solver por alimentos sólo como fallback explícito de transición.
+- `0205-calendar-as-planning-authority.md`: establece un plan snapshot por fecha como
+  autoridad de Hoy y del cumplimiento, con programas como proyecciones y periodos
+  de progreso reiniciables sin borrar evidencia.

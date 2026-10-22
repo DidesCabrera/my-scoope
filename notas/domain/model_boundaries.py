@@ -115,13 +115,15 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
             "ProgramCalendarization",
             "CalendarizedDay",
             "CalendarizedMealExecution",
+            "CalendarProgressPeriod",
+            "CalendarCommitment",
             "CalendarizationMeasurementContext",
             "CalendarizationReview",
             "CalendarizationRevision",
         ),
         responsibility=(
-            "Dated program snapshots, append-only execution evidence, measurement context, "
-            "periodic reviews and prospective revisions."
+            "Dated program snapshots, independent calendar commitments, append-only execution "
+            "evidence, measurement context, periodic reviews and prospective revisions."
         ),
     ),
     DomainModelBoundary(

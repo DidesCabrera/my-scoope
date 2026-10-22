@@ -114,6 +114,9 @@ def get_primary_food_localized_name(
 
     prefetched_names = getattr(food, "_prefetched_primary_display_names", None)
 
+    if prefetched_names is None:
+        prefetched_names = getattr(food, "_prefetched_objects_cache", {}).get("localized_names")
+
     if prefetched_names is not None:
         exact_match = _find_prefetched_primary_name(
             prefetched_names,

@@ -3,12 +3,15 @@ from __future__ import annotations
 import logging
 import re
 from time import perf_counter
+from uuid import uuid4
 
 from django.http import HttpResponseNotModified
+from sentry_sdk import set_tag
 
 from mobile_api.read_cache import invalidate_mobile_read_cache, payload_etag
 
 logger = logging.getLogger(__name__)
+REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 
 
 def _route_label(path: str) -> str:
@@ -20,6 +23,14 @@ def _route_label(path: str) -> str:
     )
 
 
+def _request_id(request) -> str:
+    for header in ("Rndr-Id", "X-Request-ID"):
+        candidate = str(request.headers.get(header, "")).strip()
+        if REQUEST_ID_PATTERN.fullmatch(candidate):
+            return candidate
+    return uuid4().hex
+
+
 class MobileAPIResponseMiddleware:
     """Attach private validation metadata and invalidate user projections after writes."""
 
@@ -28,12 +39,16 @@ class MobileAPIResponseMiddleware:
 
     def __call__(self, request):
         started_at = perf_counter()
+        request_id = _request_id(request) if request.path.startswith("/api/v1/") else ""
+        if request_id:
+            set_tag("request_id", request_id)
         response = self.get_response(request)
         if not request.path.startswith("/api/v1/"):
             return response
 
         duration_ms = (perf_counter() - started_at) * 1000
         response["Server-Timing"] = f"app;dur={duration_ms:.1f}"
+        response["X-Request-ID"] = request_id
 
         user = getattr(request, "user", None)
         if request.method not in {"GET", "HEAD", "OPTIONS"} and response.status_code < 400:
@@ -48,6 +63,7 @@ class MobileAPIResponseMiddleware:
                 not_modified["ETag"] = etag
                 not_modified["Cache-Control"] = "private, no-cache"
                 not_modified["Server-Timing"] = response["Server-Timing"]
+                not_modified["X-Request-ID"] = request_id
                 return not_modified
             response["ETag"] = etag
             response["Cache-Control"] = "private, no-cache"
@@ -59,6 +75,7 @@ class MobileAPIResponseMiddleware:
                     "duration_ms": round(duration_ms, 1),
                     "method": request.method,
                     "path": _route_label(request.path),
+                    "request_id": request_id,
                     "status_code": response.status_code,
                 },
             )

@@ -31,7 +31,7 @@ export function CurrentWeekSection({ localDate }: { localDate: string }) {
 }
 
 const styles = StyleSheet.create({
-  dayCircle: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 44, justifyContent: "center", overflow: "visible", position: "relative", width: 44 },
+  dayCircle: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.pill, height: 44, justifyContent: "center", overflow: "visible", position: "relative", width: 44 },
   dayCircleCompact: { height: 40, width: 40 },
   dayCircleToday: { backgroundColor: tokens.color.entityIconForeground },
   dayNumber: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"] },

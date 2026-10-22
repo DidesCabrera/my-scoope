@@ -240,12 +240,11 @@ test("cards hide the edit tab while entity details keep it available", async () 
     assert.doesNotMatch(sourceCode, /ArrowUp|ArrowDown|label=\{`Subir|label=\{`Bajar/);
   }
   assert.match(panels, /label=\{`Cambiar hora de \$\{item\.name\}`\}[\s\S]*?<Clock/);
-  assert.match(panels, />Porción<\/Text>/);
   assert.match(panels, /decimal\(item\.quantity\)[\s\S]*?item\.quantityUnit/);
   assert.match(panels, />Hora<\/Text>/);
   assert.match(panels, /styles\.editValue, styles\.editTimeValue\]\}>\{item\.time \?\? "—"\}/);
   assert.match(panels, /editDragHandle: \{[^}]*width: 20/);
-  assert.match(panels, /editPortionValue: \{ color: tokens\.color\.textMain \}/);
+  assert.doesNotMatch(panels, />Porción<|styles\.editPortionValue/);
   assert.match(panels, /editTimeValue: \{ color: tokens\.color\.textMain \}/);
   assert.match(panels, /<GripVertical color=\{tokens\.color\.textMuted\}/);
   assert.match(panels, /<Trash2 color=\{tokens\.color\.danger\}/);

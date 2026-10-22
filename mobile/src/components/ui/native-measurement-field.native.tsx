@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
+import { recordWheelPickerInteraction } from "@/observability/sentry";
 import type { NativeMeasurementFieldProps } from "./native-measurement-field.types";
 import { NativeWheelAdornment } from "./native-wheel-adornment";
 import { nativeWheelMetrics } from "./native-wheel-metrics";
@@ -38,35 +39,48 @@ export function NativeMeasurementField({ containerStyle, defaultValue, disabled 
 
   const open = () => {
     if (disabled) return;
+    if (visible) {
+      recordWheelPickerInteraction(kind, "cancel");
+      setVisible(false);
+      return;
+    }
     const nextPickerValue = value || defaultValue || "";
     setHeight(heightFromValue(nextPickerValue));
     setPortion(portionFromValue(nextPickerValue));
     const nextWeight = weightPartsFromValue(nextPickerValue);
     setKilograms(nextWeight.kilograms);
     setGrams(nextWeight.grams);
-    setVisible((current) => !current);
+    recordWheelPickerInteraction(kind, "open");
+    setVisible(true);
   };
 
   const changeHeight = (next: number) => {
     setHeight(next);
-    onChange(String(next));
   };
 
   const changePortion = (next: number) => {
     setPortion(next);
-    onChange(String(next));
   };
 
   const changeKilograms = (next: number) => {
     const nextGrams = next === 350 ? 0 : grams;
     setKilograms(next);
     setGrams(nextGrams);
-    onChange(weightValueFromParts(next, nextGrams));
   };
 
   const changeGrams = (next: number) => {
     setGrams(next);
-    onChange(weightValueFromParts(kilograms, next));
+  };
+
+  const commit = () => {
+    const nextValue = kind === "height"
+      ? String(height)
+      : kind === "portion"
+        ? String(portion)
+        : weightValueFromParts(kilograms, kilograms === 350 ? 0 : grams);
+    recordWheelPickerInteraction(kind, "commit");
+    onChange(nextValue);
+    setVisible(false);
   };
 
   const pickerStyle = Platform.OS === "ios" ? styles.iosPicker : styles.androidPicker;
@@ -125,7 +139,7 @@ export function NativeMeasurementField({ containerStyle, defaultValue, disabled 
                 </View>
                 <NativeWheelAdornment label="," width={8} />
                 <View style={[styles.pickerColumn, styles.weightGramsPickerColumn]}>
-                  <Picker dropdownIconColor={tokens.color.textMain} enabled={kilograms < 350} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeGrams(Number(next))} selectedValue={grams} style={pickerStyle}>
+                  <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => changeGrams(Number(next))} selectedValue={grams} style={pickerStyle}>
                     {WEIGHT_GRAM_VALUES.map((option) => <Picker.Item key={option} label={String(option / 100)} value={option} />)}
                   </Picker>
                 </View>
@@ -133,7 +147,7 @@ export function NativeMeasurementField({ containerStyle, defaultValue, disabled 
               </>
             )}
           </View>
-          <Pressable accessibilityLabel="Listo" accessibilityRole="button" onPress={() => setVisible(false)} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
+          <Pressable accessibilityLabel="Listo" accessibilityRole="button" onPress={commit} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
             <Check color={tokens.color.interactivePrimary} size={22} strokeWidth={2.6} />
           </Pressable>
         </View>

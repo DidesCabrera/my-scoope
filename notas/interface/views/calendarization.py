@@ -3,16 +3,21 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import asdict
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponseBadRequest, JsonResponse
+from django.db.models import Q
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 
+from mobile_api.read_cache import invalidate_mobile_read_cache
+from notas.application.queries.calendar_foods import calendar_foods_for_period
+from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
 from notas.application.queries.calendarization_execution_queries import (
     meal_execution_state_for_day,
 )
@@ -23,6 +28,14 @@ from notas.application.queries.calendarization_queries import (
     owned_programs_for_calendarization,
     today_for_calendarization,
 )
+from notas.application.services.calendarization.scheduling import local_date_for_timezone
+from notas.application.services.commands.calendar_commitment_commands import register_calendar_commitments
+from notas.application.services.commands.calendar_day_commands import (
+    assign_dailyplan_to_calendar_date,
+    move_calendar_date_plan,
+    remove_calendar_date_plan,
+)
+from notas.application.services.commands.calendar_progress_commands import start_new_calendar_progress_period
 from notas.application.services.commands.calendarization_commands import (
     activate_program_calendarization,
     cancel_calendarization,
@@ -38,7 +51,7 @@ from notas.application.services.commands.calendarization_commands import (
 from notas.application.services.commands.calendarization_execution_commands import (
     record_meal_execution,
 )
-from notas.domain.models import Program, WebPushSubscription
+from notas.domain.models import CalendarCommitment, CalendarizedDay, DailyPlan, Program, WebPushSubscription
 from notas.interface.forms.calendarization_forms import (
     CalendarizationActivationForm,
     CalendarizationPreferencesForm,
@@ -62,7 +75,7 @@ ERROR_MESSAGES = {
     "calendarization_replacement_confirmation_required": "Ya tienes una calendarización vigente. Confirma que deseas reemplazarla.",
     "calendarization_start_date_past": "La fecha de inicio no puede estar en el pasado para tu zona horaria.",
     "calendarization_program_not_owned": "Solo puedes calendarizar programas propios.",
-    "calendarization_current_conflict": "Otra calendarización quedó vigente al mismo tiempo. Vuelve a intentarlo.",
+    "calendarization_current_conflict": "El programa coincide con fechas ocupadas por planes individuales, o el calendario cambió. Revisa esas fechas e inténtalo de nuevo.",
 }
 
 
@@ -73,11 +86,23 @@ def _context(viewmode, content):
 
 def _can_check_in_today(day) -> bool:
     calendarization = day.calendarization
-    today = today_for_calendarization(calendarization)
-    return day.calendar_date == today and calendarization.status in {
+    today = (
+        today_for_calendarization(calendarization)
+        if calendarization else local_date_for_timezone(day.user.profile.timezone_name or "UTC")
+    )
+    if day.calendar_date != today or day.assignment_state != CalendarizedDay.STATE_CURRENT:
+        return False
+    if calendarization is None:
+        return True
+    return calendarization.status in {
         calendarization.STATUS_SCHEDULED,
         calendarization.STATUS_ACTIVE,
-    }
+    } or (
+        calendarization.status == calendarization.STATUS_CANCELLED
+        and calendarization.replaced_by_id is not None
+        and calendarization.replacement_effective_on is not None
+        and day.calendar_date < calendarization.replacement_effective_on
+    )
 
 
 def _header(*, history=False, extra_actions=None):
@@ -138,6 +163,251 @@ def dashboard(request):
         "notas/calendarization/dashboard.html",
         _context(CALENDARIZATION_VIEWMODE_DASHBOARD, content),
     )
+
+
+@login_required
+@require_GET
+def calendar_preview(request):
+    today = local_date_for_timezone(request.user.profile.timezone_name or "UTC")
+    monday = today - timedelta(days=today.weekday())
+    end_date = monday + timedelta(days=34)
+    extended = request.GET.get("extended") == "1"
+    requested = request.GET.get("date", "")
+    try:
+        selected_date = date.fromisoformat(requested) if requested else today
+    except ValueError:
+        selected_date = today
+    if not monday <= selected_date <= end_date:
+        selected_date = today
+    rows = CalendarizedDay.objects.filter(
+        Q(user=request.user) | Q(user__isnull=True, calendarization__user=request.user),
+        assignment_state=CalendarizedDay.STATE_CURRENT,
+        calendar_date__range=(monday, end_date),
+    ).select_related("calendarization", "origin_calendarization")
+    by_date = {day.calendar_date: day for day in rows}
+    commitments_by_date = {}
+    for commitment in CalendarCommitment.objects.filter(
+        user=request.user, calendar_date__range=(monday, end_date)
+    ):
+        commitments_by_date.setdefault(commitment.calendar_date, []).append(commitment)
+    dates = []
+    for offset in range(35):
+        current_date = monday + timedelta(days=offset)
+        day = by_date.get(current_date)
+        dates.append({
+            "date": current_date,
+            "weekday": ("L", "M", "M", "J", "V", "S", "D")[current_date.weekday()],
+            "has_plan": bool(day and day.has_plan),
+            "plan_name": (day.plan_snapshot or {}).get("name", "") if day else "",
+            "program_name": (day.origin_calendarization or day.calendarization).program_name_snapshot if day and (day.origin_calendarization or day.calendarization) else "",
+            "is_today": current_date == today,
+            "is_selected": current_date == selected_date,
+            "detail_url": reverse("calendarization_day_detail", args=[day.id]) if day and day.has_plan else "",
+            "commitments": commitments_by_date.get(current_date, []),
+        })
+    selected_day = by_date.get(selected_date)
+    return render(request, "notas/calendarization/calendar_preview.html", _context(
+        CALENDARIZATION_VIEWMODE_DASHBOARD,
+        {
+            "header": _header(),
+            "today": today,
+            "selected_date": selected_date,
+            "selected_day": selected_day,
+            "selected_commitments": commitments_by_date.get(selected_date, []),
+            "selected_day_has_execution": bool(selected_day and selected_day.meal_execution_events.exists()),
+            "selected_history": CalendarizedDay.objects.filter(
+                user=request.user, calendar_date=selected_date
+            ).select_related("origin_calendarization", "calendarization").order_by("created_at", "id"),
+            "week": dates[:7],
+            "grid": dates[7:35],
+            "upcoming": [day for day in dates if day["date"] >= today][:7],
+            "extended_days": dates,
+            "extended": extended,
+            "plans": DailyPlan.objects.filter(created_by=request.user).exclude(
+                source=DailyPlan.SOURCE_PROGRAM
+            ).order_by("name", "id"),
+            "progress": calendar_adherence_summary(request.user),
+            "schedule_summary": calendar_future_schedule_summary(request.user, today=today),
+        },
+    ))
+
+
+@login_required
+def calendar_commitments(request, kind):
+    labels = dict(CalendarCommitment.KIND_CHOICES)
+    if kind not in labels:
+        raise Http404
+    today = local_date_for_timezone(request.user.profile.timezone_name or "UTC")
+    if request.method == "POST":
+        try:
+            dates = [date.fromisoformat(value) for value in request.POST.getlist("dates")]
+            raw_attachments = json.loads(request.POST.get("food_attachments", "[]"))
+            if not isinstance(raw_attachments, list):
+                raise ValueError("calendar_food_attachment_dates_invalid")
+            food_attachments = [
+                (
+                    date.fromisoformat(item["calendar_date"]),
+                    date.fromisoformat(item["food_period_start"]),
+                    date.fromisoformat(item["food_period_end"]),
+                )
+                for item in raw_attachments
+            ]
+            raw_notes = json.loads(request.POST.get("notes_by_date", "[]"))
+            if not isinstance(raw_notes, list):
+                raise ValueError("calendar_commitment_note_dates_invalid")
+            note_dates = [date.fromisoformat(item["calendar_date"]) for item in raw_notes]
+            if len(set(note_dates)) != len(note_dates):
+                raise ValueError("calendar_commitment_note_dates_invalid")
+            register_calendar_commitments(
+                user=request.user,
+                kind=kind,
+                dates=dates,
+                note=request.POST.get("note", ""),
+                food_period_start=(
+                    date.fromisoformat(request.POST["food_period_start"])
+                    if request.POST.get("food_period_start") else None
+                ),
+                food_period_end=(
+                    date.fromisoformat(request.POST["food_period_end"])
+                    if request.POST.get("food_period_end") else None
+                ),
+                food_attachments=food_attachments,
+                notes_by_date={date.fromisoformat(item["calendar_date"]): item["note"] for item in raw_notes},
+            )
+        except (ValueError, TypeError, KeyError) as exc:
+            errors = {
+                "calendar_commitment_kind_invalid": "Elige un tipo de compromiso válido.",
+                "calendar_commitment_dates_invalid": "Elige entre 1 y 62 fechas distintas.",
+                "calendar_commitment_date_in_past": "No puedes registrar compromisos en fechas pasadas.",
+                "calendar_commitment_note_too_long": "La nota no puede superar los 500 caracteres.",
+                "calendar_commitment_note_dates_invalid": "Cada nota debe corresponder a una fecha seleccionada y distinta.",
+                "calendar_commitment_already_exists": "Una de las fechas ya tiene ese compromiso. Revisa tu selección.",
+                "calendar_food_period_invalid": "Elige un periodo válido de hasta 366 días.",
+                "calendar_food_period_incomplete": "Elige ambas fechas del periodo o deja ambas vacías.",
+                "calendar_food_period_wrong_kind": "La lista de alimentos corresponde a Hacer compras o Cocinar.",
+                "calendar_food_period_multiple_dates": "Adjunta cada lista a una sola fecha del compromiso.",
+                "calendar_food_attachment_dates_invalid": "Cada lista debe corresponder a una fecha seleccionada y distinta.",
+            }
+            messages.error(request, errors.get(str(exc), "No pudimos registrar los compromisos."))
+        else:
+            invalidate_mobile_read_cache(request.user.id)
+            messages.success(request, "Compromisos registrados en el calendario.")
+            return redirect("calendar_preview")
+        return redirect("calendar_commitments", kind=kind)
+    if request.method != "GET":
+        return HttpResponseBadRequest()
+    month_key = request.GET.get("month")
+    if month_key is not None:
+        try:
+            if len(month_key) != 7:
+                raise ValueError("invalid month")
+            first_day = date.fromisoformat(f"{month_key}-01")
+            if first_day.year == 9999 and first_day.month == 12:
+                raise ValueError("invalid month")
+        except ValueError:
+            return HttpResponseBadRequest()
+        next_month = date(first_day.year + (first_day.month == 12), first_day.month % 12 + 1, 1)
+        commitments = {}
+        for calendar_date, commitment_kind in CalendarCommitment.objects.filter(
+            user=request.user, calendar_date__gte=first_day, calendar_date__lt=next_month
+        ).values_list("calendar_date", "kind"):
+            commitments.setdefault(calendar_date.isoformat(), []).append(commitment_kind)
+        plans = [calendar_date.isoformat() for calendar_date in CalendarizedDay.objects.filter(
+            Q(user=request.user) | Q(user__isnull=True, calendarization__user=request.user),
+            assignment_state=CalendarizedDay.STATE_CURRENT,
+            plan_snapshot__isnull=False,
+            calendar_date__gte=first_day,
+            calendar_date__lt=next_month,
+        ).exclude(plan_snapshot={}).values_list("calendar_date", flat=True).distinct()]
+        return JsonResponse({"commitments": commitments, "plans": plans})
+    existing_dates = list(
+        CalendarCommitment.objects.filter(user=request.user, kind=kind, calendar_date__gte=today)
+        .values_list("calendar_date", flat=True)
+    )
+    return render(request, "notas/calendarization/calendar_commitments.html", {
+        "kind": kind,
+        "kind_label": {"shopping": "Registrar días de compras", "cooking": "Registrar días de cocinar", "training": "Registrar días de entrenamiento"}[kind],
+        "today": today,
+        "existing_dates": [value.isoformat() for value in existing_dates],
+    })
+
+
+@login_required
+@require_GET
+def calendar_commitment_foods(request):
+    try:
+        start_date = date.fromisoformat(request.GET.get("start_date", ""))
+        end_date = date.fromisoformat(request.GET.get("end_date", ""))
+        period = calendar_foods_for_period(request.user, start_date=start_date, end_date=end_date)
+    except ValueError:
+        return JsonResponse({"error": "Elige un periodo válido de hasta 366 días."}, status=422)
+    return JsonResponse({
+        "plans_count": period["plans_count"],
+        "meals_count": period["meals_count"],
+        "foods": [
+            {
+                "name": row["rel"]["name"],
+                "quantity": row["rel"]["quantity"],
+                "quantity_unit": row["rel"]["quantity_unit"],
+            }
+            for row in period["foods_aggregation_table"]
+        ],
+    })
+
+
+@login_required
+@require_POST
+def calendar_preview_action(request):
+    action = request.POST.get("action", "")
+    extended = request.POST.get("extended") == "1"
+    try:
+        local_date = date.fromisoformat(request.POST.get("date", ""))
+    except ValueError:
+        messages.error(request, "Selecciona una fecha válida.")
+        return redirect("calendar_preview")
+    target = f"{reverse('calendar_preview')}?date={local_date.isoformat()}"
+    if extended:
+        target += "&extended=1"
+    try:
+        if action == "assign":
+            assign_dailyplan_to_calendar_date(
+                user=request.user,
+                dailyplan_id=int(request.POST.get("dailyplan_id", "0")),
+                local_date=local_date,
+                assignment_key=str(uuid.uuid4()),
+                replace_existing=request.POST.get("confirm_replace") == "1",
+            )
+        elif action == "remove":
+            remove_calendar_date_plan(user=request.user, local_date=local_date)
+        elif action == "move":
+            target_date = date.fromisoformat(request.POST.get("target_date", ""))
+            move_calendar_date_plan(
+                user=request.user,
+                source_date=local_date,
+                target_date=target_date,
+                assignment_key=str(uuid.uuid4()),
+                replace_existing=request.POST.get("confirm_replace") == "1",
+            )
+            target = f"{reverse('calendar_preview')}?date={target_date.isoformat()}"
+            if extended:
+                target += "&extended=1"
+        elif action == "reset_progress":
+            start_new_calendar_progress_period(user=request.user)
+        else:
+            raise ValueError("calendar_action_invalid")
+    except (ValueError, TypeError) as exc:
+        errors = {
+            "calendar_replacement_confirmation_required": "Confirma que quieres reemplazar el plan que ya ocupa esa fecha.",
+            "calendar_day_has_execution": "No se puede cambiar un día pasado o con cumplimiento registrado.",
+            "calendar_move_program_day_unsupported": "Por ahora, mueve desde el calendario solo planes asignados individualmente.",
+            "calendar_date_in_past": "No se puede modificar una fecha pasada.",
+            "calendar_dailyplan_not_owned": "Selecciona un plan de tu biblioteca.",
+        }
+        messages.error(request, errors.get(str(exc), "No pudimos actualizar esa fecha. Revisa los datos e inténtalo de nuevo."))
+    else:
+        invalidate_mobile_read_cache(request.user.id)
+        messages.success(request, "Calendario actualizado sin borrar el historial.")
+    return HttpResponseRedirect(target)
 
 
 @login_required
@@ -531,6 +801,8 @@ def meal_check_in(request, day_id, meal_snapshot_key):
             request,
             "No fue posible actualizar el cumplimiento de esta comida.",
         )
+    else:
+        invalidate_mobile_read_cache(request.user.id)
     return_to = request.POST.get("return_to", "").strip()
     if return_to and url_has_allowed_host_and_scheme(
         return_to,

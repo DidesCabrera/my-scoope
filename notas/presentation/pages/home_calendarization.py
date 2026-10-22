@@ -6,6 +6,7 @@ from math import ceil
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
@@ -22,6 +23,7 @@ from notas.application.queries.calendarization_queries import (
     today_for_calendarization,
 )
 from notas.application.services.nutrition.weight import get_current_weight
+from notas.domain.models import CalendarizedDay
 from notas.domain.services.nutrition import macro_kcal_distribution
 from notas.presentation.resolvers.title_resolvers import resolve_category_badge
 from notas.presentation.viewmodels.content.dailyplan.list_vm import (
@@ -228,13 +230,20 @@ def build_home_calendarization_vm(
         if requested_selected_date and _week_start_from_param(requested_selected_date.isoformat(), monday) == monday
         else (today if monday == today_monday else monday)
     )
-    calendarized_days = {day.calendar_date: day for day in (calendarization.days.all() if calendarization else ())}
+    calendarized_days = {
+        day.calendar_date: day
+        for day in CalendarizedDay.objects.filter(
+            Q(user=user) | Q(user__isnull=True, calendarization__user=user),
+            assignment_state=CalendarizedDay.STATE_CURRENT,
+            calendar_date__range=(week_starts[0], week_starts[-1] + timedelta(days=6)),
+        ).select_related("calendarization").prefetch_related("meal_execution_events")
+    }
     projection = (
         build_calendarization_snapshot_projection(calendarization)
         if calendarization
         else None
     )
-    current_weight = get_current_weight(user) if calendarization else None
+    current_weight = get_current_weight(user) if calendarization or calendarized_days else None
     owner_label = str(user)
 
     weeks = [

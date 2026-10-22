@@ -33,7 +33,7 @@ from food_catalog.models import (
     CatalogFood,
     CatalogFoodCapability,
 )
-from notas.domain.models import Food, NutritionPreferenceProfile, Profile, WeightLog
+from notas.domain.models import CalendarCommitment, Food, NutritionPreferenceProfile, Profile, WeightLog
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -70,6 +70,23 @@ class AccountDeletionViewTests(TestCase):
         self.assertTrue(CulinaryTemplate.objects.filter(pk=public.pk).exists())
         reviewed.refresh_from_db()
         self.assertIsNone(reviewed.reviewed_by_id)
+
+    def test_deletion_erases_saved_shopping_commitment_and_food_snapshot(self):
+        from accounts.services.deletion import delete_user_account
+
+        commitment = CalendarCommitment.objects.create(
+            user=self.user,
+            calendar_date=date(2026, 8, 5),
+            kind=CalendarCommitment.KIND_SHOPPING,
+            food_period_start=date(2026, 8, 5),
+            food_period_end=date(2026, 8, 5),
+            foods_snapshot=[{"rel": {"name": "Alimento privado", "quantity": 100}}],
+        )
+
+        result = delete_user_account(user=self.user, source="test")
+
+        self.assertFalse(CalendarCommitment.objects.filter(pk=commitment.pk).exists())
+        self.assertEqual(result.deleted_counts["notas.CalendarCommitment"], 1)
 
     def test_profile_exposes_account_deletion_entry_point(self):
         self.client.force_login(self.user)

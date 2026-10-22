@@ -37,6 +37,19 @@ function resolveProfile(profileName, visited = new Set()) {
 function verifyProfile(profileName) {
   const profile = resolveProfile(profileName);
   const target = resolveDeploymentTarget(profile.env ?? {});
+  const releaseProfile = ["preview", "android-alpha", "testflight-staging", "testflight-production", "production"].includes(profileName);
+
+  if (releaseProfile) {
+    if (profile.uploadSourceMaps !== true) {
+      throw new Error(`${profileName} debe publicar source maps para observabilidad beta`);
+    }
+    if (profile.env?.SENTRY_DISABLE_AUTO_UPLOAD === "true") {
+      throw new Error(`${profileName} no puede desactivar la subida automática de símbolos de Sentry`);
+    }
+    if (profile.env?.EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE !== "1") {
+      throw new Error(`${profileName} debe muestrear navegación al 100% durante la beta`);
+    }
+  }
 
   if (profileName === "simulator-staging") {
     if (target.key !== "staging") throw new Error("simulator-staging no apunta a staging");

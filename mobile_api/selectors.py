@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import timedelta
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, Prefetch
 from django.utils import timezone
 
 from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
@@ -13,9 +12,12 @@ from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api import library_projections
+from mobile_api.calendar_today import current_dated_day, standalone_today_payload
 from mobile_api.errors import MobileAPIError
 from mobile_api.food_visuals import food_visual_payload
+from mobile_api.identity_selectors import local_date_for_user, profile_payload, session_payload
 from mobile_api.library_actions import library_actions_payload, library_list_actions_projector
+from notas.application.queries.calendar_foods import calendar_foods_for_period
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_measurement_summary,
     calendarization_progress_summary,
@@ -34,9 +36,18 @@ from notas.application.queries.read_boundaries import get_readable_food_queryset
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.cache.program_summary import get_program_summary
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
-from notas.application.services.nutrition.body_metrics import get_basic_body_profile
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, PinnedDailyPlan, Program, ProgramDay
+from notas.domain.models import (
+    CalendarizedDay,
+    DailyPlan,
+    DailyPlanMeal,
+    Food,
+    Meal,
+    MealFood,
+    PinnedDailyPlan,
+    Program,
+    ProgramDay,
+)
 from notas.domain.services.nutrition import macro_kcal_distribution
 
 REMINDER_UPCOMING_LIMIT = 60
@@ -166,6 +177,21 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str, current_weight=None) -
         }
         for row in rows
     ]
+
+
+def calendar_period_foods_payload(user, *, start_date, end_date) -> dict:
+    period = calendar_foods_for_period(user, start_date=start_date, end_date=end_date)
+    return {
+        "start_date": period["start_date"],
+        "end_date": period["end_date"],
+        "plans_count": period["plans_count"],
+        "meals_count": period["meals_count"],
+        "foods": _aggregated_food_panel_items(
+            period["foods_aggregation_table"],
+            id_prefix="calendar-period-food",
+            current_weight=get_current_weight(user),
+        ),
+    }
 
 
 def _program_week_panel_items(program, current_weight=None) -> list[dict]:
@@ -816,58 +842,28 @@ def subscription_payload(user) -> dict:
     }
 
 
-def session_payload(auth) -> dict:
-    user = auth.user
-    display_name = user.get_full_name().strip() or user.username
-    return {
-        "user_id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "display_name": display_name,
-        "date_joined": user.date_joined,
-        "scopes": list(auth.token.scopes),
-        "device_session_id": (str(auth.token.device_session.public_id) if auth.token.device_session_id else None),
-    }
-
-
-def profile_payload(user) -> dict:
-    body = get_basic_body_profile(user)
-    profile = user.profile
-    return {
-        "birth_date": body.birth_date,
-        "sex": body.sex,
-        "height_cm": body.height_cm,
-        "timezone_name": profile.timezone_name,
-        "onboarding_completed": profile.onboarding_completed_at is not None,
-        "onboarding_version": profile.onboarding_version,
-        "current_weight_kg": body.current_weight_kg,
-        "review_disclosure_required": (
-            profile.mobile_disclosure_version != profile.MOBILE_DISCLOSURE_VERSION
-            or profile.mobile_disclosure_accepted_at is None
-        ),
-        "review_disclosure_version": profile.MOBILE_DISCLOSURE_VERSION,
-    }
-
-
-def local_date_for_user(user, *, now=None):
-    timezone_name = getattr(user.profile, "timezone_name", "UTC") or "UTC"
-    try:
-        user_timezone = ZoneInfo(timezone_name)
-    except ZoneInfoNotFoundError:
-        user_timezone = ZoneInfo("UTC")
-    return timezone.localdate(now or timezone.now(), timezone=user_timezone)
-
-
 def today_payload(user, *, now=None, calendarization=_UNSET) -> dict:
+    local_date = local_date_for_user(user, now=now)
+    dated_day = current_dated_day(user, local_date)
+    standalone = standalone_today_payload(
+        user,
+        local_date,
+        dated_day,
+        calendarization_supplied=calendarization is not _UNSET,
+        calendarization_id=getattr(calendarization, "id", None),
+        snapshot_formatter=_calendarized_snapshot_with_meal_links,
+    )
+    if standalone is not None:
+        return standalone
     if calendarization is _UNSET:
         calendarization = current_calendarization_for_user(user)
     if calendarization is None:
-        local_date = local_date_for_user(user, now=now)
         pinned = PinnedDailyPlan.objects.select_related("dailyplan").filter(user=user, is_active=True).first()
         return {
             "local_date": local_date,
             "calendarization": None,
             "day_id": None,
+            "source_dailyplan_id": None,
             "has_plan": pinned is not None,
             "plan_snapshot": None,
             "meal_execution": pinned_dailyplan_execution_state(pinned, local_date) if pinned else [],
@@ -879,7 +875,7 @@ def today_payload(user, *, now=None, calendarization=_UNSET) -> dict:
         }
 
     local_date = today_for_calendarization(calendarization, now=now)
-    day = next((item for item in calendarization.days.all() if item.calendar_date == local_date), None)
+    day = dated_day if dated_day and dated_day.calendarization_id == calendarization.id else None
     total_days = max(1, (calendarization.end_date - calendarization.start_date).days + 1)
     progress_day = min(max((local_date - calendarization.start_date).days + 1, 0), total_days)
     elapsed_end = min(local_date, calendarization.end_date)
@@ -898,6 +894,7 @@ def today_payload(user, *, now=None, calendarization=_UNSET) -> dict:
             "progress_percent": round((progress_day / total_days) * 100),
         },
         "day_id": day.id if day else None,
+        "source_dailyplan_id": day.source_dailyplan_id if day else None,
         "has_plan": bool(day and day.has_plan),
         "plan_snapshot": (
             _calendarized_snapshot_with_meal_links(user, day.plan_snapshot) if day and day.has_plan else None
@@ -1044,6 +1041,7 @@ def _calendarized_days_payload(calendarization) -> list[dict]:
             "plan_name": (day.plan_snapshot or {}).get("name", ""),
         }
         for day in calendarization.days.all()
+        if day.assignment_state in {CalendarizedDay.STATE_CURRENT, CalendarizedDay.STATE_EMPTY}
     ]
 
 
@@ -1222,8 +1220,8 @@ def calendarized_day_payload(user, day_id: int) -> dict | None:
     return {
         "id": day.id,
         "calendar_date": day.calendar_date,
-        "week_number": day.week_number,
-        "day_number": day.day_number,
+        "week_number": day.week_number or 0,
+        "day_number": day.day_number or 0,
         "has_plan": day.has_plan,
         "meal_execution": meal_execution_state_for_day(day) if day.has_plan else [],
         "plan_name": (snapshot or {}).get("name", ""),

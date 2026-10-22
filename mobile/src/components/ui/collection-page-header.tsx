@@ -65,16 +65,16 @@ export function CollectionPageHeader({
   );
 }
 
-export function SectionPageHeader({ count, countLabel, section, subtitle, title }: { count?: number; countLabel: string; section: SectionKind; subtitle?: string; title: string }) {
+export function SectionPageHeader({ count, countLabel, icon, indicator, section, subtitle, title }: { count?: number; countLabel?: string; icon?: ReactNode; indicator?: ReactNode; section: SectionKind; subtitle?: string; title: string }) {
   return (
     <PageHeader
-      icon={<SectionIcon section={section} size="hero" />}
-      indicator={count !== undefined ? (
+      icon={icon ?? <SectionIcon section={section} size="hero" />}
+      indicator={indicator ?? (count !== undefined ? (
         <View accessibilityLabel={`${count} ${countLabel}`} accessible style={styles.countChip}>
           <Text style={styles.countValue}>{count}</Text>
           <SectionIcon section={section} size="compact" />
         </View>
-      ) : undefined}
+      ) : undefined)}
       subtitle={subtitle}
       title={title}
     />

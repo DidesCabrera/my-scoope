@@ -5,10 +5,16 @@ import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
+import { recordWheelPickerInteraction } from "@/observability/sentry";
 import type { NativeDateTimeFieldProps } from "./native-date-time-field.types";
 import { pickerDateFromValue, pickerValueFromDate } from "./native-date-time-values";
+import { committedDateTimeDraft, dateTimeDraftFromDate, type DateTimeDraft } from "./native-picker-draft-values";
 import { NativeWheelAdornment } from "./native-wheel-adornment";
 import { nativeWheelMetrics } from "./native-wheel-metrics";
+
+const DAY_VALUES = Array.from({ length: 31 }, (_, day) => day + 1);
+const HOUR_VALUES = Array.from({ length: 24 }, (_, hour) => hour);
+const MONTH_VALUES = Array.from({ length: 12 }, (_, month) => month);
 
 function displayValue(value: string, mode: NativeDateTimeFieldProps["mode"]): string {
   const date = pickerDateFromValue(value, mode);
@@ -36,13 +42,11 @@ export function NativeDateTimeField({
 }: NativeDateTimeFieldProps) {
   const [expanded, setExpanded] = useState(false);
   const selected = pickerDateFromValue(value, mode);
-  const hourValues = Array.from({ length: 24 }, (_, hour) => hour);
+  const [draft, setDraft] = useState<DateTimeDraft>(() => dateTimeDraftFromDate(selected));
   const minuteValues = Array.from({ length: Math.ceil(60 / minuteInterval) }, (_, index) => index * minuteInterval);
   const minimumDate = minimumValue ? pickerDateFromValue(minimumValue, "date") : new Date(1900, 0, 1);
   const maximumDate = maximumValue ? pickerDateFromValue(maximumValue, "date") : new Date(new Date().getFullYear() + 100, 11, 31);
   const yearValues = Array.from({ length: maximumDate.getFullYear() - minimumDate.getFullYear() + 1 }, (_, index) => minimumDate.getFullYear() + index);
-  const monthValues = Array.from({ length: 12 }, (_, month) => month);
-  const dayValues = Array.from({ length: new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate() }, (_, day) => day + 1);
   const Icon = mode === "date" ? CalendarDays : Clock3;
   const pickerProps = {
     is24Hour: true,
@@ -64,24 +68,29 @@ export function NativeDateTimeField({
       DateTimePickerAndroid.open({ ...pickerProps, onChange: handleChange });
       return;
     }
-    setExpanded((current) => !current);
+    if (expanded) {
+      recordWheelPickerInteraction(mode, "cancel");
+      setExpanded(false);
+      return;
+    }
+    setDraft(dateTimeDraftFromDate(selected));
+    recordWheelPickerInteraction(mode, "open");
+    setExpanded(true);
   };
 
   const changeTimePart = (part: "hour" | "minute", next: number) => {
-    const updated = new Date(selected);
-    if (part === "hour") updated.setHours(next);
-    else updated.setMinutes(next);
-    onChange(pickerValueFromDate(updated, "time"));
+    setDraft((current) => ({ ...current, [part]: next }));
   };
 
   const changeDatePart = (part: "day" | "month" | "year", next: number) => {
-    const year = part === "year" ? next : selected.getFullYear();
-    const month = part === "month" ? next : selected.getMonth();
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    const day = Math.min(part === "day" ? next : selected.getDate(), lastDay);
-    const updated = new Date(year, month, day);
-    const bounded = updated < minimumDate ? minimumDate : updated > maximumDate ? maximumDate : updated;
-    onChange(pickerValueFromDate(bounded, "date"));
+    setDraft((current) => ({ ...current, [part]: next }));
+  };
+
+  const commit = () => {
+    const bounded = committedDateTimeDraft(draft, mode, selected, minimumDate, maximumDate);
+    recordWheelPickerInteraction(mode, "commit");
+    onChange(pickerValueFromDate(bounded, mode));
+    setExpanded(false);
   };
 
   const input = (
@@ -115,28 +124,28 @@ export function NativeDateTimeField({
         <View style={styles.inlinePicker}>
           {mode === "time" ? (
             <View accessibilityLabel="Hora en formato de 24 horas" style={styles.timePickerRow}>
-              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeTimePart("hour", Number(next))} selectedValue={selected.getHours()} style={styles.timePicker}>
-                {hourValues.map((hour) => <Picker.Item key={hour} label={String(hour).padStart(2, "0")} value={hour} />)}
+              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeTimePart("hour", Number(next))} selectedValue={draft.hour} style={styles.timePicker}>
+                {HOUR_VALUES.map((hour) => <Picker.Item key={hour} label={String(hour).padStart(2, "0")} value={hour} />)}
               </Picker>
               <NativeWheelAdornment label=":" width={8} />
-              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeTimePart("minute", Number(next))} selectedValue={selected.getMinutes()} style={styles.timePicker}>
+              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeTimePart("minute", Number(next))} selectedValue={draft.minute} style={styles.timePicker}>
                 {minuteValues.map((minute) => <Picker.Item key={minute} label={String(minute).padStart(2, "0")} value={minute} />)}
               </Picker>
             </View>
           ) : (
             <View accessibilityLabel="Fecha" style={styles.datePickerRow}>
-              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeDatePart("day", Number(next))} selectedValue={selected.getDate()} style={styles.dateDayPicker}>
-                {dayValues.map((day) => <Picker.Item key={day} label={String(day)} value={day} />)}
+              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeDatePart("day", Number(next))} selectedValue={draft.day} style={styles.dateDayPicker}>
+                {DAY_VALUES.map((day) => <Picker.Item key={day} label={String(day)} value={day} />)}
               </Picker>
-              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeDatePart("month", Number(next))} selectedValue={selected.getMonth()} style={styles.dateMonthPicker}>
-                {monthValues.map((month) => <Picker.Item key={month} label={new Intl.DateTimeFormat("es-CL", { month: "short" }).format(new Date(2024, month, 1))} value={month} />)}
+              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeDatePart("month", Number(next))} selectedValue={draft.month} style={styles.dateMonthPicker}>
+                {MONTH_VALUES.map((month) => <Picker.Item key={month} label={new Intl.DateTimeFormat("es-CL", { month: "short" }).format(new Date(2024, month, 1))} value={month} />)}
               </Picker>
-              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeDatePart("year", Number(next))} selectedValue={selected.getFullYear()} style={styles.dateYearPicker}>
+              <Picker itemStyle={styles.pickerItem} onValueChange={(next) => changeDatePart("year", Number(next))} selectedValue={draft.year} style={styles.dateYearPicker}>
                 {yearValues.map((year) => <Picker.Item key={year} label={String(year)} value={year} />)}
               </Picker>
             </View>
           )}
-          <Pressable accessibilityLabel="Listo" accessibilityRole="button" onPress={() => setExpanded(false)} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
+          <Pressable accessibilityLabel="Listo" accessibilityRole="button" onPress={commit} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
             <Check color={tokens.color.interactivePrimary} size={22} strokeWidth={2.6} />
           </Pressable>
         </View>

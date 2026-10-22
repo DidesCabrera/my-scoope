@@ -98,13 +98,13 @@ export function resolveFoodVisual(name: string, emoji?: string | null, visualKey
   };
 }
 
-export function FoodVisualIcon({ emoji, name, size = "compact", visualKey }: { emoji?: string | null; name: string; size?: "compact" | "title"; visualKey?: string | null }) {
+export function FoodVisualIcon({ emoji, name, size = "compact", visualKey }: { emoji?: string | null; name: string; size?: "compact" | "panel" | "title"; visualKey?: string | null }) {
   const visual = resolveFoodVisual(name, emoji, visualKey);
   return (
     <Text
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[styles.icon, size === "title" && styles.titleIcon]}>
+      style={[styles.icon, size === "panel" && styles.panelIcon, size === "title" && styles.titleIcon]}>
       {visual.emoji}
     </Text>
   );
@@ -112,5 +112,6 @@ export function FoodVisualIcon({ emoji, name, size = "compact", visualKey }: { e
 
 const styles = StyleSheet.create({
   icon: { flexShrink: 0, fontSize: 18, lineHeight: 22, textAlign: "center", width: 24 },
+  panelIcon: { fontSize: 14, lineHeight: 18, width: 20 },
   titleIcon: { fontSize: 22, lineHeight: 28, width: 29 },
 });

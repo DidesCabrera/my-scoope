@@ -227,7 +227,7 @@ export default function ProgramDayScreen() {
       {day.has_plan && snapshot ? (
         <EntityDetailPage
           entity="dailyPlan"
-          afterNutrition={<DailyMealCompletionCard mealExecution={day.meal_execution} mealKeys={meals.map((meal) => meal.key)} />}
+          afterNutrition={<DailyMealCompletionCard mealExecution={day.meal_execution} mealKeys={meals.map((meal) => meal.key)} mealNutrition={meals.map((meal) => ({ calories: snapshotCalories(meal.totals), carbsGrams: meal.totals?.carbs_g ?? 0, fatGrams: meal.totals?.fat_g ?? 0, key: meal.key, proteinGrams: meal.totals?.protein_g ?? 0 }))} />}
           completion={completionFor(mealExecution)}
           eyebrowAccessory={<HeaderMetadataChip kind="date" value={compactDateLabel(day.calendar_date)} />}
           indicators={[

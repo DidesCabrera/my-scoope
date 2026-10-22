@@ -5,6 +5,7 @@ import type {
   OAuthTokenResponse,
   SessionData,
 } from "@/api/types";
+import { normalizeDiagnosticPath, sanitizeRequestId } from "@/observability/sanitize";
 
 export type StoredTokenSet = {
   accessToken: string;
@@ -32,8 +33,11 @@ type FetchLike = typeof fetch;
 export type MobileRequestMetric = {
   cache: "deduplicated" | "fresh" | "network" | "revalidated";
   durationMs: number;
+  errorCode: string | null;
   method: string;
+  outcome: "api_error" | "invalid_response" | "network_error" | "success";
   path: string;
+  requestId: string | null;
   responseBytes: number | null;
   status: number;
 };
@@ -144,12 +148,12 @@ export class MobileSessionManager {
       }
       const cached = this.responseCache.get(cacheKey);
       if (cached && this.now() - cached.storedAt <= this.cacheTtl(path)) {
-        this.reportMetric({ cache: "fresh", durationMs: 0, method, path, responseBytes: 0, status: 200 });
+        this.reportMetric({ cache: "fresh", durationMs: 0, errorCode: null, method, outcome: "success", path, requestId: null, responseBytes: 0, status: 200 });
         return cached.data as T;
       }
       const existing = this.inFlightReads.get(cacheKey);
       if (existing) {
-        this.reportMetric({ cache: "deduplicated", durationMs: 0, method, path, responseBytes: 0, status: 200 });
+        this.reportMetric({ cache: "deduplicated", durationMs: 0, errorCode: null, method, outcome: "success", path, requestId: null, responseBytes: 0, status: 200 });
         return existing as Promise<T>;
       }
       const request = this.performRequest<T>(path, init, canRetry, cached ?? null, this.cacheGeneration);
@@ -193,7 +197,7 @@ export class MobileSessionManager {
         headers,
       });
     } catch (error) {
-      this.reportMetric({ cache: "network", durationMs: this.now() - startedAt, method, path, responseBytes: null, status: 0 });
+      this.reportMetric({ cache: "network", durationMs: this.now() - startedAt, errorCode: null, method, outcome: "network_error", path, requestId: null, responseBytes: null, status: 0 });
       if (sessionGeneration !== this.sessionGeneration) {
         throw new MobileApiError("La sesión cambió durante la solicitud.", "mobile_session_changed", 401);
       }
@@ -209,17 +213,21 @@ export class MobileSessionManager {
     }
     if (response.status === 304 && cached) {
       cached.storedAt = this.now();
-      this.reportMetric({ cache: "revalidated", durationMs: this.now() - startedAt, method, path, responseBytes: 0, status: 304 });
+      this.reportMetric({ cache: "revalidated", durationMs: this.now() - startedAt, errorCode: null, method, outcome: "success", path, requestId: this.responseRequestId(response), responseBytes: 0, status: 304 });
       return cached.data as T;
     }
     const contentType = response.headers.get("Content-Type")?.toLowerCase() ?? "";
     if (!contentType.includes("application/json")) {
       const contentLength = Number(response.headers.get("Content-Length"));
+      const requestId = this.responseRequestId(response);
       this.reportMetric({
         cache: "network",
         durationMs: this.now() - startedAt,
+        errorCode: "mobile_api_invalid_response",
         method,
+        outcome: "invalid_response",
         path,
+        requestId,
         responseBytes: Number.isFinite(contentLength) ? contentLength : null,
         status: response.status,
       });
@@ -229,21 +237,38 @@ export class MobileSessionManager {
           : "El servidor devolvió una respuesta inesperada. Inténtalo nuevamente.",
         "mobile_api_invalid_response",
         response.status,
+        {},
+        requestId,
       );
     }
     const responseText = await response.text();
     const responseBytes = new TextEncoder().encode(responseText).length;
-    const payload = JSON.parse(responseText) as ApiEnvelope<T>;
+    let payload: ApiEnvelope<T>;
+    try {
+      payload = JSON.parse(responseText) as ApiEnvelope<T>;
+    } catch {
+      const requestId = this.responseRequestId(response);
+      this.reportMetric({ cache: "network", durationMs: this.now() - startedAt, errorCode: "mobile_api_invalid_json", method, outcome: "invalid_response", path, requestId, responseBytes, status: response.status });
+      throw new MobileApiError(
+        "El servidor devolvió una respuesta inesperada. Inténtalo nuevamente.",
+        "mobile_api_invalid_response",
+        response.status,
+        {},
+        requestId,
+      );
+    }
     if (sessionGeneration !== this.sessionGeneration) {
       throw new MobileApiError("La sesión cambió durante la solicitud.", "mobile_session_changed", 401);
     }
-    this.reportMetric({ cache: "network", durationMs: this.now() - startedAt, method, path, responseBytes, status: response.status });
+    const requestId = this.responseRequestId(response);
     if (!response.ok || !payload.ok) {
       const detail = payload.ok
         ? { code: "mobile_api_error", message: "La solicitud no pudo completarse.", details: {} }
         : payload.error;
-      throw new MobileApiError(detail.message, detail.code, response.status, detail.details);
+      this.reportMetric({ cache: "network", durationMs: this.now() - startedAt, errorCode: detail.code, method, outcome: "api_error", path, requestId, responseBytes, status: response.status });
+      throw new MobileApiError(detail.message, detail.code, response.status, detail.details, requestId);
     }
+    this.reportMetric({ cache: "network", durationMs: this.now() - startedAt, errorCode: null, method, outcome: "success", path, requestId, responseBytes, status: response.status });
     if (method === "GET" && cacheGeneration === this.cacheGeneration) {
       this.responseCache.set(`${method}:${path}`, {
         data: payload.data,
@@ -313,11 +338,12 @@ export class MobileSessionManager {
   private reportMetric(metric: MobileRequestMetric): void {
     this.metricObserver?.({
       ...metric,
-      path: metric.path.replace(
-        /\/(?:\d+|[0-9a-f]{8}-[0-9a-f-]{27,}|[A-Za-z0-9_-]{20,})(?=\/|\?|$)/gi,
-        "/:id",
-      ),
+      path: normalizeDiagnosticPath(metric.path),
     });
+  }
+
+  private responseRequestId(response: Response): string | null {
+    return sanitizeRequestId(response.headers.get("Rndr-Id") ?? response.headers.get("X-Request-ID"));
   }
 
   private accessNeedsRefresh(): boolean {

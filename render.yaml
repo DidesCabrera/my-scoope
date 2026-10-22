@@ -192,7 +192,7 @@ services:
     plan: starter
     autoDeployTrigger: commit
     buildCommand: ./scripts/render_build.sh
-    startCommand: python manage.py run_calendar_notification_worker --interval 300 --limit 100
+    startCommand: python manage.py wait_for_migrations --timeout 600 --interval 5 && python manage.py run_calendar_notification_worker --interval 300 --limit 100
     envVars:
       - fromGroup: myscoope-django-runtime
       - key: DJANGO_SETTINGS_MODULE

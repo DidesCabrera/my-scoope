@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from notas.application.services.commands.calendar_day_commands import assign_dailyplan_to_calendar_date
 from notas.domain.models import CalendarizedDay, DailyPlan, ProgramCalendarization
 
 UTC = dt_timezone.utc
@@ -74,6 +75,21 @@ class HomeCalendarizationTests(TestCase):
         self.assertEqual(len(calendarization["weeks"]), 1)
         self.assertFalse(calendarization["has_multiple_weeks"])
 
+    def test_home_shows_individual_calendar_snapshot_without_a_program(self):
+        plan = DailyPlan.objects.create(name="Plan individual", created_by=self.user)
+        day = assign_dailyplan_to_calendar_date(
+            user=self.user, dailyplan_id=plan.id, local_date=date(2026, 7, 15),
+            assignment_key="web-home-manual-0001", now=FIXED_NOW,
+        )
+        plan.name = "Nombre editado en biblioteca"
+        plan.save(update_fields=["name"])
+        response = self._get_home()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Plan individual")
+        self.assertNotContains(response, "Nombre editado en biblioteca")
+        self.assertContains(response, reverse("calendarization_day_detail", args=[day.id]))
+        self.assertContains(response, "Cumplimiento del calendario")
+
     def test_home_shows_only_todays_plan_card(self):
         calendarization = ProgramCalendarization.objects.create(
             user=self.user,
@@ -134,11 +150,8 @@ class HomeCalendarizationTests(TestCase):
 
         self.assertContains(response, "Programa Fuerza")
         self.assertContains(response, "Programa activo")
-        self.assertNotContains(response, "program-active-kpis__period")
-        self.assertContains(response, "Días transcurridos")
-        self.assertContains(response, "program-active-kpis--metric-cards")
-        self.assertContains(response, "Adhesión")
-        self.assertContains(response, "3/7")
+        self.assertContains(response, "Cumplimiento del calendario")
+        self.assertNotContains(response, "program-active-kpis--metric-cards")
         self.assertContains(response, "Plan calendarizado")
         self.assertContains(response, "Comida snapshot")
         self.assertContains(response, "Avena snapshot")

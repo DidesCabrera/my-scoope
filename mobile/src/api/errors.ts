@@ -4,6 +4,7 @@ export class MobileApiError extends Error {
     readonly code: string,
     readonly status: number,
     readonly details: Record<string, unknown> = {},
+    readonly requestId: string | null = null,
   ) {
     super(message);
     this.name = "MobileApiError";
@@ -41,6 +42,13 @@ export function userFacingError(error: unknown): string {
   if (isConnectionError(error)) return connectionMessage;
   if (error instanceof MobileApiError) {
     const messages: Record<string, string> = {
+      calendar_replacement_confirmation_required: "Ya hay un plan en esa fecha. Confirma su reemplazo para conservar la versión anterior en el historial.",
+      calendar_day_has_execution: "No se puede cambiar un día pasado o con cumplimiento registrado.",
+      calendar_date_in_past: "No se puede modificar una fecha pasada.",
+      calendar_move_program_day_unsupported: "Por ahora, solo se pueden mover planes asignados individualmente.",
+      calendar_progress_no_prior_period: "Aún no hay un periodo anterior para reiniciar el contador.",
+      calendar_progress_period_already_started_today: "El nuevo periodo de progreso ya comenzó hoy.",
+      calendarization_current_conflict: "Ese programa coincide con planes ya asignados individualmente. Revisa esas fechas antes de activarlo.",
       ai_async_unavailable: "El Asistente no está disponible en este momento. Tu conversación guardada no se perderá.",
       ai_turn_rate_limited: "Has enviado varios mensajes seguidos. Espera un momento e inténtalo nuevamente.",
       apple_reconciliation_rate_limited: "Espera un momento antes de consultar nuevamente tu suscripción con Apple.",
@@ -74,14 +82,24 @@ export function userFacingError(error: unknown): string {
       share_resource_not_active: "Este enlace compartido fue revocado.",
       sharing_inbox_item_not_found: "Este elemento ya no está disponible en tu Inbox.",
     };
-    if (messages[error.code]) return messages[error.code];
+    if (messages[error.code]) {
+      return error.status >= 500 && error.requestId
+        ? `${messages[error.code]} Código de soporte: ${error.requestId}.`
+        : messages[error.code];
+    }
     if (error.status === 403) return "Tu cuenta no tiene permiso para realizar esta acción.";
     if (error.status === 404) return "Este contenido ya no está disponible o no pertenece a tu cuenta.";
     if (error.status === 409) return "El contenido cambió mientras lo revisabas. Actualiza la pantalla e inténtalo nuevamente.";
     if (error.status === 422) return "No pudimos validar esta solicitud. Revisa los datos e inténtalo nuevamente.";
     if (error.status === 429) return "Has realizado varias solicitudes seguidas. Espera un momento e inténtalo nuevamente.";
-    if (error.status === 503) return "Este servicio no está disponible en este momento. Inténtalo más tarde.";
-    return error.status >= 500 ? genericMessage : safeMessage(error.message);
+    if (error.status === 503) {
+      const message = "Este servicio no está disponible en este momento. Inténtalo más tarde.";
+      return error.requestId ? `${message} Código de soporte: ${error.requestId}.` : message;
+    }
+    if (error.status >= 500) {
+      return error.requestId ? `${genericMessage} Código de soporte: ${error.requestId}.` : genericMessage;
+    }
+    return safeMessage(error.message);
   }
   if (error instanceof Error && error.message) {
     return safeMessage(error.message);

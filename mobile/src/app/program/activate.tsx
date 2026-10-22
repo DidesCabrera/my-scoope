@@ -197,7 +197,7 @@ export default function ActivateProgramScreen() {
         setConfirmation({ kind: "incomplete", message: `Este programa tiene ${count} ${count === 1 ? "día" : "días"} sin plan. Esos días se mostrarán vacíos en tu recorrido.` });
       } else if (nextError instanceof MobileApiError && nextError.code === "calendarization_replacement_confirmation_required") {
         const currentName = String(nextError.details.current_program_name || "tu programa actual");
-        setConfirmation({ kind: "replacement", message: `Ya estás siguiendo “${currentName}”. Al continuar, ese recorrido se cancelará y quedará en tu historial.` });
+        setConfirmation({ kind: "replacement", message: `Desde ${startDate}, los días restantes de “${currentName}” se sustituirán por este programa. Los días anteriores y su cumplimiento se conservarán; los planes individuales no se sobrescriben.` });
       } else {
         setError(userFacingError(nextError));
       }

@@ -1,7 +1,7 @@
 # iOS release capabilities runbook
 
 Status: current
-Date: 2026-08-20
+Date: 2026-10-21
 
 ## Host and signing prerequisites
 
@@ -134,12 +134,62 @@ owned local requests and does not duplicate an alert.
 
 ## Sentry
 
-Set `EXPO_PUBLIC_SENTRY_DSN` only for builds that should report crashes. Configure
-`SENTRY_ORG`, `SENTRY_PROJECT` and sensitive `SENTRY_AUTH_TOKEN` in EAS/build
-secrets for source maps; never prefix those build credentials with `EXPO_PUBLIC_`.
-Trigger one non-sensitive test crash and verify symbolication. Confirm the event
-contains no user object, request body, cookies, headers, query string, environment
-payload or breadcrumb data.
+Set `EXPO_PUBLIC_SENTRY_DSN` only for builds that should report crashes. In both
+the EAS `preview` and `production` environments, configure `SENTRY_ORG`,
+`SENTRY_PROJECT`, sensitive `SENTRY_AUTH_TOKEN`, and the public DSN. Never prefix
+the three build credentials with `EXPO_PUBLIC_`. Release profiles publish source
+maps to EAS and Sentry; the EAS post-install guard fails the build when any of
+these values is absent. Development and simulator profiles deliberately keep
+automatic upload disabled.
+
+During the small external beta, release profiles use
+`EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=1` so every navigation transaction is
+eligible for capture. Reduce this to the normal production rate (`0.05`) before
+public App Store distribution, after beta evidence has closed the navigation
+risks. Error capture is not sampled.
+
+Trigger one non-sensitive test crash and verify all of the following before
+assigning the build to external testers:
+
+- the event is symbolicated to repository files and lines;
+- environment, app version, build and release identify the exact binary;
+- the navigation trail uses route templates such as `/program/days/[id]`;
+- API breadcrumbs retain only normalized path, method, outcome, status, duration,
+  response size, error code and the safe request correlation ID;
+- the event contains no user object, request body, cookies, headers, query string,
+  OCR/nutrition content, screenshot, view hierarchy or arbitrary breadcrumb data.
+
+Create Sentry alerts for new issues, regressions and fatal/error spikes. Route
+backend `5xx` and mobile API contract failures to the same operational inbox.
+Do not enable Session Replay or automatic screenshots during beta.
+
+## External beta incident routine
+
+Keep tester feedback enabled for the TestFlight group. For each report, record
+build, device, iOS version, local timestamp/timezone, starting screen, actions,
+expected result, actual result, frequency, network condition and an optional
+TestFlight screenshot. Do not ask testers to paste nutrition, authentication,
+receipt or payment payloads.
+
+Triage reports using these categories:
+
+- `P0`: privacy, security, billing, data loss or a complete blocker;
+- `P1`: crash or broken core flow without a practical workaround;
+- `P2`: functional/navigation problem with a workaround;
+- `P3`: comprehension, copy, content or visual refinement.
+
+For crashes, begin with TestFlight/App Store Connect and the matching Sentry
+release. For non-crashing functional problems, use the Sentry route/API trail.
+When the app displays a `Código de soporte`, search that value in Sentry under
+`mobile.api.request_id` and in Render as the HTTP `requestID`/`Rndr-Id`. Render
+and My Scoope return the same opaque correlation value as `X-Request-ID` to the
+mobile client; it contains no user or request payload.
+
+During active external beta, review TestFlight feedback, Sentry new/regressed
+issues and Render `5xx` once each working day. Create one issue per distinct
+symptom, reproduce it, add a regression test where the behavior is representable,
+and close it only after verification in a newer TestFlight build. Avoid creating
+duplicate issues for multiple testers who encountered the same signature.
 
 ## Physical release evidence
 

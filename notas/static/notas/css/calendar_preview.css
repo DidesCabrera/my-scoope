@@ -1,0 +1,102 @@
+.calendar-preview { display: grid; gap: 1.5rem; max-width: 960px; }
+.calendar-preview__notice { color: var(--text-muted); margin: 0; }
+.calendar-preview__summary { display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.calendar-preview__summary-card { background: var(--surface-card); border-radius: 20px; display: grid; gap: .3rem; min-height: 7.5rem; padding: 1rem; }
+.calendar-preview__summary-card span { font-weight: 600; }
+.calendar-preview__summary-card strong { font-size: clamp(1.35rem, 3vw, 2rem); }
+.calendar-preview__summary-card small { color: var(--text-muted); }
+.calendar-preview__section { background: var(--surface-card); border: 1px solid var(--border-default); border-radius: 20px; display: grid; gap: 1rem; padding: 1.25rem; }
+.calendar-preview__section h2, .calendar-preview__section h3, .calendar-preview__section p { margin: 0; }
+.calendar-preview__week { display: grid; gap: .5rem; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.calendar-preview__date { align-items: center; border: 1px solid var(--border-default); border-radius: 999px; color: var(--text-main); display: flex; flex-direction: column; justify-content: center; min-height: 74px; text-decoration: none; }
+.calendar-preview__date strong { font-size: 1.25rem; }
+.calendar-preview__date small, .calendar-preview__date span { color: var(--text-muted); font-size: .75rem; }
+.calendar-preview__date.has-plan { border-color: var(--color-dailyplan); }
+.calendar-preview__date.is-selected { box-shadow: 0 0 0 3px var(--color-secondary); }
+.calendar-preview__detail { background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 18px; display: grid; gap: .75rem; padding: 1.25rem; }
+.calendar-preview__editor { border-top: 1px solid var(--border-default); display: grid; gap: .75rem; padding-top: 1rem; }
+.calendar-preview__editor form, .calendar-preview__progress form { align-items: start; display: grid; gap: .6rem; }
+.calendar-preview__editor select, .calendar-preview__editor input[type="date"] { background: var(--surface-card); border: 1px solid var(--border-default); border-radius: 10px; color: var(--text-main); min-height: 2.5rem; padding: .35rem .55rem; }
+.calendar-preview__editor button, .calendar-preview__progress button { background: var(--color-program); border: 0; border-radius: 10px; color: white; cursor: pointer; justify-self: start; min-height: 2.5rem; padding: .45rem .85rem; }
+.calendar-preview__history { border-top: 1px solid var(--border-default); display: grid; gap: .5rem; padding-top: 1rem; }
+.calendar-preview__history ul { display: grid; gap: .4rem; margin: 0; padding-left: 1.25rem; }
+.calendar-preview__eyebrow { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; }
+.calendar-preview__nutrition { color: var(--text-muted); }
+.calendar-preview__meals { display: grid; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+.calendar-preview__meals li { border-top: 1px solid var(--border-default); display: flex; gap: 1rem; padding-top: .5rem; }
+.calendar-preview__meals li span { color: var(--text-muted); min-width: 3rem; }
+.calendar-preview__grid { display: grid; gap: .4rem; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.calendar-preview__grid-date { align-items: center; border: 1px solid var(--border-default); border-radius: 10px; display: flex; flex-direction: column; min-height: 52px; padding: .3rem; }
+.calendar-preview__grid-date.has-plan { border: 2px solid var(--color-program); }
+.calendar-preview__grid-date small { color: var(--text-muted); }
+.calendar-preview__agenda { display: grid; }
+.calendar-preview__row { align-items: center; border-top: 1px solid var(--border-default); display: grid; gap: 1rem; grid-template-columns: 7rem minmax(0, 1fr) auto auto; min-height: 3.5rem; padding: .5rem 0; }
+.calendar-preview__row time { color: var(--text-muted); }
+.calendar-preview__row span small { color: var(--text-muted); display: block; }
+.calendar-preview__progress strong { font-size: 2.5rem; }
+@media (max-width: 620px) { .calendar-preview__summary { gap: .5rem; } .calendar-preview__summary-card { padding: .75rem; } .calendar-preview__section { padding: .85rem; } .calendar-preview__date { min-height: 58px; } .calendar-preview__date strong { font-size: 1rem; } .calendar-preview__row { gap: .4rem; grid-template-columns: 5rem minmax(0, 1fr) auto auto; } .calendar-preview__row a { font-size: .8rem; } }
+.calendar-preview__commitment-action > button,
+.calendar-commitments__actions > button { background: var(--color-program); border: 0; border-radius: 10px; color: #fff; cursor: pointer; font: inherit; font-weight: 600; min-height: 2.75rem; padding: .6rem 1rem; }
+.calendar-preview__commitment-action dialog { background: var(--surface-card); border: 1px solid var(--border-default); border-radius: 20px; color: var(--text-main); max-width: min(90vw, 420px); padding: 1.25rem; }
+.calendar-preview__commitment-action dialog::backdrop { background: #000a; }
+.calendar-preview__commitment-action dialog h2 { font-size: 1.2rem; margin: 0 0 1rem; }
+.calendar-preview__commitment-options { display: grid; gap: .6rem; }
+.calendar-preview__commitment-options a { align-items: center; background: var(--surface-card-muted); border-radius: 10px; color: var(--text-main); display: flex; gap: .65rem; padding: .8rem; text-decoration: none; }
+.calendar-preview__commitment-options a svg, .calendar-preview__commitment-label svg { height: 1.15rem; width: 1.15rem; }
+.calendar-preview__commitment-label { align-items: center; display: inline-flex; gap: .4rem; }
+.calendar-preview__commitment-action dialog form { margin-top: 1rem; }
+.calendar-preview__commitment-action dialog form button { background: none; border: 0; color: var(--text-muted); cursor: pointer; }
+.calendar-preview__commitment-dots { display: flex; gap: 2px; justify-content: center; }
+.calendar-preview__commitment-dot, .calendar-commitments__dot { border-radius: 50%; display: block; height: 5px; width: 5px; }
+.calendar-preview__commitment-dot--shopping, .calendar-commitments__dot--shopping { background: var(--color-food); }
+.calendar-preview__commitment-dot--cooking, .calendar-commitments__dot--cooking { background: var(--color-meal); }
+.calendar-preview__commitment-dot--training, .calendar-commitments__dot--training { background: #01e888; }
+.calendar-preview__selected-commitments { background: var(--surface-card-muted); border-radius: 14px; padding: .8rem 1rem; }
+.calendar-preview__selected-commitments h3 { margin: 0; }
+.calendar-preview__selected-commitments ul { margin-bottom: 0; padding-left: 1.2rem; }
+.calendar-commitments form { display: grid; gap: 1.5rem; }
+.calendar-commitments__month-navigation { align-items: center; display: flex; justify-content: space-between; }
+.calendar-commitments__month-navigation h2 { text-transform: capitalize; }
+.calendar-commitments__month-navigation button { background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 10px; color: var(--text-main); cursor: pointer; font: inherit; font-size: 1.5rem; height: 2.5rem; width: 2.5rem; }
+.calendar-commitments__month-navigation button:disabled { cursor: default; opacity: .35; }
+.calendar-commitments__grid { display: grid; gap: .5rem; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.calendar-commitments__weekday { color: var(--text-muted); font-size: .8rem; text-align: center; }
+.calendar-commitments__date { background: var(--surface-card-muted); border: 2px solid transparent; border-radius: 10px; color: var(--text-main); cursor: pointer; font: inherit; min-height: 2.75rem; position: relative; }
+.calendar-commitments__dots { bottom: 3px; display: flex; gap: 2px; justify-content: center; left: 0; position: absolute; right: 0; }
+.calendar-commitments__date.is-selected { border-color: var(--color-secondary); color: var(--color-secondary); }
+.calendar-commitments__date.has-plan:not(.is-selected):not(.is-range-endpoint):not(.is-range-middle) { color: var(--color-dailyplan); font-weight: 700; }
+.calendar-commitments__date:disabled { cursor: default; opacity: .45; }
+.calendar-commitments__view, .calendar-commitments__selected { display: grid; gap: 1rem; }
+.calendar-commitments__selected-row { align-items: center; background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 12px; color: var(--text-main); cursor: pointer; display: flex; font: inherit; gap: 1rem; justify-content: space-between; min-height: 4.5rem; padding: .75rem; text-align: left; width: 100%; }
+.calendar-commitments__selected-row > div { display: grid; gap: .3rem; }
+.calendar-commitments__selected-row > div { flex: 1; }
+.calendar-commitments__selected-row > svg { height: 1.25rem; width: 1.25rem; }
+.calendar-commitments__selected-row small { color: var(--text-muted); }
+.calendar-commitments__attach-button { align-items: center; background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 10px; color: var(--color-food); cursor: pointer; display: inline-flex; height: 2.5rem; justify-content: center; width: 2.5rem; }
+.calendar-commitments__attach-button svg { height: 1.2rem; width: 1.2rem; }
+.calendar-commitments textarea { background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 10px; color: var(--text-main); font: inherit; padding: .75rem; resize: vertical; width: 100%; }
+.calendar-commitments__actions { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; }
+.calendar-commitments__actions > button:disabled { cursor: default; opacity: .45; }
+.calendar-commitments__error { color: #ed6c6c; }
+.calendar-commitments [hidden] { display: none !important; }
+.calendar-commitments__period-fields { --range-accent: var(--color-food); display: grid; gap: .75rem; }
+.calendar-commitments__food-picker { display: grid; gap: .75rem; }
+.calendar-commitments__period-instruction { color: var(--text-main); font-size: 1rem; line-height: 1.45; margin: 0; }
+.calendar-commitments__header-back { align-items: center; background: transparent; border: 0; color: var(--text-main); cursor: pointer; display: inline-flex; justify-content: center; padding: .35rem; }
+.calendar-commitments__header-back svg { height: 1.25rem; width: 1.25rem; }
+.calendar-commitments__date-chip { align-self: flex-start; background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 999px; color: var(--text-main); display: inline-flex; font-size: .8rem; font-weight: 600; padding: .3rem .65rem; }
+.calendar-commitments__food-count { background: color-mix(in srgb, var(--color-food) 18%, var(--surface-card-muted)); border: 1px solid var(--color-food); border-radius: 999px; justify-self: start; padding: .35rem .7rem; }
+.calendar-commitments__period-fields .calendar-commitments__month-navigation h3 { text-transform: capitalize; }
+.calendar-commitments__period-fields .calendar-commitments__date { position: relative; }
+.calendar-commitments__period-fields .calendar-commitments__date.is-range-endpoint { background: color-mix(in srgb, var(--range-accent) 15%, var(--surface-card-muted)); border-color: var(--range-accent); color: var(--range-accent); font-weight: 700; }
+.calendar-commitments__period-fields .calendar-commitments__date.is-range-middle { background: color-mix(in srgb, var(--range-accent) 27%, var(--surface-card-muted)); color: var(--text-main); }
+.calendar-commitments__period-fields .calendar-commitments__date:disabled { cursor: default; opacity: 1; }
+.calendar-commitments__clear-period { background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 10px; color: var(--text-main); cursor: pointer; font: inherit; justify-self: start; padding: .6rem .8rem; }
+.calendar-commitments__clear-period:disabled { cursor: progress; opacity: .45; }
+.calendar-commitments__attach-save { background: var(--color-food); border: 0; border-radius: 10px; color: #101010; cursor: pointer; font: inherit; font-weight: 700; padding: .75rem 1rem; }
+.calendar-commitments__attach-save:disabled { cursor: default; opacity: .45; }
+.calendar-commitments__food-card { border-color: var(--color-food); }
+.calendar-commitments__food-list { display: grid; }
+.calendar-commitments__food-row { align-items: center; border-top: 1px solid var(--border-default); display: flex; gap: 1rem; justify-content: space-between; padding: .65rem 0; }
+.calendar-commitments__food-row strong { white-space: nowrap; }
+.calendar-commitments__food-check { align-items: center; display: inline-flex; gap: .65rem; }

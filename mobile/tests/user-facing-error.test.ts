@@ -22,3 +22,9 @@ test("native error traversal is bounded and preserves owned validation guidance"
   assert.equal(userFacingError(new MobileApiError("internal", "apple_transaction_mismatch", 422)), "La transacción no corresponde a esta cuenta, producto o entorno de la tienda.");
   assert.equal(userFacingError(new Error("Ingresa un nombre antes de guardar.")), "Ingresa un nombre antes de guardar.");
 });
+test("server failures expose only the safe correlation code", () => {
+  assert.equal(
+    userFacingError(new MobileApiError("internal", "unmapped", 500, { private: true }, "req-beta_123")),
+    "No pudimos completar la acción. Inténtalo nuevamente. Código de soporte: req-beta_123.",
+  );
+});

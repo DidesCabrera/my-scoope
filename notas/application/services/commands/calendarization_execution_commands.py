@@ -5,6 +5,7 @@ import json
 from datetime import date, datetime, time, timedelta
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from notas.application.queries.calendarization_execution_queries import (
@@ -44,9 +45,13 @@ def _clean_idempotency_key(value: str) -> str:
 def _owned_day(*, user, day_id: int, for_update: bool = False) -> CalendarizedDay:
     queryset = CalendarizedDay.objects.select_related("calendarization")
     if for_update:
-        queryset = queryset.select_for_update()
+        queryset = queryset.select_for_update(of=("self",))
     try:
-        return queryset.get(pk=day_id, calendarization__user=user)
+        return queryset.get(
+            Q(user=user) | Q(user__isnull=True, calendarization__user=user),
+            pk=day_id,
+            assignment_state=CalendarizedDay.STATE_CURRENT,
+        )
     except CalendarizedDay.DoesNotExist as exc:
         raise ValueError("calendarized_day_not_found") from exc
 
@@ -95,21 +100,38 @@ def record_meal_execution(
             and existing.meal_snapshot_key == meal_snapshot_key
             and existing.action == action
             and existing.food_snapshot_key == food_snapshot_key
-            and existing.calendarized_day.calendarization.user_id == user.id
+            and (
+                existing.calendarized_day.user_id == user.id
+                or (
+                    existing.calendarized_day.user_id is None
+                    and existing.calendarized_day.calendarization.user_id == user.id
+                )
+            )
         ):
             return existing
         raise ValueError("calendarization_idempotency_conflict")
 
     day = _owned_day(user=user, day_id=day_id, for_update=True)
     calendarization = day.calendarization
-    local_today = local_date_for_timezone(calendarization.timezone_name)
-    if (
-        calendarization.status == ProgramCalendarization.STATUS_SCHEDULED
-        and calendarization.start_date <= local_today <= calendarization.end_date
-    ):
-        calendarization.status = ProgramCalendarization.STATUS_ACTIVE
-        calendarization.save(update_fields=["status", "updated_at"])
-    if calendarization.status != ProgramCalendarization.STATUS_ACTIVE or day.calendar_date != local_today:
+    local_today = local_date_for_timezone(
+        calendarization.timezone_name if calendarization else (user.profile.timezone_name or "UTC")
+    )
+    if calendarization:
+        if (
+            calendarization.status == ProgramCalendarization.STATUS_SCHEDULED
+            and calendarization.start_date <= local_today <= calendarization.end_date
+        ):
+            calendarization.status = ProgramCalendarization.STATUS_ACTIVE
+            calendarization.save(update_fields=["status", "updated_at"])
+        if calendarization.status != ProgramCalendarization.STATUS_ACTIVE and not (
+            calendarization.status == ProgramCalendarization.STATUS_CANCELLED
+            and calendarization.replaced_by_id is not None
+            and calendarization.replacement_effective_on is not None
+            and day.calendar_date < calendarization.replacement_effective_on
+            and day.assignment_state == CalendarizedDay.STATE_CURRENT
+        ):
+            raise ValueError("meal_execution_not_today")
+    if day.calendar_date != local_today:
         raise ValueError("meal_execution_not_today")
     if meal_snapshot_key not in _meal_keys(day):
         raise ValueError("meal_snapshot_key_invalid")

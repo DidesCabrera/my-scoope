@@ -31,6 +31,7 @@ export type NutritionEntityCardProps = {
   indicators?: StructuralIndicator[];
   nutrition: Omit<NutritionKpiSectionProps, "style" | "variant">;
   onPress?: () => void;
+  showNutrition?: boolean;
   style?: StyleProp<ViewStyle>;
   subtitle?: string;
   title: string;
@@ -52,6 +53,7 @@ export function NutritionEntityCard({
   indicators,
   nutrition,
   onPress,
+  showNutrition = true,
   style,
   subtitle,
   title,
@@ -73,11 +75,11 @@ export function NutritionEntityCard({
       subtitle={subtitle}
       title={title}
       titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}>
-      <View style={hasEntityIndicatorSpacing ? styles.nutritionAfterIndicators : undefined}>
+      {showNutrition ? <View style={hasEntityIndicatorSpacing ? styles.nutritionAfterIndicators : undefined}>
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />
-      </View>
+      </View> : null}
       {afterNutrition}
-      {children ? <View style={hasPanelSpacing ? styles.panelsAfterNutrition : undefined}><EntityCardPanelSlot>{children}</EntityCardPanelSlot></View> : null}
+      {children ? <View style={showNutrition && hasPanelSpacing ? styles.panelsAfterNutrition : undefined}><EntityCardPanelSlot>{children}</EntityCardPanelSlot></View> : null}
     </EntityCard>
   );
 }

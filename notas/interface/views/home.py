@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.urls import reverse
 
+from notas.application.queries.calendar_metrics import calendar_adherence_summary
 from notas.domain.models import (
     DailyPlan,
     Food,
@@ -44,6 +45,7 @@ class HomeContentVM:
     hero: HomeHeroVM
     stats: List[HomeStatVM]
     calendarization: HomeCalendarizationVM
+    calendar_progress: dict
 
 
 @login_required
@@ -123,6 +125,7 @@ def home_view(request):
             ),
         ],
         calendarization=build_home_calendarization_vm(user),
+        calendar_progress=calendar_adherence_summary(user),
     )
 
     ui_vm = build_ui_vm(HOME_VIEWMODE)
