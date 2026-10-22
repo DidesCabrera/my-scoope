@@ -54,7 +54,9 @@ def _error(exc: ValueError) -> MobileAPIError:
         "calendar_commitment_note_too_long": "La nota puede tener hasta 500 caracteres.",
         "calendar_food_period_invalid": "Elige un periodo válido de hasta 366 días.",
         "calendar_food_period_incomplete": "Elige ambas fechas del periodo o deja ambas vacías.",
-        "calendar_food_period_wrong_kind": "La lista de alimentos solo corresponde a Hacer compras.",
+        "calendar_food_period_wrong_kind": "La lista de alimentos corresponde a Hacer compras o Cocinar.",
+        "calendar_food_period_multiple_dates": "Adjunta cada lista a una sola fecha del compromiso.",
+        "calendar_food_attachment_dates_invalid": "Cada lista debe corresponder a una fecha seleccionada y distinta.",
     }.get(code, "No pudimos actualizar el calendario.")
     return MobileAPIError(
         code=code,
@@ -164,6 +166,11 @@ def register_commitments(request, payload: CalendarCommitmentBatchInput):
         items = register_calendar_commitments(
             user=request.auth.user, kind=payload.kind, dates=payload.dates, note=payload.note,
             food_period_start=payload.food_period_start, food_period_end=payload.food_period_end,
+            food_attachments=[
+                (item.calendar_date, item.food_period_start, item.food_period_end)
+                for item in payload.food_attachments
+            ],
+            notes_by_date={item.calendar_date: item.note for item in payload.notes_by_date},
         )
     except ValueError as exc:
         raise _error(exc) from exc

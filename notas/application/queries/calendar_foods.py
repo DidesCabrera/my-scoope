@@ -25,13 +25,18 @@ def calendar_foods_for_period(user, *, start_date: date, end_date: date) -> dict
     ).order_by("calendar_date", "id")
     snapshots = [day.plan_snapshot for day in days if isinstance(day.plan_snapshot, dict) and day.plan_snapshot]
     totals = dict.fromkeys(("total_kcal", "kcal_protein", "kcal_carbs", "kcal_fat"), 0.0)
+    meals_count = 0
     for snapshot in snapshots:
         nutrition = snapshot_nutrition_totals(snapshot)
         for key in totals:
             totals[key] += nutrition[key]
+        meals = snapshot.get("meals")
+        if isinstance(meals, list):
+            meals_count += sum(1 for meal in meals if isinstance(meal, dict))
     return {
         "start_date": start_date,
         "end_date": end_date,
         "plans_count": len(snapshots),
+        "meals_count": meals_count,
         "foods_aggregation_table": snapshot_food_aggregation_rows(snapshots, totals),
     }

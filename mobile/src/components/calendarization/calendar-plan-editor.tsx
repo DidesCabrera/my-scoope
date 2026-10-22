@@ -116,19 +116,24 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {day.commitments?.length ? <View style={styles.group}>
         <Text style={styles.historyTitle}>Compromisos de esta fecha</Text>
-        {day.commitments.map((commitment) => <View key={commitment.id} style={styles.commitmentEntry}>
-          <View style={styles.commitmentRow}>
-            <View style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[commitment.kind].color }]} />
-            <View style={styles.commitmentCopy}>
-              <Text style={styles.planName}>{commitmentPresentation[commitment.kind].label}</Text>
-              {commitment.note ? <Text style={styles.historyMeta}>{commitment.note}</Text> : null}
+        {day.commitments.map((commitment) => {
+          const CommitmentIcon = commitmentPresentation[commitment.kind].icon;
+          return (
+            <View key={commitment.id} style={styles.commitmentEntry}>
+              <View style={styles.commitmentRow}>
+                <CommitmentIcon color={commitmentPresentation[commitment.kind].color} size={18} strokeWidth={2} />
+                <View style={styles.commitmentCopy}>
+                  <Text style={styles.planName}>{commitmentPresentation[commitment.kind].label}</Text>
+                  {commitment.note ? <Text style={styles.historyMeta}>{commitment.note}</Text> : null}
+                </View>
+              </View>
+              {commitment.kind !== "training" && commitment.food_period_start && commitment.food_period_end ? <>
+                <Text style={styles.historyMeta}>Lista guardada · {commitment.food_period_start} al {commitment.food_period_end} · {commitment.food_plans_count} {commitment.food_plans_count === 1 ? "plan" : "planes"}</Text>
+                <GroupedFoodsCard items={commitment.foods.map(commitmentFoodPanelItem)} title={commitment.kind === "cooking" ? "Alimentos para cocinar" : "Alimentos para comprar"} />
+              </> : null}
             </View>
-          </View>
-          {commitment.kind === "shopping" && commitment.food_period_start && commitment.food_period_end ? <>
-            <Text style={styles.historyMeta}>Lista guardada · {commitment.food_period_start} al {commitment.food_period_end} · {commitment.food_plans_count} {commitment.food_plans_count === 1 ? "plan" : "planes"}</Text>
-            <GroupedFoodsCard items={commitment.foods.map(commitmentFoodPanelItem)} title="Alimentos para comprar" />
-          </> : null}
-        </View>)}
+          );
+        })}
       </View> : null}
       {locked ? <InlineNotice>{past ? "Los días anteriores no se modifican. Su evidencia permanece en el historial." : "Este día ya tiene cumplimiento registrado y no se puede sustituir ni mover."}</InlineNotice> : mode === "confirm-assign" && selectedPlan ? (
         <ConfirmationState
@@ -220,7 +225,6 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
 const styles = StyleSheet.create({
   commitmentEntry: { gap: tokens.spacing.sm },
   commitmentCopy: { flex: 1, gap: 3 },
-  commitmentDot: { borderRadius: 4, height: 8, marginTop: 6, width: 8 },
   commitmentRow: { alignItems: "flex-start", borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, paddingTop: tokens.spacing.sm },
   group: { gap: tokens.spacing.md },
   historyMeta: { color: tokens.color.textMuted, fontSize: 12 },

@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime, time, timedelta
 from datetime import timezone as dt_timezone
 from unittest.mock import patch
@@ -531,6 +532,16 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(preview, "Mercado del barrio")
         self.assertContains(preview, "Registrar compromisos")
 
+    def test_commitment_views_use_kind_specific_icons(self):
+        for kind, icon in (("shopping", "shopping-basket"), ("cooking", "cooking-pot"), ("training", "dumbbell")):
+            with self.subTest(kind=kind):
+                response = self.client.get(reverse("calendar_commitments", args=[kind]))
+                self.assertContains(response, f'data-kind="{kind}"')
+                self.assertContains(response, f'data-lucide="{icon}"')
+        preview = self.client.get(reverse("calendar_preview"))
+        for icon in ("shopping-basket", "cooking-pot", "dumbbell"):
+            self.assertContains(preview, f'data-lucide="{icon}"')
+
     def test_calendar_commitments_reject_duplicate_batch_without_partial_write(self):
         today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
         CalendarCommitment.objects.create(user=self.user, kind="cooking", calendar_date=today)
@@ -565,16 +576,39 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         CalendarizedDay.objects.create(user=self.user, calendar_date=today,
             source_kind=CalendarizedDay.SOURCE_MANUAL, plan_snapshot=snapshot)
         page = self.client.get(reverse("calendar_commitments", args=["shopping"]))
-        self.assertContains(page, "Periodo para la lista de alimentos")
-        self.assertContains(page, "Fecha de inicio")
+        self.assertContains(page, "Selecciona una fecha de inicio y de término.")
+        self.assertNotContains(page, "Periodo para la lista de alimentos")
+        self.assertContains(page, "calendar-commitments-food-grid")
+        self.assertContains(page, 'id="calendar-commitments-food-start" type="hidden"')
+        self.assertContains(page, 'id="calendar-commitments-editor-view" hidden')
+        self.assertContains(page, 'id="calendar-commitments-selected"')
+        self.assertContains(page, 'id="calendar-commitments-food-calculate" disabled')
+        self.assertContains(page, 'id="calendar-commitments-food-summary-count"')
+        self.assertNotContains(page, 'id="calendar-commitments-food-chip"')
+        self.assertNotContains(page, 'id="calendar-commitments-food-clear"')
+        self.assertNotContains(page, 'id="calendar-commitments-food-edit"')
+        self.assertContains(page, 'id="calendar-commitments-food-count" hidden')
+        self.assertContains(page, 'id="calendar-commitments-food-list" hidden')
+        markup = page.content.decode()
+        self.assertLess(markup.index('id="calendar-commitments-food-card"'),
+                        markup.index('id="calendar-commitments-food-picker"'))
+        self.assertLess(markup.index('id="calendar-commitments-food-grid"'),
+                        markup.index('id="calendar-commitments-food-summary-count"'))
+        self.assertLess(markup.index('id="calendar-commitments-food-summary-count"'),
+                        markup.index('id="calendar-commitments-food-count"'))
         self.assertNotContains(self.client.get(reverse("calendar_commitments", args=["cooking"])),
-            "Periodo para la lista de alimentos")
+            "Alimentos para comprar")
+        self.assertContains(self.client.get(reverse("calendar_commitments", args=["cooking"])),
+            "Selecciona una fecha de inicio y de término.")
+        self.assertContains(self.client.get(reverse("calendar_commitments", args=["cooking"])),
+            "Alimentos para cocinar")
 
         response = self.client.get(reverse("calendar_commitment_foods"), {
             "start_date": today.isoformat(), "end_date": today.isoformat(),
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["plans_count"], 1)
+        self.assertEqual(response.json()["meals_count"], 1)
         self.assertEqual(response.json()["foods"], [{"name": "Plátano", "quantity": 140.0, "quantity_unit": "g"}])
 
     def test_shopping_commitment_keeps_food_list_when_calendar_plan_changes(self):
@@ -607,6 +641,54 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(preview, "Plátano")
         self.assertContains(preview, "140,0 g")
         self.assertContains(preview, "calendar-commitments__food-check")
+
+    def test_cooking_commitment_keeps_foods_from_full_period_and_shows_checkboxes(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        middle = today + timedelta(days=1)
+        end = today + timedelta(days=2)
+        CalendarizedDay.objects.create(
+            user=self.user, calendar_date=middle,
+            source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={
+                "name": "Plan del medio",
+                "totals": {"total_kcal": 124, "protein_g": 1, "carbs_g": 30, "fat_g": 0},
+                "meals": [{"foods": [{
+                    "name": "Plátano", "quantity_g": 140, "quantity_unit": "g",
+                    "protein_g": 1, "carbs_g": 30, "fat_g": 0, "total_kcal": 124,
+                }]}],
+            },
+        )
+        response = self.client.post(reverse("calendar_commitments", args=["cooking"]), {
+            "dates": [today.isoformat(), end.isoformat()],
+            "food_attachments": json.dumps([{
+                "calendar_date": today.isoformat(),
+                "food_period_start": today.isoformat(), "food_period_end": end.isoformat(),
+            }]),
+        })
+        self.assertRedirects(response, reverse("calendar_preview"))
+        saved = CalendarCommitment.objects.get(user=self.user, calendar_date=today, kind="cooking")
+        self.assertEqual(saved.food_plans_count, 1)
+        self.assertEqual(saved.foods_snapshot[0]["rel"]["name"], "Plátano")
+        other = CalendarCommitment.objects.get(user=self.user, calendar_date=end, kind="cooking")
+        self.assertIsNone(other.food_period_start)
+        self.assertEqual(other.foods_snapshot, [])
+        preview = self.client.get(reverse("calendar_preview"), {"date": today.isoformat()})
+        self.assertContains(preview, "Lista guardada")
+        self.assertContains(preview, "Plátano")
+        self.assertContains(preview, "calendar-commitments__food-check")
+
+    def test_training_commitment_saves_a_distinct_note_for_each_day(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        tomorrow = today + timedelta(days=1)
+        response = self.client.post(reverse("calendar_commitments", args=["training"]), {
+            "dates": [today.isoformat(), tomorrow.isoformat()],
+            "notes_by_date": json.dumps([
+                {"calendar_date": today.isoformat(), "note": "Fuerza"},
+                {"calendar_date": tomorrow.isoformat(), "note": "Cardio"},
+            ]),
+        })
+        self.assertRedirects(response, reverse("calendar_preview"))
+        self.assertEqual(list(CalendarCommitment.objects.filter(user=self.user, kind="training").order_by("calendar_date").values_list("note", flat=True)), ["Fuerza", "Cardio"])
 
     def test_calendar_preview_assigns_and_moves_a_snapshot_with_history(self):
         today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")

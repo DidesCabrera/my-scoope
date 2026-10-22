@@ -19,12 +19,25 @@ class CalendarCommitmentData(Schema):
     foods: list[LibraryFoodPanelItemData] = Field(default_factory=list)
 
 
+class CalendarCommitmentFoodAttachmentInput(Schema):
+    calendar_date: date
+    food_period_start: date
+    food_period_end: date
+
+
+class CalendarCommitmentNoteInput(Schema):
+    calendar_date: date
+    note: str = Field(max_length=500)
+
+
 class CalendarCommitmentBatchInput(Schema):
     kind: CalendarCommitmentKind
     dates: list[date] = Field(min_length=1, max_length=62)
     note: str = Field(default="", max_length=500)
     food_period_start: date | None = None
     food_period_end: date | None = None
+    food_attachments: list[CalendarCommitmentFoodAttachmentInput] = Field(default_factory=list)
+    notes_by_date: list[CalendarCommitmentNoteInput] = Field(default_factory=list)
 
 
 class CalendarCommitmentBatchData(Schema):
@@ -41,6 +54,7 @@ class CalendarPeriodFoodsData(Schema):
     start_date: date
     end_date: date
     plans_count: int
+    meals_count: int
     foods: list[LibraryFoodPanelItemData]
 
 

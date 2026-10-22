@@ -1423,6 +1423,13 @@
             "title": "Dates",
             "type": "array"
           },
+          "food_attachments": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarCommitmentFoodAttachmentInput"
+            },
+            "title": "Food Attachments",
+            "type": "array"
+          },
           "food_period_end": {
             "anyOf": [
               {
@@ -1461,6 +1468,13 @@
             "maxLength": 500,
             "title": "Note",
             "type": "string"
+          },
+          "notes_by_date": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarCommitmentNoteInput"
+            },
+            "title": "Notes By Date",
+            "type": "array"
           }
         },
         "required": [
@@ -1538,6 +1552,52 @@
           "note"
         ],
         "title": "CalendarCommitmentData",
+        "type": "object"
+      },
+      "CalendarCommitmentFoodAttachmentInput": {
+        "properties": {
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          },
+          "food_period_end": {
+            "format": "date",
+            "title": "Food Period End",
+            "type": "string"
+          },
+          "food_period_start": {
+            "format": "date",
+            "title": "Food Period Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "calendar_date",
+          "food_period_start",
+          "food_period_end"
+        ],
+        "title": "CalendarCommitmentFoodAttachmentInput",
+        "type": "object"
+      },
+      "CalendarCommitmentNoteInput": {
+        "properties": {
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "calendar_date",
+          "note"
+        ],
+        "title": "CalendarCommitmentNoteInput",
         "type": "object"
       },
       "CalendarDayData": {
@@ -1974,6 +2034,10 @@
             "title": "Foods",
             "type": "array"
           },
+          "meals_count": {
+            "title": "Meals Count",
+            "type": "integer"
+          },
           "plans_count": {
             "title": "Plans Count",
             "type": "integer"
@@ -1988,6 +2052,7 @@
           "start_date",
           "end_date",
           "plans_count",
+          "meals_count",
           "foods"
         ],
         "title": "CalendarPeriodFoodsData",

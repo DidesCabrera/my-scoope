@@ -26,6 +26,7 @@ export type CalendarPeriodFoodsData = {
   start_date: string;
   end_date: string;
   plans_count: number;
+  meals_count?: number;
   foods: LibraryFoodPanelItem[];
 };
 

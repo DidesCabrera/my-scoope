@@ -241,6 +241,23 @@ def calendar_commitments(request, kind):
     if request.method == "POST":
         try:
             dates = [date.fromisoformat(value) for value in request.POST.getlist("dates")]
+            raw_attachments = json.loads(request.POST.get("food_attachments", "[]"))
+            if not isinstance(raw_attachments, list):
+                raise ValueError("calendar_food_attachment_dates_invalid")
+            food_attachments = [
+                (
+                    date.fromisoformat(item["calendar_date"]),
+                    date.fromisoformat(item["food_period_start"]),
+                    date.fromisoformat(item["food_period_end"]),
+                )
+                for item in raw_attachments
+            ]
+            raw_notes = json.loads(request.POST.get("notes_by_date", "[]"))
+            if not isinstance(raw_notes, list):
+                raise ValueError("calendar_commitment_note_dates_invalid")
+            note_dates = [date.fromisoformat(item["calendar_date"]) for item in raw_notes]
+            if len(set(note_dates)) != len(note_dates):
+                raise ValueError("calendar_commitment_note_dates_invalid")
             register_calendar_commitments(
                 user=request.user,
                 kind=kind,
@@ -254,17 +271,22 @@ def calendar_commitments(request, kind):
                     date.fromisoformat(request.POST["food_period_end"])
                     if request.POST.get("food_period_end") else None
                 ),
+                food_attachments=food_attachments,
+                notes_by_date={date.fromisoformat(item["calendar_date"]): item["note"] for item in raw_notes},
             )
-        except (ValueError, TypeError) as exc:
+        except (ValueError, TypeError, KeyError) as exc:
             errors = {
                 "calendar_commitment_kind_invalid": "Elige un tipo de compromiso válido.",
                 "calendar_commitment_dates_invalid": "Elige entre 1 y 62 fechas distintas.",
                 "calendar_commitment_date_in_past": "No puedes registrar compromisos en fechas pasadas.",
                 "calendar_commitment_note_too_long": "La nota no puede superar los 500 caracteres.",
+                "calendar_commitment_note_dates_invalid": "Cada nota debe corresponder a una fecha seleccionada y distinta.",
                 "calendar_commitment_already_exists": "Una de las fechas ya tiene ese compromiso. Revisa tu selección.",
                 "calendar_food_period_invalid": "Elige un periodo válido de hasta 366 días.",
                 "calendar_food_period_incomplete": "Elige ambas fechas del periodo o deja ambas vacías.",
-                "calendar_food_period_wrong_kind": "La lista de alimentos solo corresponde a Hacer compras.",
+                "calendar_food_period_wrong_kind": "La lista de alimentos corresponde a Hacer compras o Cocinar.",
+                "calendar_food_period_multiple_dates": "Adjunta cada lista a una sola fecha del compromiso.",
+                "calendar_food_attachment_dates_invalid": "Cada lista debe corresponder a una fecha seleccionada y distinta.",
             }
             messages.error(request, errors.get(str(exc), "No pudimos registrar los compromisos."))
         else:
@@ -280,7 +302,7 @@ def calendar_commitments(request, kind):
     )
     return render(request, "notas/calendarization/calendar_commitments.html", {
         "kind": kind,
-        "kind_label": labels[kind],
+        "kind_label": {"shopping": "Registrar días de compras", "cooking": "Registrar días de cocinar", "training": "Registrar días de entrenamiento"}[kind],
         "today": today,
         "existing_dates": [value.isoformat() for value in existing_dates],
     })
@@ -297,6 +319,7 @@ def calendar_commitment_foods(request):
         return JsonResponse({"error": "Elige un periodo válido de hasta 366 días."}, status=422)
     return JsonResponse({
         "plans_count": period["plans_count"],
+        "meals_count": period["meals_count"],
         "foods": [
             {
                 "name": row["rel"]["name"],

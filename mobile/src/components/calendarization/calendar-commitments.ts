@@ -1,14 +1,27 @@
 import type { CalendarCommitmentKind } from "@/api/calendar-types";
+import { CookingPot, Dumbbell, ShoppingBasket, type LucideIcon } from "lucide-react-native";
 import type { LibraryFoodPanelItem } from "@/api/types";
 import type { FoodPanelItem } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 
 export const commitmentKinds: CalendarCommitmentKind[] = ["shopping", "cooking", "training"];
 
-export const commitmentPresentation: Record<CalendarCommitmentKind, { label: string; color: string }> = {
-  shopping: { label: "Hacer compras", color: tokens.color.food },
-  cooking: { label: "Cocinar", color: tokens.color.meal },
-  training: { label: "Entrenar", color: tokens.color.success },
+export const commitmentPresentation: Record<CalendarCommitmentKind, { label: string; color: string; icon: LucideIcon }> = {
+  shopping: { label: "Hacer compras", color: tokens.color.food, icon: ShoppingBasket },
+  cooking: { label: "Cocinar", color: tokens.color.meal, icon: CookingPot },
+  training: { label: "Entrenar", color: tokens.color.success, icon: Dumbbell },
+};
+
+export const commitmentRegistrationTitle: Record<CalendarCommitmentKind, string> = {
+  shopping: "Registrar días de compras",
+  cooking: "Registrar días de cocinar",
+  training: "Registrar días de entrenamiento",
+};
+
+export const commitmentDayTitle: Record<CalendarCommitmentKind, string> = {
+  shopping: "Día de compras",
+  cooking: "Día de cocinar",
+  training: "Día de entrenamiento",
 };
 
 export function commitmentFoodPanelItem(food: LibraryFoodPanelItem): FoodPanelItem {

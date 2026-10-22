@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { CalendarDays, ChefHat, ChevronLeft, ChevronRight, Dumbbell, Ellipsis, ShoppingCart } from "lucide-react-native";
+import { CalendarDays, ChevronLeft, ChevronRight, Ellipsis } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,7 +8,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarDay, CalendarDayDetailData, CalendarOverviewData, CalendarProgressData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
-import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
+import { commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
 import { CalendarPlanEditor } from "@/components/calendarization/calendar-plan-editor";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
@@ -276,9 +276,9 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         <ActionSheetHeader icon={CalendarDays} onClose={() => setCommitmentMenuVisible(false)} title="Registrar compromisos" />
         <View style={styles.progressSheetContent}>
           <ActionSheetActions>
-            <ActionSheetAction icon={ShoppingCart} label="Hacer compras" onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=shopping" as Href); }} />
-            <ActionSheetAction icon={ChefHat} label="Cocinar" onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=cooking" as Href); }} />
-            <ActionSheetAction icon={Dumbbell} label="Entrenar" onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=training" as Href); }} />
+            <ActionSheetAction icon={commitmentPresentation.shopping.icon} label={commitmentRegistrationTitle.shopping} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=shopping" as Href); }} />
+            <ActionSheetAction icon={commitmentPresentation.cooking.icon} label={commitmentRegistrationTitle.cooking} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=cooking" as Href); }} />
+            <ActionSheetAction icon={commitmentPresentation.training.icon} label={commitmentRegistrationTitle.training} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=training" as Href); }} />
           </ActionSheetActions>
         </View>
       </SafeAreaView>

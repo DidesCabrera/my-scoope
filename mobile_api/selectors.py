@@ -185,6 +185,7 @@ def calendar_period_foods_payload(user, *, start_date, end_date) -> dict:
         "start_date": period["start_date"],
         "end_date": period["end_date"],
         "plans_count": period["plans_count"],
+        "meals_count": period["meals_count"],
         "foods": _aggregated_food_panel_items(
             period["foods_aggregation_table"],
             id_prefix="calendar-period-food",
