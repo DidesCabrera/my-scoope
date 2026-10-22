@@ -123,7 +123,7 @@ test("program day and week comparison tables expose measured swipe actions and d
   assert.match(gestureRows, /ReanimatedSwipeable/);
   assert.match(gestureRows, /width: actions\.length \* 48/);
   assert.match(gestureRows, /delayLongPress=\{320\}/);
-  assert.match(gestureRows, /onLongPress=\{\(\) => beginComparisonPanelDrag\(drag\)\}/);
+  assert.match(gestureRows, /onLongPress=\{canDrag \? \(\) => beginComparisonPanelDrag\(drag\) : undefined\}/);
   assert.match(gestureRows, /Haptics\.impactAsync\(Haptics\.ImpactFeedbackStyle\.Rigid\)/);
   assert.match(gestureRows, /DirectionalSwipeSurface[\s\S]*?progress\.value > 0[\s\S]*?direction\.value ===/);
   assert.match(gestureRows, /overshootLeft[\s\S]*?overshootRight/);

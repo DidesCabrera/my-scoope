@@ -32,7 +32,7 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
             user=self.user,
             calendar_date=self.today,
             source_kind=CalendarizedDay.SOURCE_MANUAL,
-            plan_snapshot={"name": "Plan de hoy", "meals": []},
+            plan_snapshot={"name": "Plan de hoy", "totals": {"total_kcal": 1550, "protein_g": 120, "carbs_g": 170, "fat_g": 43, "protein_per_kilogram": 1.5}, "meals": []},
         )
         response = self.client.post(
             "/api/v1/calendar/commitments",
@@ -52,11 +52,73 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         overview = self.client.get("/api/v1/calendar").json()["data"]
         days = {item["calendar_date"]: item for item in overview["days"]}
         self.assertTrue(days[self.today.isoformat()]["has_plan"])
+        self.assertEqual(days[self.today.isoformat()]["plan_calories"], 1550)
+        self.assertEqual(days[self.today.isoformat()]["plan_protein_grams"], 120)
+        self.assertEqual(days[self.today.isoformat()]["plan_carbs_grams"], 170)
+        self.assertEqual(days[self.today.isoformat()]["plan_fat_grams"], 43)
+        self.assertEqual(days[self.today.isoformat()]["plan_protein_per_kilogram"], 1.5)
+        day_with_plan = self.client.get(f"/api/v1/calendar/days/{self.today}").json()["data"]
+        self.assertEqual(day_with_plan["plan_calories"], 1550)
         self.assertEqual({item["kind"] for item in days[self.today.isoformat()]["commitments"]}, {"shopping", "cooking"})
         self.assertFalse(days[tomorrow.isoformat()]["has_plan"])
+        self.assertIsNone(days[tomorrow.isoformat()]["plan_calories"])
+        self.assertIsNone(days[tomorrow.isoformat()]["plan_protein_grams"])
         self.assertEqual(days[tomorrow.isoformat()]["commitments"][0]["note"], "Comprar verduras")
         day_without_plan = self.client.get(f"/api/v1/calendar/days/{tomorrow}").json()["data"]
+        self.assertIsNone(day_without_plan["plan_calories"])
         self.assertEqual(day_without_plan["commitments"][0]["kind"], "shopping")
+
+    def test_reorder_calendar_plans_keeps_program_reference_and_dated_history(self):
+        first = self.today + timedelta(days=1)
+        second = first + timedelta(days=1)
+        third = second + timedelta(days=1)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user, program_name_snapshot="Programa original", start_date=first, end_date=third,
+        )
+        program_day = CalendarizedDay.objects.create(
+            calendarization=calendarization, origin_calendarization=calendarization,
+            user=self.user, calendar_date=first, week_number=1, day_number=1,
+            source_kind=CalendarizedDay.SOURCE_PROGRAM,
+            plan_snapshot={"name": "Plan del programa", "totals": {"total_kcal": 1800}},
+        )
+        manual_day = CalendarizedDay.objects.create(
+            user=self.user, calendar_date=second, source_kind=CalendarizedDay.SOURCE_MANUAL,
+            plan_snapshot={"name": "Plan individual", "totals": {"total_kcal": 1500}},
+        )
+        dates = [first.isoformat(), second.isoformat(), third.isoformat()]
+        response = self.client.put(
+            "/api/v1/calendar/reorder",
+            data={"dates": dates, "ordered_day_ids": [manual_day.id, None, program_day.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        overview = self.client.get("/api/v1/calendar", {"start_date": dates[0], "days": 3}).json()["data"]
+        self.assertEqual([day["plan_name"] for day in overview["days"]], ["Plan individual", "", "Plan del programa"])
+        program_day.refresh_from_db()
+        manual_day.refresh_from_db()
+        self.assertEqual(program_day.calendarization_id, calendarization.id)
+        self.assertEqual(program_day.assignment_state, CalendarizedDay.STATE_SUPERSEDED)
+        self.assertEqual(manual_day.assignment_state, CalendarizedDay.STATE_SUPERSEDED)
+        moved_program_day = CalendarizedDay.objects.get(user=self.user, calendar_date=third, assignment_state="current")
+        self.assertEqual(moved_program_day.origin_calendarization_id, calendarization.id)
+        self.assertIsNone(moved_program_day.calendarization_id)
+
+        stale = self.client.put(
+            "/api/v1/calendar/reorder",
+            data={"dates": dates, "ordered_day_ids": [manual_day.id, None, program_day.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(stale.status_code, 409)
+        CalendarizedMealExecution.objects.create(
+            calendarized_day=moved_program_day, meal_snapshot_key="meal-1",
+            action="completed", idempotency_key="reordered-plan-check-in",
+        )
+        locked = self.client.put(
+            "/api/v1/calendar/reorder",
+            data={"dates": dates, "ordered_day_ids": [moved_program_day.id, None, CalendarizedDay.objects.get(user=self.user, calendar_date=first, assignment_state="current").id]},
+            content_type="application/json",
+        )
+        self.assertEqual(locked.status_code, 409)
 
     def test_commitment_batch_rejects_duplicates_and_past_dates_without_partial_write(self):
         tomorrow = self.today + timedelta(days=1)

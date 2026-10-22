@@ -864,7 +864,10 @@ def update_calendarization_preferences(
         status__in=(ScheduledNotificationEvent.STATUS_PENDING, ScheduledNotificationEvent.STATUS_PROCESSING),
     )
     future_events.update(status=ScheduledNotificationEvent.STATUS_CANCELLED, skip_reason="preferences_changed", claimed_at=None)
-    for day in calendarization.days.filter(calendar_date__gte=local_date_for_timezone(timezone_name, now=current_time)):
+    for day in calendarization.days.filter(
+        calendar_date__gte=local_date_for_timezone(timezone_name, now=current_time),
+        assignment_state=CalendarizedDay.STATE_CURRENT,
+    ):
         _sync_day_events(calendarization=calendarization, day=day, now=current_time)
 
     profile = user.profile

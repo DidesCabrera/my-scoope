@@ -1703,10 +1703,65 @@
             ],
             "title": "Id"
           },
+          "plan_calories": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Calories"
+          },
+          "plan_carbs_grams": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Carbs Grams"
+          },
+          "plan_fat_grams": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Fat Grams"
+          },
           "plan_name": {
             "default": "",
             "title": "Plan Name",
             "type": "string"
+          },
+          "plan_protein_grams": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Protein Grams"
+          },
+          "plan_protein_per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Protein Per Kilogram"
           },
           "source_kind": {
             "anyOf": [
@@ -1780,10 +1835,65 @@
             "title": "Meal Execution",
             "type": "array"
           },
+          "plan_calories": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Calories"
+          },
+          "plan_carbs_grams": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Carbs Grams"
+          },
+          "plan_fat_grams": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Fat Grams"
+          },
           "plan_name": {
             "default": "",
             "title": "Plan Name",
             "type": "string"
+          },
+          "plan_protein_grams": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Protein Grams"
+          },
+          "plan_protein_per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Protein Per Kilogram"
           },
           "plan_snapshot": {
             "anyOf": [
@@ -2249,6 +2359,68 @@
           "start_date"
         ],
         "title": "CalendarProgressStartInput",
+        "type": "object"
+      },
+      "CalendarReorderEnvelope": {
+        "properties": {
+          "data": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Data",
+            "type": "object"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarReorderEnvelope",
+        "type": "object"
+      },
+      "CalendarReorderInput": {
+        "properties": {
+          "dates": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "maxItems": 42,
+            "minItems": 2,
+            "title": "Dates",
+            "type": "array"
+          },
+          "ordered_day_ids": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "maxItems": 42,
+            "minItems": 2,
+            "title": "Ordered Day Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dates",
+          "ordered_day_ids"
+        ],
+        "title": "CalendarReorderInput",
         "type": "object"
       },
       "CalendarizationActivationData": {
@@ -12283,6 +12455,70 @@
           }
         ],
         "summary": "Adjust Calendar Progress Period"
+      }
+    },
+    "/api/v1/calendar/reorder": {
+      "put": {
+        "operationId": "mobile_api_api_reorder_calendar_plans",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarReorderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarReorderEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Reorder Calendar Plans"
       }
     },
     "/api/v1/comparisons/compare": {

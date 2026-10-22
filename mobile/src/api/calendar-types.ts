@@ -35,6 +35,11 @@ export type CalendarDay = {
   calendar_date: string;
   has_plan: boolean;
   plan_name: string;
+  plan_calories?: number | null;
+  plan_protein_grams?: number | null;
+  plan_carbs_grams?: number | null;
+  plan_fat_grams?: number | null;
+  plan_protein_per_kilogram?: number | null;
   source_kind: "program" | "manual" | null;
   source_program_name: string | null;
   has_execution: boolean;

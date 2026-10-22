@@ -66,7 +66,7 @@ export default function ProgramScreen() {
       action: loading && !program ? undefined : { label: "Acciones del programa en curso", onPress: openActions },
       identityVisible: compactHeaderVisible,
       mode: "default",
-      title: "Mi programa activo",
+      title: "Programa en curso",
     });
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, loading, openActions, program, setHeaderPresentation]));
@@ -124,8 +124,7 @@ export default function ProgramScreen() {
     return (
       <>
         <Screen headerMode="preserve">
-          <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" />
-          <Button label="Vista previa del Calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
+          <SectionPageHeader countLabel="semanas" section="calendarization" title="Programa en curso" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <EmptyState actionLabel="Calendarizar un programa" message="Elige uno de tus programas guardados para comenzar un recorrido diario." onAction={() => router.push("/program/activate" as Href)} title="Aún no tienes un programa activo" />
         </Screen>
@@ -148,8 +147,7 @@ export default function ProgramScreen() {
         stickyHeaderIndices={[1]}
         style={styles.screen}>
         <View style={styles.beforePlanning}>
-          <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" />
-          <Button label="Vista previa del Calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
+          <SectionPageHeader countLabel="semanas" section="calendarization" title="Programa en curso" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <ProgramActiveOverview calendarization={calendarization} program={program} />
           <ProgramSectionHeader icon={Calendar1} subtitle="Recorre las semanas de tu programa y conoce los planes diarios y alimentos de cada una de ellas." title="Planificación Semanal" />

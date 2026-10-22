@@ -20,6 +20,8 @@ from mobile_api.schema_domains.calendar import (
     CalendarPeriodFoodsEnvelope,
     CalendarProgressEnvelope,
     CalendarProgressStartInput,
+    CalendarReorderEnvelope,
+    CalendarReorderInput,
 )
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import (
@@ -28,6 +30,7 @@ from mobile_api.selectors import (
     calendar_period_foods_payload,
     local_date_for_user,
 )
+from notas.application.queries.calendarization_projection_queries import snapshot_nutrition_totals
 from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
 from notas.application.queries.calendarization_execution_queries import meal_execution_state_for_day
 from notas.application.services.commands.calendar_commitment_commands import register_calendar_commitments, update_calendar_commitment
@@ -36,6 +39,7 @@ from notas.application.services.commands.calendar_day_commands import (
     create_and_assign_draft_to_calendar_date,
     move_calendar_date_plan,
     remove_calendar_date_plan,
+    reorder_calendar_date_plans,
 )
 from notas.application.services.commands.calendar_progress_commands import (
     adjust_calendar_progress_period_start,
@@ -60,6 +64,8 @@ def _error(exc: ValueError) -> MobileAPIError:
         "calendar_food_period_wrong_kind": "La lista de alimentos corresponde a Hacer compras o Cocinar.",
         "calendar_food_period_multiple_dates": "Adjunta cada lista a una sola fecha del compromiso.",
         "calendar_food_attachment_dates_invalid": "Cada lista debe corresponder a una fecha seleccionada y distinta.",
+        "calendar_reorder_invalid": "Selecciona fechas próximas consecutivas para reordenar.",
+        "calendar_reorder_conflict": "Los planes cambiaron mientras los reordenabas. Actualiza el calendario e inténtalo de nuevo.",
     }.get(code, "No pudimos actualizar el calendario.")
     return MobileAPIError(
         code=code,
@@ -70,6 +76,7 @@ def _error(exc: ValueError) -> MobileAPIError:
                 "calendar_replacement_confirmation_required", "calendar_day_has_execution",
                 "calendar_assignment_key_conflict", "calendar_date_in_past",
                 "calendar_move_program_day_unsupported",
+                "calendar_reorder_conflict",
                 "calendar_progress_no_prior_period", "calendar_progress_period_already_started_today",
                 "calendar_commitment_already_exists",
             }
@@ -94,6 +101,19 @@ def _commitment_payload(commitment: CalendarCommitment) -> dict:
     }
 
 
+def _plan_nutrition(day: CalendarizedDay | None) -> dict:
+    if not day or not day.has_plan:
+        return {"plan_calories": None, "plan_protein_grams": None, "plan_carbs_grams": None, "plan_fat_grams": None, "plan_protein_per_kilogram": None}
+    totals = snapshot_nutrition_totals(day.plan_snapshot)
+    return {
+        "plan_calories": totals["total_kcal"],
+        "plan_protein_grams": totals["protein"],
+        "plan_carbs_grams": totals["carbs"],
+        "plan_fat_grams": totals["fat"],
+        "plan_protein_per_kilogram": ((day.plan_snapshot or {}).get("totals") or {}).get("protein_per_kilogram"),
+    }
+
+
 def _day_payload(user, day: CalendarizedDay) -> dict:
     origin = day.origin_calendarization or day.calendarization
     commitments = CalendarCommitment.objects.filter(user=user, calendar_date=day.calendar_date)
@@ -102,6 +122,7 @@ def _day_payload(user, day: CalendarizedDay) -> dict:
         "calendar_date": day.calendar_date,
         "has_plan": day.has_plan,
         "plan_name": (day.plan_snapshot or {}).get("name", ""),
+        **_plan_nutrition(day),
         "source_kind": day.source_kind,
         "source_program_name": origin.program_name_snapshot if origin else None,
         "has_execution": day.meal_execution_events.exists(),
@@ -143,6 +164,7 @@ def calendar_overview(request, start_date: date | None = None, days: int = 28):
             "calendar_date": current_date,
             "has_plan": bool(day and day.has_plan),
             "plan_name": (day.plan_snapshot or {}).get("name", "") if day and day.has_plan else "",
+            **_plan_nutrition(day),
             "source_kind": day.source_kind if day else None,
             "source_program_name": (day.origin_calendarization or day.calendarization).program_name_snapshot if day and (day.origin_calendarization or day.calendarization) else None,
             "has_execution": bool(day.meal_execution_events.all()) if day else False,
@@ -399,3 +421,20 @@ def move_calendar_day_plan(request, local_date: date, payload: CalendarMoveInput
     except ValueError as exc:
         raise _error(exc) from exc
     return success(_day_payload(request.auth.user, day))
+
+
+@router.put(
+    "/calendar/reorder",
+    operation_id="mobile_api_api_reorder_calendar_plans",
+    auth=mobile_bearer,
+    response={200: CalendarReorderEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def reorder_calendar_plans(request, payload: CalendarReorderInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        reorder_calendar_date_plans(
+            user=request.auth.user, dates=payload.dates, ordered_day_ids=payload.ordered_day_ids,
+        )
+    except ValueError as exc:
+        raise _error(exc) from exc
+    return success({"reordered": True})

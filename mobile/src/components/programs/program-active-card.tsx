@@ -19,7 +19,7 @@ export function ProgramActiveOverview({ calendarization, program, embedded = fal
     <>
       <EntityHeading entity="program" eyebrow="Programa activo" eyebrowAccessory={<HeaderMetadataChip kind="date" value={`${compactDateLabel(calendarization.start_date)} — ${compactDateLabel(calendarization.end_date)}`} />} identityIcon={CalendarClock} indicators={activeIndicators} title={calendarization.program_name} variant={embedded ? "card" : "page"} />
       <ProgramActiveKpis adheredDays={program.adherence?.completed_meals ?? 0} adherence={program.adherence?.adherence_percent ?? 0} elapsedDays={calendarization.progress_day} mutedPanels={embedded} plannedAdherenceDays={program.adherence?.elapsed_meals ?? program.adherence?.planned_meals ?? 0} progress={calendarization.progress_percent} standalone topInset={!embedded} totalDays={calendarization.progress_total_days} />
-      {embedded ? <DetailLinkRow accessibilityLabel={`Ir a Mi programa activo: ${calendarization.program_name}`} label="Ir a Mi programa activo" onPress={() => router.push("/program" as Href)} /> : null}
+      {embedded ? <DetailLinkRow accessibilityLabel={`Ir al Calendario: ${calendarization.program_name}`} label="Ir al Calendario" onPress={() => router.push("/calendar" as Href)} /> : null}
     </>
   );
   return embedded

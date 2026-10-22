@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -215,3 +215,69 @@ def move_calendar_date_plan(
         target.superseded_by = moved
         target.save(update_fields=["superseded_by"])
     return moved
+
+
+@transaction.atomic
+def reorder_calendar_date_plans(
+    *, user, dates: list[date], ordered_day_ids: list[int | None], now: datetime | None = None,
+) -> None:
+    """Place the visible plan snapshots into fixed date slots, preserving dated history."""
+    if not 2 <= len(dates) <= 42 or len(ordered_day_ids) != len(dates):
+        raise ValueError("calendar_reorder_invalid")
+    if len(set(dates)) != len(dates) or any(
+        dates[index] != dates[0] + timedelta(days=index) for index in range(len(dates))
+    ):
+        raise ValueError("calendar_reorder_invalid")
+    current_time = now or timezone.now()
+    today = _today_for_user(user, now=current_time)
+    if dates[0] < today:
+        raise ValueError("calendar_date_in_past")
+
+    User.objects.select_for_update().get(pk=user.pk)
+    rows = list(CalendarizedDay.objects.select_for_update().filter(
+        user=user, calendar_date__in=dates, assignment_state=CalendarizedDay.STATE_CURRENT,
+    ).select_related("calendarization", "origin_calendarization"))
+    current_by_date = {row.calendar_date: row for row in rows}
+    current_ids = {row.id for row in current_by_date.values()}
+    requested_ids = [day_id for day_id in ordered_day_ids if day_id is not None]
+    if len(requested_ids) != len(current_ids) or len(set(requested_ids)) != len(requested_ids) or set(requested_ids) != current_ids:
+        raise ValueError("calendar_reorder_conflict")
+
+    source_by_id = {row.id: row for row in current_by_date.values()}
+    changed = [date_value for date_value, source_id in zip(dates, ordered_day_ids)
+               if (current_by_date.get(date_value).id if date_value in current_by_date else None) != source_id]
+    for date_value in changed:
+        current = current_by_date.get(date_value)
+        if current is not None:
+            _ensure_day_replaceable(current, today=today)
+    if not changed:
+        return
+
+    # The dated snapshot moves; the original program and its ordering never change.
+    origins = {row.id: row.origin_calendarization or row.calendarization for row in rows}
+    for date_value in changed:
+        current = current_by_date.get(date_value)
+        if current is not None:
+            _supersede_day(current, reason="calendar_plan_reordered", now=current_time)
+
+    for date_value, source_id in zip(dates, ordered_day_ids):
+        if date_value not in changed:
+            continue
+        source = source_by_id.get(source_id)
+        if source is None:
+            continue
+        replacement = CalendarizedDay.objects.create(
+            origin_calendarization=origins[source.id],
+            user=user,
+            calendar_date=date_value,
+            source_program_day_id=source.source_program_day_id,
+            source_dailyplan_id=source.source_dailyplan_id,
+            source_kind=source.source_kind,
+            assignment_state=CalendarizedDay.STATE_CURRENT,
+            plan_snapshot=source.plan_snapshot,
+            snapshot_hash=source.snapshot_hash,
+        )
+        prior = current_by_date.get(date_value)
+        if prior is not None:
+            prior.superseded_by = replacement
+            prior.save(update_fields=["superseded_by"])

@@ -8,6 +8,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarDay, CalendarDayDetailData, CalendarOverviewData, CalendarProgressData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
+import { CalendarUpcomingPanels } from "@/components/calendarization/calendar-upcoming-panels";
 import { commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
@@ -27,25 +28,6 @@ function compactDate(value: string): string {
 
 function weekDay(value: string): string {
   return dateLabel(value, { weekday: "narrow" }).toUpperCase();
-}
-
-function CalendarDateRow({ day, onEdit, onPress }: { day: CalendarDay; onEdit(): void; onPress?(): void }) {
-  return (
-    <View style={styles.agendaRow}>
-      <View style={styles.agendaDate}>
-        <Text style={styles.agendaDay}>{dateLabel(day.calendar_date, { weekday: "short" })}</Text>
-        <Text style={styles.agendaNumber}>{day.calendar_date.slice(8, 10)}</Text>
-      </View>
-      <View style={styles.agendaPlan}>
-        <Text numberOfLines={2} style={styles.agendaName}>{day.has_plan ? day.plan_name : "Sin plan asignado"}</Text>
-        {day.source_program_name ? <Text style={styles.agendaSource}>{day.source_program_name}</Text> : null}
-      </View>
-      <Pressable accessibilityLabel={`Planificar ${compactDate(day.calendar_date)}`} accessibilityRole="button" onPress={onEdit} style={styles.agendaAction}>
-        <Text style={styles.agendaActionText}>{day.has_plan ? "Editar" : "Asignar"}</Text>
-      </Pressable>
-      {onPress ? <Pressable accessibilityLabel={`Ver detalle de ${day.plan_name}`} accessibilityRole="button" onPress={onPress}><ChevronRight color={tokens.color.textMuted} size={18} /></Pressable> : null}
-    </View>
-  );
 }
 
 export function CalendarOverviewScreen({ extended = false }: { extended?: boolean }) {
@@ -111,9 +93,8 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const monthDays = monthOverview?.key === visibleMonth ? monthOverview.data.days : [];
   const upcoming = useMemo(() => {
     if (!overview) return [];
-    if (extended) return overview.days;
     const future = overview.days.filter((day) => day.calendar_date >= overview.local_date);
-    return future.slice(0, 7);
+    return extended ? future : future.slice(0, 7);
   }, [extended, overview]);
   const selectedDetail = detail?.calendar_date === selectedDate ? detail : null;
   const futurePlansCount = overview?.future_plans_count ?? 0;
@@ -150,13 +131,46 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   function openDay(date: string) {
     router.push(`/calendar/days/${date}` as Href);
   }
+  function openUpcomingDay(day: CalendarDay) {
+    if (day.has_plan && day.id != null) {
+      router.push(`/program/days/${day.id}` as Href);
+    } else {
+      openDay(day.calendar_date);
+    }
+  }
+  function replaceUpcomingDay(day: CalendarDay) {
+    router.push({ pathname: "/calendar/days/[date]", params: { date: day.calendar_date, section: "replace" } } as Href);
+  }
+  async function removeUpcomingDay(day: CalendarDay) {
+    setError(null);
+    try {
+      await apiRequest(`/api/v1/calendar/days/${day.calendar_date}/plan`, { method: "DELETE" });
+      await load();
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+      throw nextError;
+    }
+  }
+  async function reorderUpcomingDays(dates: string[], orderedDayIds: (number | null)[]) {
+    setError(null);
+    try {
+      await apiRequest("/api/v1/calendar/reorder", {
+        body: JSON.stringify({ dates, ordered_day_ids: orderedDayIds }),
+        method: "PUT",
+      });
+      await load();
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+      throw nextError;
+    }
+  }
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !overview) return <LoadingState label="Preparando tu calendario…" />;
 
   return (
     <>
     <Screen contentStyle={styles.content}>
-      <SectionPageHeader countLabel="fechas" section="calendarization" subtitle={extended ? undefined : "Trae tus planes y programas al calendario, y ejecútalos registrando su cumplimiento"} title={extended ? "Próximas fechas" : "Calendario"} />
+      <SectionPageHeader countLabel="fechas" section="calendarization" subtitle={extended ? "Fechas próximas, tengan o no un plan asignado." : "Trae tus planes y programas al calendario, y ejecútalos registrando su cumplimiento"} title={extended ? "Planes próximas fechas" : "Calendario"} />
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!extended ? <View style={styles.summaryRow}>
         <View accessibilityLabel={`Planes programados desde hoy: ${overview?.future_plans_count ?? "dato pendiente"}`} accessible style={styles.summaryCard}>
@@ -257,13 +271,11 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         </>
       ) : null}
 
-      <ProgramSectionHeader icon={CalendarDays} subtitle={extended ? "Planes ordenados por fecha." : "Los próximos siete días, con el nombre de cada plan."} title="Próximas fechas" />
-      <Card>
-        {upcoming.map((day) => <CalendarDateRow day={day} key={day.calendar_date} onEdit={() => openDay(day.calendar_date)} onPress={day.id
-          ? () => router.push(`/program/days/${day.id}` as Href) : undefined} />)}
-      </Card>
+      {!extended ? <ProgramSectionHeader icon={CalendarDays} subtitle="Los próximos siete días, con o sin plan asignado." title="Planes próximas fechas" /> : null}
+      <CalendarUpcomingPanels days={upcoming} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} />
       {!extended ? <Button label="Ver más fechas" onPress={() => router.push("/calendar/future" as Href)} variant="secondary" /> : null}
-      {!extended ? <Button label="Planificar con un programa" onPress={() => router.push("/program" as Href)} variant="secondary" /> : null}
+      {!extended ? <Button label="Calendarizar un programa" onPress={() => router.push("/program/activate" as Href)} variant="secondary" /> : null}
+      {!extended ? <Button label="Gestionar programa en curso" onPress={() => router.push("/program" as Href)} variant="secondary" /> : null}
     </Screen>
     <ActionSheetModal onRequestClose={() => setCommitmentMenuVisible(false)} visible={commitmentMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
@@ -300,15 +312,6 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
 }
 
 const styles = StyleSheet.create({
-  agendaDate: { alignItems: "center", minWidth: 44 },
-  agendaAction: { borderColor: tokens.color.borderSoft, borderRadius: 14, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 6 },
-  agendaActionText: { color: tokens.color.textMain, fontSize: 12 },
-  agendaDay: { color: tokens.color.textMuted, fontSize: 12 },
-  agendaName: { color: tokens.color.textMain, fontSize: 15, fontWeight: "600" },
-  agendaNumber: { color: tokens.color.textMain, fontSize: 19, fontWeight: "700" },
-  agendaPlan: { flex: 1, gap: 3 },
-  agendaRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 68, paddingVertical: tokens.spacing.sm },
-  agendaSource: { color: tokens.color.textMuted, fontSize: 12 },
   content: { gap: tokens.spacing.lg },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 38, width: "13.5%" },
