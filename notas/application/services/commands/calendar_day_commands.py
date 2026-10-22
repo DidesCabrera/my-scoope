@@ -234,7 +234,7 @@ def reorder_calendar_date_plans(
         raise ValueError("calendar_date_in_past")
 
     User.objects.select_for_update().get(pk=user.pk)
-    rows = list(CalendarizedDay.objects.select_for_update().filter(
+    rows = list(CalendarizedDay.objects.select_for_update(of=("self",)).filter(
         user=user, calendar_date__in=dates, assignment_state=CalendarizedDay.STATE_CURRENT,
     ).select_related("calendarization", "origin_calendarization"))
     current_by_date = {row.calendar_date: row for row in rows}
