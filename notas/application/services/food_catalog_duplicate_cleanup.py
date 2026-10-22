@@ -140,8 +140,7 @@ def audit_food_catalog_duplicates(*, apply: bool = False) -> FoodDuplicateAudit:
     possible_names = tuple(
         (row["normalized_name"], row["count"])
         for row in Food.objects.filter(is_global=True, is_active=True)
-        .exclude(canonical_name="")
-        .annotate(normalized_name=Lower(Trim("canonical_name")))
+        .annotate(normalized_name=Lower(Trim("name")))
         .values("normalized_name")
         .annotate(count=Count("id"))
         .filter(count__gt=1)

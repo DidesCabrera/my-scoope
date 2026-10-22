@@ -1,12 +1,13 @@
 from decimal import Decimal
 
-from django.db import connection
+from django.contrib.auth.models import User
+from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
 from food_catalog.models import CatalogFood
 from notas.application.services.food_catalog_duplicate_cleanup import audit_food_catalog_duplicates
-from notas.domain.models import Food
+from notas.domain.models import Food, Meal, MealFood
 
 
 class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
@@ -43,7 +44,61 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
             self.assertIsNone(second_duplicate.catalog_food_id)
             self.assertEqual(audit_food_catalog_duplicates().groups, ())
         finally:
-            MigrationExecutor(connection).migrate([("notas", "0079_unique_global_catalog_snapshots")])
+            MigrationExecutor(connection).migrate([("notas", "0080_unique_active_global_food_names")])
+
+    def test_name_migration_hides_legacy_public_duplicates_without_deleting_history(self):
+        MigrationExecutor(connection).migrate([("notas", "0079_unique_global_catalog_snapshots")])
+        try:
+            catalog = self._catalog("Arroz blanco cocido")
+            snapshot = self._food(catalog)
+            legacy = Food.objects.create(
+                name=" ARROZ BLANCO COCIDO ",
+                protein=2.5,
+                carbs=28.2,
+                fat=0.2,
+                is_global=True,
+            )
+            meal = Meal.objects.create(
+                name="Comida histórica",
+                created_by=User.objects.create_user(username="historic-meal-owner"),
+            )
+            meal_food = MealFood.objects.create(meal=meal, food=legacy, quantity=100)
+            first_honey = Food.objects.create(
+                name="Miel", protein=0, carbs=83, fat=0, is_global=True,
+            )
+            second_honey = Food.objects.create(
+                name=" miel ", protein=0.3, carbs=82.4, fat=0, is_global=True,
+            )
+            self.assertEqual(
+                audit_food_catalog_duplicates().possible_name_duplicates,
+                (("arroz blanco cocido", 2), ("miel", 2)),
+            )
+
+            MigrationExecutor(connection).migrate([("notas", "0080_unique_active_global_food_names")])
+
+            snapshot.refresh_from_db()
+            legacy.refresh_from_db()
+            first_honey.refresh_from_db()
+            second_honey.refresh_from_db()
+            self.assertTrue(snapshot.is_active)
+            self.assertFalse(legacy.is_active)
+            self.assertEqual(legacy.carbs, 28.2)
+            self.assertTrue(Food.objects.filter(pk=legacy.pk).exists())
+            meal_food.refresh_from_db()
+            self.assertEqual(meal_food.food_id, legacy.pk)
+            self.assertEqual(meal_food.carbs, 28.2)
+            self.assertTrue(first_honey.is_active)
+            self.assertFalse(second_honey.is_active)
+            self.assertEqual(audit_food_catalog_duplicates().possible_name_duplicates, ())
+
+            with self.assertRaises(IntegrityError), transaction.atomic():
+                Food.objects.create(
+                    name="  MIEL  ", protein=0, carbs=83, fat=0, is_global=True,
+                )
+            Food.objects.create(name="Miel", protein=0, carbs=83, fat=0, is_global=False)
+            Food.objects.create(name="Miel", protein=0, carbs=83, fat=0, is_global=False)
+        finally:
+            MigrationExecutor(connection).migrate([("notas", "0080_unique_active_global_food_names")])
 
     def _catalog(self, name):
         return CatalogFood.objects.create(

@@ -15,6 +15,7 @@ from uuid import UUID
 
 from django.db import transaction
 from django.db.models import Max, Q
+from django.db.models.functions import Lower, Trim
 from django.utils import timezone
 
 from core.food_visual_identity import resolved_food_visual_identity
@@ -166,6 +167,7 @@ def create_operational_food_snapshot_from_catalog(
                 skipped_aliases=0,
                 created=False,
             )
+        _ensure_unique_active_global_name(payload.food_defaults()["name"])
 
     food = Food.objects.create(
         **payload.food_defaults(),
@@ -214,6 +216,9 @@ def refresh_operational_food_snapshot_from_catalog(
         raise FoodCatalogSnapshotError("A catalog snapshot cannot be reassigned to another CatalogFood.")
     payload = build_operational_food_snapshot_payload(catalog_food)
     snapshot_created_at = timezone.now()
+
+    if food.is_global:
+        _ensure_unique_active_global_name(payload.food_defaults()["name"], except_food_id=food.pk)
 
     for field_name, value in payload.food_defaults().items():
         setattr(food, field_name, value)
@@ -268,6 +273,18 @@ def _resolve_catalog_food(catalog_food: CatalogFood | int) -> CatalogFood:
     if isinstance(catalog_food, CatalogFood):
         return catalog_food
     return CatalogFood.objects.get(pk=catalog_food)
+
+
+def _ensure_unique_active_global_name(name: str, *, except_food_id: int | None = None) -> None:
+    existing = Food.objects.filter(is_global=True, is_active=True).annotate(
+        normalized_name=Lower(Trim("name"))
+    ).filter(normalized_name=name.strip(" ").lower())
+    if except_food_id is not None:
+        existing = existing.exclude(pk=except_food_id)
+    if existing.exists():
+        raise FoodCatalogSnapshotError(
+            f"Another active global Food already uses the name {name!r}; curate it before publishing."
+        )
 
 
 def get_catalog_food_refs_by_id(ids: set[int]) -> dict[int, UUID]:

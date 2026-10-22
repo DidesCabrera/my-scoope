@@ -106,6 +106,46 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(second.food.pk, first.food.pk)
         self.assertEqual(Food.objects.filter(is_global=True, catalog_food_ref=catalog_food.catalog_ref).count(), 1)
 
+    def test_global_snapshot_rejects_another_active_public_name(self):
+        first_catalog = self._create_published_catalog_food()
+        first = create_operational_food_snapshot_from_catalog(first_catalog).food
+        second_catalog = CatalogFood.objects.create(
+            display_name=" PECHUGA DE POLLO COCIDA ",
+            canonical_name="otra pechuga de pollo cocida",
+            protein_g_per_100g=Decimal("31.000"),
+            carbs_g_per_100g=Decimal("0.000"),
+            fat_g_per_100g=Decimal("3.600"),
+            status=CatalogFood.STATUS_PUBLISHED,
+        )
+
+        with self.assertRaises(FoodCatalogSnapshotError):
+            create_operational_food_snapshot_from_catalog(second_catalog)
+        self.assertEqual(Food.objects.filter(is_global=True).count(), 1)
+        self.assertEqual(first.catalog_food_id, first_catalog.pk)
+
+    def test_refresh_inactive_snapshot_rejects_public_name_collision(self):
+        first_catalog = self._create_published_catalog_food()
+        create_operational_food_snapshot_from_catalog(first_catalog)
+        second_catalog = CatalogFood.objects.create(
+            display_name="Otro alimento",
+            canonical_name="otro alimento",
+            protein_g_per_100g=Decimal("1.000"),
+            carbs_g_per_100g=Decimal("2.000"),
+            fat_g_per_100g=Decimal("3.000"),
+            status=CatalogFood.STATUS_PUBLISHED,
+        )
+        second = create_operational_food_snapshot_from_catalog(second_catalog).food
+        second.is_active = False
+        second.save(update_fields=["is_active"])
+        second_catalog.display_name = " PECHUGA DE POLLO COCIDA "
+        second_catalog.save(update_fields=["display_name"])
+
+        with self.assertRaises(FoodCatalogSnapshotError):
+            refresh_operational_food_snapshot_from_catalog(second)
+        second.refresh_from_db()
+        self.assertFalse(second.is_active)
+        self.assertEqual(second.name, "Otro alimento")
+
     def test_database_rejects_second_global_link_but_allows_private_duplicate(self):
         catalog_food = self._create_published_catalog_food()
         original = create_operational_food_snapshot_from_catalog(catalog_food).food

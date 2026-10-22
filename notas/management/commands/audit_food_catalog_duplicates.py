@@ -19,7 +19,7 @@ class Command(BaseCommand):
         for conflict in audit.conflicts:
             self.stderr.write(f"CONFLICT: {conflict}")
         for name, count in audit.possible_name_duplicates:
-            self.stdout.write(f"REVIEW canonical_name={name!r} active_global_rows={count}")
+            self.stdout.write(f"REVIEW name={name!r} active_global_rows={count}")
         self.stdout.write(
             f"snapshot_duplicate_groups={len(audit.groups)} retired={audit.retired_count} "
             f"conflicts={len(audit.conflicts)} possible_name_duplicates={len(audit.possible_name_duplicates)}"

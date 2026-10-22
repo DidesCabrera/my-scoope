@@ -2,6 +2,7 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.functions import Lower, Trim
 
 from notas.domain.constants.nutrition import (
     CARBS_KCAL_PER_GRAM,
@@ -124,6 +125,11 @@ class Food(models.Model):
             ),
         ]
         constraints = [
+            models.UniqueConstraint(
+                Lower(Trim("name")),
+                condition=models.Q(is_global=True, is_active=True),
+                name="unique_active_global_food_normalized_name",
+            ),
             models.CheckConstraint(
                 condition=(
                     models.Q(is_global=False)
