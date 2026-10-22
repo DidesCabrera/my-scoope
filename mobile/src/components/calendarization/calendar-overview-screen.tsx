@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { CalendarDays, ChevronLeft, ChevronRight, Ellipsis } from "lucide-react-native";
+import { CalendarDays, CalendarRange, ChevronLeft, ChevronRight, Ellipsis, ListPlus } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,7 +15,7 @@ import { ProgramDaySelector } from "@/components/libraries/program-planning-cont
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { ProgramActiveKpis } from "@/components/programs/program-active-kpis";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Card, Chip, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionPageHeader } from "@/components/ui";
+import { Button, Card, Chip, DistributedTabBar, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function dateLabel(value: string, options: Intl.DateTimeFormatOptions): string {
@@ -32,17 +32,19 @@ function weekDay(value: string): string {
 
 export function CalendarOverviewScreen({ extended = false }: { extended?: boolean }) {
   const router = useRouter();
-  const { apiRequest, status } = useSession();
+  const { apiRequest, profile, refreshProfile, status } = useSession();
   const [overview, setOverview] = useState<CalendarOverviewData | null>(null);
   const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
   const [monthOverview, setMonthOverview] = useState<{ key: string; data: CalendarOverviewData } | null>(null);
   const [monthError, setMonthError] = useState<string | null>(null);
   const [detail, setDetail] = useState<CalendarDayDetailData | null>(null);
   const [progress, setProgress] = useState<CalendarProgressData | null>(null);
+  const [activeTab, setActiveTab] = useState<"planning" | "progress">("planning");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressMenuVisible, setProgressMenuVisible] = useState(false);
+  const [planMenuVisible, setPlanMenuVisible] = useState(false);
   const [commitmentMenuVisible, setCommitmentMenuVisible] = useState(false);
   const [progressMenuStage, setProgressMenuStage] = useState<"actions" | "date">("actions");
   const [progressStartDate, setProgressStartDate] = useState("");
@@ -70,6 +72,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   }, [apiRequest, extended]);
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
+  useFocusEffect(useCallback(() => { if (status === "authenticated") void refreshProfile().catch(() => undefined); }, [refreshProfile, status]));
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || !visibleMonth || extended) return;
     let active = true;
@@ -169,10 +172,20 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
 
   return (
     <>
-    <Screen contentStyle={styles.content}>
-      <SectionPageHeader countLabel="fechas" section="calendarization" subtitle={extended ? "Fechas próximas, tengan o no un plan asignado." : "Trae tus planes y programas al calendario, y ejecútalos registrando su cumplimiento"} title={extended ? "Planes próximas fechas" : "Calendario"} />
+    <Screen
+      contentStyle={styles.content}
+      headerMode={extended ? "preserve" : "automatic"}
+      scrollHeader={!extended ? <SectionPageHeader countLabel="fechas" section="calendarization" subtitle="Trae tus planes y programas al calendario, y ejecútalos registrando su cumplimiento" title="Calendario" /> : undefined}
+      stickyHeader={!extended ? <DistributedTabBar<"planning" | "progress">
+        accessibilityLabel="Secciones del calendario"
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        tabs={[{ key: "planning", label: "Planificación" }, { key: "progress", label: "Progreso" }]}
+      /> : undefined}
+      stickyHeaderStyle={styles.stickyHeader}>
+      {extended ? <SectionPageHeader countLabel="fechas" section="calendarization" subtitle="Fechas próximas, tengan o no un plan asignado." title="Planes próximas fechas" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      {!extended ? <View style={styles.summaryRow}>
+      {!extended && activeTab === "planning" ? <View style={styles.summaryRow}>
         <View accessibilityLabel={`Planes programados desde hoy: ${overview?.future_plans_count ?? "dato pendiente"}`} accessible style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Planes programados</Text>
           <Text style={styles.summaryValue}>{overview?.future_plans_count ?? "—"}</Text>
@@ -184,7 +197,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
           <Text style={styles.summaryHint}>Horizonte programado</Text>
         </View>
       </View> : null}
-      {!extended ? (
+      {!extended && activeTab === "planning" ? (
         <>
           <Card>
             <View style={styles.monthNavigation}>
@@ -214,30 +227,13 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
               ))}
             </View>
           </Card>
-          <Button label="Calendarizar compromisos" onPress={() => setCommitmentMenuVisible(true)} variant="secondary" />
-
-          {progress ? <>
-            <View style={styles.progressHeaderSpacing}>
-              <ProgramSectionHeader
-                action={<Pressable accessibilityLabel="Opciones de progreso" accessibilityRole="button" onPress={() => setProgressMenuVisible(true)} style={styles.progressMenuButton}><Ellipsis color={tokens.color.textMain} size={24} /></Pressable>}
-                detail={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`Inicio el ${dateLabel(progress.period_start, { day: "numeric", month: "long" })}`} textColor={tokens.color.textMuted} />}
-                icon={CalendarDays}
-                title="Progreso"
-              />
-            </View>
-            <ProgramActiveKpis
-              adheredDays={progress.completed_meals}
-              adherence={mealCoverage}
-              bleed={false}
-              elapsedDays={progress.days_with_plan}
-              mealLabel="Comidas cumplidas"
-              planLabel={"Planes\nrecorridos"}
-              plannedAdherenceDays={progress.scheduled_meals}
-              progress={calendarCoverage}
-              standalone
-              totalDays={futurePlansCount}
-            />
-          </> : null}
+          <View style={styles.calendarizeActions}>
+            <Button label="Calendarizar planes" onPress={() => setPlanMenuVisible(true)} variant="secondary" />
+            <Button label="Calendarizar compromisos" onPress={() => setCommitmentMenuVisible(true)} variant="secondary" />
+          </View>
+          <ProgramSectionHeader icon={CalendarDays} subtitle="Los próximos siete días, con o sin plan asignado." title="Planes próximas fechas" />
+          <CalendarUpcomingPanels days={upcoming} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
+          <Button label="Ver más fechas" onPress={() => router.push("/calendar/future" as Href)} variant="secondary" />
 
           <ProgramSectionHeader icon={CalendarDays} subtitle="Elige una fecha para revisar el plan que quedó programado." title="Semana actual" />
           <ProgramDaySelector
@@ -271,12 +267,42 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         </>
       ) : null}
 
-      {!extended ? <ProgramSectionHeader icon={CalendarDays} subtitle="Los próximos siete días, con o sin plan asignado." title="Planes próximas fechas" /> : null}
-      <CalendarUpcomingPanels days={upcoming} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} />
-      {!extended ? <Button label="Ver más fechas" onPress={() => router.push("/calendar/future" as Href)} variant="secondary" /> : null}
-      {!extended ? <Button label="Calendarizar un programa" onPress={() => router.push("/program/activate" as Href)} variant="secondary" /> : null}
-      {!extended ? <Button label="Gestionar programa en curso" onPress={() => router.push("/program" as Href)} variant="secondary" /> : null}
+      {!extended && activeTab === "progress" && progress ? <>
+        <View style={styles.progressHeaderSpacing}>
+          <ProgramSectionHeader
+            action={<Pressable accessibilityLabel="Opciones de progreso" accessibilityRole="button" onPress={() => setProgressMenuVisible(true)} style={styles.progressMenuButton}><Ellipsis color={tokens.color.textMain} size={24} /></Pressable>}
+            detail={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`Inicio el ${dateLabel(progress.period_start, { day: "numeric", month: "long" })}`} textColor={tokens.color.textMuted} />}
+            icon={CalendarDays}
+            title="Progreso"
+          />
+        </View>
+        <ProgramActiveKpis
+          adheredDays={progress.completed_meals}
+          adherence={mealCoverage}
+          bleed={false}
+          elapsedDays={progress.days_with_plan}
+          mealLabel="Comidas cumplidas"
+          planLabel={"Planes\nrecorridos"}
+          plannedAdherenceDays={progress.scheduled_meals}
+          progress={calendarCoverage}
+          standalone
+          totalDays={futurePlansCount}
+        />
+      </> : null}
+
+      {extended ? <CalendarUpcomingPanels days={upcoming} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} /> : null}
     </Screen>
+    <ActionSheetModal onRequestClose={() => setPlanMenuVisible(false)} visible={planMenuVisible}>
+      <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
+        <ActionSheetHeader icon={CalendarDays} onClose={() => setPlanMenuVisible(false)} title="Calendarizar planes" />
+        <View style={styles.progressSheetContent}>
+          <ActionSheetActions>
+            <ActionSheetAction icon={ListPlus} label="Seleccionar planes individuales" onPress={() => { setPlanMenuVisible(false); router.push("/calendar/select-plans" as Href); }} />
+            <ActionSheetAction icon={CalendarRange} label="Seleccionar programa semanal" onPress={() => { setPlanMenuVisible(false); router.push("/program/activate" as Href); }} />
+          </ActionSheetActions>
+        </View>
+      </SafeAreaView>
+    </ActionSheetModal>
     <ActionSheetModal onRequestClose={() => setCommitmentMenuVisible(false)} visible={commitmentMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
         <ActionSheetHeader icon={CalendarDays} onClose={() => setCommitmentMenuVisible(false)} title="Calendarizar compromisos" />
@@ -285,6 +311,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
             <ActionSheetAction icon={commitmentPresentation.shopping.icon} label={commitmentRegistrationTitle.shopping} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=shopping" as Href); }} />
             <ActionSheetAction icon={commitmentPresentation.cooking.icon} label={commitmentRegistrationTitle.cooking} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=cooking" as Href); }} />
             <ActionSheetAction icon={commitmentPresentation.training.icon} label={commitmentRegistrationTitle.training} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=training" as Href); }} />
+            <ActionSheetAction icon={commitmentPresentation.nutritionist.icon} label={commitmentPresentation.nutritionist.label} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=nutritionist" as Href); }} />
           </ActionSheetActions>
         </View>
       </SafeAreaView>
@@ -312,6 +339,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
 }
 
 const styles = StyleSheet.create({
+  calendarizeActions: { gap: tokens.spacing.sm },
   content: { gap: tokens.spacing.lg },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 38, width: "13.5%" },
@@ -338,5 +366,6 @@ const styles = StyleSheet.create({
   summaryLabel: { color: tokens.color.textMain, fontSize: 14, fontWeight: "600" },
   summaryRow: { flexDirection: "row", gap: tokens.spacing.sm },
   summaryValue: { color: tokens.color.textMain, fontSize: 32, fontWeight: "700", fontVariant: ["tabular-nums"] },
+  stickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
   pressed: { opacity: 0.65 },
 });

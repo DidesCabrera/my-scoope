@@ -51,6 +51,7 @@
 .calendar-preview__commitment-dot--shopping, .calendar-commitments__dot--shopping { background: var(--color-food); }
 .calendar-preview__commitment-dot--cooking, .calendar-commitments__dot--cooking { background: var(--color-meal); }
 .calendar-preview__commitment-dot--training, .calendar-commitments__dot--training { background: #01e888; }
+.calendar-preview__commitment-dot--nutritionist, .calendar-commitments__dot--nutritionist { background: #8ab4ff; }
 .calendar-preview__selected-commitments { background: var(--surface-card-muted); border-radius: 14px; padding: .8rem 1rem; }
 .calendar-preview__selected-commitments h3 { margin: 0; }
 .calendar-preview__selected-commitments ul { margin-bottom: 0; padding-left: 1.2rem; }

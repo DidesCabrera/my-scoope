@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { CalendarCommitment, CalendarDayDetailData, CalendarOverviewData } from "@/api/calendar-types";
 import { useSession } from "@/auth/session-context";
-import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
+import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
 import { calendarFoodDayRole, selectCalendarFoodDate, validCalendarFoodPeriod } from "@/components/calendarization/calendar-food-period";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
@@ -130,7 +130,7 @@ export default function CalendarCommitmentDetailScreen() {
   const controlsLocked = savingPeriod || periodSaved && !editingPeriod;
   return <Screen contentStyle={styles.content} headerMode="preserve">
     <SectionPageHeader icon={<CommitmentIcon color={presentation.color} size={28} strokeWidth={1.8} />} indicator={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={shortDate(date)} textColor={tokens.color.textMain} />} section="calendarization" title={commitmentDayTitle[commitment.kind]} />
-    {commitment.kind !== "training" ? <View style={styles.foodPeriodControls}>
+    {commitmentSupportsFoods(commitment.kind) ? <View style={styles.foodPeriodControls}>
       <Text style={styles.foodInstruction}>Selecciona una fecha de inicio y de término.</Text>
       <View style={styles.monthNavigation}>
         <Pressable accessibilityLabel="Mes anterior del periodo" accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} onPress={() => { if (month) setMonth(shiftMonth(month, -1)); }} style={styles.monthArrow}><ChevronLeft color={tokens.color.textMain} size={20} /></Pressable>

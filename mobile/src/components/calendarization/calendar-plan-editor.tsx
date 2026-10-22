@@ -7,7 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarDay, CalendarDayDetailData, CalendarDayHistoryData, LibraryPageData } from "@/api/types";
-import { commitmentDayTitle, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
+import { commitmentDayTitle, commitmentPresentation, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { PickerCardAction } from "@/components/pickers/picker-card-action";
@@ -227,7 +227,7 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
     {day.commitments?.map((commitment) => {
       const presentation = commitmentPresentation[commitment.kind];
       const CommitmentIcon = presentation.icon;
-      const hasFoodList = commitment.kind !== "training" && commitment.food_period_start && commitment.food_period_end;
+      const hasFoodList = commitmentSupportsFoods(commitment.kind) && commitment.food_period_start && commitment.food_period_end;
       return <View key={commitment.id}>
         <Card accent={presentation.color}>
           <View style={styles.assignmentHeading}>

@@ -76,12 +76,13 @@ function Header({ tab }: { tab: Exclude<Tab, "plans"> }) {
 
 type RowItem = { id: string; day: CalendarDay };
 
-export function CalendarUpcomingPanels({ days, onOpenDay, onRemove, onReorder, onReplace }: {
+export function CalendarUpcomingPanels({ days, onOpenDay, onRemove, onReorder, onReplace, weightKg }: {
   days: CalendarDay[];
   onOpenDay(day: CalendarDay): void;
   onRemove(day: CalendarDay): Promise<void>;
   onReorder(dates: string[], orderedDayIds: (number | null)[]): Promise<void>;
   onReplace(day: CalendarDay): void;
+  weightKg: number | null;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("plans");
   const [optimistic, setOptimistic] = useState<{ signature: string; items: RowItem[] } | null>(null);
@@ -123,6 +124,8 @@ export function CalendarUpcomingPanels({ days, onOpenDay, onRemove, onReorder, o
         const day = visibleDay(item, index);
         const calories = day.has_plan ? number(day.plan_calories) : null;
         const protein = day.has_plan ? number(day.plan_protein_grams) : null;
+        const ppk = protein != null && weightKg != null && Number.isFinite(weightKg) && weightKg > 0
+          ? protein / weightKg : null;
         const carbs = day.has_plan ? number(day.plan_carbs_grams) : null;
         const fat = day.has_plan ? number(day.plan_fat_grams) : null;
         const hasMacros = protein != null && carbs != null && fat != null && protein * 4 + carbs * 4 + fat * 9 > 0;
@@ -149,8 +152,8 @@ export function CalendarUpcomingPanels({ days, onOpenDay, onRemove, onReorder, o
                 : <Text style={styles.emptyValue}>—</Text>}</View>
             </> : null}
             {activeTab === "macros" ? <>
-              <View style={styles.ppkCell}>{number(day.plan_protein_per_kilogram) != null
-                ? <ProteinPerKilogramBadge density="compact" showUnit={false} value={day.plan_protein_per_kilogram!} />
+              <View style={styles.ppkCell}>{ppk != null
+                ? <ProteinPerKilogramBadge density="compact" showUnit={false} value={ppk} />
                 : <Text style={styles.emptyValue}>—</Text>}</View>
               <Text style={[styles.value, styles.macroCell]}>{integer(protein)}</Text>
               <Text style={[styles.value, styles.macroCell]}>{integer(carbs)}</Text>

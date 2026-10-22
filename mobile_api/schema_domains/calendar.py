@@ -5,7 +5,7 @@ from ninja import Field, Schema
 
 from mobile_api.schema_domains.libraries import LibraryFoodPanelItemData
 
-CalendarCommitmentKind = Literal["shopping", "cooking", "training"]
+CalendarCommitmentKind = Literal["shopping", "cooking", "training", "nutritionist"]
 
 
 class CalendarCommitmentData(Schema):

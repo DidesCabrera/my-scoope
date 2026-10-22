@@ -68,6 +68,39 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertIsNone(day_without_plan["plan_calories"])
         self.assertEqual(day_without_plan["commitments"][0]["kind"], "shopping")
 
+    def test_nutritionist_commitment_is_note_only_and_can_be_updated(self):
+        day = self.today + timedelta(days=1)
+        response = self.client.post(
+            "/api/v1/calendar/commitments",
+            data={"kind": "nutritionist", "dates": [day.isoformat()], "note": "Control mensual"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        item = response.json()["data"]["items"][0]
+        self.assertEqual(item["kind"], "nutritionist")
+        self.assertEqual(item["note"], "Control mensual")
+        self.assertEqual(item["foods"], [])
+        self.assertIsNone(item["food_period_start"])
+
+        saved = self.client.patch(
+            f"/api/v1/calendar/commitments/{item['id']}",
+            data={"note": "Llevar controles"},
+            content_type="application/json",
+        )
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(saved.json()["data"]["note"], "Llevar controles")
+        overview = self.client.get("/api/v1/calendar").json()["data"]
+        appointment = next(row for row in overview["days"] if row["calendar_date"] == day.isoformat())
+        self.assertEqual(appointment["commitments"][0]["kind"], "nutritionist")
+
+        invalid_foods = self.client.post(
+            "/api/v1/calendar/commitments",
+            data={"kind": "nutritionist", "dates": [(day + timedelta(days=1)).isoformat()],
+                  "food_period_start": day.isoformat(), "food_period_end": day.isoformat()},
+            content_type="application/json",
+        )
+        self.assertEqual(invalid_foods.status_code, 422)
+
     def test_reorder_calendar_plans_keeps_program_reference_and_dated_history(self):
         first = self.today + timedelta(days=1)
         second = first + timedelta(days=1)

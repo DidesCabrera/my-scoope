@@ -9,7 +9,7 @@ export type ActiveProgramDay = {
   plan_name: string;
 };
 
-export type CalendarCommitmentKind = "shopping" | "cooking" | "training";
+export type CalendarCommitmentKind = "shopping" | "cooking" | "training" | "nutritionist";
 
 export type CalendarCommitment = {
   id: number;

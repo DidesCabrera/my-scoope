@@ -18,7 +18,7 @@
   const foodAttachments = new Map();
   const foodPreviews = new Map();
   const notesByDate = new Map();
-  const dayTitle = { shopping: "Día de compras", cooking: "Día de cocinar", training: "Día de entrenamiento" }[page.dataset.kind];
+  const dayTitle = { shopping: "Día de compras", cooking: "Día de cocinar", training: "Día de entrenamiento", nutritionist: "Cita nutricionista" }[page.dataset.kind];
   let openFoodEditor = () => {};
   const weekdayLabels = ["L", "M", "M", "J", "V", "S", "D"];
   const todayDate = new Date(`${today}T12:00:00Z`);
@@ -26,7 +26,7 @@
   let month = todayDate.getUTCMonth();
   const commitmentMonths = new Map();
   const commitmentRequests = new Set();
-  const kindLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar" };
+  const kindLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Cita nutricionista" };
   let refreshFoodCommitments = () => {};
 
   function monthKey(targetYear, targetMonth) { return `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}`; }
@@ -84,14 +84,14 @@
       row.setAttribute("aria-label", `Ver detalle: ${dayTitle} del ${dateLabel(value)}`);
       row.addEventListener("click", () => openFoodEditor(value));
       const symbol = document.createElement("i");
-      symbol.setAttribute("data-lucide", { shopping: "shopping-basket", cooking: "cooking-pot", training: "dumbbell" }[page.dataset.kind]);
+      symbol.setAttribute("data-lucide", { shopping: "shopping-basket", cooking: "cooking-pot", training: "dumbbell", nutritionist: "stethoscope" }[page.dataset.kind]);
       symbol.setAttribute("aria-hidden", "true");
       row.appendChild(symbol);
       const details = document.createElement("div");
       const label = document.createElement("strong");
       label.textContent = `${dayTitle} · ${dateLabel(value)}`;
       details.appendChild(label);
-      if (page.dataset.kind !== "training") {
+      if (["shopping", "cooking"].includes(page.dataset.kind)) {
         const attachment = foodAttachments.get(value);
         const status = document.createElement("small");
         status.textContent = attachment

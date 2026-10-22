@@ -1458,7 +1458,8 @@
             "enum": [
               "shopping",
               "cooking",
-              "training"
+              "training",
+              "nutritionist"
             ],
             "title": "Kind",
             "type": "string"
@@ -1535,7 +1536,8 @@
             "enum": [
               "shopping",
               "cooking",
-              "training"
+              "training",
+              "nutritionist"
             ],
             "title": "Kind",
             "type": "string"
