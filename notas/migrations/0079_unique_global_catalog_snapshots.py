@@ -2,16 +2,7 @@ from django.db import migrations, models
 from django.db.models import Q
 
 
-def retire_duplicate_snapshots(apps, schema_editor):
-    Food = apps.get_model("notas", "Food")
-    CatalogFood = apps.get_model("food_catalog", "CatalogFood")
-    database = schema_editor.connection.alias
-    foods = list(
-        Food.objects.using(database)
-        .filter(is_global=True)
-        .filter(Q(catalog_food_id__isnull=False) | Q(catalog_food_ref__isnull=False))
-        .order_by("id")
-    )
+def _linked_components(foods):
     parent = {food.pk: food.pk for food in foods}
     seen_ids = {}
     seen_refs = {}
@@ -39,42 +30,33 @@ def retire_duplicate_snapshots(apps, schema_editor):
     groups = {}
     for food in foods:
         groups.setdefault(root(food.pk), []).append(food)
+    return list(groups.values())
 
-    retire_ids = []
-    for members in groups.values():
-        if len(members) < 2:
-            continue
-        ids = {food.catalog_food_id for food in members if food.catalog_food_id is not None}
-        refs = {str(food.catalog_food_ref) for food in members if food.catalog_food_ref is not None}
-        if len(ids) > 1 or len(refs) > 1:
-            raise RuntimeError(
-                f"Conflicting Food Catalog identities on notas.Food IDs {[food.pk for food in members]}"
-            )
-        if ids and refs and not CatalogFood.objects.using(database).filter(
-            pk=next(iter(ids)), catalog_ref=next(iter(refs))
-        ).exists():
-            raise RuntimeError(
-                f"Mismatched Food Catalog ID/ref on notas.Food IDs {[food.pk for food in members]}"
-            )
-        members.sort(
-            key=lambda food: (
-                not food.is_active,
-                food.catalog_food_id is None or food.catalog_food_ref is None,
-                food.catalog_sync_status != "snapshot",
-                not food.is_verified,
-                -food.data_quality_score,
-                food.pk,
-            )
-        )
-        retire_ids.extend(food.pk for food in members[1:])
 
-    if retire_ids:
-        Food.objects.using(database).filter(pk__in=retire_ids).update(
-            is_active=False,
-            catalog_food_id=None,
-            catalog_food_ref=None,
-            catalog_sync_status="unlinked",
+def _retired_ids_from_group(members, CatalogFood, database):
+    ids = {food.catalog_food_id for food in members if food.catalog_food_id is not None}
+    refs = {str(food.catalog_food_ref) for food in members if food.catalog_food_ref is not None}
+    member_ids = [food.pk for food in members]
+    if len(ids) > 1 or len(refs) > 1:
+        raise RuntimeError(f"Conflicting Food Catalog identities on notas.Food IDs {member_ids}")
+    if ids and refs and not CatalogFood.objects.using(database).filter(
+        pk=next(iter(ids)), catalog_ref=next(iter(refs))
+    ).exists():
+        raise RuntimeError(f"Mismatched Food Catalog ID/ref on notas.Food IDs {member_ids}")
+    members.sort(
+        key=lambda food: (
+            not food.is_active,
+            food.catalog_food_id is None or food.catalog_food_ref is None,
+            food.catalog_sync_status != "snapshot",
+            not food.is_verified,
+            -food.data_quality_score,
+            food.pk,
         )
+    )
+    return [food.pk for food in members[1:]]
+
+
+def _check_partial_snapshots(Food, database):
     partial = (
         Food.objects.using(database)
         .filter(is_global=True, catalog_sync_status="snapshot")
@@ -89,6 +71,32 @@ def retire_duplicate_snapshots(apps, schema_editor):
         raise RuntimeError(
             f"Global notas.Food ID {partial} has an incomplete Food Catalog trace; resolve it before migration."
         )
+
+
+def retire_duplicate_snapshots(apps, schema_editor):
+    Food = apps.get_model("notas", "Food")
+    CatalogFood = apps.get_model("food_catalog", "CatalogFood")
+    database = schema_editor.connection.alias
+    foods = list(
+        Food.objects.using(database)
+        .filter(is_global=True)
+        .filter(Q(catalog_food_id__isnull=False) | Q(catalog_food_ref__isnull=False))
+        .order_by("id")
+    )
+
+    retire_ids = []
+    for members in _linked_components(foods):
+        if len(members) > 1:
+            retire_ids.extend(_retired_ids_from_group(members, CatalogFood, database))
+
+    if retire_ids:
+        Food.objects.using(database).filter(pk__in=retire_ids).update(
+            is_active=False,
+            catalog_food_id=None,
+            catalog_food_ref=None,
+            catalog_sync_status="unlinked",
+        )
+    _check_partial_snapshots(Food, database)
 
 
 class Migration(migrations.Migration):

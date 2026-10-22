@@ -32,7 +32,7 @@ class FoodDuplicateAudit:
     retired_count: int = 0
 
 
-def _snapshot_groups(foods: list[Food]) -> tuple[list[DuplicateSnapshotGroup], list[str]]:
+def _linked_components(foods: list[Food]) -> list[list[Food]]:
     parent = {food.pk: food.pk for food in foods}
     by_id: dict[int, int] = {}
     by_ref: dict[str, int] = {}
@@ -60,12 +60,11 @@ def _snapshot_groups(foods: list[Food]) -> tuple[list[DuplicateSnapshotGroup], l
     components: dict[int, list[Food]] = {}
     for food in foods:
         components.setdefault(root(food.pk), []).append(food)
+    return list(components.values())
 
-    groups: list[DuplicateSnapshotGroup] = []
-    conflicts: list[str] = []
-    catalog_refs_by_id = get_catalog_food_refs_by_id(
-        {food.catalog_food_id for food in foods if food.catalog_food_id is not None}
-    )
+
+def _trace_conflicts(foods: list[Food], catalog_refs_by_id: dict) -> list[str]:
+    conflicts = []
     for food in foods:
         if (food.catalog_food_id is None) != (food.catalog_food_ref is None):
             conflicts.append(f"Food ID {food.pk} has an incomplete catalog ID/ref pair")
@@ -73,39 +72,55 @@ def _snapshot_groups(foods: list[Food]) -> tuple[list[DuplicateSnapshotGroup], l
             catalog_ref = catalog_refs_by_id.get(food.catalog_food_id)
             if catalog_ref is None or catalog_ref != food.catalog_food_ref:
                 conflicts.append(f"Food ID {food.pk} has a missing or mismatched CatalogFood")
-    for members in components.values():
+    return conflicts
+
+
+def _select_group(members: list[Food], catalog_refs_by_id: dict) -> tuple[DuplicateSnapshotGroup | None, str]:
+    ids = {food.catalog_food_id for food in members if food.catalog_food_id is not None}
+    refs = {str(food.catalog_food_ref) for food in members if food.catalog_food_ref is not None}
+    member_ids = [food.pk for food in members]
+    if len(ids) > 1 or len(refs) > 1:
+        return None, f"Food IDs {member_ids} have conflicting catalog identities"
+    catalog_id = next(iter(ids), None)
+    catalog_ref = next(iter(refs), None)
+    if catalog_id is not None and catalog_ref is not None and str(
+        catalog_refs_by_id.get(catalog_id)
+    ) != catalog_ref:
+        return None, f"Food IDs {member_ids} have a mismatched catalog ID/ref"
+    members.sort(
+        key=lambda food: (
+            not food.is_active,
+            food.catalog_food_id is None or food.catalog_food_ref is None,
+            food.catalog_sync_status != Food.CATALOG_SYNC_SNAPSHOT,
+            not food.is_verified,
+            -food.data_quality_score,
+            food.pk,
+        )
+    )
+    return DuplicateSnapshotGroup(
+        catalog_food_id=catalog_id,
+        catalog_food_ref=catalog_ref,
+        survivor_id=members[0].pk,
+        retired_ids=tuple(food.pk for food in members[1:]),
+    ), ""
+
+
+def _snapshot_groups(foods: list[Food]) -> tuple[list[DuplicateSnapshotGroup], list[str]]:
+    components = _linked_components(foods)
+
+    groups: list[DuplicateSnapshotGroup] = []
+    catalog_refs_by_id = get_catalog_food_refs_by_id(
+        {food.catalog_food_id for food in foods if food.catalog_food_id is not None}
+    )
+    conflicts = _trace_conflicts(foods, catalog_refs_by_id)
+    for members in components:
         if len(members) < 2:
             continue
-        ids = {food.catalog_food_id for food in members if food.catalog_food_id is not None}
-        refs = {str(food.catalog_food_ref) for food in members if food.catalog_food_ref is not None}
-        if len(ids) > 1 or len(refs) > 1:
-            conflicts.append(f"Food IDs {[food.pk for food in members]} have conflicting catalog identities")
-            continue
-        catalog_id = next(iter(ids), None)
-        catalog_ref = next(iter(refs), None)
-        if catalog_id is not None and catalog_ref is not None and str(
-            catalog_refs_by_id.get(catalog_id)
-        ) != catalog_ref:
-            conflicts.append(f"Food IDs {[food.pk for food in members]} have a mismatched catalog ID/ref")
-            continue
-        members.sort(
-            key=lambda food: (
-                not food.is_active,
-                food.catalog_food_id is None or food.catalog_food_ref is None,
-                food.catalog_sync_status != Food.CATALOG_SYNC_SNAPSHOT,
-                not food.is_verified,
-                -food.data_quality_score,
-                food.pk,
-            )
-        )
-        groups.append(
-            DuplicateSnapshotGroup(
-                catalog_food_id=catalog_id,
-                catalog_food_ref=catalog_ref,
-                survivor_id=members[0].pk,
-                retired_ids=tuple(food.pk for food in members[1:]),
-            )
-        )
+        group, conflict = _select_group(members, catalog_refs_by_id)
+        if conflict:
+            conflicts.append(conflict)
+        elif group is not None:
+            groups.append(group)
     return sorted(groups, key=lambda group: group.survivor_id), conflicts
 
 
