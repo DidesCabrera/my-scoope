@@ -22,6 +22,7 @@ class MCPUserToken(models.Model):
         unique=True,
     )
     scopes = models.JSONField(default=list)
+    resource = models.URLField(max_length=500, blank=True, default="")
     is_active = models.BooleanField(default=True)
     expires_at = models.DateTimeField(
         null=True,
@@ -196,6 +197,7 @@ class OAuthAuthorizationCode(models.Model):
     )
     redirect_uri = models.URLField(max_length=500)
     scopes = models.JSONField(default=list)
+    resource = models.URLField(max_length=500, blank=True, default="")
     code_challenge = models.CharField(max_length=160)
     code_challenge_method = models.CharField(max_length=20)
     expires_at = models.DateTimeField()

@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from notas.application.services.mcp_user_tokens import (
@@ -19,6 +19,7 @@ from notas.application.services.oauth_authorization_codes import (
 from notas.domain.models import OAuthAuthorizationCode, OAuthClient
 
 
+@override_settings(MCP_RESOURCE_URL="https://mcp.example.test")
 class OAuthAuthorizationCodeServiceTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

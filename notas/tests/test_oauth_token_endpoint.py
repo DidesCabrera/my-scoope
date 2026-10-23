@@ -1,7 +1,7 @@
 from urllib.parse import parse_qs, urlparse
 
 from django.contrib.auth.models import User
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from notas.application.services.mcp_user_tokens import (
@@ -15,6 +15,7 @@ from notas.application.services.oauth_authorization_codes import (
 from notas.domain.models import OAuthClient
 
 
+@override_settings(MCP_RESOURCE_URL="https://mcp.example.test")
 class OAuthTokenEndpointTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -37,6 +38,7 @@ class OAuthTokenEndpointTests(TestCase):
         self.redirect_uri = "https://chatgpt.com/connector/oauth/callback-test"
         self.code_verifier = "test-code-verifier-123456789"
         self.code_challenge = "HbI_WMU4Dyn8dwHtH9MsCbSM-loQTudStz1c32xWk4s"
+        self.resource = "https://mcp.example.test"
 
     def _authorize_params(self, **overrides):
         params = {
@@ -47,6 +49,7 @@ class OAuthTokenEndpointTests(TestCase):
             "state": "state-123",
             "code_challenge": self.code_challenge,
             "code_challenge_method": OAUTH_CODE_CHALLENGE_METHOD_S256,
+            "resource": self.resource,
         }
         params.update(overrides)
 
@@ -78,6 +81,7 @@ class OAuthTokenEndpointTests(TestCase):
                 "code": raw_code,
                 "redirect_uri": self.redirect_uri,
                 "code_verifier": self.code_verifier,
+                "resource": self.resource,
             },
         )
 
@@ -126,6 +130,7 @@ class OAuthTokenEndpointTests(TestCase):
                 "code": raw_code,
                 "redirect_uri": self.redirect_uri,
                 "code_verifier": self.code_verifier,
+                "resource": self.resource,
             },
         )
 
@@ -139,6 +144,7 @@ class OAuthTokenEndpointTests(TestCase):
                 "code": raw_code,
                 "redirect_uri": self.redirect_uri,
                 "code_verifier": self.code_verifier,
+                "resource": self.resource,
             },
         )
 
@@ -155,6 +161,39 @@ class OAuthTokenEndpointTests(TestCase):
             "oauth_authorization_code_already_used",
         )
 
+    def test_token_endpoint_requires_matching_resource_without_consuming_code(self):
+        raw_code = self._create_authorization_code()
+        for resource in ["", "https://other.example.test"]:
+            response = self.client.post(
+                reverse("oauth_token"),
+                data={
+                    "grant_type": "authorization_code",
+                    "client_id": "chatgpt",
+                    "code": raw_code,
+                    "redirect_uri": self.redirect_uri,
+                    "code_verifier": self.code_verifier,
+                    "resource": resource,
+                },
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(
+                response.json()["details"]["code"],
+                "oauth_authorization_code_resource_mismatch",
+            )
+
+        response = self.client.post(
+            reverse("oauth_token"),
+            data={
+                "grant_type": "authorization_code",
+                "client_id": "chatgpt",
+                "code": raw_code,
+                "redirect_uri": self.redirect_uri,
+                "code_verifier": self.code_verifier,
+                "resource": self.resource,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+
     def test_token_endpoint_rejects_wrong_pkce_verifier(self):
         raw_code = self._create_authorization_code()
 
@@ -166,6 +205,7 @@ class OAuthTokenEndpointTests(TestCase):
                 "code": raw_code,
                 "redirect_uri": self.redirect_uri,
                 "code_verifier": "wrong-verifier",
+                "resource": self.resource,
             },
         )
 
@@ -193,6 +233,7 @@ class OAuthTokenEndpointTests(TestCase):
                 "code": raw_code,
                 "redirect_uri": "https://chatgpt.com/connector/oauth/other",
                 "code_verifier": self.code_verifier,
+                "resource": self.resource,
             },
         )
 
@@ -220,6 +261,7 @@ class OAuthTokenEndpointTests(TestCase):
                 "code": raw_code,
                 "redirect_uri": self.redirect_uri,
                 "code_verifier": self.code_verifier,
+                "resource": self.resource,
             },
         )
 
@@ -288,6 +330,7 @@ class OAuthTokenEndpointTests(TestCase):
                 "code": raw_code,
                 "redirect_uri": self.redirect_uri,
                 "code_verifier": self.code_verifier,
+                "resource": self.resource,
             },
         )
 

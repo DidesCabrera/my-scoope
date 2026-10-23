@@ -5,9 +5,12 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Iterable, Optional
 
+from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 
 from notas.application.services.mcp_user_tokens import (
+    MCP_COMMERCIAL_SCOPES,
     create_mcp_user_token,
     mcp_pro_access_required,
 )
@@ -147,11 +150,23 @@ def create_oauth_authorization_code(
     code_challenge: str,
     code_challenge_method: str = OAUTH_CODE_CHALLENGE_METHOD_S256,
     expires_at=None,
+    resource: str | None = None,
 ) -> OAuthAuthorizationCodeCreationResult:
     normalized_scopes = normalize_oauth_scopes(scopes)
+    if resource is None:
+        resource = getattr(settings, "MCP_RESOURCE_URL", "") if MCP_COMMERCIAL_SCOPES.intersection(normalized_scopes) else ""
 
     if mcp_pro_access_required(user, normalized_scopes):
         raise ValueError("mcp_pro_required")
+
+    if MCP_COMMERCIAL_SCOPES.intersection(normalized_scopes):
+        expected_resource = getattr(settings, "MCP_RESOURCE_URL", "")
+        if not expected_resource:
+            raise ValueError("oauth_resource_not_configured")
+        if not resource:
+            raise ValueError("oauth_resource_required")
+        if resource != expected_resource:
+            raise ValueError("oauth_resource_not_allowed")
 
     if not client.is_active:
         raise ValueError("oauth_client_inactive")
@@ -176,6 +191,7 @@ def create_oauth_authorization_code(
         code_hash=hash_oauth_authorization_code(raw_code),
         redirect_uri=redirect_uri,
         scopes=normalized_scopes,
+        resource=resource,
         code_challenge=code_challenge,
         code_challenge_method=code_challenge_method,
         expires_at=expires_at or (
@@ -205,12 +221,14 @@ def _validation_error(
     )
 
 
+@transaction.atomic
 def validate_oauth_authorization_code(
     *,
     raw_code: str,
     client: OAuthClient,
     redirect_uri: str,
     code_verifier: str,
+    resource: str | None = None,
 ) -> OAuthAuthorizationCodeValidationResult:
     if not raw_code:
         return _validation_error(
@@ -223,6 +241,7 @@ def validate_oauth_authorization_code(
     try:
         authorization_code = (
             OAuthAuthorizationCode.objects
+            .select_for_update()
             .select_related(
                 "client",
                 "user",
@@ -245,6 +264,12 @@ def validate_oauth_authorization_code(
         return _validation_error(
             code="oauth_authorization_code_redirect_uri_mismatch",
             message="OAuth authorization code redirect URI does not match.",
+        )
+
+    if resource is not None and authorization_code.resource != resource:
+        return _validation_error(
+            code="oauth_authorization_code_resource_mismatch",
+            message="OAuth authorization code resource does not match.",
         )
 
     if authorization_code.used_at is not None:
@@ -322,6 +347,7 @@ def issue_oauth_access_token_from_authorization_code(
     client: OAuthClient,
     redirect_uri: str,
     code_verifier: str,
+    resource: str | None = None,
     expires_in: int = DEFAULT_OAUTH_ACCESS_TOKEN_TTL_SECONDS,
 ) -> OAuthAccessTokenIssueResult:
     validation = validate_oauth_authorization_code(
@@ -329,6 +355,7 @@ def issue_oauth_access_token_from_authorization_code(
         client=client,
         redirect_uri=redirect_uri,
         code_verifier=code_verifier,
+        resource=resource,
     )
 
     if not validation.ok:
@@ -349,6 +376,7 @@ def issue_oauth_access_token_from_authorization_code(
             name=f"OAuth access token - {authorization_code.client.client_name}",
             scopes=scopes,
             expires_at=expires_at,
+            resource=authorization_code.resource,
         )
     except ValueError as exc:
         if str(exc) != "mcp_pro_required":

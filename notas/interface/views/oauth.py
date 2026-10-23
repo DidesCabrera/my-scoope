@@ -1,6 +1,7 @@
 import os
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
@@ -9,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from notas.application.services.mcp_user_tokens import (
+    MCP_COMMERCIAL_SCOPES,
     MCP_SCOPE_PROPOSALS_CREATE,
     MCP_SCOPE_READ,
     mcp_pro_access_required,
@@ -101,6 +103,7 @@ def _build_authorization_request_context(request):
     state = request.GET.get("state", "").strip()
     code_challenge = request.GET.get("code_challenge", "").strip()
     code_challenge_method = request.GET.get("code_challenge_method", "").strip()
+    resource = request.GET.get("resource", "").strip()
 
     client = _get_oauth_client(client_id)
 
@@ -116,6 +119,7 @@ def _build_authorization_request_context(request):
         "state": state,
         "code_challenge": code_challenge,
         "code_challenge_method": code_challenge_method,
+        "resource": resource,
     }
 
 
@@ -143,6 +147,15 @@ def _validate_authorization_request_context(context, *, user=None):
     if not client.allows_scopes(context["requested_scopes"]):
         return "oauth_scope_not_allowed"
 
+    if MCP_COMMERCIAL_SCOPES.intersection(context["requested_scopes"]):
+        expected_resource = getattr(settings, "MCP_RESOURCE_URL", "")
+        if not expected_resource:
+            return "oauth_resource_not_configured"
+        if not context["resource"]:
+            return "oauth_resource_required"
+        if context["resource"] != expected_resource:
+            return "oauth_resource_not_allowed"
+
     if user is not None and mcp_pro_access_required(user, context["requested_scopes"]):
         return "mcp_pro_required"
 
@@ -164,6 +177,9 @@ def _oauth_error_message(error_code: str) -> str:
         "oauth_redirect_uri_not_allowed": "OAuth redirect URI is not allowed.",
         "oauth_scope_required": "OAuth scope is required.",
         "oauth_scope_not_allowed": "OAuth scope is not allowed.",
+        "oauth_resource_not_configured": "MCP resource is not configured.",
+        "oauth_resource_required": "MCP resource is required.",
+        "oauth_resource_not_allowed": "MCP resource is not allowed.",
         "mcp_pro_required": "An active PRO subscription is required for MCP access.",
         "oauth_code_challenge_required": "OAuth code challenge is required.",
         "oauth_code_challenge_method_not_supported": "OAuth code challenge method is not supported.",
@@ -235,6 +251,7 @@ def oauth_authorize(request):
             "state": context["state"],
             "code_challenge": context["code_challenge"],
             "code_challenge_method": context["code_challenge_method"],
+            "resource": context["resource"],
         },
     )
 
@@ -249,6 +266,7 @@ def oauth_authorize_consent(request):
     state = request.POST.get("state", "").strip()
     code_challenge = request.POST.get("code_challenge", "").strip()
     code_challenge_method = request.POST.get("code_challenge_method", "").strip()
+    resource = request.POST.get("resource", "").strip()
 
     client = _get_oauth_client(client_id)
     requested_scopes = normalize_oauth_scopes(scope)
@@ -263,6 +281,7 @@ def oauth_authorize_consent(request):
         "state": state,
         "code_challenge": code_challenge,
         "code_challenge_method": code_challenge_method,
+        "resource": resource,
     }
 
     error_code = _validate_authorization_request_context(context, user=request.user)
@@ -281,6 +300,7 @@ def oauth_authorize_consent(request):
             scopes=requested_scopes,
             code_challenge=code_challenge,
             code_challenge_method=code_challenge_method,
+            resource=resource,
         )
     except ValueError as exc:
         error_code = str(exc)
@@ -309,6 +329,7 @@ def oauth_authorize_consent(request):
 def oauth_token(request):
     grant_type = request.POST.get("grant_type", "").strip()
     client_id = request.POST.get("client_id", "").strip()
+    resource = request.POST.get("resource", "").strip()
 
     if grant_type not in {OAUTH_GRANT_TYPE_AUTHORIZATION_CODE, OAUTH_GRANT_TYPE_REFRESH_TOKEN}:
         return _oauth_token_error_response(
@@ -396,6 +417,7 @@ def oauth_token(request):
             client=client,
             redirect_uri=redirect_uri,
             code_verifier=code_verifier,
+            resource=resource,
         )
 
     if not result.ok:

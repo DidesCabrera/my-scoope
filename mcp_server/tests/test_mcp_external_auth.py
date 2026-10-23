@@ -1,6 +1,9 @@
+import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
+import httpx
+from mcp.server.auth.provider import AccessToken
 from myscoope_mcp.auth import (
     StaticMCPTokenVerifier,
     create_external_mcp_auth_settings,
@@ -152,12 +155,59 @@ class MCPExternalAuthTests(unittest.IsolatedAsyncioTestCase):
             public_url="http://127.0.0.1:8001",
         )
         self.assertIsNone(await verifier.verify_token("external-token"))
-        self.assertIsNotNone(await verifier.verify_token("mcp_user_example-token"))
+        self.assertIsNone(await verifier.verify_token("mcp_user_example-token"))
 
 
-    async def test_static_verifier_accepts_mcp_user_token_when_enabled(self):
+    @patch.dict("os.environ", {"MYSCOOPE_API_BASE_URL": "https://api.example.test/app"})
+    async def test_user_token_uses_verified_scopes_and_resource(self):
+        seen = []
+
+        def responder(request):
+            seen.append(request)
+            return httpx.Response(200, json={
+                "active": True,
+                "scopes": ["myscoope:read"],
+                "resource": "https://mcp.example.test",
+                "expires_at": int(time.time()) + 60,
+            })
+
+        client = httpx.AsyncClient(transport=httpx.MockTransport(responder))
+        verifier = StaticMCPTokenVerifier(
+            expected_token="",
+            resource="https://mcp.example.test",
+        )
+        with patch("myscoope_mcp.auth.httpx.AsyncClient", return_value=client):
+            access_token = await verifier.verify_token("mcp_user_real-token")
+
+        self.assertIsNotNone(access_token)
+        self.assertEqual(access_token.scopes, ["myscoope:read"])
+        self.assertEqual(seen[0].url.path, "/app/ai-tools/mcp-token-introspection/")
+        self.assertEqual(seen[0].headers["authorization"], "Bearer mcp_user_real-token")
+
+    @patch.dict("os.environ", {"MYSCOOPE_API_BASE_URL": "https://api.example.test/app"})
+    async def test_user_token_rejects_wrong_resource_and_inactive_response(self):
+        for status, payload in [
+            (401, {"active": False}),
+            (200, {"active": True, "scopes": ["myscoope:read"],
+                   "resource": "https://other.example.test", "expires_at": int(time.time()) + 60}),
+        ]:
+            client = httpx.AsyncClient(
+                transport=httpx.MockTransport(lambda request: httpx.Response(status, json=payload))
+            )
+            verifier = StaticMCPTokenVerifier(expected_token="", resource="https://mcp.example.test")
+            with patch("myscoope_mcp.auth.httpx.AsyncClient", return_value=client):
+                self.assertIsNone(await verifier.verify_token("mcp_user_fake"))
+
+    @patch.object(StaticMCPTokenVerifier, "_introspect_user_token", new_callable=AsyncMock)
+    async def test_static_verifier_accepts_mcp_user_token_when_enabled(self, introspect):
         verifier = StaticMCPTokenVerifier(
             expected_token="external-token",
+            resource="http://127.0.0.1:8001",
+        )
+        introspect.return_value = AccessToken(
+            token="mcp_user_example-token",
+            client_id="myscoope-mcp-user-token-client",
+            scopes=["myscoope:read"],
             resource="http://127.0.0.1:8001",
         )
 
@@ -178,7 +228,6 @@ class MCPExternalAuthTests(unittest.IsolatedAsyncioTestCase):
             access_token.scopes,
             [
                 "myscoope:read",
-                "myscoope:proposals:create",
             ],
         )
         self.assertEqual(
