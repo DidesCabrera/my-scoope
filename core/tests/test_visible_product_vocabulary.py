@@ -5,7 +5,6 @@ from pathlib import Path
 from django.conf import settings
 from django.test import SimpleTestCase
 
-
 LEGACY_DAILY_PLAN_TERM = re.compile(r"\bplan(?:es)?\s+diarios?\b", re.IGNORECASE)
 
 

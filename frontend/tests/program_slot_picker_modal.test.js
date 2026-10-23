@@ -21,7 +21,7 @@ test("Program DailyPlan picker uses the shared two-step modal contract", async (
 
   assert.match(template, /<dialog[\s\S]*id="program-slot-picker-section"[\s\S]*data-picker-modal/);
   assert.match(template, /data-picker-step-panel="selection"/);
-  assert.match(template, /1\. Selecciona un plan diario/);
+  assert.match(template, /1\. Selecciona una minuta diaria/);
   assert.match(template, /data-picker-step-panel="impact"/);
   assert.match(template, /2\. Configura y revisa el impacto/);
   assert.match(template, /composition-picker-fixed-configuration program-slot-picker__days/);
