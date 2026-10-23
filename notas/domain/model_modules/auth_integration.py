@@ -5,6 +5,7 @@ model import contract stable while reducing the size of the legacy model file.
 """
 
 import uuid
+from urllib.parse import urlsplit
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -84,7 +85,36 @@ class OAuthClient(models.Model):
         return self.client_name
 
     def allows_redirect_uri(self, redirect_uri: str) -> bool:
-        return redirect_uri in self.redirect_uris
+        if redirect_uri in self.redirect_uris:
+            return True
+
+        # Native OAuth clients bind a loopback listener to an ephemeral port.
+        # Only the port may vary; the host, path and query remain registered.
+        requested = self._loopback_redirect_path(redirect_uri)
+        return requested is not None and any(
+            self._loopback_redirect_path(registered) == requested
+            for registered in self.redirect_uris
+        )
+
+    @staticmethod
+    def _loopback_redirect_path(uri: str) -> tuple[str, str] | None:
+        try:
+            parsed = urlsplit(uri)
+            port = parsed.port
+        except (TypeError, ValueError):
+            return None
+
+        if (
+            parsed.scheme != "http"
+            or port is None
+            or port < 1
+            or parsed.netloc != f"127.0.0.1:{port}"
+            or not parsed.path.startswith("/")
+            or parsed.fragment
+            or parsed.geturl() != uri
+        ):
+            return None
+        return parsed.path, parsed.query
 
     def allows_scope(self, scope: str) -> bool:
         return scope in self.allowed_scopes
