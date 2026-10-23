@@ -16,6 +16,11 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.functions import Lower, Trim
 
+from shared_kernel.food_portions import (
+    HOUSEHOLD_MEASURE_CHOICES,
+    MY_SCOOPE_FOOD_GROUP_CHOICES,
+)
+
 
 class CatalogFood(models.Model):
     """Master, curated food record owned by Food Catalog.
@@ -197,6 +202,16 @@ class CatalogFood(models.Model):
     food_subgroup = models.CharField(
         max_length=120,
         blank=True,
+    )
+
+    myscoope_group = models.CharField(
+        max_length=40,
+        choices=MY_SCOOPE_FOOD_GROUP_CHOICES,
+        blank=True,
+        help_text=(
+            "Controlled My Scoope classification. Source food_group and food_subgroup "
+            "remain unchanged for traceability."
+        ),
     )
 
     preparation_state = models.CharField(
@@ -543,6 +558,28 @@ class CatalogFoodPortion(models.Model):
         help_text="Portion amount in the catalog food's configured portion unit.",
     )
 
+    household_amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.001"))],
+        help_text="Everyday portion quantity, for example 1 or 0.5.",
+    )
+
+    household_measure = models.CharField(
+        max_length=20,
+        choices=HOUSEHOLD_MEASURE_CHOICES,
+        blank=True,
+        help_text="Controlled everyday measure such as unit, cup or tablespoon.",
+    )
+
+    household_detail = models.CharField(
+        max_length=160,
+        blank=True,
+        help_text="Optional preparation or size detail for the everyday measure.",
+    )
+
     source = models.CharField(
         max_length=80,
         blank=True,
@@ -561,6 +598,16 @@ class CatalogFoodPortion(models.Model):
             models.UniqueConstraint(
                 fields=["catalog_food", "label"],
                 name="unique_catalog_food_portion_label",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(household_amount__isnull=True, household_measure="")
+                    | (
+                        models.Q(household_amount__isnull=False)
+                        & ~models.Q(household_measure="")
+                    )
+                ),
+                name="cat_portion_household_pair",
             ),
         ]
 

@@ -207,6 +207,9 @@ class FoodPortionInline(admin.TabularInline):
 
     fields = (
         "label",
+        "household_amount",
+        "household_measure",
+        "household_detail",
         "grams",
         "source",
         "is_default",
@@ -247,6 +250,7 @@ class FoodAdmin(admin.ModelAdmin):
         "portion_unit",
         "food_group",
         "food_subgroup",
+        "myscoope_group",
         "preparation_state",
         "solver_enabled",
         "protein",
@@ -274,6 +278,7 @@ class FoodAdmin(admin.ModelAdmin):
         "preparation_state",
         "food_group",
         "food_subgroup",
+        "myscoope_group",
         "created_at",
     )
 
@@ -319,6 +324,7 @@ class FoodAdmin(admin.ModelAdmin):
                 "fields": (
                     "food_group",
                     "food_subgroup",
+                    "myscoope_group",
                     "preparation_state",
                     "solver_enabled",
                 )
@@ -475,6 +481,8 @@ class FoodPortionAdmin(admin.ModelAdmin):
     list_display = (
         "food",
         "label",
+        "household_amount",
+        "household_measure",
         "grams",
         "source",
         "is_default",
@@ -482,6 +490,7 @@ class FoodPortionAdmin(admin.ModelAdmin):
 
     list_filter = (
         "source",
+        "household_measure",
         "is_default",
     )
 

@@ -22,8 +22,16 @@ from food_catalog.models import (
     CatalogRelease,
 )
 
-CATALOG_RELEASE_SCHEMA_VERSION = "myscoope.food_catalog.release.v1"
-CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION = "myscoope.food_catalog.authority_snapshot.v1"
+CATALOG_RELEASE_SCHEMA_VERSION = "myscoope.food_catalog.release.v2"
+CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION = "myscoope.food_catalog.authority_snapshot.v2"
+CATALOG_RELEASE_SUPPORTED_SCHEMA_VERSIONS = {
+    "myscoope.food_catalog.release.v1",
+    CATALOG_RELEASE_SCHEMA_VERSION,
+}
+CATALOG_AUTHORITY_SNAPSHOT_SUPPORTED_SCHEMA_VERSIONS = {
+    "myscoope.food_catalog.authority_snapshot.v1",
+    CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+}
 
 _FOOD_EXCLUDED_FIELDS = {
     "id",
@@ -125,9 +133,9 @@ def _validate_authority_snapshot_envelope(
     payload = envelope.get("payload") if isinstance(envelope, Mapping) else None
     if not isinstance(metadata, Mapping) or not isinstance(payload, Mapping):
         raise CatalogReleaseError("catalog_authority_snapshot_invalid")
-    if metadata.get("schema_version") != CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION:
+    if metadata.get("schema_version") not in CATALOG_AUTHORITY_SNAPSHOT_SUPPORTED_SCHEMA_VERSIONS:
         raise CatalogReleaseError("catalog_authority_snapshot_schema_unsupported")
-    if payload.get("schema_version") != CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION:
+    if payload.get("schema_version") != metadata.get("schema_version"):
         raise CatalogReleaseError("catalog_authority_snapshot_payload_schema_unsupported")
     if payload_sha256(payload) != str(metadata.get("payload_sha256") or ""):
         raise CatalogReleaseError("catalog_authority_snapshot_checksum_mismatch")
@@ -308,9 +316,9 @@ def validate_release_envelope(envelope: Mapping[str, object]) -> tuple[dict, dic
     payload = dict(payload)
     if metadata.get("status") != CatalogRelease.STATUS_APPROVED:
         raise CatalogReleaseError("catalog_release_not_approved")
-    if metadata.get("schema_version") != CATALOG_RELEASE_SCHEMA_VERSION:
+    if metadata.get("schema_version") not in CATALOG_RELEASE_SUPPORTED_SCHEMA_VERSIONS:
         raise CatalogReleaseError("catalog_release_schema_unsupported")
-    if payload.get("schema_version") != CATALOG_RELEASE_SCHEMA_VERSION:
+    if payload.get("schema_version") != metadata.get("schema_version"):
         raise CatalogReleaseError("catalog_release_payload_schema_unsupported")
     if str(metadata.get("version") or "") != str(payload.get("release_version") or ""):
         raise CatalogReleaseError("catalog_release_version_mismatch")

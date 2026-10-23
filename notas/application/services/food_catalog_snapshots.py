@@ -94,6 +94,7 @@ def build_operational_food_snapshot_payload(
         canonical_name=catalog_food.canonical_name,
         food_group=catalog_food.food_group,
         food_subgroup=catalog_food.food_subgroup,
+        myscoope_group=catalog_food.myscoope_group,
         nutrients_per_100g=NutrientProfilePer100g(
             protein_g=catalog_food.protein_g_per_100g,
             carbs_g=catalog_food.carbs_g_per_100g,
@@ -305,6 +306,9 @@ def _catalog_serving_options(catalog_food: CatalogFood) -> tuple[CatalogServingO
         CatalogServingOption(
             label=portion.label,
             grams=portion.grams,
+            household_amount=portion.household_amount,
+            household_measure=portion.household_measure,
+            household_detail=portion.household_detail,
             source=portion.source or FOOD_CATALOG_PORTION_SOURCE,
             is_default=portion.is_default,
         )

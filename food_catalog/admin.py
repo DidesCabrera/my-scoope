@@ -102,6 +102,15 @@ class CatalogEnrichmentChangeAdmin(admin.ModelAdmin):
 class CatalogFoodPortionInline(admin.TabularInline):
     model = CatalogFoodPortion
     extra = 0
+    fields = (
+        "label",
+        "household_amount",
+        "household_measure",
+        "household_detail",
+        "grams",
+        "source",
+        "is_default",
+    )
 
 
 class CatalogFoodAliasInline(admin.TabularInline):
@@ -143,10 +152,11 @@ class CatalogFoodAdmin(admin.ModelAdmin):
         "data_quality_score",
         "solver_enabled",
         "preparation_state",
+        "myscoope_group",
         "country",
         "updated_at",
     )
-    list_filter = ("status", "source_type", "portion_unit", "solver_enabled", "preparation_state", "is_branded", "country", "language")
+    list_filter = ("status", "source_type", "myscoope_group", "portion_unit", "solver_enabled", "preparation_state", "is_branded", "country", "language")
     search_fields = ("display_name", "canonical_name", "brand_name", "aliases__name")
     readonly_fields = ("catalog_ref", "created_at", "updated_at")
     inlines = (CatalogFoodPortionInline, CatalogFoodAliasInline, CatalogFoodSourceInline)
@@ -167,6 +177,7 @@ class CatalogFoodAdmin(admin.ModelAdmin):
                     "country",
                     "food_group",
                     "food_subgroup",
+                    "myscoope_group",
                     "preparation_state",
                     "food_form",
                     "portion_unit",
@@ -345,8 +356,16 @@ class CatalogImportSourcePolicyAdmin(admin.ModelAdmin):
 
 @admin.register(CatalogFoodPortion)
 class CatalogFoodPortionAdmin(admin.ModelAdmin):
-    list_display = ("catalog_food", "label", "grams", "is_default", "source")
-    list_filter = ("is_default", "source")
+    list_display = (
+        "catalog_food",
+        "label",
+        "household_amount",
+        "household_measure",
+        "grams",
+        "is_default",
+        "source",
+    )
+    list_filter = ("household_measure", "is_default", "source")
     search_fields = ("catalog_food__display_name", "label")
 
 

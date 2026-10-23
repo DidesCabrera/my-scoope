@@ -1,13 +1,14 @@
 from dataclasses import asdict, dataclass
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
+from django.db.models import Case, IntegerField, Prefetch, Q, QuerySet, Value, When
 
 from core.food_visual_identity import resolved_food_visual_identity
 from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
-from notas.domain.models import Food, MealFood
+from notas.domain.models import Food, FoodPortion, MealFood
+from shared_kernel.food_portions import household_measure_label, myscoope_food_group_label
 
 PICKER_SOURCE_USER = "user"
 PICKER_SOURCE_GLOBAL = "global"
@@ -27,6 +28,13 @@ class FoodPickerItemDTO:
     fat: float
     total_kcal: float
     quantity_unit: str
+    default_portion: float | None
+    household_amount: float | None
+    household_measure: str
+    household_measure_label: str
+    household_detail: str
+    myscoope_group: str
+    myscoope_group_label: str
     emoji: str
     visual_key: str
     alloc: dict
@@ -141,6 +149,11 @@ def get_food_picker_queryset(user) -> QuerySet:
         .prefetch_related(
             "aliases",
             "localized_names",
+            Prefetch(
+                "portions",
+                queryset=FoodPortion.objects.order_by("-is_default", "id"),
+                to_attr="picker_portions",
+            ),
         )
         .annotate(
             picker_source_priority=Case(
@@ -258,6 +271,11 @@ def get_food_picker_item_by_id(
             .prefetch_related(
                 "aliases",
                 "localized_names",
+                Prefetch(
+                    "portions",
+                    queryset=FoodPortion.objects.order_by("-is_default", "id"),
+                    to_attr="picker_portions",
+                ),
             )
             .first()
         )
@@ -299,6 +317,13 @@ def build_food_picker_item_dto(
         food_group=food.food_group,
         food_subgroup=food.food_subgroup,
     )
+    picker_portions = getattr(food, "picker_portions", None)
+    if picker_portions is None:
+        picker_portions = food.portions.order_by("-is_default", "id")
+    default_portion = next(
+        (portion for portion in picker_portions if portion.is_default),
+        None,
+    )
 
     return FoodPickerItemDTO(
         id=food.id,
@@ -309,6 +334,21 @@ def build_food_picker_item_dto(
         fat=float(food.fat),
         total_kcal=float(food.total_kcal),
         quantity_unit=food.portion_unit,
+        default_portion=float(food.default_portion_g) if food.default_portion_g is not None else None,
+        household_amount=(
+            float(default_portion.household_amount)
+            if default_portion and default_portion.household_amount is not None
+            else None
+        ),
+        household_measure=default_portion.household_measure if default_portion else "",
+        household_measure_label=(
+            household_measure_label(default_portion.household_measure)
+            if default_portion
+            else ""
+        ),
+        household_detail=default_portion.household_detail if default_portion else "",
+        myscoope_group=food.myscoope_group,
+        myscoope_group_label=myscoope_food_group_label(food.myscoope_group),
         emoji=visual.emoji,
         visual_key=visual.visual_key,
         alloc=food.alloc,

@@ -1,0 +1,2199 @@
+{
+  "schema_version": "myscoope.food_portions.v1",
+  "source_spreadsheet": "https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit",
+  "source_sheet": "Alimentos",
+  "source_range": "A5:B223,Q5:V223",
+  "foods": [
+    {
+      "catalog_ref": "b806c80e-0ea2-4b9f-aa41-4607fec28269",
+      "name": "Aceite de oliva",
+      "myscoope_group": "fats_and_oils",
+      "household_amount": "15",
+      "household_measure": "ml",
+      "household_detail": "Equivale aprox. a 1 cucharada de la fuente",
+      "metric_amount": "15",
+      "metric_unit": "ml"
+    },
+    {
+      "catalog_ref": "8e6e40df-d467-403a-97c2-6cbb9da83f7a",
+      "name": "Acelga cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "picado",
+      "metric_amount": "175",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "dfe2a7bb-7b5b-4708-8648-929c99bb1e62",
+      "name": "Acelga cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "36",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "da234252-f726-406b-b68a-932639ad5db3",
+      "name": "Ají verde crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "picado o en cubos",
+      "metric_amount": "75",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d9a81ec9-2d7b-4df4-baaa-c8aebd6a92c9",
+      "name": "Ajo crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "136",
+      "household_measure": "g",
+      "household_detail": "sin medida casera adecuada en la fuente",
+      "metric_amount": "136",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ce14390d-57e2-4142-9594-1912e99bd2c3",
+      "name": "Ala de pollo cruda con piel",
+      "myscoope_group": "poultry",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "71a867d1-a847-4f98-acbb-e85805147dad",
+      "name": "Alcachofa cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "alcachofa mediana",
+      "metric_amount": "120",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "23c85822-559a-4536-9e9c-1a324a764668",
+      "name": "Alga kelp cruda",
+      "myscoope_group": "algae",
+      "household_amount": "2",
+      "household_measure": "tablespoon",
+      "household_detail": "",
+      "metric_amount": "10",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "1c4e2b2b-c670-43c2-98d0-845a0549f1b0",
+      "name": "Almejas cocidas",
+      "myscoope_group": "shellfish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b25c9b91-895b-4538-9da9-3db0e479f42a",
+      "name": "Almendras",
+      "myscoope_group": "nuts_and_seeds",
+      "household_amount": "30",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "30",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "e32b63e8-f30d-4e5e-afe9-78e12e6d5100",
+      "name": "Anchoa cruda",
+      "myscoope_group": "fish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "88811264-0bdd-44c4-a1bb-23b86bdcd80f",
+      "name": "Apio crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "110",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "110",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "c41d562c-7bd3-4c01-b66b-b89821b92bca",
+      "name": "Apio nabo crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "156",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "dea8f621-2bdd-4ea2-ae50-7507a91cd7a3",
+      "name": "Arándanos",
+      "myscoope_group": "fruits",
+      "household_amount": "80",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "80",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3c1def7d-52e9-468d-9f1e-bc402eab99f7",
+      "name": "Arroz blanco cocido",
+      "myscoope_group": "cereals_and_pseudocereals",
+      "household_amount": "150",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f132bdf7-4200-4162-b445-ef8658736d5d",
+      "name": "Arroz integral cocido",
+      "myscoope_group": "cereals_and_pseudocereals",
+      "household_amount": "150",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "13b5acd3-60ff-436d-96a5-05128323784f",
+      "name": "Arvejas de ojo negro cocidas",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "171",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "8c3ac910-36e4-4e89-a533-c4498831a6a2",
+      "name": "Arvejas de ojo negro secas",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "167",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "9351794e-0abf-44e7-a49b-eb7ca06e925d",
+      "name": "Arvejas partidas cocidas",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "196",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "944ee2da-2f5e-47bc-8980-29e1e8989002",
+      "name": "Arvejas verdes cocidas",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "160",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3c4da7bd-16dd-49b8-a90c-39fce2c734b1",
+      "name": "Atún en agua drenado",
+      "myscoope_group": "fish",
+      "household_amount": "1",
+      "household_measure": "can",
+      "household_detail": "drenada",
+      "metric_amount": "120",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "aeba4865-b1ae-4f58-b1e8-2b0e250b08bf",
+      "name": "Avena tradicional",
+      "myscoope_group": "cereals_and_pseudocereals",
+      "household_amount": "40",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "40",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3811e3bf-b0f0-4dc5-975e-30a6e64d5c7c",
+      "name": "Bacalao crudo",
+      "myscoope_group": "fish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "0d31a097-193e-44f2-87a9-ef9f64520c60",
+      "name": "Berenjena cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "99",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "2badb31f-afcc-4aac-ab01-2f4ee27abbd7",
+      "name": "Berenjena cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "82",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "0fbdb11a-51e6-4cb9-8bbc-dd8db31ef858",
+      "name": "Berro crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "picado",
+      "metric_amount": "34",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ef2ab3a3-911c-4745-bafc-bfa2ff7375fb",
+      "name": "Betarraga cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "9b703193-cfa8-4624-adf3-b9b6ceb70107",
+      "name": "Betarraga cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "136",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "c16c36cf-64dd-4cb8-95d0-c8d4bc138a2f",
+      "name": "Bok choy cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en tiras",
+      "metric_amount": "170",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "83dbb1ef-14cd-4234-b6cb-45064845607b",
+      "name": "Bok choy crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en tiras",
+      "metric_amount": "70",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "949b7e5c-1c66-47ec-b7e2-89cfcb5cbd89",
+      "name": "Brócoli cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "100",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "100",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "7a83243e-50a4-49a9-9d40-c6a9a93fd062",
+      "name": "Brócoli crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "148",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "148",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "85225838-eda0-45dd-acd6-209d2ef90b10",
+      "name": "Calamar crudo",
+      "myscoope_group": "shellfish",
+      "household_amount": "28.35",
+      "household_measure": "g",
+      "household_detail": "sin hueso",
+      "metric_amount": "28.35",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "e737880a-1f66-4256-b6ff-7c9240af137a",
+      "name": "Camarón cocido",
+      "myscoope_group": "shellfish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "e669efa1-5a8f-4db9-abeb-ad2c73a412bd",
+      "name": "Camarón crudo",
+      "myscoope_group": "shellfish",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "6",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "999af61b-056b-45cf-83a2-d8cdbc205caf",
+      "name": "Camote cocido",
+      "myscoope_group": "starchy_roots_and_tubers",
+      "household_amount": "200",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "200",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "dfb97e8f-dd49-4756-a338-cb73d357cd14",
+      "name": "Camote crudo",
+      "myscoope_group": "starchy_roots_and_tubers",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "133",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b0992549-4622-4ad1-9bba-94371bc0b958",
+      "name": "Caqui crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "",
+      "metric_amount": "168",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "c5af8904-e4e5-4307-9bdf-3f8c1abd4c1c",
+      "name": "Carambola cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "91",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "751e9887-f281-4bac-8474-83e8589d61db",
+      "name": "Carne de cabra cruda",
+      "myscoope_group": "meats",
+      "household_amount": "28.35",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "28.35",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3807eb1e-3cb7-4f34-919c-8e467cdde9d8",
+      "name": "Carne de conejo cruda",
+      "myscoope_group": "meats",
+      "household_amount": "28.35",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "28.35",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "476ae8bc-db97-48f2-abdb-151069a6ab46",
+      "name": "Carne magra cocida",
+      "myscoope_group": "meats",
+      "household_amount": "150",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "faa14b35-dbd4-4d7e-97f4-69557d51484f",
+      "name": "Carne molida de vacuno magra cruda",
+      "myscoope_group": "meats",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a20f857d-ca07-4184-88c5-f5825818412b",
+      "name": "Cebolla cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "slice",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "12",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "127e93d4-7e66-4199-8252-b868e61e80a8",
+      "name": "Cebolla cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "slice",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "14",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "c2e7faea-110c-4c31-86bd-cbdf1802ac94",
+      "name": "Cebollín crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "15",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "26223d29-5ea7-4c32-8b82-4f9553ef2e49",
+      "name": "Centolla cocida",
+      "myscoope_group": "shellfish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "df2b3f13-d974-4c24-9df4-fc07479cb031",
+      "name": "Cereza cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "140",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "140",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "742b3476-7d26-4190-aaf0-c5c63b029c04",
+      "name": "Champiñón blanco cocido",
+      "myscoope_group": "mushrooms",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en trozos",
+      "metric_amount": "156",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "02a70300-12f3-46c7-abb7-e9ea130bb753",
+      "name": "Champiñón blanco crudo",
+      "myscoope_group": "mushrooms",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "18",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d79f3aaa-548f-4a17-9141-56bd4b07815d",
+      "name": "Champiñón crimini crudo",
+      "myscoope_group": "mushrooms",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "72",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3badd802-a38e-4dd6-ba39-54262ef956a2",
+      "name": "Chirimoya cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en trozos",
+      "metric_amount": "160",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "da62c77e-a9fc-4a04-a620-1ce1ac9f7c2d",
+      "name": "Chirivía cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "78",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "cd482a33-cccd-4c92-b49c-33a3aa8ceeac",
+      "name": "Chirivía cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "133",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "1d3c9b3b-7be3-4f0d-80a9-feed23439e5f",
+      "name": "Choclo amarillo cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "choclo mediano",
+      "metric_amount": "103",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "618a1ec8-9afc-43e3-815e-8ebf15092a73",
+      "name": "Choclo amarillo crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "choclo mediano; peso comestible",
+      "metric_amount": "102",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "491b56ef-f6ae-4388-b92f-39a06f61277c",
+      "name": "Ciruela cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "151",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "151",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "937cda3c-5bfc-404b-980d-ae0ecb37630b",
+      "name": "Ciruela seca",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "sin carozo",
+      "metric_amount": "174",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "1decb4d8-aaf9-4fa2-931d-73c6648d8104",
+      "name": "Clara de huevo",
+      "myscoope_group": "eggs",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "clara de huevo",
+      "metric_amount": "33",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "847aead9-96b7-46f1-b504-2234aee0283b",
+      "name": "Clementina cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "fruta entera",
+      "metric_amount": "74",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a0c87d9b-1457-4a02-be66-cada37093419",
+      "name": "Coliflor cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "en trozos",
+      "metric_amount": "62",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3caa62bc-ad77-42ad-9487-6754b25e121d",
+      "name": "Coliflor cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "cabeza mediana",
+      "metric_amount": "588",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ac87d191-31ab-4c9d-a312-c89a314a5e63",
+      "name": "Colinabo crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "135",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "fd7d4ad6-ee62-4753-9087-52dc11fd09cd",
+      "name": "Cordero molido crudo",
+      "myscoope_group": "meats",
+      "household_amount": "28.35",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "28.35",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "760ed131-6c45-413a-b19b-4ddc87467685",
+      "name": "Costilla de cerdo cruda",
+      "myscoope_group": "meats",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ff659655-56a1-4d8b-96a1-a594a6358e10",
+      "name": "Cranberry crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "enteros",
+      "metric_amount": "100",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "fb2fbf50-514a-4ce6-b417-ea81ebdefaec",
+      "name": "Crema ácida",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "230",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b487d124-4172-41ee-b3e4-b747596ea09b",
+      "name": "Crema de leche",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "batida; no equivale a crema líquida",
+      "metric_amount": "120",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "9ad3c253-4228-4fdc-a36b-566e18395b71",
+      "name": "Damasco crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en mitades",
+      "metric_amount": "155",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "4855ca14-898c-4ec6-bad0-584595a88b19",
+      "name": "Damasco seco",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en mitades",
+      "metric_amount": "130",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "e1329c54-21bc-4751-9489-ef9c385a27b1",
+      "name": "Dátil seco",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "dátil sin carozo",
+      "metric_amount": "24",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "8c68a1ec-2d99-43b3-b387-0073066e18f3",
+      "name": "Durazno crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "147",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "147",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "42907682-5be6-4501-9eda-392df9d9c011",
+      "name": "Endivia cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "picado",
+      "metric_amount": "25",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "8bcdb247-5441-49aa-8232-56a6ce0011f9",
+      "name": "Espárrago cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "90",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b0145795-ccff-46e4-9d0d-476cf0fc1fa2",
+      "name": "Espárrago crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "espárrago mediano",
+      "metric_amount": "16",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "68bd35b3-ce59-4ff7-b2f1-898652422327",
+      "name": "Espinaca cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "180",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "9a72e5cf-1f49-48c1-b5ec-8c24e73f0500",
+      "name": "Espinaca cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "50",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "50",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "636206f3-c9d7-4838-9e0b-84e1949b472d",
+      "name": "Frambuesa cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "123",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "4bbc3e6e-164d-46e4-99b4-120d28ba75dd",
+      "name": "Frutilla cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "147",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "147",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "e81b05db-e81d-4809-a9db-954defff945b",
+      "name": "Garbanzos cocidos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "150",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d9a4a633-f45c-4de3-8175-784f32668e6a",
+      "name": "Garbanzos secos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "200",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "57b278a2-597b-4dcd-bd81-618e84413a42",
+      "name": "Granada cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "granos",
+      "metric_amount": "87",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "8583fb57-0cfb-40a7-99e6-7537582edae2",
+      "name": "Grosella roja cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "112",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "db6f2da6-6b0f-4406-9001-6fb18c4a4398",
+      "name": "Guayaba cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "165",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "af309d23-f8b8-4edd-89fd-446dd45d03b8",
+      "name": "Guinda cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "con carozo; peso comestible",
+      "metric_amount": "103",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b3d500aa-ee6a-45d5-9705-c2b0db5e0fc9",
+      "name": "Habas cocidas",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "100",
+      "household_measure": "g",
+      "household_detail": "base nutricional",
+      "metric_amount": "100",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "dc6cd73e-0ec2-4575-b243-68c0fd4d202c",
+      "name": "Habas crudas",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3bc8a33f-18b6-4307-93b2-62e6d8d64e94",
+      "name": "Hígado de pollo crudo",
+      "myscoope_group": "poultry",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "74437a08-2171-4917-9ffb-3f806d2f9ce9",
+      "name": "Higo fresco",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "50",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "51d56b53-6b05-4d1f-99cf-5a10cc47ba58",
+      "name": "Higo seco",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "149",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "1a191d14-d64b-4684-8f67-cc87283bec5a",
+      "name": "Hinojo bulbo crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "87",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "8dea1592-0a4f-41a2-841f-808281fd3f84",
+      "name": "Hongo morchella crudo",
+      "myscoope_group": "mushrooms",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "66",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b2df2a0a-8a68-42e3-95bc-693cd5c13077",
+      "name": "Hongo ostra crudo",
+      "myscoope_group": "mushrooms",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "86",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "6868fe82-6804-44f8-babe-cb6616a0f836",
+      "name": "Hongo shiitake crudo",
+      "myscoope_group": "mushrooms",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "pieza entera",
+      "metric_amount": "19",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d54810fc-c591-4b2d-9fd8-899bca3d5a14",
+      "name": "Hongo shiitake seco",
+      "myscoope_group": "mushrooms",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "hongo entero",
+      "metric_amount": "3.6",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "931d09fa-8174-47fb-9bf9-fc81546e7996",
+      "name": "Huevo entero",
+      "myscoope_group": "eggs",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "",
+      "metric_amount": "50",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ff8842e8-f08f-48db-b925-402443c96c14",
+      "name": "Kale cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "118",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "4aaea27f-b573-434b-8a14-44e0371e2bf0",
+      "name": "Kale crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "21",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "50366dc5-a697-40e5-8456-2022d57d77ee",
+      "name": "Kiwi verde crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "148",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "148",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ea8700c5-9ce8-4f64-a656-49079d5f5c2a",
+      "name": "Langosta cocida",
+      "myscoope_group": "shellfish",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "145",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b0c99af3-df06-45ab-9125-9bca7617a83c",
+      "name": "Leche descremada",
+      "myscoope_group": "dairy",
+      "household_amount": "200",
+      "household_measure": "ml",
+      "household_detail": "",
+      "metric_amount": "200",
+      "metric_unit": "ml"
+    },
+    {
+      "catalog_ref": "c579d54e-de0f-4ff7-9cdd-af798ca2f1da",
+      "name": "Leche entera",
+      "myscoope_group": "dairy",
+      "household_amount": "240",
+      "household_measure": "ml",
+      "household_detail": "Equivale aprox. a 1 taza USDA",
+      "metric_amount": "240",
+      "metric_unit": "ml"
+    },
+    {
+      "catalog_ref": "2cbe869b-bf18-4d64-9f7d-f66405153118",
+      "name": "Leche semidescremada",
+      "myscoope_group": "dairy",
+      "household_amount": "240",
+      "household_measure": "ml",
+      "household_detail": "Equivale aprox. a 1 taza USDA",
+      "metric_amount": "240",
+      "metric_unit": "ml"
+    },
+    {
+      "catalog_ref": "bd300a6f-ae37-435d-89b5-89e8fae975dd",
+      "name": "Lechuga costina cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "70a7dead-d836-47a4-98fa-2631844f74fa",
+      "name": "Lechuga francesa cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "leaf",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "7.5",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "38b98853-cd80-46f5-8a7d-8d272e907a9f",
+      "name": "Lechuga hoja roja cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f79679cb-557f-4ce5-99f3-39515f7ac5e0",
+      "name": "Lenguado crudo",
+      "myscoope_group": "fish",
+      "household_amount": "28.35",
+      "household_measure": "g",
+      "household_detail": "sin hueso",
+      "metric_amount": "28.35",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b112eedf-575f-462c-a476-78e67065baeb",
+      "name": "Lenteja roja seca",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "192",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d13a5f90-0b03-4e1a-8e13-3b71afb344b2",
+      "name": "Lentejas cocidas",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "180",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "180",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d6e05aa9-efb3-45e1-9683-77c9dad7a577",
+      "name": "Lentejas secas",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "192",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "fa093336-aef5-46c6-9583-b8104d4c912b",
+      "name": "Lima cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "67",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "67",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "c0eebe41-f1db-446c-a1d7-192b175134f7",
+      "name": "Limón crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "58",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "58",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "8af015a7-94ff-4c6f-bde6-bf1ea1818683",
+      "name": "Lomo de cerdo crudo",
+      "myscoope_group": "meats",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "76561b88-3a9a-48a3-b2df-467f17001ab4",
+      "name": "Lupino cocido",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "166",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "260153e8-2da6-438b-9ec9-5b75e668b6ea",
+      "name": "Mandarina cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "109",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "109",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "69ba81bf-2eff-4aff-a4c1-ba28f0de4f35",
+      "name": "Mango crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en trozos",
+      "metric_amount": "165",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "33c490b0-6200-4951-afd1-672857154e3b",
+      "name": "Mantequilla con sal",
+      "myscoope_group": "dairy",
+      "household_amount": "227",
+      "household_measure": "g",
+      "household_detail": "equivalente de taza de la fuente",
+      "metric_amount": "227",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a3501e33-8ff0-448b-855a-386af00c269b",
+      "name": "Mantequilla de maní natural",
+      "myscoope_group": "nuts_and_seeds",
+      "household_amount": "1",
+      "household_measure": "tablespoon",
+      "household_detail": "",
+      "metric_amount": "16",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "6d479e3b-0821-41cb-917d-92035d7c1a1c",
+      "name": "Mantequilla sin sal",
+      "myscoope_group": "dairy",
+      "household_amount": "227",
+      "household_measure": "g",
+      "household_detail": "equivalente de taza de la fuente",
+      "metric_amount": "227",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "0fe48dcc-4ef9-429c-92d9-a09c529902b2",
+      "name": "Manzana",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "182",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "6869fc6a-6c6c-4453-9109-cf683c95dc8f",
+      "name": "Manzana con piel cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "242",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "242",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "31d13f02-6fef-4438-8a6d-ffa153714dfe",
+      "name": "Maracuyá cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "236",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b0f969f3-e879-4ce8-9de7-fdbf92cb351d",
+      "name": "Melón calameño crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "134",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "134",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "0e556e27-8eb4-4908-ba51-f0acc54a3346",
+      "name": "Melón tuna crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "134",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "134",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "aea53faa-06b7-4773-b292-750031a641b2",
+      "name": "Membrillo crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "parte comestible",
+      "metric_amount": "92",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "2574811f-b207-47b1-923e-ee0225c92102",
+      "name": "Mora cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "144",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a0c67fc1-fbb8-4508-886c-38a01155515b",
+      "name": "Mozzarella fresca",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "rallado",
+      "metric_amount": "112",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "71a56d9b-dabe-4ee1-a078-dcca5fb098af",
+      "name": "Nabo cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "156",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a6de3b81-bc80-4edb-8791-0abda2ef7cf8",
+      "name": "Nabo crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "122",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b7f1ee0f-dc4f-4452-a6e0-5c9164eb55f1",
+      "name": "Ñame cocido",
+      "myscoope_group": "starchy_roots_and_tubers",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "68",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "158cbc30-62e7-4dd3-86f3-49dea944c72d",
+      "name": "Naranja cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en gajos",
+      "metric_amount": "180",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "6722ec18-4bec-46ab-b2b1-546baa7b732d",
+      "name": "Nectarina cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "140",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "140",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ad01fd73-4066-477d-a559-b845ef253f33",
+      "name": "Nueces",
+      "myscoope_group": "nuts_and_seeds",
+      "household_amount": "30",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "30",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f729b103-2b75-4a68-ba8a-ecc5d45ae3ec",
+      "name": "Okra cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "100",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "4b98e8a1-60a0-4c38-a039-e86cbf7e7ddd",
+      "name": "Ostiones cocidos",
+      "myscoope_group": "shellfish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "aeef642d-e68a-44de-8c3c-6a328a486383",
+      "name": "Paleta de cerdo cruda",
+      "myscoope_group": "meats",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "127c6a0a-d6dd-45f4-a672-cef2edf9502b",
+      "name": "Palmito crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "100",
+      "household_measure": "g",
+      "household_detail": "base nutricional",
+      "metric_amount": "100",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "61635a7c-3ddb-413a-a19f-c731be7741b3",
+      "name": "Palta",
+      "myscoope_group": "fruits",
+      "household_amount": "50",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "50",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "8c24721f-9ec2-4695-99ca-56f7e0de5235",
+      "name": "Panceta de cerdo cruda",
+      "myscoope_group": "meats",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "db75ed27-43fd-4515-90ba-be23a9f61c4a",
+      "name": "Papa cocida sin piel",
+      "myscoope_group": "starchy_roots_and_tubers",
+      "household_amount": "200",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "200",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b616a213-b033-4b68-b101-6c6844e8d3a9",
+      "name": "Papa cruda con piel",
+      "myscoope_group": "starchy_roots_and_tubers",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "papa mediana",
+      "metric_amount": "213",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "1bdbf270-e68f-4328-b184-e763d981e219",
+      "name": "Papa horneada con piel",
+      "myscoope_group": "starchy_roots_and_tubers",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "papa mediana",
+      "metric_amount": "173",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "dd6bd131-75b6-4282-b9c6-275a88b154cd",
+      "name": "Papaya cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en trozos",
+      "metric_amount": "145",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "29f95e41-7a1d-4060-ab3d-6eb3afa27ec8",
+      "name": "Pato crudo con piel",
+      "myscoope_group": "poultry",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f46e7436-377b-4ef8-a662-30d5d404104d",
+      "name": "Pavo molido crudo",
+      "myscoope_group": "poultry",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b1c3b512-3cc7-4036-9901-82d02c83c035",
+      "name": "Pechuga de pavo cocida",
+      "myscoope_group": "poultry",
+      "household_amount": "150",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "da83d52a-ffbf-4114-bb3a-3914c6fbca7a",
+      "name": "Pechuga de pollo cocida",
+      "myscoope_group": "poultry",
+      "household_amount": "150",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "7c5fdaec-7904-4fd5-a36b-3a0fcd2402e6",
+      "name": "Pechuga de pollo cruda sin piel",
+      "myscoope_group": "poultry",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "81b33517-3a64-485a-b40d-3960a606e617",
+      "name": "Pepino con piel crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "52",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "32f6304c-21ed-4169-aea0-cfa22f0ac7d5",
+      "name": "Pera cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "166",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "166",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "1c1f4221-a845-43a5-bfd1-72c175e9aac8",
+      "name": "Pernil de cerdo crudo",
+      "myscoope_group": "meats",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a76ff14d-8ca3-4bec-8615-17a0459bc831",
+      "name": "Pimentón amarillo crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "10",
+      "household_measure": "strip",
+      "household_detail": "",
+      "metric_amount": "52",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "891052ea-a45c-4458-bbaf-43b17a307832",
+      "name": "Pimentón rojo crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "119",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a2b6ec78-cb1b-4fbc-b2e4-b992942e2c2f",
+      "name": "Pimentón verde crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "119",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "94c320e5-7438-42f6-b24c-843fc5f65f86",
+      "name": "Piña cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en trozos",
+      "metric_amount": "165",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "9b2220cc-3f59-43db-b30c-f44341417e00",
+      "name": "Plátano",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "118",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "cb9aaae7-c3a2-4e8e-bacc-59dff170b4da",
+      "name": "Pollo entero crudo con piel",
+      "myscoope_group": "poultry",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "2c0fbd29-6337-49c8-8d02-2ec9f5ca6d82",
+      "name": "Pollo molido crudo",
+      "myscoope_group": "poultry",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "desmenuzado",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d647d298-b49c-41cd-8743-9cd59b757a8c",
+      "name": "Pomelo crudo",
+      "myscoope_group": "fruits",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en gajos, con jugo",
+      "metric_amount": "230",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "1dee4358-4f6b-4742-9886-3248741a4edf",
+      "name": "Porotos adzuki cocidos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "230",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "57eafedc-fcda-48ca-90dd-353cae73a521",
+      "name": "Porotos adzuki secos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "197",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3fc46991-23e9-452d-b761-d256693dfe51",
+      "name": "Porotos blancos cocidos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "182",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ce44caf0-1220-47bd-a966-af9f6540e6cb",
+      "name": "Porotos blancos secos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "208",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f5d01530-0b08-4777-a60b-115b9e23f6d9",
+      "name": "Porotos cranberry cocidos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "177",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "dbddb5c0-219b-422c-9f95-20261b4bc051",
+      "name": "Porotos cranberry secos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "195",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "5ae0a8a0-3ee8-4777-b387-9ff2e865994e",
+      "name": "Porotos mung cocidos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "202",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "de57b7d6-be83-484d-928d-ab43cec1073b",
+      "name": "Porotos mung secos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "207",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f40fe40d-1449-4668-ae2a-ec5330cadf87",
+      "name": "Porotos negros cocidos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "170",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "170",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d8fe327d-f1ad-42c0-a569-8d377ee438f9",
+      "name": "Porotos negros secos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "194",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "7a3175a8-3577-4260-bdd8-35bb46c28a0f",
+      "name": "Porotos pintos cocidos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "171",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "eb3dde16-a929-4a4a-9958-bbcd2e392250",
+      "name": "Porotos pintos secos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "193",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "b96182d8-a1e0-46e5-918b-6e875fb234cb",
+      "name": "Porotos rojos cocidos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "177",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "87d5ac2d-7659-4b5d-a1f6-ffc0fa341a35",
+      "name": "Porotos rojos secos",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "184",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "c1cbf678-92f3-485a-9d34-6e400abc7ea0",
+      "name": "Puerro cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.25",
+      "household_measure": "cup",
+      "household_detail": "picado o en cubos",
+      "metric_amount": "26",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "0359eb17-a4d2-4c7a-b8b4-b17683e7b9f0",
+      "name": "Puerro crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "89",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "4aeb2b22-0ceb-44e7-9b76-e5a6d7483766",
+      "name": "Pulpo cocido",
+      "myscoope_group": "shellfish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "e86756a8-e20f-4889-9ea5-62a875dad355",
+      "name": "Queso azul",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "desmenuzado, sin compactar",
+      "metric_amount": "135",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "988b576e-91d4-47be-b2a2-7e4387929ffe",
+      "name": "Queso cheddar",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "rallado",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "64f7d2af-ec1d-4f24-b7af-36267b9625f6",
+      "name": "Queso de cabra semiduro",
+      "myscoope_group": "dairy",
+      "household_amount": "28.35",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "28.35",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "826c636b-a206-4ee6-a58a-ce27f380e888",
+      "name": "Queso gauda",
+      "myscoope_group": "dairy",
+      "household_amount": "28.35",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "28.35",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "aeb73103-a930-4a14-a1fc-0bae95978c34",
+      "name": "Queso parmesano",
+      "myscoope_group": "dairy",
+      "household_amount": "28.35",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "28.35",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "2926c315-ec29-41b9-b658-e195b7863c37",
+      "name": "Queso suizo",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "rallado",
+      "metric_amount": "108",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "46221120-e7ca-4022-bdf6-695e64aadecb",
+      "name": "Quinoa cocida",
+      "myscoope_group": "cereals_and_pseudocereals",
+      "household_amount": "150",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "dd234ddb-441a-48d9-84f4-83c6df730b4d",
+      "name": "Rábano crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "4.5",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "9d9577e6-6ff4-479e-acb8-55997fe8a99a",
+      "name": "Repollo blanco crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "leaf",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "23",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "0466a557-41db-47a2-bec6-edbf8b5aa11d",
+      "name": "Repollo de Bruselas cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "78",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a5f887eb-859b-4c7c-8950-2d89123e0d92",
+      "name": "Repollo de Bruselas crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "88",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3bbe899a-91cb-427b-b6c2-099431a395f7",
+      "name": "Repollo morado cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "en tiras",
+      "metric_amount": "75",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "fee2ecac-8253-4c02-8677-c5c087cda43c",
+      "name": "Repollo morado crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "cabeza mediana",
+      "metric_amount": "839",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "841c85f6-eed1-40d0-bfb2-60efcc09a938",
+      "name": "Requesón bajo en grasa",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "sin compactar",
+      "metric_amount": "226",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "a9625375-33ff-45aa-b68b-8b021871925c",
+      "name": "Ricotta entera",
+      "myscoope_group": "dairy",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "124",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "8e11eab4-706a-4395-a06d-2d13a23b02a9",
+      "name": "Rúcula cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "10",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "14327917-3edd-4851-8e50-6b4c2ebc90ed",
+      "name": "Salmón cocido",
+      "myscoope_group": "fish",
+      "household_amount": "150",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "150",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "ccc69140-485f-4cf1-9dcf-c80b2b17c751",
+      "name": "Salmón crudo",
+      "myscoope_group": "fish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "5809f825-b3a9-4c8e-9d80-87059b052bb0",
+      "name": "Sandía cruda",
+      "myscoope_group": "fruits",
+      "household_amount": "280",
+      "household_measure": "g",
+      "household_detail": "sin medida casera en la fuente",
+      "metric_amount": "280",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "66b9c7e4-2513-4e9c-9802-d63f81cb9719",
+      "name": "Soya cocida",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "172",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f3f606e2-6c20-466f-afa9-0a2f27d89a9b",
+      "name": "Soya seca",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "186",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f9f8a2b7-df1b-490e-9a67-d91e7303d5f5",
+      "name": "Taro cocido",
+      "myscoope_group": "starchy_roots_and_tubers",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "132",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "99a60d11-cf5f-413f-a024-f1e7dcf89933",
+      "name": "Tempeh cocido",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "100",
+      "household_measure": "g",
+      "household_detail": "base nutricional",
+      "metric_amount": "100",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "2cdaf9e8-dae3-4b42-85d2-510d7741aeb3",
+      "name": "Tilapia cruda",
+      "myscoope_group": "fish",
+      "household_amount": "1",
+      "household_measure": "fillet",
+      "household_detail": "",
+      "metric_amount": "116",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d99e33b7-4053-4c50-939c-35fe612f3fd0",
+      "name": "Tofu blando",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "248",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "db15b4c2-3dda-4cb2-9d04-bad0d6361449",
+      "name": "Tofu firme",
+      "myscoope_group": "legumes_and_derivatives",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "126",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "f7d9d660-9652-4bd5-b489-1553cafed8d4",
+      "name": "Tomate",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "123",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3af3a317-a63c-4656-a924-fd6171836cb8",
+      "name": "Tomate cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "2",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "246",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "30099c68-82c9-4e58-a9ca-09196cdfe1aa",
+      "name": "Trucha arcoíris cruda",
+      "myscoope_group": "fish",
+      "household_amount": "85",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "85",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "7e621ee8-d1a7-495d-ba50-14079bdafe3a",
+      "name": "Trutro de pollo cocido con piel",
+      "myscoope_group": "poultry",
+      "household_amount": "41",
+      "household_measure": "g",
+      "household_detail": "rendimiento USDA de pollo entero; revisar",
+      "metric_amount": "41",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "0faf13b8-0e43-4c42-8cad-10595cdc0acd",
+      "name": "Trutro de pollo crudo con piel",
+      "myscoope_group": "poultry",
+      "household_amount": "113",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "113",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "cc57c9e3-4bb8-4aab-bed7-fb6b47dd9be5",
+      "name": "Yogur griego natural sin azúcar",
+      "myscoope_group": "dairy",
+      "household_amount": "170",
+      "household_measure": "g",
+      "household_detail": "",
+      "metric_amount": "170",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "d0d1d286-4140-4bdb-9cc9-47a9ae6f326e",
+      "name": "Yogur natural descremado sin azúcar",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "245",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3acc49bc-329a-45ce-a445-807dca851764",
+      "name": "Yogur natural entero sin azúcar",
+      "myscoope_group": "dairy",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "245",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "7a243f03-79ad-454c-ae36-47dcc4e3d144",
+      "name": "Yuca cruda",
+      "myscoope_group": "starchy_roots_and_tubers",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "",
+      "metric_amount": "206",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "995aaefd-ad29-4111-8a79-e66b6205c9fe",
+      "name": "Zanahoria cocida",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "en rodajas",
+      "metric_amount": "78",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3dc91a34-3f4f-41b1-8b8e-ea3d9321a596",
+      "name": "Zanahoria cruda",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "61",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "70a30131-eaac-4385-954f-592d737a9166",
+      "name": "Zapallo butternut cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "205",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "c6c8df3d-e06b-48f9-8171-285d431ed02d",
+      "name": "Zapallo butternut crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "140",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "6f26873d-a571-41a0-b600-1bf6212f551f",
+      "name": "Zapallo camote cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "molido",
+      "metric_amount": "245",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "3d16e341-d89c-4be5-850e-4dec9edecd24",
+      "name": "Zapallo camote crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "cup",
+      "household_detail": "en cubos",
+      "metric_amount": "116",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "7b0e46a3-f680-4090-a1f3-1f9f5a3f5b88",
+      "name": "Zapallo italiano cocido",
+      "myscoope_group": "vegetables",
+      "household_amount": "0.5",
+      "household_measure": "cup",
+      "household_detail": "molido",
+      "metric_amount": "120",
+      "metric_unit": "g"
+    },
+    {
+      "catalog_ref": "684a63dd-ecdf-4241-b945-9b0d2eaeac94",
+      "name": "Zapallo italiano crudo",
+      "myscoope_group": "vegetables",
+      "household_amount": "1",
+      "household_measure": "unit",
+      "household_detail": "tamaño mediano",
+      "metric_amount": "196",
+      "metric_unit": "g"
+    }
+  ]
+}
+
