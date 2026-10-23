@@ -15,6 +15,7 @@ from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
     Food,
+    FoodPortion,
     Meal,
     MealFood,
     Program,
@@ -39,6 +40,14 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
             carbs=12,
             fat=0,
             created_by=self.user,
+        )
+        FoodPortion.objects.create(
+            food=extra_food,
+            label="1 unidad",
+            grams=50,
+            household_amount=1,
+            household_measure="unit",
+            is_default=True,
         )
         source_meal = Meal.objects.create(name="Colación de biblioteca", created_by=self.user, is_draft=False)
         source_relation = MealFood.objects.create(meal=source_meal, food=source_food, quantity=50, order=0)
@@ -98,7 +107,12 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
 
         food_preview = self.client.post(
             f"/api/v1/program/days/{day.id}/meals/{encoded_meal_key}/food-picker/preview",
-            data={"food_id": extra_food.id, "quantity": 75},
+            data={
+                "food_id": extra_food.id,
+                "quantity": 75,
+                "portion_display_quantity": 1.5,
+                "portion_display_measure": "unit",
+            },
             content_type="application/json",
         )
         day.refresh_from_db()
@@ -117,13 +131,20 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
 
         food_commit = self.client.post(
             f"/api/v1/program/days/{day.id}/meals/{encoded_meal_key}/food-picker/commit",
-            data={"food_id": extra_food.id, "quantity": 75},
+            data={
+                "food_id": extra_food.id,
+                "quantity": 75,
+                "portion_display_quantity": 1.5,
+                "portion_display_measure": "unit",
+            },
             content_type="application/json",
         )
         self.assertEqual(food_commit.status_code, 200)
         day.refresh_from_db()
         updated_meal = day.plan_snapshot["meals"][-1]
         self.assertEqual([food["source_food_id"] for food in updated_meal["foods"]], [source_food.id, extra_food.id])
+        self.assertEqual(updated_meal["foods"][-1]["portion_display_quantity"], 1.5)
+        self.assertEqual(updated_meal["foods"][-1]["portion_display_measure"], "unit")
         day_detail = self.client.get(f"/api/v1/program/days/{day.id}").json()["data"]
         navigable_foods = day_detail["plan_snapshot"]["meals"][-1]["foods"]
         self.assertEqual([food["detail_id"] for food in navigable_foods], [source_food.id, extra_food.id])

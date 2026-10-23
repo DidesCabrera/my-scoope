@@ -17,6 +17,7 @@ from mobile_api.composition_projections import (
     project_program_week_result,
 )
 from mobile_api.errors import MobileAPIError
+from mobile_api.food_portion_selection import normalize_portion_display_selection
 from notas.application.queries.read_boundaries import get_readable_food_queryset
 from notas.application.services.commands.dailyplan_commands import (
     add_existing_meal_to_dailyplan,
@@ -172,10 +173,17 @@ def _positive_quantity(quantity) -> float:
 def preview_food_for_meal(
     *, user, meal_id: int, food_id: int, quantity, meal_food_id=None,
     dailyplan_id=None, dailyplan_meal_id=None,
+    portion_display_quantity=None, portion_display_measure="",
 ) -> dict:
     meal = _owned_meal(user, meal_id)
     food = _readable_food(user, food_id)
     quantity_value = _positive_quantity(quantity)
+    normalize_portion_display_selection(
+        food=food,
+        metric_quantity=quantity_value,
+        display_quantity=portion_display_quantity,
+        display_measure=portion_display_measure,
+    )
     current_weight = get_current_weight(user)
     meal_macros = _entity_macros(meal)
     food_macros = tuple(value * quantity_value / 100 for value in _entity_macros(food))
@@ -231,19 +239,40 @@ def preview_food_for_meal(
     }
 
 
-def add_food_from_picker(*, user, meal_id: int, food_id: int, quantity, meal_food_id=None) -> dict:
+def add_food_from_picker(
+    *, user, meal_id: int, food_id: int, quantity, meal_food_id=None,
+    portion_display_quantity=None, portion_display_measure="",
+) -> dict:
     meal = _owned_meal(user, meal_id)
     food = _readable_food(user, food_id)
     quantity_value = _positive_quantity(quantity)
+    display_selection = normalize_portion_display_selection(
+        food=food,
+        metric_quantity=quantity_value,
+        display_quantity=portion_display_quantity,
+        display_measure=portion_display_measure,
+    )
     if meal_food_id:
         _meal, meal_food = _owned_meal_food(user, meal_id, meal_food_id)
-        result = update_meal_food(meal_food=meal_food, quantity=quantity_value, food_id=food.id)
+        result = update_meal_food(
+            meal_food=meal_food,
+            quantity=quantity_value,
+            food_id=food.id,
+            portion_display_quantity=display_selection.quantity,
+            portion_display_measure=display_selection.measure,
+        )
         return {
             "message": "Alimento reemplazado en la comida.",
             "target_id": meal.id,
             "created_id": result.meal_food.id,
         }
-    result = create_meal_food(meal=meal, food=food, quantity=quantity_value)
+    result = create_meal_food(
+        meal=meal,
+        food=food,
+        quantity=quantity_value,
+        portion_display_quantity=display_selection.quantity,
+        portion_display_measure=display_selection.measure,
+    )
     return {
         "message": "Alimento agregado a la comida.",
         "target_id": meal.id,
@@ -522,9 +551,24 @@ def _owned_meal_food(user, meal_id: int, meal_food_id: int) -> tuple[Meal, MealF
     return meal, meal_food
 
 
-def update_food_in_meal(*, user, meal_id: int, meal_food_id: int, quantity) -> dict:
+def update_food_in_meal(
+    *, user, meal_id: int, meal_food_id: int, quantity,
+    portion_display_quantity=None, portion_display_measure="",
+) -> dict:
     meal, meal_food = _owned_meal_food(user, meal_id, meal_food_id)
-    update_meal_food(meal_food=meal_food, quantity=_positive_quantity(quantity))
+    quantity_value = _positive_quantity(quantity)
+    display_selection = normalize_portion_display_selection(
+        food=meal_food.food,
+        metric_quantity=quantity_value,
+        display_quantity=portion_display_quantity,
+        display_measure=portion_display_measure,
+    )
+    update_meal_food(
+        meal_food=meal_food,
+        quantity=quantity_value,
+        portion_display_quantity=display_selection.quantity,
+        portion_display_measure=display_selection.measure,
+    )
     return {"message": "Porción actualizada.", "target_id": meal.id, "affected_id": meal_food.id}
 
 

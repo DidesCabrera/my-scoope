@@ -27,7 +27,7 @@ class ComparatorEntryFlowTests(TestCase):
         self.assertContains(response, "Comparaciones")
         self.assertContains(response, "Alimentos")
         self.assertContains(response, "Comidas")
-        self.assertContains(response, "Planes")
+        self.assertContains(response, "Minutas")
         self.assertContains(response, "Crear nueva comparación")
         self.assertContains(response, 'data-lucide="plus"')
         self.assertContains(response, reverse("food_comparator"))

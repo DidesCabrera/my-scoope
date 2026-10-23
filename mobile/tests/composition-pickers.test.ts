@@ -56,7 +56,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /\{kind === "dailyplan-to-program" \? configurationCard : null\}\s*\{selectedCard\}/);
   matches(picker, /showPanels && option\.panel\?\.kind === "foods"/);
   matches(picker, /showPanels && option\.panel\?\.kind === "meals"/);
-  matches(picker, /nutrition: scaleFoodNutrition\(selected\.nutrition, quantity\)/);
+  matches(picker, /nutrition: scaleFoodNutrition\(selected\.nutrition, String\(grams\)\)/);
   matches(picker, /label: "porción seleccionada"/);
   omits(picker, /Cambiar selección/);
   omits(picker, /<Button label="Cambiar selección"/);
@@ -74,7 +74,9 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /compactControlField: \{[^}]*marginHorizontal: 0[^}]*marginRight: -8[^}]*minHeight: 36[^}]*width: 120/);
   matches(picker, /<NotebookPen color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   omits(picker, /<CalendarDays|Días de la Semana \{weekNumber\}<\/Text>/);
-  matches(picker, /<NativeMeasurementField[\s\S]*containerStyle=\{styles\.compactControlField\}[\s\S]*iconColor=\{tokens\.color\.textMain\}[\s\S]*inputStyle=\{styles\.mealTimeValue\}[\s\S]*kind="portion"[\s\S]*label="Porción del alimento"[\s\S]*labelStyle=\{styles\.mealTimeLabel\}[\s\S]*unit=\{selected\.quantityUnit \?\? "g"\}[\s\S]*value=\{quantity\}/);
+  matches(picker, /<FoodPortionField[\s\S]*equivalentMetricAmount=\{metricQuantity\}[\s\S]*householdMeasureLabel=\{selected\.householdMeasureLabel\}[\s\S]*label="Porción del alimento"[\s\S]*measure=\{portionMeasure\}[\s\S]*metricUnit=\{selected\.quantityUnit \?\? "g"\}[\s\S]*onMeasureChange=\{setPortionMeasure\}[\s\S]*value=\{quantity\}/);
+  matches(picker, /foodPortionMetricAmount\(quantity, portionMeasure, selectedPortionConversion\)/);
+  matches(picker, /quantity: isFoodPicker \? String\(metricQuantity\) : quantity/);
   matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView/);
   matches(picker, /foodFixedPortion: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
   omits(picker, /setQuantity\(value\); setPreview\(null\)/);
@@ -114,7 +116,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(payload, /meal_food_id: relationId/);
   matches(picker, /Reemplazar alimento/);
   matches(picker, /target\.panel\.foods\.find\(\(item\) => item\.relation_id === relationId\)/);
-  matches(picker, /setQuantity\(String\(relation\.quantity\)\)/);
+  matches(picker, /restoredFoodPortionSelection\(relation\.quantity, relation\.portion_display_quantity, relation\.portion_display_measure/);
   matches(picker, /const detailHref = returnTo \?\?/);
   matches(picker, /pickerConfigureHref\(kind, \{ contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo/);
   matches(payload, /food_snapshot_key: relationKey/);

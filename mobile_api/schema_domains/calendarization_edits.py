@@ -33,6 +33,8 @@ class CalendarizedFoodPickerInput(Schema):
     food_id: int = Field(gt=0)
     food_snapshot_key: str | None = Field(default=None, min_length=1, max_length=80)
     quantity: float = Field(gt=0, le=100000)
+    portion_display_quantity: float | None = Field(default=None, gt=0, le=100000)
+    portion_display_measure: str = Field(default="", max_length=20)
 
 
 class CalendarizedOrderInput(Schema):

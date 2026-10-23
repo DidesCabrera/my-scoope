@@ -1,7 +1,7 @@
 from django.test import override_settings
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, FoodPortion, Meal, MealFood, Program, ProgramDay
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -100,9 +100,23 @@ class MobileCompositionProjectionAPITests(AuthenticatedMobileAPITestCase):
         replacement = Food.objects.create(
             name="Yogur de reemplazo", protein=12, carbs=8, fat=3, created_by=self.user
         )
+        FoodPortion.objects.create(
+            food=replacement,
+            label="1 taza",
+            grams=200,
+            household_amount=1,
+            household_measure="cup",
+            is_default=True,
+        )
         meal = Meal.objects.create(name="Comida editable", created_by=self.user, is_draft=False)
         relation = MealFood.objects.create(meal=meal, food=original, quantity=50)
-        payload = {"food_id": replacement.id, "meal_food_id": relation.id, "quantity": 80}
+        payload = {
+            "food_id": replacement.id,
+            "meal_food_id": relation.id,
+            "quantity": 400,
+            "portion_display_quantity": 2,
+            "portion_display_measure": "cup",
+        }
 
         preview = self.client.post(
             f"/api/v1/library/meals/{meal.id}/food-picker/preview",
@@ -144,5 +158,7 @@ class MobileCompositionProjectionAPITests(AuthenticatedMobileAPITestCase):
         relation.refresh_from_db()
         self.assertEqual(relation.id, commit.json()["data"]["created_id"])
         self.assertEqual(relation.food_id, replacement.id)
-        self.assertEqual(float(relation.quantity), 80)
+        self.assertEqual(float(relation.quantity), 400)
+        self.assertEqual(float(relation.portion_display_quantity), 2)
+        self.assertEqual(relation.portion_display_measure, "cup")
         self.assertEqual(MealFood.objects.filter(meal=meal).count(), 1)

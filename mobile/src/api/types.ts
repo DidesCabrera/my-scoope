@@ -282,7 +282,8 @@ export type LibraryFoodPanelItem = {
   detail_id?: number | null;
   name: string; emoji?: string; visual_key?: string;
   quantity: number;
-  quantity_unit: string;
+  quantity_unit: string; portion_display_quantity?: number | null;
+  portion_display_measure?: string | null;
   calories: number;
   calorie_share: number;
   calorie_distribution: LibraryCalorieDistribution;
@@ -511,6 +512,8 @@ export type MealSnapshot = {
     name?: string;
     quantity_g?: number | null;
     quantity_unit?: "g" | "ml" | null;
+    portion_display_quantity?: number | null;
+    portion_display_measure?: string | null;
     protein_g?: number | null;
     protein_per_kilogram?: number | null;
     carbs_g?: number | null;

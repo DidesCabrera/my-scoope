@@ -77,7 +77,7 @@ class LibraryFoodPanelItemData(library_common.FoodVisualIdentityData):
     detail_id: int | None = None
     name: str
     quantity: float
-    quantity_unit: str
+    quantity_unit: str; portion_display_quantity: float | None = None; portion_display_measure: str = ""
     calories: float
     calorie_share: float
     calorie_distribution: LibraryCalorieDistributionData

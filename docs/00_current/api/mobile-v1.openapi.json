@@ -3282,6 +3282,25 @@
             ],
             "title": "Food Snapshot Key"
           },
+          "portion_display_measure": {
+            "default": "",
+            "maxLength": 20,
+            "title": "Portion Display Measure",
+            "type": "string"
+          },
+          "portion_display_quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portion Display Quantity"
+          },
           "quantity": {
             "exclusiveMinimum": 0,
             "maximum": 100000,
@@ -5643,6 +5662,25 @@
             ],
             "title": "Meal Food Id"
           },
+          "portion_display_measure": {
+            "default": "",
+            "maxLength": 20,
+            "title": "Portion Display Measure",
+            "type": "string"
+          },
+          "portion_display_quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portion Display Quantity"
+          },
           "quantity": {
             "exclusiveMinimum": 0,
             "maximum": 100000,
@@ -6137,6 +6175,22 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "portion_display_measure": {
+            "default": "",
+            "title": "Portion Display Measure",
+            "type": "string"
+          },
+          "portion_display_quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portion Display Quantity"
           },
           "projected_label": {
             "anyOf": [
@@ -7131,6 +7185,25 @@
       },
       "MealFoodUpdateInput": {
         "properties": {
+          "portion_display_measure": {
+            "default": "",
+            "maxLength": 20,
+            "title": "Portion Display Measure",
+            "type": "string"
+          },
+          "portion_display_quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portion Display Quantity"
+          },
           "quantity": {
             "exclusiveMinimum": 0,
             "maximum": 100000,
