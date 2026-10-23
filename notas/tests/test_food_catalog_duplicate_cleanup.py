@@ -47,7 +47,7 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
             self.assertIsNone(second_duplicate.catalog_food_id)
             self.assertEqual(audit_food_catalog_duplicates().groups, ())
         finally:
-            MigrationExecutor(connection).migrate([("notas", "0082_apply_myscoope_food_portions_v1")])
+            MigrationExecutor(connection).migrate([("notas", "0083_apply_myscoope_food_portions_v1")])
 
     def test_name_migration_hides_legacy_public_duplicates_without_deleting_history(self):
         executor = MigrationExecutor(connection)
@@ -111,7 +111,7 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
             HistoricalFood.objects.create(name="Miel", protein=0, carbs=83, fat=0, is_global=False)
             HistoricalFood.objects.create(name="Miel", protein=0, carbs=83, fat=0, is_global=False)
         finally:
-            MigrationExecutor(connection).migrate([("notas", "0082_apply_myscoope_food_portions_v1")])
+            MigrationExecutor(connection).migrate([("notas", "0083_apply_myscoope_food_portions_v1")])
 
     def _catalog(self, name):
         return CatalogFood.objects.create(

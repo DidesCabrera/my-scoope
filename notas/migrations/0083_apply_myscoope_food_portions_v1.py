@@ -50,7 +50,7 @@ def apply_curated_portions(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("food_catalog", "0016_apply_myscoope_food_portions_v1"),
-        ("notas", "0081_food_myscoope_group_and_household_portions"),
+        ("notas", "0082_food_myscoope_group_and_household_portions"),
     ]
 
     operations = [

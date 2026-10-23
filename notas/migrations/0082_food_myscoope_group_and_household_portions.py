@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("notas", "0080_unique_active_global_food_names"),
+        ("notas", "0081_mcp_oauth_resource"),
     ]
 
     operations = [
