@@ -5,7 +5,7 @@ from typing import Any
 
 from .models import AccountPlan
 
-ACCOUNT_PLAN_SEED_VERSION = "CLC01.2026-09-26"
+ACCOUNT_PLAN_SEED_VERSION = "MCP01.2026-10-22"
 
 ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
     {
@@ -18,6 +18,7 @@ ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
         "daily_credit_limit": 0,
         "monthly_credit_limit": 0,
         "entitlements": {
+            "integrations": {"mcp": {"enabled": False}},
             "ai_assistant": {
                 "enabled": False,
                 "monthly_credit_limit": 0,
@@ -51,6 +52,7 @@ ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
         "daily_credit_limit": 0,
         "monthly_credit_limit": 150,
         "entitlements": {
+            "integrations": {"mcp": {"enabled": False}},
             "ai_assistant": {
                 "enabled": True,
                 "monthly_credit_limit": 150,
@@ -84,6 +86,7 @@ ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
         "daily_credit_limit": 0,
         "monthly_credit_limit": 1000,
         "entitlements": {
+            "integrations": {"mcp": {"enabled": True}},
             "ai_assistant": {
                 "enabled": True,
                 "monthly_credit_limit": 1000,

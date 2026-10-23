@@ -36,6 +36,9 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `mcp_mvp_validation_cycle.md`: MCP00-MCP04 valida una conexión privada desde
+  Codex hacia un MCP de staging limitado a cuatro tools, con acceso PRO,
+  identidad de usuario y propuesta nutricional revisable.
 - `calendar_as_planning_spine_cycle.md`: ciclo CALV00-CALV07 para convertir el
   calendario en autoridad de un plan snapshot por fecha, proyectar programas sin
   perder días cumplidos y medir la adherencia por periodos elegidos por el usuario.

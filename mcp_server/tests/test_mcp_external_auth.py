@@ -142,6 +142,18 @@ class MCPExternalAuthTests(unittest.IsolatedAsyncioTestCase):
                 public_url="http://127.0.0.1:8001",
             )
 
+    @patch.dict(
+        "os.environ",
+        {"MYSCOOPE_MCP_USER_TOKENS_ONLY": "true"},
+        clear=True,
+    )
+    async def test_user_only_mode_needs_no_static_secret_and_rejects_it(self):
+        verifier = create_external_mcp_token_verifier(
+            public_url="http://127.0.0.1:8001",
+        )
+        self.assertIsNone(await verifier.verify_token("external-token"))
+        self.assertIsNotNone(await verifier.verify_token("mcp_user_example-token"))
+
 
     async def test_static_verifier_accepts_mcp_user_token_when_enabled(self):
         verifier = StaticMCPTokenVerifier(

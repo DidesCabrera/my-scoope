@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from notas.application.services.mcp_user_tokens import (
     create_mcp_user_token,
+    mcp_pro_access_required,
 )
 from notas.domain.models import OAuthAuthorizationCode, OAuthClient
 
@@ -148,6 +149,9 @@ def create_oauth_authorization_code(
     expires_at=None,
 ) -> OAuthAuthorizationCodeCreationResult:
     normalized_scopes = normalize_oauth_scopes(scopes)
+
+    if mcp_pro_access_required(user, normalized_scopes):
+        raise ValueError("mcp_pro_required")
 
     if not client.is_active:
         raise ValueError("oauth_client_inactive")
@@ -339,12 +343,20 @@ def issue_oauth_access_token_from_authorization_code(
 
     expires_at = timezone.now() + timedelta(seconds=expires_in)
 
-    created = create_mcp_user_token(
-        user=authorization_code.user,
-        name=f"OAuth access token - {authorization_code.client.client_name}",
-        scopes=scopes,
-        expires_at=expires_at,
-    )
+    try:
+        created = create_mcp_user_token(
+            user=authorization_code.user,
+            name=f"OAuth access token - {authorization_code.client.client_name}",
+            scopes=scopes,
+            expires_at=expires_at,
+        )
+    except ValueError as exc:
+        if str(exc) != "mcp_pro_required":
+            raise
+        return _issue_error(
+            code="mcp_pro_required",
+            message="An active PRO subscription is required for MCP access.",
+        )
 
     return OAuthAccessTokenIssueResult(
         access_token=created.raw_token,

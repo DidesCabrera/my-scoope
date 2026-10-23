@@ -16,6 +16,12 @@ DEFAULT_MCP_AUTH_SCOPES = [
 MCP_USER_TOKEN_PREFIX = "mcp_user_"
 
 
+def user_tokens_only_enabled() -> bool:
+    return os.getenv("MYSCOOPE_MCP_USER_TOKENS_ONLY", "false").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
+
+
 class StaticMCPTokenVerifier(TokenVerifier):
     """
     Transitional external MCP auth verifier.
@@ -132,13 +138,13 @@ def create_external_mcp_token_verifier(
 ) -> StaticMCPTokenVerifier:
     token = get_external_mcp_auth_token()
 
-    if token is None:
+    if token is None and not user_tokens_only_enabled():
         raise RuntimeError(
             "MYSCOOPE_MCP_EXTERNAL_AUTH_TOKEN is required for streamable-http MCP transport."
         )
 
     return StaticMCPTokenVerifier(
-        expected_token=token,
+        expected_token="" if user_tokens_only_enabled() else token,
         scopes=list(scopes or DEFAULT_MCP_AUTH_SCOPES),
         resource=public_url,
         allow_mcp_user_tokens=True,

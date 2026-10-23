@@ -3,8 +3,10 @@ import secrets
 from dataclasses import dataclass
 from typing import Iterable, Optional
 
+from django.conf import settings
 from django.utils import timezone
 
+from accounts.services.entitlements import has_mcp_access
 from notas.domain.models import MCPUserToken
 
 MCP_USER_TOKEN_PREFIX = "mcp_user_"
@@ -16,6 +18,16 @@ DEFAULT_MCP_USER_TOKEN_SCOPES = [
     MCP_SCOPE_READ,
     MCP_SCOPE_PROPOSALS_CREATE,
 ]
+MCP_COMMERCIAL_SCOPES = frozenset(DEFAULT_MCP_USER_TOKEN_SCOPES)
+
+
+def mcp_pro_access_required(user, scopes: Iterable[str]) -> bool:
+    """Keep mobile OAuth scopes independent from the optional MCP PRO gate."""
+    return (
+        getattr(settings, "MCP_PRO_ENTITLEMENT_ENFORCED", False)
+        and bool(MCP_COMMERCIAL_SCOPES.intersection(scopes))
+        and not has_mcp_access(user)
+    )
 
 
 @dataclass(frozen=True)
@@ -66,13 +78,17 @@ def create_mcp_user_token(
     expires_at=None,
     device_session=None,
 ) -> MCPUserTokenCreationResult:
+    resolved_scopes = list(scopes or DEFAULT_MCP_USER_TOKEN_SCOPES)
+    if mcp_pro_access_required(user, resolved_scopes):
+        raise ValueError("mcp_pro_required")
+
     raw_token = generate_mcp_user_raw_token()
 
     token = MCPUserToken.objects.create(
         user=user,
         name=name,
         token_hash=hash_mcp_user_token(raw_token),
-        scopes=list(scopes or DEFAULT_MCP_USER_TOKEN_SCOPES),
+        scopes=resolved_scopes,
         expires_at=expires_at,
         device_session=device_session,
     )
@@ -160,6 +176,15 @@ def validate_mcp_user_token(
                 details={
                     "user_id": token.user_id,
                 },
+            )
+        )
+
+    if mcp_pro_access_required(token.user, token.scopes):
+        return MCPUserTokenValidationResult(
+            error=MCPUserTokenValidationError(
+                code="mcp_pro_required",
+                message="An active PRO subscription is required for MCP access.",
+                details={},
             )
         )
 
