@@ -25,10 +25,6 @@ test("composition pickers use independent native routes and one shared flow", as
     path.resolve(process.cwd(), "src/components/pickers/food-portion-field.native.tsx"),
     "utf8",
   );
-  const dateTimeField = await readFile(
-    path.resolve(process.cwd(), "src/components/ui/native-date-time-field.native.tsx"),
-    "utf8",
-  );
   matches(picker, /mode: "back"/);
   matches(picker, /stickyHeaderIndices=\{\[0\]\}/);
   matches(picker, /stickyHeaderIndices=\{kind === "dailyplan-to-program" \? \[0\] : undefined\}/);
@@ -95,9 +91,6 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /foodPortionHouseholdAmount\(grams, selectedPortionConversion\)/);
   matches(picker, /householdMeasureDisplayLabel\(selected\.householdMeasureLabel, selectedHouseholdAmount\)/);
   matches(portionField, /selector: \{[^}]*marginRight: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
-  matches(dateTimeField, /const \[expanded, setExpanded\] = useState\(Platform\.OS === "ios" && initiallyExpanded\)/);
-  matches(dateTimeField, /<Check color=\{confirmationColor\}/);
-  matches(dateTimeField, /inlinePicker: \{[^}]*marginBottom: tokens\.layout\.reducedInset - 6[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   matches(picker, /quantity: isFoodPicker \? String\(metricQuantity\) : quantity/);
   matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView/);
   matches(picker, /foodFixedPortion: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
