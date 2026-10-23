@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 from django.utils import timezone
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import CalendarizedDay, Food, Meal, MealFood, ProgramCalendarization
+from notas.domain.models import CalendarizedDay, Food, FoodPortion, Meal, MealFood, ProgramCalendarization
 
 
 class CalendarizedSnapshotLinkTests(AuthenticatedMobileAPITestCase):
@@ -11,6 +11,14 @@ class CalendarizedSnapshotLinkTests(AuthenticatedMobileAPITestCase):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))
         meal = Meal.objects.create(name="Comida enlazada", created_by=self.user, is_draft=False)
         food = Food.objects.create(name="Avena enlazada", protein=10, carbs=50, fat=6, created_by=self.user)
+        FoodPortion.objects.create(
+            food=food,
+            label="Media taza",
+            grams=80,
+            household_amount=0.5,
+            household_measure="cup",
+            is_default=True,
+        )
         meal_food = MealFood.objects.create(meal=meal, food=food, quantity=80)
         calendarization = ProgramCalendarization.objects.create(
             user=self.user,
@@ -44,3 +52,5 @@ class CalendarizedSnapshotLinkTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.status_code, 200)
         food_payload = response.json()["data"]["plan_snapshot"]["meals"][0]["foods"][0]
         self.assertEqual(food_payload["detail_id"], food.id)
+        self.assertEqual(food_payload["portion_display_quantity"], 0.5)
+        self.assertEqual(food_payload["portion_display_measure"], "cup")

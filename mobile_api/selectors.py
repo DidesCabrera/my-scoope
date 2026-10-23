@@ -36,6 +36,7 @@ from notas.application.queries.read_boundaries import get_readable_food_queryset
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.cache.program_summary import get_program_summary
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
+from notas.application.services.food_portions import enrich_snapshot_food_portions, proposed_or_selected_portion
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import (
     CalendarizedDay,
@@ -100,7 +101,7 @@ def _creator_name(entity) -> str:
 
 
 def _food_panel_item(meal_food, current_weight=None) -> dict:
-    protein = _safe_number(meal_food.protein)
+    display_quantity, display_measure = proposed_or_selected_portion(food=meal_food.food, metric_quantity=meal_food.quantity, selected_quantity=meal_food.portion_display_quantity, selected_measure=meal_food.portion_display_measure)
     return {
         "id": f"meal-food:{meal_food.id}",
         "relation_id": meal_food.id,
@@ -108,12 +109,12 @@ def _food_panel_item(meal_food, current_weight=None) -> dict:
         **food_visual_payload(meal_food.food),
         "quantity": _safe_number(meal_food.quantity),
         "quantity_unit": meal_food.food.portion_unit,
-        "portion_display_quantity": _safe_number(meal_food.portion_display_quantity if meal_food.portion_display_quantity is not None else meal_food.quantity),
-        "portion_display_measure": meal_food.portion_display_measure or meal_food.food.portion_unit,
+        "portion_display_quantity": _safe_number(display_quantity) if display_quantity is not None else None,
+        "portion_display_measure": display_measure or "",
         "calories": _safe_number(meal_food.total_kcal),
         "calorie_share": _safe_number(meal_food.kcal_share),
         "calorie_distribution": _calorie_distribution(meal_food.kcal_protein, meal_food.kcal_carbs, meal_food.kcal_fat),
-        "protein_grams": protein,
+        "protein_grams": _safe_number(meal_food.protein),
         "protein_per_kilogram": _safe_number(protein / current_weight) if current_weight and protein else None,
         "carbs_grams": _safe_number(meal_food.carbs),
         "fat_grams": _safe_number(meal_food.fat),
@@ -1205,12 +1206,10 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
     relation_food_ids = MealFood.objects.filter(pk__in=foods_by_relation_id).values_list("id", "food_id")
     for relation_id, food_id in relation_food_ids:
         foods_by_source_id.setdefault(food_id, []).extend(foods_by_relation_id[relation_id])
-    readable_food_ids = (
-        get_readable_food_queryset(user).filter(pk__in=foods_by_source_id, is_active=True).values_list("id", flat=True)
-    )
-    for food_id in readable_food_ids:
-        for food in foods_by_source_id[food_id]:
-            food["detail_id"] = food_id
+    readable_food_ids = list(get_readable_food_queryset(user).filter(
+        pk__in=foods_by_source_id, is_active=True
+    ).values_list("id", flat=True))
+    enrich_snapshot_food_portions(foods_by_source_id=foods_by_source_id, readable_food_ids=readable_food_ids)
     return payload
 
 

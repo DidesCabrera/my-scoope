@@ -1,7 +1,7 @@
 from django.db.models import Prefetch
 
 from notas.application.queries.calendarization_projection_queries import snapshot_nutrition_totals
-from notas.domain.models import FoodLocalizedName, MealFood
+from notas.domain.models import FoodLocalizedName, FoodPortion, MealFood
 from notas.domain.services.nutrition import macro_kcal_distribution
 
 
@@ -38,6 +38,10 @@ def meal_foods_for_library_projection():
     primary_names = FoodLocalizedName.objects.filter(
         language="es", country__in=["CL", ""], is_primary=True
     ).order_by("country", "name")
+    default_household_portions = FoodPortion.objects.filter(
+        is_default=True,
+        household_amount__isnull=False,
+    ).exclude(household_measure="")
     return (
         MealFood.objects.select_related("food")
         .prefetch_related(
@@ -45,7 +49,12 @@ def meal_foods_for_library_projection():
                 "food__localized_names",
                 queryset=primary_names,
                 to_attr="_prefetched_primary_display_names",
-            )
+            ),
+            Prefetch(
+                "food__portions",
+                queryset=default_household_portions,
+                to_attr="_prefetched_default_household_portions",
+            ),
         )
         .order_by("order", "id")
     )

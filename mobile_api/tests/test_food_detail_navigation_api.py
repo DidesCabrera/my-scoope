@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import override_settings
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, FoodPortion, Meal, MealFood, Program, ProgramDay
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -41,18 +41,36 @@ class FoodDetailNavigationAPITests(AuthenticatedMobileAPITestCase):
 
     def test_composition_payloads_expose_the_food_detail_id_at_every_level(self):
         food = Food.objects.create(name="Avena navegable", protein=10, carbs=20, fat=5, created_by=self.user)
+        FoodPortion.objects.create(
+            food=food,
+            label="Media taza",
+            grams=80,
+            household_amount=0.5,
+            household_measure="cup",
+            is_default=True,
+        )
         meal = Meal.objects.create(name="Comida navegable", created_by=self.user, is_draft=False)
-        MealFood.objects.create(meal=meal, food=food, quantity=100)
+        MealFood.objects.create(
+            meal=meal,
+            food=food,
+            quantity=160,
+            portion_display_quantity=160,
+            portion_display_measure="g",
+        )
         dailyplan = DailyPlan.objects.create(name="Plan navegable", created_by=self.user, is_draft=False)
         DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=meal)
         program = Program.objects.create(name="Programa navegable", created_by=self.user, duration_weeks=1)
         ProgramDay.objects.create(program=program, dailyplan=dailyplan, week_number=1, day_number=1)
 
         meal_data = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]
+        picker_data = self.client.get(f"/api/v1/food-picker-options/{food.id}").json()["data"]
         dailyplan_data = self.client.get(f"/api/v1/library/daily-plans/{dailyplan.id}").json()["data"]
         program_data = self.client.get(f"/api/v1/library/programs/{program.id}").json()["data"]
 
         self.assertEqual(meal_data["panel"]["foods"][0]["detail_id"], food.id)
+        self.assertEqual(meal_data["panel"]["foods"][0]["portion_display_quantity"], 1.0)
+        self.assertEqual(meal_data["panel"]["foods"][0]["portion_display_measure"], "cup")
+        self.assertEqual(meal_data["panel"]["foods"][0]["portion_display_measure"], picker_data["household_measure"])
         self.assertEqual(dailyplan_data["panel"]["meals"][0]["foods"][0]["detail_id"], food.id)
         self.assertEqual(dailyplan_data["panel"]["foods"][0]["detail_id"], food.id)
         week = program_data["panel"]["weeks"][0]

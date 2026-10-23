@@ -33,7 +33,7 @@ import { LibraryActions } from "./library-actions";
 const sectionTitles = { foods: "Composición comida", meals: "Composición de la minuta diaria", weeks: "Semanas del programa" } as const;
 
 function foodPanelItem(item: LibraryItem["panel"]["foods"][number]): FoodPanelItem {
-  return { id: item.id, detailId: item.detail_id, relationId: item.relation_id, name: item.name, emoji: item.emoji, visualKey: item.visual_key, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, detailId: item.detail_id, relationId: item.relation_id, name: item.name, emoji: item.emoji, visualKey: item.visual_key, quantity: item.quantity, quantityUnit: item.quantity_unit, portionDisplayQuantity: item.portion_display_quantity, portionDisplayMeasure: item.portion_display_measure, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelItem {

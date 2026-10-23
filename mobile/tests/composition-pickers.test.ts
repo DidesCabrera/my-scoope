@@ -26,6 +26,7 @@ test("composition pickers use independent native routes and one shared flow", as
     "src/components/ui/native-date-time-field.native.tsx",
   ].map((file) => readFile(path.resolve(process.cwd(), file), "utf8")));
   matches(picker, /mode: "back"/);
+  matches(picker, /action: selectedId \? undefined : \{ label: "Cancelar", onPress: close \}/);
   matches(picker, /stickyHeaderIndices=\{\[0\]\}/);
   matches(picker, /stickyHeaderIndices=\{kind === "dailyplan-to-program" \? \[0\] : undefined\}/);
   matches(picker, /style=\{styles\.configurationSticky\}/);
@@ -82,6 +83,11 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /foodPortionMetricAmount\(quantity, portionMeasure, selectedPortionConversion\)/);
   matches(portionField, /<Check color=\{tokens\.color\.food\}/);
   matches(portionField, /const \[visible, setVisible\] = useState\(initiallyExpanded\)/);
+  matches(portionField, /const \[confirmed, setConfirmed\] = useState\(false\)/);
+  matches(portionField, /setConfirmed\(true\)/);
+  matches(portionField, /accessibilityLabel=\{confirmed \? "Cerrar selector de porción" : "Confirmar porción"\}/);
+  matches(portionField, /onPress=\{confirmed \? close : commit\}/);
+  matches(portionField, /confirmed[\s\S]*<X color=\{tokens\.color\.food\}[\s\S]*<Check color=\{tokens\.color\.food\}/);
   matches(portionField, /accessibilityLabel=\{`Porción: \$\{selectorLabel\}`\}/);
   matches(portionField, /householdMeasureDisplayLabel\(householdMeasureLabel, selectedAmount\)/);
   omits(portionField, /accessibilityLabel=\{`(?:Cantidad|Medida):/);
@@ -181,7 +187,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(navigation, /ChevronLeft/);
   matches(navigation, /BackHeaderIdentity/);
   matches(navigation, /backHeaderAction/);
-  matches(picker, /action: \{ label: "Cancelar"/);
+  matches(picker, /action: selectedId \? undefined : \{ label: "Cancelar"/);
 
   for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day", "meal-to-calendarized-day", "food-to-calendarized-meal"]) {
     const source = await readFile(path.resolve(process.cwd(), `src/app/pickers/${route}.tsx`), "utf8");

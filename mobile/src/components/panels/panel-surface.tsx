@@ -45,7 +45,7 @@ export function PanelEmptyState({ label }: { label: string }) {
 }
 
 export function SortablePanelHeaderCell({ align = "center", direction, icon, label, onPress, style, textStyle }: {
-  align?: "center" | "left";
+  align?: "center" | "left" | "right";
   direction?: "asc" | "desc";
   icon?: ReactNode;
   label: string;
@@ -61,7 +61,7 @@ export function SortablePanelHeaderCell({ align = "center", direction, icon, lab
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.sortHeaderCell, style, pressed && styles.sortHeaderPressed]}>
-      <View style={[styles.sortHeaderContent, align === "left" && styles.sortHeaderContentLeft]}>
+      <View style={[styles.sortHeaderContent, align === "left" && styles.sortHeaderContentLeft, align === "right" && styles.sortHeaderContentRight]}>
         {icon ?? <Text numberOfLines={1} style={[styles.sortHeaderText, textStyle]}>{label}</Text>}
         {direction === "asc" ? <ChevronUp color={tokens.color.textMuted} size={12} strokeWidth={2.4} /> : null}
         {direction === "desc" ? <ChevronDown color={tokens.color.textMuted} size={12} strokeWidth={2.4} /> : null}
@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
   sortHeaderCell: { alignSelf: "stretch", justifyContent: "center", minWidth: 0 },
   sortHeaderContent: { alignItems: "center", flexDirection: "row", gap: 2, justifyContent: "center", minWidth: 0 },
   sortHeaderContentLeft: { justifyContent: "flex-start" },
+  sortHeaderContentRight: { justifyContent: "flex-end" },
   sortHeaderText: { color: tokens.color.textMuted, flexShrink: 1, fontSize: 10, fontWeight: tokens.weight.semibold, textAlign: "center", textTransform: "uppercase" },
   sortHeaderPressed: { opacity: 0.6 },
 });

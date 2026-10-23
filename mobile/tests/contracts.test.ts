@@ -512,7 +512,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /sortKey="quantity" style=\{styles\.quantityValue\}>\{trailingLabel\}<\/PanelHeaderCell>/);
   assertSourceDoesNotMatch(sharedEntityPanels, /quantityHeaderText/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} itemNameStyle=\{styles\.quantityItemText\}/);
-  assertSourceMatch(sharedEntityPanels, /styles\.quantityValue, styles\.quantityItemText/);
+  assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.quantityValue, styles\.quantityValueStack\]\}/);
+  assertSourceMatch(sharedEntityPanels, /styles\.quantityItemText, styles\.quantityValueText/);
+  assertSourceMatch(sharedEntityPanels, /const proposedPortion = proposedPortionLabel\(item\)/);
+  assertSourceMatch(sharedEntityPanels, /proposedPortion \? <Text style=\{styles\.quantityEquivalent\}>\{proposedPortion\}<\/Text> : null/);
   assertSourceMatch(sharedEntityPanels, /<Text numberOfLines=\{2\} style=\{\[styles\.cell, styles\.editName\]\}>\{item\.name\}<Text style=\{styles\.foodPortionSuffix\}>/);
   assertSourceDoesNotMatch(sharedEntityPanels, />Porción<|styles\.editPortionValue/);
   assertSourceMatch(sharedEntityPanels, /editIdentity: \{ alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 \}/);
@@ -818,7 +821,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} onOpenItem=\{onOpenItem\} showFoodPortion=\{leadingLabel === "Alimentos"\}/);
   assertSourceMatch(sharedEntityPanels, /styles\.editName\]\}>\{item\.name\}<Text style=\{styles\.foodPortionSuffix\}>/);
   assertSourceMatch(sharedEntityPanels, /quantityLeadingCell: \{[^}]*flex: 1/);
-  assertSourceMatch(sharedEntityPanels, /quantityValue: \{ textAlign: "center", width: 56 \}/);
+  assertSourceMatch(sharedEntityPanels, /quantityValue: \{ paddingRight: 8, width: 86 \}/);
+  assertSourceMatch(sharedEntityPanels, /quantityValueStack: \{ alignItems: "flex-end", gap: tokens\.spacing\.sm, justifyContent: "center" \}/);
   assertSourceMatch(sharedEntityPanels, /function PanelHeaderCell/);
   assertSourceMatch(sharedEntityPanels, /headerCell: \{[^}]*alignSelf: "stretch"[^}]*justifyContent: "center"/);
   assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell \{\.\.\.sorting\} align="left" sortKey="name" style=\{styles\.gridLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);

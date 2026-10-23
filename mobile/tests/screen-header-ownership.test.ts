@@ -92,7 +92,7 @@ test("screens that own global navigation preserve their header through content a
 
   const compositionPicker = await source("src/components/pickers/composition-picker-screen.tsx");
   assertSourceMatch(compositionPicker, /useHeaderPresentation/);
-  assertSourceMatch(compositionPicker, /setHeaderPresentation\(\{ action: \{ label: "Cancelar"/);
+  assertSourceMatch(compositionPicker, /setHeaderPresentation\(\{ action: selectedId \? undefined : \{ label: "Cancelar"/);
   assertSourceMatch(compositionPicker, /return \(\) => setHeaderPresentation\(\{ mode: "default" \}\)/);
   assertSourceMatch(compositionPicker, /<SafeAreaView edges=\{\["left", "right"\]\}/);
 

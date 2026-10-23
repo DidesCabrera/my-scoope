@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from core.food_visual_identity import resolved_food_visual_identity
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
+from notas.application.services.food_portions import proposed_portion_display
 from notas.domain.models import ProgramDay
 from notas.domain.services.nutrition import macro_kcal_distribution
 
@@ -78,6 +79,10 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, current_weight=None, 
         food_group=food.food_group,
         food_subgroup=food.food_subgroup,
     )
+    display_quantity, display_measure = proposed_portion_display(
+        food=food,
+        metric_quantity=quantity,
+    )
     return {
         "id": row_id or (f"meal-food:{relation_id}" if relation_id else f"projected-food:{food.id}"),
         "relation_id": relation_id,
@@ -87,6 +92,8 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, current_weight=None, 
         "visual_key": visual.visual_key,
         "quantity": _number(quantity),
         "quantity_unit": food.portion_unit,
+        "portion_display_quantity": display_quantity,
+        "portion_display_measure": display_measure,
         "calories": _number(total),
         "calorie_share": _percentage(total, sum(parent_kcal)),
         "calorie_distribution": {key: _number(value) for key, value in distribution.items()},

@@ -38,6 +38,8 @@ function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
     visualKey: item.visual_key,
     quantity: item.quantity,
     quantityUnit: item.quantity_unit,
+    portionDisplayQuantity: item.portion_display_quantity,
+    portionDisplayMeasure: item.portion_display_measure,
     calories: item.calories,
     calorieShare: item.calorie_share,
     proteinGrams: item.protein_grams,
