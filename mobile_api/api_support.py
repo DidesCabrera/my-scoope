@@ -60,7 +60,13 @@ def calendarization_error(exc: ValueError) -> MobileAPIError:
 def pinned_dailyplan_error(exc: ValueError) -> MobileAPIError:
     code = str(exc)
     not_found = {"pinned_dailyplan_not_found"}
-    conflicts = {"pinned_dailyplan_active_calendarization", "pinned_dailyplan_idempotency_conflict"}
+    conflicts = {
+        "account_plan_unavailable",
+        "can_create_dailyplan_disabled",
+        "max_dailyplans_reached",
+        "pinned_dailyplan_active_calendarization",
+        "pinned_dailyplan_idempotency_conflict",
+    }
     return MobileAPIError(
         code=code,
         message="No pudimos actualizar la minuta diaria fijada.",

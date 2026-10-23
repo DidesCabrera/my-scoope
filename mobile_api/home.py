@@ -31,6 +31,7 @@ def _latest_weight(user) -> dict | None:
         "measured_on": item.date,
         "measured_time": item.time,
         "weight_kg": item.weight_kg,
+        "comment": item.comment,
         "source": item.source,
         "created_at": item.created_at,
         "calendarization_id": None,

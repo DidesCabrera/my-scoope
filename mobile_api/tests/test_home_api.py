@@ -5,7 +5,7 @@ from django.test import override_settings
 
 from mobile_api.read_cache import home_cache_key
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import DailyPlan, Food, Meal, Program
+from notas.domain.models import DailyPlan, Food, Meal, Program, WeightLog
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -44,6 +44,27 @@ class MobileHomeAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(second.headers["Cache-Control"], "private, no-cache")
         self.assertIn("app;dur=", second.headers["Server-Timing"])
         self.assertRegex(second.headers["X-Request-ID"], r"^[A-Za-z0-9._:-]{1,128}$")
+
+    def test_home_serializes_the_latest_weight_comment(self) -> None:
+        weight = WeightLog.objects.create(
+            user=self.user,
+            date="2026-10-23",
+            weight_kg=82.9,
+            comment="Medición de prueba",
+        )
+
+        response = self.client.get("/api/v1/home")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        latest_weight = response.json()["data"]["latest_weight"]
+        self.assertEqual(latest_weight["id"], weight.id)
+        self.assertEqual(latest_weight["measured_on"], "2026-10-23")
+        self.assertIsNone(latest_weight["measured_time"])
+        self.assertEqual(latest_weight["weight_kg"], 82.9)
+        self.assertEqual(latest_weight["comment"], "Medición de prueba")
+        self.assertEqual(latest_weight["source"], "manual")
+        self.assertIsNotNone(latest_weight["created_at"])
+        self.assertIsNone(latest_weight["calendarization_id"])
 
     def test_mobile_responses_preserve_render_request_correlation(self) -> None:
         response = self.client.get("/api/v1/home", HTTP_RNDR_ID="req-beta_123")
