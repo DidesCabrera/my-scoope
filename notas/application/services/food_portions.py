@@ -1,6 +1,19 @@
 from __future__ import annotations
 
+from django.db.models import Prefetch
+
 from notas.domain.models import FoodPortion
+
+
+def proposed_portion_prefetch(lookup: str) -> Prefetch:
+    return Prefetch(
+        lookup,
+        queryset=FoodPortion.objects.filter(
+            is_default=True,
+            household_amount__isnull=False,
+        ).exclude(household_measure=""),
+        to_attr="_prefetched_default_household_portions",
+    )
 
 
 def proposed_portion_display(*, food, metric_quantity) -> tuple[float | None, str]:

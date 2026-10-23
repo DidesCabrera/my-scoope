@@ -102,6 +102,7 @@ def _creator_name(entity) -> str:
 
 def _food_panel_item(meal_food, current_weight=None) -> dict:
     display_quantity, display_measure = proposed_or_selected_portion(food=meal_food.food, metric_quantity=meal_food.quantity, selected_quantity=meal_food.portion_display_quantity, selected_measure=meal_food.portion_display_measure)
+    protein = _safe_number(meal_food.protein)
     return {
         "id": f"meal-food:{meal_food.id}",
         "relation_id": meal_food.id,
@@ -114,7 +115,7 @@ def _food_panel_item(meal_food, current_weight=None) -> dict:
         "calories": _safe_number(meal_food.total_kcal),
         "calorie_share": _safe_number(meal_food.kcal_share),
         "calorie_distribution": _calorie_distribution(meal_food.kcal_protein, meal_food.kcal_carbs, meal_food.kcal_fat),
-        "protein_grams": _safe_number(meal_food.protein),
+        "protein_grams": protein,
         "protein_per_kilogram": _safe_number(protein / current_weight) if current_weight and protein else None,
         "carbs_grams": _safe_number(meal_food.carbs),
         "fat_grams": _safe_number(meal_food.fat),
