@@ -1,15 +1,31 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.test import override_settings
 from django.utils import timezone
 
 from mobile_api.selectors import today_payload
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, PinnedDailyPlan
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPIPinnedDailyPlanTests(AuthenticatedMobileAPITestCase):
+    def test_create_returns_a_controlled_conflict_when_the_plan_limit_is_reached(self):
+        with patch(
+            "mobile_api.routes.pinned_dailyplans.create_and_pin_empty_dailyplan",
+            side_effect=CommercialLimitReached("max_dailyplans_reached"),
+        ):
+            response = self.client.post(
+                "/api/v1/today/pinned-plan",
+                data={},
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()["error"]["code"], "max_dailyplans_reached")
+
     def test_pinned_dailyplan_stays_live_and_tracks_each_day_without_duplicates(self):
         first = self.client.post("/api/v1/today/pinned-plan", data={}, content_type="application/json")
         second = self.client.post("/api/v1/today/pinned-plan", data={}, content_type="application/json")

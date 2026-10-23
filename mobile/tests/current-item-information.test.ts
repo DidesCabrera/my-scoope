@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import test from "node:test";
 
-import { readTestFile } from "./support/source-contract";
+import { assertSourceMatch, readTestFile } from "./support/source-contract";
 
 test("in-progress program, plan and meal menus open dedicated information views", async () => {
   const program = await readTestFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
@@ -17,6 +17,7 @@ test("in-progress program, plan and meal menus open dedicated information views"
   assert.doesNotMatch(day, /title="Información del día"/);
   assert.match(meal, /onOpenInformation=\{\(\) => router\.push\(`\/program\/days\/\$\{dayId\}\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/information` as Href\)\}/);
   assert.match(entityActions, /<ActionSheetAction icon=\{Info\} label="Ver información del elemento"/);
+  assertSourceMatch(entityActions, /<NativeDateTimeField[\s\S]*confirmationColor=\{tokens\.color\.meal\}[\s\S]*initiallyExpanded[\s\S]*label="Hora de la comida"/);
 });
 
 test("in-progress information routes preserve the current element hierarchy", async () => {

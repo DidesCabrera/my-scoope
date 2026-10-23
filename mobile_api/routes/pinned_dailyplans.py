@@ -6,6 +6,7 @@ from mobile_api.schema_domains.calendarization import MealCheckInInput
 from mobile_api.schema_domains.today import PinnedDailyPlanInput, TodayEnvelope
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import local_date_for_user, today_payload
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.queries.calendarization_queries import current_calendarization_for_user
 from notas.application.services.commands.pinned_dailyplan_commands import (
     create_and_pin_empty_dailyplan,
@@ -32,7 +33,10 @@ def _require_no_current_calendarization(user):
 def create_and_pin_today_dailyplan(request):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     _require_no_current_calendarization(request.auth.user)
-    create_and_pin_empty_dailyplan(user=request.auth.user, local_date=local_date_for_user(request.auth.user))
+    try:
+        create_and_pin_empty_dailyplan(user=request.auth.user, local_date=local_date_for_user(request.auth.user))
+    except CommercialLimitReached as exc:
+        raise pinned_dailyplan_error(exc) from exc
     return success(today_payload(request.auth.user))
 
 
