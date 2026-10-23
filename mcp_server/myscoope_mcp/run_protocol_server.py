@@ -14,7 +14,7 @@ from myscoope_mcp.protocol_server import (
     SERVER_NAME,
     assert_protocol_tool_surface_is_safe,
     create_mcp_server,
-    get_protocol_allowed_tool_names,
+    get_configured_allowed_tool_names,
 )
 from myscoope_mcp.well_known import (
     oauth_protected_resource_metadata,
@@ -57,7 +57,7 @@ def _print_registered_tools() -> None:
     print(f"{SERVER_NAME} protocol server initialized safely.")
     print("Registered FastMCP MVP tools:")
 
-    for tool_name in sorted(get_protocol_allowed_tool_names()):
+    for tool_name in sorted(get_configured_allowed_tool_names()):
         print(f"- {tool_name}")
 
 

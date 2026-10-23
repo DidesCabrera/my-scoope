@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 
 from unittest.mock import patch
@@ -26,6 +27,7 @@ from myscoope_mcp.protocol_server import (
     assert_protocol_tool_surface_is_safe,
     create_mcp_server,
     get_protocol_allowed_tool_names,
+    get_configured_allowed_tool_names,
     get_protocol_forbidden_tool_names,
     get_protocol_tool_annotations,
     protocol_dispatch_placeholder,
@@ -121,6 +123,25 @@ class MCPProtocolServerTests(unittest.TestCase):
 
         self.assertIsInstance(server, FastMCP)
         self.assertEqual(server.name, SERVER_NAME)
+
+    @patch.dict(
+        "os.environ",
+        {"MYSCOOPE_MCP_ALLOWED_TOOLS": "list_food_catalog,read_proposal"},
+        clear=True,
+    )
+    def test_configured_tool_subset_is_the_only_discovered_surface(self):
+        server = create_mcp_server()
+        tools = asyncio.run(server.list_tools())
+        self.assertEqual({tool.name for tool in tools}, {"list_food_catalog", "read_proposal"})
+
+    @patch.dict(
+        "os.environ",
+        {"MYSCOOPE_MCP_ALLOWED_TOOLS": "apply_approved_proposal"},
+        clear=True,
+    )
+    def test_unknown_or_forbidden_subset_fails_startup(self):
+        with self.assertRaises(RuntimeError):
+            get_configured_allowed_tool_names()
 
 
     @patch("myscoope_mcp.protocol_server.get_access_token")

@@ -7,6 +7,7 @@ from accounts.models import AccountPlan
 from accounts.services.credits import DEFAULT_ACCOUNT_PLAN_SLUG, resolve_account_plan_for_user
 
 NUTRITION_WORKSPACE_KEY = "nutrition_workspace"
+MCP_INTEGRATION_KEY = "mcp"
 
 DEFAULT_NUTRITION_WORKSPACE_ENTITLEMENTS: dict[str, Any] = {
     "can_create_food": True,
@@ -75,6 +76,21 @@ def resolve_account_entitlements(user: Any | None) -> AccountEntitlements | None
         source="accounts_account_plan",
         nutrition_workspace=merged,
     )
+
+
+def has_mcp_access(user: Any | None) -> bool:
+    """Resolve MCP access from the current account plan, including expiry/downgrade."""
+    if user is None or not getattr(user, "pk", None) or not getattr(user, "is_active", False):
+        return False
+
+    plan = resolve_account_plan_for_user(user)
+    if plan is None:
+        return False
+    integrations = (plan.entitlements or {}).get("integrations") or {}
+    if not isinstance(integrations, Mapping):
+        return False
+    mcp = integrations.get(MCP_INTEGRATION_KEY) or {}
+    return isinstance(mcp, Mapping) and mcp.get("enabled") is True
 
 
 def _account_nutrition_entitlements(plan: AccountPlan) -> Mapping[str, Any]:

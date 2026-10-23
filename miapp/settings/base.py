@@ -557,6 +557,10 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+# MCP commercial gate is opt-in until the PRO-only integration has been validated.
+MCP_PRO_ENTITLEMENT_ENFORCED = _env_bool("MCP_PRO_ENTITLEMENT_ENFORCED", False)
+
+
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "").strip()
 EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND") or (
     "django.core.mail.backends.smtp.EmailBackend"

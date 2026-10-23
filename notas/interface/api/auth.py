@@ -61,7 +61,7 @@ def _mcp_user_token_error_to_internal_api_error(
 ) -> InternalAPIAuthError:
     status_code = 401
 
-    if error.code == "mcp_user_token_missing_scope":
+    if error.code in {"mcp_user_token_missing_scope", "mcp_pro_required"}:
         status_code = 403
 
     return InternalAPIAuthError(

@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET, require_POST
 from notas.application.services.mcp_user_tokens import (
     MCP_SCOPE_PROPOSALS_CREATE,
     MCP_SCOPE_READ,
+    mcp_pro_access_required,
 )
 from notas.application.services.oauth_authorization_codes import (
     OAUTH_CODE_CHALLENGE_METHOD_S256,
@@ -118,7 +119,7 @@ def _build_authorization_request_context(request):
     }
 
 
-def _validate_authorization_request_context(context):
+def _validate_authorization_request_context(context, *, user=None):
     client = context["client"]
 
     if client is None:
@@ -142,6 +143,9 @@ def _validate_authorization_request_context(context):
     if not client.allows_scopes(context["requested_scopes"]):
         return "oauth_scope_not_allowed"
 
+    if user is not None and mcp_pro_access_required(user, context["requested_scopes"]):
+        return "mcp_pro_required"
+
     if not context["code_challenge"]:
         return "oauth_code_challenge_required"
 
@@ -160,6 +164,7 @@ def _oauth_error_message(error_code: str) -> str:
         "oauth_redirect_uri_not_allowed": "OAuth redirect URI is not allowed.",
         "oauth_scope_required": "OAuth scope is required.",
         "oauth_scope_not_allowed": "OAuth scope is not allowed.",
+        "mcp_pro_required": "An active PRO subscription is required for MCP access.",
         "oauth_code_challenge_required": "OAuth code challenge is required.",
         "oauth_code_challenge_method_not_supported": "OAuth code challenge method is not supported.",
         "oauth_grant_type_not_supported": "OAuth grant type is not supported.",
@@ -209,7 +214,7 @@ def oauth_authorization_server_metadata(request):
 @login_required
 def oauth_authorize(request):
     context = _build_authorization_request_context(request)
-    error_code = _validate_authorization_request_context(context)
+    error_code = _validate_authorization_request_context(context, user=request.user)
 
     if error_code is not None:
         return _oauth_error_response(
@@ -260,7 +265,7 @@ def oauth_authorize_consent(request):
         "code_challenge_method": code_challenge_method,
     }
 
-    error_code = _validate_authorization_request_context(context)
+    error_code = _validate_authorization_request_context(context, user=request.user)
 
     if error_code is not None:
         return _oauth_error_response(

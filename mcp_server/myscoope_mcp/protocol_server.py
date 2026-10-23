@@ -1,4 +1,5 @@
 from dataclasses import replace
+import os
 from typing import Any
 
 from mcp.server.auth.middleware.auth_context import get_access_token
@@ -8,6 +9,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
 from myscoope_mcp.client import MyscoopeAPIClient
+from myscoope_mcp.auth import user_tokens_only_enabled
 from myscoope_mcp.config import load_config_from_env
 from myscoope_mcp.contracts import MCPToolCallResult
 from myscoope_mcp.dispatcher import dispatch_tool_call
@@ -77,6 +79,9 @@ def create_api_client() -> MyscoopeAPIClient:
     config = load_config_from_env()
     current_bearer_token = _get_current_mcp_bearer_token()
 
+    if user_tokens_only_enabled() and not _should_forward_mcp_bearer_token(current_bearer_token):
+        raise RuntimeError("A user-scoped MCP token is required.")
+
     if _should_forward_mcp_bearer_token(current_bearer_token):
         config = replace(
             config,
@@ -136,6 +141,9 @@ def create_mcp_server(
     )
 
     register_mcp_tools(server)
+
+    for tool_name in get_protocol_allowed_tool_names() - get_configured_allowed_tool_names():
+        server.remove_tool(tool_name)
 
     return server
 
@@ -452,6 +460,18 @@ def get_protocol_allowed_tool_names() -> set[str]:
         TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
         TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     }
+
+
+def get_configured_allowed_tool_names() -> set[str]:
+    """Keep the default surface stable and allow a smaller validation rollout."""
+    known = get_protocol_allowed_tool_names()
+    raw = os.getenv("MYSCOOPE_MCP_ALLOWED_TOOLS", "").strip()
+    if not raw:
+        return known
+    configured = {name.strip() for name in raw.split(",") if name.strip()}
+    if not configured or not configured.issubset(known):
+        raise RuntimeError("MYSCOOPE_MCP_ALLOWED_TOOLS contains an unsupported tool.")
+    return configured
 
 
 def get_protocol_forbidden_tool_names() -> set[str]:
