@@ -4,7 +4,9 @@ import test from "node:test";
 import {
   convertFoodPortionAmount,
   defaultFoodPortionSelection,
+  foodPortionHouseholdAmount,
   foodPortionMetricAmount,
+  householdMeasureDisplayLabel,
   portionGrams,
   restoredFoodPortionSelection,
   scaleFoodNutrition,
@@ -40,6 +42,10 @@ test("household measures convert the selected amount to the metric nutrition qua
   const egg = { defaultPortion: 65, householdAmount: 1, householdMeasure: "unit", householdMeasureLabel: "unidad" };
   assert.equal(foodPortionMetricAmount("2", "household", egg), 130);
   assert.equal(foodPortionMetricAmount("65", "metric", egg), 65);
+  assert.equal(foodPortionHouseholdAmount(130, egg), 2);
+  assert.equal(householdMeasureDisplayLabel("unidad", 1), "unidad");
+  assert.equal(householdMeasureDisplayLabel("unidad", 1.25), "unidades");
+  assert.equal(householdMeasureDisplayLabel("taza", 2), "taza");
 
   const oats = { defaultPortion: 40, householdAmount: 0.5, householdMeasure: "cup", householdMeasureLabel: "taza" };
   assert.equal(foodPortionMetricAmount("1", "household", oats), 80);

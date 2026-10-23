@@ -5,6 +5,7 @@ export type FoodPortionFieldProps = {
   householdDefaultAmount?: number | null;
   householdDetail?: string;
   householdMeasureLabel?: string;
+  initiallyExpanded?: boolean;
   label: string;
   measure: FoodPortionMeasure;
   metricDefaultAmount?: number | null;

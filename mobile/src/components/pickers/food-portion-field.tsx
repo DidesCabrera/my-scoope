@@ -42,7 +42,7 @@ export function FoodPortionField({ equivalentMetricAmount, householdDefaultAmoun
 
 const styles = StyleSheet.create({
   amount: { minWidth: 68, textAlign: "center" },
-  equivalence: { color: tokens.color.textMuted, fontSize: tokens.type.caption, marginLeft: 26, marginTop: 6 },
+  equivalence: { alignSelf: "flex-end", color: tokens.color.textMuted, fontSize: tokens.type.caption, marginBottom: 4, marginRight: 4, marginTop: 1, textAlign: "right" },
   field: { gap: 7 },
   label: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold },
   labelRow: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },

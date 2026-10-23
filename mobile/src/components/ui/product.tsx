@@ -56,11 +56,11 @@ export type EntityHeadingLink = {
   onPress(): void;
 };
 
-function isGramQuantity(value: number | string | undefined): value is string {
-  return typeof value === "string" && /^[\d.,]+\s*g$/i.test(value.trim());
+function isFoodQuantity(value: number | string | undefined): value is string {
+  return typeof value === "string" && (/^[\d.,]+\s*(?:g|ml)(?:\s*\(.+\))?$/i.test(value.trim()) || /^.+\([\d.,]+\s*(?:g|ml)\)$/i.test(value.trim()));
 }
 
-function FoodGramChip({ value }: { value: string }) {
+function FoodQuantityChip({ value }: { value: string }) {
   return <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={value} textColor={tokens.color.entityIconForeground} />;
 }
 
@@ -181,8 +181,8 @@ export function StructuralIndicators({ indicators, entity, tone = "identity" }: 
       style={styles.structuralIndicators}>
       {indicators.map((indicator, index) => {
         const key = `${indicator.icon ?? "text"}-${indicator.label}-${index}`;
-        if (entity === "food" && isGramQuantity(indicator.value)) {
-          return <FoodGramChip key={key} value={indicator.value} />;
+        if (entity === "food" && isFoodQuantity(indicator.value)) {
+          return <FoodQuantityChip key={key} value={indicator.value} />;
         }
         const Icon = indicator.icon ? structuralIcons[indicator.icon] : null;
         const itemTone = indicator.tone ?? tone;
@@ -288,7 +288,7 @@ export function EntityHeading({
         {titleIcon}
         <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
       </View>
-      {subtitle ? entity === "food" && isGramQuantity(subtitle) ? <FoodGramChip value={subtitle} /> : <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
+      {subtitle ? entity === "food" && isFoodQuantity(subtitle) ? <FoodQuantityChip value={subtitle} /> : <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
       {indicators || completion ? (
         <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
           {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}

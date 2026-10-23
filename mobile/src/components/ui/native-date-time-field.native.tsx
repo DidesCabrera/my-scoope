@@ -24,11 +24,13 @@ function displayValue(value: string, mode: NativeDateTimeFieldProps["mode"]): st
 }
 
 export function NativeDateTimeField({
+  confirmationColor = tokens.color.interactivePrimary,
   containerStyle,
   disabled = false,
   hideLabel = false,
   iconColor = tokens.color.textMuted,
   iconInLabel = false,
+  initiallyExpanded = false,
   inputStyle,
   inlineLabel = false,
   label,
@@ -40,7 +42,7 @@ export function NativeDateTimeField({
   onChange,
   value,
 }: NativeDateTimeFieldProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(Platform.OS === "ios" && initiallyExpanded);
   const selected = pickerDateFromValue(value, mode);
   const [draft, setDraft] = useState<DateTimeDraft>(() => dateTimeDraftFromDate(selected));
   const minuteValues = Array.from({ length: Math.ceil(60 / minuteInterval) }, (_, index) => index * minuteInterval);
@@ -146,7 +148,7 @@ export function NativeDateTimeField({
             </View>
           )}
           <Pressable accessibilityLabel="Listo" accessibilityRole="button" onPress={commit} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
-            <Check color={tokens.color.interactivePrimary} size={22} strokeWidth={2.6} />
+            <Check color={confirmationColor} size={22} strokeWidth={2.6} />
           </Pressable>
         </View>
       ) : null}
@@ -158,7 +160,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.45 },
   doneButton: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.pill, bottom: tokens.spacing.sm, height: 40, justifyContent: "center", position: "absolute", right: tokens.spacing.sm, width: 40, zIndex: 2 },
   field: { gap: 7 },
-  inlinePicker: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden", position: "relative" },
+  inlinePicker: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginBottom: tokens.layout.reducedInset - 6, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden", position: "relative" },
   inlineHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   inlineLabelGroup: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm },
   input: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: tokens.spacing.lg },

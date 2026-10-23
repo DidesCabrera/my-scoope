@@ -46,6 +46,18 @@ export function foodPortionMetricAmount(
   return selectedAmount * Number(conversion.defaultPortion) / Number(conversion.householdAmount);
 }
 
+export function foodPortionHouseholdAmount(
+  metricQuantity: number,
+  conversion: FoodPortionConversion,
+): number {
+  if (metricQuantity <= 0 || !hasHouseholdPortion(conversion)) return 0;
+  return metricQuantity * Number(conversion.householdAmount) / Number(conversion.defaultPortion);
+}
+
+export function householdMeasureDisplayLabel(label: string, amount: number): string {
+  return label.trim().toLocaleLowerCase("es-CL") === "unidad" && amount > 1 ? "unidades" : label;
+}
+
 export function convertFoodPortionAmount(
   quantity: string,
   from: FoodPortionMeasure,

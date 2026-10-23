@@ -31,7 +31,7 @@ import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 import { FoodPortionField } from "./food-portion-field";
-import { defaultFoodPortionSelection, foodPortionMetricAmount, portionGrams, restoredFoodPortionSelection, scaleFoodNutrition, type FoodPortionMeasure } from "./food-portion-nutrition";
+import { defaultFoodPortionSelection, foodPortionHouseholdAmount, foodPortionMetricAmount, householdMeasureDisplayLabel, portionGrams, restoredFoodPortionSelection, scaleFoodNutrition, type FoodPortionMeasure } from "./food-portion-nutrition";
 import { PickerCardAction } from "./picker-card-action";
 import { buildCompositionPickerPayload } from "./composition-picker-payload";
 import { PickerEntryTabs } from "./picker-entry-tabs";
@@ -419,15 +419,20 @@ export function CompositionPickerScreen({
     if (!selected || !isFoodPicker) return selected;
     const grams = metricQuantity;
     const quantityUnit = selected.quantityUnit ?? "g";
+    const householdEquivalent = foodPortionHouseholdAmount(grams, selectedPortionConversion);
+    const selectedHouseholdAmount = portionMeasure === "household" ? portionGrams(quantity) : householdEquivalent;
+    const selectedHouseholdLabel = selected.householdMeasureLabel
+      ? householdMeasureDisplayLabel(selected.householdMeasureLabel, selectedHouseholdAmount)
+      : undefined;
     const selectedPortionLabel = portionMeasure === "household" && selected.householdMeasureLabel
-      ? `${quantity.replace(".", ",")} ${selected.householdMeasureLabel} (${grams.toLocaleString("es-CL", { maximumFractionDigits: 2 })} ${quantityUnit})`
-      : `${grams.toLocaleString("es-CL", { maximumFractionDigits: 2 })} ${quantityUnit}`;
+      ? `${quantity.replace(".", ",")} ${selectedHouseholdLabel} (${grams.toLocaleString("es-CL", { maximumFractionDigits: 2 })} ${quantityUnit})`
+      : `${grams.toLocaleString("es-CL", { maximumFractionDigits: 2 })} ${quantityUnit}${householdEquivalent > 0 && selectedHouseholdLabel ? ` (${householdEquivalent.toLocaleString("es-CL", { maximumFractionDigits: 2 })} ${selectedHouseholdLabel})` : ""}`;
     return {
       ...selected,
       indicators: [{ label: "porción seleccionada", value: selectedPortionLabel }],
       nutrition: scaleFoodNutrition(selected.nutrition, String(grams)),
     };
-  }, [isFoodPicker, metricQuantity, portionMeasure, quantity, selected]);
+  }, [isFoodPicker, metricQuantity, portionMeasure, quantity, selected, selectedPortionConversion]);
 
   const payload = useMemo(() => {
     if (!selected) return null;
@@ -543,7 +548,7 @@ export function CompositionPickerScreen({
   const mealTimeCard = isMealPicker && selected ? (
     <View style={styles.mealFixedTime}>
       <Card style={styles.fixedControlCard}>
-        <NativeDateTimeField containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
+        <NativeDateTimeField confirmationColor={tokens.color.meal} containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel initiallyExpanded inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={setHour} value={hour} />
         {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
       </Card>
     </View>
@@ -560,7 +565,7 @@ export function CompositionPickerScreen({
             <Pencil color={tokens.color.textMuted} size={19} />
           </Pressable>
         </View>
-        {noteEditing ? <TextInput autoCapitalize="sentences" onChangeText={(value) => { setNote(value); setPreview(null); }} placeholder="Ej. antes de entrenar" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.noteInput} value={note} /> : null}
+        {noteEditing ? <TextInput autoCapitalize="sentences" onChangeText={setNote} placeholder="Ej. antes de entrenar" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.noteInput} value={note} /> : null}
       </View>
     </Card>
   ) : null;
@@ -572,6 +577,7 @@ export function CompositionPickerScreen({
           householdDefaultAmount={selected.householdAmount}
           householdDetail={selected.householdDetail}
           householdMeasureLabel={selected.householdMeasureLabel}
+          initiallyExpanded
           label="Porción del alimento"
           measure={portionMeasure}
           metricDefaultAmount={selected.defaultPortion}
@@ -652,7 +658,7 @@ export function CompositionPickerScreen({
 }
 
 const styles = StyleSheet.create({
-  compactControlField: { borderRadius: tokens.radius.md, marginHorizontal: 0, marginRight: -8, minHeight: 36, width: 120 },
+  compactControlField: { borderRadius: tokens.radius.md, marginHorizontal: 0, marginRight: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 36, width: 120 },
   compactFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   configurationLabel: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   configurationSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
