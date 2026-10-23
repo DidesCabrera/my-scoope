@@ -30,6 +30,9 @@ DATABASES = {"default": PRODUCTION_DATABASE}
 
 DEBUG = False
 
+# Commercial MCP access is never disabled by a missing or stale deploy flag.
+MCP_PRO_ENTITLEMENT_ENFORCED = True
+
 # Per-worker high-water logging makes memory growth diagnosable without
 # retaining request data or adding any work to the response path.
 MIDDLEWARE = [*MIDDLEWARE, "core.memory_monitor.WorkerMemoryHighWaterMiddleware"]

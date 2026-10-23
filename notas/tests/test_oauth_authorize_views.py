@@ -1,7 +1,7 @@
 from urllib.parse import parse_qs, urlparse
 
 from django.contrib.auth.models import User
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from notas.application.services.mcp_user_tokens import (
@@ -16,6 +16,7 @@ from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_ACCOUN
 from notas.domain.models import OAuthAuthorizationCode, OAuthClient
 
 
+@override_settings(MCP_RESOURCE_URL="https://mcp.example.test")
 class OAuthAuthorizeViewsTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -47,6 +48,7 @@ class OAuthAuthorizeViewsTests(TestCase):
             "state": "state-123",
             "code_challenge": self.code_challenge,
             "code_challenge_method": OAUTH_CODE_CHALLENGE_METHOD_S256,
+            "resource": "https://mcp.example.test",
         }
         params.update(overrides)
 
@@ -205,6 +207,19 @@ class OAuthAuthorizeViewsTests(TestCase):
             "oauth_scope_not_allowed",
         )
 
+    def test_authorize_rejects_missing_or_foreign_resource(self):
+        self.client.force_login(self.user)
+        for value, expected in [
+            ("", "oauth_resource_required"),
+            ("https://other.example.test", "oauth_resource_not_allowed"),
+        ]:
+            response = self.client.get(
+                reverse("oauth_authorize"),
+                data=self._authorize_params(resource=value),
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()["error"]["code"], expected)
+
     def test_authorize_rejects_missing_code_challenge(self):
         self.client.force_login(self.user)
 
@@ -282,6 +297,7 @@ class OAuthAuthorizeViewsTests(TestCase):
             authorization_code.redirect_uri,
             self.redirect_uri,
         )
+        self.assertEqual(authorization_code.resource, "https://mcp.example.test")
         self.assertEqual(
             authorization_code.scopes,
             [

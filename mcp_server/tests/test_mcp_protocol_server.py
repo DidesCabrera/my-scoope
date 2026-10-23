@@ -1,38 +1,35 @@
 import asyncio
 import unittest
-
 from unittest.mock import patch
+
 from mcp.server.auth.provider import AccessToken
-from starlette.applications import Starlette
-
 from mcp.server.fastmcp import FastMCP
-
 from myscoope_mcp.contracts import MCPToolCallResult
-
-from myscoope_mcp.tools import (
-    TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
-    TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
-    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
-    TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
-    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
-    TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
-    TOOL_LIST_USER_PROPOSALS,
-    TOOL_LIST_FOOD_CATALOG,
-    TOOL_READ_DAILYPLAN,
-    TOOL_READ_PROPOSAL,
-)
-
 from myscoope_mcp.protocol_server import (
     SERVER_NAME,
     assert_protocol_tool_surface_is_safe,
     create_mcp_server,
-    get_protocol_allowed_tool_names,
     get_configured_allowed_tool_names,
+    get_protocol_allowed_tool_names,
     get_protocol_forbidden_tool_names,
     get_protocol_tool_annotations,
     protocol_dispatch_placeholder,
     serialize_tool_result,
+    summarize_created_proposal_result,
 )
+from myscoope_mcp.tools import (
+    TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
+    TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+    TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    TOOL_LIST_FOOD_CATALOG,
+    TOOL_LIST_USER_PROPOSALS,
+    TOOL_READ_DAILYPLAN,
+    TOOL_READ_PROPOSAL,
+)
+from starlette.applications import Starlette
 
 
 class MCPProtocolServerTests(unittest.TestCase):
@@ -118,6 +115,46 @@ class MCPProtocolServerTests(unittest.TestCase):
             },
         )
 
+    def test_created_proposal_response_does_not_echo_private_snapshots(self):
+        result = MCPToolCallResult(
+            ok=True,
+            data={
+                "proposal": {"id": 82, "status": "pending_review", "profile": {"weight_kg": 88}},
+                "nutrition_brief": {"raw_prompt": "private health details"},
+                "source_proposal": {"proposed_payload": {"private": "value"}},
+            },
+            error=None,
+        )
+        response = summarize_created_proposal_result(result)
+        self.assertEqual(response["data"]["proposal_id"], 82)
+        self.assertEqual(response["data"]["detail_tool"], "read_proposal")
+        self.assertNotIn("nutrition_brief", response["data"])
+        self.assertNotIn("source_proposal", response["data"])
+        self.assertNotIn("profile", response["data"])
+
+    def test_failed_proposal_response_does_not_echo_private_error_details(self):
+        result = MCPToolCallResult(
+            ok=False,
+            data={"nutrition_brief": {"private": "value"}},
+            error={
+                "code": "invalid_brief",
+                "message": "Private user input",
+                "details": {"profile": {"weight_kg": 88}},
+            },
+        )
+        self.assertEqual(
+            summarize_created_proposal_result(result),
+            {
+                "ok": False,
+                "data": {},
+                "error": {
+                    "code": "invalid_brief",
+                    "message": "Proposal creation failed.",
+                    "details": {},
+                },
+            },
+        )
+
     def test_create_mcp_server_registers_all_mvp_tools_without_sdk_internal_assertions(self):
         server = create_mcp_server()
 
@@ -133,6 +170,17 @@ class MCPProtocolServerTests(unittest.TestCase):
         server = create_mcp_server()
         tools = asyncio.run(server.list_tools())
         self.assertEqual({tool.name for tool in tools}, {"list_food_catalog", "read_proposal"})
+
+    def test_tools_declare_read_and_create_oauth_scopes(self):
+        tools = {tool.name: tool for tool in asyncio.run(create_mcp_server().list_tools())}
+        self.assertEqual(
+            tools[TOOL_LIST_FOOD_CATALOG].securitySchemes,
+            [{"type": "oauth2", "scopes": ["myscoope:read"]}],
+        )
+        self.assertEqual(
+            tools[TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL].securitySchemes,
+            [{"type": "oauth2", "scopes": ["myscoope:read", "myscoope:proposals:create"]}],
+        )
 
     @patch.dict(
         "os.environ",
@@ -155,7 +203,7 @@ class MCPProtocolServerTests(unittest.TestCase):
             token="mcp_user_dynamic-token",
             client_id="client",
             scopes=[
-                "myscoope:mcp",
+                "myscoope:read",
             ],
             resource="http://127.0.0.1:8001",
         )
@@ -166,6 +214,17 @@ class MCPProtocolServerTests(unittest.TestCase):
             client.config.auth_token,
             "mcp_user_dynamic-token",
         )
+
+    @patch("myscoope_mcp.protocol_server.get_access_token")
+    def test_read_only_token_cannot_enter_create_tool(self, mocked_get_access_token):
+        from myscoope_mcp.protocol_server import create_api_client
+
+        mocked_get_access_token.return_value = AccessToken(
+            token="mcp_user_read-only", client_id="client",
+            scopes=["myscoope:read"], resource="http://127.0.0.1:8001",
+        )
+        with self.assertRaises(PermissionError):
+            create_api_client(required_scope="myscoope:proposals:create")
 
     @patch("myscoope_mcp.protocol_server.get_access_token")
     @patch.dict(
@@ -240,7 +299,7 @@ class MCPProtocolServerTests(unittest.TestCase):
             get_protocol_allowed_tool_names(),
         )
 
-    def test_read_tools_are_annotated_as_read_only_non_destructive_open_world(self):
+    def test_read_tools_are_annotated_as_read_only_bounded_account(self):
         annotations = get_protocol_tool_annotations()
 
         for tool_name in [
@@ -258,12 +317,12 @@ class MCPProtocolServerTests(unittest.TestCase):
                 annotations[tool_name].destructiveHint,
                 tool_name,
             )
-            self.assertTrue(
+            self.assertFalse(
                 annotations[tool_name].openWorldHint,
                 tool_name,
             )
 
-    def test_proposal_create_tools_are_annotated_as_write_non_destructive_open_world(self):
+    def test_proposal_create_tools_are_annotated_as_write_bounded_account(self):
         annotations = get_protocol_tool_annotations()
 
         for tool_name in [
@@ -281,7 +340,7 @@ class MCPProtocolServerTests(unittest.TestCase):
                 annotations[tool_name].destructiveHint,
                 tool_name,
             )
-            self.assertTrue(
+            self.assertFalse(
                 annotations[tool_name].openWorldHint,
                 tool_name,
             )

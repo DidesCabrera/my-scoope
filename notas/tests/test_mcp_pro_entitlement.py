@@ -19,7 +19,7 @@ from notas.application.services.oauth_authorization_codes import (
 from notas.domain.models import OAuthClient
 
 
-@override_settings(MCP_PRO_ENTITLEMENT_ENFORCED=True)
+@override_settings(MCP_PRO_ENTITLEMENT_ENFORCED=True, MCP_RESOURCE_URL="https://mcp.example.test")
 class MCPProEntitlementTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="mcp-pro-test")
@@ -35,13 +35,22 @@ class MCPProEntitlementTests(TestCase):
             user=self.user, plan=self.free, status=AccountSubscription.Status.ACTIVE,
         )
 
+    def _create_token(self):
+        return create_mcp_user_token(
+            user=self.user,
+            name="MCP test",
+            scopes=[MCP_SCOPE_READ],
+            resource="https://mcp.example.test",
+            expires_at=timezone.now() + timedelta(hours=1),
+        )
+
     def test_only_active_pro_can_issue_and_use_mcp_token(self):
         with self.assertRaisesMessage(ValueError, "mcp_pro_required"):
-            create_mcp_user_token(user=self.user, name="MCP test", scopes=[MCP_SCOPE_READ])
+            self._create_token()
 
         self.subscription.plan = self.pro
         self.subscription.save(update_fields=["plan"])
-        created = create_mcp_user_token(user=self.user, name="MCP test", scopes=[MCP_SCOPE_READ])
+        created = self._create_token()
         self.assertTrue(validate_mcp_user_token(created.raw_token).ok)
 
         response = Client().post(
@@ -66,7 +75,7 @@ class MCPProEntitlementTests(TestCase):
     def test_expired_pro_period_denies_existing_token(self):
         self.subscription.plan = self.pro
         self.subscription.save(update_fields=["plan"])
-        created = create_mcp_user_token(user=self.user, name="MCP test", scopes=[MCP_SCOPE_READ])
+        created = self._create_token()
 
         self.subscription.current_period_end = timezone.now() - timedelta(seconds=1)
         self.subscription.save(update_fields=["current_period_end"])
