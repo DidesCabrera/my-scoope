@@ -239,8 +239,8 @@ export default function ProgramDayScreen() {
             fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
             protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
           }}
-          title={snapshot.name ?? day.plan_name ?? "Plan diario"}>
-          <EntityDetailSection title="Composición plan diario">
+          title={snapshot.name ?? day.plan_name ?? "Minuta diaria"}>
+          <EntityDetailSection title="Composición de la minuta diaria">
             <MealPanels
               editing={{
                 onChangeTime: setTimeChangeMeal,
@@ -265,14 +265,14 @@ export default function ProgramDayScreen() {
           />
           {meals.length ? (
             <>
-              <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
+              <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
               <CalendarizedMealCards apiRequest={apiRequest} completionError={completionError} dayId={day.id} mealExecution={mealExecution} meals={meals} onChanged={load} onToggleCompleted={(mealKey, completed) => void toggleMealCompletion(mealKey, completed)} onTogglePrepared={(mealKey, foodKey) => void togglePreparedFood(mealKey, foodKey)} savingMealKey={savingMealKey} />
             </>
           ) : null}
           {foods.length ? (
             <>
-              <ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en este plan diario" />
-              <GroupedFoodsCard items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} title="Alimentos plan diario" />
+              <ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en esta minuta diaria" />
+              <GroupedFoodsCard items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} title="Alimentos de la minuta diaria" />
             </>
           ) : null}
         </EntityDetailPage>
@@ -284,7 +284,7 @@ export default function ProgramDayScreen() {
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     </NestableScrollContainer>
     <CalendarizedEntityActions
-      entityName={snapshot?.name ?? day.plan_name ?? "Plan diario"}
+      entityName={snapshot?.name ?? day.plan_name ?? "Minuta diaria"}
       onOpenInformation={() => router.push(`/program/days/${day.id}/information` as Href)}
       onVisibleChange={setActionsVisible}
       rename={{

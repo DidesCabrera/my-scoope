@@ -12,6 +12,8 @@ class FoodPickerInput(Schema):
     dailyplan_id: int | None = Field(default=None, gt=0)
     dailyplan_meal_id: int | None = Field(default=None, gt=0)
     quantity: float = Field(gt=0, le=100000)
+    portion_display_quantity: float | None = Field(default=None, gt=0, le=100000)
+    portion_display_measure: str = Field(default="", max_length=20)
 
 
 class MealPickerInput(Schema):
@@ -27,6 +29,8 @@ class CompositionOrderInput(Schema):
 
 class MealFoodUpdateInput(Schema):
     quantity: float = Field(gt=0, le=100000)
+    portion_display_quantity: float | None = Field(default=None, gt=0, le=100000)
+    portion_display_measure: str = Field(default="", max_length=20)
 
 
 class DailyPlanMealUpdateInput(Schema):

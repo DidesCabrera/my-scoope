@@ -444,7 +444,7 @@ def _build_review_attachments(
     if intent == AI_NUTRITION_BRIEF_INTENT:
         brief = _safe_dict(proposed_payload.get("nutrition_brief"))
         requested_entity = _safe_str(brief.get("requested_entity"), default="daily_plan")
-        entity_label = "Programa semanal" if requested_entity == "program" else "Plan diario"
+        entity_label = "Programa semanal" if requested_entity == "program" else "Minuta diaria"
         return [
             {
                 "kind": intent_contract.attachment_kind,
@@ -770,7 +770,7 @@ def _build_program_review_vm(
                     "main_id": card_id,
                     "actions": [{
                         "key": "open_proposed_dailyplan",
-                        "label": "Explorar plan diario",
+                        "label": "Explorar minuta diaria",
                         "icon": "arrow-right",
                         "url": detail_url,
                         "method": "get",

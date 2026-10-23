@@ -26,13 +26,13 @@ type ComparisonPreviewTab = "allocation" | "calories" | "distribution" | "entity
 const scopeLabels: Record<ComparisonScope, string> = {
   food: "Alimentos",
   meal: "Comidas",
-  dailyPlan: "Planes",
+  dailyPlan: "Minutas",
 };
 
 const scopeSingularLabels: Record<ComparisonScope, string> = {
   food: "Alimento",
   meal: "Comida",
-  dailyPlan: "Plan",
+  dailyPlan: "Minuta",
 };
 
 const metricColors: Record<ComparisonMetricTone, string> = {
@@ -111,7 +111,7 @@ export function SavedComparisonPreviewPanels({ items, scope }: { items?: Compari
   const panelItems = comparisonPanelItems(sourceItems);
   const leadingLabel = scopeLabels[scope];
   const tabs = [
-    { key: "entity" as const, label: scope === "dailyPlan" ? "Planes diarios" : leadingLabel },
+    { key: "entity" as const, label: scope === "dailyPlan" ? "Minutas diarias" : leadingLabel },
     { key: "calories" as const, label: "Calorías" },
     { key: "macros" as const, label: "Macros" },
     { key: "distribution" as const, label: "Dist" },
@@ -122,7 +122,7 @@ export function SavedComparisonPreviewPanels({ items, scope }: { items?: Compari
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
       {activeTab === "entity" && scope === "food" ? <FoodQuantityPanel items={panelItems.map((item, index) => ({ ...item, name: sourceItems[index].name }))} /> : null}
-      {activeTab === "entity" && scope !== "food" ? <EntityNamePanel entity={scope} items={sourceItems.map((item) => ({ id: `${item.position}-${item.id}`, name: item.name }))} label={scope === "meal" ? "Comidas" : "Planes diarios"} /> : null}
+      {activeTab === "entity" && scope !== "food" ? <EntityNamePanel entity={scope} items={sourceItems.map((item) => ({ id: `${item.position}-${item.id}`, name: item.name }))} label={scope === "meal" ? "Comidas" : "Minutas diarias"} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={panelItems} leadingLabel={leadingLabel} /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel items={panelItems} leadingLabel={leadingLabel} /> : null}

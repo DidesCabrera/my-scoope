@@ -297,12 +297,12 @@ def proposal_generate_dailyplan(request, proposal_id):
 
 def _dailyplan_generator_error_message(error_code: str) -> str:
     messages_by_code = {
-        "dailyplan_generator_not_allowed": "No tienes permisos para generar un plan desde esta propuesta.",
-        "dailyplan_generator_source_payload_invalid": "La propuesta no contiene un payload válido para generar un plan.",
+        "dailyplan_generator_not_allowed": "No tienes permisos para generar una minuta desde esta propuesta.",
+        "dailyplan_generator_source_payload_invalid": "La propuesta no contiene un payload válido para generar una minuta.",
         "dailyplan_generator_source_must_be_nutrition_brief": "Solo se puede generar un DailyPlan desde propuestas de tipo NutritionBrief.",
-        "dailyplan_generator_source_not_active": "La propuesta base ya no está activa para generar un plan.",
+        "dailyplan_generator_source_not_active": "La propuesta base ya no está activa para generar una minuta.",
         "dailyplan_generator_brief_not_found": "No se encontró el NutritionBrief dentro de la propuesta.",
-        "dailyplan_generator_only_supports_daily_plan_briefs": "Este generador inicial solo soporta briefs de Plan diario; Programas quedan para un patch posterior.",
+        "dailyplan_generator_only_supports_daily_plan_briefs": "Este generador inicial solo soporta briefs de Minuta diaria; Programas quedan para un patch posterior.",
         "dailyplan_generator_requires_at_least_three_readable_foods": "Necesitas al menos tres alimentos disponibles para generar una propuesta inicial.",
         "dailyplan_generator_food_candidates_not_found": "No se encontraron alimentos suficientes que respeten las exclusiones del brief.",
         "dailyplan_generator_typed_safety_requires_portfolio": "Las alergias o el patrón alimentario declarado requieren el solver con restricciones tipadas.",

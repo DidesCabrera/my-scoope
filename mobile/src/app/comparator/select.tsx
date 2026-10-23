@@ -28,7 +28,7 @@ type SelectorConfig = {
 const selectorConfigs: Record<ComparisonKind, SelectorConfig> = {
   foods: { createEntity: "food", createLabel: "Crear alimento", searchLabel: "Buscar alimento", searchPlaceholder: "Escribe el nombre de un alimento", title: "Seleccionar alimento" },
   meals: { createEntity: "meal", createLabel: "Crear comida", searchLabel: "Buscar comida", searchPlaceholder: "Escribe el nombre de una comida", title: "Seleccionar comida" },
-  dailyplans: { createEntity: "dailyPlan", createLabel: "Crear plan diario", searchLabel: "Buscar plan diario", searchPlaceholder: "Escribe el nombre de un plan diario", title: "Seleccionar plan" },
+  dailyplans: { createEntity: "dailyPlan", createLabel: "Crear minuta diaria", searchLabel: "Buscar minuta diaria", searchPlaceholder: "Escribe el nombre de una minuta diaria", title: "Seleccionar minuta" },
 };
 
 function builderHref(kind: ComparisonKind, savedId: number | null): Href {

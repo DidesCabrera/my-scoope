@@ -147,7 +147,7 @@ export default function RemindersScreen() {
         <>
           <Card accent={tokens.color.meal}>
             <Field label="Zona horaria IANA" onChangeText={setTimezoneName} placeholder="America/Santiago" value={timezoneName} />
-            <NativeDateTimeField label="Aviso del plan diario" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} />
+            <NativeDateTimeField label="Aviso de la minuta diaria" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} />
             <ChoiceRow<Toggle> label="Recordatorio diario" onChange={setDaily} options={toggleOptions} value={daily} />
             <ChoiceRow<Toggle> label="Recordatorios según hora de cada comida" onChange={setMeals} options={toggleOptions} value={meals} />
             <Button label="Guardar agenda" loading={saving} onPress={() => void save()} />
@@ -157,7 +157,7 @@ export default function RemindersScreen() {
             {settings.upcoming.length ? settings.upcoming.slice(0, 8).map((event, index) => (
               <View key={`${event.event_type}-${event.local_date}-${event.meal_key}-${index}`} style={styles.event}>
                 <View>
-                  <Text style={styles.eventTitle}>{event.event_type === "daily_plan" ? "Plan diario" : "Comida"}</Text>
+                  <Text style={styles.eventTitle}>{event.event_type === "daily_plan" ? "Minuta diaria" : "Comida"}</Text>
                   <Text style={textStyles.caption}>{event.local_date} · {event.local_time.slice(0, 5)}</Text>
                 </View>
                 <Text style={styles.eventStatus}>{event.status}</Text>
@@ -167,7 +167,7 @@ export default function RemindersScreen() {
         </>
       ) : (
         <Card>
-          <Text style={textStyles.muted}>Puedes activar los avisos ahora. Para recibir recordatorios de comidas y planes diarios, activa y calendariza un programa.</Text>
+          <Text style={textStyles.muted}>Puedes activar los avisos ahora. Para recibir recordatorios de comidas y minutas diarias, activa y calendariza un programa.</Text>
           <Button label="Ver calendario" onPress={() => router.push("/calendar")} variant="secondary" />
         </Card>
       )}

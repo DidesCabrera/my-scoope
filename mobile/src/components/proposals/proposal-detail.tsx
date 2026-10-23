@@ -59,8 +59,8 @@ type ProposedEntityKind = Extract<EntityKind, "food" | "meal" | "dailyPlan" | "d
 const proposedEntityLabels: Record<ProposedEntityKind, [singular: string, plural: string]> = {
   food: ["Alimento propuesto", "Alimentos propuestos"],
   meal: ["Comida propuesta", "Comidas propuestas"],
-  dailyPlan: ["Plan propuesto", "Planes propuestos"],
-  dpm: ["Plan de comidas propuesto", "Planes de comidas propuestos"],
+  dailyPlan: ["Minuta propuesta", "Minutas propuestas"],
+  dpm: ["Comida de minuta propuesta", "Comidas de minuta propuestas"],
   program: ["Programa propuesto", "Programas propuestos"],
 };
 

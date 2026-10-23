@@ -165,7 +165,7 @@ export function CalendarizedProgramPlanning({
       <View style={styles.weekContent}>
         <ProgramWeekHeading detail={weekDateRange(weekDays)} week={activeWeek} />
         <ProgramDaySelector
-          accessibilityLabel={`Planes diarios de Semana ${activeWeek}`}
+          accessibilityLabel={`Minutas diarias de Semana ${activeWeek}`}
           allowEmptySelection
           days={weekDays.map((day) => ({
             dayOfMonth: Number(day.calendar_date.slice(8, 10)),
@@ -183,7 +183,7 @@ export function CalendarizedProgramPlanning({
           {loading ? (
             <View style={styles.loading}>
               <ActivityIndicator color={tokens.color.program} />
-              <Text style={textStyles.muted}>Abriendo el plan diario…</Text>
+              <Text style={textStyles.muted}>Abriendo la minuta diaria…</Text>
             </View>
           ) : error ? (
             <InlineNotice tone="error">{error}</InlineNotice>
@@ -192,7 +192,7 @@ export function CalendarizedProgramPlanning({
               <CalendarizedDailyPlanCard apiRequest={apiRequest} dayId={detail.id} dateLabel={compactDateLabel(detail.calendar_date)} editing={mealEditing} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} onAddMeal={() => router.push(pickerHref("meal-to-calendarized-day", { dayId: detail.id, returnTo: "/program" }))} onChanged={async () => setDetail(normalizeCalendarizedDayDetail(await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${detail.id}`)))} onChangeMealTime={(meal, hour) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/${encodeURIComponent(meal.id)}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" })} planName={detail.plan_name} snapshot={snapshot} />
               {detail.calendar_date > localDate() ? (
                 <Button
-                  label="Cambiar plan diario"
+                  label="Cambiar minuta diaria"
                   onPress={() => router.push(pickerHref("dailyplan-to-calendarized-day", { dayId: detail.id }))}
                   variant="secondary"
                 />
@@ -200,10 +200,10 @@ export function CalendarizedProgramPlanning({
             </View>
           ) : detail ? (
             <View style={styles.emptyDay}>
-              <InlineNotice>Día sin plan. No hay un plan diario asignado para esta fecha.</InlineNotice>
+              <InlineNotice>Día sin plan. No hay una minuta diaria asignada para esta fecha.</InlineNotice>
               {detail.calendar_date > localDate() ? (
                 <Button
-                  label="Agregar plan diario"
+                  label="Agregar minuta diaria"
                   onPress={() => router.push(pickerHref("dailyplan-to-calendarized-day", { dayId: detail.id }))}
                   variant="secondary"
                 />

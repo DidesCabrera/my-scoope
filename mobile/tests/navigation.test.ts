@@ -57,7 +57,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceMatch(comparisonList, /<Card accent=\{entityColor\} style=\{styles\.savedCard\}>/);
   assertSourceMatch(comparisonList, /savedCard: \{ paddingBottom: tokens\.card\.innerPadding \}/);
   assertSourceMatch(comparisonList, /backgroundColor=\{`\$\{entityColor\}1A`\}[\s\S]*borderColor=\{entityColor\}[\s\S]*label=\{comparisonCountLabel\(item\.kind, item\.item_count\)\}[\s\S]*textColor=\{tokens\.color\.entityIconForeground\}/);
-  assertSourceMatch(comparisonList, /foods: \{ plural: "Alimentos", singular: "Alimento" \}[\s\S]*meals: \{ plural: "Comidas", singular: "Comida" \}[\s\S]*dailyplans: \{ plural: "Planes diarios", singular: "Plan diario" \}/);
+  assertSourceMatch(comparisonList, /foods: \{ plural: "Alimentos", singular: "Alimento" \}[\s\S]*meals: \{ plural: "Comidas", singular: "Comida" \}[\s\S]*dailyplans: \{ plural: "Minutas diarias", singular: "Minuta diaria" \}/);
   assertSourceDoesNotMatch(comparisonList, /Ver comparación guardada/);
   assertSourceDoesNotMatch(comparisonList, /DateTimeFormat|item\.updated_at/);
   assertSourceMatch(comparisonList, /savedChip: \{[^}]*marginTop: tokens\.spacing\.xs/);
@@ -67,7 +67,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assertSourceDoesNotMatch(program, /Abrir plan de hoy/);
   assertSourceMatch(program, /CalendarizedProgramPlanning/);
   assertSourceMatch(programDay, /<EntityDetailPage/);
-  assertSourceMatch(programDay, /title="Composición plan diario"/);
+  assertSourceMatch(programDay, /title="Composición de la minuta diaria"/);
   assertSourceMatch(programDay, /title="Detalle de cada Comida"/);
   assertSourceMatch(programDay, /<NutritionEntityCard/);
   assertSourceMatch(programDay, /\/program\/days\/\[id\]\/meals\/\[mealKey\]/);

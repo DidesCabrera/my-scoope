@@ -73,6 +73,7 @@ export function Field({
   keyboardType,
   autoCapitalize = "none",
   autoCorrect,
+  maxLength,
   secureTextEntry = false,
 }: {
   hideLabel?: boolean;
@@ -86,6 +87,7 @@ export function Field({
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   autoCorrect?: boolean;
+  maxLength?: number;
   secureTextEntry?: boolean;
 }) {
   return (
@@ -99,6 +101,7 @@ export function Field({
         autoCapitalize={autoCapitalize}
         autoCorrect={autoCorrect}
         keyboardType={keyboardType}
+        maxLength={maxLength}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={tokens.color.textSubtle}

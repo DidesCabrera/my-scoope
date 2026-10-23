@@ -154,7 +154,7 @@ def build_calendarized_dailyplan_detail(*, day, user, header: dict) -> dict:
         main_card=MainCardUI(
             main_id=day.id,
             titulo=TitleUI(
-                name=snapshot.get("name") or "Plan diario",
+                name=snapshot.get("name") or "Minuta diaria",
                 label="DailyPlan",
                 icon="clipboard-list",
                 category="en plan",

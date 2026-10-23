@@ -233,7 +233,7 @@ def build_tabs(active_key: str, *, saved: bool = False) -> list[ComparatorTab]:
     specs = [
         ("foods", "Alimentos", "carrot", "food_comparator"),
         ("meals", "Comidas", "utensils", "meal_comparator"),
-        ("dailyplans", "Planes", "clipboard-list", "dailyplan_comparator"),
+        ("dailyplans", "Minutas", "clipboard-list", "dailyplan_comparator"),
     ]
 
     return [

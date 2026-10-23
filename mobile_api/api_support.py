@@ -63,7 +63,7 @@ def pinned_dailyplan_error(exc: ValueError) -> MobileAPIError:
     conflicts = {"pinned_dailyplan_active_calendarization", "pinned_dailyplan_idempotency_conflict"}
     return MobileAPIError(
         code=code,
-        message="No pudimos actualizar el plan diario fijado.",
+        message="No pudimos actualizar la minuta diaria fijada.",
         status_code=404 if code in not_found else 409 if code in conflicts else 422,
     )
 

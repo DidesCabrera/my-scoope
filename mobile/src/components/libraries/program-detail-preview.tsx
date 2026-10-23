@@ -54,7 +54,7 @@ function ProgramDaysGrid({ onAssignDailyPlan, onOpenDailyPlan, onOpenMeal, onRem
   const [selectedDay, setSelectedDay] = useState<number | null>(() => filledDays[0] ? 0 : null);
   return (
     <ProgramDaySelector
-      accessibilityLabel={`Planes diarios de Semana ${week}`}
+      accessibilityLabel={`Minutas diarias de Semana ${week}`}
       allowEmptySelection={Boolean(onAssignDailyPlan)}
       days={labels.map((label, index) => ({ filled: filledDays[index], id: index, label }))}
       onSelect={(day) => {
@@ -113,7 +113,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
           {hasPlans ? <StructuralIndicators
             entity="program"
             indicators={[
-              { icon: "dailyPlan", label: "planes diarios", value: filledDaysCount },
+              { icon: "dailyPlan", label: "minutas diarias", value: filledDaysCount },
               { icon: "meal", label: "comidas", value: weekData?.meals_count ?? 0 },
               { icon: "food", label: "alimentos", value: weekData?.foods_count ?? weekData?.foods?.length ?? 0 },
             ]}
@@ -143,7 +143,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
       </> : null}
 
       <View style={styles.dailyPlansSectionHeading}>
-        <SectionHeading icon={<ClipboardList color={tokens.color.entityIconForeground} size={18} />} title={`Planes diarios en Semana ${week}`} />
+        <SectionHeading icon={<ClipboardList color={tokens.color.entityIconForeground} size={18} />} title={`Minutas diarias en Semana ${week}`} />
       </View>
       <ProgramDaysGrid key={`${week}:${weekData?.days.map((day) => Number(Boolean(day.plan_name))).join("") ?? "demo"}`} onAssignDailyPlan={onAssignDailyPlan} onOpenDailyPlan={onOpenDailyPlan} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onSaveDailyPlan={onSaveDailyPlan} week={week} weekData={weekData} />
 
@@ -206,7 +206,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
           entity="program"
           indicators={showProgramStructure ? [
             { label: "semanas", value: `${weeksCount} SEMANAS` },
-            { icon: "dailyPlan", label: "planes asignados", value: plansCount },
+            { icon: "dailyPlan", label: "minutas asignadas", value: plansCount },
             { icon: "food", label: "alimentos", value: foodsCount },
           ] : undefined}
           title={item?.name ?? "Programa de recomposición"}
@@ -225,7 +225,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
   const planningHeader = (
     <ProgramSectionHeader
       icon={Calendar1}
-      subtitle="Recorre las semanas de tu programa y conoce los planes diarios y alimentos de cada una de ellas."
+      subtitle="Recorre las semanas de tu programa y conoce las minutas diarias y los alimentos de cada una."
       title="Planificación Semanal"
     />
   );

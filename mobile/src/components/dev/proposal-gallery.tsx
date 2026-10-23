@@ -20,7 +20,7 @@ const meals: MealPanelItem[] = [
 const proposalSummaryExample: ProposalSummary = {
   actions: [],
   attachment_kind: "dailyplan",
-  attachment_label: "Plan diario propuesto",
+  attachment_label: "Minuta diaria propuesta",
   attachment_name: "Día de entrenamiento",
   created_at: "2026-10-07T14:30:00-03:00",
   id: 101,
@@ -28,8 +28,8 @@ const proposalSummaryExample: ProposalSummary = {
   source: "ai",
   status: "pending_review",
   status_label: "Pendiente de revisión",
-  summary: "Crear un plan diario alto en proteína para un día de entrenamiento.",
-  title: "Propuesta de plan diario",
+  summary: "Crear una minuta diaria alta en proteína para un día de entrenamiento.",
+  title: "Propuesta de minuta diaria",
 };
 
 export function ProposalGallery() {

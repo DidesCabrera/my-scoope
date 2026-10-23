@@ -8,7 +8,7 @@ test("mobile libraries expose native creation for all four entities", async () =
   const create = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-create-screen.tsx"), "utf8");
   const route = await readFile(path.resolve(process.cwd(), "src/app/libraries/create.tsx"), "utf8");
 
-  for (const label of ["Crear alimento", "Crear comida", "Crear plan diario", "Crear programa"]) {
+  for (const label of ["Crear alimento", "Crear comida", "Crear minuta diaria", "Crear programa"]) {
     assert.match(list, new RegExp(label));
   }
   assert.match(list, /pathname: "\/libraries\/create"/);
@@ -20,7 +20,7 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.match(create, /action: \{ label: "Cancelar"/);
   assert.match(create, /<Card accent=\{tokens\.color\[entity\]\}/);
   assert.match(create, /<EntityIcon entity=\{entity\} size="compact" \/>/);
-  for (const identity of ["Nuevo alimento", "Nueva comida", "Nuevo plan diario", "Nuevo programa"]) {
+  for (const identity of ["Nuevo alimento", "Nueva comida", "Nuevo minuta diaria", "Nuevo programa"]) {
     assert.match(create, new RegExp(identity));
   }
   assert.match(create, /const mealCreationContext = entity === "meal" && returnHref && pickerEntryHref && pickerKind/);

@@ -18,9 +18,9 @@ test("program week detail presents weekly charts before the day selector and foo
   const foods = weekDetail.indexOf("Alimentos en Semana");
   const foodPanels = weekDetail.indexOf("<GroupedFoodsCard");
   const weeklyChart = weekDetail.indexOf("<WeekMetricPreview");
-  const dailyPlansHeading = weekDetail.indexOf("Planes diarios en Semana");
+  const dailyPlansHeading = weekDetail.indexOf("Minutas diarias en Semana");
 
-  assert.doesNotMatch(weekDetail, /Planes diarios esta semana|\$\{filledDaysCount\} asignados/);
+  assert.doesNotMatch(weekDetail, /Minutas diarias esta semana|\$\{filledDaysCount\} asignados/);
   assert.ok(daysGrid >= 0);
   assert.ok(weeklyChart < daysGrid);
   assert.ok(weeklyChart < dailyPlansHeading);
@@ -30,7 +30,7 @@ test("program week detail presents weekly charts before the day selector and foo
   assert.match(weekDetail, /<GroupedFoodsCard title=\{`Alimentos semana \$\{week\}`\}/);
   assert.ok(source.indexOf('{ key: "calories", label: "Calorías" }') < source.indexOf('{ key: "all", label: "Todos" }'));
   assert.match(source, /weekChartSection: \{ gap: tokens\.spacing\.md/);
-  assert.ok(!weekDetail.includes('<SectionDivider spacing="compact" tone="soft" />\n        <SectionHeading detail={`${filledDaysCount} asignados`} title="Planes diarios esta semana"'));
+  assert.ok(!weekDetail.includes('<SectionDivider spacing="compact" tone="soft" />\n        <SectionHeading detail={`${filledDaysCount} asignados`} title="Minutas diarias esta semana"'));
 });
 
 test("grouped foods card owns the food identity and existing comparison panel", async () => {

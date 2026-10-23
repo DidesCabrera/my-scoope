@@ -1,13 +1,13 @@
 {% extends "notas/base.html" %}
 
 {% block content %}
-  <h1>{{ author.username }} · Daily Plans</h1>
+  <h1>{{ author.username }} · Minutas diarias</h1>
 
   {% if dailyplans %}
     {% for dailyplan in dailyplans %}
       {% include "components/card_dailyplan.html" with obj=dailyplan %}
     {% endfor %}
   {% else %}
-    <p>No public daily plans yet.</p>
+    <p>Todavía no hay minutas diarias públicas.</p>
   {% endif %}
 {% endblock %}

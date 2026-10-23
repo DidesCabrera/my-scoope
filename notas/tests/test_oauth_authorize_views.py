@@ -309,6 +309,28 @@ class OAuthAuthorizeViewsTests(TestCase):
             authorization_code.used_at,
         )
 
+    def test_consent_uses_requested_loopback_port_and_binds_code_to_it(self):
+        self.oauth_client.redirect_uris = [
+            "http://127.0.0.1:64173/callback/codex"
+        ]
+        self.oauth_client.save(update_fields=["redirect_uris"])
+        self.client.force_login(self.user)
+        requested_uri = "http://127.0.0.1:49830/callback/codex"
+        params = self._authorize_params(redirect_uri=requested_uri)
+
+        consent = self.client.get(reverse("oauth_authorize"), data=params)
+        self.assertEqual(consent.status_code, 200)
+
+        response = self.client.post(
+            reverse("oauth_authorize_consent"), data=params
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith(f"{requested_uri}?"))
+        self.assertEqual(
+            OAuthAuthorizationCode.objects.get().redirect_uri,
+            requested_uri,
+        )
+
     def test_consent_redirects_to_exact_registered_native_scheme(self):
         mobile_client = OAuthClient.objects.get(client_id="myscoope-ios")
         self.assertEqual(mobile_client.client_name, "My Scoope iOS")

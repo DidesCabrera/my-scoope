@@ -74,7 +74,7 @@ GOAL_CHOICES = (
 )
 
 REQUESTED_ENTITY_CHOICES = (
-    ("daily_plan", "Plan diario"),
+    ("daily_plan", "Minuta diaria"),
     ("program", "Programa semanal"),
 )
 
@@ -251,7 +251,7 @@ class NutritionBrief:
 
     @property
     def requested_entity_label(self) -> str:
-        return _choice_label(REQUESTED_ENTITY_CHOICES, self.requested_entity, "Plan diario")
+        return _choice_label(REQUESTED_ENTITY_CHOICES, self.requested_entity, "Minuta diaria")
 
     @property
     def subject_source_label(self) -> str:

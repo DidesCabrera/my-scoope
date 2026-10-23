@@ -188,7 +188,7 @@ def generate_nutrition_onboarding_plan(*, user) -> NutritionProposal:
             "fat_target": round(estimate["fat"]),
             "protein_per_kg_target": estimate["protein_per_kg"],
         },
-        raw_prompt="Generar el primer plan diario desde el onboarding.",
+        raw_prompt="Generar la primera minuta diaria desde el onboarding.",
     )
     source = create_nutrition_brief_proposal(user=user, brief=brief, source=NutritionProposal.SOURCE_SYSTEM)
     generated = generate_dailyplan_proposal_from_brief_proposal(

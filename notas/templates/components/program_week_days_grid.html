@@ -15,7 +15,7 @@
         aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
       {% else %}
         aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-empty-card"
-        aria-label="{{ day.day_label }}: sin plan diario"
+        aria-label="{{ day.day_label }}: sin minuta diaria"
       {% endif %}
     >
       <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>
@@ -30,7 +30,7 @@
           <span>{{ day.dailyplan.name }}</span>
         </div>
       {% else %}
-        <button type="button" class="program-day-cell__add js-program-slot-open" aria-label="Agregar plan diario a {{ day.day_label }}">
+        <button type="button" class="program-day-cell__add js-program-slot-open" aria-label="Agregar minuta diaria a {{ day.day_label }}">
           <i data-lucide="plus" class="program-day-cell__add-icon"></i>
         </button>
       {% endif %}

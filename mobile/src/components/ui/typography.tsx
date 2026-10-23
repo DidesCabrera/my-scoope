@@ -13,7 +13,7 @@ function iconForSectionTitle(title: string): SectionTitleIcon | undefined {
   if (normalizedTitle.startsWith("alimentos en est")) return "foods";
   if (normalizedTitle === "planificación semanal") return "planning";
   if (normalizedTitle.startsWith("detalle de cada comida")) return "meals";
-  if (normalizedTitle === "planes diarios esta semana") return "dailyPlans";
+  if (normalizedTitle === "minutas diarias esta semana") return "dailyPlans";
   return undefined;
 }
 

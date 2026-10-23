@@ -45,15 +45,15 @@ const configs: Record<CreatableEntity, CreateConfig> = {
   dailyPlan: {
     endpoint: "/api/v1/library/daily-plans",
     guidance: "Después podrás agregar las comidas y elegir sus horarios.",
-    headerTitle: "Crear plan diario",
-    identityLabel: "Nuevo plan diario",
+    headerTitle: "Crear minuta diaria",
+    identityLabel: "Nuevo minuta diaria",
     namePlaceholder: "Un día, objetivo o tipo de jornada",
     segment: "daily-plans",
     submitLabel: "Crear y continuar",
   },
   program: {
     endpoint: "/api/v1/library/programs",
-    guidance: "El programa comenzará con una semana. Después podrás asignar planes diarios o agregar más semanas.",
+    guidance: "El programa comenzará con una semana. Después podrás asignar minutas diarias o agregar más semanas.",
     headerTitle: "Crear programa",
     identityLabel: "Nuevo programa",
     namePlaceholder: "Ej: Volumen controlado",

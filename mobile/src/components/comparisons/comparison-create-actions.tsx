@@ -26,7 +26,7 @@ export function ComparisonCreateActions({ onClose, onSelect, visible }: Props) {
           <ActionSheetActions>
             <ActionSheetAction iconNode={<EntityIcon entity="food" size="compact" />} label="Comparar alimentos" onPress={() => select("foods")} />
             <ActionSheetAction iconNode={<EntityIcon entity="meal" size="compact" />} label="Comparar comidas" onPress={() => select("meals")} />
-            <ActionSheetAction iconNode={<EntityIcon entity="dailyPlan" size="compact" />} label="Comparar planes diarios" onPress={() => select("dailyplans")} />
+            <ActionSheetAction iconNode={<EntityIcon entity="dailyPlan" size="compact" />} label="Comparar minutas diarias" onPress={() => select("dailyplans")} />
           </ActionSheetActions>
         </View>
       </SafeAreaView>

@@ -16,7 +16,7 @@ class SavedComparison(models.Model):
     KIND_CHOICES = (
         (KIND_FOODS, "Alimentos"),
         (KIND_MEALS, "Comidas"),
-        (KIND_DAILYPLANS, "Planes diarios"),
+        (KIND_DAILYPLANS, "Minutas diarias"),
     )
 
     owner = models.ForeignKey(

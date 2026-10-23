@@ -380,7 +380,7 @@ export function ProgramChildCard({
         headingLink={headingLink}
         indicators={[
           { label: "semanas", value: `${weeksCount} SEMANAS` },
-          { icon: "dailyPlan", label: "planes asignados", value: filledDaysCount },
+          { icon: "dailyPlan", label: "minutas asignadas", value: filledDaysCount },
           { icon: "food", label: "alimentos", value: foodsCount },
         ]}
         title={title}

@@ -62,7 +62,7 @@ class CulinaryPrimaryGenerationTests(TestCase):
 
     def brief(self):
         return NutritionBrief(
-            raw_prompt="Plan diario culinario",
+            raw_prompt="Minuta diaria culinario",
             requested_entity="daily_plan",
             meals_per_day=4,
             calorie_target=2300,

@@ -63,7 +63,7 @@ def _preview_response(
     title = str(snapshot.get("subject", {}).get("title", "Contenido compartido"))
     subject_label = {
         ShareResource.SubjectType.COMPARISON: "Comparación",
-        ShareResource.SubjectType.DAILY_PLAN: "Plan diario",
+        ShareResource.SubjectType.DAILY_PLAN: "Minuta diaria",
         ShareResource.SubjectType.FOOD: "Alimento",
         ShareResource.SubjectType.MEAL: "Comida",
         ShareResource.SubjectType.PROGRAM: "Programa semanal",

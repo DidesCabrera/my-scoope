@@ -26,11 +26,12 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, MealPanels } from "@/components/libraries/entity-panels";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, NativeMeasurementField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
+import { Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
-import { portionGrams, scaleFoodNutrition } from "./food-portion-nutrition";
+import { FoodPortionField } from "./food-portion-field";
+import { defaultFoodPortionSelection, foodPortionHouseholdAmount, foodPortionMetricAmount, householdMeasureDisplayLabel, portionGrams, restoredFoodPortionSelection, scaleFoodNutrition, type FoodPortionMeasure } from "./food-portion-nutrition";
 import { PickerCardAction } from "./picker-card-action";
 import { buildCompositionPickerPayload } from "./composition-picker-payload";
 import { PickerEntryTabs } from "./picker-entry-tabs";
@@ -50,6 +51,11 @@ type PickerOption = {
   panel?: LibraryItem["panel"];
   subtitle?: string;
   quantityUnit?: "g" | "ml";
+  defaultPortion?: number | null;
+  householdAmount?: number | null;
+  householdMeasure?: string;
+  householdMeasureLabel?: string;
+  householdDetail?: string;
 };
 
 type PickerConfig = {
@@ -86,20 +92,20 @@ const configs: Record<PickerKind, PickerConfig> = {
   },
   "dailyplan-to-program": {
     createEntity: "dailyPlan",
-    createLabel: "Crear plan diario",
-    title: "Asignar plan diario",
-    searchLabel: "Buscar plan diario",
-    searchPlaceholder: "Escribe el nombre de un plan diario",
+    createLabel: "Crear minuta diaria",
+    title: "Asignar minuta diaria",
+    searchLabel: "Buscar minuta diaria",
+    searchPlaceholder: "Escribe el nombre de una minuta diaria",
     targetSlug: "programs",
     previewPath: (id) => `/api/v1/library/programs/${id}/daily-plan-picker/preview`,
     commitPath: (id) => `/api/v1/library/programs/${id}/daily-plan-picker/commit`,
   },
   "dailyplan-to-calendarized-day": {
     createEntity: "dailyPlan",
-    createLabel: "Crear plan diario",
-    title: "Asignar plan al programa activo",
-    searchLabel: "Buscar plan diario",
-    searchPlaceholder: "Escribe el nombre de un plan diario",
+    createLabel: "Crear minuta diaria",
+    title: "Asignar minuta al programa activo",
+    searchLabel: "Buscar minuta diaria",
+    searchPlaceholder: "Escribe el nombre de una minuta diaria",
     targetSlug: "programs",
     previewPath: (id) => `/api/v1/program/days/${id}/daily-plan-picker/preview`,
     commitPath: (id) => `/api/v1/program/days/${id}/daily-plan-picker/commit`,
@@ -159,7 +165,7 @@ function AssignmentDayOption({ day, occupied, selected, onPress }: { day: (typeo
   return (
     <WeekDayCell label={day.short}>
       <Pressable
-        accessibilityLabel={`${day.label}: ${selected ? occupied ? "reemplazar plan diario" : "asignar plan diario" : occupied ? "plan diario asignado" : "agregar plan diario"}`}
+        accessibilityLabel={`${day.label}: ${selected ? occupied ? "reemplazar minuta diaria" : "asignar minuta diaria" : occupied ? "minuta diaria asignada" : "agregar minuta diaria"}`}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: selected }}
         hitSlop={compact ? 2 : undefined}
@@ -193,6 +199,11 @@ function optionFromFood(item: FoodPickerOption): PickerOption {
     foodVisualKey: item.visual_key,
     indicators: [{ label: "base nutricional", value: `100 ${item.quantity_unit}` }],
     quantityUnit: item.quantity_unit,
+    defaultPortion: item.default_portion,
+    householdAmount: item.household_amount,
+    householdMeasure: item.household_measure,
+    householdMeasureLabel: item.household_measure_label,
+    householdDetail: item.household_detail,
     nutrition: {
       calories: item.total_kcal,
       protein: { grams: item.protein, allocation: item.protein_allocation, per_kilogram: null },
@@ -275,6 +286,7 @@ export function CompositionPickerScreen({
   const [options, setOptions] = useState<PickerOption[]>([]);
   const [selected, setSelected] = useState<PickerOption | null>(null);
   const [quantity, setQuantity] = useState("100");
+  const [portionMeasure, setPortionMeasure] = useState<FoodPortionMeasure>("metric");
   const [hour, setHour] = useState("08:00");
   const [note, setNote] = useState("");
   const [noteEditing, setNoteEditing] = useState(false);
@@ -316,9 +328,28 @@ export function CompositionPickerScreen({
       .then(([target, option]) => {
         if (!active) return;
         setSelected(option);
+        if (option?.entity === "food") {
+          const initialPortion = defaultFoodPortionSelection({
+            defaultPortion: option.defaultPortion,
+            householdAmount: option.householdAmount,
+            householdMeasure: option.householdMeasure,
+            householdMeasureLabel: option.householdMeasureLabel,
+          });
+          setQuantity(initialPortion.quantity);
+          setPortionMeasure(initialPortion.measure);
+        }
         if (kind === "food-to-meal" && relationId && target && "panel" in target && target.panel.kind === "foods") {
           const relation = target.panel.foods.find((item) => item.relation_id === relationId);
-          if (relation) setQuantity(String(relation.quantity));
+          if (relation && option?.entity === "food") {
+            const restored = restoredFoodPortionSelection(relation.quantity, relation.portion_display_quantity, relation.portion_display_measure, {
+              defaultPortion: option.defaultPortion,
+              householdAmount: option.householdAmount,
+              householdMeasure: option.householdMeasure,
+              householdMeasureLabel: option.householdMeasureLabel,
+            });
+            setQuantity(restored.quantity);
+            setPortionMeasure(restored.measure);
+          }
         }
         if (kind === "meal-to-dailyplan" && relationId && target && "panel" in target && target.panel.kind === "meals") {
           const slot = target.panel.meals.find((item) => item.relation_id === relationId);
@@ -330,7 +361,16 @@ export function CompositionPickerScreen({
         }
         if (kind === "food-to-calendarized-meal" && relationKey && target && "plan_snapshot" in target) {
           const food = target.plan_snapshot?.meals?.find((item) => item.key === mealKey)?.foods?.find((item) => item.key === relationKey);
-          if (food?.quantity_g != null) setQuantity(String(food.quantity_g));
+          if (food?.quantity_g != null && option?.entity === "food") {
+            const restored = restoredFoodPortionSelection(food.quantity_g, food.portion_display_quantity, food.portion_display_measure, {
+              defaultPortion: option.defaultPortion,
+              householdAmount: option.householdAmount,
+              householdMeasure: option.householdMeasure,
+              householdMeasureLabel: option.householdMeasureLabel,
+            });
+            setQuantity(restored.quantity);
+            setPortionMeasure(restored.measure);
+          }
         }
       })
       .catch((nextError) => active && setError(userFacingError(nextError)))
@@ -364,23 +404,41 @@ export function CompositionPickerScreen({
   }, [apiRequest, isFoodPicker, isMealPicker, query, retryNonce, selectedId, status]));
 
   const hourValid = !isMealPicker || /^([01]\d|2[0-3]):[0-5]\d$/.test(hour);
-  const quantityValid = !isFoodPicker || portionGrams(quantity) > 0;
+  const selectedPortionConversion = useMemo(() => ({
+    defaultPortion: selected?.defaultPortion,
+    householdAmount: selected?.householdAmount,
+    householdMeasure: selected?.householdMeasure,
+    householdMeasureLabel: selected?.householdMeasureLabel,
+  }), [selected]);
+  const metricQuantity = isFoodPicker && selected
+    ? foodPortionMetricAmount(quantity, portionMeasure, selectedPortionConversion)
+    : portionGrams(quantity);
+  const quantityValid = !isFoodPicker || metricQuantity > 0;
   const configurationValid = Boolean(selected) && hourValid && quantityValid && (kind !== "dailyplan-to-program" || dayNumbers.length > 0);
   const configuredSelection = useMemo(() => {
     if (!selected || !isFoodPicker) return selected;
-    const grams = portionGrams(quantity);
+    const grams = metricQuantity;
     const quantityUnit = selected.quantityUnit ?? "g";
+    const householdEquivalent = foodPortionHouseholdAmount(grams, selectedPortionConversion);
+    const selectedHouseholdAmount = portionMeasure === "household" ? portionGrams(quantity) : householdEquivalent;
+    const selectedHouseholdLabel = selected.householdMeasureLabel
+      ? householdMeasureDisplayLabel(selected.householdMeasureLabel, selectedHouseholdAmount)
+      : undefined;
+    const selectedPortionLabel = portionMeasure === "household" && selected.householdMeasureLabel
+      ? `${quantity.replace(".", ",")} ${selectedHouseholdLabel} (${grams.toLocaleString("es-CL", { maximumFractionDigits: 2 })} ${quantityUnit})`
+      : `${grams.toLocaleString("es-CL", { maximumFractionDigits: 2 })} ${quantityUnit}${householdEquivalent > 0 && selectedHouseholdLabel ? ` (${householdEquivalent.toLocaleString("es-CL", { maximumFractionDigits: 2 })} ${selectedHouseholdLabel})` : ""}`;
     return {
       ...selected,
-      indicators: [{ label: "porción seleccionada", value: `${grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} ${quantityUnit}` }],
-      nutrition: scaleFoodNutrition(selected.nutrition, quantity),
+      indicators: [{ label: "porción seleccionada", value: selectedPortionLabel }],
+      nutrition: scaleFoodNutrition(selected.nutrition, String(grams)),
     };
-  }, [isFoodPicker, quantity, selected]);
+  }, [isFoodPicker, metricQuantity, portionMeasure, quantity, selected, selectedPortionConversion]);
 
   const payload = useMemo(() => {
     if (!selected) return null;
-    return buildCompositionPickerPayload({ contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, relationKey, selectedId: selected.id, weekNumber });
-  }, [contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, relationKey, selected, weekNumber]);
+    const displayMeasure = portionMeasure === "household" ? selected.householdMeasure : selected.quantityUnit;
+    return buildCompositionPickerPayload({ contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity: isFoodPicker ? String(metricQuantity) : quantity, portionDisplayQuantity: isFoodPicker ? quantity : undefined, portionDisplayMeasure: isFoodPicker ? displayMeasure : undefined, relationId, relationKey, selectedId: selected.id, weekNumber });
+  }, [contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, isFoodPicker, kind, metricQuantity, note, portionMeasure, quantity, relationId, relationKey, selected, weekNumber]);
   const payloadKey = payload ? JSON.stringify(payload) : null;
   const previewing = configurationValid && previewRequestKey === payloadKey;
   const occupiedDayNumbers = useMemo(() => {
@@ -490,7 +548,7 @@ export function CompositionPickerScreen({
   const mealTimeCard = isMealPicker && selected ? (
     <View style={styles.mealFixedTime}>
       <Card style={styles.fixedControlCard}>
-        <NativeDateTimeField containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setPreview(null); }} value={hour} />
+        <NativeDateTimeField confirmationColor={tokens.color.meal} containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel initiallyExpanded inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={setHour} value={hour} />
         {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
       </Card>
     </View>
@@ -507,23 +565,25 @@ export function CompositionPickerScreen({
             <Pencil color={tokens.color.textMuted} size={19} />
           </Pressable>
         </View>
-        {noteEditing ? <TextInput autoCapitalize="sentences" onChangeText={(value) => { setNote(value); setPreview(null); }} placeholder="Ej. antes de entrenar" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.noteInput} value={note} /> : null}
+        {noteEditing ? <TextInput autoCapitalize="sentences" onChangeText={setNote} placeholder="Ej. antes de entrenar" placeholderTextColor={tokens.color.textSubtle} selectionColor={tokens.color.interactivePrimary} style={styles.noteInput} value={note} /> : null}
       </View>
     </Card>
   ) : null;
   const foodPortionCard = isFoodPicker && selected ? (
     <View style={styles.foodFixedPortion}>
       <Card style={styles.fixedControlCard}>
-        <NativeMeasurementField
-          containerStyle={styles.compactControlField}
-          iconColor={tokens.color.textMain}
-          inlineLabel
-          inputStyle={styles.mealTimeValue}
-          kind="portion"
+        <FoodPortionField
+          equivalentMetricAmount={metricQuantity}
+          householdDefaultAmount={selected.householdAmount}
+          householdDetail={selected.householdDetail}
+          householdMeasureLabel={selected.householdMeasureLabel}
+          initiallyExpanded
           label="Porción del alimento"
-          labelStyle={styles.mealTimeLabel}
+          measure={portionMeasure}
+          metricDefaultAmount={selected.defaultPortion}
+          metricUnit={selected.quantityUnit ?? "g"}
           onChange={setQuantity}
-          unit={selected.quantityUnit ?? "g"}
+          onMeasureChange={setPortionMeasure}
           value={quantity}
         />
       </Card>
@@ -552,7 +612,7 @@ export function CompositionPickerScreen({
     <ConfirmationState
       busy={submitting}
       confirmLabel="Reemplazar y asignar"
-      message={`Los días ${preview.replacements.join(", ")} ya tienen un plan. Se reemplazarán por ${preview.selection.name}.`}
+      message={`Los días ${preview.replacements.join(", ")} ya tienen una minuta. Se reemplazarán por ${preview.selection.name}.`}
       onCancel={() => setConfirming(false)}
       onConfirm={() => void commit(true)}
       title="Confirmar reemplazos"
@@ -561,7 +621,7 @@ export function CompositionPickerScreen({
     <Button
       bleed
       disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
-      label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
+      label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar minuta diaria"}
       loading={submitting}
       onPress={() => preview.confirmation_required && kind !== "dailyplan-to-program" ? setConfirming(true) : void commit(preview.confirmation_required)}
     />
@@ -598,7 +658,7 @@ export function CompositionPickerScreen({
 }
 
 const styles = StyleSheet.create({
-  compactControlField: { borderRadius: tokens.radius.md, marginHorizontal: 0, marginRight: -8, minHeight: 36, width: 120 },
+  compactControlField: { borderRadius: tokens.radius.md, marginHorizontal: 0, marginRight: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 36, width: 120 },
   compactFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   configurationLabel: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   configurationSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },

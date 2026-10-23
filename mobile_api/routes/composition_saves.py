@@ -52,4 +52,4 @@ def program_dailyplan_save_to_library(request, program_id: int, week_number: int
             )
         )
     except CommercialLimitReached as exc:
-        raise MobileAPIError(str(exc), "El plan actual no permite guardar más planes diarios.", 403) from exc
+        raise MobileAPIError(str(exc), "El plan actual no permite guardar más minutas diarias.", 403) from exc

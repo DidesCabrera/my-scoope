@@ -65,7 +65,10 @@ def meal_food_update(request, meal_id: int, meal_food_id: int, payload: MealFood
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     return success(
         update_food_in_meal(
-            user=request.auth.user, meal_id=meal_id, meal_food_id=meal_food_id, quantity=payload.quantity
+            user=request.auth.user,
+            meal_id=meal_id,
+            meal_food_id=meal_food_id, quantity=payload.quantity,
+            portion_display_quantity=payload.portion_display_quantity, portion_display_measure=payload.portion_display_measure,
         )
     )
 
@@ -185,6 +188,8 @@ def meal_food_picker_preview(request, meal_id: int, payload: FoodPickerInput):
             quantity=payload.quantity,
             dailyplan_id=payload.dailyplan_id,
             dailyplan_meal_id=payload.dailyplan_meal_id,
+            portion_display_quantity=payload.portion_display_quantity,
+            portion_display_measure=payload.portion_display_measure,
         )
     )
 
@@ -210,6 +215,8 @@ def meal_food_picker_commit(request, meal_id: int, payload: FoodPickerInput):
             food_id=payload.food_id,
             meal_food_id=payload.meal_food_id,
             quantity=payload.quantity,
+            portion_display_quantity=payload.portion_display_quantity,
+            portion_display_measure=payload.portion_display_measure,
         )
     )
 

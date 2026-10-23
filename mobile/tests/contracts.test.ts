@@ -319,8 +319,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(programDetail, /<Card(?: muted)? style=\{styles\.weekCard\}>/);
   assertSourceMatch(programDetail, /<ProgramDaySelector/);
   assertSourceMatch(programDetail, /<ProgramWeekTabs/);
-  assertSourceMatch(programDetail, /<ProgramSectionHeader[\s\S]*icon=\{Calendar1\}[\s\S]*subtitle="Recorre las semanas de tu programa y conoce los planes diarios y alimentos de cada una de ellas\."[\s\S]*title="Planificación Semanal"/);
-  assertSourceDoesNotMatch(programDetail, /Planes diarios esta semana/);
+  assertSourceMatch(programDetail, /<ProgramSectionHeader[\s\S]*icon=\{Calendar1\}[\s\S]*subtitle="Recorre las semanas de tu programa y conoce las minutas diarias y los alimentos de cada una\."[\s\S]*title="Planificación Semanal"/);
+  assertSourceDoesNotMatch(programDetail, /Minutas diarias esta semana/);
   assertSourceDoesNotMatch(programDetail, /MajorSectionTitle/);
   assertSourceMatch(programDetail, /<ProgramWeekHeading week=\{week\} \/>/);
   assertSourceMatch(programDetail, /weekContent: \{[^}]*paddingTop: tokens\.spacing\.md \+ tokens\.spacing\.sm/);
@@ -377,7 +377,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedPlanning, /apiRequest<CalendarizedDayDetail>/);
   assertSourceMatch(calendarizedPlanning, /<CalendarizedDailyPlanCard/);
   assertSourceMatch(calendarizedPlanning, /preferredCalendarizedDay\(days, week, localDate\(\)\)/);
-  assertSourceMatch(calendarizedPlanning, /Día sin plan\. No hay un plan diario asignado para esta fecha\./);
+  assertSourceMatch(calendarizedPlanning, /Día sin plan\. No hay una minuta diaria asignada para esta fecha\./);
   assertSourceMatch(calendarizedPlanning, /isToday: day\.calendar_date === localDate\(\)/);
   assertSourceDoesNotMatch(calendarizedPlanning, /SectionDivider|SectionHeading/);
   assertSourceMatch(calendarizedPlanning, /<ProgramSectionHeader icon=\{Carrot\} subtitle="Revisa las cantidades de alimentos de esta semana; conoce y compara su aporte nutricional real en el programa\." title="Alimentos en esta semana" \/>/);
@@ -566,7 +566,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgram, /Array\.from\(\{ length: weekCount \}/);
   assertSourceMatch(activeProgram, /<ProgramWeekTabs activeWeek=\{activeWeek\}/);
   assertSourceMatch(activeProgram, /<CalendarizedProgramPlanning days=\{programDays\} initialWeek=\{activeWeek\} key=\{`\$\{calendarization\.id\}:\$\{activeWeek\}`\} showWeekTabs=\{false\} weeksData=\{program\.weeks\} \/>/);
-  assertSourceMatch(activeProgram, /<ProgramActiveOverview[\s\S]*<ProgramSectionHeader icon=\{Calendar1\} subtitle="Recorre las semanas de tu programa y conoce los planes diarios y alimentos de cada una de ellas\." title="Planificación Semanal" \/>/);
+  assertSourceMatch(activeProgram, /<ProgramActiveOverview[\s\S]*<ProgramSectionHeader icon=\{Calendar1\} subtitle="Recorre las semanas de tu programa y conoce las minutas diarias y los alimentos de cada una\." title="Planificación Semanal" \/>/);
   assertSourceDoesNotMatch(activeProgram, /SectionDivider|SectionHeading|planningDivider/);
   assertSourceDoesNotMatch(activeProgram, /DetailLinkRow|Ver plantilla original/);
   assertSourceMatch(activeProgram, /onOpenOriginalProgram=\{calendarization\?\.source_program_id \? \(\) => router\.push/);
@@ -588,7 +588,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedPlanningActive, /compactMonthLabel\(day\.calendar_date\)/);
   assertSourceMatch(calendarizedPlanningActive, /left\.calendar_date\.localeCompare\(right\.calendar_date\)/);
   assertSourceMatch(calendarizedPlanningActive, /pickerHref\("dailyplan-to-calendarized-day", \{ dayId:/);
-  assertSourceMatch(calendarizedPlanningActive, /label="Cambiar plan diario"/);
+  assertSourceMatch(calendarizedPlanningActive, /label="Cambiar minuta diaria"/);
 
   const activeProgramOverview = await readTestFile(
     path.resolve(process.cwd(), "src/components/programs/program-active-card.tsx"),
@@ -618,7 +618,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activeProgramKpis, /kcalSurface|kcalBorder|periodBorder|periodText/);
   assertSourceMatch(activeProgramKpis, /indicatorsSurfaceReset:\{[^}]*padding:tokens\.spacing\.xs/);
   assertSourceMatch(activeProgramKpis, /standaloneTopInset:\{marginTop:tokens\.spacing\.sm\}/);
-  assertSourceMatch(activeProgramKpis, /Planes diarios recorridos/);
+  assertSourceMatch(activeProgramKpis, /Minutas diarias recorridas/);
   assertSourceMatch(activeProgramKpis, /Cumplimiento comidas/);
   assertSourceMatch(activeProgramKpis, /indicator:\{[^}]*paddingHorizontal:tokens\.spacing\.md[^}]*paddingVertical:tokens\.spacing\.lg/);
   assertSourceMatch(activeProgramKpis, /function ProgressRing/);
@@ -657,7 +657,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activateProgram, /pathname: "\/libraries\/create", params: \{ entity: "program" \}/);
   assertSourceMatch(activateProgram, /<ProgramChildCard[\s\S]*openActionLabel="Seleccionar"/);
   assertSourceDoesNotMatch(activateProgram, /openActionLabel="Cambiar selección"/);
-  assertSourceMatch(activateProgram, /<SectionHeading title="Configura la selección" \/>[\s\S]*<NotificationToggle[\s\S]*label="Aviso inicial del plan diario"[\s\S]*<NotificationToggle[\s\S]*label="Avisos según la hora de cada comida"/);
+  assertSourceMatch(activateProgram, /<SectionHeading title="Configura la selección" \/>[\s\S]*<NotificationToggle[\s\S]*label="Aviso inicial de la minuta diaria"[\s\S]*<NotificationToggle[\s\S]*label="Avisos según la hora de cada comida"/);
   assertSourceMatch(activateProgram, /label="Calendarizar programa"/);
   assertSourceDoesNotMatch(activateProgram, /<Card accent=\{tokens\.color\.program\}>/);
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
@@ -748,7 +748,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(homeLibraryGrid, /<Bookmark[^>]*>[\s\S]*Mis librerías/);
   assertSourceMatch(homeLibraryGrid, /flexWrap: "wrap"/);
   assertSourceMatch(homeLibraryGrid, /Mis Programas\\nSemanales/);
-  assertSourceMatch(homeLibraryGrid, /Mis Planes\\nDiarios/);
+  assertSourceMatch(homeLibraryGrid, /Mis minutas\\ndiarias/);
   assertSourceMatch(homeLibraryGrid, /Mis Comidas/);
   assertSourceMatch(homeLibraryGrid, /Mis Alimentos/);
   assertSourceMatch(homeLibraryGrid, /pathname: "\/libraries\/create", params: \{ entity: entry\.entity \}/);
@@ -770,12 +770,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(libraryDetail, /<ProgramDetailPreview[\s\S]*?scrollable\s*\/>/);
   assertSourceMatch(libraryDetail, /FoodPanels, GroupedFoodsCard, MealPanels.*from "@\/components\/panels"/);
   assertSourceMatch(libraryDetail, /<ProgramSectionHeader icon=\{Utensils\}[^>]*title="Detalle de cada Comida" \/><DailyPlanMealCards/);
-  assertSourceMatch(libraryDetail, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Alimentos en este plan diario" \/><GroupedFoodsCard/);
+  assertSourceMatch(libraryDetail, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Alimentos en esta minuta diaria" \/><GroupedFoodsCard/);
   assertSourceMatch(libraryDetail, /hasMealTimeContext[\s\S]*?\? \{ icon: "clock", label: "Cambiar hora"/);
   assertSourceMatch(libraryDetail, /eyebrowAccessory=\{item\.entity === "meal" && hasMealTimeContext && contextTime \? <HeaderMetadataChip kind="time" value=\{contextTime\} \/> : undefined\}/);
   assertSourceMatch(libraryDetail, /item\?\.entity === "dailyPlan"[\s\S]*?\{ icon: "pin", label: isCalendarPlan \? "Quitar del calendario de hoy" : "Asignar al calendario de hoy"/);
   assertSourceMatch(libraryDetail, /item\?\.entity === "program"[\s\S]*?\{ icon: "calendar-clock", label: "Calendarizar este programa"/);
-  assertSourceMatch(libraryDetail, /Alert\.alert\([\s\S]*?\? "¿Asignar este plan a hoy\?" : "¿Quitar este plan de hoy\?"/);
+  assertSourceMatch(libraryDetail, /Alert\.alert\([\s\S]*?\? "¿Asignar esta minuta a hoy\?" : "¿Quitar esta minuta de hoy\?"/);
   assertSourceMatch(libraryDetail, /<Button bleed label="Calendarizar este programa"/);
   assertSourceMatch(libraryDetail, /<Button bleed label=\{isCalendarPlan \? "Quitar del calendario de hoy" : "Asignar al calendario de hoy"\}/);
   assertSourceMatch(libraryDetail, /mealTimeInMenu=\{false\}/);
@@ -788,7 +788,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/app/program/days/[id].tsx"),
     "utf8",
   );
-  assertSourceMatch(calendarizedDayDetail, /<GroupedFoodsCard items=\{foods\} onOpenItem=[\s\S]*?title="Alimentos plan diario"/);
+  assertSourceMatch(calendarizedDayDetail, /<GroupedFoodsCard items=\{foods\} onOpenItem=[\s\S]*?title="Alimentos de la minuta diaria"/);
   assertSourceMatch(calendarizedDayDetail, /<MealPanels\s+editing=\{\{/);
   assertSourceMatch(calendarizedDayDetail, /relationKey: meal\.id/);
   assertSourceMatch(calendarizedDayDetail, /\/meals\/order/);
@@ -802,7 +802,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
   assertSourceMatch(calendarizedDayDetail, /<ProgramSectionHeader icon=\{Utensils\}[^>]*title="Detalle de cada Comida"/);
   assertSourceMatch(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
-  assertSourceMatch(calendarizedDayDetail, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Alimentos en este plan diario"[\s\S]*<GroupedFoodsCard items=\{foods\} onOpenItem=/);
+  assertSourceMatch(calendarizedDayDetail, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Alimentos en esta minuta diaria"[\s\S]*<GroupedFoodsCard items=\{foods\} onOpenItem=/);
 
   assertSourceMatch(sharedEntityPanels, /function PanelItemName<T extends FoodPanelItem \| MealPanelItem>/);
   assertSourceMatch(sharedEntityPanels, /<View style=\{styles\.foodIdentity\}><View style=\{styles\.foodIdentityTitleRow\}><FoodVisualIcon[^>]*size="panel"[\s\S]*?<\/View>\{showNutritionSummary \? <NutritionSummary/);
@@ -869,14 +869,14 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(programDailyPlan, /day \? \(day\.meals \?\? \[\]\)\.map\(mealPanelItem\) : meals/);
-  assertSourceMatch(programDailyPlan, /const openDetailLabel = `Ir al detalle del plan de \$\{dayLabel\}`/);
+  assertSourceMatch(programDailyPlan, /const openDetailLabel = `Ir al detalle de la minuta de \$\{dayLabel\}`/);
   assertSourceMatch(programDailyPlan, /label=\{openDetailLabel\}/);
   assertSourceMatch(programDailyPlan, /headingLink=\{openDetail \? \{ label: openDetailLabel, onPress: openDetail \} : undefined\}/);
   assertSourceMatch(programDailyPlan, /router\.push\(`\/libraries\/daily-plans\/\$\{day\.dailyplan_id\}` as Href\)/);
   assertSourceMatch(programDailyPlan, /const openDetail = onOpen \?\? \(day\?\.dailyplan_id \?/);
   assertSourceMatch(programDailyPlan, /actions=\{\(/);
   assertSourceDoesNotMatch(programDailyPlan, /accessory=\{\(/);
-  assertSourceDoesNotMatch(programDailyPlan, /kpiVariant="nested"|subtitle="Plan diario asignado"|label: "plan asignado"/);
+  assertSourceDoesNotMatch(programDailyPlan, /kpiVariant="nested"|subtitle="Minuta diaria asignada"|label: "plan asignado"/);
   assertSourceMatch(programDailyPlan, /label: "posición"/);
   assertSourceMatch(programDailyPlan, /icon: "meal", label: "comidas"/);
   assertSourceMatch(programDailyPlan, /onOpenItem=\{\(meal\) =>/);
@@ -1089,7 +1089,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /annualPrice|\$3\.990|\$6\.990/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton label="Continuar con Free"/);
-  assertSourceMatch(journey, /primary="Generar primer plan"/);
+  assertSourceMatch(journey, /primary="Generar primera minuta"/);
   assertSourceMatch(journey, /storyboardSummaryLayout \? nutritionGoalSection : estimationInformationSection[\s\S]*storyboardSummaryLayout \? maintenanceSection : nutritionGoalSection[\s\S]*storyboardSummaryLayout \? estimationInformationSection : maintenanceSection/);
   assertSourceMatch(journey, /!storyboardSummaryLayout \? <Pressable accessibilityRole="button" onPress=\{controller\.onAdjust \?\? noop\}/);
   assertSourceMatch(journey, /summaryGridPanelBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
@@ -1115,11 +1115,11 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /index >= 7 && index <= 12 && styles\.profileScreen/);
   assertSourceMatch(journey, /profileScreen: \{ paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18 - 32 \}/);
   assertSourceMatch(journey, /index === 6 \? <CreditContinueButton label=\{primary\} \/> : <Button label=\{primary\} loading=\{controller\.busy\} onPress=\{controller\.onNext \?\? noop\} \/>/);
-  assertSourceMatch(journey, /<EntityDetailPage[\s\S]*eyebrow="PLAN DEL DÍA"[\s\S]*title="Plan equilibrado · Día 1"/);
+  assertSourceMatch(journey, /<EntityDetailPage[\s\S]*eyebrow="MINUTA DEL DÍA"[\s\S]*title="Minuta equilibrada · Día 1"/);
   assertSourceMatch(journey, /<MealPanels items=\{generatedDailyPlanMeals\} showEditTab=\{false\} \/>/);
-  assertSourceMatch(journey, /<EntityDetailSection title="Composición plan diario">/);
+  assertSourceMatch(journey, /<EntityDetailSection title="Composición de la minuta diaria">/);
   assertSourceMatch(typography, /normalizedTitle\.startsWith\("composición"\)[^\n]*return "comparison"/);
-  assertSourceMatch(journey, /<ProgramSectionHeader icon=\{Utensils\} subtitle="Revisa el detalle de comida en este plan diario\. Conoce sus alimentos, compáralos, y ve su impacto real en la comida\." title="Detalle de cada Comida" \/>[\s\S]*<DailyPlanMealDetailList items=\{generatedDailyPlanMealDetails\} \/>/);
+  assertSourceMatch(journey, /<ProgramSectionHeader icon=\{Utensils\} subtitle="Revisa el detalle de comida en esta minuta diaria\. Conoce sus alimentos, compáralos, y ve su impacto real en la comida\." title="Detalle de cada Comida" \/>[\s\S]*<DailyPlanMealDetailList items=\{generatedDailyPlanMealDetails\} \/>/);
   assertSourceDoesNotMatch(journey, /subtitle="Creado a partir de tu objetivo y nivel de actividad"/);
   assertSourceMatch(journey, /id="daily-plan-credit-button"/);
   assertSourceMatch(journey, /<Text style=\{\[styles\.creditContinueLabel, chip && styles\.creditContinueLabelChip\]\}>\{label\}<\/Text>/);

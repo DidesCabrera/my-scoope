@@ -12,7 +12,7 @@ export const commercialPlanBenefits: Record<"Basic" | "Free" | "Pro", PlanBenefi
   Free: [
     { entity: "food", label: "Alimentos privados", value: "Ilimitados" },
     { entity: "meal", label: "Comidas", value: "Hasta 12" },
-    { entity: "dailyPlan", label: "Planes diarios", value: "Hasta 4" },
+    { entity: "dailyPlan", label: "Minutas diarias", value: "Hasta 4" },
     { entity: "program", label: "Programas", value: "1 de hasta 2 semanas" },
     { icon: Inbox, label: "Compartidos", value: "1 incorporación al mes" },
     { icon: Scale, label: "Comparaciones", value: "Sin guardadas" },
@@ -21,7 +21,7 @@ export const commercialPlanBenefits: Record<"Basic" | "Free" | "Pro", PlanBenefi
   Basic: [
     { entity: "food", label: "Alimentos", value: "Ilimitados" },
     { entity: "meal", label: "Comidas", value: "Ilimitadas" },
-    { entity: "dailyPlan", label: "Planes diarios", value: "Ilimitados" },
+    { entity: "dailyPlan", label: "Minutas diarias", value: "Ilimitados" },
     { entity: "program", label: "Programas", value: "Ilimitados · hasta 12 semanas" },
     { icon: Inbox, label: "Compartidos", value: "Incorporaciones ilimitadas" },
     { icon: Scale, label: "Comparaciones", value: "Ilimitadas" },

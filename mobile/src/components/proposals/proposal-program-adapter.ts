@@ -244,7 +244,7 @@ function weekDraft(program: ProposalProgram, week: number): WeekDraft {
       day_number: dayNumber,
       day_label: dayLabel,
       dailyplan_id: null,
-      plan_name: proposedDay.dailyplan.name || `Plan diario ${dayNumber}`,
+      plan_name: proposedDay.dailyplan.name || `Minuta diaria ${dayNumber}`,
       nutrition: libraryNutrition(totals),
       meals: proposedDay.dailyplan.meals.map((meal, mealIndex) => mealPanelItem(meal, mealIndex, totals.calories, referenceWeight, `proposed-program:week:${week}:day:${dayNumber}`)),
     };
@@ -302,7 +302,7 @@ export function proposalProgramLibraryItem(program: ProposalProgram): LibraryIte
     nutrition: libraryNutrition(programNutrition),
     indicators: [
       { icon: "week", label: "semanas", value: program.duration_weeks },
-      { icon: "dailyPlan", label: "planes asignados", value: program.days.length },
+      { icon: "dailyPlan", label: "minutas asignadas", value: program.days.length },
       { icon: "food", label: "alimentos", value: uniqueFoods.size },
     ],
     panel: { kind: "weeks", foods: [], meals: [], weeks },

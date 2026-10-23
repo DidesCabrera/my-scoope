@@ -297,7 +297,7 @@ export default function TodayScreen() {
           <HomeSectionTitle>Registra tus comidas en un nuevo Plan</HomeSectionTitle>
           <Card accent={tokens.color.dailyPlan}>
             <Button label="Crear un plan para hoy" loading={creatingTodayPlan} onPress={() => void createTodayPlan()} />
-            <Button label="Elegir desde Mis Planes Diarios" onPress={() => router.push("/libraries/daily-plans" as Href)} variant="secondary" />
+            <Button label="Elegir desde Mis minutas diarias" onPress={() => router.push("/libraries/daily-plans" as Href)} variant="secondary" />
           </Card>
         </>
       ) : null}

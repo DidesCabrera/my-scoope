@@ -235,6 +235,18 @@ class MealFood(models.Model):
 
     quantity = models.FloatField(help_text="Amount in the food's configured portion unit")
 
+    portion_display_quantity = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Quantity exactly as selected by the user before metric conversion.",
+    )
+
+    portion_display_measure = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Household measure or metric unit selected by the user.",
+    )
+
     order = models.PositiveIntegerField(default=0)
 
     class Meta:

@@ -81,6 +81,7 @@ def record_weight(
     *,
     measured_on: date | None = None,
     measured_time: time | None = None,
+    comment: str = "",
     source: str = WeightLog.SOURCE_MANUAL,
 ) -> WeightLog:
     """Create or update the user's body-weight metric for a specific date."""
@@ -95,6 +96,7 @@ def record_weight(
         defaults={
             "weight_kg": weight_kg,
             "time": measured_time,
+            "comment": comment.strip(),
             "source": source,
         },
     )

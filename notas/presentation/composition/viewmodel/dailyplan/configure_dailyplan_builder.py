@@ -24,7 +24,7 @@ def build_dailyplan_configure_vm(dailyplan, user, viewmode):
             fields=[
                 ConfigureFieldUI(
                     name="is_public",
-                    label="Share this daily plan in explore",
+                    label="Compartir esta minuta diaria en Explorar",
                     value=dailyplan.is_public,
                     enabled=caps.can_publish(),
                     hint="🔒 Publishing is available for nutritionists",

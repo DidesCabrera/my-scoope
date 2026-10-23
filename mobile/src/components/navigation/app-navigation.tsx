@@ -47,6 +47,7 @@ import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/pro
 import { MyScoopeBrandLogo } from "@/components/ui/my-scoope-brand-logo";
 import { ModalBackdrop } from "@/components/ui/action-sheet-modal";
 import { HeaderMetadataChip } from "@/components/ui/product";
+import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
@@ -91,7 +92,7 @@ const secondaryPrimaryItems: NavigationSidebarItemData[] = [
 
 const libraryItems: EntitySidebarItemData[] = [
   { entity: "program", href: "/libraries/programs", label: "Mis Programas Semanales" },
-  { entity: "dailyPlan", href: "/libraries/daily-plans", label: "Mis Planes Diarios" },
+  { entity: "dailyPlan", href: "/libraries/daily-plans", label: PRODUCT_VOCABULARY_ES.dailyPlan.libraryTitle },
   { entity: "meal", href: "/libraries/meals", label: "Mis Comidas" },
   { entity: "food", href: "/libraries/foods", label: "Mis Alimentos" },
 ];
@@ -151,7 +152,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/revision") return { icon: ClipboardCheck, title: "Revisar ajuste" };
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };
   if (pathname === "/inbox") return { icon: Send, title: "Compartidos" };
-  if (pathname.startsWith("/share/")) return { icon: UserPlus, title: "Plan compartido" };
+  if (pathname.startsWith("/share/")) return { icon: UserPlus, title: "Contenido compartido" };
   if (pathname === "/subscription" || pathname === "/subscription-details") return { icon: WalletCards, title: pathname === "/subscription" ? "Suscripciones y Bolsas" : "Detalles de suscripciones y bolsas" };
   if (pathname === "/account") return { icon: UserRound, title: "Mi cuenta" };
   if (pathname === "/onboarding") return { icon: UserRound, title: "Tu ficha" };

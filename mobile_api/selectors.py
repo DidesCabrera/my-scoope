@@ -108,6 +108,8 @@ def _food_panel_item(meal_food, current_weight=None) -> dict:
         **food_visual_payload(meal_food.food),
         "quantity": _safe_number(meal_food.quantity),
         "quantity_unit": meal_food.food.portion_unit,
+        "portion_display_quantity": _safe_number(meal_food.portion_display_quantity if meal_food.portion_display_quantity is not None else meal_food.quantity),
+        "portion_display_measure": meal_food.portion_display_measure or meal_food.food.portion_unit,
         "calories": _safe_number(meal_food.total_kcal),
         "calorie_share": _safe_number(meal_food.kcal_share),
         "calorie_distribution": _calorie_distribution(meal_food.kcal_protein, meal_food.kcal_carbs, meal_food.kcal_fat),

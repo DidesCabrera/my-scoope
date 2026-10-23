@@ -25,7 +25,7 @@ const comparisonEntityColors: Record<ComparisonKind, string> = {
 const comparisonCountLabels: Record<ComparisonKind, { plural: string; singular: string }> = {
   foods: { plural: "Alimentos", singular: "Alimento" },
   meals: { plural: "Comidas", singular: "Comida" },
-  dailyplans: { plural: "Planes diarios", singular: "Plan diario" },
+  dailyplans: { plural: "Minutas diarias", singular: "Minuta diaria" },
 };
 
 function comparisonCountLabel(kind: ComparisonKind, count: number) {

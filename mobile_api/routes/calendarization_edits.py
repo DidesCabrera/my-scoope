@@ -173,6 +173,8 @@ def calendarized_meal_food_picker_preview(
             food_id=payload.food_id,
             quantity=payload.quantity,
             food_snapshot_key=payload.food_snapshot_key,
+            portion_display_quantity=payload.portion_display_quantity,
+            portion_display_measure=payload.portion_display_measure,
         )
     )
 
@@ -195,6 +197,8 @@ def calendarized_meal_food_picker_commit(
             food_id=payload.food_id,
             quantity=payload.quantity,
             food_snapshot_key=payload.food_snapshot_key,
+            portion_display_quantity=payload.portion_display_quantity,
+            portion_display_measure=payload.portion_display_measure,
         )
     )
 

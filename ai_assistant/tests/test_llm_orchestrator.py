@@ -55,7 +55,7 @@ def _selection_reason(
 
 @override_settings(AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED=False)
 class ExternalLLMOrchestratorTests(SimpleTestCase):
-    def _request(self, content="Necesito un plan diario de 2200 kcal"):
+    def _request(self, content="Necesito una minuta diaria de 2200 kcal"):
         return AssistantTurnRequest(
             user_message=AssistantMessage(role=AssistantMessageRole.USER, content=content),
             history=[
@@ -158,7 +158,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
                 json.dumps(
                     {
                         "assistant_message": {
-                            "content": "Estoy preparando tu plan diario; todavía faltan datos."
+                            "content": "Estoy preparando tu minuta diaria; todavía faltan datos."
                         },
                         "intent": {"name": "answer_question", "confidence": 0.7},
                         "tool_requests": [],
@@ -192,7 +192,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
 
         self.assertIn("No tengo suficiente contexto", response.assistant_text)
         self.assertIn("?", response.assistant_text)
-        self.assertNotIn("plan diario", response.assistant_text)
+        self.assertNotIn("minuta diaria", response.assistant_text)
         self.assertTrue(response.metadata["clarification_grounding_guard_applied"])
         self.assertTrue(response.metadata["outcome_trace"]["expected_outcome_met"])
 
@@ -313,7 +313,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             ),
         )
         message = (
-            "Para un futuro plan diario orientado a ganar músculo, usa mi ficha "
+            "Para una futura minuta diaria orientada a ganar músculo, usa mi ficha "
             "personal como base y registra en esta conversación: 38 años, hombre, "
             "85 kg, 188 cm, fuerza 3 veces por semana con actividad alta, 4 comidas "
             "y algo simple. Por ahora solo deja los datos listos."
@@ -378,7 +378,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
                         "intent": {
                             "name": "create_dailyplan_proposal",
                             "confidence": 0.88,
-                            "summary": "Crear propuesta de plan diario",
+                            "summary": "Crear propuesta de minuta diaria",
                         },
                         "tool_requests": [
                             {
@@ -559,7 +559,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             user_message=AssistantMessage(
                 role=AssistantMessageRole.USER,
                 content=(
-                    "Crea ahora un plan diario de 2400 kcal con 30% proteína, "
+                    "Crea ahora una minuta diaria de 2400 kcal con 30% proteína, "
                     "50% carbohidratos y 20% grasas para un hombre de 38 años, "
                     "80 kg, 180 cm, actividad alta, fuerza 4 veces por semana y 4 comidas."
                 ),
@@ -756,7 +756,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
 
         client = ScriptedOpenAIClient()
         response = ExternalLLMOrchestrator(llm_client=client).continue_turn(
-            self._request("Quiero un plan diario para ganar masa muscular.")
+            self._request("Quiero una minuta diaria para ganar masa muscular.")
         )
 
         self.assertEqual(len(client.requests), 3)

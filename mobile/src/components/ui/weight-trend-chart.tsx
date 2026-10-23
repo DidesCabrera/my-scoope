@@ -4,8 +4,9 @@ import Svg, { Circle, Defs, LinearGradient, Line, Path, Stop } from "react-nativ
 
 import type { WeightItem } from "@/api/types";
 import { tokens } from "@/design/tokens";
+import { localDateValue } from "@/presentation/date-time-values";
 
-import { sortedWeightTrend } from "./weight-trend-values";
+import { dailyWeightTrend, sortedWeightTrend } from "./weight-trend-values";
 
 const CHART_HEIGHT = 176;
 const PLOT_TOP = 12;
@@ -23,7 +24,8 @@ function decimal(value: number): string {
 
 export function WeightTrendChart({ items }: { items: WeightItem[] }) {
   const [width, setWidth] = useState(0);
-  const trend = useMemo(() => sortedWeightTrend(items), [items]);
+  const measurements = useMemo(() => sortedWeightTrend(items), [items]);
+  const trend = useMemo(() => dailyWeightTrend(measurements, localDateValue()), [measurements]);
 
   if (!trend.length) {
     return <Text style={styles.empty}>La tendencia aparecerá cuando registres tu primera medición.</Text>;
@@ -72,8 +74,8 @@ export function WeightTrendChart({ items }: { items: WeightItem[] }) {
           })}
           {areaPath ? <Path d={areaPath} fill="url(#weight-trend-area)" /> : null}
           {coordinates.length > 1 ? <Path d={linePath} fill="none" stroke={tokens.color.protein} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} /> : null}
-          {coordinates.map(({ x, y }, index) => (
-            <Circle key={trend[index].id} cx={x} cy={y} fill={tokens.color.surfaceMuted} r={4} stroke={tokens.color.protein} strokeWidth={2.5} />
+          {coordinates.map(({ x, y }, index) => trend[index].estimated ? null : (
+            <Circle key={trend[index].measured_on} cx={x} cy={y} fill={tokens.color.surfaceMuted} r={4} stroke={tokens.color.protein} strokeWidth={2.5} />
           ))}
         </Svg>
         <View pointerEvents="none" style={styles.yLabels}>

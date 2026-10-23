@@ -20,7 +20,7 @@ test("assistant cards expose semantic eyebrows and keep dates below titles", asy
   assert.match(proposalListCard, /formatCompactDate\(proposal\.created_at\)[\s\S]*<ProposalStatusBadge status=\{proposalCardStatus\(proposal\.status\)\} \/>[\s\S]*<ProposalTypeBadge kind=\{proposal\.attachment_kind\} \/>/);
   assert.match(proposalListCard, /proposalBadges: \{ flexDirection: "row", flexWrap: "wrap"/);
   assert.match(proposalCard, /program: \{ color: tokens\.color\.program, label: "Programa semanal" \}/);
-  assert.match(proposalCard, /dailyplan: \{ color: tokens\.color\.dailyPlan, label: "Plan diario" \}/);
+  assert.match(proposalCard, /dailyplan: \{ color: tokens\.color\.dailyPlan, label: "Minuta diaria" \}/);
   assert.match(proposalCard, /meal: \{ color: tokens\.color\.meal, label: "Comida" \}/);
   assert.match(proposalCard, /food: \{ color: tokens\.color\.food, label: "Alimento" \}/);
   assert.match(proposalCard, /kind === "brief" \? styles\.typeNeutral : \{ backgroundColor: `\$\{presentation\.color\}1A`, borderColor: presentation\.color \}/);

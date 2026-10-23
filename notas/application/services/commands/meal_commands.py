@@ -5,7 +5,7 @@ from django.db import transaction
 
 from notas.application.commercial.limits import require_new_workspace_item
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
-from notas.domain.models import Meal, MealFood
+from notas.domain.models import Food, Meal, MealFood
 
 # ==================================================
 # MEAL HELPERS
@@ -27,7 +27,9 @@ def clone_meal_foods(source: Meal, target: Meal) -> None:
         MealFood(
             meal=target,
             food=mf.food,
-            quantity=mf.quantity
+            quantity=mf.quantity,
+            portion_display_quantity=mf.portion_display_quantity,
+            portion_display_measure=mf.portion_display_measure,
         )
         for mf in source.meal_food_set.all()
     ])
@@ -405,10 +407,19 @@ def update_meal_food(
     meal_food: MealFood,
     quantity,
     food_id=None,
+    portion_display_quantity=None,
+    portion_display_measure="",
 ) -> MealFoodUpdateResult:
+    fallback_measure = (
+        Food.objects.only("portion_unit").get(pk=int(food_id)).portion_unit
+        if food_id
+        else meal_food.food.portion_unit
+    )
     meal_food.quantity = quantity
+    meal_food.portion_display_quantity = portion_display_quantity if portion_display_quantity is not None else quantity
+    meal_food.portion_display_measure = portion_display_measure or fallback_measure
 
-    update_fields = ["quantity"]
+    update_fields = ["quantity", "portion_display_quantity", "portion_display_measure"]
 
     if food_id:
         meal_food.food_id = int(food_id)
@@ -448,6 +459,8 @@ def create_meal_food(
     meal: Meal,
     food,
     quantity,
+    portion_display_quantity=None,
+    portion_display_measure="",
 ) -> MealFoodCreateResult:
     next_order = meal.meal_food_set.count() + 1
 
@@ -455,6 +468,8 @@ def create_meal_food(
         meal=meal,
         food=food,
         quantity=quantity,
+        portion_display_quantity=portion_display_quantity if portion_display_quantity is not None else quantity,
+        portion_display_measure=portion_display_measure or food.portion_unit,
         order=next_order,
     )
 

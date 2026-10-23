@@ -669,7 +669,7 @@ def _diet_with_profile_tool_led_scenario() -> ConversationReplayScenario:
                     tool_request(
                         "update_proposal_preferences",
                         {"updates": {"requested_entity": "daily_plan"}},
-                        reason="Registrar que el usuario pidió una dieta/plan diario.",
+                        reason="Registrar que el usuario pidió una dieta/minuta diaria.",
                     ),
                 ),
             ),
@@ -1030,13 +1030,13 @@ def _change_direction_scenario() -> ConversationReplayScenario:
             "instead of treating the first interpretation as a fixed questionnaire state."
         ),
         user_messages=(
-            "Quiero un plan diario para ganar masa muscular.",
+            "Quiero una minuta diaria para ganar masa muscular.",
             "Mejor hagamos un programa semanal para bajar grasa.",
             "Déjalo en 3 comidas al día y avancemos sin más preferencias por ahora.",
         ),
         provider_responses=(
             assistant_envelope(
-                "Perfecto, tomo como punto de partida un plan diario para ganar masa muscular.",
+                "Perfecto, tomo como punto de partida una minuta diaria para ganar masa muscular.",
                 tool_requests=(
                     tool_request(
                         TOOL_UPDATE_PROPOSAL_PREFERENCES,
@@ -1046,7 +1046,7 @@ def _change_direction_scenario() -> ConversationReplayScenario:
                 ),
             ),
             assistant_envelope(
-                "Perfecto, tomo como punto de partida un plan diario para ganar masa muscular."
+                "Perfecto, tomo como punto de partida una minuta diaria para ganar masa muscular."
             ),
             assistant_envelope(
                 "Entendido. Cambio la dirección a un programa semanal orientado a bajar grasa.",

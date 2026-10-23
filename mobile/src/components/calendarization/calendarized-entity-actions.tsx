@@ -44,9 +44,11 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
     <View style={styles.form}>
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       <NativeDateTimeField
+        confirmationColor={tokens.color.meal}
         containerStyle={styles.timeInput}
         iconColor={tokens.color.textMain}
         iconInLabel
+        initiallyExpanded
         inlineLabel
         inputStyle={styles.timeValue}
         label="Hora de la comida"

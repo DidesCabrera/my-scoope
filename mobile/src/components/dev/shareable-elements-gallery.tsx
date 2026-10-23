@@ -31,7 +31,7 @@ const previews: Record<SocialCardPreview, PreviewData> = {
     sectionTitle: "Alimentos", source: require("../../assets/dev/share-card-meal.png"), summary: "3 alimentos", title: "Desayuno proteico",
   },
   dailyPlan: {
-    calories: 1924, carbs: 219.6, fat: 55.8, label: "Plan diario", protein: 137.2,
+    calories: 1924, carbs: 219.6, fat: 55.8, label: "Minuta diaria", protein: 137.2,
     rows: [
       { detail: "08:00", items: [{ label: "Avena integral", value: "80 g" }, { label: "Yogur griego", value: "180 g" }, { label: "Plátano", value: "120 g" }], title: "Desayuno proteico", value: "544 kcal" },
       { detail: "13:30", items: [{ label: "Pechuga de pollo", value: "180 g" }, { label: "Arroz integral", value: "200 g" }, { label: "Ensalada mediterránea", value: "180 g" }], title: "Almuerzo", value: "720 kcal" },
@@ -152,7 +152,7 @@ function ShareLinkDestinationPreview({ kind, preview }: { kind: SocialCardPrevie
   const foods = foodItems(preview);
   const meals = mealItems(preview);
   const mealDetails = mealDetailItems(preview);
-  const sharedEyebrow = kind === "meal" ? "Comida compartida" : kind === "food" ? "Alimento compartido" : kind === "dailyPlan" ? "Plan diario compartido" : "Programa compartido";
+  const sharedEyebrow = kind === "meal" ? "Comida compartida" : kind === "food" ? "Alimento compartido" : kind === "dailyPlan" ? "Minuta diaria compartido" : "Programa compartido";
   if (kind === "program") {
     return (
       <View style={styles.destinationSurface}>

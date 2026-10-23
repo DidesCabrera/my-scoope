@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { portionGrams, scaleFoodNutrition } from "../src/components/pickers/food-portion-nutrition";
+import {
+  convertFoodPortionAmount,
+  defaultFoodPortionSelection,
+  foodPortionHouseholdAmount,
+  foodPortionMetricAmount,
+  householdMeasureDisplayLabel,
+  portionGrams,
+  restoredFoodPortionSelection,
+  scaleFoodNutrition,
+} from "../src/components/pickers/food-portion-nutrition";
 
 const baseNutrition = {
   calories: 200,
@@ -27,4 +36,36 @@ test("food portion accepts locale decimal commas and clears KPI values for inval
     carbs: { allocation: 0, grams: 0 },
     fat: { allocation: 0, grams: 0 },
   });
+});
+
+test("household measures convert the selected amount to the metric nutrition quantity", () => {
+  const egg = { defaultPortion: 65, householdAmount: 1, householdMeasure: "unit", householdMeasureLabel: "unidad" };
+  assert.equal(foodPortionMetricAmount("2", "household", egg), 130);
+  assert.equal(foodPortionMetricAmount("65", "metric", egg), 65);
+  assert.equal(foodPortionHouseholdAmount(130, egg), 2);
+  assert.equal(householdMeasureDisplayLabel("unidad", 1), "unidad");
+  assert.equal(householdMeasureDisplayLabel("unidad", 1.25), "unidades");
+  assert.equal(householdMeasureDisplayLabel("taza", 2), "taza");
+
+  const oats = { defaultPortion: 40, householdAmount: 0.5, householdMeasure: "cup", householdMeasureLabel: "taza" };
+  assert.equal(foodPortionMetricAmount("1", "household", oats), 80);
+});
+
+test("new foods prefer the proposed household measure and fall back to the metric unit", () => {
+  assert.deepEqual(defaultFoodPortionSelection({ defaultPortion: 65, householdAmount: 1, householdMeasure: "unit", householdMeasureLabel: "unidad" }), {
+    measure: "household",
+    quantity: "1",
+  });
+  assert.deepEqual(defaultFoodPortionSelection({ defaultPortion: 30, householdAmount: null, householdMeasure: "", householdMeasureLabel: "" }), {
+    measure: "metric",
+    quantity: "30",
+  });
+});
+
+test("changing the measure preserves the real portion and editing restores the chosen household value", () => {
+  const egg = { defaultPortion: 65, householdAmount: 1, householdMeasure: "unit", householdMeasureLabel: "unidad" };
+  assert.equal(convertFoodPortionAmount("2", "household", "metric", egg), "130");
+  assert.equal(convertFoodPortionAmount("130", "metric", "household", egg), "2");
+  assert.deepEqual(restoredFoodPortionSelection(130, 2, "unit", egg), { measure: "household", quantity: "2" });
+  assert.deepEqual(restoredFoodPortionSelection(130, 130, "g", egg), { measure: "metric", quantity: "130" });
 });

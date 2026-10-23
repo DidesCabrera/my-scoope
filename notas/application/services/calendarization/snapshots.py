@@ -73,7 +73,11 @@ def snapshot_content_hash(payload: dict) -> str:
     return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
 
 
-def build_food_snapshot(*, food, quantity: float, key: str) -> dict:
+def build_food_snapshot(
+    *, food, quantity: float, key: str,
+    portion_display_quantity: float | None = None,
+    portion_display_measure: str = "",
+) -> dict:
     factor = float(quantity) / 100
     protein = float(food.protein or 0) * factor
     carbs = float(food.carbs or 0) * factor
@@ -84,6 +88,10 @@ def build_food_snapshot(*, food, quantity: float, key: str) -> dict:
         "name": food.name,
         "quantity_g": _round(quantity),
         "quantity_unit": food.portion_unit,
+        "portion_display_quantity": _round(
+            portion_display_quantity if portion_display_quantity is not None else quantity
+        ),
+        "portion_display_measure": portion_display_measure or food.portion_unit,
         "protein_g": _round(protein),
         "carbs_g": _round(carbs),
         "fat_g": _round(fat),
@@ -111,6 +119,8 @@ def build_meal_snapshot(
             food=meal_food.food,
             quantity=meal_food.quantity,
             key=f"source_meal_food:{meal_food.id}",
+            portion_display_quantity=meal_food.portion_display_quantity,
+            portion_display_measure=meal_food.portion_display_measure,
         )
         for meal_food in meal.meal_food_set.all()
     ]
@@ -151,6 +161,12 @@ def build_dailyplan_snapshot_from_dailyplan(
                     "name": food.name,
                     "quantity_g": _round(meal_food.quantity),
                     "quantity_unit": food.portion_unit,
+                    "portion_display_quantity": _round(
+                        meal_food.portion_display_quantity
+                        if meal_food.portion_display_quantity is not None
+                        else meal_food.quantity
+                    ),
+                    "portion_display_measure": meal_food.portion_display_measure or food.portion_unit,
                     "protein_g": _round(meal_food.protein),
                     "carbs_g": _round(meal_food.carbs),
                     "fat_g": _round(meal_food.fat),

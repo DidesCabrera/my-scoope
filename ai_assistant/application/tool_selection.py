@@ -733,7 +733,7 @@ def _reviewable_proposal_tool_relevant(tool_name: str, *, user_text: str) -> boo
     mentions_meal = any(keyword in user_text for keyword in ("meal", "comida"))
     mentions_plan = any(
         keyword in f" {user_text} "
-        for keyword in ("dailyplan", "plan diario", " plan ")
+        for keyword in ("dailyplan", "minuta", "minuta diaria", "plan diario", " plan ")
     )
     if mentions_meal and not mentions_plan:
         return tool_name in _MEAL_PROPOSAL_TOOLS

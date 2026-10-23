@@ -337,7 +337,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "after the user explicitly asks to review them."
             ),
             user_messages=(
-                "Para un futuro plan diario orientado a ganar músculo, usa mi ficha personal como base y registra en esta conversación: 38 años, hombre, 85 kg, 188 cm, fuerza 3 veces por semana con actividad alta, 4 comidas y algo simple. Por ahora solo deja los datos listos.",
+                "Para una futura minuta diaria orientada a ganar músculo, usa mi ficha personal como base y registra en esta conversación: 38 años, hombre, 85 kg, 188 cm, fuerza 3 veces por semana con actividad alta, 4 comidas y algo simple. Por ahora solo deja los datos listos.",
                 "Antes de avanzar, muéstrame las preferencias de alimentación y de propuesta que usarás.",
             ),
             expected_final_brief={
@@ -399,7 +399,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
             key="cambio_de_direccion",
             description="Accept an explicit change of goal and requested entity without defending the earlier path.",
             user_messages=(
-                "Quiero un plan diario para ganar masa muscular.",
+                "Quiero una minuta diaria para ganar masa muscular.",
                 "Mejor hagamos un programa semanal para bajar grasa.",
                 "Déjalo en 3 comidas al día y avancemos sin más preferencias por ahora.",
             ),
@@ -446,7 +446,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
             user_messages=(
                 "Consulta mi biblioteca de alimentos y responde exactamente con el formato TOTAL: N.",
                 "Consulta mi biblioteca de comidas y responde exactamente con el formato TOTAL: N.",
-                "Consulta mi biblioteca de planes diarios y responde exactamente con el formato TOTAL: N.",
+                "Consulta mi biblioteca de minutas diarias y responde exactamente con el formato TOTAL: N.",
                 "Consulta mi biblioteca de programas y responde exactamente con el formato TOTAL: N.",
             ),
             required_tool_names=("query_workspace",),

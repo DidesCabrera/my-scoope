@@ -122,7 +122,7 @@ class SidebarBuilderTests(TestCase):
             [group["label"] for group in sidebar[1]["groups"]],
             [
                 "Mis Programas Semanales",
-                "Mis Planes Diarios",
+                "Mis minutas diarias",
                 "Mis Comidas",
                 "Mis Alimentos",
             ],

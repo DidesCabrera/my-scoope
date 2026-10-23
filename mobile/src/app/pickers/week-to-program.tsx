@@ -92,7 +92,7 @@ export default function WeekToProgramPickerRoute() {
 
   const assignedPlans = filledDays(week ?? undefined);
   const weekIndicators = week && assignedPlans > 0 ? [
-    { icon: "dailyPlan" as const, label: "planes diarios", value: assignedPlans },
+    { icon: "dailyPlan" as const, label: "minutas diarias", value: assignedPlans },
     { icon: "meal" as const, label: "comidas", value: week.meals_count ?? 0 },
     { icon: "food" as const, label: "alimentos", value: week.foods_count ?? week.foods?.length ?? 0 },
   ] : undefined;

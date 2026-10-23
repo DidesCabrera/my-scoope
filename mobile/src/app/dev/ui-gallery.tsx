@@ -272,7 +272,7 @@ export default function UiGalleryScreen() {
             <KeyValueTable items={[
               { icon: <EntityIcon entity="food" size="benefit" />, label: "Alimentos privados", value: "Ilimitados" },
               { icon: <EntityIcon entity="meal" size="benefit" />, label: "Comidas", value: "Hasta 12" },
-              { icon: <EntityIcon entity="dailyPlan" size="benefit" />, label: "Planes diarios", value: "Hasta 4" },
+              { icon: <EntityIcon entity="dailyPlan" size="benefit" />, label: "Minutas diarias", value: "Hasta 4" },
             ]} />
           </Card>
           <Card>
@@ -280,7 +280,7 @@ export default function UiGalleryScreen() {
             <KeyValueTable items={[
               { label: "Alimentos privados", value: "Ilimitados" },
               { label: "Comidas", value: "Hasta 12" },
-              { label: "Planes diarios", value: "Hasta 4" },
+              { label: "Minutas diarias", value: "Hasta 4" },
             ]} />
           </Card>
           <NutritionFactsGallery />
@@ -334,7 +334,7 @@ export default function UiGalleryScreen() {
             weeksCount={2}
           />
           <SectionTitle detail="Identidad + colección + cantidad" title="Encabezados de páginas de lista" />
-          <CollectionPageHeader count={8} entity="dailyPlan" title="Planes diarios" />
+          <CollectionPageHeader count={8} entity="dailyPlan" title="Minutas diarias" />
           <CollectionPageHeader count={14} entity="meal" title="Comidas" />
           <SectionPageHeader count={6} countLabel="conversaciones" section="chat" title="Asistente Nutricional" />
           <SectionPageHeader count={4} countLabel="propuestas" section="proposal" title="Propuestas" />
@@ -496,9 +496,9 @@ export default function UiGalleryScreen() {
                 />
                 <CurrentWeekSection localDate="2026-09-01" />
                 <SectionDivider spacing="compact" tone="soft" />
-                <Text style={styles.calendarExampleLabel}>PROGRAMA · PLANES DIARIOS</Text>
+                <Text style={styles.calendarExampleLabel}>PROGRAMA · MINUTAS DIARIAS</Text>
                 <ProgramDaySelector
-                  accessibilityLabel={`Ejemplo de planes diarios a ${preview.width} puntos`}
+                  accessibilityLabel={`Ejemplo de minutas diarias a ${preview.width} puntos`}
                   allowEmptySelection
                   days={programDayExamples}
                   onSelect={(day) => setSelectedProgramDay(day.id)}
@@ -538,7 +538,7 @@ export default function UiGalleryScreen() {
             }}
             onBack={() => undefined}
             title="Día de entrenamiento">
-            <EntityDetailSection title="Composición plan diario">
+            <EntityDetailSection title="Composición de la minuta diaria">
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
             <SectionDivider />

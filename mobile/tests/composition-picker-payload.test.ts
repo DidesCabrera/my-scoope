@@ -66,3 +66,21 @@ test("food portions use decimal commas consistently in KPI and commit payloads",
     quantity: 125.5,
   });
 });
+
+test("food payloads preserve the visible household selection alongside metric quantity", () => {
+  assert.deepEqual(buildCompositionPickerPayload({
+    ...defaults,
+    kind: "food-to-meal",
+    quantity: "130",
+    portionDisplayQuantity: "2",
+    portionDisplayMeasure: "unit",
+  }), {
+    dailyplan_id: undefined,
+    dailyplan_meal_id: undefined,
+    food_id: 77,
+    meal_food_id: undefined,
+    quantity: 130,
+    portion_display_quantity: 2,
+    portion_display_measure: "unit",
+  });
+});

@@ -21,6 +21,10 @@ test("composition pickers use independent native routes and one shared flow", as
     path.resolve(process.cwd(), "src/components/pickers/composition-picker-payload.ts"),
     "utf8",
   );
+  const portionField = await readFile(
+    path.resolve(process.cwd(), "src/components/pickers/food-portion-field.native.tsx"),
+    "utf8",
+  );
   matches(picker, /mode: "back"/);
   matches(picker, /stickyHeaderIndices=\{\[0\]\}/);
   matches(picker, /stickyHeaderIndices=\{kind === "dailyplan-to-program" \? \[0\] : undefined\}/);
@@ -29,7 +33,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /<SearchField/);
   matches(picker, /if \(!selectedId\) \{/);
   matches(picker, /<PickerEntryTabs/);
-  for (const createLabel of ["Crear alimento", "Crear comida", "Crear plan diario"]) {
+  for (const createLabel of ["Crear alimento", "Crear comida", "Crear minuta diaria"]) {
     matches(picker, new RegExp(createLabel));
   }
   matches(picker, /pathname: "\/libraries\/create"/);
@@ -56,7 +60,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /\{kind === "dailyplan-to-program" \? configurationCard : null\}\s*\{selectedCard\}/);
   matches(picker, /showPanels && option\.panel\?\.kind === "foods"/);
   matches(picker, /showPanels && option\.panel\?\.kind === "meals"/);
-  matches(picker, /nutrition: scaleFoodNutrition\(selected\.nutrition, quantity\)/);
+  matches(picker, /nutrition: scaleFoodNutrition\(selected\.nutrition, String\(grams\)\)/);
   matches(picker, /label: "porción seleccionada"/);
   omits(picker, /Cambiar selección/);
   omits(picker, /<Button label="Cambiar selección"/);
@@ -70,14 +74,31 @@ test("composition pickers use independent native routes and one shared flow", as
   const impactPreview = picker.indexOf("<PickerResultCard preview={preview}");
   assert.ok(selectedCard < impactPreview);
   matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView[\s\S]*\{selectedCard\}[\s\S]*\{isMealPicker \? mealNoteCard : null\}[\s\S]*\{configurationAction \? <View style=\{styles\.scrollableAction\}>\{configurationAction\}<\/View> : null\}/);
-  matches(picker, /<NativeDateTimeField[^>]*iconInLabel[^>]*inlineLabel[^>]*mode="time"/);
-  matches(picker, /compactControlField: \{[^}]*marginHorizontal: 0[^}]*marginRight: -8[^}]*minHeight: 36[^}]*width: 120/);
+  matches(picker, /<NativeDateTimeField[^>]*confirmationColor=\{tokens\.color\.meal\}[^>]*iconInLabel[^>]*initiallyExpanded[^>]*inlineLabel[^>]*mode="time"/);
+  matches(picker, /compactControlField: \{[^}]*marginHorizontal: 0[^}]*marginRight: tokens\.layout\.reducedInset - tokens\.card\.outerPadding[^}]*minHeight: 36[^}]*width: 120/);
   matches(picker, /<NotebookPen color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
   omits(picker, /<CalendarDays|Días de la Semana \{weekNumber\}<\/Text>/);
-  matches(picker, /<NativeMeasurementField[\s\S]*containerStyle=\{styles\.compactControlField\}[\s\S]*iconColor=\{tokens\.color\.textMain\}[\s\S]*inputStyle=\{styles\.mealTimeValue\}[\s\S]*kind="portion"[\s\S]*label="Porción del alimento"[\s\S]*labelStyle=\{styles\.mealTimeLabel\}[\s\S]*unit=\{selected\.quantityUnit \?\? "g"\}[\s\S]*value=\{quantity\}/);
+  matches(picker, /<FoodPortionField[\s\S]*equivalentMetricAmount=\{metricQuantity\}[\s\S]*householdMeasureLabel=\{selected\.householdMeasureLabel\}[\s\S]*initiallyExpanded[\s\S]*label="Porción del alimento"[\s\S]*measure=\{portionMeasure\}[\s\S]*metricUnit=\{selected\.quantityUnit \?\? "g"\}[\s\S]*onMeasureChange=\{setPortionMeasure\}[\s\S]*value=\{quantity\}/);
+  matches(picker, /foodPortionMetricAmount\(quantity, portionMeasure, selectedPortionConversion\)/);
+  matches(portionField, /<Check color=\{tokens\.color\.food\}/);
+  matches(portionField, /const \[visible, setVisible\] = useState\(initiallyExpanded\)/);
+  matches(portionField, /accessibilityLabel=\{`Porción: \$\{selectorLabel\}`\}/);
+  matches(portionField, /householdMeasureDisplayLabel\(householdMeasureLabel, selectedAmount\)/);
+  omits(portionField, /accessibilityLabel=\{`(?:Cantidad|Medida):/);
+  matches(portionField, /inlinePicker: \{[^}]*marginBottom: tokens\.layout\.reducedInset - 6[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  matches(portionField, /equivalence: \{[^}]*alignSelf: "flex-end"[^}]*marginBottom: 4[^}]*marginRight: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \+ 4[^}]*marginTop: 1[^}]*textAlign: "right"/);
+  omits(portionField, /foodPortionHouseholdAmount\(equivalentMetricAmount/);
+  matches(picker, /foodPortionHouseholdAmount\(grams, selectedPortionConversion\)/);
+  matches(picker, /householdMeasureDisplayLabel\(selected\.householdMeasureLabel, selectedHouseholdAmount\)/);
+  matches(portionField, /selector: \{[^}]*marginRight: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  matches(picker, /quantity: isFoodPicker \? String\(metricQuantity\) : quantity/);
   matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView/);
   matches(picker, /foodFixedPortion: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
   omits(picker, /setQuantity\(value\); setPreview\(null\)/);
+  matches(picker, /mode="time" onChange=\{setHour\} value=\{hour\}/);
+  matches(picker, /onChangeText=\{setNote\}/);
+  omits(picker, /setHour\(value\); setPreview\(null\)/);
+  omits(picker, /setNote\(value\); setPreview\(null\)/);
   matches(picker, /setPreviewPayloadKey\(payloadKey\)/);
   matches(picker, /disabled=\{!configurationValid \|\| previewing \|\| previewPayloadKey !== payloadKey\}/);
   matches(picker, /<MacroLoadingIndicator accessibilityLabel="Actualizando previsualización" size="small" style=\{styles\.previewActivity\} \/>/);
@@ -114,7 +135,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(payload, /meal_food_id: relationId/);
   matches(picker, /Reemplazar alimento/);
   matches(picker, /target\.panel\.foods\.find\(\(item\) => item\.relation_id === relationId\)/);
-  matches(picker, /setQuantity\(String\(relation\.quantity\)\)/);
+  matches(picker, /restoredFoodPortionSelection\(relation\.quantity, relation\.portion_display_quantity, relation\.portion_display_measure/);
   matches(picker, /const detailHref = returnTo \?\?/);
   matches(picker, /pickerConfigureHref\(kind, \{ contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo/);
   matches(payload, /food_snapshot_key: relationKey/);
@@ -186,7 +207,7 @@ test("composition pickers use independent native routes and one shared flow", as
     "utf8",
   );
   matches(resultCard, /Previsualización Comida/);
-  matches(resultCard, /Previsualización Plan Diario/);
+  matches(resultCard, /Previsualización de minuta diaria/);
   matches(resultCard, /preview\.selection\.entity === "food"/);
   matches(resultCard, /projectedMeal\.foods\.map\(foodPanelItem\)/);
   matches(resultCard, /result\.entity === "week" && week/);
@@ -232,7 +253,7 @@ test("active program details expose snapshot-only composition actions after comp
   matches(dayDetail, /<Button\s+bleed\s+label="\+ Agregar Comida"/);
   matches(dayDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey, returnTo: `\/program\/days\/\$\{dayId\}` \}\)/);
   matches(dayDetail, /<Button bleed label="\+ Agregar alimento"/);
-  assert.ok(dayDetail.indexOf('title="Composición plan diario"') < dayDetail.indexOf('label="+ Agregar Comida"'));
+  assert.ok(dayDetail.indexOf('title="Composición de la minuta diaria"') < dayDetail.indexOf('label="+ Agregar Comida"'));
   assert.ok(dayDetail.indexOf('label="+ Agregar Comida"') < dayDetail.indexOf('title="Detalle de cada Comida"'));
 
   matches(mealDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey \}\)/);
@@ -303,7 +324,7 @@ test("library details open every composition flow and program days remain editab
   const program = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"), "utf8");
   const assignedPlan = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"), "utf8");
   matches(program, /onAssignDailyPlan/);
-  matches(assignedPlan, /Reemplazar plan diario/);
-  matches(assignedPlan, /Quitar plan diario/);
+  matches(assignedPlan, /Reemplazar minuta diaria/);
+  matches(assignedPlan, /Quitar minuta diaria/);
   matches(program, /allowEmptySelection/);
 });

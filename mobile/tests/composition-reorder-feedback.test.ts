@@ -18,7 +18,7 @@ test("composition reordering shows immediate progress and self-closing success f
   const mealDetail = await source("src/app/program/days/[id]/meals/[mealKey].tsx");
 
   assert.match(detail, /loadingLabel: "Actualizando programa", successLabel: "Programa actualizado"/);
-  assert.match(detail, /loadingLabel: "Actualizando plan", successLabel: "Plan actualizado"/);
+  assert.match(detail, /loadingLabel: "Actualizando minuta", successLabel: "Minuta actualizada"/);
   assert.match(detail, /loadingLabel: "Actualizando comida", successLabel: "Comida actualizada"/);
   assert.match(detail, /if \(feedback\) setMutationStatus\(\{ \.\.\.feedback, phase: "loading" \}\);[\s\S]*?await apiRequest/);
   assert.match(detail, /if \(feedback\) setMutationStatus\(\{ \.\.\.feedback, phase: "success" \}\);/);

@@ -279,9 +279,9 @@ def list_provider_tool_specs() -> list[dict[str, Any]]:
             provider_spec = {
                 **provider_spec,
                 "description": (
-                    "Create the requested reviewable daily plan or complete program of 1 to 8 weeks from the "
+                    "Create the requested reviewable daily meal plan or complete program of 1 to 8 weeks from the "
                     "current conversation workspace. My Scoope supplies all known "
-                    "drafts and defaults automatically; never fabricate them. Programs include real daily plans and meals. "
+                    "drafts and defaults automatically; never fabricate them. Programs include real daily meal plans and meals. "
                     "Capture requested_entity=program and duration_weeks in proposal preferences before creating a program. "
                     "A week has seven days. Never silently shorten the duration; ask when it is ambiguous. "
                     "Inspect the actual variety and per-day nutritional validation before describing the result."

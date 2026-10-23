@@ -43,7 +43,7 @@ function ProgressRing({ color, current, percentage, total, trackColor }: { color
   );
 }
 
-export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapsedDays, mealLabel = "Cumplimiento comidas", mutedPanels = false, planLabel = "Planes diarios recorridos", plannedAdherenceDays, progress, standalone = false, topInset = false, totalDays }: Props) {
+export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapsedDays, mealLabel = "Cumplimiento comidas", mutedPanels = false, planLabel = "Minutas diarias recorridas", plannedAdherenceDays, progress, standalone = false, topInset = false, totalDays }: Props) {
   const advancement = Math.max(0, Math.min(progress, 100));
   const compliance = Math.max(0, Math.min(adherence, 100));
   const content = <>

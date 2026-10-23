@@ -51,15 +51,15 @@ test("shared daily plans reuse the native entity detail and nutrition panel syst
 
   assertSourceMatch(shareScreen, /<EntityDetailPage/);
   assertSourceMatch(shareScreen, /entity="dailyPlan"/);
-  assertSourceMatch(shareScreen, /eyebrow="Plan diario"/);
-  assertSourceDoesNotMatch(shareScreen, /eyebrow="Plan diario compartido"/);
+  assertSourceMatch(shareScreen, /eyebrow="Minuta diaria"/);
+  assertSourceDoesNotMatch(shareScreen, /eyebrow="Minuta diaria compartido"/);
   assertSourceMatch(shareScreen, /<MealPanels items=\{mealItems\}/);
-  assertSourceMatch(shareScreen, /title="Composición plan diario"[\s\S]*Detalle de cada Comida/);
+  assertSourceMatch(shareScreen, /title="Composición de la minuta diaria"[\s\S]*Detalle de cada Comida/);
   assertSourceMatch(shareScreen, /<NutritionEntityCard/);
   assertSourceMatch(shareScreen, /<FoodPanels[\s\S]*?items=\{sharedFoodPanelItems\(meal\)\}/);
   assertSourceMatch(shareScreen, /onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/share\/\$\{id\}\/meals\/\$\{index\}\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);
   assertSourceMatch(shareScreen, /sharedPlanFoodPanelItems\(meals, snapshot\.nutrition\.calories\)/);
-  assertSourceMatch(shareScreen, /title="Alimentos en este plan diario"[\s\S]*<GroupedFoodsCard items=\{planFoodItems\} title="Alimentos plan diario" \/>/);
+  assertSourceMatch(shareScreen, /title="Alimentos en esta minuta diaria"[\s\S]*<GroupedFoodsCard items=\{planFoodItems\} title="Alimentos de la minuta diaria" \/>/);
   assertSourceMatch(shareScreen, /planFoodItems\.length/);
 });
 
@@ -188,7 +188,7 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inbox, /current\.sent\.items\.filter\(\(\{ resource_id \}\) => resource_id !== item\.resource_id\)/);
   assertSourceMatch(inbox, /item\.status === "revoked" \|\| item\.status === "expired"/);
   assertSourceMatch(inbox, /comparison: \{ feminine: true, label: "Comparación" \}/);
-  assertSourceMatch(inbox, /daily_plan: \{ feminine: false, label: "Plan diario" \}/);
+  assertSourceMatch(inbox, /daily_plan: \{ feminine: false, label: "Minuta diaria" \}/);
   assertSourceMatch(inbox, /meal: \{ feminine: true, label: "Comida" \}/);
   assertSourceMatch(inbox, /activeScope === "received"[\s\S]*eyebrow\.feminine \? "Recibida" : "Recibido"[\s\S]*eyebrow\.feminine \? "Enviada" : "Enviado"/);
   assertSourceMatch(inbox, /<ProposalStatusBadge label=\{item\.status === "expired" \? "Enlace vencido" : "Acceso revocado"\} status="rejected" \/>/);
@@ -199,7 +199,7 @@ test("native Inbox manages messages while shared detail owns saving to the libra
   assertSourceMatch(inbox, /onPress=\{unavailable \? undefined/);
   assertSourceMatch(inbox, /<EntityCard/);
   assertSourceMatch(inbox, /<EntityCardAction/);
-  assertSourceMatch(inbox, /comparisonLabelByKind[\s\S]*?dailyplans: "Planes diarios"[\s\S]*?foods: "Alimentos"[\s\S]*?meals: "Comidas"/);
+  assertSourceMatch(inbox, /comparisonLabelByKind[\s\S]*?dailyplans: "Minutas diarias"[\s\S]*?foods: "Alimentos"[\s\S]*?meals: "Comidas"/);
   assertSourceMatch(inbox, /eyebrow=\{`\$\{eyebrowLabel\} \$\{directionLabel\}`\}/);
   assertSourceMatch(inbox, /identityColor=\{comparisonAccent\}/);
   assertSourceMatch(inbox, /<CollectionEmptyState/);

@@ -124,7 +124,7 @@ class AIAssistantAuditSafetyTests(SimpleTestCase):
         )
         response = ExternalLLMOrchestrator(llm_client=client).continue_turn(
             AssistantTurnRequest(
-                user_message=AssistantMessage(role=AssistantMessageRole.USER, content="Crea un plan diario"),
+                user_message=AssistantMessage(role=AssistantMessageRole.USER, content="Crea una minuta diaria"),
             )
         )
 

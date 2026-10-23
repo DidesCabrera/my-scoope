@@ -167,12 +167,14 @@ def record_calendarized_weight(
     weight_kg: float,
     measured_on: date | None = None,
     measured_time: time | None = None,
+    comment: str = "",
 ) -> tuple[WeightLog, CalendarizationMeasurementContext | None]:
     weight_log = record_weight(
         user,
         weight_kg,
         measured_on=measured_on,
         measured_time=measured_time,
+        comment=comment,
         source=WeightLog.SOURCE_MANUAL,
     )
     calendarization = current_calendarization_for_user(user)
@@ -194,14 +196,20 @@ def update_calendarized_weight(
     weight_kg: float,
     measured_on: date,
     measured_time: time | None = None,
+    comment: str | None = None,
 ) -> tuple[WeightLog, CalendarizationMeasurementContext | None]:
     if WeightLog.objects.filter(user=weight_log.user, date=measured_on).exclude(pk=weight_log.pk).exists():
         raise ValueError("weight_date_conflict")
     weight_log.date = measured_on
     weight_log.time = measured_time
     weight_log.weight_kg = weight_kg
+    if comment is not None:
+        weight_log.comment = comment.strip()
     weight_log.source = WeightLog.SOURCE_MANUAL
-    weight_log.save(update_fields=["date", "time", "weight_kg", "source"])
+    update_fields = ["date", "time", "weight_kg", "source"]
+    if comment is not None:
+        update_fields.append("comment")
+    weight_log.save(update_fields=update_fields)
     CalendarizationMeasurementContext.objects.filter(weight_log=weight_log).delete()
     calendarization = current_calendarization_for_user(weight_log.user)
     if calendarization is None or not (calendarization.start_date <= measured_on <= calendarization.end_date):
@@ -517,7 +525,7 @@ def assign_dailyplan_to_calendarized_day(
                 "plan_snapshot": snapshot.payload,
             }
         ],
-        rationale="Plan diario asignado manualmente al programa activo.",
+        rationale="Minuta diaria asignada manualmente al programa activo.",
         idempotency_key=clean_key,
         now=now,
     )

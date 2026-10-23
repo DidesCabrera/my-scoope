@@ -13,7 +13,7 @@
         aria-controls="proposal-program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
         aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
       {% else %}
-        aria-label="{{ day.day_label }}: sin plan diario"
+        aria-label="{{ day.day_label }}: sin minuta diaria"
       {% endif %}
     >
       <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>

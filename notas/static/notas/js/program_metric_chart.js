@@ -666,7 +666,7 @@ document.addEventListener("DOMContentLoaded", () => {
     iconRow.appendChild(iconShell);
 
     const name = makeElement("span", "program-chart-bar-tooltip__name", {
-      text: bar.dailyplanName || "Plan diario",
+      text: bar.dailyplanName || "Minuta diaria",
     });
     const value = makeElement("span", "program-chart-bar-tooltip__value", {
       text: bar.titleValue || `${formatNumber(bar.value, metric.decimals || 0)} ${metric.unit || ""}`.trim(),

@@ -1,11 +1,13 @@
 import type { StyleProp, TextStyle, ViewStyle } from "react-native";
 
 export type NativeDateTimeFieldProps = {
+  confirmationColor?: string;
   containerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
   hideLabel?: boolean;
   iconColor?: string;
   iconInLabel?: boolean;
+  initiallyExpanded?: boolean;
   inputStyle?: StyleProp<TextStyle>;
   inlineLabel?: boolean;
   label: string;

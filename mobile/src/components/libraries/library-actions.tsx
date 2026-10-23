@@ -59,7 +59,7 @@ const actionIcons = {
 const entityLabels = {
   food: "este alimento",
   meal: "esta comida",
-  dailyPlan: "este plan diario",
+  dailyPlan: "esta minuta diaria",
   program: "este programa",
 } as const;
 
@@ -333,7 +333,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
 
                 {selected?.key === "remove" ? (
                   <View style={styles.confirmation}>
-                    <Text style={styles.confirmationText}>Se quitará esta comida del plan diario.</Text>
+                    <Text style={styles.confirmationText}>Se quitará esta comida de la minuta diaria.</Text>
                     <Button label="Quitar comida" loading={submitting} onPress={() => void removeItem()} variant="danger" />
                     <Button label="Cancelar" onPress={() => setSelected(null)} variant="secondary" />
                   </View>

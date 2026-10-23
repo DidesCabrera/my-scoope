@@ -6,6 +6,7 @@ from django.db.models import Prefetch, Q
 
 from mobile_api.api_support import calendarization_error
 from mobile_api.errors import MobileAPIError
+from mobile_api.food_portion_selection import normalize_portion_display_selection
 from notas.application.queries.read_boundaries import get_readable_food_queryset
 from notas.application.services.calendarization.snapshots import (
     build_food_snapshot,
@@ -92,6 +93,12 @@ def _food_row(
         "name": food.get("name") or "Alimento",
         "quantity": _number(food.get("quantity_g")),
         "quantity_unit": food.get("quantity_unit") or "g",
+        "portion_display_quantity": _number(
+            food.get("portion_display_quantity")
+            if food.get("portion_display_quantity") is not None
+            else food.get("quantity_g")
+        ),
+        "portion_display_measure": food.get("portion_display_measure") or food.get("quantity_unit") or "g",
         "calories": _number(calories),
         "calorie_share": _percentage(calories, _total_kcal(parent_totals)),
         "calorie_distribution": {
@@ -202,7 +209,7 @@ def _dailyplan_result(*, day_id: int, snapshot: dict, current_weight, projected_
     return {
         "id": day_id,
         "entity": "dailyPlan",
-        "name": snapshot.get("name") or "Plan diario",
+        "name": snapshot.get("name") or "Minuta diaria",
         "nutrition": _nutrition(totals, current_weight),
         "indicators": [
             {"icon": "meal", "label": "comidas", "value": len(meals)},
@@ -344,7 +351,7 @@ def preview_meal_for_calendarized_day(
             "quantity": None,
             "hour": str(hour)[:5] if hour else None,
         },
-        "impacts": [{"label": "Plan diario después de reemplazar" if meal_snapshot_key else "Plan diario después de agregar", "entity": "dailyPlan", "before": before, "after": result["nutrition"], "metrics": []}],
+        "impacts": [{"label": "Minuta diaria después de reemplazar" if meal_snapshot_key else "Minuta diaria después de agregar", "entity": "dailyPlan", "before": before, "after": result["nutrition"], "metrics": []}],
         "result": result,
         "replacements": [replaced_name] if replaced_name else [],
         "confirmation_required": False,
@@ -370,16 +377,23 @@ def commit_meal_to_calendarized_day(
             add_meal_to_calendarized_day(user=user, day_id=day_id, meal=meal, hour=hour, note=note)
     except ValueError as exc:
         raise calendarization_error(exc) from exc
-    message = "Comida reemplazada en el plan diario activo." if meal_snapshot_key else "Comida agregada al plan diario activo."
+    message = "Comida reemplazada en la minuta diaria activa." if meal_snapshot_key else "Comida agregada a la minuta diaria activa."
     return {"message": message, "target_id": day_id, "created_id": meal.id}
 
 
 def preview_food_for_calendarized_meal(
     *, user, day_id: int, meal_snapshot_key: str, food_id: int, quantity: float,
     food_snapshot_key: str | None = None,
+    portion_display_quantity=None, portion_display_measure="",
 ) -> dict:
     _day, snapshot = _day_context(user=user, day_id=day_id)
     food = _readable_food(user, food_id)
+    display_selection = normalize_portion_display_selection(
+        food=food,
+        metric_quantity=quantity,
+        display_quantity=portion_display_quantity,
+        display_measure=portion_display_measure,
+    )
     meal = _snapshot_meal(snapshot, meal_snapshot_key)
     current_weight = get_current_weight(user)
     before = _nutrition(meal.get("totals", {}), current_weight)
@@ -395,9 +409,21 @@ def preview_food_for_calendarized_meal(
         if index is None:
             raise calendarization_error(ValueError("food_snapshot_key_invalid"))
         replaced_name = foods[index].get("name") or "Alimento"
-        foods[index] = build_food_snapshot(food=food, quantity=quantity, key=projected_key)
+        foods[index] = build_food_snapshot(
+            food=food,
+            quantity=quantity,
+            key=projected_key,
+            portion_display_quantity=display_selection.quantity,
+            portion_display_measure=display_selection.measure,
+        )
     else:
-        foods.append(build_food_snapshot(food=food, quantity=quantity, key=projected_key))
+        foods.append(build_food_snapshot(
+            food=food,
+            quantity=quantity,
+            key=projected_key,
+            portion_display_quantity=display_selection.quantity,
+            portion_display_measure=display_selection.measure,
+        ))
         replaced_name = None
     meal["totals"] = snapshot_totals(foods)
     snapshot["totals"] = snapshot_totals(
@@ -409,7 +435,13 @@ def preview_food_for_calendarized_meal(
         current_weight=current_weight,
         projected_food_key=projected_key,
     )
-    selected_totals = build_food_snapshot(food=food, quantity=quantity, key="selection")
+    selected_totals = build_food_snapshot(
+        food=food,
+        quantity=quantity,
+        key="selection",
+        portion_display_quantity=display_selection.quantity,
+        portion_display_measure=display_selection.measure,
+    )
     return {
         "selection": {
             "id": food.id,
@@ -429,9 +461,16 @@ def preview_food_for_calendarized_meal(
 def commit_food_to_calendarized_meal(
     *, user, day_id: int, meal_snapshot_key: str, food_id: int, quantity: float,
     food_snapshot_key: str | None = None,
+    portion_display_quantity=None, portion_display_measure="",
 ) -> dict:
     _day_context(user=user, day_id=day_id)
     food = _readable_food(user, food_id)
+    display_selection = normalize_portion_display_selection(
+        food=food,
+        metric_quantity=quantity,
+        display_quantity=portion_display_quantity,
+        display_measure=portion_display_measure,
+    )
     try:
         if food_snapshot_key:
             replace_calendarized_food(
@@ -441,6 +480,8 @@ def commit_food_to_calendarized_meal(
                 food_snapshot_key=food_snapshot_key,
                 food=food,
                 quantity=quantity,
+                portion_display_quantity=display_selection.quantity,
+                portion_display_measure=display_selection.measure,
             )
         else:
             add_food_to_calendarized_meal(
@@ -449,6 +490,8 @@ def commit_food_to_calendarized_meal(
                 meal_snapshot_key=meal_snapshot_key,
                 food=food,
                 quantity=quantity,
+                portion_display_quantity=display_selection.quantity,
+                portion_display_measure=display_selection.measure,
             )
     except ValueError as exc:
         raise calendarization_error(exc) from exc

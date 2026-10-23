@@ -344,6 +344,8 @@ def add_food_to_calendarized_meal(
     meal_snapshot_key: str,
     food,
     quantity: float,
+    portion_display_quantity: float | None = None,
+    portion_display_measure: str = "",
 ) -> tuple[CalendarizedDay, str]:
     day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
     snapshot = _calendarized_snapshot(day)
@@ -352,7 +354,13 @@ def add_food_to_calendarized_meal(
     if not isinstance(foods, list):
         raise ValueError("calendarized_meal_snapshot_invalid")
     snapshot_key = f"calendarized_food:{uuid4()}"
-    foods.append(build_food_snapshot(food=food, quantity=quantity, key=snapshot_key))
+    foods.append(build_food_snapshot(
+        food=food,
+        quantity=quantity,
+        key=snapshot_key,
+        portion_display_quantity=portion_display_quantity,
+        portion_display_measure=portion_display_measure,
+    ))
     meal["totals"] = snapshot_totals(foods)
     _refresh_calendarized_totals(snapshot)
     _save_calendarized_snapshot(day, snapshot)
@@ -480,6 +488,10 @@ def update_calendarized_food_quantity(
         raise ValueError("calendarized_food_quantity_invalid")
     factor = float(quantity) / current_quantity
     food["quantity_g"] = round(float(quantity), 3)
+    # This legacy endpoint receives a metric quantity only, so its visible
+    # representation must become metric instead of leaving stale household data.
+    food["portion_display_quantity"] = round(float(quantity), 3)
+    food["portion_display_measure"] = food.get("quantity_unit") or "g"
     for field in ("protein_g", "carbs_g", "fat_g", "total_kcal"):
         food[field] = round(float(food.get(field) or 0) * factor, 3)
     _refresh_calendarized_meal_totals(snapshot, meal)
@@ -507,7 +519,8 @@ def remove_calendarized_food(
 
 @transaction.atomic
 def replace_calendarized_food(
-    *, user, day_id: int, meal_snapshot_key: str, food_snapshot_key: str, food, quantity: float
+    *, user, day_id: int, meal_snapshot_key: str, food_snapshot_key: str, food, quantity: float,
+    portion_display_quantity: float | None = None, portion_display_measure: str = "",
 ) -> tuple[CalendarizedDay, str]:
     day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
     snapshot = _calendarized_snapshot(day)
@@ -520,7 +533,13 @@ def replace_calendarized_food(
     if index is None:
         raise ValueError("food_snapshot_key_invalid")
     replacement_key = f"calendarized_food:{uuid4()}"
-    foods[index] = build_food_snapshot(food=food, quantity=quantity, key=replacement_key)
+    foods[index] = build_food_snapshot(
+        food=food,
+        quantity=quantity,
+        key=replacement_key,
+        portion_display_quantity=portion_display_quantity,
+        portion_display_measure=portion_display_measure,
+    )
     _refresh_calendarized_meal_totals(snapshot, meal)
     _save_calendarized_snapshot(day, snapshot)
     return day, replacement_key

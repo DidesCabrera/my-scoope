@@ -10,12 +10,12 @@
       <div class="composition-picker-modal__title">
         <span data-program-slot-header-icon="add" aria-hidden="true"><i data-lucide="plus"></i></span>
         <span data-program-slot-header-icon="replace" aria-hidden="true" hidden><i data-lucide="repeat"></i></span>
-        <h2 id="program-slot-picker-title">Agrega un Plan Diario</h2>
+        <h2 id="program-slot-picker-title">Agrega un Minuta diaria</h2>
       </div>
       <button
         type="button"
         class="composition-picker-modal__close"
-        aria-label="Cerrar selector de planes diarios"
+        aria-label="Cerrar selector de minutas diarias"
         data-picker-dismiss
       >
         <i data-lucide="x"></i>
@@ -40,7 +40,7 @@
         <div class="composition-picker-modal__body composition-picker-modal__body--selection">
           <div class="selector program-slot-picker__selector">
             <div class="composition-picker-step-heading">
-              <h3 id="program-slot-selection-title">1. Selecciona un plan diario</h3>
+              <h3 id="program-slot-selection-title">1. Selecciona una minuta diaria</h3>
 
               <div class="composition-picker-entry-actions">
                 <span class="composition-picker-entry-actions__active">
@@ -52,18 +52,18 @@
                   class="composition-picker-entry-actions__create"
                 >
                   <i data-lucide="plus"></i>
-                  Crear plan
+                  Crear minuta
                 </a>
               </div>
 
               <div class="composition-picker-search-row">
                 <i data-lucide="search" class="search-icon-add-row-icon"></i>
-                <label class="sr-only" for="program-slot-search">Buscar plan diario</label>
+                <label class="sr-only" for="program-slot-search">Buscar minuta diaria</label>
                 <input
                   type="search"
                   id="program-slot-search"
                   class="program-slot-picker__search js-program-slot-search"
-                  placeholder="Escribe el nombre de un plan diario"
+                  placeholder="Escribe el nombre de una minuta diaria"
                   autocomplete="off"
                 >
               </div>
@@ -72,7 +72,7 @@
             <div
               class="selector-list program-slot-picker__results js-program-slot-results"
               role="listbox"
-              aria-label="Planes diarios disponibles"
+              aria-label="Minutas diarias disponibles"
             ></div>
           </div>
         </div>
@@ -124,7 +124,7 @@
           <div class="program-slot-picker__overwrite-warning js-program-slot-overwrite-warning" hidden>
             <div class="program-slot-picker__overwrite-copy">
               <strong>Hay días ocupados seleccionados.</strong>
-              <span>Si continúas, se sobrescribirán esos planes.</span>
+              <span>Si continúas, se sobrescribirán esas minutas.</span>
             </div>
             <div class="program-slot-picker__overwrite-actions">
               <button type="button" class="composition-picker-modal__action composition-picker-modal__action--secondary js-program-slot-overwrite-cancel">Cancelar</button>
@@ -137,7 +137,7 @@
               Cancelar
             </button>
             <button type="submit" class="composition-picker-modal__action composition-picker-modal__action--primary">
-              Asignar Plan
+              Asignar minuta
             </button>
           </footer>
         </div>

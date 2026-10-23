@@ -95,7 +95,7 @@ def home_view(request):
         hero=HomeHeroVM(
             title=f"Bienvenido {user.username}!",
             subtitle=(
-                "Organiza planes diarios, comidas y alimentos en un solo lugar. Este es tu resumen de trabajo actual."
+                "Organiza minutas diarias, comidas y alimentos en un solo lugar. Este es tu resumen de trabajo actual."
             ),
         ),
         stats=[
@@ -106,7 +106,7 @@ def home_view(request):
                 url=reverse("program_list"),
             ),
             HomeStatVM(
-                label="Planes Diarios",
+                label="Minutas diarias",
                 value=dailyplans_count,
                 icon="clipboard-list",
                 url=reverse("dailyplan_list"),

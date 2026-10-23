@@ -131,7 +131,7 @@ test("proposed entities expose progressive detail navigation", async () => {
   const typography = await source("src/components/ui/typography.tsx");
 
   assert.match(entity, /<EntityDetailPage/);
-  assert.match(entity, /proposal\?\.dailyplan \? "Plan Diario Propuesto" : proposal\?\.meal \? "Comida Propuesta"/);
+  assert.match(entity, /proposal\?\.dailyplan \? "Minuta diaria propuesta" : proposal\?\.meal \? "Comida Propuesta"/);
   assert.doesNotMatch(entity, /title: "Entidad propuesta"/);
   assert.match(entity, /<ProgramSectionHeader icon=\{Carrot\}[\s\S]*title="Detalle de cada Alimento"/);
   assert.match(entity, /<ProgramSectionHeader icon=\{Utensils\}[\s\S]*title="Detalle de cada Comida"/);

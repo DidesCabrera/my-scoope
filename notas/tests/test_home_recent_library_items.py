@@ -122,4 +122,4 @@ class HomeRecentLibraryItemsTests(TestCase):
             for item in response.context["vm"]["content"]["stats"]
         }
 
-        self.assertEqual(stats_by_label["Planes Diarios"], 1)
+        self.assertEqual(stats_by_label["Minutas diarias"], 1)

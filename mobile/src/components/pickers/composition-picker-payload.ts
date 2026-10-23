@@ -9,6 +9,8 @@ type PickerPayloadInput = {
   kind: PickerKind;
   note: string;
   quantity: string;
+  portionDisplayQuantity?: string;
+  portionDisplayMeasure?: string;
   relationId?: number;
   relationKey?: string;
   selectedId: number;
@@ -23,6 +25,8 @@ export function buildCompositionPickerPayload({
   kind,
   note,
   quantity,
+  portionDisplayQuantity,
+  portionDisplayMeasure,
   relationId,
   relationKey,
   selectedId,
@@ -34,11 +38,19 @@ export function buildCompositionPickerPayload({
     dailyplan_id: contextDailyPlanId,
     dailyplan_meal_id: contextDailyPlanMealId,
     quantity: portionGrams(quantity),
+    ...(portionDisplayMeasure ? {
+      portion_display_quantity: portionGrams(portionDisplayQuantity ?? quantity),
+      portion_display_measure: portionDisplayMeasure,
+    } : {}),
   };
   if (kind === "food-to-calendarized-meal") return {
     food_id: selectedId,
     food_snapshot_key: relationKey,
     quantity: portionGrams(quantity),
+    ...(portionDisplayMeasure ? {
+      portion_display_quantity: portionGrams(portionDisplayQuantity ?? quantity),
+      portion_display_measure: portionDisplayMeasure,
+    } : {}),
   };
   if (kind === "meal-to-dailyplan") return {
     meal_id: selectedId,

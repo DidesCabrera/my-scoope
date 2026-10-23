@@ -252,7 +252,7 @@ def _build_dailyplan_item(share: DailyPlanShare) -> InboxItem:
     save_url = reverse("inbox_save_attachment", args=["dailyplan", share.id])
     attachment = InboxAttachment(
         kind="dailyplan",
-        label="Plan diario compartido",
+        label="Minuta diaria compartido",
         name=share.dailyplan.name,
         icon="clipboard-list",
         open_url=open_url,
@@ -260,7 +260,7 @@ def _build_dailyplan_item(share: DailyPlanShare) -> InboxItem:
     )
     summary = _share_message(
         share,
-        f"{share.sender.username} compartió un plan diario contigo.",
+        f"{share.sender.username} compartió una minuta diaria contigo.",
     )
     attachment_card = _build_dailyplan_attachment_card(share, open_url=open_url, save_url=save_url)
 
@@ -268,7 +268,7 @@ def _build_dailyplan_item(share: DailyPlanShare) -> InboxItem:
         id=f"dailyplan-{share.id}",
         share_id=share.id,
         kind="dailyplan",
-        kind_label="Plan diario",
+        kind_label="Minuta diaria",
         icon="clipboard-list",
         created_at=share.created_at,
         received_at_label=_format_received_at(share.created_at),
@@ -401,19 +401,19 @@ def _build_dpm_item(share: DailyPlanMealShare) -> InboxItem:
     save_url = reverse("inbox_save_attachment", args=["dpm", share.id])
     attachment = InboxAttachment(
         kind="dpm",
-        label="Comida de plan compartida",
+        label="Comida de minuta compartida",
         name=dpm.meal.name,
         icon="utensils",
         open_url=open_url,
         save_url=save_url,
     )
-    summary = _share_message(share, f"{share.sender.username} compartió una comida de plan contigo.")
+    summary = _share_message(share, f"{share.sender.username} compartió una comida de minuta contigo.")
     attachment_card = _build_dpm_attachment_card(share, open_url=open_url, save_url=save_url)
     return InboxItem(
         id=f"dpm-{share.id}",
         share_id=share.id,
         kind="dpm",
-        kind_label="Comida de plan",
+        kind_label="Comida de minuta",
         icon="utensils",
         created_at=share.created_at,
         received_at_label=_format_received_at(share.created_at),
@@ -448,7 +448,7 @@ def _normalized_title(resource: ShareResource) -> str:
 def _normalized_metadata(resource: ShareResource) -> tuple[str, str, str]:
     return {
         ShareResource.SubjectType.COMPARISON: ("comparison", "Comparación", "scale"),
-        ShareResource.SubjectType.DAILY_PLAN: ("dailyplan", "Plan diario", "clipboard-list"),
+        ShareResource.SubjectType.DAILY_PLAN: ("dailyplan", "Minuta diaria", "clipboard-list"),
         ShareResource.SubjectType.FOOD: ("food", "Alimento", "carrot"),
         ShareResource.SubjectType.MEAL: ("meal", "Comida", "utensils"),
         ShareResource.SubjectType.PROGRAM: ("program", "Programa semanal", "calendar"),
@@ -549,7 +549,7 @@ def _build_sent_dailyplan_item(share: DailyPlanShare) -> InboxItem:
     open_url = _inbox_sent_attachment_detail_url("dailyplan", share.id)
     attachment = InboxAttachment(
         kind="dailyplan",
-        label="Plan diario enviado",
+        label="Minuta diaria enviado",
         name=share.dailyplan.name,
         icon="clipboard-list",
         open_url=open_url,
@@ -558,7 +558,7 @@ def _build_sent_dailyplan_item(share: DailyPlanShare) -> InboxItem:
 
     summary = _share_message(
         share,
-        f"Compartiste un plan diario con {share.recipient_email}.",
+        f"Compartiste una minuta diaria con {share.recipient_email}.",
     )
     attachment_card = _build_dailyplan_attachment_card(share, open_url=open_url, save_url="")
     if attachment_card:
@@ -568,7 +568,7 @@ def _build_sent_dailyplan_item(share: DailyPlanShare) -> InboxItem:
         id=f"sent-dailyplan-{share.id}",
         share_id=share.id,
         kind="dailyplan",
-        kind_label="Plan diario",
+        kind_label="Minuta diaria",
         icon="clipboard-list",
         created_at=share.created_at,
         received_at_label=_format_received_at(share.created_at),
@@ -658,13 +658,13 @@ def _build_sent_dpm_item(share: DailyPlanMealShare) -> InboxItem:
     dpm = share.dailyplan_meal
     detail_url = _inbox_sent_detail_url("dpm", share.id)
     open_url = _inbox_sent_attachment_detail_url("dpm", share.id)
-    attachment = InboxAttachment(kind="dpm", label="Comida de plan enviada", name=dpm.meal.name, icon="utensils", open_url=open_url, save_url="")
-    summary = _share_message(share, f"Compartiste una comida de plan con {share.recipient_email}.")
+    attachment = InboxAttachment(kind="dpm", label="Comida de minuta enviada", name=dpm.meal.name, icon="utensils", open_url=open_url, save_url="")
+    summary = _share_message(share, f"Compartiste una comida de minuta con {share.recipient_email}.")
     attachment_card = _build_dpm_attachment_card(share, open_url=open_url, save_url="")
     if attachment_card:
         attachment_card.actions = _build_sent_actions(open_url=open_url)
     return InboxItem(
-        id=f"sent-dpm-{share.id}", share_id=share.id, kind="dpm", kind_label="Comida de plan", icon="utensils", created_at=share.created_at,
+        id=f"sent-dpm-{share.id}", share_id=share.id, kind="dpm", kind_label="Comida de minuta", icon="utensils", created_at=share.created_at,
         received_at_label=_format_received_at(share.created_at), sender=share.recipient_email, sender_label="Para", direction="sent",
         title=(share.subject or dpm.meal.name), summary=summary, message=summary, is_favorite=False, is_read=True, detail_url=detail_url,
         dismiss_url="", favorite_url="", attachment=attachment, attachment_card=attachment_card, attachment_cards=[attachment_card] if attachment_card else [],

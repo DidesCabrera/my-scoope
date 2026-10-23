@@ -30,14 +30,14 @@ const INITIAL_PAGE_SIZE = 12;
 const createLabels: Record<LibraryEntity, string> = {
   food: "Crear alimento",
   meal: "Crear comida",
-  dailyPlan: "Crear plan diario",
+  dailyPlan: "Crear minuta diaria",
   program: "Crear programa",
 };
 
 const deleteLabels: Record<LibraryEntity, string> = {
   food: "Eliminar alimentos",
   meal: "Eliminar comidas",
-  dailyPlan: "Eliminar planes diarios",
+  dailyPlan: "Eliminar minutas diarias",
   program: "Eliminar programas",
 };
 

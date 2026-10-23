@@ -51,9 +51,9 @@ test("assigned daily plan cards expose replace, remove, and detail", async () =>
   const card = await source("src/components/libraries/program-daily-plan-preview.tsx");
   const parent = await source("src/components/libraries/program-detail-preview.tsx");
 
-  assert.match(card, /label: "Reemplazar plan diario"/);
-  assert.match(card, /label: "Quitar plan diario"/);
-  assert.match(card, /Ir al detalle del plan/);
+  assert.match(card, /label: "Reemplazar minuta diaria"/);
+  assert.match(card, /label: "Quitar minuta diaria"/);
+  assert.match(card, /Ir al detalle de la minuta/);
   assert.match(parent, /onReplace=\{onAssignDailyPlan/);
   assert.match(parent, /onRemove=\{onRemoveDailyPlan/);
   assert.doesNotMatch(card, /onPress=\{\(\) => undefined\}/);

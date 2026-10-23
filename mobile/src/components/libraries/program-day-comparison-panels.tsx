@@ -65,7 +65,7 @@ function DayIdentity({ row }: { row: ProgramDayNutrition }) {
       <EntityIcon entity="dailyPlan" size="compact" />
       <View style={styles.dayCopy}>
         <Text numberOfLines={1} style={styles.dayName}>{row.day}</Text>
-        <Text numberOfLines={1} style={styles.planName}>{row.planName ?? "Sin plan"}</Text>
+        <Text numberOfLines={1} style={styles.planName}>{row.planName ?? "Sin minuta"}</Text>
         {row.projectedLabel ? <Text style={styles.projectedBadge}>{row.projectedLabel}</Text> : null}
       </View>
     </View>
@@ -96,7 +96,7 @@ type DayRowGestures = {
 
 function DayRows({ gestures, renderRow, rows }: { gestures?: DayRowGestures; renderRow(row: ProgramDayNutrition, index: number): React.ReactNode; rows: ProgramDayNutrition[] }) {
   if (!gestures) return <StaticComparisonPanelRows items={rows} renderRow={renderRow} />;
-  return <ComparisonPanelGestureRows actions={gestures.actions} itemLabel={(row) => `${row.day}: ${row.planName ?? "Sin plan"}`} items={rows} onReorder={gestures.onReorder} renderRow={renderRow} />;
+  return <ComparisonPanelGestureRows actions={gestures.actions} itemLabel={(row) => `${row.day}: ${row.planName ?? "Sin minuta"}`} items={rows} onReorder={gestures.onReorder} renderRow={renderRow} />;
 }
 
 function CaloriesPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
@@ -190,7 +190,7 @@ function EditPanel({ onAssign, onDelete, onReorder, rows }: { onAssign(week: num
       <View style={[styles.row, styles.header]}>
         <View style={styles.editDragHeader} />
         <Text style={[styles.headerText, styles.editDay]}>Día</Text>
-        <Text style={[styles.headerText, styles.editPlan]}>Plan</Text>
+        <Text style={[styles.headerText, styles.editPlan]}>Minuta</Text>
         <Text style={[styles.headerText, styles.editActions]}>Acciones</Text>
       </View>
       <NestableDraggableFlatList
@@ -206,14 +206,14 @@ function EditPanel({ onAssign, onDelete, onReorder, rows }: { onAssign(week: num
         renderItem={({ drag, getIndex, isActive, item: row }) => {
           const index = getIndex() ?? 0;
           return <ScaleDecorator activeScale={1.018}><View style={[styles.row, styles.editRow, index === draftRows.length - 1 && styles.rowLast, isActive && styles.editRowActive]}>
-          <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={`Reordenar plan de ${row.day}`} accessibilityRole="button" delayLongPress={180} disabled={busy} hitSlop={8} onLongPress={() => beginComparisonPanelDrag(drag)} style={({ pressed }) => [styles.editDragHandle, busy && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>
+          <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={`Reordenar minuta de ${row.day}`} accessibilityRole="button" delayLongPress={180} disabled={busy} hitSlop={8} onLongPress={() => beginComparisonPanelDrag(drag)} style={({ pressed }) => [styles.editDragHandle, busy && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>
           <Text style={[styles.cell, styles.editDay]}>{row.day}</Text>
-          <Text numberOfLines={2} style={[styles.cell, styles.editPlan, !row.planName && styles.planName]}>{row.planName ?? "Sin plan"}</Text>
+          <Text numberOfLines={2} style={[styles.cell, styles.editPlan, !row.planName && styles.planName]}>{row.planName ?? "Sin minuta"}</Text>
           <View style={styles.editActions}>
-            <Pressable accessibilityLabel={`${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`} accessibilityRole="button" onPress={() => onAssign(row.week, row.dayNumber)} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}>
+            <Pressable accessibilityLabel={`${row.planName ? "Reemplazar" : "Agregar"} minuta de ${row.day}`} accessibilityRole="button" onPress={() => onAssign(row.week, row.dayNumber)} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}>
               {row.planName ? <RefreshCw color={tokens.color.textMain} size={16} /> : <Plus color={tokens.color.textMain} size={17} />}
             </Pressable>
-            {row.planName ? <Pressable accessibilityLabel={`Eliminar plan de ${row.day}`} accessibilityRole="button" onPress={() => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }])} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}><Trash2 color={tokens.color.danger} size={16} /></Pressable> : null}
+            {row.planName ? <Pressable accessibilityLabel={`Eliminar minuta de ${row.day}`} accessibilityRole="button" onPress={() => Alert.alert("Eliminar minuta diaria", `¿Quitar la minuta asignada a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }])} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}><Trash2 color={tokens.color.danger} size={16} /></Pressable> : null}
           </View>
         </View></ScaleDecorator>;
         }}
@@ -234,14 +234,14 @@ export function ProgramDayComparisonPanels({ onAssign, onDelete, onReorder, rows
       {
         backgroundColor: "#515151",
         icon: row.planName ? <RefreshCw color={tokens.color.entityIconForeground} size={18} /> : <Plus color={tokens.color.entityIconForeground} size={19} />,
-        label: `${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`,
+        label: `${row.planName ? "Reemplazar" : "Agregar"} minuta de ${row.day}`,
         onPress: () => onAssign(row.week, row.dayNumber),
       },
       ...(row.planName ? [{
         backgroundColor: "#DB294A",
         icon: <Trash2 color={tokens.color.entityIconForeground} size={18} />,
-        label: `Eliminar plan de ${row.day}`,
-        onPress: () => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }]),
+        label: `Eliminar minuta de ${row.day}`,
+        onPress: () => Alert.alert("Eliminar minuta diaria", `¿Quitar la minuta asignada a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }]),
       }] : []),
     ],
     onReorder: async (nextRows) => {
