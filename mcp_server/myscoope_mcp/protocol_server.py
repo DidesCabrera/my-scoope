@@ -1,5 +1,5 @@
-from dataclasses import replace
 import os
+from dataclasses import replace
 from typing import Any
 
 from mcp.server.auth.middleware.auth_context import get_access_token
@@ -8,8 +8,8 @@ from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
-from myscoope_mcp.client import MyscoopeAPIClient
 from myscoope_mcp.auth import user_tokens_only_enabled
+from myscoope_mcp.client import MyscoopeAPIClient
 from myscoope_mcp.config import load_config_from_env
 from myscoope_mcp.contracts import MCPToolCallResult
 from myscoope_mcp.dispatcher import dispatch_tool_call
