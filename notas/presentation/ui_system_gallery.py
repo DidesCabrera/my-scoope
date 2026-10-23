@@ -2,8 +2,8 @@ from notas.presentation.viewmodels.programs import build_program_metric_chart
 
 ONBOARDING_STORYBOARD = (
     {"key": "login", "label": "Acceso", "eyebrow": "Acceso", "title": "Inicia sesión para guardar tu progreso", "description": "Usa tu cuenta para continuar el proceso en cualquiera de tus dispositivos.", "icon": "log-in"},
-    {"key": "value", "label": "Funciones principales", "eyebrow": "Funciones principales", "title": "Qué puedes hacer con My Scoope", "description": "My Scoope organiza tu objetivo, calcula referencias nutricionales y las convierte en un plan diario que puedes revisar.", "icon": "target"},
-    {"key": "structure", "label": "Organización nutricional", "eyebrow": "Estructura del sistema", "title": "Cómo se organiza tu alimentación", "description": "La información se organiza en cuatro niveles reutilizables: alimentos, comidas, planes diarios y programas.", "icon": "layers-3"},
+    {"key": "value", "label": "Funciones principales", "eyebrow": "Funciones principales", "title": "Qué puedes hacer con My Scoope", "description": "My Scoope organiza tu objetivo, calcula referencias nutricionales y las convierte en una minuta diaria que puedes revisar.", "icon": "target"},
+    {"key": "structure", "label": "Organización nutricional", "eyebrow": "Estructura del sistema", "title": "Cómo se organiza tu alimentación", "description": "La información se organiza en cuatro niveles reutilizables: alimentos, comidas, minutas diarias y programas.", "icon": "layers-3"},
     {"key": "panels", "label": "Lectura de paneles", "eyebrow": "Paneles de información", "title": "Cómo leer los paneles", "description": "Cada panel muestra primero un resumen y permite consultar calorías, macronutrientes y detalle.", "icon": "eye"},
     {"key": "control", "label": "Asistencia y decisiones", "eyebrow": "Asistencia y control", "title": "Cómo funciona la asistencia", "description": "La asistencia interpreta tu solicitud y prepara una propuesta. Tú la revisas antes de aplicarla.", "icon": "brain-circuit"},
     {"key": "progress", "label": "Seguimiento del progreso", "eyebrow": "Seguimiento", "title": "Cómo revisar tu progreso", "description": "Compara lo planificado con tus registros para decidir si necesitas ajustar el plan.", "icon": "chart-no-axes-column-increasing"},
@@ -14,7 +14,7 @@ ONBOARDING_STORYBOARD = (
     {"key": "activity", "label": "Actividad y entrenamiento", "eyebrow": "Datos para el cálculo", "title": "Describe tu actividad y entrenamiento", "description": "Separa el movimiento habitual de los entrenamientos para evitar contarlos dos veces.", "icon": "dumbbell"},
     {"key": "summary", "label": "Resumen de la ficha", "eyebrow": "Resumen de la ficha", "title": "Revisa tu información", "description": "Comprueba los datos y la estimación inicial antes de continuar.", "icon": "gauge"},
     {"key": "plans", "label": "Planes disponibles", "eyebrow": "Planes disponibles", "title": "Elige un plan", "description": "Compara lo que incluyen Free, Basic y Pro. Puedes cambiar de plan más adelante.", "icon": "badge-dollar-sign"},
-    {"key": "home", "label": "Primer plan diario", "eyebrow": "Siguiente paso", "title": "Tu ficha está lista", "description": "Ahora puedes crear un plan diario a partir de tu objetivo y tus datos.", "icon": "house"},
+    {"key": "home", "label": "Primera minuta diaria", "eyebrow": "Siguiente paso", "title": "Tu ficha está lista", "description": "Ahora puedes crear una minuta diaria a partir de tu objetivo y tus datos.", "icon": "house"},
 )
 
 

@@ -273,7 +273,7 @@ def dailyplanmeal_change_time(request, dailyplan_id, dailyplanmeal_id):
     content = MealTimeChangeContent(
         header=build_page_header(),
         title="Cambiar hora",
-        description="El cambio se aplicará a esta comida dentro de este plan diario.",
+        description="El cambio se aplicará a esta comida dentro de esta minuta diaria.",
         cancel_url=detail_url,
     )
     context = BaseVM(ui=ui_vm, content=content).as_context()
@@ -381,7 +381,7 @@ def dailyplan_add_meal(request, pk=None):
         note=note,
     )
 
-    messages.success(request, "Meal added to daily plan")
+    messages.success(request, "Comida agregada a la minuta diaria.")
 
     return redirect("dailyplan_detail", dailyplan.pk)
 
@@ -406,7 +406,7 @@ def dailyplanmeal_remove(request, dailyplan_id, dailyplanmeal_id):
         dailyplan_meal=dpm,
     )
 
-    messages.success(request, "Meal eliminada del daily plan")
+    messages.success(request, "Comida eliminada de la minuta diaria.")
 
     if return_to:
         return redirect(return_to)
@@ -511,11 +511,11 @@ def dailyplanmeal_share(request, dailyplan_id, pk):
         )
 
         if delivery.sent:
-            messages.success(request, "Compartiste esta comida de plan. Enviamos el correo de invitación al destinatario.")
+            messages.success(request, "Compartiste esta comida de minuta. Enviamos el correo de invitación al destinatario.")
         elif delivery.reason == "self_recipient":
             messages.error(request, "No puedes compartir una comida contigo mismo.")
         elif delivery.reason == "duplicate_share":
-            messages.success(request, "Esta comida de plan ya estaba compartida. No reenviamos el correo para evitar duplicados.")
+            messages.success(request, "Esta comida de minuta ya estaba compartida. No reenviamos el correo para evitar duplicados.")
         else:
             messages.warning(request, "Se creó la invitación, pero la política de correo no permitió enviarla.")
 

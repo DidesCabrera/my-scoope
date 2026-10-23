@@ -255,7 +255,7 @@ def create_library_dailyplan(request, payload: NamedLibraryCreateInput):
     try:
         result = create_draft_dailyplan(user=request.auth.user, name=_clean_creation_name(payload.name))
     except CommercialLimitReached as exc:
-        raise MobileAPIError(str(exc), "El plan actual no permite crear más planes diarios.", 403) from exc
+        raise MobileAPIError(str(exc), "El plan actual no permite crear más minutas diarias.", 403) from exc
     return success(library_item_detail_payload(request.auth.user, "daily-plans", result.dailyplan.id))
 
 

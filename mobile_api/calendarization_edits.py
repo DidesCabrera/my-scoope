@@ -31,7 +31,7 @@ def _selection_context(*, user, day_id: int, dailyplan_id: int):
     if dailyplan is None:
         raise MobileAPIError(
             "picker_selection_not_found",
-            "El plan diario seleccionado no está disponible.",
+            "La minuta diaria seleccionada no está disponible.",
             404,
         )
     return day, dailyplan
@@ -85,7 +85,7 @@ def add_dailyplan_to_calendarized_day(
     except ValueError as exc:
         raise calendarization_error(exc) from exc
     return {
-        "message": "Plan diario asignado al programa activo.",
+        "message": "Minuta diaria asignada al programa activo.",
         "target_id": day_id,
         "created_id": revision.id,
     }

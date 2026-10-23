@@ -1,5 +1,5 @@
 {% extends "notas/base.html" %}
-{% block title %}Compartir plan diario{% endblock %}
+{% block title %}Compartir minuta diaria{% endblock %}
 {% block content %}
 
 <div class="page page--detail page-modal page-modal--entity-form share-form-page share-form-page--dailyplan">
@@ -9,7 +9,7 @@
     <div class="entity-form__form share-form__form">
       <div class="main-modal entity-form__main-modal">
         <i data-lucide="send" class="main-modal-icon dailyplan"></i>
-        <h2 class="title-create">Compartir Plan Diario</h2>
+        <h2 class="title-create">Compartir Minuta diaria</h2>
       </div>
 
       <section class="entity-form__section share-form__section" aria-labelledby="dailyplan-share-link-title">
@@ -17,13 +17,13 @@
           <h3 id="dailyplan-share-link-title">Enlace para compartir</h3>
         </div>
         {% if share_url %}
-          <p class="share-form__hint">Quien reciba este enlace podrá revisar el plan y decidir si lo agrega a su Inbox.</p>
+          <p class="share-form__hint">Quien reciba este enlace podrá revisar la minuta y decidir si la agrega a su Inbox.</p>
           <div class="share-form__link-row">
             <input id="dailyplan-share-url" class="input-create entity-form__input" value="{{ share_url }}" readonly>
             <button id="dailyplan-copy-link" type="button" class="btn-continue">Copiar enlace</button>
           </div>
         {% else %}
-          <p class="share-form__hint">Crea una vista previa segura y portable de este plan.</p>
+          <p class="share-form__hint">Crea una vista previa segura y portable de esta minuta.</p>
           <form method="post" action="{% url 'dailyplan_share' dailyplan.pk %}">
             {% csrf_token %}
             <input type="hidden" name="share_action" value="create_link">

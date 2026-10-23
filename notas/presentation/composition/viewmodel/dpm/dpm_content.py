@@ -100,7 +100,7 @@ def build_dpm_detail_content_data(
         "father_id": dailyplan.id,
         "title": {
             "name": dailyplan.name,
-            "label": "Daily Plan",
+            "label": "Minuta diaria",
             "category": dailyplan.category,
             "category_badge": resolve_category_badge(dailyplan.category),
             "icon": CONTENT_ICON_REGISTRY.get("dailyplan"),

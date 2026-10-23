@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from django.urls import reverse
 
 SHARE_KIND_LABELS = {
-    "dailyplan": "plan diario",
+    "dailyplan": "minuta diaria",
     "meal": "comida",
     "food": "alimento",
     "dpm": "comida de plan",
@@ -90,7 +90,7 @@ def build_normalized_share_invitation_email(*, request, invitation):
     item_name = snapshot.get("subject", {}).get("title", "Contenido compartido")
     subject_type = invitation.resource.subject_type
     kind_label = {
-        "daily_plan": "plan diario",
+        "daily_plan": "minuta diaria",
         "food": "alimento",
         "meal": "comida",
         "program": "programa semanal",

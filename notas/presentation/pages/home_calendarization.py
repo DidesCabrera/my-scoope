@@ -475,7 +475,7 @@ def _build_snapshot_dailyplan_card(day, *, current_weight, owner_label: str) -> 
     return ChildCardUI(
         child_id=day.id,
         titulo=TitleUI(
-            name=snapshot.get("name") or "Plan diario",
+            name=snapshot.get("name") or "Minuta diaria",
             label="DailyPlan",
             icon="clipboard-list",
             category="en plan",

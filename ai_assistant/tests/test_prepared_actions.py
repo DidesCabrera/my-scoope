@@ -401,7 +401,7 @@ class PreparedProductActionTests(TestCase):
         action = prepare_workspace_patch(
             user=self.user,
             title="Completar plan",
-            summary="Agrega la comida al plan diario.",
+            summary="Agrega la comida a la minuta diaria.",
             operations=[
                 {
                     "operation_id": "add_lunch",

@@ -75,7 +75,7 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
     onChangeTime: setTimeChangeMeal,
     onDelete: async (meal) => { if (meal.relationId != null) await mutate(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relationId}`, { method: "DELETE" }, "Comida eliminada"); },
     onOpen: openMeal,
-    onReorder: async (meals: MealPanelItem[]) => mutate(`/api/v1/library/daily-plans/${item.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" }, "Orden actualizado", { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" }),
+    onReorder: async (meals: MealPanelItem[]) => mutate(`/api/v1/library/daily-plans/${item.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" }, "Orden actualizado", { loadingLabel: "Actualizando minuta", successLabel: "Minuta actualizada" }),
     onReplace: (meal) => { if (meal.relationId != null) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, dailyPlanMealId: meal.relationId })); },
   } : undefined;
   if (item.entity === "program") {

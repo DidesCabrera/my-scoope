@@ -13,7 +13,7 @@
         </p>
 
         <div class="entity-indicators structural-indicators program-week-child-card__indicators" aria-label="Estructura de la semana {{ week.week_number }}">
-          <span class="structural-item" aria-label="{{ week.assigned_dailyplans_count }} planes diarios asignados">
+          <span class="structural-item" aria-label="{{ week.assigned_dailyplans_count }} minutas diarias asignadas">
             <span class="structural-value">{{ week.assigned_dailyplans_count }}</span>
             <i data-lucide="clipboard-list" class="structural-icon main" aria-hidden="true"></i>
           </span>
@@ -62,13 +62,13 @@
     {% endif %}
   </header>
 
-  <section class="program-week-child-card__plan-section" aria-label="Planes diarios de Semana {{ week.week_number }}">
+  <section class="program-week-child-card__plan-section" aria-label="Minutas diarias de Semana {{ week.week_number }}">
     <div class="detail-section-header dailyplan-detail__children-header program-week-detail-section__header">
       <div class="detail-section-heading home-section-title detail-dp">
         <i data-lucide="clipboard-list" class="home-section-header-icon dailyplan"></i>
-        <h2>Planes diarios esta semana</h2>
+        <h2>Minutas diarias esta semana</h2>
       </div>
-      <div class="entity-indicators structural-indicators" aria-label="Planes diarios asignados en la semana">
+      <div class="entity-indicators structural-indicators" aria-label="Minutas diarias asignadas en la semana">
         <span class="structural-item">
           <span class="structural-value">{{ week.assigned_dailyplans_count }}</span>
           <i data-lucide="clipboard-list" class="structural-icon main" aria-hidden="true"></i>

@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta
     name="description"
-    content="My Scoope te ayuda a crear comidas, organizar planes diarios y ajustar tu alimentación con precisión para avanzar hacia tus objetivos corporales."
+    content="My Scoope te ayuda a crear comidas, organizar minutas diarias y ajustar tu alimentación con precisión para avanzar hacia tus objetivos corporales."
   >
 
   {% load static %}
@@ -105,7 +105,7 @@
         <div class="section-heading section-heading-centered">
           <p class="eyebrow">Comprensible</p>
           <h2>Un sistema modular fácil de entender.</h2>
-          <p>Arma comidas con tus alimentos preferidos, arma planes diarios con tus comidas, y arma programas semanales con tus planes diarios. Cada uno reutilizable y guardado en tus librerias</p>
+          <p>Arma comidas con tus alimentos preferidos, arma minutas diarias con tus comidas, y arma programas semanales con tus minutas diarias. Cada una reutilizable y guardada en tus librerías.</p>
         </div>
 
         <div class="system-diagram">
@@ -144,8 +144,8 @@
               </span>
               <span class="system-node-number">03</span>
             </div>
-            <strong>Planes Diarios</strong>
-            <p>Organiza planes diarios de alimentacion con tus comidas, puedes modificalas para ajustarlas a tu objetivo diario</p>
+            <strong>Minutas diarias</strong>
+            <p>Organiza minutas diarias de alimentación con tus comidas; puedes modificarlas para ajustarlas a tu objetivo diario.</p>
           </div>
 
           <div class="system-connector"></div>
@@ -158,7 +158,7 @@
               <span class="system-node-number">04</span>
             </div>
             <strong>Programas Semanales</strong>
-            <p>Programa semanas de alimentacion con tus planes diarios, define variaciones en tu ingesta cálorica y macros</p>
+            <p>Programa semanas de alimentación con tus minutas diarias y define variaciones en tu ingesta calórica y macros.</p>
           </div>
         </div>
 
@@ -193,7 +193,7 @@
         <div class="section-copy">
           <p class="eyebrow">Preciso</p>
           <h2>Ajusta las porciones viendo el impacto real en tus métricas</h2>
-          <p>No todos los alimentos contribuyen nutricionalmente de la misma manera. Ajustas las porciones de alimentos viendo su impacto en la comida y en el plan diario.</p>
+          <p>No todos los alimentos contribuyen nutricionalmente de la misma manera. Ajustas las porciones de alimentos viendo su impacto en la comida y en la minuta diaria.</p>
         </div>
 
       </div>
@@ -286,7 +286,7 @@
 
             <ul>
               <li>Alimentos privados ilimitados.</li>
-              <li>Hasta {{ plan_benefits.free.max_meals }} comidas y {{ plan_benefits.free.max_dailyplans }} planes diarios.</li>
+              <li>Hasta {{ plan_benefits.free.max_meals }} comidas y {{ plan_benefits.free.max_dailyplans }} minutas diarias.</li>
               <li>{{ plan_benefits.free.max_programs }} programa guardado de hasta {{ plan_benefits.free.max_program_duration_weeks }} semanas.</li>
               <li>Incorporar {{ plan_benefits.free.max_shared_imports_monthly }} elemento compartido al mes; recibir y consultar sin límite.</li>
               <li>Sin créditos de IA incluidos.</li>
@@ -309,7 +309,7 @@
 
             <ul>
               <li>Todo lo incluido en Free.</li>
-              <li>Comidas, planes diarios y programas guardados ilimitados.</li>
+              <li>Comidas, minutas diarias y programas guardados ilimitados.</li>
               <li>Programas de hasta {{ plan_benefits.basic.max_program_duration_weeks }} semanas.</li>
               <li>Incorporación de compartidos y comparaciones guardadas ilimitadas.</li>
               <li>{{ plan_benefits.basic.monthly_credits_label }} créditos de asistencia IA al mes.</li>

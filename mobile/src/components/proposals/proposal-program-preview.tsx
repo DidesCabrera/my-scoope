@@ -30,7 +30,7 @@ export function ProposalProgramWeekObjectivesCard({ program, week }: { program: 
   const facts = weekRequirementFacts(program, week);
   return facts.length ? (
     <ProposalFacts
-      description="Requisitos usados por el Asistente Nutricional para validar los siete planes de esta semana."
+      description="Requisitos usados por el Asistente Nutricional para validar las siete minutas de esta semana."
       facts={facts}
       title={`Objetivos de la Semana ${week}`}
     />

@@ -85,7 +85,7 @@ class WebCompositionPickerModalTests(TestCase):
         self.assertContains(response, '<dialog\n  id="program-slot-picker-section"')
         self.assertContains(response, "data-picker-modal")
         self.assertContains(response, 'data-picker-step-panel="selection"')
-        self.assertContains(response, "1. Selecciona un plan diario")
+        self.assertContains(response, "1. Selecciona una minuta diaria")
         self.assertContains(response, 'data-picker-step-panel="impact"')
         self.assertContains(response, "2. Configura y revisa el impacto")
         self.assertContains(response, "Resultado proyectado")

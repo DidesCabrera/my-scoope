@@ -13,7 +13,10 @@ _RESOURCE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("calendarization", r"\b(?:calendari\w*|calendariz\w*)\b"),
     ("saved_comparison", r"\b(?:comparacion\w*|comparison\w*)\b"),
     ("program", r"\b(?:programas?|programs?|semana\w*)\b"),
-    ("dailyplan", r"\b(?:dailyplans?|planes?|plan diario|dietas?)\b"),
+    (
+        "dailyplan",
+        r"\b(?:dailyplans?|planes?|planes? diarios?|minutas?(?: diarias?)?|dietas?)\b",
+    ),
     ("meal", r"\b(?:comidas?|meals?|colacion\w*|desayuno\w*|almuerzo\w*|cena\w*)\b"),
     ("food", r"\b(?:alimentos?|foods?|ingredientes?)\b"),
     ("proposal", r"\b(?:propuestas?|proposals?)\b"),

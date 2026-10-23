@@ -44,7 +44,7 @@ class AssistantStructuredContractsTests(SimpleTestCase):
         intent = AssistantIntent(
             name="create_dailyplan_proposal",
             confidence="0.8",
-            summary="  Crear   plan diario  ",
+            summary="  Crear   minuta diaria  ",
             slots={"meals_per_day": 4},
             missing_slots=[" calorie target "],
             safety_flags=["needs review"],
@@ -52,7 +52,7 @@ class AssistantStructuredContractsTests(SimpleTestCase):
 
         self.assertEqual(intent.name, AssistantIntentName.CREATE_DAILYPLAN_PROPOSAL)
         self.assertEqual(intent.confidence, 0.8)
-        self.assertEqual(intent.summary, "Crear plan diario")
+        self.assertEqual(intent.summary, "Crear minuta diaria")
         self.assertEqual(intent.missing_slots, ("calorie_target",))
         self.assertEqual(intent.safety_flags, ("needs_review",))
         self.assertTrue(intent.is_write_intent)

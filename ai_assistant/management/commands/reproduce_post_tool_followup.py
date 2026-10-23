@@ -21,7 +21,7 @@ from ai_assistant.infrastructure.providers.factory import get_llm_client
 from ai_assistant.infrastructure.providers.openai_client import build_openai_responses_payload
 
 PROBE_USER_MESSAGE = (
-    "Quiero un plan diario para bajar grasa con 4 comidas. "
+    "Quiero una minuta diaria para bajar grasa con 4 comidas. "
     "Registra esa dirección para la propuesta."
 )
 

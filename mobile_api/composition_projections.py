@@ -409,7 +409,7 @@ def project_program_week_result(*, program, dailyplan, week_number, day_numbers,
         "name": f"Semana {week_number} resultante",
         "nutrition": _nutrition(week_macros, week_kcal, current_weight),
         "indicators": [
-            {"icon": "dailyPlan", "label": "planes diarios", "value": len(projected_plans)},
+            {"icon": "dailyPlan", "label": "minutas diarias", "value": len(projected_plans)},
             {"icon": "meal", "label": "comidas", "value": meals_count},
             {"icon": "food", "label": "alimentos", "value": len(foods)},
         ],

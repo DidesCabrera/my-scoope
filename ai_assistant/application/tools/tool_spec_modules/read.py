@@ -12,7 +12,7 @@ READ_TOOL_SPECS = {
         name=TOOL_QUERY_WORKSPACE,
         description=(
             "Query the authenticated user's My Scoope workspace. This is the primary read capability for "
-            "foods, meals, daily plans, programs, calendarization, proposals and saved comparisons. "
+            "foods, meals, daily meal plans, programs, calendarization, proposals and saved comparisons. "
             "Use it before saying stored product data is unavailable. Omit object_id to list or search; "
             "include object_id to read one object. For count questions, always report total_count "
             "(also exposed as count_for_user_questions), never returned_count or the page length. "

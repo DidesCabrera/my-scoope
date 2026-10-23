@@ -86,20 +86,20 @@ const configs: Record<PickerKind, PickerConfig> = {
   },
   "dailyplan-to-program": {
     createEntity: "dailyPlan",
-    createLabel: "Crear plan diario",
-    title: "Asignar plan diario",
-    searchLabel: "Buscar plan diario",
-    searchPlaceholder: "Escribe el nombre de un plan diario",
+    createLabel: "Crear minuta diaria",
+    title: "Asignar minuta diaria",
+    searchLabel: "Buscar minuta diaria",
+    searchPlaceholder: "Escribe el nombre de una minuta diaria",
     targetSlug: "programs",
     previewPath: (id) => `/api/v1/library/programs/${id}/daily-plan-picker/preview`,
     commitPath: (id) => `/api/v1/library/programs/${id}/daily-plan-picker/commit`,
   },
   "dailyplan-to-calendarized-day": {
     createEntity: "dailyPlan",
-    createLabel: "Crear plan diario",
-    title: "Asignar plan al programa activo",
-    searchLabel: "Buscar plan diario",
-    searchPlaceholder: "Escribe el nombre de un plan diario",
+    createLabel: "Crear minuta diaria",
+    title: "Asignar minuta al programa activo",
+    searchLabel: "Buscar minuta diaria",
+    searchPlaceholder: "Escribe el nombre de una minuta diaria",
     targetSlug: "programs",
     previewPath: (id) => `/api/v1/program/days/${id}/daily-plan-picker/preview`,
     commitPath: (id) => `/api/v1/program/days/${id}/daily-plan-picker/commit`,
@@ -159,7 +159,7 @@ function AssignmentDayOption({ day, occupied, selected, onPress }: { day: (typeo
   return (
     <WeekDayCell label={day.short}>
       <Pressable
-        accessibilityLabel={`${day.label}: ${selected ? occupied ? "reemplazar plan diario" : "asignar plan diario" : occupied ? "plan diario asignado" : "agregar plan diario"}`}
+        accessibilityLabel={`${day.label}: ${selected ? occupied ? "reemplazar minuta diaria" : "asignar minuta diaria" : occupied ? "minuta diaria asignada" : "agregar minuta diaria"}`}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: selected }}
         hitSlop={compact ? 2 : undefined}
@@ -552,7 +552,7 @@ export function CompositionPickerScreen({
     <ConfirmationState
       busy={submitting}
       confirmLabel="Reemplazar y asignar"
-      message={`Los días ${preview.replacements.join(", ")} ya tienen un plan. Se reemplazarán por ${preview.selection.name}.`}
+      message={`Los días ${preview.replacements.join(", ")} ya tienen una minuta. Se reemplazarán por ${preview.selection.name}.`}
       onCancel={() => setConfirming(false)}
       onConfirm={() => void commit(true)}
       title="Confirmar reemplazos"
@@ -561,7 +561,7 @@ export function CompositionPickerScreen({
     <Button
       bleed
       disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
-      label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
+      label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar minuta diaria"}
       loading={submitting}
       onPress={() => preview.confirmation_required && kind !== "dailyplan-to-program" ? setConfirming(true) : void commit(preview.confirmation_required)}
     />

@@ -517,7 +517,7 @@ def assign_dailyplan_to_calendarized_day(
                 "plan_snapshot": snapshot.payload,
             }
         ],
-        rationale="Plan diario asignado manualmente al programa activo.",
+        rationale="Minuta diaria asignada manualmente al programa activo.",
         idempotency_key=clean_key,
         now=now,
     )

@@ -28,8 +28,8 @@ COMPARISON_KINDS = {
         "include_ppk": True,
     },
     SavedComparison.KIND_DAILYPLANS: {
-        "label": "Planes diarios",
-        "entity_label": "Plan diario",
+        "label": "Minutas diarias",
+        "entity_label": "Minuta diaria",
         "include_quantities": False,
         "include_ppk": True,
     },

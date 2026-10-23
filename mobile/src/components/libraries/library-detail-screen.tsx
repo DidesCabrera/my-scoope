@@ -30,7 +30,7 @@ import { libraryFoodNutritionFacts, libraryNutrition } from "./presentation-adap
 import { ProgramDetailPreview } from "./program-detail-preview";
 import { LibraryActions } from "./library-actions";
 
-const sectionTitles = { foods: "Composición comida", meals: "Composición plan diario", weeks: "Semanas del programa" } as const;
+const sectionTitles = { foods: "Composición comida", meals: "Composición de la minuta diaria", weeks: "Semanas del programa" } as const;
 
 function foodPanelItem(item: LibraryItem["panel"]["foods"][number]): FoodPanelItem {
   return { id: item.id, detailId: item.detail_id, relationId: item.relation_id, name: item.name, emoji: item.emoji, visualKey: item.visual_key, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
@@ -105,7 +105,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const isPinnedMealContext = entitySlug === "meals" && pinned === "1" && Boolean(mealKey);
   const pinnedMealAdherence = useMealAdherenceCheckIn({ enabled: isPinnedMealContext, mealKey: mealKey ?? "", mode: "pinned", onChange: setPinnedMealExecution });
   const headerEntity = entitySlug === "daily-plans" ? "dailyPlan" : entitySlug === "programs" ? "program" : entitySlug === "meals" ? "meal" : "food";
-  const fallbackTitle = entitySlug === "daily-plans" ? "Plan diario" : entitySlug === "programs" ? "Programa" : entitySlug === "meals" ? "Comida" : "Alimento";
+  const fallbackTitle = entitySlug === "daily-plans" ? "Minuta diaria" : entitySlug === "programs" ? "Programa" : entitySlug === "meals" ? "Comida" : "Alimento";
   const isPinnedPlan = item?.entity === "dailyPlan" && todayContext?.calendarization == null && todayContext?.pinned_plan?.id === item.id;
   const isCalendarPlan = item?.entity === "dailyPlan" && todayContext?.day_id != null && todayContext.source_dailyplan_id === item.id;
   const openActions = useCallback(() => setActionSheet("menu"), []);
@@ -143,11 +143,11 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   }, [apiRequest, item, todayContext]);
   const confirmCalendarPlan = useCallback((assign: boolean) => {
     Alert.alert(
-      assign ? "¿Asignar este plan a hoy?" : "¿Quitar este plan de hoy?",
+      assign ? "¿Asignar esta minuta a hoy?" : "¿Quitar esta minuta de hoy?",
       assign
         ? todayContext?.day_id != null
           ? "La asignación actual se conservará en el historial. No se puede reemplazar un día con cumplimiento registrado."
-          : "Se guardará una copia de este plan para la fecha de hoy; los cambios futuros en la biblioteca no la modificarán."
+          : "Se guardará una copia de esta minuta para la fecha de hoy; los cambios futuros en la biblioteca no la modificarán."
         : "La asignación quedará en el historial. No se puede quitar un día con cumplimiento registrado.",
       [
         { style: "cancel", text: "Cancelar" },
@@ -395,7 +395,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     onChangeTime: (meal: MealPanelItem) => { if (meal.relationId) setPanelTimeMeal(meal); },
     onDelete: async (meal: MealPanelItem) => { if (meal.relationId) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relationId}`, { method: "DELETE" }); },
     onOpen: (meal: MealPanelItem) => { if (meal.detailId && meal.relationId) router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(item.id), dailyPlanMealId: String(meal.relationId), id: String(meal.detailId), mealTime: meal.time ?? "", ...(isPinnedPlan ? { pinned: "1", mealKey: meal.id } : {}) } } as Href); },
-    onReorder: async (meals: MealPanelItem[]) => { await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }) }, { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" }); },
+    onReorder: async (meals: MealPanelItem[]) => { await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }) }, { loadingLabel: "Actualizando minuta", successLabel: "Minuta actualizada" }); },
     onReplace: (meal: MealPanelItem) => { if (meal.relationId) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, dailyPlanMealId: meal.relationId })); },
     onToggleCompleted: isPinnedPlan ? (meal: MealPanelItem, completed: boolean) => { void togglePinnedMealCompletion(meal.id, completed); } : undefined,
   } : undefined;
@@ -424,8 +424,8 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id }))} /> : null}
     {item.entity === "meal" && isPinnedMealContext ? <MealNoteCard controller={pinnedMealAdherence} /> : null}
     {item.entity === "meal" && !isPinnedMealContext && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
-    {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" /><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onChanged={load} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></> : null}
-    {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en este plan diario" /><GroupedFoodsCard items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} title="Alimentos plan diario" /></> : null}
+    {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" /><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onChanged={load} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></> : null}
+    {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en esta minuta diaria" /><GroupedFoodsCard items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} title="Alimentos de la minuta diaria" /></> : null}
     {item.entity === "dailyPlan" ? <Button bleed label={isCalendarPlan ? "Quitar del calendario de hoy" : "Asignar al calendario de hoy"} onPress={() => confirmCalendarPlan(!isCalendarPlan)} variant={isCalendarPlan ? "secondary" : "primary"} /> : null}
   </EntityDetailPage></NestableScrollContainer>{actionsModal}{mutationStatusModal}<CalendarizedEntityActions
     entityName={panelTimeMeal?.name ?? "Comida"}

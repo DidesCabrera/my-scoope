@@ -134,7 +134,7 @@ def _get_proposal_attachment(proposal: NutritionProposal) -> dict[str, str]:
     if intent == "ai_nutrition_brief":
         brief = payload.get("nutrition_brief") or {}
         requested_entity = brief.get("requested_entity") or "daily_plan"
-        entity_label = "Programa semanal" if requested_entity == "program" else "Plan diario"
+        entity_label = "Programa semanal" if requested_entity == "program" else "Minuta diaria"
         return {
             "kind": "brief",
             "label": "Brief nutricional",

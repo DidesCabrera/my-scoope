@@ -205,10 +205,10 @@
 
   {% if can_edit %}
     <div id="program-week-days-edit-{{ panel_id }}" class="card-table-programs program-table-panel program-week-day-panels__panel">
-      <div class="data-grid data-grid--program-week-days-edit" role="table" aria-label="Editar planes diarios de la semana">
+      <div class="data-grid data-grid--program-week-days-edit" role="table" aria-label="Editar minutas diarias de la semana">
         <div class="data-grid-header data-grid-header--program-week-days-edit" role="row">
           <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
-          <div class="data-grid-col data-grid-col--program-day-plan" role="columnheader">Plan</div>
+          <div class="data-grid-col data-grid-col--program-day-plan" role="columnheader">Minuta</div>
           <div class="data-grid-col data-grid-col--program-day-actions" role="columnheader"></div>
         </div>
 
@@ -231,7 +231,7 @@
                   data-week-number="{{ week.week_number }}"
                   data-day-number="{{ row.day_number }}"
                   data-dailyplan-id="{{ row.dailyplan_id }}"
-                  aria-label="Reemplazar plan de {{ row.day_name }}"
+                  aria-label="Reemplazar minuta de {{ row.day_name }}"
                   title="Reemplazar"
                 >
                   <i data-lucide="refresh-cw" class="table-icon"></i>
@@ -242,8 +242,8 @@
                   <button
                     type="submit"
                     class="table-action-link program-week-day-table-action program-week-day-table-action--danger"
-                    aria-label="Eliminar plan de {{ row.day_name }}"
-                    title="Eliminar plan"
+                    aria-label="Eliminar minuta de {{ row.day_name }}"
+                    title="Eliminar minuta"
                   >
                     <i data-lucide="trash-2" class="table-icon"></i>
                   </button>
@@ -254,8 +254,8 @@
                   class="table-action-link program-week-day-table-action program-week-day-table-action--add js-program-week-day-replace"
                   data-week-number="{{ week.week_number }}"
                   data-day-number="{{ row.day_number }}"
-                  aria-label="Agregar plan a {{ row.day_name }}"
-                  title="Agregar plan"
+                  aria-label="Agregar minuta a {{ row.day_name }}"
+                  title="Agregar minuta"
                 >
                   <i data-lucide="plus" class="table-icon"></i>
                 </button>

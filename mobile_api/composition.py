@@ -122,7 +122,7 @@ def _owned_dailyplan(user, dailyplan_id: int) -> DailyPlan:
         DailyPlan.objects.filter(pk=dailyplan_id, created_by=user).exclude(source=DailyPlan.SOURCE_PROGRAM).first()
     )
     if not dailyplan:
-        raise MobileAPIError("picker_target_not_found", "El plan diario no está disponible para edición.", 404)
+        raise MobileAPIError("picker_target_not_found", "La minuta diaria no está disponible para edición.", 404)
     return dailyplan
 
 
@@ -158,7 +158,7 @@ def _library_dailyplan(user, dailyplan_id: int) -> DailyPlan:
         .first()
     )
     if not dailyplan:
-        raise MobileAPIError("picker_selection_not_found", "El plan diario seleccionado no está disponible.", 404)
+        raise MobileAPIError("picker_selection_not_found", "La minuta diaria seleccionada no está disponible.", 404)
     return dailyplan
 
 
@@ -191,11 +191,11 @@ def preview_food_for_meal(
     dailyplan_meal = None
     if dailyplan_id is not None or dailyplan_meal_id is not None:
         if dailyplan_id is None or dailyplan_meal_id is None:
-            raise MobileAPIError("picker_context_invalid", "El contexto del plan diario está incompleto.", 422)
+            raise MobileAPIError("picker_context_invalid", "El contexto de la minuta diaria está incompleto.", 422)
         dailyplan = _owned_dailyplan(user, dailyplan_id)
         dailyplan_meal = _owned_dailyplan_meal(user, dailyplan, dailyplan_meal_id)
         if dailyplan_meal.meal_id != meal.id:
-            raise MobileAPIError("picker_context_invalid", "La comida no pertenece al plan diario indicado.", 422)
+            raise MobileAPIError("picker_context_invalid", "La comida no pertenece a la minuta diaria indicado.", 422)
     result = (
         project_dailyplan_food_result(
             dailyplan=dailyplan,
@@ -219,7 +219,7 @@ def preview_food_for_meal(
         ),
         "impacts": [
             _impact(
-                label=("Plan diario después de reemplazar" if replaced else "Plan diario después de agregar") if dailyplan else ("Comida después de reemplazar" if replaced else "Comida después de agregar"),
+                label=("Minuta diaria después de reemplazar" if replaced else "Minuta diaria después de agregar") if dailyplan else ("Comida después de reemplazar" if replaced else "Comida después de agregar"),
                 entity="dailyPlan" if dailyplan else "meal",
                 before=before_nutrition,
                 after=result["nutrition"],
@@ -258,7 +258,7 @@ def _owned_dailyplan_meal(user, dailyplan: DailyPlan, dailyplan_meal_id: int) ->
         .first()
     )
     if not dailyplan_meal:
-        raise MobileAPIError("composition_item_not_found", "La comida del plan no está disponible para edición.", 404)
+        raise MobileAPIError("composition_item_not_found", "La comida de la minuta no está disponible para edición.", 404)
     return dailyplan_meal
 
 
@@ -286,10 +286,10 @@ def save_dailyplan_from_program(*, user, program_id: int, week_number: int, day_
         .first()
     )
     if not program_day or not program_day.dailyplan:
-        raise MobileAPIError("composition_item_not_found", "El plan diario del programa no está disponible.", 404)
+        raise MobileAPIError("composition_item_not_found", "La minuta diaria del programa no está disponible.", 404)
     saved_dailyplan = save_dailyplan(program_day.dailyplan, user)
     return {
-        "message": "Plan diario guardado en tu biblioteca.",
+        "message": "Minuta diaria guardada en tu biblioteca.",
         "target_id": program.id,
         "affected_id": saved_dailyplan.id,
     }
@@ -322,7 +322,7 @@ def preview_meal_for_dailyplan(
         ),
         "impacts": [
             _impact(
-                label="Plan diario después de reemplazar" if replaced else "Plan diario después de agregar",
+                label="Minuta diaria después de reemplazar" if replaced else "Minuta diaria después de agregar",
                 entity="dailyPlan",
                 before=_nutrition(*dailyplan_macros, current_weight),
                 after=result["nutrition"],
@@ -349,7 +349,7 @@ def add_meal_from_picker(
             note=note,
         )
         return {
-            "message": "Comida reemplazada en el plan diario.",
+            "message": "Comida reemplazada en la minuta diaria.",
             "target_id": dailyplan.id,
             "created_id": result.dailyplan_meal.id,
         }
@@ -361,7 +361,7 @@ def add_meal_from_picker(
         note=note,
     )
     return {
-        "message": "Comida agregada al plan diario.",
+        "message": "Comida agregada a la minuta diaria.",
         "target_id": dailyplan.id,
         "created_id": result.dailyplan_meal.id,
     }
@@ -457,7 +457,7 @@ def add_dailyplan_from_picker(
         program.is_draft = False
         program.save(update_fields=["is_draft"])
     return {
-        "message": "Plan diario asignado a la semana.",
+        "message": "Minuta diaria asignada a la semana.",
         "target_id": program.id,
         "created_id": created_ids[0],
     }
@@ -560,7 +560,7 @@ def remove_meal_from_dailyplan(*, user, dailyplan_id: int, dailyplan_meal_id: in
     dailyplan = _owned_dailyplan(user, dailyplan_id)
     dailyplan_meal = _owned_dailyplan_meal(user, dailyplan, dailyplan_meal_id)
     remove_dailyplan_meal(dailyplan_meal=dailyplan_meal)
-    return {"message": "Comida eliminada del plan diario.", "target_id": dailyplan.id, "affected_id": dailyplan_meal_id}
+    return {"message": "Comida eliminada de la minuta diaria.", "target_id": dailyplan.id, "affected_id": dailyplan_meal_id}
 
 
 def reorder_meals_in_dailyplan(*, user, dailyplan_id: int, ordered_ids) -> dict:
@@ -587,8 +587,8 @@ def reorder_days_in_program_week(*, user, program_id: int, week_number: int, ord
     try:
         reorder_program_days(program=program, week_number=week_number, ordered_day_numbers=ordered_days)
     except ValueError as exc:
-        raise MobileAPIError("composition_order_invalid", "El orden de planes diarios no es válido.", 422) from exc
-    return {"message": "Orden de planes diarios guardado.", "target_id": program.id, "affected_id": program.id}
+        raise MobileAPIError("composition_order_invalid", "El orden de minutas diarias no es válido.", 422) from exc
+    return {"message": "Orden de minutas diarias guardado.", "target_id": program.id, "affected_id": program.id}
 
 
 def duplicate_program_week(*, user, program_id: int, week_number: int) -> dict:
@@ -622,7 +622,7 @@ def remove_dailyplan_from_program(*, user, program_id: int, week_number: int, da
     program = _owned_program(user, program_id)
     program_day = ProgramDay.objects.filter(program=program, week_number=week_number, day_number=day_number).first()
     if not program_day:
-        raise MobileAPIError("composition_item_not_found", "El día no tiene un plan asignado.", 404)
+        raise MobileAPIError("composition_item_not_found", "El día no tiene una minuta asignada.", 404)
     program_day_id = program_day.id
     remove_program_day(program_day=program_day)
-    return {"message": "Plan diario eliminado de la semana.", "target_id": program.id, "affected_id": program_day_id}
+    return {"message": "Minuta diaria eliminada de la semana.", "target_id": program.id, "affected_id": program_day_id}

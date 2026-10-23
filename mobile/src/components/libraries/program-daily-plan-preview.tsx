@@ -92,27 +92,27 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onR
   const liveMeals = day ? (day.meals ?? []).map(mealPanelItem) : meals;
   const contextualActions: ContextCardAction[] = [
     ...(onSaveToLibrary ? [{ icon: Bookmark, key: "save-to-library", label: "Guardar en mi biblioteca", onPress: onSaveToLibrary }] : []),
-    ...(onReplace ? [{ icon: RefreshCw, key: "replace", label: "Reemplazar plan diario", onPress: onReplace }] : []),
+    ...(onReplace ? [{ icon: RefreshCw, key: "replace", label: "Reemplazar minuta diaria", onPress: onReplace }] : []),
     ...(onRemove ? [{
       confirmation: {
-        confirmLabel: "Quitar plan diario",
-        message: "Se quitará este plan del día. El plan diario seguirá disponible en tu biblioteca.",
-        title: "¿Quitar plan diario?",
+        confirmLabel: "Quitar minuta diaria",
+        message: "Se quitará esta minuta del día. La minuta diaria seguirá disponible en tu biblioteca.",
+        title: "¿Quitar minuta diaria?",
       },
       destructive: true,
       icon: Trash2,
       key: "remove",
-      label: "Quitar plan diario",
+      label: "Quitar minuta diaria",
       onPress: onRemove,
     }] : []),
   ];
   const openDetail = onOpen ?? (day?.dailyplan_id ? () => router.push(`/libraries/daily-plans/${day.dailyplan_id}` as Href) : undefined);
-  const openDetailLabel = `Ir al detalle del plan de ${dayLabel}`;
+  const openDetailLabel = `Ir al detalle de la minuta de ${dayLabel}`;
   return (
     <NutritionEntityCard
       actions={(
         <>
-          <ContextCardActions actions={contextualActions} label={`Más acciones para el plan de ${dayLabel}`} title={day?.plan_name ?? `Plan de ${dayLabel}`} />
+          <ContextCardActions actions={contextualActions} label={`Más acciones para la minuta de ${dayLabel}`} title={day?.plan_name ?? `Minuta de ${dayLabel}`} />
           {openDetail ? (
             <EntityCardAction
               label={openDetailLabel}

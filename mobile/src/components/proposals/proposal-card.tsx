@@ -19,9 +19,9 @@ const labels: Record<ProposalStatus, string> = {
 
 const proposalTypePresentation: Record<ProposalTypeKind, { color: string; label: string }> = {
   brief: { color: tokens.color.proposal, label: "Requerimiento" },
-  dailyplan: { color: tokens.color.dailyPlan, label: "Plan diario" },
-  dailyPlan: { color: tokens.color.dailyPlan, label: "Plan diario" },
-  dpm: { color: tokens.color.dpm, label: "Plan de comidas" },
+  dailyplan: { color: tokens.color.dailyPlan, label: "Minuta diaria" },
+  dailyPlan: { color: tokens.color.dailyPlan, label: "Minuta diaria" },
+  dpm: { color: tokens.color.dpm, label: "Comida de minuta" },
   food: { color: tokens.color.food, label: "Alimento" },
   meal: { color: tokens.color.meal, label: "Comida" },
   program: { color: tokens.color.program, label: "Programa semanal" },

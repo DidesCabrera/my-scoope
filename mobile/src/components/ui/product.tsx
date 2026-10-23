@@ -26,6 +26,7 @@ import {
 } from "lucide-react-native";
 import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 
+import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { tokens } from "@/design/tokens";
 import { runGuardedNavigation } from "@/navigation/navigation-press-guard";
 import { Chip } from "./chip";
@@ -97,8 +98,8 @@ const entityLabels: Record<EntityKind, string> = {
   comparison: "Comparación",
   food: "Alimento",
   meal: "Comida",
-  dailyPlan: "Plan diario",
-  dpm: "Plan diario",
+  dailyPlan: PRODUCT_VOCABULARY_ES.dailyPlan.singular,
+  dpm: PRODUCT_VOCABULARY_ES.dailyPlan.singular,
   program: "Programa",
 };
 

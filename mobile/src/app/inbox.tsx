@@ -38,7 +38,7 @@ const comparisonEntityByKind: Record<NonNullable<SharingInboxItem["comparison_ki
 };
 
 const comparisonLabelByKind: Record<NonNullable<SharingInboxItem["comparison_kind"]>, string> = {
-  dailyplans: "Planes diarios",
+  dailyplans: "Minutas diarias",
   foods: "Alimentos",
   meals: "Comidas",
 };
@@ -50,7 +50,7 @@ function sharedCardAccent(item: SharingInboxItem): string | undefined {
 
 const eyebrowBySubject: Record<SharingInboxItem["subject_type"], { feminine: boolean; label: string }> = {
   comparison: { feminine: true, label: "Comparación" },
-  daily_plan: { feminine: false, label: "Plan diario" },
+  daily_plan: { feminine: false, label: "Minuta diaria" },
   food: { feminine: false, label: "Alimento" },
   meal: { feminine: true, label: "Comida" },
   program: { feminine: false, label: "Programa semanal" },
@@ -194,7 +194,7 @@ export default function InboxScreen() {
       })}
       {visibleData && visibleData.count === 0 ? (
         <CollectionEmptyState
-          description={activeScope === "sent" ? "Los alimentos, comidas, planes y programas que compartas aparecerán aquí." : "Los alimentos, comidas, planes y programas que agregues desde un enlace compartido aparecerán aquí."}
+          description={activeScope === "sent" ? "Los alimentos, comidas, minutas y programas que compartas aparecerán aquí." : "Los alimentos, comidas, minutas y programas que agregues desde un enlace compartido aparecerán aquí."}
           title={activeScope === "sent" ? "Aún no has compartido elementos" : "Aún no tienes compartidos recibidos"}
         />
       ) : null}

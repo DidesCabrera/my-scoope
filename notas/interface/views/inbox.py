@@ -549,7 +549,7 @@ def inbox_attachment_detail(request, kind, share_id):
     if kind == "share":
         subject_label = {
             ShareResource.SubjectType.COMPARISON: "Comparación",
-            ShareResource.SubjectType.DAILY_PLAN: "Plan diario",
+            ShareResource.SubjectType.DAILY_PLAN: "Minuta diaria",
             ShareResource.SubjectType.FOOD: "Alimento",
             ShareResource.SubjectType.MEAL: "Comida",
             ShareResource.SubjectType.PROGRAM: "Programa semanal",
@@ -741,7 +741,7 @@ def inbox_save_attachment(request, kind, share_id):
         except ShareUnavailable:
             return HttpResponseBadRequest("El contenido compartido no se puede guardar.")
         route, label = {
-            "dailyPlan": ("dailyplan_detail", "Plan diario"),
+            "dailyPlan": ("dailyplan_detail", "Minuta diaria"),
             "food": ("food_detail", "Alimento"),
             "meal": ("meal_detail", "Comida"),
             "program": ("program_detail", "Programa"),
@@ -751,7 +751,7 @@ def inbox_save_attachment(request, kind, share_id):
 
     if kind == "dailyplan":
         saved = save_dailyplan(share.dailyplan, request.user)
-        messages.success(request, "Plan diario guardado en Mi librería.")
+        messages.success(request, "Minuta diaria guardada en Mi librería.")
         return redirect("dailyplan_detail", pk=saved.pk)
 
     if kind == "meal":

@@ -80,3 +80,12 @@ class PersonalRecordIntentTests(SimpleTestCase):
         self.assertEqual(active["expected_outcome"], "clarification_required")
         self.assertEqual(active["action"], "clarify")
         self.assertEqual(len(active["clarification_options"]), 5)
+
+    def test_legacy_plan_diario_alias_still_resolves_to_dailyplan(self):
+        active = infer_active_work(
+            None,
+            current_user_message="Quiero un plan diario para ganar masa muscular",
+        )
+
+        self.assertEqual(active["resource"], "dailyplan")
+        self.assertEqual(active["objective"], "create_reviewable_dailyplan_proposal")

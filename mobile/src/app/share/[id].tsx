@@ -31,7 +31,7 @@ const comparisonEntityByKind = {
 } as const satisfies Record<ComparisonKind, Extract<EntityKind, "dailyPlan" | "food" | "meal">>;
 
 const comparisonCountLabels = {
-  dailyplans: ["Plan diario", "Planes diarios"],
+  dailyplans: ["Minuta diaria", "Minutas diarias"],
   foods: ["Alimento", "Alimentos"],
   meals: ["Comida", "Comidas"],
 } as const satisfies Record<ComparisonKind, readonly [string, string]>;
@@ -104,7 +104,7 @@ export default function SharedResourceScreen() {
   }, [apiRequest, id, status]);
 
   useFocusEffect(useCallback(() => {
-    const headerTitle = resource?.subject_type === "comparison" ? "Comparación Compartida" : resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : resource?.subject_type === "food" ? "Alimento Compartido" : resource?.subject_type === "meal" ? "Comida Compartida" : resource?.subject_type === "program" ? "Programa Compartido" : "Contenido Compartido";
+    const headerTitle = resource?.subject_type === "comparison" ? "Comparación Compartida" : resource?.subject_type === "daily_plan" ? "Minuta diaria compartida" : resource?.subject_type === "food" ? "Alimento Compartido" : resource?.subject_type === "meal" ? "Comida Compartida" : resource?.subject_type === "program" ? "Programa Compartido" : "Contenido Compartido";
     setHeaderPresentation({ action: resource ? { icon: "more", label: `Acciones para ${resource.title}`, onPress: () => setActionsVisible(true) } : undefined, fallback: "/inbox", mode: "back", title: headerTitle });
     return () => setHeaderPresentation({ mode: "default" });
   }, [resource, setHeaderPresentation]));
@@ -193,18 +193,18 @@ export default function SharedResourceScreen() {
         <>
           <EntityDetailPage
             entity="dailyPlan"
-            eyebrow="Plan diario"
+            eyebrow="Minuta diaria"
             indicators={[
               { icon: "meal", label: "comidas", value: meals.length },
               { icon: "food", label: "alimentos", value: meals.reduce((total, meal) => total + meal.foods.length, 0) },
             ]}
             nutrition={sharedNutrition(snapshot.nutrition)}
             title={resource.title}>
-            <EntityDetailSection detail={`${meals.length} comidas`} title="Composición plan diario">
+            <EntityDetailSection detail={`${meals.length} comidas`} title="Composición de la minuta diaria">
               <MealPanels items={mealItems} onOpenItem={(item) => router.push(`/share/${id}/meals/${item.id}` as Href)} />
             </EntityDetailSection>
             {meals.length ? <>
-              <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
+              <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
                 {meals.map((meal, index) => {
                   const openDetail = () => router.push(`/share/${id}/meals/${index}` as Href);
                   return <NutritionEntityCard
@@ -231,8 +231,8 @@ export default function SharedResourceScreen() {
                 })}
             </> : null}
             {planFoodItems.length ? <>
-              <ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento y evaluar su impacto contextual." title="Alimentos en este plan diario" />
-              <GroupedFoodsCard items={planFoodItems} title="Alimentos plan diario" />
+              <ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento y evaluar su impacto contextual." title="Alimentos en esta minuta diaria" />
+              <GroupedFoodsCard items={planFoodItems} title="Alimentos de la minuta diaria" />
             </> : null}
           </EntityDetailPage>
         </>

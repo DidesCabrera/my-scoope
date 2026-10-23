@@ -15,7 +15,7 @@ SUPPORTED_COMPARISON_KINDS = {
 COMPARISON_KIND_LABELS = {
     SavedComparison.KIND_FOODS: "Alimentos",
     SavedComparison.KIND_MEALS: "Comidas",
-    SavedComparison.KIND_DAILYPLANS: "Planes diarios",
+    SavedComparison.KIND_DAILYPLANS: "Minutas diarias",
 }
 
 

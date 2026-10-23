@@ -70,7 +70,7 @@ async function scheduleLocally(reminders: ReminderSettings): Promise<number> {
       identifier: localReminderIdentifier(event.event_key),
       content: {
         title: "My Scoope",
-        body: event.event_type === "daily_plan" ? "Tu plan diario está listo" : "Es hora de tu comida planificada",
+        body: event.event_type === "daily_plan" ? "Tu minuta diaria está listo" : "Es hora de tu comida planificada",
         data: {
           eventKey: event.event_key,
           owner: LOCAL_REMINDER_OWNER,

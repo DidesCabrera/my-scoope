@@ -57,7 +57,7 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes('title="Que es My Scoope"'));
   assert.ok(!journey.includes("levels.map((level, levelIndex)"));
   assert.ok(!journey.includes("levelIndex < levels.length"));
-  for (const emphasizedCopy of ["entorno nutricional", "Tus Librerías", "Alimentos, Comidas, Planes Diarios, y Programas Semanales"]) {
+  for (const emphasizedCopy of ["entorno nutricional", "Tus Librerías", "Alimentos, Comidas, Minutas diarias, y Programas Semanales"]) {
     assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
   }
   assert.ok(journey.includes("Podrás organizar tu alimentación en"));
@@ -65,7 +65,7 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
     assert.ok(journey.includes(`entity: "${entity}"`));
   }
   assert.ok(journey.includes(`<EntityIcon entity={level.entity} size="hero" />`));
-  for (const copy of ["La base nutricional del sistema", "Tu combinación de alimentos y porciones", "Tu distribución de comidas en el día", "Programas semanales", "Tu asignación de planes en semanas"]) {
+  for (const copy of ["La base nutricional del sistema", "Tu combinación de alimentos y porciones", "Tu distribución de comidas en el día", "Programas semanales", "Tu asignación de minutas en semanas"]) {
     assert.ok(journey.includes(copy));
   }
   assert.ok(journey.includes('levelDetail: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 18 }'));
@@ -101,10 +101,10 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes('title="Ejecuta lo planeado"'));
   assert.ok(journey.includes('<MealCompletionToggleCard'));
   assert.ok(journey.includes('<MealCompletionToggleCard completed onToggle={() => undefined} />'));
-  assert.ok(journey.includes('planLabel="Planes Diarios Recorridos"'));
+  assert.ok(journey.includes('planLabel="Minutas diarias recorridas"'));
   assert.ok(journey.includes('mealLabel="Comidas Cumplidas"'));
   assert.ok(!journey.includes('title="1. Conversa"'));
-  assert.ok(journey.includes("Puedes <Text style={styles.descriptionEmphasis}>calendarizar Planes y Programas</Text>, y activar el"));
+  assert.ok(journey.includes("Puedes <Text style={styles.descriptionEmphasis}>llevar Minutas y Programas al Calendario</Text>, y activar el"));
   assert.ok(journey.includes("<Text style={styles.descriptionEmphasis}>registro de cumplimiento de comidas</Text>"));
   assert.ok(journey.includes("permitiéndote ver tu progreso"));
   assert.ok(journey.includes('title="Recibe Asistencia AI"'));
@@ -120,7 +120,7 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes('<Text style={styles.descriptionEmphasis}>sistema de créditos</Text>'));
   assert.ok(journey.includes('<Text style={styles.descriptionEmphasis}>No tener créditos jamás limitará la gestión sobre tu librería.</Text>'));
   assert.ok(journey.includes("styles.assistanceCreditDescription"));
-  assert.ok(journey.includes('index={13} showProgress={false} title="Tu primer plan diario"'));
+  assert.ok(journey.includes('index={13} showProgress={false} title="Tu primera minuta diaria"'));
   assert.ok(journey.includes('<ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} showNutrition={false} />'));
   assert.ok(!preview.includes("apiRequest"));
   assert.ok(!preview.includes("/api/v1/"));

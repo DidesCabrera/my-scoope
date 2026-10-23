@@ -48,7 +48,7 @@ def build_program_proposal_navigation_content(
         "week_number": week_number,
         "day_number": day_number,
         "day_label": day.get("day_label") or f"Día {day_number}",
-        "dailyplan_name": dailyplan.get("name") or "Plan diario propuesto",
+        "dailyplan_name": dailyplan.get("name") or "Minuta diaria propuesta",
     }
     meals = dailyplan.get("meals") or []
 
@@ -336,7 +336,7 @@ def build_proposal_entity_navigation_content(
                 food_number=food_number,
                 meal_name=meal_name,
             ),
-            "dailyplan_name": dailyplan.get("name") or "Plan diario propuesto",
+            "dailyplan_name": dailyplan.get("name") or "Minuta diaria propuesta",
             "meal_number": meal_number,
         }
 
@@ -357,7 +357,7 @@ def build_proposal_entity_navigation_content(
     return {
         "entity_kind": "meal",
         "entity_name": meal_name,
-        "dailyplan_name": dailyplan.get("name") or "Plan diario propuesto",
+        "dailyplan_name": dailyplan.get("name") or "Minuta diaria propuesta",
         "meal_name": meal_name,
         "meal_number": meal_number,
         "meal_hour": item.get("hour") or "",

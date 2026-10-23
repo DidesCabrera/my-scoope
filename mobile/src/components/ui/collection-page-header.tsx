@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { tokens } from "@/design/tokens";
 import {
   EntityIcon,
@@ -12,8 +13,8 @@ import { Chip } from "./chip";
 
 const collectionCountLabels: Record<EntityKind, { plural: string; singular: string }> = {
   comparison: { plural: "Comparaciones", singular: "Comparación" },
-  dailyPlan: { plural: "Planes diarios", singular: "Plan diario" },
-  dpm: { plural: "Planes diarios", singular: "Plan diario" },
+  dailyPlan: PRODUCT_VOCABULARY_ES.dailyPlan,
+  dpm: PRODUCT_VOCABULARY_ES.dailyPlan,
   food: { plural: "Alimentos", singular: "Alimento" },
   meal: { plural: "Comidas", singular: "Comida" },
   program: { plural: "Programas semanales", singular: "Programa semanal" },

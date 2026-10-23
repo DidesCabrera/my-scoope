@@ -227,7 +227,7 @@ export default function ActivateProgramScreen() {
             <NativeDateTimeField label="Fecha de inicio" minimumValue={localDate()} mode="date" onChange={(value) => { setStartDate(value); setConfirmation(null); }} value={startDate} />
             <View style={styles.dailyNotificationBlock}>
               <NotificationToggle
-                label="Aviso inicial del plan diario"
+                label="Aviso inicial de la minuta diaria"
                 onValueChange={(enabled) => setDaily(enabled ? "on" : "off")}
                 value={daily === "on"}
               />

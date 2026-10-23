@@ -202,7 +202,7 @@ def _dailyplan_result(*, day_id: int, snapshot: dict, current_weight, projected_
     return {
         "id": day_id,
         "entity": "dailyPlan",
-        "name": snapshot.get("name") or "Plan diario",
+        "name": snapshot.get("name") or "Minuta diaria",
         "nutrition": _nutrition(totals, current_weight),
         "indicators": [
             {"icon": "meal", "label": "comidas", "value": len(meals)},
@@ -344,7 +344,7 @@ def preview_meal_for_calendarized_day(
             "quantity": None,
             "hour": str(hour)[:5] if hour else None,
         },
-        "impacts": [{"label": "Plan diario después de reemplazar" if meal_snapshot_key else "Plan diario después de agregar", "entity": "dailyPlan", "before": before, "after": result["nutrition"], "metrics": []}],
+        "impacts": [{"label": "Minuta diaria después de reemplazar" if meal_snapshot_key else "Minuta diaria después de agregar", "entity": "dailyPlan", "before": before, "after": result["nutrition"], "metrics": []}],
         "result": result,
         "replacements": [replaced_name] if replaced_name else [],
         "confirmation_required": False,
@@ -370,7 +370,7 @@ def commit_meal_to_calendarized_day(
             add_meal_to_calendarized_day(user=user, day_id=day_id, meal=meal, hour=hour, note=note)
     except ValueError as exc:
         raise calendarization_error(exc) from exc
-    message = "Comida reemplazada en el plan diario activo." if meal_snapshot_key else "Comida agregada al plan diario activo."
+    message = "Comida reemplazada en la minuta diaria activa." if meal_snapshot_key else "Comida agregada a la minuta diaria activa."
     return {"message": message, "target_id": day_id, "created_id": meal.id}
 
 

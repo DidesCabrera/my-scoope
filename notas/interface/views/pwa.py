@@ -37,7 +37,7 @@ def pwa_manifest(request):
     manifest = {
         "name": "MyScoope",
         "short_name": "MyScoope",
-        "description": "Planificación nutricional deportiva con comidas, planes diarios y propuestas IA.",
+        "description": "Planificación nutricional deportiva con comidas, minutas diarias y propuestas IA.",
         "id": start_url,
         "start_url": start_url,
         "scope": "/app/",
@@ -69,7 +69,7 @@ def pwa_manifest(request):
                 "icons": [{"src": icon_192_url, "sizes": "192x192", "type": "image/png"}],
             },
             {
-                "name": "Mis Planes Diarios",
+                "name": "Mis minutas diarias",
                 "short_name": "Planes",
                 "url": shortcut_dailyplans_url,
                 "icons": [{"src": icon_192_url, "sizes": "192x192", "type": "image/png"}],

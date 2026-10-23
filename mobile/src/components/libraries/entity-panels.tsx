@@ -194,7 +194,7 @@ export function ProgramPanels({ items }: { items: LibraryWeekPanelItem[] }) {
     <PanelSurface>
       <EntityPanelTabs<"days" | "calories" | "macros" | "distribution" | "allocation"> activeTab={activeTab} onChange={setActiveTab} tabs={[{ key: "days", label: "Días" }, { key: "calories", label: "Calorías" }, { key: "macros", label: "Macros" }, { key: "distribution", label: "Dist" }, { key: "allocation", label: "Alloc" }]} />
       {items.length === 0 ? <PanelEmptyState label="Todavía no hay semanas configuradas." /> : null}
-      {items.length > 0 && activeTab === "days" ? <PanelBody>{items.map((week, index) => <View key={week.id} style={[styles.weekRow, index === items.length - 1 && styles.rowLast]}><Text style={styles.weekTitle}>Semana {week.week_number}</Text>{week.days.map((day) => <Text key={day.day_label} style={styles.weekDay}><Text style={styles.weekDayLabel}>{day.day_label} · </Text>{day.plan_name ?? "Sin plan"}</Text>)}</View>)}</PanelBody> : null}
+      {items.length > 0 && activeTab === "days" ? <PanelBody>{items.map((week, index) => <View key={week.id} style={[styles.weekRow, index === items.length - 1 && styles.rowLast]}><Text style={styles.weekTitle}>Semana {week.week_number}</Text>{week.days.map((day) => <Text key={day.day_label} style={styles.weekDay}><Text style={styles.weekDayLabel}>{day.day_label} · </Text>{day.plan_name ?? "Sin minuta"}</Text>)}</View>)}</PanelBody> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={normalized} leadingLabel="Semana" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={normalized} leadingLabel="Semana" /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel items={normalized} leadingLabel="Semana" /> : null}

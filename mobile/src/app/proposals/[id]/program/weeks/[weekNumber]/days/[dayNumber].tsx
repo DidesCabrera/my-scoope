@@ -23,17 +23,17 @@ export default function ProposedProgramDayDetailScreen() {
   const dailyplan = programDay?.dailyplan;
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: `/proposals/${id}/program` as Href, mode: "back", title: "Plan diario propuesto" });
+    setHeaderPresentation({ fallback: `/proposals/${id}/program` as Href, mode: "back", title: "Minuta diaria propuesta" });
     return () => setHeaderPresentation({ mode: "default" });
   }, [id, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
-  if (loading && !proposal) return <LoadingState label="Abriendo el plan diario propuesto…" />;
+  if (loading && !proposal) return <LoadingState label="Abriendo la minuta diaria propuesta…" />;
 
   return (
     <Screen headerMode="preserve">
       {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
-      {proposal && !dailyplan ? <InlineNotice tone="warning">El plan diario propuesto no está disponible.</InlineNotice> : null}
+      {proposal && !dailyplan ? <InlineNotice tone="warning">La minuta diaria propuesta no está disponible.</InlineNotice> : null}
       {dailyplan ? (
         <EntityDetailPage
           entity="dailyPlan"
@@ -43,14 +43,14 @@ export default function ProposedProgramDayDetailScreen() {
             { icon: "food", label: "alimentos", value: dailyplan.meals.reduce((total, item) => total + item.meal.foods.length, 0) },
           ]}
           nutrition={proposalPreviewAdapters.nutrition(dailyplan.kpis)}
-          title={dailyplan.name || `Plan diario ${day}`}>
+          title={dailyplan.name || `Minuta diaria ${day}`}>
           <EntityDetailSection detail={`${dailyplan.meals.length} comidas`} title="Composición">
             <MealPanels
               items={proposalPreviewAdapters.mealPanelItems(dailyplan)}
               onOpenItem={(item) => router.push(`/proposals/${id}/program/weeks/${week}/days/${day}/meals/${item.id}` as Href)}
             />
           </EntityDetailSection>
-          <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
+          <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
             {dailyplan.meals.map((item, mealIndex) => (
               <ProposalMealCard
                 actions={(

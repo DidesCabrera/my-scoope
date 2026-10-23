@@ -42,7 +42,7 @@ test("comparison header creation action offers every comparison kind", async () 
   assertSourceMatch(dashboard, /<ComparisonCreateActions[\s\S]*onSelect=\{\(selectedKind\) => router\.push\(creationHref\(selectedKind\)\)\}/);
   assertSourceMatch(actions, /label="Comparar alimentos"[\s\S]*select\("foods"\)/);
   assertSourceMatch(actions, /label="Comparar comidas"[\s\S]*select\("meals"\)/);
-  assertSourceMatch(actions, /label="Comparar planes diarios"[\s\S]*select\("dailyplans"\)/);
+  assertSourceMatch(actions, /label="Comparar minutas diarias"[\s\S]*select\("dailyplans"\)/);
   assertSourceMatch(actions, /iconNode=\{<EntityIcon entity="food" size="compact" \/>\}/);
   assertSourceMatch(actions, /iconNode=\{<EntityIcon entity="meal" size="compact" \/>\}/);
   assertSourceMatch(actions, /iconNode=\{<EntityIcon entity="dailyPlan" size="compact" \/>\}/);

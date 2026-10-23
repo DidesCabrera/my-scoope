@@ -19,7 +19,7 @@ export function projectProgramWeekRows(existingRows, selectedPlan, selectedDayNu
     return {
       ...row,
       dailyplan_id: selectedPlan.id,
-      dailyplan_name: selectedPlan.name || "Plan diario",
+      dailyplan_name: selectedPlan.name || "Minuta diaria",
       has_plan: true,
       is_empty: false,
       is_projected: true,

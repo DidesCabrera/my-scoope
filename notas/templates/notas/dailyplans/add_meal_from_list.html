@@ -6,14 +6,14 @@
 
   <div class="wrap-page-modal">
 
-    <h2>Add "{{ meal.name }}" to daily plan</h2>
+    <h2>Agregar «{{ meal.name }}» a una minuta diaria</h2>
 
     <form method="post" action="{% url 'dailyplan_add_meal' 0 %}">
       {% csrf_token %}
 
       <input type="hidden" name="meal_id" value="{{ meal.id }}">
 
-      <label class="name-create">Daily plan</label>
+      <label class="name-create">Minuta diaria</label>
       <select name="dailyplan_id" required class="input-create">
         {% for dp in dailyplans %}
           <option value="{{ dp.id }}" >{{ dp.name }}</option>

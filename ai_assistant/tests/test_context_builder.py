@@ -225,7 +225,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
 
     def test_latest_explicit_program_request_replaces_an_older_plan_objective(self):
         state = self._state_with_messages(
-            NutritionConversationMessage(role="user", text="Quiero un plan diario"),
+            NutritionConversationMessage(role="user", text="Quiero una minuta diaria"),
             NutritionConversationMessage(role="assistant", text="De acuerdo."),
             NutritionConversationMessage(
                 role="user",
@@ -250,7 +250,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         state = self._state_with_messages(
             NutritionConversationMessage(
                 role="user",
-                text="Quiero un plan diario para ganar masa muscular.",
+                text="Quiero una minuta diaria para ganar masa muscular.",
             ),
             NutritionConversationMessage(role="assistant", text="De acuerdo."),
             NutritionConversationMessage(role="user", text=message),
@@ -294,7 +294,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
     def test_meal_request_wins_over_later_plan_context_reference(self):
         message = (
             "Crea ahora una propuesta revisable de comida de 450 kcal usando el "
-            "plan diario de contexto ID 2."
+            "minuta diaria de contexto ID 2."
         )
         state = self._state_with_messages(
             NutritionConversationMessage(role="user", text=message)
@@ -316,7 +316,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
 
     def test_creation_guardrail_is_not_misread_as_mutation_authority(self):
         message = (
-            "Crea un plan diario de 2400 kcal con distribución 30/50/20 y cuatro "
+            "Crea una minuta diaria de 2400 kcal con distribución 30/50/20 y cuatro "
             "comidas. No apliques la propuesta sin mi aprobación."
         )
         state = self._state_with_messages(
@@ -435,7 +435,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
 
     def test_review_artifact_closes_an_older_objective(self):
         state = self._state_with_messages(
-            NutritionConversationMessage(role="user", text="Crea un plan diario"),
+            NutritionConversationMessage(role="user", text="Crea una minuta diaria"),
             NutritionConversationMessage(
                 role="assistant",
                 text="",

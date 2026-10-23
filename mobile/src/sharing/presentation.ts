@@ -185,7 +185,7 @@ export function sharedProgramLibraryItem(snapshot: ShareSnapshot, title: string)
     nutrition: libraryNutrition(snapshot.nutrition),
     indicators: [
       { icon: "week", label: "semanas", value: duration },
-      { icon: "dailyPlan", label: "planes diarios", value: snapshot.summary.filled_days ?? 0 },
+      { icon: "dailyPlan", label: "minutas diarias", value: snapshot.summary.filled_days ?? 0 },
     ],
     panel: { kind: "weeks", foods: [], meals: [], weeks },
     creator: "Elemento compartido",
@@ -230,7 +230,7 @@ export function sharedComparisonResult(snapshot: ShareSnapshot): ComparisonResul
   });
   return {
     kind: comparison.kind,
-    kind_label: comparison.kind === "foods" ? "Alimentos" : comparison.kind === "meals" ? "Comidas" : "Planes diarios",
+    kind_label: comparison.kind === "foods" ? "Alimentos" : comparison.kind === "meals" ? "Comidas" : "Minutas diarias",
     historical_snapshot: true,
     saved_comparison_id: null,
     saved_comparison_name: snapshot.subject.title,

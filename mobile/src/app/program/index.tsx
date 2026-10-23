@@ -150,7 +150,7 @@ export default function ProgramScreen() {
           <SectionPageHeader countLabel="semanas" section="calendarization" title="Programa en curso" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <ProgramActiveOverview calendarization={calendarization} program={program} />
-          <ProgramSectionHeader icon={Calendar1} subtitle="Recorre las semanas de tu programa y conoce los planes diarios y alimentos de cada una de ellas." title="Planificación Semanal" />
+          <ProgramSectionHeader icon={Calendar1} subtitle="Recorre las semanas de tu programa y conoce las minutas diarias y los alimentos de cada una." title="Planificación Semanal" />
         </View>
 
         <View style={styles.weekTabsSticky}>

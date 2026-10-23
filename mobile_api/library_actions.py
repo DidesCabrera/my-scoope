@@ -40,7 +40,7 @@ from notas.domain.models import DailyPlan, Food, Meal, Program, ShareResource
 ENTITY_NAMES = {
     "foods": "alimento",
     "meals": "comida",
-    "daily-plans": "plan diario",
+    "daily-plans": "minuta diaria",
     "programs": "programa",
 }
 

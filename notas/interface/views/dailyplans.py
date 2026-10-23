@@ -99,7 +99,7 @@ def dailyplan_share(request, pk):
         except ShareUnavailable as exc:
             if str(exc) != "share_self_recipient_not_allowed":
                 raise
-            messages.error(request, "No puedes compartir un plan diario contigo mismo.")
+            messages.error(request, "No puedes compartir una minuta diaria contigo mismo.")
             return redirect("dailyplan_share", pk=dailyplan.pk)
         subject, email_message = build_normalized_share_invitation_email(
             request=request,
@@ -115,12 +115,12 @@ def dailyplan_share(request, pk):
             mark_share_invitation_delivered(invitation=invitation)
             messages.success(
                 request,
-                "Compartiste este plan diario. Enviamos el correo de invitación al destinatario.",
+                "Compartiste esta minuta diaria. Enviamos el correo de invitación al destinatario.",
             )
         elif delivery.reason == "duplicate_share":
             messages.success(
                 request,
-                "Este plan diario ya estaba compartido. No reenviamos el correo para evitar duplicados.",
+                "Esta minuta diaria ya estaba compartido. No reenviamos el correo para evitar duplicados.",
             )
         else:
             messages.warning(
@@ -259,7 +259,7 @@ def dailyplan_list_bulk_delete(request):
     selected_ids = request.POST.getlist("selected_ids[]")
 
     if not selected_ids:
-        messages.info(request, "No seleccionaste planes para eliminar.")
+        messages.info(request, "No seleccionaste minutas para eliminar.")
         return redirect(_safe_return_to(request, "dailyplan_list", mode="delete"))
 
     dailyplans = DailyPlan.objects.filter(
@@ -278,9 +278,9 @@ def dailyplan_list_bulk_delete(request):
             continue
 
     if deleted_count:
-        messages.success(request, f"{deleted_count} plan(es) eliminado(s).")
+        messages.success(request, f"{deleted_count} minuta(s) eliminada(s).")
     else:
-        messages.info(request, "No se eliminaron planes.")
+        messages.info(request, "No se eliminaron minutas.")
 
     return redirect(_safe_return_to(request, "dailyplan_list", mode="delete"))
 
@@ -457,7 +457,7 @@ def dailyplan_create(request):
                 name=name,
             )
         except CommercialLimitReached:
-            messages.error(request, "Alcanzaste el límite de planes diarios de tu plan. Tus planes existentes siguen disponibles.")
+            messages.error(request, "Alcanzaste el límite de minutas diarias de tu plan. Tus minutas existentes siguen disponibles.")
             return redirect("dailyplan_create")
         except ValueError:
             messages.error(request, "El nombre es obligatorio")
@@ -514,7 +514,7 @@ def dailyplan_configure(request, pk):
     caps = get_capabilities(user)
 
     if not caps or not caps.can_access_distribution_settings():
-        messages.error(request, "Your plan cannot configure daily plan distribution.")
+        messages.error(request, "Tu plan no permite configurar la distribución de esta minuta diaria.")
         return redirect("dailyplan_detail", pk=pk)
 
     # =====================
@@ -527,7 +527,7 @@ def dailyplan_configure(request, pk):
         is_copiable = bool(request.POST.get("is_copiable"))
 
         if is_public and not caps.can_publish():
-            messages.error(request, "You cannot publish this daily plan.")
+            messages.error(request, "No puedes publicar esta minuta diaria.")
             return redirect("dailyplan_configure", pk=pk)
 
         if is_copiable and not caps.can_copy():
@@ -565,11 +565,11 @@ def dailyplan_fork(request, dailyplan_id):
     original = get_dailyplan_for_user(request.user, dailyplan_id)
 
     if not original.is_forkable:
-        return HttpResponseForbidden("No puedes forkear este daily plan")
+        return HttpResponseForbidden("No puedes copiar esta minuta diaria")
 
     forked = fork_dailyplan(original, request.user)
 
-    messages.success(request, "Daily plan guardado en tu biblioteca")
+    messages.success(request, "Minuta diaria guardada en tu biblioteca.")
     return redirect("dailyplan_detail", pk=forked.pk)
 
 
@@ -580,11 +580,11 @@ def dailyplan_save(request, dailyplan_id):
     original = get_dailyplan_for_user(request.user, dailyplan_id)
 
     if not original.is_forkable:
-        return HttpResponseForbidden("No puedes guardar este daily plan")
+        return HttpResponseForbidden("No puedes guardar esta minuta diaria")
 
     saved = save_dailyplan(original, request.user)
 
-    messages.success(request, "Daily plan guardado en tu biblioteca")
+    messages.success(request, "Minuta diaria guardada en tu biblioteca.")
     return redirect("dailyplan_list")
 
 
@@ -600,7 +600,7 @@ def dailyplan_copy(request, pk):
 
     copy = copy_dailyplan(dailyplan, request.user)
 
-    messages.success(request, "Daily plan copied successfully")
+    messages.success(request, "Minuta diaria copiada correctamente.")
     return redirect("dailyplan_detail", pk=copy.pk)
 
 
@@ -683,9 +683,9 @@ def dailyplan_remove(request, pk):
         )
     except ValueError:
         return HttpResponseForbidden(
-            "No puedes eliminar un plan público."
+            "No puedes eliminar una minuta pública."
         )
 
-    messages.success(request, "Plan eliminado definitivamente.")
+    messages.success(request, "Minuta eliminada definitivamente.")
 
     return redirect(_safe_return_to(request, "dailyplan_list", mode="delete"))

@@ -23,7 +23,7 @@ class ProgramDetailWebParityTests(SimpleTestCase):
     def test_week_detail_orders_plans_foods_and_comparison_insights(self):
         source = (TEMPLATES / "program_week_child_card.html").read_text()
 
-        plans = source.index("Planes diarios esta semana")
+        plans = source.index("Minutas diarias esta semana")
         foods = source.index('program_week_foods_section.html')
         chart = source.index('program_metric_chart_base.html')
         comparison = source.index("Composición semana")

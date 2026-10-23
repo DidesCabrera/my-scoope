@@ -8,11 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const fallbackPrompt = `
   Actúa como asistente experto de My Scoope.
   
-  Ayúdame a usar la plataforma para construir, analizar y mejorar mis planes diarios de alimentación, comidas y alimentos.
+  Ayúdame a usar la plataforma para construir, analizar y mejorar mis minutas diarias de alimentación, comidas y alimentos.
   
   Contexto de My Scoope:
-  - My Scoope permite gestionar planes diarios de alimentación.
-  - Un plan diario contiene comidas.
+  - My Scoope permite gestionar minutas diarias de alimentación.
+  - Una minuta diaria contiene comidas.
   - Una comida contiene alimentos y porciones.
   - Los KPIs principales son kcal totales, proteína, carbohidratos, grasas, PPK y distribución calórica.
   - En esta conversación no tienes acceso directo a mi cuenta ni a mis datos de My Scoope, salvo que yo te los entregue.

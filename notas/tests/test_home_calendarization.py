@@ -42,9 +42,9 @@ class HomeCalendarizationTests(TestCase):
         self.assertNotContains(response, '<i data-lucide="weight"')
         self.assertNotContains(response, "home-brand-entities")
         self.assertContains(response, "Mis Librerias")
-        self.assertContains(response, "Resume tus programas, planes diarios, comidas y alimentos")
+        self.assertContains(response, "Resume tus programas, minutas diarias, comidas y alimentos")
         self.assertContains(response, "Organiza estructuras semanales")
-        self.assertContains(response, "Revisa tus planes diarios")
+        self.assertContains(response, "Revisa tus minutas diarias")
         self.assertContains(response, "home-stat-card__surface-link", count=4)
         self.assertNotContains(response, "Actualizar peso")
         self.assertNotContains(response, "home-footer")
@@ -169,7 +169,7 @@ class HomeCalendarizationTests(TestCase):
             html.index('class="home-calendar__plan-panel"'),
             html.index('class="home-active-program"'),
         )
-        self.assertNotContains(response, "Sin plan diario")
+        self.assertNotContains(response, "Sin minuta diaria")
         calendarization_vm = response.context["vm"]["content"]["calendarization"]
         self.assertEqual(calendarization_vm["end_label"], "19 jul")
         self.assertEqual(calendarization_vm["days"][2]["date_label"], "15 jul")

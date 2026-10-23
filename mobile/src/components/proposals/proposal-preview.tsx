@@ -168,15 +168,15 @@ export function ProposalDailyPlanCard({ actions, dailyplan, onOpen, onOpenMeal, 
     <NutritionEntityCard
       actions={actions}
       entity="dailyPlan"
-      eyebrow="Plan diario propuesto"
-      headingLink={onOpen ? { label: `Ver detalle de ${dailyplan.name || "Plan diario"}`, onPress: onOpen } : undefined}
+      eyebrow="Minuta diaria propuesta"
+      headingLink={onOpen ? { label: `Ver detalle de ${dailyplan.name || "Minuta diaria"}`, onPress: onOpen } : undefined}
       indicators={[
         { icon: "meal", label: "comidas", value: dailyplan.meals.length },
         { icon: "food", label: "alimentos", value: dailyplan.meals.reduce((total, item) => total + item.meal.foods.length, 0) },
       ]}
       nutrition={nutrition(dailyplan.kpis)}
       showNutrition={showNutrition}
-      title={dailyplan.name || "Plan diario"}>
+      title={dailyplan.name || "Minuta diaria"}>
       <MealPanels items={mealPanelItems(dailyplan)} onOpenItem={onOpenMeal ? (item) => onOpenMeal(Number(item.id)) : undefined} />
     </NutritionEntityCard>
   );

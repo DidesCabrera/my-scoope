@@ -16,7 +16,7 @@ class AIProposalPreferenceToolsTests(TestCase):
             self.user,
             updates={
                 "goal": "aumentar de musculo",
-                "requested_entity": "plan diario",
+                "requested_entity": "minuta diaria",
                 "meals_per_day": "5",
                 "energy_adjustment": "superávit leve",
                 "protein_target": "180",
@@ -64,6 +64,18 @@ class AIProposalPreferenceToolsTests(TestCase):
         self.assertEqual(
             result.data["rejected_fields"]["macro_distribution"],
             "invalid_or_empty_value",
+        )
+
+    def test_update_proposal_preferences_accepts_legacy_daily_plan_alias(self):
+        result = update_proposal_preferences_tool(
+            self.user,
+            updates={"requested_entity": "plan diario"},
+        )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(
+            result.data["proposal_preferences"]["requested_entity"],
+            "daily_plan",
         )
 
     def test_update_proposal_preferences_tolerates_goal_typos_from_llm_arguments(self):

@@ -58,7 +58,7 @@ def build_lab_scenarios() -> dict[str, Any]:
                 "operational food candidates, without mutating the meal library."
             ),
             user_messages=(
-                "Crea ahora una propuesta revisable de comida de 450 kcal usando el plan diario "
+                "Crea ahora una propuesta revisable de comida de 450 kcal usando la minuta diaria "
                 "de contexto ID {dailyplan_id}. Usa los alimentos disponibles en My Scoope y "
                 "ejecuta el solver; no inventes alimentos ni apliques la propuesta.",
             ),
@@ -106,7 +106,7 @@ def build_lab_scenarios() -> dict[str, Any]:
                 "Create a reviewable daily-plan proposal from explicit calories and macro distribution."
             ),
             user_messages=(
-                "Crea ahora una propuesta revisable de plan diario de 2400 kcal con distribución "
+                "Crea ahora una propuesta revisable de minuta diaria de 2400 kcal con distribución "
                 "30% proteína, 50% carbohidratos y 20% grasas. Para esta propuesta usa: hombre, "
                 "38 años, 80 kg, 180 cm, actividad alta, fuerza 4 veces por semana y 4 comidas. "
                 "No apliques la propuesta sin mi aprobación.",

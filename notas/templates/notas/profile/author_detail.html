@@ -16,7 +16,7 @@
     </a>
     |
     <a href="{% url 'author_dailyplans' profile.user.username %}">
-      Daily Plans
+      Minutas diarias
     </a>
     |
     <a href="{% url 'author_meals' profile.user.username %}">
@@ -25,7 +25,7 @@
   </nav>
 
 
-  <h2>Daily Plans</h2>
+  <h2>Minutas diarias</h2>
   <br>
   {% if dailyplans %}
     <div class="card-list">
@@ -34,7 +34,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p>No public daily plans yet.</p>
+    <p>Todavía no hay minutas diarias públicas.</p>
   {% endif %}
 
     <br>

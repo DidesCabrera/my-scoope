@@ -43,10 +43,10 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
         _family(
             "dailyplan_create",
             (
-                "Crea un plan diario de 2200 kcal.",
+                "Crea una minuta diaria de 2200 kcal.",
                 "Quiero una dieta simple.",
                 "Necesito un dailyplan para hoy.",
-                "Dame un plan diario con cuatro comidas.",
+                "Dame una minuta diaria con cuatro comidas.",
                 "Prepara una dieta para mí.",
                 "Quiero perder grasa.",
                 "Mi objetivo es ganar músculo.",
@@ -102,7 +102,7 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
     mutation_cases = (
         ("Renombra mi comida a Almuerzo rápido.", "meal", "rename"),
         ("Elimina este alimento de mi biblioteca.", "food", "delete"),
-        ("Cambia mi plan diario a 2300 kcal.", "dailyplan", "update"),
+        ("Cambia mi minuta diaria a 2300 kcal.", "dailyplan", "update"),
         ("Pausa mi calendario activo.", "calendarization", "pause"),
         ("Reanuda el calendario del programa.", "calendarization", "resume"),
         ("Aprueba esta propuesta.", "proposal", "approve"),
@@ -126,7 +126,7 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
         ("¿Qué programas tengo activos?", "program"),
         ("Muéstrame mis comidas.", "meal"),
         ("Lista mis alimentos.", "food"),
-        ("Busca un plan diario de 2200 kcal.", "dailyplan"),
+        ("Busca una minuta diaria de 2200 kcal.", "dailyplan"),
         ("¿Cuántas propuestas tengo?", "proposal"),
         ("Revisa mi calendario actual.", "calendarization"),
         ("Dime qué comparaciones guardé.", "saved_comparison"),

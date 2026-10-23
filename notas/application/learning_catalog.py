@@ -130,10 +130,10 @@ SYSTEM_MANUALS = (
     LearningArticle(
         slug="bibliotecas",
         title="Bibliotecas y jerarquía",
-        summary="Entiende cómo se relacionan alimentos, comidas, planes diarios y programas.",
+        summary="Entiende cómo se relacionan alimentos, comidas, minutas diarias y programas.",
         icon="library-big",
         sections=(
-            LearningSection("La jerarquía del sistema", "Los alimentos son la base nutricional. Una comida reúne alimentos con sus cantidades; un plan diario organiza comidas; y un programa distribuye planes diarios entre días y semanas. Entender esta jerarquía permite editar en el nivel correcto y evita confundir un ingrediente con la estructura completa donde se utiliza."),
+            LearningSection("La jerarquía del sistema", "Los alimentos son la base nutricional. Una comida reúne alimentos con sus cantidades; una minuta diaria organiza comidas; y un programa distribuye minutas diarias entre días y semanas. Entender esta jerarquía permite editar en el nivel correcto y evita confundir un ingrediente con la estructura completa donde se utiliza."),
             LearningSection("Para qué sirven las bibliotecas", "Cada biblioteca reúne elementos de un mismo tipo para que puedas buscarlos, abrir su detalle y reutilizarlos en estructuras mayores. Antes de crear algo nuevo, revisa si ya existe un elemento que puedas aprovechar. Los nombres claros y diferenciables facilitan encontrar la versión correcta más adelante."),
             LearningSection("Editar con contexto", "Antes de modificar un alimento, comida o plan, revisa dónde esperas ver el cambio. Las estructuras ya creadas pueden conservar información propia o requerir una edición separada según el flujo. Después de guardar, vuelve al elemento superior relevante y verifica cantidades, composición y totales en lugar de asumir que toda referencia cambió."),
             LearningSection("Duplicar, compartir e incorporar", "Duplicar resulta útil cuando necesitas una variante sin perder el original. Compartir permite entregar un elemento para que otra persona lo revise, mientras que incorporarlo lo sitúa dentro de una comida, plan o programa. En cada caso, confirma el tipo de elemento, su identidad y su información nutricional antes de continuar."),

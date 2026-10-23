@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+from notas.presentation.terminology import DAILY_PLAN_LIBRARY_TITLE
+
 
 @dataclass(frozen=True)
 class NavItemSpec:
@@ -278,7 +280,7 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="dailyplan",
-                label="Mis Planes Diarios",
+                label=DAILY_PLAN_LIBRARY_TITLE,
                 icon="clipboard-list",
                 url_name="dailyplan_list",
                 nav_root="dailyplan",
@@ -286,7 +288,7 @@ APP_NAVIGATION = (
                 page_icon="bookmark",
                 action_url_name="dailyplan_create",
                 action_icon="plus",
-                action_label="Nuevo plan diario",
+                action_label="Nuevo minuta diaria",
             ),
             NavGroupSpec(
                 key="meal",

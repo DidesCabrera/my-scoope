@@ -18,9 +18,9 @@ import { tokens } from "@/design/tokens";
 
 type DetailTab = "cards" | "table" | "entities";
 
-const entityTabLabels = { dailyplans: "Planes", foods: "Alimentos", meals: "Comidas" } as const;
+const entityTabLabels = { dailyplans: "Minutas", foods: "Alimentos", meals: "Comidas" } as const;
 const entityCountLabels = {
-  dailyplans: ["Plan diario", "Planes diarios"],
+  dailyplans: ["Minuta diaria", "Minutas diarias"],
   foods: ["Alimento", "Alimentos"],
   meals: ["Comida", "Comidas"],
 } as const;

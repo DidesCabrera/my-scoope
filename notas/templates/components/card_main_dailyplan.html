@@ -18,7 +18,7 @@
 
     <!-- TABLE ========================================= -->
     <div class="detail-section dailyplan">
-        <h3>Composición plan diario</h3>
+        <h3>Composición de la minuta diaria</h3>
         {% with panel_id=main_card.main_id|default:"main-dailyplan" %}
             <div class="content-panel content-panel--main card-detail-block main">
                 {% include "components/detail_tabs_meals.html" with panel_id=panel_id %}
@@ -33,7 +33,7 @@
 
         <!-- METADATA ========================================= -->
         <div class="card-bottom main"> 
-            <h3>Creador de este Plan</h3>
+            <h3>Creador de esta minuta</h3>
             <div class="card-metadata main">
                 {% include "components//card_child_metadata.html" with metadata=main_card.metadata %}
             </div>

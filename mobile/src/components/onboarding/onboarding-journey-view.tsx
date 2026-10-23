@@ -47,7 +47,7 @@ export const onboardingJourneySteps = [
   { key: "activity", shortLabel: "Actividad", label: "Actividad y entrenamiento" },
   { key: "dietary", shortLabel: "Preferencias", label: "Preferencias alimentarias" },
   { key: "summary", shortLabel: "Resumen", label: "Resumen de la ficha" },
-  { key: "dailyPlan", shortLabel: "Plan", label: "Primer plan diario" },
+  { key: "dailyPlan", shortLabel: "Minuta", label: "Primera minuta diaria" },
   { key: "plans", shortLabel: "Planes", label: "Planes disponibles" },
 ] as const;
 
@@ -549,8 +549,8 @@ function StructureView({ index }: { index: number }) {
   const levels: { detail: string; entity: EntityKind; label: string }[] = [
     { entity: "food", label: "Alimentos", detail: "La base nutricional del sistema" },
     { entity: "meal", label: "Comidas", detail: "Tu combinación de alimentos y porciones" },
-    { entity: "dailyPlan", label: "Planes diarios", detail: "Tu distribución de comidas en el día" },
-    { entity: "program", label: "Programas semanales", detail: "Tu asignación de planes en semanas" },
+    { entity: "dailyPlan", label: "Minutas diarias", detail: "Tu distribución de comidas en el día" },
+    { entity: "program", label: "Programas semanales", detail: "Tu asignación de minutas en semanas" },
   ];
   return (
     <>
@@ -559,7 +559,7 @@ function StructureView({ index }: { index: number }) {
           <>
             My scoope es un <Text style={styles.descriptionEmphasis}>entorno nutricional</Text> para que puedas <Text style={styles.descriptionEmphasis}>planificar, ejecutar y aprender</Text> sobre alimentación.
             {"\n\n"}
-            Podrás organizar tu alimentación en <Text style={styles.descriptionEmphasis}>Tus Librerías</Text>: <Text style={styles.descriptionEmphasis}>Alimentos, Comidas, Planes Diarios, y Programas Semanales</Text>;
+            Podrás organizar tu alimentación en <Text style={styles.descriptionEmphasis}>Tus Librerías</Text>: <Text style={styles.descriptionEmphasis}>Alimentos, Comidas, Minutas diarias, y Programas Semanales</Text>;
           </>
         )}
         eyebrow="Estructura del sistema"
@@ -629,7 +629,7 @@ function ControlView({ index }: { index: number }) {
           <>
             Ya planificaste, aprendiste, ahora toca ejecutar; Porque recorrer el camino es lo que finalmente te transformará.
             {"\n\n"}
-            Puedes <Text style={styles.descriptionEmphasis}>calendarizar Planes y Programas</Text>, y activar el <Text style={styles.descriptionEmphasis}>registro de cumplimiento de comidas</Text> permitiéndote ver tu progreso.
+            Puedes <Text style={styles.descriptionEmphasis}>llevar Minutas y Programas al Calendario</Text>, y activar el <Text style={styles.descriptionEmphasis}>registro de cumplimiento de comidas</Text> permitiéndote ver tu progreso.
           </>
         )}
         eyebrow="Asistencia y control"
@@ -645,7 +645,7 @@ function ControlView({ index }: { index: number }) {
           bleed={false}
           elapsedDays={4}
           mealLabel="Comidas Cumplidas"
-          planLabel="Planes Diarios Recorridos"
+          planLabel="Minutas diarias recorridas"
           plannedAdherenceDays={12}
           progress={57}
           standalone
@@ -861,7 +861,7 @@ function DietaryPreferencesView({ index }: { index: number }) {
   const profileQuestionStyle = useProfileQuestionStyle();
   return (
     <ProfileStepLayout index={index} primary="Analizar">
-      <StepHeader description="Cuéntanos qué alimentos podemos considerar antes de generar tu primer plan." eyebrow="Preferencias alimentarias" icon={Leaf} index={index} title="Preferencias alimentarias" />
+      <StepHeader description="Cuéntanos qué alimentos podemos considerar antes de generar tu primera minuta." eyebrow="Preferencias alimentarias" icon={Leaf} index={index} title="Preferencias alimentarias" />
       <Card style={[styles.profileCard, styles.dietaryCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
         <View accessibilityRole="radiogroup" style={styles.dietaryQuestion}>
           <Text style={profileQuestionStyle}>Tipo de alimentación</Text>
@@ -939,7 +939,7 @@ function SummaryView({ index }: { index: number }) {
     </View>
   );
   return (
-    <ProfileStepLayout index={index} primary="Generar primer plan">
+    <ProfileStepLayout index={index} primary="Generar primera minuta">
       <StepHeader description="Comprueba los datos y la estimación inicial antes de continuar." eyebrow="Resumen de la ficha" icon={Gauge} index={index} title="Revisa tu información" />
       <Card style={[styles.profileCard, styles.summaryCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
         {storyboardSummaryLayout ? nutritionGoalSection : estimationInformationSection}
@@ -1000,7 +1000,7 @@ function GeneratedDailyPlanView() {
   if (controller.proposal?.dailyplan) {
     return (
       <>
-        <StepHeader description="Revisa el plan generado antes de guardarlo en tu biblioteca." eyebrow="Plan del día" icon={BookOpen} index={13} showProgress={false} title="Tu primer plan diario" />
+        <StepHeader description="Revisa la minuta generada antes de guardarla en tu biblioteca." eyebrow="Minuta del día" icon={BookOpen} index={13} showProgress={false} title="Tu primera minuta diaria" />
         <ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} showNutrition={false} />
         {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
         <CreditContinueButton />
@@ -1012,7 +1012,7 @@ function GeneratedDailyPlanView() {
     <>
       <EntityDetailPage
         entity="dailyPlan"
-        eyebrow="PLAN DEL DÍA"
+        eyebrow="MINUTA DEL DÍA"
         indicators={[{ icon: "meal", label: "comidas", value: 3 }, { icon: "food", label: "alimentos", value: 9 }]}
         nutrition={{
           calories: 1840,
@@ -1020,11 +1020,11 @@ function GeneratedDailyPlanView() {
           carbs: { allocation: 45, grams: 205 },
           fat: { allocation: 27, grams: 55 },
         }}
-        title="Plan equilibrado · Día 1">
-        <EntityDetailSection title="Composición plan diario">
+        title="Minuta equilibrada · Día 1">
+        <EntityDetailSection title="Composición de la minuta diaria">
           <MealPanels items={generatedDailyPlanMeals} showEditTab={false} />
         </EntityDetailSection>
-        <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
+        <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
         <DailyPlanMealDetailList items={generatedDailyPlanMealDetails} />
       </EntityDetailPage>
       <CreditContinueButton />

@@ -29,7 +29,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /<SearchField/);
   matches(picker, /if \(!selectedId\) \{/);
   matches(picker, /<PickerEntryTabs/);
-  for (const createLabel of ["Crear alimento", "Crear comida", "Crear plan diario"]) {
+  for (const createLabel of ["Crear alimento", "Crear comida", "Crear minuta diaria"]) {
     matches(picker, new RegExp(createLabel));
   }
   matches(picker, /pathname: "\/libraries\/create"/);
@@ -186,7 +186,7 @@ test("composition pickers use independent native routes and one shared flow", as
     "utf8",
   );
   matches(resultCard, /Previsualización Comida/);
-  matches(resultCard, /Previsualización Plan Diario/);
+  matches(resultCard, /Previsualización de minuta diaria/);
   matches(resultCard, /preview\.selection\.entity === "food"/);
   matches(resultCard, /projectedMeal\.foods\.map\(foodPanelItem\)/);
   matches(resultCard, /result\.entity === "week" && week/);
@@ -232,7 +232,7 @@ test("active program details expose snapshot-only composition actions after comp
   matches(dayDetail, /<Button\s+bleed\s+label="\+ Agregar Comida"/);
   matches(dayDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey, returnTo: `\/program\/days\/\$\{dayId\}` \}\)/);
   matches(dayDetail, /<Button bleed label="\+ Agregar alimento"/);
-  assert.ok(dayDetail.indexOf('title="Composición plan diario"') < dayDetail.indexOf('label="+ Agregar Comida"'));
+  assert.ok(dayDetail.indexOf('title="Composición de la minuta diaria"') < dayDetail.indexOf('label="+ Agregar Comida"'));
   assert.ok(dayDetail.indexOf('label="+ Agregar Comida"') < dayDetail.indexOf('title="Detalle de cada Comida"'));
 
   matches(mealDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey \}\)/);
@@ -303,7 +303,7 @@ test("library details open every composition flow and program days remain editab
   const program = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"), "utf8");
   const assignedPlan = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"), "utf8");
   matches(program, /onAssignDailyPlan/);
-  matches(assignedPlan, /Reemplazar plan diario/);
-  matches(assignedPlan, /Quitar plan diario/);
+  matches(assignedPlan, /Reemplazar minuta diaria/);
+  matches(assignedPlan, /Quitar minuta diaria/);
   matches(program, /allowEmptySelection/);
 });

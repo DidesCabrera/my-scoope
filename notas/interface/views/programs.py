@@ -437,7 +437,7 @@ def configure_program(request, pk):
             or 1
         )
         if duration_weeks < max_filled_week:
-            messages.error(request, "No puedes reducir la duración por debajo de la última semana con planes asignados.")
+            messages.error(request, "No puedes reducir la duración por debajo de la última semana con minutas asignadas.")
             return redirect("configure_program", pk=pk)
 
         program.is_public = is_public
@@ -522,9 +522,9 @@ def add_dailyplan_to_program(request, pk):
         return redirect("program_detail", pk=program.pk)
 
     if len(day_numbers) == 1:
-        messages.success(request, "Plan diario asignado al programa.")
+        messages.success(request, "Minuta diaria asignada al programa.")
     else:
-        messages.success(request, "Plan diario asignado a los días seleccionados.")
+        messages.success(request, "Minuta diaria asignada a los días seleccionados.")
 
     return_to = request.POST.get("return_to") or ""
     if return_to and url_has_allowed_host_and_scheme(

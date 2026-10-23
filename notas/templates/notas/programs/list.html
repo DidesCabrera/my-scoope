@@ -17,7 +17,7 @@
       {% include "components/card_child_program.html" with child_card=child %}
     {% empty %}
       {% url 'program_create' as program_create_url %}
-      {% include "components/collection_empty_state.html" with modifier="program-empty-state" icon="calendar" title="No tienes programas semanales todavía" description="Crea un programa de una o más semanas y asigna planes diarios a cada día." action_url=program_create_url action_label="Crear programa semanal" %}
+      {% include "components/collection_empty_state.html" with modifier="program-empty-state" icon="calendar" title="No tienes programas semanales todavía" description="Crea un programa de una o más semanas y asigna minutas diarias a cada día." action_url=program_create_url action_label="Crear programa semanal" %}
     {% endfor %}
   {% endif %}
 </div>

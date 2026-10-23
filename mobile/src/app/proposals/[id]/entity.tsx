@@ -22,7 +22,7 @@ export default function ProposalEntityDetailScreen() {
   const [proposal, setProposal] = useState<ProposalDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const headerTitle = proposal?.dailyplan ? "Plan Diario Propuesto" : proposal?.meal ? "Comida Propuesta" : "Detalle de Propuesta";
+  const headerTitle = proposal?.dailyplan ? "Minuta diaria propuesta" : proposal?.meal ? "Comida Propuesta" : "Detalle de Propuesta";
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -99,20 +99,20 @@ export default function ProposalEntityDetailScreen() {
         <EntityDetailPage
           action={libraryAction}
           entity="dailyPlan"
-          eyebrow="Plan diario propuesto"
+          eyebrow="Minuta diaria propuesta"
           indicators={[
             { icon: "meal", label: "comidas", value: proposal.dailyplan.meals.length },
             { icon: "food", label: "alimentos", value: proposal.dailyplan.meals.reduce((total, item) => total + item.meal.foods.length, 0) },
           ]}
           nutrition={proposalPreviewAdapters.nutrition(proposal.dailyplan.kpis)}
-          title={proposal.dailyplan.name || "Plan diario"}>
+          title={proposal.dailyplan.name || "Minuta diaria"}>
           <EntityDetailSection detail={`${proposal.dailyplan.meals.length} comidas`} title="Composición">
             <MealPanels
               items={proposalPreviewAdapters.mealPanelItems(proposal.dailyplan)}
               onOpenItem={(item) => router.push(`/proposals/${proposal.id}/entity/meals/${item.id}` as Href)}
             />
           </EntityDetailSection>
-          <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en este plan diario. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
+          <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
             {proposal.dailyplan.meals.map((item, index) => (
               <ProposalMealCard
                 actions={(

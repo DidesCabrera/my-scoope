@@ -50,7 +50,7 @@ export function CalendarizedDailyPlanCard({ apiRequest, dayId, dateLabel, editin
   const sourceDailyPlanId = snapshot.source?.dailyplan_id;
   return (<>
     <NutritionEntityCard
-      actions={<>{sourceDailyPlanId ? <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={sourceDailyPlanId} name={snapshot.name ?? planName ?? "Plan diario"} onChanged={onChanged} /> : null}{openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}</>}
+      actions={<>{sourceDailyPlanId ? <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={sourceDailyPlanId} name={snapshot.name ?? planName ?? "Minuta diaria"} onChanged={onChanged} /> : null}{openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}</>}
       afterNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} mealNutrition={meals.map((meal) => ({ calories: snapshotCalories(meal.totals), carbsGrams: meal.totals?.carbs_g ?? 0, fatGrams: meal.totals?.fat_g ?? 0, key: meal.key, proteinGrams: meal.totals?.protein_g ?? 0 }))} />}
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       entity="dailyPlan"
@@ -67,7 +67,7 @@ export function CalendarizedDailyPlanCard({ apiRequest, dayId, dateLabel, editin
         fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
         protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
       }}
-      title={snapshot.name ?? planName ?? "Plan diario"}>
+      title={snapshot.name ?? planName ?? "Minuta diaria"}>
       <MealPanels
         editing={cardEditing}
         items={mealItems}

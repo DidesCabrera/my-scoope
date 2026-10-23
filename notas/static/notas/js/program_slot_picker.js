@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const addIcon = picker?.querySelector('[data-program-slot-header-icon="add"]');
     const replaceIcon = picker?.querySelector('[data-program-slot-header-icon="replace"]');
 
-    if (title) title.textContent = replacing ? "Reemplaza el Plan Diario" : "Agrega un Plan Diario";
+    if (title) title.textContent = replacing ? "Reemplaza el Minuta diaria" : "Agrega un Minuta diaria";
     if (addIcon) addIcon.hidden = replacing;
     if (replaceIcon) replaceIcon.hidden = !replacing;
   }
@@ -150,9 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
     container.innerHTML = `
       <div class="program-slot-picker__days-title">
         <i data-lucide="calendar-days" aria-hidden="true"></i>
-        <span>Asignar este plan en</span>
+        <span>Asignar esta minuta en</span>
       </div>
-      <div class="program-slot-picker__day-list" role="group" aria-label="Días para asignar este plan">
+      <div class="program-slot-picker__day-list" role="group" aria-label="Días para asignar esta minuta">
         ${cells.map((dayCell) => {
           const dayNumber = escapeHtml(dayCell.dataset.dayNumber || "");
           const dayLabel = escapeHtml(dayCell.dataset.dayLabel || `Día ${dayNumber}`);
@@ -209,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="picker-result-title__name">${name}</span>
           </div>
           <div class="picker-result-badges" aria-label="Características">
-            <span class="picker-result-badge picker-result-badge--verified">Plan diario</span>
+            <span class="picker-result-badge picker-result-badge--verified">Minuta diaria</span>
           </div>
         </div>
       </div>
@@ -252,9 +252,9 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="main-title">
                 <p class="card-title-eyebrow">
                   <i data-lucide="clipboard-list" class="card-title-eyebrow__icon dailyplan" aria-hidden="true"></i>
-                  <span>Plan diario seleccionado</span>
+                  <span>Minuta diaria seleccionada</span>
                 </p>
-                <h3>${escapeHtml(dailyplan.name || "Plan diario")}</h3>
+                <h3>${escapeHtml(dailyplan.name || "Minuta diaria")}</h3>
               </div>
             </div>
           </div>
@@ -448,13 +448,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const dailyplans = getDailyplans();
     if (!dailyplans.length) {
-      results.innerHTML = '<div class="program-slot-picker__empty picker-item">No hay planes diarios disponibles en tu librería.</div>';
+      results.innerHTML = '<div class="program-slot-picker__empty picker-item">No hay minutas diarias disponibles en tu librería.</div>';
       optionsRendered = true;
       return;
     }
 
     results.innerHTML = dailyplans.map((dailyplan) => {
-      const name = escapeHtml(dailyplan.name || "Plan diario");
+      const name = escapeHtml(dailyplan.name || "Minuta diaria");
       const kcal = formatNumber(dailyplan.total_kcal);
       const protein = formatNumber(dailyplan.protein);
       const carbs = formatNumber(dailyplan.carbs);
@@ -635,8 +635,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="program-day-empty-card__content">
           <i data-lucide="clipboard-list" class="program-day-empty-card__icon" aria-hidden="true"></i>
           <div class="program-day-empty-card__body">
-            <strong>${escapeHtml(dayLabel)} no tiene plan asignado.</strong>
-            <span>Elije un plan para este día.</span>
+            <strong>${escapeHtml(dayLabel)} no tiene una minuta asignada.</strong>
+            <span>Elige una minuta para este día.</span>
           </div>
         </div>
       </div>

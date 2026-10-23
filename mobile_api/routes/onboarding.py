@@ -214,7 +214,7 @@ def onboarding_generate_plan(request):
     try:
         proposal = generate_nutrition_onboarding_plan(user=request.auth.user)
     except (ValueError, RuntimeError) as exc:
-        raise MobileAPIError(code=str(exc), message="We could not generate the first daily plan.", status_code=422) from exc
+        raise MobileAPIError(code=str(exc), message="No pudimos generar la primera minuta diaria.", status_code=422) from exc
     return success(proposal_detail_payload(request.auth.user, proposal.id))
 
 
@@ -229,7 +229,7 @@ def onboarding_accept_plan(request):
     try:
         proposal = accept_nutrition_onboarding_plan(user=request.auth.user)
     except ValueError as exc:
-        raise MobileAPIError(code=str(exc), message="The first daily plan could not be applied.", status_code=409) from exc
+        raise MobileAPIError(code=str(exc), message="No pudimos aplicar la primera minuta diaria.", status_code=409) from exc
     return success(proposal_detail_payload(request.auth.user, proposal.id))
 
 

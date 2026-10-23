@@ -1,0 +1,50 @@
+{
+  "status": "current",
+  "version": 1,
+  "principles": {
+    "technical_identifiers_are_stable": true,
+    "user_content_is_never_translated_automatically": true,
+    "sentences_are_localized_as_complete_messages": true
+  },
+  "entities": {
+    "daily_plan": {
+      "definition": "Reusable nutrition specification containing meals, foods, portions, times and nutrition totals for one day.",
+      "technical_identifiers": [
+        "DailyPlan",
+        "daily_plan",
+        "dailyPlan",
+        "daily-plans"
+      ],
+      "es": {
+        "singular": "Minuta diaria",
+        "plural": "Minutas diarias",
+        "library_title": "Mis minutas diarias"
+      },
+      "en": {
+        "singular": "Daily meal plan",
+        "plural": "Daily meal plans",
+        "library_title": "My daily meal plans"
+      },
+      "accepted_input_aliases_es": [
+        "minuta",
+        "minuta diaria",
+        "plan diario"
+      ]
+    },
+    "calendar_day_planning": {
+      "definition": "Dated planning authority that combines a nutrition snapshot, commitments, reminders and execution evidence.",
+      "technical_identifiers": [
+        "CalendarizedDay",
+        "plan_snapshot"
+      ],
+      "es": {
+        "singular": "Planificación del día",
+        "plural": "Planificaciones diarias"
+      },
+      "en": {
+        "singular": "Daily planning",
+        "plural": "Daily plans"
+      }
+    }
+  }
+}

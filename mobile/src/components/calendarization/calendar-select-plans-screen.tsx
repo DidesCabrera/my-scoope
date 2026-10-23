@@ -138,10 +138,10 @@ export default function SelectCalendarPlansScreen() {
       stickyHeaderIndices={[0]}>
       <View style={styles.selectionSticky}>
         <PickerEntryTabs createLabel="Crear Nuevo" onCreate={() => router.push({ pathname: "/libraries/create", params: { entity: "dailyPlan" } })} />
-        <SearchField accessibilityLabel="Buscar plan diario" autoCapitalize="words" bleed busy={loading} onChangeText={setQuery} placeholder="Escribe el nombre de un plan" value={query} />
+        <SearchField accessibilityLabel="Buscar minuta diaria" autoCapitalize="words" bleed busy={loading} onChangeText={setQuery} placeholder="Escribe el nombre de una minuta" value={query} />
       </View>
       <View style={styles.options}>
-        <SectionHeading detail={`${plans.length} disponibles`} title="Selecciona un plan diario" />
+        <SectionHeading detail={`${plans.length} disponibles`} title="Selecciona una minuta diaria" />
         {plans.map((plan) => <NutritionEntityCard
           actions={<PickerCardAction label="Seleccionar" onPress={() => { setSelected(plan); setError(null); }} subject={plan.name} />}
           entity="dailyPlan"
@@ -151,7 +151,7 @@ export default function SelectCalendarPlansScreen() {
           subtitle={plan.subtitle}
           title={plan.name}
         />)}
-        {!loading && !plans.length && !error ? <Text style={styles.emptyText}>No encontramos planes diarios.</Text> : null}
+        {!loading && !plans.length && !error ? <Text style={styles.emptyText}>No encontramos minutas diarias.</Text> : null}
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         {loading && !plans.length ? <LoadingState label="Buscando tus planes…" /> : null}
       </View>

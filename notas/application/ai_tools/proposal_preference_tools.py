@@ -64,7 +64,7 @@ GOAL_LABELS = {
 }
 
 REQUESTED_ENTITY_LABELS = {
-    "daily_plan": "Plan diario",
+    "daily_plan": "Minuta diaria",
     "program": "Programa semanal",
 }
 
@@ -173,6 +173,8 @@ ENERGY_ALIASES = {
 
 ENTITY_ALIASES = {
     "daily_plan": "daily_plan",
+    "minuta diaria": "daily_plan",
+    "minuta": "daily_plan",
     "plan diario": "daily_plan",
     "día": "daily_plan",
     "dia": "daily_plan",

@@ -69,6 +69,6 @@ def apply_approved_program_proposal(*, user, proposal):
     stored.save(update_fields=["status", "applied_by", "applied_at"])
     NutritionProposalAuditEvent.objects.create(proposal=stored, actor=user,
         action=NutritionProposalAuditEvent.ACTION_APPLIED, status_before=NutritionProposal.STATUS_APPROVED,
-        status_after=stored.status, message="Programa aplicado con planes diarios independientes.",
+        status_after=stored.status, message="Programa aplicado con minutas diarias independientes.",
         metadata={"intent": "create_program", "program_id": program.pk, "program_name": program.name})
     return AppliedProgramResult(stored, program)

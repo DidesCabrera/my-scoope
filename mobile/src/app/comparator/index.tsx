@@ -37,7 +37,7 @@ import { tokens } from "@/design/tokens";
 const fallbackKinds = [
   { value: "foods" as const, icon: Carrot, label: "Alimentos" },
   { value: "meals" as const, icon: Utensils, label: "Comidas" },
-  { value: "dailyplans" as const, icon: ClipboardList, label: "Planes" },
+  { value: "dailyplans" as const, icon: ClipboardList, label: "Minutas" },
 ];
 
 const comparisonEntities = {

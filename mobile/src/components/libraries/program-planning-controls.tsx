@@ -34,7 +34,7 @@ function ProgramDayCell({ allowEmptySelection, day, onSelect, selected }: { allo
   return (
     <WeekDayCell label={day.label}>
       <Pressable
-        accessibilityLabel={day.filled ? `${day.label}: ver plan diario` : day.disabled ? `${day.label}: día sin plan, no editable` : `${day.label}: agregar plan diario`}
+        accessibilityLabel={day.filled ? `${day.label}: ver minuta diaria` : day.disabled ? `${day.label}: día sin minuta, no editable` : `${day.label}: agregar minuta diaria`}
         accessibilityRole="button"
         accessibilityState={{ expanded: day.filled ? selected : undefined, selected }}
         disabled={day.disabled || (!day.filled && !allowEmptySelection)}

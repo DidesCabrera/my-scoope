@@ -221,7 +221,7 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
     subject_type = _text(subject.get("type"), fallback="daily_plan")
     type_label = {
         "comparison": "COMPARACIÓN",
-        "daily_plan": "PLAN DIARIO",
+        "daily_plan": "MINUTA DIARIA",
         "food": "ALIMENTO",
         "meal": "COMIDA",
         "program": "PROGRAMA",

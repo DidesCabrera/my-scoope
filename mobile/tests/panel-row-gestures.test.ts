@@ -156,7 +156,7 @@ test("program day and week comparison tables expose measured swipe actions and d
   assert.match(dayPanels, /Reemplazar.*Agregar/);
   assert.match(dayPanels, /backgroundColor: "#515151"/);
   assert.match(dayPanels, /backgroundColor: "#DB294A"/);
-  assert.match(dayPanels, /Eliminar plan de/);
+  assert.match(dayPanels, /Eliminar minuta de/);
   assert.match(dayPanels, /sourceRows\.find\(\(\{ id \}\) => id === row\.id\)\?\.dayNumber/);
   assert.match(dayPanels, /await onReorder\(week, orderedDays\)/);
   assert.match(dayPanels, /onLongPress=\{\(\) => beginComparisonPanelDrag\(drag\)\}/);

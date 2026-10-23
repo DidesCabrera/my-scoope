@@ -89,14 +89,14 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /productName: \{[^}]*fontSize: 26[^}]*fontWeight: tokens\.weight\.extraBold/);
   assertSourceMatch(subscription, /const monthlyDisplayPrice = Platform\.OS === "android" \? monthlyAndroidOffer\?\.displayPrice : monthlyStoreProduct\?\.displayPrice/);
   assertSourceMatch(subscription, /planPriceChipLabel: \{[^}]*color: tokens\.color\.surfaceApp[^}]*fontSize: 16[^}]*fontVariant: \["tabular-nums"\][^}]*fontWeight: tokens\.weight\.semibold/);
-  assertSourceMatch(planCard, /Basic:[\s\S]*entity: "food", label: "Alimentos", value: "Ilimitados"[\s\S]*label: "Comidas", value: "Ilimitadas"[\s\S]*label: "Planes diarios", value: "Ilimitados"[\s\S]*label: "Programas", value: "Ilimitados · hasta 12 semanas"[\s\S]*150 créditos al mes/);
+  assertSourceMatch(planCard, /Basic:[\s\S]*entity: "food", label: "Alimentos", value: "Ilimitados"[\s\S]*label: "Comidas", value: "Ilimitadas"[\s\S]*label: "Minutas diarias", value: "Ilimitados"[\s\S]*label: "Programas", value: "Ilimitados · hasta 12 semanas"[\s\S]*150 créditos al mes/);
   assertSourceMatch(planCard, /Pro:[\s\S]*Todo lo de Basic[\s\S]*1\.000 créditos al mes/);
   assertSourceDoesNotMatch(subscription, /label: "Publicación"|Contenido compatible|\bUpload\b/);
   assertSourceMatch(keyValueTable, /label: \{[^}]*fontSize: 14/);
   assertSourceMatch(keyValueTable, /value: \{[^}]*fontSize: 14[^}]*textAlign: "right"/);
   assertSourceMatch(planCard, /item\.entity \? <EntityIcon entity=\{item\.entity\} size="benefit" \/>/);
   assertSourceMatch(planCard, /entity: "meal", label: "Comidas"/);
-  assertSourceMatch(planCard, /entity: "dailyPlan", label: "Planes diarios"/);
+  assertSourceMatch(planCard, /entity: "dailyPlan", label: "Minutas diarias"/);
   assertSourceMatch(planCard, /entity: "program", label: "Programas"/);
   assertSourceMatch(subscription, /const interval = configured\.interval === "year" \? "Anual" : "Mensual"/);
   assertSourceMatch(subscription, /numericPrice \/ \(monthlyNumericPrice \* 12\)/);

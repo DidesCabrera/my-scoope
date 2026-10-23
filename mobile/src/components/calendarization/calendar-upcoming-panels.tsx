@@ -54,7 +54,7 @@ function PlanIdentity({ day, tab }: { day: CalendarDay; tab: Tab }) {
 
 function Header({ tab }: { tab: Exclude<Tab, "plans"> }) {
   return <View style={[styles.analyticsRow, styles.header]}>
-    <Text style={[styles.headerLabel, styles.leading]}>Plan diario</Text>
+    <Text style={[styles.headerLabel, styles.leading]}>Minuta diaria</Text>
     {tab === "calories" ? <>
       <Text style={[styles.headerLabel, styles.calorieCell]}>Cal</Text>
       <Text style={[styles.headerLabel, styles.shareCell]}>% Cal</Text>
