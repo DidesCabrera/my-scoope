@@ -9,6 +9,10 @@ from notas.domain.constants.nutrition import (
     FAT_KCAL_PER_GRAM,
     PROTEIN_KCAL_PER_GRAM,
 )
+from shared_kernel.food_portions import (
+    HOUSEHOLD_MEASURE_CHOICES,
+    MY_SCOOPE_FOOD_GROUP_CHOICES,
+)
 
 # ==================================================
 # FOOD
@@ -161,6 +165,16 @@ class Food(models.Model):
         max_length=120,
         blank=True,
         help_text="Optional nutritional/category subgroup.",
+    )
+
+    myscoope_group = models.CharField(
+        max_length=40,
+        choices=MY_SCOOPE_FOOD_GROUP_CHOICES,
+        blank=True,
+        help_text=(
+            "Controlled My Scoope classification copied from Food Catalog. "
+            "Source food_group and food_subgroup remain available for traceability."
+        ),
     )
 
     preparation_state = models.CharField(
@@ -573,6 +587,27 @@ class FoodPortion(models.Model):
         help_text="Portion amount in the food's configured portion unit.",
     )
 
+    household_amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        help_text="Everyday portion quantity copied from Food Catalog.",
+    )
+
+    household_measure = models.CharField(
+        max_length=20,
+        choices=HOUSEHOLD_MEASURE_CHOICES,
+        blank=True,
+        help_text="Controlled everyday measure copied from Food Catalog.",
+    )
+
+    household_detail = models.CharField(
+        max_length=160,
+        blank=True,
+        help_text="Optional preparation or size detail for the everyday measure.",
+    )
+
     source = models.CharField(
         max_length=50,
         blank=True,
@@ -587,6 +622,18 @@ class FoodPortion(models.Model):
         verbose_name = "Food portion"
         verbose_name_plural = "Food portions"
         ordering = ["food", "-is_default", "label"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(household_amount__isnull=True, household_measure="")
+                    | (
+                        models.Q(household_amount__isnull=False)
+                        & ~models.Q(household_measure="")
+                    )
+                ),
+                name="food_portion_household_pair",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.food} · {self.label} = {self.grams} {self.food.portion_unit}"

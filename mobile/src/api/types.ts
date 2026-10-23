@@ -441,6 +441,9 @@ export type FoodPickerOption = {
   is_verified: boolean;
   data_quality_score: number;
   quantity_unit: "g" | "ml";
+  default_portion: number | null; household_amount: number | null;
+  household_measure: string; household_measure_label: string; household_detail: string;
+  myscoope_group: string; myscoope_group_label: string;
 };
 
 export type FoodPickerPageData = {

@@ -557,6 +557,15 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+# External MCP access must never become free because a deployment omitted a flag.
+MCP_PRO_ENTITLEMENT_ENFORCED = _env_bool("MCP_PRO_ENTITLEMENT_ENFORCED", True)
+MCP_RESOURCE_URL = os.environ.get("MYSCOOPE_MCP_RESOURCE_URL", "").strip().rstrip("/")
+MCP_CREATE_MAX_PER_MINUTE = _env_int("MCP_CREATE_MAX_PER_MINUTE", 3)
+MCP_CREATE_MAX_PER_DAY = _env_int("MCP_CREATE_MAX_PER_DAY", 30)
+MCP_MAX_REQUEST_BYTES = _env_int("MCP_MAX_REQUEST_BYTES", 65_536)
+MCP_AUTH_MAX_PER_IP_PER_MINUTE = _env_int("MCP_AUTH_MAX_PER_IP_PER_MINUTE", 120)
+
+
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "").strip()
 EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND") or (
     "django.core.mail.backends.smtp.EmailBackend"

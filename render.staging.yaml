@@ -35,6 +35,8 @@ services:
         value: myscoope-staging.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
         value: https://myscoope-staging.onrender.com
+      - key: MYSCOOPE_MCP_RESOURCE_URL
+        value: https://myscoope-mcp-staging.onrender.com
       - key: BILLING_PUBLIC_BASE_URL
         value: https://myscoope-staging.onrender.com
       - key: BILLING_PADDLE_ENVIRONMENT

@@ -53,6 +53,7 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(food.fat, 3.6)
         self.assertEqual(food.food_group, "meats")
         self.assertEqual(food.food_subgroup, "poultry")
+        self.assertEqual(food.myscoope_group, "poultry")
         self.assertEqual(food.preparation_state, Food.PREPARATION_COOKED)
         self.assertEqual(food.portion_unit, Food.PORTION_UNIT_MILLILITERS)
         self.assertTrue(food.solver_enabled)
@@ -77,6 +78,9 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(result.skipped_aliases, 0)
         self.assertEqual(food.portions.get().source, FOOD_CATALOG_PORTION_SOURCE)
         self.assertEqual(food.portions.get().grams, Decimal("120.000"))
+        self.assertEqual(food.portions.get().household_amount, Decimal("1.000"))
+        self.assertEqual(food.portions.get().household_measure, "unit")
+        self.assertEqual(food.portions.get().household_detail, "pechuga mediana")
         self.assertEqual(food.default_portion_g, Decimal("120.000"))
         self.assertEqual(food.min_portion_g, Decimal("60.000"))
         self.assertEqual(food.max_portion_g, Decimal("300.000"))
@@ -262,6 +266,7 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
             catalog_version="v1",
             food_group="meats",
             food_subgroup="poultry",
+            myscoope_group="poultry",
             preparation_state=CatalogFood.PREPARATION_COOKED,
             portion_unit=CatalogFood.PORTION_UNIT_MILLILITERS,
             solver_enabled=True,
@@ -278,6 +283,9 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
             catalog_food=catalog_food,
             label="1 porción",
             grams=Decimal("120.000"),
+            household_amount=Decimal("1.000"),
+            household_measure="unit",
+            household_detail="pechuga mediana",
             source="reviewed",
             is_default=True,
         )

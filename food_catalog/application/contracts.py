@@ -16,6 +16,13 @@ from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 from typing import Any, Mapping
 
+from shared_kernel.food_portions import (
+    HOUSEHOLD_MEASURE_LABELS,
+    MY_SCOOPE_FOOD_GROUP_LABELS,
+    HouseholdMeasure,
+    MyScoopeFoodGroup,
+)
+
 
 class FoodCatalogContractError(ValueError):
     """Raised when an internal Food Catalog contract payload is invalid."""
@@ -168,6 +175,9 @@ class CatalogServingOption:
 
     label: str
     grams: Decimal | int | float | str
+    household_amount: Decimal | int | float | str | None = None
+    household_measure: HouseholdMeasure | str | None = None
+    household_detail: str = ""
     source: str = ""
     is_default: bool = False
 
@@ -176,6 +186,18 @@ class CatalogServingOption:
         grams = _decimal(self.grams, field_name="grams")
         _require_positive(grams, field_name="grams")
         object.__setattr__(self, "grams", grams)
+        household_amount = _decimal(self.household_amount, field_name="household_amount")
+        _require_positive(household_amount, field_name="household_amount")
+        household_measure = (
+            HouseholdMeasure(self.household_measure) if self.household_measure else None
+        )
+        if (household_amount is None) != (household_measure is None):
+            raise FoodCatalogContractError(
+                "household_amount and household_measure must be provided together."
+            )
+        object.__setattr__(self, "household_amount", household_amount)
+        object.__setattr__(self, "household_measure", household_measure)
+        object.__setattr__(self, "household_detail", self.household_detail.strip())
 
     def operational_portion_defaults(self) -> dict[str, Any]:
         """Return field names compatible with ``notas.FoodPortion`` creation."""
@@ -183,6 +205,28 @@ class CatalogServingOption:
         return {
             "label": self.label.strip(),
             "grams": self.grams,
+            "household_amount": self.household_amount,
+            "household_measure": self.household_measure.value if self.household_measure else "",
+            "household_detail": self.household_detail,
+            "source": self.source.strip(),
+            "is_default": self.is_default,
+        }
+
+    def contract_payload(self, *, metric_unit: "PortionUnit") -> dict[str, Any]:
+        """Expose one portion without duplicating its metric storage concepts."""
+
+        return {
+            "label": self.label.strip(),
+            "household_amount": self.household_amount,
+            "household_measure": self.household_measure.value if self.household_measure else "",
+            "household_measure_label": (
+                HOUSEHOLD_MEASURE_LABELS[self.household_measure]
+                if self.household_measure
+                else ""
+            ),
+            "household_detail": self.household_detail,
+            "metric_amount": self.grams,
+            "metric_unit": metric_unit.value,
             "source": self.source.strip(),
             "is_default": self.is_default,
         }
@@ -291,6 +335,7 @@ class PublishedFoodSnapshot:
     canonical_name: str = ""
     food_group: str = ""
     food_subgroup: str = ""
+    myscoope_group: MyScoopeFoodGroup | str | None = None
     data_quality_score: int = 0
     visibility: OperationalVisibility | str = OperationalVisibility.EXTENDED
     is_verified: bool = True
@@ -314,6 +359,11 @@ class PublishedFoodSnapshot:
         object.__setattr__(self, "visibility", OperationalVisibility(self.visibility))
         object.__setattr__(self, "preparation_state", PreparationState(self.preparation_state))
         object.__setattr__(self, "portion_unit", PortionUnit(self.portion_unit))
+        object.__setattr__(
+            self,
+            "myscoope_group",
+            MyScoopeFoodGroup(self.myscoope_group) if self.myscoope_group else None,
+        )
         for field_name in ("default_portion_g", "min_portion_g", "max_portion_g", "portion_step_g"):
             value = _decimal(getattr(self, field_name), field_name=field_name)
             _require_positive(value, field_name=field_name)
@@ -333,6 +383,7 @@ class PublishedFoodSnapshot:
             canonical_name=self.canonical_name.strip(),
             food_group=self.food_group.strip(),
             food_subgroup=self.food_subgroup.strip(),
+            myscoope_group=self.myscoope_group,
             nutrients_per_100g=self.nutrients_per_100g,
             portion_unit=self.portion_unit,
             data_quality_score=self.data_quality_score,
@@ -362,6 +413,7 @@ class OperationalFoodSnapshotPayload:
     food_group: str
     food_subgroup: str
     nutrients_per_100g: NutrientProfilePer100g
+    myscoope_group: MyScoopeFoodGroup | str | None = None
     emoji: str = ""
     visual_key: str = ""
     portion_unit: PortionUnit | str = PortionUnit.GRAMS
@@ -388,6 +440,11 @@ class OperationalFoodSnapshotPayload:
         object.__setattr__(self, "visibility", OperationalVisibility(self.visibility))
         object.__setattr__(self, "preparation_state", PreparationState(self.preparation_state))
         object.__setattr__(self, "portion_unit", PortionUnit(self.portion_unit))
+        object.__setattr__(
+            self,
+            "myscoope_group",
+            MyScoopeFoodGroup(self.myscoope_group) if self.myscoope_group else None,
+        )
         object.__setattr__(self, "solver_capabilities", dict(self.solver_capabilities or {}))
 
     def food_defaults(self) -> dict[str, Any]:
@@ -408,6 +465,7 @@ class OperationalFoodSnapshotPayload:
             "is_active": True,
             "food_group": self.food_group.strip(),
             "food_subgroup": self.food_subgroup.strip(),
+            "myscoope_group": self.myscoope_group.value if self.myscoope_group else "",
             "preparation_state": self.preparation_state.value,
             "solver_enabled": self.solver_enabled,
             "portion_unit": self.portion_unit.value,
@@ -435,9 +493,16 @@ class OperationalFoodSnapshotPayload:
             "preparation_state": self.preparation_state.value,
             "solver_enabled": self.solver_enabled,
             "portion_unit": self.portion_unit.value,
+            "myscoope_group": self.myscoope_group.value if self.myscoope_group else "",
+            "myscoope_group_label": (
+                MY_SCOOPE_FOOD_GROUP_LABELS[self.myscoope_group]
+                if self.myscoope_group
+                else ""
+            ),
             "aliases": tuple(self.aliases),
             "serving_options": tuple(
-                option.operational_portion_defaults() for option in self.serving_options
+                option.contract_payload(metric_unit=self.portion_unit)
+                for option in self.serving_options
             ),
             "evidence": tuple(item.source_metadata_defaults() for item in self.evidence),
             "solver_capabilities": dict(self.solver_capabilities),
@@ -460,6 +525,8 @@ __all__ = [
     "CatalogServingOption",
     "FoodCatalogContractError",
     "NutrientProfilePer100g",
+    "HouseholdMeasure",
+    "MyScoopeFoodGroup",
     "OperationalFoodSnapshotPayload",
     "OperationalVisibility",
     "PreparationState",

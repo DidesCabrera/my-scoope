@@ -6,6 +6,7 @@ from mobile_api.api_support import require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
 from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
+from mobile_api.presenters.library_foods import food_picker_item_payload
 from mobile_api.schema_domains.libraries import (
     CalendarizationProgramOptionsEnvelope,
     CompositionOptionsEnvelope,
@@ -64,33 +65,13 @@ def foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
     )
     return success(
         {
-            "items": [_food_picker_item_payload(item) for item in page.foods],
+            "items": [food_picker_item_payload(item) for item in page.foods],
             "total": page.total,
             "offset": page.offset,
             "limit": page.limit,
             "search": page.search,
         }
     )
-
-
-def _food_picker_item_payload(item):
-    return {
-        "id": item.id,
-        "name": item.name,
-        "display_name": item.display_name,
-        "protein": item.protein,
-        "carbs": item.carbs,
-        "fat": item.fat,
-        "total_kcal": item.total_kcal,
-        "protein_allocation": item.alloc.get("protein", 0),
-        "carbs_allocation": item.alloc.get("carbs", 0),
-        "fat_allocation": item.alloc.get("fat", 0),
-        "source": item.source,
-        "is_user_food": item.is_user_food,
-        "is_verified": item.is_verified,
-        "data_quality_score": item.data_quality_score,
-        "quantity_unit": item.quantity_unit, "emoji": item.emoji, "visual_key": item.visual_key,
-    }
 
 
 @router.get(
@@ -103,7 +84,7 @@ def food_detail(request, food_id: int):
     food = get_food_picker_queryset(request.auth.user).filter(pk=food_id).first()
     if food is None:
         raise MobileAPIError("picker_selection_not_found", "El alimento seleccionado no está disponible.", 404)
-    return success(_food_picker_item_payload(build_food_picker_item_dto(food=food, user=request.auth.user)))
+    return success(food_picker_item_payload(build_food_picker_item_dto(food=food, user=request.auth.user)))
 
 
 @router.get(

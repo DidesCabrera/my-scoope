@@ -4590,6 +4590,17 @@
             "title": "Data Quality Score",
             "type": "integer"
           },
+          "default_portion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Portion"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -4607,6 +4618,32 @@
             "title": "Fat Allocation",
             "type": "number"
           },
+          "household_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Amount"
+          },
+          "household_detail": {
+            "default": "",
+            "title": "Household Detail",
+            "type": "string"
+          },
+          "household_measure": {
+            "default": "",
+            "title": "Household Measure",
+            "type": "string"
+          },
+          "household_measure_label": {
+            "default": "",
+            "title": "Household Measure Label",
+            "type": "string"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -4618,6 +4655,16 @@
           "is_verified": {
             "title": "Is Verified",
             "type": "boolean"
+          },
+          "myscoope_group": {
+            "default": "",
+            "title": "Myscoope Group",
+            "type": "string"
+          },
+          "myscoope_group_label": {
+            "default": "",
+            "title": "Myscoope Group Label",
+            "type": "string"
           },
           "name": {
             "title": "Name",

@@ -12,6 +12,16 @@ class FoodVisualIdentityData(Schema):
     visual_key: str = ""
 
 
+class FoodPortionContractData(Schema):
+    default_portion: float | None = None
+    household_amount: float | None = None
+    household_measure: str = ""
+    household_measure_label: str = ""
+    household_detail: str = ""
+    myscoope_group: str = ""
+    myscoope_group_label: str = ""
+
+
 class OptionalFoodVisualIdentityData(Schema):
     emoji: str | None = None
     visual_key: str | None = None

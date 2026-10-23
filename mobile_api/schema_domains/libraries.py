@@ -11,7 +11,10 @@ OptionalPortionUnitData = library_common.OptionalPortionUnitData
 LibraryMacroData = library_common.LibraryMacroData
 
 
-class FoodItem(library_common.FoodVisualIdentityData):
+class FoodItem(
+    library_common.FoodVisualIdentityData,
+    library_common.FoodPortionContractData,
+):
     id: int
     name: str
     display_name: str

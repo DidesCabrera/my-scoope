@@ -95,6 +95,8 @@ class CatalogReleaseTests(TestCase):
         mirrored = CatalogFood.objects.get()
         self.assertTrue(mirrored.is_release_managed)
         self.assertEqual(mirrored.imported_release_version, "2026.09.2")
+        self.assertEqual(mirrored.myscoope_group, "poultry")
+        self.assertEqual(mirrored.portions.get().household_measure, "unit")
 
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "release.json"
@@ -115,6 +117,8 @@ class CatalogReleaseTests(TestCase):
         self.assertTrue(operational.is_global)
         self.assertTrue(operational.solver_enabled)
         self.assertEqual(operational.catalog_snapshot_version, "v1")
+        self.assertEqual(operational.myscoope_group, "poultry")
+        self.assertEqual(operational.portions.get().household_amount, Decimal("1.000"))
 
     def test_authority_snapshot_preserves_unpublished_curation_state(self):
         food = _published_food()
@@ -244,6 +248,7 @@ def _published_food() -> CatalogFood:
         catalog_version="v1",
         food_group="meats",
         food_subgroup="poultry",
+        myscoope_group="poultry",
         preparation_state=CatalogFood.PREPARATION_COOKED,
         solver_enabled=True,
         solver_min_portion_g=Decimal("60"),
@@ -261,6 +266,9 @@ def _published_food() -> CatalogFood:
         catalog_food=food,
         label="1 porción",
         grams=Decimal("120.000"),
+        household_amount=Decimal("1.000"),
+        household_measure="unit",
+        household_detail="pechuga mediana",
         source="reviewed",
         is_default=True,
     )

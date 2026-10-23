@@ -14,6 +14,7 @@ from notas.domain.models import (
     Food,
     FoodAlias,
     FoodLocalizedName,
+    FoodPortion,
     FoodSourceMetadata,
 )
 
@@ -73,6 +74,18 @@ class FoodPickerQueryTests(TestCase):
             is_active=True,
             visibility=Food.VISIBILITY_CORE,
             data_quality_score=90,
+            myscoope_group="cereals_and_pseudocereals",
+            default_portion_g=40,
+        )
+
+        FoodPortion.objects.create(
+            food=self.core_global_food,
+            label="1 porción",
+            grams=40,
+            household_amount=0.5,
+            household_measure="cup",
+            household_detail="avena seca",
+            is_default=True,
         )
 
         FoodSourceMetadata.objects.create(
@@ -254,6 +267,13 @@ class FoodPickerQueryTests(TestCase):
         self.assertTrue(item.is_verified)
         self.assertEqual(item.visibility, Food.VISIBILITY_CORE)
         self.assertEqual(item.source, FoodSourceMetadata.SOURCE_USDA)
+        self.assertEqual(item.myscoope_group, "cereals_and_pseudocereals")
+        self.assertEqual(item.myscoope_group_label, "Cereales y pseudocereales")
+        self.assertEqual(item.default_portion, 40.0)
+        self.assertEqual(item.household_amount, 0.5)
+        self.assertEqual(item.household_measure, "cup")
+        self.assertEqual(item.household_measure_label, "taza")
+        self.assertEqual(item.household_detail, "avena seca")
 
     def test_list_food_picker_items_searches_by_alias(self):
         result = list_food_picker_items(

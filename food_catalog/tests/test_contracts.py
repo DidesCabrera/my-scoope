@@ -9,6 +9,8 @@ from food_catalog.application.contracts import (
     CatalogFoodCandidate,
     CatalogServingOption,
     FoodCatalogContractError,
+    HouseholdMeasure,
+    MyScoopeFoodGroup,
     NutrientProfilePer100g,
     OperationalVisibility,
     PortionUnit,
@@ -97,6 +99,9 @@ class FoodCatalogContractTests(TestCase):
         serving_option = CatalogServingOption(
             label="1 porción",
             grams="120",
+            household_amount="1",
+            household_measure=HouseholdMeasure.UNIT,
+            household_detail="pechuga mediana",
             source="reviewed",
             is_default=True,
         )
@@ -109,6 +114,7 @@ class FoodCatalogContractTests(TestCase):
             canonical_name="pechuga pollo cocida",
             food_group="meats",
             food_subgroup="poultry",
+            myscoope_group=MyScoopeFoodGroup.POULTRY,
             nutrients_per_100g=NutrientProfilePer100g(
                 protein_g="31",
                 carbs_g="0",
@@ -143,6 +149,7 @@ class FoodCatalogContractTests(TestCase):
                 "is_active": True,
                 "food_group": "meats",
                 "food_subgroup": "poultry",
+                "myscoope_group": "poultry",
                 "preparation_state": "cooked",
                 "solver_enabled": True,
                 "portion_unit": "ml",
@@ -165,7 +172,12 @@ class FoodCatalogContractTests(TestCase):
             (
                 {
                     "label": "1 porción",
-                    "grams": Decimal("120"),
+                    "household_amount": Decimal("1"),
+                    "household_measure": "unit",
+                    "household_measure_label": "unidad",
+                    "household_detail": "pechuga mediana",
+                    "metric_amount": Decimal("120"),
+                    "metric_unit": "ml",
                     "source": "reviewed",
                     "is_default": True,
                 },
@@ -174,6 +186,8 @@ class FoodCatalogContractTests(TestCase):
         self.assertEqual(payload.snapshot_metadata()["aliases"], ("pollo cocido",))
         self.assertEqual(payload.snapshot_metadata()["preparation_state"], "cooked")
         self.assertEqual(payload.snapshot_metadata()["portion_unit"], "ml")
+        self.assertEqual(payload.snapshot_metadata()["myscoope_group"], "poultry")
+        self.assertEqual(payload.snapshot_metadata()["myscoope_group_label"], "Aves")
         self.assertTrue(payload.snapshot_metadata()["solver_enabled"])
         self.assertEqual(payload.snapshot_metadata()["solver_capabilities"], {})
 

@@ -1,3 +1,4 @@
+import os
 from dataclasses import replace
 from typing import Any
 
@@ -7,6 +8,11 @@ from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
+from myscoope_mcp.auth import (
+    MCP_SCOPE_PROPOSALS_CREATE,
+    MCP_SCOPE_READ,
+    user_tokens_only_enabled,
+)
 from myscoope_mcp.client import MyscoopeAPIClient
 from myscoope_mcp.config import load_config_from_env
 from myscoope_mcp.contracts import MCPToolCallResult
@@ -27,16 +33,33 @@ from myscoope_mcp.tools import (
 
 SERVER_NAME = "my-scoope-mcp"
 
+
+class MyScoopeFastMCP(FastMCP):
+    async def list_tools(self):
+        tools = await super().list_tools()
+        for tool in tools:
+            scopes = [MCP_SCOPE_READ]
+            if tool.name in {
+                TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+                TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
+                TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+                TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+            }:
+                scopes.append(MCP_SCOPE_PROPOSALS_CREATE)
+            tool.securitySchemes = [{"type": "oauth2", "scopes": scopes}]
+        return tools
+
 READ_ONLY_TOOL_ANNOTATIONS = ToolAnnotations(
     readOnlyHint=True,
     destructiveHint=False,
-    openWorldHint=True,
+    openWorldHint=False,
 )
 
 PROPOSAL_CREATE_TOOL_ANNOTATIONS = ToolAnnotations(
     readOnlyHint=False,
     destructiveHint=False,
-    openWorldHint=True,
+    openWorldHint=False,
 )
 
 
@@ -55,15 +78,6 @@ def get_protocol_tool_annotations() -> dict[str, ToolAnnotations]:
     }
 
 
-def _get_current_mcp_bearer_token() -> str | None:
-    access_token = get_access_token()
-
-    if access_token is None:
-        return None
-
-    return access_token.token
-
-
 def _should_forward_mcp_bearer_token(
     token: str | None,
 ) -> bool:
@@ -73,9 +87,18 @@ def _should_forward_mcp_bearer_token(
     return token.startswith("mcp_user_")
 
 
-def create_api_client() -> MyscoopeAPIClient:
+def create_api_client(required_scope: str = MCP_SCOPE_READ) -> MyscoopeAPIClient:
     config = load_config_from_env()
-    current_bearer_token = _get_current_mcp_bearer_token()
+    access_token = get_access_token()
+    current_bearer_token = access_token.token if access_token else None
+
+    if user_tokens_only_enabled() and not _should_forward_mcp_bearer_token(current_bearer_token):
+        raise RuntimeError("A user-scoped MCP token is required.")
+
+    if _should_forward_mcp_bearer_token(current_bearer_token) and (
+        access_token is None or required_scope not in access_token.scopes
+    ):
+        raise PermissionError("MCP token lacks the required tool scope.")
 
     if _should_forward_mcp_bearer_token(current_bearer_token):
         config = replace(
@@ -93,6 +116,45 @@ def serialize_tool_result(
     Preserve the My Scoope ok/data/error contract for MCP responses.
     """
     return result.as_dict()
+
+
+def summarize_created_proposal_result(result: MCPToolCallResult) -> dict[str, Any]:
+    """Keep nutrition/profile snapshots out of the automatic MCP response."""
+    if not result.ok:
+        error = result.error or {}
+        return {
+            "ok": False,
+            "data": {},
+            "error": {
+                "code": error.get("code", "proposal_creation_failed"),
+                "message": "Proposal creation failed.",
+                "details": {},
+            },
+        }
+
+    proposal = result.data.get("proposal")
+    if not isinstance(proposal, dict) or not isinstance(proposal.get("id"), int):
+        return serialize_tool_result(MCPToolCallResult(
+            ok=False,
+            data={},
+            error={
+                "code": "invalid_proposal_result",
+                "message": "The proposal was created but its reference was unavailable.",
+                "details": {},
+            },
+        ))
+
+    return {
+        "ok": True,
+        "data": {
+            "proposal_id": proposal["id"],
+            "status": proposal.get("status"),
+            "requires_human_review": True,
+            "applies_changes": False,
+            "detail_tool": TOOL_READ_PROPOSAL,
+        },
+        "error": None,
+    }
 
 
 def create_mcp_server(
@@ -130,12 +192,15 @@ def create_mcp_server(
     if auth_settings is not None:
         server_kwargs["auth"] = auth_settings
 
-    server = FastMCP(
+    server = MyScoopeFastMCP(
         SERVER_NAME,
         **server_kwargs,
     )
 
     register_mcp_tools(server)
+
+    for tool_name in get_protocol_allowed_tool_names() - get_configured_allowed_tool_names():
+        server.remove_tool(tool_name)
 
     return server
 
@@ -284,7 +349,7 @@ def register_mcp_tools(server: FastMCP) -> None:
         This tool does not create a final Meal.
         It only creates a NutritionProposal pending human review.
         """
-        client = create_api_client()
+        client = create_api_client(required_scope=MCP_SCOPE_PROPOSALS_CREATE)
 
         arguments = {
             "dailyplan_id": dailyplan_id,
@@ -302,7 +367,7 @@ def register_mcp_tools(server: FastMCP) -> None:
             arguments=arguments,
         )
 
-        return serialize_tool_result(result)
+        return summarize_created_proposal_result(result)
 
     @server.tool(
         annotations=annotations[TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL],
@@ -322,7 +387,7 @@ def register_mcp_tools(server: FastMCP) -> None:
         It does not approve it.
         It does not apply final changes.
         """
-        client = create_api_client()
+        client = create_api_client(required_scope=MCP_SCOPE_PROPOSALS_CREATE)
 
         arguments = {
             "dailyplan_id": dailyplan_id,
@@ -345,7 +410,7 @@ def register_mcp_tools(server: FastMCP) -> None:
             arguments=arguments,
         )
 
-        return serialize_tool_result(result)
+        return summarize_created_proposal_result(result)
 
     @server.tool(
         annotations=annotations[TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL],
@@ -363,7 +428,7 @@ def register_mcp_tools(server: FastMCP) -> None:
         This tool does not create a final DailyPlan.
         It only creates a NutritionProposal pending human review.
         """
-        client = create_api_client()
+        client = create_api_client(required_scope=MCP_SCOPE_PROPOSALS_CREATE)
 
         arguments: dict[str, Any] = {
             "dailyplan_id": dailyplan_id,
@@ -381,7 +446,7 @@ def register_mcp_tools(server: FastMCP) -> None:
             arguments=arguments,
         )
 
-        return serialize_tool_result(result)
+        return summarize_created_proposal_result(result)
 
 
     @server.tool(
@@ -396,7 +461,7 @@ def register_mcp_tools(server: FastMCP) -> None:
         This tool creates NutritionProposal artifacts only.
         It does not apply a final DailyPlan.
         """
-        client = create_api_client()
+        client = create_api_client(required_scope=MCP_SCOPE_PROPOSALS_CREATE)
 
         result = dispatch_tool_call(
             client=client,
@@ -406,7 +471,7 @@ def register_mcp_tools(server: FastMCP) -> None:
             },
         )
 
-        return serialize_tool_result(result)
+        return summarize_created_proposal_result(result)
 
     @server.tool(
         annotations=annotations[TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL],
@@ -421,7 +486,7 @@ def register_mcp_tools(server: FastMCP) -> None:
 
         This tool keeps the previous proposal immutable and stores iteration trace.
         """
-        client = create_api_client()
+        client = create_api_client(required_scope=MCP_SCOPE_PROPOSALS_CREATE)
 
         result = dispatch_tool_call(
             client=client,
@@ -433,7 +498,7 @@ def register_mcp_tools(server: FastMCP) -> None:
             },
         )
 
-        return serialize_tool_result(result)
+        return summarize_created_proposal_result(result)
 
 
 def get_protocol_allowed_tool_names() -> set[str]:
@@ -452,6 +517,18 @@ def get_protocol_allowed_tool_names() -> set[str]:
         TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
         TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     }
+
+
+def get_configured_allowed_tool_names() -> set[str]:
+    """Keep the default surface stable and allow a smaller validation rollout."""
+    known = get_protocol_allowed_tool_names()
+    raw = os.getenv("MYSCOOPE_MCP_ALLOWED_TOOLS", "").strip()
+    if not raw:
+        return known
+    configured = {name.strip() for name in raw.split(",") if name.strip()}
+    if not configured or not configured.issubset(known):
+        raise RuntimeError("MYSCOOPE_MCP_ALLOWED_TOOLS contains an unsupported tool.")
+    return configured
 
 
 def get_protocol_forbidden_tool_names() -> set[str]:
