@@ -175,6 +175,7 @@ class WeightItem(Schema):
     measured_on: date
     measured_time: time | None = None
     weight_kg: float
+    comment: str
     source: str
     created_at: datetime
     calendarization_id: int | None = None
@@ -195,11 +196,22 @@ class WeightCreateInput(Schema):
     weight_kg: float = Field(gt=0, le=350)
     measured_on: date | None = None
     measured_time: time | None = None
+    comment: str | None = Field(default=None, max_length=500)
 
 
 class WeightEnvelope(Schema):
     ok: Literal[True] = True
     data: WeightItem
+    error: None = None
+
+
+class WeightDeleteData(Schema):
+    deleted_id: int
+
+
+class WeightDeleteEnvelope(Schema):
+    ok: Literal[True] = True
+    data: WeightDeleteData
     error: None = None
 
 

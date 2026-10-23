@@ -11,6 +11,7 @@ export type KeyValueTableItem = {
   id?: number | string;
   label: string;
   onPress?: () => void;
+  secondaryValue?: string;
   value: string;
 };
 
@@ -21,6 +22,7 @@ function TableRow({ item, last }: { item: KeyValueTableItem; last: boolean }) {
         <Text style={[styles.label, item.emphasized && styles.labelEmphasized]}>{item.label}</Text>
       </View>
       <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.value}>{item.value}</Text>
+      {item.secondaryValue ? <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={styles.secondaryValue}>{item.secondaryValue}</Text> : null}
       {item.accessory}
     </>;
   return item.onPress ? (
@@ -52,5 +54,6 @@ const styles = StyleSheet.create({
   rowLast: { borderBottomWidth: 0 },
   rowPressed: { opacity: 0.65 },
   rows: { marginTop: -tokens.spacing.xs },
+  secondaryValue: { color: tokens.color.textMain, fontSize: 13, fontWeight: tokens.weight.regular, lineHeight: 17, textAlign: "right", width: 54 },
   value: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20, textAlign: "right" },
 });

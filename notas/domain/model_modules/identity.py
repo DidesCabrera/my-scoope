@@ -226,6 +226,7 @@ class WeightLog(models.Model):
     date = models.DateField()
     time = models.TimeField(null=True, blank=True)
     weight_kg = models.FloatField()
+    comment = models.CharField(max_length=500, blank=True)
     source = models.CharField(
         max_length=30,
         choices=SOURCE_CHOICES,

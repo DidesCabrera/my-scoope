@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
-import { sortedWeightTrend } from "../src/components/ui/weight-trend-values";
+import { dailyWeightTrend, sortedWeightTrend } from "../src/components/ui/weight-trend-values";
 
 test("weight trend orders valid measurements chronologically without mutating history", () => {
   const history = [
@@ -16,6 +16,35 @@ test("weight trend orders valid measurements chronologically without mutating hi
   assert.deepEqual(history.map((item) => item.id), [3, 1, 2]);
 });
 
+test("weight trend fills consecutive days with weighted estimates and carries the latest weight forward", () => {
+  const trend = dailyWeightTrend([
+    { id: 1, measured_on: "2026-10-01", weight_kg: 80 },
+    { id: 2, measured_on: "2026-10-05", weight_kg: 84 },
+  ], "2026-10-07");
+
+  assert.deepEqual(trend.map((item) => item.measured_on), [
+    "2026-10-01",
+    "2026-10-02",
+    "2026-10-03",
+    "2026-10-04",
+    "2026-10-05",
+    "2026-10-06",
+    "2026-10-07",
+  ]);
+  assert.deepEqual(trend.map((item) => item.weight_kg), [80, 81, 82, 83, 84, 84, 84]);
+  assert.deepEqual(trend.map((item) => item.estimated), [false, true, true, true, false, true, true]);
+});
+
+test("weight trend ignores an earlier through date and still includes the latest measurement", () => {
+  const trend = dailyWeightTrend([
+    { id: 1, measured_on: "2026-10-01", weight_kg: 80 },
+    { id: 2, measured_on: "2026-10-03", weight_kg: 82 },
+  ], "2026-09-30");
+
+  assert.equal(trend.at(-1)?.measured_on, "2026-10-03");
+  assert.equal(trend.at(-1)?.estimated, false);
+});
+
 test("weight trend and history use the standard card surface", async () => {
   const screen = await readFile(path.resolve(process.cwd(), "src/app/weight.tsx"), "utf8");
   assert.match(screen, /<Card accent=\{tokens\.color\.protein\}>\s*<CardHeader title="Registro de peso actual" \/>/);
@@ -23,13 +52,13 @@ test("weight trend and history use the standard card surface", async () => {
   assert.match(screen, /El registro de peso te permitirá visualizar su variación\./);
   assert.match(screen, /La variación de peso puede deberse a diferentes factores/);
   assert.match(screen, /Por eso te aconsejamos evaluar la tendencia en el mediano plazo/);
-  assert.match(screen, /<SectionPageHeader countLabel="mediciones" section="weight" title="Registra tu peso" \/>\s*<View style=\{styles\.weightIntroduction\}>[\s\S]*?<Text style=\{textStyles\.body\}>El registro/);
+  assert.match(screen, /<SectionPageHeader countLabel="mediciones" section="weight" subtitle="El registro de peso te permitirá visualizar su variación\. Esto revelará tendencias en el mediano y largo plazo\." title="Registra tu peso" \/>\s*<Card accent=\{tokens\.color\.protein\}>/);
   assert.match(screen, /<InlineNotice>[\s\S]*La variación de peso puede deberse[\s\S]*\{"\\n\\n"\}[\s\S]*Por eso te aconsejamos evaluar la tendencia[\s\S]*<\/InlineNotice>/);
   assert.doesNotMatch(screen, /eyebrow="Mediciones"/);
   assert.match(screen, /setHeaderPresentation\(\{ fallback: "\/today", identityVisible: compactHeaderVisible, mode: "back", title: "Registra tu peso" \}\)/);
   assert.match(screen, /<Screen headerMode="preserve" onHeaderVisibilityChange=\{setCompactHeaderVisible\}>/);
-  assert.doesNotMatch(screen, /<CardHeader title="Registro de peso actual" \/>\s*<View style=\{styles\.weightIntroduction\}>/);
-  assert.match(screen, /weightIntroduction: \{ gap: tokens\.spacing\.sm \}/);
+  assert.match(screen, /<Card accent=\{tokens\.color\.protein\}>[\s\S]*?<\/Card>\s*<InlineNotice>\s*La variación de peso/);
+  assert.doesNotMatch(screen, /weightIntroduction/);
   assert.doesNotMatch(screen, /Una cifra aislada no define tu progreso/);
   assert.match(screen, /<Card>\s*<CardHeader description=\{`\$\{items\.length\} registros`\} title="Tendencia de peso" \/>\s*<WeightTrendChart items=\{items\} \/>\s*<\/Card>/);
   assert.match(screen, /<Card>[\s\S]*<CardHeader[\s\S]*title="Pesos históricos"[\s\S]*<KeyValueTable items=\{items\.map/);
@@ -37,8 +66,8 @@ test("weight trend and history use the standard card surface", async () => {
   assert.match(screen, /value: `\$\{item\.weight_kg\.toFixed\(1\)\} kg`/);
   assert.match(screen, /label=\{`Peso actual · \$\{formatDate\(localDateValue\(\)\)\}`\}/);
   assert.match(screen, /<NativeDateTimeField label="Hora de medición \(Opcional\)" mode="time"/);
+  assert.match(screen, /const payload: WeightInput = \{ comment: comment\.trim\(\), measured_on: localDateValue\(\), measured_time: measuredTime \|\| localTimeValue\(\), weight_kg: weight \}/);
   assert.doesNotMatch(screen, /Incluir hora|SystemSwitch/);
-  assert.match(screen, /const payload: WeightInput = \{ measured_on: localDateValue\(\), measured_time: measuredTime \|\| null, weight_kg: weight \}/);
   assert.match(screen, /item\.measured_time\?\.slice\(0, 5\)/);
   assert.match(screen, /accessibilityLabel=\{historyEditing \? "Finalizar edición de pesos históricos" : "Editar pesos históricos"\}/);
   assert.match(screen, /accessibilityLabel="Agregar medición anterior"[\s\S]*<Plus color=\{tokens\.color\.textMain\}/);

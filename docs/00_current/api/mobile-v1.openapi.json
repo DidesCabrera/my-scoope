@@ -10636,6 +10636,18 @@
       },
       "WeightCreateInput": {
         "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
           "measured_on": {
             "anyOf": [
               {
@@ -10673,6 +10685,41 @@
         "title": "WeightCreateInput",
         "type": "object"
       },
+      "WeightDeleteData": {
+        "properties": {
+          "deleted_id": {
+            "title": "Deleted Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted_id"
+        ],
+        "title": "WeightDeleteData",
+        "type": "object"
+      },
+      "WeightDeleteEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/WeightDeleteData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "WeightDeleteEnvelope",
+        "type": "object"
+      },
       "WeightEnvelope": {
         "properties": {
           "data": {
@@ -10707,6 +10754,10 @@
               }
             ],
             "title": "Calendarization Id"
+          },
+          "comment": {
+            "title": "Comment",
+            "type": "string"
           },
           "created_at": {
             "format": "date-time",
@@ -10747,6 +10798,7 @@
           "id",
           "measured_on",
           "weight_kg",
+          "comment",
           "source",
           "created_at"
         ],
@@ -21678,6 +21730,58 @@
       }
     },
     "/api/v1/weights/{weight_id}": {
+      "delete": {
+        "operationId": "mobile_api_api_delete_weight",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "weight_id",
+            "required": true,
+            "schema": {
+              "title": "Weight Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightDeleteEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Delete Weight"
+      },
       "patch": {
         "operationId": "mobile_api_api_update_weight",
         "parameters": [

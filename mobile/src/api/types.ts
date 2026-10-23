@@ -527,14 +527,14 @@ export type WeightItem = {
   measured_on: string;
   measured_time?: string | null;
   weight_kg: number;
+  comment: string;
   source: string;
   created_at: string;
   calendarization_id?: number | null;
 };
-
 export type WeightListData = { items: WeightItem[]; count: number };
 
-export type WeightInput = { weight_kg: number; measured_on?: string; measured_time?: string | null };
+export type WeightInput = { weight_kg: number; measured_on?: string; measured_time?: string | null; comment?: string };
 
 export type MealCheckInInput = {
   action: "completed" | "skipped" | "reset" | "note" | "food_prepared" | "food_unprepared";

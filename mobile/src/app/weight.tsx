@@ -1,16 +1,16 @@
 import { Redirect, useFocusEffect } from "expo-router";
-import { Check, Pencil, Plus } from "lucide-react-native";
+import { Check, Pencil, Plus, Trash2 } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { WeightInput, WeightItem, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { Button, Card, CardHeader, InlineNotice, KeyValueTable, LoadingState, NativeDateTimeField, NativeMeasurementField, Screen, SectionPageHeader, textStyles, WeightTrendChart } from "@/components/ui";
+import { Button, Card, CardHeader, Field, InlineNotice, KeyValueTable, LoadingState, NativeDateTimeField, NativeMeasurementField, Screen, SectionPageHeader, textStyles, WeightTrendChart } from "@/components/ui";
 import { ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { tokens } from "@/design/tokens";
-import { localDateValue } from "@/presentation/date-time-values";
+import { localDateValue, localTimeValue } from "@/presentation/date-time-values";
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", year: "numeric" }).format(
@@ -23,15 +23,25 @@ function historyDateLabel(item: WeightItem): string {
   return time ? `${formatDate(item.measured_on)} · ${time}` : formatDate(item.measured_on);
 }
 
+function weightVariationLabel(current: WeightItem, previous?: WeightItem): string {
+  if (!previous) return "—";
+  const rawVariation = current.weight_kg - previous.weight_kg;
+  const variation = Math.abs(rawVariation) < 0.05 ? 0 : rawVariation;
+  const sign = variation > 0 ? "+" : "";
+  return `${sign}${variation.toFixed(1).replace(".", ",")} kg`;
+}
+
 export default function WeightScreen() {
   const { status, profile, apiRequest, refreshProfile } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [items, setItems] = useState<WeightItem[]>([]);
   const [value, setValue] = useState(profile?.current_weight_kg?.toString() ?? "");
   const [measuredTime, setMeasuredTime] = useState("");
+  const [comment, setComment] = useState("");
   const [editingItem, setEditingItem] = useState<WeightItem | null>(null);
   const [historyFormMode, setHistoryFormMode] = useState<"create" | "edit" | null>(null);
   const [historyEditing, setHistoryEditing] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editDate, setEditDate] = useState(localDateValue());
   const [editTime, setEditTime] = useState("");
@@ -72,7 +82,7 @@ export default function WeightScreen() {
       setError("Ingresa un peso válido entre 25 y 350 kg.");
       return;
     }
-    const payload: WeightInput = { measured_on: localDateValue(), measured_time: measuredTime || null, weight_kg: weight };
+    const payload: WeightInput = { comment: comment.trim(), measured_on: localDateValue(), measured_time: measuredTime || localTimeValue(), weight_kg: weight };
     setSaving(true);
     setSaved(false);
     setError(null);
@@ -80,6 +90,7 @@ export default function WeightScreen() {
       await apiRequest<WeightItem>("/api/v1/weights", { method: "POST", body: JSON.stringify(payload) });
       await Promise.all([load(), refreshProfile()]);
       setMeasuredTime("");
+      setComment("");
       setSaved(true);
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -142,25 +153,49 @@ export default function WeightScreen() {
     }
   }
 
+  async function deleteWeight(item: WeightItem) {
+    setDeletingId(item.id);
+    setSaved(false);
+    try {
+      await apiRequest<{ deleted_id: number }>(`/api/v1/weights/${item.id}`, { method: "DELETE" });
+      await Promise.all([load(), refreshProfile()]);
+    } catch (nextError) {
+      Alert.alert("No pudimos eliminar la medición", userFacingError(nextError));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function confirmDeleteWeight(item: WeightItem) {
+    Alert.alert(
+      "Eliminar medición",
+      `¿Eliminar la medición de ${item.weight_kg.toFixed(1)} kg del ${historyDateLabel(item)}?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Eliminar", style: "destructive", onPress: () => void deleteWeight(item) },
+      ],
+    );
+  }
+
   return (
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
-      <SectionPageHeader countLabel="mediciones" section="weight" title="Registra tu peso" />
-      <View style={styles.weightIntroduction}>
-        <Text style={textStyles.body}>El registro de peso te permitirá visualizar su variación. Esto revelará tendencias en el mediano y largo plazo.</Text>
-        <InlineNotice>
-          La variación de peso puede deberse a diferentes factores, destacando la variación de agua en el cuerpo, la cual puede cambiar en un corto lapso de tiempo.{"\n\n"}
-          Por eso te aconsejamos evaluar la tendencia en el mediano plazo, más que dentro de uno o pocos días.
-        </InlineNotice>
-      </View>
+      <SectionPageHeader countLabel="mediciones" section="weight" subtitle="El registro de peso te permitirá visualizar su variación. Esto revelará tendencias en el mediano y largo plazo." title="Registra tu peso" />
       <Card accent={tokens.color.protein}>
         <CardHeader title="Registro de peso actual" />
         <Text style={textStyles.muted}>Mídete en condiciones similares para que la tendencia sea comparable.</Text>
         <NativeMeasurementField kind="weight" label={`Peso actual · ${formatDate(localDateValue())}`} onChange={setValue} value={value} />
         <NativeDateTimeField label="Hora de medición (Opcional)" mode="time" onChange={setMeasuredTime} value={measuredTime} />
+        <Field autoCapitalize="sentences" label="Comentario (Opcional)" maxLength={500} onChangeText={setComment} placeholder="Agrega contexto sobre esta medición" value={comment} />
+        <View style={styles.saveButtonSpacing}>
+          <Button label="Guardar medición" loading={saving} onPress={save} />
+        </View>
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         {saved ? <InlineNotice>Medición guardada. Tu Today ya usa el peso actualizado.</InlineNotice> : null}
-        <Button label="Guardar medición" loading={saving} onPress={save} />
       </Card>
+      <InlineNotice>
+        La variación de peso puede deberse a diferentes factores, destacando la variación de agua en el cuerpo, la cual puede cambiar en un corto lapso de tiempo.{"\n\n"}
+        Por eso te aconsejamos evaluar la tendencia en el mediano plazo, más que dentro de uno o pocos días.
+      </InlineNotice>
       <Card>
         <CardHeader description={`${items.length} registros`} title="Tendencia de peso" />
         <WeightTrendChart items={items} />
@@ -189,19 +224,33 @@ export default function WeightScreen() {
           title="Pesos históricos"
         />
         {items.length ? (
-          <KeyValueTable items={items.map((item) => ({
+          <KeyValueTable items={items.map((item, index) => ({
             accessory: historyEditing ? (
-              <Pressable
-                accessibilityLabel={`Editar peso del ${historyDateLabel(item)}`}
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={() => openEdit(item)}
-                style={({ pressed }) => [styles.rowEditAction, pressed && styles.pressed]}>
-                <Pencil color={tokens.color.textMuted} size={18} strokeWidth={2.2} />
-              </Pressable>
+              <View style={styles.rowEditActions}>
+                <Pressable
+                  accessibilityLabel={`Editar peso del ${historyDateLabel(item)}`}
+                  accessibilityRole="button"
+                  disabled={deletingId != null}
+                  hitSlop={8}
+                  onPress={() => openEdit(item)}
+                  style={({ pressed }) => [styles.rowEditAction, pressed && styles.pressed]}>
+                  <Pencil color={tokens.color.textMuted} size={18} strokeWidth={2.2} />
+                </Pressable>
+                <Pressable
+                  accessibilityLabel={`Eliminar peso del ${historyDateLabel(item)}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ busy: deletingId === item.id, disabled: deletingId != null }}
+                  disabled={deletingId != null}
+                  hitSlop={8}
+                  onPress={() => confirmDeleteWeight(item)}
+                  style={({ pressed }) => [styles.rowEditAction, pressed && styles.pressed]}>
+                  <Trash2 color={tokens.color.danger} size={18} strokeWidth={2.2} />
+                </Pressable>
+              </View>
             ) : null,
             id: item.id,
             label: historyDateLabel(item),
+            secondaryValue: historyEditing ? undefined : weightVariationLabel(item, items[index + 1]),
             value: `${item.weight_kg.toFixed(1)} kg`,
           }))} />
         ) : <Text style={textStyles.muted}>Tu primera medición aparecerá aquí.</Text>}
@@ -234,5 +283,6 @@ const styles = StyleSheet.create({
   historyEditToggle: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   pressed: { opacity: 0.65 },
   rowEditAction: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
-  weightIntroduction: { gap: tokens.spacing.sm },
+  rowEditActions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
+  saveButtonSpacing: { marginTop: 24 - tokens.card.gap },
 });
