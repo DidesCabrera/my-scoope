@@ -1,91 +1,82 @@
 ---
 name: mobile-simulator-review
-description: "Show the current My Scoope mobile change in an iOS Simulator from the intended checkout, Metro server, native build, and backend environment. Use when Felipe asks to show, open, refresh, or verify a mobile change visually, especially when a stale bundle or build may hide the latest code. Do not use for release builds or general feature implementation."
+description: "Present an already implemented My Scoope mobile change in the iOS Simulator with the smallest possible action set. Use when Felipe asks to show, open, reload, or see a change. This workflow never implements, validates, integrates, deploys, or fabricates preview data."
 ---
 
 # Mobile Simulator Review
 
-Make the intended mobile change visibly reviewable in the iOS Simulator and prove
-which source and environment produced what Felipe sees. This is a shared workflow,
-not a role: any role working on a mobile change may use it. Communicate in Spanish
-unless the user requests another language.
+Show an already implemented change in the iOS Simulator. This is a presentation
+workflow, not an implementation, debugging, validation, or release workflow.
+Communicate in Spanish unless Felipe requests another language.
 
-Treat brief requests such as “muéstrame este cambio en el simulador”, “abre la
-versión actual” or “refresca la app” as instructions to complete this workflow.
-Infer the expected screen and behavior from the current task and diff when possible.
+## Hard boundary
 
-## Establish the preview identity
+A request such as “muéstrame el cambio”, “ábrelo en el simulador” or “refresca la
+app” authorizes only simulator presentation.
 
-Read `AGENTS.md`, `mobile/README.md`, and only the current feature source needed to
-understand the expected screen. Do not use the human Knowledge Center as product
-evidence.
+Never do any of the following in this workflow:
 
-Before opening the app, establish:
+- edit, add, delete, or reformat repository files;
+- create preview routes, mock data, fixtures, redirects, or temporary UI;
+- run tests, lint, type checks, CI scripts, builds, migrations, or seed commands;
+- inspect broad source code, diffs, documentation, branch history, or architecture;
+- start a backend, database, worker, deployment, integration, fetch, push, or PR;
+- erase simulator data, sessions, credentials, or another chat's Metro process;
+- substitute representative data for the actual requested behavior;
+- repeat navigation experiments after one direct retry.
 
-- the absolute checkout path, current branch, commit, and relevant working changes;
-- the active Metro process and the directory it serves;
-- the intended development profile and API environment;
-- the simulator, installed development client, route, and state needed for review.
+Do not turn missing validation into work. Report that it was not part of this
+presentation request. Do not turn a missing backend or dataset into environment
+setup. Report the missing dependency and stop.
 
-Run `scripts/inspect_preview_context.sh` from this skill to compare the current
-checkout with the Metro listener. Do not assume that an open simulator or a running
-Metro belongs to the current chat or worktree. If another checkout owns the port,
-do not terminate it blindly; connect the intended development client to a server
-started from the correct checkout on an available port, or restart it only after
-its ownership is clear.
+## Fast path
 
-For the normal staging-backed simulator loop, use the guarded repository commands
-from `mobile/`:
+Use the expected screen and route from the current conversation. Do not reread the
+feature to rediscover information already present in the task.
 
-```bash
-npm run start:staging
-npm run ios:staging
-```
+Perform at most these actions:
 
-Use `start:staging` for the normal Metro loop. Use `ios:staging` only when the
-installed native development build must change. Run `npm run verify:environments`
-when environment identity is uncertain.
+1. Determine the current checkout root and run
+   `scripts/inspect_preview_context.sh` once for the intended Metro port.
+2. If Metro belongs to this checkout, reload the client. If it belongs to another
+   checkout, leave it running and start Metro for this checkout on a free port.
+3. Connect the simulator client to that port and open the existing route.
+4. If the route does not open, retry once using the other existing direct method:
+   app navigation or deep link. Do not change code to force navigation.
+5. Capture the visible result.
 
-## Choose the smallest refresh that can show the change
+For ordinary JavaScript, TypeScript, style, copy, and bundled asset changes, never
+rebuild the native app. If the change actually requires a native rebuild, state
+that clearly before running the existing repository build command; do not perform
+any other preparation.
 
-- For JavaScript, TypeScript, styling, copy, or bundled asset changes, serve the
-  intended checkout through Metro and use Fast Refresh or an explicit reload.
-- For native dependencies, Expo plugins, entitlements, app configuration, generated
-  iOS files, or native modules, rebuild and install the staging simulator client
-  before reloading JavaScript.
-- For backend, schema, authorization, or server-data changes, verify that the API
-  environment used by the simulator contains the change. A current mobile bundle
-  cannot expose backend code that exists only in a local checkout. Prefer an
-  already-authorized local environment when suitable; obtain explicit authority
-  before deploying or changing an external environment.
-- For session or cached application state, reproduce with the least destructive
-  state change. Do not erase simulator data, credentials, or user state merely as a
-  generic refresh step.
+## Multiple chats
 
-If the change crosses more than one boundary, satisfy each required layer. Never
-claim that a Metro reload proves a native rebuild, backend deployment, migration,
-or installed release.
+Each active worktree must use its own Metro port. A simulator can display only the
+bundle to which its current development client is connected. Before presenting a
+result, require that the Metro process directory equals the current worktree's
+`mobile/` directory. Never capture another chat's bundle as evidence.
 
-## Validate during visual iteration
+## Stop conditions
 
-Run the smallest focused check before presenting the screen. For a visual mobile
-change, use `scripts/ci_mobile_visual_check.sh` from the repository root and pass
-only the directly related test when one exists. Do not run the global typecheck,
-the full mobile test set, or `ci_mobile_iteration.sh` for each visual adjustment.
+Stop immediately and report one concrete blocker when any of these is true:
 
-Then navigate to the exact screen and state that demonstrates the requested
-behavior. Capture or present visual evidence when the available simulator tooling
-supports it. If the screen cannot be shown, identify the exact missing layer—source,
-Metro, native build, API environment, test data, authentication, or simulator
-control—instead of presenting an older version as current.
+- the existing route cannot be opened after one retry;
+- the required API, authentication, or data is absent from the connected environment;
+- only a native rebuild could expose the change and it has not yet completed;
+- simulator control is unavailable;
+- the requested change has not actually been implemented.
 
-## Report the review state
+Do not solve the blocker within this workflow unless Felipe separately asks for
+that work.
 
-Return a compact evidence packet containing:
+## Response
 
-- checkout, branch, commit, and whether relevant changes are uncommitted;
-- Metro source directory and port;
-- simulator profile and API environment;
-- refresh or rebuild action performed;
-- focused validation performed and its limits;
-- screen or behavior shown, plus any layer still not verified.
+Return only:
+
+- the screenshot or visible simulator result;
+- one short line with the checkout path and Metro port; or
+- one short sentence naming the blocker.
+
+Do not include an audit, test report, implementation summary, or extended evidence
+packet unless Felipe explicitly asks for one.
