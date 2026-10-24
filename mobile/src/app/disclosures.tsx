@@ -12,6 +12,8 @@ import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
 
+const onboardingLegalSource = "source=mobile-onboarding";
+
 export default function DisclosuresScreen() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const returnHref = internalHref(returnTo);
@@ -50,9 +52,9 @@ export default function DisclosuresScreen() {
   return (
     <Screen>
       <ResponsibleUseContent policyActions={<View style={styles.policyActions}>
-        <Button label="Leer política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/`)} variant="secondary" />
-        <Button label="Leer términos de uso" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/terms/`)} variant="secondary" />
-        <Button label="Leer política de reembolsos" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/refund-policy/`)} variant="secondary" />
+        <Button label="Leer política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/?${onboardingLegalSource}`)} variant="secondary" />
+        <Button label="Leer términos de uso" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/terms/?${onboardingLegalSource}`)} variant="secondary" />
+        <Button label="Leer política de reembolsos" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/refund-policy/?${onboardingLegalSource}`)} variant="secondary" />
       </View>} />
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       <ResponsibleUseActionButton loading={busy} onPress={accept} />

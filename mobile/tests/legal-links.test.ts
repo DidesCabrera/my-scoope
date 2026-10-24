@@ -12,6 +12,7 @@ test("legal policies live in disclosures instead of the account action sheet", a
     assertSourceMatch(source, /\/privacy\//);
     assertSourceMatch(source, /\/terms\//);
     assertSourceMatch(source, /\/refund-policy\//);
+    assertSourceMatch(source, /source=mobile-onboarding/);
   }
   assertSourceDoesNotMatch(account, /Política de privacidad|Términos de uso|Cancelaciones y reembolsos/);
   assertSourceMatch(account, /\/support\//);
