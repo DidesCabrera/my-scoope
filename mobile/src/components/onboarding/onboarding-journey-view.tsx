@@ -523,25 +523,11 @@ function ValueView({ index }: { index: number }) {
   return (
     <>
       <StepHeader
-        description={(
-          <>
-            Nos alegra tenerte por aquí.
-            {"\n\n"}
-            Queremos ayudarte a cumplir a conseguir los resultados que desees, apoyándote en el camino.
-            {"\n\n"}
-            Alcanzar tu objetivo corporal será el <Text style={styles.descriptionEmphasis}>resultado de pequeñas buenas decisiones que tomes día a día</Text> <Text style={styles.descriptionEmphasis}>de forma consistente</Text>; Y si bien un cambio corporal no se logra de la noche a la mañana, un cambio de actitud sí.
-            {"\n\n"}
-            Decidir enfrentar este desafío con convicción es el primer paso, luego verás tu avance fruto de tu trabajo, y <Text style={styles.descriptionEmphasis}>te sentirás orgulloso de ti mismo</Text>, reforzará tu actitud y finalmente <Text style={styles.descriptionEmphasis}>se reflejará en un cambio físico y mental</Text>.
-            {"\n\n"}
-            Te deseamos lo mejor en este camino,
-            {"\n"}
-            Éxito!
-          </>
-        )}
+        description="Arma minutas con tus comidas recurrentes, calendarízalas y sigue tu programación."
         eyebrow="Funciones principales"
         icon={Target}
         index={index}
-        title="Bienvenido a My Scoope!"
+        title="No improvises, Planifica."
       />
       <ExplanationDots index={index} />
     </>

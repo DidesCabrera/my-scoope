@@ -35,7 +35,8 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(preview.includes("{...presentationProps}"));
   const journey = await source("src/components/onboarding/onboarding-journey-view.tsx");
   assert.ok(journey.includes('require("../../../assets/images/login-background.jpg")'));
-  assert.ok(journey.includes('title="Bienvenido a My Scoope!"'));
+  assert.ok(journey.includes('title="No improvises, Planifica."'));
+  assert.ok(journey.includes('description="Arma minutas con tus comidas recurrentes, calendarízalas y sigue tu programación."'));
   assert.ok(journey.includes("isExplanation && styles.explanationDescription"));
   assert.ok(journey.includes("<MyScoopeBrandLogo scale={0.8} />"));
   assert.ok(journey.includes("explanationLogo: { marginBottom: -20 }"));
@@ -46,14 +47,8 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes("contentContainerStyle={styles.explanationScrollContent}"));
   assert.ok(journey.includes("explanationScrollContent: { flexGrow: 1 }"));
   assert.ok(journey.includes("isExplanation && { marginBottom: (usesCenteredTitleSpacing ? tokens.spacing.sm : 0) + 10 }"));
-  assert.ok(journey.includes("Nos alegra tenerte por aquí"));
-  assert.ok(journey.includes("Queremos ayudarte a cumplir a conseguir los resultados que desees, apoyándote en el camino"));
   assert.ok(!journey.includes("onboarding-mind-to-body"));
-  for (const emphasizedCopy of ["resultado de pequeñas buenas decisiones que tomes día a día", "de forma consistente", "te sentirás orgulloso de ti mismo", "se reflejará en un cambio físico y mental"]) {
-    assert.ok(journey.includes(`<Text style={styles.descriptionEmphasis}>${emphasizedCopy}</Text>`));
-  }
-  assert.ok(journey.includes("Te deseamos lo mejor en este camino,"));
-  assert.ok(journey.includes("Éxito!"));
+  assert.ok(!journey.includes("Nos alegra tenerte por aquí"));
   assert.ok(journey.includes('title="Que es My Scoope"'));
   assert.ok(!journey.includes("levels.map((level, levelIndex)"));
   assert.ok(!journey.includes("levelIndex < levels.length"));
