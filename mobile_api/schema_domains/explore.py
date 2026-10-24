@@ -50,3 +50,44 @@ class ExploreMealSaveResultEnvelope(Schema):
     data: ExploreMealSaveResultData
     error: None = None
 
+
+class ExploreDailyPlanItemData(LibraryItemData):
+    catalog_id: int
+    summary: str
+    dietary_style: DietaryStyle
+    dietary_style_label: str
+    meal_count: int
+    is_saved: bool
+
+
+class ExploreDailyPlanPageData(Schema):
+    items: list[ExploreDailyPlanItemData]
+    total: int
+    offset: int
+    limit: int
+    search: str | None = None
+
+
+class ExploreDailyPlanPageEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ExploreDailyPlanPageData
+    error: None = None
+
+
+class ExploreDailyPlanItemEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ExploreDailyPlanItemData
+    error: None = None
+
+
+class ExploreDailyPlanSaveResultData(Schema):
+    saved_dailyplan_id: int
+    already_saved: bool
+    message: str
+
+
+class ExploreDailyPlanSaveResultEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ExploreDailyPlanSaveResultData
+    error: None = None
+

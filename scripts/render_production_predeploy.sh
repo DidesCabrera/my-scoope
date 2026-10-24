@@ -5,6 +5,7 @@ set -euo pipefail
 # signed transaction environment selects the matching immutable catalog row.
 python manage.py migrate --noinput
 python manage.py seed_meal_catalog --apply
+python manage.py seed_dailyplan_catalog --apply
 python manage.py seed_billing_catalog
 
 for catalog_environment in live sandbox; do

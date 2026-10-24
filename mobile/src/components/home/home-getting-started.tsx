@@ -60,7 +60,7 @@ export function HomeGettingStarted() {
         accent={tokens.color.dailyPlan}
         description="Reúne tus comidas en una minuta diaria que puedas reutilizar cuando la necesites."
         icon={ClipboardList}
-        primary={{ icon: Search, label: "Explorar minutas", onPress: () => router.push("/libraries/daily-plans" as Href) }}
+        primary={{ icon: Search, label: "Explorar minutas", onPress: () => router.push("/explore/daily-plans" as Href) }}
         secondary={{ icon: Plus, label: "Armar con mis comidas", onPress: () => router.push({ pathname: "/libraries/create", params: { entity: "dailyPlan" } }) }}
         step={2}
         title="Define minutas recurrentes"

@@ -26,6 +26,7 @@ from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.culinary import CulinaryTemplate, CulinaryVariant
 from notas.domain.model_modules.dailyplans import (
     DailyPlan,
+    DailyPlanCatalogEntry,
     DailyPlanMeal,
     PinnedDailyPlan,
     PinnedDailyPlanMealExecution,
@@ -78,7 +79,7 @@ __all__ = [
     "CulinaryTemplate", "CulinaryVariant",
     "AiAssistantMessageFeedback", "AiNutritionChat", "ApplePushSubscription",
     "CalendarizedDay", "CalendarizedMealExecution", "CalendarCommitment", "CalendarProgressPeriod",
-    "CalendarizationMeasurementContext", "CalendarizationReview", "CalendarizationRevision", "DailyPlan",
+    "CalendarizationMeasurementContext", "CalendarizationReview", "CalendarizationRevision", "DailyPlan", "DailyPlanCatalogEntry",
     "DailyPlanMeal", "DailyPlanMealShare",
     "PinnedDailyPlan", "PinnedDailyPlanMealExecution",
     "DailyPlanShare", "Food",
@@ -96,5 +97,4 @@ __all__ = [
     "ProgramShare", "ShareClaim", "ShareInvitation",
     "ShareResource", "SavedComparison",
     "ScheduledNotificationEvent",
-    "Subscription",
-    "WebPushSubscription", "WeightLog", ]
+    "Subscription", "WebPushSubscription", "WeightLog", ]

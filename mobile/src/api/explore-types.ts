@@ -22,3 +22,22 @@ export type ExploreMealSaveResult = {
   already_saved: boolean;
   message: string;
 };
+
+export type ExploreDailyPlanItem = LibraryItem & {
+  catalog_id: number;
+  summary: string;
+  dietary_style: ExploreMealDietaryStyle;
+  dietary_style_label: string;
+  meal_count: number;
+  is_saved: boolean;
+};
+
+export type ExploreDailyPlanPageData = Omit<LibraryPageData, "items"> & {
+  items: ExploreDailyPlanItem[];
+};
+
+export type ExploreDailyPlanSaveResult = {
+  saved_dailyplan_id: number;
+  already_saved: boolean;
+  message: string;
+};
