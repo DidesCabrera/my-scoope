@@ -22,6 +22,43 @@ present human-oriented explanatory material in the staff Knowledge Center.
 These rules intentionally keep the human presentation layer from becoming a
 second authority or influencing Codex's understanding of the codebase.
 
+## AI team organization and memory
+
+My Scoope's AI roles, reporting relationships, lifecycle states, and shared
+operating model live under `.codex/team/`. The discoverable role instructions
+live under `.codex/skills/`.
+
+- Read `.codex/team/README.md` when a task concerns the composition, delegation,
+  evaluation, or evolution of the AI team.
+- Use `.codex/team/capability-registry.yaml` as the organizational inventory. A
+  role's `SKILL.md` remains authoritative for that role's behavior and limits.
+- Store durable area and initiative context in `.codex/team/memory/` only when it
+  helps later work. Link to product sources of truth instead of copying them.
+- Team memory is not authoritative for product behavior, architecture, data
+  contracts, permissions, accounting treatment, or accepted business decisions.
+- Never store secrets, credentials, private customer data, health data, raw
+  financial account data, or unnecessary personal information in team memory.
+- Creating a role does not grant it permission to mutate external systems. The
+  current user request and the role's authority boundaries still control writes.
+
+## Fresh task checkout boundary
+
+Before starting a new technical task, fetch `origin` with pruning and resolve the
+task base from the updated remote-tracking refs. Ordinary product and engineering
+work starts from the exact current `origin/staging` commit in a new isolated
+worktree and `codex/<task>` branch. A local branch named `staging` or the branch in
+an already-open checkout is not proof of current code.
+
+- Do not reset, clean, switch, pull, or rebase a dirty or unrelated checkout to
+  prepare new work.
+- Use `origin/main` only when the task is explicitly scoped to the production line
+  or the user names that base.
+- If fetching fails, report that freshness is unverified. If `origin/main` has
+  commits absent from `origin/staging`, report the divergence before ordinary work
+  begins rather than silently reconciling it.
+- Record the selected base ref and full commit SHA before editing. Fetch and compare
+  again before integration because `origin/staging` may advance during the task.
+
 ## Efficient validation policy
 
 Engineering confidence must increase at every validation stage without paying

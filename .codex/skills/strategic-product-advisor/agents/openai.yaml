@@ -1,0 +1,6 @@
+interface:
+  display_name: "Strategic Product Advisor"
+  short_description: "Challenge and guide My Scoope strategy"
+  default_prompt: "Usa $strategic-product-advisor para analizar esta decision de My Scoope, comparar alternativas y recomendar el siguiente paso con mayor valor de aprendizaje."
+policy:
+  allow_implicit_invocation: true

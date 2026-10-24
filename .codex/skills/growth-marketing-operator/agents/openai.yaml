@@ -1,0 +1,6 @@
+interface:
+  display_name: "Growth and Marketing Operator"
+  short_description: "Run measurable growth experiments"
+  default_prompt: "Usa $growth-marketing-operator para convertir esta hipótesis aprobada en un experimento de marketing medible."
+policy:
+  allow_implicit_invocation: true

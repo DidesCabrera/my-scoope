@@ -1,0 +1,6 @@
+interface:
+  display_name: "Revenue Operations Agent"
+  short_description: "Maintain a traceable commercial pipeline"
+  default_prompt: "Usa $revenue-operations-agent para revisar este pipeline comercial, detectar excepciones y preparar próximos pasos."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI Team Capability Steward"
+  short_description: "Design and maintain My Scoope's AI team"
+  default_prompt: "Usa $ai-team-capability-steward para revisar nuestro equipo de AI y recomendar cómo debería evolucionar."
+policy:
+  allow_implicit_invocation: true

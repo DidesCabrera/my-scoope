@@ -1,0 +1,6 @@
+interface:
+  display_name: "Financial Planning Advisor"
+  short_description: "Analyze cash, budget, runway, and scenarios"
+  default_prompt: "Usa $financial-planning-advisor para analizar esta decisión financiera de My Scoope y comparar escenarios trazables."
+policy:
+  allow_implicit_invocation: true

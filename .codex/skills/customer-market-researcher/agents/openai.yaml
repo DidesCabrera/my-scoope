@@ -1,0 +1,6 @@
+interface:
+  display_name: "Customer and Market Researcher"
+  short_description: "Research customers, competitors, and markets"
+  default_prompt: "Usa $customer-market-researcher para investigar esta hipótesis de clientes o mercado y separar evidencia de supuestos."
+policy:
+  allow_implicit_invocation: true

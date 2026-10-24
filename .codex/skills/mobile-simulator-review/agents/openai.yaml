@@ -1,0 +1,6 @@
+interface:
+  display_name: "Mobile Simulator Review"
+  short_description: "Show the current mobile change reliably"
+  default_prompt: "Usa $mobile-simulator-review para mostrarme este cambio en el simulador desde el checkout y ambiente correctos."
+policy:
+  allow_implicit_invocation: true
