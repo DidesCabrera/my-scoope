@@ -127,8 +127,9 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
 
 test("the native sidebar keeps sign-out inside the account screen", async () => {
   const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
-  assertSourceMatch(navigation, /headerPresentation\.action\?\.icon === "more" && styles\.backHeaderMenuAction/);
-  assertSourceMatch(navigation, /backHeaderMenuAction: \{ alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens\.spacing\.sm, width: 92 \}/);
+  assertSourceMatch(navigation, /\(headerPresentation\.action\?\.icon === "more" \|\| headerPresentation\.action\?\.icon === "plus"\) && styles\.backHeaderIconAction/);
+  assertSourceMatch(navigation, /backHeaderIconAction: \{ paddingHorizontal: 0, width: 44 \}/);
+  assertSourceMatch(navigation, /backHeaderIdentity: \{ alignItems: "center", bottom: 0, justifyContent: "center", left: 92[^}]*position: "absolute", right: 92, top: 0 \}/);
   assertSourceMatch(navigation, /inbox: Send/);
   assertSourceMatch(navigation, /pathname === "\/inbox"[^\n]*icon: Send[^\n]*title: "Compartidos"/);
   assertSourceDoesNotMatch(navigation, /accessibilityLabel="Cerrar sesión"|signOutButton|drawerFooter/);
@@ -150,7 +151,7 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceMatch(navigation, /drawerContent: \{ gap: 0/);
   assertSourceMatch(navigation, /<ModalBackdrop accessibilityLabel="Cerrar menú" onPress=\{closeMenu\} \/>/);
   assertSourceDoesNotMatch(navigation, /scrim: \{ backgroundColor: "rgba\(0,0,0,0\.72\)"/);
-  assertSourceMatch(navigation, /menuSection: \{ gap: 0/);
+  assertSourceMatch(navigation, /menuSection: \{ gap: 0, marginTop: tokens\.spacing\.md, paddingTop: tokens\.spacing\.compact \}/);
   assertSourceMatch(sidebarItems, /label: \{ color: tokens\.color\.textMain[^}]*fontSize: tokens\.type\.body/);
   assertSourceMatch(sidebarItems, /assistant \? <AssistantGradientIcon \/> : <Icon color=\{tokens\.color\.textMain\}/);
   assertSourceDoesNotMatch(sidebarItems, /active \? tokens\.color\.textMain : tokens\.color\.textMuted/);
@@ -265,14 +266,12 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /headerPresentation\.createAction/);
   assertSourceMatch(navigation, /height: 48/);
   assertSourceMatch(navigation, /<Pressable accessibilityLabel="Ir a Inicio"[\s\S]*onPress=\{openHome\}[\s\S]*<MyScoopeBrandLogo compact scale=\{1\.12\} \/>/);
-  assertSourceMatch(navigation, /const firstName = session\?\.display_name\.split\(" "\)\[0\] \|\| session\?\.username \|\| "Atleta"/);
   assertSourceMatch(navigation, /<MyScoopeBrandLogo compact scale=\{1\.12\} \/>/);
-  assertSourceMatch(navigation, /<Text style=\{styles\.drawerGreeting\}><Text style=\{styles\.drawerGreetingEmoji\}>💪🏻<\/Text>\{`Vamos \$\{firstName\}!`\}<\/Text>/);
+  assertSourceDoesNotMatch(navigation, /Vamos \$\{firstName\}|drawerGreeting|💪🏻/);
+  assertSourceMatch(navigation, /<Text style=\{styles\.menuSectionLabel\}>Asistencia AI<\/Text>[\s\S]*<FunctionalSidebarEntry item=\{assistantItem\} \/>[\s\S]*<Text style=\{styles\.menuSectionLabel\}>Cuenta<\/Text>/);
   assertSourceMatch(navigation, /drawerBrandRow: \{[^}]*alignItems: "center"[^}]*flexDirection: "row"[^}]*justifyContent: "space-between"/);
-  assertSourceMatch(navigation, /drawerHeader: \{[^}]*minHeight: 59\.7[^}]*paddingHorizontal: tokens\.spacing\.md \* 2/);
-  assertSourceMatch(navigation, /drawerContent: \{[^}]*paddingBottom: tokens\.spacing\.lg[^}]*paddingTop: 24/);
-  assertSourceMatch(navigation, /drawerGreeting: \{[^}]*color: tokens\.color\.textMain[^}]*fontSize: 15[^}]*fontWeight: "300"/);
-  assertSourceMatch(navigation, /drawerGreetingEmoji: \{ fontSize: 13 \}/);
+  assertSourceMatch(navigation, /drawerHeader: \{[^}]*minHeight: 64[^}]*paddingHorizontal: tokens\.spacing\.md \* 2[^}]*paddingTop: tokens\.spacing\.sm/);
+  assertSourceMatch(navigation, /drawerContent: \{[^}]*paddingBottom: tokens\.spacing\.lg[^}]*paddingTop: 0/);
   assertSourceMatch(navigation, /setLatestWeightKg\(home\.latest_weight\?\.weight_kg \?\? null\)/);
   assertSourceMatch(navigation, /<PersonalRecordsSidebarEntry weightKg=\{currentWeightKg\} \/>/);
   assertSourceMatch(navigation, /<HeaderMetadataChip kind="weight" value=\{sidebarWeightLabel\(weightKg\)\} \/>/);

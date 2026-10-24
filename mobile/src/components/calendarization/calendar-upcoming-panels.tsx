@@ -13,7 +13,7 @@ import { runGuardedNavigation } from "@/navigation/navigation-press-guard";
 type Tab = "plans" | "calories" | "macros" | "distribution";
 
 const tabs = [
-  { key: "plans", label: "Planes" },
+  { key: "plans", label: "Minutas" },
   { key: "calories", label: "Calorías" },
   { key: "macros", label: "Macros" },
   { key: "distribution", label: "Dist" },
@@ -46,7 +46,7 @@ function PlanIdentity({ day, tab }: { day: CalendarDay; tab: Tab }) {
         </View>
         {tab === "plans"
           ? day.has_plan && day.source_program_name ? <Text numberOfLines={1} style={styles.subtitle}>{day.source_program_name}</Text> : null
-          : <Text style={styles.subtitle}>{dateLabel(day.calendar_date, { weekday: "short", day: "numeric", month: "short" })}</Text>}
+          : <Text style={[styles.subtitle, styles.analyticsDate]}>{dateLabel(day.calendar_date, { weekday: "short", day: "numeric", month: "short" })}</Text>}
       </View>
     </View>
   );
@@ -54,7 +54,7 @@ function PlanIdentity({ day, tab }: { day: CalendarDay; tab: Tab }) {
 
 function Header({ tab }: { tab: Exclude<Tab, "plans"> }) {
   return <View style={[styles.analyticsRow, styles.header]}>
-    <Text style={[styles.headerLabel, styles.leading]}>Minuta diaria</Text>
+    <Text style={[styles.headerLabel, styles.leading, styles.leadingHeader]}>Minutas diarias</Text>
     {tab === "calories" ? <>
       <Text style={[styles.headerLabel, styles.calorieCell]}>Cal</Text>
       <Text style={[styles.headerLabel, styles.shareCell]}>% Cal</Text>
@@ -175,14 +175,15 @@ export function CalendarUpcomingPanels({ days, onOpenDay, onRemove, onReorder, o
 }
 
 const styles = StyleSheet.create({
-  surface: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen },
-  planRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 68, paddingHorizontal: tokens.card.outerPadding, paddingVertical: tokens.spacing.sm },
-  analyticsRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 62, paddingHorizontal: tokens.spacing.sm },
+  surface: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -6 },
+  planRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 68, paddingLeft: tokens.card.outerPadding - 10, paddingRight: tokens.card.outerPadding, paddingVertical: tokens.spacing.sm },
+  analyticsRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 62, paddingLeft: tokens.spacing.md, paddingRight: tokens.spacing.sm },
   lastRow: { borderBottomWidth: 0 },
   header: { minHeight: 32 },
   headerLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: "600", textAlign: "center", textTransform: "uppercase" },
+  leadingHeader: { textAlign: "left" },
   leading: { flex: 4, minWidth: 0 },
-  identity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.md, minWidth: 0 },
+  identity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   dateColumn: { alignItems: "center", minWidth: 44 },
   dateWeekday: { color: tokens.color.textMuted, fontSize: 12 },
   dateNumber: { color: tokens.color.textMain, fontSize: 19, fontWeight: "700" },
@@ -190,6 +191,7 @@ const styles = StyleSheet.create({
   planTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   planName: { color: tokens.color.textMain, flexShrink: 1, fontSize: 14, fontWeight: "600" },
   subtitle: { color: tokens.color.textMuted, fontSize: 11 },
+  analyticsDate: { paddingLeft: 18 + tokens.spacing.sm },
   planCalories: { alignItems: "flex-end", minWidth: 62 },
   planCaloriesValue: { color: tokens.color.textMain, fontSize: 14, fontVariant: ["tabular-nums"], fontWeight: "700" },
   planCaloriesUnit: { color: tokens.color.textMuted, fontSize: 11 },

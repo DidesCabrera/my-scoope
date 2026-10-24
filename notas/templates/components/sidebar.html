@@ -30,7 +30,7 @@
             {% for section in vm.ui.sidebar_sections %}
                 {% if section.key != "admin" or request.user.is_staff or request.user.is_superuser %}
                     <div class="sidebar-section sidebar-section--{{ section.key }}">
-                        {% if section.key != "account" %}
+                        {% if section.key != "primary" %}
                             <p class="group-name-sidebar">{{ section.label }}</p>
                         {% endif %}
 

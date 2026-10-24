@@ -8,6 +8,7 @@ import type { CalendarCommitment, CalendarCommitmentKind, CalendarOverviewData, 
 import { useSession } from "@/auth/session-context";
 import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentRegistrationTitle, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
+import { CalendarMonthPlaceholder } from "@/components/calendarization/calendar-month-calendar";
 import { calendarFoodDayRole, calendarFoodPeriodDayCount, selectCalendarFoodDate, validCalendarFoodPeriod } from "@/components/calendarization/calendar-food-period";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
@@ -39,8 +40,9 @@ type FoodAttachment = { start: string; end: string };
 export default function RegisterCommitmentsScreen() {
   const router = useRouter();
   const pathname = usePathname();
-  const { kind: requestedKind } = useLocalSearchParams<{ kind?: string }>();
+  const { date: requestedDate, kind: requestedKind } = useLocalSearchParams<{ date?: string; kind?: string }>();
   const kind = isCommitmentKind(requestedKind) ? requestedKind : null;
+  const initialDate = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : null;
   const setHeaderPresentation = useHeaderPresentation();
   const { apiRequest, status } = useSession();
   const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
@@ -78,12 +80,13 @@ export default function RegisterCommitmentsScreen() {
       .then((result) => {
         if (!active) return;
         setLocalToday(result.local_date);
-        setVisibleMonth(monthKeyFromDate(result.local_date));
+        setVisibleMonth(monthKeyFromDate(initialDate ?? result.local_date));
         setFoodMonth(monthKeyFromDate(result.local_date));
+        if (initialDate) setSelectedDates((current) => current.length ? current : [initialDate]);
       })
       .catch((nextError) => { if (active) { setError(userFacingError(nextError)); setLoading(false); } });
     return () => { active = false; };
-  }, [apiRequest, kind, status]);
+  }, [apiRequest, initialDate, kind, status]);
 
   useEffect(() => {
     if (status !== "authenticated" || !visibleMonth) return;
@@ -319,7 +322,7 @@ export default function RegisterCommitmentsScreen() {
                 disabled={foodRangeLocked}
                 key={`food-${day}`}
                 onPress={() => chooseFoodDate(day)}
-                style={[styles.gridDate, endpoint && { backgroundColor: `${accent}26`, borderColor: accent }, role === "between" && { backgroundColor: `${accent}33` }, monthKeyFromDate(day) !== foodMonth && styles.gridDateAdjacent]}>
+                style={[styles.gridDate, dayData?.has_plan && styles.gridDateFilled, endpoint && { backgroundColor: `${accent}26`, borderColor: accent }, role === "between" && { backgroundColor: `${accent}33` }, monthKeyFromDate(day) !== foodMonth && styles.gridDateAdjacent]}>
                 <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, endpoint && { color: accent, fontWeight: "700" }, role === "between" && { color: accent }]}>{day.slice(8, 10)}</Text>
                 <CommitmentDots commitments={dayCommitments} draftKind={shoppingDate ? "shopping" : undefined} />
               </Pressable>;
@@ -365,8 +368,7 @@ export default function RegisterCommitmentsScreen() {
           <ChevronRight color={tokens.color.textMain} size={20} />
         </Pressable>
       </View>
-      {loading ? <LoadingState label="Cargando fechas…" /> : null}
-      <View style={styles.grid}>
+      {loading ? <CalendarMonthPlaceholder /> : <View style={styles.grid}>
         {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
         {monthOverview?.days.map((day) => {
           const exists = day.commitments?.some((item) => item.kind === kind) ?? false;
@@ -379,12 +381,12 @@ export default function RegisterCommitmentsScreen() {
             disabled={isPast || exists}
             key={day.calendar_date}
             onPress={() => toggleDate(day.calendar_date)}
-            style={[styles.gridDate, isSelected && { backgroundColor: `${presentation.color}33`, borderColor: presentation.color }, exists && styles.gridDateExisting, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, isPast && styles.gridDatePast]}>
+            style={[styles.gridDate, day.has_plan && styles.gridDateFilled, isSelected && { backgroundColor: `${presentation.color}33`, borderColor: presentation.color }, exists && styles.gridDateExisting, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, isPast && styles.gridDatePast]}>
             <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, (isSelected || exists) && { color: presentation.color }]}>{day.calendar_date.slice(8, 10)}</Text>
             <CommitmentDots commitments={day.commitments} />
           </Pressable>;
         })}
-      </View>
+      </View>}
       <Text style={styles.legend}>Los días con un punto ya tienen este compromiso registrado.</Text>
     </View>
     <View style={styles.selectedDatesSection}>
@@ -431,10 +433,11 @@ const styles = StyleSheet.create({
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 40, width: "13.5%" },
   gridDateAdjacent: { opacity: 0.5 },
   gridDateExisting: { backgroundColor: tokens.color.surfaceMuted },
+  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}33` },
   gridDatePast: { opacity: 0.35 },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
-  gridNumberWithPlan: { color: tokens.color.dailyPlan, fontWeight: "700" },
+  gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
   helper: { color: tokens.color.textMuted, fontSize: 13, lineHeight: 19 },
   foodInstruction: { color: tokens.color.textMain, fontSize: 16, fontWeight: "700", lineHeight: 23 },
   foodPeriodAction: { marginTop: 30 - tokens.spacing.md },

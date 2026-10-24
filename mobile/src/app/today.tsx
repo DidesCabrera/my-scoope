@@ -1,12 +1,18 @@
 import { type Href, Redirect, Stack, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { CalendarClock, Camera, Pin, Scale, Weight } from "lucide-react-native";
-import { useCallback, useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { CalendarCheck2, CalendarDays, Camera, ChevronRight, Pin, Scale, Weight } from "lucide-react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, CalendarDayDetailData, CalendarProgressData, CalendarizedDayDetail, ComparisonKind, HomeData, MealCheckInInput, TodayData } from "@/api/types";
+import type { CalendarCommitment, CalendarOverviewData } from "@/api/calendar-types";
+import type { CalendarDayDetailData, CalendarProgressData, CalendarizedDayDetail, ComparisonKind, HomeData, MealCheckInInput, TodayData, WeightItem, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { commitmentDayTitle, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
+import { CalendarMonthCalendar } from "@/components/calendarization/calendar-month-calendar";
+import { CalendarizeActions } from "@/components/calendarization/calendarize-actions";
+import { monthKeyFromDate, shiftMonth } from "@/components/calendarization/calendar-month";
+import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { subscribeToCalendarizedDayUpdates } from "@/components/calendarization/calendarized-day-updates";
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
@@ -19,12 +25,25 @@ import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import type { MealPanelEditing, MealPanelItem } from "@/components/panels";
-import { Button, Card, Chip, GuideMetric, InlineNotice, LoadingState, MutationStatusModal, Screen, SectionTitle, textStyles, useMutationStatus } from "@/components/ui";
+import { ProgramActiveKpis } from "@/components/programs/program-active-kpis";
+import { ProgramSectionHeader } from "@/components/programs/program-section-header";
+import { Button, Card, Chip, GuideMetric, InlineNotice, LoadingState, MutationStatusModal, Screen, SectionTitle, textStyles, useMutationStatus, WeightTrendCard } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
+const homeCommitmentChipLabels: Record<CalendarCommitment["kind"], string> = {
+  shopping: "Hacer compras",
+  cooking: "Cocinar",
+  training: "Entrenar",
+  nutritionist: "Cita nutricionista",
+};
+
 function displayWeight(value: number): string {
   return new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(value);
+}
+
+function longDateLabel(value: string): string {
+  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long" }).format(new Date(`${value}T12:00:00`));
 }
 
 function optimisticMealExecution(data: TodayData, mealKey: string, completed: boolean): TodayData {
@@ -46,28 +65,53 @@ function HomeSectionTitle({ children, pinned = false }: { children: string; pinn
   </View>;
 }
 
-function ActiveProgramSectionHeader() {
+function TodayCommitmentsSectionHeader() {
   return (
     <View style={styles.activeProgramSectionHeader}>
       <View style={styles.activeProgramSectionHeading}>
-        <CalendarClock color={tokens.color.textMain} size={19} strokeWidth={2.2} />
-        <Text accessibilityRole="header" style={styles.activeProgramSectionTitle}>Tu programa en curso</Text>
+        <CalendarCheck2 color={tokens.color.textMain} size={19} strokeWidth={2.2} />
+        <Text accessibilityRole="header" style={styles.activeProgramSectionTitle}>Tus compromisos para hoy</Text>
       </View>
-      <Text style={styles.activeProgramSectionSubtitle}>Usa el programa para planificar fechas. El cumplimiento principal se mide en tu calendario.</Text>
+      <Text style={styles.activeProgramSectionSubtitle}>Revisa lo que planificaste para este día.</Text>
     </View>
   );
+}
+
+function TodayCommitmentCard({ commitment, onPress }: { commitment: CalendarCommitment; onPress(): void }) {
+  const presentation = commitmentPresentation[commitment.kind];
+  const CommitmentIcon = presentation.icon;
+  return <Pressable accessibilityLabel={`Ver ${commitmentDayTitle[commitment.kind]}`} accessibilityRole="link" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
+    <Card accent={presentation.color}>
+      <View style={styles.commitmentRow}>
+        <CommitmentIcon color={presentation.color} size={23} strokeWidth={2.1} />
+        <View style={styles.commitmentCopy}>
+          <Text style={styles.commitmentTitle}>{commitmentDayTitle[commitment.kind]}</Text>
+          {commitment.note ? <Text style={styles.commitmentNote}>{commitment.note}</Text> : null}
+        </View>
+        <ChevronRight color={tokens.color.textMuted} size={20} />
+      </View>
+    </Card>
+  </Pressable>;
 }
 
 export default function TodayScreen() {
   const router = useRouter();
   const { status, session, profile, apiRequest } = useSession();
+  const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const [today, setToday] = useState<TodayData | null>(null);
-  const [activeProgram, setActiveProgram] = useState<ActiveProgramData | null>(null);
   const [calendarProgress, setCalendarProgress] = useState<CalendarProgressData | null>(null);
+  const [futurePlansCount, setFuturePlansCount] = useState(0);
+  const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
+  const [monthOverview, setMonthOverview] = useState<{ key: string; data: CalendarOverviewData } | null>(null);
+  const [monthError, setMonthError] = useState<string | null>(null);
+  const [weightItems, setWeightItems] = useState<WeightItem[]>([]);
+  const [todayCommitments, setTodayCommitments] = useState<CalendarCommitment[]>([]);
+  const [commitmentsError, setCommitmentsError] = useState<string | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [homeActionsVisible, setHomeActionsVisible] = useState(false);
+  const [calendarizeActionsVisible, setCalendarizeActionsVisible] = useState(false);
   const [comparisonActionsVisible, setComparisonActionsVisible] = useState(false);
   const [openComparisonAfterHomeActions, setOpenComparisonAfterHomeActions] = useState(false);
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
@@ -76,6 +120,7 @@ export default function TodayScreen() {
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
   const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
+  const openCalendarizeActions = useCallback(() => setCalendarizeActionsVisible(true), []);
 
   const openComparisonBuilder = useCallback((kind: ComparisonKind) => {
     router.push({ pathname: "/comparator", params: { create: "1", kind } } as Href);
@@ -84,15 +129,24 @@ export default function TodayScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setCommitmentsError(null);
     try {
-      const [home, nextProgress] = await Promise.all([
-        apiRequest<HomeData>("/api/v1/home"),
+      const homeRequest = apiRequest<HomeData>("/api/v1/home");
+      const [home, nextProgress, nextOverview, todayCalendar, weightHistory] = await Promise.all([
+        homeRequest,
         apiRequest<CalendarProgressData>("/api/v1/calendar/progress").catch(() => null),
+        apiRequest<CalendarOverviewData>("/api/v1/calendar?days=1").catch(() => null),
+        homeRequest.then((homeData) => apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${homeData.today.local_date}`))
+          .catch((nextError) => { setCommitmentsError(userFacingError(nextError)); return null; }),
+        apiRequest<WeightListData>("/api/v1/weights?limit=12").catch(() => null),
       ]);
       const nextToday = home.today;
       setToday(nextToday);
-      setActiveProgram(home.active_program);
       setCalendarProgress(nextProgress);
+      setFuturePlansCount(nextOverview?.future_plans_count ?? 0);
+      setVisibleMonth((previous) => previous ?? monthKeyFromDate(nextToday.local_date));
+      setTodayCommitments(todayCalendar?.commitments ?? []);
+      setWeightItems(weightHistory?.items ?? []);
       setLatestWeightKg(home.latest_weight?.weight_kg ?? null);
       setLibraryCounts({
         dailyPlan: home.library_counts.daily_plan,
@@ -120,6 +174,18 @@ export default function TodayScreen() {
     }, [load]),
   );
 
+  useFocusEffect(useCallback(() => {
+    if (status !== "authenticated" || !visibleMonth) return;
+    let active = true;
+    setMonthError(null);
+    const cached = monthCache.get(visibleMonth);
+    if (cached) setMonthOverview({ key: visibleMonth, data: cached });
+    void monthCache.load(visibleMonth)
+      .then((data) => { if (active) { setMonthOverview({ key: visibleMonth, data }); monthCache.prefetchAdjacent(visibleMonth); } })
+      .catch((nextError) => { if (active) setMonthError(userFacingError(nextError)); });
+    return () => { active = false; };
+  }, [monthCache, status, visibleMonth]));
+
   useEffect(() => subscribeToCalendarizedDayUpdates((day) => {
     setToday((current) => current?.day_id === day.id ? {
       ...current,
@@ -130,9 +196,13 @@ export default function TodayScreen() {
   }), []);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: { label: "Acciones de inicio", onPress: openHomeActions }, mode: "default" });
+    setHeaderPresentation({
+      action: { icon: "more", label: "Acciones de inicio", onPress: openHomeActions },
+      createAction: { icon: "plus", label: "Calendarizar", onPress: openCalendarizeActions },
+      mode: "default",
+    });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [openHomeActions, setHeaderPresentation]));
+  }, [openCalendarizeActions, openHomeActions, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (status === "authenticated" && profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
@@ -143,10 +213,13 @@ export default function TodayScreen() {
   const todayDayId = today?.day_id;
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? today?.measurements?.latest_weight_kg;
+  const calendarCoverage = calendarProgress && futurePlansCount ? Math.round(calendarProgress.days_with_plan / futurePlansCount * 100) : 0;
+  const mealCoverage = calendarProgress?.scheduled_meals ? Math.round(calendarProgress.completed_meals / calendarProgress.scheduled_meals * 100) : 0;
+  const monthDays = monthOverview?.key === visibleMonth ? monthOverview.data.days : [];
   const planContext = today?.calendarization
     ? { color: tokens.color.program, label: "Programa en curso" }
     : today?.day_id
-      ? { color: tokens.color.dailyPlan, label: "Plan del calendario" }
+      ? { color: tokens.color.dailyPlan, label: "Minuta diaria" }
     : today?.pinned_plan
       ? { color: tokens.color.dailyPlan, label: "Plan calendarizado" }
       : null;
@@ -258,9 +331,15 @@ export default function TodayScreen() {
           <Text style={styles.greetingTitle}>{`💪🏻Vamos ${firstName}!`}</Text>
           {currentWeightKg != null ? <GuideMetric onPress={() => router.push("/weight" as Href)} tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} /> : null}
         </View>
-        {planContext ? <View style={styles.planContext}><Chip backgroundColor={`${planContext.color}4D`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /></View> : null}
       </View>
-      {today?.day_id != null ? <HomeSectionTitle pinned>Tu plan de alimentación para hoy</HomeSectionTitle> : null}
+      {today?.day_id != null || today?.pinned_plan ? <HomeSectionTitle pinned>Tu plan para hoy</HomeSectionTitle> : null}
+      {planContext || todayCommitments.length ? <View style={styles.planContext}>
+        {planContext ? <Chip backgroundColor={`${planContext.color}1A`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /> : null}
+        {todayCommitments.map((commitment) => {
+          const presentation = commitmentPresentation[commitment.kind];
+          return <Chip backgroundColor={`${presentation.color}1A`} borderColor={presentation.color} key={commitment.id} label={homeCommitmentChipLabels[commitment.kind]} textColor={tokens.color.textMain} />;
+        })}
+      </View> : null}
 
       {today?.day_id != null && today.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
@@ -285,7 +364,6 @@ export default function TodayScreen() {
         </Card>
       ) : today?.pinned_plan ? (
         <>
-          <HomeSectionTitle pinned>Tu plan de alimentación para hoy</HomeSectionTitle>
           <PinnedDailyPlanCard apiRequest={apiRequest} editing={pinnedMealEditing} item={today.pinned_plan} mealExecution={today.meal_execution} onChanged={load} onChangeMealTime={async (meal, hour) => {
             if (meal.relationId == null) return;
             await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan!.id}/meals/${meal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
@@ -302,21 +380,62 @@ export default function TodayScreen() {
         </>
       ) : null}
 
-      {calendarProgress ? <Card accent={tokens.color.dailyPlan}>
-        <SectionTitle detail={calendarProgress.elapsed_meals ? `${calendarProgress.adherence_percent}%` : "Sin registros"} title="Cumplimiento del calendario" />
-        <Text style={textStyles.muted}>{calendarProgress.elapsed_meals ? `${calendarProgress.completed_meals} de ${calendarProgress.elapsed_meals} comidas transcurridas` : "Aún no hay comidas transcurridas"} desde {compactDateLabel(calendarProgress.period_start)}.</Text>
-        <Button label="Ver calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
-      </Card> : null}
+      {today ? <>
+        <TodayCommitmentsSectionHeader />
+        {commitmentsError ? <InlineNotice tone="error">{commitmentsError}</InlineNotice> : todayCommitments.length ? todayCommitments.map((commitment) => (
+          <TodayCommitmentCard
+            commitment={commitment}
+            key={commitment.id}
+            onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)}
+          />
+        )) : <Card muted><Text style={textStyles.muted}>Sin compromisos para este día.</Text></Card>}
+        <Button label="Ver mi registro de compromisos" onPress={() => router.push("/calendar/registry" as Href)} variant="secondary" />
+      </> : null}
 
-      {activeProgram?.calendarization ? (
-        <>
-          <ActiveProgramSectionHeader />
-          <Card accent={tokens.color.program}>
-            <SectionTitle title={activeProgram.calendarization.program_name} />
-            <Button label="Ver calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
-          </Card>
-        </>
-      ) : null}
+      {visibleMonth && today ? <View style={styles.homeCalendarSection}>
+        <ProgramSectionHeader
+          icon={CalendarDays}
+          subtitle="Planifica tus próximos días y semanas en tu calendario"
+          title="Tu calendario"
+        />
+        <CalendarMonthCalendar
+          days={monthDays}
+          error={monthError}
+          localDate={today.local_date}
+          onChangeMonth={(delta) => {
+            const nextMonth = shiftMonth(visibleMonth, delta);
+            const cached = monthCache.get(nextMonth);
+            if (cached) setMonthOverview({ key: nextMonth, data: cached });
+            setVisibleMonth(nextMonth);
+          }}
+          onOpenDay={(date) => router.push(`/calendar/days/${date}` as Href)}
+          onReturnToCurrentMonth={() => setVisibleMonth(monthKeyFromDate(today.local_date))}
+          visibleMonth={visibleMonth}
+        />
+        <Button label="Ver calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
+      </View> : null}
+
+      {calendarProgress ? <View style={styles.homeProgressSection}>
+        <ProgramSectionHeader
+          detail={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`Inicio el ${longDateLabel(calendarProgress.period_start)}`} textColor={tokens.color.textMuted} />}
+          icon={CalendarDays}
+          title="Progreso"
+        />
+        <ProgramActiveKpis
+          adheredDays={calendarProgress.completed_meals}
+          adherence={mealCoverage}
+          bleed={false}
+          elapsedDays={calendarProgress.days_with_plan}
+          mealLabel="Comidas cumplidas"
+          planLabel={"Planes\nrecorridos"}
+          plannedAdherenceDays={calendarProgress.scheduled_meals}
+          progress={calendarCoverage}
+          standalone
+          totalDays={futurePlansCount}
+        />
+        <WeightTrendCard items={weightItems} />
+        <Button icon={<Weight color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Registrar peso corporal" onPress={() => router.push("/weight" as Href)} variant="secondary" />
+      </View> : null}
 
       <HomeLibraryGrid counts={libraryCounts} />
 
@@ -354,7 +473,6 @@ export default function TodayScreen() {
         <HomeSectionTitle>Accesos rápidos</HomeSectionTitle>
         <View style={styles.homeFooterActions}>
           <Button icon={<Camera color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Digitalizar etiqueta" onPress={() => router.push("/label-capture" as Href)} variant="secondary" />
-          <Button icon={<Weight color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Registrar peso corporal" onPress={() => router.push("/weight" as Href)} variant="secondary" />
           <Button icon={<Scale color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Comparar" onPress={() => setComparisonActionsVisible(true)} variant="secondary" />
         </View>
       </View>
@@ -375,6 +493,7 @@ export default function TodayScreen() {
         onRegisterWeight={() => router.push("/weight")}
         visible={homeActionsVisible}
       />
+      <CalendarizeActions onClose={() => setCalendarizeActionsVisible(false)} visible={calendarizeActionsVisible} />
       <ComparisonCreateActions onClose={() => setComparisonActionsVisible(false)} onSelect={openComparisonBuilder} visible={comparisonActionsVisible} />
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </>
@@ -386,14 +505,21 @@ const styles = StyleSheet.create({
   activeProgramSectionHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   activeProgramSectionSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   activeProgramSectionTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
+  commitmentCopy: { flex: 1, gap: tokens.spacing.xs },
+  commitmentNote: { color: tokens.color.textMuted, fontSize: 13, lineHeight: 19 },
+  commitmentRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
+  commitmentTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: tokens.weight.semibold },
   homeSectionHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
   homeSectionTitle: { color: tokens.color.textMain, flex: 1, fontSize: 18, fontWeight: tokens.weight.semibold, marginBottom: 0 },
   homeFooterActions: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
   homeQuickActions: { marginTop: tokens.spacing.xl },
+  homeCalendarSection: { marginTop: tokens.spacing.lg },
+  homeProgressSection: { gap: tokens.spacing.md, marginTop: tokens.spacing.lg },
   greetingRow: { gap: 0, marginBottom: 0 },
   greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   greetingTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5 },
-  planContext: { alignSelf: "flex-start", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: tokens.spacing.sm },
+  planContext: { alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs, marginBottom: 14, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: tokens.spacing.sm - 14 },
+  pressed: { opacity: 0.65 },
   weekRow: { marginBottom: tokens.spacing.sm },
   measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   measurementValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: "900", fontVariant: ["tabular-nums"] },

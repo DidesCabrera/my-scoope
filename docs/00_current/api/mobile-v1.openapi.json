@@ -1556,6 +1556,41 @@
         "title": "CalendarCommitmentData",
         "type": "object"
       },
+      "CalendarCommitmentDeleteData": {
+        "properties": {
+          "deleted_id": {
+            "title": "Deleted Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted_id"
+        ],
+        "title": "CalendarCommitmentDeleteData",
+        "type": "object"
+      },
+      "CalendarCommitmentDeleteEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarCommitmentDeleteData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarCommitmentDeleteEnvelope",
+        "type": "object"
+      },
       "CalendarCommitmentEnvelope": {
         "properties": {
           "data": {
@@ -1626,6 +1661,18 @@
       },
       "CalendarCommitmentUpdateInput": {
         "properties": {
+          "calendar_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Date"
+          },
           "food_period_end": {
             "anyOf": [
               {
@@ -11903,6 +11950,58 @@
       }
     },
     "/api/v1/calendar/commitments/{commitment_id}": {
+      "delete": {
+        "operationId": "mobile_api_api_delete_calendar_commitment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "commitment_id",
+            "required": true,
+            "schema": {
+              "title": "Commitment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarCommitmentDeleteEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Delete Commitment"
+      },
       "patch": {
         "operationId": "mobile_api_api_update_calendar_commitment",
         "parameters": [

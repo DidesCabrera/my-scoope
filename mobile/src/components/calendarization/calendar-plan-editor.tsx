@@ -27,8 +27,8 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
   localToday: string;
   onChanged(): Promise<void> | void;
   onClose(): void;
-  onSelectItem(item: "replace" | "remove" | "move" | "history" | null): void;
-  selectedItem: "replace" | "remove" | "move" | "history" | null;
+  onSelectItem(item: "assign" | "replace" | "remove" | "move" | "history" | null): void;
+  selectedItem: "assign" | "replace" | "remove" | "move" | "history" | null;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"choose" | "confirm-move" | "confirm-assign">("choose");
@@ -131,23 +131,28 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
     }
   }
 
-  if (selectedItem === "replace") return <>
-    <Text style={styles.sectionTitle}>Reemplazar minuta diaria</Text>
-    <Text style={styles.helper}>Selecciona un plan de tu biblioteca para {shortDate(day.calendar_date)}.</Text>
+  if (selectedItem === "assign" || selectedItem === "replace") {
+    const replacing = selectedItem === "replace";
+    return <>
+    <Text style={styles.sectionTitle}>{replacing ? "Reemplazar minuta diaria" : "Agregar minuta diaria"}</Text>
+    <Text style={styles.helper}>Selecciona una minuta de tu biblioteca para {shortDate(day.calendar_date)}.</Text>
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     {mode === "confirm-assign" && selectedPlan ? <ConfirmationState
       busy={busy}
-      confirmLabel="Reemplazar minuta diaria"
-      message={`“${day.plan_name}” conservará su historial. “${selectedPlan.name}” quedará vigente para esta fecha.`}
+      confirmLabel={replacing ? "Reemplazar minuta diaria" : "Agregar minuta diaria"}
+      message={replacing
+        ? `“${day.plan_name}” conservará su historial. “${selectedPlan.name}” quedará vigente para esta fecha.`
+        : `“${selectedPlan.name}” quedará programada para esta fecha.`}
       onCancel={() => setMode("choose")}
-      onConfirm={() => void assign(true)}
-      title="¿Reemplazar el plan de esta fecha?"
+      onConfirm={() => void assign(replacing)}
+      title={replacing ? "¿Reemplazar el plan de esta fecha?" : "¿Agregar esta minuta a la fecha?"}
     /> : <>
       <SearchField busy={plansLoading} onChangeText={setSearch} onClear={() => setSearch("")} placeholder="Buscar minuta diaria" value={search} />
       {plans.map((plan) => <DailyPlanPreviewCard action={{ label: "Seleccionar", onPress: () => { setSelectedPlan({ id: plan.id, name: plan.name }); setMode("confirm-assign"); } }} item={plan} key={plan.id} />)}
       {!plansLoading && !plans.length && !error ? <Text style={styles.helper}>No encontramos minutas diarias.</Text> : null}
     </>}
-  </>;
+    </>;
+  }
   if (selectedItem === "remove") return <>
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     <ConfirmationState

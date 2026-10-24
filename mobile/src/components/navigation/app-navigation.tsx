@@ -79,12 +79,19 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   inbox: Send,
 };
 
-const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().map((area) => ({
+const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().map<NavigationSidebarItemData>((area) => ({
   href: area.href,
   icon: productAreaIcons[area.key],
   iconTreatment: area.key === "assistant" ? "assistant" : "plain",
   label: area.label,
-}));
+})).filter((item) => item.href !== "/assistant");
+
+const assistantItem: NavigationSidebarItemData = {
+  href: "/assistant",
+  icon: Sparkles,
+  iconTreatment: "assistant",
+  label: "Asistente Nutricional",
+};
 
 const secondaryPrimaryItems: NavigationSidebarItemData[] = [
   { href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" },
@@ -223,7 +230,7 @@ export function AppNavigationHeader() {
             disabled={headerPresentation.secondaryAction.disabled}
             hitSlop={8}
             onPress={headerPresentation.secondaryAction.onPress}
-            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.secondaryAction?.disabled && styles.disabled, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.secondaryAction?.icon === "plus" && styles.backHeaderIconAction, headerPresentation.secondaryAction?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.secondaryAction.icon === "plus" ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} /> : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.secondaryAction.label}</Text>}
           </Pressable> : null}
           {headerPresentation.action ? <Pressable
@@ -232,7 +239,7 @@ export function AppNavigationHeader() {
             disabled={headerPresentation.action.disabled}
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.icon === "more" && styles.backHeaderMenuAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.backHeaderAction, (headerPresentation.action?.icon === "more" || headerPresentation.action?.icon === "plus") && styles.backHeaderIconAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.action.icon === "more"
               ? <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
               : headerPresentation.action.icon === "plus"
@@ -378,7 +385,6 @@ function AppSidebar() {
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [translateX] = useState(() => new Animated.Value(-380));
   const [scrimOpacity] = useState(() => new Animated.Value(0));
-  const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
 
   useEffect(() => {
     const hiddenPosition = -drawerWidth;
@@ -444,7 +450,6 @@ function AppSidebar() {
                   <PanelRight color={tokens.color.textMuted} size={24} strokeWidth={2} />
                 </Pressable>
               </View>
-              <Text style={styles.drawerGreeting}><Text style={styles.drawerGreetingEmoji}>💪🏻</Text>{`Vamos ${firstName}!`}</Text>
             </View>
             <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false} style={styles.drawerScroll}>
               {primaryItems.flatMap((item) => [
@@ -456,6 +461,10 @@ function AppSidebar() {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
                 {libraryItems.map((item) => <EntitySidebarEntry count={libraryCount(libraryCounts, item.entity)} item={item} key={String(item.href)} />)}
+              </View>
+              <View style={styles.menuSection}>
+                <Text style={styles.menuSectionLabel}>Asistencia AI</Text>
+                <FunctionalSidebarEntry item={assistantItem} />
               </View>
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>
@@ -491,9 +500,9 @@ const styles = StyleSheet.create({
   backHeaderSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderLeadingAction: { alignItems: "flex-start", height: 52, justifyContent: "center", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 92 },
-  backHeaderMenuAction: { alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens.spacing.sm, width: 92 },
+  backHeaderIconAction: { paddingHorizontal: 0, width: 44 },
   backHeaderActionText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700" },
-  backHeaderIdentity: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0 },
+  backHeaderIdentity: { alignItems: "center", bottom: 0, justifyContent: "center", left: 92, minWidth: 0, position: "absolute", right: 92, top: 0 },
   headerListIdentity: { flex: 1, justifyContent: "center" },
   headerLogo: { alignItems: "center", bottom: 0, justifyContent: "center", left: 58, position: "absolute", right: 58, top: 0 },
   routeIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
@@ -502,14 +511,12 @@ const styles = StyleSheet.create({
   scrim: { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   drawer: { backgroundColor: tokens.color.surfaceApp, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
   drawerSafeArea: { flex: 1 },
-  drawerHeader: { alignItems: "stretch", minHeight: 59.7, paddingHorizontal: tokens.spacing.md * 2 },
+  drawerHeader: { alignItems: "stretch", minHeight: 64, paddingHorizontal: tokens.spacing.md * 2, paddingTop: tokens.spacing.sm },
   drawerBrandRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 44 },
   drawerHome: { alignItems: "flex-start", justifyContent: "center", minHeight: 44 },
-  drawerGreeting: { color: tokens.color.textMain, fontSize: 15, fontWeight: "300", lineHeight: 20, marginTop: -4.3 },
-  drawerGreetingEmoji: { fontSize: 13 },
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
-  drawerContent: { gap: 0, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.md, paddingTop: 24 },
+  drawerContent: { gap: 0, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.md, paddingTop: 0 },
   drawerScroll: { flex: 1 },
-  menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
+  menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.compact },
   menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
 });

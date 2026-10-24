@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { CalendarDays } from "lucide-react-native";
+import { CalendarDays, ClipboardList } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,13 +7,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { userFacingError } from "@/api/errors";
 import type { CalendarDayDetailData, CalendarOverviewData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { commitmentKinds, commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
 import { CalendarPlanEditor } from "@/components/calendarization/calendar-plan-editor";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { InlineNotice, LoadingState, Screen } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-type DaySection = "replace" | "remove" | "move" | "history" | null;
+type DaySection = "assign" | "replace" | "remove" | "move" | "history" | null;
 
 function dayLabel(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00`));
@@ -28,6 +29,7 @@ export default function CalendarDayScreen() {
   const [localToday, setLocalToday] = useState("");
   const [sectionOverride, setSection] = useState<DaySection | undefined>(undefined);
   const section = sectionOverride === undefined ? (initialSection === "replace" ? "replace" : null) : sectionOverride;
+  const [addMenuVisible, setAddMenuVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export default function CalendarDayScreen() {
       fallback: "/calendar" as Href,
       leadingAction: section == null ? undefined : { icon: "back", label: "Volver al día", onPress: () => setSection(null) },
       mode: "back",
+      secondaryAction: section == null ? { icon: "plus", label: "Agregar a esta fecha", onPress: () => setAddMenuVisible(true) } : undefined,
       title: date ? dayLabel(date) : "Detalle del día",
     });
     return () => setHeaderPresentation({ mode: "default" });
@@ -79,6 +82,25 @@ export default function CalendarDayScreen() {
         selectedItem={section}
       /> : null}
     </Screen>
+    <ActionSheetModal onRequestClose={() => setAddMenuVisible(false)} visible={addMenuVisible}>
+      <SafeAreaView edges={["left", "right"]} style={{ backgroundColor: tokens.color.surfaceCard, flexShrink: 1 }}>
+        <ActionSheetHeader icon={CalendarDays} onClose={() => setAddMenuVisible(false)} title="Agregar a esta fecha" />
+        <View style={{ padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl }}>
+          <ActionSheetActions>
+            <ActionSheetAction icon={ClipboardList} label={day?.has_plan ? "Reemplazar minuta diaria" : "Agregar minuta diaria"} onPress={() => { setAddMenuVisible(false); setSection(day?.has_plan ? "replace" : "assign"); }} />
+            {commitmentKinds.map((kind) => <ActionSheetAction
+              icon={commitmentPresentation[kind].icon}
+              key={kind}
+              label={kind === "nutritionist" ? commitmentPresentation[kind].label : commitmentRegistrationTitle[kind]}
+              onPress={() => {
+                setAddMenuVisible(false);
+                router.push(`/calendar/commitments?kind=${kind}&date=${date}` as Href);
+              }}
+            />)}
+          </ActionSheetActions>
+        </View>
+      </SafeAreaView>
+    </ActionSheetModal>
     <ActionSheetModal onRequestClose={() => setMenuVisible(false)} visible={menuVisible}>
       <SafeAreaView edges={["left", "right"]} style={{ backgroundColor: tokens.color.surfaceCard, flexShrink: 1 }}>
         <ActionSheetHeader icon={CalendarDays} onClose={() => setMenuVisible(false)} title="Esta fecha" />

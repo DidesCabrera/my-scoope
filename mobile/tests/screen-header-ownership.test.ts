@@ -146,8 +146,8 @@ test("screens that own global navigation preserve their header through content a
   assertSourceMatch(libraryList, /isHeaderIdentityVisible\(nativeEvent\.contentOffset\.y\)/);
 
   const navigation = await source("src/components/navigation/app-navigation.tsx");
-  assertSourceMatch(navigation, /headerPresentation\.action\?\.icon === "more" && styles\.backHeaderMenuAction/);
-  assertSourceMatch(navigation, /backHeaderMenuAction: \{ alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens\.spacing\.sm, width: 92 \}/);
+  assertSourceMatch(navigation, /\(headerPresentation\.action\?\.icon === "more" \|\| headerPresentation\.action\?\.icon === "plus"\) && styles\.backHeaderIconAction/);
+  assertSourceMatch(navigation, /backHeaderIconAction: \{ paddingHorizontal: 0, width: 44 \}/);
 
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
   assertSourceMatch(libraryDetail, /mode: "library-detail"[\s\S]*identityVisible: compactHeaderVisible/);

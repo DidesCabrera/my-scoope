@@ -9,6 +9,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarDay, CalendarDayDetailData, CalendarOverviewData, LibraryItem, LibraryPageData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { DailyPlanPreviewCard } from "@/components/calendarization/daily-plan-preview-card";
+import { CalendarMonthPlaceholder } from "@/components/calendarization/calendar-month-calendar";
 import { monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
@@ -240,7 +241,7 @@ export default function SelectCalendarPlansScreen() {
           <ChevronRight color={tokens.color.textMain} size={20} />
         </Pressable>
       </View>
-      {monthLoading ? <LoadingState label="Cargando fechas…" /> : <View style={styles.grid}>
+      {monthLoading ? <CalendarMonthPlaceholder /> : <View style={styles.grid}>
         {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
         {monthOverview?.days.map((day) => {
           const isPast = Boolean(localToday && day.calendar_date < localToday);

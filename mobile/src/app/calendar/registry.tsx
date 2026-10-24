@@ -8,10 +8,11 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarCommitment, CalendarCommitmentKind, CalendarOverviewData } from "@/api/calendar-types";
 import { useSession } from "@/auth/session-context";
 import { commitmentKinds, commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
+import { CalendarMonthPlaceholder } from "@/components/calendarization/calendar-month-calendar";
 import { monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Card, InlineNotice, LoadingState, Screen, ScrollableTabBar } from "@/components/ui";
+import { Card, InlineNotice, Screen, ScrollableTabBar } from "@/components/ui";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
 
@@ -21,7 +22,7 @@ const tabLabels: Record<CalendarCommitmentKind, string> = {
   shopping: "Hacer compras",
   cooking: "Cocinar",
   training: "Entrenar",
-  nutritionist: "Cita nutri.",
+  nutritionist: "Cita nutricionista",
 };
 
 function readableDate(value: string): string {
@@ -125,6 +126,7 @@ export default function CommitmentRegistryScreen() {
   return <>
     <Screen
       contentStyle={styles.content}
+      headerMode="preserve"
       scrollHeader={<CommitmentHeader />}
       stickyHeader={<ScrollableTabBar<CommitmentScope>
         accessibilityLabel="Tipos de compromisos"
@@ -148,24 +150,23 @@ export default function CommitmentRegistryScreen() {
             <ChevronRight color={tokens.color.textMain} size={20} />
           </Pressable>
         </View>
-        {loading ? <LoadingState label="Cargando compromisos…" /> : null}
-        <View style={styles.grid}>
+        {loading ? <CalendarMonthPlaceholder /> : <View style={styles.grid}>
           {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
-          {!loading && overview?.days.map((day) => {
+          {overview?.days.map((day) => {
             const visibleCommitments = (day.commitments ?? []).filter((item) => activeScope === "all" || item.kind === activeScope);
             const selected = selectedDate === day.calendar_date;
             return <Pressable
-              accessibilityLabel={`${readableDate(day.calendar_date)}: ${visibleCommitments.length ? visibleCommitments.map((item) => commitmentPresentation[item.kind].label).join(", ") : "Sin compromisos"}`}
+              accessibilityLabel={`${readableDate(day.calendar_date)}: ${day.has_plan ? "Con minuta diaria" : "Sin minuta diaria"}; ${visibleCommitments.length ? visibleCommitments.map((item) => commitmentPresentation[item.kind].label).join(", ") : "Sin compromisos"}`}
               accessibilityRole="button"
               accessibilityState={{ selected }}
               key={day.calendar_date}
               onPress={() => selectDate(day.calendar_date)}
-              style={({ pressed }) => [styles.gridDate, selected && styles.gridDateSelected, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, pressed && styles.pressed]}>
-              <Text style={styles.gridNumber}>{day.calendar_date.slice(8, 10)}</Text>
+              style={({ pressed }) => [styles.gridDate, selected && styles.gridDateSelected, day.has_plan && styles.gridDateFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, pressed && styles.pressed]}>
+              <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan]}>{day.calendar_date.slice(8, 10)}</Text>
               {visibleCommitments.length ? <View style={styles.commitmentDots}>{visibleCommitments.map((item) => <View key={item.id} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
             </Pressable>;
           })}
-        </View>
+        </View>}
         <Text style={styles.hint}>Toca un día para ver sus compromisos. Tócalo otra vez para ver todo el mes.</Text>
       </View>
       <Text accessibilityRole="header" style={styles.listTitle}>{selectedDate ? `Compromisos del ${readableDate(selectedDate)}` : `Compromisos de ${visibleMonth ? monthLabel(visibleMonth) : "este mes"}`}</Text>
@@ -225,9 +226,11 @@ const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 1, justifyContent: "center", minHeight: 40, width: "13.5%" },
   gridDateAdjacent: { opacity: 0.45 },
+  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}33` },
   gridDateSelected: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
+  gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
   header: { gap: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   headerIcons: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   hint: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 18, marginTop: tokens.spacing.sm },

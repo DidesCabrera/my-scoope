@@ -47,7 +47,7 @@ class NavSectionSpec:
 
 APP_NAVIGATION = (
     NavSectionSpec(
-        key="account",
+        key="primary",
         label="Tools",
         groups=(
             NavGroupSpec(
@@ -59,24 +59,6 @@ APP_NAVIGATION = (
                 nav_root="home",
                 scope="personal",
                 show_in_sidebar=True,
-            ),
-            NavGroupSpec(
-                key="profile",
-                label="Mi cuenta",
-                icon="circle-user-round",
-                url_name="profile_detail",
-                nav_root="profile",
-                scope="personal",
-                page_icon="circle-user-round",
-            ),
-            NavGroupSpec(
-                key="personal_records",
-                label="Fichas personales",
-                icon="files",
-                url_name="personal_records",
-                nav_root="personal_records",
-                scope="personal",
-                page_icon="files",
             ),
             NavGroupSpec(
                 key="learning",
@@ -197,16 +179,6 @@ APP_NAVIGATION = (
                 scope="personal",
             ),
             NavGroupSpec(
-                key="chat",
-                label="Asistente Nutricional",
-                icon="sparkles",
-                page_icon="sparkles",
-                page_title="Asistente AI",
-                url_name="ai_nutrition_chat_list",
-                nav_root="chat",
-                scope="personal",
-            ),
-            NavGroupSpec(
                 key="create",
                 label="Crear",
                 icon="circle-fading-plus",
@@ -313,6 +285,48 @@ APP_NAVIGATION = (
                 action_url_name="food_create",
                 action_icon="plus",
                 action_label="Nuevo alimento",
+            ),
+        ),
+    ),
+
+    NavSectionSpec(
+        key="assistance",
+        label="Asistencia AI",
+        groups=(
+            NavGroupSpec(
+                key="chat",
+                label="Asistente Nutricional",
+                icon="sparkles",
+                page_icon="sparkles",
+                page_title="Asistente AI",
+                url_name="ai_nutrition_chat_list",
+                nav_root="chat",
+                scope="personal",
+            ),
+        ),
+    ),
+
+    NavSectionSpec(
+        key="account",
+        label="Cuenta",
+        groups=(
+            NavGroupSpec(
+                key="profile",
+                label="Mi cuenta",
+                icon="circle-user-round",
+                url_name="profile_detail",
+                nav_root="profile",
+                scope="personal",
+                page_icon="circle-user-round",
+            ),
+            NavGroupSpec(
+                key="personal_records",
+                label="Fichas personales",
+                icon="files",
+                url_name="personal_records",
+                nav_root="personal_records",
+                scope="personal",
+                page_icon="files",
             ),
         ),
     ),

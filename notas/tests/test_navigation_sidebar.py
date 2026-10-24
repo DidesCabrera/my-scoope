@@ -102,20 +102,17 @@ class SidebarBuilderTests(TestCase):
     def test_build_sidebar_vm_uses_reorganized_section_order(self):
         sidebar = build_sidebar_vm(PROFILE_VIEWMODE)
 
-        self.assertEqual([section["key"] for section in sidebar[:2]], ["account", "workspace"])
+        self.assertEqual([section["key"] for section in sidebar[:4]], ["primary", "workspace", "assistance", "account"])
         self.assertEqual(sidebar[0]["label"], "Tools")
         self.assertEqual(sidebar[1]["label"], "Mis librerias")
         self.assertEqual(
             [group["label"] for group in sidebar[0]["groups"][:8]],
             [
                 "Inicio",
-                "Mi cuenta",
-                "Fichas personales",
                 "Fundamentos Sistema",
                 "Mi programa activo",
                 "Comparaciones",
                 "Compartidos",
-                "Asistente Nutricional",
             ],
         )
         self.assertEqual(
@@ -127,7 +124,9 @@ class SidebarBuilderTests(TestCase):
                 "Mis Alimentos",
             ],
         )
-        tool_groups = {group["key"]: group for group in sidebar[0]["groups"]}
+        self.assertEqual([group["label"] for group in sidebar[2]["groups"]], ["Asistente Nutricional"])
+        self.assertEqual([group["label"] for group in sidebar[3]["groups"]], ["Mi cuenta", "Fichas personales"])
+        tool_groups = {group["key"]: group for section in sidebar for group in section["groups"]}
         self.assertNotIn("chat_new", tool_groups)
         self.assertEqual(tool_groups["chat"]["label"], "Asistente Nutricional")
         self.assertEqual(tool_groups["chat"]["url_name"], "ai_nutrition_chat_list")
@@ -139,7 +138,7 @@ class SidebarBuilderTests(TestCase):
 
     def test_proposals_keep_the_assistant_sidebar_entry_active(self):
         sidebar = build_sidebar_vm(PROPOSAL_VIEWMODE_LIST)
-        tool_groups = {group["key"]: group for group in sidebar[0]["groups"]}
+        tool_groups = {group["key"]: group for section in sidebar for group in section["groups"]}
 
         self.assertTrue(tool_groups["chat"]["is_active"])
         self.assertNotIn("proposal", tool_groups)
@@ -150,13 +149,13 @@ class SidebarBuilderTests(TestCase):
 
         self.assertEqual(ui.nav_root, "profile")
         self.assertEqual(ui.icon, "circle-user-round")
-        self.assertEqual(ui.section_label, "Tools")
+        self.assertEqual(ui.section_label, "Cuenta")
         self.assertEqual(ui.page_icon, "circle-user-round")
 
 
     def test_build_sidebar_vm_places_personal_records_after_account(self):
         sidebar = build_sidebar_vm(PROFILE_VIEWMODE)
-        group_keys = [group["key"] for group in sidebar[0]["groups"]]
+        group_keys = [group["key"] for group in sidebar[3]["groups"]]
 
         self.assertEqual(group_keys.index("personal_records"), group_keys.index("profile") + 1)
     
@@ -165,7 +164,7 @@ class SidebarBuilderTests(TestCase):
 
         self.assertEqual(ui.nav_root, "profile")
         self.assertEqual(ui.icon, "circle-user-round")
-        self.assertEqual(ui.section_label, "Tools")
+        self.assertEqual(ui.section_label, "Cuenta")
         self.assertEqual(ui.page_icon, "circle-user-round")
 
 
