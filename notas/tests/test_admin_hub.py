@@ -21,6 +21,8 @@ class AdminHubTests(TestCase):
         self.assertContains(response, "Admin Analytics")
         self.assertContains(response, "Admin Operations")
         self.assertContains(response, "Knowledge Center")
+        self.assertContains(response, "Catálogo de comidas")
         self.assertContains(response, reverse("admin_analytics_overview"))
         self.assertContains(response, reverse("admin_operations_overview"))
         self.assertContains(response, reverse("admin_knowledge_overview"))
+        self.assertContains(response, reverse("admin:notas_mealcatalogentry_changelist"))

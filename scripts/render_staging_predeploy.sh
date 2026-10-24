@@ -4,6 +4,7 @@ set -euo pipefail
 # Sandbox catalog IDs are deliberately scoped to staging. Production is mapped
 # separately after provider-side and collection tests have passed.
 python manage.py migrate --noinput
+python manage.py seed_meal_catalog --apply
 python manage.py seed_billing_catalog
 python manage.py configure_paddle_catalog \
   --environment sandbox \

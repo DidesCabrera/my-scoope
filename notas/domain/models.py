@@ -48,7 +48,7 @@ from notas.domain.model_modules.identity import (
     Subscription,
     WeightLog,
 )
-from notas.domain.model_modules.meals import Meal, MealAccess, MealFood
+from notas.domain.model_modules.meals import Meal, MealAccess, MealCatalogEntry, MealFood
 from notas.domain.model_modules.notification_delivery import (
     ApplePushSubscription,
     NotificationDelivery,
@@ -86,7 +86,7 @@ __all__ = [
     "FoodLabelAIAnalysis", "FoodLabelCaptureReceipt", "FoodLocalizedName",
     "FoodPortion", "FoodShare", "InboxItem",
     "FoodSourceMetadata", "MCPUserToken", "Meal",
-    "MealAccess", "MealFood", "MealShare",
+    "MealAccess", "MealCatalogEntry", "MealFood", "MealShare",
     "NotificationDelivery", "NutritionProposal", "NutritionProposalAuditEvent",
     "NutritionPreferenceProfile", "NutritionistMemberRelationship",
     "OAuthAuthorizationCode", "OAuthClient",

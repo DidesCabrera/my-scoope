@@ -7,7 +7,7 @@ test("Home creates a dated snapshot while retaining legacy pinned-plan fallback"
   const home = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
   const card = await readTestFile(path.resolve(process.cwd(), "src/components/calendarization/pinned-daily-plan-card.tsx"), "utf8");
 
-  assertSourceMatch(home, /Registra tus comidas en un nuevo Plan/);
+  assertSourceMatch(home, /<HomeGettingStarted \/>[\s\S]*Completa tu día/);
   assertSourceMatch(home, /label="Crear un plan para hoy"/);
   assertSourceMatch(home, /apiRequest<CalendarDayDetailData>\(`\/api\/v1\/calendar\/days\/\$\{today\.local_date\}\/plan\/draft`/);
   assertSourceMatch(home, /assignment_key: Crypto\.randomUUID\(\)/);

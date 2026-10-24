@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 
 from . import admin_culinary  # noqa: F401
 from .admin_food_actions import (
@@ -29,6 +31,7 @@ from .domain.models import (
     FoodPortion,
     FoodSourceMetadata,
     Meal,
+    MealCatalogEntry,
     MealFood,
     NotificationDelivery,
     NutritionistMemberRelationship,
@@ -604,6 +607,13 @@ class MealFoodAdmin(admin.ModelAdmin):
     )
 
 
+class MealFoodInline(admin.TabularInline):
+    model = MealFood
+    autocomplete_fields = ("food",)
+    extra = 0
+    fields = ("food", "quantity", "order")
+
+
 class DailyPlanMealInline(admin.TabularInline):
     model = DailyPlanMeal
     fields = (
@@ -645,6 +655,52 @@ class MealAdmin(admin.ModelAdmin):
     readonly_fields = (
         "created_at",
     )
+
+    inlines = (MealFoodInline,)
+
+
+@admin.register(MealCatalogEntry)
+class MealCatalogEntryAdmin(admin.ModelAdmin):
+    list_display = (
+        "meal_name",
+        "occasion",
+        "dietary_style",
+        "is_published",
+        "is_featured",
+        "sort_order",
+        "updated_at",
+    )
+    list_editable = ("occasion", "dietary_style", "is_published", "is_featured", "sort_order")
+    list_filter = ("is_published", "is_featured", "occasion", "dietary_style")
+    list_select_related = ("meal",)
+    ordering = ("sort_order", "meal__name")
+    raw_id_fields = ("meal",)
+    readonly_fields = ("meal_admin_link", "created_at", "updated_at")
+    search_fields = ("meal__name", "summary")
+    fields = (
+        "meal",
+        "meal_admin_link",
+        "summary",
+        "occasion",
+        "dietary_style",
+        "is_published",
+        "is_featured",
+        "sort_order",
+        "created_at",
+        "updated_at",
+    )
+
+    @admin.display(description="Comida", ordering="meal__name")
+    def meal_name(self, entry):
+        url = reverse("admin:notas_meal_change", args=[entry.meal_id])
+        return format_html('<a href="{}">{}</a>', url, entry.meal.name)
+
+    @admin.display(description="Editar composición")
+    def meal_admin_link(self, entry):
+        if not entry or not entry.meal_id:
+            return "Guarda la entrada para editar sus alimentos."
+        url = reverse("admin:notas_meal_change", args=[entry.meal_id])
+        return format_html('<a href="{}">Abrir comida y alimentos</a>', url)
 
 
 @admin.register(DailyPlan)

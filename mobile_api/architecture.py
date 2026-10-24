@@ -12,6 +12,7 @@ ROUTE_DOMAIN_PREFIXES = (
     ("/proposals", "proposals"),
     ("/comparisons", "comparisons"),
     ("/shares", "sharing"),
+    ("/explore", "libraries"),
     ("/library", "libraries"),
     ("/foods", "food_catalog"),
     ("/food-picker-options", "food_catalog"),

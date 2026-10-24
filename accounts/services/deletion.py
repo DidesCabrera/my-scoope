@@ -111,6 +111,7 @@ MODEL_RETENTION_POLICY = {
     "notas.MCPUserToken": RetentionAction.ERASE,
     "notas.Meal": RetentionAction.ERASE,
     "notas.MealAccess": RetentionAction.ERASE,
+    "notas.MealCatalogEntry": RetentionAction.FOLLOW_PARENT,
     "notas.MealFood": RetentionAction.FOLLOW_PARENT,
     "notas.MealShare": RetentionAction.ERASE,
     "notas.NotificationDelivery": RetentionAction.FOLLOW_PARENT,

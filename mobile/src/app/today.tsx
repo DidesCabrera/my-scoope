@@ -21,6 +21,7 @@ import { compactDateLabel } from "@/components/calendarization/current-week";
 import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import { HomeActions } from "@/components/home-actions";
 import { ComparisonCreateActions } from "@/components/comparisons";
+import { HomeGettingStarted } from "@/components/home/home-getting-started";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -223,6 +224,8 @@ export default function TodayScreen() {
     : today?.pinned_plan
       ? { color: tokens.color.dailyPlan, label: "Plan calendarizado" }
       : null;
+  const hasDatedPlan = Boolean(today?.day_id != null && today.has_plan && snapshot);
+  const showGettingStarted = Boolean(today && !hasDatedPlan && !today.calendarization && !today.pinned_plan && todayCommitments.length === 0);
 
   async function createTodayPlan() {
     if (!today) return;
@@ -370,9 +373,11 @@ export default function TodayScreen() {
             await load();
           }} />
         </>
+      ) : showGettingStarted ? (
+        <HomeGettingStarted />
       ) : today ? (
         <>
-          <HomeSectionTitle>Registra tus comidas en un nuevo Plan</HomeSectionTitle>
+          <HomeSectionTitle>Completa tu día</HomeSectionTitle>
           <Card accent={tokens.color.dailyPlan}>
             <Button label="Crear un plan para hoy" loading={creatingTodayPlan} onPress={() => void createTodayPlan()} />
             <Button label="Elegir desde Mis minutas diarias" onPress={() => router.push("/libraries/daily-plans" as Href)} variant="secondary" />
@@ -380,7 +385,7 @@ export default function TodayScreen() {
         </>
       ) : null}
 
-      {today ? <>
+      {!showGettingStarted && today ? <>
         <TodayCommitmentsSectionHeader />
         {commitmentsError ? <InlineNotice tone="error">{commitmentsError}</InlineNotice> : todayCommitments.length ? todayCommitments.map((commitment) => (
           <TodayCommitmentCard
@@ -415,7 +420,7 @@ export default function TodayScreen() {
         <Button label="Ver calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
       </View> : null}
 
-      {calendarProgress ? <View style={styles.homeProgressSection}>
+      {!showGettingStarted && calendarProgress ? <View style={styles.homeProgressSection}>
         <ProgramSectionHeader
           detail={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`Inicio el ${longDateLabel(calendarProgress.period_start)}`} textColor={tokens.color.textMuted} />}
           icon={CalendarDays}

@@ -4597,6 +4597,338 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "ExploreMealItemData": {
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryActionData"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "can_calendarize": {
+            "default": false,
+            "title": "Can Calendarize",
+            "type": "boolean"
+          },
+          "catalog_id": {
+            "title": "Catalog Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "creator": {
+            "title": "Creator",
+            "type": "string"
+          },
+          "default_portion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Portion"
+          },
+          "dietary_style": {
+            "enum": [
+              "omnivore",
+              "pescatarian",
+              "vegetarian",
+              "vegan"
+            ],
+            "title": "Dietary Style",
+            "type": "string"
+          },
+          "dietary_style_label": {
+            "title": "Dietary Style Label",
+            "type": "string"
+          },
+          "emoji": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emoji"
+          },
+          "entity": {
+            "enum": [
+              "food",
+              "meal",
+              "dailyPlan",
+              "program"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "food_nutrition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoodNutritionFactsData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "is_draft": {
+            "default": false,
+            "title": "Is Draft",
+            "type": "boolean"
+          },
+          "is_saved": {
+            "title": "Is Saved",
+            "type": "boolean"
+          },
+          "label_capture_receipt_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Capture Receipt Id"
+          },
+          "label_image_available": {
+            "default": false,
+            "title": "Label Image Available",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "occasion": {
+            "enum": [
+              "breakfast",
+              "lunch",
+              "dinner",
+              "snack",
+              "pre_workout",
+              "post_workout"
+            ],
+            "title": "Occasion",
+            "type": "string"
+          },
+          "occasion_label": {
+            "title": "Occasion Label",
+            "type": "string"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
+          },
+          "subtitle": {
+            "title": "Subtitle",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "visual_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Key"
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "name",
+          "subtitle",
+          "nutrition",
+          "indicators",
+          "panel",
+          "creator",
+          "created_at",
+          "catalog_id",
+          "summary",
+          "occasion",
+          "occasion_label",
+          "dietary_style",
+          "dietary_style_label",
+          "is_saved"
+        ],
+        "title": "ExploreMealItemData",
+        "type": "object"
+      },
+      "ExploreMealItemEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ExploreMealItemData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ExploreMealItemEnvelope",
+        "type": "object"
+      },
+      "ExploreMealPageData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExploreMealItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "ExploreMealPageData",
+        "type": "object"
+      },
+      "ExploreMealPageEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ExploreMealPageData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ExploreMealPageEnvelope",
+        "type": "object"
+      },
+      "ExploreMealSaveResultData": {
+        "properties": {
+          "already_saved": {
+            "title": "Already Saved",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "saved_meal_id": {
+            "title": "Saved Meal Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "saved_meal_id",
+          "already_saved",
+          "message"
+        ],
+        "title": "ExploreMealSaveResultData",
+        "type": "object"
+      },
+      "ExploreMealSaveResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ExploreMealSaveResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ExploreMealSaveResultEnvelope",
+        "type": "object"
+      },
       "FoodCreateInput": {
         "properties": {
           "carbs": {
@@ -13710,6 +14042,247 @@
           }
         ],
         "summary": "Entitlements"
+      }
+    },
+    "/api/v1/explore/meals": {
+      "get": {
+        "operationId": "mobile_api_api_explore_meals",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "occasion",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Occasion"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dietary_style",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dietary Style"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreMealPageEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Explore Meals"
+      }
+    },
+    "/api/v1/explore/meals/{catalog_id}": {
+      "get": {
+        "operationId": "mobile_api_api_explore_meal_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "catalog_id",
+            "required": true,
+            "schema": {
+              "title": "Catalog Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreMealItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Explore Meal Detail"
+      }
+    },
+    "/api/v1/explore/meals/{catalog_id}/save": {
+      "post": {
+        "operationId": "mobile_api_api_save_explore_meal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "catalog_id",
+            "required": true,
+            "schema": {
+              "title": "Catalog Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreMealSaveResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Save Explore Meal"
       }
     },
     "/api/v1/food-picker-options/{food_id}": {
