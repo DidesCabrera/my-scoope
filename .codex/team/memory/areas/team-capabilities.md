@@ -23,7 +23,8 @@ grows with real company needs.
 ## Current priorities
 
 1. Evaluate the newly created pilot roles through real conversations.
-2. Configure the provisional accounting workflow before unattended operation.
+2. Configure the provisional accounting and Chilean tax-compliance workflows
+   before unattended operation or company-specific compliance conclusions.
 3. Record concrete failures, overlaps, and missing capabilities as evaluation
    evidence rather than adding speculative rules.
 4. Pilot `mobile-simulator-review` on real visual changes and verify that its

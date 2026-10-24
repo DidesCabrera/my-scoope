@@ -14,7 +14,8 @@ finance, and commercial and marketing work as My Scoope grows.
 
 - An organizational model and machine-readable registry exist under `.codex/team/`.
 - Existing roles are registered.
-- Technical incident, finance, and commercial roles have initial skill definitions.
+- Technical incident, finance, Chilean tax compliance, and commercial roles have
+  initial skill definitions.
 - Durable memory is separated into areas, projects, and accepted AI-team decisions.
 
 ## Evaluation plan

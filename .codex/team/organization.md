@@ -21,6 +21,7 @@ flowchart TD
 
     F --> FIN[Finance]
     FIN --> AIR[Accounting Intake and Recordkeeping Agent]
+    FIN --> CTA[Chile Tax and SII Compliance Advisor]
     FIN --> FPA[Financial Planning Advisor]
     FIN --> FA[Funding Advisor]
 
