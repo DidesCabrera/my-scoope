@@ -6,7 +6,6 @@ from notas.application.meal_catalog_seed import STARTER_MEAL_CATALOG
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.domain.models import Food, Meal, MealCatalogEntry, MealFood
 
-
 CATALOG_USERNAME = "myscoope_catalog"
 
 
