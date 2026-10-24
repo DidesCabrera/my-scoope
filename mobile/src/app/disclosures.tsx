@@ -6,7 +6,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { ProfileData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { ResponsibleUseActionButton, ResponsibleUseContent, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
+import { ResponsibleUseActionButton, ResponsibleUseConfirmationNotice, ResponsibleUseContent, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
 import { InlineNotice, Screen, textStyles } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
@@ -58,6 +58,7 @@ export default function DisclosuresScreen() {
       </View>} />
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       <ResponsibleUseActionButton loading={busy} onPress={accept} />
+      <ResponsibleUseConfirmationNotice />
       <Text style={textStyles.caption}>Confirmación {profile?.review_disclosure_version ?? "cml08.v1"}</Text>
     </Screen>
   );

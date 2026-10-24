@@ -123,6 +123,9 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes('<ResponsibleUsePolicyLink label="Leer política de privacidad" onPress={noop} />'));
   assert.ok(journey.includes('<ResponsibleUsePolicyLink label="Leer términos de uso" onPress={noop} />'));
   assert.ok(journey.includes('<ResponsibleUsePolicyLink label="Leer política de reembolsos" onPress={noop} />'));
+  assert.ok(journey.includes('{index === 6 ? <ResponsibleUseConfirmationNotice /> : null}'));
+  const disclosuresView = journey.match(/function DisclosuresView[\s\S]*?function GoalView/)?.[0] ?? "";
+  assert.equal(disclosuresView.includes("Al continuar confirmas"), false);
   assert.ok(journey.includes('index={13} showProgress={false} title="Tu primera minuta diaria"'));
   assert.ok(journey.includes('<ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} showNutrition={false} />'));
   assert.ok(!preview.includes("apiRequest"));

@@ -17,6 +17,7 @@ test("legal policies live in disclosures instead of the account action sheet", a
   }
   assertSourceMatch(disclosures, /ResponsibleUsePolicyLink/);
   assertSourceDoesNotMatch(disclosures, /<Button label="Leer política/);
+  assertSourceMatch(disclosures, /<ResponsibleUseActionButton[\s\S]*<ResponsibleUseConfirmationNotice \/>/);
   assertSourceMatch(disclosureContent, /accessibilityRole="link"/);
   assertSourceMatch(disclosureContent, /color: "#0A84FF"/);
   assertSourceDoesNotMatch(account, /Política de privacidad|Términos de uso|Cancelaciones y reembolsos/);

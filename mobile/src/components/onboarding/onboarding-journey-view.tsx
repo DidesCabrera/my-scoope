@@ -22,7 +22,7 @@ import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-nativ
 import { DailyPlanMealDetailList, type DailyPlanMealDetailItem, EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
-import { ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
+import { ResponsibleUseConfirmationNotice, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
 import { NutritionEntityCard, NutritionKpiSection } from "@/components/nutrition";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { ProgramActiveKpis } from "@/components/programs";
@@ -465,6 +465,7 @@ function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: {
   return (
     <View style={styles.footer}>
       {index === 6 ? <CreditContinueButton label={primary} /> : <Button label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
+      {index === 6 ? <ResponsibleUseConfirmationNotice /> : null}
       {index > 0 ? (
         <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, index === 6 && styles.disclosuresBackAction]}>
           <ChevronLeft color={tokens.color.textMuted} size={16} />
@@ -704,7 +705,6 @@ function DisclosuresView({ index }: { index: number }) {
           </View>
         </ExplanationCard>
       </View>
-      <InlineNotice>Al continuar confirmas que comprendes estos límites. Podrás consultar las políticas completas cuando quieras.</InlineNotice>
     </DisclosuresStepLayout>
   );
 }

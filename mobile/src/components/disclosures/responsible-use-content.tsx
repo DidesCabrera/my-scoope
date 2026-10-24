@@ -42,9 +42,12 @@ export function ResponsibleUseContent({ policyActions }: { policyActions?: React
           {policyActions}
         </ResponsibleUsePanel>
       </View>
-      <InlineNotice>Al continuar confirmas que comprendes estos límites. Podrás consultar las políticas completas cuando quieras.</InlineNotice>
     </>
   );
+}
+
+export function ResponsibleUseConfirmationNotice() {
+  return <InlineNotice>Al continuar confirmas que comprendes estos límites. Podrás consultar las políticas completas cuando quieras.</InlineNotice>;
 }
 
 export function ResponsibleUsePolicyLink({ label, onPress }: { label: string; onPress(): void }) {

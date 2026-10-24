@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { ResponsibleUseActionButton, ResponsibleUseContent, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
+import { ResponsibleUseActionButton, ResponsibleUseConfirmationNotice, ResponsibleUseContent, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
 import { InlineNotice, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -23,6 +23,7 @@ export function DisclosureGallery() {
             <ResponsibleUsePolicyLink label="Leer política de reembolsos" onPress={noop} />
           </View>} />
           <ResponsibleUseActionButton label="Entiendo y quiero continuar" onPress={noop} />
+          <ResponsibleUseConfirmationNotice />
           <Text style={textStyles.caption}>Confirmación label-ai.v1</Text>
         </View>
       </View>
