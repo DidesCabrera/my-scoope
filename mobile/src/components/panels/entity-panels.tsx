@@ -126,14 +126,14 @@ function decimal(value: number): string {
 }
 
 function portionDecimal(value: number): string {
-  return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 2 }) : "0";
+  return Number.isFinite(value) ? value.toLocaleString("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "0,0";
 }
 
 function proposedPortionLabel(item: FoodPanelItem): string | null {
   const amount = item.portionDisplayQuantity;
   const measure = item.portionDisplayMeasure?.trim();
   if (amount == null || !Number.isFinite(amount) || amount <= 0 || !measure || measure === item.quantityUnit || measure === "g" || measure === "ml") return null;
-  return `${portionDecimal(amount)} ${householdMeasureDisplayLabel(measure, amount)}`;
+  return `~${portionDecimal(amount)} ${householdMeasureDisplayLabel(measure, amount)}`;
 }
 
 type PortionApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -159,7 +159,7 @@ function useFoodPanelPortionEquivalences(items: FoodPanelItem[]): FoodPanelItem[
     .filter((item) => item.detailId != null && proposedPortionLabel(item) == null)
     .map((item) => item.detailId as number))], [items]);
   useEffect(() => {
-    if (!__DEV__ || status !== "authenticated" || missingIds.length === 0) return undefined;
+    if (status !== "authenticated" || missingIds.length === 0) return undefined;
     let active = true;
     void Promise.all(missingIds.map(async (foodId) => [foodId, await foodPortionOption(apiRequest, foodId)] as const))
       .then((loaded) => {
@@ -508,7 +508,7 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation, pre
           <PanelItemName dragInteraction={dragInteraction} item={item} itemNameStyle={styles.quantityItemText} onOpenItem={canOpen ? onOpenItem : undefined} showNutritionSummary style={styles.quantityLeadingCell} />
           <View accessibilityLabel={`${decimal(item.quantity)} ${item.quantityUnit}${proposedPortion ? `. Equivale a ${proposedPortion}` : ""}`} style={[styles.quantityValue, styles.quantityValueStack]}>
             <Text style={[styles.cell, styles.quantityItemText, styles.quantityValueText]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
-            {proposedPortion ? <Text style={styles.quantityEquivalent}>{proposedPortion}</Text> : null}
+            {proposedPortion ? <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={styles.quantityEquivalent}>{proposedPortion}</Text> : null}
           </View>
           {!preparationFirst ? preparationCell : null}
         </View>

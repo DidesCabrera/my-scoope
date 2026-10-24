@@ -515,7 +515,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.quantityValue, styles\.quantityValueStack\]\}/);
   assertSourceMatch(sharedEntityPanels, /styles\.quantityItemText, styles\.quantityValueText/);
   assertSourceMatch(sharedEntityPanels, /const proposedPortion = proposedPortionLabel\(item\)/);
-  assertSourceMatch(sharedEntityPanels, /proposedPortion \? <Text style=\{styles\.quantityEquivalent\}>\{proposedPortion\}<\/Text> : null/);
+  assertSourceMatch(sharedEntityPanels, /return `~\$\{portionDecimal\(amount\)\} \$\{householdMeasureDisplayLabel\(measure, amount\)\}`/);
+  assertSourceMatch(sharedEntityPanels, /minimumFractionDigits: 1, maximumFractionDigits: 1/);
+  assertSourceMatch(sharedEntityPanels, /proposedPortion \? <Text adjustsFontSizeToFit minimumFontScale=\{0\.8\} numberOfLines=\{1\} style=\{styles\.quantityEquivalent\}>\{proposedPortion\}<\/Text> : null/);
+  assertSourceDoesNotMatch(sharedEntityPanels, /!__DEV__ \|\| status !== "authenticated"/);
   assertSourceMatch(sharedEntityPanels, /<Text numberOfLines=\{2\} style=\{\[styles\.cell, styles\.editName\]\}>\{item\.name\}<Text style=\{styles\.foodPortionSuffix\}>/);
   assertSourceDoesNotMatch(sharedEntityPanels, />Porción<|styles\.editPortionValue/);
   assertSourceMatch(sharedEntityPanels, /editIdentity: \{ alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 \}/);
