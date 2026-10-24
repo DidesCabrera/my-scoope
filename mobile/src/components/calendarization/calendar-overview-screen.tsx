@@ -9,13 +9,14 @@ import type { CalendarDay, CalendarDayDetailData, CalendarOverviewData, Calendar
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { CalendarUpcomingPanels } from "@/components/calendarization/calendar-upcoming-panels";
-import { commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
-import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
+import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
+import { monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
+import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { ProgramActiveKpis } from "@/components/programs/program-active-kpis";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Card, Chip, DistributedTabBar, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionPageHeader } from "@/components/ui";
+import { Button, Chip, DistributedTabBar, EntityIcon, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function dateLabel(value: string, options: Intl.DateTimeFormatOptions): string {
@@ -30,9 +31,17 @@ function weekDay(value: string): string {
   return dateLabel(value, { weekday: "narrow" }).toUpperCase();
 }
 
+function CalendarMonthPlaceholder() {
+  return <View accessibilityLabel="Cargando días del mes" accessible style={styles.grid}>
+    {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`placeholder-weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
+    {Array.from({ length: 42 }, (_, index) => <View key={`placeholder-day-${index}`} style={styles.gridPlaceholderDate}><View style={styles.gridPlaceholderNumber} /></View>)}
+  </View>;
+}
+
 export function CalendarOverviewScreen({ extended = false }: { extended?: boolean }) {
   const router = useRouter();
   const { apiRequest, profile, refreshProfile, status } = useSession();
+  const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const [overview, setOverview] = useState<CalendarOverviewData | null>(null);
   const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
   const [monthOverview, setMonthOverview] = useState<{ key: string; data: CalendarOverviewData } | null>(null);
@@ -45,7 +54,6 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const [error, setError] = useState<string | null>(null);
   const [progressMenuVisible, setProgressMenuVisible] = useState(false);
   const [planMenuVisible, setPlanMenuVisible] = useState(false);
-  const [commitmentMenuVisible, setCommitmentMenuVisible] = useState(false);
   const [progressMenuStage, setProgressMenuStage] = useState<"actions" | "date">("actions");
   const [progressStartDate, setProgressStartDate] = useState("");
   const [progressDateError, setProgressDateError] = useState<string | null>(null);
@@ -76,13 +84,12 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || !visibleMonth || extended) return;
     let active = true;
-    const window = monthWindow(visibleMonth);
     setMonthError(null);
-    void apiRequest<CalendarOverviewData>(`/api/v1/calendar?start_date=${window.startDate}&days=${window.days}`)
-      .then((data) => { if (active) setMonthOverview({ key: visibleMonth, data }); })
+    void monthCache.load(visibleMonth)
+      .then((data) => { if (active) { setMonthOverview({ key: visibleMonth, data }); monthCache.prefetchAdjacent(visibleMonth); } })
       .catch((nextError) => { if (active) setMonthError(userFacingError(nextError)); });
     return () => { active = false; };
-  }, [apiRequest, extended, status, visibleMonth]));
+  }, [extended, monthCache, status, visibleMonth]));
   useEffect(() => {
     if (!selectedDate || status !== "authenticated") return;
     let active = true;
@@ -103,6 +110,14 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const futurePlansCount = overview?.future_plans_count ?? 0;
   const calendarCoverage = progress && futurePlansCount ? Math.round(progress.days_with_plan / futurePlansCount * 100) : 0;
   const mealCoverage = progress?.scheduled_meals ? Math.round(progress.completed_meals / progress.scheduled_meals * 100) : 0;
+
+  function changeVisibleMonth(delta: number) {
+    if (!visibleMonth) return;
+    const nextMonth = shiftMonth(visibleMonth, delta);
+    const cached = monthCache.get(nextMonth);
+    if (cached) setMonthOverview({ key: nextMonth, data: cached });
+    setVisibleMonth(nextMonth);
+  }
   async function adjustProgressStart() {
     setProgressDateBusy(true);
     setProgressDateError(null);
@@ -185,34 +200,21 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
       stickyHeaderStyle={styles.stickyHeader}>
       {extended ? <SectionPageHeader countLabel="fechas" section="calendarization" subtitle="Fechas próximas, tengan o no un plan asignado." title="Planes próximas fechas" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      {!extended && activeTab === "planning" ? <View style={styles.summaryRow}>
-        <View accessibilityLabel={`Planes programados desde hoy: ${overview?.future_plans_count ?? "dato pendiente"}`} accessible style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Planes programados</Text>
-          <Text style={styles.summaryValue}>{overview?.future_plans_count ?? "—"}</Text>
-          <Text style={styles.summaryHint}>Desde hoy</Text>
-        </View>
-        <View accessibilityLabel={`Última fecha con plan: ${overview?.last_scheduled_date === undefined ? "dato pendiente" : overview.last_scheduled_date ?? "sin fecha"}`} accessible style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Última fecha con plan</Text>
-          <Text style={styles.summaryDateValue}>{overview?.last_scheduled_date === undefined ? "—" : overview.last_scheduled_date ? dateLabel(overview.last_scheduled_date, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
-          <Text style={styles.summaryHint}>Horizonte programado</Text>
-        </View>
-      </View> : null}
       {!extended && activeTab === "planning" ? (
         <>
-          <Card>
+          <View style={styles.calendarSection}>
             <View style={styles.monthNavigation}>
-              <Pressable accessibilityLabel="Mes anterior" accessibilityRole="button" onPress={() => setVisibleMonth((current) => current ? shiftMonth(current, -1) : current)} style={styles.monthArrow}>
+              <Pressable accessibilityLabel="Mes anterior" accessibilityRole="button" onPress={() => changeVisibleMonth(-1)} style={styles.monthArrow}>
                 <ChevronLeft color={tokens.color.textMain} size={20} />
               </Pressable>
               <Text accessibilityRole="header" style={styles.monthTitle}>{visibleMonth ? monthLabel(visibleMonth) : ""}</Text>
-              <Pressable accessibilityLabel="Mes siguiente" accessibilityRole="button" onPress={() => setVisibleMonth((current) => current ? shiftMonth(current, 1) : current)} style={styles.monthArrow}>
+              <Pressable accessibilityLabel="Mes siguiente" accessibilityRole="button" onPress={() => changeVisibleMonth(1)} style={styles.monthArrow}>
                 <ChevronRight color={tokens.color.textMain} size={20} />
               </Pressable>
             </View>
             {visibleMonth && overview && visibleMonth !== monthKeyFromDate(overview.local_date) ? <Pressable accessibilityRole="button" onPress={() => setVisibleMonth(monthKeyFromDate(overview.local_date))}><Text style={styles.monthTodayLink}>Volver al mes actual</Text></Pressable> : null}
             {monthError ? <InlineNotice tone="error">{monthError}</InlineNotice> : null}
-            {!monthDays.length && !monthError ? <LoadingState label="Cargando mes…" /> : null}
-            <View style={styles.grid}>
+            {!monthDays.length && !monthError ? <CalendarMonthPlaceholder /> : <View style={styles.grid}>
               {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
               {monthDays.map((day) => (
                 <Pressable
@@ -225,11 +227,23 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
                   {day.commitments?.length ? <View style={styles.gridCommitmentDots}>{day.commitments.map((item) => <View key={item.id} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
                 </Pressable>
               ))}
+            </View>}
+          </View>
+          <View style={styles.summaryRow}>
+            <View accessibilityLabel={`Planes programados desde hoy: ${overview?.future_plans_count ?? "dato pendiente"}`} accessible style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Planes programados</Text>
+              <Text style={styles.summaryValue}>{overview?.future_plans_count ?? "—"}</Text>
+              <Text style={styles.summaryHint}>Desde hoy</Text>
             </View>
-          </Card>
+            <View accessibilityLabel={`Última fecha con plan: ${overview?.last_scheduled_date === undefined ? "dato pendiente" : overview.last_scheduled_date ?? "sin fecha"}`} accessible style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Última fecha con plan</Text>
+              <Text style={styles.summaryDateValue}>{overview?.last_scheduled_date === undefined ? "—" : overview.last_scheduled_date ? dateLabel(overview.last_scheduled_date, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
+              <Text style={styles.summaryHint}>Horizonte programado</Text>
+            </View>
+          </View>
           <View style={styles.calendarizeActions}>
-            <Button label="Calendarizar planes" onPress={() => setPlanMenuVisible(true)} variant="secondary" />
-            <Button label="Calendarizar compromisos" onPress={() => setCommitmentMenuVisible(true)} variant="secondary" />
+            <Button icon={<EntityIcon entity="dailyPlan" />} label="Calendarizar planes" onPress={() => setPlanMenuVisible(true)} variant="secondary" />
+            <Button label="Ver registro de compromisos" onPress={() => router.push("/calendar/registry" as Href)} variant="secondary" />
           </View>
           <ProgramSectionHeader icon={CalendarDays} subtitle="Los próximos siete días, con o sin plan asignado." title="Planes próximas fechas" />
           <CalendarUpcomingPanels days={upcoming} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
@@ -303,19 +317,6 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         </View>
       </SafeAreaView>
     </ActionSheetModal>
-    <ActionSheetModal onRequestClose={() => setCommitmentMenuVisible(false)} visible={commitmentMenuVisible}>
-      <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
-        <ActionSheetHeader icon={CalendarDays} onClose={() => setCommitmentMenuVisible(false)} title="Calendarizar compromisos" />
-        <View style={styles.progressSheetContent}>
-          <ActionSheetActions>
-            <ActionSheetAction icon={commitmentPresentation.shopping.icon} label={commitmentRegistrationTitle.shopping} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=shopping" as Href); }} />
-            <ActionSheetAction icon={commitmentPresentation.cooking.icon} label={commitmentRegistrationTitle.cooking} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=cooking" as Href); }} />
-            <ActionSheetAction icon={commitmentPresentation.training.icon} label={commitmentRegistrationTitle.training} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=training" as Href); }} />
-            <ActionSheetAction icon={commitmentPresentation.nutritionist.icon} label={commitmentPresentation.nutritionist.label} onPress={() => { setCommitmentMenuVisible(false); router.push("/calendar/commitments?kind=nutritionist" as Href); }} />
-          </ActionSheetActions>
-        </View>
-      </SafeAreaView>
-    </ActionSheetModal>
     <ActionSheetModal onRequestClose={closeProgressMenu} visible={progressMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
         <ActionSheetHeader icon={CalendarDays} onClose={closeProgressMenu} title={progressMenuStage === "date" ? "Ajustar inicio del periodo" : "Progreso"} />
@@ -340,6 +341,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
 
 const styles = StyleSheet.create({
   calendarizeActions: { gap: tokens.spacing.sm },
+  calendarSection: { marginBottom: 12, marginTop: -12, paddingVertical: tokens.spacing.sm },
   content: { gap: tokens.spacing.lg },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 38, width: "13.5%" },
@@ -350,7 +352,9 @@ const styles = StyleSheet.create({
   gridDateToday: { borderColor: tokens.color.success },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
-  gridNumberWithPlan: { color: tokens.color.dailyPlan, fontWeight: "700" },
+  gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
+  gridPlaceholderDate: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: 10, justifyContent: "center", minHeight: 38, opacity: 0.55, width: "13.5%" },
+  gridPlaceholderNumber: { backgroundColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, height: 5, opacity: 0.7, width: 14 },
   monthArrow: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: tokens.spacing.md },
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },

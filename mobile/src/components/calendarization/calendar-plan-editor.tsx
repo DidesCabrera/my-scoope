@@ -6,13 +6,12 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarDay, CalendarDayDetailData, CalendarDayHistoryData, LibraryPageData } from "@/api/types";
+import type { CalendarDayDetailData, CalendarDayHistoryData, LibraryPageData } from "@/api/types";
 import { commitmentDayTitle, commitmentPresentation, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
-import { libraryNutrition } from "@/components/libraries/presentation-adapters";
-import { NutritionEntityCard } from "@/components/nutrition";
-import { PickerCardAction } from "@/components/pickers/picker-card-action";
+import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
+import { DailyPlanPreviewCard } from "@/components/calendarization/daily-plan-preview-card";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Card, Chip, EntityCard, EntityCardAction, InlineNotice, LoadingState, NativeDateTimeField, SearchField } from "@/components/ui";
+import { Button, Card, Chip, EntityCardAction, InlineNotice, LoadingState, NativeDateTimeField, SearchField } from "@/components/ui";
 import { ConfirmationState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 
@@ -24,7 +23,7 @@ function shortDate(value: string): string {
 
 export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onClose, onSelectItem, selectedItem }: {
   apiRequest: ApiRequest;
-  day: CalendarDay;
+  day: CalendarDayDetailData;
   localToday: string;
   onChanged(): Promise<void> | void;
   onClose(): void;
@@ -145,15 +144,7 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
       title="¿Reemplazar el plan de esta fecha?"
     /> : <>
       <SearchField busy={plansLoading} onChangeText={setSearch} onClear={() => setSearch("")} placeholder="Buscar minuta diaria" value={search} />
-      {plans.map((plan) => <NutritionEntityCard
-        actions={<PickerCardAction label="Seleccionar" onPress={() => { setSelectedPlan({ id: plan.id, name: plan.name }); setMode("confirm-assign"); }} subject={plan.name} />}
-        entity="dailyPlan"
-        indicators={plan.indicators}
-        key={plan.id}
-        nutrition={libraryNutrition(plan.nutrition)}
-        subtitle={plan.subtitle}
-        title={plan.name}
-      />)}
+      {plans.map((plan) => <DailyPlanPreviewCard action={{ label: "Seleccionar", onPress: () => { setSelectedPlan({ id: plan.id, name: plan.name }); setMode("confirm-assign"); } }} item={plan} key={plan.id} />)}
       {!plansLoading && !plans.length && !error ? <Text style={styles.helper}>No encontramos minutas diarias.</Text> : null}
     </>}
   </>;
@@ -200,16 +191,16 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
   </>;
   return (<>
     <Text style={styles.sectionTitle}>Programado para este día</Text>
-    {day.has_plan ? <EntityCard
-      actions={<>
-        <EntityCardAction label="Opciones de la minuta diaria" onPress={() => setPlanMenuVisible(true)}><Ellipsis color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
-        {day.id != null ? <EntityCardAction label="Ver detalle de la minuta diaria" onPress={() => router.push(`/program/days/${day.id}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}
-      </>}
-      entity="dailyPlan"
-      eyebrow="MINUTA DIARIA"
-      headingLink={day.id != null ? { label: "Ver detalle de la minuta diaria", onPress: () => router.push(`/program/days/${day.id}` as Href) } : undefined}
-      subtitle={day.source_program_name ?? undefined}
-      title={day.plan_name}
+    {day.has_plan && day.plan_snapshot ? <CalendarizedDailyPlanCard
+      additionalActions={<EntityCardAction label="Opciones de la minuta diaria" onPress={() => setPlanMenuVisible(true)}><Ellipsis color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>}
+      apiRequest={apiRequest}
+      dateLabel={shortDate(day.calendar_date)}
+      dayId={day.id}
+      eyebrow={day.source_program_name ?? "PLAN DE CALENDARIO"}
+      mealExecution={day.meal_execution}
+      onChanged={onChanged}
+      planName={day.plan_name}
+      snapshot={day.plan_snapshot}
     /> : null}
     <ActionSheetModal onRequestClose={() => setPlanMenuVisible(false)} visible={planMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.planMenu}>
@@ -246,23 +237,16 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
       </View>;
     })}
     {!day.has_plan && !day.commitments?.length ? <InlineNotice>No hay planes ni compromisos programados para este día.</InlineNotice> : null}
-    {!day.has_plan ? <Card>
+    {!day.has_plan ? <>
       <Text style={styles.title}>Asignar minuta diaria</Text>
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {locked ? <InlineNotice>{past ? "Los días anteriores no se modifican. Su evidencia permanece en el historial." : "Este día ya tiene cumplimiento registrado y no se puede sustituir ni mover."}</InlineNotice> : (
         <View style={styles.group}>
           <SearchField onChangeText={setSearch} onClear={() => setSearch("")} placeholder="Buscar plan de biblioteca" value={search} />
-          {plans.map((plan) => (
-            <Pressable accessibilityLabel={`Asignar ${plan.name}`} accessibilityRole="button" disabled={busy} key={plan.id} onPress={() => {
-              void assignPlanFromChoice(plan.id, plan.name);
-            }} style={styles.planRow}>
-              <Text style={styles.planName}>{plan.name}</Text>
-              <Text style={styles.planAction}>Elegir</Text>
-            </Pressable>
-          ))}
+          {plans.map((plan) => <DailyPlanPreviewCard action={{ label: "Asignar", onPress: () => { if (!busy) void assignPlanFromChoice(plan.id, plan.name); } }} item={plan} key={plan.id} />)}
         </View>
       )}
-    </Card> : null}
+    </> : null}
     </>
   );
 
@@ -295,9 +279,6 @@ const styles = StyleSheet.create({
   group: { gap: tokens.spacing.md },
   helper: { color: tokens.color.textMuted, fontSize: 13 },
   historyMeta: { color: tokens.color.textMuted, fontSize: 12 },
-  planAction: { color: tokens.color.interactivePrimary, fontSize: 13 },
-  planName: { color: tokens.color.textMain, flex: 1, fontSize: 15 },
-  planRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
   planMenu: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   planMenuContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sectionTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "700" },

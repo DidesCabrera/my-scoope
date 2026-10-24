@@ -1,5 +1,6 @@
 import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
+import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { useState } from "react";
 
@@ -17,6 +18,7 @@ import { ContextualLibraryActions } from "@/components/libraries/contextual-libr
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
 type Props = {
+  additionalActions?: ReactNode;
   dayId: number | null;
   dateLabel: string;
   eyebrow: string;
@@ -30,7 +32,7 @@ type Props = {
   onChanged(): Promise<void> | void;
 };
 
-export function CalendarizedDailyPlanCard({ apiRequest, dayId, dateLabel, editing, eyebrow, mealExecution = [], onAddMeal, onChangeMealTime, onChanged, planName, snapshot }: Props) {
+export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId, dateLabel, editing, eyebrow, mealExecution = [], onAddMeal, onChangeMealTime, onChanged, planName, snapshot }: Props) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const meals = snapshot.meals ?? [];
@@ -50,7 +52,7 @@ export function CalendarizedDailyPlanCard({ apiRequest, dayId, dateLabel, editin
   const sourceDailyPlanId = snapshot.source?.dailyplan_id;
   return (<>
     <NutritionEntityCard
-      actions={<>{sourceDailyPlanId ? <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={sourceDailyPlanId} name={snapshot.name ?? planName ?? "Minuta diaria"} onChanged={onChanged} /> : null}{openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}</>}
+      actions={<>{additionalActions}{sourceDailyPlanId ? <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={sourceDailyPlanId} name={snapshot.name ?? planName ?? "Minuta diaria"} onChanged={onChanged} /> : null}{openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}</>}
       afterNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} mealNutrition={meals.map((meal) => ({ calories: snapshotCalories(meal.totals), carbsGrams: meal.totals?.carbs_g ?? 0, fatGrams: meal.totals?.fat_g ?? 0, key: meal.key, proteinGrams: meal.totals?.protein_g ?? 0 }))} />}
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       entity="dailyPlan"

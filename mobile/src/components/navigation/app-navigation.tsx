@@ -55,7 +55,7 @@ type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "cl
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
-  | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; title: string }
+  | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
 
@@ -143,7 +143,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente Nutricional" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: pathname === "/proposals" ? Sparkles : ClipboardCheck, title: pathname === "/proposals" ? "Asistente Nutricional" : "Detalle de propuesta" };
   if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparaciones" };
-  if (pathname.startsWith("/calendar")) return { icon: CalendarClock, title: pathname === "/calendar" ? "Calendario" : pathname.startsWith("/calendar/commitments") ? "Registrar compromisos" : pathname === "/calendar/future" ? "Planes próximas fechas" : "Detalle de fecha" };
+  if (pathname.startsWith("/calendar")) return { icon: CalendarClock, title: pathname === "/calendar" ? "Calendario" : pathname === "/calendar/registry" ? "Registro de compromisos" : pathname.startsWith("/calendar/commitments") ? "Registrar compromisos" : pathname === "/calendar/future" ? "Planes próximas fechas" : "Detalle de fecha" };
   if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Programa en curso" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
   if (pathname === "/weight") return { icon: Weight, title: "Registrar peso" };
@@ -215,8 +215,18 @@ export function AppNavigationHeader() {
         {headerPresentation.mode === "back" ? <BackHeaderIdentity title={headerPresentation.title} visible={headerPresentation.identityVisible} /> : headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
           <LibraryHeaderIdentity entity={headerPresentation.entity} title={headerPresentation.title} visible={headerPresentation.identityVisible} />
         ) : isHome ? <View pointerEvents="none" style={styles.headerLogo}><MyScoopeBrandLogo compact /></View> : <HeaderIdentity icon={routeIdentity.icon} title={headerPresentation.title || routeIdentity.title} visible={defaultIdentityVisible} />}
-        {headerPresentation.mode === "back" && headerPresentation.action ? (
-          <Pressable
+        {headerPresentation.mode === "back" && (headerPresentation.secondaryAction || headerPresentation.action) ? (
+          <View style={styles.libraryHeaderActions}>
+          {headerPresentation.secondaryAction ? <Pressable
+            accessibilityLabel={headerPresentation.secondaryAction.label}
+            accessibilityRole="button"
+            disabled={headerPresentation.secondaryAction.disabled}
+            hitSlop={8}
+            onPress={headerPresentation.secondaryAction.onPress}
+            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.secondaryAction?.disabled && styles.disabled, pressed && styles.pressed]}>
+            {headerPresentation.secondaryAction.icon === "plus" ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} /> : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.secondaryAction.label}</Text>}
+          </Pressable> : null}
+          {headerPresentation.action ? <Pressable
             accessibilityLabel={headerPresentation.action.label}
             accessibilityRole="button"
             disabled={headerPresentation.action.disabled}
@@ -225,8 +235,11 @@ export function AppNavigationHeader() {
             style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.icon === "more" && styles.backHeaderMenuAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.action.icon === "more"
               ? <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
-              : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
-          </Pressable>
+              : headerPresentation.action.icon === "plus"
+                ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+                : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
+          </Pressable> : null}
+          </View>
         ) : headerPresentation.mode === "library-list" ? (
           <View style={styles.libraryHeaderActions}>
             {headerPresentation.createAction ? (

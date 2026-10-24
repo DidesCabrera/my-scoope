@@ -10,12 +10,14 @@ import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, co
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
 import { calendarFoodDayRole, calendarFoodPeriodDayCount, selectCalendarFoodDate, validCalendarFoodPeriod } from "@/components/calendarization/calendar-food-period";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
+import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { GroupedFoodsCard } from "@/components/panels";
 import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import { Button, Card, InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
 import { Chip } from "@/components/ui/chip";
 import { tokens } from "@/design/tokens";
+import { loadCommitmentReminderSettings, syncCommitmentReminders } from "@/notifications/commitment-reminders";
 
 function isCommitmentKind(value: string | undefined): value is CalendarCommitmentKind {
   return value === "shopping" || value === "cooking" || value === "training" || value === "nutritionist";
@@ -41,6 +43,7 @@ export default function RegisterCommitmentsScreen() {
   const kind = isCommitmentKind(requestedKind) ? requestedKind : null;
   const setHeaderPresentation = useHeaderPresentation();
   const { apiRequest, status } = useSession();
+  const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const [localToday, setLocalToday] = useState<string | null>(null);
   const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
   const [monthOverview, setMonthOverview] = useState<CalendarOverviewData | null>(null);
@@ -85,13 +88,12 @@ export default function RegisterCommitmentsScreen() {
   useEffect(() => {
     if (status !== "authenticated" || !visibleMonth) return;
     let active = true;
-    const window = monthWindow(visibleMonth);
-    void apiRequest<CalendarOverviewData>(`/api/v1/calendar?start_date=${window.startDate}&days=${window.days}`)
-      .then((result) => { if (active) setMonthOverview(result); })
+    void monthCache.load(visibleMonth)
+      .then((result) => { if (active) { setMonthOverview(result); monthCache.prefetchAdjacent(visibleMonth); } })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [apiRequest, status, visibleMonth]);
+  }, [monthCache, status, visibleMonth]);
 
   useEffect(() => {
     if (status !== "authenticated" || !editingFoodDate || !foodMonth || foodMonth === visibleMonth && monthOverview?.start_date === monthWindow(foodMonth).startDate) return;
@@ -255,10 +257,12 @@ export default function RegisterCommitmentsScreen() {
 
   function changeMonth(delta: number) {
     if (!visibleMonth) return;
-    setLoading(true);
+    const nextMonth = shiftMonth(visibleMonth, delta);
+    const cached = monthCache.get(nextMonth);
+    setLoading(!cached);
     setError(null);
-    setMonthOverview(null);
-    setVisibleMonth(shiftMonth(visibleMonth, delta));
+    if (cached) setMonthOverview(cached);
+    setVisibleMonth(nextMonth);
   }
 
   async function register() {
@@ -276,7 +280,9 @@ export default function RegisterCommitmentsScreen() {
             : []),
         }),
       });
-      router.replace("/calendar" as Href);
+      monthCache.invalidate(new Set(selected.map(monthKeyFromDate)));
+      void loadCommitmentReminderSettings().then((reminderSettings) => syncCommitmentReminders(reminderSettings, apiRequest)).catch(() => undefined);
+      router.replace("/calendar/registry" as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -349,7 +355,7 @@ export default function RegisterCommitmentsScreen() {
   return <Screen contentStyle={styles.content} headerMode="preserve" key="commitment-registration">
     <SectionPageHeader countLabel="fechas" icon={pageIcon} section="calendarization" subtitle="Marca varios días; puedes cambiar de mes sin perder tu selección." title={commitmentRegistrationTitle[kind]} />
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    <Card>
+    <View style={styles.calendarSection}>
       <View style={styles.monthNavigation}>
         <Pressable accessibilityLabel="Mes anterior" accessibilityRole="button" accessibilityState={{ disabled: !visibleMonth || !localToday || visibleMonth <= monthKeyFromDate(localToday) }} disabled={!visibleMonth || !localToday || visibleMonth <= monthKeyFromDate(localToday)} onPress={() => changeMonth(-1)} style={styles.monthArrow}>
           <ChevronLeft color={tokens.color.textMain} size={20} />
@@ -380,7 +386,7 @@ export default function RegisterCommitmentsScreen() {
         })}
       </View>
       <Text style={styles.legend}>Los días con un punto ya tienen este compromiso registrado.</Text>
-    </Card>
+    </View>
     <View style={styles.selectedDatesSection}>
       <Text style={styles.sectionTitle}>Días comprometidos · {selected.length}</Text>
       {selected.length ? selected.map((date) => <View key={date} style={[styles.selectedDateCard, { borderTopColor: presentation.color }]}>
@@ -416,6 +422,7 @@ export default function RegisterCommitmentsScreen() {
 }
 
 const styles = StyleSheet.create({
+  calendarSection: { paddingVertical: tokens.spacing.sm },
   content: { gap: tokens.spacing.lg },
   selectedDateIcon: { alignItems: "center", borderRadius: 6, height: 23, justifyContent: "center", width: 23 },
   commitmentDots: { bottom: 3, flexDirection: "row", gap: 2, position: "absolute" },

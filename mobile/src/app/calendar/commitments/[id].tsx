@@ -10,6 +10,7 @@ import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, co
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
 import { calendarFoodDayRole, selectCalendarFoodDate, validCalendarFoodPeriod } from "@/components/calendarization/calendar-food-period";
 import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
+import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { GroupedFoodsCard } from "@/components/panels";
 import { Button, Card, Chip, InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
@@ -23,6 +24,7 @@ export default function CalendarCommitmentDetailScreen() {
   const { id, date } = useLocalSearchParams<{ id: string; date: string }>();
   const router = useRouter();
   const { apiRequest, status } = useSession();
+  const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const setHeaderPresentation = useHeaderPresentation();
   const [commitment, setCommitment] = useState<CalendarCommitment | null>(null);
   const [month, setMonth] = useState<string | null>(null);
@@ -67,12 +69,19 @@ export default function CalendarCommitmentDetailScreen() {
   useEffect(() => {
     if (status !== "authenticated" || !month) return;
     let active = true;
-    const window = monthWindow(month);
-    void apiRequest<CalendarOverviewData>(`/api/v1/calendar?start_date=${window.startDate}&days=${window.days}`)
-      .then((result) => { if (active) setMonthOverview(result); })
+    void monthCache.load(month)
+      .then((result) => { if (active) { setMonthOverview(result); monthCache.prefetchAdjacent(month); } })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); });
     return () => { active = false; };
-  }, [apiRequest, month, status]);
+  }, [month, monthCache, status]);
+
+  function changeMonth(delta: number) {
+    if (!month) return;
+    const nextMonth = shiftMonth(month, delta);
+    const cached = monthCache.get(nextMonth);
+    if (cached) setMonthOverview(cached);
+    setMonth(nextMonth);
+  }
 
   const monthDates = useMemo(() => {
     if (!month) return [];
@@ -133,9 +142,9 @@ export default function CalendarCommitmentDetailScreen() {
     {commitmentSupportsFoods(commitment.kind) ? <View style={styles.foodPeriodControls}>
       <Text style={styles.foodInstruction}>Selecciona una fecha de inicio y de término.</Text>
       <View style={styles.monthNavigation}>
-        <Pressable accessibilityLabel="Mes anterior del periodo" accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} onPress={() => { if (month) setMonth(shiftMonth(month, -1)); }} style={styles.monthArrow}><ChevronLeft color={tokens.color.textMain} size={20} /></Pressable>
+        <Pressable accessibilityLabel="Mes anterior del periodo" accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} onPress={() => changeMonth(-1)} style={styles.monthArrow}><ChevronLeft color={tokens.color.textMain} size={20} /></Pressable>
         <Text accessibilityRole="header" style={styles.monthTitle}>{month ? monthLabel(month) : ""}</Text>
-        <Pressable accessibilityLabel="Mes siguiente del periodo" accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} onPress={() => { if (month) setMonth(shiftMonth(month, 1)); }} style={styles.monthArrow}><ChevronRight color={tokens.color.textMain} size={20} /></Pressable>
+        <Pressable accessibilityLabel="Mes siguiente del periodo" accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} onPress={() => changeMonth(1)} style={styles.monthArrow}><ChevronRight color={tokens.color.textMain} size={20} /></Pressable>
       </View>
       <View style={styles.grid}>
         {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
