@@ -7,6 +7,7 @@ import { assertSourceDoesNotMatch, assertSourceMatch, readTestFile } from "./sup
 test("legal policies live in disclosures instead of the account action sheet", async () => {
   const account = await readTestFile(path.resolve(process.cwd(), "src/app/account.tsx"), "utf8");
   const disclosures = await readTestFile(path.resolve(process.cwd(), "src/app/disclosures.tsx"), "utf8");
+  const disclosureContent = await readTestFile(path.resolve(process.cwd(), "src/components/disclosures/responsible-use-content.tsx"), "utf8");
 
   for (const source of [disclosures]) {
     assertSourceMatch(source, /\/privacy\//);
@@ -14,6 +15,10 @@ test("legal policies live in disclosures instead of the account action sheet", a
     assertSourceMatch(source, /\/refund-policy\//);
     assertSourceMatch(source, /source=mobile-onboarding/);
   }
+  assertSourceMatch(disclosures, /ResponsibleUsePolicyLink/);
+  assertSourceDoesNotMatch(disclosures, /<Button label="Leer política/);
+  assertSourceMatch(disclosureContent, /accessibilityRole="link"/);
+  assertSourceMatch(disclosureContent, /color: "#0A84FF"/);
   assertSourceDoesNotMatch(account, /Política de privacidad|Términos de uso|Cancelaciones y reembolsos/);
   assertSourceMatch(account, /\/support\//);
 });

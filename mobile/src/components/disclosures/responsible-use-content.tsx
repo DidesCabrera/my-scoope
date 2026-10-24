@@ -47,6 +47,19 @@ export function ResponsibleUseContent({ policyActions }: { policyActions?: React
   );
 }
 
+export function ResponsibleUsePolicyLink({ label, onPress }: { label: string; onPress(): void }) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="link"
+      hitSlop={6}
+      onPress={onPress}
+      style={({ pressed }) => [styles.policyLink, pressed && styles.policyLinkPressed]}>
+      <Text style={styles.policyLinkLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export function ResponsibleUseActionButton({ disabled = false, label = "Entiendo y quiero continuar", loading = false, onPress }: { disabled?: boolean; label?: string; loading?: boolean; onPress(): void }) {
   return (
     <Pressable accessibilityLabel={label} accessibilityRole="button" accessibilityState={{ busy: loading, disabled: disabled || loading }} disabled={disabled || loading} onPress={onPress} style={[styles.actionButton, (disabled || loading) && styles.actionDisabled]}>
@@ -78,6 +91,9 @@ const styles = StyleSheet.create({
   panelTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
   panelBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
   panelBodyWithActions: { marginBottom: tokens.spacing.sm },
+  policyLink: { alignItems: "center", justifyContent: "center", minHeight: 44, paddingHorizontal: tokens.spacing.sm },
+  policyLinkPressed: { opacity: 0.62 },
+  policyLinkLabel: { color: "#0A84FF", fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, textAlign: "center" },
   actionButton: { alignItems: "center", borderRadius: tokens.radius.lg, justifyContent: "center", minHeight: 48, overflow: "hidden", paddingHorizontal: tokens.spacing.lg },
   actionDisabled: { opacity: 0.55 },
   actionLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold },

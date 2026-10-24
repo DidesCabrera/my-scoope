@@ -22,6 +22,7 @@ import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-nativ
 import { DailyPlanMealDetailList, type DailyPlanMealDetailItem, EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
+import { ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
 import { NutritionEntityCard, NutritionKpiSection } from "@/components/nutrition";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { ProgramActiveKpis } from "@/components/programs";
@@ -474,13 +475,14 @@ function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: {
   );
 }
 
-function ExplanationCard({ icon: IconComponent, title, body }: { body: string; icon: Icon; title: string }) {
+function ExplanationCard({ body, children, icon: IconComponent, title }: { body: string; children?: ReactNode; icon: Icon; title: string }) {
   return (
     <View style={styles.explanationCard}>
       <View style={styles.explanationIcon}><IconComponent color={tokens.color.entityIconForeground} size={18} /></View>
       <View style={styles.explanationCopy}>
         <Text style={styles.explanationTitle}>{title}</Text>
         <Text style={styles.explanationBody}>{body}</Text>
+        {children}
       </View>
     </View>
   );
@@ -694,7 +696,13 @@ function DisclosuresView({ index }: { index: number }) {
       <View style={styles.noticeStack}>
         <ExplanationCard body="No diagnostica, trata ni reemplaza atención profesional." icon={HeartPulse} title="No es atención médica" />
         {!hideCalculationReviewDisclosure ? <ExplanationCard body="Los cálculos y propuestas deben revisarse antes de usarse." icon={Eye} title="Revisa antes de aplicar" /> : null}
-        <ExplanationCard body="Tú decides qué datos compartes y puedes eliminar tu cuenta." icon={LockKeyhole} title="Privacidad y control" />
+        <ExplanationCard body="Tú decides qué datos compartes y puedes eliminar tu cuenta." icon={LockKeyhole} title="Privacidad y control">
+          <View style={styles.disclosurePolicyLinks}>
+            <ResponsibleUsePolicyLink label="Leer política de privacidad" onPress={noop} />
+            <ResponsibleUsePolicyLink label="Leer términos de uso" onPress={noop} />
+            <ResponsibleUsePolicyLink label="Leer política de reembolsos" onPress={noop} />
+          </View>
+        </ExplanationCard>
       </View>
       <InlineNotice>Al continuar confirmas que comprendes estos límites. Podrás consultar las políticas completas cuando quieras.</InlineNotice>
     </DisclosuresStepLayout>
@@ -1321,6 +1329,7 @@ const styles = StyleSheet.create({
   explanationCopy: { flex: 1, gap: 2 },
   explanationTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   explanationBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
+  disclosurePolicyLinks: { marginTop: tokens.spacing.sm },
   loginHero: { alignItems: "center", gap: tokens.spacing.md, marginTop: -12 },
   loginDescription: { color: tokens.color.textMain, marginBottom: 22, marginTop: -10 },
   loginAction: { width: "100%" },

@@ -6,8 +6,8 @@ import { StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { ProfileData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { ResponsibleUseActionButton, ResponsibleUseContent } from "@/components/disclosures/responsible-use-content";
-import { Button, InlineNotice, Screen, textStyles } from "@/components/ui";
+import { ResponsibleUseActionButton, ResponsibleUseContent, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
+import { InlineNotice, Screen, textStyles } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
@@ -52,9 +52,9 @@ export default function DisclosuresScreen() {
   return (
     <Screen>
       <ResponsibleUseContent policyActions={<View style={styles.policyActions}>
-        <Button label="Leer política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/?${onboardingLegalSource}`)} variant="secondary" />
-        <Button label="Leer términos de uso" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/terms/?${onboardingLegalSource}`)} variant="secondary" />
-        <Button label="Leer política de reembolsos" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/refund-policy/?${onboardingLegalSource}`)} variant="secondary" />
+        <ResponsibleUsePolicyLink label="Leer política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/?${onboardingLegalSource}`)} />
+        <ResponsibleUsePolicyLink label="Leer términos de uso" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/terms/?${onboardingLegalSource}`)} />
+        <ResponsibleUsePolicyLink label="Leer política de reembolsos" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/refund-policy/?${onboardingLegalSource}`)} />
       </View>} />
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       <ResponsibleUseActionButton loading={busy} onPress={accept} />

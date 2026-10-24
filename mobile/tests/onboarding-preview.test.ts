@@ -120,6 +120,9 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.includes('<Text style={styles.descriptionEmphasis}>sistema de créditos</Text>'));
   assert.ok(journey.includes('<Text style={styles.descriptionEmphasis}>No tener créditos jamás limitará la gestión sobre tu librería.</Text>'));
   assert.ok(journey.includes("styles.assistanceCreditDescription"));
+  assert.ok(journey.includes('<ResponsibleUsePolicyLink label="Leer política de privacidad" onPress={noop} />'));
+  assert.ok(journey.includes('<ResponsibleUsePolicyLink label="Leer términos de uso" onPress={noop} />'));
+  assert.ok(journey.includes('<ResponsibleUsePolicyLink label="Leer política de reembolsos" onPress={noop} />'));
   assert.ok(journey.includes('index={13} showProgress={false} title="Tu primera minuta diaria"'));
   assert.ok(journey.includes('<ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} showNutrition={false} />'));
   assert.ok(!preview.includes("apiRequest"));
