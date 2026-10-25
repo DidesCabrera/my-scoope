@@ -5,6 +5,7 @@ set -euo pipefail
 # separately after provider-side and collection tests have passed.
 python manage.py migrate --noinput
 python manage.py seed_meal_catalog --apply
+python manage.py seed_dailyplan_catalog --apply
 python manage.py seed_billing_catalog
 python manage.py configure_paddle_catalog \
   --environment sandbox \

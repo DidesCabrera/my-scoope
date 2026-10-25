@@ -94,6 +94,7 @@ MODEL_RETENTION_POLICY = {
     "notas.CalendarizationReview": RetentionAction.FOLLOW_PARENT,
     "notas.CalendarizationRevision": RetentionAction.FOLLOW_PARENT,
     "notas.DailyPlan": RetentionAction.ERASE,
+    "notas.DailyPlanCatalogEntry": RetentionAction.FOLLOW_PARENT,
     "notas.DailyPlanMeal": RetentionAction.FOLLOW_PARENT,
     "notas.DailyPlanMealShare": RetentionAction.ERASE,
     "notas.DailyPlanShare": RetentionAction.ERASE,

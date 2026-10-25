@@ -15,8 +15,12 @@ class LibraryProjectionPerformanceTests(PaidMobileAPITestCase):
             meal = Meal.objects.create(name=f"Comida {index}", created_by=self.user, is_draft=False)
             MealFood.objects.create(meal=meal, food=food, quantity=100)
 
-        with CaptureQueriesContext(connection) as queries:
-            payload = library_meals_payload(self.user, limit=12, include_actions=False)
+        for limit in (1, 12):
+            with self.subTest(limit=limit):
+                with CaptureQueriesContext(connection) as queries:
+                    payload = library_meals_payload(self.user, limit=limit, include_actions=False)
 
-        self.assertEqual(len(payload["items"]), 12)
-        self.assertLessEqual(len(queries), 5)
+                self.assertEqual(len(payload["items"]), limit)
+                self.assertEqual(payload["total"], 12)
+                # Weight, count, page and three fixed prefetches (meal foods, names, portions).
+                self.assertLessEqual(len(queries), 6)

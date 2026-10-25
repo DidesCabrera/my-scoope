@@ -58,7 +58,7 @@ type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
   | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
-  | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string };
+  | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; secondaryAction?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
   closeMenu(): void;

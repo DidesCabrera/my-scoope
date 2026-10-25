@@ -24,7 +24,7 @@ test("the getting-started journey teaches the meal to minuta to assignment seque
   assertSourceMatch(journey, /Agrega comidas recurrentes[\s\S]*Define minutas recurrentes[\s\S]*Asigna tus minutas/);
   assertSourceMatch(journey, /label: "Explorar comidas"[\s\S]*router\.push\("\/explore\/meals" as Href\)/);
   assertSourceMatch(journey, /label: "Crear desde cero"[\s\S]*entity: "meal"/);
-  assertSourceMatch(journey, /label: "Explorar minutas"[\s\S]*router\.push\("\/libraries\/daily-plans" as Href\)/);
+  assertSourceMatch(journey, /label: "Explorar minutas"[\s\S]*router\.push\("\/explore\/daily-plans" as Href\)/);
   assertSourceMatch(journey, /label: "Armar con mis comidas"[\s\S]*entity: "dailyPlan"/);
   assertSourceMatch(journey, /label: "Agregar al calendario"[\s\S]*router\.push\("\/calendar" as Href\)/);
   assertSourceMatch(journey, /label: "Construir un programa"[\s\S]*entity: "program"/);

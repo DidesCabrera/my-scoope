@@ -4597,6 +4597,325 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "ExploreDailyPlanItemData": {
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryActionData"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "can_calendarize": {
+            "default": false,
+            "title": "Can Calendarize",
+            "type": "boolean"
+          },
+          "catalog_id": {
+            "title": "Catalog Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "creator": {
+            "title": "Creator",
+            "type": "string"
+          },
+          "default_portion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Portion"
+          },
+          "dietary_style": {
+            "enum": [
+              "omnivore",
+              "pescatarian",
+              "vegetarian",
+              "vegan"
+            ],
+            "title": "Dietary Style",
+            "type": "string"
+          },
+          "dietary_style_label": {
+            "title": "Dietary Style Label",
+            "type": "string"
+          },
+          "emoji": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emoji"
+          },
+          "entity": {
+            "enum": [
+              "food",
+              "meal",
+              "dailyPlan",
+              "program"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "food_nutrition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoodNutritionFactsData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "is_draft": {
+            "default": false,
+            "title": "Is Draft",
+            "type": "boolean"
+          },
+          "is_saved": {
+            "title": "Is Saved",
+            "type": "boolean"
+          },
+          "label_capture_receipt_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Capture Receipt Id"
+          },
+          "label_image_available": {
+            "default": false,
+            "title": "Label Image Available",
+            "type": "boolean"
+          },
+          "meal_count": {
+            "title": "Meal Count",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "g",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
+          },
+          "subtitle": {
+            "title": "Subtitle",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "visual_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Key"
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "name",
+          "subtitle",
+          "nutrition",
+          "indicators",
+          "panel",
+          "creator",
+          "created_at",
+          "catalog_id",
+          "summary",
+          "dietary_style",
+          "dietary_style_label",
+          "meal_count",
+          "is_saved"
+        ],
+        "title": "ExploreDailyPlanItemData",
+        "type": "object"
+      },
+      "ExploreDailyPlanItemEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ExploreDailyPlanItemData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ExploreDailyPlanItemEnvelope",
+        "type": "object"
+      },
+      "ExploreDailyPlanPageData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExploreDailyPlanItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "ExploreDailyPlanPageData",
+        "type": "object"
+      },
+      "ExploreDailyPlanPageEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ExploreDailyPlanPageData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ExploreDailyPlanPageEnvelope",
+        "type": "object"
+      },
+      "ExploreDailyPlanSaveResultData": {
+        "properties": {
+          "already_saved": {
+            "title": "Already Saved",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "saved_dailyplan_id": {
+            "title": "Saved Dailyplan Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "saved_dailyplan_id",
+          "already_saved",
+          "message"
+        ],
+        "title": "ExploreDailyPlanSaveResultData",
+        "type": "object"
+      },
+      "ExploreDailyPlanSaveResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ExploreDailyPlanSaveResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ExploreDailyPlanSaveResultEnvelope",
+        "type": "object"
+      },
       "ExploreMealItemData": {
         "properties": {
           "actions": {
@@ -14042,6 +14361,247 @@
           }
         ],
         "summary": "Entitlements"
+      }
+    },
+    "/api/v1/explore/daily-plans": {
+      "get": {
+        "operationId": "mobile_api_api_explore_dailyplans",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dietary_style",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dietary Style"
+            }
+          },
+          {
+            "in": "query",
+            "name": "meal_count",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Meal Count"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreDailyPlanPageEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Explore Dailyplans"
+      }
+    },
+    "/api/v1/explore/daily-plans/{catalog_id}": {
+      "get": {
+        "operationId": "mobile_api_api_explore_dailyplan_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "catalog_id",
+            "required": true,
+            "schema": {
+              "title": "Catalog Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreDailyPlanItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Explore Dailyplan Detail"
+      }
+    },
+    "/api/v1/explore/daily-plans/{catalog_id}/save": {
+      "post": {
+        "operationId": "mobile_api_api_save_explore_dailyplan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "catalog_id",
+            "required": true,
+            "schema": {
+              "title": "Catalog Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreDailyPlanSaveResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Save Explore Dailyplan"
       }
     },
     "/api/v1/explore/meals": {

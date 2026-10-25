@@ -1,4 +1,4 @@
-import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
@@ -214,6 +214,9 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           ? { icon: "more", label: `Acciones de ${title}`, onPress: () => setActionsVisible(true) }
           : { disabled: loading || submitting, label: "Listo", onPress: finishEdit },
         createAction: mode === "list" ? { label: createLabels[entity], onPress: () => router.push({ pathname: "/libraries/create", params: { entity } }) } : undefined,
+        secondaryAction: mode === "list" && (entity === "meal" || entity === "dailyPlan")
+          ? { icon: "search", label: entity === "meal" ? "Explorar comidas" : "Explorar minutas", onPress: () => router.push((entity === "meal" ? "/explore/meals" : "/explore/daily-plans") as Href) }
+          : undefined,
         entity,
         identityVisible: compactHeaderVisible,
         secondaryAction: mode === "list" && entity === "meal" ? { icon: "search", label: "Explorar comidas", onPress: () => router.push("/explore/meals") } : undefined,
