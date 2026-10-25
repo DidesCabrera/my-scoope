@@ -65,8 +65,13 @@ terminating another chat's processes.
    - for an explicitly required local backend, run the already configured Django
      server from the staging checkout and use
      `npm run start:local -- --port <port>` from the feature checkout.
-4. Connect the development client to that Metro port. Prefer the existing client;
-   do not rebuild it for JavaScript, TypeScript, styles, copy, or bundled assets.
+4. Connect the existing development client directly to that Metro port with:
+
+   ```bash
+   xcrun simctl openurl booted "exp+my-scoope://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A<port>"
+   ```
+
+   Do not rebuild it for JavaScript, TypeScript, styles, copy, or bundled assets.
 5. Open the known route. Retry once after a reload if Fast Refresh left stale
    state. Then capture the result and stop.
 
