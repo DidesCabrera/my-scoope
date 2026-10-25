@@ -17,6 +17,7 @@ export function ExploreMealDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
 
   const load = useCallback(async () => {
@@ -36,9 +37,9 @@ export function ExploreMealDetailScreen() {
   }, [load, status]));
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: "/explore/meals" as Href, identityVisible: false, mode: "back", title: item?.name ?? "Explorar comida" });
+    setHeaderPresentation({ fallback: "/explore/meals" as Href, identityVisible: compactHeaderVisible, mode: "back", title: item?.name ?? "Explorar comida" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [item?.name, setHeaderPresentation]));
+  }, [compactHeaderVisible, item?.name, setHeaderPresentation]));
 
   const saveToLibrary = async () => {
     if (!item || item.is_saved || saving) return;
@@ -62,7 +63,7 @@ export function ExploreMealDetailScreen() {
 
   return (
     <>
-      <Screen headerMode="preserve">
+      <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
         <SectionPageHeader countLabel="comida" section="explore" subtitle="Revisa sus alimentos y guárdala como una copia editable en tu biblioteca." title={item?.name ?? "Explorar comida"} />
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         {item ? <LibraryCard apiRequest={apiRequest} interactive={false} item={item} navigable={false} onChanged={() => undefined} onSaveToLibrary={saveToLibrary} savedToLibrary={item.is_saved} savingToLibrary={saving} /> : null}

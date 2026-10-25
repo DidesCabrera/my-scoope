@@ -42,6 +42,7 @@ export function ExploreMealsScreen() {
   const [savingCatalogId, setSavingCatalogId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
 
   const load = useCallback(async () => {
@@ -65,9 +66,9 @@ export function ExploreMealsScreen() {
   }, [load, status]));
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: "/today" as Href, identityVisible: false, mode: "back", title: "Explorar comidas" });
+    setHeaderPresentation({ fallback: "/today" as Href, identityVisible: compactHeaderVisible, mode: "back", title: "Explorar comidas" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [setHeaderPresentation]));
+  }, [compactHeaderVisible, setHeaderPresentation]));
 
   const saveToLibrary = async (item: ExploreMealItem) => {
     if (item.is_saved || savingCatalogId != null) return;
@@ -97,6 +98,7 @@ export function ExploreMealsScreen() {
     <>
       <Screen
         headerMode="preserve"
+        onHeaderVisibilityChange={setCompactHeaderVisible}
         scrollHeader={<SectionPageHeader count={page?.total} countLabel="comidas disponibles" section="explore" subtitle="Comidas seleccionadas por My Scoope para distintas ocasiones y estilos de alimentación." title="Explorar comidas" />}
         stickyHeader={<View style={styles.filters}>
           <SearchField accessibilityLabel="Buscar comidas para explorar" autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); }} onSubmitEditing={() => setSubmittedQuery(query.trim())} placeholder="Buscar por nombre o descripción" returnKeyType="search" value={query} />

@@ -37,6 +37,7 @@ export function ExploreDailyPlansScreen() {
   const [savingCatalogId, setSavingCatalogId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
 
   const load = useCallback(async () => {
@@ -59,9 +60,9 @@ export function ExploreDailyPlansScreen() {
     if (status === "authenticated") void load();
   }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: "/libraries/daily-plans" as Href, identityVisible: false, mode: "back", title: "Explorar minutas" });
+    setHeaderPresentation({ fallback: "/libraries/daily-plans" as Href, identityVisible: compactHeaderVisible, mode: "back", title: "Explorar minutas" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [setHeaderPresentation]));
+  }, [compactHeaderVisible, setHeaderPresentation]));
 
   const saveToLibrary = async (item: ExploreDailyPlanItem) => {
     if (item.is_saved || savingCatalogId != null) return;
@@ -91,6 +92,7 @@ export function ExploreDailyPlansScreen() {
     <>
       <Screen
         headerMode="preserve"
+        onHeaderVisibilityChange={setCompactHeaderVisible}
         scrollHeader={<SectionPageHeader count={page?.total} countLabel="minutas disponibles" section="explore" subtitle="Minutas diarias seleccionadas por My Scoope para distintos estilos y cantidades de comidas." title="Explorar minutas" />}
         stickyHeader={<View style={styles.filters}>
           <SearchField accessibilityLabel="Buscar minutas para explorar" autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); }} onSubmitEditing={() => setSubmittedQuery(query.trim())} placeholder="Buscar por nombre o descripción" returnKeyType="search" value={query} />
