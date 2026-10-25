@@ -1206,10 +1206,9 @@ test("the onboarding gallery exposes every visual journey view without product s
     assertSourceDoesNotMatch(section, /<Card accent=/);
   }
   const welcomeView = journey.match(/function ValueView[\s\S]*?function StructureView/)?.[0] ?? "";
-  assertSourceMatch(welcomeView, /title="Bienvenido a My Scoope!"/);
-  assertSourceMatch(welcomeView, /Nos alegra tenerte por aquí/);
-  assertSourceMatch(welcomeView, /Queremos ayudarte a cumplir a conseguir los resultados que desees, apoyándote en el camino/);
-  assertSourceMatch(welcomeView, /Decidir enfrentar este desafío con convicción/);
+  assertSourceMatch(welcomeView, /title="No improvises, Planifica\."/);
+  assertSourceMatch(welcomeView, /Arma minutas con tus comidas recurrentes, calendarízalas y sigue tu programación\./);
+  assertSourceDoesNotMatch(welcomeView, /Bienvenido a My Scoope|Nos alegra tenerte por aquí/);
   assertSourceDoesNotMatch(welcomeView, /<ExplanationCard/);
   assertSourceMatch(journey, /explanationSteps\.map\(\(step, dotIndex\) =>/);
   assertSourceMatch(journey, /id="onboarding-credit-gradient"/);
