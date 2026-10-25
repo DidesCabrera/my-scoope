@@ -12,7 +12,7 @@ test("Home guides people without a minuta even when they have a calendarization 
   assertSourceDoesNotMatch(home, /Programa en curso/);
   assertSourceMatch(home, /\) : showGettingStarted \? \(\s*<HomeGettingStarted compactTop=\{Boolean\(planContext \|\| todayCommitments\.length\)\} \/>\s*\) : today\?\.calendarization \? \(/);
   assertSourceMatch(home, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}[\s\S]*?showGettingStarted \? \([\s\S]*?<HomeGettingStarted compactTop=/);
-  assertSourceMatch(home, /!showGettingStarted && calendarProgress/);
+  assertSourceMatch(home, /\{calendarProgress \? <View style=\{styles\.homeProgressSection\}>/);
   assertSourceMatch(home, /!showGettingStarted && today \? <>[\s\S]*?<TodayCommitmentsSectionHeader \/>/);
   assertSourceMatch(home, /<HomeLibraryGrid counts=\{libraryCounts\} \/>[\s\S]*?Accesos rápidos/);
 });

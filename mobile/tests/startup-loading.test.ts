@@ -14,5 +14,5 @@ test("startup keeps the native splash through session restoration and leaves one
   assertSourceMatch(index, /status === "booting"\) return null/);
   assertSourceDoesNotMatch(index, /LoadingState/);
   assertSourceMatch(today, /if \(loading && !today\) return <>\s*<Stack\.Screen options=\{\{ animation: "none", headerShown: false \}\} \/>\s*<LoadingState headerVisible=\{false\} \/>\s*<\/>/);
-  assertSourceMatch(today, /<Stack\.Screen options=\{\{ headerShown: true \}\} \/>\s*<Screen headerMode="preserve">/);
+  assertSourceMatch(today, /<Stack\.Screen options=\{\{ headerShown: true \}\} \/>\s*<Screen headerMode="preserve" scrollToTopSignal=\{scrollToTopSignal\}>/);
 });
