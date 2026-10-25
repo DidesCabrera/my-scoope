@@ -17,6 +17,7 @@ export function ExploreDailyPlanDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
 
   const load = useCallback(async () => {
@@ -35,9 +36,9 @@ export function ExploreDailyPlanDetailScreen() {
     if (status === "authenticated") void load();
   }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: "/explore/daily-plans" as Href, identityVisible: false, mode: "back", title: item?.name ?? "Explorar minuta" });
+    setHeaderPresentation({ fallback: "/explore/daily-plans" as Href, identityVisible: compactHeaderVisible, mode: "back", title: item?.name ?? "Explorar minuta" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [item?.name, setHeaderPresentation]));
+  }, [compactHeaderVisible, item?.name, setHeaderPresentation]));
 
   const saveToLibrary = async () => {
     if (!item || item.is_saved || saving) return;
@@ -61,7 +62,7 @@ export function ExploreDailyPlanDetailScreen() {
 
   return (
     <>
-      <Screen headerMode="preserve">
+      <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
         <SectionPageHeader countLabel="minuta" section="explore" subtitle="Revisa sus comidas y guárdala como una copia editable en tu biblioteca." title={item?.name ?? "Explorar minuta"} />
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         {item ? <LibraryCard apiRequest={apiRequest} interactive={false} item={item} navigable={false} onChanged={() => undefined} onSaveToLibrary={saveToLibrary} savedToLibrary={item.is_saved} savingToLibrary={saving} /> : null}
