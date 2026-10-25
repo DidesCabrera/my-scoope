@@ -12,11 +12,11 @@ import {
   Fish,
   Gauge,
   HeartPulse,
-  Leaf,
   LibraryBig,
   LockKeyhole,
   Pin,
   Scale,
+  Send,
   Sparkles,
   Target,
   Utensils,
@@ -45,6 +45,7 @@ export const onboardingJourneySteps = [
   { key: "control", shortLabel: "Asistencia", label: "Asistencia y decisiones" },
   { key: "panels", shortLabel: "Paneles", label: "Lectura de paneles" },
   { key: "panelsCopy", shortLabel: "Paneles", label: "Lectura de paneles" },
+  { key: "compareShare", shortLabel: "Comparar", label: "Comparar y compartir" },
   { key: "progress", shortLabel: "Progreso", label: "Seguimiento del progreso" },
   { key: "disclosures", shortLabel: "Límites", label: "Información y límites" },
   { key: "goal", shortLabel: "Objetivo", label: "Objetivo nutricional" },
@@ -61,9 +62,10 @@ export type OnboardingJourneyStep = (typeof onboardingJourneySteps)[number]["key
 
 const onboardingStoryboardTopInsetReduction = 20;
 const earlyOnboardingStoryboardTopInsetReduction = onboardingStoryboardTopInsetReduction + 18;
+const continueFooterBottomMargin = 49;
 
 export function topInsetReductionForOnboardingStoryboard(step: OnboardingJourneyStep) {
-  return onboardingJourneySteps.findIndex((item) => item.key === step) < 7
+  return onboardingJourneySteps.findIndex((item) => item.key === step) < 8
     ? earlyOnboardingStoryboardTopInsetReduction
     : onboardingStoryboardTopInsetReduction;
 }
@@ -74,33 +76,33 @@ export function presentationPropsForOnboardingStep(step: OnboardingJourneyStep) 
   return {
     conciseSexEyebrow: usesRefinedPresentation,
     contentSizedDietaryChips: usesRefinedPresentation,
-    disclosuresTitleSpacingReduction: index === 7 ? 18 : 0,
-    fixedDisclosuresFooter: index === 7,
+    disclosuresTitleSpacingReduction: index === 8 ? 18 : 0,
+    fixedDisclosuresFooter: index === 8,
     fixedLoginActionBottomSpacing: 0,
-    fixedProfileChrome: index >= 8 && index <= 13,
-    fixedProfileFooterBottomSpacing: index >= 8 && index <= 13 ? 46 : 0,
-    fullWidthExplanationTransition: index >= 1 && index <= 6,
+    fixedProfileChrome: index >= 9 && index <= 14,
+    fixedProfileFooterBottomSpacing: index >= 9 && index <= 14 ? continueFooterBottomMargin : 0,
+    fullWidthExplanationTransition: index >= 1 && index <= 7,
     hideCalculationReviewDisclosure: usesRefinedPresentation,
     progressiveAllergyDetails: usesRefinedPresentation,
     profileEyebrowsMuted: usesRefinedPresentation,
-    profileProgressBottomSpacing: index >= 8 && index <= 13 ? 24 : 0,
-    profileProgressEyebrowBottomSpacing: index >= 8 && index <= 13 ? 18 : 0,
-    profileQuestionSpacing: index >= 8 && index <= 13 ? 24 : 0,
-    profileProgressWidthReduction: index >= 8 && index <= 13 ? 36 : 0,
-    profileTitleBottomSpacingReduction: index >= 8 && index <= 13 ? 12 : 0,
+    profileProgressBottomSpacing: index >= 9 && index <= 14 ? 4 : 0,
+    profileProgressEyebrowBottomSpacing: index >= 9 && index <= 14 ? 10 : 0,
+    profileQuestionSpacing: index >= 9 && index <= 14 ? 24 : 0,
+    profileProgressWidthReduction: index >= 9 && index <= 14 ? 36 : 0,
+    profileTitleBottomSpacingReduction: index >= 9 && index <= 14 ? 12 : 0,
     showGoalOptionsEyebrow: usesRefinedPresentation,
     showProfileControlBleed: usesRefinedPresentation,
     storyboardSummaryLayout: usesRefinedPresentation,
     topInsetReduction: usesRefinedPresentation
       ? topInsetReductionForOnboardingStoryboard(step)
-        + (index >= 1 && index <= 7 ? 20 : 0)
-        + (index >= 7 ? 20 : 0)
+        + (index >= 1 && index <= 8 ? 20 : 0)
+        + (index >= 8 ? 20 : 0)
         + (step === "plans" ? 20 : 0)
       : 0,
   };
 }
 
-const explanationSteps = onboardingJourneySteps.slice(1, 7);
+const explanationSteps = onboardingJourneySteps.slice(1, 8);
 const mealFoodIcons = [Apple, Carrot, Beef, Fish];
 
 export const onboardingNutritionFields = ["goal", "birth_date", "sex", "height_cm", "weight_kg", "activity_level", "training_frequency", "dietary_pattern", "allergies_or_intolerances", "avoided_foods"] as const;
@@ -142,10 +144,10 @@ export type OnboardingJourneyController = {
 
 export const onboardingJourneyPreviewValues: OnboardingJourneyValues = {
   goal: "fat_loss",
-  birthDate: "1990-05-10",
+  birthDate: "2000-01-01",
   sex: "male",
-  height: "178",
-  weight: "82,5",
+  height: "180",
+  weight: "80",
   activityLevel: "light",
   trainingFrequency: 3,
   dietaryPattern: "omnivore",
@@ -202,14 +204,14 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
   titleTopSpacingReduction?: number;
 }) {
   const { disclosuresTitleSpacingReduction, externalExplanationChrome, fixedProfileChrome, profileTitleBottomSpacingReduction } = useContext(JourneyPresentationContext);
-  const isExplanation = index >= 1 && index <= 6;
-  const isProfileStep = index >= 8 && index <= 13;
+  const isExplanation = index >= 1 && index <= 7;
+  const isProfileStep = index >= 9 && index <= 14;
   const usesBrandedHeader = isExplanation || brandedCentered;
-  const isCenteredIntro = index <= 13 || brandedCentered;
-  const usesCenteredTitleSpacing = (index <= 7 || brandedCentered) && !externalExplanationChrome;
+  const isCenteredIntro = index <= 14 || brandedCentered;
+  const usesCenteredTitleSpacing = (index <= 8 || brandedCentered) && !externalExplanationChrome;
   return (
     <View style={[styles.intro, isCenteredIntro && styles.introCentered, isProfileStep && fixedProfileChrome && profileTitleBottomSpacingReduction > 0 && { marginBottom: -profileTitleBottomSpacingReduction }]}>
-      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={[styles.centeredLogo, index === 7 && styles.disclosuresLogo]}><MyScoopeBrandLogo scale={isExplanation ? 1.1 : index === 7 ? 0.88 : 1} /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 7 || !showProgress ? null : (
+      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={[styles.centeredLogo, index === 8 && styles.disclosuresLogo]}><MyScoopeBrandLogo scale={isExplanation ? 1.1 : index === 8 ? 0.88 : 1} /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 8 || !showProgress ? null : (
         <View style={styles.stepMeta}>
           <Text style={styles.stepCount}>{String(index + 1).padStart(2, "0")} / {onboardingJourneySteps.length}</Text>
           <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.progressTrack}>
@@ -218,18 +220,21 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
         </View>
       )}
       {!usesBrandedHeader || showIconAboveTitle ? <View style={styles.iconWell}><IconComponent color={tokens.color.entityIconForeground} size={27} strokeWidth={1.8} /></View> : null}
-      {!usesBrandedHeader && !isProfileStep && eyebrow ? <Text style={[styles.eyebrow, isCenteredIntro && styles.centeredText, index === 7 && styles.disclosuresEyebrow]}>{eyebrow}</Text> : null}
+      {!usesBrandedHeader && !isProfileStep && eyebrow ? <Text style={[styles.eyebrow, isCenteredIntro && styles.centeredText, index === 8 && styles.disclosuresEyebrow]}>{eyebrow}</Text> : null}
       <Text style={[
         styles.title,
         isCenteredIntro && styles.centeredText,
         usesCenteredTitleSpacing && !showIconAboveTitle && styles.centeredTitleSpacing,
         titleTopSpacingReduction > 0 && { marginTop: -titleTopSpacingReduction },
         isExplanation && { marginBottom: (usesCenteredTitleSpacing ? tokens.spacing.sm : 0) + 10 },
-        index === 7 && disclosuresTitleSpacingReduction > 0 && { marginTop: styles.centeredTitleSpacing.marginTop - disclosuresTitleSpacingReduction },
+        index === 8 && disclosuresTitleSpacingReduction > 0 && { marginTop: styles.centeredTitleSpacing.marginTop - disclosuresTitleSpacingReduction },
         titleStyle,
+        (!usesBrandedHeader || showIconAboveTitle) && styles.iconTitleSpacing,
+        isExplanation && showIconAboveTitle && styles.explanationIconTitleSpacing,
+        isProfileStep && styles.profileTitleBottomSpacing,
       ]}>{title}</Text>
       {titleAccessory}
-      {!isProfileStep && description ? <Text style={[styles.description, isExplanation && styles.explanationDescription, isCenteredIntro && styles.centeredText, index === 1 && styles.valueDescription, index === 7 && styles.disclosuresDescription]}>{description}</Text> : null}
+      {!isProfileStep && description ? <Text style={[styles.description, isExplanation && styles.explanationDescription, isCenteredIntro && styles.centeredText, index === 1 && styles.valueDescription, index === 8 && styles.disclosuresDescription]}>{description}</Text> : null}
       {descriptionSecondary ? <Text style={[styles.description, styles.explanationDescription, styles.centeredText, styles.valueDescription, styles.valueSecondaryDescription]}>{descriptionSecondary}</Text> : null}
       {descriptionAccessory}
     </View>
@@ -361,22 +366,24 @@ function SelectedActivityRadio() {
 
 function ProfileProgress({ index }: { index: number }) {
   const { profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileProgressWidthReduction } = useContext(JourneyPresentationContext);
-  const activeIndex = index - 7;
+  const activeIndex = index - 8;
   return (
     <View style={[styles.profileProgressGroup, profileProgressBottomSpacing > 0 && { marginBottom: profileProgressBottomSpacing }]}>
-      <Text style={[styles.profileProgressEyebrow, index >= 9 && styles.profileProgressEyebrowTextMain, profileEyebrowsMuted && styles.profileQuestionMuted, profileProgressEyebrowBottomSpacing > 0 && { marginBottom: profileProgressEyebrowBottomSpacing }]}>OBJETIVO Y PLANIFICACIÓN</Text>
+      <Text style={[styles.profileProgressEyebrow, index >= 10 && styles.profileProgressEyebrowTextMain, profileEyebrowsMuted && styles.profileQuestionMuted, profileProgressEyebrowBottomSpacing > 0 && { marginBottom: profileProgressEyebrowBottomSpacing }]}>OBJETIVO Y PLANIFICACIÓN</Text>
       <View
         accessibilityLabel={`Paso ${activeIndex + 1} de 6 de tu perfil`}
         style={[styles.profileProgress, profileProgressWidthReduction > 0 && { paddingHorizontal: tokens.spacing.xl + (profileProgressWidthReduction / 2) }]}
       >
-        {Array.from({ length: 6 }, (_, stepIndex) => (
-          <View key={stepIndex} style={[styles.profileProgressItem, stepIndex === 5 && styles.profileProgressItemLast]}>
-            <View style={[styles.profileProgressDot, stepIndex <= activeIndex && styles.profileProgressDotActive]} />
-            {stepIndex < 5 ? (
-              <View style={[styles.profileProgressLine, stepIndex < activeIndex && styles.profileProgressLineActive]} />
-            ) : null}
-          </View>
-        ))}
+        <View style={[styles.profileProgressItems, profileProgressWidthReduction > 0 && styles.profileProgressItemsCompact]}>
+          {Array.from({ length: 6 }, (_, stepIndex) => (
+            <View key={stepIndex} style={[styles.profileProgressItem, stepIndex === 5 && styles.profileProgressItemLast]}>
+              <View style={[styles.profileProgressDot, stepIndex <= activeIndex && styles.profileProgressDotActive]} />
+              {stepIndex < 5 ? (
+                <View style={[styles.profileProgressLine, stepIndex < activeIndex && styles.profileProgressLineActive]} />
+              ) : null}
+            </View>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -444,7 +451,7 @@ function DisclosuresStepLayout({ children, index }: { children: ReactNode; index
 
 function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: { index: number; primary?: string; secondary?: string }) {
   const controller = useJourneyController();
-  if (index >= 8 && index <= 13) {
+  if (index >= 9 && index <= 14) {
     return (
       <View style={[styles.footer, styles.profileFooter]}>
         <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, styles.profileBackAction]}>
@@ -452,19 +459,19 @@ function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: {
           <Text style={styles.backLabel}>{secondary}</Text>
         </Pressable>
         <View style={styles.profilePrimaryAction}>
-          {index === 13 ? <CreditContinueButton chip label={primary} /> : <ContinueChip label={primary} />}
+          {index === 14 ? <CreditContinueButton chip label={primary} /> : <ContinueChip label={primary} />}
         </View>
       </View>
     );
   }
   return (
     <View style={styles.footer}>
-      {index === 7 ? <CreditContinueButton label={primary} /> : <Button label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
-      {index === 7 ? <View style={styles.disclosuresConfirmationSpacing}><ResponsibleUseConfirmationNotice /></View> : null}
+      {index === 8 ? <CreditContinueButton label={primary} /> : <Button label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
+      {index === 8 ? <View style={styles.disclosuresConfirmationSpacing}><ResponsibleUseConfirmationNotice /></View> : null}
       {index > 0 ? (
-        <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, index === 7 && styles.disclosuresBackAction]}>
-          {index === 7 ? null : <ChevronLeft color={tokens.color.textMuted} size={16} />}
-          <Text style={styles.backLabel}>{index === 7 ? "Volver" : secondary}</Text>
+        <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, index === 8 && styles.disclosuresBackAction]}>
+          {index === 8 ? null : <ChevronLeft color={tokens.color.textMuted} size={16} />}
+          <Text style={styles.backLabel}>{index === 8 ? "Volver" : secondary}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -528,8 +535,8 @@ function ValueView({ index }: { index: number }) {
   return (
     <>
       <StepHeader
-        description={<Text style={styles.valueDescriptionEmphasis}>My Scoope no es un contador de calorías,{"\n"}es un planificador de alimentación.</Text>}
-        descriptionSecondary="Arma minutas con tus comidas, calendarízalas y sigue tu programación."
+        description={<Text style={styles.valueDescriptionEmphasis}>My Scoope no es un contador de calorías,{"\n"}es un planificador de alimentación</Text>}
+        descriptionSecondary="Arma minutas con tus comidas, calendarízalas y sigue tu programación"
         descriptionAccessory={
           <View accessibilityLabel="Comidas, minutas, calendario y programas" style={styles.valueIconRow}>
             <EntityIcon entity="meal" size="intro" />
@@ -542,7 +549,7 @@ function ValueView({ index }: { index: number }) {
         icon={Target}
         index={index}
         title="No improvises,"
-        titleAccessory={<View style={[styles.loginTitleChip, styles.valueTitleChip]}><Text style={[styles.loginTitleChipText, styles.valueTitleChipText]}>Planifica.</Text></View>}
+        titleAccessory={<View style={[styles.loginTitleChip, styles.valueTitleChip]}><Text style={[styles.loginTitleChipText, styles.valueTitleChipText]}>Planifica</Text></View>}
         titleStyle={styles.valueTitleText}
       />
       <ExplanationDots index={index} />
@@ -566,7 +573,7 @@ function StructureView({ index }: { index: number }) {
           showIconAboveTitle
           title="Reúne tus comidas recurrentes"
         />
-        <View style={styles.levels}>
+        <View style={[styles.levels, styles.structureLevels]}>
           {levels.map((level) => (
             <View key={level.label} style={styles.structureSection}>
               {level.sectionTitle ? <Text style={styles.structureSectionTitle}>{level.sectionTitle}</Text> : null}
@@ -598,7 +605,7 @@ function StructureView({ index }: { index: number }) {
             </View>
           ))}
         </View>
-        <Text style={[styles.description, styles.centeredText, styles.structureClosingText]}>Y luego puedes ajustar tus porciones según tu objetivo nutricional.</Text>
+        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.structureViewClosingText]}>Y luego puedes ajustar tus porciones según tu objetivo nutricional</Text>
       </View>
       <ExplanationDots index={index} />
     </>
@@ -615,7 +622,7 @@ function PanelsView({ index }: { index: number }) {
           icon={Eye}
           index={index}
           showIconAboveTitle
-          title={"Gramos de proteína por\nKilo de Peso (PPK)"}
+          title={"Proteínas por kilo\nde peso - PPK"}
           titleStyle={styles.panelsTitle}
         />
         <View style={styles.levels}>
@@ -625,11 +632,11 @@ function PanelsView({ index }: { index: number }) {
                 <Text style={styles.levelTitle}>PPK</Text>
                 <Text style={styles.levelDetail}>Gramos de proteína por kilo de peso corporal</Text>
               </View>
-              <ProteinPerKilogramBadge style={styles.panelsPpkBadge} textSize={17} value={39.36 / 80} />
+              <ProteinPerKilogramBadge style={styles.panelsPpkBadge} textSize={17} value={2} />
             </TopAccentCard>
           </View>
           <View style={styles.structureSection}>
-            <Text style={styles.structureSectionTitle}>Distribución calórica por macros (Alloc)</Text>
+            <Text style={styles.structureSectionTitle}>% Calorías por{"\n"}macros - Alloc</Text>
             <TopAccentCard accent={tokens.color.protein} style={styles.panelsAllocationRow}>
               <View style={styles.levelCopy}>
                 <Text style={styles.levelTitle}>Alloc</Text>
@@ -643,7 +650,7 @@ function PanelsView({ index }: { index: number }) {
             </TopAccentCard>
           </View>
         </View>
-        <Text style={[styles.description, styles.centeredText, styles.structureClosingText]}>También verás las calorías y gramos por macros correspondientes.</Text>
+        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.panelsViewClosingText]}>También verás las calorías y gramos por macros correspondientes</Text>
       </View>
       <ExplanationDots index={index} />
     </>
@@ -666,7 +673,7 @@ function PanelsCopyView({ index }: { index: number }) {
           icon={Pin}
           index={index}
           showIconAboveTitle
-          title="Mejora tu planificación con compromisos."
+          title={"Mejora tu planificación\ncon compromisos"}
           titleStyle={styles.panelsTitle}
         />
         <View style={styles.commitmentCards}>
@@ -685,7 +692,53 @@ function PanelsCopyView({ index }: { index: number }) {
             );
           })}
         </View>
-        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.commitmentClosingText]}>Cada uno está relacionado con tus objetivos nutricionales, integrarlos te dará una visión completa.</Text>
+        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.commitmentClosingText]}>Calendarízalos para tener una visión más completa</Text>
+      </View>
+      <ExplanationDots index={index} />
+    </>
+  );
+}
+
+function CompareShareView({ index }: { index: number }) {
+  return (
+    <>
+      <View style={styles.structureRaisedContent}>
+        <StepHeader
+          description={null}
+          eyebrow="Comparar y compartir"
+          icon={Scale}
+          index={index}
+          showIconAboveTitle
+          title="Compara tus alimentos, comidas y minutas"
+        />
+        <View style={[styles.levels, styles.structureLevels]}>
+          <View style={styles.structureSection}>
+            <TopAccentCard accent={tokens.color.food}>
+              <EntityIcon backgroundColor={tokens.color.food} entity="comparison" size="hero" />
+              <View style={styles.levelCopy}>
+                <Text style={styles.levelTitle}>Comparador</Text>
+                <Text style={styles.levelDetail}>Contrasta alimentos, comidas y minutas</Text>
+              </View>
+            </TopAccentCard>
+          </View>
+          <View style={styles.structureSection}>
+            <View style={styles.sharingSectionHeading}>
+              <View style={styles.sharingHeadingIcon}>
+                <Send color={tokens.color.textMain} size={27} strokeWidth={1.8} />
+              </View>
+              <Text style={styles.structureSectionTitle}>Comparte tus librerías{"\n"}con amigos</Text>
+            </View>
+            <TopAccentCard accent={tokens.color.meal}>
+              <View style={styles.sharingHeroIcon}>
+                <Send color={tokens.color.entityIconForeground} size={27} strokeWidth={1.8} />
+              </View>
+              <View style={styles.levelCopy}>
+                <Text style={styles.levelTitle}>Compartir librerías</Text>
+                <Text style={styles.levelDetail}>Envía tus colecciones a tus amigos</Text>
+              </View>
+            </TopAccentCard>
+          </View>
+        </View>
       </View>
       <ExplanationDots index={index} />
     </>
@@ -706,9 +759,9 @@ function ControlView({ index }: { index: number }) {
           icon={CalendarDays}
           index={index}
           showIconAboveTitle
-          title="Asigna minutas en tu calendario"
+          title="Asigna minutas a tu calendario"
         />
-        <View style={styles.levels}>
+        <View style={[styles.levels, styles.structureLevels]}>
           {levels.map((level) => (
             <View key={level.label} style={styles.structureSection}>
               {level.sectionTitle ? <Text style={styles.structureSectionTitle}>{level.sectionTitle}</Text> : null}
@@ -729,7 +782,7 @@ function ControlView({ index }: { index: number }) {
             </View>
           ))}
         </View>
-        <Text style={[styles.description, styles.centeredText, styles.structureClosingText]}>Y luego puedes calendarizar las minutas ya estructuradas.</Text>
+        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.structureViewClosingText]}>Y luego puedes calendarizar las minutas ya estructuradas</Text>
       </View>
       <ExplanationDots index={index} />
     </>
@@ -759,7 +812,7 @@ function ProgressView({ index }: { index: number }) {
             </TopAccentCard>
           </View>
           <View style={styles.structureSection}>
-            <Text style={styles.structureSectionTitle}>Pide propuestas según tus requerimientos</Text>
+            <Text style={styles.structureSectionTitle}>Pide propuestas según{"\n"}tus objetivos</Text>
             <View style={styles.assistancePlansCard}>
               <Svg aria-hidden height="100%" pointerEvents="none" style={StyleSheet.absoluteFill} width="100%">
                 <Defs>
@@ -784,7 +837,7 @@ function ProgressView({ index }: { index: number }) {
           </View>
         </View>
         <Text style={[styles.description, styles.explanationDescription, styles.centeredText, styles.structureClosingText, styles.assistanceClosingText]}>
-          Puede realizar ajustes a tus programas o realizar otras tareas en el sistema.
+          Puedes pedir diferentes tareas, como construir programas semanales, ajustar minutas, comparar alimentos, registrar comidas, entre otros
         </Text>
       </View>
       <ExplanationDots
@@ -861,8 +914,8 @@ function IdentityView({ index }: { index: number }) {
     <ProfileStepLayout index={index}>
       <StepHeader description="La edad y el sexo usado para el cálculo forman parte de la estimación de tu gasto basal." eyebrow="Datos para el cálculo" icon={CircleUserRound} index={index} title="Ingresa tus datos personales" />
       <Card style={[styles.profileCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
-        <NativeDateTimeField inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={profileQuestionStyle} maximumValue={localDateValue()} mode="date" onChange={(value) => controller.onChange?.("birthDate", value)} value={controller.values.birthDate} />
-        <View accessibilityRole="radiogroup" style={styles.identityChoiceField}>
+        <NativeDateTimeField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={profileQuestionStyle} maximumValue={localDateValue()} mode="date" onChange={(value) => controller.onChange?.("birthDate", value)} value={controller.values.birthDate} />
+        <View accessibilityRole="radiogroup" style={[styles.identityChoiceField, styles.profileSectionExtraTopSpacing]}>
           <Text style={profileQuestionStyle}>{conciseSexEyebrow ? "Sexo" : "Sexo usado para el cálculo nutricional"}</Text>
           <View style={[styles.identityChoiceRow, showProfileControlBleed && styles.profileControlBleed]}>
             {["Masculino", "Femenino"].map((label, optionIndex) => {
@@ -891,8 +944,8 @@ function MeasurementsView({ index }: { index: number }) {
       <StepHeader description="La altura y el peso permiten estimar tu gasto energético y calcular referencias por kilogramo." eyebrow="Datos para el cálculo" icon={Scale} index={index} title="Ingresa tus medidas actuales" />
       <Card style={styles.profileCard}>
         <View style={[styles.measurementFields, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
-          <View style={styles.flex}><NativeMeasurementField inputStyle={styles.profileInput} kind="height" label="Altura" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("height", value)} value={controller.values.height} /></View>
-          <View style={styles.flex}><NativeMeasurementField inputStyle={styles.profileInput} kind="weight" label="Peso" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("weight", value)} value={controller.values.weight} /></View>
+          <View style={styles.flex}><NativeMeasurementField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} kind="height" label="Altura" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("height", value)} value={controller.values.height} /></View>
+          <View style={[styles.flex, styles.profileSectionExtraTopSpacing]}><NativeMeasurementField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} kind="weight" label="Peso" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("weight", value)} value={controller.values.weight} /></View>
         </View>
       </Card>
     </ProfileStepLayout>
@@ -929,7 +982,7 @@ function ActivityView({ index }: { index: number }) {
               );})}
             </View>
           </View>
-          <View style={styles.trainingFrequencyField}>
+          <View style={[styles.trainingFrequencyField, styles.profileSectionExtraTopSpacing]}>
             <Text style={profileQuestionStyle}>Entrenamientos por semana</Text>
             <View style={[styles.trainingFrequencyChips, showProfileControlBleed && styles.profileControlBleed]}>
               {[[0, "0"], [1, "1"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6+"]].map(([value, label]) => {
@@ -972,13 +1025,13 @@ function DietaryPreferencesView({ index }: { index: number }) {
   const profileQuestionStyle = useProfileQuestionStyle();
   return (
     <ProfileStepLayout index={index} primary="Analizar">
-      <StepHeader description="Cuéntanos qué alimentos podemos considerar antes de generar tu primera minuta." eyebrow="Preferencias alimentarias" icon={Leaf} index={index} title="Preferencias alimentarias" />
+      <StepHeader description="Cuéntanos qué alimentos podemos considerar antes de generar tu primera minuta." eyebrow="Preferencias alimentarias" icon={Utensils} index={index} title="Preferencias alimentarias" />
       <Card style={[styles.profileCard, styles.dietaryCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
         <View accessibilityRole="radiogroup" style={styles.dietaryQuestion}>
           <Text style={profileQuestionStyle}>Tipo de alimentación</Text>
           <DietaryChoiceGroup idPrefix="diet-type" onChange={(value) => controller.onChange?.("dietaryPattern", value)} options={[["omnivore", "Omnívora"], ["vegetarian", "Vegetariana"], ["vegan", "Vegana"], ["pescatarian", "Pescetariana"], ["flexitarian", "Flexitariana"]]} selectedValue={controller.values.dietaryPattern} />
         </View>
-        <View accessibilityRole="radiogroup" style={styles.dietaryQuestion}>
+        <View accessibilityRole="radiogroup" style={[styles.dietaryQuestion, styles.profileSectionExtraTopSpacing]}>
           <Text style={profileQuestionStyle}>Alergias o condiciones relevantes</Text>
           <DietaryChoiceGroup idPrefix="diet-condition" onChange={(value) => controller.onChange?.("allergy", value)} options={[["", "Sin alergias"], ["gluten", "Gluten"], ["lácteos", "Lácteos"], ["frutos secos", "Frutos secos"], ["mariscos", "Mariscos"], ["otra", "Otra"]]} selectedValue={controller.values.allergy} />
           {(!progressiveAllergyDetails || controller.values.allergy === "otra") ? <Field
@@ -991,14 +1044,16 @@ function DietaryPreferencesView({ index }: { index: number }) {
             value={controller.values.allergyDetails}
           /> : null}
         </View>
-        <Field
-          autoCapitalize="sentences"
-          label="Alimentos que no consumes"
-          labelStyle={profileQuestionStyle}
-          onChangeText={(value) => controller.onChange?.("avoidedFoods", value)}
-          placeholder="Ej. cilantro, aceitunas o champiñones"
-          value={controller.values.avoidedFoods}
-        />
+        <View style={styles.profileSectionExtraTopSpacing}>
+          <Field
+            autoCapitalize="sentences"
+            label="Alimentos que no consumes"
+            labelStyle={profileQuestionStyle}
+            onChangeText={(value) => controller.onChange?.("avoidedFoods", value)}
+            placeholder="Ej. cilantro, aceitunas o champiñones"
+            value={controller.values.avoidedFoods}
+          />
+        </View>
       </Card>
       {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
     </ProfileStepLayout>
@@ -1008,7 +1063,6 @@ function DietaryPreferencesView({ index }: { index: number }) {
 function SummaryView({ index }: { index: number }) {
   const controller = useJourneyController();
   const { profileQuestionSpacing, storyboardSummaryLayout } = useContext(JourneyPresentationContext);
-  const profileQuestionStyle = useProfileQuestionStyle();
   const estimate = controller.estimate;
   const calories = Math.round(estimate?.total_kcal ?? 1980);
   const protein = Math.round(estimate?.protein ?? 148);
@@ -1038,7 +1092,7 @@ function SummaryView({ index }: { index: number }) {
   );
   const nutritionGoalSection = (
     <View style={styles.summaryQuestion}>
-      <Text style={profileQuestionStyle}>OBJETIVO NUTRICIONAL PROPUESTO</Text>
+      <Text style={styles.summaryNutritionTitle}>Objetivo propuesto</Text>
       <NutritionKpiSection
         calories={calories}
         protein={{ allocation: allocation(protein, 4), grams: protein, perKilogram: estimate?.protein_per_kg ?? 1.8 }}
@@ -1054,6 +1108,7 @@ function SummaryView({ index }: { index: number }) {
         {estimationInformationSection}
         {maintenanceSection}
         {nutritionGoalSection}
+        <Text style={[styles.description, styles.centeredText, styles.summaryClosingText]}>My Scoope generará 2 minutas que cumplan con este objetivo. Luego las pondremos en tu calendario.</Text>
         {!storyboardSummaryLayout ? <Pressable accessibilityRole="button" onPress={controller.onAdjust ?? noop} style={styles.adjustNutritionAction}>
           <Text style={styles.adjustNutritionLabel}>Ajusta objetivo nutricional</Text>
         </Pressable> : null}
@@ -1109,7 +1164,7 @@ function GeneratedDailyPlanView() {
   if (controller.proposal?.dailyplan) {
     return (
       <>
-        <StepHeader description="Revisa la minuta generada antes de guardarla en tu biblioteca." eyebrow="Minuta del día" icon={BookOpen} index={13} showProgress={false} title="Tu primera minuta diaria" />
+        <StepHeader description="Revisa la minuta generada antes de guardarla en tu biblioteca." eyebrow="Minuta del día" icon={BookOpen} index={14} showProgress={false} title="Tu primera minuta diaria" />
         <ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} showNutrition={false} />
         {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
         <CreditContinueButton />
@@ -1174,6 +1229,7 @@ const views: Record<OnboardingJourneyStep, (props: { index: number }) => ReactNo
   structure: StructureView,
   panels: PanelsView,
   panelsCopy: PanelsCopyView,
+  compareShare: CompareShareView,
   control: ControlView,
   progress: ProgressView,
   disclosures: DisclosuresView,
@@ -1241,7 +1297,7 @@ export function OnboardingJourneyView({
   const [translateX] = useState(() => new Animated.Value(0));
   const [transitioning, setTransitioning] = useState(false);
   const [explanationTransitionWidth, setExplanationTransitionWidth] = useState(width);
-  const interactiveExplanation = Boolean(controller) && index >= 1 && index <= 6;
+  const interactiveExplanation = Boolean(controller) && index >= 1 && index <= 7;
   const transitionWidth = fullWidthExplanationTransition ? explanationTransitionWidth : width;
   const explanationPageGap = 48;
   const explanationStride = transitionWidth + explanationPageGap;
@@ -1255,7 +1311,7 @@ export function OnboardingJourneyView({
   }, [explanationOffset, translateX]);
   const moveToExplanation = useCallback((direction: "back" | "next") => {
     if (transitioning) return;
-    const canMove = direction === "next" ? index < 6 : index > 1;
+    const canMove = direction === "next" ? index < 7 : index > 1;
     if (!canMove) {
       Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: explanationOffset, useNativeDriver: true }).start();
       return;
@@ -1280,7 +1336,7 @@ export function OnboardingJourneyView({
     onMoveShouldSetPanResponderCapture: (_event, gesture) => interactiveExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
     onPanResponderMove: (_event, gesture) => {
       if (transitioning) return;
-      const atBoundary = (index === 1 && gesture.dx > 0) || (index === 6 && gesture.dx < 0);
+      const atBoundary = (index === 1 && gesture.dx > 0) || (index === 7 && gesture.dx < 0);
       translateX.setValue(explanationOffset + gesture.dx * (atBoundary ? 0.18 : 1));
     },
     onPanResponderRelease: (_event, gesture) => finishExplanationGesture(gesture),
@@ -1313,7 +1369,7 @@ export function OnboardingJourneyView({
                         removeClippedSubviews={false}
                         showsVerticalScrollIndicator={false}
                         style={styles.explanationPageScroll}>
-                        <View style={[styles.explanationSlide, fullWidthExplanationTransition && styles.fullWidthExplanationSlide]}>
+                        <View style={[styles.explanationSlide, pageStep.key === "panels" && styles.ppkExplanationSlide, pageStep.key === "panelsCopy" && styles.commitmentsExplanationSlide, fullWidthExplanationTransition && styles.fullWidthExplanationSlide]}>
                           <PageView index={pageIndex} />
                         </View>
                       </ScrollView>
@@ -1322,7 +1378,7 @@ export function OnboardingJourneyView({
                 })}
               </Animated.View>
             </View>
-            <ExplanationDots action={index === 6 ? <ContinueChip /> : undefined} compact forceVisible index={index} />
+            <ExplanationDots action={index === 7 ? <ContinueChip /> : undefined} compact forceVisible index={index} />
           </View>
         </JourneyPresentationContext.Provider>
       </JourneyControllerContext.Provider>
@@ -1336,11 +1392,11 @@ export function OnboardingJourneyView({
             styles.screen,
             index === 0 && styles.loginBackgroundScreen,
             fixedLoginActionBottomSpacing > 0 && index === 0 && styles.fixedLoginScreen,
-            index >= 8 && index <= 13 && styles.profileScreen,
-            fixedDisclosuresFooter && index === 7 && styles.fixedProfileScreen,
-            fixedProfileChrome && index >= 8 && index <= 13 && styles.fixedProfileScreen,
+            index >= 9 && index <= 14 && styles.profileScreen,
+            fixedDisclosuresFooter && index === 8 && styles.fixedProfileScreen,
+            fixedProfileChrome && index >= 9 && index <= 14 && styles.fixedProfileScreen,
             topInsetReduction > 0 && {
-              paddingTop: (index >= 8 && index <= 13 ? styles.profileScreen.paddingTop : styles.screen.paddingTop) - topInsetReduction,
+              paddingTop: (index >= 9 && index <= 14 ? styles.profileScreen.paddingTop : styles.screen.paddingTop) - topInsetReduction,
             },
           ]}
         >
@@ -1366,7 +1422,9 @@ const styles = StyleSheet.create({
   explanationPage: { flexShrink: 0, height: "100%", overflow: "hidden" },
   explanationPageScroll: { flex: 1, width: "100%" },
   explanationScrollContent: { flexGrow: 1 },
-  explanationSlide: { flex: 1, gap: tokens.spacing.lg, justifyContent: "center", paddingTop: tokens.spacing.xxl - 18 },
+  explanationSlide: { flex: 1, gap: tokens.spacing.lg, justifyContent: "flex-start", paddingTop: 40 },
+  ppkExplanationSlide: { paddingTop: 20 },
+  commitmentsExplanationSlide: { paddingTop: 8 },
   fullWidthExplanationViewport: { alignSelf: "stretch", marginHorizontal: -tokens.spacing.screen, width: undefined },
   fullWidthExplanationSlide: { paddingHorizontal: tokens.spacing.screen },
   profileScreen: { paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 - 32 },
@@ -1387,12 +1445,15 @@ const styles = StyleSheet.create({
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, flex: 1, height: 3, overflow: "hidden" },
   progressFill: { backgroundColor: tokens.color.interactivePrimary, height: "100%" },
   iconWell: { alignItems: "center", height: 54, justifyContent: "center", marginTop: tokens.spacing.sm, width: 54 },
+  iconTitleSpacing: { marginTop: -2 },
+  explanationIconTitleSpacing: { marginTop: 2 },
   eyebrow: { color: tokens.color.interactivePrimary, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.2, textTransform: "uppercase" },
   disclosuresEyebrow: { color: tokens.color.textMuted },
   disclosuresTitle: { marginTop: 0 },
   title: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 32 },
+  profileTitleBottomSpacing: { paddingBottom: 4 },
   description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
-  disclosuresDescription: { color: tokens.color.textMain, fontWeight: tokens.weight.semibold },
+  disclosuresDescription: { color: tokens.color.textMain, fontWeight: tokens.weight.semibold, marginVertical: 12 },
   valueDescription: { fontSize: 18, lineHeight: 26 },
   valueDescriptionEmphasis: { fontWeight: tokens.weight.bold },
   valueSecondaryDescription: { marginTop: 28 },
@@ -1407,8 +1468,8 @@ const styles = StyleSheet.create({
   descriptionEmphasis: { fontWeight: tokens.weight.bold },
   footer: { gap: tokens.spacing.sm, marginTop: "auto" },
   disclosuresConfirmationSpacing: { marginVertical: 4 },
-  explanationFooter: { alignItems: "center", gap: tokens.spacing.md, marginBottom: 48, marginTop: "auto" },
-  explanationFooterCompact: { marginBottom: 28, marginTop: -16 },
+  explanationFooter: { alignItems: "center", gap: tokens.spacing.md, marginBottom: continueFooterBottomMargin, marginTop: "auto" },
+  explanationFooterCompact: { marginTop: -16 },
   explanationFooterWithAction: { position: "relative", width: "100%" },
   explanationFooterAction: { position: "absolute", right: 0, top: 3 },
   explanationDots: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 40 },
@@ -1423,8 +1484,10 @@ const styles = StyleSheet.create({
   creditContinueLabelChip: { fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   actionDisabled: { opacity: 0.55 },
   profileProgress: { alignItems: "center", flexDirection: "row", justifyContent: "center", paddingHorizontal: tokens.spacing.xl, width: "100%" },
+  profileProgressItems: { alignItems: "center", flexDirection: "row", width: "100%" },
+  profileProgressItemsCompact: { width: "72%" },
   profileProgressGroup: { alignItems: "center", gap: tokens.spacing.sm, width: "100%" },
-  profileProgressEyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.regular, letterSpacing: 1.2, textAlign: "center", textTransform: "uppercase" },
+  profileProgressEyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label * 0.85, fontWeight: tokens.weight.regular, letterSpacing: 1.2, textAlign: "center", textTransform: "uppercase" },
   profileProgressEyebrowTextMain: { color: tokens.color.textMain },
   profileProgressItem: { alignItems: "center", flex: 1, flexDirection: "row" },
   profileProgressItemLast: { flex: 0 },
@@ -1454,19 +1517,24 @@ const styles = StyleSheet.create({
   loginTitle: { color: tokens.color.textMain, fontSize: 32, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 37, textAlign: "center" },
   loginTitleChip: { backgroundColor: tokens.color.textMain, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 1 },
   loginTitleChipText: { color: tokens.color.surfaceApp, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 35 },
-  valueTitleText: { fontSize: 37, lineHeight: 43 },
+  valueTitleText: { fontSize: 37, lineHeight: 43, marginTop: 96 },
   valueTitleChip: { marginBottom: 48, marginTop: -10 },
   valueTitleChipText: { fontSize: 52, lineHeight: 61 },
   cardTitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.bold },
   quietCenter: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16, textAlign: "center" },
-  levels: { gap: tokens.spacing.xl + 24, marginTop: -tokens.spacing.sm },
-  assistanceLevels: { width: "100%" },
-  structureRaisedContent: { gap: tokens.spacing.lg, transform: [{ translateY: -40 }] },
+  levels: { gap: tokens.spacing.xl + 16, marginTop: -tokens.spacing.sm },
+  structureLevels: { marginTop: -14 },
+  assistanceLevels: { marginTop: -14, width: "100%" },
+  structureRaisedContent: { gap: tokens.spacing.lg },
   structureSection: { gap: tokens.spacing.md },
   structureSectionTitle: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, lineHeight: 32, textAlign: "center" },
+  sharingSectionHeading: { alignItems: "center", gap: 10 },
+  sharingHeadingIcon: { alignItems: "center", height: 54, justifyContent: "center", width: 54 },
   structureClosingText: { color: tokens.color.textMain, marginTop: 40 - tokens.spacing.md },
-  assistanceClosingText: { marginTop: -tokens.spacing.md },
-  panelsViewContent: { gap: 20, transform: [{ translateY: -40 }] },
+  structureViewClosingText: { marginTop: tokens.spacing.md + 10 },
+  assistanceClosingText: { marginTop: -10 },
+  panelsViewContent: { gap: 20 },
+  panelsViewClosingText: { marginTop: tokens.spacing.sm + 10 },
   panelsTitle: { marginBottom: 0 },
   panelsAllocationPreview: { gap: 10, width: 100 },
   panelsAllocationRow: { alignItems: "flex-start", columnGap: 20 },
@@ -1474,10 +1542,11 @@ const styles = StyleSheet.create({
   levelRowFrame: { borderRadius: tokens.radius.panel, marginHorizontal: tokens.spacing.md, overflow: "hidden" },
   levelRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.panel - 3, borderTopRightRadius: tokens.radius.panel - 3, flexDirection: "row", gap: tokens.spacing.md, marginTop: 3, padding: tokens.spacing.screen },
   entityContentsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 4, width: 44 },
-  commitmentCards: { gap: 12, marginTop: 8 },
-  commitmentClosingText: { marginTop: 0 },
+  commitmentCards: { gap: 12, marginTop: -2 },
+  commitmentClosingText: { marginTop: 8 },
   commitmentCard: { minHeight: 44 + tokens.spacing.screen * 2 },
   commitmentHeroIcon: { alignItems: "center", borderRadius: 10, height: 40, justifyContent: "center", width: 40 },
+  sharingHeroIcon: { alignItems: "center", backgroundColor: tokens.color.meal, borderRadius: 10, height: 40, justifyContent: "center", width: 40 },
   entityContentsTile: { alignItems: "center", borderRadius: 6, height: 20, justifyContent: "center", width: 20 },
   levelCopy: { flex: 1, gap: 2, minWidth: 0 },
   levelTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.bold, lineHeight: 24 },
@@ -1497,7 +1566,7 @@ const styles = StyleSheet.create({
   optionTextSelected: { color: tokens.color.textMain },
   goalSelectionCheck: { height: 22, width: 22 },
   measurementFields: { gap: tokens.spacing.md },
-  profileCard: { backgroundColor: "transparent" },
+  profileCard: { backgroundColor: "transparent", paddingHorizontal: tokens.card.outerPadding + 10 },
   summaryCard: { marginTop: -tokens.spacing.xs },
   profileInput: { paddingVertical: 0, textAlign: "center", textAlignVertical: "center" },
   identityChoiceField: { gap: 7 },
@@ -1507,9 +1576,10 @@ const styles = StyleSheet.create({
   identityChoiceSelected: { backgroundColor: tokens.color.surfaceElevated, borderColor: "transparent", borderWidth: 0, overflow: "hidden" },
   flex: { flex: 1 },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
-  profileQuestion: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.regular, letterSpacing: 1.1, textTransform: "uppercase" },
+  profileQuestion: { color: tokens.color.textMain, fontSize: 11, fontWeight: tokens.weight.bold, letterSpacing: 1.1, textTransform: "uppercase" },
   profileQuestionMuted: { color: tokens.color.textMuted },
   profileQuestionGroup: { gap: 7 },
+  profileSectionExtraTopSpacing: { marginTop: 10 },
   activityList: { gap: tokens.spacing.sm },
   activityOption: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
   activityOptionSelected: { backgroundColor: tokens.color.surfaceElevated, borderColor: "transparent", borderWidth: 0, overflow: "hidden" },
@@ -1536,9 +1606,11 @@ const styles = StyleSheet.create({
   summaryGrid: { alignSelf: "stretch", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   summaryGridPanelBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   summaryQuestion: { gap: 7 },
+  summaryNutritionTitle: { color: tokens.color.textMain, fontSize: 22, fontWeight: tokens.weight.bold, lineHeight: 27, marginBottom: 4, textAlign: "center" },
+  summaryClosingText: { color: tokens.color.textMain, marginTop: 12 },
   summaryMaintenanceCloser: { marginBottom: tokens.spacing.sm, marginTop: -tokens.spacing.md },
   summaryCell: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexBasis: "45%", flexGrow: 1, gap: 3, minWidth: 0, padding: tokens.spacing.sm },
-  summaryLabel: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 14, textTransform: "uppercase" },
+  summaryLabel: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.bold, lineHeight: 13, textTransform: "uppercase" },
   summaryText: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.bold, lineHeight: 20 },
   summaryMetricLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: tokens.weight.semibold, lineHeight: 20, minWidth: 0 },
   summaryMetricUnit: { color: tokens.color.textSoft, fontSize: 11, fontWeight: tokens.weight.medium },

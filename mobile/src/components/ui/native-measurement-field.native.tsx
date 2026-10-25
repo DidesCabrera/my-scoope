@@ -27,7 +27,7 @@ function displayValue(value: string, kind: NativeMeasurementFieldProps["kind"], 
   return grams ? `${kilograms},${grams / 100} kg` : `${kilograms} kg`;
 }
 
-export function NativeMeasurementField({ containerStyle, defaultValue, disabled = false, iconColor = tokens.color.textMuted, inlineLabel = false, inputStyle, kind, label, labelStyle, onChange, unit = "g", value }: NativeMeasurementFieldProps) {
+export function NativeMeasurementField({ confirmationColor = tokens.color.interactivePrimary, containerStyle, defaultValue, disabled = false, iconColor = tokens.color.textMuted, inlineLabel = false, inputStyle, kind, label, labelStyle, onChange, unit = "g", value }: NativeMeasurementFieldProps) {
   const pickerValue = value || defaultValue || "";
   const initialWeight = weightPartsFromValue(pickerValue);
   const [visible, setVisible] = useState(false);
@@ -148,7 +148,7 @@ export function NativeMeasurementField({ containerStyle, defaultValue, disabled 
             )}
           </View>
           <Pressable accessibilityLabel="Listo" accessibilityRole="button" onPress={commit} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
-            <Check color={tokens.color.interactivePrimary} size={22} strokeWidth={2.6} />
+            <Check color={confirmationColor} size={22} strokeWidth={2.6} />
           </Pressable>
         </View>
       ) : null}

@@ -16,15 +16,15 @@ import {
 import { LoadingState, Screen } from "@/components/ui";
 import { internalHref } from "@/navigation/internal-href";
 
-const introSteps: OnboardingJourneyStep[] = ["value", "structure", "control", "panels", "panelsCopy", "progress"];
+const introSteps: OnboardingJourneyStep[] = ["value", "structure", "control", "panels", "panelsCopy", "compareShare", "progress"];
 const profileSteps: OnboardingJourneyStep[] = ["goal", "identity", "measurements", "activity", "dietary", "summary"];
 
 const initialValues: OnboardingJourneyValues = {
   goal: "fat_loss",
-  birthDate: "",
+  birthDate: "2000-01-01",
   sex: "male",
-  height: "",
-  weight: "",
+  height: "180",
+  weight: "80",
   activityLevel: "light",
   trainingFrequency: 3,
   dietaryPattern: "omnivore",
@@ -47,10 +47,10 @@ function valuesForState(state: OnboardingStateData): OnboardingJourneyValues {
   const selectedAllergy = state.allergies_or_intolerances.find((item) => allergyChoices.has(item)) || "";
   return {
     goal: state.goal || initialValues.goal,
-    birthDate: state.birth_date || "",
+    birthDate: state.birth_date || initialValues.birthDate,
     sex: state.sex === "female" ? "female" : "male",
-    height: state.height_cm ? String(state.height_cm) : "",
-    weight: state.weight_kg ? String(state.weight_kg).replace(".", ",") : "",
+    height: state.height_cm ? String(state.height_cm) : initialValues.height,
+    weight: state.weight_kg ? String(state.weight_kg).replace(".", ",") : initialValues.weight,
     activityLevel: state.activity_level || initialValues.activityLevel,
     trainingFrequency: state.training_frequency ?? initialValues.trainingFrequency,
     dietaryPattern: state.dietary_pattern || initialValues.dietaryPattern,
@@ -213,15 +213,15 @@ export default function OnboardingScreen() {
   };
 
   const stepIndex = onboardingJourneySteps.findIndex((item) => item.key === step);
-  const usesFixedDisclosuresFooter = stepIndex === 7;
-  const usesFixedProfileChrome = stepIndex >= 8 && stepIndex <= 13;
-  const headerCompensationTop = stepIndex >= 7 ? 88 : 0;
+  const usesFixedDisclosuresFooter = stepIndex === 8;
+  const usesFixedProfileChrome = stepIndex >= 9 && stepIndex <= 14;
+  const headerCompensationTop = stepIndex >= 8 ? 88 : 0;
   const presentationProps = presentationPropsForOnboardingStep(step);
 
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
-      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 7 ? "auto" : false}>
+      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 8 ? "auto" : false}>
         <OnboardingJourneyView controller={controller} {...presentationProps} step={step} />
       </Screen>
     </>

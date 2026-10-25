@@ -14,7 +14,7 @@ export const commitmentPresentation: Record<CalendarCommitmentKind, { label: str
   shopping: { label: "Hacer compras", color: tokens.color.food, icon: ShoppingBasket },
   cooking: { label: "Cocinar", color: tokens.color.meal, icon: CookingPot },
   training: { label: "Entrenar", color: tokens.color.success, icon: Dumbbell },
-  nutritionist: { label: "Cita nutricionista", color: tokens.color.interactivePrimary, icon: Stethoscope },
+  nutritionist: { label: "Cita nutricionista", color: tokens.color.protein, icon: Stethoscope },
 };
 
 export const commitmentRegistrationTitle: Record<CalendarCommitmentKind, string> = {
