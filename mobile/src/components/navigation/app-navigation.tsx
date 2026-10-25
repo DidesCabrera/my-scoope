@@ -15,6 +15,7 @@ import {
   Pin,
   MoreHorizontal,
   Plus,
+  Search,
   Bell,
   Scale,
   Send,
@@ -51,13 +52,13 @@ import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
-type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus"; label: string; onPress(): void };
+type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus" | "search"; label: string; onPress(): void };
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
   | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
-  | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
+  | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string };
 
 type NavigationContextValue = {
   closeMenu(): void;
@@ -249,6 +250,16 @@ export function AppNavigationHeader() {
           </View>
         ) : headerPresentation.mode === "library-list" ? (
           <View style={styles.libraryHeaderActions}>
+            {headerPresentation.secondaryAction ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.secondaryAction.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.secondaryAction.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <Search color={tokens.color.textMuted} size={24} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
             {headerPresentation.createAction ? (
               <Pressable
                 accessibilityLabel={headerPresentation.createAction.label}

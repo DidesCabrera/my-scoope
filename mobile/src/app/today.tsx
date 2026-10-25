@@ -107,6 +107,7 @@ export default function TodayScreen() {
   const [monthError, setMonthError] = useState<string | null>(null);
   const [weightItems, setWeightItems] = useState<WeightItem[]>([]);
   const [todayCommitments, setTodayCommitments] = useState<CalendarCommitment[]>([]);
+  const [scrollToTopSignal, setScrollToTopSignal] = useState(0);
   const [commitmentsError, setCommitmentsError] = useState<string | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -217,15 +218,13 @@ export default function TodayScreen() {
   const calendarCoverage = calendarProgress && futurePlansCount ? Math.round(calendarProgress.days_with_plan / futurePlansCount * 100) : 0;
   const mealCoverage = calendarProgress?.scheduled_meals ? Math.round(calendarProgress.completed_meals / calendarProgress.scheduled_meals * 100) : 0;
   const monthDays = monthOverview?.key === visibleMonth ? monthOverview.data.days : [];
-  const planContext = today?.calendarization
-    ? { color: tokens.color.program, label: "Programa en curso" }
-    : today?.day_id
-      ? { color: tokens.color.dailyPlan, label: "Minuta diaria" }
+  const hasDatedPlan = Boolean(today?.day_id != null && today.has_plan && snapshot);
+  const planContext = hasDatedPlan
+    ? { color: tokens.color.dailyPlan, label: "Minuta diaria" }
     : today?.pinned_plan
       ? { color: tokens.color.dailyPlan, label: "Plan calendarizado" }
       : null;
-  const hasDatedPlan = Boolean(today?.day_id != null && today.has_plan && snapshot);
-  const showGettingStarted = Boolean(today && !hasDatedPlan && !today.calendarization && !today.pinned_plan && todayCommitments.length === 0);
+  const showGettingStarted = Boolean(today && !hasDatedPlan && !today.pinned_plan);
 
   async function createTodayPlan() {
     if (!today) return;
@@ -327,7 +326,7 @@ export default function TodayScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: true }} />
-      <Screen headerMode="preserve">
+      <Screen headerMode="preserve" scrollToTopSignal={scrollToTopSignal}>
       {today ? <View style={styles.weekRow}><CurrentWeekSection localDate={today.local_date} /></View> : null}
       <View style={styles.greetingRow}>
         <View style={styles.greetingHeading}>
@@ -335,8 +334,8 @@ export default function TodayScreen() {
           {currentWeightKg != null ? <GuideMetric onPress={() => router.push("/weight" as Href)} tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} /> : null}
         </View>
       </View>
-      {today?.day_id != null || today?.pinned_plan ? <HomeSectionTitle pinned>Tu plan para hoy</HomeSectionTitle> : null}
-      {planContext || todayCommitments.length ? <View style={styles.planContext}>
+      {today ? <HomeSectionTitle pinned>Tu plan para hoy</HomeSectionTitle> : null}
+      {planContext || todayCommitments.length ? <View style={[styles.planContext, showGettingStarted && styles.planContextBeforeGettingStarted]}>
         {planContext ? <Chip backgroundColor={`${planContext.color}1A`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /> : null}
         {todayCommitments.map((commitment) => {
           const presentation = commitmentPresentation[commitment.kind];
@@ -358,8 +357,15 @@ export default function TodayScreen() {
           }}
           onAddMeal={todayDayId != null ? () => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId })) : undefined}
           onChanged={load}
+          onRemoveFromCalendar={async () => {
+            await apiRequest(`/api/v1/calendar/days/${today.local_date}/plan`, { method: "DELETE" });
+            await load();
+            setScrollToTopSignal((current) => current + 1);
+          }}
           snapshot={snapshot}
         />
+      ) : showGettingStarted ? (
+        <HomeGettingStarted compactTop={Boolean(planContext || todayCommitments.length)} />
       ) : today?.calendarization ? (
         <Card muted>
           <SectionTitle title="Día sin plan" />
@@ -373,8 +379,6 @@ export default function TodayScreen() {
             await load();
           }} />
         </>
-      ) : showGettingStarted ? (
-        <HomeGettingStarted />
       ) : today ? (
         <>
           <HomeSectionTitle>Completa tu día</HomeSectionTitle>
@@ -420,7 +424,7 @@ export default function TodayScreen() {
         <Button label="Ver calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
       </View> : null}
 
-      {!showGettingStarted && calendarProgress ? <View style={styles.homeProgressSection}>
+      {calendarProgress ? <View style={styles.homeProgressSection}>
         <ProgramSectionHeader
           detail={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`Inicio el ${longDateLabel(calendarProgress.period_start)}`} textColor={tokens.color.textMuted} />}
           icon={CalendarDays}
@@ -524,6 +528,7 @@ const styles = StyleSheet.create({
   greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   greetingTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5 },
   planContext: { alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs, marginBottom: 14, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: tokens.spacing.sm - 14 },
+  planContextBeforeGettingStarted: { marginBottom: 12 },
   pressed: { opacity: 0.65 },
   weekRow: { marginBottom: tokens.spacing.sm },
   measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },

@@ -3,13 +3,15 @@ import test from "node:test";
 
 import { assertSourceDoesNotMatch, assertSourceMatch, readTestFile } from "./support/source-contract";
 
-test("Home guides people without a minuta or a commitment after the week and greeting", async () => {
+test("Home guides people without a minuta even when they have a calendarization or commitment", async () => {
   const home = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
 
   assertSourceMatch(home, /apiRequest<CalendarDayDetailData>\(`\/api\/v1\/calendar\/days\/\$\{homeData\.today\.local_date\}`\)/);
   assertSourceMatch(home, /setTodayCommitments\(todayCalendar\?\.commitments \?\? \[\]\)/);
-  assertSourceMatch(home, /const showGettingStarted = Boolean\(today && !hasDatedPlan && !today\.calendarization && !today\.pinned_plan && todayCommitments\.length === 0\)/);
-  assertSourceMatch(home, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}[\s\S]*?showGettingStarted \? \([\s\S]*?<HomeGettingStarted \/>/);
+  assertSourceMatch(home, /const showGettingStarted = Boolean\(today && !hasDatedPlan && !today\.pinned_plan\)/);
+  assertSourceDoesNotMatch(home, /Programa en curso/);
+  assertSourceMatch(home, /\) : showGettingStarted \? \(\s*<HomeGettingStarted compactTop=\{Boolean\(planContext \|\| todayCommitments\.length\)\} \/>\s*\) : today\?\.calendarization \? \(/);
+  assertSourceMatch(home, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}[\s\S]*?showGettingStarted \? \([\s\S]*?<HomeGettingStarted compactTop=/);
   assertSourceMatch(home, /!showGettingStarted && calendarProgress/);
   assertSourceMatch(home, /!showGettingStarted && today \? <>[\s\S]*?<TodayCommitmentsSectionHeader \/>/);
   assertSourceMatch(home, /<HomeLibraryGrid counts=\{libraryCounts\} \/>[\s\S]*?Accesos rápidos/);
