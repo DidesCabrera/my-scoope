@@ -219,7 +219,6 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           : undefined,
         entity,
         identityVisible: compactHeaderVisible,
-        secondaryAction: mode === "list" && entity === "meal" ? { icon: "search", label: "Explorar comidas", onPress: () => router.push("/explore/meals") } : undefined,
         title,
       });
     }
