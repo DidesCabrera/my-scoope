@@ -41,22 +41,40 @@ class Command(BaseCommand):
                 username=CATALOG_USERNAME,
                 defaults={"first_name": "Equipo", "last_name": "My Scoope", "is_active": False},
             )
+            # Serialize catalog seeds on the stable owner row. Render may start a
+            # newer deploy while another pre-deploy is still seeding the catalog.
+            owner = user_model.objects.select_for_update().get(pk=owner.pk)
             if owner.has_usable_password():
                 owner.set_unusable_password()
                 owner.save(update_fields=["password"])
 
             for sort_order, definition in enumerate(STARTER_MEAL_CATALOG, start=1):
-                meal, meal_created = Meal.objects.get_or_create(
-                    created_by=owner,
-                    name=definition["name"],
-                    defaults={
-                        "is_public": False,
-                        "is_forkable": True,
-                        "is_copiable": False,
-                        "is_draft": False,
-                        "scope": Meal.Scope.LIBRARY,
-                    },
+                matching_meals = list(
+                    Meal.objects.filter(created_by=owner, name=definition["name"])
+                    .select_related("catalog_entry")
+                    .order_by("id")
                 )
+                meal = next(
+                    (candidate for candidate in matching_meals if hasattr(candidate, "catalog_entry")),
+                    matching_meals[0] if matching_meals else None,
+                )
+                meal_created = meal is None
+                if meal_created:
+                    meal = Meal.objects.create(
+                        created_by=owner,
+                        name=definition["name"],
+                        is_public=False,
+                        is_forkable=True,
+                        is_copiable=False,
+                        is_draft=False,
+                        scope=Meal.Scope.LIBRARY,
+                    )
+                else:
+                    duplicate_ids = [candidate.id for candidate in matching_meals if candidate.id != meal.id]
+                    if duplicate_ids:
+                        # Preserve the meals because saved user copies may still
+                        # reference them; remove only duplicate publications.
+                        MealCatalogEntry.objects.filter(meal_id__in=duplicate_ids).delete()
                 if meal_created or options["refresh"]:
                     if not meal_created:
                         meal.is_public = False
