@@ -50,7 +50,7 @@ export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId
   }));
   const cardEditing = editing && onChangeMealTime ? { ...editing, onChangeTime: setTimeChangeMeal } : editing;
   const openDetail = dayId ? () => router.push(`/program/days/${dayId}` as Href) : undefined;
-  const sourceDailyPlanId = snapshot.source?.dailyplan_id;
+  const sourceDailyPlanId = snapshot.source?.dailyplan_id ?? undefined;
   return (<>
     <NutritionEntityCard
       actions={<>{additionalActions}{sourceDailyPlanId || onRemoveFromCalendar ? <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={sourceDailyPlanId} name={snapshot.name ?? planName ?? "Minuta diaria"} onChanged={onChanged} onRemoveFromCalendar={onRemoveFromCalendar} /> : null}{openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}</>}
