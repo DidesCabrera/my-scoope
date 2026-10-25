@@ -53,7 +53,6 @@ if [[ -n "$MATCHING_PORT" ]]; then
 elif [[ -n "$FREE_PORT" ]]; then
   printf 'free_metro_port=%s\n' "$FREE_PORT"
   printf 'recommended_staging_command=npm run start:staging -- --port %s\n' "$FREE_PORT"
-  printf 'recommended_local_command=npm run start:local -- --port %s\n' "$FREE_PORT"
 else
   printf 'free_metro_port=none_in_range_%s_%s\n' "$PORT_START" "$PORT_END"
 fi

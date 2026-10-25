@@ -28,8 +28,10 @@ feature worktree/mobile -> its own Metro port -> iOS Simulator
                                       +-> deployed staging API
 ```
 
-Use a local Django server from a staging checkout only when Felipe asks for it or
-the change genuinely depends on local backend code. In that mode, start Metro from
+Always point the simulator presentation at the deployed Render staging API through
+`npm run start:staging`. Do not start or select a local Django backend merely
+because one is available. Use a local backend only when Felipe explicitly requests
+that environment in the current task; in that exceptional mode, start Metro from
 the feature checkout with the local profile so it points to
 `http://127.0.0.1:8000`.
 
@@ -59,12 +61,10 @@ terminating another chat's processes.
    the feature.
 2. From that checkout, run `scripts/inspect_preview_context.sh`. Use its matching
    Metro port when one exists; otherwise use the reported free port.
-3. Choose the API mode:
-   - normally run `npm run start:staging -- --port <port>` from that checkout's
-     `mobile/` directory;
-   - for an explicitly required local backend, run the already configured Django
-     server from the staging checkout and use
-     `npm run start:local -- --port <port>` from the feature checkout.
+3. Run `npm run start:staging -- --port <port>` from that checkout's `mobile/`
+   directory. This points the app at `https://myscoope-staging.onrender.com`.
+   Substitute a local backend and `npm run start:local` only when Felipe explicitly
+   requests that environment in the current task.
 4. Connect the existing development client directly to that Metro port with:
 
    ```bash

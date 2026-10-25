@@ -128,7 +128,7 @@ shared_skills:
     area: "product-technology"
     status: "pilot"
     path: ".codex/skills/mobile-simulator-review/SKILL.md"
-    purpose: "Show an implemented mobile change through the owning checkout's Metro and the compatible API environment."
+    purpose: "Show an implemented mobile change through the owning checkout's Metro against the Render staging API."
     available_to: "all-roles"
     typical_users:
       - "strategic-product-advisor"
