@@ -16,7 +16,7 @@ import {
 import { LoadingState, Screen } from "@/components/ui";
 import { internalHref } from "@/navigation/internal-href";
 
-const introSteps: OnboardingJourneyStep[] = ["value", "structure", "panels", "control", "progress"];
+const introSteps: OnboardingJourneyStep[] = ["value", "structure", "control", "panels", "panelsCopy", "progress"];
 const profileSteps: OnboardingJourneyStep[] = ["goal", "identity", "measurements", "activity", "dietary", "summary"];
 
 const initialValues: OnboardingJourneyValues = {
@@ -213,15 +213,15 @@ export default function OnboardingScreen() {
   };
 
   const stepIndex = onboardingJourneySteps.findIndex((item) => item.key === step);
-  const usesFixedDisclosuresFooter = stepIndex === 6;
-  const usesFixedProfileChrome = stepIndex >= 7 && stepIndex <= 12;
-  const headerCompensationTop = stepIndex >= 6 ? 88 : 0;
+  const usesFixedDisclosuresFooter = stepIndex === 7;
+  const usesFixedProfileChrome = stepIndex >= 8 && stepIndex <= 13;
+  const headerCompensationTop = stepIndex >= 7 ? 88 : 0;
   const presentationProps = presentationPropsForOnboardingStep(step);
 
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
-      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
+      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 7 ? "auto" : false}>
         <OnboardingJourneyView controller={controller} {...presentationProps} step={step} />
       </Screen>
     </>

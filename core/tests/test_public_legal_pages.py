@@ -36,6 +36,21 @@ class PublicLegalPagesTests(TestCase):
                 with self.subTest(route_name=route_name, link=link):
                     self.assertContains(response, f'href="{link}"')
 
+    def test_mobile_onboarding_context_replaces_login_with_safe_app_return(self):
+        for route_name in ("terms", "privacy", "refund_policy", "support"):
+            response = self.client.get(reverse(route_name), {"source": "mobile-onboarding"})
+            with self.subTest(route_name=route_name):
+                self.assertContains(response, 'href="myscoope://disclosures"')
+                self.assertContains(response, "Volver a la app")
+                self.assertContains(response, '/privacy/?source=mobile-onboarding')
+                self.assertNotContains(response, 'href="/accounts/login/"')
+
+    def test_unknown_legal_source_keeps_normal_web_login(self):
+        response = self.client.get(reverse("privacy"), {"source": "unexpected"})
+
+        self.assertContains(response, 'href="/accounts/login/"')
+        self.assertNotContains(response, "Volver a la app")
+
     def test_refund_policy_separates_web_and_store_channels(self):
         response = self.client.get(reverse("refund_policy"))
 

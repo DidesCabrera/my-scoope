@@ -156,17 +156,25 @@ def msos_detail(request, kind, item_id):
     )
 
 
+def _legal_page_context(request):
+    from_mobile_onboarding = request.GET.get("source") == "mobile-onboarding"
+    return {
+        "from_mobile_onboarding": from_mobile_onboarding,
+        "legal_query_suffix": "?source=mobile-onboarding" if from_mobile_onboarding else "",
+    }
+
+
 def privacy(request):
-    return render(request, "core/privacy.html")
+    return render(request, "core/privacy.html", _legal_page_context(request))
 
 
 def refund_policy(request):
-    return render(request, "core/refund_policy.html")
+    return render(request, "core/refund_policy.html", _legal_page_context(request))
 
 
 def terms(request):
-    return render(request, "core/terms.html")
+    return render(request, "core/terms.html", _legal_page_context(request))
 
 
 def support(request):
-    return render(request, "core/support.html")
+    return render(request, "core/support.html", _legal_page_context(request))

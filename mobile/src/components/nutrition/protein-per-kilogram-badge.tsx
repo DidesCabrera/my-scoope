@@ -21,7 +21,7 @@ export function ProteinPerKilogramBadge({
   density?: "compact" | "regular";
   showUnit?: boolean;
   style?: StyleProp<ViewStyle>;
-  textSize?: 12 | 13;
+  textSize?: number;
 }) {
   const compact = density === "compact";
   return (
