@@ -1184,7 +1184,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /const isProfileStep = index >= 7 && index <= 12/);
   assertSourceMatch(journey, /index === 6 && styles\.disclosuresEyebrow/);
   assertSourceMatch(journey, /disclosuresEyebrow: \{ color: tokens\.color\.textMuted \}/);
-  assertSourceMatch(journey, /!isProfileStep \? <Text style=\{\[styles\.description, isExplanation && styles\.explanationDescription, isCenteredIntro && styles\.centeredText\]\}>\{description\}<\/Text> : null/);
+  assertSourceMatch(journey, /!isProfileStep && description \? <Text style=\{\[styles\.description, isExplanation && styles\.explanationDescription, isCenteredIntro && styles\.centeredText\]\}>\{description\}<\/Text> : null/);
   assertSourceMatch(journey, /explanationDescription: \{ color: tokens\.color\.textMain \}/);
   assertSourceMatch(journey, /!usesBrandedHeader && !isProfileStep \? <Text/);
   assertSourceMatch(journey, /isProfileStep \? \(!fixedProfileChrome \? <ProfileProgress index=\{index\} \/> : null\) : index === 6 \|\| !showProgress \? null/);

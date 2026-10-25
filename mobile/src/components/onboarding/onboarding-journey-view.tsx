@@ -220,7 +220,7 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
         index === 6 && disclosuresTitleSpacingReduction > 0 && { marginTop: styles.centeredTitleSpacing.marginTop - disclosuresTitleSpacingReduction },
       ]}>{title}</Text>
       {titleAccessory}
-      {!isProfileStep ? <Text style={[styles.description, isExplanation && styles.explanationDescription, isCenteredIntro && styles.centeredText]}>{description}</Text> : null}
+      {!isProfileStep && description ? <Text style={[styles.description, isExplanation && styles.explanationDescription, isCenteredIntro && styles.centeredText]}>{description}</Text> : null}
     </View>
   );
 }
@@ -479,12 +479,12 @@ function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: {
 function ExplanationCard({ body, children, icon: IconComponent, title }: { body: string; children?: ReactNode; icon: Icon; title: string }) {
   return (
     <View style={styles.explanationCard}>
-      <View style={styles.explanationIcon}><IconComponent color={tokens.color.entityIconForeground} size={18} /></View>
       <View style={styles.explanationCopy}>
         <Text style={styles.explanationTitle}>{title}</Text>
         <Text style={styles.explanationBody}>{body}</Text>
         {children}
       </View>
+      <View style={styles.explanationIcon}><IconComponent color={tokens.color.entityIconForeground} size={18} /></View>
     </View>
   );
 }
@@ -679,7 +679,7 @@ function DisclosuresView({ index }: { index: number }) {
   const { hideCalculationReviewDisclosure } = useContext(JourneyPresentationContext);
   return (
     <DisclosuresStepLayout index={index}>
-      <StepHeader description="Revisa qué hace My Scoope, qué no hace y qué decisiones quedan bajo tu responsabilidad." eyebrow="Uso responsable" icon={LockKeyhole} index={index} title="Información importante antes de continuar" />
+      <StepHeader description={null} eyebrow="Uso responsable" icon={LockKeyhole} index={index} title="Información Importante" />
       <View style={styles.noticeStack}>
         <ExplanationCard body="No diagnostica, trata ni reemplaza atención profesional." icon={HeartPulse} title="No es atención médica" />
         {!hideCalculationReviewDisclosure ? <ExplanationCard body="Los cálculos y propuestas deben revisarse antes de usarse." icon={Eye} title="Revisa antes de aplicar" /> : null}
@@ -1310,7 +1310,7 @@ const styles = StyleSheet.create({
   profileBackAction: { alignSelf: "auto", paddingLeft: 0 },
   profilePrimaryAction: { minWidth: 144 },
   backLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  explanationCard: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
+  explanationCard: { alignItems: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
   explanationIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceElevated, borderRadius: tokens.radius.md, height: 36, justifyContent: "center", width: 36 },
   explanationCopy: { flex: 1, gap: 2 },
   explanationTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },

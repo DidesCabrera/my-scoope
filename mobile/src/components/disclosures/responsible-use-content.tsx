@@ -10,8 +10,8 @@ function ResponsibleUsePanel({ body, children, icon: Icon, title }: { body: stri
   return (
     <View style={styles.panel}>
       <View style={styles.panelHeading}>
-        <View style={styles.panelIcon}><Icon color={tokens.color.textMain} size={20} /></View>
         <Text style={styles.panelTitle}>{title}</Text>
+        <View style={styles.panelIcon}><Icon color={tokens.color.textMain} size={20} /></View>
       </View>
       <Text style={[styles.panelBody, children ? styles.panelBodyWithActions : undefined]}>{body}</Text>
       {children}
@@ -25,8 +25,7 @@ export function ResponsibleUseContent({ policyActions }: { policyActions?: React
       <View style={styles.header}>
         <Text style={styles.eyebrow}>Uso responsable</Text>
         <View style={styles.headerIcon}><LockKeyhole color={tokens.color.textMain} size={27} /></View>
-        <Text style={styles.title}>Información importante antes de continuar</Text>
-        <Text style={styles.description}>Revisa qué hace My Scoope, qué no hace y qué decisiones quedan bajo tu responsabilidad.</Text>
+        <Text style={styles.title}>Información Importante</Text>
       </View>
       <View style={styles.panelStack}>
         <ResponsibleUsePanel
@@ -86,10 +85,9 @@ const styles = StyleSheet.create({
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.2, textTransform: "uppercase" },
   headerIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, height: 54, justifyContent: "center", marginTop: tokens.spacing.sm, width: 54 },
   title: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 32, marginTop: tokens.spacing.lg, textAlign: "center" },
-  description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23, textAlign: "center" },
   panelStack: { gap: tokens.spacing.sm },
   panel: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
-  panelHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
+  panelHeading: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   panelIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceElevated, borderRadius: tokens.radius.md, height: 36, justifyContent: "center", width: 36 },
   panelTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
   panelBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
