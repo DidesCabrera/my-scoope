@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
+import { assertSourceMatch } from "./support/source-contract";
+
 async function source(file: string): Promise<string> {
   return readFile(path.resolve(process.cwd(), file), "utf8");
 }
@@ -85,12 +87,12 @@ test("current cards retain library actions while today's plan removes only its c
   }
   assert.ok(contextualActions.indexOf('key: "share"') < contextualActions.indexOf('key: "rename"'));
   assert.match(contextualActions, /onCompare=\{id != null \? \(\) => void compare\(\) : undefined\}/);
-  assert.match(contextualActions, /if \(id != null && !onRemoveFromCalendar\) \{\s*actions\.push\(\{ destructive: true, key: "delete", label: "Eliminar" \}\)/);
+  assertSourceMatch(contextualActions, /if \(id != null && !onRemoveFromCalendar\) \{\s*actions\.push\(\{ destructive: true, key: "delete", label: "Eliminar" \}\)/);
   assert.match(calendarizedPlan, /snapshot\.source\?\.dailyplan_id/);
   assert.match(calendarizedPlan, /<ContextualLibraryActions[^>]*entity="dailyPlan"/);
-  assert.match(calendarizedPlan, /onRemoveFromCalendar=\{onRemoveFromCalendar\}/);
-  assert.match(today, /onRemoveFromCalendar=\{async \(\) => \{\s*await apiRequest\(`\/api\/v1\/calendar\/days\/\$\{today\.local_date\}\/plan`, \{ method: "DELETE" \}\)/);
-  assert.match(libraryActions, /label="Eliminar del calendario"[\s\S]*key: "remove-calendar"/);
+  assertSourceMatch(calendarizedPlan, /onRemoveFromCalendar=\{onRemoveFromCalendar\}/);
+  assertSourceMatch(today, /onRemoveFromCalendar=\{async \(\) => \{\s*await apiRequest\(`\/api\/v1\/calendar\/days\/\$\{today\.local_date\}\/plan`, \{ method: "DELETE" \}\)/);
+  assertSourceMatch(libraryActions, /label="Eliminar del calendario"[\s\S]*key: "remove-calendar"/);
   assert.match(pinnedPlan, /<ContextualLibraryActions[^>]*entity="dailyPlan"/);
   assert.match(currentDay, /<ContextualLibraryActions[^>]*entity="meal"/);
 });
