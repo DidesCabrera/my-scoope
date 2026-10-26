@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { OnboardingAnalyzeInput, OnboardingStateData, ProposalDetail } from "@/api/types";
+import type { OnboardingAnalyzeInput, OnboardingCalendarization, OnboardingStateData, ProposalDetail } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import {
   OnboardingJourneyView,
@@ -34,11 +34,12 @@ const initialValues: OnboardingJourneyValues = {
 };
 
 const allergyChoices = new Set(["gluten", "lácteos", "frutos secos", "mariscos"]);
+type OnboardingMinutas = { items: ProposalDetail[] };
 
 function stepForState(state: OnboardingStateData): OnboardingJourneyStep {
   if (state.stage === "summary") return "summary";
   if (state.stage === "plan") return "dailyPlan";
-  if (state.stage === "plans") return "plans";
+  if (state.stage === "plans") return state.proposal_ids?.length === 2 ? "dailyPlan" : "plans";
   if (state.stage === "profile") return "goal";
   return "value";
 }
@@ -68,7 +69,8 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState<OnboardingJourneyStep>("value");
   const [values, setValues] = useState<OnboardingJourneyValues>(initialValues);
   const [state, setState] = useState<OnboardingStateData | null>(null);
-  const [proposal, setProposal] = useState<ProposalDetail | null>(null);
+  const [proposals, setProposals] = useState<ProposalDetail[]>([]);
+  const [calendarization, setCalendarization] = useState<OnboardingCalendarization | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,9 +84,10 @@ export default function OnboardingScreen() {
       setState(nextState);
       setValues(valuesForState(nextState));
       setStep(stepForState(nextState));
-      if (nextState.proposal_id) {
-        setProposal(await apiRequest<ProposalDetail>(`/api/v1/proposals/${nextState.proposal_id}`));
-      }
+      const proposalIds = nextState.proposal_ids?.length ? nextState.proposal_ids : nextState.proposal_id ? [nextState.proposal_id] : [];
+      setProposals(await Promise.all(proposalIds.map((id) => apiRequest<ProposalDetail>(`/api/v1/proposals/${id}`))));
+      setCalendarization(proposalIds.length === 2
+        ? await apiRequest<OnboardingCalendarization>("/api/v1/onboarding/calendarized-foods") : null);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -172,16 +175,38 @@ export default function OnboardingScreen() {
         return;
       }
       if (step === "summary") {
-        const nextProposal = await apiRequest<ProposalDetail>("/api/v1/onboarding/generate-plan", { method: "POST" });
-        setProposal(nextProposal);
+        const generated = await apiRequest<OnboardingMinutas>("/api/v1/onboarding/generate-plan", { method: "POST" });
+        setProposals(generated.items);
+        setCalendarization({ plans: generated.items.map((item) => ({ proposal_id: item.id, dailyplan_id: null, dates: [], foods: [] })), days_count: 0, foods: [] });
         setStep("dailyPlan");
         return;
       }
       if (step === "dailyPlan") {
-        const applied = await apiRequest<ProposalDetail>("/api/v1/onboarding/accept-plan", { method: "POST" });
-        setProposal(applied);
+        if (proposals.length === 2 && calendarization?.plans.filter((plan) => plan.dates.length > 0).length !== 2) {
+          throw new Error("Calendariza ambas minutas antes de continuar.");
+        }
+        const applied = await apiRequest<OnboardingMinutas>("/api/v1/onboarding/accept-plan", { method: "POST" });
+        setProposals(applied.items);
         router.replace({ pathname: "/subscription", params: { origin: "onboarding", ...(returnHref ? { returnTo: String(returnHref) } : {}) } });
       }
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function calendarize(proposalId: number) {
+    setBusy(true);
+    setError(null);
+    try {
+      const applied = proposals.every((item) => item.status === "applied")
+        ? proposals
+        : (await apiRequest<OnboardingMinutas>("/api/v1/onboarding/accept-plan", { method: "POST" })).items;
+      setProposals(applied);
+      const dailyPlanId = applied.find((item) => item.id === proposalId)?.applied_result?.object_id;
+      if (!dailyPlanId) throw new Error("No pudimos abrir esta minuta en el calendario.");
+      router.push({ pathname: "/calendar/select-plans", params: { origin: "onboarding", dailyPlanId: String(dailyPlanId) } });
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -203,11 +228,15 @@ export default function OnboardingScreen() {
   const controller: OnboardingJourneyController = {
     values,
     estimate: state?.estimate,
-    proposal,
+    proposal: proposals[0] ?? null,
+    proposals,
+    calendarization,
     busy,
     error,
     onChange: updateValue,
     onNext: () => void next(),
+    onCalendarize: (proposalId) => void calendarize(proposalId),
+    onOpenMeal: (proposalId, mealIndex) => router.push(`/onboarding/minutas/${proposalId}/meals/${mealIndex}` as Href),
     onBack: back,
     onAdjust: () => setStep("goal"),
   };

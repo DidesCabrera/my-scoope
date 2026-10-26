@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from django.contrib.auth.models import User
 from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
@@ -58,6 +57,7 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
         HistoricalFood = historical_apps.get_model("notas", "Food")
         HistoricalMeal = historical_apps.get_model("notas", "Meal")
         HistoricalMealFood = historical_apps.get_model("notas", "MealFood")
+        HistoricalUser = historical_apps.get_model("auth", "User")
         try:
             catalog = self._catalog("Arroz blanco cocido")
             snapshot = self._food(catalog, HistoricalFood)
@@ -70,7 +70,7 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
             )
             meal = HistoricalMeal.objects.create(
                 name="Comida histórica",
-                created_by_id=User.objects.create_user(username="historic-meal-owner").pk,
+                created_by_id=HistoricalUser.objects.create(username="historic-meal-owner").pk,
             )
             meal_food = HistoricalMealFood.objects.create(
                 meal_id=meal.pk,

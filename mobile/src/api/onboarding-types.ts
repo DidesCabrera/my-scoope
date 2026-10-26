@@ -1,3 +1,5 @@
+import type { LibraryFoodPanelItem } from "./types";
+
 export type OnboardingStage = "intro" | "profile" | "summary" | "plan" | "plans" | "completed";
 
 export type OnboardingInput = {
@@ -42,4 +44,11 @@ export type OnboardingStateData = {
   avoided_foods: string[];
   estimate: OnboardingEstimate | null;
   proposal_id: number | null;
+  proposal_ids: number[];
+};
+
+export type OnboardingCalendarization = {
+  plans: { proposal_id: number; dailyplan_id: number | null; dates: string[]; foods: LibraryFoodPanelItem[] }[];
+  days_count: number;
+  foods: LibraryFoodPanelItem[];
 };

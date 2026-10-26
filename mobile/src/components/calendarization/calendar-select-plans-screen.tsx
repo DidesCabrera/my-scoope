@@ -1,5 +1,5 @@
 import * as Crypto from "expo-crypto";
-import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
+import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -41,6 +41,9 @@ function calendarDayNutrition(day: CalendarDay) {
 
 export default function SelectCalendarPlansScreen() {
   const router = useRouter();
+  const { dailyPlanId, origin } = useLocalSearchParams<{ dailyPlanId?: string; origin?: string }>();
+  const onboardingPlanId = origin === "onboarding" && Number.isInteger(Number(dailyPlanId)) && Number(dailyPlanId) > 0 ? Number(dailyPlanId) : null;
+  const returnHref: Href = onboardingPlanId ? "/onboarding" : "/calendar";
   const { apiRequest, status } = useSession();
   const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const setHeaderPresentation = useHeaderPresentation();
@@ -64,16 +67,27 @@ export default function SelectCalendarPlansScreen() {
     .filter((day): day is CalendarDay => Boolean(day?.has_plan)), [selectedDateList, selectedDaysByDate]);
 
   useFocusEffect(useCallback(() => {
-    const cancel = () => router.dismissTo("/calendar" as Href);
+    const cancel = () => router.dismissTo(returnHref as Href);
     setHeaderPresentation({
       action: selected ? undefined : { label: "Cancelar", onPress: cancel },
-      fallback: "/calendar",
-      leadingAction: selected ? { icon: "back", label: "Volver a los planes", onPress: () => { setSelected(null); setConfirmReplacement(null); setError(null); } } : undefined,
+      fallback: returnHref,
+      leadingAction: selected ? onboardingPlanId
+        ? { icon: "back", label: "Volver al onboarding", onPress: cancel }
+        : { icon: "back", label: "Volver a los planes", onPress: () => { setSelected(null); setConfirmReplacement(null); setError(null); } } : undefined,
       mode: "back",
       title: selected ? "Calendarizar plan" : "Seleccionar plan individual",
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [router, selected, setHeaderPresentation]));
+  }, [onboardingPlanId, returnHref, router, selected, setHeaderPresentation]));
+
+  useEffect(() => {
+    if (status !== "authenticated" || !onboardingPlanId) return;
+    let active = true;
+    void apiRequest<LibraryItem>(`/api/v1/library/daily-plans/${onboardingPlanId}`)
+      .then((plan) => { if (active) setSelected(plan); })
+      .catch((nextError) => { if (active) setError(userFacingError(nextError)); });
+    return () => { active = false; };
+  }, [apiRequest, onboardingPlanId, status]);
 
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated") return;
@@ -146,7 +160,7 @@ export default function SelectCalendarPlansScreen() {
         body: JSON.stringify({ dailyplan_id: selected.id, assignment_key: Crypto.randomUUID(), replace_existing: day.has_plan }),
         method: "PUT",
       })));
-    router.dismissTo("/calendar" as Href);
+    router.dismissTo(returnHref as Href);
   }
 
   async function reviewAssignment() {
@@ -292,6 +306,10 @@ export default function SelectCalendarPlansScreen() {
       onPress={() => void reviewAssignment()}
     />}
   </Screen>;
+
+  if (onboardingPlanId) return error
+    ? <Screen headerMode="preserve"><InlineNotice tone="error">{error}</InlineNotice><Button label="Volver al onboarding" onPress={() => router.dismissTo(returnHref as Href)} /></Screen>
+    : <LoadingState label="Abriendo minuta para calendarizar…" />;
 
   return <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
     <ScrollView

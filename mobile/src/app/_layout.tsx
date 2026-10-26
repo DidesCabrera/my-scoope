@@ -58,7 +58,11 @@ function AuthenticatedRouteGate() {
       return;
     }
     const isOnboardingSubscription = pathname === "/subscription" && origin === "onboarding";
-    if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding" && !isOnboardingSubscription) {
+    const isOnboardingCalendar = pathname === "/calendar/select-plans" && origin === "onboarding"
+      && (profile.onboarding_stage === "plan" || profile.onboarding_stage === "plans");
+    const isOnboardingMealDetail = /^\/onboarding\/minutas\/\d+\/meals\/\d+$/.test(pathname)
+      && (profile.onboarding_stage === "plan" || profile.onboarding_stage === "plans");
+    if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding" && !isOnboardingSubscription && !isOnboardingCalendar && !isOnboardingMealDetail) {
       recordNavigationRedirect(routeTemplate, "/onboarding", "onboarding_required");
       router.replace(returnTo ? { pathname: "/onboarding", params: { returnTo } } : "/onboarding" as Href);
     }

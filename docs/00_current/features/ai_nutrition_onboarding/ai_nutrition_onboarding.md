@@ -753,9 +753,24 @@ versión: la actividad habitual ya representa el multiplicador y sumar sesiones
 semanales produciría doble conteo.
 
 El transporte Native expone estado reanudable, análisis, generación, aceptación y
-finalización bajo `/api/v1/onboarding/*`. La generación reutiliza el brief y el
-generador determinístico existentes. Produce una `NutritionProposal` revisable; el
-Plan diario solo se crea en la biblioteca cuando la persona lo confirma. El endpoint
-v1 se conserva temporalmente para el onboarding Web existente.
+finalización bajo `/api/v1/onboarding/*`. Al generar minutas, consulta las minutas
+publicadas de Explorar, selecciona dos compatibles con el patrón alimentario y
+verifica cada alimento frente a exclusiones, alergias y etiquetas dietarias. El
+solver ajusta las cantidades de alimentos clave dentro de límites de porción;
+la simulación y el validador nutricional deben aprobar cada minuta. Si no hay dos
+opciones válidas, la operación no guarda propuestas parciales y responde 422.
+
+La respuesta de generación y aceptación contiene `data.items` con dos
+`NutritionProposal`; el estado reanudable contiene `proposal_ids` y conserva
+`proposal_id` como alias de la primera propuesta para clientes anteriores. La
+persona revisa ambas propuestas. Al calendarizar la primera, se crean juntas
+dos `DailyPlan` en su biblioteca, con referencia a las minutas fuente de
+Explorar. Se abre el selector de fechas del calendario con esa minuta ya
+elegida y, tras confirmar, vuelve al onboarding para calendarizar la segunda.
+El avance a suscripción requiere al menos una fecha vigente para cada minuta.
+`GET /api/v1/onboarding/calendarized-foods` devuelve las fechas vigentes y la
+lista de alimentos acumulada desde los snapshots de todos los días marcados;
+si se reemplaza una fecha, la lista se recalcula desde el estado actual.
+El endpoint v1 se conserva temporalmente para el onboarding Web existente.
 
 Decisión: `docs/20_decisions/0203-native-onboarding-v2-persistence-and-first-plan.md`.

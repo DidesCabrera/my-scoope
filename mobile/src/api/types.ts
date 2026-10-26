@@ -4,7 +4,7 @@ import type { ActiveProgramDay } from "./calendar-types";
 
 export type { EntitlementsData, SubscriptionData } from "./billing-types";
 export type { ActiveProgramDay, CalendarDay, CalendarDayDetailData, CalendarDayHistoryData, CalendarOverviewData, CalendarProgressData } from "./calendar-types";
-export type { OnboardingAnalyzeInput, OnboardingEstimate, OnboardingInput, OnboardingStage, OnboardingStateData } from "./onboarding-types";
+export type { OnboardingAnalyzeInput, OnboardingCalendarization, OnboardingEstimate, OnboardingInput, OnboardingStage, OnboardingStateData } from "./onboarding-types";
 export type ApiErrorDetail = {
   code: string;
   message: string;

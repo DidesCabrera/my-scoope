@@ -8316,6 +8316,96 @@
         "title": "OnboardingAnalyzeInput",
         "type": "object"
       },
+      "OnboardingCalendarPlanData": {
+        "properties": {
+          "dailyplan_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dailyplan Id"
+          },
+          "dates": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Dates",
+            "type": "array"
+          },
+          "foods": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryFoodPanelItemData"
+            },
+            "title": "Foods",
+            "type": "array"
+          },
+          "proposal_id": {
+            "title": "Proposal Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "proposal_id"
+        ],
+        "title": "OnboardingCalendarPlanData",
+        "type": "object"
+      },
+      "OnboardingCalendarizationData": {
+        "properties": {
+          "days_count": {
+            "title": "Days Count",
+            "type": "integer"
+          },
+          "foods": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryFoodPanelItemData"
+            },
+            "title": "Foods",
+            "type": "array"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingCalendarPlanData"
+            },
+            "title": "Plans",
+            "type": "array"
+          }
+        },
+        "required": [
+          "plans",
+          "days_count",
+          "foods"
+        ],
+        "title": "OnboardingCalendarizationData",
+        "type": "object"
+      },
+      "OnboardingCalendarizationEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/OnboardingCalendarizationData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "OnboardingCalendarizationEnvelope",
+        "type": "object"
+      },
       "OnboardingInput": {
         "properties": {
           "birth_date": {
@@ -8347,6 +8437,44 @@
           "weight_kg"
         ],
         "title": "OnboardingInput",
+        "type": "object"
+      },
+      "OnboardingMinutasData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalDetailData"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "OnboardingMinutasData",
+        "type": "object"
+      },
+      "OnboardingMinutasEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/OnboardingMinutasData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "OnboardingMinutasEnvelope",
         "type": "object"
       },
       "OnboardingStateData": {
@@ -8425,6 +8553,13 @@
               }
             ],
             "title": "Proposal Id"
+          },
+          "proposal_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Proposal Ids",
+            "type": "array"
           },
           "sex": {
             "default": "",
@@ -18696,7 +18831,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                  "$ref": "#/components/schemas/OnboardingMinutasEnvelope"
                 }
               }
             },
@@ -18795,6 +18930,40 @@
         "summary": "Onboarding Analyze"
       }
     },
+    "/api/v1/onboarding/calendarized-foods": {
+      "get": {
+        "operationId": "mobile_api_api_onboarding_calendarized_foods",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingCalendarizationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Onboarding Calendarized Foods"
+      }
+    },
     "/api/v1/onboarding/complete": {
       "post": {
         "operationId": "mobile_api_api_onboarding_complete_v2",
@@ -18848,7 +19017,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                  "$ref": "#/components/schemas/OnboardingMinutasEnvelope"
                 }
               }
             },

@@ -121,6 +121,11 @@ class Profile(models.Model):
         blank=True,
         help_text="Owned proposal identifier used to resume first-plan review without a cross-domain relation.",
     )
+    onboarding_plan_proposal_ids = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Owned proposal identifiers used to resume the two onboarding minutas.",
+    )
     onboarding_completed_at = models.DateTimeField(
         null=True,
         blank=True,

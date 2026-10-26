@@ -27,7 +27,7 @@ import { createContext, type ComponentType, type ReactNode, useCallback, useCont
 import { Animated, Image, PanResponder, type PanResponderGestureState, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
+import { commitmentFoodPanelItem, commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { ResponsibleUseConfirmationNotice, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
 import { KpiAllocationBar, NutritionEntityCard, NutritionKpiSection, ProteinPerKilogramBadge, type NutritionEntityCardProps } from "@/components/nutrition";
 import { GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
@@ -35,7 +35,7 @@ import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
 import { AssistantGradientIcon, Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, textStyles, type EntityKind } from "@/components/ui";
 import { useScreenScrollControl } from "@/components/ui/layout";
-import type { OnboardingEstimate, ProposalDetail } from "@/api/types";
+import type { OnboardingCalendarization, OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { localDateValue } from "@/presentation/date-time-values";
 
@@ -141,12 +141,16 @@ export type OnboardingJourneyController = {
   values: OnboardingJourneyValues;
   estimate?: OnboardingEstimate | null;
   proposal?: ProposalDetail | null;
+  proposals?: ProposalDetail[];
+  calendarization?: OnboardingCalendarization | null;
   busy?: boolean;
   error?: string | null;
   loginDisabled?: boolean;
   loginLabel?: string;
   onChange?(field: keyof OnboardingJourneyValues, value: string | number): void;
   onNext?(): void;
+  onCalendarize?(proposalId: number): void;
+  onOpenMeal?(proposalId: number, mealIndex: number): void;
   onBack?(): void;
   onLogin?(): void;
   onAdjust?(): void;
@@ -305,10 +309,11 @@ function ContinueChip({ label = "Continuar", onPress }: { label?: string; onPres
   );
 }
 
-function CreditContinueButton({ chip = false, label = "Continuar", onPress }: { chip?: boolean; label?: string; onPress?: () => void }) {
+function CreditContinueButton({ chip = false, disabled = false, label = "Continuar", onPress }: { chip?: boolean; disabled?: boolean; label?: string; onPress?: () => void }) {
   const controller = useJourneyController();
+  const isDisabled = Boolean(controller.busy || disabled);
   return (
-    <Pressable accessibilityRole="button" disabled={controller.busy} onPress={onPress ?? controller.onNext ?? noop} style={[styles.creditContinueButton, chip && styles.creditContinueButtonChip, controller.busy && styles.actionDisabled]}>
+    <Pressable accessibilityRole="button" disabled={isDisabled} onPress={onPress ?? controller.onNext ?? noop} style={[styles.creditContinueButton, chip && styles.creditContinueButtonChip, isDisabled && styles.actionDisabled]}>
       <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="daily-plan-credit-button" x1="0" x2="1" y1="0" y2="1">
@@ -1119,7 +1124,7 @@ function SummaryView({ index }: { index: number }) {
         {estimationInformationSection}
         {maintenanceSection}
         {nutritionGoalSection}
-        <Text style={[styles.description, styles.centeredText, styles.summaryClosingText]}>My Scoope generará 2 minutas que cumplan con este objetivo. Luego las pondremos en tu calendario.</Text>
+        <Text style={[styles.description, styles.centeredText, styles.summaryClosingText]}>My Scoope generará 2 minutas que cumplan con este objetivo. Luego podrás llevarlas a tu calendario.</Text>
         {!storyboardSummaryLayout ? <Pressable accessibilityRole="button" onPress={controller.onAdjust ?? noop} style={styles.adjustNutritionAction}>
           <Text style={styles.adjustNutritionLabel}>Ajusta objetivo nutricional</Text>
         </Pressable> : null}
@@ -1170,6 +1175,32 @@ function GeneratedDailyPlanView() {
   const controller = useJourneyController();
   const { scrollToTop } = useScreenScrollControl();
   const [showFoodList, setShowFoodList] = useState(false);
+  const generated = controller.proposals?.filter((item) => item.dailyplan) ?? [];
+  if (generated.length === 2) {
+    const calendarization = controller.calendarization;
+    const scheduledPlans = calendarization?.plans.filter((plan) => plan.dates.length > 0).length ?? 0;
+    if (showFoodList) return <GeneratedFoodListPage calendarization={calendarization} onBack={() => setShowFoodList(false)} proposals={generated} />;
+    return (
+      <View style={[styles.generatedPlanPreview, styles.generatedPlanPreviewMain]}>
+        <View style={styles.generatedPlanLogo}><MyScoopeBrandLogo compact /></View>
+        <Text style={styles.generatedPlanHeadline}>Hemos generado 2 minutas según tus objetivos</Text>
+        <Text style={styles.generatedPlanSubtitle}>Asígnalas en el calendario y luego cumple con cada comida</Text>
+        <View style={styles.generatedPlanCards}>
+          {generated.map((item) => {
+            return <ProposalDailyPlanCard
+              actions={<View style={styles.generatedPlanCardAction}><Button bleed={false} icon={<CalendarDays color={tokens.color.surfaceApp} size={17} strokeWidth={2} />} label="Calendarizar" loading={controller.busy} onPress={() => controller.onCalendarize?.(item.id)} /></View>}
+              dailyplan={item.dailyplan!}
+              key={item.id}
+              onOpenMeal={(mealIndex) => controller.onOpenMeal?.(item.id, mealIndex)}
+            />;
+          })}
+        </View>
+        <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
+        {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
+        <CreditContinueButton disabled={scheduledPlans < 2} label="Continuar" />
+      </View>
+    );
+  }
   if (controller.proposal?.dailyplan) {
     return (
       <>
@@ -1238,6 +1269,26 @@ function PreviewFoodListPage({ onBack }: { onBack: () => void }) {
     {activeTab === "grouped"
       ? <GroupedFoodsCard items={groupedPreviewFoodItems()} quantityOnly showPreparationColumn={false} title="Ambas minutas" />
       : generatedPlanPlaceholders.map((plan) => <GroupedFoodsCard items={previewFoodItemsForPlan(plan)} key={plan.name} quantityOnly showPreparationColumn={false} title={plan.name} />)}
+  </View>;
+}
+
+function GeneratedFoodListPage({ calendarization, onBack, proposals }: { calendarization?: OnboardingCalendarization | null; onBack: () => void; proposals: ProposalDetail[] }) {
+  const [activeTab, setActiveTab] = useState<"grouped" | "individual">("grouped");
+  const daysCount = calendarization?.days_count ?? 0;
+  return <View style={styles.generatedPlanPreview}>
+    <Pressable accessibilityRole="button" onPress={onBack} style={styles.generatedFoodListBack}>
+      <ChevronLeft color={tokens.color.textMain} size={22} />
+      <Text style={styles.generatedFoodListBackLabel}>Volver</Text>
+    </Pressable>
+    <Text style={styles.generatedPlanHeadline}>Lista de alimentos</Text>
+    <Text style={styles.generatedFoodListSubtitle}>Crea listas de alimentos para planificar tus compras o preparar tus comidas</Text>
+    <DistributedTabBar<"grouped" | "individual"> accessibilityLabel="Vista de la lista de alimentos" activeTab={activeTab} onChange={setActiveTab} style={styles.generatedFoodListTabs} tabs={[{ key: "grouped", label: "Agrupados" }, { key: "individual", label: "Individuales" }]} />
+    {!daysCount ? <InlineNotice>Calendariza una minuta para ver aquí sus alimentos acumulados.</InlineNotice> : activeTab === "grouped"
+      ? <GroupedFoodsCard items={(calendarization?.foods ?? []).map(commitmentFoodPanelItem)} quantityOnly showPreparationColumn={false} title="Ambas minutas" />
+      : proposals.map((proposal) => {
+          const plan = calendarization?.plans.find((item) => item.proposal_id === proposal.id);
+          return <GroupedFoodsCard items={(plan?.foods ?? []).map(commitmentFoodPanelItem)} key={proposal.id} quantityOnly showPreparationColumn={false} title={proposal.dailyplan?.name ?? proposal.title} />;
+        })}
   </View>;
 }
 
