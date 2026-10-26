@@ -97,5 +97,4 @@ __all__ = [
     "ProgramCalendarization", "ProgramDay",
     "ProgramShare", "ShareClaim", "ShareInvitation",
     "ShareResource", "SavedComparison",
-    "ScheduledNotificationEvent",
-    "Subscription", "WebPushSubscription", "WeightLog", ]
+    "ScheduledNotificationEvent", "Subscription", "WebPushSubscription", "WeightLog", ]
