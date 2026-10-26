@@ -1,35 +1,40 @@
 import {
-  BarChart3,
+  Apple,
+  Beef,
   BookOpen,
-  BrainCircuit,
+  CalendarDays,
+  Carrot,
   ChevronLeft,
+  ChevronRight,
   CircleUserRound,
+  ClipboardList,
   Dumbbell,
   Eye,
+  Fish,
   Gauge,
   HeartPulse,
-  Layers3,
-  Leaf,
+  LibraryBig,
   LockKeyhole,
+  Pin,
   Scale,
+  Send,
+  ShoppingBasket,
+  Sparkles,
   Target,
   Utensils,
 } from "lucide-react-native";
 import { createContext, type ComponentType, type ReactNode, useCallback, useContext, useLayoutEffect, useMemo, useState } from "react";
-import { Animated, Image, PanResponder, type PanResponderGestureState, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
+import { Animated, Image, PanResponder, type PanResponderGestureState, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { DailyPlanMealDetailList, type DailyPlanMealDetailItem, EntityDetailPage, EntityDetailSection } from "@/components/details";
-import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
-import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
+import { commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { ResponsibleUseConfirmationNotice, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
-import { NutritionEntityCard, NutritionKpiSection } from "@/components/nutrition";
-import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
-import { ProgramActiveKpis } from "@/components/programs";
-import { ProgramSectionHeader } from "@/components/programs/program-section-header";
+import { KpiAllocationBar, NutritionEntityCard, NutritionKpiSection, ProteinPerKilogramBadge, type NutritionEntityCardProps } from "@/components/nutrition";
+import { GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
-import { AssistantGradientIcon, Button, Card, EntityIcon, Field, InlineNotice, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, textStyles, type EntityKind } from "@/components/ui";
+import { AssistantGradientIcon, Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, textStyles, type EntityKind } from "@/components/ui";
+import { useScreenScrollControl } from "@/components/ui/layout";
 import type { OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { localDateValue } from "@/presentation/date-time-values";
@@ -38,8 +43,10 @@ export const onboardingJourneySteps = [
   { key: "login", shortLabel: "Acceso", label: "Acceso" },
   { key: "value", shortLabel: "Funciones", label: "Funciones principales" },
   { key: "structure", shortLabel: "Estructura", label: "Organización nutricional" },
-  { key: "panels", shortLabel: "Paneles", label: "Lectura de paneles" },
   { key: "control", shortLabel: "Asistencia", label: "Asistencia y decisiones" },
+  { key: "panels", shortLabel: "Paneles", label: "Lectura de paneles" },
+  { key: "panelsCopy", shortLabel: "Paneles", label: "Lectura de paneles" },
+  { key: "compareShare", shortLabel: "Comparar", label: "Comparar y compartir" },
   { key: "progress", shortLabel: "Progreso", label: "Seguimiento del progreso" },
   { key: "disclosures", shortLabel: "Límites", label: "Información y límites" },
   { key: "goal", shortLabel: "Objetivo", label: "Objetivo nutricional" },
@@ -56,9 +63,10 @@ export type OnboardingJourneyStep = (typeof onboardingJourneySteps)[number]["key
 
 const onboardingStoryboardTopInsetReduction = 20;
 const earlyOnboardingStoryboardTopInsetReduction = onboardingStoryboardTopInsetReduction + 18;
+const continueFooterBottomMargin = 49;
 
 export function topInsetReductionForOnboardingStoryboard(step: OnboardingJourneyStep) {
-  return onboardingJourneySteps.findIndex((item) => item.key === step) < 6
+  return onboardingJourneySteps.findIndex((item) => item.key === step) < 8
     ? earlyOnboardingStoryboardTopInsetReduction
     : onboardingStoryboardTopInsetReduction;
 }
@@ -69,34 +77,34 @@ export function presentationPropsForOnboardingStep(step: OnboardingJourneyStep) 
   return {
     conciseSexEyebrow: usesRefinedPresentation,
     contentSizedDietaryChips: usesRefinedPresentation,
-    disclosuresTitleSpacingReduction: index === 6 ? 18 : 0,
-    fixedDisclosuresFooter: index === 6,
+    disclosuresTitleSpacingReduction: index === 8 ? 18 : 0,
+    fixedDisclosuresFooter: index === 8,
     fixedLoginActionBottomSpacing: 0,
-    fixedProfileChrome: index >= 7 && index <= 12,
-    fixedProfileFooterBottomSpacing: index >= 7 && index <= 12 ? 46 : 0,
-    fullWidthExplanationTransition: index >= 1 && index <= 5,
+    fixedProfileChrome: index >= 9 && index <= 14,
+    fixedProfileFooterBottomSpacing: index >= 9 && index <= 14 ? continueFooterBottomMargin : 0,
+    fullWidthExplanationTransition: index >= 1 && index <= 7,
     hideCalculationReviewDisclosure: usesRefinedPresentation,
-    measurementReferenceNotice: usesRefinedPresentation,
     progressiveAllergyDetails: usesRefinedPresentation,
     profileEyebrowsMuted: usesRefinedPresentation,
-    profileProgressBottomSpacing: index >= 7 && index <= 12 ? 24 : 0,
-    profileProgressEyebrowBottomSpacing: index >= 7 && index <= 12 ? 18 : 0,
-    profileQuestionSpacing: index >= 7 && index <= 12 ? 24 : 0,
-    profileProgressWidthReduction: index >= 7 && index <= 12 ? 36 : 0,
-    profileTitleBottomSpacingReduction: index >= 7 && index <= 12 ? 12 : 0,
+    profileProgressBottomSpacing: index >= 9 && index <= 14 ? 4 : 0,
+    profileProgressEyebrowBottomSpacing: index >= 9 && index <= 14 ? 10 : 0,
+    profileQuestionSpacing: index >= 9 && index <= 14 ? 24 : 0,
+    profileProgressWidthReduction: index >= 9 && index <= 14 ? 36 : 0,
+    profileTitleBottomSpacingReduction: index >= 9 && index <= 14 ? 12 : 0,
     showGoalOptionsEyebrow: usesRefinedPresentation,
     showProfileControlBleed: usesRefinedPresentation,
     storyboardSummaryLayout: usesRefinedPresentation,
     topInsetReduction: usesRefinedPresentation
       ? topInsetReductionForOnboardingStoryboard(step)
-        + (index >= 1 && index <= 6 ? 20 : 0)
-        + (index >= 6 ? 20 : 0)
+        + (index >= 1 && index <= 8 ? 20 : 0)
+        + (index >= 8 ? 20 : 0)
         + (step === "plans" ? 20 : 0)
       : 0,
   };
 }
 
-const explanationSteps = onboardingJourneySteps.slice(1, 6);
+const explanationSteps = onboardingJourneySteps.slice(1, 8);
+const mealFoodIcons = [Apple, Carrot, Beef, Fish];
 
 export const onboardingNutritionFields = ["goal", "birth_date", "sex", "height_cm", "weight_kg", "activity_level", "training_frequency", "dietary_pattern", "allergies_or_intolerances", "avoided_foods"] as const;
 
@@ -137,10 +145,10 @@ export type OnboardingJourneyController = {
 
 export const onboardingJourneyPreviewValues: OnboardingJourneyValues = {
   goal: "fat_loss",
-  birthDate: "1990-05-10",
+  birthDate: "2000-01-01",
   sex: "male",
-  height: "178",
-  weight: "82,5",
+  height: "180",
+  weight: "80",
   activityLevel: "light",
   trainingFrequency: 3,
   dietaryPattern: "omnivore",
@@ -160,7 +168,6 @@ const JourneyPresentationContext = createContext({
   fixedProfileChrome: false,
   fixedProfileFooterBottomSpacing: 0,
   hideCalculationReviewDisclosure: false,
-  measurementReferenceNotice: false,
   progressiveAllergyDetails: false,
   profileEyebrowsMuted: false,
   profileProgressEyebrowBottomSpacing: 0,
@@ -182,26 +189,30 @@ function useProfileQuestionStyle() {
   return [styles.profileQuestion, profileEyebrowsMuted && styles.profileQuestionMuted];
 }
 
-function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, showProgress = true, title, titleAccessory, titleTopSpacingReduction = 0, description }: {
+function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebrow, showIconAboveTitle = false, showProgress = true, title, titleAccessory, titleStyle, titleTopSpacingReduction = 0, description, descriptionSecondary, descriptionAccessory }: {
   brandedCentered?: boolean;
   description: ReactNode;
+  descriptionSecondary?: ReactNode;
+  descriptionAccessory?: ReactNode;
   eyebrow: string;
   icon: Icon;
   index: number;
+  showIconAboveTitle?: boolean;
   showProgress?: boolean;
   title: string;
   titleAccessory?: ReactNode;
+  titleStyle?: StyleProp<TextStyle>;
   titleTopSpacingReduction?: number;
 }) {
   const { disclosuresTitleSpacingReduction, externalExplanationChrome, fixedProfileChrome, profileTitleBottomSpacingReduction } = useContext(JourneyPresentationContext);
-  const isExplanation = index >= 1 && index <= 5;
-  const isProfileStep = index >= 7 && index <= 12;
+  const isExplanation = index >= 1 && index <= 7;
+  const isProfileStep = index >= 9 && index <= 14;
   const usesBrandedHeader = isExplanation || brandedCentered;
-  const isCenteredIntro = index <= 12 || brandedCentered;
-  const usesCenteredTitleSpacing = (index <= 6 || brandedCentered) && !externalExplanationChrome;
+  const isCenteredIntro = index <= 14 || brandedCentered;
+  const usesCenteredTitleSpacing = (index <= 8 || brandedCentered) && !externalExplanationChrome;
   return (
     <View style={[styles.intro, isCenteredIntro && styles.introCentered, isProfileStep && fixedProfileChrome && profileTitleBottomSpacingReduction > 0 && { marginBottom: -profileTitleBottomSpacingReduction }]}>
-      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={styles.centeredLogo}><MyScoopeBrandLogo /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 6 || !showProgress ? null : (
+      {usesBrandedHeader ? (!externalExplanationChrome ? <View style={[styles.centeredLogo, index === 8 && styles.disclosuresLogo]}><MyScoopeBrandLogo scale={isExplanation ? 1.1 : index === 8 ? 0.88 : 1} /></View> : null) : isProfileStep ? (!fixedProfileChrome ? <ProfileProgress index={index} /> : null) : index === 8 || !showProgress ? null : (
         <View style={styles.stepMeta}>
           <Text style={styles.stepCount}>{String(index + 1).padStart(2, "0")} / {onboardingJourneySteps.length}</Text>
           <View accessibilityLabel={`Paso ${index + 1} de ${onboardingJourneySteps.length}`} style={styles.progressTrack}>
@@ -209,18 +220,24 @@ function StepHeader({ brandedCentered = false, icon: IconComponent, index, eyebr
           </View>
         </View>
       )}
-      {!usesBrandedHeader ? <View style={styles.iconWell}><IconComponent color={tokens.color.entityIconForeground} size={27} strokeWidth={1.8} /></View> : null}
-      {!usesBrandedHeader && !isProfileStep ? <Text style={[styles.eyebrow, isCenteredIntro && styles.centeredText, index === 6 && styles.disclosuresEyebrow]}>{eyebrow}</Text> : null}
+      {!usesBrandedHeader || showIconAboveTitle ? <View style={styles.iconWell}><IconComponent color={tokens.color.entityIconForeground} size={27} strokeWidth={1.8} /></View> : null}
+      {!usesBrandedHeader && !isProfileStep && eyebrow ? <Text style={[styles.eyebrow, isCenteredIntro && styles.centeredText, index === 8 && styles.disclosuresEyebrow]}>{eyebrow}</Text> : null}
       <Text style={[
         styles.title,
         isCenteredIntro && styles.centeredText,
-        usesCenteredTitleSpacing && styles.centeredTitleSpacing,
+        usesCenteredTitleSpacing && !showIconAboveTitle && styles.centeredTitleSpacing,
         titleTopSpacingReduction > 0 && { marginTop: -titleTopSpacingReduction },
         isExplanation && { marginBottom: (usesCenteredTitleSpacing ? tokens.spacing.sm : 0) + 10 },
-        index === 6 && disclosuresTitleSpacingReduction > 0 && { marginTop: styles.centeredTitleSpacing.marginTop - disclosuresTitleSpacingReduction },
+        index === 8 && disclosuresTitleSpacingReduction > 0 && { marginTop: styles.centeredTitleSpacing.marginTop - disclosuresTitleSpacingReduction },
+        titleStyle,
+        (!usesBrandedHeader || showIconAboveTitle) && styles.iconTitleSpacing,
+        isExplanation && showIconAboveTitle && styles.explanationIconTitleSpacing,
+        isProfileStep && styles.profileTitleBottomSpacing,
       ]}>{title}</Text>
       {titleAccessory}
-      {!isProfileStep && description ? <Text style={[styles.description, isExplanation && styles.explanationDescription, isCenteredIntro && styles.centeredText]}>{description}</Text> : null}
+      {!isProfileStep && description ? <Text style={[styles.description, isExplanation && styles.explanationDescription, isCenteredIntro && styles.centeredText, index === 1 && styles.valueDescription, index === 8 && styles.disclosuresDescription]}>{description}</Text> : null}
+      {descriptionSecondary ? <Text style={[styles.description, styles.explanationDescription, styles.centeredText, styles.valueDescription, styles.valueSecondaryDescription]}>{descriptionSecondary}</Text> : null}
+      {descriptionAccessory}
     </View>
   );
 }
@@ -297,8 +314,8 @@ function CreditContinueButton({ chip = false, label = "Continuar", onPress }: { 
   );
 }
 
-function CreditSelectionBorder({ id, shape = "md" }: { id: string; shape?: "md" | "lg" | "pill" }) {
-  const radius = shape === "pill" ? 17 : shape === "lg" ? tokens.radius.lg : tokens.radius.md;
+function CreditSelectionBorder({ id, shape = "md" }: { id: string; shape?: "md" | "lg" | "pill" | "identity" }) {
+  const radius = shape === "identity" ? 22 : shape === "pill" ? 17 : shape === "lg" ? tokens.radius.lg : tokens.radius.md;
   return (
     <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Defs>
@@ -350,38 +367,24 @@ function SelectedActivityRadio() {
 
 function ProfileProgress({ index }: { index: number }) {
   const { profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileProgressWidthReduction } = useContext(JourneyPresentationContext);
-  const activeIndex = index - 7;
-  const creditGradient = (shape: "dot" | "line", id: string) => (
-    <Svg aria-hidden height="100%" viewBox={shape === "dot" ? "0 0 14 14" : "0 0 100 2"} width="100%">
-      <Defs>
-        <LinearGradient id={id} x1="0" x2="1" y1="0" y2="1">
-          <Stop offset="0" stopColor={tokens.color.protein} />
-          <Stop offset="0.5" stopColor={tokens.color.carbs} />
-          <Stop offset="1" stopColor={tokens.color.fat} />
-        </LinearGradient>
-      </Defs>
-      {shape === "dot" ? <Circle cx="7" cy="7" fill={`url(#${id})`} r="7" /> : <Rect fill={`url(#${id})`} height="2" width="100" />}
-    </Svg>
-  );
+  const activeIndex = index - 8;
   return (
     <View style={[styles.profileProgressGroup, profileProgressBottomSpacing > 0 && { marginBottom: profileProgressBottomSpacing }]}>
-      <Text style={[styles.profileProgressEyebrow, index >= 8 && styles.profileProgressEyebrowTextMain, profileEyebrowsMuted && styles.profileQuestionMuted, profileProgressEyebrowBottomSpacing > 0 && { marginBottom: profileProgressEyebrowBottomSpacing }]}>OBJETIVO Y PLANIFICACIÓN</Text>
+      <Text style={[styles.profileProgressEyebrow, index >= 10 && styles.profileProgressEyebrowTextMain, profileEyebrowsMuted && styles.profileQuestionMuted, profileProgressEyebrowBottomSpacing > 0 && { marginBottom: profileProgressEyebrowBottomSpacing }]}>OBJETIVO Y PLANIFICACIÓN</Text>
       <View
         accessibilityLabel={`Paso ${activeIndex + 1} de 6 de tu perfil`}
         style={[styles.profileProgress, profileProgressWidthReduction > 0 && { paddingHorizontal: tokens.spacing.xl + (profileProgressWidthReduction / 2) }]}
       >
-        {Array.from({ length: 6 }, (_, stepIndex) => (
-          <View key={stepIndex} style={[styles.profileProgressItem, stepIndex === 5 && styles.profileProgressItemLast]}>
-            <View style={styles.profileProgressDot}>
-              {stepIndex <= activeIndex ? creditGradient("dot", `profile-dot-${stepIndex}`) : null}
+        <View style={[styles.profileProgressItems, profileProgressWidthReduction > 0 && styles.profileProgressItemsCompact]}>
+          {Array.from({ length: 6 }, (_, stepIndex) => (
+            <View key={stepIndex} style={[styles.profileProgressItem, stepIndex === 5 && styles.profileProgressItemLast]}>
+              <View style={[styles.profileProgressDot, stepIndex <= activeIndex && styles.profileProgressDotActive]} />
+              {stepIndex < 5 ? (
+                <View style={[styles.profileProgressLine, stepIndex < activeIndex && styles.profileProgressLineActive]} />
+              ) : null}
             </View>
-            {stepIndex < 5 ? (
-              <View style={styles.profileProgressLine}>
-                {stepIndex < activeIndex ? creditGradient("line", `profile-line-${stepIndex}`) : null}
-              </View>
-            ) : null}
-          </View>
-        ))}
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -436,7 +439,7 @@ function DisclosuresStepLayout({ children, index }: { children: ReactNode; index
         onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
         scrollEnabled={contentOverflows}
         showsVerticalScrollIndicator={false}
-        style={styles.fixedProfileScroll}
+        style={[styles.fixedProfileScroll, styles.disclosuresScroll]}
       >
         {children}
       </ScrollView>
@@ -449,7 +452,7 @@ function DisclosuresStepLayout({ children, index }: { children: ReactNode; index
 
 function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: { index: number; primary?: string; secondary?: string }) {
   const controller = useJourneyController();
-  if (index >= 7 && index <= 12) {
+  if (index >= 9 && index <= 14) {
     return (
       <View style={[styles.footer, styles.profileFooter]}>
         <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, styles.profileBackAction]}>
@@ -457,34 +460,44 @@ function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: {
           <Text style={styles.backLabel}>{secondary}</Text>
         </Pressable>
         <View style={styles.profilePrimaryAction}>
-          {index === 12 ? <CreditContinueButton chip label={primary} /> : <ContinueChip label={primary} />}
+          {index === 14 ? <CreditContinueButton chip label={primary} /> : <ContinueChip label={primary} />}
         </View>
       </View>
     );
   }
   return (
     <View style={styles.footer}>
-      {index === 6 ? <CreditContinueButton label={primary} /> : <Button label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
-      {index === 6 ? <ResponsibleUseConfirmationNotice /> : null}
+      {index === 8 ? <CreditContinueButton label={primary} /> : <Button label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
+      {index === 8 ? <View style={styles.disclosuresConfirmationSpacing}><ResponsibleUseConfirmationNotice /></View> : null}
       {index > 0 ? (
-        <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, index === 6 && styles.disclosuresBackAction]}>
-          <ChevronLeft color={tokens.color.textMuted} size={16} />
-          <Text style={styles.backLabel}>{secondary}</Text>
+        <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, index === 8 && styles.disclosuresBackAction]}>
+          {index === 8 ? null : <ChevronLeft color={tokens.color.textMuted} size={16} />}
+          <Text style={styles.backLabel}>{index === 8 ? "Volver" : secondary}</Text>
         </Pressable>
       ) : null}
     </View>
   );
 }
 
-function ExplanationCard({ body, children, icon: IconComponent, title }: { body: string; children?: ReactNode; icon: Icon; title: string }) {
+function ExplanationCard({ body, children, icon: IconComponent, style, title }: { body: string; children?: ReactNode; icon: Icon; style?: StyleProp<ViewStyle>; title: string }) {
   return (
-    <View style={styles.explanationCard}>
-      <View style={styles.explanationCopy}>
-        <Text style={styles.explanationTitle}>{title}</Text>
-        <Text style={styles.explanationBody}>{body}</Text>
-        {children}
+    <View style={[styles.explanationCard, style]}>
+      <View style={styles.explanationCardRow}>
+        <View style={styles.explanationCopy}>
+          <Text style={styles.explanationTitle}>{title}</Text>
+          <Text style={styles.explanationBody}>{body}</Text>
+        </View>
+        <View style={styles.explanationIcon}><IconComponent color={tokens.color.entityIconForeground} size={18} /></View>
       </View>
-      <View style={styles.explanationIcon}><IconComponent color={tokens.color.entityIconForeground} size={18} /></View>
+      {children}
+    </View>
+  );
+}
+
+function TopAccentCard({ accent, children, style }: { accent: string; children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  return (
+    <View style={[styles.levelRowFrame, { backgroundColor: accent }]}>
+      <View style={[styles.levelRow, style]}>{children}</View>
     </View>
   );
 }
@@ -523,11 +536,22 @@ function ValueView({ index }: { index: number }) {
   return (
     <>
       <StepHeader
-        description="Arma minutas con tus comidas recurrentes, calendarízalas y sigue tu programación."
+        description={<Text style={styles.valueDescriptionEmphasis}>My Scoope no es un contador de calorías,{"\n"}es un planificador de alimentación</Text>}
+        descriptionSecondary="Arma minutas con tus comidas, calendarízalas y sigue tu programación"
+        descriptionAccessory={
+          <View accessibilityLabel="Comidas, minutas, calendario y programas" style={styles.valueIconRow}>
+            <EntityIcon entity="meal" size="intro" />
+            <EntityIcon entity="dailyPlan" size="intro" />
+            <EntityIcon backgroundColor={`${tokens.color.dailyPlan}80`} entity="dpm" size="intro" />
+            <EntityIcon entity="program" size="intro" />
+          </View>
+        }
         eyebrow="Funciones principales"
         icon={Target}
         index={index}
-        title="No improvises, Planifica."
+        title="No improvises,"
+        titleAccessory={<View style={[styles.loginTitleChip, styles.valueTitleChip]}><Text style={[styles.loginTitleChipText, styles.valueTitleChipText]}>Planifica</Text></View>}
+        titleStyle={styles.valueTitleText}
       />
       <ExplanationDots index={index} />
     </>
@@ -535,34 +559,54 @@ function ValueView({ index }: { index: number }) {
 }
 
 function StructureView({ index }: { index: number }) {
-  const levels: { detail: string; entity: EntityKind; label: string }[] = [
-    { entity: "food", label: "Alimentos", detail: "La base nutricional del sistema" },
-    { entity: "meal", label: "Comidas", detail: "Tu combinación de alimentos y porciones" },
-    { entity: "dailyPlan", label: "Minutas diarias", detail: "Tu distribución de comidas en el día" },
-    { entity: "program", label: "Programas semanales", detail: "Tu asignación de minutas en semanas" },
+  const levels: { detail: string; entity: EntityKind; label: string; sectionTitle?: string }[] = [
+    { detail: "Compuesto por alimentos", entity: "meal", label: "Mis Comidas" },
+    { detail: "Compuesto por comidas", entity: "dailyPlan", label: "Mis Minutas", sectionTitle: "y arma opciones de minutas" },
   ];
   return (
     <>
-      <StepHeader
-        description={(
-          <>
-            My scoope es un <Text style={styles.descriptionEmphasis}>entorno nutricional</Text> para que puedas <Text style={styles.descriptionEmphasis}>planificar, ejecutar y aprender</Text> sobre alimentación.
-            {"\n\n"}
-            Podrás organizar tu alimentación en <Text style={styles.descriptionEmphasis}>Tus Librerías</Text>: <Text style={styles.descriptionEmphasis}>Alimentos, Comidas, Minutas diarias, y Programas Semanales</Text>;
-          </>
-        )}
-        eyebrow="Estructura del sistema"
-        icon={Layers3}
-        index={index}
-        title="Que es My Scoope"
-      />
-      <View style={styles.levels}>
-        {levels.map((level) => (
-          <View key={level.label} style={[styles.levelRow, { borderTopColor: tokens.color[level.entity] }]}>
-            <EntityIcon entity={level.entity} size="hero" />
-            <View style={styles.levelCopy}><Text style={styles.levelTitle}>{level.label}</Text><Text style={styles.levelDetail}>{level.detail}</Text></View>
-          </View>
-        ))}
+      <View style={styles.structureRaisedContent}>
+        <StepHeader
+          description={null}
+          eyebrow="Estructura del sistema"
+          icon={LibraryBig}
+          index={index}
+          showIconAboveTitle
+          title="Reúne tus comidas recurrentes"
+        />
+        <View style={[styles.levels, styles.structureLevels]}>
+          {levels.map((level) => (
+            <View key={level.label} style={styles.structureSection}>
+              {level.sectionTitle ? <Text style={styles.structureSectionTitle}>{level.sectionTitle}</Text> : null}
+              <TopAccentCard accent={tokens.color[level.entity]}>
+                <EntityIcon entity={level.entity} size="hero" />
+                <View style={styles.levelCopy}>
+                  <Text style={styles.levelTitle}>{level.label}</Text>
+                  <Text style={styles.levelDetail}>{level.detail}</Text>
+                </View>
+                {level.entity === "meal" ? (
+                  <View accessibilityLabel="Cuatro alimentos" style={styles.entityContentsGrid}>
+                    {mealFoodIcons.map((FoodIcon, iconIndex) => (
+                      <View key={iconIndex} style={[styles.entityContentsTile, { backgroundColor: tokens.color.food }]}>
+                        <FoodIcon color={tokens.color.entityIconForeground} size={13} strokeWidth={2} />
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+                {level.entity === "dailyPlan" ? (
+                  <View accessibilityLabel="Cuatro comidas" style={styles.entityContentsGrid}>
+                    {[0, 1, 2, 3].map((mealIndex) => (
+                      <View key={mealIndex} style={[styles.entityContentsTile, { backgroundColor: tokens.color.meal }]}>
+                        <Utensils color={tokens.color.entityIconForeground} size={13} strokeWidth={2} />
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+              </TopAccentCard>
+            </View>
+          ))}
+        </View>
+        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.structureViewClosingText]}>Y luego puedes ajustar tus porciones según tu objetivo nutricional</Text>
       </View>
       <ExplanationDots index={index} />
     </>
@@ -570,76 +614,176 @@ function StructureView({ index }: { index: number }) {
 }
 
 function PanelsView({ index }: { index: number }) {
-  const referenceWeightKg = 80;
-  const foods: FoodPanelItem[] = [
-    { id: "rice", name: "Arroz cocido", quantity: 200, quantityUnit: "g", calories: 260, calorieShare: 40, proteinGrams: 5.4, proteinPerKilogram: 5.4 / referenceWeightKg, carbsGrams: 56.4, fatGrams: 0.6, proteinAllocation: 9, carbsAllocation: 89, fatAllocation: 2 },
-    { id: "chicken", name: "Pollo asado", quantity: 120, quantityUnit: "g", calories: 286.8, calorieShare: 45, proteinGrams: 32.76, proteinPerKilogram: 32.76 / referenceWeightKg, carbsGrams: 0, fatGrams: 16.32, proteinAllocation: 47, carbsAllocation: 0, fatAllocation: 53 },
-    { id: "avocado", name: "Palta", quantity: 60, quantityUnit: "g", calories: 96, calorieShare: 15, proteinGrams: 1.2, proteinPerKilogram: 1.2 / referenceWeightKg, carbsGrams: 5.1, fatGrams: 8.82, proteinAllocation: 5, carbsAllocation: 19, fatAllocation: 76 },
-  ];
   return (
-    <View style={styles.panelsViewContent}>
-      <StepHeader
-        description={(
-          <>
-            Te ofrecemos <Text style={styles.descriptionEmphasis}>instancias de aprendizaje y análisis</Text> para que formes tu propio criterio.
-            {"\n\n"}
-            Navega por los <Text style={styles.descriptionEmphasis}>paneles</Text>, realiza <Text style={styles.descriptionEmphasis}>comparaciones</Text> y comprende de mejor manera el impacto real que los alimentos tienen en tu dieta.
-          </>
-        )}
-        eyebrow="Paneles de información"
-        icon={Eye}
-        index={index}
-        title="Forma tu propio criterio"
-        titleTopSpacingReduction={12}
-      />
-      <NutritionEntityCard
-        entity="meal"
-        eyebrow="Comida"
-        nutrition={{
-          calories: 642.8,
-          protein: { allocation: 25, grams: 39.36, perKilogram: 39.36 / referenceWeightKg },
-          carbs: { allocation: 39, grams: 61.5 },
-          fat: { allocation: 36, grams: 25.74 },
-        }}
-        style={styles.explanationVisualSpacing}
-        title="Comida equilibrada">
-        <FoodPanels items={foods} showEditTab={false} />
-      </NutritionEntityCard>
+    <>
+      <View style={styles.panelsViewContent}>
+        <StepHeader
+          description={null}
+          eyebrow="Paneles de información"
+          icon={Eye}
+          index={index}
+          showIconAboveTitle
+          title={"Proteínas por kilo\nde peso - PPK"}
+          titleStyle={styles.panelsTitle}
+        />
+        <View style={styles.levels}>
+          <View style={styles.structureSection}>
+            <TopAccentCard accent={tokens.color.ppk}>
+              <View style={styles.levelCopy}>
+                <Text style={styles.levelTitle}>PPK</Text>
+                <Text style={styles.levelDetail}>Gramos de proteína por kilo de peso corporal</Text>
+              </View>
+              <ProteinPerKilogramBadge style={styles.panelsPpkBadge} textSize={17} value={2} />
+            </TopAccentCard>
+          </View>
+          <View style={styles.structureSection}>
+            <Text style={styles.structureSectionTitle}>% Calorías por{"\n"}macros - Alloc</Text>
+            <TopAccentCard accent={tokens.color.protein} style={styles.panelsAllocationRow}>
+              <View style={styles.levelCopy}>
+                <Text style={styles.levelTitle}>Alloc</Text>
+                <Text style={styles.levelDetail}>Distribución de calorías por macronutriente</Text>
+              </View>
+              <View style={styles.panelsAllocationPreview}>
+                <KpiAllocationBar tone="protein" value={33} />
+                <KpiAllocationBar tone="carbs" value={41} />
+                <KpiAllocationBar tone="fat" value={26} />
+              </View>
+            </TopAccentCard>
+          </View>
+        </View>
+        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.panelsViewClosingText]}>También verás las calorías y gramos por macros correspondientes</Text>
+      </View>
       <ExplanationDots index={index} />
-    </View>
+    </>
+  );
+}
+
+function PanelsCopyView({ index }: { index: number }) {
+  const commitmentDetails = {
+    shopping: "Genera tu lista de compra",
+    cooking: "Define tus preparaciones",
+    training: "Diseña tus minutas según tu entrenamiento",
+    nutritionist: "Chequea tu progreso con un profesional",
+  } as const;
+  return (
+    <>
+      <View style={styles.panelsViewContent}>
+        <StepHeader
+          description={null}
+          eyebrow="Paneles de información"
+          icon={Pin}
+          index={index}
+          showIconAboveTitle
+          title={"Mejora tu planificación\ncon compromisos"}
+          titleStyle={styles.panelsTitle}
+        />
+        <View style={styles.commitmentCards}>
+          {commitmentKinds.map((kind) => {
+            const { color, icon: CommitmentIcon, label } = commitmentPresentation[kind];
+            return (
+              <TopAccentCard accent={color} key={kind} style={styles.commitmentCard}>
+                <View style={[styles.commitmentHeroIcon, { backgroundColor: `${color}1A` }]}>
+                  <CommitmentIcon color={color} size={22} strokeWidth={1.9} />
+                </View>
+                <View style={styles.levelCopy}>
+                  <Text style={styles.levelTitle}>{label}</Text>
+                  <Text style={styles.levelDetail}>{commitmentDetails[kind]}</Text>
+                </View>
+              </TopAccentCard>
+            );
+          })}
+        </View>
+        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.commitmentClosingText]}>Calendarízalos para tener una visión más completa</Text>
+      </View>
+      <ExplanationDots index={index} />
+    </>
+  );
+}
+
+function CompareShareView({ index }: { index: number }) {
+  return (
+    <>
+      <View style={styles.structureRaisedContent}>
+        <StepHeader
+          description={null}
+          eyebrow="Comparar y compartir"
+          icon={Scale}
+          index={index}
+          showIconAboveTitle
+          title="Compara tus alimentos, comidas y minutas"
+        />
+        <View style={[styles.levels, styles.structureLevels]}>
+          <View style={styles.structureSection}>
+            <TopAccentCard accent={tokens.color.food}>
+              <EntityIcon backgroundColor={tokens.color.food} entity="comparison" size="hero" />
+              <View style={styles.levelCopy}>
+                <Text style={styles.levelTitle}>Comparador</Text>
+                <Text style={styles.levelDetail}>Contrasta alimentos, comidas y minutas</Text>
+              </View>
+            </TopAccentCard>
+          </View>
+          <View style={styles.structureSection}>
+            <View style={styles.sharingSectionHeading}>
+              <View style={styles.sharingHeadingIcon}>
+                <Send color={tokens.color.textMain} size={27} strokeWidth={1.8} />
+              </View>
+              <Text style={styles.structureSectionTitle}>Comparte tus librerías{"\n"}con amigos</Text>
+            </View>
+            <TopAccentCard accent={tokens.color.meal}>
+              <View style={styles.sharingHeroIcon}>
+                <Send color={tokens.color.entityIconForeground} size={27} strokeWidth={1.8} />
+              </View>
+              <View style={styles.levelCopy}>
+                <Text style={styles.levelTitle}>Compartir librerías</Text>
+                <Text style={styles.levelDetail}>Envía y recibe colecciones con tus amigos</Text>
+              </View>
+            </TopAccentCard>
+          </View>
+        </View>
+      </View>
+      <ExplanationDots index={index} />
+    </>
   );
 }
 
 function ControlView({ index }: { index: number }) {
+  const levels: { detail: string; entity: EntityKind; label: string; sectionTitle?: string }[] = [
+    { detail: "Compuesto por minutas", entity: "dpm", label: "Mi calendario" },
+    { detail: "Compuesto por minutas", entity: "program", label: "Mis programas", sectionTitle: "O planifícalas en programas" },
+  ];
   return (
     <>
-      <StepHeader
-        description={(
-          <>
-            Ya planificaste, aprendiste, ahora toca ejecutar; Porque recorrer el camino es lo que finalmente te transformará.
-            {"\n\n"}
-            Puedes <Text style={styles.descriptionEmphasis}>llevar Minutas y Programas al Calendario</Text>, y activar el <Text style={styles.descriptionEmphasis}>registro de cumplimiento de comidas</Text> permitiéndote ver tu progreso.
-          </>
-        )}
-        eyebrow="Asistencia y control"
-        icon={BrainCircuit}
-        index={index}
-        title="Ejecuta lo planeado"
-      />
-      <View style={styles.executionPreview}>
-        <MealCompletionToggleCard completed onToggle={() => undefined} />
-        <ProgramActiveKpis
-          adheredDays={10}
-          adherence={83}
-          bleed={false}
-          elapsedDays={4}
-          mealLabel="Comidas Cumplidas"
-          planLabel="Minutas diarias recorridas"
-          plannedAdherenceDays={12}
-          progress={57}
-          standalone
-          totalDays={7}
+      <View style={styles.structureRaisedContent}>
+        <StepHeader
+          description={null}
+          eyebrow="Planificación"
+          icon={CalendarDays}
+          index={index}
+          showIconAboveTitle
+          title="Asigna minutas a tu calendario"
         />
+        <View style={[styles.levels, styles.structureLevels]}>
+          {levels.map((level) => (
+            <View key={level.label} style={styles.structureSection}>
+              {level.sectionTitle ? <Text style={styles.structureSectionTitle}>{level.sectionTitle}</Text> : null}
+              <TopAccentCard accent={level.entity === "dpm" ? `${tokens.color.dailyPlan}80` : tokens.color[level.entity]}>
+                <EntityIcon backgroundColor={level.entity === "dpm" ? `${tokens.color.dailyPlan}80` : undefined} entity={level.entity} size="hero" />
+                <View style={styles.levelCopy}>
+                  <Text style={styles.levelTitle}>{level.label}</Text>
+                  <Text style={styles.levelDetail}>{level.detail}</Text>
+                </View>
+                <View accessibilityLabel="Cuatro minutas" style={styles.entityContentsGrid}>
+                  {[0, 1, 2, 3].map((dailyPlanIndex) => (
+                    <View key={dailyPlanIndex} style={[styles.entityContentsTile, { backgroundColor: tokens.color.dailyPlan }]}>
+                      <ClipboardList color={tokens.color.entityIconForeground} size={13} strokeWidth={2} />
+                    </View>
+                  ))}
+                </View>
+              </TopAccentCard>
+            </View>
+          ))}
+        </View>
+        <Text style={[styles.description, styles.centeredText, styles.structureClosingText, styles.structureViewClosingText]}>Y luego puedes calendarizar las minutas ya estructuradas</Text>
       </View>
       <ExplanationDots index={index} />
     </>
@@ -649,24 +793,54 @@ function ControlView({ index }: { index: number }) {
 function ProgressView({ index }: { index: number }) {
   return (
     <>
-      <StepHeader
-        description={(
-          <>
-            Puede no ser fácil, pero <Text style={styles.descriptionEmphasis}>no debes frustrarte</Text>. Si necesitas ayuda en la construcción de programas de alimentación puedes recibirla de nuestro <Text style={styles.descriptionEmphasis}>asistente nutricional</Text>.
-            {"\n\n"}
-            El asistente te hará <Text style={styles.descriptionEmphasis}>propuestas</Text> las cuales están sujetas a tu <Text style={styles.descriptionEmphasis}>aprobación para su aplicación</Text>. Nada ocurrirá si tu no lo apruebas.
-          </>
-        )}
-        eyebrow="Seguimiento"
-        icon={BarChart3}
-        index={index}
-        title="Recibe Asistencia AI"
-        titleAccessory={<View style={styles.assistanceIcon}><AssistantGradientIcon size={52} strokeWidth={1.8} /></View>}
-      />
-      <CreditDashboardGrid availableCredits={150} planName="Basic" style={styles.assistanceDashboardSpacing} />
-      <Text style={[styles.description, styles.explanationDescription, styles.assistanceCreditDescription]}>
-        La asistencia funciona mediante un <Text style={styles.descriptionEmphasis}>sistema de créditos</Text>, y dependiendo de la complejidad de las solicitudes es su consumo. <Text style={styles.descriptionEmphasis}>No tener créditos jamás limitará la gestión sobre tu librería.</Text>
-      </Text>
+      <View style={styles.structureRaisedContent}>
+        <StepHeader
+          description={null}
+          eyebrow="Seguimiento"
+          icon={Sparkles}
+          index={index}
+          showIconAboveTitle
+          title="Ahorra tiempo con un asistente"
+        />
+        <View style={[styles.levels, styles.assistanceLevels]}>
+          <View style={styles.structureSection}>
+            <TopAccentCard accent={tokens.color.carbs}>
+              <AssistantGradientIcon size={40} strokeWidth={1.8} />
+              <View style={styles.levelCopy}>
+                <Text style={styles.levelTitle}>Asistente nutricional</Text>
+                <Text style={styles.levelDetail}>Realiza propuestas y ajuste</Text>
+              </View>
+            </TopAccentCard>
+          </View>
+          <View style={styles.structureSection}>
+            <Text style={styles.structureSectionTitle}>Pide propuestas según{"\n"}tus objetivos</Text>
+            <View style={styles.assistancePlansCard}>
+              <Svg aria-hidden height="100%" pointerEvents="none" style={StyleSheet.absoluteFill} width="100%">
+                <Defs>
+                  <LinearGradient id="onboarding-assistance-plans-gradient" x1="0" x2="1" y1="0" y2="1">
+                    <Stop offset="0" stopColor={tokens.color.protein} />
+                    <Stop offset="0.5" stopColor={tokens.color.carbs} />
+                    <Stop offset="1" stopColor={tokens.color.fat} />
+                  </LinearGradient>
+                </Defs>
+                <Rect fill="url(#onboarding-assistance-plans-gradient)" height="100%" rx={tokens.radius.panel} ry={tokens.radius.panel} width="100%" />
+              </Svg>
+              <View style={styles.assistancePlansGrid}>
+                {(["Free", "Basic", "Pro"] as const).map((plan) => (
+                  <View key={plan} style={styles.assistancePlanColumn}>
+                    <Text style={styles.assistancePlanEyebrow}>PLAN</Text>
+                    <Text style={styles.assistancePlanName}>{plan}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={styles.assistancePlansCaption}>Las tareas ocupan créditos según su dificultad</Text>
+            </View>
+          </View>
+        </View>
+        <Text style={[styles.description, styles.explanationDescription, styles.centeredText, styles.structureClosingText, styles.assistanceClosingText]}>
+          Puedes pedir diferentes tareas, como construir programas semanales, ajustar minutas, comparar alimentos, registrar comidas, entre otros
+        </Text>
+      </View>
       <ExplanationDots
         action={<ContinueChip />}
         index={index}
@@ -679,11 +853,11 @@ function DisclosuresView({ index }: { index: number }) {
   const { hideCalculationReviewDisclosure } = useContext(JourneyPresentationContext);
   return (
     <DisclosuresStepLayout index={index}>
-      <StepHeader description={null} eyebrow="Uso responsable" icon={LockKeyhole} index={index} title="Información Importante" />
+      <StepHeader brandedCentered description="My Scoope te entregará algunas minutas personalizadas, pero debe considerar:" eyebrow="" icon={LockKeyhole} index={index} showIconAboveTitle title="Información Importante" titleStyle={styles.disclosuresTitle} />
       <View style={styles.noticeStack}>
         <ExplanationCard body="No diagnostica, trata ni reemplaza atención profesional." icon={HeartPulse} title="No es atención médica" />
         {!hideCalculationReviewDisclosure ? <ExplanationCard body="Los cálculos y propuestas deben revisarse antes de usarse." icon={Eye} title="Revisa antes de aplicar" /> : null}
-        <ExplanationCard body="Tú decides qué datos compartes y puedes eliminar tu cuenta." icon={LockKeyhole} title="Privacidad y control">
+        <ExplanationCard body="Tú decides qué datos compartes y puedes eliminar tu cuenta." icon={LockKeyhole} style={styles.disclosurePrivacyCard} title="Privacidad y control">
           <View style={styles.disclosurePolicyLinks}>
             <ResponsibleUsePolicyLink label="Leer política de privacidad" onPress={noop} />
             <ResponsibleUsePolicyLink label="Leer términos de uso" onPress={noop} />
@@ -741,43 +915,40 @@ function IdentityView({ index }: { index: number }) {
     <ProfileStepLayout index={index}>
       <StepHeader description="La edad y el sexo usado para el cálculo forman parte de la estimación de tu gasto basal." eyebrow="Datos para el cálculo" icon={CircleUserRound} index={index} title="Ingresa tus datos personales" />
       <Card style={[styles.profileCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
-        <NativeDateTimeField inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={profileQuestionStyle} maximumValue={localDateValue()} mode="date" onChange={(value) => controller.onChange?.("birthDate", value)} value={controller.values.birthDate} />
-        <View accessibilityRole="radiogroup" style={styles.identityChoiceField}>
+        <NativeDateTimeField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={profileQuestionStyle} maximumValue={localDateValue()} mode="date" onChange={(value) => controller.onChange?.("birthDate", value)} value={controller.values.birthDate} />
+        <View accessibilityRole="radiogroup" style={[styles.identityChoiceField, styles.profileSectionExtraTopSpacing]}>
           <Text style={profileQuestionStyle}>{conciseSexEyebrow ? "Sexo" : "Sexo usado para el cálculo nutricional"}</Text>
           <View style={[styles.identityChoiceRow, showProfileControlBleed && styles.profileControlBleed]}>
             {["Masculino", "Femenino"].map((label, optionIndex) => {
               const value = optionIndex === 0 ? "male" : "female";
               const selected = controller.values.sex === value;
               return (
-                <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={label} onPress={() => controller.onChange?.("sex", value)} style={[styles.trainingFrequencyChip, selected && styles.identityChoiceSelected]}>
-                  {selected ? <CreditSelectionBorder id="identity-option-border" shape="pill" /> : null}
-                  <Text style={[styles.trainingFrequencyChipLabel, selected && styles.trainingFrequencyChipLabelSelected]}>{label}</Text>
+                <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={label} onPress={() => controller.onChange?.("sex", value)} style={[styles.trainingFrequencyChip, styles.identityChoiceChip, selected && styles.identityChoiceSelected]}>
+                  {selected ? <CreditSelectionBorder id="identity-option-border" shape="identity" /> : null}
+                  <Text style={[styles.trainingFrequencyChipLabel, styles.identityChoiceChipLabel, selected && styles.trainingFrequencyChipLabelSelected]}>{label}</Text>
                 </Pressable>
               );
             })}
           </View>
         </View>
       </Card>
-      <InlineNotice>Usamos estos datos para estimaciones nutricionales, no para definir tu identidad.</InlineNotice>
     </ProfileStepLayout>
   );
 }
 
 function MeasurementsView({ index }: { index: number }) {
   const controller = useJourneyController();
-  const { measurementReferenceNotice, profileQuestionSpacing } = useContext(JourneyPresentationContext);
+  const { profileQuestionSpacing } = useContext(JourneyPresentationContext);
   const profileQuestionStyle = useProfileQuestionStyle();
   return (
     <ProfileStepLayout index={index}>
       <StepHeader description="La altura y el peso permiten estimar tu gasto energético y calcular referencias por kilogramo." eyebrow="Datos para el cálculo" icon={Scale} index={index} title="Ingresa tus medidas actuales" />
       <Card style={styles.profileCard}>
         <View style={[styles.measurementFields, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
-          <View style={styles.flex}><NativeMeasurementField inputStyle={styles.profileInput} kind="height" label="Altura" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("height", value)} value={controller.values.height} /></View>
-          <View style={styles.flex}><NativeMeasurementField inputStyle={styles.profileInput} kind="weight" label="Peso" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("weight", value)} value={controller.values.weight} /></View>
+          <View style={styles.flex}><NativeMeasurementField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} kind="height" label="Altura" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("height", value)} value={controller.values.height} /></View>
+          <View style={[styles.flex, styles.profileSectionExtraTopSpacing]}><NativeMeasurementField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} kind="weight" label="Peso" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("weight", value)} value={controller.values.weight} /></View>
         </View>
-        {!measurementReferenceNotice ? <Text style={textStyles.caption}>El peso inicial quedará como primera referencia de tu evolución.</Text> : null}
       </Card>
-      {measurementReferenceNotice ? <InlineNotice>El peso inicial quedará como primera referencia de tu evolución.</InlineNotice> : null}
     </ProfileStepLayout>
   );
 }
@@ -795,7 +966,7 @@ function ActivityView({ index }: { index: number }) {
   ] as const;
   return (
     <ProfileStepLayout index={index}>
-      <StepHeader description="Separa el movimiento habitual de los entrenamientos para evitar contarlos dos veces." eyebrow="Datos para el cálculo" icon={Dumbbell} index={index} title="Describe tu actividad y entrenamiento" />
+      <StepHeader description="Separa el movimiento habitual de los entrenamientos para evitar contarlos dos veces." eyebrow="Datos para el cálculo" icon={Dumbbell} index={index} title="Nivel de actividad" />
       <View accessibilityLabel={`Datos solicitados: ${onboardingNutritionFields.join(", ")}`}>
         <Card style={[styles.profileCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
           <View style={styles.profileQuestionGroup}>
@@ -805,14 +976,14 @@ function ActivityView({ index }: { index: number }) {
                 const selected = controller.values.activityLevel === value;
                 return (
                 <Pressable accessibilityRole="radio" accessibilityState={{ selected }} key={value} onPress={() => controller.onChange?.("activityLevel", value)} style={[styles.activityOption, selected && styles.activityOptionSelected]}>
-                  {selected ? <CreditSelectionBorder id="activity-selection-border" /> : null}
+                  {selected ? <CreditSelectionBorder id="activity-selection-border" shape="lg" /> : null}
                   <View style={styles.flex}><Text style={styles.activityLabel}>{label}</Text><Text style={styles.activityDetail}>{detail}</Text></View>
                   {selected ? <SelectedActivityRadio /> : <View style={styles.radio} />}
                 </Pressable>
               );})}
             </View>
           </View>
-          <View style={styles.trainingFrequencyField}>
+          <View style={[styles.trainingFrequencyField, styles.profileSectionExtraTopSpacing]}>
             <Text style={profileQuestionStyle}>Entrenamientos por semana</Text>
             <View style={[styles.trainingFrequencyChips, showProfileControlBleed && styles.profileControlBleed]}>
               {[[0, "0"], [1, "1"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6+"]].map(([value, label]) => {
@@ -855,13 +1026,13 @@ function DietaryPreferencesView({ index }: { index: number }) {
   const profileQuestionStyle = useProfileQuestionStyle();
   return (
     <ProfileStepLayout index={index} primary="Analizar">
-      <StepHeader description="Cuéntanos qué alimentos podemos considerar antes de generar tu primera minuta." eyebrow="Preferencias alimentarias" icon={Leaf} index={index} title="Preferencias alimentarias" />
+      <StepHeader description="Cuéntanos qué alimentos podemos considerar antes de generar tu primera minuta." eyebrow="Preferencias alimentarias" icon={Utensils} index={index} title="Preferencias alimentarias" />
       <Card style={[styles.profileCard, styles.dietaryCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
         <View accessibilityRole="radiogroup" style={styles.dietaryQuestion}>
           <Text style={profileQuestionStyle}>Tipo de alimentación</Text>
           <DietaryChoiceGroup idPrefix="diet-type" onChange={(value) => controller.onChange?.("dietaryPattern", value)} options={[["omnivore", "Omnívora"], ["vegetarian", "Vegetariana"], ["vegan", "Vegana"], ["pescatarian", "Pescetariana"], ["flexitarian", "Flexitariana"]]} selectedValue={controller.values.dietaryPattern} />
         </View>
-        <View accessibilityRole="radiogroup" style={styles.dietaryQuestion}>
+        <View accessibilityRole="radiogroup" style={[styles.dietaryQuestion, styles.profileSectionExtraTopSpacing]}>
           <Text style={profileQuestionStyle}>Alergias o condiciones relevantes</Text>
           <DietaryChoiceGroup idPrefix="diet-condition" onChange={(value) => controller.onChange?.("allergy", value)} options={[["", "Sin alergias"], ["gluten", "Gluten"], ["lácteos", "Lácteos"], ["frutos secos", "Frutos secos"], ["mariscos", "Mariscos"], ["otra", "Otra"]]} selectedValue={controller.values.allergy} />
           {(!progressiveAllergyDetails || controller.values.allergy === "otra") ? <Field
@@ -874,14 +1045,16 @@ function DietaryPreferencesView({ index }: { index: number }) {
             value={controller.values.allergyDetails}
           /> : null}
         </View>
-        <Field
-          autoCapitalize="sentences"
-          label="Alimentos que no consumes"
-          labelStyle={profileQuestionStyle}
-          onChangeText={(value) => controller.onChange?.("avoidedFoods", value)}
-          placeholder="Ej. cilantro, aceitunas o champiñones"
-          value={controller.values.avoidedFoods}
-        />
+        <View style={styles.profileSectionExtraTopSpacing}>
+          <Field
+            autoCapitalize="sentences"
+            label="Alimentos que no consumes"
+            labelStyle={profileQuestionStyle}
+            onChangeText={(value) => controller.onChange?.("avoidedFoods", value)}
+            placeholder="Ej. cilantro, aceitunas o champiñones"
+            value={controller.values.avoidedFoods}
+          />
+        </View>
       </Card>
       {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
     </ProfileStepLayout>
@@ -891,7 +1064,6 @@ function DietaryPreferencesView({ index }: { index: number }) {
 function SummaryView({ index }: { index: number }) {
   const controller = useJourneyController();
   const { profileQuestionSpacing, storyboardSummaryLayout } = useContext(JourneyPresentationContext);
-  const profileQuestionStyle = useProfileQuestionStyle();
   const estimate = controller.estimate;
   const calories = Math.round(estimate?.total_kcal ?? 1980);
   const protein = Math.round(estimate?.protein ?? 148);
@@ -901,29 +1073,27 @@ function SummaryView({ index }: { index: number }) {
   const goalLabel = ({ fat_loss: "Bajar grasa", muscle_gain: "Ganar masa muscular", maintenance: "Mantenerme", performance: "Rendimiento", healthy_eating: "Comer mejor" } as Record<string, string>)[controller.values.goal] ?? controller.values.goal;
   const activityLabel = ({ sedentary: "Sedentaria", light: "Ligera", moderate: "Moderada", high: "Alta", very_high: "Muy alta" } as Record<string, string>)[controller.values.activityLevel] ?? controller.values.activityLevel;
   const estimationInformationSection = (
-    <View style={styles.summaryQuestion}>
-      <Text style={profileQuestionStyle}>INFORMACIÓN PARA LA ESTIMACIÓN</Text>
-      <View style={[styles.summaryGrid, storyboardSummaryLayout && styles.summaryGridPanelBleed]}>
-        <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Objetivo</Text><Text style={styles.summaryText}>{goalLabel}</Text></View>
-        <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Referencia</Text><Text style={styles.summaryText}>{controller.values.weight} kg</Text></View>
-        <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Actividad</Text><Text style={styles.summaryText}>{activityLabel}</Text></View>
-        <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Entrenamiento</Text><Text style={styles.summaryText}>{controller.values.trainingFrequency >= 6 ? "6+" : controller.values.trainingFrequency} días</Text></View>
-      </View>
+    <View style={[styles.summaryGrid, storyboardSummaryLayout && styles.summaryGridPanelBleed]}>
+      <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Objetivo</Text><Text style={styles.summaryText}>{goalLabel}</Text></View>
+      <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Referencia</Text><Text style={styles.summaryText}>{controller.values.weight} kg</Text></View>
+      <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Actividad</Text><Text style={styles.summaryText}>{activityLabel}</Text></View>
+      <View style={styles.summaryCell}><Text style={styles.summaryLabel}>Entrenamiento</Text><Text style={styles.summaryText}>{controller.values.trainingFrequency >= 6 ? "6+" : controller.values.trainingFrequency} días</Text></View>
     </View>
   );
   const maintenanceSection = (
-    <View style={styles.summaryQuestion}>
-      <Text style={profileQuestionStyle}>KCAL DE MANTENIMIENTO ESTIMADO</Text>
+    <View style={[styles.summaryQuestion, storyboardSummaryLayout && styles.summaryMaintenanceCloser]}>
       <View style={styles.summaryHero}>
-        <Text style={styles.summaryMetricLabel}>Calorías</Text>
-        <Text style={styles.summaryValue}>{Math.round(estimate?.estimated_maintenance_kcal ?? 2340).toLocaleString("es-CL")}</Text>
-        <Text style={styles.summaryMetricUnit}>kcal</Text>
+        <Text style={styles.summaryMetricLabel}>Kcal de mantenimiento{"\n"}estimado</Text>
+        <View style={styles.summaryValueGroup}>
+          <Text style={styles.summaryValue}>{Math.round(estimate?.estimated_maintenance_kcal ?? 2340).toLocaleString("es-CL")}</Text>
+          <Text style={styles.summaryMetricUnit}>kcal</Text>
+        </View>
       </View>
     </View>
   );
   const nutritionGoalSection = (
     <View style={styles.summaryQuestion}>
-      <Text style={profileQuestionStyle}>OBJETIVO NUTRICIONAL PROPUESTO</Text>
+      <Text style={styles.summaryNutritionTitle}>Objetivo propuesto</Text>
       <NutritionKpiSection
         calories={calories}
         protein={{ allocation: allocation(protein, 4), grams: protein, perKilogram: estimate?.protein_per_kg ?? 1.8 }}
@@ -933,12 +1103,13 @@ function SummaryView({ index }: { index: number }) {
     </View>
   );
   return (
-    <ProfileStepLayout index={index} primary="Generar primera minuta">
+    <ProfileStepLayout index={index} primary="Generar minutas">
       <StepHeader description="Comprueba los datos y la estimación inicial antes de continuar." eyebrow="Resumen de la ficha" icon={Gauge} index={index} title="Revisa tu información" />
       <Card style={[styles.profileCard, styles.summaryCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
-        {storyboardSummaryLayout ? nutritionGoalSection : estimationInformationSection}
-        {storyboardSummaryLayout ? maintenanceSection : nutritionGoalSection}
-        {storyboardSummaryLayout ? estimationInformationSection : maintenanceSection}
+        {estimationInformationSection}
+        {maintenanceSection}
+        {nutritionGoalSection}
+        <Text style={[styles.description, styles.centeredText, styles.summaryClosingText]}>My Scoope generará 2 minutas que cumplan con este objetivo. Luego las pondremos en tu calendario.</Text>
         {!storyboardSummaryLayout ? <Pressable accessibilityRole="button" onPress={controller.onAdjust ?? noop} style={styles.adjustNutritionAction}>
           <Text style={styles.adjustNutritionLabel}>Ajusta objetivo nutricional</Text>
         </Pressable> : null}
@@ -948,53 +1119,51 @@ function SummaryView({ index }: { index: number }) {
   );
 }
 
-const generatedDailyPlanReferenceWeightKg = 82;
+type GeneratedPlanPlaceholder = { name: string; nutrition: NutritionEntityCardProps["nutrition"]; meals: MealPanelItem[] };
 
-const generatedDailyPlanMeals: MealPanelItem[] = [
-  { id: "generated-breakfast", name: "Desayuno energético", time: "08:00", foods: [{ name: "Avena", quantity: 70, quantityUnit: "g" }, { name: "Yogur griego", quantity: 180, quantityUnit: "g" }, { name: "Arándanos", quantity: 80, quantityUnit: "g" }], calories: 515, calorieShare: 28, proteinGrams: 31, proteinPerKilogram: 31 / generatedDailyPlanReferenceWeightKg, carbsGrams: 67, fatGrams: 14, proteinAllocation: 24, carbsAllocation: 52, fatAllocation: 24 },
-  { id: "generated-lunch", name: "Almuerzo balanceado", time: "13:30", foods: [{ name: "Pechuga de pollo", quantity: 170, quantityUnit: "g" }, { name: "Arroz integral", quantity: 160, quantityUnit: "g" }, { name: "Ensalada mixta", quantity: 150, quantityUnit: "g" }], calories: 710, calorieShare: 39, proteinGrams: 58, proteinPerKilogram: 58 / generatedDailyPlanReferenceWeightKg, carbsGrams: 76, fatGrams: 19, proteinAllocation: 33, carbsAllocation: 43, fatAllocation: 24 },
-  { id: "generated-dinner", name: "Cena liviana", time: "20:00", foods: [{ name: "Salmón", quantity: 150, quantityUnit: "g" }, { name: "Papas asadas", quantity: 180, quantityUnit: "g" }, { name: "Verduras salteadas", quantity: 160, quantityUnit: "g" }], calories: 615, calorieShare: 33, proteinGrams: 41, proteinPerKilogram: 41 / generatedDailyPlanReferenceWeightKg, carbsGrams: 62, fatGrams: 22, proteinAllocation: 27, carbsAllocation: 40, fatAllocation: 33 },
+const generatedPlanPlaceholders: GeneratedPlanPlaceholder[] = [
+  {
+    name: "Minuta equilibrada",
+    nutrition: { calories: 1840, protein: { allocation: 28, grams: 130, perKilogram: 1.6 }, carbs: { allocation: 45, grams: 205 }, fat: { allocation: 27, grams: 55 } },
+    meals: [
+      { id: "equilibrada-desayuno", name: "Desayuno energético", time: "08:00", foods: [{ name: "Avena", quantity: 70, quantityUnit: "g" }, { name: "Yogur griego", quantity: 180, quantityUnit: "g" }, { name: "Arándanos", quantity: 80, quantityUnit: "g" }], calories: 515, calorieShare: 28, proteinGrams: 31, carbsGrams: 67, fatGrams: 14, proteinAllocation: 24, carbsAllocation: 52, fatAllocation: 24 },
+      { id: "equilibrada-almuerzo", name: "Almuerzo balanceado", time: "13:30", foods: [{ name: "Pechuga de pollo", quantity: 170, quantityUnit: "g" }, { name: "Arroz integral", quantity: 160, quantityUnit: "g" }, { name: "Ensalada mixta", quantity: 150, quantityUnit: "g" }], calories: 710, calorieShare: 39, proteinGrams: 58, carbsGrams: 76, fatGrams: 19, proteinAllocation: 33, carbsAllocation: 43, fatAllocation: 24 },
+      { id: "equilibrada-cena", name: "Cena liviana", time: "20:00", foods: [{ name: "Salmón", quantity: 150, quantityUnit: "g" }, { name: "Papas asadas", quantity: 180, quantityUnit: "g" }, { name: "Verduras salteadas", quantity: 160, quantityUnit: "g" }], calories: 615, calorieShare: 33, proteinGrams: 41, carbsGrams: 62, fatGrams: 22, proteinAllocation: 27, carbsAllocation: 40, fatAllocation: 33 },
+    ],
+  },
+  {
+    name: "Día de entrenamiento",
+    nutrition: { calories: 2140, protein: { allocation: 30, grams: 155, perKilogram: 1.8 }, carbs: { allocation: 44, grams: 238 }, fat: { allocation: 26, grams: 62 } },
+    meals: [
+      { id: "entrenamiento-desayuno", name: "Desayuno", time: "08:00", foods: [{ name: "Avena", quantity: 80, quantityUnit: "g" }, { name: "Yogur", quantity: 180, quantityUnit: "g" }, { name: "Plátano", quantity: 120, quantityUnit: "g" }], calories: 594, calorieShare: 28, proteinGrams: 29.8, carbsGrams: 88.4, fatGrams: 13, proteinAllocation: 20, carbsAllocation: 60, fatAllocation: 20 },
+      { id: "entrenamiento-almuerzo", name: "Almuerzo", time: "13:30", foods: [{ name: "Arroz", quantity: 180, quantityUnit: "g" }, { name: "Pollo", quantity: 160, quantityUnit: "g" }, { name: "Ensalada", quantity: 120, quantityUnit: "g" }], calories: 720, calorieShare: 34, proteinGrams: 52, carbsGrams: 82, fatGrams: 20, proteinAllocation: 29, carbsAllocation: 46, fatAllocation: 25 },
+      { id: "entrenamiento-cena", name: "Cena", time: "20:00", foods: [{ name: "Salmón", quantity: 170, quantityUnit: "g" }, { name: "Papas", quantity: 220, quantityUnit: "g" }, { name: "Verduras", quantity: 140, quantityUnit: "g" }], calories: 610, calorieShare: 29, proteinGrams: 43, carbsGrams: 58, fatGrams: 23, proteinAllocation: 28, carbsAllocation: 38, fatAllocation: 34 },
+    ],
+  },
 ];
 
-const generatedDailyPlanMealDetails: DailyPlanMealDetailItem[] = [
-  {
-    id: "generated-breakfast-detail",
-    name: "Desayuno energético",
-    time: "08:00",
-    foods: [
-      { id: "generated-oats", name: "Avena", quantity: 70, quantityUnit: "g", calories: 272, calorieShare: 53, proteinGrams: 9, proteinPerKilogram: 9 / generatedDailyPlanReferenceWeightKg, carbsGrams: 46, fatGrams: 5, proteinAllocation: 13, carbsAllocation: 68, fatAllocation: 19 },
-      { id: "generated-yogurt", name: "Yogur griego y arándanos", quantity: 260, quantityUnit: "g", calories: 243, calorieShare: 47, proteinGrams: 22, proteinPerKilogram: 22 / generatedDailyPlanReferenceWeightKg, carbsGrams: 21, fatGrams: 9, proteinAllocation: 36, carbsAllocation: 35, fatAllocation: 29 },
-    ],
-    nutrition: { calories: 515, protein: { allocation: 24, grams: 31, perKilogram: 0.38 }, carbs: { allocation: 52, grams: 67 }, fat: { allocation: 24, grams: 14 } },
-  },
-  {
-    id: "generated-lunch-detail",
-    name: "Almuerzo balanceado",
-    time: "13:30",
-    foods: [
-      { id: "generated-chicken", name: "Pechuga de pollo", quantity: 170, quantityUnit: "g", calories: 281, calorieShare: 40, proteinGrams: 53, proteinPerKilogram: 53 / generatedDailyPlanReferenceWeightKg, carbsGrams: 0, fatGrams: 6, proteinAllocation: 76, carbsAllocation: 0, fatAllocation: 24 },
-      { id: "generated-rice-salad", name: "Arroz integral y ensalada", quantity: 310, quantityUnit: "g", calories: 429, calorieShare: 60, proteinGrams: 5, proteinPerKilogram: 5 / generatedDailyPlanReferenceWeightKg, carbsGrams: 76, fatGrams: 13, proteinAllocation: 5, carbsAllocation: 71, fatAllocation: 24 },
-    ],
-    nutrition: { calories: 710, protein: { allocation: 33, grams: 58, perKilogram: 0.7 }, carbs: { allocation: 43, grams: 76 }, fat: { allocation: 24, grams: 19 } },
-  },
-  {
-    id: "generated-dinner-detail",
-    name: "Cena liviana",
-    time: "20:00",
-    foods: [
-      { id: "generated-salmon", name: "Salmón", quantity: 150, quantityUnit: "g", calories: 312, calorieShare: 51, proteinGrams: 33, proteinPerKilogram: 33 / generatedDailyPlanReferenceWeightKg, carbsGrams: 0, fatGrams: 20, proteinAllocation: 42, carbsAllocation: 0, fatAllocation: 58 },
-      { id: "generated-potatoes-vegetables", name: "Papas y verduras", quantity: 340, quantityUnit: "g", calories: 303, calorieShare: 49, proteinGrams: 8, proteinPerKilogram: 8 / generatedDailyPlanReferenceWeightKg, carbsGrams: 62, fatGrams: 2, proteinAllocation: 11, carbsAllocation: 82, fatAllocation: 7 },
-    ],
-    nutrition: { calories: 615, protein: { allocation: 27, grams: 41, perKilogram: 0.5 }, carbs: { allocation: 40, grams: 62 }, fat: { allocation: 33, grams: 22 } },
-  },
-];
+function GeneratedPlanPlaceholderCard({ plan }: { plan: GeneratedPlanPlaceholder }) {
+  return (
+    <NutritionEntityCard
+      actions={<View style={styles.generatedPlanCardAction}><Button bleed={false} icon={<CalendarDays color={tokens.color.surfaceApp} size={17} strokeWidth={2} />} label="Calendarizar" onPress={noop} /></View>}
+      entity="dailyPlan"
+      eyebrow="Minuta diaria propuesta"
+      indicators={[{ icon: "meal", label: "comidas", value: plan.meals.length }, { icon: "food", label: "alimentos", value: plan.meals.reduce((total, meal) => total + meal.foods.length, 0) }]}
+      nutrition={plan.nutrition}
+      title={plan.name}>
+      <MealPanels items={plan.meals} showEditTab={false} />
+    </NutritionEntityCard>
+  );
+}
 
 function GeneratedDailyPlanView() {
   const controller = useJourneyController();
+  const { scrollToTop } = useScreenScrollControl();
+  const [showFoodList, setShowFoodList] = useState(false);
   if (controller.proposal?.dailyplan) {
     return (
       <>
-        <StepHeader description="Revisa la minuta generada antes de guardarla en tu biblioteca." eyebrow="Minuta del día" icon={BookOpen} index={13} showProgress={false} title="Tu primera minuta diaria" />
+        <StepHeader description="Revisa la minuta generada antes de guardarla en tu biblioteca." eyebrow="Minuta del día" icon={BookOpen} index={14} showProgress={false} title="Tu primera minuta diaria" />
         <ProposalDailyPlanCard dailyplan={controller.proposal.dailyplan} showNutrition={false} />
         {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
         <CreditContinueButton />
@@ -1002,29 +1171,64 @@ function GeneratedDailyPlanView() {
       </>
     );
   }
+  if (showFoodList) return <PreviewFoodListPage onBack={() => setShowFoodList(false)} />;
   return (
-    <>
-      <EntityDetailPage
-        entity="dailyPlan"
-        eyebrow="MINUTA DEL DÍA"
-        indicators={[{ icon: "meal", label: "comidas", value: 3 }, { icon: "food", label: "alimentos", value: 9 }]}
-        nutrition={{
-          calories: 1840,
-          protein: { allocation: 28, grams: 130, perKilogram: 1.6 },
-          carbs: { allocation: 45, grams: 205 },
-          fat: { allocation: 27, grams: 55 },
-        }}
-        title="Minuta equilibrada · Día 1">
-        <EntityDetailSection title="Composición de la minuta diaria">
-          <MealPanels items={generatedDailyPlanMeals} showEditTab={false} />
-        </EntityDetailSection>
-        <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />
-        <DailyPlanMealDetailList items={generatedDailyPlanMealDetails} />
-      </EntityDetailPage>
+    <View style={[styles.generatedPlanPreview, styles.generatedPlanPreviewMain]}>
+      <View style={styles.generatedPlanLogo}><MyScoopeBrandLogo compact /></View>
+      <Text style={styles.generatedPlanHeadline}>Hemos generado 2 minutas según tus objetivos</Text>
+      <Text style={styles.generatedPlanSubtitle}>Asígnalas en el calendario y luego cumple con cada comida</Text>
+      <View style={styles.generatedPlanCards}>
+        {generatedPlanPlaceholders.map((plan) => <GeneratedPlanPlaceholderCard key={plan.name} plan={plan} />)}
+      </View>
+      <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
       <CreditContinueButton />
-      <View style={styles.generatedDailyPlanBottomSpacing} />
-    </>
+    </View>
   );
+}
+
+function PreviewFoodListLink({ onPress }: { onPress: () => void }) {
+  return <Pressable accessibilityRole="button" onPress={onPress} style={styles.generatedFoodListMiniCard}>
+      <ShoppingBasket color={tokens.color.food} size={23} strokeWidth={1.9} />
+      <Text style={styles.generatedFoodListMiniCardLabel}>Ver lista de alimentos</Text>
+      <ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={1.9} />
+    </Pressable>;
+}
+
+function previewFoodItemsForPlan(plan: GeneratedPlanPlaceholder): FoodPanelItem[] {
+  return plan.meals.flatMap((meal) => meal.foods.map((food, index) => ({
+    id: `${meal.id}-${index}`, name: food.name, quantity: food.quantity, quantityUnit: food.quantityUnit,
+    calories: 0, calorieShare: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0,
+    proteinAllocation: 0, carbsAllocation: 0, fatAllocation: 0,
+  })));
+}
+
+function groupedPreviewFoodItems(): FoodPanelItem[] {
+  const grouped = new Map<string, FoodPanelItem>();
+  for (const plan of generatedPlanPlaceholders) {
+    for (const item of previewFoodItemsForPlan(plan)) {
+      const key = `${item.name.trim().toLocaleLowerCase("es")}::${item.quantityUnit.trim().toLocaleLowerCase("es")}`;
+      const current = grouped.get(key);
+      if (current) grouped.set(key, { ...current, quantity: current.quantity + item.quantity });
+      else grouped.set(key, { ...item, id: `grouped-${grouped.size}` });
+    }
+  }
+  return [...grouped.values()];
+}
+
+function PreviewFoodListPage({ onBack }: { onBack: () => void }) {
+  const [activeTab, setActiveTab] = useState<"grouped" | "individual">("grouped");
+  return <View style={styles.generatedPlanPreview}>
+    <Pressable accessibilityRole="button" onPress={onBack} style={styles.generatedFoodListBack}>
+      <ChevronLeft color={tokens.color.textMain} size={22} />
+      <Text style={styles.generatedFoodListBackLabel}>Volver</Text>
+    </Pressable>
+    <Text style={styles.generatedPlanHeadline}>Lista de alimentos</Text>
+    <Text style={styles.generatedFoodListSubtitle}>Crea listas de alimentos para planificar tus compras o preparar tus comidas</Text>
+    <DistributedTabBar<"grouped" | "individual"> accessibilityLabel="Vista de la lista de alimentos" activeTab={activeTab} onChange={setActiveTab} style={styles.generatedFoodListTabs} tabs={[{ key: "grouped", label: "Agrupados" }, { key: "individual", label: "Individuales" }]} />
+    {activeTab === "grouped"
+      ? <GroupedFoodsCard items={groupedPreviewFoodItems()} quantityOnly showPreparationColumn={false} title="Ambas minutas" />
+      : generatedPlanPlaceholders.map((plan) => <GroupedFoodsCard items={previewFoodItemsForPlan(plan)} key={plan.name} quantityOnly showPreparationColumn={false} title={plan.name} />)}
+  </View>;
 }
 
 const plans = [
@@ -1058,6 +1262,8 @@ const views: Record<OnboardingJourneyStep, (props: { index: number }) => ReactNo
   value: ValueView,
   structure: StructureView,
   panels: PanelsView,
+  panelsCopy: PanelsCopyView,
+  compareShare: CompareShareView,
   control: ControlView,
   progress: ProgressView,
   disclosures: DisclosuresView,
@@ -1082,7 +1288,6 @@ export function OnboardingJourneyView({
   fixedProfileFooterBottomSpacing = 0,
   fullWidthExplanationTransition = false,
   hideCalculationReviewDisclosure = false,
-  measurementReferenceNotice = false,
   progressiveAllergyDetails = false,
   profileEyebrowsMuted = false,
   profileProgressBottomSpacing = 0,
@@ -1106,7 +1311,6 @@ export function OnboardingJourneyView({
   fixedProfileFooterBottomSpacing?: number;
   fullWidthExplanationTransition?: boolean;
   hideCalculationReviewDisclosure?: boolean;
-  measurementReferenceNotice?: boolean;
   progressiveAllergyDetails?: boolean;
   profileEyebrowsMuted?: boolean;
   profileProgressBottomSpacing?: number;
@@ -1127,7 +1331,7 @@ export function OnboardingJourneyView({
   const [translateX] = useState(() => new Animated.Value(0));
   const [transitioning, setTransitioning] = useState(false);
   const [explanationTransitionWidth, setExplanationTransitionWidth] = useState(width);
-  const interactiveExplanation = Boolean(controller) && index >= 1 && index <= 5;
+  const interactiveExplanation = Boolean(controller) && index >= 1 && index <= 7;
   const transitionWidth = fullWidthExplanationTransition ? explanationTransitionWidth : width;
   const explanationPageGap = 48;
   const explanationStride = transitionWidth + explanationPageGap;
@@ -1141,7 +1345,7 @@ export function OnboardingJourneyView({
   }, [explanationOffset, translateX]);
   const moveToExplanation = useCallback((direction: "back" | "next") => {
     if (transitioning) return;
-    const canMove = direction === "next" ? index < 5 : index > 1;
+    const canMove = direction === "next" ? index < 7 : index > 1;
     if (!canMove) {
       Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: explanationOffset, useNativeDriver: true }).start();
       return;
@@ -1166,7 +1370,7 @@ export function OnboardingJourneyView({
     onMoveShouldSetPanResponderCapture: (_event, gesture) => interactiveExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
     onPanResponderMove: (_event, gesture) => {
       if (transitioning) return;
-      const atBoundary = (index === 1 && gesture.dx > 0) || (index === 5 && gesture.dx < 0);
+      const atBoundary = (index === 1 && gesture.dx > 0) || (index === 7 && gesture.dx < 0);
       translateX.setValue(explanationOffset + gesture.dx * (atBoundary ? 0.18 : 1));
     },
     onPanResponderRelease: (_event, gesture) => finishExplanationGesture(gesture),
@@ -1175,9 +1379,9 @@ export function OnboardingJourneyView({
   if (interactiveExplanation) {
     return (
       <JourneyControllerContext.Provider value={resolvedController}>
-        <JourneyPresentationContext.Provider value={{ conciseSexEyebrow, contentSizedDietaryChips, disclosuresTitleSpacingReduction, externalExplanationChrome: true, fixedDisclosuresFooter, fixedLoginActionBottomSpacing, fixedProfileChrome, fixedProfileFooterBottomSpacing, hideCalculationReviewDisclosure, measurementReferenceNotice, progressiveAllergyDetails, profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileQuestionSpacing, profileProgressWidthReduction, profileTitleBottomSpacingReduction, showGoalOptionsEyebrow, showProfileControlBleed, storyboardSummaryLayout }}>
+        <JourneyPresentationContext.Provider value={{ conciseSexEyebrow, contentSizedDietaryChips, disclosuresTitleSpacingReduction, externalExplanationChrome: true, fixedDisclosuresFooter, fixedLoginActionBottomSpacing, fixedProfileChrome, fixedProfileFooterBottomSpacing, hideCalculationReviewDisclosure, progressiveAllergyDetails, profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileQuestionSpacing, profileProgressWidthReduction, profileTitleBottomSpacingReduction, showGoalOptionsEyebrow, showProfileControlBleed, storyboardSummaryLayout }}>
           <View style={[styles.screen, styles.interactiveExplanationScreen, topInsetReduction > 0 && { paddingTop: styles.screen.paddingTop - topInsetReduction }, styles.interactiveExplanationScreenFlush]}>
-            <View style={[styles.centeredLogo, styles.explanationLogo]}><MyScoopeBrandLogo scale={0.8} /></View>
+            <View style={[styles.centeredLogo, styles.explanationLogo]}><MyScoopeBrandLogo scale={0.88} /></View>
             <View
               {...swipeResponder.panHandlers}
               onLayout={handleExplanationViewportLayout}
@@ -1199,7 +1403,7 @@ export function OnboardingJourneyView({
                         removeClippedSubviews={false}
                         showsVerticalScrollIndicator={false}
                         style={styles.explanationPageScroll}>
-                        <View style={[styles.explanationSlide, fullWidthExplanationTransition && styles.fullWidthExplanationSlide]}>
+                        <View style={[styles.explanationSlide, pageStep.key === "panels" && styles.ppkExplanationSlide, pageStep.key === "panelsCopy" && styles.commitmentsExplanationSlide, fullWidthExplanationTransition && styles.fullWidthExplanationSlide]}>
                           <PageView index={pageIndex} />
                         </View>
                       </ScrollView>
@@ -1208,7 +1412,7 @@ export function OnboardingJourneyView({
                 })}
               </Animated.View>
             </View>
-            <ExplanationDots action={index === 5 ? <ContinueChip /> : undefined} compact forceVisible index={index} />
+            <ExplanationDots action={index === 7 ? <ContinueChip /> : undefined} compact forceVisible index={index} />
           </View>
         </JourneyPresentationContext.Provider>
       </JourneyControllerContext.Provider>
@@ -1216,17 +1420,17 @@ export function OnboardingJourneyView({
   }
   return (
     <JourneyControllerContext.Provider value={resolvedController}>
-      <JourneyPresentationContext.Provider value={{ conciseSexEyebrow, contentSizedDietaryChips, disclosuresTitleSpacingReduction, externalExplanationChrome: false, fixedDisclosuresFooter, fixedLoginActionBottomSpacing, fixedProfileChrome, fixedProfileFooterBottomSpacing, hideCalculationReviewDisclosure, measurementReferenceNotice, progressiveAllergyDetails, profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileQuestionSpacing, profileProgressWidthReduction, profileTitleBottomSpacingReduction, showGoalOptionsEyebrow, showProfileControlBleed, storyboardSummaryLayout }}>
+      <JourneyPresentationContext.Provider value={{ conciseSexEyebrow, contentSizedDietaryChips, disclosuresTitleSpacingReduction, externalExplanationChrome: false, fixedDisclosuresFooter, fixedLoginActionBottomSpacing, fixedProfileChrome, fixedProfileFooterBottomSpacing, hideCalculationReviewDisclosure, progressiveAllergyDetails, profileEyebrowsMuted, profileProgressBottomSpacing, profileProgressEyebrowBottomSpacing, profileQuestionSpacing, profileProgressWidthReduction, profileTitleBottomSpacingReduction, showGoalOptionsEyebrow, showProfileControlBleed, storyboardSummaryLayout }}>
         <View
           style={[
             styles.screen,
             index === 0 && styles.loginBackgroundScreen,
             fixedLoginActionBottomSpacing > 0 && index === 0 && styles.fixedLoginScreen,
-            index >= 7 && index <= 12 && styles.profileScreen,
-            fixedDisclosuresFooter && index === 6 && styles.fixedProfileScreen,
-            fixedProfileChrome && index >= 7 && index <= 12 && styles.fixedProfileScreen,
+            index >= 9 && index <= 14 && styles.profileScreen,
+            fixedDisclosuresFooter && index === 8 && styles.fixedProfileScreen,
+            fixedProfileChrome && index >= 9 && index <= 14 && styles.fixedProfileScreen,
             topInsetReduction > 0 && {
-              paddingTop: (index >= 7 && index <= 12 ? styles.profileScreen.paddingTop : styles.screen.paddingTop) - topInsetReduction,
+              paddingTop: (index >= 9 && index <= 14 ? styles.profileScreen.paddingTop : styles.screen.paddingTop) - topInsetReduction,
             },
           ]}
         >
@@ -1252,17 +1456,21 @@ const styles = StyleSheet.create({
   explanationPage: { flexShrink: 0, height: "100%", overflow: "hidden" },
   explanationPageScroll: { flex: 1, width: "100%" },
   explanationScrollContent: { flexGrow: 1 },
-  explanationSlide: { flex: 1, gap: tokens.spacing.lg, justifyContent: "center", paddingTop: tokens.spacing.xxl - 18 },
+  explanationSlide: { flex: 1, gap: tokens.spacing.lg, justifyContent: "flex-start", paddingTop: 40 },
+  ppkExplanationSlide: { paddingTop: 20 },
+  commitmentsExplanationSlide: { paddingTop: 8 },
   fullWidthExplanationViewport: { alignSelf: "stretch", marginHorizontal: -tokens.spacing.screen, width: undefined },
   fullWidthExplanationSlide: { paddingHorizontal: tokens.spacing.screen },
   profileScreen: { paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 - 32 },
   fixedProfileScreen: { flex: 1, minHeight: 0 },
   fixedProfileLayout: { flex: 1, minHeight: 0 },
   fixedProfileScroll: { flex: 1, marginHorizontal: -tokens.spacing.screen },
+  disclosuresScroll: { marginTop: -12 },
   fixedProfileScrollContent: { gap: tokens.spacing.lg, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   intro: { alignItems: "flex-start", gap: tokens.spacing.sm },
   introCentered: { alignItems: "center" },
   centeredLogo: { alignItems: "center", justifyContent: "center", width: "100%" },
+  disclosuresLogo: { marginBottom: 12 },
   explanationLogo: { marginBottom: -20 },
   centeredText: { textAlign: "center" },
   centeredTitleSpacing: { marginBottom: tokens.spacing.sm, marginTop: tokens.spacing.xxl + tokens.spacing.md },
@@ -1270,19 +1478,32 @@ const styles = StyleSheet.create({
   stepCount: { color: tokens.color.textSoft, fontSize: 10, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, letterSpacing: 1 },
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, flex: 1, height: 3, overflow: "hidden" },
   progressFill: { backgroundColor: tokens.color.interactivePrimary, height: "100%" },
-  iconWell: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, height: 54, justifyContent: "center", marginTop: tokens.spacing.sm, width: 54 },
+  iconWell: { alignItems: "center", height: 54, justifyContent: "center", marginTop: tokens.spacing.sm, width: 54 },
+  iconTitleSpacing: { marginTop: -2 },
+  explanationIconTitleSpacing: { marginTop: 2 },
   eyebrow: { color: tokens.color.interactivePrimary, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.2, textTransform: "uppercase" },
   disclosuresEyebrow: { color: tokens.color.textMuted },
+  disclosuresTitle: { marginTop: 0 },
   title: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 32 },
+  profileTitleBottomSpacing: { paddingBottom: 4 },
   description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
+  disclosuresDescription: { color: tokens.color.textMain, fontWeight: tokens.weight.semibold, marginVertical: 12 },
+  valueDescription: { fontSize: 18, lineHeight: 26 },
+  valueDescriptionEmphasis: { fontWeight: tokens.weight.bold },
+  valueSecondaryDescription: { marginTop: 28 },
+  valueIconRow: { alignItems: "center", alignSelf: "center", flexDirection: "row", gap: tokens.spacing.md, marginTop: tokens.spacing.lg + 24 },
   explanationDescription: { color: tokens.color.textMain },
-  assistanceCreditDescription: { textAlign: "center" },
-  assistanceDashboardSpacing: { marginBottom: 8, marginTop: 8 },
-  assistanceIcon: { marginBottom: 12 },
+  assistancePlansCard: { borderRadius: tokens.radius.panel, height: 118, marginLeft: tokens.spacing.md, overflow: "hidden", paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.lg, width: "100%" },
+  assistancePlansGrid: { flexDirection: "row", gap: tokens.spacing.sm, marginRight: -20, paddingHorizontal: 10 },
+  assistancePlanColumn: { flex: 1, minWidth: 0 },
+  assistancePlanEyebrow: { color: tokens.color.surfaceApp, fontSize: 9, fontWeight: tokens.weight.bold, letterSpacing: 0.8, lineHeight: 11, opacity: 0.72 },
+  assistancePlanName: { color: tokens.color.surfaceApp, fontSize: 22, fontWeight: tokens.weight.bold, lineHeight: 26 },
+  assistancePlansCaption: { alignSelf: "stretch", color: tokens.color.surfaceApp, fontSize: 11, fontWeight: tokens.weight.medium, lineHeight: 15, marginTop: tokens.spacing.lg - 8, textAlign: "center", transform: [{ translateX: -tokens.spacing.md }] },
   descriptionEmphasis: { fontWeight: tokens.weight.bold },
   footer: { gap: tokens.spacing.sm, marginTop: "auto" },
-  explanationFooter: { alignItems: "center", gap: tokens.spacing.md, marginBottom: 48, marginTop: "auto" },
-  explanationFooterCompact: { marginBottom: 28, marginTop: -16 },
+  disclosuresConfirmationSpacing: { marginVertical: 4 },
+  explanationFooter: { alignItems: "center", gap: tokens.spacing.md, marginBottom: continueFooterBottomMargin, marginTop: "auto" },
+  explanationFooterCompact: { marginTop: -16 },
   explanationFooterWithAction: { position: "relative", width: "100%" },
   explanationFooterAction: { position: "absolute", right: 0, top: 3 },
   explanationDots: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 40 },
@@ -1297,25 +1518,31 @@ const styles = StyleSheet.create({
   creditContinueLabelChip: { fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   actionDisabled: { opacity: 0.55 },
   profileProgress: { alignItems: "center", flexDirection: "row", justifyContent: "center", paddingHorizontal: tokens.spacing.xl, width: "100%" },
+  profileProgressItems: { alignItems: "center", flexDirection: "row", width: "100%" },
+  profileProgressItemsCompact: { width: "72%" },
   profileProgressGroup: { alignItems: "center", gap: tokens.spacing.sm, width: "100%" },
-  profileProgressEyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.regular, letterSpacing: 1.2, textAlign: "center", textTransform: "uppercase" },
+  profileProgressEyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label * 0.85, fontWeight: tokens.weight.regular, letterSpacing: 1.2, textAlign: "center", textTransform: "uppercase" },
   profileProgressEyebrowTextMain: { color: tokens.color.textMain },
   profileProgressItem: { alignItems: "center", flex: 1, flexDirection: "row" },
   profileProgressItemLast: { flex: 0 },
   profileProgressLine: { backgroundColor: tokens.color.borderStrong, flex: 1, height: 2 },
-  profileProgressDot: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderStrong, borderRadius: 7, borderWidth: 1, height: 14, overflow: "hidden", width: 14 },
+  profileProgressLineActive: { backgroundColor: tokens.color.carbs },
+  profileProgressDot: { backgroundColor: tokens.color.borderStrong, borderRadius: 7, height: 14, width: 14 },
+  profileProgressDotActive: { backgroundColor: tokens.color.carbs },
   backAction: { alignItems: "center", alignSelf: "center", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 40, paddingHorizontal: tokens.spacing.md },
   disclosuresBackAction: { marginBottom: 20 },
   profileFooter: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   profileBackAction: { alignSelf: "auto", paddingLeft: 0 },
   profilePrimaryAction: { minWidth: 144 },
   backLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  explanationCard: { alignItems: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
+  explanationCard: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.screen },
+  disclosurePrivacyCard: { paddingBottom: tokens.spacing.screen - 8 },
+  explanationCardRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   explanationIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceElevated, borderRadius: tokens.radius.md, height: 36, justifyContent: "center", width: 36 },
-  explanationCopy: { flex: 1, gap: 2 },
-  explanationTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
-  explanationBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
-  disclosurePolicyLinks: { marginTop: tokens.spacing.sm },
+  explanationCopy: { flex: 1, gap: tokens.spacing.sm },
+  explanationTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.bold, lineHeight: 22 },
+  explanationBody: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
+  disclosurePolicyLinks: { alignItems: "center", marginTop: tokens.spacing.md },
   loginHero: { alignItems: "center", gap: tokens.spacing.md, marginTop: -12 },
   loginDescription: { color: tokens.color.textMain, marginBottom: 22, marginTop: -10 },
   loginAction: { width: "100%" },
@@ -1324,16 +1551,40 @@ const styles = StyleSheet.create({
   loginTitle: { color: tokens.color.textMain, fontSize: 32, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 37, textAlign: "center" },
   loginTitleChip: { backgroundColor: tokens.color.textMain, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 1 },
   loginTitleChipText: { color: tokens.color.surfaceApp, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -1, lineHeight: 35 },
+  valueTitleText: { fontSize: 37, lineHeight: 43, marginTop: 96 },
+  valueTitleChip: { marginBottom: 48, marginTop: -10 },
+  valueTitleChipText: { fontSize: 52, lineHeight: 61 },
   cardTitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.bold },
   quietCenter: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16, textAlign: "center" },
-  levels: { gap: tokens.spacing.sm, marginTop: 8 },
-  panelsViewContent: { gap: tokens.spacing.lg, transform: [{ translateY: 20 }] },
-  levelRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderTopWidth: 3, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
-  levelCopy: { flex: 1, gap: 2 },
-  levelTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, lineHeight: 21 },
-  levelDetail: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 18 },
-  executionPreview: { gap: tokens.spacing.lg, marginTop: 8 },
-  explanationVisualSpacing: { marginTop: 8 },
+  levels: { gap: tokens.spacing.xl + 16, marginTop: -tokens.spacing.sm },
+  structureLevels: { marginTop: -14 },
+  assistanceLevels: { marginTop: -14, width: "100%" },
+  structureRaisedContent: { gap: tokens.spacing.lg },
+  structureSection: { gap: tokens.spacing.md },
+  structureSectionTitle: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, lineHeight: 32, textAlign: "center" },
+  sharingSectionHeading: { alignItems: "center", gap: 10 },
+  sharingHeadingIcon: { alignItems: "center", height: 54, justifyContent: "center", width: 54 },
+  structureClosingText: { color: tokens.color.textMain, marginTop: 40 - tokens.spacing.md },
+  structureViewClosingText: { marginTop: tokens.spacing.md + 10 },
+  assistanceClosingText: { marginTop: -10 },
+  panelsViewContent: { gap: 20 },
+  panelsViewClosingText: { marginTop: tokens.spacing.sm + 10 },
+  panelsTitle: { marginBottom: 0 },
+  panelsAllocationPreview: { gap: 10, width: 100 },
+  panelsAllocationRow: { alignItems: "flex-start", columnGap: 20 },
+  panelsPpkBadge: { borderRadius: 10, minHeight: 29, paddingHorizontal: 10 },
+  levelRowFrame: { borderRadius: tokens.radius.panel, marginHorizontal: tokens.spacing.md, overflow: "hidden" },
+  levelRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.panel - 3, borderTopRightRadius: tokens.radius.panel - 3, flexDirection: "row", gap: tokens.spacing.md, marginTop: 3, padding: tokens.spacing.screen },
+  entityContentsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 4, width: 44 },
+  commitmentCards: { gap: 12, marginTop: -2 },
+  commitmentClosingText: { marginTop: 8 },
+  commitmentCard: { minHeight: 44 + tokens.spacing.screen * 2 },
+  commitmentHeroIcon: { alignItems: "center", borderRadius: 10, height: 40, justifyContent: "center", width: 40 },
+  sharingHeroIcon: { alignItems: "center", backgroundColor: tokens.color.meal, borderRadius: 10, height: 40, justifyContent: "center", width: 40 },
+  entityContentsTile: { alignItems: "center", borderRadius: 6, height: 20, justifyContent: "center", width: 20 },
+  levelCopy: { flex: 1, gap: 2, minWidth: 0 },
+  levelTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.bold, lineHeight: 24 },
+  levelDetail: { color: tokens.color.textMuted, fontSize: 11, lineHeight: 15 },
   metricRow: { alignItems: "baseline", flexDirection: "row", justifyContent: "space-between" },
   metricLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   metricValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold },
@@ -1349,21 +1600,24 @@ const styles = StyleSheet.create({
   optionTextSelected: { color: tokens.color.textMain },
   goalSelectionCheck: { height: 22, width: 22 },
   measurementFields: { gap: tokens.spacing.md },
-  profileCard: { backgroundColor: "transparent" },
-  summaryCard: { marginTop: -tokens.spacing.md },
+  profileCard: { backgroundColor: "transparent", paddingHorizontal: tokens.card.outerPadding + 10 },
+  summaryCard: { marginTop: -tokens.spacing.xs },
   profileInput: { paddingVertical: 0, textAlign: "center", textAlignVertical: "center" },
   identityChoiceField: { gap: 7 },
   identityChoiceRow: { flexDirection: "row", gap: tokens.spacing.sm },
+  identityChoiceChip: { minHeight: 44 },
+  identityChoiceChipLabel: { fontSize: 16, lineHeight: 20 },
   identityChoiceSelected: { backgroundColor: tokens.color.surfaceElevated, borderColor: "transparent", borderWidth: 0, overflow: "hidden" },
   flex: { flex: 1 },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
-  profileQuestion: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.regular, letterSpacing: 1.1, textTransform: "uppercase" },
+  profileQuestion: { color: tokens.color.textMain, fontSize: 11, fontWeight: tokens.weight.bold, letterSpacing: 1.1, textTransform: "uppercase" },
   profileQuestionMuted: { color: tokens.color.textMuted },
   profileQuestionGroup: { gap: 7 },
+  profileSectionExtraTopSpacing: { marginTop: 10 },
   activityList: { gap: tokens.spacing.sm },
-  activityOption: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
+  activityOption: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, padding: tokens.spacing.md },
   activityOptionSelected: { backgroundColor: tokens.color.surfaceElevated, borderColor: "transparent", borderWidth: 0, overflow: "hidden" },
-  activityLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  activityLabel: { color: tokens.color.textMain, fontSize: 14, fontWeight: tokens.weight.bold },
   activityDetail: { color: tokens.color.textMuted, fontSize: 11, marginTop: 2 },
   radio: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: 10, borderWidth: 1, height: 20, justifyContent: "center", width: 20 },
   radioSelected: { borderWidth: 0, overflow: "hidden" },
@@ -1380,16 +1634,33 @@ const styles = StyleSheet.create({
   dietaryChoiceChip: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flexBasis: "30%", flexGrow: 1, justifyContent: "center", minHeight: 34, minWidth: 0, paddingHorizontal: tokens.spacing.sm },
   dietaryChoiceChipContentSized: { flexBasis: "auto", flexGrow: 0, paddingHorizontal: tokens.spacing.xl },
   dietaryChoiceChipSelected: { backgroundColor: tokens.color.surfaceElevated, borderColor: "transparent", borderWidth: 0, overflow: "hidden" },
-  summaryHero: { alignItems: "center", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.component.nutritionKpi.regular.totalRadius, borderWidth: tokens.component.nutritionKpi.regular.totalBorderWidth, gap: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
-  summaryValue: { color: tokens.color.textMain, fontSize: 34, fontWeight: tokens.weight.extraBold, letterSpacing: -1 },
+  summaryHero: { alignItems: "center", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.component.nutritionKpi.regular.totalRadius, borderWidth: tokens.component.nutritionKpi.regular.totalBorderWidth, flexDirection: "row", gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 76, paddingHorizontal: tokens.spacing.lg, paddingVertical: tokens.spacing.sm },
+  summaryValueGroup: { alignItems: "flex-end" },
+  summaryValue: { color: tokens.color.textMain, fontSize: 24, fontWeight: tokens.weight.extraBold, letterSpacing: -0.5, lineHeight: 28 },
   summaryGrid: { alignSelf: "stretch", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   summaryGridPanelBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   summaryQuestion: { gap: 7 },
-  summaryCell: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexBasis: "45%", flexGrow: 1, gap: 3, minWidth: 0, padding: tokens.spacing.sm },
-  summaryLabel: { color: tokens.color.textSoft, fontSize: 10, textTransform: "uppercase" },
-  summaryText: { color: tokens.color.textMain, fontSize: 12, fontWeight: tokens.weight.bold },
-  summaryMetricLabel: { color: tokens.color.textMuted, fontSize: 12, fontWeight: tokens.weight.medium },
+  summaryNutritionTitle: { color: tokens.color.textMain, fontSize: 22, fontWeight: tokens.weight.bold, lineHeight: 27, marginBottom: 4, textAlign: "center" },
+  summaryClosingText: { color: tokens.color.textMain, fontWeight: tokens.weight.semibold, marginTop: -4 },
+  summaryMaintenanceCloser: { marginBottom: tokens.spacing.sm, marginTop: -tokens.spacing.md },
+  summaryCell: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexBasis: "45%", flexGrow: 1, gap: 3, minWidth: 0, padding: tokens.spacing.sm, paddingLeft: tokens.spacing.sm + 6 },
+  summaryLabel: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.bold, lineHeight: 13, textTransform: "uppercase" },
+  summaryText: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.bold, lineHeight: 20 },
+  summaryMetricLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: tokens.weight.semibold, lineHeight: 20, minWidth: 0 },
   summaryMetricUnit: { color: tokens.color.textSoft, fontSize: 11, fontWeight: tokens.weight.medium },
+  generatedPlanPreview: { gap: tokens.spacing.lg, paddingBottom: tokens.spacing.xl },
+  generatedPlanPreviewMain: { paddingBottom: 96 },
+  generatedPlanLogo: { alignItems: "flex-start", marginBottom: tokens.spacing.sm },
+  generatedPlanHeadline: { color: tokens.color.textMain, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 35 },
+  generatedPlanSubtitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.semibold, lineHeight: 26 },
+  generatedPlanCards: { gap: tokens.spacing.md, marginTop: tokens.spacing.sm },
+  generatedPlanCardAction: { flex: 1 },
+  generatedFoodListMiniCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.md, marginHorizontal: -18, minHeight: 62, paddingHorizontal: tokens.spacing.lg },
+  generatedFoodListMiniCardLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: tokens.weight.bold },
+  generatedFoodListBack: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 44 },
+  generatedFoodListBackLabel: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.semibold },
+  generatedFoodListSubtitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.medium, lineHeight: 25 },
+  generatedFoodListTabs: { marginHorizontal: -6, width: "auto" },
   generatedDailyPlanBottomSpacing: { height: 40 },
   adjustNutritionAction: { alignItems: "center", justifyContent: "center", minHeight: 40, paddingHorizontal: tokens.spacing.md },
   adjustNutritionLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium },

@@ -16,8 +16,8 @@ type LibraryEntry = {
 };
 
 const entries: LibraryEntry[] = [
-  { entity: "program", href: "/libraries/programs", icon: CalendarDays, title: "Mis Programas\nSemanales" },
-  { entity: "dailyPlan", href: "/libraries/daily-plans", icon: ClipboardList, title: "Mis minutas\ndiarias" },
+  { entity: "program", href: "/libraries/programs", icon: CalendarDays, title: "Mis Programas" },
+  { entity: "dailyPlan", href: "/libraries/daily-plans", icon: ClipboardList, title: "Mis Minutas" },
   { entity: "meal", href: "/libraries/meals", icon: Utensils, title: "Mis Comidas" },
   { entity: "food", href: "/libraries/foods", icon: Carrot, title: "Mis Alimentos" },
 ];

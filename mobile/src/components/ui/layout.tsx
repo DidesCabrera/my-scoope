@@ -1,5 +1,5 @@
-import type { PropsWithChildren, ReactElement, ReactNode } from "react";
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import type { ElementRef, PropsWithChildren, ReactElement, ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { Platform, type RefreshControlProps, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,7 +24,7 @@ type ScreenProps = PropsWithChildren<{
   stickyHeaderStyle?: StyleProp<ViewStyle>;
 }>;
 
-const ScreenScrollContext = createContext<{ setPanelDragging(dragging: boolean): void }>({ setPanelDragging: () => undefined });
+const ScreenScrollContext = createContext<{ scrollToTop(): void; setPanelDragging(dragging: boolean): void }>({ scrollToTop: () => undefined, setPanelDragging: () => undefined });
 
 export function useScreenScrollControl() {
   return useContext(ScreenScrollContext);
@@ -36,7 +36,8 @@ export function Screen({ children, scroll = true, contentStyle, fixedHeader, fix
   const [panelDragging, setPanelDragging] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
-  const scrollControl = useMemo(() => ({ setPanelDragging }), []);
+  const scrollRef = useRef<ElementRef<typeof NestableScrollContainer>>(null);
+  const scrollControl = useMemo(() => ({ scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: false }), setPanelDragging }), []);
   useFocusEffect(useCallback(() => {
     if (headerMode === "preserve") return undefined;
     setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });
@@ -56,6 +57,7 @@ export function Screen({ children, scroll = true, contentStyle, fixedHeader, fix
       {fixedHeader ? <View style={[styles.fixedHeader, fixedHeaderStyle]}>{fixedHeader}</View> : null}
       {scroll ? (
         <NestableScrollContainer
+          ref={scrollRef}
           alwaysBounceVertical={scroll === "auto" ? contentOverflows : undefined}
           automaticallyAdjustKeyboardInsets
           bounces={scroll === "auto" ? contentOverflows : undefined}

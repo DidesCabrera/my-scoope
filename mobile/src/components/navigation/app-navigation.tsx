@@ -99,7 +99,7 @@ const secondaryPrimaryItems: NavigationSidebarItemData[] = [
 ];
 
 const libraryItems: EntitySidebarItemData[] = [
-  { entity: "program", href: "/libraries/programs", label: "Mis Programas Semanales" },
+  { entity: "program", href: "/libraries/programs", label: "Mis Programas" },
   { entity: "dailyPlan", href: "/libraries/daily-plans", label: PRODUCT_VOCABULARY_ES.dailyPlan.libraryTitle },
   { entity: "meal", href: "/libraries/meals", label: "Mis Comidas" },
   { entity: "food", href: "/libraries/foods", label: "Mis Alimentos" },

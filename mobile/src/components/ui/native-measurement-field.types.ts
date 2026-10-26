@@ -1,6 +1,7 @@
 import type { StyleProp, TextStyle, ViewStyle } from "react-native";
 
 export type NativeMeasurementFieldProps = {
+  confirmationColor?: string;
   containerStyle?: StyleProp<ViewStyle>;
   defaultValue?: string;
   disabled?: boolean;

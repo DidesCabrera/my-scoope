@@ -1,6 +1,6 @@
 export const PRODUCT_VOCABULARY_ES = {
   dailyPlan: {
-    libraryTitle: "Mis minutas diarias",
+    libraryTitle: "Mis Minutas",
     plural: "Minutas diarias",
     singular: "Minuta diaria",
   },
