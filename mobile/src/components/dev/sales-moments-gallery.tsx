@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { CommercialLimitContent, type CommercialLimitEntity } from "@/components/subscriptions/commercial-limit-sheet";
+import { CommercialLimitContent, SharedImportLimitContent, type CommercialLimitEntity } from "@/components/subscriptions/commercial-limit-sheet";
 import { ScrollableTabBar } from "@/components/ui/tab-bars";
 import { SectionTitle, textStyles } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
 
 const noop = () => undefined;
+type LimitScenario = CommercialLimitEntity | "receivedImports";
 
 const limits: Record<CommercialLimitEntity, number> = {
   comparison: 0,
@@ -16,8 +17,7 @@ const limits: Record<CommercialLimitEntity, number> = {
 };
 
 export function SalesMomentsGallery() {
-  const [entity, setEntity] = useState<CommercialLimitEntity>("dailyPlan");
-  const limit = limits[entity];
+  const [scenario, setScenario] = useState<LimitScenario>("dailyPlan");
   return (
     <View style={styles.gallery}>
       <SectionTitle
@@ -28,21 +28,24 @@ export function SalesMomentsGallery() {
         Estados comerciales que aparecen cuando una intención válida supera los beneficios del plan actual.
         Cada vista debe explicar qué ocurrió, conservar el trabajo existente y ofrecer una salida clara.
       </Text>
-      <ScrollableTabBar<CommercialLimitEntity>
-        accessibilityLabel="Entidad con límite alcanzado"
-        activeTab={entity}
+      <ScrollableTabBar<LimitScenario>
+        accessibilityLabel="Escenario con límite alcanzado"
+        activeTab={scenario}
         density="compact"
-        onChange={setEntity}
+        onChange={setScenario}
         tabs={[
           { key: "dailyPlan", label: "Planes" },
           { key: "meal", label: "Comidas" },
           { key: "program", label: "Programas" },
           { key: "comparison", label: "Comparaciones" },
+          { key: "receivedImports", label: "Recibidos" },
         ]}
       />
       <View style={styles.phonePreview}>
-        <Text style={styles.previewLabel}>ESCENARIO 01 · LÍMITE DE LIBRERÍA</Text>
-        <CommercialLimitContent entity={entity} limit={limit} onClose={noop} onUpgrade={noop} planName="Free" used={limit} />
+        <Text style={styles.previewLabel}>{scenario === "receivedImports" ? "ESCENARIO 02 · RECIBIDOS AGREGADOS A LA LIBRERÍA" : "ESCENARIO 01 · LÍMITE DE LIBRERÍA"}</Text>
+        {scenario === "receivedImports" ? <SharedImportLimitContent limit={1} onClose={noop} onUpgrade={noop} planName="Free" used={1} /> : (
+          <CommercialLimitContent entity={scenario} limit={limits[scenario]} onClose={noop} onUpgrade={noop} planName="Free" used={limits[scenario]} />
+        )}
       </View>
     </View>
   );

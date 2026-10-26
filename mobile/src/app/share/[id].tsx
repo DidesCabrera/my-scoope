@@ -3,9 +3,11 @@ import { Carrot, ChevronRight, ClipboardList, LayoutGrid, Rows3, Utensils } from
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import type { ApiEnvelope, ComparisonKind, ComparisonResultItem, ShareClaimResult, ShareResource, SharingInboxData } from "@/api/types";
+import type { ApiEnvelope, ComparisonKind, ComparisonResultItem, EntitlementsData, ShareClaimResult, ShareResource, SharingInboxData } from "@/api/types";
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
+import { isSharedImportLimitError, sharedImportLimitState, type SharedImportLimitState } from "@/components/subscriptions/commercial-limit";
+import { SharedImportLimitSheet } from "@/components/subscriptions/commercial-limit-sheet";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { FoodDetailCardList } from "@/components/details/food-detail-card-list";
 import { ComparisonItemsSummary, SavedComparisonPreviewPanels } from "@/components/comparisons";
@@ -71,6 +73,7 @@ export default function SharedResourceScreen() {
   const [comparisonTab, setComparisonTab] = useState<SharedComparisonTab>("cards");
   const [inboxState, setInboxState] = useState<{ id: number; isSaved: boolean; resourceId: string } | null>(null);
   const [isOwnedResource, setIsOwnedResource] = useState(false);
+  const [sharedImportLimit, setSharedImportLimit] = useState<SharedImportLimitState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -119,6 +122,18 @@ export default function SharedResourceScreen() {
       const saved = await apiRequest<SavedShare>(`/api/v1/shares/inbox/${inboxItemId}/save`, { method: "POST" });
       router.replace((saved.entity === "comparison" ? `/comparator/saved/${saved.item_id}` : `/libraries/${libraryPathByEntity[saved.entity]}/${saved.item_id}`) as Href);
     } catch (nextError) {
+      if (isSharedImportLimitError(nextError)) {
+        try {
+          const entitlements = await apiRequest<EntitlementsData>("/api/v1/entitlements", { cache: "no-store" });
+          const limitState = sharedImportLimitState(entitlements);
+          if (limitState) {
+            setSharedImportLimit({ ...limitState, used: Math.max(limitState.used, limitState.limit) });
+            return;
+          }
+        } catch {
+          // Preserve the server error when usage cannot be refreshed.
+        }
+      }
       setError(userFacingError(nextError));
     } finally {
       setClaiming(false);
@@ -278,6 +293,7 @@ export default function SharedResourceScreen() {
       )) : null}
       {!sharedProgram ? libraryAction : null}
     </Screen>
+    {sharedImportLimit ? <SharedImportLimitSheet {...sharedImportLimit} onClose={() => setSharedImportLimit(null)} onUpgrade={() => { setSharedImportLimit(null); router.push("/subscription"); }} visible /> : null}
     <SharedResourceActions onOpenInformation={() => router.push(`/share/${id}/information` as Href)} onVisibleChange={setActionsVisible} title={resource?.title ?? "Elemento compartido"} visible={actionsVisible} />
     </>
   );

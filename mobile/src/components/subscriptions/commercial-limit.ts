@@ -11,6 +11,8 @@ export type CommercialLimitState = {
   used: number;
 };
 
+export type SharedImportLimitState = Omit<CommercialLimitState, "entity">;
+
 const commercialLimitKeys = {
   comparison: { error: "max_saved_comparisons_reached", limit: "max_saved_comparisons", usage: "comparison" },
   dailyPlan: { error: "max_dailyplans_reached", limit: "max_dailyplans", usage: "dailyplan" },
@@ -37,4 +39,18 @@ export function reachedCommercialLimit(entitlements: EntitlementsData, entity: C
 
 export function isCommercialLimitError(error: unknown, entity: CommercialLimitEntity): boolean {
   return error instanceof MobileApiError && error.code === commercialLimitKeys[entity].error;
+}
+
+export function sharedImportLimitState(entitlements: EntitlementsData): SharedImportLimitState | null {
+  const limit = entitlements.workspace_limits.max_shared_imports_monthly;
+  if (typeof limit !== "number") return null;
+  return {
+    limit,
+    planName: entitlements.plan_name,
+    used: entitlements.workspace_usage.shared_imports_monthly ?? 0,
+  };
+}
+
+export function isSharedImportLimitError(error: unknown): boolean {
+  return error instanceof MobileApiError && error.code === "max_shared_imports_monthly_reached";
 }
