@@ -15,7 +15,7 @@ export type { CommercialLimitEntity, CommercialLimitState } from "./commercial-l
 
 const content = {
   comparison: { noun: "comparaciones", title: "Guarda comparaciones en tu librería", usageLabel: "Comparaciones guardadas" },
-  dailyPlan: { noun: "planes diarios", title: "Agrega más planes a tu librería", usageLabel: "Planes utilizados" },
+  dailyPlan: { noun: "minutas diarias", title: "Agrega más minutas a tu librería", usageLabel: "Minutas utilizadas" },
   meal: { noun: "comidas", title: "Agrega más comidas a tu librería", usageLabel: "Comidas utilizadas" },
   program: { noun: "programas", title: "Agrega más programas a tu librería", usageLabel: "Programas utilizados" },
 } satisfies Record<CommercialLimitEntity, { noun: string; title: string; usageLabel: string }>;
