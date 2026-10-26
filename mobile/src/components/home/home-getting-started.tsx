@@ -39,10 +39,10 @@ function GettingStartedCard({ accent, description, icon: Icon, primary, secondar
   );
 }
 
-export function HomeGettingStarted() {
+export function HomeGettingStarted({ compactTop = false }: { compactTop?: boolean }) {
   const router = useRouter();
   return (
-    <View accessibilityLabel="Primeros pasos" style={styles.section}>
+    <View accessibilityLabel="Primeros pasos" style={[styles.section, compactTop && styles.sectionCompact]}>
       <View style={styles.introduction}>
         <Text accessibilityRole="header" style={styles.title}>Construye tu sistema paso a paso</Text>
         <Text style={styles.subtitle}>Guarda lo que repites, conviértelo en minutas y luego llévalo a tu calendario.</Text>
@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
   icon: { alignItems: "center", borderRadius: tokens.radius.md, height: 40, justifyContent: "center", width: 40 },
   introduction: { gap: tokens.spacing.xs },
   section: { gap: tokens.spacing.lg, marginTop: tokens.spacing.lg },
+  sectionCompact: { marginTop: 0 },
   step: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   title: { color: tokens.color.textMain, fontSize: 22, fontWeight: tokens.weight.extraBold, letterSpacing: -0.3 },

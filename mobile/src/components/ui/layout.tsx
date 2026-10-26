@@ -1,5 +1,5 @@
 import type { ElementRef, PropsWithChildren, ReactElement, ReactNode } from "react";
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { Platform, type RefreshControlProps, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,6 +20,7 @@ type ScreenProps = PropsWithChildren<{
   refreshControl?: ReactElement<RefreshControlProps>;
   scroll?: boolean | "auto";
   scrollHeader?: ReactNode;
+  scrollToTopSignal?: number;
   stickyHeader?: ReactNode;
   stickyHeaderStyle?: StyleProp<ViewStyle>;
 }>;
@@ -30,14 +31,17 @@ export function useScreenScrollControl() {
   return useContext(ScreenScrollContext);
 }
 
-export function Screen({ children, scroll = true, contentStyle, fixedHeader, fixedHeaderStyle, headerMode = "automatic", onHeaderVisibilityChange, refreshControl, scrollHeader, stickyHeader, stickyHeaderStyle }: ScreenProps) {
+export function Screen({ children, scroll = true, contentStyle, fixedHeader, fixedHeaderStyle, headerMode = "automatic", onHeaderVisibilityChange, refreshControl, scrollHeader, scrollToTopSignal = 0, stickyHeader, stickyHeaderStyle }: ScreenProps) {
   const setHeaderPresentation = useHeaderPresentation();
+  const scrollRef = useRef<ElementRef<typeof NestableScrollContainer>>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [panelDragging, setPanelDragging] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
-  const scrollRef = useRef<ElementRef<typeof NestableScrollContainer>>(null);
   const scrollControl = useMemo(() => ({ scrollToTop: () => scrollRef.current?.scrollTo({ y: 0, animated: false }), setPanelDragging }), []);
+  useEffect(() => {
+    if (scrollToTopSignal > 0) scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [scrollToTopSignal]);
   useFocusEffect(useCallback(() => {
     if (headerMode === "preserve") return undefined;
     setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });

@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
+import { assertSourceMatch } from "./support/source-contract";
+
 async function source(file: string): Promise<string> {
   return readFile(path.resolve(process.cwd(), file), "utf8");
 }
@@ -72,19 +74,25 @@ test("meal cards nested in a daily plan expose library actions, compare, remove,
   assert.match(detail, /<DailyPlanMealCards[^>]*items=\{item\.panel\.meals\}[^>]*onChanged=\{load\}[^>]*onRemove=/);
 });
 
-test("current and today cards expose source library actions and compare", async () => {
+test("current cards retain library actions while today's plan removes only its calendar assignment", async () => {
   const contextualActions = await source("src/components/libraries/contextual-library-actions.tsx");
   const calendarizedPlan = await source("src/components/calendarization/calendarized-daily-plan-card.tsx");
   const pinnedPlan = await source("src/components/calendarization/pinned-daily-plan-card.tsx");
   const currentDay = await source("src/app/program/days/[id].tsx");
+  const today = await source("src/app/today.tsx");
+  const libraryActions = await source("src/components/libraries/library-actions.tsx");
 
   for (const label of ["Renombrar", "Compartir", "Eliminar"]) {
     assert.match(contextualActions, new RegExp(label));
   }
   assert.ok(contextualActions.indexOf('key: "share"') < contextualActions.indexOf('key: "rename"'));
-  assert.match(contextualActions, /onCompare=\{\(\) => void compare\(\)\}/);
+  assert.match(contextualActions, /onCompare=\{id != null \? \(\) => void compare\(\) : undefined\}/);
+  assertSourceMatch(contextualActions, /if \(id != null && !onRemoveFromCalendar\) \{\s*actions\.push\(\{ destructive: true, key: "delete", label: "Eliminar" \}\)/);
   assert.match(calendarizedPlan, /snapshot\.source\?\.dailyplan_id/);
   assert.match(calendarizedPlan, /<ContextualLibraryActions[^>]*entity="dailyPlan"/);
+  assertSourceMatch(calendarizedPlan, /onRemoveFromCalendar=\{onRemoveFromCalendar\}/);
+  assertSourceMatch(today, /onRemoveFromCalendar=\{async \(\) => \{\s*await apiRequest\(`\/api\/v1\/calendar\/days\/\$\{today\.local_date\}\/plan`, \{ method: "DELETE" \}\)/);
+  assertSourceMatch(libraryActions, /label="Eliminar del calendario"[\s\S]*key: "remove-calendar"/);
   assert.match(pinnedPlan, /<ContextualLibraryActions[^>]*entity="dailyPlan"/);
   assert.match(currentDay, /<ContextualLibraryActions[^>]*entity="meal"/);
 });
