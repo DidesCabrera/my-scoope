@@ -1098,7 +1098,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /annualPrice|\$3\.990|\$6\.990/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton label="Continuar con Free"/);
-  assertSourceMatch(journey, /primary="Generar primera minuta"/);
+  assertSourceMatch(journey, /primary="Generar minutas"/);
   assertSourceMatch(journey, /\{estimationInformationSection\}[\s\S]*\{maintenanceSection\}[\s\S]*\{nutritionGoalSection\}/);
   assertSourceMatch(journey, /!storyboardSummaryLayout \? <Pressable accessibilityRole="button" onPress=\{controller\.onAdjust \?\? noop\}/);
   assertSourceMatch(journey, /summaryGridPanelBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
@@ -1117,20 +1117,31 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /El mantenimiento usa edad, sexo de cálculo/);
   assertSourceMatch(journey, /function GeneratedDailyPlanView/);
   assertSourceMatch(journey, /Planifica, Ejecuta y Aprende sobre alimentación para ver resultados importantes/);
-  assertSourceMatch(journey, /proteinPerKilogram: 9 \/ generatedDailyPlanReferenceWeightKg/);
-  assertSourceMatch(journey, /proteinPerKilogram: 53 \/ generatedDailyPlanReferenceWeightKg/);
-  assertSourceMatch(journey, /proteinPerKilogram: 33 \/ generatedDailyPlanReferenceWeightKg/);
+  assertSourceMatch(journey, /generatedPlanPlaceholders: GeneratedPlanPlaceholder\[\] = \[[\s\S]*Minuta equilibrada[\s\S]*Día de entrenamiento/);
+  assertSourceMatch(journey, /Hemos generado 2 minutas según tus objetivos/);
+  assertSourceMatch(journey, /Asígnalas en el calendario y luego cumple con cada comida/);
+  assertSourceMatch(journey, /<MyScoopeBrandLogo compact \/>/);
+  assertSourceMatch(journey, /generatedPlanPlaceholders\.map\(\(plan\) => <GeneratedPlanPlaceholderCard/);
+  assertSourceMatch(journey, /<PreviewFoodListLink onPress=\{\(\) => \{ scrollToTop\(\); setShowFoodList\(true\); \}\} \/>[\s\S]*<CreditContinueButton \/>/);
+  assertSourceMatch(journey, /generatedPlanPreviewMain: \{ paddingBottom: 96 \}/);
+  assertSourceMatch(journey, /function PreviewFoodListLink[\s\S]*Ver lista de alimentos/);
+  assertSourceMatch(journey, /function groupedPreviewFoodItems[\s\S]*current\.quantity \+ item\.quantity/);
+  assertSourceMatch(journey, /function PreviewFoodListPage[\s\S]*<DistributedTabBar[^\n]*Agrupados[^\n]*Individuales/);
+  assertSourceMatch(journey, /Lista de alimentos<\/Text>[\s\S]*Crea listas de alimentos para planificar tus compras o preparar tus comidas<\/Text>[\s\S]*<DistributedTabBar/);
+  assertSourceMatch(journey, /generatedFoodListTabs: \{ marginHorizontal: -6, width: "auto" \}/);
+  assertSourceMatch(journey, /activeTab === "grouped"[\s\S]*<GroupedFoodsCard items=\{groupedPreviewFoodItems\(\)\}[^\n]*quantityOnly[\s\S]*generatedPlanPlaceholders\.map\(\(plan\) => <GroupedFoodsCard/);
+  assertSourceMatch(journey, /\{ key: "dailyPlan"[^\n]*\n  \{ key: "plans"/);
+  assertSourceMatch(journey, /function GeneratedPlanPlaceholderCard[\s\S]*<NutritionEntityCard[\s\S]*entity="dailyPlan"[\s\S]*<MealPanels items=\{plan\.meals\} showEditTab=\{false\} \/>/);
+  assertSourceMatch(journey, /actions=\{<View style=\{styles\.generatedPlanCardAction\}><Button bleed=\{false\}[^\n]*label="Calendarizar"/);
+  assertSourceMatch(journey, /generatedPlanCardAction: \{ flex: 1 \}/);
   assertSourceMatch(journey, /generatedDailyPlanBottomSpacing: \{ height: 40 \}/);
   assertSourceMatch(journey, /screen: \{[^}]*paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18/);
   assertSourceMatch(journey, /topInsetReduction = 0/);
   assertSourceMatch(journey, /index >= 9 && index <= 14 && styles\.profileScreen/);
   assertSourceMatch(journey, /profileScreen: \{ paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18 - 32 \}/);
   assertSourceMatch(journey, /index === 8 \? <CreditContinueButton label=\{primary\} \/> : <Button label=\{primary\} loading=\{controller\.busy\} onPress=\{controller\.onNext \?\? noop\} \/>/);
-  assertSourceMatch(journey, /<EntityDetailPage[\s\S]*eyebrow="MINUTA DEL DÍA"[\s\S]*title="Minuta equilibrada · Día 1"/);
-  assertSourceMatch(journey, /<MealPanels items=\{generatedDailyPlanMeals\} showEditTab=\{false\} \/>/);
-  assertSourceMatch(journey, /<EntityDetailSection title="Composición de la minuta diaria">/);
+  assertSourceMatch(journey, /if \(controller\.proposal\?\.dailyplan\)[\s\S]*<ProposalDailyPlanCard dailyplan=\{controller\.proposal\.dailyplan\}/);
   assertSourceMatch(typography, /normalizedTitle\.startsWith\("composición"\)[^\n]*return "comparison"/);
-  assertSourceMatch(journey, /<ProgramSectionHeader icon=\{Utensils\} subtitle="Revisa el detalle de comida en esta minuta diaria\. Conoce sus alimentos, compáralos, y ve su impacto real en la comida\." title="Detalle de cada Comida" \/>[\s\S]*<DailyPlanMealDetailList items=\{generatedDailyPlanMealDetails\} \/>/);
   assertSourceDoesNotMatch(journey, /subtitle="Creado a partir de tu objetivo y nivel de actividad"/);
   assertSourceMatch(journey, /id="daily-plan-credit-button"/);
   assertSourceMatch(journey, /<Text style=\{\[styles\.creditContinueLabel, chip && styles\.creditContinueLabelChip\]\}>\{label\}<\/Text>/);
@@ -1202,7 +1213,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /Array\.from\(\{ length: 6 \}/);
   assertSourceMatch(journey, /Paso \$\{activeIndex \+ 1\} de 6 de tu perfil/);
   for (const view of ["IdentityView", "MeasurementsView", "ActivityView", "SummaryView"]) {
-    const nextView = view === "IdentityView" ? "MeasurementsView" : view === "MeasurementsView" ? "ActivityView" : view === "ActivityView" ? "SummaryView" : "const plans";
+    const nextView = view === "IdentityView" ? "MeasurementsView" : view === "MeasurementsView" ? "ActivityView" : view === "ActivityView" ? "SummaryView" : "function GeneratedDailyPlanView";
     const section = journey.match(new RegExp(`function ${view}[\\s\\S]*?${nextView}`))?.[0] ?? "";
     assertSourceDoesNotMatch(section, /<Card accent=/);
   }

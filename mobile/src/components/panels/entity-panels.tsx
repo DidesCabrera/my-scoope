@@ -775,7 +775,7 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
   );
 }
 
-export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation, preparationFirst = false, showEditTab = true, showPreparationColumn = false }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; preparationFirst?: boolean; showEditTab?: boolean; showPreparationColumn?: boolean }) {
+export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation, preparationFirst = false, quantityOnly = false, showEditTab = true, showPreparationColumn = false }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; preparationFirst?: boolean; quantityOnly?: boolean; showEditTab?: boolean; showPreparationColumn?: boolean }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
   const itemsWithPortions = useFoodPanelPortionEquivalences(items);
   const itemSignature = itemsWithPortions.map(({ id, name, quantity }) => `${id}:${name}:${quantity}`).join("|");
@@ -801,7 +801,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
 
   return (
     <NestedPanelScrollContext.Provider value={nestedScroll}><PanelSurface>
-      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing && showEditTab ? [...foodTabs, editTab] : foodTabs} />
+      {quantityOnly ? null : <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing && showEditTab ? [...foodTabs, editTab] : foodTabs} />}
       {activeTab === "quantity" ? <FoodQuantityPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} preparation={showPreparationColumn ? preparation : undefined} preparationFirst={preparationFirst} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
