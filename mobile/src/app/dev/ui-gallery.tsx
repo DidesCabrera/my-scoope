@@ -28,6 +28,7 @@ import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { DisclosureGallery } from "@/components/dev/disclosure-gallery";
 import { PersonalRecordCardGallery } from "@/components/dev/personal-record-card-gallery";
 import { SavedComparisonCardGallery } from "@/components/dev/saved-comparison-card-gallery";
+import { SalesMomentsGallery } from "@/components/dev/sales-moments-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
 import { NutritionFactsGallery } from "@/components/dev/nutrition-facts-gallery";
@@ -216,6 +217,7 @@ export default function UiGalleryScreen() {
       ) : null}
       {tab === "disclosures" ? <DisclosureGallery /> : null}
       {tab === "subscriptions" ? <SubscriptionGallery /> : null}
+      {tab === "salesMoments" ? <SalesMomentsGallery /> : null}
 
       {tab === "labelCapture" ? <LabelCaptureStoryboardGallery /> : null}
 
