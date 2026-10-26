@@ -1,11 +1,17 @@
 """One in-app feed backed by the existing proposal and sharing read states."""
 
+from allauth.account.models import EmailAddress
 from django.db.models import Q
 from django.utils import timezone
 
-from allauth.account.models import EmailAddress
-
-from notas.domain.models import InboxItem, NutritionProposal, ProductAnnouncement, ProductAnnouncementRead, ShareInvitation, ShareResource
+from notas.domain.models import (
+    InboxItem,
+    NutritionProposal,
+    ProductAnnouncement,
+    ProductAnnouncementRead,
+    ShareInvitation,
+    ShareResource,
+)
 
 
 def _proposals(user):

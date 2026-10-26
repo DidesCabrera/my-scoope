@@ -75,6 +75,7 @@ from notas.domain.model_modules.sharing import (
     ShareInvitation,
     ShareResource,
 )
+
 __all__ = [
     "CulinaryTemplate", "CulinaryVariant",
     "AiAssistantMessageFeedback", "AiNutritionChat", "ApplePushSubscription",
