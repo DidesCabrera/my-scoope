@@ -134,6 +134,12 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
         responsibility="Web Push/APNs subscriptions, logical scheduled events and per-device delivery attempts.",
     ),
     DomainModelBoundary(
+        slug="notification_center",
+        label="Notification Center",
+        models=("ProductAnnouncement", "ProductAnnouncementRead"),
+        responsibility="Staff-published in-app announcements and per-user read receipts.",
+    ),
+    DomainModelBoundary(
         slug="proposals",
         label="AI Proposals",
         models=(
@@ -222,6 +228,11 @@ DOMAIN_MODEL_DEPENDENCY_POLICIES: tuple[DomainModelDependencyPolicy, ...] = (
         rationale="Notification events are scheduled for calendarized days and native subscriptions belong to OAuth device sessions.",
     ),
     DomainModelDependencyPolicy(
+        source_slug="notification_center",
+        allowed_dependency_slugs=(),
+        rationale="Announcements and their read receipts do not reference other product models.",
+    ),
+    DomainModelDependencyPolicy(
         source_slug="proposals",
         allowed_dependency_slugs=("dailyplans",),
         rationale="Nutrition proposals may reference the created/applied DailyPlan snapshot.",
@@ -252,6 +263,7 @@ DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG: dict[str, str] = {
     "proposals": "notas.domain.model_modules.proposals",
     "calendarization": "notas.domain.model_modules.calendarization",
     "notification_delivery": "notas.domain.model_modules.notification_delivery",
+    "notification_center": "notas.domain.model_modules.notification_center",
     "food_catalog": "notas.domain.model_modules.food",
     "meals": "notas.domain.model_modules.meals",
     "dailyplans": "notas.domain.model_modules.dailyplans",

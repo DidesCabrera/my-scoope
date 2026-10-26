@@ -183,7 +183,7 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
         slug="notifications",
         label="Notifications",
         entries=("notifications",),
-        responsibility="Outbound message builders and notification content.",
+        responsibility="Outbound message builders and the personal in-app notification feed.",
     ),
     ApplicationServiceArea(
         slug="scheduling",

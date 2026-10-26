@@ -1,5 +1,7 @@
 # Retomar la preparación de Google Play
 
+Status: active
+
 Estado documentado: 2026-10-26. Este documento reúne la evidencia registrada en
 el [ciclo de activación de pagos](production_payment_channels_cycle.md) y el
 [runbook de proveedores](../40_technical/operations/billing_providers_runbook.md).

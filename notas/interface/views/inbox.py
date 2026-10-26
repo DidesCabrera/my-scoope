@@ -286,11 +286,6 @@ def inbox_list(request):
     received_items = build_inbox_items(request.user, favorites_only=favorites_only)
     sent_items = build_inbox_items(request.user, scope="sent")
     items = [asdict(item) for item in (sent_items if scope == "sent" else received_items)]
-    if scope == "received":
-        request.session["inbox_notification_seen_count"] = sum(
-            1 for item in items if not item.get("is_read")
-        )
-
     content_vm = InboxListContentVM(
         header=build_page_header(
             title="Compartidos",

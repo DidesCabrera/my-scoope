@@ -42,6 +42,7 @@ import { initialWindowMetrics, SafeAreaView, useSafeAreaInsets } from "react-nat
 
 import { useSession } from "@/auth/session-context";
 import type { EntitlementsData, HomeData, LibraryEntity } from "@/api/types";
+import type { NotificationFeed } from "@/api/notification-types";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
@@ -159,6 +160,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/review") return { icon: TrendingUp, title: "Revisión de progreso" };
   if (pathname === "/revision") return { icon: ClipboardCheck, title: "Revisar ajuste" };
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };
+  if (pathname === "/notifications") return { icon: Bell, title: "Notificaciones" };
   if (pathname === "/inbox") return { icon: Send, title: "Compartidos" };
   if (pathname.startsWith("/share/")) return { icon: UserPlus, title: "Contenido compartido" };
   if (pathname === "/subscription" || pathname === "/subscription-details") return { icon: WalletCards, title: pathname === "/subscription" ? "Suscripciones y Bolsas" : "Detalles de suscripciones y bolsas" };
@@ -394,6 +396,7 @@ function AppSidebar() {
   const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeData["library_counts"] | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [translateX] = useState(() => new Animated.Value(-380));
   const [scrimOpacity] = useState(() => new Animated.Value(0));
 
@@ -426,6 +429,9 @@ function AppSidebar() {
         setLatestWeightKg(home.latest_weight?.weight_kg ?? null);
       })
       .catch(() => undefined);
+    void apiRequest<NotificationFeed>("/api/v1/notifications")
+      .then((feed) => setNotificationUnreadCount(feed.unread_count))
+      .catch(() => undefined);
   }, [apiRequest, menuOpen, status]);
 
   const openCredits = () => {
@@ -435,6 +441,10 @@ function AppSidebar() {
   const openHome = () => {
     closeMenu();
     router.push("/today" as Href);
+  };
+  const openNotifications = () => {
+    closeMenu();
+    router.push("/notifications" as Href);
   };
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? null;
 
@@ -453,6 +463,15 @@ function AppSidebar() {
                 <Pressable accessibilityLabel="Ir a Inicio" accessibilityRole="button" hitSlop={8} onPress={openHome} style={({ pressed }) => [styles.drawerHome, pressed && styles.pressed]}>
                   <MyScoopeBrandLogo compact scale={1.12} />
                 </Pressable>
+                <View style={styles.drawerHeaderActions}>
+                <Pressable
+                  accessibilityLabel={`Notificaciones${notificationUnreadCount ? `: ${notificationUnreadCount} sin leer` : ""}`}
+                  accessibilityRole="button"
+                  onPress={openNotifications}
+                  style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
+                  <Bell color={tokens.color.textMuted} size={23} strokeWidth={2} />
+                  {notificationUnreadCount > 0 ? <View style={styles.notificationDot} /> : null}
+                </Pressable>
                 <Pressable
                   accessibilityLabel="Cerrar menú"
                   accessibilityRole="button"
@@ -460,6 +479,7 @@ function AppSidebar() {
                   style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
                   <PanelRight color={tokens.color.textMuted} size={24} strokeWidth={2} />
                 </Pressable>
+                </View>
               </View>
             </View>
             <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false} style={styles.drawerScroll}>
@@ -525,7 +545,9 @@ const styles = StyleSheet.create({
   drawerHeader: { alignItems: "stretch", minHeight: 64, paddingHorizontal: tokens.spacing.md * 2, paddingTop: tokens.spacing.sm },
   drawerBrandRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 44 },
   drawerHome: { alignItems: "flex-start", justifyContent: "center", minHeight: 44 },
+  drawerHeaderActions: { alignItems: "center", flexDirection: "row", gap: 4 },
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
+  notificationDot: { backgroundColor: tokens.color.danger, borderColor: tokens.color.surfaceApp, borderRadius: 6, borderWidth: 2, height: 12, position: "absolute", right: 7, top: 5, width: 12 },
   drawerContent: { gap: 0, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.md, paddingTop: 0 },
   drawerScroll: { flex: 1 },
   menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.compact },

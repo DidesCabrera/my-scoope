@@ -50,6 +50,7 @@ from notas.domain.model_modules.identity import (
     WeightLog,
 )
 from notas.domain.model_modules.meals import Meal, MealAccess, MealCatalogEntry, MealFood
+from notas.domain.model_modules.notification_center import ProductAnnouncement, ProductAnnouncementRead
 from notas.domain.model_modules.notification_delivery import (
     ApplePushSubscription,
     NotificationDelivery,
@@ -74,7 +75,6 @@ from notas.domain.model_modules.sharing import (
     ShareInvitation,
     ShareResource,
 )
-
 __all__ = [
     "CulinaryTemplate", "CulinaryVariant",
     "AiAssistantMessageFeedback", "AiNutritionChat", "ApplePushSubscription",
@@ -88,7 +88,7 @@ __all__ = [
     "FoodPortion", "FoodShare", "InboxItem",
     "FoodSourceMetadata", "MCPUserToken", "Meal",
     "MealAccess", "MealCatalogEntry", "MealFood", "MealShare",
-    "NotificationDelivery", "NutritionProposal", "NutritionProposalAuditEvent",
+    "NotificationDelivery", "NutritionProposal", "NutritionProposalAuditEvent", "ProductAnnouncement", "ProductAnnouncementRead",
     "NutritionPreferenceProfile", "NutritionistMemberRelationship",
     "OAuthAuthorizationCode", "OAuthClient",
     "OAuthDeviceSession", "OAuthRefreshToken",

@@ -14,6 +14,7 @@ from mobile_api.routes.explore import router as explore_router
 from mobile_api.routes.label_capture import router as label_capture_router
 from mobile_api.routes.libraries import router as libraries_router
 from mobile_api.routes.list_actions import router as list_actions_router
+from mobile_api.routes.notifications import router as notifications_router
 from mobile_api.routes.proposals import router as proposals_router
 from mobile_api.routes.root import router as identity_router
 from mobile_api.routes.sharing import router as sharing_router
@@ -27,11 +28,9 @@ api = NinjaAPI(
     urls_namespace="mobile_api_v1",
 )
 
-
 @api.exception_handler(MobileAPIError)
 def handle_mobile_api_error(request, exc):
     return api.create_response(request, error_envelope(exc), status=exc.status_code)
-
 
 @api.exception_handler(NinjaValidationError)
 def handle_validation_error(request, exc):
@@ -61,6 +60,7 @@ api.add_router("", calendar_router)
 api.add_router("", calendarization_edits_router)
 api.add_router("", list_actions_router)
 api.add_router("", proposals_router)
+api.add_router("", notifications_router)
 api.add_router("", sharing_router)
 api.add_router("", comparisons_router)
 api.add_router("", comparison_edits_router)

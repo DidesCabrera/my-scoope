@@ -204,6 +204,7 @@ class DomainModelBoundaryTests(TestCase):
                 "proposals": "notas.domain.model_modules.proposals",
                 "calendarization": "notas.domain.model_modules.calendarization",
                 "notification_delivery": "notas.domain.model_modules.notification_delivery",
+                "notification_center": "notas.domain.model_modules.notification_center",
                 "food_catalog": "notas.domain.model_modules.food",
                 "meals": "notas.domain.model_modules.meals",
                 "dailyplans": "notas.domain.model_modules.dailyplans",

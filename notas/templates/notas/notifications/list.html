@@ -1,0 +1,34 @@
+{% extends "notas/base.html" %}
+{% load static %}
+{% block title %}Notificaciones{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/notifications.css' %}">{% endblock %}
+{% block content %}
+<div class="page notifications-page">
+  <div class="notifications-heading">
+    <p class="notifications-eyebrow">Tu actividad</p>
+    <h1>Notificaciones</h1>
+    <p>Propuestas por revisar, contenido compartido y novedades de My Scoope.</p>
+  </div>
+  <div class="notifications-list">
+    {% for item in vm.content.items %}
+      <article class="notification-card{% if not item.is_read %} is-unread{% endif %}">
+        <div class="notification-card__icon" aria-hidden="true"><i data-lucide="{% if item.kind == 'proposal' %}sparkles{% elif item.kind == 'share' or item.kind == 'invitation' %}send{% else %}megaphone{% endif %}"></i></div>
+        <div class="notification-card__content">
+          <div class="notification-card__meta">
+            <span>{% if item.kind == 'proposal' %}Propuesta{% elif item.kind == 'share' %}Compartido{% elif item.kind == 'invitation' %}Invitación{% else %}Actualización{% endif %}</span>
+            <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"d M Y" }}</time>
+          </div>
+          <h2>{{ item.title }}</h2>
+          <p>{{ item.body }}</p>
+        </div>
+        <form method="post" action="{% url 'notification_read' item.kind item.id %}">
+          {% csrf_token %}
+          <button type="submit">{% if item.kind == 'announcement' %}{% if item.is_read %}Leída{% else %}Marcar como leída{% endif %}{% else %}Abrir{% endif %}</button>
+        </form>
+      </article>
+    {% empty %}
+      <div class="notifications-empty"><i data-lucide="bell" aria-hidden="true"></i><h2>Todo al día</h2><p>Aquí aparecerán tus próximas notificaciones.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

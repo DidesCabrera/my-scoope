@@ -85,6 +85,11 @@ owns only API construction, shared errors, the public health route and router mo
 Sharing uses `routes/sharing.py` and `schema_domains/sharing.py`. Its transport only
 creates and revokes portable resources; snapshot construction and ownership rules
 belong to `notas.application.sharing`.
+The in-app notification feed uses `GET /notifications` and
+`POST /notifications/{kind}/{item_id}/read`. The feed is authenticated, and the
+read command requires `mobile:write`. The source and ownership rules live in
+`notas.application.services.notifications.center`; directed invitations retain their
+email-verified web preview.
 
 When extracting another domain:
 

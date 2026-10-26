@@ -42,10 +42,19 @@ from .domain.models import (
     Program,
     ProgramCalendarization,
     ProgramDay,
+    ProductAnnouncement,
     ScheduledNotificationEvent,
     WebPushSubscription,
     WeightLog,
 )
+
+
+@admin.register(ProductAnnouncement)
+class ProductAnnouncementAdmin(admin.ModelAdmin):
+    list_display = ("title", "published_at", "is_active", "created_at")
+    list_filter = ("is_active", "published_at")
+    search_fields = ("title", "body")
+    fields = ("title", "body", "published_at", "is_active")
 
 # =============================================================================
 # Account / subscription

@@ -8149,6 +8149,104 @@
         "title": "NamedLibraryCreateInput",
         "type": "object"
       },
+      "NotificationItemData": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_read": {
+            "title": "Is Read",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "proposal",
+              "share",
+              "invitation",
+              "announcement"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "mobile_path": {
+            "title": "Mobile Path",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "web_url": {
+            "title": "Web Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "title",
+          "body",
+          "created_at",
+          "is_read",
+          "web_url",
+          "mobile_path"
+        ],
+        "title": "NotificationItemData",
+        "type": "object"
+      },
+      "NotificationListData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "unread_count": {
+            "title": "Unread Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "unread_count"
+        ],
+        "title": "NotificationListData",
+        "type": "object"
+      },
+      "NotificationListEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/NotificationListData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "NotificationListEnvelope",
+        "type": "object"
+      },
       "OnboardingAnalyzeInput": {
         "properties": {
           "activity_level": {
@@ -18364,6 +18462,50 @@
         "summary": "Me"
       }
     },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "mobile_api_notifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Notifications"
+      }
+    },
     "/api/v1/notifications/apple/device": {
       "put": {
         "operationId": "mobile_api_api_register_apple_notification_device",
@@ -18416,6 +18558,79 @@
           }
         ],
         "summary": "Register Apple Notification Device"
+      }
+    },
+    "/api/v1/notifications/{kind}/{item_id}/read": {
+      "post": {
+        "operationId": "mobile_api_mark_notification_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Notification Read"
       }
     },
     "/api/v1/onboarding": {
