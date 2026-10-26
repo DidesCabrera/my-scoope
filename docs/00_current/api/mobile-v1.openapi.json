@@ -4720,6 +4720,24 @@
             "title": "Meal Count",
             "type": "integer"
           },
+          "meal_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "breakfast",
+                  "snack",
+                  "lunch",
+                  "shake",
+                  "dinner"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meal Type"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -5034,6 +5052,24 @@
             "default": false,
             "title": "Label Image Available",
             "type": "boolean"
+          },
+          "meal_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "breakfast",
+                  "snack",
+                  "lunch",
+                  "shake",
+                  "dinner"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meal Type"
           },
           "name": {
             "title": "Name",
@@ -7103,6 +7139,24 @@
             "title": "Label Image Available",
             "type": "boolean"
           },
+          "meal_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "breakfast",
+                  "snack",
+                  "lunch",
+                  "shake",
+                  "dinner"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meal Type"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -7826,6 +7880,39 @@
           "idempotency_key"
         ],
         "title": "MealCheckInInput",
+        "type": "object"
+      },
+      "MealCreateInput": {
+        "properties": {
+          "meal_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "breakfast",
+                  "snack",
+                  "lunch",
+                  "shake",
+                  "dinner"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meal Type"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "MealCreateInput",
         "type": "object"
       },
       "MealExecutionData": {
@@ -16321,7 +16408,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NamedLibraryCreateInput"
+                "$ref": "#/components/schemas/MealCreateInput"
               }
             }
           },

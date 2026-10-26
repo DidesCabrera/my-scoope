@@ -19,15 +19,15 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.match(create, /mode: "back"/);
   assert.match(create, /action: \{ label: "Cancelar"/);
   assert.match(create, /<Card accent=\{tokens\.color\[entity\]\}/);
-  assert.match(create, /<EntityIcon entity=\{entity\} size="compact" \/>/);
-  for (const identity of ["Nuevo alimento", "Nueva comida", "Nuevo minuta diaria", "Nuevo programa"]) {
-    assert.match(create, new RegExp(identity));
+  for (const title of ["Crear nuevo alimento", "Crear nueva comida", "Crear nueva minuta diaria", "Crear nuevo programa"]) {
+    assert.match(create, new RegExp(title));
   }
+  assert.ok(create.indexOf("</Card>") < create.indexOf("{config.guidance ? <View"));
   assert.match(create, /const mealCreationContext = entity === "meal" && returnHref && pickerEntryHref && pickerKind/);
   assert.match(create, /pathname: "\/libraries\/meals\/\[id\]"/);
   assert.match(create, /pickerEntryTo: String\(mealCreationContext\.pickerEntryHref\)/);
   assert.match(create, /returnTo: String\(mealCreationContext\.returnHref\)/);
-  assert.doesNotMatch(create, /AppHeader|CollectionPageHeader/);
+  assert.doesNotMatch(create, /AppHeader/);
   for (const field of ["Nombre", "Proteínas", "Carbohidratos", "Grasas totales"]) {
     assert.match(create, new RegExp(field.replace(/[()]/g, "\\$&")));
   }

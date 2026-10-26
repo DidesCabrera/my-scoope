@@ -366,7 +366,7 @@ export type LibraryPanel = {
 export type LibraryItem = {
   id: number;
   entity: LibraryEntity;
-  name: string; emoji?: string | null; visual_key?: string | null;
+  name: string; emoji?: string | null; visual_key?: string | null; meal_type?: "breakfast" | "snack" | "lunch" | "shake" | "dinner" | null;
   subtitle: string;
   quantity_unit?: "g" | "ml" | null;
   default_portion?: number | null;

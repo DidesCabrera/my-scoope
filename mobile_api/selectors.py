@@ -411,7 +411,7 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
         builder=lambda meal: {
             "id": meal.id,
             "entity": "meal",
-            "name": meal.name,
+            "name": meal.name, "meal_type": meal.meal_type or None,
             "subtitle": "",
             "nutrition": _library_nutrition_payload(meal, current_weight),
             "indicators": [{"icon": "food", "label": "alimentos", "value": meal.library_food_count}]
@@ -679,7 +679,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
             return {
                 "id": item.id,
                 "entity": "meal",
-                "name": item.name,
+                "name": item.name, "meal_type": item.meal_type or None,
                 "subtitle": "",
                 "nutrition": _library_nutrition_payload(item, current_weight),
                 "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}]

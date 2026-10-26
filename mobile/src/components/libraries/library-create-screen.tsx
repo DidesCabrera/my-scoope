@@ -1,23 +1,32 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type { LibraryEntity, LibraryItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { DistributedTabBar, EntityIcon, Field, LoadingState } from "@/components/ui";
+import { CollectionPageHeader, DistributedTabBar, Field, LoadingState } from "@/components/ui";
 import { Button, Card, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
 
 type CreatableEntity = LibraryEntity;
+type MealType = "breakfast" | "snack" | "lunch" | "shake" | "dinner";
+
+const mealTypes: { value: MealType; label: string }[] = [
+  { value: "breakfast", label: "Desayuno" },
+  { value: "snack", label: "Snack" },
+  { value: "lunch", label: "Comida" },
+  { value: "shake", label: "Batido" },
+  { value: "dinner", label: "Cena" },
+];
 
 type CreateConfig = {
   endpoint: string;
   headerTitle: string;
-  identityLabel: string;
+  pageTitle: string;
   namePlaceholder: string;
   segment: "foods" | "meals" | "daily-plans" | "programs";
   submitLabel: string;
@@ -28,7 +37,7 @@ const configs: Record<CreatableEntity, CreateConfig> = {
   food: {
     endpoint: "/api/v1/library/foods",
     headerTitle: "Crear alimento",
-    identityLabel: "Nuevo alimento",
+    pageTitle: "Crear nuevo alimento",
     namePlaceholder: "Ej: Yogur natural",
     segment: "foods",
     submitLabel: "Crear alimento",
@@ -37,7 +46,7 @@ const configs: Record<CreatableEntity, CreateConfig> = {
     endpoint: "/api/v1/library/meals",
     guidance: "Después podrás agregar los alimentos y configurar sus porciones.",
     headerTitle: "Crear comida",
-    identityLabel: "Nueva comida",
+    pageTitle: "Crear nueva comida",
     namePlaceholder: "Según ingredientes, propósito u otro",
     segment: "meals",
     submitLabel: "Crear y continuar",
@@ -46,7 +55,7 @@ const configs: Record<CreatableEntity, CreateConfig> = {
     endpoint: "/api/v1/library/daily-plans",
     guidance: "Después podrás agregar las comidas y elegir sus horarios.",
     headerTitle: "Crear minuta diaria",
-    identityLabel: "Nuevo minuta diaria",
+    pageTitle: "Crear nueva minuta diaria",
     namePlaceholder: "Un día, objetivo o tipo de jornada",
     segment: "daily-plans",
     submitLabel: "Crear y continuar",
@@ -55,7 +64,7 @@ const configs: Record<CreatableEntity, CreateConfig> = {
     endpoint: "/api/v1/library/programs",
     guidance: "El programa comenzará con una semana. Después podrás asignar minutas diarias o agregar más semanas.",
     headerTitle: "Crear programa",
-    identityLabel: "Nuevo programa",
+    pageTitle: "Crear nuevo programa",
     namePlaceholder: "Ej: Volumen controlado",
     segment: "programs",
     submitLabel: "Crear y continuar",
@@ -109,6 +118,7 @@ export function LibraryCreateScreen() {
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [name, setName] = useState("");
+  const [mealType, setMealType] = useState<MealType | null>(null);
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
   const [fat, setFat] = useState("");
@@ -128,6 +138,7 @@ export function LibraryCreateScreen() {
       mode: "back",
       action: { label: "Cancelar", onPress: cancel },
       fallback: `/libraries/${config.segment}` as Href,
+      identityVisible: false,
       title: editingFoodId ? "Editar alimento" : config.headerTitle,
     });
     return () => setHeaderPresentation({ mode: "default" });
@@ -159,7 +170,7 @@ export function LibraryCreateScreen() {
   }), [carbs, fat, protein]);
   const cleanName = name.trim();
   const validFood = entity !== "food" || Object.values(macroValues).every((value) => value !== null);
-  const canSubmit = Boolean(cleanName && cleanName.length <= 100 && validFood && !submitting);
+  const canSubmit = Boolean(cleanName && cleanName.length <= 100 && validFood && (entity !== "meal" || mealType) && !submitting);
 
   async function submit() {
     if (!config || !entity || !canSubmit) return;
@@ -168,7 +179,7 @@ export function LibraryCreateScreen() {
     try {
       const body = entity === "food"
         ? { name: cleanName, protein: macroValues.protein, carbs: macroValues.carbs, fat: macroValues.fat, portion_unit: portionUnit }
-        : { name: cleanName };
+        : entity === "meal" ? { name: cleanName, meal_type: mealType } : { name: cleanName };
       const saved = await apiRequest<LibraryItem>(editingFoodId ? `/api/v1/library/foods/${editingFoodId}/edit` : config.endpoint, {
         body: JSON.stringify(body),
         headers: { "Content-Type": "application/json" },
@@ -202,12 +213,34 @@ export function LibraryCreateScreen() {
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.flex}>
         <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <CollectionPageHeader entity={entity} title={editingFoodId ? "Editar alimento" : config.pageTitle} />
           <Card accent={tokens.color[entity]} style={styles.formCard}>
-            <View style={styles.identityRow}>
-              <EntityIcon entity={entity} size="compact" />
-              <Text style={styles.eyebrow}>{editingFoodId ? "Editar alimento" : config.identityLabel}</Text>
-            </View>
             <Field autoCapitalize="sentences" label="Nombre" labelStyle={entity === "food" ? styles.foodFieldLabel : undefined} onChangeText={setName} placeholder={config.namePlaceholder} value={name} />
+            {entity === "meal" ? (
+              <View style={styles.mealTypeSection}>
+                <Text style={styles.mealTypeLabel}>TIPO DE COMIDA</Text>
+                <View accessibilityRole="radiogroup" style={styles.mealTypeChoices}>
+                  {[mealTypes.slice(0, 3), mealTypes.slice(3)].map((row, rowIndex) => (
+                    <View key={rowIndex} style={styles.mealTypeRow}>
+                      {row.map(({ value, label }) => {
+                        const selected = mealType === value;
+                        return (
+                          <Pressable
+                            key={value}
+                            accessibilityLabel={label}
+                            accessibilityRole="radio"
+                            accessibilityState={{ selected }}
+                            onPress={() => setMealType(value)}
+                            style={({ pressed }) => [styles.mealTypeChip, selected && styles.mealTypeChipSelected, pressed && styles.mealTypeChipPressed]}>
+                            <Text style={[styles.mealTypeChipText, selected && styles.mealTypeChipTextSelected]}>{label}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : null}
             {entity === "food" ? (
               <View style={styles.macroFields}>
                 <DistributedTabBar<"g" | "ml">
@@ -228,10 +261,10 @@ export function LibraryCreateScreen() {
                 </View>
               </View>
             ) : null}
-            {config.guidance ? <InlineNotice>{config.guidance}</InlineNotice> : null}
             {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
             <Button disabled={!canSubmit} label={editingFoodId ? "Guardar cambios" : config.submitLabel} loading={submitting} onPress={() => void submit()} />
           </Card>
+          {config.guidance ? <View style={styles.guidance}><InlineNotice>{config.guidance}</InlineNotice></View> : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -241,10 +274,18 @@ export function LibraryCreateScreen() {
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   flex: { flex: 1 },
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.sm },
+  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   formCard: { gap: tokens.spacing.lg },
-  identityRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, textTransform: "uppercase" },
+  guidance: { marginHorizontal: tokens.card.outerPadding - tokens.layout.reducedInset },
+  mealTypeSection: { gap: tokens.spacing.md },
+  mealTypeLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 1.4 },
+  mealTypeChoices: { gap: tokens.spacing.sm },
+  mealTypeRow: { flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center" },
+  mealTypeChip: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, justifyContent: "center", minHeight: 40, paddingHorizontal: tokens.spacing.lg },
+  mealTypeChipSelected: { backgroundColor: tokens.color.surfaceMuted, borderBottomColor: tokens.color.fat, borderLeftColor: tokens.color.protein, borderRightColor: tokens.color.fat, borderTopColor: tokens.color.protein, borderWidth: 2 },
+  mealTypeChipPressed: { opacity: 0.72 },
+  mealTypeChipText: { color: tokens.color.textMuted, fontSize: 14, fontWeight: tokens.weight.semibold },
+  mealTypeChipTextSelected: { color: tokens.color.textMain },
   foodFieldLabel: { color: tokens.color.textMain },
   macroFields: { gap: tokens.spacing.md },
   macroHeading: { gap: tokens.spacing.xs },

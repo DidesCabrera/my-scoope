@@ -314,9 +314,12 @@ existing collection routes: `/library/foods`, `/library/meals`,
 product.
 
 Food creation receives a name and protein, carbohydrate and fat values per 100 g
-and immediately returns a complete Food detail. Meal, DailyPlan and Program
-creation receives a name and returns an owned draft detail so the native client
-can continue directly into composition. Adding the first Food completes a Meal;
+and immediately returns a complete Food detail. Meal creation also accepts an
+optional `meal_type` (`breakfast`, `snack`, `lunch`, `shake` or `dinner`). The native
+form requires a selection; callers that omit it retain the legacy unspecified
+value. Meal list and detail responses return the saved value or `null` for older
+meals. Meal, DailyPlan and Program creation returns an owned draft detail so the
+native client can continue directly into composition. Adding the first Food completes a Meal;
 adding the first Meal completes a DailyPlan; assigning the first DailyPlan
 completes a Program.
 

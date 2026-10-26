@@ -2,8 +2,7 @@ import { Redirect } from "expo-router";
 import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { useState } from "react";
 import { Image, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import {
-  ComparisonBuilder,
+import { ComparisonBuilder,
   ComparisonEditorCard,
   ComparisonMetricCard,
   ComparisonScopeTabs,

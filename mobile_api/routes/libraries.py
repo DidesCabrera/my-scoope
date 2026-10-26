@@ -20,6 +20,7 @@ from mobile_api.schema_domains.libraries import (
     LibraryListActionResultEnvelope,
     LibraryOrderInput,
     LibraryPageEnvelope,
+    MealCreateInput,
     NamedLibraryCreateInput,
     ProgramWeekPickerDetailEnvelope,
 )
@@ -235,10 +236,10 @@ def update_library_food(request, food_id: int, payload: FoodCreateInput):
     auth=mobile_bearer,
     response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
 )
-def create_library_meal(request, payload: NamedLibraryCreateInput):
+def create_library_meal(request, payload: MealCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     try:
-        result = create_draft_meal(user=request.auth.user, name=_clean_creation_name(payload.name))
+        result = create_draft_meal(user=request.auth.user, name=_clean_creation_name(payload.name), meal_type=payload.meal_type or "")
     except CommercialLimitReached as exc:
         raise MobileAPIError(str(exc), "El plan actual no permite crear más comidas.", 403) from exc
     return success(library_item_detail_payload(request.auth.user, "meals", result.meal.id))

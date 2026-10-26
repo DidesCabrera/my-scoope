@@ -21,7 +21,15 @@ class Meal(models.Model):
         LIBRARY = "library", "Library"
         EMBEDDED = "embedded", "Embedded snapshot"
 
+    class MealType(models.TextChoices):
+        BREAKFAST = "breakfast", "Desayuno"
+        SNACK = "snack", "Snack"
+        LUNCH = "lunch", "Comida"
+        SHAKE = "shake", "Batido"
+        DINNER = "dinner", "Cena"
+
     name = models.CharField(max_length=100)
+    meal_type = models.CharField(max_length=16, choices=MealType.choices, blank=True, default="")
 
     foods = models.ManyToManyField(Food, through="MealFood")
 
