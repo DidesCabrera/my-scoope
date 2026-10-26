@@ -106,7 +106,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
     }] : []),
   ];
   return (
-    <View style={styles.weekContent}>
+    <View style={[styles.weekContent, !showHeading && styles.weekContentWithoutHeading]}>
       {showHeading ? <View style={styles.weekCardHeader}>
         <View style={styles.weekIdentity}>
           <ProgramWeekHeading week={week} />
@@ -199,6 +199,9 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
   const foodsCount = item ? liveFoodsCount : 36;
   const showProgramStructure = !item || plansCount > 0 || weeksCount > 1;
   const showProgramComparison = !item || weeksCount > 1;
+  const singleWeekPlanningSpacing = weeksCount === 1 ? 32 - tokens.spacing.xl : undefined;
+  const addWeekAtEnd = Boolean(onAddWeek && weeksCount === 1);
+  const addWeekButton = onAddWeek ? <Button bleed label="+ Agregar nueva semana" onPress={onAddWeek} /> : null;
 
   const overview = (
     <View style={styles.overview}>
@@ -218,7 +221,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
           <SectionHeading title="Composición programa" />
           <ProgramWeekComparisonPanels onDelete={onRemoveWeek} onDuplicate={onDuplicateWeek} onReorder={onReorderWeeks} weeks={liveSummaries.length ? liveSummaries : weekSummaries} />
         </> : null}
-        {onAddWeek ? <Button bleed label="+ Agregar nueva semana" onPress={onAddWeek} /> : null}
+        {!addWeekAtEnd ? addWeekButton : null}
     </View>
   );
 
@@ -227,6 +230,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
       icon={Calendar1}
       subtitle="Recorre las semanas de tu programa y conoce las minutas diarias y los alimentos de cada una."
       title="Planificación Semanal"
+      topSpacing={singleWeekPlanningSpacing}
     />
   );
 
@@ -236,6 +240,9 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
       <ProgramWeekTabs activeWeek={displayedActiveWeek} onChange={setActiveWeek} style={styles.weekTabsBarBleed} weeks={displayedWeeks} />
     </View>
   );
+  const bottomActions = addWeekAtEnd || footer
+    ? <View style={[styles.footer, { marginTop: footerTopSpacing }]}>{addWeekAtEnd ? addWeekButton : null}{footer}</View>
+    : null;
 
   if (scrollable) {
     return (
@@ -247,11 +254,11 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
         stickyHeaderIndices={[2]}
         style={styles.screen}>
         {overview}
-        <View style={styles.planningHeaderScreen}>{planningHeader}</View>
+        <View style={[styles.planningHeaderScreen, weeksCount === 1 && styles.singleWeekPlanningHeaderScreen]}>{planningHeader}</View>
         {weekTabs}
         {renderWeekContext?.(displayedActiveWeek)}
         <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} onSaveDailyPlan={onSaveDailyPlan} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
-        {footer ? <View style={[styles.footer, { marginTop: footerTopSpacing }]}>{footer}</View> : null}
+        {bottomActions}
       </NestableScrollContainer>
     );
   }
@@ -264,7 +271,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
         {weekTabs}
         {renderWeekContext?.(displayedActiveWeek)}
         <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} onSaveDailyPlan={onSaveDailyPlan} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
-        {footer ? <View style={[styles.footer, { marginTop: footerTopSpacing }]}>{footer}</View> : null}
+        {bottomActions}
       </View>
     </View>
   );
@@ -277,11 +284,13 @@ const styles = StyleSheet.create({
   overview: { gap: tokens.spacing.lg, minWidth: 0 },
   planningSection: { gap: 0, minWidth: 0 },
   planningHeaderScreen: { marginTop: tokens.spacing.lg + 24 },
+  singleWeekPlanningHeaderScreen: { marginTop: tokens.spacing.xl },
   weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
   weekTabsEmbedded: { paddingBottom: tokens.spacing.sm },
   weekTabsBarBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   footer: { gap: tokens.spacing.lg },
   weekContent: { gap: tokens.spacing.lg, minWidth: 0, paddingTop: tokens.spacing.md + tokens.spacing.sm, width: "100%" },
+  weekContentWithoutHeading: { paddingTop: 0 },
   weekChartSection: { gap: tokens.spacing.md, minWidth: 0 },
   weekChartPanelGroup: { gap: tokens.spacing.xs },
   metricTabsBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding - tokens.spacing.sm },

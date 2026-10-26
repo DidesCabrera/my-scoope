@@ -42,7 +42,7 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelIt
 
 export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "meals" | "daily-plans" | "programs" }) {
   const router = useRouter();
-  const { id, calendarizedDayId, dailyPlanId, dailyPlanMealId, dayNumber, mealKey, mealTime, pinned, pickerEntryTo, pickerKind, pickerRelationId, pickerTargetId, programId, returnTo, weekNumber } = useLocalSearchParams<{ id: string; calendarizedDayId?: string; dailyPlanId?: string; dailyPlanMealId?: string; dayNumber?: string; mealKey?: string; mealTime?: string; pinned?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; programId?: string; returnTo?: string; weekNumber?: string }>();
+  const { id, calendarizedDayId, createdFromLibrary, dailyPlanId, dailyPlanMealId, dayNumber, mealKey, mealTime, pinned, pickerEntryTo, pickerKind, pickerRelationId, pickerTargetId, programId, returnTo, weekNumber } = useLocalSearchParams<{ id: string; calendarizedDayId?: string; createdFromLibrary?: string; dailyPlanId?: string; dailyPlanMealId?: string; dayNumber?: string; mealKey?: string; mealTime?: string; pinned?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; programId?: string; returnTo?: string; weekNumber?: string }>();
   const { status, apiRequest } = useSession();
   const { publishSelection } = useComparatorSelectionTransfer();
   const [item, setItem] = useState<LibraryItem | null>(null);
@@ -71,6 +71,9 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const contextualPickerTargetId = Number(pickerTargetId);
   const contextualPickerRelationId = Number(pickerRelationId) || undefined;
   const createdMealId = Number(id);
+  const isLibraryMealCreation = entitySlug === "meals" && createdFromLibrary === "1";
+  const isLibraryDailyPlanCreation = entitySlug === "daily-plans" && createdFromLibrary === "1";
+  const isLibraryProgramCreation = entitySlug === "programs" && createdFromLibrary === "1";
   const isContextualMealCreation = entitySlug === "meals"
     && Boolean(returnHref)
     && Boolean(pickerEntryHref)
@@ -89,7 +92,13 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   }
   const currentDetailHref = (isContextualMealCreation
     ? `/libraries/meals/${id}?${contextualDetailParams.toString()}`
-    : `/libraries/${entitySlug}/${id}`) as Href;
+    : isLibraryMealCreation
+      ? `/libraries/meals/${id}?createdFromLibrary=1`
+      : isLibraryDailyPlanCreation
+        ? `/libraries/daily-plans/${id}?createdFromLibrary=1`
+        : isLibraryProgramCreation
+          ? `/libraries/programs/${id}?createdFromLibrary=1`
+      : `/libraries/${entitySlug}/${id}`) as Href;
   const hasMealTimeContext = entitySlug === "meals"
     && Number.isInteger(contextDailyPlanId)
     && contextDailyPlanId > 0
@@ -180,6 +189,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
         mode: "library-detail",
         action: item ? { label: `Más acciones para ${item.name}`, onPress: openActions } : undefined,
         entity: headerEntity,
+        forceFallback: isLibraryMealCreation || isLibraryDailyPlanCreation || isLibraryProgramCreation,
         identityVisible: compactHeaderVisible,
         secondaryAction: hasMealTimeContext
           ? { icon: "clock", label: "Cambiar hora", onPress: openTimeChange }
@@ -192,7 +202,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       });
     }
     return () => setHeaderPresentation({ mode: "default" });
-  }, [cancelContextualCreation, compactHeaderVisible, confirmCalendarPlan, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isCalendarPlan, isContextualMealCreation, item, openActions, openTimeChange, pickerEntryHref, router, setHeaderPresentation]));
+  }, [cancelContextualCreation, compactHeaderVisible, confirmCalendarPlan, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isCalendarPlan, isContextualMealCreation, isLibraryDailyPlanCreation, isLibraryMealCreation, isLibraryProgramCreation, item, openActions, openTimeChange, pickerEntryHref, router, setHeaderPresentation]));
   const load = useCallback(async () => { setLoading(true); setError(null); try {
     const [nextItem, nextToday] = await Promise.all([
       apiRequest<LibraryItem>(`/api/v1/library/${entitySlug}/${id}`),
@@ -357,7 +367,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       footerTopSpacing={68}
       item={item}
       onAddWeek={item.can_calendarize ? () => router.push(`/pickers/week-to-program?programId=${item.id}` as Href) : undefined}
-      onAssignDailyPlan={item.can_calendarize ? (week, day) => router.push(pickerHref("dailyplan-to-program", { programId: item.id, weekNumber: week, dayNumber: day })) : undefined}
+      onAssignDailyPlan={item.can_calendarize ? (week, day) => router.push(pickerHref("dailyplan-to-program", { programId: item.id, weekNumber: week, dayNumber: day, ...(isLibraryProgramCreation ? { returnTo: String(currentDetailHref) } : {}) })) : undefined}
       onDuplicateWeek={item.can_calendarize ? async (week) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/duplicate`, { method: "POST" }); } : undefined}
       onHeaderVisibilityChange={setCompactHeaderVisible}
       onOpenDailyPlan={(week, day) => {
@@ -387,16 +397,16 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const mealItems = item.panel.meals.map((meal) => ({ ...mealPanelItem(meal), completed: isPinnedPlan && completedPinnedMealKeys.has(meal.id) }));
   const foodEditing = item.entity === "meal" ? {
     onDelete: async (food: FoodPanelItem) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "DELETE" }); },
-    onEditPortion: (food: FoodPanelItem) => { if (food.relationId && food.detailId) router.push(pickerConfigureHref("food-to-meal", { contextDailyPlanId: hasMealTimeContext ? contextDailyPlanId : undefined, contextDailyPlanMealId: hasMealTimeContext ? contextDailyPlanMealId : undefined, relationId: food.relationId, returnTo: isContextualMealCreation ? currentDetailHref : undefined, selectedId: food.detailId, targetId: item.id, weekNumber: 1 })); },
+    onEditPortion: (food: FoodPanelItem) => { if (food.relationId && food.detailId) router.push(pickerConfigureHref("food-to-meal", { contextDailyPlanId: hasMealTimeContext ? contextDailyPlanId : undefined, contextDailyPlanMealId: hasMealTimeContext ? contextDailyPlanMealId : undefined, relationId: food.relationId, returnTo: isContextualMealCreation || isLibraryMealCreation ? currentDetailHref : undefined, selectedId: food.detailId, targetId: item.id, weekNumber: 1 })); },
     onReorder: async (foods: FoodPanelItem[]) => { await mutateComposition(`/api/v1/library/meals/${item.id}/foods/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: foods.map((food) => food.relationId) }) }, { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" }); },
-    onReplace: (food: FoodPanelItem) => { if (food.relationId) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation ? { returnTo: String(currentDetailHref) } : {}) })); },
+    onReplace: (food: FoodPanelItem) => { if (food.relationId) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation || isLibraryMealCreation ? { returnTo: String(currentDetailHref) } : {}) })); },
   } : undefined;
   const mealEditing = item.entity === "dailyPlan" ? {
     onChangeTime: (meal: MealPanelItem) => { if (meal.relationId) setPanelTimeMeal(meal); },
     onDelete: async (meal: MealPanelItem) => { if (meal.relationId) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relationId}`, { method: "DELETE" }); },
     onOpen: (meal: MealPanelItem) => { if (meal.detailId && meal.relationId) router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(item.id), dailyPlanMealId: String(meal.relationId), id: String(meal.detailId), mealTime: meal.time ?? "", ...(isPinnedPlan ? { pinned: "1", mealKey: meal.id } : {}) } } as Href); },
     onReorder: async (meals: MealPanelItem[]) => { await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }) }, { loadingLabel: "Actualizando minuta", successLabel: "Minuta actualizada" }); },
-    onReplace: (meal: MealPanelItem) => { if (meal.relationId) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, dailyPlanMealId: meal.relationId })); },
+    onReplace: (meal: MealPanelItem) => { if (meal.relationId) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, dailyPlanMealId: meal.relationId, ...(isLibraryDailyPlanCreation ? { returnTo: String(currentDetailHref) } : {}) })); },
     onToggleCompleted: isPinnedPlan ? (meal: MealPanelItem, completed: boolean) => { void togglePinnedMealCompletion(meal.id, completed); } : undefined,
   } : undefined;
   const detailIndicators = isEmptyDraft ? undefined : item.indicators;
@@ -419,9 +429,9 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       <Button label="Eliminar copia" loading={labelImageBusy} onPress={deleteLabelImage} variant="secondary" />
     </EntityDetailSection></> : null}
     {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={item.panel.kind === "weeks" ? `${panelCount} elementos` : undefined} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} nestedScroll onOpenItem={openFood} preparation={isPinnedMealContext && pinnedMealAdherence.available ? { disabled: savingMealKey != null, isPrepared: (food) => normalizedPinnedMealExecution?.prepared_food_keys.includes(food.id) ?? false, onToggle: (food) => void togglePinnedMealDetailFood(food.id) } : undefined} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} nestedScroll onOpenItem={mealEditing?.onOpen} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
-    {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation ? { returnTo: String(currentDetailHref) } : {}) }))} /> : null}
+    {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation || isLibraryMealCreation ? { returnTo: String(currentDetailHref) } : {}) }))} /> : null}
     {item.entity === "meal" && foodItems.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" /><FoodDetailCardList items={foodItems} onOpenFood={openFood} /></> : null}
-    {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id }))} /> : null}
+    {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, ...(isLibraryDailyPlanCreation ? { returnTo: String(currentDetailHref) } : {}) }))} /> : null}
     {item.entity === "meal" && isPinnedMealContext ? <MealNoteCard controller={pinnedMealAdherence} /> : null}
     {item.entity === "meal" && !isPinnedMealContext && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" /><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onChanged={load} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></> : null}

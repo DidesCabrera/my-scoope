@@ -404,7 +404,15 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 }
 
 function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteraction, item, itemNameStyle, onOpenItem, showFoodPortion = false, showNutritionSummary = false, style = styles.gridLeadingCell }: { dragInteraction?: PanelRowDragInteraction; item: T; itemNameStyle?: StyleProp<TextStyle>; onOpenItem?: (item: T) => void; showFoodPortion?: boolean; showNutritionSummary?: boolean; style?: StyleProp<ViewStyle> }) {
-  const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}><View style={styles.foodIdentityTitleRow}><FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} /><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text></View>{showNutritionSummary ? <NutritionSummary item={item} /> : null}{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>;
+  const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}>
+    <View style={[styles.foodIdentityTitleRow, item.projectedLabel === "Por agregar" && styles.foodIdentityTitleRowWithBadge]}>
+      <FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} />
+      <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>
+      {item.projectedLabel === "Por agregar" ? <Text style={[styles.projectedBadge, styles.foodInlineProjectedBadge]}>{item.projectedLabel}</Text> : null}
+    </View>
+    {showNutritionSummary ? <NutritionSummary item={item} /> : null}
+    {item.projectedLabel && item.projectedLabel !== "Por agregar" ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}
+  </View>;
   const canOpen = Boolean(onOpenItem && (item.detailId != null || (isMealPanelItem(item) && item.canOpen)));
   if (!canOpen) return <View style={style}>{content}</View>;
   return <Pressable {...dragInteraction} accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => runGuardedNavigation(() => onOpenItem?.(item))} style={style}>{content}</Pressable>;
@@ -906,6 +914,9 @@ const styles = StyleSheet.create({
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   foodIdentity: { alignItems: "stretch", flex: 1, gap: tokens.spacing.sm, justifyContent: "center", minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   foodIdentityTitleRow: { alignItems: "center", flexDirection: "row", gap: 2, minWidth: 0 },
+  foodIdentityTitleRowWithBadge: { gap: 0 },
+  foodNameWithBadge: { flexShrink: 1, minWidth: 0, paddingRight: 0 },
+  foodInlineProjectedBadge: { borderColor: tokens.color.food, flexShrink: 0, marginLeft: tokens.spacing.sm },
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
   mealIdentityTitleRow: { alignItems: "center", alignSelf: "stretch", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentityName: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18, minWidth: 0 },

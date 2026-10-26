@@ -8,7 +8,8 @@ import type { LibraryEntity, LibraryItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { CollectionPageHeader, DistributedTabBar, Field, LoadingState } from "@/components/ui";
-import { Button, Card, InlineNotice, textStyles } from "@/components/ui/primitives";
+import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
+import { pickerHref } from "@/components/pickers/picker-routes";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
 
@@ -44,7 +45,6 @@ const configs: Record<CreatableEntity, CreateConfig> = {
   },
   meal: {
     endpoint: "/api/v1/library/meals",
-    guidance: "Después podrás agregar los alimentos y configurar sus porciones.",
     headerTitle: "Crear comida",
     pageTitle: "Crear nueva comida",
     namePlaceholder: "Según ingredientes, propósito u otro",
@@ -53,7 +53,6 @@ const configs: Record<CreatableEntity, CreateConfig> = {
   },
   dailyPlan: {
     endpoint: "/api/v1/library/daily-plans",
-    guidance: "Después podrás agregar las comidas y elegir sus horarios.",
     headerTitle: "Crear minuta diaria",
     pageTitle: "Crear nueva minuta diaria",
     namePlaceholder: "Un día, objetivo o tipo de jornada",
@@ -62,7 +61,7 @@ const configs: Record<CreatableEntity, CreateConfig> = {
   },
   program: {
     endpoint: "/api/v1/library/programs",
-    guidance: "El programa comenzará con una semana. Después podrás asignar minutas diarias o agregar más semanas.",
+    guidance: "El programa comenzará con una semana. Después podrás agregar más semanas.",
     headerTitle: "Crear programa",
     pageTitle: "Crear nuevo programa",
     namePlaceholder: "Ej: Volumen controlado",
@@ -78,9 +77,9 @@ function macroNumber(value: string): number | null {
   return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
 }
 
-function NutritionValueRow({ label, onChangeText, value }: { label: string; onChangeText(value: string): void; value: string }) {
+function NutritionValueRow({ label, last = false, onChangeText, value }: { label: string; last?: boolean; onChangeText(value: string): void; value: string }) {
   return (
-    <View style={styles.nutritionRow}>
+    <View style={[styles.nutritionRow, last && styles.nutritionRowLast]}>
       <Text style={styles.nutritionLabel}>{label}</Text>
       <View style={styles.nutritionInputSurface}>
         <TextInput
@@ -185,19 +184,23 @@ export function LibraryCreateScreen() {
         headers: { "Content-Type": "application/json" },
         method: editingFoodId ? "PUT" : "POST",
       });
-      router.replace(mealCreationContext
-        ? {
-          pathname: "/libraries/meals/[id]",
-          params: {
-            id: String(saved.id),
-            pickerEntryTo: String(mealCreationContext.pickerEntryHref),
-            pickerKind: mealCreationContext.pickerKind,
-            ...(mealCreationContext.pickerRelationId ? { pickerRelationId: String(mealCreationContext.pickerRelationId) } : {}),
-            pickerTargetId: String(mealCreationContext.pickerTargetId),
-            returnTo: String(mealCreationContext.returnHref),
-          },
-        }
-        : `/libraries/${config.segment}/${saved.id}` as Href);
+      if (entity === "meal") {
+        const detailParams = mealCreationContext ? new URLSearchParams({
+          pickerEntryTo: String(mealCreationContext.pickerEntryHref),
+          pickerKind: mealCreationContext.pickerKind,
+          ...(mealCreationContext.pickerRelationId ? { pickerRelationId: String(mealCreationContext.pickerRelationId) } : {}),
+          pickerTargetId: String(mealCreationContext.pickerTargetId),
+          returnTo: String(mealCreationContext.returnHref),
+        }) : null;
+        const detailHref = `/libraries/meals/${saved.id}${detailParams ? `?${detailParams.toString()}` : "?createdFromLibrary=1"}`;
+        router.replace(pickerHref("food-to-meal", { mealId: saved.id, returnTo: detailHref }));
+      } else if (entity === "dailyPlan") {
+        router.replace(pickerHref("meal-to-dailyplan", { dailyPlanId: saved.id, returnTo: `/libraries/daily-plans/${saved.id}?createdFromLibrary=1` }));
+      } else if (entity === "program") {
+        router.replace(pickerHref("dailyplan-to-program", { dayNumber: 1, programId: saved.id, returnTo: `/libraries/programs/${saved.id}?createdFromLibrary=1`, weekNumber: 1 }));
+      } else {
+        router.replace(`/libraries/${config.segment}/${saved.id}` as Href);
+      }
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -209,16 +212,18 @@ export function LibraryCreateScreen() {
   if (!config || !entity) return <Redirect href="/today" />;
   if (initializing) return <LoadingState label="Cargando alimento…" />;
 
+  const submitButton = <Button disabled={!canSubmit} label={editingFoodId ? "Guardar cambios" : config.submitLabel} loading={submitting} onPress={() => void submit()} />;
+
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.flex}>
         <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <CollectionPageHeader entity={entity} title={editingFoodId ? "Editar alimento" : config.pageTitle} />
-          <Card accent={tokens.color[entity]} style={styles.formCard}>
+          <View style={styles.formBody}>
             <Field autoCapitalize="sentences" label="Nombre" labelStyle={entity === "food" ? styles.foodFieldLabel : undefined} onChangeText={setName} placeholder={config.namePlaceholder} value={name} />
             {entity === "meal" ? (
               <View style={styles.mealTypeSection}>
-                <Text style={styles.mealTypeLabel}>TIPO DE COMIDA</Text>
+                <Text style={styles.mealTypeLabel}>Tipo de comida</Text>
                 <View accessibilityRole="radiogroup" style={styles.mealTypeChoices}>
                   {[mealTypes.slice(0, 3), mealTypes.slice(3)].map((row, rowIndex) => (
                     <View key={rowIndex} style={styles.mealTypeRow}>
@@ -243,13 +248,15 @@ export function LibraryCreateScreen() {
             ) : null}
             {entity === "food" ? (
               <View style={styles.macroFields}>
-                <DistributedTabBar<"g" | "ml">
-                  accessibilityLabel="Unidad de porción"
-                  activeTab={portionUnit}
-                  bleed
-                  onChange={(unit) => setPortionUnit(unit)}
-                  tabs={[{ key: "g", label: "Gramos" }, { key: "ml", label: "Mililitros" }]}
-                />
+                <View style={styles.portionTabs}>
+                  <DistributedTabBar<"g" | "ml">
+                    accessibilityLabel="Unidad de porción"
+                    activeTab={portionUnit}
+                    bleed
+                    onChange={(unit) => setPortionUnit(unit)}
+                    tabs={[{ key: "g", label: "Gramos" }, { key: "ml", label: "Mililitros" }]}
+                  />
+                </View>
                 <View style={styles.macroHeading}>
                   <Text style={styles.macroTitle}>Valores por 100 {portionUnit}</Text>
                   <Text style={textStyles.caption}>Ingresa cada macronutriente entre 0 y 100 g.</Text>
@@ -257,14 +264,14 @@ export function LibraryCreateScreen() {
                 <View style={styles.nutritionRows}>
                   <NutritionValueRow label="Proteínas" onChangeText={setProtein} value={protein} />
                   <NutritionValueRow label="Carbohidratos" onChangeText={setCarbs} value={carbs} />
-                  <NutritionValueRow label="Grasas totales" onChangeText={setFat} value={fat} />
+                  <NutritionValueRow label="Grasas totales" last onChangeText={setFat} value={fat} />
                 </View>
               </View>
             ) : null}
             {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-            <Button disabled={!canSubmit} label={editingFoodId ? "Guardar cambios" : config.submitLabel} loading={submitting} onPress={() => void submit()} />
-          </Card>
-          {config.guidance ? <View style={styles.guidance}><InlineNotice>{config.guidance}</InlineNotice></View> : null}
+            <View style={[styles.formSubmit, entity === "food" && styles.foodFormSubmit]}>{submitButton}</View>
+          </View>
+          {config.guidance ? <Text style={styles.guidance}>{config.guidance}</Text> : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -275,23 +282,27 @@ const styles = StyleSheet.create({
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   flex: { flex: 1 },
   content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
-  formCard: { gap: tokens.spacing.lg },
-  guidance: { marginHorizontal: tokens.card.outerPadding - tokens.layout.reducedInset },
-  mealTypeSection: { gap: tokens.spacing.md },
-  mealTypeLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 1.4 },
+  formBody: { gap: tokens.spacing.lg },
+  guidance: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
+  formSubmit: { marginTop: tokens.spacing.md },
+  foodFormSubmit: { marginTop: tokens.spacing.lg },
+  mealTypeSection: { gap: tokens.spacing.md, marginTop: tokens.spacing.md },
+  mealTypeLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   mealTypeChoices: { gap: tokens.spacing.sm },
   mealTypeRow: { flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center" },
   mealTypeChip: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, justifyContent: "center", minHeight: 40, paddingHorizontal: tokens.spacing.lg },
-  mealTypeChipSelected: { backgroundColor: tokens.color.surfaceMuted, borderBottomColor: tokens.color.fat, borderLeftColor: tokens.color.protein, borderRightColor: tokens.color.fat, borderTopColor: tokens.color.protein, borderWidth: 2 },
+  mealTypeChipSelected: { backgroundColor: `${tokens.color.meal}1A`, borderColor: tokens.color.meal, borderWidth: 2 },
   mealTypeChipPressed: { opacity: 0.72 },
   mealTypeChipText: { color: tokens.color.textMuted, fontSize: 14, fontWeight: tokens.weight.semibold },
   mealTypeChipTextSelected: { color: tokens.color.textMain },
-  foodFieldLabel: { color: tokens.color.textMain },
+  foodFieldLabel: { color: tokens.color.textMuted },
   macroFields: { gap: tokens.spacing.md },
+  portionTabs: { marginBottom: tokens.spacing.md, marginTop: tokens.spacing.md },
   macroHeading: { gap: tokens.spacing.xs },
   macroTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
-  nutritionRows: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: -tokens.spacing.xs },
+  nutritionRows: { marginTop: -tokens.spacing.xs },
   nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
+  nutritionRowLast: { borderBottomWidth: 0 },
   nutritionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20 },
   nutritionInputSurface: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", height: 32, minWidth: 112, paddingHorizontal: tokens.spacing.sm },
   nutritionInput: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, height: 30, padding: 0, textAlign: "right" },

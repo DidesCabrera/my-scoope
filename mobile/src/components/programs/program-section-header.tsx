@@ -4,9 +4,9 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
-export function ProgramSectionHeader({ action, detail, icon: Icon, subtitle, title }: { action?: ReactNode; detail?: ReactNode; icon: LucideIcon; subtitle?: string; title: string }) {
+export function ProgramSectionHeader({ action, detail, icon: Icon, subtitle, title, topSpacing }: { action?: ReactNode; detail?: ReactNode; icon: LucideIcon; subtitle?: string; title: string; topSpacing?: number }) {
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, topSpacing !== undefined && { marginTop: topSpacing }]}>
       <View style={styles.headerRow}>
         <View style={styles.heading}>
           <Icon color={tokens.color.textMain} size={19} strokeWidth={2.2} />

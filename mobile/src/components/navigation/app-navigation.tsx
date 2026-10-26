@@ -57,7 +57,7 @@ type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "cl
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
   | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; secondaryAction?: HeaderAction; title: string }
-  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
+  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; forceFallback?: boolean; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; secondaryAction?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
@@ -207,7 +207,7 @@ export function AppNavigationHeader() {
               : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.leadingAction.label}</Text>}
           </Pressable>
         ) : headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
-          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (headerPresentation.mode === "back" && headerPresentation.forceFallback) router.replace(detailFallback); else if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMuted} size={26} strokeWidth={2.2} /></Pressable>
+          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (headerPresentation.mode === "back" && headerPresentation.forceFallback) router.replace(detailFallback); else if (headerPresentation.mode === "library-detail" && headerPresentation.forceFallback) router.dismissTo(detailFallback); else if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMuted} size={26} strokeWidth={2.2} /></Pressable>
         ) : canOpenMenu ? (
           <Pressable
             accessibilityLabel="Abrir menú"

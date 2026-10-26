@@ -315,7 +315,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programDetail, /weekData\.foods \?\? \[\]\)\.map\(foodItem\)/);
   assertSourceMatch(programDetail, /: weekFoodItems/);
   assertSourceMatch(programDetail, /useState<number \| null>\(\(\) => filledDays\[0\] \? 0 : null\)/);
-  assertSourceMatch(programDetail, /<View style=\{styles\.weekContent\}>/);
+  assertSourceMatch(programDetail, /<View style=\{\[styles\.weekContent, !showHeading && styles\.weekContentWithoutHeading\]\}>/);
   assertSourceDoesNotMatch(programDetail, /<Card(?: muted)? style=\{styles\.weekCard\}>/);
   assertSourceMatch(programDetail, /<ProgramDaySelector/);
   assertSourceMatch(programDetail, /<ProgramWeekTabs/);
@@ -811,7 +811,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDayDetail, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Alimentos en esta minuta diaria"[\s\S]*<GroupedFoodsCard items=\{foods\} onOpenItem=/);
 
   assertSourceMatch(sharedEntityPanels, /function PanelItemName<T extends FoodPanelItem \| MealPanelItem>/);
-  assertSourceMatch(sharedEntityPanels, /<View style=\{styles\.foodIdentity\}><View style=\{styles\.foodIdentityTitleRow\}><FoodVisualIcon[^>]*size="panel"[\s\S]*?<\/View>\{showNutritionSummary \? <NutritionSummary/);
+  assertSourceMatch(sharedEntityPanels, /<View style=\{styles\.foodIdentity\}>[\s\S]*<View style=\{\[styles\.foodIdentityTitleRow, item\.projectedLabel === "Por agregar" && styles\.foodIdentityTitleRowWithBadge\]\}>[\s\S]*<FoodVisualIcon[^>]*size="panel"[\s\S]*?<\/View>\s*\{showNutritionSummary \? <NutritionSummary/);
   assertSourceMatch(sharedEntityPanels, /foodIdentity: \{ alignItems: "stretch"[^}]*gap: tokens\.spacing\.sm[^}]*justifyContent: "center"/);
   assertSourceMatch(sharedEntityPanels, /foodIdentityTitleRow: \{ alignItems: "center", flexDirection: "row"/);
   assertSourceDoesNotMatch(sharedEntityPanels, /foodIdentityCopy/);
