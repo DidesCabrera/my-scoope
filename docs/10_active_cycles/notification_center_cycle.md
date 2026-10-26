@@ -1,7 +1,7 @@
 # Ciclo NC · Centro de notificaciones web y móvil
 
 Status: active
-Estado de ejecución: implementación local en revisión visual
+Estado de ejecución: implementación local validada; integración en curso
 Fecha: 2026-10-26
 Base: `origin/staging` @ `8d071923d752778387ccd5a775486c58c1be2646`
 
@@ -16,9 +16,9 @@ sidebar y un punto rojo cuando queda algo sin leer.
 | Etapa | Estado | Entregable | Salida |
 | --- | --- | --- | --- |
 | NC01 · Criterio de eventos | Completada | Propuesta pendiente, invitación dirigida, compartido reclamado y actualización del producto. | Contrato en `docs/00_current/features/notification_center.md`. |
-| NC02 · Estado y API | Completada en local | Proyección cronológica, lectura por usuario y anuncio publicable por staff. | Migraciones, rutas web/API y pruebas de aislamiento aprobadas. |
-| NC03 · Interfaces | Pendiente de revisión visual | Campana con punto rojo y bandeja en web y móvil ya implementadas. | Revisión funcional y visual de Felipe antes de integrar. |
-| NC04 · Integración | Pendiente | Validación completa pertinente, comparación con staging actualizado y publicación del commit exacto validado. | CI y comprobación de entorno después de cerrar NC03. |
+| NC02 · Estado y API | Completada | Proyección cronológica, lectura por usuario y anuncio publicable por staff. | Migraciones, rutas web/API y pruebas de aislamiento aprobadas. |
+| NC03 · Interfaces | Completada | Campana con punto rojo y bandeja en web y móvil. | Felipe confirmó el alcance y la ubicación el 2026-10-26. |
+| NC04 · Integración | En curso | Suite Django completa (2449 pruebas), pruebas móviles (365), exportación web y comparación con staging aprobadas. | Publicar el commit validado y comprobar CI y entorno de staging. |
 
 ## Criterios de aceptación
 

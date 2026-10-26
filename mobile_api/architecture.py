@@ -31,4 +31,6 @@ ROUTE_DOMAIN_PREFIXES = (
 
 
 def route_domain(path: str) -> str | None:
+    if path == "/notifications" or path.startswith("/notifications/{kind}/"):
+        return "notification_center"
     return next((domain for prefix, domain in ROUTE_DOMAIN_PREFIXES if path.startswith(prefix)), None)
