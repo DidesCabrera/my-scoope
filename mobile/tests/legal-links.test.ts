@@ -66,7 +66,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(details, /fallback: "\/subscription", mode: "back"/);
   assertSourceDoesNotMatch(subscription, /detail="Precio oficial de App Store"/);
   assertSourceMatch(subscription, /productStatusAndroid === "not-found"/);
-  assertSourceMatch(subscription, /androidUnavailable \? "No disponible" : "Consultando…"/);
+  assertSourceMatch(subscription, /const unavailablePrice = billing\?\.catalogBusy \? "Consultando…" : "No disponible"/);
   assertSourceMatch(subscription, /const subscriptionPlans = \["Basic", "Pro"\]\.map/);
   assertSourceMatch(subscription, /overview\?\.eligible && isOnboarding[\s\S]*name="Free" price="Gratis"/);
   assertSourceMatch(subscription, /!isOnboarding \? <SubscriptionPlanCard[^>]*name="Free" price="Gratis"/);
@@ -78,7 +78,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /<Card accent=\{tokens\.color\.carbs\} key=\{configured\.product_id\}>/);
   assertSourceDoesNotMatch(subscription, /<Card key=\{(?:plan\.planName|configured\.product_id)\} muted>/);
   assertSourceMatch(subscription, /item\.plan_name\.trim\(\)\.toLowerCase\(\) === planName\.toLowerCase\(\)/);
-  assertSourceMatch(subscription, /name=\{plan\.planName\} price=\{monthlyDisplayPrice \? `\$\{monthlyDisplayPrice\}\/mes` : "Consultando…"\}/);
+  assertSourceMatch(subscription, /name=\{plan\.planName\} price=\{monthlyDisplayPrice \? `\$\{monthlyDisplayPrice\}\/mes` : unavailablePrice\}/);
   assertSourceMatch(planCard, /<Text style=\{styles\.eyebrow\}>PLAN DE SUSCRIPCIÓN<\/Text>[\s\S]*<Text style=\{styles\.productName\}>\{name\}<\/Text>[\s\S]*<Text numberOfLines=\{1\} style=\{styles\.planPriceChipLabel\}>\{price\}<\/Text>/);
   assertSourceMatch(planCard, /<KeyValueTable items=\{benefits\.map\(\(item\) =>/);
   assertSourceMatch(subscription, /<Text style=\{textStyles\.caption\}>Elige la modalidad de tu suscripción\.<\/Text>/);
@@ -112,7 +112,7 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /<SubscriptionPurchaseButton[\s\S]*label=\{`\$\{interval\} · \$\{priceExplanation\}`\}/);
   assertSourceMatch(subscription, /<SubscriptionPurchaseButton[\s\S]*label=\{`Comprar \$\{configured\.credits\.toLocaleString\("es-CL"\)\} créditos`\}/);
   assertSourceMatch(planCard, /LinearGradient id="subscription-purchase-macros"[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat/);
-  assertSourceMatch(subscription, /<CreditPackPriceChip label=\{storeProduct\?\.displayPrice \?\? "Consultando…"\} \/>/);
+  assertSourceMatch(subscription, /<CreditPackPriceChip label=\{storeProduct\?\.displayPrice \?\? unavailablePrice\} \/>/);
   assertSourceMatch(subscription, /LinearGradient id="credit-pack-price-macros"[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat/);
   assertSourceDoesNotMatch(subscription, /subscription-card-macros|SubscriptionCardAccent/);
   assertSourceDoesNotMatch(subscription, /label=\{`Suscribirme a \$\{configured\.plan_name\}`\}/);

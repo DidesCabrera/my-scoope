@@ -112,3 +112,94 @@ test("diagnostic history is bounded and only contains price metadata", async () 
   assert.equal(catalog.diagnostics.length, 20);
   assert.equal(JSON.stringify(catalog.diagnostics).includes("private-"), false);
 });
+
+for (const stalledRead of ["storefront_before", "products", "storefront_after"]) {
+  test(`a stalled ${stalledRead} ends loading, ignores a late response and permits a fresh retry`, async () => {
+    let expire!: () => void;
+    let release!: () => void;
+    let healthy = false;
+    let storefrontReads = 0;
+    let timerActive = false;
+    const waiting = new Promise<void>((resolve) => { release = resolve; });
+    const catalog = new StoreCatalog({
+      storefront: async () => {
+        storefrontReads += 1;
+        if (!healthy && (stalledRead === "storefront_before" || stalledRead === "storefront_after" && storefrontReads === 2)) await waiting;
+        return chile;
+      },
+      fetch: async () => { if (!healthy && stalledRead === "products") await waiting; return [clp]; },
+      schedule: (run, delay) => {
+        assert.equal(delay, 15_000);
+        expire = run;
+        timerActive = true;
+        return () => { timerActive = false; };
+      },
+    });
+    const pending = catalog.refresh([clp.id]);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(catalog.state.loading, true);
+    expire();
+    assert.equal(await pending, null);
+    assert.deepEqual(catalog.state, { items: [], loading: false, failed: true });
+    assert.equal(catalog.failureReason, "timeout");
+    assert.equal(catalog.diagnostics.at(-1)?.result, "timed_out");
+    assert.equal(timerActive, false);
+
+    healthy = true;
+    release();
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(catalog.state, { items: [], loading: false, failed: true });
+    assert.deepEqual(await catalog.refresh([clp.id], "manual_retry"), [clp]);
+    assert.deepEqual(catalog.state, { items: [clp], loading: false, failed: false });
+    assert.equal(catalog.failureReason, null);
+    assert.equal(timerActive, false);
+  });
+}
+
+test("one deadline bounds both attempts after a mismatched quote", async () => {
+  let expire!: () => void;
+  let queries = 0;
+  let deadlines = 0;
+  const catalog = new StoreCatalog<Product>({
+    storefront: async () => chile,
+    fetch: async () => ++queries === 1 ? [usd] : new Promise(() => undefined),
+    schedule: (run) => { deadlines += 1; expire = run; return () => undefined; },
+  });
+  const pending = catalog.refresh([clp.id]);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(queries, 2);
+  assert.equal(deadlines, 1);
+  expire();
+  assert.equal(await pending, null);
+  assert.equal(catalog.failureReason, "timeout");
+  assert.equal(catalog.state.loading, false);
+});
+
+for (const action of ["invalidate", "dispose"] as const) {
+  test(`${action} settles a stalled query and cancels its timer`, async () => {
+    let timerActive = false;
+    const catalog = new StoreCatalog<Product>({
+      storefront: async () => chile,
+      fetch: () => new Promise(() => undefined),
+      schedule: () => { timerActive = true; return () => { timerActive = false; }; },
+    });
+    const pending = catalog.refresh([clp.id]);
+    await new Promise((resolve) => setImmediate(resolve));
+    catalog[action]();
+    assert.equal(await pending, null);
+    assert.equal(timerActive, false);
+    assert.equal(catalog.failureReason, null);
+    assert.deepEqual(catalog.state.items, []);
+  });
+}
+
+test("an empty native catalog offers retry instead of accepting a permanent missing-price state", async () => {
+  let products: Product[] = [];
+  const catalog = new StoreCatalog({ storefront: async () => chile, fetch: async () => products });
+  assert.equal(await catalog.refresh([clp.id]), null);
+  assert.deepEqual(catalog.state, { items: [], loading: false, failed: true });
+  assert.equal(catalog.failureReason, "unavailable");
+  products = [clp];
+  assert.deepEqual(await catalog.refresh([clp.id], "manual_retry"), [clp]);
+  assert.equal(catalog.state.failed, false);
+});
