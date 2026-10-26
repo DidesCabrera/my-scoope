@@ -1235,7 +1235,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey.match(/function ValueView[\s\S]*?function DisclosuresView/)?.[0] ?? "", /<JourneyFooter/);
   assertSourceMatch(journey, /PanResponder\.create/);
   assertSourceMatch(journey, /Animated\.timing/);
-  assertSourceMatch(journey, /Boolean\(controller\) && index >= 1 && index <= 7/);
+  assertSourceMatch(journey, /\(Boolean\(controller\) \|\| storyboardExplanationPresentation\) && index >= 1 && index <= 7/);
   assertSourceMatch(journey, /explanationSteps\.map\(\(pageStep, explanationIndex\) =>/);
   assertSourceMatch(journey, /style=\{\[styles\.explanationPage, \{ width: transitionWidth \}\]\}/);
   assertSourceMatch(journey, /const explanationPageGap = 48/);
@@ -1249,9 +1249,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /useSession|apiRequest|fetch\(|router\.|useRouter/);
   const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
   const onboardingPreview = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding-preview.tsx"), "utf8");
-  assertSourceMatch(onboarding, /scroll=\{usesFixedDisclosuresFooter \|\| usesFixedProfileChrome \? false : stepIndex >= 8 \? "auto" : false\}/);
+  assertSourceMatch(onboarding, /onboardingScreenChromeForStep\(step\)/);
   assertSourceMatch(onboarding, /<Stack\.Screen options=\{\{ gestureEnabled: false, headerShown: false \}\} \/>/);
-  assertSourceMatch(onboarding, /const headerCompensationTop = stepIndex >= 8 \? 88 : 0/);
+  assertSourceMatch(journey, /headerCompensationTop: index >= 8 \? 88 : 0/);
   assertSourceMatch(onboarding, /<Screen contentStyle=\{\[styles\.screen, \{ paddingTop: headerCompensationTop \}\]\}/);
   assertSourceDoesNotMatch(onboarding, /<Screen key=\{step\}/);
   assertSourceMatch(onboarding, /presentationPropsForOnboardingStep\(step\)/);
@@ -1261,12 +1261,12 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(subscription, /<Stack\.Screen options=\{\{ headerShown: !isOnboarding \}\} \/>/);
   const layout = await readTestFile(path.resolve(process.cwd(), "src/app/_layout.tsx"), "utf8");
   assertSourceMatch(layout, /pathname === "\/subscription" && origin === "onboarding"/);
-  assertSourceMatch(onboardingPreview, /scroll=\{usesFixedDisclosuresFooter \|\| usesFixedProfileChrome \? false : stepIndex >= 8 \? "auto" : false\}/);
+  assertSourceMatch(onboardingPreview, /onboardingScreenChromeForStep\(step as OnboardingJourneyStep\)/);
   const storyboardGallery = await readTestFile(path.resolve(process.cwd(), "src/components/dev/storyboard-gallery.tsx"), "utf8");
   assertSourceMatch(journey, /const onboardingStoryboardTopInsetReduction = 20/);
   assertSourceMatch(journey, /const earlyOnboardingStoryboardTopInsetReduction = onboardingStoryboardTopInsetReduction \+ 18/);
   assertSourceMatch(journey, /findIndex\(\(item\) => item\.key === step\) < 8/);
-  assertSourceMatch(storyboardGallery, /<OnboardingJourneyView step=\{step\} topInsetReduction=\{topInsetReductionForOnboardingStoryboard\(step\)\} \/>/);
+  assertSourceMatch(storyboardGallery, /<OnboardingJourneyView fullWidthExplanationTransition step=\{step\} storyboardExplanationPresentation topInsetReduction=\{topInsetReductionForOnboardingStoryboard\(step\)\} \/>/);
   assertSourceMatch(storyboardGallery, /<SubscriptionPreviewContent context="onboarding" topInsetReduction=\{topInsetReductionForOnboardingStoryboard\(step\)\} \/>/);
   assertSourceMatch(onboardingPreview, /presentationPropsForOnboardingStep\(step as OnboardingJourneyStep\)/);
   assertSourceMatch(onboardingPreview, /\{\.\.\.presentationProps\}/);
@@ -1303,7 +1303,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /fixedProfileFooterBottomSpacing: index >= 9 && index <= 14 \? continueFooterBottomMargin : 0/);
   assertSourceDoesNotMatch(onboardingPreview, /fixedLoginActionBottomSpacing=\{134\}/);
   assert.ok(journey.includes("fixedLoginActionBottomSpacing: 0"));
-  assertSourceMatch(onboardingPreview, /scroll=\{usesFixedDisclosuresFooter \|\| usesFixedProfileChrome \? false : stepIndex >= 8 \? "auto" : false\}/);
+  assertSourceMatch(onboardingPreview, /scroll=\{scroll\}/);
   assertSourceMatch(journey, /marginBottom: profileProgressEyebrowBottomSpacing/);
   assertSourceMatch(journey, /marginBottom: profileProgressBottomSpacing/);
   assertSourceMatch(journey, /paddingHorizontal: tokens\.spacing\.xl \+ \(profileProgressWidthReduction \/ 2\)/);

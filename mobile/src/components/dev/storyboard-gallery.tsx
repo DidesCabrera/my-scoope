@@ -63,7 +63,7 @@ export function OnboardingStoryboardGallery() {
       notice="Cada formato presenta el flujo completo en orden, con datos fijos y sin persistencia."
       renderStep={(step) => step === "plans"
         ? <SubscriptionPreviewContent context="onboarding" topInsetReduction={topInsetReductionForOnboardingStoryboard(step)} />
-        : <OnboardingJourneyView step={step} topInsetReduction={topInsetReductionForOnboardingStoryboard(step)} />}
+        : <OnboardingJourneyView fullWidthExplanationTransition step={step} storyboardExplanationPresentation topInsetReduction={topInsetReductionForOnboardingStoryboard(step)} />}
       steps={onboardingJourneySteps}
       title="Flujo inicial"
     />

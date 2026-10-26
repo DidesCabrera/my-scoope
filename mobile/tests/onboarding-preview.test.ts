@@ -28,7 +28,7 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(preview.includes('if (!session.is_staff) return <Redirect href="/account"'));
   assert.ok(preview.includes("gestureEnabled: false"));
   assert.ok(preview.includes("headerShown: false"));
-  assert.ok(preview.includes("const headerCompensationTop = stepIndex >= 8 ? 88 : 0"));
+  assert.ok(preview.includes("onboardingScreenChromeForStep(step as OnboardingJourneyStep)"));
   assert.ok(preview.includes("paddingTop: headerCompensationTop"));
   assert.equal(preview.includes("<Screen key={step}"), false);
   assert.ok(preview.includes("onboardingJourneySteps.length - 1"));
@@ -40,7 +40,7 @@ test("staff can traverse a side-effect-free onboarding preview", async () => {
   assert.ok(journey.indexOf('key: "panelsCopy"') < journey.indexOf('key: "compareShare"'));
   assert.ok(journey.indexOf('key: "compareShare"') < journey.indexOf('key: "progress"'));
   assert.ok(journey.includes('const explanationSteps = onboardingJourneySteps.slice(1, 8)'));
-  assert.ok(journey.includes('const interactiveExplanation = Boolean(controller) && index >= 1 && index <= 7'));
+  assert.ok(journey.includes('const interactiveExplanation = (Boolean(controller) || storyboardExplanationPresentation) && index >= 1 && index <= 7'));
   assert.ok(journey.includes('ExplanationDots action={index === 7 ? <ContinueChip /> : undefined}'));
   assert.ok(journey.includes('require("../../../assets/images/login-background.jpg")'));
   assert.ok(journey.includes('title="No improvises,"'));

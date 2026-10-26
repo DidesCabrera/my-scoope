@@ -61,6 +61,16 @@ export const onboardingJourneySteps = [
 
 export type OnboardingJourneyStep = (typeof onboardingJourneySteps)[number]["key"];
 
+export function onboardingScreenChromeForStep(step: OnboardingJourneyStep) {
+  const index = onboardingJourneySteps.findIndex((item) => item.key === step);
+  const fixedDisclosuresFooter = step === "disclosures";
+  const fixedProfileChrome = index >= 9 && index <= 14;
+  return {
+    headerCompensationTop: index >= 8 ? 88 : 0,
+    scroll: fixedDisclosuresFooter || fixedProfileChrome ? false : index >= 8 ? "auto" as const : false,
+  };
+}
+
 const onboardingStoryboardTopInsetReduction = 20;
 const earlyOnboardingStoryboardTopInsetReduction = onboardingStoryboardTopInsetReduction + 18;
 const continueFooterBottomMargin = 49;
@@ -1298,6 +1308,7 @@ export function OnboardingJourneyView({
   showGoalOptionsEyebrow = false,
   showProfileControlBleed = false,
   storyboardSummaryLayout = false,
+  storyboardExplanationPresentation = false,
   step,
   topInsetReduction = 0,
 }: {
@@ -1321,6 +1332,7 @@ export function OnboardingJourneyView({
   showGoalOptionsEyebrow?: boolean;
   showProfileControlBleed?: boolean;
   storyboardSummaryLayout?: boolean;
+  storyboardExplanationPresentation?: boolean;
   step: OnboardingJourneyStep;
   topInsetReduction?: number;
 }) {
@@ -1331,7 +1343,8 @@ export function OnboardingJourneyView({
   const [translateX] = useState(() => new Animated.Value(0));
   const [transitioning, setTransitioning] = useState(false);
   const [explanationTransitionWidth, setExplanationTransitionWidth] = useState(width);
-  const interactiveExplanation = Boolean(controller) && index >= 1 && index <= 7;
+  const interactiveExplanation = (Boolean(controller) || storyboardExplanationPresentation) && index >= 1 && index <= 7;
+  const canSwipeExplanation = Boolean(controller) && interactiveExplanation;
   const transitionWidth = fullWidthExplanationTransition ? explanationTransitionWidth : width;
   const explanationPageGap = 48;
   const explanationStride = transitionWidth + explanationPageGap;
@@ -1366,8 +1379,8 @@ export function OnboardingJourneyView({
     else Animated.spring(translateX, { damping: 20, stiffness: 220, toValue: explanationOffset, useNativeDriver: true }).start();
   }, [explanationOffset, moveToExplanation, translateX]);
   const swipeResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_event, gesture) => interactiveExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-    onMoveShouldSetPanResponderCapture: (_event, gesture) => interactiveExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+    onMoveShouldSetPanResponder: (_event, gesture) => canSwipeExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+    onMoveShouldSetPanResponderCapture: (_event, gesture) => canSwipeExplanation && Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
     onPanResponderMove: (_event, gesture) => {
       if (transitioning) return;
       const atBoundary = (index === 1 && gesture.dx > 0) || (index === 7 && gesture.dx < 0);
@@ -1375,7 +1388,7 @@ export function OnboardingJourneyView({
     },
     onPanResponderRelease: (_event, gesture) => finishExplanationGesture(gesture),
     onPanResponderTerminate: (_event, gesture) => finishExplanationGesture(gesture),
-  }), [explanationOffset, finishExplanationGesture, index, interactiveExplanation, transitioning, translateX]);
+  }), [canSwipeExplanation, explanationOffset, finishExplanationGesture, index, transitioning, translateX]);
   if (interactiveExplanation) {
     return (
       <JourneyControllerContext.Provider value={resolvedController}>

@@ -7,7 +7,7 @@ import type { OnboardingAnalyzeInput, OnboardingStateData, ProposalDetail } from
 import { useSession } from "@/auth/session-context";
 import {
   OnboardingJourneyView,
-  onboardingJourneySteps,
+  onboardingScreenChromeForStep,
   presentationPropsForOnboardingStep,
   type OnboardingJourneyController,
   type OnboardingJourneyStep,
@@ -212,16 +212,13 @@ export default function OnboardingScreen() {
     onAdjust: () => setStep("goal"),
   };
 
-  const stepIndex = onboardingJourneySteps.findIndex((item) => item.key === step);
-  const usesFixedDisclosuresFooter = stepIndex === 8;
-  const usesFixedProfileChrome = stepIndex >= 9 && stepIndex <= 14;
-  const headerCompensationTop = stepIndex >= 8 ? 88 : 0;
+  const { headerCompensationTop, scroll } = onboardingScreenChromeForStep(step);
   const presentationProps = presentationPropsForOnboardingStep(step);
 
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
-      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 8 ? "auto" : false}>
+      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={scroll}>
         <OnboardingJourneyView controller={controller} {...presentationProps} step={step} />
       </Screen>
     </>
