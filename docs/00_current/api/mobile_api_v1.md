@@ -108,6 +108,15 @@ with existing application services move before the composition-heavy library sur
 
 ## Authentication
 
+- A signup started through the iOS OAuth client sends a confirmation URL under
+  `/mobile/confirm-email/<key>/`. The web route remains the fallback when no app
+  handles the universal link. The app sends the key to anonymous
+  `POST /auth/confirm-email`; the server verifies ownership without creating a
+  session. The app then opens login, and an authenticated account with incomplete
+  onboarding continues through the existing onboarding gate.
+- iOS associates `www.myscoope.com` and `myscoope-staging.onrender.com` for this
+  route. Each host must serve an Apple association file containing the path and
+  the configured Apple team identifier.
 - Public clients use authorization code + mandatory PKCE S256.
 - Mobile OAuth clients require an app-generated device identifier and a declared
   platform at token exchange.

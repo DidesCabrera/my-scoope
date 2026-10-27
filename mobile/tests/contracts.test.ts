@@ -1485,7 +1485,7 @@ test("the iOS release contract declares only approved capabilities and privacy c
   };
   assert.equal(app.ios.usesAppleSignIn, true);
   assert.equal(app.ios.privacyManifests.NSPrivacyTracking, false);
-  assert.deepEqual(app.ios.associatedDomains, ["applinks:www.myscoope.com"]);
+  assert.deepEqual(app.ios.associatedDomains, ["applinks:www.myscoope.com", "applinks:myscoope-staging.onrender.com"]);
   assert.equal(app.android.intentFilters[0].autoVerify, true);
   assert.deepEqual(app.android.intentFilters[0].data, [
     { scheme: "https", host: "www.myscoope.com", pathPrefix: "/s/" },

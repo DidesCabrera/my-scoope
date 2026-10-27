@@ -4438,6 +4438,43 @@
         "title": "DisclosureAcceptanceInput",
         "type": "object"
       },
+      "EmailConfirmationEnvelope": {
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "EmailConfirmationEnvelope",
+        "type": "object"
+      },
+      "EmailConfirmationInput": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "EmailConfirmationInput",
+        "type": "object"
+      },
       "EntitlementsData": {
         "properties": {
           "available_credits": {
@@ -12864,6 +12901,45 @@
           }
         ],
         "summary": "Submit Ai Turn"
+      }
+    },
+    "/api/v1/auth/confirm-email": {
+      "post": {
+        "operationId": "mobile_api_confirm_email",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailConfirmationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailConfirmationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          }
+        },
+        "summary": "Confirm Email"
       }
     },
     "/api/v1/calendar": {

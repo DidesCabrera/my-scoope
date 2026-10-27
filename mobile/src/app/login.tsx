@@ -6,7 +6,7 @@ import { LoadingState, Screen } from "@/components/ui";
 import { internalHref } from "@/navigation/internal-href";
 
 export default function LoginScreen() {
-  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
+  const { returnTo, emailConfirmed } = useLocalSearchParams<{ returnTo?: string; emailConfirmed?: string }>();
   const returnHref = internalHref(returnTo);
   const { status, profile, authBusy, authError, authReady, authRestorePending, retrySessionRestore, startSignIn } = useSession();
   if (status === "booting") return <LoadingState label="Reconectando tu cuenta…" />;
@@ -25,6 +25,7 @@ export default function LoginScreen() {
           controller={{
             busy: authBusy,
             error: authError,
+            notice: emailConfirmed === "1" ? "Correo confirmado. Inicia sesión para continuar en My Scoope." : null,
             loginDisabled: !authReady && !authRestorePending,
             loginLabel: authRestorePending ? "Reintentar conexión" : undefined,
             onLogin: () => authRestorePending ? retrySessionRestore() : void startSignIn(returnHref),

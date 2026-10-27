@@ -2,6 +2,7 @@ from allauth.account import views as allauth_account_views
 from django.contrib import admin
 from django.urls import include, path
 
+from accounts.email_confirmation import MyScoopeConfirmEmailView
 from core.rate_limits import limit_login, limit_signup
 from food_catalog.interface.views import export_authority_snapshot
 from mobile_api.api import api as mobile_api_v1
@@ -47,6 +48,16 @@ urlpatterns = [
 
     # Auth system
     path("accounts/", include("accounts.urls")),
+    path(
+        "mobile/confirm-email/<str:key>/",
+        MyScoopeConfirmEmailView.as_view(),
+        name="mobile_confirm_email",
+    ),
+    path(
+        "accounts/confirm-email/<str:key>/",
+        MyScoopeConfirmEmailView.as_view(),
+        name="account_confirm_email",
+    ),
     path(
         "accounts/login/",
         limit_login(allauth_account_views.login),

@@ -15,7 +15,7 @@ class MobileAssociationTests(SimpleTestCase):
         self.assertEqual(response["Content-Type"], "application/json")
         details = response.json()["applinks"]["details"][0]
         self.assertEqual(details["appID"], "AB12CD34EF.com.myscoope.app")
-        self.assertEqual(details["paths"], ["/s/*"])
+        self.assertEqual(details["paths"], ["/s/*", "/mobile/confirm-email/*"])
 
     @override_settings(
         MYSCOOPE_ANDROID_SHA256_CERT_FINGERPRINTS=[
