@@ -13,6 +13,8 @@ class NotificationItemData(Schema):
     is_read: bool
     web_url: str
     mobile_path: str
+    subject_type: Literal["comparison", "daily_plan", "food", "meal", "program"] | None = None
+    comparison_kind: Literal["foods", "meals", "dailyplans"] | None = None
 
 
 class NotificationListData(Schema):

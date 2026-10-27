@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
+import { Plus } from "lucide-react-native";
 import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
+import { ButtonSurfaceContext } from "./button-surface-context";
 
 export function Button({
   bleed = true,
@@ -10,6 +12,7 @@ export function Button({
   label,
   onPress,
   variant = "primary",
+  surface,
   multicolorSurface = "muted",
   disabled = false,
   loading = false,
@@ -18,26 +21,31 @@ export function Button({
   icon?: ReactNode;
   label: string;
   onPress(): void;
-  variant?: "primary" | "secondary" | "danger" | "gradient" | "multicolor";
+  variant?: "primary" | "secondary" | "surfaceCard" | "chipPrimary" | "danger" | "gradient" | "multicolor";
+  surface?: "app" | "card";
   multicolorSurface?: "app" | "muted";
   disabled?: boolean;
   loading?: boolean;
 }) {
+  const onCard = useContext(ButtonSurfaceContext);
   const gradient = variant === "gradient";
   const multicolor = variant === "multicolor" || gradient;
-  const buttonStyle = variant === "primary" ? styles.buttonPrimary : multicolor ? styles.buttonMulticolor : styles.buttonSecondary;
-  const textStyle = variant === "primary" || gradient ? styles.buttonPrimaryText : styles.buttonSecondaryText;
+  const chipPrimary = variant === "chipPrimary";
+  const buttonStyle = variant === "primary" ? styles.buttonPrimary : multicolor ? styles.buttonMulticolor : variant === "surfaceCard" ? styles.buttonSurfaceCard : chipPrimary ? styles.buttonChipPrimary : styles.buttonSecondary;
+  const textStyle = variant === "primary" || gradient ? styles.buttonPrimaryText : chipPrimary ? styles.buttonChipPrimaryText : styles.buttonSecondaryText;
+  const chipHasPlus = chipPrimary && label.startsWith("+ ");
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={chipHasPlus ? label.slice(2) : label}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       disabled={disabled || loading}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        bleed && styles.buttonBleed,
+        bleed && !chipPrimary && styles.buttonBleed,
         buttonStyle,
+        (variant === "secondary" || variant === "surfaceCard") && (surface === "card" || (surface !== "app" && onCard)) && styles.buttonSecondaryOnCard,
         variant === "danger" && styles.buttonDanger,
         (disabled || loading) && styles.buttonDisabled,
         pressed && styles.buttonPressed,
@@ -56,8 +64,8 @@ export function Button({
         {!gradient ? <View style={[styles.buttonMulticolorInset, multicolorSurface === "app" && styles.buttonMulticolorInsetApp]} /> : null}
       </> : null}
       {loading ? <ActivityIndicator color={variant === "primary" || gradient ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
-      {!loading ? icon : null}
-      <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{label}</Text>
+      {!loading ? icon ?? (chipHasPlus ? <Plus color={tokens.color.surfaceApp} size={18} strokeWidth={2.2} /> : null) : null}
+      <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{chipHasPlus ? label.slice(2) : label}</Text>
     </Pressable>
   );
 }
@@ -164,18 +172,22 @@ export function SystemSwitch({ accessibilityLabel, disabled = false, onValueChan
 }
 
 const styles = StyleSheet.create({
-  button: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 48, paddingHorizontal: tokens.spacing.lg },
+  button: { alignItems: "center", borderRadius: tokens.radius.pill, flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 44, paddingHorizontal: tokens.spacing.lg },
   buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   buttonPrimary: { backgroundColor: tokens.color.textMain },
   buttonMulticolor: { overflow: "hidden" },
-  buttonMulticolorInset: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg - 2, bottom: 2, left: 2, position: "absolute", right: 2, top: 2 },
+  buttonMulticolorInset: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, bottom: 2, left: 2, position: "absolute", right: 2, top: 2 },
   buttonMulticolorInsetApp: { backgroundColor: tokens.color.surfaceApp },
-  buttonSecondary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderWidth: 1 },
-  buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger },
+  buttonSecondary: { backgroundColor: tokens.color.surfaceCard },
+  buttonSecondaryOnCard: { backgroundColor: tokens.color.surfaceMuted },
+  buttonSurfaceCard: { backgroundColor: tokens.color.surfaceCard },
+  buttonChipPrimary: { alignSelf: "stretch", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.pill, gap: 8, marginHorizontal: -6, minHeight: 44, paddingHorizontal: 16 },
+  buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger, borderWidth: 1 },
   buttonDisabled: { opacity: 0.45 },
   buttonPressed: { opacity: 0.72, transform: [{ translateY: 1 }] },
   buttonPrimaryText: { color: tokens.color.surfaceApp, fontSize: tokens.type.body, fontWeight: "800" },
   buttonSecondaryText: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: "700" },
+  buttonChipPrimaryText: { color: tokens.color.surfaceApp, fontSize: 16, fontWeight: "700" },
   buttonDangerText: { color: tokens.color.danger },
   field: { gap: 7 },
   systemSwitch: { backgroundColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, height: 28, padding: 3, width: 48 },

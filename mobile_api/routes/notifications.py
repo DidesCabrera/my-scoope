@@ -5,7 +5,7 @@ from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
 from mobile_api.schema_domains.notifications import NotificationListEnvelope
 from mobile_api.schemas import ErrorEnvelope
-from notas.application.services.notifications.center import list_notifications, mark_notification_read, unread_notification_count
+from notas.application.services.notifications.center import list_notifications, mark_all_notifications_read, mark_notification_read, unread_notification_count
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 from notas.presentation.notifications import present_notifications
 
@@ -25,6 +25,17 @@ def _feed(request):
     response={200: NotificationListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
 )
 def notifications(request):
+    return success(_feed(request))
+
+
+@router.post(
+    "/notifications/read-all",
+    operation_id="mobile_api_mark_all_notifications_read",
+    response={200: NotificationListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def notification_read_all(request):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    mark_all_notifications_read(request.auth.user)
     return success(_feed(request))
 
 

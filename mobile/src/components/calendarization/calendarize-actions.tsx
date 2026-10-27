@@ -8,7 +8,7 @@ import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetMo
 import { EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-export function CalendarizeActions({ onClose, visible }: { onClose(): void; visible: boolean }) {
+export function CalendarizeActions({ onClose, origin, visible }: { onClose(): void; origin?: "home"; visible: boolean }) {
   const router = useRouter();
   const navigate = (href: Href) => {
     onClose();
@@ -20,12 +20,12 @@ export function CalendarizeActions({ onClose, visible }: { onClose(): void; visi
       <ActionSheetHeader icon={CalendarDays} onClose={onClose} title="Calendarizar" />
       <View style={styles.content}>
         <ActionSheetActions>
-          <ActionSheetAction iconNode={<EntityIcon entity="dailyPlan" size="compact" />} label="Minutas" onPress={() => navigate("/calendar/select-plans" as Href)} />
+          <ActionSheetAction iconNode={<EntityIcon entity="dailyPlan" size="compact" />} label="Minutas" onPress={() => navigate((origin === "home" ? "/calendar/select-plans?origin=home" : "/calendar/select-plans") as Href)} />
           <ActionSheetAction iconNode={<EntityIcon entity="program" size="compact" />} label="Programas" onPress={() => navigate("/program/activate" as Href)} />
           {commitmentKinds.map((kind) => {
             const presentation = commitmentPresentation[kind];
             const Icon = presentation.icon;
-            return <ActionSheetAction iconNode={<Icon color={presentation.color} size={18} />} key={kind} label={presentation.label} onPress={() => navigate(`/calendar/commitments?kind=${kind}` as Href)} />;
+            return <ActionSheetAction iconNode={<Icon color={presentation.color} size={18} />} key={kind} label={presentation.label} onPress={() => navigate(`/calendar/commitments?kind=${kind}${origin === "home" ? "&origin=home" : ""}` as Href)} />;
           })}
         </ActionSheetActions>
       </View>

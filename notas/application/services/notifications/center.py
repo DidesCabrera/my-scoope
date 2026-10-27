@@ -1,6 +1,7 @@
 """One in-app feed backed by the existing proposal and sharing read states."""
 
 from allauth.account.models import EmailAddress
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -41,6 +42,18 @@ def _announcements():
     return ProductAnnouncement.objects.filter(is_active=True, published_at__lte=timezone.now())
 
 
+def _share_visual_metadata(resource):
+    if resource.subject_type != ShareResource.SubjectType.COMPARISON:
+        return {"subject_type": resource.subject_type, "comparison_kind": None}
+    summary = resource.snapshot.get("summary") or {}
+    comparison = resource.snapshot.get("comparison") or {}
+    comparison_kind = summary.get("comparison_kind") or comparison.get("kind")
+    return {
+        "subject_type": resource.subject_type,
+        "comparison_kind": comparison_kind if comparison_kind in {"foods", "meals", "dailyplans"} else None,
+    }
+
+
 def unread_notification_count(user):
     if not user.is_authenticated:
         return 0
@@ -67,6 +80,7 @@ def list_notifications(user, *, limit=50):
         sender = share.resource.sender.get_full_name() or share.resource.sender.username
         items.append({
             "kind": "share", "id": share.id,
+            **_share_visual_metadata(share.resource),
             "title": subject.get("title") or "Contenido compartido",
             "body": f"{sender} compartió este contenido contigo.",
             "created_at": share.created_at, "is_read": share.read_at is not None,
@@ -78,6 +92,7 @@ def list_notifications(user, *, limit=50):
         subject = resource.snapshot.get("subject") or {}
         items.append({
             "kind": "invitation", "id": invitation.id,
+            **_share_visual_metadata(resource),
             "title": invitation.subject or subject.get("title") or "Contenido compartido",
             "body": invitation.message or f"{sender} compartió este contenido contigo.",
             "created_at": invitation.created_at, "is_read": invitation.read_at is not None,
@@ -113,3 +128,18 @@ def mark_notification_read(user, kind, item_id):
         ProductAnnouncementRead.objects.get_or_create(announcement=announcement, user=user)
         return True
     return False
+
+
+@transaction.atomic
+def mark_all_notifications_read(user):
+    """Mark every currently visible notification for this user as read."""
+    now = timezone.now()
+    _proposals(user).filter(is_read=False).update(is_read=True)
+    _shares(user).filter(read_at__isnull=True).update(read_at=now)
+    _invitations(user).filter(read_at__isnull=True).update(read_at=now)
+    read_ids = ProductAnnouncementRead.objects.filter(user=user).values("announcement_id")
+    ProductAnnouncementRead.objects.bulk_create(
+        [ProductAnnouncementRead(user=user, announcement=announcement, read_at=now)
+         for announcement in _announcements().exclude(id__in=read_ids)],
+        ignore_conflicts=True,
+    )

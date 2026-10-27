@@ -6,13 +6,14 @@ import { tokens } from "@/design/tokens";
 
 export type EntityPanelTab<T extends string> = { icon?: ReactNode | ((selected: boolean) => ReactNode); iconOnly?: boolean; key: T; label: string };
 
-export function EntityPanelTabs<T extends string>({ activeTab, onChange, tabs }: {
+export function EntityPanelTabs<T extends string>({ activeTab, contentContainerStyle, onChange, tabs }: {
   activeTab: T;
+  contentContainerStyle?: StyleProp<ViewStyle>;
   onChange: (tab: T) => void;
   tabs: EntityPanelTab<T>[];
 }) {
   return (
-    <ScrollView accessibilityRole="tablist" contentContainerStyle={styles.tabs} horizontal showsHorizontalScrollIndicator={false}>
+    <ScrollView accessibilityRole="tablist" contentContainerStyle={[styles.tabs, contentContainerStyle]} horizontal showsHorizontalScrollIndicator={false}>
       {tabs.map((tab) => {
         const selected = tab.key === activeTab;
         return (

@@ -178,7 +178,7 @@ export function DailyPlanMealCards({ dailyPlanId, items, onChanged, onRemove, pi
               isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
               onToggle: (food) => pinnedTracking.onTogglePrepared(item.id, food.id),
             } : undefined} />
-            {mealId != null && dailyPlanMealId != null ? <View style={styles.addAction}><Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { dailyPlanId, dailyPlanMealId, mealId, returnTo: `/libraries/daily-plans/${dailyPlanId}` }))} /></View> : null}
+            {mealId != null && dailyPlanMealId != null ? <View style={styles.addAction}><Button label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { dailyPlanId, dailyPlanMealId, mealId, returnTo: `/libraries/daily-plans/${dailyPlanId}` }))} variant="chipPrimary" /></View> : null}
           </NutritionEntityCard>
         </View>;
       })}

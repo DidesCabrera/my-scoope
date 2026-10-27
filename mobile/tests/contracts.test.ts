@@ -218,10 +218,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(collectionPageHeader, /container: \{ alignItems: "flex-start", gap: tokens\.spacing\.sm/);
   assertSourceMatch(collectionPageHeader, /iconSlot: \{ alignSelf: "flex-start" \}/);
   assertSourceMatch(collectionPageHeader, /function PageHeader[\s\S]*<View style=\{styles\.copy\}>[\s\S]*?<Text style=\{styles\.title\}>\{title\}<\/Text>[\s\S]*\{indicator\}/);
-  assertSourceMatch(collectionPageHeader, /subtitle \? <Text style=\{styles\.subtitle\}>\{subtitle\}<\/Text>/);
+  assertSourceMatch(collectionPageHeader, /subtitle \? <Text style=\{\[styles\.subtitle, subtitleStyle\]\}>\{subtitle\}<\/Text>/);
   assertSourceMatch(collectionPageHeader, /subtitle: \{ color: tokens\.color\.textMuted, fontSize: tokens\.type\.caption, lineHeight: 20 \}/);
   assertSourceDoesNotMatch(collectionPageHeader, /Bookmark|Mis librerías|eyebrow/);
-  assertSourceMatch(collectionPageHeader, /<Chip[\s\S]*backgroundColor=\{`\$\{tokens\.color\[entity\]\}1A`\}[\s\S]*borderColor=\{tokens\.color\[entity\]\}[\s\S]*label=\{`\$\{count\} \$\{collectionCountLabels\[entity\]\[count === 1 \? "singular" : "plural"\]\}`\}/);
+  assertSourceMatch(collectionPageHeader, /<Chip[\s\S]*backgroundColor=\{`\$\{tokens\.color\[entity\]\}4D`\}[\s\S]*borderless[\s\S]*label=\{`\$\{count\} \$\{collectionCountLabels\[entity\]\[count === 1 \? "singular" : "plural"\]\}`\}/);
 
   const chip = await readTestFile(
     path.resolve(process.cwd(), "src/components/ui/chip.tsx"),
@@ -578,7 +578,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgram, /onOpenOriginalProgram=\{calendarization\?\.source_program_id \? \(\) => router\.push/);
   assertSourceDoesNotMatch(activeProgram, /conserva lo que realmente ocurrió/);
   const programSectionHeader = await readTestFile(path.resolve(process.cwd(), "src/components/programs/program-section-header.tsx"), "utf8");
-  assertSourceMatch(programSectionHeader, /<Icon color=\{tokens\.color\.textMain\} size=\{19\} strokeWidth=\{2\.2\} \/>/);
+  assertSourceMatch(programSectionHeader, /<Icon color=\{tokens\.color\.textMain\} size=\{variant === "home" \? 25 : 19\} strokeWidth=\{2\.2\} \/>/);
   assertSourceMatch(programSectionHeader, /header: \{[^}]*marginBottom: tokens\.spacing\.sm[^}]*marginTop: tokens\.spacing\.xxl/);
   assertSourceMatch(programSectionHeader, /title: \{[^}]*fontSize: 20[^}]*fontWeight: tokens\.weight\.extraBold/);
   assertSourceMatch(programSectionHeader, /subtitle: \{[^}]*fontSize: tokens\.type\.caption[^}]*lineHeight: 20/);
@@ -681,7 +681,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm \}/);
   assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf('title="Progreso"'));
   assertSourceDoesNotMatch(todayScreen, /ActiveProgramSectionHeader|Tu programa en curso|activeProgram\?\.calendarization/);
-  assertSourceMatch(todayScreen, /<Button label="Ver calendario" onPress=\{\(\) => router\.push\("\/calendar" as Href\)\} variant="secondary" \/>/);
+  assertSourceMatch(todayScreen, /<Pressable accessibilityLabel="Ver calendario" accessibilityRole="button"[\s\S]*?onPress=\{\(\) => router\.push\("\/calendar" as Href\)\}/);
   assertSourceMatch(todayScreen, /activeProgramSectionTitle: \{[^}]*fontSize: 20[^}]*fontWeight: tokens\.weight\.extraBold/);
   assertSourceMatch(todayScreen, /activeProgramSectionHeader: \{[^}]*marginTop: tokens\.spacing\.xxl/);
   assertSourceMatch(todayScreen, /homeSectionHeading: \{[^}]*marginTop: tokens\.spacing\.sm/);
@@ -721,17 +721,17 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /<GuideMetric label="Peso actual" value="85,0kg" \/>/);
   assertSourceMatch(gallery, /<ProgramDaySelector/);
   assertSourceMatch(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
-  assertSourceMatch(todayScreen, /<ProgramActiveKpis[\s\S]*?mealLabel="Comidas cumplidas"[\s\S]*?planLabel=\{"Planes\\nrecorridos"\}/);
+  assertSourceMatch(todayScreen, /<ProgramActiveKpis[\s\S]*?mealLabel="Comidas cumplidas"[\s\S]*?planLabel=\{"Minutas\\nrecorridas"\}/);
   assertSourceMatch(todayScreen, /greetingHeading: \{ alignItems: "center", flexDirection: "row"/);
   assertSourceMatch(todayScreen, /<GuideMetric onPress=\{\(\) => router\.push\("\/weight" as Href\)\} tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assertSourceMatch(todayScreen, /<View style=\{styles\.homeQuickActions\}>[\s\S]*<HomeSectionTitle>Accesos rápidos<\/HomeSectionTitle>[\s\S]*<View style=\{styles\.homeFooterActions\}>/);
   assertSourceMatch(todayScreen, /homeFooterActions: \{[^}]*marginTop: tokens\.spacing\.sm/);
-  assertSourceMatch(todayScreen, /<Button icon=\{<Camera color=\{tokens\.color\.textMain\}[\s\S]*label="Digitalizar etiqueta"[\s\S]*router\.push\("\/label-capture" as Href\)[^>]*variant="secondary"/);
-  assertSourceMatch(todayScreen, /<Button icon=\{<Weight color=\{tokens\.color\.textMain\}[\s\S]*label="Registrar peso corporal"[\s\S]*router\.push\("\/weight" as Href\)[^>]*variant="secondary"/);
-  assertSourceMatch(todayScreen, /<Button icon=\{<Scale color=\{tokens\.color\.textMain\}[\s\S]*label="Comparar" onPress=\{\(\) => setComparisonActionsVisible\(true\)\} variant="secondary"/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Camera color=\{tokens\.color\.textMain\}[\s\S]*label="Digitalizar etiqueta"[\s\S]*router\.push\("\/label-capture" as Href\)[^>]*variant="surfaceCard"/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Weight color=\{tokens\.color\.textMain\}[\s\S]*label="Registrar peso corporal"[\s\S]*router\.push\("\/weight" as Href\)[^>]*variant="surfaceCard"/);
+  assertSourceMatch(todayScreen, /<Button icon=\{<Scale color=\{tokens\.color\.textMain\}[\s\S]*label="Comparar" onPress=\{\(\) => setComparisonActionsVisible\(true\)\} variant="surfaceCard"/);
   assertSourceMatch(todayScreen, /<HomeActions[\s\S]*onCompare=\{\(\) => \{[\s\S]*setOpenComparisonAfterHomeActions\(true\)[\s\S]*setHomeActionsVisible\(false\)[\s\S]*onDismiss=\{\(\) => \{[\s\S]*setComparisonActionsVisible\(true\)/);
   assertSourceMatch(todayScreen, /createAction: \{ icon: "plus", label: "Calendarizar", onPress: openCalendarizeActions \}/);
-  assertSourceMatch(todayScreen, /<CalendarizeActions onClose=\{\(\) => setCalendarizeActionsVisible\(false\)\} visible=\{calendarizeActionsVisible\} \/>/);
+  assertSourceMatch(todayScreen, /<CalendarizeActions onClose=\{\(\) => setCalendarizeActionsVisible\(false\)\} origin="home" visible=\{calendarizeActionsVisible\} \/>/);
   assertSourceMatch(todayScreen, /<ComparisonCreateActions onClose=\{\(\) => setComparisonActionsVisible\(false\)\} onSelect=\{openComparisonBuilder\} visible=\{comparisonActionsVisible\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /<GuideMetric icon="weight"/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
@@ -779,11 +779,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(libraryDetail, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Alimentos en esta minuta diaria" \/><GroupedFoodsCard/);
   assertSourceMatch(libraryDetail, /hasMealTimeContext[\s\S]*?\? \{ icon: "clock", label: "Cambiar hora"/);
   assertSourceMatch(libraryDetail, /eyebrowAccessory=\{item\.entity === "meal" && hasMealTimeContext && contextTime \? <HeaderMetadataChip kind="time" value=\{contextTime\} \/> : undefined\}/);
-  assertSourceMatch(libraryDetail, /item\?\.entity === "dailyPlan"[\s\S]*?\{ icon: "pin", label: isCalendarPlan \? "Quitar del calendario de hoy" : "Asignar al calendario de hoy"/);
+  assertSourceMatch(libraryDetail, /item\?\.entity === "dailyPlan" && !item\.is_draft[\s\S]*?\{ icon: "calendar-clock", label: "Asignar al calendario", onPress: openCalendarAssignment \}/);
   assertSourceMatch(libraryDetail, /item\?\.entity === "program"[\s\S]*?\{ icon: "calendar-clock", label: "Calendarizar este programa"/);
-  assertSourceMatch(libraryDetail, /Alert\.alert\([\s\S]*?\? "¿Asignar esta minuta a hoy\?" : "¿Quitar esta minuta de hoy\?"/);
+  assertSourceMatch(libraryDetail, /pathname: "\/calendar\/select-plans", params: \{ dailyPlanId: String\(item\.id\), origin: "detail"/);
   assertSourceMatch(libraryDetail, /<Button bleed label="Calendarizar este programa"/);
-  assertSourceMatch(libraryDetail, /<Button bleed label=\{isCalendarPlan \? "Quitar del calendario de hoy" : "Asignar al calendario de hoy"\}/);
+  assertSourceMatch(libraryDetail, /<Button bleed label="Asignar al calendario" onPress=\{openCalendarAssignment\} variant="primary" \/>/);
   assertSourceMatch(libraryDetail, /mealTimeInMenu=\{false\}/);
 
   assertSourceMatch(appNavigation, /headerPresentation\.secondaryAction[\s\S]*<Pin/);
@@ -908,7 +908,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(controlsSource, /systemSwitch: \{[^}]*height: 28[^}]*width: 48/);
   assertSourceMatch(controlsSource, /systemSwitchActive: \{ backgroundColor: tokens\.color\.success \}/);
   assertSourceMatch(controlsSource, /systemSwitchKnobActive: \{ transform: \[\{ translateX: 20 \}\] \}/);
-  assertSourceMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 48/);
+  assertSourceMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 44/);
   assertSourceDoesNotMatch(controlsSource, /button: \{[^}]*minHeight: 54|trackColor|thumbColor|ios_backgroundColor/);
   assertSourceDoesNotMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 54/);
   assertSourceMatch(cardSurfaceSource, /card: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);

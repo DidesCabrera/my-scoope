@@ -17,7 +17,7 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.match(list, /include_drafts/);
   assert.match(route, /LibraryCreateScreen/);
   assert.match(create, /mode: "back"/);
-  assert.match(create, /action: \{ label: "Cancelar"/);
+  assert.match(create, /fallback: `\/libraries\/\$\{config\.segment\}`/);
   assert.match(create, /<View style=\{styles\.formBody\}>/);
   for (const title of ["Crear nuevo alimento", "Crear nueva comida", "Crear nueva minuta diaria", "Crear nuevo programa"]) {
     assert.match(create, new RegExp(title));

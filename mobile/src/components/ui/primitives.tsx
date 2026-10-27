@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import { useContext, type PropsWithChildren, type ReactNode } from "react";
 import {
   ActivityIndicator,
   KeyboardTypeOptions,
@@ -14,6 +14,7 @@ import {
 import { tokens } from "@/design/tokens";
 import { Screen } from "./layout";
 import { LoadingState } from "./feedback";
+import { ButtonSurfaceContext } from "./button-surface-context";
 
 export { Chip as Pill } from "./chip";
 
@@ -53,9 +54,11 @@ export function Card({
   style,
 }: PropsWithChildren<{ accent?: string; muted?: boolean; style?: StyleProp<ViewStyle> }>) {
   return (
-    <View style={[styles.card, muted && styles.cardMuted, accent ? { borderTopColor: accent, borderTopWidth: 3 } : null, style]}>
-      {children}
-    </View>
+    <ButtonSurfaceContext.Provider value={!muted}>
+      <View style={[styles.card, muted && styles.cardMuted, accent ? { borderTopColor: accent, borderTopWidth: 3 } : null, style]}>
+        {children}
+      </View>
+    </ButtonSurfaceContext.Provider>
   );
 }
 
@@ -75,6 +78,7 @@ export function Button({
   label,
   onPress,
   variant = "primary",
+  surface,
   disabled = false,
   loading = false,
 }: {
@@ -84,9 +88,11 @@ export function Button({
   label: string;
   onPress(): void;
   variant?: "primary" | "secondary" | "danger";
+  surface?: "app" | "card";
   disabled?: boolean;
   loading?: boolean;
 }) {
+  const onCard = useContext(ButtonSurfaceContext);
   const buttonStyle = variant === "primary" ? styles.buttonPrimary : styles.buttonSecondary;
   const textStyle = variant === "primary" ? styles.buttonPrimaryText : styles.buttonSecondaryText;
   return (
@@ -99,6 +105,7 @@ export function Button({
         styles.button,
         bleed && styles.buttonBleed,
         buttonStyle,
+        variant === "secondary" && (surface === "card" || (surface !== "app" && onCard)) && styles.buttonSecondaryOnCard,
         variant === "danger" && styles.buttonDanger,
         (disabled || loading) && styles.buttonDisabled,
         pressed && styles.buttonPressed,
@@ -225,12 +232,13 @@ const styles = StyleSheet.create({
   sectionTitleRow: { alignItems: "baseline", flexDirection: "row", justifyContent: "space-between" },
   sectionTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   sectionDetail: { color: tokens.color.textSoft, fontSize: tokens.type.caption },
-  button: { alignItems: "center", borderRadius: tokens.radius.lg, justifyContent: "center", minHeight: 48, paddingHorizontal: tokens.spacing.lg },
+  button: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 44, paddingHorizontal: tokens.spacing.lg },
   buttonContent: { alignItems: "center", flexDirection: "row", gap: 8, justifyContent: "center" },
   buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   buttonPrimary: { backgroundColor: tokens.color.textMain },
-  buttonSecondary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderWidth: 1 },
-  buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger },
+  buttonSecondary: { backgroundColor: tokens.color.surfaceCard },
+  buttonSecondaryOnCard: { backgroundColor: tokens.color.surfaceMuted },
+  buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger, borderWidth: 1 },
   buttonDisabled: { opacity: 0.45 },
   buttonPressed: { opacity: 0.72, transform: [{ translateY: 1 }] },
   buttonPrimaryText: { color: tokens.color.surfaceApp, fontSize: 16, fontWeight: "800" },

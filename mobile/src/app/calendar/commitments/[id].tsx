@@ -9,8 +9,9 @@ import type { CalendarCommitment, CalendarDayDetailData, CalendarOverviewData } 
 import { useSession } from "@/auth/session-context";
 import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
+import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
 import { calendarFoodDayRole, selectCalendarFoodDate, validCalendarFoodPeriod } from "@/components/calendarization/calendar-food-period";
-import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
+import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { GroupedFoodsCard } from "@/components/panels";
@@ -50,6 +51,9 @@ export default function CalendarCommitmentDetailScreen() {
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleMonth, setRescheduleMonth] = useState<string | null>(null);
   const [rescheduleOverview, setRescheduleOverview] = useState<CalendarOverviewData | null>(null);
+  const [todaySize, setTodaySize] = useState({ width: 0, height: 0 });
+  const [rescheduleTodaySize, setRescheduleTodaySize] = useState({ width: 0, height: 0 });
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
 
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || !date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !id) return;
@@ -77,11 +81,12 @@ export default function CalendarCommitmentDetailScreen() {
     setHeaderPresentation({
       action: { icon: "more", label: "Opciones del compromiso", onPress: () => setActionMode("menu") },
       fallback: date ? `/calendar/days/${date}` as Href : "/calendar",
+      identityVisible: compactHeaderVisible,
       mode: "back",
       title: commitment ? commitmentDayTitle[commitment.kind] : "Detalle de compromiso",
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [commitment, date, setHeaderPresentation]));
+  }, [commitment, compactHeaderVisible, date, setHeaderPresentation]));
 
   useEffect(() => {
     if (status !== "authenticated" || !month) return;
@@ -230,7 +235,7 @@ export default function CalendarCommitmentDetailScreen() {
   const savedEnd = commitment.food_period_end;
   const controlsLocked = savingPeriod || periodSaved && !editingPeriod;
   return <>
-  <Screen contentStyle={styles.content} headerMode="preserve">
+  <Screen contentStyle={styles.content} headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
     <SectionPageHeader icon={<CommitmentIcon color={presentation.color} size={28} strokeWidth={1.8} />} indicator={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={shortDate(date)} textColor={tokens.color.textMain} />} section="calendarization" title={commitmentDayTitle[commitment.kind]} />
     {commitmentSupportsFoods(commitment.kind) ? <View style={styles.foodPeriodControls}>
       <Text style={styles.foodInstruction}>Selecciona una fecha de inicio y de término.</Text>
@@ -249,16 +254,20 @@ export default function CalendarCommitmentDetailScreen() {
           const dots = commitmentDotKinds(dayData?.commitments, shoppingDate ? "shopping" : undefined);
           const accent = tokens.color.food;
           return <Pressable
-            accessibilityLabel={`${shortDate(day)}: ${shoppingDate ? "día para hacer compras, " : ""}${role === "single" ? "inicio y término" : role === "start" ? "inicio" : role === "end" ? "término" : role === "between" ? "dentro del periodo" : "fuera del periodo"}${dayData?.commitments?.length ? `; ${dayData.commitments.map((item) => commitmentPresentation[item.kind].label).join(", ")}` : ""}`}
+            accessibilityLabel={`${shortDate(day)}${day === monthOverview?.local_date ? ", hoy" : ""}: ${shoppingDate ? "día para hacer compras, " : ""}${role === "single" ? "inicio y término" : role === "start" ? "inicio" : role === "end" ? "término" : role === "between" ? "dentro del periodo" : "fuera del periodo"}${dayData?.commitments?.length ? `; ${dayData.commitments.map((item) => commitmentPresentation[item.kind].label).join(", ")}` : ""}`}
             accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} key={day}
+            onLayout={day === monthOverview?.local_date ? ({ nativeEvent: { layout } }) => {
+              setTodaySize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
+            } : undefined}
             onPress={() => {
               const next = selectCalendarFoodDate(start, end, day);
               if (next.tooLong) { setError("Elige un periodo de hasta 366 días."); return; }
               setStart(next.start); setEnd(next.end); setError(null);
             }}
-            style={[styles.gridDate, dayData?.has_plan && styles.gridDateFilled, endpoint && { backgroundColor: `${accent}26`, borderColor: accent }, role === "between" && { backgroundColor: `${accent}33` }, monthKeyFromDate(day) !== month && styles.gridDateAdjacent]}>
-            <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, endpoint && { color: accent, fontWeight: "700" }, role === "between" && { color: accent }]}>{day.slice(8, 10)}</Text>
-            {dots.length ? <View style={styles.commitmentDots}>{dots.map((kind) => <View key={kind} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
+            style={[styles.gridDate, dayData?.has_plan && styles.gridDateFilled, dayData?.has_plan && isCurrentMonthFromToday(day, monthOverview?.local_date) && styles.gridDateUpcomingFilled, endpoint && { backgroundColor: `${accent}26`, borderColor: accent }, role === "between" && { backgroundColor: `${accent}33` }, monthKeyFromDate(day) !== month && styles.gridDateAdjacent, day === monthOverview?.local_date && styles.gridDateToday]}>
+            <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, Boolean(monthOverview?.local_date && day < monthOverview.local_date) && styles.gridNumberPast, endpoint && { color: accent, fontWeight: "700" }, role === "between" && { color: accent }]}>{day.slice(8, 10)}</Text>
+            {dots.length ? <View style={[styles.commitmentDots, day === monthOverview?.local_date && styles.commitmentDotsToday]}>{dots.map((kind) => <View key={kind} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
+            {day === monthOverview?.local_date ? <CalendarTodayOutline {...todaySize} /> : null}
           </Pressable>;
         })}
       </View>
@@ -317,15 +326,19 @@ export default function CalendarCommitmentDetailScreen() {
               const selected = day === rescheduleDate;
               const dots = commitmentDotKinds(dayData?.commitments?.filter((item) => item.id !== commitment.id));
               return <Pressable
-                accessibilityLabel={`${shortDate(day)}${occupied ? "; ya tiene este compromiso" : ""}`}
+                accessibilityLabel={`${shortDate(day)}${day === rescheduleOverview?.local_date ? ", hoy" : ""}${occupied ? "; ya tiene este compromiso" : ""}`}
                 accessibilityRole="button"
                 accessibilityState={{ disabled, selected }}
                 disabled={disabled}
                 key={day}
+                onLayout={day === rescheduleOverview?.local_date ? ({ nativeEvent: { layout } }) => {
+                  setRescheduleTodaySize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
+                } : undefined}
                 onPress={() => setRescheduleDate(day)}
-                style={[styles.gridDate, dayData?.has_plan && styles.gridDateFilled, selected && styles.rescheduleDateSelected, disabled && styles.gridDateDisabled, monthKeyFromDate(day) !== rescheduleMonth && styles.gridDateAdjacent]}>
-                <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, selected && styles.rescheduleNumberSelected]}>{day.slice(8, 10)}</Text>
-                {dots.length ? <View style={styles.commitmentDots}>{dots.map((kind) => <View key={kind} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
+                style={[styles.gridDate, dayData?.has_plan && styles.gridDateFilled, dayData?.has_plan && isCurrentMonthFromToday(day, rescheduleOverview?.local_date) && styles.gridDateUpcomingFilled, selected && styles.rescheduleDateSelected, disabled && styles.gridDateDisabled, monthKeyFromDate(day) !== rescheduleMonth && styles.gridDateAdjacent, day === rescheduleOverview?.local_date && styles.gridDateToday]}>
+                <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, past && styles.gridNumberPast, selected && styles.rescheduleNumberSelected]}>{day.slice(8, 10)}</Text>
+                {dots.length ? <View style={[styles.commitmentDots, day === rescheduleOverview?.local_date && styles.commitmentDotsToday]}>{dots.map((kind) => <View key={kind} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
+                {day === rescheduleOverview?.local_date ? <CalendarTodayOutline {...rescheduleTodaySize} /> : null}
               </Pressable>;
             })}
           </View>
@@ -355,18 +368,22 @@ export default function CalendarCommitmentDetailScreen() {
 
 const styles = StyleSheet.create({
   content: { gap: tokens.spacing.lg },
-  commitmentDots: { bottom: 3, flexDirection: "row", gap: 2, position: "absolute" },
+  commitmentDots: { bottom: 4, flexDirection: "row", gap: 2, position: "absolute" },
+  commitmentDotsToday: { bottom: 6 },
   commitmentDot: { borderRadius: 3, height: 5, width: 5 },
   foodInstruction: { color: tokens.color.textMain, fontSize: 16, fontWeight: "700", lineHeight: 23 },
   foodPeriodAction: { gap: tokens.spacing.sm, marginTop: 30 - tokens.spacing.md },
   foodPeriodControls: { gap: tokens.spacing.md, marginBottom: 42 - tokens.spacing.lg },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 40, width: "13.5%" },
+  gridDateToday: { borderWidth: 0 },
   gridDateAdjacent: { opacity: 0.5 },
   gridDateDisabled: { opacity: 0.32 },
-  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}33` },
+  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}2E` },
+  gridDateUpcomingFilled: { backgroundColor: `${tokens.color.dailyPlan}59` },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
+  gridNumberPast: { opacity: 0.8 },
   gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
   monthArrow: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: tokens.spacing.md },

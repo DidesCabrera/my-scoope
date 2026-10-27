@@ -152,7 +152,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente Nutricional" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: pathname === "/proposals" ? Sparkles : ClipboardCheck, title: pathname === "/proposals" ? "Asistente Nutricional" : "Detalle de propuesta" };
   if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparaciones" };
-  if (pathname.startsWith("/calendar")) return { icon: CalendarClock, title: pathname === "/calendar" ? "Calendario" : pathname === "/calendar/registry" ? "Registro de compromisos" : pathname.startsWith("/calendar/commitments") ? "Registrar compromisos" : pathname === "/calendar/future" ? "Planes próximas fechas" : "Detalle de fecha" };
+  if (pathname.startsWith("/calendar")) return { icon: CalendarClock, title: pathname === "/calendar" ? "Calendario" : pathname === "/calendar/registry" ? "Mis compromisos" : pathname.startsWith("/calendar/commitments") ? "Registrar compromisos" : pathname === "/calendar/future" ? "Planes próximas fechas" : "Detalle de fecha" };
   if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Programa en curso" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
   if (pathname === "/weight") return { icon: Weight, title: "Registrar peso" };

@@ -20,6 +20,7 @@ import {
 import { initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { tokens } from "@/design/tokens";
+import { ButtonSurfaceContext } from "./button-surface-context";
 import { EntityIcon, SectionIcon, type EntityKind, type SectionKind } from "./product";
 
 type ActionSheetModalProps = PropsWithChildren<{
@@ -131,7 +132,7 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
           style={[styles.sheetFrame, { paddingBottom: bottomInset, transform: [{ translateY: sheetTranslateY }] }]}
         >
           <View style={styles.sheetHandle} />
-          {children}
+          <ButtonSurfaceContext.Provider value>{children}</ButtonSurfaceContext.Provider>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>

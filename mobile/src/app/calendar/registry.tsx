@@ -8,8 +8,9 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarCommitment, CalendarCommitmentKind, CalendarOverviewData } from "@/api/calendar-types";
 import { useSession } from "@/auth/session-context";
 import { commitmentKinds, commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
+import { CalendarCommitmentListCard } from "@/components/calendarization/calendar-commitment-list-card";
 import { CalendarMonthPlaceholder } from "@/components/calendarization/calendar-month-calendar";
-import { monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
+import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Card, InlineNotice, Screen, ScrollableTabBar } from "@/components/ui";
@@ -36,10 +37,12 @@ function CommitmentHeader() {
       {commitmentKinds.map((kind) => {
         const presentation = commitmentPresentation[kind];
         const Icon = presentation.icon;
-        return <Icon color={presentation.color} key={kind} size={28} strokeWidth={2.1} />;
+        return <View key={kind} style={[styles.headerIcon, { backgroundColor: `${presentation.color}33` }]}>
+          <Icon color={presentation.color} size={24} strokeWidth={2.1} />
+        </View>;
       })}
     </View>
-    <Text accessibilityRole="header" style={styles.title}>Registro de compromisos</Text>
+    <Text accessibilityRole="header" style={styles.title}>Mis compromisos</Text>
     <Text style={styles.subtitle}>Marca en el calendario tus compromisos y planifícate con anticipación</Text>
   </View>;
 }
@@ -57,17 +60,19 @@ export default function CommitmentRegistryScreen() {
   const [actionsVisible, setActionsVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
 
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
       action: { icon: "more", label: "Más opciones de compromisos", onPress: () => setActionsVisible(true) },
       fallback: "/calendar",
+      identityVisible: compactHeaderVisible,
       mode: "back",
       secondaryAction: { icon: "plus", label: "Registrar un compromiso", onPress: () => setMenuVisible(true) },
-      title: "Registro de compromisos",
+      title: "Mis compromisos",
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [setHeaderPresentation]));
+  }, [compactHeaderVisible, setHeaderPresentation]));
 
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated") return;
@@ -127,6 +132,7 @@ export default function CommitmentRegistryScreen() {
     <Screen
       contentStyle={styles.content}
       headerMode="preserve"
+      onHeaderVisibilityChange={setCompactHeaderVisible}
       scrollHeader={<CommitmentHeader />}
       stickyHeader={<ScrollableTabBar<CommitmentScope>
         accessibilityLabel="Tipos de compromisos"
@@ -161,8 +167,8 @@ export default function CommitmentRegistryScreen() {
               accessibilityState={{ selected }}
               key={day.calendar_date}
               onPress={() => selectDate(day.calendar_date)}
-              style={({ pressed }) => [styles.gridDate, selected && styles.gridDateSelected, day.has_plan && styles.gridDateFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, pressed && styles.pressed]}>
-              <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan]}>{day.calendar_date.slice(8, 10)}</Text>
+              style={({ pressed }) => [styles.gridDate, selected && styles.gridDateSelected, day.has_plan && styles.gridDateFilled, day.has_plan && isCurrentMonthFromToday(day.calendar_date, overview?.local_date) && styles.gridDateUpcomingFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, pressed && styles.pressed]}>
+              <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, Boolean(overview?.local_date && day.calendar_date < overview.local_date) && styles.gridNumberPast]}>{day.calendar_date.slice(8, 10)}</Text>
               {visibleCommitments.length ? <View style={styles.commitmentDots}>{visibleCommitments.map((item) => <View key={item.id} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
             </Pressable>;
           })}
@@ -171,23 +177,7 @@ export default function CommitmentRegistryScreen() {
       </View>
       <Text accessibilityRole="header" style={styles.listTitle}>{selectedDate ? `Compromisos del ${readableDate(selectedDate)}` : `Compromisos de ${visibleMonth ? monthLabel(visibleMonth) : "este mes"}`}</Text>
       {!loading && !error && !commitments.length ? <Card><Text style={styles.empty}>No hay compromisos registrados para esta selección.</Text></Card> : null}
-      {!loading && commitments.map((commitment: CalendarCommitment) => {
-        const presentation = commitmentPresentation[commitment.kind];
-        const Icon = presentation.icon;
-        return <Pressable accessibilityLabel={`Ver ${presentation.label} del ${readableDate(commitment.calendar_date)}`} accessibilityRole="link" key={commitment.id} onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)} style={({ pressed }) => pressed && styles.pressed}>
-          <Card>
-            <View style={styles.commitmentRow}>
-              <Icon color={presentation.color} size={23} strokeWidth={2.1} />
-              <View style={styles.commitmentCopy}>
-                <Text style={styles.commitmentTitle}>{presentation.label}</Text>
-                <Text style={styles.commitmentDate}>{readableDate(commitment.calendar_date)}</Text>
-                {commitment.note ? <Text style={styles.commitmentNote}>{commitment.note}</Text> : null}
-              </View>
-              <ChevronRight color={tokens.color.textMuted} size={20} />
-            </View>
-          </Card>
-        </Pressable>;
-      })}
+      {!loading && commitments.map((commitment: CalendarCommitment) => <CalendarCommitmentListCard commitment={commitment} key={commitment.id} onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)} />)}
     </Screen>
     <ActionSheetModal onRequestClose={() => setMenuVisible(false)} visible={menuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.sheet}>
@@ -214,24 +204,22 @@ export default function CommitmentRegistryScreen() {
 
 const styles = StyleSheet.create({
   calendarSection: { paddingVertical: tokens.spacing.sm },
-  commitmentCopy: { flex: 1, gap: tokens.spacing.xs },
-  commitmentDate: { color: tokens.color.textMuted, fontSize: 13 },
   commitmentDot: { borderRadius: 3, height: 5, width: 5 },
-  commitmentDots: { bottom: 3, flexDirection: "row", gap: 2, position: "absolute" },
-  commitmentNote: { color: tokens.color.textMain, fontSize: 13, lineHeight: 19 },
-  commitmentRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
-  commitmentTitle: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.semibold },
+  commitmentDots: { bottom: 4, flexDirection: "row", gap: 2, position: "absolute" },
   content: { gap: tokens.spacing.lg },
   empty: { color: tokens.color.textMuted, fontSize: 13 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 1, justifyContent: "center", minHeight: 40, width: "13.5%" },
   gridDateAdjacent: { opacity: 0.45 },
-  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}33` },
+  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}2E` },
+  gridDateUpcomingFilled: { backgroundColor: `${tokens.color.dailyPlan}59` },
   gridDateSelected: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
+  gridNumberPast: { opacity: 0.8 },
   gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
   header: { gap: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
+  headerIcon: { alignItems: "center", borderRadius: tokens.radius.md, height: 40, justifyContent: "center", width: 40 },
   headerIcons: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   hint: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 18, marginTop: tokens.spacing.sm },
   listTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: tokens.weight.semibold },

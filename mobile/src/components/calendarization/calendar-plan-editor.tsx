@@ -1,17 +1,17 @@
 import * as Crypto from "expo-crypto";
 import { type Href, useRouter } from "expo-router";
-import { ChevronRight, Ellipsis, MoveRight, Paperclip, Repeat2, Trash2 } from "lucide-react-native";
+import { Ellipsis, MoveRight, Repeat2, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarDayDetailData, CalendarDayHistoryData, LibraryPageData } from "@/api/types";
-import { commitmentDayTitle, commitmentPresentation, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
+import { CalendarCommitmentListCard } from "@/components/calendarization/calendar-commitment-list-card";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { DailyPlanPreviewCard } from "@/components/calendarization/daily-plan-preview-card";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Card, Chip, EntityCardAction, InlineNotice, LoadingState, NativeDateTimeField, SearchField } from "@/components/ui";
+import { Button, Card, EntityCardAction, InlineNotice, LoadingState, NativeDateTimeField, SearchField } from "@/components/ui";
 import { ConfirmationState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 
@@ -195,7 +195,6 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
     </Card>) : !historyError ? <InlineNotice>No hay cambios anteriores para esta fecha.</InlineNotice> : null}
   </>;
   return (<>
-    <Text style={styles.sectionTitle}>Programado para este día</Text>
     {day.has_plan && day.plan_snapshot ? <CalendarizedDailyPlanCard
       additionalActions={<EntityCardAction label="Opciones de la minuta diaria" onPress={() => setPlanMenuVisible(true)}><Ellipsis color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>}
       apiRequest={apiRequest}
@@ -205,6 +204,7 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
       mealExecution={day.meal_execution}
       onChanged={onChanged}
       planName={day.plan_name}
+      showLibraryActions={false}
       snapshot={day.plan_snapshot}
     /> : null}
     <ActionSheetModal onRequestClose={() => setPlanMenuVisible(false)} visible={planMenuVisible}>
@@ -220,27 +220,7 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
         </View>
       </SafeAreaView>
     </ActionSheetModal>
-    {day.commitments?.map((commitment) => {
-      const presentation = commitmentPresentation[commitment.kind];
-      const CommitmentIcon = presentation.icon;
-      const hasFoodList = commitmentSupportsFoods(commitment.kind) && commitment.food_period_start && commitment.food_period_end;
-      return <View key={commitment.id}>
-        <Card accent={presentation.color}>
-          <View style={styles.assignmentHeading}>
-            <CommitmentIcon color={presentation.color} size={19} strokeWidth={2} />
-            <Text style={styles.assignmentEyebrow}>{commitmentDayTitle[commitment.kind].toUpperCase()}</Text>
-            {hasFoodList ? <Paperclip accessibilityLabel="Lista de alimentos adjunta" color={tokens.color.textMuted} size={17} /> : null}
-          </View>
-          <Pressable accessibilityLabel={`Ver detalle de ${commitmentDayTitle[commitment.kind]}`} accessibilityRole="link" onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${day.calendar_date}` as Href)}><Text style={styles.assignmentTitle}>{commitmentDayTitle[commitment.kind]}</Text></Pressable>
-          {commitment.note ? <Text style={styles.assignmentMeta}>{commitment.note}</Text> : null}
-          {hasFoodList ? <View style={styles.assignmentChips}>
-            <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={`${commitment.foods.length} ${commitment.foods.length === 1 ? "alimento" : "alimentos"}`} textColor={tokens.color.textMain} />
-            <Chip backgroundColor={`${tokens.color.dailyPlan}1A`} borderColor={tokens.color.dailyPlan} label={`${commitment.food_plans_count} ${commitment.food_plans_count === 1 ? "plan" : "planes"}`} textColor={tokens.color.textMain} />
-          </View> : null}
-          <View style={styles.assignmentActions}><EntityCardAction label={`Ver detalle de ${commitmentDayTitle[commitment.kind]}`} onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${day.calendar_date}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction></View>
-        </Card>
-      </View>;
-    })}
+    {day.commitments?.map((commitment) => <CalendarCommitmentListCard commitment={commitment} key={commitment.id} onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${day.calendar_date}` as Href)} />)}
     {!day.has_plan && !day.commitments?.length ? <InlineNotice>No hay planes ni compromisos programados para este día.</InlineNotice> : null}
     {!day.has_plan ? <>
       <Text style={styles.title}>Asignar minuta diaria</Text>
@@ -275,11 +255,6 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
 }
 
 const styles = StyleSheet.create({
-  assignmentActions: { alignItems: "flex-end" },
-  assignmentChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },
-  assignmentEyebrow: { color: tokens.color.textMuted, flex: 1, fontSize: 11, fontWeight: "600" },
-  assignmentHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
-  assignmentMeta: { color: tokens.color.textMuted, fontSize: 13 },
   assignmentTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: "700" },
   group: { gap: tokens.spacing.md },
   helper: { color: tokens.color.textMuted, fontSize: 13 },

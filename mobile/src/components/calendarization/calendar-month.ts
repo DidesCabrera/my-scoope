@@ -2,6 +2,10 @@ export function monthKeyFromDate(value: string): string {
   return value.slice(0, 7);
 }
 
+export function isCurrentMonthFromToday(date: string, today: string | null | undefined): boolean {
+  return Boolean(today && date >= today && monthKeyFromDate(date) === monthKeyFromDate(today));
+}
+
 export function shiftMonth(monthKey: string, delta: number): string {
   const year = Number(monthKey.slice(0, 4));
   const month = Number(monthKey.slice(5, 7)) - 1;

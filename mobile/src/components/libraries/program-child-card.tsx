@@ -55,7 +55,7 @@ export function programDailyMetricData(weeks: { days: { nutrition?: LibraryNutri
 
 function liveRange(metric: MetricRow, values: number[] | undefined): string {
   const finite = (values ?? []).filter((value) => Number.isFinite(value) && value > 0);
-  if (finite.length === 0) return metric.range;
+  if (finite.length === 0) return values ? "Sin datos" : metric.range;
   const minimum = Math.min(...finite);
   const maximum = Math.max(...finite);
   const unit = metric.key === "calories" ? "kcal" : metric.key === "ppk" ? "g/kg" : "g";
@@ -157,7 +157,7 @@ function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: provi
     : Math.round(value).toLocaleString("es-CL");
   return (
     <View
-      accessibilityLabel={`${metric.label}: ${metric.range}`}
+      accessibilityLabel={`${metric.label}: ${providedValues ? liveRange(metric, providedValues) : metric.range}`}
       onLayout={fullWidth ? ({ nativeEvent }) => setRenderedSize(nativeEvent.layout) : undefined}
       style={[styles.metricPlot, fullWidth && styles.weekFullWidthPlot, fullWidth && styles.weekMetricPlot]}>
       {fullWidth ? <Text style={styles.inlineChartTitle}>{metric.label}</Text> : null}
@@ -174,7 +174,7 @@ function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: provi
           </LinearGradient>
         </Defs>
         {weekDividers.map((x, index) => <Line key={`week-divider-${index}`} stroke={tokens.color.borderSoft} strokeWidth="0.8" x1={x} x2={x} y1="0" y2={plotHeight} />)}
-        {fullWidth ? coordinates.map(({ x, y }, index) => (
+        {fullWidth ? coordinates.map(({ x, y }, index) => rawValues[index] > 0 ? (
           <Rect
             fill={`url(#metric-bar-${metric.key})`}
             height={Math.max(1, plotBaseline - y)}
@@ -185,7 +185,7 @@ function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: provi
             x={x - barWidth / 2}
             y={y}
           />
-        )) : (
+        ) : null) : (
           <>
             {areaPoints ? <Polygon fill={`url(#metric-area-${metric.key})`} points={areaPoints} /> : null}
             <Polyline fill="none" points={points} stroke={metric.color} strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" vectorEffect="non-scaling-stroke" />
@@ -206,7 +206,7 @@ function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: provi
                   top: `${Math.max(0, (y / plotHeight) * 100 - 12)}%`,
                 },
               ]}>
-              {formatPointValue(rawValues[index])}
+              {rawValues[index] > 0 ? formatPointValue(rawValues[index]) : "—"}
             </Text>
           ))}
         </View>

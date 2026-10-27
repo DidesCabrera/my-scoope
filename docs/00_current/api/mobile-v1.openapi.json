@@ -8155,6 +8155,22 @@
             "title": "Body",
             "type": "string"
           },
+          "comparison_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "foods",
+                  "meals",
+                  "dailyplans"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Kind"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -8181,6 +8197,24 @@
           "mobile_path": {
             "title": "Mobile Path",
             "type": "string"
+          },
+          "subject_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "comparison",
+                  "daily_plan",
+                  "food",
+                  "meal",
+                  "program"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Type"
           },
           "title": {
             "title": "Title",
@@ -18693,6 +18727,50 @@
           }
         ],
         "summary": "Register Apple Notification Device"
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "operationId": "mobile_api_mark_all_notifications_read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Notification Read All"
       }
     },
     "/api/v1/notifications/{kind}/{item_id}/read": {

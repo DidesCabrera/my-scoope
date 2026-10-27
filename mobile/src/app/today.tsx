@@ -1,6 +1,6 @@
 import { type Href, Redirect, Stack, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { CalendarCheck2, CalendarDays, Camera, ChevronRight, Pin, Scale, Weight } from "lucide-react-native";
+import { CalendarCheck2, CalendarDays, Camera, ChartColumnIncreasing, ChevronRight, Pin, Scale, Weight } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -21,6 +21,8 @@ import { compactDateLabel } from "@/components/calendarization/current-week";
 import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import { HomeActions } from "@/components/home-actions";
 import { ComparisonCreateActions } from "@/components/comparisons";
+import { emptyDaySituation } from "@/components/home/home-empty-day";
+import { HomeEmptyDayNotice } from "@/components/home/home-empty-day-notice";
 import { HomeGettingStarted } from "@/components/home/home-getting-started";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -82,9 +84,11 @@ function TodayCommitmentCard({ commitment, onPress }: { commitment: CalendarComm
   const presentation = commitmentPresentation[commitment.kind];
   const CommitmentIcon = presentation.icon;
   return <Pressable accessibilityLabel={`Ver ${commitmentDayTitle[commitment.kind]}`} accessibilityRole="link" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-    <Card accent={presentation.color}>
+    <Card>
       <View style={styles.commitmentRow}>
-        <CommitmentIcon color={presentation.color} size={23} strokeWidth={2.1} />
+        <View style={[styles.commitmentIcon, { backgroundColor: `${presentation.color}33` }]}>
+          <CommitmentIcon color={presentation.color} size={23} strokeWidth={2.1} />
+        </View>
         <View style={styles.commitmentCopy}>
           <Text style={styles.commitmentTitle}>{commitmentDayTitle[commitment.kind]}</Text>
           {commitment.note ? <Text style={styles.commitmentNote}>{commitment.note}</Text> : null}
@@ -95,6 +99,24 @@ function TodayCommitmentCard({ commitment, onPress }: { commitment: CalendarComm
   </Pressable>;
 }
 
+function TodayCommitmentsSection({ commitments, error, onOpen, onOpenRegistry }: {
+  commitments: CalendarCommitment[];
+  error: string | null;
+  onOpen(commitment: CalendarCommitment): void;
+  onOpenRegistry(): void;
+}) {
+  return <>
+    <TodayCommitmentsSectionHeader />
+    {error ? <InlineNotice tone="error">{error}</InlineNotice> : commitments.length ? commitments.map((commitment) => (
+      <TodayCommitmentCard commitment={commitment} key={commitment.id} onPress={() => onOpen(commitment)} />
+    )) : <Card muted><Text style={textStyles.muted}>Sin compromisos para este día.</Text></Card>}
+    <Pressable accessibilityLabel="Ver mis compromisos" accessibilityRole="button" hitSlop={6} onPress={onOpenRegistry} style={({ pressed }) => [styles.homeActionChip, pressed && styles.pressed]}>
+      <Pin color={tokens.color.textMain} size={16} strokeWidth={2.2} />
+      <Text style={styles.homeActionChipLabel}>Ver mis compromisos</Text>
+    </Pressable>
+  </>;
+}
+
 export default function TodayScreen() {
   const router = useRouter();
   const { status, session, profile, apiRequest } = useSession();
@@ -102,6 +124,7 @@ export default function TodayScreen() {
   const [today, setToday] = useState<TodayData | null>(null);
   const [calendarProgress, setCalendarProgress] = useState<CalendarProgressData | null>(null);
   const [futurePlansCount, setFuturePlansCount] = useState(0);
+  const [upcomingOverview, setUpcomingOverview] = useState<CalendarOverviewData | null>(null);
   const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
   const [monthOverview, setMonthOverview] = useState<{ key: string; data: CalendarOverviewData } | null>(null);
   const [monthError, setMonthError] = useState<string | null>(null);
@@ -137,7 +160,7 @@ export default function TodayScreen() {
       const [home, nextProgress, nextOverview, todayCalendar, weightHistory] = await Promise.all([
         homeRequest,
         apiRequest<CalendarProgressData>("/api/v1/calendar/progress").catch(() => null),
-        apiRequest<CalendarOverviewData>("/api/v1/calendar?days=1").catch(() => null),
+        homeRequest.then((homeData) => apiRequest<CalendarOverviewData>(`/api/v1/calendar?start_date=${homeData.today.local_date}&days=42`)).catch(() => null),
         homeRequest.then((homeData) => apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${homeData.today.local_date}`))
           .catch((nextError) => { setCommitmentsError(userFacingError(nextError)); return null; }),
         apiRequest<WeightListData>("/api/v1/weights?limit=12").catch(() => null),
@@ -146,6 +169,7 @@ export default function TodayScreen() {
       setToday(nextToday);
       setCalendarProgress(nextProgress);
       setFuturePlansCount(nextOverview?.future_plans_count ?? 0);
+      setUpcomingOverview(nextOverview);
       setVisibleMonth((previous) => previous ?? monthKeyFromDate(nextToday.local_date));
       setTodayCommitments(todayCalendar?.commitments ?? []);
       setWeightItems(weightHistory?.items ?? []);
@@ -225,6 +249,12 @@ export default function TodayScreen() {
       ? { color: tokens.color.dailyPlan, label: "Plan calendarizado" }
       : null;
   const showGettingStarted = Boolean(today && !hasDatedPlan && !today.pinned_plan);
+  const commitmentsSection = <TodayCommitmentsSection
+    commitments={todayCommitments}
+    error={commitmentsError}
+    onOpen={(commitment) => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)}
+    onOpenRegistry={() => router.push("/calendar/registry" as Href)}
+  />;
 
   async function createTodayPlan() {
     if (!today) return;
@@ -323,6 +353,37 @@ export default function TodayScreen() {
     onReplace: (meal) => { if (meal.relationId != null) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: pinnedPlan.id, dailyPlanMealId: meal.relationId })); },
   } : undefined;
 
+  const calendarSection = visibleMonth && today ? <View style={styles.homeCalendarSection}>
+    <ProgramSectionHeader
+      bottomSpacing={24}
+      icon={CalendarDays}
+      subtitle="Planifica tus próximos días y semanas. Asigna minutas y compromisos en tu calendario"
+      title="Tu calendario"
+      variant="home"
+    />
+    <Card style={styles.homeCalendarCard}>
+      <CalendarMonthCalendar
+        days={monthDays}
+        embedded
+        error={monthError}
+        localDate={today.local_date}
+        onChangeMonth={(delta) => {
+          const nextMonth = shiftMonth(visibleMonth, delta);
+          const cached = monthCache.get(nextMonth);
+          if (cached) setMonthOverview({ key: nextMonth, data: cached });
+          setVisibleMonth(nextMonth);
+        }}
+        onOpenDay={(date) => router.push(`/calendar/days/${date}${date === today.local_date ? "?origin=home" : ""}` as Href)}
+        onReturnToCurrentMonth={() => setVisibleMonth(monthKeyFromDate(today.local_date))}
+        visibleMonth={visibleMonth}
+      />
+      <Pressable accessibilityLabel="Ver calendario" accessibilityRole="button" hitSlop={6} onPress={() => router.push("/calendar" as Href)} style={({ pressed }) => [styles.homeActionChip, styles.homeCalendarActionChip, pressed && styles.pressed]}>
+        <CalendarDays color={tokens.color.textMain} size={16} strokeWidth={2.2} />
+        <Text style={styles.homeActionChipLabel}>Ver calendario</Text>
+      </Pressable>
+    </Card>
+  </View> : null;
+
   return (
     <>
       <Stack.Screen options={{ headerShown: true }} />
@@ -364,8 +425,13 @@ export default function TodayScreen() {
           }}
           snapshot={snapshot}
         />
-      ) : showGettingStarted ? (
-        <HomeGettingStarted compactTop={Boolean(planContext || todayCommitments.length)} />
+      ) : showGettingStarted && today ? (
+        <>
+          <HomeEmptyDayNotice localDate={today.local_date} situation={emptyDaySituation(upcomingOverview, today.local_date)} />
+          {todayCommitments.length || commitmentsError ? commitmentsSection : null}
+          <HomeGettingStarted compactTop />
+          {calendarSection}
+        </>
       ) : today?.calendarization ? (
         <Card muted>
           <SectionTitle title="Día sin plan" />
@@ -389,61 +455,33 @@ export default function TodayScreen() {
         </>
       ) : null}
 
-      {!showGettingStarted && today ? <>
-        <TodayCommitmentsSectionHeader />
-        {commitmentsError ? <InlineNotice tone="error">{commitmentsError}</InlineNotice> : todayCommitments.length ? todayCommitments.map((commitment) => (
-          <TodayCommitmentCard
-            commitment={commitment}
-            key={commitment.id}
-            onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)}
-          />
-        )) : <Card muted><Text style={textStyles.muted}>Sin compromisos para este día.</Text></Card>}
-        <Button label="Ver mi registro de compromisos" onPress={() => router.push("/calendar/registry" as Href)} variant="secondary" />
-      </> : null}
+      {!showGettingStarted && today ? commitmentsSection : null}
 
-      {visibleMonth && today ? <View style={styles.homeCalendarSection}>
-        <ProgramSectionHeader
-          icon={CalendarDays}
-          subtitle="Planifica tus próximos días y semanas en tu calendario"
-          title="Tu calendario"
-        />
-        <CalendarMonthCalendar
-          days={monthDays}
-          error={monthError}
-          localDate={today.local_date}
-          onChangeMonth={(delta) => {
-            const nextMonth = shiftMonth(visibleMonth, delta);
-            const cached = monthCache.get(nextMonth);
-            if (cached) setMonthOverview({ key: nextMonth, data: cached });
-            setVisibleMonth(nextMonth);
-          }}
-          onOpenDay={(date) => router.push(`/calendar/days/${date}` as Href)}
-          onReturnToCurrentMonth={() => setVisibleMonth(monthKeyFromDate(today.local_date))}
-          visibleMonth={visibleMonth}
-        />
-        <Button label="Ver calendario" onPress={() => router.push("/calendar" as Href)} variant="secondary" />
-      </View> : null}
+      {!showGettingStarted ? calendarSection : null}
 
       {calendarProgress ? <View style={styles.homeProgressSection}>
         <ProgramSectionHeader
-          detail={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`Inicio el ${longDateLabel(calendarProgress.period_start)}`} textColor={tokens.color.textMuted} />}
-          icon={CalendarDays}
+          detail={<Chip backgroundColor={`${tokens.color.protein}1A`} borderColor={tokens.color.protein} label={`Inicio el ${longDateLabel(calendarProgress.period_start)}`} textColor={tokens.color.protein} />}
+          icon={ChartColumnIncreasing}
+          subtitle="Tu elijes cuando partir. Elije la fecha de inicio de tu progreso cuando te sientas comprometido"
           title="Progreso"
+          variant="home"
         />
         <ProgramActiveKpis
           adheredDays={calendarProgress.completed_meals}
           adherence={mealCoverage}
           bleed={false}
           elapsedDays={calendarProgress.days_with_plan}
+          marginHorizontal={-6}
           mealLabel="Comidas cumplidas"
-          planLabel={"Planes\nrecorridos"}
+          planLabel={"Minutas\nrecorridas"}
           plannedAdherenceDays={calendarProgress.scheduled_meals}
           progress={calendarCoverage}
           standalone
           totalDays={futurePlansCount}
         />
-        <WeightTrendCard items={weightItems} />
-        <Button icon={<Weight color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Registrar peso corporal" onPress={() => router.push("/weight" as Href)} variant="secondary" />
+        <WeightTrendCard chartMarginLeft={-16} chartMarginRight={-18} currentWeightLabel={currentWeightKg == null ? undefined : `${displayWeight(currentWeightKg)} kg`} items={weightItems} marginHorizontal={-6} onPressCurrentWeight={() => router.push("/weight" as Href)} yAxisLabelInset={6} />
+        <Button icon={<Weight color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Registrar peso corporal" onPress={() => router.push("/weight" as Href)} variant="surfaceCard" />
       </View> : null}
 
       <HomeLibraryGrid counts={libraryCounts} />
@@ -453,21 +491,6 @@ export default function TodayScreen() {
           <InlineNotice tone="error">{error}</InlineNotice>
           <Button label="Reintentar" loading={loading} onPress={() => void load()} variant="secondary" />
         </>
-      ) : null}
-
-      {today?.measurements?.latest_weight_kg != null ? (
-        <Card muted>
-          <SectionTitle detail={`${today.measurements.count} mediciones`} title="Tendencia del programa" />
-          <View style={styles.measurementRow}>
-            <Text style={styles.measurementValue}>{displayWeight(today.measurements.latest_weight_kg)} kg</Text>
-            {today.measurements.change_kg != null ? (
-              <Chip
-                borderColor={tokens.color.protein}
-                label={`${today.measurements.change_kg > 0 ? "+" : ""}${today.measurements.change_kg.toFixed(1)} kg`}
-              />
-            ) : null}
-          </View>
-        </Card>
       ) : null}
 
       {today?.pending_revision ? (
@@ -481,8 +504,8 @@ export default function TodayScreen() {
       <View style={styles.homeQuickActions}>
         <HomeSectionTitle>Accesos rápidos</HomeSectionTitle>
         <View style={styles.homeFooterActions}>
-          <Button icon={<Camera color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Digitalizar etiqueta" onPress={() => router.push("/label-capture" as Href)} variant="secondary" />
-          <Button icon={<Scale color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Comparar" onPress={() => setComparisonActionsVisible(true)} variant="secondary" />
+          <Button icon={<Camera color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Digitalizar etiqueta" onPress={() => router.push("/label-capture" as Href)} variant="surfaceCard" />
+          <Button icon={<Scale color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Comparar" onPress={() => setComparisonActionsVisible(true)} variant="surfaceCard" />
         </View>
       </View>
 
@@ -502,7 +525,7 @@ export default function TodayScreen() {
         onRegisterWeight={() => router.push("/weight")}
         visible={homeActionsVisible}
       />
-      <CalendarizeActions onClose={() => setCalendarizeActionsVisible(false)} visible={calendarizeActionsVisible} />
+      <CalendarizeActions onClose={() => setCalendarizeActionsVisible(false)} origin="home" visible={calendarizeActionsVisible} />
       <ComparisonCreateActions onClose={() => setComparisonActionsVisible(false)} onSelect={openComparisonBuilder} visible={comparisonActionsVisible} />
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </>
@@ -515,7 +538,11 @@ const styles = StyleSheet.create({
   activeProgramSectionSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   activeProgramSectionTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
   commitmentCopy: { flex: 1, gap: tokens.spacing.xs },
+  commitmentIcon: { alignItems: "center", borderRadius: 10, height: 40, justifyContent: "center", width: 40 },
   commitmentNote: { color: tokens.color.textMuted, fontSize: 13, lineHeight: 19 },
+  homeActionChip: { alignItems: "center", alignSelf: "flex-end", borderColor: tokens.color.borderDefault, borderRadius: 999, borderWidth: 1, flexDirection: "row", gap: 6, justifyContent: "center", minHeight: 34, paddingHorizontal: 12 },
+  homeActionChipLabel: { color: tokens.color.textMain, fontSize: 13, fontWeight: "700" },
+  homeCalendarActionChip: { borderColor: tokens.color.dailyPlan },
   commitmentRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   commitmentTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: tokens.weight.semibold },
   homeSectionHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
@@ -523,6 +550,7 @@ const styles = StyleSheet.create({
   homeFooterActions: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
   homeQuickActions: { marginTop: tokens.spacing.xl },
   homeCalendarSection: { marginTop: tokens.spacing.lg },
+  homeCalendarCard: { gap: 24 },
   homeProgressSection: { gap: tokens.spacing.md, marginTop: tokens.spacing.lg },
   greetingRow: { gap: 0, marginBottom: 0 },
   greetingHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
@@ -531,6 +559,4 @@ const styles = StyleSheet.create({
   planContextBeforeGettingStarted: { marginBottom: 12 },
   pressed: { opacity: 0.65 },
   weekRow: { marginBottom: tokens.spacing.sm },
-  measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  measurementValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: "900", fontVariant: ["tabular-nums"] },
 });

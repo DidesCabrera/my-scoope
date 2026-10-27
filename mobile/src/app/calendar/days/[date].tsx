@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { CalendarDays, ClipboardList } from "lucide-react-native";
+import { CalendarDays, ClipboardList, Pin } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -11,7 +11,7 @@ import { commitmentKinds, commitmentPresentation, commitmentRegistrationTitle } 
 import { CalendarPlanEditor } from "@/components/calendarization/calendar-plan-editor";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { InlineNotice, LoadingState, Screen } from "@/components/ui";
+import { InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 type DaySection = "assign" | "replace" | "remove" | "move" | "history" | null;
@@ -21,18 +21,20 @@ function dayLabel(value: string): string {
 }
 
 export default function CalendarDayScreen() {
-  const { date, section: initialSection } = useLocalSearchParams<{ date: string; section?: string }>();
+  const { date, origin, section: initialSection } = useLocalSearchParams<{ date: string; origin?: string; section?: string }>();
   const router = useRouter();
   const { apiRequest, status } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [day, setDay] = useState<CalendarDayDetailData | null>(null);
   const [localToday, setLocalToday] = useState("");
   const [sectionOverride, setSection] = useState<DaySection | undefined>(undefined);
-  const section = sectionOverride === undefined ? (initialSection === "replace" ? "replace" : null) : sectionOverride;
+  const section = sectionOverride === undefined ? (initialSection === "assign" || initialSection === "replace" ? initialSection : null) : sectionOverride;
   const [addMenuVisible, setAddMenuVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
+  const title = "Plan del día";
 
   const load = useCallback(async () => {
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
@@ -55,20 +57,22 @@ export default function CalendarDayScreen() {
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
       action: section == null ? { icon: "more", label: "Opciones de esta fecha", onPress: () => setMenuVisible(true) } : undefined,
-      fallback: "/calendar" as Href,
+      fallback: (origin === "home" ? "/today" : "/calendar") as Href,
+      identityVisible: compactHeaderVisible,
       leadingAction: section == null ? undefined : { icon: "back", label: "Volver al día", onPress: () => setSection(null) },
       mode: "back",
       secondaryAction: section == null ? { icon: "plus", label: "Agregar a esta fecha", onPress: () => setAddMenuVisible(true) } : undefined,
-      title: date ? dayLabel(date) : "Detalle del día",
+      title,
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [date, section, setHeaderPresentation]));
+  }, [compactHeaderVisible, origin, section, setHeaderPresentation, title]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return <Redirect href="/calendar" />;
 
   return <>
-    <Screen headerMode="preserve">
+    <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
+      {section == null ? <SectionPageHeader icon={<Pin color={tokens.color.textMain} size={28} strokeWidth={1.8} />} section="calendarization" subtitle={dayLabel(date)} subtitleStyle={styles.dateSubtitle} title={title} /> : null}
       {loading && !day ? <LoadingState label="Abriendo esta fecha…" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {day && localToday ? <CalendarPlanEditor
@@ -77,7 +81,7 @@ export default function CalendarDayScreen() {
         key={`${date}:${section ?? "list"}`}
         localToday={localToday}
         onChanged={load}
-        onClose={() => router.back()}
+        onClose={() => origin === "home" ? router.dismissTo("/today" as Href) : router.back()}
         onSelectItem={setSection}
         selectedItem={section}
       /> : null}
@@ -94,7 +98,7 @@ export default function CalendarDayScreen() {
               label={kind === "nutritionist" ? commitmentPresentation[kind].label : commitmentRegistrationTitle[kind]}
               onPress={() => {
                 setAddMenuVisible(false);
-                router.push(`/calendar/commitments?kind=${kind}&date=${date}` as Href);
+                router.push(`/calendar/commitments?kind=${kind}&date=${date}${origin === "home" ? "&origin=home" : ""}` as Href);
               }}
             />)}
           </ActionSheetActions>
@@ -113,3 +117,7 @@ export default function CalendarDayScreen() {
     </ActionSheetModal>
   </>;
 }
+
+const styles = StyleSheet.create({
+  dateSubtitle: { fontSize: 17, fontWeight: "600", lineHeight: 23, marginTop: -4 },
+});

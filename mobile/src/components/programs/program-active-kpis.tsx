@@ -5,7 +5,7 @@ import Svg, { Circle } from "react-native-svg";
 import { Card } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-type Props = { adheredDays: number; adherence: number; bleed?: boolean; elapsedDays: number; mealLabel?: string; mutedPanels?: boolean; planLabel?: string; plannedAdherenceDays: number; progress: number; standalone?: boolean; topInset?: boolean; totalDays: number };
+type Props = { adheredDays: number; adherence: number; bleed?: boolean; elapsedDays: number; marginHorizontal?: number; mealLabel?: string; mutedPanels?: boolean; planLabel?: string; plannedAdherenceDays: number; progress: number; standalone?: boolean; topInset?: boolean; totalDays: number };
 
 const RING_SIZE = 136;
 const RING_CENTER = RING_SIZE / 2;
@@ -43,7 +43,7 @@ function ProgressRing({ color, current, percentage, total, trackColor }: { color
   );
 }
 
-export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapsedDays, mealLabel = "Cumplimiento comidas", mutedPanels = false, planLabel = "Minutas diarias recorridas", plannedAdherenceDays, progress, standalone = false, topInset = false, totalDays }: Props) {
+export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapsedDays, marginHorizontal, mealLabel = "Cumplimiento comidas", mutedPanels = false, planLabel = "Minutas diarias recorridas", plannedAdherenceDays, progress, standalone = false, topInset = false, totalDays }: Props) {
   const advancement = Math.max(0, Math.min(progress, 100));
   const compliance = Math.max(0, Math.min(adherence, 100));
   const content = <>
@@ -58,7 +58,7 @@ export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapse
       </View>
     </View>
   </>;
-  return standalone ? <View style={[styles.standalone, bleed ? styles.standaloneBleed : styles.standaloneInset, topInset ? styles.standaloneTopInset : undefined]}>{content}</View> : <Card accent={tokens.color.program} style={styles.card}>{content}</Card>;
+  return standalone ? <View style={[styles.standalone, bleed ? styles.standaloneBleed : styles.standaloneInset, topInset ? styles.standaloneTopInset : undefined, marginHorizontal === undefined ? undefined : { marginHorizontal }]}>{content}</View> : <Card accent={tokens.color.program} style={styles.card}>{content}</Card>;
 }
 
 const styles = StyleSheet.create({

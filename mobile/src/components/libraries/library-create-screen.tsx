@@ -126,22 +126,16 @@ export function LibraryCreateScreen() {
   const [initializing, setInitializing] = useState(editingFoodId != null);
   const [error, setError] = useState<string | null>(null);
 
-  const cancel = useCallback(() => {
-    if (router.canGoBack()) router.back();
-    else if (config) router.replace(`/libraries/${config.segment}` as Href);
-  }, [config, router]);
-
   useFocusEffect(useCallback(() => {
     if (!config) return;
     setHeaderPresentation({
       mode: "back",
-      action: { label: "Cancelar", onPress: cancel },
       fallback: `/libraries/${config.segment}` as Href,
       identityVisible: false,
       title: editingFoodId ? "Editar alimento" : config.headerTitle,
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [cancel, config, editingFoodId, setHeaderPresentation]));
+  }, [config, editingFoodId, setHeaderPresentation]));
 
   useFocusEffect(useCallback(() => {
     if (!editingFoodId || status !== "authenticated") return;

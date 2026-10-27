@@ -59,7 +59,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
   if (meals.length === 0) {
     return (
       <EntityCard actions={detailAction} entity="dailyPlan" eyebrow="PLAN DEL DÍA" headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }} indicators={indicators} title={item.name}>
-        <Button bleed label="+ Agregar Comida" onPress={addMeal} />
+        <Button label="+ Agregar Comida" onPress={addMeal} variant="chipPrimary" />
       </EntityCard>
     );
   }
@@ -91,7 +91,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
         }}
       />
       <View style={styles.addMealAction}>
-        <Button bleed label="+ Agregar Comida" onPress={addMeal} />
+        <Button label="+ Agregar Comida" onPress={addMeal} variant="chipPrimary" />
       </View>
     </NutritionEntityCard>
     <CalendarizedEntityActions entityName={timeChangeMeal?.name ?? "Comida"} initialAction="change-time" key={timeChangeMeal?.id ?? "closed-card-time-change"} onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }} timeChange={timeChangeMeal && onChangeMealTime ? { initialTime: timeChangeMeal.time, onSubmit: (hour) => onChangeMealTime(timeChangeMeal, hour) } : undefined} visible={timeChangeMeal != null} />

@@ -59,6 +59,9 @@ class NotificationCenterTests(AuthenticatedMobileAPITestCase):
         data = response.json()["data"]
         self.assertEqual(data["unread_count"], 3)
         self.assertEqual({item["kind"] for item in data["items"]}, {"proposal", "share", "announcement"})
+        share_notification = next(item for item in data["items"] if item["kind"] == "share")
+        self.assertEqual(share_notification["subject_type"], "meal")
+        self.assertIsNone(share_notification["comparison_kind"])
         self.assertNotContains(response, "Propuesta ajena")
         self.assertNotContains(response, "Novedad futura")
         self.assertEqual(Client().get("/api/v1/notifications").status_code, 401)
@@ -110,9 +113,43 @@ class NotificationCenterTests(AuthenticatedMobileAPITestCase):
         feed = self.client.get("/api/v1/notifications").json()["data"]
         self.assertEqual(feed["unread_count"], 4)
         self.assertIn("invitation", {item["kind"] for item in feed["items"]})
+        invitation_notification = next(item for item in feed["items"] if item["kind"] == "invitation")
+        self.assertEqual(invitation_notification["subject_type"], "food")
         self.client.post(f"/api/v1/notifications/invitation/{invitation.id}/read")
         invitation.refresh_from_db()
         self.assertIsNotNone(invitation.read_at)
         _, inbox_item = claim_share_resource(resource=resource, user=self.user, source=ShareClaim.Source.EMAIL, invitation=invitation)
         self.assertIsNotNone(inbox_item.read_at)
         self.assertEqual(self.client.get("/api/v1/notifications").json()["data"]["unread_count"], 3)
+
+    def test_comparison_notification_exposes_compared_entity(self):
+        resource = ShareResource.objects.create(
+            sender=self.other,
+            subject_type=ShareResource.SubjectType.COMPARISON,
+            snapshot={"subject": {"title": "Comparación compartida"}, "summary": {"comparison_kind": "dailyplans"}},
+            snapshot_schema_version="test-v1",
+        )
+        claim = ShareClaim.objects.create(resource=resource, user=self.user, source=ShareClaim.Source.LINK)
+        item = InboxItem.objects.create(owner=self.user, resource=resource, claim=claim)
+        feed = self.client.get("/api/v1/notifications").json()["data"]
+        notification = next(entry for entry in feed["items"] if entry["kind"] == "share" and entry["id"] == item.id)
+        self.assertEqual(notification["subject_type"], "comparison")
+        self.assertEqual(notification["comparison_kind"], "dailyplans")
+
+    def test_mark_all_read_updates_every_visible_kind_for_current_user(self):
+        EmailAddress.objects.create(user=self.user, email=self.user.email, verified=True, primary=True)
+        invitation = ShareInvitation.objects.create(
+            resource=self.resource, recipient_email=self.user.email, status=ShareInvitation.Status.DELIVERED,
+        )
+        response = self.client.post("/api/v1/notifications/read-all")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"]["unread_count"], 0)
+        self.proposal.refresh_from_db()
+        self.share.refresh_from_db()
+        invitation.refresh_from_db()
+        self.assertTrue(self.proposal.is_read)
+        self.assertIsNotNone(self.share.read_at)
+        self.assertIsNotNone(invitation.read_at)
+        self.assertTrue(ProductAnnouncementRead.objects.filter(user=self.user, announcement=self.announcement).exists())
+        self.assertFalse(NutritionProposal.objects.get(title="Propuesta ajena").is_read)
+        self.assertEqual(self.client.post("/api/v1/notifications/read-all").json()["data"]["unread_count"], 0)

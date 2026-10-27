@@ -174,10 +174,9 @@ function ComparatorBuilderScreen() {
 
   useFocusEffect(useCallback(() => {
     const fallback = { pathname: "/comparator", params: { kind } } as Href;
-    const cancel = () => { if (router.canGoBack()) router.back(); else router.replace(fallback); };
-    setHeaderPresentation({ action: { label: "Cancelar", onPress: cancel }, fallback, mode: "back", title: savedId ? "Editar comparación" : "Nueva comparación" });
+    setHeaderPresentation({ fallback, mode: "back", title: savedId ? "Editar comparación" : "Nueva comparación" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [kind, router, savedId, setHeaderPresentation]));
+  }, [kind, savedId, setHeaderPresentation]));
 
   useFocusEffect(useCallback(() => {
     const selection = consumeSelection();

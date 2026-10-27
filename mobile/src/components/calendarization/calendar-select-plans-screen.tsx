@@ -1,6 +1,6 @@
 import * as Crypto from "expo-crypto";
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Pin } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,11 +9,15 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarDay, CalendarDayDetailData, CalendarOverviewData, LibraryItem, LibraryPageData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { DailyPlanPreviewCard } from "@/components/calendarization/daily-plan-preview-card";
+import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
+import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarMonthPlaceholder } from "@/components/calendarization/calendar-month-calendar";
-import { monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
+import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
+import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { internalHref } from "@/navigation/internal-href";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { MealPanels as SnapshotMealPanels } from "@/components/panels";
@@ -41,9 +45,10 @@ function calendarDayNutrition(day: CalendarDay) {
 
 export default function SelectCalendarPlansScreen() {
   const router = useRouter();
-  const { dailyPlanId, origin } = useLocalSearchParams<{ dailyPlanId?: string; origin?: string }>();
-  const onboardingPlanId = origin === "onboarding" && Number.isInteger(Number(dailyPlanId)) && Number(dailyPlanId) > 0 ? Number(dailyPlanId) : null;
-  const returnHref: Href = onboardingPlanId ? "/onboarding" : "/calendar";
+  const { dailyPlanId, origin, returnTo } = useLocalSearchParams<{ dailyPlanId?: string; origin?: string; returnTo?: string }>();
+  const initialPlanId = (origin === "onboarding" || origin === "detail" || origin === "library") && Number.isInteger(Number(dailyPlanId)) && Number(dailyPlanId) > 0 ? Number(dailyPlanId) : null;
+  const onboardingPlanId = origin === "onboarding" ? initialPlanId : null;
+  const returnHref: Href = origin === "detail" || origin === "library" ? (internalHref(returnTo) ?? "/calendar") : onboardingPlanId ? "/onboarding" : origin === "home" ? "/today" : "/calendar";
   const { apiRequest, status } = useSession();
   const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const setHeaderPresentation = useHeaderPresentation();
@@ -52,6 +57,7 @@ export default function SelectCalendarPlansScreen() {
   const [selected, setSelected] = useState<LibraryItem | null>(null);
   const [localToday, setLocalToday] = useState("");
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [todaySize, setTodaySize] = useState({ width: 0, height: 0 });
   const [selectedDaysByDate, setSelectedDaysByDate] = useState<Record<string, CalendarDay>>({});
   const [replacementDetailsByDate, setReplacementDetailsByDate] = useState<Record<string, CalendarDayDetailData>>({});
   const [visibleMonth, setVisibleMonth] = useState("");
@@ -71,23 +77,23 @@ export default function SelectCalendarPlansScreen() {
     setHeaderPresentation({
       action: selected ? undefined : { label: "Cancelar", onPress: cancel },
       fallback: returnHref,
-      leadingAction: selected ? onboardingPlanId
-        ? { icon: "back", label: "Volver al onboarding", onPress: cancel }
+      leadingAction: selected ? initialPlanId
+        ? { icon: "back", label: "Volver", onPress: cancel }
         : { icon: "back", label: "Volver a los planes", onPress: () => { setSelected(null); setConfirmReplacement(null); setError(null); } } : undefined,
       mode: "back",
-      title: selected ? "Calendarizar plan" : "Seleccionar plan individual",
+      title: selected ? "Calendarizar minuta" : "Seleccionar plan individual",
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [onboardingPlanId, returnHref, router, selected, setHeaderPresentation]));
+  }, [initialPlanId, returnHref, router, selected, setHeaderPresentation]));
 
   useEffect(() => {
-    if (status !== "authenticated" || !onboardingPlanId) return;
+    if (status !== "authenticated" || !initialPlanId) return;
     let active = true;
-    void apiRequest<LibraryItem>(`/api/v1/library/daily-plans/${onboardingPlanId}`)
+    void apiRequest<LibraryItem>(`/api/v1/library/daily-plans/${initialPlanId}`)
       .then((plan) => { if (active) setSelected(plan); })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); });
     return () => { active = false; };
-  }, [apiRequest, onboardingPlanId, status]);
+  }, [apiRequest, initialPlanId, status]);
 
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated") return;
@@ -245,7 +251,7 @@ export default function SelectCalendarPlansScreen() {
   if (selected) return <Screen headerMode="preserve">
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     <View style={styles.calendarSection}>
-      <Text style={styles.calendarLabel}>Fechas del plan · {selectedDateList.length}</Text>
+      <Text style={styles.calendarLabel}>Selecciona las fechas para esta minuta:</Text>
       <View style={styles.monthNavigation}>
         <Pressable accessibilityLabel="Mes anterior" accessibilityRole="button" accessibilityState={{ disabled: !visibleMonth || !localToday || visibleMonth <= monthKeyFromDate(localToday) }} disabled={!visibleMonth || !localToday || visibleMonth <= monthKeyFromDate(localToday)} onPress={() => changeMonth(-1)} style={styles.monthArrow}>
           <ChevronLeft color={tokens.color.textMain} size={20} />
@@ -261,20 +267,44 @@ export default function SelectCalendarPlansScreen() {
           const isPast = Boolean(localToday && day.calendar_date < localToday);
           const isProtected = day.has_execution;
           const isSelected = selectedDates.includes(day.calendar_date);
+          const commitmentKinds = commitmentDotKinds(day.commitments);
           return <Pressable
-            accessibilityLabel={`${readableDate(day.calendar_date)}: ${isSelected ? "seleccionado" : isPast ? "fecha anterior" : isProtected ? "con cumplimiento registrado" : day.has_plan ? "con plan" : "sin seleccionar"}`}
+            accessibilityLabel={`${readableDate(day.calendar_date)}: ${isSelected ? "seleccionado" : isPast ? "fecha anterior" : isProtected ? "con cumplimiento registrado" : day.has_plan ? "con plan" : "sin seleccionar"}${commitmentKinds.length ? `; ${commitmentKinds.map((kind) => commitmentPresentation[kind].label).join(", ")}` : ""}`}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: isSelected, disabled: isPast || isProtected }}
             disabled={isPast || isProtected}
             key={day.calendar_date}
+            onLayout={day.calendar_date === localToday ? ({ nativeEvent: { layout } }) => {
+              setTodaySize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
+            } : undefined}
             onPress={() => toggleDate(day)}
-            style={[styles.gridDate, day.has_plan && styles.gridDateWithPlan, day.calendar_date === localToday && styles.gridDateToday, isSelected && styles.gridDateSelected, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, (isPast || isProtected) && styles.gridDatePast]}>
-            <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, isSelected && styles.gridNumberSelected]}>{day.calendar_date.slice(8, 10)}</Text>
+            style={[styles.gridDate, day.has_plan && styles.gridDateWithPlan, isSelected && styles.gridDateSelected, day.has_plan && isCurrentMonthFromToday(day.calendar_date, localToday) && styles.gridDateUpcomingWithPlan, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, (isPast || isProtected) && styles.gridDatePast, day.calendar_date === localToday && styles.gridDateToday]}>
+            <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, isPast && styles.gridNumberPast, isSelected && styles.gridNumberSelected]}>{day.calendar_date.slice(8, 10)}</Text>
+            {commitmentKinds.length ? <View style={[styles.gridCommitmentDots, day.calendar_date === localToday && styles.gridCommitmentDotsToday]}>{commitmentKinds.map((kind) => <View key={kind} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
+            {day.calendar_date === localToday ? <CalendarTodayOutline {...todaySize} /> : null}
           </Pressable>;
         })}
       </View>}
     </View>
-    <DailyPlanPreviewCard item={selected} />
+    <View style={styles.calendarAction}>
+      <Text style={styles.replacementCount}>{replacementDays.length === 1 ? "1 plan será reemplazado" : `${replacementDays.length} planes serán reemplazados`}</Text>
+      {confirmReplacement ? <ConfirmationState
+        busy={busy}
+        confirmLabel={confirmReplacement.length === 1 ? "Reemplazar y calendarizar" : `Reemplazar ${confirmReplacement.length} planes`}
+        message={`${confirmReplacement.length === 1 ? "El plan actual conservará" : "Los planes actuales conservarán"} su historial. “${selected.name}” quedará asignado ${selectedDateList.length === 1 ? `al ${readableDate(selectedDateList[0])}` : `a las ${selectedDateList.length} fechas seleccionadas`}.`}
+        onCancel={() => setConfirmReplacement(null)}
+        onConfirm={() => void confirmAssignments()}
+        title={confirmReplacement.length === 1 ? "¿Reemplazar el plan de esta fecha?" : "¿Reemplazar los planes de estas fechas?"}
+      /> : <Button
+        disabled={busy || !localToday || !selectedDateList.length}
+        icon={<Pin color={tokens.color.surfaceApp} size={18} strokeWidth={2.2} />}
+        label={selectedDateList.length === 1 ? "Calendarizar minuta" : `Calendarizar minuta en ${selectedDateList.length} fechas`}
+        loading={busy}
+        onPress={() => void reviewAssignment()}
+        variant="chipPrimary"
+      />}
+    </View>
+    <DailyPlanPreviewCard eyebrow="Minuta seleccionada" item={selected} />
     {replacementDays.length ? <View style={styles.replacementSection}>
       <SectionHeading detail={`${replacementDays.length} ${replacementDays.length === 1 ? "fecha" : "fechas"}`} title="Planes que serán reemplazados" />
       {replacementDays.map((day) => {
@@ -292,23 +322,10 @@ export default function SelectCalendarPlansScreen() {
         </NutritionEntityCard>;
       })}
     </View> : null}
-    {confirmReplacement ? <ConfirmationState
-      busy={busy}
-      confirmLabel={confirmReplacement.length === 1 ? "Reemplazar y calendarizar" : `Reemplazar ${confirmReplacement.length} planes`}
-      message={`${confirmReplacement.length === 1 ? "El plan actual conservará" : "Los planes actuales conservarán"} su historial. “${selected.name}” quedará asignado ${selectedDateList.length === 1 ? `al ${readableDate(selectedDateList[0])}` : `a las ${selectedDateList.length} fechas seleccionadas`}.`}
-      onCancel={() => setConfirmReplacement(null)}
-      onConfirm={() => void confirmAssignments()}
-      title={confirmReplacement.length === 1 ? "¿Reemplazar el plan de esta fecha?" : "¿Reemplazar los planes de estas fechas?"}
-    /> : <Button
-      disabled={busy || !localToday || !selectedDateList.length}
-      label={selectedDateList.length === 1 ? "Calendarizar plan" : `Calendarizar plan en ${selectedDateList.length} fechas`}
-      loading={busy}
-      onPress={() => void reviewAssignment()}
-    />}
   </Screen>;
 
-  if (onboardingPlanId) return error
-    ? <Screen headerMode="preserve"><InlineNotice tone="error">{error}</InlineNotice><Button label="Volver al onboarding" onPress={() => router.dismissTo(returnHref as Href)} /></Screen>
+  if (initialPlanId) return error
+    ? <Screen headerMode="preserve"><InlineNotice tone="error">{error}</InlineNotice><Button label="Volver" onPress={() => router.dismissTo(returnHref)} /></Screen>
     : <LoadingState label="Abriendo minuta para calendarizar…" />;
 
   return <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
@@ -336,17 +353,24 @@ export default function SelectCalendarPlansScreen() {
 
 const styles = StyleSheet.create({
   calendarLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
-  calendarSection: { gap: tokens.spacing.md },
+  calendarAction: { gap: 20, marginBottom: 36 },
+  calendarSection: { gap: tokens.spacing.md, marginBottom: -2 },
+  replacementCount: { color: tokens.color.textMuted, fontSize: tokens.type.caption, textAlign: "center" },
   emptyText: { color: tokens.color.textMuted, fontSize: tokens.type.body },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
+  gridCommitmentDots: { bottom: 3, flexDirection: "row", gap: 2, position: "absolute" },
+  gridCommitmentDotsToday: { bottom: 6 },
+  gridCommitmentDot: { borderRadius: 3, height: 4, width: 4 },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 40, width: "13.5%" },
+  gridDateToday: { borderWidth: 0 },
   gridDateAdjacent: { opacity: 0.5 },
   gridDatePast: { opacity: 0.35 },
-  gridDateSelected: { backgroundColor: `${tokens.color.dailyPlan}33`, borderColor: tokens.color.dailyPlan },
-  gridDateToday: { borderColor: tokens.color.success },
-  gridDateWithPlan: { backgroundColor: `${tokens.color.dailyPlan}33` },
+  gridDateSelected: { backgroundColor: `${tokens.color.dailyPlan}2E`, borderColor: tokens.color.dailyPlan },
+  gridDateWithPlan: { backgroundColor: `${tokens.color.dailyPlan}2E` },
+  gridDateUpcomingWithPlan: { backgroundColor: `${tokens.color.dailyPlan}59` },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
+  gridNumberPast: { opacity: 0.8 },
   gridNumberSelected: { color: tokens.color.dailyPlan, fontWeight: "700" },
   gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
   monthArrow: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },

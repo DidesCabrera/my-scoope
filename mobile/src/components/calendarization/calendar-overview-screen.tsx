@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { CalendarDays, CalendarRange, Ellipsis, ListPlus, Weight } from "lucide-react-native";
+import { CalendarDays, CalendarRange, Ellipsis, ListPlus, Pin, Weight } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,15 +11,18 @@ import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendar
 import { CalendarizeActions } from "@/components/calendarization/calendarize-actions";
 import { CalendarUpcomingPanels } from "@/components/calendarization/calendar-upcoming-panels";
 import { CalendarMonthCalendar } from "@/components/calendarization/calendar-month-calendar";
+import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
+import { CalendarWeekMetrics } from "@/components/calendarization/calendar-week-metrics";
 import { monthKeyFromDate, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { calendarWeekRangeLabel, groupCalendarDaysByIsoWeek } from "@/components/calendarization/calendar-weeks";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
+import { pickerHref } from "@/components/pickers/picker-routes";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { ProgramActiveKpis } from "@/components/programs/program-active-kpis";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Chip, DistributedTabBar, EntityIcon, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionPageHeader, WeightTrendCard } from "@/components/ui";
+import { Button, Card, Chip, DistributedTabBar, EntityIcon, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionPageHeader, WeightTrendCard } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function dateLabel(value: string, options: Intl.DateTimeFormatOptions): string {
@@ -48,6 +51,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const [weightItems, setWeightItems] = useState<WeightItem[]>([]);
   const [activeTab, setActiveTab] = useState<"planning" | "progress">("planning");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressMenuVisible, setProgressMenuVisible] = useState(false);
@@ -60,13 +64,11 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const [progressDateBusy, setProgressDateBusy] = useState(false);
 
   useFocusEffect(useCallback(() => {
-    if (extended) return undefined;
-    setHeaderPresentation({
-      createAction: { icon: "plus", label: "Calendarizar", onPress: () => setCalendarMenuVisible(true) },
-      identityVisible: compactHeaderVisible,
-      mode: "default",
-      title: "Calendario",
-    });
+    if (extended) {
+      setHeaderPresentation({ fallback: "/calendar", identityVisible: compactHeaderVisible, mode: "back", title: "Próximas minutas programadas" });
+    } else {
+      setHeaderPresentation({ createAction: { icon: "plus", label: "Calendarizar", onPress: () => setCalendarMenuVisible(true) }, identityVisible: compactHeaderVisible, mode: "default", title: "Calendario" });
+    }
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, extended, setHeaderPresentation]));
 
@@ -114,13 +116,20 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
 
   const week = useMemo(() => overview?.days.slice(0, 7) ?? [], [overview]);
   const monthDays = monthOverview?.key === visibleMonth ? monthOverview.data.days : [];
+  const selectedCalendarDate = calendarSelectedDate ?? overview?.local_date;
+  const selectedCalendarDay = monthDays.find((day) => day.calendar_date === selectedCalendarDate)
+    ?? overview?.days.find((day) => day.calendar_date === selectedCalendarDate);
+  const selectedCommitments = selectedCalendarDay?.commitments ?? [];
+  const firstColumnCount = Math.ceil(selectedCommitments.length / 2);
   const upcoming = useMemo(() => {
     if (!overview) return [];
     const future = overview.days.filter((day) => day.calendar_date >= overview.local_date);
     return extended ? future : future.slice(0, 7);
   }, [extended, overview]);
   const upcomingWeeks = useMemo(() => groupCalendarDaysByIsoWeek(upcoming), [upcoming]);
+  const fullCalendarWeeks = useMemo(() => new Map(groupCalendarDaysByIsoWeek(overview?.days ?? []).map((week) => [week.key, week.days])), [overview]);
   const selectedDetail = detail?.calendar_date === selectedDate ? detail : null;
+  const selectedDayId = selectedDetail?.id;
   const futurePlansCount = overview?.future_plans_count ?? 0;
   const calendarCoverage = progress && futurePlansCount ? Math.round(progress.days_with_plan / futurePlansCount * 100) : 0;
   const mealCoverage = progress?.scheduled_meals ? Math.round(progress.completed_meals / progress.scheduled_meals * 100) : 0;
@@ -173,6 +182,9 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   function replaceUpcomingDay(day: CalendarDay) {
     router.push({ pathname: "/calendar/days/[date]", params: { date: day.calendar_date, section: "replace" } } as Href);
   }
+  function assignUpcomingDay(day: CalendarDay) {
+    router.push({ pathname: "/calendar/days/[date]", params: { date: day.calendar_date, section: "assign" } } as Href);
+  }
   async function removeUpcomingDay(day: CalendarDay) {
     setError(null);
     try {
@@ -203,8 +215,8 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     return <Screen
       contentStyle={styles.content}
       headerMode="preserve"
-      onHeaderVisibilityChange={!extended ? setCompactHeaderVisible : undefined}
-      scrollHeader={!extended ? <SectionPageHeader countLabel="fechas" section="calendarization" subtitle="Trae tus planes y programas al calendario, y ejecútalos registrando su cumplimiento" title="Calendario" /> : undefined}
+      onHeaderVisibilityChange={setCompactHeaderVisible}
+      scrollHeader={!extended ? <SectionPageHeader countLabel="fechas" section="calendarization" subtitle="Planifica tus minutas, programas y compromisos en el calendario" title="Calendario" /> : undefined}
       stickyHeader={!extended ? <DistributedTabBar<"planning" | "progress">
         accessibilityLabel="Secciones del calendario"
         activeTab={activeTab}
@@ -221,8 +233,8 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     <Screen
       contentStyle={styles.content}
       headerMode="preserve"
-      onHeaderVisibilityChange={!extended ? setCompactHeaderVisible : undefined}
-      scrollHeader={!extended ? <SectionPageHeader countLabel="fechas" section="calendarization" subtitle="Trae tus planes y programas al calendario, y ejecútalos registrando su cumplimiento" title="Calendario" /> : undefined}
+      onHeaderVisibilityChange={setCompactHeaderVisible}
+      scrollHeader={!extended ? <SectionPageHeader countLabel="fechas" section="calendarization" subtitle="Planifica tus minutas, programas y compromisos en el calendario" title="Calendario" /> : undefined}
       stickyHeader={!extended ? <DistributedTabBar<"planning" | "progress">
         accessibilityLabel="Secciones del calendario"
         activeTab={activeTab}
@@ -234,7 +246,33 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!extended && activeTab === "planning" ? (
         <>
-          {visibleMonth && overview ? <CalendarMonthCalendar days={monthDays} error={monthError} localDate={overview.local_date} onChangeMonth={changeVisibleMonth} onOpenDay={openDay} onReturnToCurrentMonth={() => setVisibleMonth(monthKeyFromDate(overview.local_date))} visibleMonth={visibleMonth} /> : null}
+          {visibleMonth && overview ? <CalendarMonthCalendar days={monthDays} error={monthError} localDate={overview.local_date} onChangeMonth={changeVisibleMonth} onOpenDay={setCalendarSelectedDate} onReturnToCurrentMonth={() => setVisibleMonth(monthKeyFromDate(overview.local_date))} selectedDate={selectedCalendarDate} visibleMonth={visibleMonth} /> : null}
+          <View style={styles.todaySection}>
+            <View style={styles.todayHeading}>
+              <Pin color={tokens.color.textMain} size={16} strokeWidth={2} />
+              <Text accessibilityRole="header" style={styles.todayTitle}>{selectedCalendarDate === overview?.local_date ? "Hoy" : selectedCalendarDate ? dateLabel(selectedCalendarDate, { day: "numeric", month: "long", year: "numeric" }) : "Hoy"}</Text>
+            </View>
+            <Card style={styles.todayCard}>
+              {selectedCalendarDay?.has_plan ? <Pressable accessibilityRole="button" onPress={() => selectedCalendarDay.id != null ? router.push(`/program/days/${selectedCalendarDay.id}` as Href) : openDay(selectedCalendarDay.calendar_date)} style={styles.todayRow}>
+                <EntityIcon cornerRadius={8} entity="dailyPlan" />
+                <Text numberOfLines={1} style={styles.todayRowTitle}>{selectedCalendarDay.plan_name}</Text>
+              </Pressable> : null}
+              {selectedCommitments.length ? <View style={styles.todayCommitmentColumns}>
+                {[selectedCommitments.slice(0, firstColumnCount), selectedCommitments.slice(firstColumnCount)].map((column, index) => <View key={index} style={styles.todayCommitmentColumn}>
+                  {column.map((commitment) => {
+                    const presentation = commitmentPresentation[commitment.kind];
+                    const Icon = presentation.icon;
+                    return <Pressable accessibilityRole="button" key={commitment.id} onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)} style={styles.todayRow}>
+                      <View style={[styles.todayCommitmentIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={16} strokeWidth={2.1} /></View>
+                      <Text numberOfLines={1} style={styles.todayRowTitle}>{presentation.label}</Text>
+                    </Pressable>;
+                  })}
+                </View>)}
+              </View> : null}
+              {!selectedCalendarDay?.has_plan && !selectedCalendarDay?.commitments?.length ? <Text style={styles.todayEmpty}>No hay minuta ni compromisos para esta fecha.</Text> : null}
+              {selectedCalendarDate ? <View style={styles.todayDetailButton}><Button bleed={false} label="Ver detalle del día" onPress={() => openDay(selectedCalendarDate)} variant="secondary" /></View> : null}
+            </Card>
+          </View>
           <View style={styles.summaryRow}>
             <View accessibilityLabel={`Planes programados desde hoy: ${overview?.future_plans_count ?? "dato pendiente"}`} accessible style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>Planes programados</Text>
@@ -249,11 +287,14 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
           </View>
           <View style={styles.calendarizeActions}>
             <Button icon={<EntityIcon entity="dailyPlan" />} label="Calendarizar planes" onPress={() => setPlanMenuVisible(true)} variant="secondary" />
-            <Button label="Ver registro de compromisos" onPress={() => router.push("/calendar/registry" as Href)} variant="secondary" />
+            <Button label="Ver mis compromisos" onPress={() => router.push("/calendar/registry" as Href)} variant="secondary" />
           </View>
           <ProgramSectionHeader icon={CalendarDays} subtitle="Los próximos siete días, con o sin plan asignado." title="Próximas minutas" />
+          <View style={styles.upcomingMetricsSpacing}>
+            <CalendarWeekMetrics days={upcoming} weightKg={profile?.current_weight_kg ?? null} />
+          </View>
           <View style={styles.upcomingPanelsSpacing}>
-            <CalendarUpcomingPanels days={upcoming} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
+            <CalendarUpcomingPanels days={upcoming} localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
           </View>
           <Button label="Ver más fechas" onPress={() => router.push("/calendar/future" as Href)} variant="secondary" />
 
@@ -271,20 +312,21 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
             }))}
             onSelect={(day) => { setError(null); setSelectedDate(String(day.id)); }}
             selectedId={selectedDate}>
-            {!selectedDetail && !error ? <LoadingState label="Abriendo esta fecha…" /> : selectedDetail?.has_plan && selectedDetail.plan_snapshot ? (
+            {!selectedDetail && !error ? <View style={styles.weekDayLoading}><LoadingState label="Abriendo esta fecha…" mode="content" /></View> : selectedDetail?.has_plan && selectedDetail.plan_snapshot ? (
               <CalendarizedDailyPlanCard
                 apiRequest={apiRequest}
                 dateLabel={compactDate(selectedDetail.calendar_date)}
                 dayId={selectedDetail.id}
                 eyebrow={selectedDetail.source_program_name ?? "PLAN DE CALENDARIO"}
                 mealExecution={selectedDetail.meal_execution}
+                onAddMeal={selectedDayId != null ? () => router.push(pickerHref("meal-to-calendarized-day", { dayId: selectedDayId, returnTo: "/calendar" })) : undefined}
                 onChanged={async () => { setDetail(await apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${selectedDetail.calendar_date}`)); }}
                 planName={selectedDetail.plan_name}
                 snapshot={selectedDetail.plan_snapshot}
               />
             ) : selectedDetail ? <InlineNotice>No hay un plan asignado a esta fecha.</InlineNotice> : null}
           </ProgramDaySelector>
-          {selectedDetail && !selectedDetail.has_execution ? <Button label={selectedDetail.has_plan ? "Cambiar plan de esta fecha" : "Asignar plan a esta fecha"} onPress={() => openDay(selectedDetail.calendar_date)} variant="secondary" /> : null}
+          {selectedDetail && !selectedDetail.has_execution && !selectedDetail.has_plan ? <Button label="Asignar plan a esta fecha" onPress={() => openDay(selectedDetail.calendar_date)} variant="secondary" /> : null}
 
         </>
       ) : null}
@@ -314,14 +356,18 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         <Button icon={<Weight color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Registrar peso" onPress={() => router.push("/weight" as Href)} variant="secondary" />
       </> : null}
 
-      {extended ? upcomingWeeks.map((calendarWeek) => <View key={calendarWeek.key} style={styles.futureWeekSection}>
+      {extended ? upcomingWeeks.map((calendarWeek, index) => <View key={calendarWeek.key} style={[styles.futureWeekSection, index > 0 && styles.futureWeekSpacing]}>
         <ProgramSectionHeader
           icon={CalendarDays}
           subtitle={calendarWeekRangeLabel(calendarWeek.days)}
+          subtitleTopSpacing={-4}
           title={`Semana ${calendarWeek.weekNumber}`}
         />
+        <View style={styles.futureWeekMetrics}>
+          <CalendarWeekMetrics days={fullCalendarWeeks.get(calendarWeek.key) ?? calendarWeek.days} weightKg={profile?.current_weight_kg ?? null} />
+        </View>
         <View style={styles.futureWeekPanel}>
-          <CalendarUpcomingPanels days={calendarWeek.days} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
+          <CalendarUpcomingPanels days={calendarWeek.days} localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
         </View>
       </View>) : null}
     </Screen>
@@ -363,19 +409,34 @@ const styles = StyleSheet.create({
   calendarizeActions: { gap: tokens.spacing.sm },
   content: { gap: tokens.spacing.lg },
   futureWeekPanel: { marginTop: 0 },
+  futureWeekMetrics: { marginBottom: tokens.spacing.lg - 6, marginTop: tokens.spacing.md - 18 },
   futureWeekSection: { gap: 0 },
+  futureWeekSpacing: { marginTop: 18 },
   progressMenuButton: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   progressHeaderSpacing: { marginTop: -42 },
   progressDateHelp: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   progressSheet: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   progressSheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  summaryCard: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.panel, flex: 1, gap: tokens.spacing.xs, justifyContent: "space-between", minHeight: 122, padding: tokens.spacing.md },
-  summaryDateValue: { color: tokens.color.textMain, fontSize: 20, fontWeight: "700" },
-  summaryHint: { color: tokens.color.textMuted, fontSize: 12 },
-  summaryLabel: { color: tokens.color.textMain, fontSize: 14, fontWeight: "600" },
-  summaryRow: { flexDirection: "row", gap: tokens.spacing.sm },
-  summaryValue: { color: tokens.color.textMain, fontSize: 32, fontWeight: "700", fontVariant: ["tabular-nums"] },
+  summaryCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.panel, flex: 1, gap: tokens.spacing.xs, justifyContent: "center", minHeight: 122, padding: tokens.spacing.md },
+  summaryDateValue: { color: tokens.color.textMain, fontSize: 20, fontWeight: "700", textAlign: "center" },
+  summaryHint: { color: tokens.color.textMuted, fontSize: 12, textAlign: "center" },
+  summaryLabel: { color: tokens.color.textMain, fontSize: 14, fontWeight: "600", textAlign: "center" },
+  summaryRow: { flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: -6 },
+  summaryValue: { color: tokens.color.textMain, fontSize: 32, fontWeight: "700", fontVariant: ["tabular-nums"], textAlign: "center" },
   upcomingPanelsSpacing: { marginTop: -20 },
+  upcomingMetricsSpacing: { marginBottom: 10, marginTop: -20 },
   stickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
+  todayCard: { gap: tokens.spacing.sm, marginHorizontal: -6 },
+  todayCommitmentColumn: { flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
+  todayCommitmentColumns: { flexDirection: "row", gap: tokens.spacing.sm },
+  todayCommitmentIcon: { alignItems: "center", borderRadius: 7, height: 22, justifyContent: "center", width: 22 },
+  todayDetailButton: { marginHorizontal: -6 },
+  todayEmpty: { color: tokens.color.textMuted, fontSize: 14 },
+  todayHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  todayRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 32 },
+  todayRowTitle: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: "600" },
+  todaySection: { gap: tokens.spacing.sm },
+  todayTitle: { color: tokens.color.textMain, fontSize: 16, fontWeight: "700" },
+  weekDayLoading: { minHeight: 220 },
   pressed: { opacity: 0.65 },
 });

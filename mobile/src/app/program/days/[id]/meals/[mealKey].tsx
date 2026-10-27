@@ -180,9 +180,9 @@ export default function CalendarizedMealDetailScreen() {
           />
         </EntityDetailSection>
         <Button
-          bleed
           label="+ Agregar alimento"
           onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
+          variant="chipPrimary"
         />
         {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" /><FoodDetailCardList items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} /></> : null}
         <MealNoteCard controller={adherence} />

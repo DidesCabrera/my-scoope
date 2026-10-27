@@ -1,4 +1,4 @@
-import { Bookmark, Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2 } from "lucide-react-native";
+import { Bookmark, CalendarClock, Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -36,6 +36,7 @@ type LibraryActionsProps = {
   mealTimeInMenu?: boolean;
   onCompleted(result: LibraryActionResult): void;
   onCompare?: () => void;
+  onCalendarize?: () => void;
   onEdit?: () => void;
   onOpenInformation?: () => void;
   onRemoveFromCalendar?: () => Promise<void>;
@@ -64,7 +65,7 @@ const entityLabels = {
   program: "este programa",
 } as const;
 
-export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCompare, onEdit, onOpenInformation, onRemoveFromCalendar, onRemove, onSaveToLibrary, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
+export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCalendarize, onCompare, onEdit, onOpenInformation, onRemoveFromCalendar, onRemove, onSaveToLibrary, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
   const shareAction = actions.find((action) => action.key === "share");
   const remainingActions = actions.filter((action) => action.key !== "share");
@@ -83,7 +84,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     onVisibleChange?.(nextVisible);
   };
 
-  if (!actions.length && !mealTimeChange && !onCompare && !onEdit && !onOpenInformation && !onRemoveFromCalendar && !onRemove && !onSaveToLibrary) return null;
+  if (!actions.length && !mealTimeChange && !onCalendarize && !onCompare && !onEdit && !onOpenInformation && !onRemoveFromCalendar && !onRemove && !onSaveToLibrary) return null;
 
   const close = () => {
     if (submitting) return;
@@ -259,6 +260,17 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                     onPress={() => {
                       setVisible(false);
                       onCompare();
+                    }}
+                  />
+                ) : null}
+
+                {onCalendarize ? (
+                  <ActionSheetAction
+                    icon={CalendarClock}
+                    label="Calendarizar minuta"
+                    onPress={() => {
+                      setVisible(false);
+                      onCalendarize();
                     }}
                   />
                 ) : null}

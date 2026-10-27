@@ -201,7 +201,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
   const showProgramComparison = !item || weeksCount > 1;
   const singleWeekPlanningSpacing = weeksCount === 1 ? 32 - tokens.spacing.xl : undefined;
   const addWeekAtEnd = Boolean(onAddWeek && weeksCount === 1);
-  const addWeekButton = onAddWeek ? <Button bleed label="+ Agregar nueva semana" onPress={onAddWeek} /> : null;
+  const addWeekButton = onAddWeek ? <Button label="+ Agregar nueva semana" onPress={onAddWeek} variant="chipPrimary" /> : null;
 
   const overview = (
     <View style={styles.overview}>

@@ -7,7 +7,7 @@ test("Home creates a dated snapshot while retaining legacy pinned-plan fallback"
   const home = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
   const card = await readTestFile(path.resolve(process.cwd(), "src/components/calendarization/pinned-daily-plan-card.tsx"), "utf8");
 
-  assertSourceMatch(home, /<HomeGettingStarted compactTop=\{Boolean\(planContext \|\| todayCommitments\.length\)\} \/>[\s\S]*Completa tu día/);
+  assertSourceMatch(home, /<HomeGettingStarted compactTop \/>[\s\S]*Completa tu día/);
   assertSourceMatch(home, /label="Crear un plan para hoy"/);
   assertSourceMatch(home, /apiRequest<CalendarDayDetailData>\(`\/api\/v1\/calendar\/days\/\$\{today\.local_date\}\/plan\/draft`/);
   assertSourceMatch(home, /assignment_key: Crypto\.randomUUID\(\)/);
@@ -33,8 +33,8 @@ test("library plans assign dated snapshots and retain legacy pinned completion c
   const cards = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"), "utf8");
   const adherence = await readTestFile(path.resolve(process.cwd(), "src/components/calendarization/meal-adherence-check-in.tsx"), "utf8");
 
-  assertSourceMatch(detail, /Asignar al calendario de hoy/);
-  assertSourceMatch(detail, /`\/api\/v1\/calendar\/days\/\$\{todayContext\.local_date\}\/plan`/);
+  assertSourceMatch(detail, /Asignar al calendario/);
+  assertSourceMatch(detail, /pathname: "\/calendar\/select-plans", params: \{ dailyPlanId: String\(item\.id\), origin: "detail"/);
   assertSourceMatch(detail, /<DailyMealCompletionCard/);
   assertSourceMatch(detail, /pinnedTracking=\{isPinnedPlan/);
   assertSourceMatch(cards, /<MealCompletionToggleCard/);

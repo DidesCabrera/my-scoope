@@ -98,7 +98,7 @@ test("screens that own global navigation preserve their header through content a
 
   const comparator = await source("src/app/comparator/index.tsx");
   assertSourceMatch(comparator, /mode: "back", title: savedId \? "Editar comparación" : "Nueva comparación"/);
-  assertSourceMatch(comparator, /action: \{ label: "Cancelar", onPress: cancel \}/);
+  assertSourceMatch(comparator, /setHeaderPresentation\(\{ fallback, mode: "back", title: savedId \? "Editar comparación" : "Nueva comparación" \}\)/);
   assertSourceDoesNotMatch(comparator, /title=\{savedId \? "Editar Comparación" : "Nueva Comparación"\}/);
   assertSourceDoesNotMatch(comparator, /<ComparisonKindTabs kind=\{kind\}/);
   assertSourceMatch(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" subtitle="Compara los elementos de tu librería\. Comprende las similitudes y diferencias, y reemplázalos en tu dieta\." title="Comparaciones" \/>\}/);

@@ -1,9 +1,11 @@
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { CalendarDay } from "@/api/calendar-types";
 import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
-import { monthKeyFromDate, monthLabel } from "@/components/calendarization/calendar-month";
+import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
+import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel } from "@/components/calendarization/calendar-month";
 import { InlineNotice } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -18,17 +20,20 @@ export function CalendarMonthPlaceholder() {
   </View>;
 }
 
-export function CalendarMonthCalendar({ days, error, localDate, onChangeMonth, onOpenDay, onReturnToCurrentMonth, visibleMonth }: {
+export function CalendarMonthCalendar({ days, embedded = false, error, localDate, onChangeMonth, onOpenDay, onReturnToCurrentMonth, selectedDate, visibleMonth }: {
   days: CalendarDay[];
+  embedded?: boolean;
   error?: string | null;
   localDate: string;
   onChangeMonth(delta: number): void;
   onOpenDay(date: string): void;
   onReturnToCurrentMonth(): void;
+  selectedDate?: string;
   visibleMonth: string;
 }) {
   const currentMonth = monthKeyFromDate(localDate);
-  return <View style={styles.calendarSection}>
+  const [todaySize, setTodaySize] = useState({ width: 0, height: 0 });
+  return <View style={[styles.calendarSection, embedded && styles.calendarSectionEmbedded]}>
     <View style={styles.monthNavigation}>
       <Pressable accessibilityLabel="Mes anterior" accessibilityRole="button" onPress={() => onChangeMonth(-1)} style={styles.monthArrow}>
         <ChevronLeft color={tokens.color.textMain} size={20} />
@@ -46,11 +51,16 @@ export function CalendarMonthCalendar({ days, error, localDate, onChangeMonth, o
         <Pressable
           accessibilityLabel={`${dateLabel(day.calendar_date)}: ${day.has_plan ? "Con plan" : "Sin plan"}${day.commitments?.length ? `; ${day.commitments.map((item) => commitmentPresentation[item.kind].label).join(", ")}` : ""}`}
           accessibilityRole="button"
+          accessibilityState={{ selected: day.calendar_date === selectedDate }}
           key={day.calendar_date}
+          onLayout={day.calendar_date === localDate ? ({ nativeEvent: { layout } }) => {
+            setTodaySize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
+          } : undefined}
           onPress={() => onOpenDay(day.calendar_date)}
-          style={[styles.gridDate, day.has_plan && styles.gridDateFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, day.calendar_date === localDate && styles.gridDateToday]}>
-          <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan]}>{day.calendar_date.slice(8, 10)}</Text>
-          {day.commitments?.length ? <View style={styles.gridCommitmentDots}>{day.commitments.map((item) => <View key={item.id} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
+          style={[styles.gridDate, day.has_plan && styles.gridDateFilled, day.has_plan && isCurrentMonthFromToday(day.calendar_date, localDate) && styles.gridDateUpcomingFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, day.calendar_date === localDate && styles.gridDateToday, day.calendar_date === selectedDate && day.calendar_date !== localDate && styles.gridDateSelected]}>
+          <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, day.calendar_date < localDate && styles.gridNumberPast]}>{day.calendar_date.slice(8, 10)}</Text>
+          {day.commitments?.length ? <View style={[styles.gridCommitmentDots, day.calendar_date === localDate && styles.gridCommitmentDotsToday]}>{day.commitments.map((item) => <View key={item.id} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
+          {day.calendar_date === localDate ? <CalendarTodayOutline {...todaySize} /> : null}
         </Pressable>
       ))}
     </View>}
@@ -59,15 +69,20 @@ export function CalendarMonthCalendar({ days, error, localDate, onChangeMonth, o
 
 const styles = StyleSheet.create({
   calendarSection: { marginBottom: 12, marginTop: -12, paddingVertical: tokens.spacing.sm },
+  calendarSectionEmbedded: { marginBottom: 0, marginTop: 0, paddingVertical: 0 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
-  gridCommitmentDots: { bottom: 2, flexDirection: "row", gap: 2, position: "absolute" },
+  gridCommitmentDots: { bottom: 3, flexDirection: "row", gap: 2, position: "absolute" },
+  gridCommitmentDotsToday: { bottom: 6 },
   gridCommitmentDot: { borderRadius: 3, height: 4, width: 4 },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 38, width: "13.5%" },
+  gridDateToday: { borderWidth: 0 },
+  gridDateSelected: { borderColor: tokens.color.interactivePrimary },
   gridDateAdjacent: { opacity: 0.5 },
-  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}33` },
-  gridDateToday: { borderColor: tokens.color.success },
+  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}2E` },
+  gridDateUpcomingFilled: { backgroundColor: `${tokens.color.dailyPlan}59` },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
+  gridNumberPast: { opacity: 0.8 },
   gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
   gridPlaceholderDate: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: 10, justifyContent: "center", minHeight: 38, opacity: 0.55, width: "13.5%" },
   gridPlaceholderNumber: { backgroundColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, height: 5, opacity: 0.7, width: 14 },
