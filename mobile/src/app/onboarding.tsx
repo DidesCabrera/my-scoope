@@ -78,7 +78,6 @@ export default function OnboardingScreen() {
 
   const load = useCallback(async () => {
     if (status !== "authenticated") return;
-    setLoading(true);
     setError(null);
     try {
       const nextState = await apiRequest<OnboardingStateData>("/api/v1/onboarding/state");

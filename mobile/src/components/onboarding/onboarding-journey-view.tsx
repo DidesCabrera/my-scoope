@@ -1187,8 +1187,12 @@ function GeneratedDailyPlanView() {
         <Text style={styles.generatedPlanSubtitle}>Asígnalas en el calendario y luego cumple con cada comida</Text>
         <View style={styles.generatedPlanCards}>
           {generated.map((item) => {
+            const isCalendarized = calendarization?.plans.some((plan) => plan.proposal_id === item.id && plan.dates.length > 0) ?? false;
             return <ProposalDailyPlanCard
-              actions={<View style={styles.generatedPlanCardAction}><Button bleed={false} icon={<CalendarDays color={tokens.color.surfaceApp} size={17} strokeWidth={2} />} label="Calendarizar" loading={controller.busy} onPress={() => controller.onCalendarize?.(item.id)} /></View>}
+              actions={<View style={styles.generatedPlanCardAction}>
+                {isCalendarized ? <Text style={styles.generatedPlanCalendarizedNotice}>Minuta asignada en el calendario!</Text> : null}
+                <Button bleed={false} icon={<CalendarDays color={tokens.color.surfaceApp} size={17} strokeWidth={2} />} label="Calendarizar" loading={controller.busy} onPress={() => controller.onCalendarize?.(item.id)} />
+              </View>}
               dailyplan={item.dailyplan!}
               key={item.id}
               onOpenMeal={(mealIndex) => controller.onOpenMeal?.(item.id, mealIndex)}
@@ -1718,7 +1722,8 @@ const styles = StyleSheet.create({
   generatedPlanHeadline: { color: tokens.color.textMain, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 35 },
   generatedPlanSubtitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.semibold, lineHeight: 26 },
   generatedPlanCards: { gap: tokens.spacing.md, marginTop: tokens.spacing.sm },
-  generatedPlanCardAction: { flex: 1 },
+  generatedPlanCardAction: { flex: 1, gap: tokens.spacing.sm },
+  generatedPlanCalendarizedNotice: { color: tokens.color.success, fontSize: 15, fontWeight: tokens.weight.semibold, textAlign: "center" },
   generatedFoodListMiniCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.md, marginHorizontal: -18, minHeight: 62, paddingHorizontal: tokens.spacing.lg },
   generatedFoodListMiniCardLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: tokens.weight.bold },
   generatedFoodListBack: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 44 },
