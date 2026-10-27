@@ -1200,7 +1200,7 @@ function GeneratedDailyPlanView() {
           })}
         </View>
         <View style={styles.generatedFoodListIntro}>
-          <Text style={styles.generatedFoodListHeading}>Revisa las listas de alimentos de las minutas</Text>
+          <Text style={styles.generatedFoodListHeading}>Revisa las listas de alimentos de las minutas generadas</Text>
           <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
         </View>
         {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
@@ -1229,7 +1229,7 @@ function GeneratedDailyPlanView() {
         {generatedPlanPlaceholders.map((plan) => <GeneratedPlanPlaceholderCard key={plan.name} plan={plan} />)}
       </View>
       <View style={styles.generatedFoodListIntro}>
-        <Text style={styles.generatedFoodListHeading}>Revisa las listas de alimentos de las minutas</Text>
+        <Text style={styles.generatedFoodListHeading}>Revisa las listas de alimentos de las minutas generadas</Text>
         <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
       </View>
       <View style={styles.generatedPlanContinue}><CreditContinueButton /></View>
@@ -1726,7 +1726,7 @@ const styles = StyleSheet.create({
   generatedPlanPreviewMain: { paddingBottom: 96 },
   generatedPlanLogo: { alignItems: "flex-start", marginBottom: tokens.spacing.sm },
   generatedPlanHeadline: { color: tokens.color.textMain, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 35 },
-  generatedPlanSubtitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.semibold, lineHeight: 26 },
+  generatedPlanSubtitle: { color: tokens.color.textMuted, fontSize: 19, fontWeight: tokens.weight.semibold, lineHeight: 26 },
   generatedPlanCards: { gap: 32, marginTop: tokens.spacing.sm },
   generatedPlanContinue: { marginTop: 32 },
   generatedPlanCardAction: { flex: 1, gap: tokens.spacing.sm },

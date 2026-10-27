@@ -102,7 +102,6 @@ export default function SelectCalendarPlansScreen() {
       .then((overview) => {
         if (!active) return;
         setLocalToday(overview.local_date);
-        setSelectedDates((current) => current.length ? current : [overview.local_date]);
         const today = overview.days.find((day) => day.calendar_date === overview.local_date);
         if (today) setSelectedDaysByDate((current) => ({ ...current, [today.calendar_date]: today }));
         setVisibleMonth((current) => current || monthKeyFromDate(overview.local_date));
