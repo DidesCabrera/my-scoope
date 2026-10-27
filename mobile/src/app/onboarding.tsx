@@ -65,7 +65,7 @@ export default function OnboardingScreen() {
   const { returnTo, reviewIntro } = useLocalSearchParams<{ returnTo?: string; reviewIntro?: string }>();
   const returnHref = internalHref(returnTo);
   const router = useRouter();
-  const { status, profile, apiRequest } = useSession();
+  const { status, profile, apiRequest, refreshProfile } = useSession();
   const disclosureRequired = Boolean(profile?.review_disclosure_required);
   const [step, setStep] = useState<OnboardingJourneyStep>("value");
   const [values, setValues] = useState<OnboardingJourneyValues>(initialValues);
@@ -207,6 +207,7 @@ export default function OnboardingScreen() {
       setProposals(applied);
       const dailyPlanId = applied.find((item) => item.id === proposalId)?.applied_result?.object_id;
       if (!dailyPlanId) throw new Error("No pudimos abrir esta minuta en el calendario.");
+      void refreshProfile().catch(() => undefined);
       router.push({ pathname: "/calendar/select-plans", params: { origin: "onboarding", dailyPlanId: String(dailyPlanId) } });
     } catch (nextError) {
       setError(userFacingError(nextError));

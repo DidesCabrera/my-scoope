@@ -45,7 +45,7 @@ function AuthenticatedRouteGate() {
   const pathname = usePathname();
   const segments = useSegments();
   const routeTemplate = routeTemplateFromSegments(segments);
-  const { origin } = useGlobalSearchParams<{ origin?: string }>();
+  const { dailyPlanId, origin } = useGlobalSearchParams<{ dailyPlanId?: string; origin?: string }>();
   const router = useRouter();
   const { status, profile } = useSession();
 
@@ -58,15 +58,16 @@ function AuthenticatedRouteGate() {
       return;
     }
     const isOnboardingSubscription = pathname === "/subscription" && origin === "onboarding";
+    // The profile snapshot can still have the previous stage when accept-plan navigates here.
     const isOnboardingCalendar = pathname === "/calendar/select-plans" && origin === "onboarding"
-      && (profile.onboarding_stage === "plan" || profile.onboarding_stage === "plans");
+      && Number.isSafeInteger(Number(dailyPlanId)) && Number(dailyPlanId) > 0;
     const isOnboardingMealDetail = /^\/onboarding\/minutas\/\d+\/meals\/\d+$/.test(pathname)
       && (profile.onboarding_stage === "plan" || profile.onboarding_stage === "plans");
     if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding" && !isOnboardingSubscription && !isOnboardingCalendar && !isOnboardingMealDetail) {
       recordNavigationRedirect(routeTemplate, "/onboarding", "onboarding_required");
       router.replace(returnTo ? { pathname: "/onboarding", params: { returnTo } } : "/onboarding" as Href);
     }
-  }, [origin, pathname, profile, routeTemplate, router, status]);
+  }, [dailyPlanId, origin, pathname, profile, routeTemplate, router, status]);
 
   return null;
 }
