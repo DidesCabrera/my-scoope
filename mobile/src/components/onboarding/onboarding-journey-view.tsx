@@ -1407,8 +1407,6 @@ export function OnboardingJourneyView({
   const ViewComponent = views[step];
   const resolvedController = useMemo(() => controller ?? { values: onboardingJourneyPreviewValues }, [controller]);
   const { width } = useWindowDimensions();
-  const [translateX] = useState(() => new Animated.Value(0));
-  const [transitioning, setTransitioning] = useState(false);
   const [explanationTransitionWidth, setExplanationTransitionWidth] = useState(width);
   const interactiveExplanation = (Boolean(controller) || storyboardExplanationPresentation) && index >= 1 && index <= 7;
   const canSwipeExplanation = Boolean(controller) && interactiveExplanation;
@@ -1416,6 +1414,9 @@ export function OnboardingJourneyView({
   const explanationPageGap = 48;
   const explanationStride = transitionWidth + explanationPageGap;
   const explanationOffset = -(index - 1) * explanationStride;
+  // Opening the explanation directly on a later step must position its page before the first native render.
+  const [translateX] = useState(() => new Animated.Value(explanationOffset));
+  const [transitioning, setTransitioning] = useState(false);
   const handleExplanationViewportLayout = useCallback((event: LayoutChangeEvent) => {
     if (!fullWidthExplanationTransition) return;
     setExplanationTransitionWidth(event.nativeEvent.layout.width);
