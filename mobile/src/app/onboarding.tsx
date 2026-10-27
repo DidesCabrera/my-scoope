@@ -62,10 +62,11 @@ function valuesForState(state: OnboardingStateData): OnboardingJourneyValues {
 }
 
 export default function OnboardingScreen() {
-  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
+  const { returnTo, reviewIntro } = useLocalSearchParams<{ returnTo?: string; reviewIntro?: string }>();
   const returnHref = internalHref(returnTo);
   const router = useRouter();
   const { status, profile, apiRequest } = useSession();
+  const disclosureRequired = Boolean(profile?.review_disclosure_required);
   const [step, setStep] = useState<OnboardingJourneyStep>("value");
   const [values, setValues] = useState<OnboardingJourneyValues>(initialValues);
   const [state, setState] = useState<OnboardingStateData | null>(null);
@@ -83,7 +84,7 @@ export default function OnboardingScreen() {
       const nextState = await apiRequest<OnboardingStateData>("/api/v1/onboarding/state");
       setState(nextState);
       setValues(valuesForState(nextState));
-      setStep(stepForState(nextState));
+      setStep(reviewIntro === "1" && disclosureRequired ? "progress" : stepForState(nextState));
       const proposalIds = nextState.proposal_ids?.length ? nextState.proposal_ids : nextState.proposal_id ? [nextState.proposal_id] : [];
       setProposals(await Promise.all(proposalIds.map((id) => apiRequest<ProposalDetail>(`/api/v1/proposals/${id}`))));
       setCalendarization(proposalIds.length === 2
@@ -93,7 +94,7 @@ export default function OnboardingScreen() {
     } finally {
       setLoading(false);
     }
-  }, [apiRequest, status]);
+  }, [apiRequest, disclosureRequired, reviewIntro, status]);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 
@@ -103,7 +104,7 @@ export default function OnboardingScreen() {
   if (step === "plans") {
     return <Redirect href={{ pathname: "/subscription", params: { origin: "onboarding", ...(returnHref ? { returnTo: String(returnHref) } : {}) } }} />;
   }
-  if (profile?.review_disclosure_required && state && state.stage !== "intro") {
+  if (profile?.review_disclosure_required && state && state.stage !== "intro" && !(reviewIntro === "1" && introSteps.includes(step))) {
     return <Redirect href={{ pathname: "/disclosures", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
   }
 

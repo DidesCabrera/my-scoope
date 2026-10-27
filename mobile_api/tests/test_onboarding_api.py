@@ -175,6 +175,47 @@ class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
         self.assertTrue(completed.json()["data"]["onboarding_completed"])
         self.assertEqual(completed.json()["data"]["onboarding_version"], Profile.ONBOARDING_VERSION_NUTRITION_V2)
 
+    def test_catalog_minutas_can_include_food_portions_measured_in_ml(self):
+        self._create_minimal_food_catalog()
+        oil = Food.objects.create(
+            name="Aceite de oliva", protein=0, carbs=0, fat=100,
+            portion_unit=Food.PORTION_UNIT_MILLILITERS,
+            created_by=None, is_global=True, is_verified=True,
+            solver_enabled=True, visibility=Food.VISIBILITY_CORE,
+            food_group="grasas", data_quality_score=90,
+            default_portion_g=8, min_portion_g=2, max_portion_g=20,
+            portion_step_g=1,
+            solver_capabilities={
+                "schema_version": "solver_food_capabilities.v1", "source": "test",
+                "values": {"functional_roles": ["fat_source"], "allergens": ["none"],
+                           "dietary_tags": ["vegan"]},
+                "confidence": {"functional_roles": 95, "allergens": 95},
+            },
+        )
+        for plan in DailyPlan.objects.all():
+            first_meal = plan.dailyplan_meals.order_by("order").first().meal
+            MealFood.objects.create(meal=first_meal, food=oil, quantity=8, order=5)
+
+        analyzed = self.client.post("/api/v1/onboarding/analyze", data={
+            "birth_date": "1990-05-10", "sex": "male", "height_cm": 178,
+            "weight_kg": 82.5, "goal": "fat_loss", "activity_level": "light",
+            "training_frequency": 3, "dietary_pattern": "omnivore",
+            "allergies_or_intolerances": [], "avoided_foods": [],
+        }, content_type="application/json")
+        self.assertEqual(analyzed.status_code, 200, analyzed.content)
+        generated = self.client.post("/api/v1/onboarding/generate-plan", content_type="application/json")
+        self.assertEqual(generated.status_code, 200, generated.content)
+        proposals = NutritionProposal.objects.filter(created_by=self.user)
+        self.assertEqual(proposals.count(), 2)
+        for proposal in proposals:
+            portions = [food for meal in proposal.proposed_payload["dailyplan"]["meals"]
+                        for food in meal["meal"]["foods"] if food["food_id"] == oil.id]
+            self.assertEqual(len(portions), 1)
+            self.assertEqual(portions[0]["unit"], "ml")
+        accepted = self.client.post("/api/v1/onboarding/accept-plan", content_type="application/json")
+        self.assertEqual(accepted.status_code, 200, accepted.content)
+        self.assertEqual(len(accepted.json()["data"]["items"]), 2)
+
     def test_unknown_allergen_data_fails_without_partial_proposals(self):
         self._create_minimal_food_catalog()
         chicken = Food.objects.get(name="Pechuga de pollo")

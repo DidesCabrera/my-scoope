@@ -103,7 +103,7 @@ def _candidate_payload(entry, *, pattern: str, target: MacroTarget, exclusions: 
         for item in meal_foods:
             food = item.food
             base = float(item.quantity)
-            if base <= 0 or food.portion_unit != "g" or not _food_allowed(food, pattern=pattern, exclusions=exclusions, allergens=allergens):
+            if base <= 0 or food.portion_unit not in {"g", "ml"} or not _food_allowed(food, pattern=pattern, exclusions=exclusions, allergens=allergens):
                 return None
             candidate = build_solver_food_candidate(food)
             if candidate.role in _KEY_ROLES:
@@ -126,7 +126,7 @@ def _candidate_payload(entry, *, pattern: str, target: MacroTarget, exclusions: 
     meals = []
     for slot in slots:
         foods = [ProposedFoodItemDTO(
-            food_id=item.food_id, quantity=round(quantities[item.pk], 2), unit="g",
+            food_id=item.food_id, quantity=round(quantities[item.pk], 2), unit=item.food.portion_unit,
         ) for item in slot.meal.meal_food_set.all()]
         meals.append(ProposedDailyPlanMealDTO(
             hour=slot.hour.strftime("%H:%M") if slot.hour else None,

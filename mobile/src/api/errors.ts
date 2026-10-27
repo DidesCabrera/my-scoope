@@ -73,6 +73,7 @@ export function userFacingError(error: unknown): string {
       nutrition_label_insufficient_credits: "No tienes créditos suficientes para digitalizar esta etiqueta. Puedes ingresarla manualmente.",
       food_label_volume_weight_required: "Indica cuánto pesan 100 ml antes de guardar este alimento.",
       nutrition_label_scan_rate_limited: "Has digitalizado varias etiquetas seguidas. Espera un momento o ingrésala manualmente.",
+      onboarding_catalog_two_valid_minutas_unavailable: "No encontramos dos minutas compatibles con tus preferencias y objetivo. Vuelve a revisar tus preferencias o inténtalo más tarde.",
       request_validation_failed: "Revisa los datos ingresados e inténtalo nuevamente.",
       saved_comparison_not_found: "Esta comparación ya no está disponible o no pertenece a tu cuenta.",
       share_resource_already_claimed: "Este enlace ya fue agregado por otra persona.",
