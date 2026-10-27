@@ -296,7 +296,7 @@ export default function SelectCalendarPlansScreen() {
       /> : <Button
         disabled={busy || !localToday || !selectedDateList.length}
         icon={<Pin color={tokens.color.surfaceApp} size={18} strokeWidth={2.2} />}
-        label={selectedDateList.length === 1 ? "Calendarizar minuta" : `Calendarizar minuta en ${selectedDateList.length} fechas`}
+        label={selectedDateList.length <= 1 ? "Calendarizar minuta" : `Calendarizar minuta en ${selectedDateList.length} fechas`}
         loading={busy}
         onPress={() => void reviewAssignment()}
         variant="chipPrimary"
