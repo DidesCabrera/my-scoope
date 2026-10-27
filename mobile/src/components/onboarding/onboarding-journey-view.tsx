@@ -1201,7 +1201,7 @@ function GeneratedDailyPlanView() {
         </View>
         <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
         {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
-        <CreditContinueButton disabled={scheduledPlans < 2} label="Continuar" />
+        <View style={styles.generatedPlanContinue}><CreditContinueButton disabled={scheduledPlans < 2} label="Continuar" /></View>
       </View>
     );
   }
@@ -1226,14 +1226,14 @@ function GeneratedDailyPlanView() {
         {generatedPlanPlaceholders.map((plan) => <GeneratedPlanPlaceholderCard key={plan.name} plan={plan} />)}
       </View>
       <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
-      <CreditContinueButton />
+      <View style={styles.generatedPlanContinue}><CreditContinueButton /></View>
     </View>
   );
 }
 
 function PreviewFoodListLink({ onPress }: { onPress: () => void }) {
   return <Pressable accessibilityRole="button" onPress={onPress} style={styles.generatedFoodListMiniCard}>
-      <ShoppingBasket color={tokens.color.food} size={23} strokeWidth={1.9} />
+      <View style={styles.generatedFoodListIcon}><ShoppingBasket color={tokens.color.food} size={23} strokeWidth={1.9} /></View>
       <Text style={styles.generatedFoodListMiniCardLabel}>Ver lista de alimentos</Text>
       <ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={1.9} />
     </Pressable>;
@@ -1721,10 +1721,12 @@ const styles = StyleSheet.create({
   generatedPlanLogo: { alignItems: "flex-start", marginBottom: tokens.spacing.sm },
   generatedPlanHeadline: { color: tokens.color.textMain, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 35 },
   generatedPlanSubtitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.semibold, lineHeight: 26 },
-  generatedPlanCards: { gap: tokens.spacing.md, marginTop: tokens.spacing.sm },
+  generatedPlanCards: { gap: 32, marginTop: tokens.spacing.sm },
+  generatedPlanContinue: { marginTop: 32 },
   generatedPlanCardAction: { flex: 1, gap: tokens.spacing.sm },
   generatedPlanCalendarizedNotice: { color: tokens.color.success, fontSize: 15, fontWeight: tokens.weight.semibold, textAlign: "center" },
   generatedFoodListMiniCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.md, marginHorizontal: -18, minHeight: 62, paddingHorizontal: tokens.spacing.lg },
+  generatedFoodListIcon: { alignItems: "center", backgroundColor: `${tokens.color.food}33`, borderRadius: tokens.radius.md, height: 40, justifyContent: "center", width: 40 },
   generatedFoodListMiniCardLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: tokens.weight.bold },
   generatedFoodListBack: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 44 },
   generatedFoodListBackLabel: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.semibold },
