@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { MobileSessionManager, type StoredTokenSet, type TokenStorage } from "../src/auth/session-manager";
+import { createCalendarMonthCache } from "../src/components/calendarization/calendar-month-cache";
 
 const now = 1_800_000_000_000;
 const config = {
@@ -318,4 +319,36 @@ test("a mutation invalidates affected cached reads", async () => {
   assert.deepEqual(await manager.request("/api/v1/home"), { version: 1 });
   await manager.request("/api/v1/weights", { body: JSON.stringify({ weight_kg: 80 }), method: "POST" });
   assert.deepEqual(await manager.request("/api/v1/home"), { version: 2 });
+});
+
+test("calendar writes invalidate overview responses and shared month data", async () => {
+  const saved = storage({
+    accessToken: "access-current",
+    refreshToken: "refresh-current",
+    accessExpiresAt: now + 100_000,
+    refreshExpiresAt: now + 200_000,
+    scope: "mobile:read mobile:write",
+    deviceSessionId: "device-session-1",
+  });
+  let reads = 0;
+  const fetchMock = (async (input: string | URL | Request, init?: RequestInit) => {
+    if (String(input).endsWith("/api/v1/session")) return jsonResponse({ ok: true, data: sessionData, error: null });
+    if ((init?.method ?? "GET") !== "GET") return jsonResponse({ ok: true, data: {}, error: null });
+    reads += 1;
+    return jsonResponse({ ok: true, data: {
+      days: [], end_date: "2026-10-31", local_date: `2026-10-${String(reads).padStart(2, "0")}`, start_date: "2026-10-01",
+    }, error: null });
+  }) as typeof fetch;
+  const manager = new MobileSessionManager(config, saved, async () => ({ id: "unused", name: "unused", platform: "ios" }), fetchMock, () => now);
+  await manager.restore();
+  const apiRequest = <T>(path: string, init?: RequestInit) => manager.request<T>(path, init);
+  const monthCache = createCalendarMonthCache(apiRequest);
+
+  await monthCache.load("2026-10");
+  const overview = await manager.request<{ local_date: string }>("/api/v1/calendar?days=35");
+  await manager.request("/api/v1/calendar/days/2026-10-27/plan", { method: "DELETE" });
+
+  assert.equal(monthCache.get("2026-10"), undefined);
+  assert.notEqual((await monthCache.load("2026-10")).local_date, "2026-10-01");
+  assert.notEqual((await manager.request<{ local_date: string }>("/api/v1/calendar?days=35")).local_date, overview.local_date);
 });

@@ -94,7 +94,7 @@ export default function RegisterCommitmentsScreen() {
     if (status !== "authenticated" || !visibleMonth) return;
     let active = true;
     void monthCache.load(visibleMonth)
-      .then((result) => { if (active) { setMonthOverview(result); monthCache.prefetchAdjacent(visibleMonth); } })
+      .then((result) => { if (active) setMonthOverview(result); })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };

@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { CalendarDays, CalendarRange, Ellipsis, ListPlus, Pin, Weight } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -62,6 +62,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const [progressStartDate, setProgressStartDate] = useState("");
   const [progressDateError, setProgressDateError] = useState<string | null>(null);
   const [progressDateBusy, setProgressDateBusy] = useState(false);
+  const loadSequence = useRef(0);
 
   useFocusEffect(useCallback(() => {
     if (extended) {
@@ -73,46 +74,57 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   }, [compactHeaderVisible, extended, setHeaderPresentation]));
 
   const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
     setLoading(true);
     setError(null);
     try {
-      const [nextOverview, nextProgress, weightHistory] = await Promise.all([
-        apiRequest<CalendarOverviewData>(`/api/v1/calendar?days=${extended ? 42 : 35}`),
-        apiRequest<CalendarProgressData>("/api/v1/calendar/progress"),
-        apiRequest<WeightListData>("/api/v1/weights?limit=12").catch(() => null),
-      ]);
+      const progressRequest = (extended ? Promise.resolve(null) : apiRequest<CalendarProgressData>("/api/v1/calendar/progress"))
+        .catch((nextError) => {
+          if (sequence === loadSequence.current) setError(userFacingError(nextError));
+          return null;
+        });
+      const weightRequest = extended
+        ? Promise.resolve(null)
+        : apiRequest<WeightListData>("/api/v1/weights?limit=12").catch(() => null);
+      const nextOverview = await apiRequest<CalendarOverviewData>(`/api/v1/calendar?days=${extended ? 42 : 35}`);
+      if (sequence !== loadSequence.current) return;
       setOverview(nextOverview);
-      setProgress(nextProgress);
-      setWeightItems(weightHistory?.items ?? []);
       setVisibleMonth((previous) => previous ?? monthKeyFromDate(nextOverview.local_date));
       setSelectedDate((previous) => previous && nextOverview.days.some((day) => day.calendar_date === previous)
         ? previous : nextOverview.local_date);
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    } finally {
       setLoading(false);
+      const [nextProgress, weightHistory] = await Promise.all([progressRequest, weightRequest]);
+      if (sequence !== loadSequence.current) return;
+      setProgress(nextProgress);
+      setWeightItems(weightHistory?.items ?? []);
+    } catch (nextError) {
+      if (sequence === loadSequence.current) setError(userFacingError(nextError));
+    } finally {
+      if (sequence === loadSequence.current) setLoading(false);
     }
   }, [apiRequest, extended]);
 
+  useEffect(() => () => { loadSequence.current += 1; }, []);
+
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
-  useFocusEffect(useCallback(() => { if (status === "authenticated") void refreshProfile().catch(() => undefined); }, [refreshProfile, status]));
+  useFocusEffect(useCallback(() => { if (status === "authenticated" && !extended) void refreshProfile().catch(() => undefined); }, [extended, refreshProfile, status]));
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || !visibleMonth || extended) return;
     let active = true;
     setMonthError(null);
     void monthCache.load(visibleMonth)
-      .then((data) => { if (active) { setMonthOverview({ key: visibleMonth, data }); monthCache.prefetchAdjacent(visibleMonth); } })
+      .then((data) => { if (active) setMonthOverview({ key: visibleMonth, data }); })
       .catch((nextError) => { if (active) setMonthError(userFacingError(nextError)); });
     return () => { active = false; };
   }, [extended, monthCache, status, visibleMonth]));
   useEffect(() => {
-    if (!selectedDate || status !== "authenticated") return;
+    if (extended || !selectedDate || status !== "authenticated") return;
     let active = true;
     void apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${selectedDate}`)
       .then((next) => { if (active) setDetail(next); })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
     return () => { active = false; };
-  }, [apiRequest, selectedDate, status]);
+  }, [apiRequest, extended, selectedDate, status]);
 
   const week = useMemo(() => overview?.days.slice(0, 7) ?? [], [overview]);
   const monthDays = monthOverview?.key === visibleMonth ? monthOverview.data.days : [];

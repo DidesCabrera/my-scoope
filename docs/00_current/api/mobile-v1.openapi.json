@@ -6516,10 +6516,10 @@
         },
         "required": [
           "today",
-          "active_program",
           "library_counts",
           "pending_proposal_count",
-          "version"
+          "version",
+          "active_program"
         ],
         "title": "HomeData",
         "type": "object"
@@ -6572,6 +6572,64 @@
           "program"
         ],
         "title": "HomeLibraryCountsData",
+        "type": "object"
+      },
+      "HomeSummaryData": {
+        "properties": {
+          "latest_weight": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeightItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "library_counts": {
+            "$ref": "#/components/schemas/HomeLibraryCountsData"
+          },
+          "pending_proposal_count": {
+            "title": "Pending Proposal Count",
+            "type": "integer"
+          },
+          "today": {
+            "$ref": "#/components/schemas/TodayData"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "today",
+          "library_counts",
+          "pending_proposal_count",
+          "version"
+        ],
+        "title": "HomeSummaryData",
+        "type": "object"
+      },
+      "HomeSummaryEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/HomeSummaryData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "HomeSummaryEnvelope",
         "type": "object"
       },
       "LearningArticleData": {
@@ -15753,6 +15811,50 @@
           }
         ],
         "summary": "Home"
+      }
+    },
+    "/api/v1/home/summary": {
+      "get": {
+        "operationId": "mobile_api_api_home_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSummaryEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Home Summary"
       }
     },
     "/api/v1/learning": {

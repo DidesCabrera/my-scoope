@@ -157,7 +157,7 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceDoesNotMatch(sidebarItems, /active \? tokens\.color\.textMain : tokens\.color\.textMuted/);
   assertSourceMatch(sidebarItems, /countChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minWidth: 30[^}]*paddingVertical: tokens\.spacing\.xs/);
   assertSourceDoesNotMatch(sidebarItems, /singleDigitCount|countChipSingle/);
-  assertSourceMatch(navigation, /apiRequest<HomeData>\("\/api\/v1\/home"\)/);
+  assertSourceMatch(navigation, /apiRequest<HomeSummaryData>\("\/api\/v1\/home\/summary"\)/);
   assertSourceMatch(navigation, /entity === "dailyPlan" \? counts\.daily_plan : counts\[entity\]/);
   assertSourceMatch(navigation, /<EntitySidebarEntry count=\{libraryCount\(libraryCounts, item\.entity\)\}/);
   assertSourceMatch(sidebarItems, /item: \{[^}]*minHeight: 48/);

@@ -92,7 +92,7 @@ export default function CalendarCommitmentDetailScreen() {
     if (status !== "authenticated" || !month) return;
     let active = true;
     void monthCache.load(month)
-      .then((result) => { if (active) { setMonthOverview(result); monthCache.prefetchAdjacent(month); } })
+      .then((result) => { if (active) setMonthOverview(result); })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); });
     return () => { active = false; };
   }, [month, monthCache, status]);
@@ -101,7 +101,7 @@ export default function CalendarCommitmentDetailScreen() {
     if (status !== "authenticated" || actionMode !== "reschedule" || !rescheduleMonth) return;
     let active = true;
     void monthCache.load(rescheduleMonth)
-      .then((result) => { if (active) { setRescheduleOverview(result); monthCache.prefetchAdjacent(rescheduleMonth); } })
+      .then((result) => { if (active) setRescheduleOverview(result); })
       .catch((nextError) => { if (active) setActionError(userFacingError(nextError)); });
     return () => { active = false; };
   }, [actionMode, monthCache, rescheduleMonth, status]);

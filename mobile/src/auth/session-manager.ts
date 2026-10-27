@@ -1,4 +1,5 @@
 import { MobileApiError } from "@/api/errors";
+import { invalidateCalendarMonthCaches } from "@/components/calendarization/calendar-month-cache";
 import type {
   ApiEnvelope,
   OAuthErrorResponse,
@@ -107,6 +108,7 @@ export class MobileSessionManager {
 
   async exchangeAuthorizationCode(code: string, codeVerifier: string): Promise<SessionData> {
     const sessionGeneration = ++this.sessionGeneration;
+    invalidateCalendarMonthCaches();
     this.cacheGeneration += 1;
     this.responseCache.clear();
     this.inFlightReads.clear();
@@ -293,6 +295,7 @@ export class MobileSessionManager {
 
   async clear(): Promise<void> {
     this.sessionGeneration += 1;
+    invalidateCalendarMonthCaches();
     this.cacheGeneration += 1;
     this.tokens = null;
     this.responseCache.clear();
@@ -307,7 +310,7 @@ export class MobileSessionManager {
   }
 
   private cacheTtl(path: string): number {
-    if (path === "/api/v1/home") return 20_000;
+    if (path === "/api/v1/home" || path === "/api/v1/home/summary") return 20_000;
     if (path === "/api/v1/session" || path === "/api/v1/me") return 60_000;
     if (path.startsWith("/api/v1/library/")) return 20_000;
     return 10_000;
@@ -315,14 +318,21 @@ export class MobileSessionManager {
 
   private invalidateAfterMutation(path: string): void {
     this.cacheGeneration += 1;
-    const affectedPrefixes = path.includes("/library/")
+    const changesCalendar = path.startsWith("/api/v1/calendar/")
+      || path.startsWith("/api/v1/program/")
+      || path.startsWith("/api/v1/today/")
+      || path.startsWith("/api/v1/days/");
+    if (changesCalendar) invalidateCalendarMonthCaches();
+    const affectedPrefixes = path.startsWith("/api/v1/calendar/")
+      ? ["/api/v1/home", "/api/v1/today", "/api/v1/program/", "/api/v1/calendar"]
+      : path.includes("/library/")
       ? ["/api/v1/home", "/api/v1/library/", "/api/v1/today", "/api/v1/program/"]
       : path.includes("/weights")
         ? ["/api/v1/home", "/api/v1/weights", "/api/v1/me"]
         : path.includes("/proposals") || path.includes("/ai/")
           ? ["/api/v1/home", "/api/v1/proposals", "/api/v1/ai/"]
           : path.includes("/today") || path.includes("/program/") || path.includes("/days/")
-            ? ["/api/v1/home", "/api/v1/today", "/api/v1/program/", "/api/v1/days/"]
+            ? ["/api/v1/home", "/api/v1/today", "/api/v1/program/", "/api/v1/calendar", "/api/v1/days/"]
             : ["/api/v1/"];
     const isAffected = (key: string) => affectedPrefixes.some(
       (prefix) => key.slice(key.indexOf(":") + 1).startsWith(prefix),

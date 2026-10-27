@@ -41,7 +41,7 @@ import {
 import { initialWindowMetrics, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useSession } from "@/auth/session-context";
-import type { EntitlementsData, HomeData, LibraryEntity } from "@/api/types";
+import type { EntitlementsData, HomeSummaryData, LibraryEntity } from "@/api/types";
 import type { NotificationFeed } from "@/api/notification-types";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { tokens } from "@/design/tokens";
@@ -377,7 +377,7 @@ function PersonalRecordsSidebarEntry({ weightKg }: { weightKg: number | null }) 
   return <NavigationSidebarItem {...state} accessory={weightKg != null ? <HeaderMetadataChip kind="weight" value={sidebarWeightLabel(weightKg)} /> : undefined} icon={Files} label="Fichas personales" />;
 }
 
-function libraryCount(counts: HomeData["library_counts"] | null, entity: LibraryEntity): number | null {
+function libraryCount(counts: HomeSummaryData["library_counts"] | null, entity: LibraryEntity): number | null {
   if (!counts) return null;
   return entity === "dailyPlan" ? counts.daily_plan : counts[entity];
 }
@@ -394,7 +394,7 @@ function AppSidebar() {
   const { apiRequest, profile, session, status } = useSession();
   const router = useRouter();
   const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
-  const [libraryCounts, setLibraryCounts] = useState<HomeData["library_counts"] | null>(null);
+  const [libraryCounts, setLibraryCounts] = useState<HomeSummaryData["library_counts"] | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [translateX] = useState(() => new Animated.Value(-380));
@@ -423,7 +423,7 @@ function AppSidebar() {
     void apiRequest<EntitlementsData>("/api/v1/entitlements")
       .then((entitlements) => setCreditSummary({ availableCredits: entitlements.available_credits, planName: entitlements.plan_name }))
       .catch(() => undefined);
-    void apiRequest<HomeData>("/api/v1/home")
+    void apiRequest<HomeSummaryData>("/api/v1/home/summary")
       .then((home) => {
         setLibraryCounts(home.library_counts);
         setLatestWeightKg(home.latest_weight?.weight_kg ?? null);

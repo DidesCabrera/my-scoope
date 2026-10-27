@@ -123,7 +123,6 @@ export default function SelectCalendarPlansScreen() {
           for (const day of overview.days) if (current[day.calendar_date]) next[day.calendar_date] = day;
           return next;
         });
-        monthCache.prefetchAdjacent(visibleMonth);
       })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
       .finally(() => { if (active) setMonthLoading(false); });

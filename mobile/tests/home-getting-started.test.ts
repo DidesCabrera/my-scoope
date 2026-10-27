@@ -9,7 +9,7 @@ import { assertSourceDoesNotMatch, assertSourceMatch, readTestFile } from "./sup
 test("Home guides people without a minuta even when they have a calendarization or commitment", async () => {
   const home = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
 
-  assertSourceMatch(home, /apiRequest<CalendarDayDetailData>\(`\/api\/v1\/calendar\/days\/\$\{homeData\.today\.local_date\}`\)/);
+  assertSourceMatch(home, /apiRequest<CalendarDayDetailData>\(`\/api\/v1\/calendar\/days\/\$\{nextToday\.local_date\}`\)/);
   assertSourceMatch(home, /setTodayCommitments\(todayCalendar\?\.commitments \?\? \[\]\)/);
   assertSourceMatch(home, /const showGettingStarted = Boolean\(today && !hasDatedPlan && !today\.pinned_plan\)/);
   assertSourceDoesNotMatch(home, /Programa en curso/);

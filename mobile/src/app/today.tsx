@@ -1,12 +1,12 @@
 import { type Href, Redirect, Stack, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { CalendarCheck2, CalendarDays, Camera, ChartColumnIncreasing, ChevronRight, Pin, Scale, Weight } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarCommitment, CalendarOverviewData } from "@/api/calendar-types";
-import type { CalendarDayDetailData, CalendarProgressData, CalendarizedDayDetail, ComparisonKind, HomeData, MealCheckInInput, TodayData, WeightItem, WeightListData } from "@/api/types";
+import type { CalendarDayDetailData, CalendarProgressData, CalendarizedDayDetail, ComparisonKind, HomeSummaryData, MealCheckInInput, TodayData, WeightItem, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { commitmentDayTitle, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarMonthCalendar } from "@/components/calendarization/calendar-month-calendar";
@@ -142,6 +142,7 @@ export default function TodayScreen() {
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
   const [savingCompletionMealKey, setSavingCompletionMealKey] = useState<string | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
+  const loadSequence = useRef(0);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
   const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
@@ -152,27 +153,18 @@ export default function TodayScreen() {
   }, [router]);
 
   const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
     setLoading(true);
     setError(null);
     setCommitmentsError(null);
     try {
-      const homeRequest = apiRequest<HomeData>("/api/v1/home");
-      const [home, nextProgress, nextOverview, todayCalendar, weightHistory] = await Promise.all([
-        homeRequest,
-        apiRequest<CalendarProgressData>("/api/v1/calendar/progress").catch(() => null),
-        homeRequest.then((homeData) => apiRequest<CalendarOverviewData>(`/api/v1/calendar?start_date=${homeData.today.local_date}&days=42`)).catch(() => null),
-        homeRequest.then((homeData) => apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${homeData.today.local_date}`))
-          .catch((nextError) => { setCommitmentsError(userFacingError(nextError)); return null; }),
-        apiRequest<WeightListData>("/api/v1/weights?limit=12").catch(() => null),
-      ]);
+      const progressRequest = apiRequest<CalendarProgressData>("/api/v1/calendar/progress").catch(() => null);
+      const weightRequest = apiRequest<WeightListData>("/api/v1/weights?limit=12").catch(() => null);
+      const home = await apiRequest<HomeSummaryData>("/api/v1/home/summary");
+      if (sequence !== loadSequence.current) return;
       const nextToday = home.today;
       setToday(nextToday);
-      setCalendarProgress(nextProgress);
-      setFuturePlansCount(nextOverview?.future_plans_count ?? 0);
-      setUpcomingOverview(nextOverview);
       setVisibleMonth((previous) => previous ?? monthKeyFromDate(nextToday.local_date));
-      setTodayCommitments(todayCalendar?.commitments ?? []);
-      setWeightItems(weightHistory?.items ?? []);
       setLatestWeightKg(home.latest_weight?.weight_kg ?? null);
       setLibraryCounts({
         dailyPlan: home.library_counts.daily_plan,
@@ -180,6 +172,7 @@ export default function TodayScreen() {
         meal: home.library_counts.meal,
         program: home.library_counts.program,
       });
+      setLoading(false);
       if (nextToday.reminders) {
         void syncNativeRemindersForProgram(
           nextToday.reminders,
@@ -187,12 +180,30 @@ export default function TodayScreen() {
           apiRequest,
         ).catch(() => undefined);
       }
+      const [nextProgress, nextOverview, todayCalendar, weightHistory] = await Promise.all([
+        progressRequest,
+        apiRequest<CalendarOverviewData>(`/api/v1/calendar?start_date=${nextToday.local_date}&days=42`).catch(() => null),
+        apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${nextToday.local_date}`)
+          .catch((nextError) => {
+            if (sequence === loadSequence.current) setCommitmentsError(userFacingError(nextError));
+            return null;
+          }),
+        weightRequest,
+      ]);
+      if (sequence !== loadSequence.current) return;
+      setCalendarProgress(nextProgress);
+      setFuturePlansCount(nextOverview?.future_plans_count ?? 0);
+      setUpcomingOverview(nextOverview);
+      setTodayCommitments(todayCalendar?.commitments ?? []);
+      setWeightItems(weightHistory?.items ?? []);
     } catch (nextError) {
-      setError(userFacingError(nextError));
+      if (sequence === loadSequence.current) setError(userFacingError(nextError));
     } finally {
-      setLoading(false);
+      if (sequence === loadSequence.current) setLoading(false);
     }
   }, [apiRequest]);
+
+  useEffect(() => () => { loadSequence.current += 1; }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -207,7 +218,7 @@ export default function TodayScreen() {
     const cached = monthCache.get(visibleMonth);
     if (cached) setMonthOverview({ key: visibleMonth, data: cached });
     void monthCache.load(visibleMonth)
-      .then((data) => { if (active) { setMonthOverview({ key: visibleMonth, data }); monthCache.prefetchAdjacent(visibleMonth); } })
+      .then((data) => { if (active) setMonthOverview({ key: visibleMonth, data }); })
       .catch((nextError) => { if (active) setMonthError(userFacingError(nextError)); });
     return () => { active = false; };
   }, [monthCache, status, visibleMonth]));

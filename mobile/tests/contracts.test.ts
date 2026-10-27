@@ -739,7 +739,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUiSourceForIndicators, /guideMetricPpk: \{ backgroundColor: "transparent", borderColor: tokens\.color\.borderDefault, borderRadius: tokens\.radius\.pill/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValuePpk: \{ color: tokens\.color\.textMain, fontSize: 15, lineHeight: 18 \}/);
   assertSourceDoesNotMatch(productUiSourceForIndicators, /icon === "weight"/);
-  assertSourceMatch(todayScreen, /apiRequest<HomeData>\("\/api\/v1\/home"\)/);
+  assertSourceMatch(todayScreen, /apiRequest<HomeSummaryData>\("\/api\/v1\/home\/summary"\)/);
   assertSourceMatch(todayScreen, /home\.latest_weight\?\.weight_kg/);
   assertSourceMatch(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
   assertSourceMatch(todayScreen, /displayWeight\(currentWeightKg\)/);

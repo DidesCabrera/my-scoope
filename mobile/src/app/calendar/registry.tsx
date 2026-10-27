@@ -91,7 +91,7 @@ export default function CommitmentRegistryScreen() {
     setLoading(!cached);
     setError(null);
     void monthCache.load(visibleMonth)
-      .then((data) => { if (active) { setOverview(data); monthCache.prefetchAdjacent(visibleMonth); } })
+      .then((data) => { if (active) setOverview(data); })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };

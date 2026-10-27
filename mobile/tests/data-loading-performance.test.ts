@@ -4,10 +4,10 @@ import path from "node:path";
 import test from "node:test";
 
 
-test("Home uses the consolidated read projection", async () => {
+test("Home uses the compact read projection", async () => {
   const source = await readFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
 
-  assert.ok(source.includes('apiRequest<HomeData>("/api/v1/home")'));
+  assert.ok(source.includes('apiRequest<HomeSummaryData>("/api/v1/home/summary")'));
   assert.ok(!source.includes("/api/v1/library/programs?limit=1"));
   assert.ok(!source.includes("/api/v1/program/active"));
 });

@@ -26,12 +26,13 @@ object containing `code`, `message` and `details`.
 The generated source of truth is `mobile-v1.openapi.json`. CI regenerates the
 schema in memory and fails when the committed contract drifts.
 
-`GET /home` is the canonical initial mobile read. It returns the complete Today
-and active-program projections, latest weight, exact library counts and pending
-proposal count in one private response. The response is short-lived in the
-shared cache, supports ETag revalidation and is invalidated after every successful
-authenticated mobile write. This consolidates transport work without reducing
-the information rendered by the existing Home screen.
+`GET /home/summary` is the compact initial native read. It returns Today, latest
+weight, exact library counts and pending proposal count without building the
+active-program projection. Inicio, the navigation drawer and native reminder
+reconciliation use it. `GET /home` retains the complete response, including the
+active program, for existing clients. Both private responses use short-lived
+shared caches, support ETag revalidation and are invalidated after a successful
+authenticated mobile write.
 
 ## Implementation navigation
 
