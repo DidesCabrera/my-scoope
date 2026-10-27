@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import unicodedata
 from dataclasses import replace
+from math import ceil, floor
 
 from django.db import transaction
 from django.db.models import Prefetch
@@ -107,9 +108,9 @@ def _candidate_payload(entry, *, pattern: str, target: MacroTarget, exclusions: 
                 return None
             candidate = build_solver_food_candidate(food)
             if candidate.role in _KEY_ROLES:
-                minimum = max(1, base * 0.5, float(food.min_portion_g or 0))
-                maximum = min(base * 2.2, _ROLE_MAXIMUM_G[candidate.role], float(food.max_portion_g or base * 2.2))
-                if minimum > base or maximum < base:
+                minimum = ceil(max(1, base * 0.5, float(food.min_portion_g or 0)))
+                maximum = floor(min(base * 2.2, _ROLE_MAXIMUM_G[candidate.role], float(food.max_portion_g or base * 2.2)))
+                if minimum > maximum:
                     return None
             else:
                 minimum = maximum = base
