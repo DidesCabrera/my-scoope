@@ -346,6 +346,51 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         other_commitment.refresh_from_db()
         self.assertEqual(other_commitment.note, "")
 
+    def test_saved_commitment_can_be_rescheduled_and_deleted(self):
+        tomorrow = self.today + timedelta(days=1)
+        later = self.today + timedelta(days=2)
+        commitment = CalendarCommitment.objects.create(
+            user=self.user, kind="training", calendar_date=self.today, note="Fuerza",
+        )
+        occupied = CalendarCommitment.objects.create(
+            user=self.user, kind="training", calendar_date=later,
+        )
+        url = f"/api/v1/calendar/commitments/{commitment.id}"
+
+        moved = self.client.patch(url, data={
+            "calendar_date": tomorrow.isoformat(),
+        }, content_type="application/json")
+        self.assertEqual(moved.status_code, 200)
+        self.assertEqual(moved.json()["data"]["calendar_date"], tomorrow.isoformat())
+        self.assertEqual(moved.json()["data"]["note"], "Fuerza")
+
+        duplicate = self.client.patch(url, data={
+            "calendar_date": later.isoformat(),
+        }, content_type="application/json")
+        self.assertEqual(duplicate.status_code, 409)
+        commitment.refresh_from_db()
+        self.assertEqual(commitment.calendar_date, tomorrow)
+
+        deleted = self.client.delete(url)
+        self.assertEqual(deleted.status_code, 200)
+        self.assertEqual(deleted.json()["data"]["deleted_id"], commitment.id)
+        self.assertFalse(CalendarCommitment.objects.filter(pk=commitment.id).exists())
+        self.assertTrue(CalendarCommitment.objects.filter(pk=occupied.id).exists())
+
+    def test_commitment_reschedule_and_delete_are_owner_scoped(self):
+        other = User.objects.create_user(username="other-commitment-actions")
+        commitment = CalendarCommitment.objects.create(
+            user=other, kind="nutritionist", calendar_date=self.today,
+        )
+        url = f"/api/v1/calendar/commitments/{commitment.id}"
+        moved = self.client.patch(url, data={
+            "calendar_date": (self.today + timedelta(days=1)).isoformat(),
+        }, content_type="application/json")
+        deleted = self.client.delete(url)
+        self.assertEqual(moved.status_code, 404)
+        self.assertEqual(deleted.status_code, 404)
+        self.assertTrue(CalendarCommitment.objects.filter(pk=commitment.id).exists())
+
     def test_cooking_commitment_saves_foods_for_entire_period_including_intermediate_days(self):
         middle = self.today + timedelta(days=1)
         end = self.today + timedelta(days=2)

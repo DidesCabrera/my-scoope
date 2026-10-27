@@ -60,7 +60,7 @@ test("weight trend and history use the standard card surface", async () => {
   assert.match(screen, /<Card accent=\{tokens\.color\.protein\}>[\s\S]*?<\/Card>\s*<InlineNotice>\s*La variación de peso/);
   assert.doesNotMatch(screen, /weightIntroduction/);
   assert.doesNotMatch(screen, /Una cifra aislada no define tu progreso/);
-  assert.match(screen, /<Card>\s*<CardHeader description=\{`\$\{items\.length\} registros`\} title="Tendencia de peso" \/>\s*<WeightTrendChart items=\{items\} \/>\s*<\/Card>/);
+  assert.match(screen, /<WeightTrendCard items=\{items\} \/>/);
   assert.match(screen, /<Card>[\s\S]*<CardHeader[\s\S]*title="Pesos históricos"[\s\S]*<KeyValueTable items=\{items\.map/);
   assert.match(screen, /label: historyDateLabel\(item\)/);
   assert.match(screen, /value: `\$\{item\.weight_kg\.toFixed\(1\)\} kg`/);

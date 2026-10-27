@@ -1,10 +1,12 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import {
   BookOpen,
+  Bell,
   CalendarClock,
   CalendarDays,
   CalendarRange,
   Carrot,
+  ChartNoAxesCombined,
   Check,
   CheckCheck,
   CircleFadingPlus,
@@ -34,7 +36,7 @@ import { Button } from "./controls";
 import { Card } from "./surfaces";
 
 export type EntityKind = "comparison" | "food" | "meal" | "dailyPlan" | "dpm" | "program";
-export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "learning" | "create" | "import";
+export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "notifications" | "learning" | "create" | "import";
 
 export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "week" | "weight";
 
@@ -109,7 +111,7 @@ const entityIcons: Record<EntityKind, LucideIcon> = {
   meal: Utensils,
   dailyPlan: ClipboardList,
   dpm: CalendarDays,
-  program: CalendarRange,
+  program: ChartNoAxesCombined,
 };
 
 const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
@@ -143,20 +145,22 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   weight: Weight,
   explore: Search,
   inbox: Send,
+  notifications: Bell,
   learning: BookOpen,
   create: CircleFadingPlus,
   import: FileDown,
 };
 
-export function EntityIcon({ backgroundColor, entity, size = "regular", tone = "entity" }: { backgroundColor?: string; entity: EntityKind; size?: "benefit" | "compact" | "regular" | "header" | "hero"; tone?: "entity" | "white" }) {
+export function EntityIcon({ backgroundColor, cornerRadius, entity, size = "regular", tone = "entity" }: { backgroundColor?: string; cornerRadius?: number; entity: EntityKind; size?: "benefit" | "compact" | "regular" | "header" | "intro" | "hero"; tone?: "entity" | "white" }) {
   const Icon = entityIcons[entity];
   const benefit = size === "benefit";
   const compact = size === "compact";
   const header = size === "header";
+  const intro = size === "intro";
   const hero = size === "hero";
   return (
-    <View style={[styles.entityIcon, benefit && styles.entityIconBenefit, compact && styles.entityIconCompact, header && styles.entityIconHeader, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : backgroundColor ?? tokens.color[entity] }]}>
-      <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" || header ? 18 : benefit ? 14 : compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
+    <View style={[styles.entityIcon, benefit && styles.entityIconBenefit, compact && styles.entityIconCompact, header && styles.entityIconHeader, intro && styles.entityIconIntro, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : backgroundColor ?? tokens.color[entity], ...(cornerRadius !== undefined ? { borderRadius: cornerRadius } : {}) }]}>
+      <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" || header ? 18 : benefit ? 14 : compact ? 11 : intro ? 20 : hero ? 22 : 13} strokeWidth={intro || hero ? 1.9 : 2.4} />
     </View>
   );
 }
@@ -388,16 +392,19 @@ export function CardHeader({
   title,
   description,
   accessory,
+  leadingIcon,
   density = "regular",
 }: {
   title: string;
   description?: string;
   accessory?: ReactNode;
+  leadingIcon?: ReactNode;
   density?: "compact" | "regular";
 }) {
   const compact = density === "compact";
   return (
     <View style={[styles.cardHeader, compact && styles.cardHeaderCompact]}>
+      {leadingIcon}
       <View style={[styles.cardHeaderCopy, compact && styles.cardHeaderCopyCompact]}>
         <Text style={[styles.cardHeaderTitle, compact && styles.cardHeaderTitleCompact]}>{title}</Text>
         {description ? (
@@ -522,6 +529,7 @@ const styles = StyleSheet.create({
   entityIconBenefit: { borderRadius: tokens.radius.sm, height: 22, width: 22 },
   entityIconCompact: { height: 18, width: 18 },
   entityIconHeader: { borderRadius: 7, height: 28, width: 28 },
+  entityIconIntro: { borderRadius: 9, height: 36, width: 36 },
   entityIconHero: { borderRadius: tokens.radius.md, height: 40, width: 40 },
   sectionIcon: { alignItems: "center", backgroundColor: "transparent", height: 22, justifyContent: "center", width: 22 },
   sectionIconCompact: { height: 18, width: 18 },

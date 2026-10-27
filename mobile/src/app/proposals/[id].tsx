@@ -57,7 +57,9 @@ export default function ProposalDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      setProposal(await apiRequest<ProposalDetail>(`/api/v1/proposals/${id}`));
+      const detail = await apiRequest<ProposalDetail>(`/api/v1/proposals/${id}`);
+      setProposal(detail);
+      if (detail.status === "pending_review") void apiRequest(`/api/v1/notifications/proposal/${id}/read`, { method: "POST" }).catch(() => undefined);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {

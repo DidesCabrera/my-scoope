@@ -22,7 +22,7 @@ function decimal(value: number): string {
   return value.toLocaleString("es-CL", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 }
 
-export function WeightTrendChart({ items }: { items: WeightItem[] }) {
+export function WeightTrendChart({ items, yAxisLabelInset = 0 }: { items: WeightItem[]; yAxisLabelInset?: number }) {
   const [width, setWidth] = useState(0);
   const measurements = useMemo(() => sortedWeightTrend(items), [items]);
   const trend = useMemo(() => dailyWeightTrend(measurements, localDateValue()), [measurements]);
@@ -78,7 +78,7 @@ export function WeightTrendChart({ items }: { items: WeightItem[] }) {
             <Circle key={trend[index].measured_on} cx={x} cy={y} fill={tokens.color.surfaceMuted} r={4} stroke={tokens.color.protein} strokeWidth={2.5} />
           ))}
         </Svg>
-        <View pointerEvents="none" style={styles.yLabels}>
+        <View pointerEvents="none" style={[styles.yLabels, { left: yAxisLabelInset }]}>
           {guideValues.map((value, index) => <Text key={`weight-${index}`} style={styles.axisLabel}>{decimal(value)}</Text>)}
         </View>
         <View pointerEvents="none" style={styles.xLabels}>

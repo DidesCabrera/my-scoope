@@ -58,6 +58,7 @@ def create_draft_meal(
     *,
     user,
     name: str,
+    meal_type: str = "",
     pending_dailyplan_id: Optional[int] = None,
 ) -> MealCreateResult:
     clean_name = (name or "").strip()
@@ -65,11 +66,15 @@ def create_draft_meal(
     if not clean_name:
         raise ValueError("meal_name_required")
 
+    if meal_type not in {"", *Meal.MealType.values}:
+        raise ValueError("meal_type_invalid")
+
     if not pending_dailyplan_id:
         require_new_workspace_item(user, "meal")
 
     meal = Meal.objects.create(
         name=clean_name,
+        meal_type=meal_type,
         created_by=user,
         is_draft=True,
         scope=Meal.Scope.EMBEDDED if pending_dailyplan_id else Meal.Scope.LIBRARY,
@@ -146,6 +151,7 @@ def fork_meal(original: Meal, user) -> Meal:
 
     forked = Meal.objects.create(
         name=f"{original.name}",
+        meal_type=original.meal_type,
         created_by=user,
 
         forked_from=origin,
@@ -169,6 +175,7 @@ def _clone_meal(original: Meal, user, *, scope=Meal.Scope.LIBRARY) -> Meal:
 
     forked = Meal.objects.create(
         name=original.name,
+        meal_type=original.meal_type,
         created_by=user,
         forked_from=origin,
         original_author=origin.created_by,
@@ -217,6 +224,7 @@ def copy_meal(original: Meal, user) -> Meal:
     require_new_workspace_item(user, "meal")
     copy = Meal.objects.create(
         name=f"{original.name} (copy)",
+        meal_type=original.meal_type,
         created_by=user,
 
         forked_from=None,

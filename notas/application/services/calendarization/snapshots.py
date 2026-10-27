@@ -7,9 +7,28 @@ from datetime import time
 
 from django.db.models import Prefetch
 
-from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, Program
+from notas.application.services.food_portions import proposed_portion_display
+from notas.domain.models import DailyPlan, DailyPlanMeal, FoodPortion, MealFood, Program
 
 SNAPSHOT_SCHEMA_VERSION = "calendarized_dailyplan.v1"
+
+
+def _meal_foods_for_snapshot():
+    default_household_portions = FoodPortion.objects.filter(
+        is_default=True,
+        household_amount__isnull=False,
+    ).exclude(household_measure="")
+    return (
+        MealFood.objects.select_related("food")
+        .prefetch_related(
+            Prefetch(
+                "food__portions",
+                queryset=default_household_portions,
+                to_attr="_prefetched_default_household_portions",
+            )
+        )
+        .order_by("order", "id")
+    )
 
 
 @dataclass(frozen=True)
@@ -29,7 +48,7 @@ def program_with_calendarization_content(program_id: int) -> Program:
                     .prefetch_related(
                         Prefetch(
                             "meal__meal_food_set",
-                            queryset=MealFood.objects.select_related("food").order_by("order", "id"),
+                            queryset=_meal_foods_for_snapshot(),
                         )
                     )
                     .order_by("order", "id")
@@ -51,7 +70,7 @@ def dailyplan_with_calendarization_content(dailyplan_id: int) -> DailyPlan:
                     .prefetch_related(
                         Prefetch(
                             "meal__meal_food_set",
-                            queryset=MealFood.objects.select_related("food").order_by("order", "id"),
+                            queryset=_meal_foods_for_snapshot(),
                         )
                     )
                     .order_by("order", "id")
@@ -82,6 +101,10 @@ def build_food_snapshot(
     protein = float(food.protein or 0) * factor
     carbs = float(food.carbs or 0) * factor
     fat = float(food.fat or 0) * factor
+    proposed_quantity, proposed_measure = proposed_portion_display(
+        food=food,
+        metric_quantity=quantity,
+    )
     return {
         "key": key,
         "source_food_id": food.id,
@@ -89,9 +112,11 @@ def build_food_snapshot(
         "quantity_g": _round(quantity),
         "quantity_unit": food.portion_unit,
         "portion_display_quantity": _round(
-            portion_display_quantity if portion_display_quantity is not None else quantity
+            proposed_quantity
+            if proposed_quantity is not None
+            else portion_display_quantity if portion_display_quantity is not None else quantity
         ),
-        "portion_display_measure": portion_display_measure or food.portion_unit,
+        "portion_display_measure": proposed_measure or portion_display_measure or food.portion_unit,
         "protein_g": _round(protein),
         "carbs_g": _round(carbs),
         "fat_g": _round(fat),
@@ -155,6 +180,10 @@ def build_dailyplan_snapshot_from_dailyplan(
         foods = []
         for meal_food in meal.meal_food_set.all():
             food = meal_food.food
+            proposed_quantity, proposed_measure = proposed_portion_display(
+                food=food,
+                metric_quantity=meal_food.quantity,
+            )
             foods.append(
                 {
                     "key": f"meal_food:{meal_food.id}",
@@ -162,11 +191,13 @@ def build_dailyplan_snapshot_from_dailyplan(
                     "quantity_g": _round(meal_food.quantity),
                     "quantity_unit": food.portion_unit,
                     "portion_display_quantity": _round(
-                        meal_food.portion_display_quantity
+                        proposed_quantity
+                        if proposed_quantity is not None
+                        else meal_food.portion_display_quantity
                         if meal_food.portion_display_quantity is not None
                         else meal_food.quantity
                     ),
-                    "portion_display_measure": meal_food.portion_display_measure or food.portion_unit,
+                    "portion_display_measure": proposed_measure or meal_food.portion_display_measure or food.portion_unit,
                     "protein_g": _round(meal_food.protein),
                     "carbs_g": _round(meal_food.carbs),
                     "fat_g": _round(meal_food.fat),

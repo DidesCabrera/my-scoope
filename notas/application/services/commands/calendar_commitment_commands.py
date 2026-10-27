@@ -83,6 +83,7 @@ def register_calendar_commitments(
 @transaction.atomic
 def update_calendar_commitment(
     *, user: User, commitment_id: int, note: str | None = None,
+    calendar_date: date | None = None,
     update_food_period: bool = False,
     food_period_start: date | None = None, food_period_end: date | None = None,
 ) -> CalendarCommitment:
@@ -92,6 +93,16 @@ def update_calendar_commitment(
     if commitment is None:
         raise ValueError("calendar_commitment_not_found")
     update_fields = []
+    if calendar_date is not None and calendar_date != commitment.calendar_date:
+        today = local_date_for_timezone(user.profile.timezone_name or "UTC")
+        if calendar_date < today:
+            raise ValueError("calendar_commitment_date_in_past")
+        if CalendarCommitment.objects.filter(
+            user=user, kind=commitment.kind, calendar_date=calendar_date,
+        ).exclude(pk=commitment.pk).exists():
+            raise ValueError("calendar_commitment_already_exists")
+        commitment.calendar_date = calendar_date
+        update_fields.append("calendar_date")
     if note is not None:
         clean_note = note.strip()
         if len(clean_note) > 500:
@@ -118,5 +129,20 @@ def update_calendar_commitment(
             commitment.foods_snapshot = deepcopy(foods["foods_aggregation_table"])
         update_fields.extend(("food_period_start", "food_period_end", "food_plans_count", "foods_snapshot"))
     if update_fields:
-        commitment.save(update_fields=update_fields)
+        try:
+            commitment.save(update_fields=update_fields)
+        except IntegrityError as exc:
+            raise ValueError("calendar_commitment_already_exists") from exc
     return commitment
+
+
+@transaction.atomic
+def delete_calendar_commitment(*, user: User, commitment_id: int) -> int:
+    commitment = CalendarCommitment.objects.select_for_update().filter(
+        pk=commitment_id, user=user,
+    ).first()
+    if commitment is None:
+        raise ValueError("calendar_commitment_not_found")
+    deleted_id = commitment.pk
+    commitment.delete()
+    return deleted_id

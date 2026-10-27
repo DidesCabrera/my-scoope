@@ -3,11 +3,11 @@ import { useCallback, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { OnboardingAnalyzeInput, OnboardingStateData, ProposalDetail } from "@/api/types";
+import type { OnboardingAnalyzeInput, OnboardingCalendarization, OnboardingStateData, ProposalDetail } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import {
   OnboardingJourneyView,
-  onboardingJourneySteps,
+  onboardingScreenChromeForStep,
   presentationPropsForOnboardingStep,
   type OnboardingJourneyController,
   type OnboardingJourneyStep,
@@ -16,15 +16,15 @@ import {
 import { LoadingState, Screen } from "@/components/ui";
 import { internalHref } from "@/navigation/internal-href";
 
-const introSteps: OnboardingJourneyStep[] = ["value", "structure", "panels", "control", "progress"];
+const introSteps: OnboardingJourneyStep[] = ["value", "structure", "control", "panels", "panelsCopy", "compareShare", "progress"];
 const profileSteps: OnboardingJourneyStep[] = ["goal", "identity", "measurements", "activity", "dietary", "summary"];
 
 const initialValues: OnboardingJourneyValues = {
   goal: "fat_loss",
-  birthDate: "",
+  birthDate: "2000-01-01",
   sex: "male",
-  height: "",
-  weight: "",
+  height: "180",
+  weight: "80",
   activityLevel: "light",
   trainingFrequency: 3,
   dietaryPattern: "omnivore",
@@ -34,11 +34,12 @@ const initialValues: OnboardingJourneyValues = {
 };
 
 const allergyChoices = new Set(["gluten", "lácteos", "frutos secos", "mariscos"]);
+type OnboardingMinutas = { items: ProposalDetail[] };
 
 function stepForState(state: OnboardingStateData): OnboardingJourneyStep {
   if (state.stage === "summary") return "summary";
   if (state.stage === "plan") return "dailyPlan";
-  if (state.stage === "plans") return "plans";
+  if (state.stage === "plans") return state.proposal_ids?.length === 2 ? "dailyPlan" : "plans";
   if (state.stage === "profile") return "goal";
   return "value";
 }
@@ -47,10 +48,10 @@ function valuesForState(state: OnboardingStateData): OnboardingJourneyValues {
   const selectedAllergy = state.allergies_or_intolerances.find((item) => allergyChoices.has(item)) || "";
   return {
     goal: state.goal || initialValues.goal,
-    birthDate: state.birth_date || "",
+    birthDate: state.birth_date || initialValues.birthDate,
     sex: state.sex === "female" ? "female" : "male",
-    height: state.height_cm ? String(state.height_cm) : "",
-    weight: state.weight_kg ? String(state.weight_kg).replace(".", ",") : "",
+    height: state.height_cm ? String(state.height_cm) : initialValues.height,
+    weight: state.weight_kg ? String(state.weight_kg).replace(".", ",") : initialValues.weight,
     activityLevel: state.activity_level || initialValues.activityLevel,
     trainingFrequency: state.training_frequency ?? initialValues.trainingFrequency,
     dietaryPattern: state.dietary_pattern || initialValues.dietaryPattern,
@@ -68,7 +69,8 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState<OnboardingJourneyStep>("value");
   const [values, setValues] = useState<OnboardingJourneyValues>(initialValues);
   const [state, setState] = useState<OnboardingStateData | null>(null);
-  const [proposal, setProposal] = useState<ProposalDetail | null>(null);
+  const [proposals, setProposals] = useState<ProposalDetail[]>([]);
+  const [calendarization, setCalendarization] = useState<OnboardingCalendarization | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,9 +84,10 @@ export default function OnboardingScreen() {
       setState(nextState);
       setValues(valuesForState(nextState));
       setStep(stepForState(nextState));
-      if (nextState.proposal_id) {
-        setProposal(await apiRequest<ProposalDetail>(`/api/v1/proposals/${nextState.proposal_id}`));
-      }
+      const proposalIds = nextState.proposal_ids?.length ? nextState.proposal_ids : nextState.proposal_id ? [nextState.proposal_id] : [];
+      setProposals(await Promise.all(proposalIds.map((id) => apiRequest<ProposalDetail>(`/api/v1/proposals/${id}`))));
+      setCalendarization(proposalIds.length === 2
+        ? await apiRequest<OnboardingCalendarization>("/api/v1/onboarding/calendarized-foods") : null);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -172,16 +175,38 @@ export default function OnboardingScreen() {
         return;
       }
       if (step === "summary") {
-        const nextProposal = await apiRequest<ProposalDetail>("/api/v1/onboarding/generate-plan", { method: "POST" });
-        setProposal(nextProposal);
+        const generated = await apiRequest<OnboardingMinutas>("/api/v1/onboarding/generate-plan", { method: "POST" });
+        setProposals(generated.items);
+        setCalendarization({ plans: generated.items.map((item) => ({ proposal_id: item.id, dailyplan_id: null, dates: [], foods: [] })), days_count: 0, foods: [] });
         setStep("dailyPlan");
         return;
       }
       if (step === "dailyPlan") {
-        const applied = await apiRequest<ProposalDetail>("/api/v1/onboarding/accept-plan", { method: "POST" });
-        setProposal(applied);
+        if (proposals.length === 2 && calendarization?.plans.filter((plan) => plan.dates.length > 0).length !== 2) {
+          throw new Error("Calendariza ambas minutas antes de continuar.");
+        }
+        const applied = await apiRequest<OnboardingMinutas>("/api/v1/onboarding/accept-plan", { method: "POST" });
+        setProposals(applied.items);
         router.replace({ pathname: "/subscription", params: { origin: "onboarding", ...(returnHref ? { returnTo: String(returnHref) } : {}) } });
       }
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function calendarize(proposalId: number) {
+    setBusy(true);
+    setError(null);
+    try {
+      const applied = proposals.every((item) => item.status === "applied")
+        ? proposals
+        : (await apiRequest<OnboardingMinutas>("/api/v1/onboarding/accept-plan", { method: "POST" })).items;
+      setProposals(applied);
+      const dailyPlanId = applied.find((item) => item.id === proposalId)?.applied_result?.object_id;
+      if (!dailyPlanId) throw new Error("No pudimos abrir esta minuta en el calendario.");
+      router.push({ pathname: "/calendar/select-plans", params: { origin: "onboarding", dailyPlanId: String(dailyPlanId) } });
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -203,25 +228,26 @@ export default function OnboardingScreen() {
   const controller: OnboardingJourneyController = {
     values,
     estimate: state?.estimate,
-    proposal,
+    proposal: proposals[0] ?? null,
+    proposals,
+    calendarization,
     busy,
     error,
     onChange: updateValue,
     onNext: () => void next(),
+    onCalendarize: (proposalId) => void calendarize(proposalId),
+    onOpenMeal: (proposalId, mealIndex) => router.push(`/onboarding/minutas/${proposalId}/meals/${mealIndex}` as Href),
     onBack: back,
     onAdjust: () => setStep("goal"),
   };
 
-  const stepIndex = onboardingJourneySteps.findIndex((item) => item.key === step);
-  const usesFixedDisclosuresFooter = stepIndex === 6;
-  const usesFixedProfileChrome = stepIndex >= 7 && stepIndex <= 12;
-  const headerCompensationTop = stepIndex >= 6 ? 88 : 0;
+  const { headerCompensationTop, scroll } = onboardingScreenChromeForStep(step);
   const presentationProps = presentationPropsForOnboardingStep(step);
 
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
-      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
+      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={scroll}>
         <OnboardingJourneyView controller={controller} {...presentationProps} step={step} />
       </Screen>
     </>

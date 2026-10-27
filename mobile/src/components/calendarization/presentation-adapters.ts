@@ -35,6 +35,8 @@ export function snapshotMealPanelItem(meal: MealSnapshot, index: number, planTot
       name: food.name ?? "Alimento",
       quantity: food.quantity_g ?? 0,
       quantityUnit: food.quantity_unit ?? "g",
+      portionDisplayQuantity: food.portion_display_quantity,
+      portionDisplayMeasure: food.portion_display_measure,
     })),
     id: meal.key ?? `meal-${index}`,
     name: meal.name ?? "Comida",
@@ -72,6 +74,8 @@ export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
         ?? (currentWeight ? (totals.protein_g ?? 0) / currentWeight : null),
       quantity: food.quantity_g ?? 0,
       quantityUnit: food.quantity_unit ?? "g",
+      portionDisplayQuantity: food.portion_display_quantity,
+      portionDisplayMeasure: food.portion_display_measure,
     };
   });
 }
@@ -86,6 +90,8 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     proteinGrams: number;
     quantity: number;
     quantityUnit: "g" | "ml";
+    portionDisplayQuantity?: number;
+    portionDisplayMeasure?: string;
   }>();
 
   meals.forEach((meal) => {
@@ -104,11 +110,23 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
         proteinGrams: 0,
         quantity: 0,
         quantityUnit,
+        portionDisplayQuantity: 0,
+        portionDisplayMeasure: food.portion_display_measure || undefined,
       };
       current.carbsGrams += food.carbs_g ?? 0;
       current.fatGrams += food.fat_g ?? 0;
       current.proteinGrams += food.protein_g ?? 0;
       current.quantity += food.quantity_g ?? 0;
+      if (
+        current.portionDisplayMeasure
+        && food.portion_display_measure === current.portionDisplayMeasure
+        && food.portion_display_quantity != null
+      ) {
+        current.portionDisplayQuantity = (current.portionDisplayQuantity ?? 0) + food.portion_display_quantity;
+      } else {
+        current.portionDisplayQuantity = undefined;
+        current.portionDisplayMeasure = undefined;
+      }
       aggregated.set(key, current);
     });
   });
@@ -143,6 +161,8 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     proteinPerKilogram: currentWeight ? food.proteinGrams / currentWeight : null,
     quantity: food.quantity,
     quantityUnit: food.quantityUnit,
+    portionDisplayQuantity: food.portionDisplayQuantity,
+    portionDisplayMeasure: food.portionDisplayMeasure,
   }));
 }
 

@@ -200,6 +200,31 @@ class DailyPlan(models.Model):
             self.save(update_fields=["is_draft"])
 
 
+class DailyPlanCatalogEntry(models.Model):
+    class DietaryStyle(models.TextChoices):
+        OMNIVORE = "omnivore", "Omnívora"
+        PESCATARIAN = "pescatarian", "Pescetariana"
+        VEGETARIAN = "vegetarian", "Vegetariana"
+        VEGAN = "vegan", "Vegana"
+
+    dailyplan = models.OneToOneField(DailyPlan, on_delete=models.CASCADE, related_name="catalog_entry")
+    summary = models.CharField(max_length=180, blank=True)
+    dietary_style = models.CharField(max_length=24, choices=DietaryStyle.choices)
+    is_published = models.BooleanField(default=False)
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "dailyplan__name", "id"]
+        verbose_name = "minuta del catálogo Explorar"
+        verbose_name_plural = "catálogo de minutas Explorar"
+        indexes = [models.Index(fields=["is_published", "dietary_style", "sort_order"], name="dayplan_catalog_explore_idx")]
+
+    def __str__(self):
+        return self.dailyplan.name
+
+
 class PinnedDailyPlan(models.Model):
     user = models.OneToOneField(
         User,

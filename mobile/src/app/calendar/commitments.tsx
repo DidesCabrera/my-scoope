@@ -8,14 +8,17 @@ import type { CalendarCommitment, CalendarCommitmentKind, CalendarOverviewData, 
 import { useSession } from "@/auth/session-context";
 import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentRegistrationTitle, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
+import { CalendarMonthPlaceholder } from "@/components/calendarization/calendar-month-calendar";
 import { calendarFoodDayRole, calendarFoodPeriodDayCount, selectCalendarFoodDate, validCalendarFoodPeriod } from "@/components/calendarization/calendar-food-period";
-import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
+import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
+import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { GroupedFoodsCard } from "@/components/panels";
 import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import { Button, Card, InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
 import { Chip } from "@/components/ui/chip";
 import { tokens } from "@/design/tokens";
+import { loadCommitmentReminderSettings, syncCommitmentReminders } from "@/notifications/commitment-reminders";
 
 function isCommitmentKind(value: string | undefined): value is CalendarCommitmentKind {
   return value === "shopping" || value === "cooking" || value === "training" || value === "nutritionist";
@@ -37,10 +40,12 @@ type FoodAttachment = { start: string; end: string };
 export default function RegisterCommitmentsScreen() {
   const router = useRouter();
   const pathname = usePathname();
-  const { kind: requestedKind } = useLocalSearchParams<{ kind?: string }>();
+  const { date: requestedDate, kind: requestedKind, origin } = useLocalSearchParams<{ date?: string; kind?: string; origin?: string }>();
   const kind = isCommitmentKind(requestedKind) ? requestedKind : null;
+  const initialDate = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : null;
   const setHeaderPresentation = useHeaderPresentation();
   const { apiRequest, status } = useSession();
+  const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const [localToday, setLocalToday] = useState<string | null>(null);
   const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
   const [monthOverview, setMonthOverview] = useState<CalendarOverviewData | null>(null);
@@ -57,6 +62,7 @@ export default function RegisterCommitmentsScreen() {
   const [serverSupportsPerDateLists, setServerSupportsPerDateLists] = useState<boolean | null>(null);
   const [foodLoading, setFoodLoading] = useState(false);
   const [foodError, setFoodError] = useState<string | null>(null);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +70,7 @@ export default function RegisterCommitmentsScreen() {
 
   const closeFoodEditor = useCallback(() => {
     foodRequestSequence.current += 1;
+    setCompactHeaderVisible(false);
     setFoodLoading(false);
     setEditingFoodDate(null);
   }, []);
@@ -75,23 +82,23 @@ export default function RegisterCommitmentsScreen() {
       .then((result) => {
         if (!active) return;
         setLocalToday(result.local_date);
-        setVisibleMonth(monthKeyFromDate(result.local_date));
+        setVisibleMonth(monthKeyFromDate(initialDate ?? result.local_date));
         setFoodMonth(monthKeyFromDate(result.local_date));
+        if (initialDate) setSelectedDates((current) => current.length ? current : [initialDate]);
       })
       .catch((nextError) => { if (active) { setError(userFacingError(nextError)); setLoading(false); } });
     return () => { active = false; };
-  }, [apiRequest, kind, status]);
+  }, [apiRequest, initialDate, kind, status]);
 
   useEffect(() => {
     if (status !== "authenticated" || !visibleMonth) return;
     let active = true;
-    const window = monthWindow(visibleMonth);
-    void apiRequest<CalendarOverviewData>(`/api/v1/calendar?start_date=${window.startDate}&days=${window.days}`)
-      .then((result) => { if (active) setMonthOverview(result); })
+    void monthCache.load(visibleMonth)
+      .then((result) => { if (active) { setMonthOverview(result); monthCache.prefetchAdjacent(visibleMonth); } })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [apiRequest, status, visibleMonth]);
+  }, [monthCache, status, visibleMonth]);
 
   useEffect(() => {
     if (status !== "authenticated" || !editingFoodDate || !foodMonth || foodMonth === visibleMonth && monthOverview?.start_date === monthWindow(foodMonth).startDate) return;
@@ -115,11 +122,12 @@ export default function RegisterCommitmentsScreen() {
   const presentHeader = useCallback(() => {
     setHeaderPresentation({
       fallback: "/calendar",
+      identityVisible: compactHeaderVisible,
       leadingAction: editingFoodDate ? { icon: "back", label: "Volver a las fechas", onPress: closeFoodEditor } : undefined,
       mode: "back",
-      title: editingFoodDate && kind ? commitmentDayTitle[kind] : "Registrar compromisos",
+      title: kind ? editingFoodDate ? commitmentDayTitle[kind] : commitmentRegistrationTitle[kind] : "Registrar compromisos",
     });
-  }, [closeFoodEditor, editingFoodDate, kind, setHeaderPresentation]);
+  }, [closeFoodEditor, compactHeaderVisible, editingFoodDate, kind, setHeaderPresentation]);
 
   useEffect(() => {
     if (!pathname.startsWith("/calendar/commitments")) return;
@@ -171,6 +179,7 @@ export default function RegisterCommitmentsScreen() {
   function openFoodEditor(day: string) {
     foodRequestSequence.current += 1;
     const attachment = foodAttachments[day];
+    setCompactHeaderVisible(false);
     setEditingFoodDate(day);
     setFoodStartDate(attachment?.start ?? "");
     setFoodEndDate(attachment?.end ?? "");
@@ -255,10 +264,12 @@ export default function RegisterCommitmentsScreen() {
 
   function changeMonth(delta: number) {
     if (!visibleMonth) return;
-    setLoading(true);
+    const nextMonth = shiftMonth(visibleMonth, delta);
+    const cached = monthCache.get(nextMonth);
+    setLoading(!cached);
     setError(null);
-    setMonthOverview(null);
-    setVisibleMonth(shiftMonth(visibleMonth, delta));
+    if (cached) setMonthOverview(cached);
+    setVisibleMonth(nextMonth);
   }
 
   async function register() {
@@ -276,7 +287,9 @@ export default function RegisterCommitmentsScreen() {
             : []),
         }),
       });
-      router.replace("/calendar" as Href);
+      monthCache.invalidate(new Set(selected.map(monthKeyFromDate)));
+      void loadCommitmentReminderSettings().then((reminderSettings) => syncCommitmentReminders(reminderSettings, apiRequest)).catch(() => undefined);
+      router.replace((origin === "home" ? "/today" : "/calendar/registry") as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -284,7 +297,7 @@ export default function RegisterCommitmentsScreen() {
     }
   }
 
-  if (editingFoodDate) return <Screen contentStyle={styles.content} headerMode="preserve" key={`commitment-detail-${editingFoodDate}`}>
+  if (editingFoodDate) return <Screen contentStyle={styles.content} headerMode="preserve" key={`commitment-detail-${editingFoodDate}`} onHeaderVisibilityChange={setCompactHeaderVisible}>
     <SectionPageHeader icon={pageIcon} indicator={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={shortDate(editingFoodDate)} textColor={tokens.color.textMain} />} section="calendarization" title={commitmentDayTitle[kind]} />
     {commitmentSupportsFoods(kind) ? <View style={styles.foodPeriodControls}>
           <Text style={styles.foodInstruction}>Selecciona una fecha de inicio y de término.</Text>
@@ -313,8 +326,8 @@ export default function RegisterCommitmentsScreen() {
                 disabled={foodRangeLocked}
                 key={`food-${day}`}
                 onPress={() => chooseFoodDate(day)}
-                style={[styles.gridDate, endpoint && { backgroundColor: `${accent}26`, borderColor: accent }, role === "between" && { backgroundColor: `${accent}33` }, monthKeyFromDate(day) !== foodMonth && styles.gridDateAdjacent]}>
-                <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, endpoint && { color: accent, fontWeight: "700" }, role === "between" && { color: accent }]}>{day.slice(8, 10)}</Text>
+                style={[styles.gridDate, dayData?.has_plan && styles.gridDateFilled, dayData?.has_plan && isCurrentMonthFromToday(day, localToday) && styles.gridDateUpcomingFilled, endpoint && { backgroundColor: `${accent}26`, borderColor: accent }, role === "between" && { backgroundColor: `${accent}33` }, monthKeyFromDate(day) !== foodMonth && styles.gridDateAdjacent]}>
+                <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, Boolean(localToday && day < localToday) && styles.gridNumberPast, endpoint && { color: accent, fontWeight: "700" }, role === "between" && { color: accent }]}>{day.slice(8, 10)}</Text>
                 <CommitmentDots commitments={dayCommitments} draftKind={shoppingDate ? "shopping" : undefined} />
               </Pressable>;
             })}
@@ -346,10 +359,10 @@ export default function RegisterCommitmentsScreen() {
     </Card>
   </Screen>;
 
-  return <Screen contentStyle={styles.content} headerMode="preserve" key="commitment-registration">
-    <SectionPageHeader countLabel="fechas" icon={pageIcon} section="calendarization" subtitle="Marca varios días; puedes cambiar de mes sin perder tu selección." title={commitmentRegistrationTitle[kind]} />
+  return <Screen contentStyle={styles.content} headerMode="preserve" key="commitment-registration" onHeaderVisibilityChange={setCompactHeaderVisible}>
+    <SectionPageHeader countLabel="fechas" icon={pageIcon} section="calendarization" subtitle="Selecciona las fechas en el calendario" title={commitmentRegistrationTitle[kind]} />
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    <Card>
+    <View style={styles.calendarSection}>
       <View style={styles.monthNavigation}>
         <Pressable accessibilityLabel="Mes anterior" accessibilityRole="button" accessibilityState={{ disabled: !visibleMonth || !localToday || visibleMonth <= monthKeyFromDate(localToday) }} disabled={!visibleMonth || !localToday || visibleMonth <= monthKeyFromDate(localToday)} onPress={() => changeMonth(-1)} style={styles.monthArrow}>
           <ChevronLeft color={tokens.color.textMain} size={20} />
@@ -359,8 +372,7 @@ export default function RegisterCommitmentsScreen() {
           <ChevronRight color={tokens.color.textMain} size={20} />
         </Pressable>
       </View>
-      {loading ? <LoadingState label="Cargando fechas…" /> : null}
-      <View style={styles.grid}>
+      {loading ? <CalendarMonthPlaceholder /> : <View style={styles.grid}>
         {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
         {monthOverview?.days.map((day) => {
           const exists = day.commitments?.some((item) => item.kind === kind) ?? false;
@@ -373,79 +385,88 @@ export default function RegisterCommitmentsScreen() {
             disabled={isPast || exists}
             key={day.calendar_date}
             onPress={() => toggleDate(day.calendar_date)}
-            style={[styles.gridDate, isSelected && { backgroundColor: `${presentation.color}33`, borderColor: presentation.color }, exists && styles.gridDateExisting, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, isPast && styles.gridDatePast]}>
-            <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, (isSelected || exists) && { color: presentation.color }]}>{day.calendar_date.slice(8, 10)}</Text>
+            style={[styles.gridDate, day.has_plan && styles.gridDateFilled, day.has_plan && isCurrentMonthFromToday(day.calendar_date, localToday) && styles.gridDateUpcomingFilled, isSelected && { backgroundColor: `${presentation.color}33`, borderColor: presentation.color }, exists && styles.gridDateExisting, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, isPast && styles.gridDatePast]}>
+            <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, isPast && styles.gridNumberPast, (isSelected || exists) && { color: presentation.color }]}>{day.calendar_date.slice(8, 10)}</Text>
             <CommitmentDots commitments={day.commitments} />
           </Pressable>;
         })}
-      </View>
+      </View>}
+    </View>
+    <View style={styles.calendarAction}>
       <Text style={styles.legend}>Los días con un punto ya tienen este compromiso registrado.</Text>
-    </Card>
-    <View style={styles.selectedDatesSection}>
-      <Text style={styles.sectionTitle}>Días comprometidos · {selected.length}</Text>
-      {selected.length ? selected.map((date) => <View key={date} style={[styles.selectedDateCard, { borderTopColor: presentation.color }]}>
-        <Pressable accessibilityLabel={`Ver detalle: ${commitmentDayTitle[kind]} del ${shortDate(date)}`} accessibilityRole="button" onPress={() => openFoodEditor(date)} style={styles.selectedDateContent}>
-        <View style={styles.selectedDateEyebrow}>
-          {foodAttachments[date] ? <Paperclip accessibilityLabel="Lista de alimentos adjunta" color={tokens.color.textSoft} size={16} strokeWidth={2} /> : null}
-          <View style={[styles.selectedDateIcon, { backgroundColor: presentation.color }]}><CommitmentIcon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.3} /></View>
-          <Text style={styles.selectedDateEyebrowText}>{commitmentDayTitle[kind].toUpperCase()}</Text>
-        </View>
-        <Text style={styles.selectedDateTitle}>{shortDate(date)}</Text>
-        {commitmentSupportsFoods(kind) ? <Text style={styles.helper}>{foodAttachments[date]
-          ? `Lista: ${shortDate(foodAttachments[date].start)} – ${shortDate(foodAttachments[date].end)}`
-          : "Sin lista de alimentos adjunta"}</Text> : null}
-        {foodAttachments[date] && calculatedFoodsByDate[date] ? <View style={styles.selectedDateChips}>
-          <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={`${calculatedFoodsByDate[date].foods.length} ${calculatedFoodsByDate[date].foods.length === 1 ? "alimento" : "alimentos"}`} textColor={tokens.color.textMain} />
-          <Chip backgroundColor={`${tokens.color.dailyPlan}1A`} borderColor={tokens.color.dailyPlan} label={`${calculatedFoodsByDate[date].plans_count} ${calculatedFoodsByDate[date].plans_count === 1 ? "plan" : "planes"}`} textColor={tokens.color.textMain} />
-          <Chip backgroundColor={`${tokens.color.program}1A`} borderColor={tokens.color.program} label={`${calendarFoodPeriodDayCount(foodAttachments[date].start, foodAttachments[date].end)} ${calendarFoodPeriodDayCount(foodAttachments[date].start, foodAttachments[date].end) === 1 ? "día" : "días"}`} textColor={tokens.color.textMain} />
-        </View> : null}
-        {notesByDate[date]?.trim() ? <Text numberOfLines={1} style={styles.helper}>{notesByDate[date].trim()}</Text> : null}
-        </Pressable>
-        <View style={styles.selectedDateFooter}>
-          {commitmentSupportsFoods(kind) && !foodAttachments[date]
-            ? <PickerCardAction label={kind === "shopping" ? "Crear lista de compras" : "Crear lista para cocinar"} onPress={() => openFoodEditor(date)} subject={shortDate(date)} />
-            : <Pressable accessibilityLabel={`Ver detalle: ${shortDate(date)}`} accessibilityRole="button" onPress={() => openFoodEditor(date)}><ChevronRight color={tokens.color.textMuted} size={22} /></Pressable>}
-        </View>
-      </View>) : <Text style={styles.helper}>Toca las fechas del calendario para seleccionarlas.</Text>}
+      <Button disabled={!selected.length || saving || hasFoodAttachments && serverSupportsPerDateLists !== true} label="Registrar en el calendario" loading={saving} onPress={() => void register()} />
     </View>
     {hasFoodAttachments && serverSupportsPerDateLists === false ? <InlineNotice tone="error">El servidor seleccionado aún no permite guardar una lista distinta para cada fecha. Espera la actualización antes de registrar estos compromisos.</InlineNotice> : null}
-    <View style={styles.registerAction}>
-      <Button disabled={!selected.length || saving || hasFoodAttachments && serverSupportsPerDateLists !== true} label="Registrar en el calendario" loading={saving} onPress={() => void register()} />
+    <View style={styles.selectedDatesSection}>
+      <Text style={styles.sectionTitle}>Días comprometidos · {selected.length}</Text>
+      {selected.length ? selected.map((date) => <View key={date} style={styles.selectedDateCard}>
+        <Pressable accessibilityLabel={`Ver detalle: ${commitmentDayTitle[kind]} del ${shortDate(date)}`} accessibilityRole="button" onPress={() => openFoodEditor(date)} style={styles.selectedDateContent}>
+        <View style={[styles.selectedDateIcon, { backgroundColor: `${presentation.color}33` }]}>
+          <CommitmentIcon color={presentation.color} size={23} strokeWidth={2.1} />
+        </View>
+        <View style={styles.selectedDateCopy}>
+          <Text style={styles.selectedDateTitle}>{commitmentDayTitle[kind]}</Text>
+          <Text style={styles.selectedDateDate}>{shortDate(date)}</Text>
+          {commitmentSupportsFoods(kind) ? <View style={styles.selectedDateListRow}>
+            {foodAttachments[date] ? <Paperclip accessibilityLabel="Lista de alimentos adjunta" color={tokens.color.textSoft} size={16} strokeWidth={2} /> : null}
+            <Text style={styles.helper}>{foodAttachments[date]
+              ? `Lista: ${shortDate(foodAttachments[date].start)} – ${shortDate(foodAttachments[date].end)}`
+              : "Sin lista de alimentos adjunta"}</Text>
+          </View> : null}
+          {foodAttachments[date] && calculatedFoodsByDate[date] ? <View style={styles.selectedDateChips}>
+            <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={`${calculatedFoodsByDate[date].foods.length} ${calculatedFoodsByDate[date].foods.length === 1 ? "alimento" : "alimentos"}`} textColor={tokens.color.textMain} />
+            <Chip backgroundColor={`${tokens.color.dailyPlan}1A`} borderColor={tokens.color.dailyPlan} label={`${calculatedFoodsByDate[date].plans_count} ${calculatedFoodsByDate[date].plans_count === 1 ? "plan" : "planes"}`} textColor={tokens.color.textMain} />
+            <Chip backgroundColor={`${tokens.color.program}1A`} borderColor={tokens.color.program} label={`${calendarFoodPeriodDayCount(foodAttachments[date].start, foodAttachments[date].end)} ${calendarFoodPeriodDayCount(foodAttachments[date].start, foodAttachments[date].end) === 1 ? "día" : "días"}`} textColor={tokens.color.textMain} />
+          </View> : null}
+          {notesByDate[date]?.trim() ? <Text numberOfLines={1} style={styles.selectedDateNote}>{notesByDate[date].trim()}</Text> : null}
+        </View>
+        {commitmentSupportsFoods(kind) && !foodAttachments[date] ? null : <ChevronRight color={tokens.color.textMuted} size={20} />}
+        </Pressable>
+        {commitmentSupportsFoods(kind) && !foodAttachments[date] ? <View style={styles.selectedDateFooter}>
+          <PickerCardAction label={kind === "shopping" ? "Crear lista de compras" : "Crear lista para cocinar"} onPress={() => openFoodEditor(date)} subject={shortDate(date)} />
+        </View> : null}
+      </View>) : <Text style={styles.helper}>Toca las fechas del calendario para seleccionarlas.</Text>}
     </View>
   </Screen>;
 }
 
 const styles = StyleSheet.create({
+  calendarAction: { gap: 20 },
+  calendarSection: { marginBottom: -2, paddingTop: tokens.spacing.sm },
   content: { gap: tokens.spacing.lg },
-  selectedDateIcon: { alignItems: "center", borderRadius: 6, height: 23, justifyContent: "center", width: 23 },
-  commitmentDots: { bottom: 3, flexDirection: "row", gap: 2, position: "absolute" },
+  selectedDateIcon: { alignItems: "center", borderRadius: 10, height: 40, justifyContent: "center", width: 40 },
+  commitmentDots: { bottom: 4, flexDirection: "row", gap: 2, position: "absolute" },
   commitmentDot: { borderRadius: 3, height: 5, width: 5 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 40, width: "13.5%" },
   gridDateAdjacent: { opacity: 0.5 },
   gridDateExisting: { backgroundColor: tokens.color.surfaceMuted },
+  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}2E` },
+  gridDateUpcomingFilled: { backgroundColor: `${tokens.color.dailyPlan}59` },
   gridDatePast: { opacity: 0.35 },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
-  gridNumberWithPlan: { color: tokens.color.dailyPlan, fontWeight: "700" },
+  gridNumberPast: { opacity: 0.8 },
+  gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
   helper: { color: tokens.color.textMuted, fontSize: 13, lineHeight: 19 },
   foodInstruction: { color: tokens.color.textMain, fontSize: 16, fontWeight: "700", lineHeight: 23 },
   foodPeriodAction: { marginTop: 30 - tokens.spacing.md },
   foodPeriodControls: { gap: tokens.spacing.md, marginBottom: 42 - tokens.spacing.lg },
-  legend: { color: tokens.color.textMuted, fontSize: 12, marginTop: tokens.spacing.sm },
+  legend: { color: tokens.color.textMuted, fontSize: 12, textAlign: "center" },
   monthArrow: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: tokens.spacing.md },
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
   noteCount: { color: tokens.color.textMuted, fontSize: 12, textAlign: "right" },
   noteInput: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, minHeight: 96, padding: tokens.spacing.md },
-  registerAction: { marginTop: 64 - tokens.spacing.lg },
   sectionTitle: { color: tokens.color.textMain, fontSize: 16, fontWeight: "600" },
-  selectedDateCard: { backgroundColor: tokens.color.surfaceCard, borderColor: "transparent", borderRadius: tokens.radius.card, borderWidth: 1, borderTopWidth: 3, gap: tokens.spacing.xs, marginHorizontal: -tokens.spacing.screen, minHeight: 130, overflow: "hidden", padding: tokens.card.outerPadding },
+  selectedDateCard: { backgroundColor: tokens.color.surfaceCard, borderColor: "transparent", borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.xs, marginHorizontal: -tokens.spacing.screen, padding: tokens.card.outerPadding },
   selectedDateChips: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs, marginTop: tokens.spacing.sm },
-  selectedDateContent: { gap: tokens.spacing.xs },
-  selectedDateEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
-  selectedDateEyebrowText: { color: tokens.color.textMuted, fontSize: 12, fontWeight: "600" },
+  selectedDateContent: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
+  selectedDateCopy: { flex: 1, gap: tokens.spacing.xs },
+  selectedDateDate: { color: tokens.color.textMuted, fontSize: 13 },
   selectedDateFooter: { alignItems: "center", flexDirection: "row", justifyContent: "flex-end", marginTop: tokens.spacing.sm },
-  selectedDateTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: "700" },
+  selectedDateListRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
+  selectedDateNote: { color: tokens.color.textMain, fontSize: 13, lineHeight: 19 },
+  selectedDateTitle: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.semibold },
   selectedDatesSection: { gap: tokens.spacing.md, marginTop: 34 },
 });

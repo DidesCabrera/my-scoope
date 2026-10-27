@@ -3,6 +3,9 @@ from typing import Any, Literal
 
 from ninja import Field, Schema
 
+from mobile_api.schema_domains.libraries import LibraryFoodPanelItemData
+from mobile_api.schema_domains.proposals import ProposalDetailData
+
 
 class OnboardingInput(Schema):
     birth_date: date
@@ -56,9 +59,39 @@ class OnboardingStateData(Schema):
     avoided_foods: list[str] = Field(default_factory=list)
     estimate: dict[str, Any] | None = None
     proposal_id: int | None = None
+    proposal_ids: list[int] = Field(default_factory=list)
 
 
 class OnboardingStateEnvelope(Schema):
     ok: Literal[True] = True
     data: OnboardingStateData
+    error: None = None
+
+
+class OnboardingMinutasData(Schema):
+    items: list[ProposalDetailData]
+
+
+class OnboardingMinutasEnvelope(Schema):
+    ok: Literal[True] = True
+    data: OnboardingMinutasData
+    error: None = None
+
+
+class OnboardingCalendarPlanData(Schema):
+    proposal_id: int
+    dailyplan_id: int | None = None
+    dates: list[date] = Field(default_factory=list)
+    foods: list[LibraryFoodPanelItemData] = Field(default_factory=list)
+
+
+class OnboardingCalendarizationData(Schema):
+    plans: list[OnboardingCalendarPlanData]
+    days_count: int
+    foods: list[LibraryFoodPanelItemData]
+
+
+class OnboardingCalendarizationEnvelope(Schema):
+    ok: Literal[True] = True
+    data: OnboardingCalendarizationData
     error: None = None

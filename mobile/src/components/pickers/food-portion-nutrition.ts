@@ -2,6 +2,28 @@ import type { LibraryNutrition } from "@/api/types";
 
 export type FoodPortionMeasure = "household" | "metric";
 
+const householdMeasureLabels: Record<string, string> = {
+  can: "lata",
+  cup: "taza",
+  fillet: "filete",
+  leaf: "hoja",
+  slice: "rodaja",
+  strip: "tira",
+  tablespoon: "cucharada",
+  unit: "unidad",
+};
+
+const householdMeasurePlurals: Record<string, string> = {
+  cucharada: "cucharadas",
+  filete: "filetes",
+  hoja: "hojas",
+  lata: "latas",
+  rodaja: "rodajas",
+  taza: "tazas",
+  tira: "tiras",
+  unidad: "unidades",
+};
+
 export type FoodPortionConversion = {
   defaultPortion: number | null | undefined;
   householdAmount: number | null | undefined;
@@ -55,7 +77,9 @@ export function foodPortionHouseholdAmount(
 }
 
 export function householdMeasureDisplayLabel(label: string, amount: number): string {
-  return label.trim().toLocaleLowerCase("es-CL") === "unidad" && amount > 1 ? "unidades" : label;
+  const normalized = label.trim().toLocaleLowerCase("es-CL");
+  const singular = householdMeasureLabels[normalized] ?? label;
+  return amount > 1 ? householdMeasurePlurals[singular.toLocaleLowerCase("es-CL")] ?? singular : singular;
 }
 
 export function convertFoodPortionAmount(

@@ -304,9 +304,9 @@ export function CompositionPickerScreen({
 
   useFocusEffect(useCallback(() => {
     const close = () => router.dismissTo(detailHref);
-    setHeaderPresentation({ action: { label: "Cancelar", onPress: close }, mode: "back", fallback: detailHref, title });
+    setHeaderPresentation({ action: selectedId ? undefined : { label: "Cancelar", onPress: close }, mode: "back", fallback: detailHref, title });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [detailHref, router, setHeaderPresentation, title]));
+  }, [detailHref, router, selectedId, setHeaderPresentation, title]));
 
   useEffect(() => {
     if (status !== "authenticated" || !targetId) return;

@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI Architecture & Context Steward"
+  short_description: "Audit architecture and AI comprehension"
+  default_prompt: "Usa $ai-architecture-context-steward para auditar si My Scoope es comprensible y arquitectónicamente coherente para una AI nueva."
+policy:
+  allow_implicit_invocation: true

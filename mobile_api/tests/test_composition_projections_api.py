@@ -130,6 +130,8 @@ class MobileCompositionProjectionAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(projected[0]["relation_id"], relation.id)
         self.assertEqual(projected[0]["projected_label"], "Reemplazo")
         self.assertEqual(projected[0]["name"], "Yogur de reemplazo")
+        self.assertEqual(projected[0]["portion_display_quantity"], 2)
+        self.assertEqual(projected[0]["portion_display_measure"], "cup")
 
         dailyplan = DailyPlan.objects.create(name="Plan del DPM", created_by=self.user, is_draft=False)
         dailyplan_meal = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=meal)

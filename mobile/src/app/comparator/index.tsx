@@ -9,6 +9,7 @@ import type {
   ComparisonMetadata,
   ComparisonResult,
   ComparisonSelection,
+  EntitlementsData,
   SavedComparisonDetail,
   SavedComparisonListData,
   ShareResource,
@@ -25,6 +26,8 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionKpiSection } from "@/components/nutrition";
+import { isCommercialLimitError, reachedCommercialLimit } from "@/components/subscriptions/commercial-limit";
+import { CommercialLimitSheet, type CommercialLimitState } from "@/components/subscriptions/commercial-limit-sheet";
 import {
   DistributedTabBar,
   EntityCard,
@@ -167,13 +170,13 @@ function ComparatorBuilderScreen() {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [commercialLimit, setCommercialLimit] = useState<CommercialLimitState | null>(null);
 
   useFocusEffect(useCallback(() => {
     const fallback = { pathname: "/comparator", params: { kind } } as Href;
-    const cancel = () => { if (router.canGoBack()) router.back(); else router.replace(fallback); };
-    setHeaderPresentation({ action: { label: "Cancelar", onPress: cancel }, fallback, mode: "back", title: savedId ? "Editar comparación" : "Nueva comparación" });
+    setHeaderPresentation({ fallback, mode: "back", title: savedId ? "Editar comparación" : "Nueva comparación" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [kind, router, savedId, setHeaderPresentation]));
+  }, [kind, savedId, setHeaderPresentation]));
 
   useFocusEffect(useCallback(() => {
     const selection = consumeSelection();
@@ -267,6 +270,14 @@ function ComparatorBuilderScreen() {
     setWorking(true);
     setError(null);
     try {
+      if (!savedId) {
+        const entitlements = await apiRequest<EntitlementsData>("/api/v1/entitlements", { cache: "no-store" });
+        const reachedLimit = reachedCommercialLimit(entitlements, "comparison");
+        if (reachedLimit) {
+          setCommercialLimit(reachedLimit);
+          return;
+        }
+      }
       const path = savedId ? `/api/v1/comparisons/saved/${savedId}` : "/api/v1/comparisons/saved";
       const saved = await apiRequest<SavedComparisonDetail>(path, {
         method: savedId ? "PUT" : "POST",
@@ -274,6 +285,18 @@ function ComparatorBuilderScreen() {
       });
       router.replace({ pathname: "/comparator/saved/[id]", params: { id: String(saved.saved_comparison_id), kind: saved.kind } } as Href);
     } catch (nextError) {
+      if (!savedId && isCommercialLimitError(nextError, "comparison")) {
+        try {
+          const entitlements = await apiRequest<EntitlementsData>("/api/v1/entitlements", { cache: "no-store" });
+          const reachedLimit = reachedCommercialLimit(entitlements, "comparison");
+          if (reachedLimit) {
+            setCommercialLimit(reachedLimit);
+            return;
+          }
+        } catch {
+          // Preserve the original server response when the refresh also fails.
+        }
+      }
       setError(userFacingError(nextError));
     } finally {
       setWorking(false);
@@ -284,6 +307,7 @@ function ComparatorBuilderScreen() {
   if (loading) return <LoadingState label="Preparando la comparación…" />;
 
   return (
+    <>
     <View style={styles.builderRoot}>
       <Screen headerMode="preserve">
 
@@ -345,6 +369,8 @@ function ComparatorBuilderScreen() {
         ) : null}
       </Screen>
     </View>
+    {commercialLimit ? <CommercialLimitSheet {...commercialLimit} onClose={() => setCommercialLimit(null)} onUpgrade={() => { setCommercialLimit(null); router.push("/subscription"); }} visible /> : null}
+    </>
   );
 }
 

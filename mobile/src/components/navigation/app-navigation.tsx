@@ -15,6 +15,7 @@ import {
   Pin,
   MoreHorizontal,
   Plus,
+  Search,
   Bell,
   Scale,
   Send,
@@ -41,6 +42,7 @@ import { initialWindowMetrics, SafeAreaView, useSafeAreaInsets } from "react-nat
 
 import { useSession } from "@/auth/session-context";
 import type { EntitlementsData, HomeData, LibraryEntity } from "@/api/types";
+import type { NotificationFeed } from "@/api/notification-types";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
@@ -51,13 +53,13 @@ import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
-type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus"; label: string; onPress(): void };
+type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus" | "search"; label: string; onPress(): void };
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
-  | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; title: string }
-  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
-  | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
+  | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; secondaryAction?: HeaderAction; title: string }
+  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; forceFallback?: boolean; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
+  | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; secondaryAction?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
   closeMenu(): void;
@@ -79,19 +81,26 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   inbox: Send,
 };
 
-const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().map((area) => ({
+const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().map<NavigationSidebarItemData>((area) => ({
   href: area.href,
   icon: productAreaIcons[area.key],
   iconTreatment: area.key === "assistant" ? "assistant" : "plain",
   label: area.label,
-}));
+})).filter((item) => item.href !== "/assistant");
+
+const assistantItem: NavigationSidebarItemData = {
+  href: "/assistant",
+  icon: Sparkles,
+  iconTreatment: "assistant",
+  label: "Asistente Nutricional",
+};
 
 const secondaryPrimaryItems: NavigationSidebarItemData[] = [
   { href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" },
 ];
 
 const libraryItems: EntitySidebarItemData[] = [
-  { entity: "program", href: "/libraries/programs", label: "Mis Programas Semanales" },
+  { entity: "program", href: "/libraries/programs", label: "Mis Programas" },
   { entity: "dailyPlan", href: "/libraries/daily-plans", label: PRODUCT_VOCABULARY_ES.dailyPlan.libraryTitle },
   { entity: "meal", href: "/libraries/meals", label: "Mis Comidas" },
   { entity: "food", href: "/libraries/foods", label: "Mis Alimentos" },
@@ -143,7 +152,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente Nutricional" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: pathname === "/proposals" ? Sparkles : ClipboardCheck, title: pathname === "/proposals" ? "Asistente Nutricional" : "Detalle de propuesta" };
   if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparaciones" };
-  if (pathname.startsWith("/calendar")) return { icon: CalendarClock, title: pathname === "/calendar" ? "Calendario" : pathname.startsWith("/calendar/commitments") ? "Registrar compromisos" : pathname === "/calendar/future" ? "Planes próximas fechas" : "Detalle de fecha" };
+  if (pathname.startsWith("/calendar")) return { icon: CalendarClock, title: pathname === "/calendar" ? "Calendario" : pathname === "/calendar/registry" ? "Mis compromisos" : pathname.startsWith("/calendar/commitments") ? "Registrar compromisos" : pathname === "/calendar/future" ? "Planes próximas fechas" : "Detalle de fecha" };
   if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Programa en curso" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
   if (pathname === "/weight") return { icon: Weight, title: "Registrar peso" };
@@ -151,6 +160,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/review") return { icon: TrendingUp, title: "Revisión de progreso" };
   if (pathname === "/revision") return { icon: ClipboardCheck, title: "Revisar ajuste" };
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };
+  if (pathname === "/notifications") return { icon: Bell, title: "Notificaciones" };
   if (pathname === "/inbox") return { icon: Send, title: "Compartidos" };
   if (pathname.startsWith("/share/")) return { icon: UserPlus, title: "Contenido compartido" };
   if (pathname === "/subscription" || pathname === "/subscription-details") return { icon: WalletCards, title: pathname === "/subscription" ? "Suscripciones y Bolsas" : "Detalles de suscripciones y bolsas" };
@@ -199,7 +209,7 @@ export function AppNavigationHeader() {
               : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.leadingAction.label}</Text>}
           </Pressable>
         ) : headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
-          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (headerPresentation.mode === "back" && headerPresentation.forceFallback) router.replace(detailFallback); else if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMuted} size={26} strokeWidth={2.2} /></Pressable>
+          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (headerPresentation.mode === "back" && headerPresentation.forceFallback) router.replace(detailFallback); else if (headerPresentation.mode === "library-detail" && headerPresentation.forceFallback) router.dismissTo(detailFallback); else if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMuted} size={26} strokeWidth={2.2} /></Pressable>
         ) : canOpenMenu ? (
           <Pressable
             accessibilityLabel="Abrir menú"
@@ -215,20 +225,43 @@ export function AppNavigationHeader() {
         {headerPresentation.mode === "back" ? <BackHeaderIdentity title={headerPresentation.title} visible={headerPresentation.identityVisible} /> : headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
           <LibraryHeaderIdentity entity={headerPresentation.entity} title={headerPresentation.title} visible={headerPresentation.identityVisible} />
         ) : isHome ? <View pointerEvents="none" style={styles.headerLogo}><MyScoopeBrandLogo compact /></View> : <HeaderIdentity icon={routeIdentity.icon} title={headerPresentation.title || routeIdentity.title} visible={defaultIdentityVisible} />}
-        {headerPresentation.mode === "back" && headerPresentation.action ? (
-          <Pressable
+        {headerPresentation.mode === "back" && (headerPresentation.secondaryAction || headerPresentation.action) ? (
+          <View style={styles.libraryHeaderActions}>
+          {headerPresentation.secondaryAction ? <Pressable
+            accessibilityLabel={headerPresentation.secondaryAction.label}
+            accessibilityRole="button"
+            disabled={headerPresentation.secondaryAction.disabled}
+            hitSlop={8}
+            onPress={headerPresentation.secondaryAction.onPress}
+            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.secondaryAction?.icon === "plus" && styles.backHeaderIconAction, headerPresentation.secondaryAction?.disabled && styles.disabled, pressed && styles.pressed]}>
+            {headerPresentation.secondaryAction.icon === "plus" ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} /> : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.secondaryAction.label}</Text>}
+          </Pressable> : null}
+          {headerPresentation.action ? <Pressable
             accessibilityLabel={headerPresentation.action.label}
             accessibilityRole="button"
             disabled={headerPresentation.action.disabled}
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.icon === "more" && styles.backHeaderMenuAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.backHeaderAction, (headerPresentation.action?.icon === "more" || headerPresentation.action?.icon === "plus") && styles.backHeaderIconAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.action.icon === "more"
               ? <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
-              : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
-          </Pressable>
+              : headerPresentation.action.icon === "plus"
+                ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+                : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
+          </Pressable> : null}
+          </View>
         ) : headerPresentation.mode === "library-list" ? (
           <View style={styles.libraryHeaderActions}>
+            {headerPresentation.secondaryAction ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.secondaryAction.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.secondaryAction.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <Search color={tokens.color.textMuted} size={24} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
             {headerPresentation.createAction ? (
               <Pressable
                 accessibilityLabel={headerPresentation.createAction.label}
@@ -363,9 +396,9 @@ function AppSidebar() {
   const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeData["library_counts"] | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [translateX] = useState(() => new Animated.Value(-380));
   const [scrimOpacity] = useState(() => new Animated.Value(0));
-  const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
 
   useEffect(() => {
     const hiddenPosition = -drawerWidth;
@@ -396,6 +429,9 @@ function AppSidebar() {
         setLatestWeightKg(home.latest_weight?.weight_kg ?? null);
       })
       .catch(() => undefined);
+    void apiRequest<NotificationFeed>("/api/v1/notifications")
+      .then((feed) => setNotificationUnreadCount(feed.unread_count))
+      .catch(() => undefined);
   }, [apiRequest, menuOpen, status]);
 
   const openCredits = () => {
@@ -405,6 +441,10 @@ function AppSidebar() {
   const openHome = () => {
     closeMenu();
     router.push("/today" as Href);
+  };
+  const openNotifications = () => {
+    closeMenu();
+    router.push("/notifications" as Href);
   };
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? null;
 
@@ -423,6 +463,15 @@ function AppSidebar() {
                 <Pressable accessibilityLabel="Ir a Inicio" accessibilityRole="button" hitSlop={8} onPress={openHome} style={({ pressed }) => [styles.drawerHome, pressed && styles.pressed]}>
                   <MyScoopeBrandLogo compact scale={1.12} />
                 </Pressable>
+                <View style={styles.drawerHeaderActions}>
+                <Pressable
+                  accessibilityLabel={`Notificaciones${notificationUnreadCount ? `: ${notificationUnreadCount} sin leer` : ""}`}
+                  accessibilityRole="button"
+                  onPress={openNotifications}
+                  style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
+                  <Bell color={tokens.color.textMuted} size={23} strokeWidth={2} />
+                  {notificationUnreadCount > 0 ? <View style={styles.notificationDot} /> : null}
+                </Pressable>
                 <Pressable
                   accessibilityLabel="Cerrar menú"
                   accessibilityRole="button"
@@ -430,8 +479,8 @@ function AppSidebar() {
                   style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
                   <PanelRight color={tokens.color.textMuted} size={24} strokeWidth={2} />
                 </Pressable>
+                </View>
               </View>
-              <Text style={styles.drawerGreeting}><Text style={styles.drawerGreetingEmoji}>💪🏻</Text>{`Vamos ${firstName}!`}</Text>
             </View>
             <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false} style={styles.drawerScroll}>
               {primaryItems.flatMap((item) => [
@@ -443,6 +492,10 @@ function AppSidebar() {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
                 {libraryItems.map((item) => <EntitySidebarEntry count={libraryCount(libraryCounts, item.entity)} item={item} key={String(item.href)} />)}
+              </View>
+              <View style={styles.menuSection}>
+                <Text style={styles.menuSectionLabel}>Asistencia AI</Text>
+                <FunctionalSidebarEntry item={assistantItem} />
               </View>
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>
@@ -478,9 +531,9 @@ const styles = StyleSheet.create({
   backHeaderSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderLeadingAction: { alignItems: "flex-start", height: 52, justifyContent: "center", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 92 },
-  backHeaderMenuAction: { alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens.spacing.sm, width: 92 },
+  backHeaderIconAction: { paddingHorizontal: 0, width: 44 },
   backHeaderActionText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700" },
-  backHeaderIdentity: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0 },
+  backHeaderIdentity: { alignItems: "center", bottom: 0, justifyContent: "center", left: 92, minWidth: 0, position: "absolute", right: 92, top: 0 },
   headerListIdentity: { flex: 1, justifyContent: "center" },
   headerLogo: { alignItems: "center", bottom: 0, justifyContent: "center", left: 58, position: "absolute", right: 58, top: 0 },
   routeIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
@@ -489,14 +542,14 @@ const styles = StyleSheet.create({
   scrim: { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   drawer: { backgroundColor: tokens.color.surfaceApp, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
   drawerSafeArea: { flex: 1 },
-  drawerHeader: { alignItems: "stretch", minHeight: 59.7, paddingHorizontal: tokens.spacing.md * 2 },
+  drawerHeader: { alignItems: "stretch", minHeight: 64, paddingHorizontal: tokens.spacing.md * 2, paddingTop: tokens.spacing.sm },
   drawerBrandRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 44 },
   drawerHome: { alignItems: "flex-start", justifyContent: "center", minHeight: 44 },
-  drawerGreeting: { color: tokens.color.textMain, fontSize: 15, fontWeight: "300", lineHeight: 20, marginTop: -4.3 },
-  drawerGreetingEmoji: { fontSize: 13 },
+  drawerHeaderActions: { alignItems: "center", flexDirection: "row", gap: 4 },
   closeButton: { alignItems: "center", borderRadius: tokens.radius.md, height: 44, justifyContent: "center", width: 44 },
-  drawerContent: { gap: 0, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.md, paddingTop: 24 },
+  notificationDot: { backgroundColor: tokens.color.danger, borderColor: tokens.color.surfaceApp, borderRadius: 6, borderWidth: 2, height: 12, position: "absolute", right: 7, top: 5, width: 12 },
+  drawerContent: { gap: 0, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.md, paddingTop: 0 },
   drawerScroll: { flex: 1 },
-  menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.lg },
+  menuSection: { gap: 0, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.compact },
   menuSectionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm, textTransform: "uppercase" },
 });

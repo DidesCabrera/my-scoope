@@ -26,6 +26,7 @@ test("composition pickers use independent native routes and one shared flow", as
     "src/components/ui/native-date-time-field.native.tsx",
   ].map((file) => readFile(path.resolve(process.cwd(), file), "utf8")));
   matches(picker, /mode: "back"/);
+  matches(picker, /action: selectedId \? undefined : \{ label: "Cancelar", onPress: close \}/);
   matches(picker, /stickyHeaderIndices=\{\[0\]\}/);
   matches(picker, /stickyHeaderIndices=\{kind === "dailyplan-to-program" \? \[0\] : undefined\}/);
   matches(picker, /style=\{styles\.configurationSticky\}/);
@@ -82,6 +83,11 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /foodPortionMetricAmount\(quantity, portionMeasure, selectedPortionConversion\)/);
   matches(portionField, /<Check color=\{tokens\.color\.food\}/);
   matches(portionField, /const \[visible, setVisible\] = useState\(initiallyExpanded\)/);
+  matches(portionField, /const \[confirmed, setConfirmed\] = useState\(false\)/);
+  matches(portionField, /setConfirmed\(true\)/);
+  matches(portionField, /accessibilityLabel=\{confirmed \? "Cerrar selector de porción" : "Confirmar porción"\}/);
+  matches(portionField, /onPress=\{confirmed \? close : commit\}/);
+  matches(portionField, /confirmed[\s\S]*<X color=\{tokens\.color\.food\}[\s\S]*<Check color=\{tokens\.color\.food\}/);
   matches(portionField, /accessibilityLabel=\{`Porción: \$\{selectorLabel\}`\}/);
   matches(portionField, /householdMeasureDisplayLabel\(householdMeasureLabel, selectedAmount\)/);
   omits(portionField, /accessibilityLabel=\{`(?:Cantidad|Medida):/);
@@ -181,7 +187,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(navigation, /ChevronLeft/);
   matches(navigation, /BackHeaderIdentity/);
   matches(navigation, /backHeaderAction/);
-  matches(picker, /action: \{ label: "Cancelar"/);
+  matches(picker, /action: selectedId \? undefined : \{ label: "Cancelar"/);
 
   for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day", "meal-to-calendarized-day", "food-to-calendarized-meal"]) {
     const source = await readFile(path.resolve(process.cwd(), `src/app/pickers/${route}.tsx`), "utf8");
@@ -252,15 +258,15 @@ test("active program details expose snapshot-only composition actions after comp
 
   matches(dayDetail, /pickerHref\("meal-to-calendarized-day", \{ dayId: day\.id \}\)/);
   matches(dayDetail, /label="\+ Agregar Comida"/);
-  matches(dayDetail, /<Button\s+bleed\s+label="\+ Agregar Comida"/);
+  matches(dayDetail, /<Button\s+label="\+ Agregar Comida"[\s\S]*?variant="chipPrimary"/);
   matches(dayDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey, returnTo: `\/program\/days\/\$\{dayId\}` \}\)/);
-  matches(dayDetail, /<Button bleed label="\+ Agregar alimento"/);
+  matches(dayDetail, /<Button label="\+ Agregar alimento"[\s\S]*?variant="chipPrimary"/);
   assert.ok(dayDetail.indexOf('title="Composición de la minuta diaria"') < dayDetail.indexOf('label="+ Agregar Comida"'));
   assert.ok(dayDetail.indexOf('label="+ Agregar Comida"') < dayDetail.indexOf('title="Detalle de cada Comida"'));
 
   matches(mealDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey \}\)/);
   matches(mealDetail, /label="\+ Agregar alimento"/);
-  matches(mealDetail, /<Button\s+bleed\s+label="\+ Agregar alimento"/);
+  matches(mealDetail, /<Button\s+label="\+ Agregar alimento"[\s\S]*?variant="chipPrimary"/);
   assert.ok(mealDetail.indexOf('title="Composición comida"') < mealDetail.indexOf('label="+ Agregar alimento"'));
   assert.ok(mealDetail.indexOf('label="+ Agregar alimento"') < mealDetail.indexOf('title="Detalle de cada Alimento"'));
 });
@@ -275,7 +281,7 @@ test("Home and library cards expose their contextual composition actions below t
   matches(today, /const todayDayId = today\?\.day_id/);
   matches(today, /onAddMeal=\{todayDayId != null \? \(\) => router\.push\(pickerHref\("meal-to-calendarized-day", \{ dayId: todayDayId \}\)\) : undefined\}/);
   matches(card, /onAddMeal\?: \(\) => void/);
-  matches(card, /<Button bleed label="\+ Agregar Comida" onPress=\{onAddMeal\} \/>/);
+  matches(card, /<Button label="\+ Agregar Comida" onPress=\{onAddMeal\} variant="chipPrimary" \/>/);
   assert.ok(card.indexOf("<MealPanels") < card.indexOf('label="+ Agregar Comida"'));
   matches(libraryCard, /interactive && item\.entity === "meal"/);
   matches(libraryCard, /pickerHref\("food-to-meal", \{ mealId: item\.id, returnTo: String\(libraryHref\) \}\)/);

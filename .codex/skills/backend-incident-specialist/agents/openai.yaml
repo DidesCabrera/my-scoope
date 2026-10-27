@@ -1,0 +1,6 @@
+interface:
+  display_name: "Backend Incident Specialist"
+  short_description: "Investigate Django and API incidents"
+  default_prompt: "Usa $backend-incident-specialist para investigar este incidente de Django o API y entregar una causa respaldada por evidencia."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Incident Verifier"
+  short_description: "Verify incident fixes and closure evidence"
+  default_prompt: "Usa $incident-verifier para comprobar de forma independiente si este incidente está realmente resuelto."
+policy:
+  allow_implicit_invocation: true

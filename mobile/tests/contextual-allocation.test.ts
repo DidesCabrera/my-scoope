@@ -3,6 +3,7 @@ import test from "node:test";
 
 import type { MealSnapshot } from "../src/api/types";
 import {
+  snapshotDailyPlanFoodPanelItems,
   snapshotFoodPanelItems,
   snapshotMacroDistribution,
   snapshotMealPanelItem,
@@ -74,5 +75,39 @@ test("calendarized food panels prefer API PPK and retain the legacy snapshot fal
   assert.deepEqual(
     snapshotFoodPanelItems(meal).map((food) => food.proteinPerKilogram),
     [0.25, 0.25],
+  );
+});
+
+test("calendarized food panels retain and aggregate proposed household equivalents", () => {
+  const meals: MealSnapshot[] = [
+    {
+      foods: [{
+        detail_id: 7,
+        name: "Avena",
+        quantity_g: 80,
+        quantity_unit: "g",
+        portion_display_quantity: 0.5,
+        portion_display_measure: "cup",
+      }],
+    },
+    {
+      foods: [{
+        detail_id: 7,
+        name: "Avena",
+        quantity_g: 160,
+        quantity_unit: "g",
+        portion_display_quantity: 1,
+        portion_display_measure: "cup",
+      }],
+    },
+  ];
+
+  assert.deepEqual(
+    snapshotFoodPanelItems(meals[0]).map((food) => [food.portionDisplayQuantity, food.portionDisplayMeasure]),
+    [[0.5, "cup"]],
+  );
+  assert.deepEqual(
+    snapshotDailyPlanFoodPanelItems(meals).map((food) => [food.portionDisplayQuantity, food.portionDisplayMeasure]),
+    [[1.5, "cup"]],
   );
 });

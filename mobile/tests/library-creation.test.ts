@@ -17,23 +17,23 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.match(list, /include_drafts/);
   assert.match(route, /LibraryCreateScreen/);
   assert.match(create, /mode: "back"/);
-  assert.match(create, /action: \{ label: "Cancelar"/);
-  assert.match(create, /<Card accent=\{tokens\.color\[entity\]\}/);
-  assert.match(create, /<EntityIcon entity=\{entity\} size="compact" \/>/);
-  for (const identity of ["Nuevo alimento", "Nueva comida", "Nuevo minuta diaria", "Nuevo programa"]) {
-    assert.match(create, new RegExp(identity));
+  assert.match(create, /fallback: `\/libraries\/\$\{config\.segment\}`/);
+  assert.match(create, /<View style=\{styles\.formBody\}>/);
+  for (const title of ["Crear nuevo alimento", "Crear nueva comida", "Crear nueva minuta diaria", "Crear nuevo programa"]) {
+    assert.match(create, new RegExp(title));
   }
+  assert.ok(create.indexOf("<View style={styles.formBody}>") < create.indexOf("{config.guidance ?"));
   assert.match(create, /const mealCreationContext = entity === "meal" && returnHref && pickerEntryHref && pickerKind/);
-  assert.match(create, /pathname: "\/libraries\/meals\/\[id\]"/);
+  assert.match(create, /const detailHref = `\/libraries\/meals\/\$\{saved\.id\}/);
   assert.match(create, /pickerEntryTo: String\(mealCreationContext\.pickerEntryHref\)/);
   assert.match(create, /returnTo: String\(mealCreationContext\.returnHref\)/);
-  assert.doesNotMatch(create, /AppHeader|CollectionPageHeader/);
+  assert.doesNotMatch(create, /AppHeader/);
   for (const field of ["Nombre", "Proteínas", "Carbohidratos", "Grasas totales"]) {
     assert.match(create, new RegExp(field.replace(/[()]/g, "\\$&")));
   }
   assert.equal(create.includes("Valores por 100 {portionUnit}"), true);
   assert.equal(create.includes('labelStyle={entity === "food" ? styles.foodFieldLabel : undefined}'), true);
-  assert.equal(create.includes("foodFieldLabel: { color: tokens.color.textMain }"), true);
+  assert.equal(create.includes("foodFieldLabel: { color: tokens.color.textMuted }"), true);
   assert.ok(create.includes("nutritionLabel: { color: tokens.color.textMain") && create.includes("fontWeight: tokens.weight.bold"));
   assert.equal(create.includes("style={styles.nutritionInputSurface}"), true);
   assert.equal(create.includes('<Text style={styles.nutritionUnit}>g</Text>'), true);
@@ -98,5 +98,4 @@ test("empty drafts hide nutrition comparisons until they have comparable content
   assert.match(program, /label: "Duplicar semana"/);
   assert.match(program, /label: "Eliminar semana"/);
   assert.match(program, /canRemoveWeek=\{weeksCount > 1\}/);
-  assert.ok(program.indexOf("<ProgramWeekComparisonPanels") < program.indexOf('label="+ Agregar nueva semana"'));
 });

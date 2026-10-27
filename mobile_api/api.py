@@ -1,6 +1,5 @@
 from ninja import NinjaAPI
-from ninja.errors import AuthenticationError
-from ninja.errors import ValidationError as NinjaValidationError
+from ninja.errors import AuthenticationError, ValidationError as NinjaValidationError
 
 from mobile_api.api_support import success as _success
 from mobile_api.errors import MobileAPIError, error_envelope
@@ -11,9 +10,11 @@ from mobile_api.routes.calendarization_edits import router as calendarization_ed
 from mobile_api.routes.comparison_edits import router as comparison_edits_router
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.composition import router as composition_router
+from mobile_api.routes.explore import router as explore_router
 from mobile_api.routes.label_capture import router as label_capture_router
 from mobile_api.routes.libraries import router as libraries_router
 from mobile_api.routes.list_actions import router as list_actions_router
+from mobile_api.routes.notifications import router as notifications_router
 from mobile_api.routes.proposals import router as proposals_router
 from mobile_api.routes.root import router as identity_router
 from mobile_api.routes.sharing import router as sharing_router
@@ -27,11 +28,9 @@ api = NinjaAPI(
     urls_namespace="mobile_api_v1",
 )
 
-
 @api.exception_handler(MobileAPIError)
 def handle_mobile_api_error(request, exc):
     return api.create_response(request, error_envelope(exc), status=exc.status_code)
-
 
 @api.exception_handler(NinjaValidationError)
 def handle_validation_error(request, exc):
@@ -61,10 +60,12 @@ api.add_router("", calendar_router)
 api.add_router("", calendarization_edits_router)
 api.add_router("", list_actions_router)
 api.add_router("", proposals_router)
+api.add_router("", notifications_router)
 api.add_router("", sharing_router)
 api.add_router("", comparisons_router)
 api.add_router("", comparison_edits_router)
 api.add_router("", label_capture_router)
 api.add_router("", libraries_router)
+api.add_router("", explore_router)
 api.add_router("", composition_router)
 api.add_router("", assistant_router)

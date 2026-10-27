@@ -6,7 +6,7 @@ type NotificationData = Record<string, unknown>;
 
 function internalRoute(value: unknown): Href | null {
   if (typeof value !== "string") return null;
-  if (value === "/today" || /^\/program\/days\/\d+(?:\/meals\/[^/?#]+)?$/.test(value)) {
+  if (value === "/today" || /^\/program\/days\/\d+(?:\/meals\/[^/?#]+)?$/.test(value) || /^\/calendar\/commitments\/\d+\?date=\d{4}-\d{2}-\d{2}$/.test(value)) {
     return value as Href;
   }
   return null;

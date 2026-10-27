@@ -41,3 +41,7 @@ test("notification responses reject external or unsupported destinations", () =>
   assert.equal(notificationRoute({ url: "https://malicious.example/path" }), "/today");
   assert.equal(notificationRoute({ url: "/account" }), "/today");
 });
+
+test("commitment reminders open their commitment detail", () => {
+  assert.equal(notificationRoute({ url: "/calendar/commitments/42?date=2026-10-25" }), "/calendar/commitments/42?date=2026-10-25");
+});

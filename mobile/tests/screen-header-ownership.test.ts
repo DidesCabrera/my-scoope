@@ -92,13 +92,13 @@ test("screens that own global navigation preserve their header through content a
 
   const compositionPicker = await source("src/components/pickers/composition-picker-screen.tsx");
   assertSourceMatch(compositionPicker, /useHeaderPresentation/);
-  assertSourceMatch(compositionPicker, /setHeaderPresentation\(\{ action: \{ label: "Cancelar"/);
+  assertSourceMatch(compositionPicker, /setHeaderPresentation\(\{ action: selectedId \? undefined : \{ label: "Cancelar"/);
   assertSourceMatch(compositionPicker, /return \(\) => setHeaderPresentation\(\{ mode: "default" \}\)/);
   assertSourceMatch(compositionPicker, /<SafeAreaView edges=\{\["left", "right"\]\}/);
 
   const comparator = await source("src/app/comparator/index.tsx");
   assertSourceMatch(comparator, /mode: "back", title: savedId \? "Editar comparación" : "Nueva comparación"/);
-  assertSourceMatch(comparator, /action: \{ label: "Cancelar", onPress: cancel \}/);
+  assertSourceMatch(comparator, /setHeaderPresentation\(\{ fallback, mode: "back", title: savedId \? "Editar comparación" : "Nueva comparación" \}\)/);
   assertSourceDoesNotMatch(comparator, /title=\{savedId \? "Editar Comparación" : "Nueva Comparación"\}/);
   assertSourceDoesNotMatch(comparator, /<ComparisonKindTabs kind=\{kind\}/);
   assertSourceMatch(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" subtitle="Compara los elementos de tu librería\. Comprende las similitudes y diferencias, y reemplázalos en tu dieta\." title="Comparaciones" \/>\}/);
@@ -146,8 +146,8 @@ test("screens that own global navigation preserve their header through content a
   assertSourceMatch(libraryList, /isHeaderIdentityVisible\(nativeEvent\.contentOffset\.y\)/);
 
   const navigation = await source("src/components/navigation/app-navigation.tsx");
-  assertSourceMatch(navigation, /headerPresentation\.action\?\.icon === "more" && styles\.backHeaderMenuAction/);
-  assertSourceMatch(navigation, /backHeaderMenuAction: \{ alignItems: "flex-end", paddingHorizontal: 0, paddingRight: tokens\.spacing\.sm, width: 92 \}/);
+  assertSourceMatch(navigation, /\(headerPresentation\.action\?\.icon === "more" \|\| headerPresentation\.action\?\.icon === "plus"\) && styles\.backHeaderIconAction/);
+  assertSourceMatch(navigation, /backHeaderIconAction: \{ paddingHorizontal: 0, width: 44 \}/);
 
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
   assertSourceMatch(libraryDetail, /mode: "library-detail"[\s\S]*identityVisible: compactHeaderVisible/);

@@ -199,6 +199,34 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(dismissed.status_code, 200)
         self.assertEqual(self.client.get("/api/v1/shares/inbox").json()["data"]["count"], 0)
 
+    def test_monthly_import_limit_returns_a_specific_error_without_blocking_saved_content(self):
+        sender = User.objects.create_user("monthly-import-sender")
+        sources = [
+            DailyPlan.objects.create(name=f"Plan recibido {index}", created_by=sender, is_draft=False)
+            for index in (1, 2)
+        ]
+        resources = [
+            create_dailyplan_share_resource(sender=sender, dailyplan_id=source.id).resource
+            for source in sources
+        ]
+        claimed_ids = [
+            self.client.post(f"/api/v1/shares/{resource.public_id}/claims").json()["data"]["inbox_item_id"]
+            for resource in resources
+        ]
+
+        first_save = self.client.post(f"/api/v1/shares/inbox/{claimed_ids[0]}/save")
+        blocked_save = self.client.post(f"/api/v1/shares/inbox/{claimed_ids[1]}/save")
+        saved_again = self.client.post(f"/api/v1/shares/inbox/{claimed_ids[0]}/save")
+        entitlements = self.client.get("/api/v1/entitlements").json()["data"]
+
+        self.assertEqual(first_save.status_code, 200)
+        self.assertEqual(blocked_save.status_code, 422)
+        self.assertEqual(blocked_save.json()["error"]["code"], "max_shared_imports_monthly_reached")
+        self.assertEqual(saved_again.status_code, 200)
+        self.assertEqual(saved_again.json()["data"], first_save.json()["data"])
+        self.assertEqual(entitlements["workspace_limits"]["max_shared_imports_monthly"], 1)
+        self.assertEqual(entitlements["workspace_usage"]["shared_imports_monthly"], 1)
+
     def test_owner_cannot_claim_or_email_their_own_share(self):
         source = DailyPlan.objects.create(name="Plan propio", created_by=self.user, is_draft=False)
         resource = create_dailyplan_share_resource(sender=self.user, dailyplan_id=source.id).resource

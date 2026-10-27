@@ -14,7 +14,7 @@ export const commitmentPresentation: Record<CalendarCommitmentKind, { label: str
   shopping: { label: "Hacer compras", color: tokens.color.food, icon: ShoppingBasket },
   cooking: { label: "Cocinar", color: tokens.color.meal, icon: CookingPot },
   training: { label: "Entrenar", color: tokens.color.success, icon: Dumbbell },
-  nutritionist: { label: "Cita nutricionista", color: tokens.color.interactivePrimary, icon: Stethoscope },
+  nutritionist: { label: "Cita nutricionista", color: tokens.color.protein, icon: Stethoscope },
 };
 
 export const commitmentRegistrationTitle: Record<CalendarCommitmentKind, string> = {
@@ -34,7 +34,9 @@ export const commitmentDayTitle: Record<CalendarCommitmentKind, string> = {
 export function commitmentFoodPanelItem(food: LibraryFoodPanelItem): FoodPanelItem {
   return {
     id: food.id, detailId: food.detail_id, name: food.name, emoji: food.emoji, visualKey: food.visual_key,
-    quantity: food.quantity, quantityUnit: food.quantity_unit, calories: food.calories,
+    quantity: food.quantity, quantityUnit: food.quantity_unit,
+    portionDisplayQuantity: food.portion_display_quantity, portionDisplayMeasure: food.portion_display_measure,
+    calories: food.calories,
     calorieShare: food.calorie_share, proteinGrams: food.protein_grams,
     proteinPerKilogram: food.protein_per_kilogram, carbsGrams: food.carbs_grams,
     fatGrams: food.fat_grams, proteinAllocation: food.protein_allocation,

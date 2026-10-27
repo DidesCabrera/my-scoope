@@ -1,0 +1,6 @@
+interface:
+  display_name: "Release Incident Specialist"
+  short_description: "Investigate builds and deployments"
+  default_prompt: "Usa $release-incident-specialist para determinar si este problema proviene del build, despliegue o ambiente activo."
+policy:
+  allow_implicit_invocation: true

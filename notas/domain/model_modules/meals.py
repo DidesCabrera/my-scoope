@@ -21,7 +21,15 @@ class Meal(models.Model):
         LIBRARY = "library", "Library"
         EMBEDDED = "embedded", "Embedded snapshot"
 
+    class MealType(models.TextChoices):
+        BREAKFAST = "breakfast", "Desayuno"
+        SNACK = "snack", "Snack"
+        LUNCH = "lunch", "Comida"
+        SHAKE = "shake", "Batido"
+        DINNER = "dinner", "Cena"
+
     name = models.CharField(max_length=100)
+    meal_type = models.CharField(max_length=16, choices=MealType.choices, blank=True, default="")
 
     foods = models.ManyToManyField(Food, through="MealFood")
 
@@ -220,6 +228,50 @@ class Meal(models.Model):
             if self.is_draft:
                 self.is_draft = False
                 self.save(update_fields=["is_draft"])
+
+
+class MealCatalogEntry(models.Model):
+    class Occasion(models.TextChoices):
+        BREAKFAST = "breakfast", "Desayuno"
+        LUNCH = "lunch", "Almuerzo"
+        DINNER = "dinner", "Cena"
+        SNACK = "snack", "Colación"
+        PRE_WORKOUT = "pre_workout", "Pre-entreno"
+        POST_WORKOUT = "post_workout", "Post-entreno"
+
+    class DietaryStyle(models.TextChoices):
+        OMNIVORE = "omnivore", "Omnívora"
+        PESCATARIAN = "pescatarian", "Pescetariana"
+        VEGETARIAN = "vegetarian", "Vegetariana"
+        VEGAN = "vegan", "Vegana"
+
+    meal = models.OneToOneField(
+        Meal,
+        on_delete=models.CASCADE,
+        related_name="catalog_entry",
+    )
+    summary = models.CharField(max_length=180, blank=True)
+    occasion = models.CharField(max_length=24, choices=Occasion.choices)
+    dietary_style = models.CharField(max_length=24, choices=DietaryStyle.choices)
+    is_published = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False)
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "meal__name", "id"]
+        verbose_name = "comida del catálogo Explorar"
+        verbose_name_plural = "catálogo de comidas Explorar"
+        indexes = [
+            models.Index(
+                fields=["is_published", "occasion", "dietary_style", "sort_order"],
+                name="meal_catalog_explore_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return self.meal.name
 
 
 

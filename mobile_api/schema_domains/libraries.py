@@ -6,11 +6,10 @@ from typing import Literal
 from ninja import Field, Schema
 
 from mobile_api.schema_domains import library_common
+from mobile_api.schema_domains.meal_creation import MealCreateInput
 
 OptionalPortionUnitData = library_common.OptionalPortionUnitData
 LibraryMacroData = library_common.LibraryMacroData
-
-
 class FoodItem(
     library_common.FoodVisualIdentityData,
     library_common.FoodPortionContractData,
@@ -176,6 +175,7 @@ class LibraryItemData(library_common.OptionalFoodVisualIdentityData):
     id: int
     entity: Literal["food", "meal", "dailyPlan", "program"]
     name: str
+    meal_type: Literal["breakfast", "snack", "lunch", "shake", "dinner"] | None = None
     subtitle: str
     quantity_unit: Literal["g", "ml"] | None = None
     default_portion: float | None = None

@@ -14,15 +14,19 @@
 
   <header class="header is-visible">
     <div class="container header-inner">
-      <a href="/" class="logo legal-logo">My Scoope</a>
+      <a href="{% if from_mobile_onboarding %}myscoope://disclosures{% else %}/{% endif %}" class="logo legal-logo">My Scoope</a>
 
       <nav class="nav">
-        <a href="/">Inicio</a>
-        <a href="/privacy/">Privacidad</a>
-        <a href="/terms/">Términos</a>
-        <a href="/refund-policy/">Reembolsos</a>
-        <a href="/support/">Soporte</a>
-        <a href="/accounts/login/" class="login">Ingresar</a>
+        <a href="{% if from_mobile_onboarding %}myscoope://disclosures{% else %}/{% endif %}">{% if from_mobile_onboarding %}Volver{% else %}Inicio{% endif %}</a>
+        <a href="/privacy/{{ legal_query_suffix }}">Privacidad</a>
+        <a href="/terms/{{ legal_query_suffix }}">Términos</a>
+        <a href="/refund-policy/{{ legal_query_suffix }}">Reembolsos</a>
+        <a href="/support/{{ legal_query_suffix }}">Soporte</a>
+        {% if from_mobile_onboarding %}
+          <a href="myscoope://disclosures" class="login">Volver a la app</a>
+        {% else %}
+          <a href="/accounts/login/" class="login">Ingresar</a>
+        {% endif %}
       </nav>
     </div>
   </header>
@@ -37,10 +41,10 @@
     <div class="container footer-inner">
       <p>© My Scoope SpA</p>
       <div class="footer-links">
-        <a href="/privacy/">Privacidad</a>
-        <a href="/terms/">Términos</a>
-        <a href="/refund-policy/">Reembolsos</a>
-        <a href="/support/">Soporte</a>
+        <a href="/privacy/{{ legal_query_suffix }}">Privacidad</a>
+        <a href="/terms/{{ legal_query_suffix }}">Términos</a>
+        <a href="/refund-policy/{{ legal_query_suffix }}">Reembolsos</a>
+        <a href="/support/{{ legal_query_suffix }}">Soporte</a>
       </div>
     </div>
   </footer>

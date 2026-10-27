@@ -45,7 +45,9 @@ test("household measures convert the selected amount to the metric nutrition qua
   assert.equal(foodPortionHouseholdAmount(130, egg), 2);
   assert.equal(householdMeasureDisplayLabel("unidad", 1), "unidad");
   assert.equal(householdMeasureDisplayLabel("unidad", 1.25), "unidades");
-  assert.equal(householdMeasureDisplayLabel("taza", 2), "taza");
+  assert.equal(householdMeasureDisplayLabel("taza", 2), "tazas");
+  assert.equal(householdMeasureDisplayLabel("cup", 2), "tazas");
+  assert.equal(householdMeasureDisplayLabel("tablespoon", 0.5), "cucharada");
 
   const oats = { defaultPortion: 40, householdAmount: 0.5, householdMeasure: "cup", householdMeasureLabel: "taza" };
   assert.equal(foodPortionMetricAmount("1", "household", oats), 80);

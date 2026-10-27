@@ -7,7 +7,7 @@ import { userFacingError } from "@/api/errors";
 import type { WeightInput, WeightItem, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { Button, Card, CardHeader, Field, InlineNotice, KeyValueTable, LoadingState, NativeDateTimeField, NativeMeasurementField, Screen, SectionPageHeader, textStyles, WeightTrendChart } from "@/components/ui";
+import { Button, Card, CardHeader, Field, InlineNotice, KeyValueTable, LoadingState, NativeDateTimeField, NativeMeasurementField, Screen, SectionPageHeader, textStyles, WeightTrendCard } from "@/components/ui";
 import { ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { tokens } from "@/design/tokens";
 import { localDateValue, localTimeValue } from "@/presentation/date-time-values";
@@ -196,10 +196,7 @@ export default function WeightScreen() {
         La variación de peso puede deberse a diferentes factores, destacando la variación de agua en el cuerpo, la cual puede cambiar en un corto lapso de tiempo.{"\n\n"}
         Por eso te aconsejamos evaluar la tendencia en el mediano plazo, más que dentro de uno o pocos días.
       </InlineNotice>
-      <Card>
-        <CardHeader description={`${items.length} registros`} title="Tendencia de peso" />
-        <WeightTrendChart items={items} />
-      </Card>
+      <WeightTrendCard items={items} />
       <Card>
         <CardHeader
           accessory={<View style={styles.historyActions}>

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Commercial Strategy Advisor"
+  short_description: "Guide positioning, pricing, and channels"
+  default_prompt: "Usa $commercial-strategy-advisor para analizar esta decisión comercial de My Scoope y proponer un experimento medible."
+policy:
+  allow_implicit_invocation: true

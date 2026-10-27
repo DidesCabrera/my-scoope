@@ -1,0 +1,6 @@
+interface:
+  display_name: "Accounting Intake and Recordkeeping Agent"
+  short_description: "Register receipts with traceable controls"
+  default_prompt: "Usa $accounting-intake-recordkeeping-agent para procesar estos comprobantes, proponer su clasificacion contable y separar las excepciones que requieren mi aprobacion."
+policy:
+  allow_implicit_invocation: true

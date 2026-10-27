@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, type StyleProp, type TextStyle } from "react-native";
 
 import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { tokens } from "@/design/tokens";
@@ -20,7 +20,7 @@ const collectionCountLabels: Record<EntityKind, { plural: string; singular: stri
   program: { plural: "Programas semanales", singular: "Programa semanal" },
 };
 
-function PageHeader({ action, icon, indicator, subtitle, title }: { action?: ReactNode; icon: ReactNode; indicator?: ReactNode; subtitle?: string; title: string }) {
+function PageHeader({ action, icon, indicator, subtitle, subtitleStyle, title }: { action?: ReactNode; icon: ReactNode; indicator?: ReactNode; subtitle?: string; subtitleStyle?: StyleProp<TextStyle>; title: string }) {
   return (
     <View style={styles.container}>
       <View style={styles.iconSlot}>{icon}</View>
@@ -29,7 +29,7 @@ function PageHeader({ action, icon, indicator, subtitle, title }: { action?: Rea
           <Text style={styles.title}>{title}</Text>
           {action}
         </View>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        {subtitle ? <Text style={[styles.subtitle, subtitleStyle]}>{subtitle}</Text> : null}
         {indicator}
       </View>
     </View>
@@ -55,8 +55,8 @@ export function CollectionPageHeader({
       icon={icon ?? <EntityIcon entity={entity} size="hero" />}
       indicator={count !== undefined ? (
         <Chip
-          backgroundColor={`${tokens.color[entity]}1A`}
-          borderColor={tokens.color[entity]}
+          backgroundColor={`${tokens.color[entity]}4D`}
+          borderless
           label={`${count} ${collectionCountLabels[entity][count === 1 ? "singular" : "plural"]}`}
           textColor={tokens.color.textMain}
         />
@@ -66,7 +66,7 @@ export function CollectionPageHeader({
   );
 }
 
-export function SectionPageHeader({ count, countLabel, icon, indicator, section, subtitle, title }: { count?: number; countLabel?: string; icon?: ReactNode; indicator?: ReactNode; section: SectionKind; subtitle?: string; title: string }) {
+export function SectionPageHeader({ count, countLabel, icon, indicator, section, subtitle, subtitleStyle, title }: { count?: number; countLabel?: string; icon?: ReactNode; indicator?: ReactNode; section: SectionKind; subtitle?: string; subtitleStyle?: StyleProp<TextStyle>; title: string }) {
   return (
     <PageHeader
       icon={icon ?? <SectionIcon section={section} size="hero" />}
@@ -77,6 +77,7 @@ export function SectionPageHeader({ count, countLabel, icon, indicator, section,
         </View>
       ) : undefined)}
       subtitle={subtitle}
+      subtitleStyle={subtitleStyle}
       title={title}
     />
   );

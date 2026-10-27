@@ -8,6 +8,7 @@ from accounts.services.onboarding import (
     generate_nutrition_onboarding_plan,
     mark_nutrition_onboarding_intro_complete,
     nutrition_onboarding_estimate,
+    onboarding_plan_proposal_ids,
     save_nutrition_onboarding_v2,
 )
 from accounts.services.personal_records import (
@@ -22,16 +23,18 @@ from mobile_api.errors import MobileAPIError
 from mobile_api.schema_domains.identity import ProfileEnvelope
 from mobile_api.schema_domains.onboarding import (
     OnboardingAnalyzeInput,
+    OnboardingCalendarizationEnvelope,
     OnboardingInput,
+    OnboardingMinutasEnvelope,
     OnboardingStateEnvelope,
     PersonalBodyInput,
     PersonalPlanningInput,
     PersonalPreferencesInput,
     PersonalWeightInput,
 )
-from mobile_api.schema_domains.proposals import ProposalDetailEnvelope
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors_identity import profile_payload
+from mobile_api.selectors_onboarding import onboarding_calendarization_payload
 from mobile_api.selectors_proposals import proposal_detail_payload
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 from notas.domain.models import NutritionPreferenceProfile
@@ -89,6 +92,7 @@ def _onboarding_state_payload(user):
         "avoided_foods": list(preferences.get("avoided_foods") or []),
         "estimate": estimate,
         "proposal_id": profile.onboarding_plan_proposal_id,
+        "proposal_ids": onboarding_plan_proposal_ids(profile),
     }
 
 
@@ -207,30 +211,41 @@ def onboarding_analyze(request, payload: OnboardingAnalyzeInput):
     "/onboarding/generate-plan",
     operation_id="mobile_api_api_onboarding_generate_plan",
     auth=mobile_bearer,
-    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+    response={200: OnboardingMinutasEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
 )
 def onboarding_generate_plan(request):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     try:
-        proposal = generate_nutrition_onboarding_plan(user=request.auth.user)
+        proposals = generate_nutrition_onboarding_plan(user=request.auth.user)
     except (ValueError, RuntimeError) as exc:
-        raise MobileAPIError(code=str(exc), message="No pudimos generar la primera minuta diaria.", status_code=422) from exc
-    return success(proposal_detail_payload(request.auth.user, proposal.id))
+        raise MobileAPIError(code=str(exc), message="No encontramos dos minutas compatibles con tus preferencias y objetivos.", status_code=422) from exc
+    return success({"items": [proposal_detail_payload(request.auth.user, proposal.id) for proposal in proposals]})
 
 
 @router.post(
     "/onboarding/accept-plan",
     operation_id="mobile_api_api_onboarding_accept_plan",
     auth=mobile_bearer,
-    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+    response={200: OnboardingMinutasEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
 )
 def onboarding_accept_plan(request):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     try:
-        proposal = accept_nutrition_onboarding_plan(user=request.auth.user)
+        proposals = accept_nutrition_onboarding_plan(user=request.auth.user)
     except ValueError as exc:
-        raise MobileAPIError(code=str(exc), message="No pudimos aplicar la primera minuta diaria.", status_code=409) from exc
-    return success(proposal_detail_payload(request.auth.user, proposal.id))
+        raise MobileAPIError(code=str(exc), message="No pudimos guardar las minutas propuestas.", status_code=409) from exc
+    return success({"items": [proposal_detail_payload(request.auth.user, proposal.id) for proposal in proposals]})
+
+
+@router.get(
+    "/onboarding/calendarized-foods",
+    operation_id="mobile_api_api_onboarding_calendarized_foods",
+    auth=mobile_bearer,
+    response={200: OnboardingCalendarizationEnvelope, 403: ErrorEnvelope},
+)
+def onboarding_calendarized_foods(request):
+    profile = request.auth.user.profile
+    return success(onboarding_calendarization_payload(request.auth.user, onboarding_plan_proposal_ids(profile)))
 
 
 @router.post(
@@ -244,5 +259,7 @@ def onboarding_complete_v2(request):
     try:
         complete_nutrition_onboarding_v2(user=request.auth.user)
     except ValueError as exc:
-        raise MobileAPIError(code=str(exc), message="The onboarding is not ready to complete.", status_code=409) from exc
+        message = ("Calendariza ambas minutas antes de completar el onboarding."
+                   if str(exc) == "onboarding_calendarization_incomplete" else "El onboarding aún no está listo para completarse.")
+        raise MobileAPIError(code=str(exc), message=message, status_code=409) from exc
     return success(profile_payload(request.auth.user))

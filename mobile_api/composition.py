@@ -43,6 +43,7 @@ from notas.application.services.commands.program_commands import (
     reorder_program_weeks,
 )
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
+from notas.application.services.food_portions import proposed_portion_prefetch
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
 
@@ -402,6 +403,7 @@ def _program_selection_context(*, user, program_id: int, dailyplan_id: int, week
     prefetch_related_objects(
         [dailyplan],
         "dailyplan_meals__meal__meal_food_set__food__localized_names",
+        proposed_portion_prefetch("dailyplan_meals__meal__meal_food_set__food__portions"),
     )
     try:
         week = int(week_number)

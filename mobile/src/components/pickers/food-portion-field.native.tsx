@@ -1,5 +1,5 @@
 import { Picker } from "@react-native-picker/picker";
-import { Check, ChevronDown, Scale } from "lucide-react-native";
+import { Check, ChevronDown, Scale, X } from "lucide-react-native";
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -36,13 +36,16 @@ export function FoodPortionField({
 }: FoodPortionFieldProps) {
   const householdAvailable = Boolean(householdMeasureLabel && householdDefaultAmount && householdDefaultAmount > 0 && metricDefaultAmount && metricDefaultAmount > 0);
   const [visible, setVisible] = useState(initiallyExpanded);
+  const [confirmed, setConfirmed] = useState(false);
   const [draftMeasure, setDraftMeasure] = useState<FoodPortionMeasure>(measure);
   const [draftAmount, setDraftAmount] = useState(() => numericValue(value, measure === "household" ? householdDefaultAmount ?? 1 : metricDefaultAmount ?? 100));
   const pickerStyle = Platform.OS === "ios" ? styles.iosPicker : styles.androidPicker;
 
   const open = () => {
+    if (visible) return;
     setDraftMeasure(measure);
     setDraftAmount(numericValue(value, measure === "household" ? householdDefaultAmount ?? 1 : metricDefaultAmount ?? 100));
+    setConfirmed(false);
     setVisible(true);
   };
 
@@ -55,12 +58,18 @@ export function FoodPortionField({
     });
     setDraftMeasure(next);
     setDraftAmount(numericValue(converted, draftAmount));
+    setConfirmed(false);
   };
 
   const commit = () => {
     onMeasureChange(draftMeasure);
     onChange(String(draftAmount));
+    setConfirmed(true);
+  };
+
+  const close = () => {
     setVisible(false);
+    setConfirmed(false);
   };
 
   const selectedAmount = numericValue(value, 0);
@@ -87,7 +96,7 @@ export function FoodPortionField({
         <View style={styles.inlinePicker}>
           <View accessibilityLabel="Cantidad y medida de la porción" style={styles.pickers}>
             <View style={styles.amountPickerColumn}>
-              <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => setDraftAmount(Number(next))} selectedValue={draftAmount} style={pickerStyle}>
+              <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => { setDraftAmount(Number(next)); setConfirmed(false); }} selectedValue={draftAmount} style={pickerStyle}>
                 {[...new Set([...(draftMeasure === "household" ? HOUSEHOLD_PORTION_VALUES : PORTION_VALUES), draftAmount])].sort((a, b) => a - b).map((option) => <Picker.Item key={option} label={displayNumber(option)} value={option} />)}
               </Picker>
             </View>
@@ -98,8 +107,10 @@ export function FoodPortionField({
               </Picker>
             </View>
           </View>
-          <Pressable accessibilityLabel="Listo" accessibilityRole="button" onPress={commit} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
-            <Check color={tokens.color.food} size={22} strokeWidth={2.6} />
+          <Pressable accessibilityLabel={confirmed ? "Cerrar selector de porción" : "Confirmar porción"} accessibilityRole="button" onPress={confirmed ? close : commit} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
+            {confirmed
+              ? <X color={tokens.color.food} size={22} strokeWidth={2.6} />
+              : <Check color={tokens.color.food} size={22} strokeWidth={2.6} />}
           </Pressable>
         </View>
       ) : null}
@@ -122,6 +133,6 @@ const styles = StyleSheet.create({
   pickers: { alignItems: "center", flexDirection: "row", justifyContent: "center" },
   pressed: { opacity: 0.72 },
   row: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  selector: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", gap: 3, justifyContent: "center", marginLeft: 8, marginRight: tokens.layout.reducedInset - tokens.card.outerPadding, maxWidth: 180, minHeight: 36, minWidth: 96, paddingHorizontal: 10 },
+  selector: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", gap: 3, justifyContent: "center", marginLeft: 8, marginRight: tokens.layout.reducedInset - tokens.card.outerPadding, maxWidth: 180, minHeight: 36, minWidth: 96, paddingHorizontal: 14 },
   selectorText: { color: tokens.color.textMain, flexShrink: 1, fontSize: 16, textAlign: "center" },
 });

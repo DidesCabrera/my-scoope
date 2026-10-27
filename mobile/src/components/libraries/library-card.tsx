@@ -1,5 +1,5 @@
 import { type Href, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { BookmarkCheck, BookmarkPlus, ChevronRight } from "lucide-react-native";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import type { LibraryActionResult, LibraryItem } from "@/api/types";
@@ -23,15 +23,17 @@ function indicatorValue(item: LibraryItem, icon: "week" | "dailyPlan" | "food"):
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
-export function LibraryCard({ apiRequest, interactive = true, item, navigable = interactive, onChanged }: { apiRequest: ApiRequest; interactive?: boolean; item: LibraryItem; navigable?: boolean; onChanged(result: LibraryActionResult): Promise<void> | void }) {
+export function LibraryCard({ apiRequest, detailHref: detailHrefOverride, interactive = true, item, navigable = interactive, onChanged, onSaveToLibrary, savedToLibrary = false, savingToLibrary = false }: { apiRequest: ApiRequest; detailHref?: Href; interactive?: boolean; item: LibraryItem; navigable?: boolean; onChanged(result: LibraryActionResult): Promise<void> | void; onSaveToLibrary?: () => Promise<void> | void; savedToLibrary?: boolean; savingToLibrary?: boolean }) {
   const router = useRouter();
   const { publishSelection } = useComparatorSelectionTransfer();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const segment = item.entity === "dailyPlan" ? "daily-plans" : item.entity === "program" ? "programs" : item.entity === "meal" ? "meals" : "foods";
-  const detailHref = `/libraries/${segment}/${item.id}` as Href;
+  const detailHref = detailHrefOverride ?? `/libraries/${segment}/${item.id}` as Href;
   const libraryHref = `/libraries/${segment}` as Href;
   const openDetail = () => router.push(detailHref);
+  const canCalendarize = item.entity === "dailyPlan" && !item.is_draft;
+  const openCalendarAssignment = () => router.push({ pathname: "/calendar/select-plans", params: { dailyPlanId: String(item.id), origin: "library", returnTo: String(libraryHref) } });
   const openEdit = () => router.push({ pathname: "/libraries/create", params: { entity: "food", id: String(item.id) } });
   const openComparison = () => {
     if (item.entity !== "meal" && item.entity !== "dailyPlan") return;
@@ -99,12 +101,12 @@ export function LibraryCard({ apiRequest, interactive = true, item, navigable = 
     ) : card();
   }
   return (<>
-    <NutritionEntityCard actions={interactive || navigable ? <>{interactive && item.actions?.length ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCompare={item.entity === "meal" || item.entity === "dailyPlan" ? openComparison : undefined} onCompleted={onChanged} onEdit={item.entity === "food" ? openEdit : undefined} /> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} entity={item.entity} foodEmoji={item.emoji} foodVisualKey={item.visual_key} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
+    <NutritionEntityCard actions={interactive || navigable || onSaveToLibrary ? <>{interactive && (item.actions?.length || canCalendarize) ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCalendarize={canCalendarize ? openCalendarAssignment : undefined} onCompare={item.entity === "meal" || item.entity === "dailyPlan" ? openComparison : undefined} onCompleted={onChanged} onEdit={item.entity === "food" ? openEdit : undefined} /> : null}{onSaveToLibrary ? <EntityCardAction label={savedToLibrary ? `${item.name} guardada en tu biblioteca` : `Guardar ${item.name} en mi biblioteca`} onPress={() => { if (!savedToLibrary && !savingToLibrary) void onSaveToLibrary(); }}>{savedToLibrary ? <BookmarkCheck color={tokens.color.success} size={22} strokeWidth={2.2} /> : <BookmarkPlus color={savingToLibrary ? tokens.color.textSoft : tokens.color.textMain} size={22} strokeWidth={2.2} />}</EntityCardAction> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} entity={item.entity} foodEmoji={item.emoji} foodVisualKey={item.visual_key} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
       {item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={item.panel.foods} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "meals" ? <MealPanels dailyPlanId={item.entity === "dailyPlan" ? item.id : undefined} editing={mealEditing} items={item.panel.meals} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}
-      {interactive && item.entity === "meal" ? <View style={styles.addAction}><Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, returnTo: String(libraryHref) }))} /></View> : null}
-      {interactive && item.entity === "dailyPlan" ? <View style={styles.addAction}><Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: String(libraryHref) }))} /></View> : null}
+      {interactive && item.entity === "meal" ? <View style={styles.addAction}><Button label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, returnTo: String(libraryHref) }))} variant="chipPrimary" /></View> : null}
+      {interactive && item.entity === "dailyPlan" ? <View style={styles.addAction}><Button label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: String(libraryHref) }))} variant="chipPrimary" /></View> : null}
     </NutritionEntityCard>
     <CalendarizedEntityActions entityName={timeChangeMeal?.name ?? "Comida"} initialAction="change-time" key={timeChangeMeal?.id ?? "closed-library-card-time-change"} onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }} timeChange={timeChangeMeal?.relationId != null ? { initialTime: timeChangeMeal.time, onSubmit: async (hour) => mutate(`/api/v1/library/daily-plans/${item.id}/meals/${timeChangeMeal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" }, "Hora actualizada") } : undefined} visible={timeChangeMeal != null} />
     <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />

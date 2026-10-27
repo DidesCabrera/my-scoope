@@ -16,8 +16,8 @@ type LibraryEntry = {
 };
 
 const entries: LibraryEntry[] = [
-  { entity: "program", href: "/libraries/programs", icon: CalendarDays, title: "Mis Programas\nSemanales" },
-  { entity: "dailyPlan", href: "/libraries/daily-plans", icon: ClipboardList, title: "Mis minutas\ndiarias" },
+  { entity: "program", href: "/libraries/programs", icon: CalendarDays, title: "Mis Programas" },
+  { entity: "dailyPlan", href: "/libraries/daily-plans", icon: ClipboardList, title: "Mis Minutas" },
   { entity: "meal", href: "/libraries/meals", icon: Utensils, title: "Mis Comidas" },
   { entity: "food", href: "/libraries/foods", icon: Carrot, title: "Mis Alimentos" },
 ];
@@ -68,6 +68,6 @@ const styles = StyleSheet.create({
   icon: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", marginBottom: tokens.spacing.sm, width: 34 },
   pressed: { opacity: 0.65 },
   section: { gap: tokens.spacing.md, marginHorizontal: -tokens.spacing.screen, marginTop: tokens.spacing.xxl },
-  subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20, marginHorizontal: tokens.spacing.screen },
+  subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20, marginBottom: 4, marginHorizontal: tokens.spacing.screen },
   title: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold, lineHeight: 19, minHeight: 38 },
 });

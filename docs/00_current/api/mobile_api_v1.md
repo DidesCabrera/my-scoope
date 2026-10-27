@@ -85,6 +85,11 @@ owns only API construction, shared errors, the public health route and router mo
 Sharing uses `routes/sharing.py` and `schema_domains/sharing.py`. Its transport only
 creates and revokes portable resources; snapshot construction and ownership rules
 belong to `notas.application.sharing`.
+The in-app notification feed uses `GET /notifications` and
+`POST /notifications/{kind}/{item_id}/read`. The feed is authenticated, and the
+read command requires `mobile:write`. The source and ownership rules live in
+`notas.application.services.notifications.center`; directed invitations retain their
+email-verified web preview.
 
 When extracting another domain:
 
@@ -314,9 +319,12 @@ existing collection routes: `/library/foods`, `/library/meals`,
 product.
 
 Food creation receives a name and protein, carbohydrate and fat values per 100 g
-and immediately returns a complete Food detail. Meal, DailyPlan and Program
-creation receives a name and returns an owned draft detail so the native client
-can continue directly into composition. Adding the first Food completes a Meal;
+and immediately returns a complete Food detail. Meal creation also accepts an
+optional `meal_type` (`breakfast`, `snack`, `lunch`, `shake` or `dinner`). The native
+form requires a selection; callers that omit it retain the legacy unspecified
+value. Meal list and detail responses return the saved value or `null` for older
+meals. Meal, DailyPlan and Program creation returns an owned draft detail so the
+native client can continue directly into composition. Adding the first Food completes a Meal;
 adding the first Meal completes a DailyPlan; assigning the first DailyPlan
 completes a Program.
 

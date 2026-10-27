@@ -2,8 +2,7 @@ import { Redirect } from "expo-router";
 import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { useState } from "react";
 import { Image, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import {
-  ComparisonBuilder,
+import { ComparisonBuilder,
   ComparisonEditorCard,
   ComparisonMetricCard,
   ComparisonScopeTabs,
@@ -28,6 +27,7 @@ import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { DisclosureGallery } from "@/components/dev/disclosure-gallery";
 import { PersonalRecordCardGallery } from "@/components/dev/personal-record-card-gallery";
 import { SavedComparisonCardGallery } from "@/components/dev/saved-comparison-card-gallery";
+import { SalesMomentsGallery } from "@/components/dev/sales-moments-gallery";
 import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import { PopupAestheticGallery } from "@/components/dev/popup-aesthetic-gallery";
 import { NutritionFactsGallery } from "@/components/dev/nutrition-facts-gallery";
@@ -105,9 +105,9 @@ const surfaces = [
   { key: "surfaceElevated", label: "Elevated", role: "Controles activos y capas superiores" },
 ] as const;
 const foodPanelItems: FoodPanelItem[] = [
-  { id: "oats", name: "Avena integral", quantity: 80, quantityUnit: "g", calories: 311, calorieShare: 34, proteinGrams: 10.5, carbsGrams: 52.8, fatGrams: 5.5, proteinAllocation: 14, carbsAllocation: 71, fatAllocation: 15 },
-  { id: "yogurt", name: "Yogur griego", quantity: 180, quantityUnit: "g", calories: 176, calorieShare: 19, proteinGrams: 18, carbsGrams: 8.2, fatGrams: 7.1, proteinAllocation: 41, carbsAllocation: 19, fatAllocation: 40 },
-  { id: "banana", name: "Plátano", quantity: 120, quantityUnit: "g", calories: 107, calorieShare: 12, proteinGrams: 1.3, carbsGrams: 27.4, fatGrams: 0.4, proteinAllocation: 5, carbsAllocation: 92, fatAllocation: 3 },
+  { id: "oats", name: "Avena integral", quantity: 80, quantityUnit: "g", portionDisplayQuantity: 0.5, portionDisplayMeasure: "cup", calories: 311, calorieShare: 34, proteinGrams: 10.5, carbsGrams: 52.8, fatGrams: 5.5, proteinAllocation: 14, carbsAllocation: 71, fatAllocation: 15 },
+  { id: "yogurt", name: "Yogur griego", quantity: 180, quantityUnit: "g", portionDisplayQuantity: 1, portionDisplayMeasure: "cup", calories: 176, calorieShare: 19, proteinGrams: 18, carbsGrams: 8.2, fatGrams: 7.1, proteinAllocation: 41, carbsAllocation: 19, fatAllocation: 40 },
+  { id: "banana", name: "Plátano", quantity: 120, quantityUnit: "g", portionDisplayQuantity: 1, portionDisplayMeasure: "unit", calories: 107, calorieShare: 12, proteinGrams: 1.3, carbsGrams: 27.4, fatGrams: 0.4, proteinAllocation: 5, carbsAllocation: 92, fatAllocation: 3 },
 ];
 const comparisonFoodItems: FoodPanelItem[] = [
   { id: "comparison-yogurt", name: "Yogur griego natural", quantity: 100, quantityUnit: "g", calories: 97, calorieShare: 61, proteinGrams: 9, carbsGrams: 3.8, fatGrams: 5, proteinAllocation: 37, carbsAllocation: 16, fatAllocation: 47 },
@@ -216,6 +216,7 @@ export default function UiGalleryScreen() {
       ) : null}
       {tab === "disclosures" ? <DisclosureGallery /> : null}
       {tab === "subscriptions" ? <SubscriptionGallery /> : null}
+      {tab === "salesMoments" ? <SalesMomentsGallery /> : null}
 
       {tab === "labelCapture" ? <LabelCaptureStoryboardGallery /> : null}
 

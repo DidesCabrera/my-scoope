@@ -10,6 +10,7 @@ from mobile_api.schema_domains.calendar import (
     CalendarAssignmentInput,
     CalendarCommitmentBatchEnvelope,
     CalendarCommitmentBatchInput,
+    CalendarCommitmentDeleteEnvelope,
     CalendarCommitmentEnvelope,
     CalendarCommitmentUpdateInput,
     CalendarDayDetailEnvelope,
@@ -33,7 +34,7 @@ from mobile_api.selectors import (
 from notas.application.queries.calendarization_projection_queries import snapshot_nutrition_totals
 from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
 from notas.application.queries.calendarization_execution_queries import meal_execution_state_for_day
-from notas.application.services.commands.calendar_commitment_commands import register_calendar_commitments, update_calendar_commitment
+from notas.application.services.commands.calendar_commitment_commands import delete_calendar_commitment, register_calendar_commitments, update_calendar_commitment
 from notas.application.services.commands.calendar_day_commands import (
     assign_dailyplan_to_calendar_date,
     create_and_assign_draft_to_calendar_date,
@@ -213,6 +214,7 @@ def update_commitment(request, commitment_id: int, payload: CalendarCommitmentUp
     try:
         item = update_calendar_commitment(
             user=request.auth.user, commitment_id=commitment_id, note=payload.note,
+            calendar_date=payload.calendar_date,
             update_food_period=payload.update_food_period,
             food_period_start=payload.food_period_start,
             food_period_end=payload.food_period_end,
@@ -220,6 +222,23 @@ def update_commitment(request, commitment_id: int, payload: CalendarCommitmentUp
     except ValueError as exc:
         raise _error(exc) from exc
     return success(_commitment_payload(item))
+
+
+@router.delete(
+    "/calendar/commitments/{commitment_id}",
+    operation_id="mobile_api_api_delete_calendar_commitment",
+    auth=mobile_bearer,
+    response={200: CalendarCommitmentDeleteEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def delete_commitment(request, commitment_id: int):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        deleted_id = delete_calendar_commitment(
+            user=request.auth.user, commitment_id=commitment_id,
+        )
+    except ValueError as exc:
+        raise _error(exc) from exc
+    return success({"deleted_id": deleted_id})
 
 
 @router.get(

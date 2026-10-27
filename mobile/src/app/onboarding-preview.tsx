@@ -9,6 +9,7 @@ import {
   type OnboardingJourneyValues,
   onboardingJourneyPreviewValues,
   onboardingJourneySteps,
+  onboardingScreenChromeForStep,
   presentationPropsForOnboardingStep,
 } from "@/components/onboarding";
 import { LoadingState, Screen } from "@/components/ui";
@@ -20,9 +21,7 @@ export default function OnboardingPreviewScreen() {
   const [values, setValues] = useState<OnboardingJourneyValues>({ ...onboardingJourneyPreviewValues });
 
   const step = onboardingJourneySteps[stepIndex]?.key ?? "login";
-  const usesFixedDisclosuresFooter = stepIndex === 6;
-  const usesFixedProfileChrome = stepIndex >= 7 && stepIndex <= 12;
-  const headerCompensationTop = stepIndex >= 6 ? 88 : 0;
+  const { headerCompensationTop, scroll } = onboardingScreenChromeForStep(step as OnboardingJourneyStep);
   const presentationProps = presentationPropsForOnboardingStep(step as OnboardingJourneyStep);
   const controller = useMemo<OnboardingJourneyController>(() => ({
     onAdjust: () => setStepIndex(onboardingJourneySteps.findIndex((item) => item.key === "goal")),
@@ -44,7 +43,7 @@ export default function OnboardingPreviewScreen() {
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
-      <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: headerCompensationTop }} scroll={usesFixedDisclosuresFooter || usesFixedProfileChrome ? false : stepIndex >= 6 ? "auto" : false}>
+      <Screen contentStyle={{ paddingBottom: 0, paddingHorizontal: 0, paddingTop: headerCompensationTop }} scroll={scroll}>
         <OnboardingJourneyView
         controller={controller}
         {...presentationProps}

@@ -210,6 +210,9 @@ def claim_share_resource(
     )
     inbox_item = InboxItem.objects.create(owner=user, resource=locked, claim=claim)
     if invitation is not None:
+        if invitation.read_at is not None:
+            inbox_item.read_at = invitation.read_at
+            inbox_item.save(update_fields=["read_at", "updated_at"])
         invitation.recipient_user = user
         invitation.status = ShareInvitation.Status.CLAIMED
         invitation.claimed_at = now or timezone.now()

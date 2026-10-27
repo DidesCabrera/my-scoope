@@ -173,7 +173,7 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
     ApplicationServiceArea(
         slug="food_catalog",
         label="Food Catalog",
-        entries=("food_imports", "food_catalog_snapshots", "food_catalog_duplicate_cleanup"),
+        entries=("food_imports", "food_catalog_snapshots", "food_catalog_duplicate_cleanup", "food_portions"),
         responsibility=(
             "Core-food catalog, import normalization, USDA mapping, "
             "snapshot publication helpers and visibility policy."
@@ -183,7 +183,7 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
         slug="notifications",
         label="Notifications",
         entries=("notifications",),
-        responsibility="Outbound message builders and notification content.",
+        responsibility="Outbound message builders and the personal in-app notification feed.",
     ),
     ApplicationServiceArea(
         slug="scheduling",
@@ -263,8 +263,8 @@ APPLICATION_SERVICE_AREA_DEPENDENCY_POLICIES: tuple[ApplicationServiceAreaDepend
     ),
     ApplicationServiceAreaDependencyPolicy(
         source_slug="scheduling",
-        allowed_dependency_slugs=(),
-        rationale="Scheduling helpers stay deterministic and are coordinated by commands.",
+        allowed_dependency_slugs=("food_catalog",),
+        rationale="Scheduling snapshots may preserve canonical food-catalog portion equivalences.",
     ),
     ApplicationServiceAreaDependencyPolicy(
         source_slug="nutrition_services",

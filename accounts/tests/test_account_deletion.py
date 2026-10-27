@@ -33,7 +33,15 @@ from food_catalog.models import (
     CatalogFood,
     CatalogFoodCapability,
 )
-from notas.domain.models import CalendarCommitment, Food, NutritionPreferenceProfile, Profile, WeightLog
+from notas.domain.models import (
+    CalendarCommitment,
+    Food,
+    NutritionPreferenceProfile,
+    ProductAnnouncement,
+    ProductAnnouncementRead,
+    Profile,
+    WeightLog,
+)
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -87,6 +95,18 @@ class AccountDeletionViewTests(TestCase):
 
         self.assertFalse(CalendarCommitment.objects.filter(pk=commitment.pk).exists())
         self.assertEqual(result.deleted_counts["notas.CalendarCommitment"], 1)
+
+    def test_deletion_erases_announcement_read_state_but_keeps_public_announcement(self):
+        from accounts.services.deletion import delete_user_account
+
+        announcement = ProductAnnouncement.objects.create(title="Novedad", body="Mensaje", is_active=True)
+        ProductAnnouncementRead.objects.create(announcement=announcement, user=self.user)
+
+        result = delete_user_account(user=self.user, source="test")
+
+        self.assertFalse(ProductAnnouncementRead.objects.filter(user=self.user).exists())
+        self.assertEqual(result.deleted_counts["notas.ProductAnnouncementRead"], 1)
+        self.assertTrue(ProductAnnouncement.objects.filter(pk=announcement.pk).exists())
 
     def test_profile_exposes_account_deletion_entry_point(self):
         self.client.force_login(self.user)

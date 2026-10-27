@@ -105,6 +105,12 @@ def admin_home(request):
                 url="admin_food_catalog",
                 icon="database",
             ),
+            AdminCardVM(
+                title="Catálogo de comidas",
+                description="Publica, clasifica, ordena y edita las comidas disponibles en Explorar.",
+                url="admin:notas_mealcatalogentry_changelist",
+                icon="utensils",
+            ),
         ],
     )
 

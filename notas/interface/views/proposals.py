@@ -146,10 +146,6 @@ def proposal_list(request):
             status_filter=status_filter,
         )
     ]
-    request.session["proposal_notification_seen_count"] = get_available_proposal_queryset(
-        request.user,
-    ).filter(is_read=False).count()
-
     content_vm = ProposalListContentVM(
         header=build_page_header(
             title="Propuestas",

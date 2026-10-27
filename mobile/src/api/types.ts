@@ -4,7 +4,7 @@ import type { ActiveProgramDay } from "./calendar-types";
 
 export type { EntitlementsData, SubscriptionData } from "./billing-types";
 export type { ActiveProgramDay, CalendarDay, CalendarDayDetailData, CalendarDayHistoryData, CalendarOverviewData, CalendarProgressData } from "./calendar-types";
-export type { OnboardingAnalyzeInput, OnboardingEstimate, OnboardingInput, OnboardingStage, OnboardingStateData } from "./onboarding-types";
+export type { OnboardingAnalyzeInput, OnboardingCalendarization, OnboardingEstimate, OnboardingInput, OnboardingStage, OnboardingStateData } from "./onboarding-types";
 export type ApiErrorDetail = {
   code: string;
   message: string;
@@ -366,7 +366,7 @@ export type LibraryPanel = {
 export type LibraryItem = {
   id: number;
   entity: LibraryEntity;
-  name: string; emoji?: string | null; visual_key?: string | null;
+  name: string; emoji?: string | null; visual_key?: string | null; meal_type?: "breakfast" | "snack" | "lunch" | "shake" | "dinner" | null;
   subtitle: string;
   quantity_unit?: "g" | "ml" | null;
   default_portion?: number | null;

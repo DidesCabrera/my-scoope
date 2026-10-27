@@ -1,0 +1,6 @@
+interface:
+  display_name: "Funding Advisor"
+  short_description: "Evaluate and prepare financing opportunities"
+  default_prompt: "Usa $funding-advisor para evaluar opciones de financiamiento para My Scoope y preparar el siguiente paso."
+policy:
+  allow_implicit_invocation: true

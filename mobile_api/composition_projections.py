@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from core.food_visual_identity import resolved_food_visual_identity
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
+from notas.application.services.food_portions import proposed_portion_display, proposed_portion_prefetch
 from notas.domain.models import ProgramDay
 from notas.domain.services.nutrition import macro_kcal_distribution
 
@@ -78,6 +79,10 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, current_weight=None, 
         food_group=food.food_group,
         food_subgroup=food.food_subgroup,
     )
+    display_quantity, display_measure = proposed_portion_display(
+        food=food,
+        metric_quantity=quantity,
+    )
     return {
         "id": row_id or (f"meal-food:{relation_id}" if relation_id else f"projected-food:{food.id}"),
         "relation_id": relation_id,
@@ -87,6 +92,8 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, current_weight=None, 
         "visual_key": visual.visual_key,
         "quantity": _number(quantity),
         "quantity_unit": food.portion_unit,
+        "portion_display_quantity": display_quantity,
+        "portion_display_measure": display_measure,
         "calories": _number(total),
         "calorie_share": _percentage(total, sum(parent_kcal)),
         "calorie_distribution": {key: _number(value) for key, value in distribution.items()},
@@ -106,7 +113,10 @@ def _ordered_meal_foods(meal):
     prefetched = getattr(meal, "_prefetched_objects_cache", {}).get("meal_food_set")
     if prefetched is not None:
         return sorted(prefetched, key=lambda relation: (relation.order, relation.id))
-    return meal.meal_food_set.select_related("food").prefetch_related("food__localized_names").order_by("order", "id")
+    return meal.meal_food_set.select_related("food").prefetch_related(
+        "food__localized_names",
+        proposed_portion_prefetch("food__portions"),
+    ).order_by("order", "id")
 
 
 def _meal_food_rows(meal, parent_kcal, current_weight=None):
@@ -140,7 +150,9 @@ def project_meal_result(*, meal, food, quantity, current_weight, replaced=None) 
             parent_kcal=result_kcal,
             current_weight=current_weight,
         )
-        for relation in meal.meal_food_set.select_related("food").order_by("order", "id")
+        for relation in meal.meal_food_set.select_related("food").prefetch_related(
+            proposed_portion_prefetch("food__portions")
+        ).order_by("order", "id")
         if not replaced or relation.id != replaced.id
     ]
     rows.append(
@@ -200,7 +212,10 @@ def project_dailyplan_result(*, dailyplan, meal, hour, note, current_weight, rep
     result_kcal = _add(_subtract(before_kcal, replaced_kcal), _kcal(meal))
     relations = list(
         dailyplan.dailyplan_meals.select_related("meal")
-        .prefetch_related("meal__meal_food_set__food")
+        .prefetch_related(
+            "meal__meal_food_set__food__localized_names",
+            proposed_portion_prefetch("meal__meal_food_set__food__portions"),
+        )
         .order_by("order", "id")
     )
     rows = [
@@ -270,7 +285,10 @@ def project_dailyplan_food_result(
     result_kcal = _add(_subtract(_kcal(dailyplan), _kcal(meal)), projected_meal_kcal)
     relations = list(
         dailyplan.dailyplan_meals.select_related("meal")
-        .prefetch_related("meal__meal_food_set__food")
+        .prefetch_related(
+            "meal__meal_food_set__food__localized_names",
+            proposed_portion_prefetch("meal__meal_food_set__food__portions"),
+        )
         .order_by("order", "id")
     )
     rows = [
@@ -333,7 +351,12 @@ def project_program_week_result(*, program, dailyplan, week_number, day_numbers,
     program_days = list(
         ProgramDay.objects.filter(program=program)
         .select_related("dailyplan")
-        .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food__localized_names")
+        .prefetch_related(
+            "dailyplan__dailyplan_meals__meal__meal_food_set__food__localized_names",
+            proposed_portion_prefetch(
+                "dailyplan__dailyplan_meals__meal__meal_food_set__food__portions"
+            ),
+        )
         .order_by("week_number", "day_number")
     )
     existing_by_slot = {(row.week_number, row.day_number): row for row in program_days}

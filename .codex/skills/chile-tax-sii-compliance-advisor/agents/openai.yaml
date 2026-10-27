@@ -1,0 +1,4 @@
+interface:
+  display_name: "Chile Tax & SII Compliance Advisor"
+  short_description: "Prepare SII tax compliance reviews"
+  default_prompt: "Usa $chile-tax-sii-compliance-advisor para revisar mis obligaciones tributarias chilenas y preparar los antecedentes que requieren decisión o validación profesional."

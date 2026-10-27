@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
 import { Button, Card, InlineNotice, SectionTitle, textStyles } from "./primitives";
@@ -49,21 +49,33 @@ export function ConfirmationState({
   danger?: boolean;
   busy?: boolean;
 }) {
+  const accent = danger ? tokens.color.danger : tokens.color.warning;
   return (
-    <Card accent={danger ? tokens.color.danger : tokens.color.warning}>
+    <Card accent={accent} style={[styles.confirmationCard, { backgroundColor: `${accent}1A`, borderColor: `${accent}80`, borderTopColor: `${accent}80` }]}>
       <SectionTitle title={title} />
       <Text style={textStyles.muted}>{message}</Text>
       <View style={styles.actions}>
-        <View style={styles.action}><Button disabled={busy} label="Cancelar" onPress={onCancel} variant="secondary" /></View>
-        <View style={styles.action}><Button label={confirmLabel} loading={busy} onPress={onConfirm} variant={danger ? "danger" : "primary"} /></View>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={onCancel} style={[styles.actionChip, { borderColor: accent }, busy && styles.actionDisabled]}>
+          <Text style={[styles.actionChipText, { color: accent }]}>Cancelar</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={onConfirm} style={[styles.actionChip, styles.confirmChip, danger && { backgroundColor: accent }, busy && styles.actionDisabled]}>
+          {busy ? <ActivityIndicator color={danger ? tokens.color.textMain : tokens.color.surfaceApp} /> : null}
+          <Text style={[styles.confirmChipText, danger && styles.dangerConfirmText]}>{confirmLabel}</Text>
+        </Pressable>
       </View>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  action: { flex: 1 },
+  actionChip: { alignItems: "center", borderRadius: tokens.radius.pill, borderWidth: 1, flex: 1, justifyContent: "center", minHeight: 44, paddingHorizontal: 12, paddingVertical: 8 },
+  actionChipText: { fontSize: 16, fontWeight: "700", textAlign: "center" },
+  actionDisabled: { opacity: 0.55 },
   actions: { flexDirection: "row", gap: tokens.spacing.sm },
+  confirmationCard: { borderTopWidth: 1 },
+  confirmChip: { backgroundColor: tokens.color.textMain, borderColor: "transparent" },
+  confirmChipText: { color: tokens.color.surfaceApp, fontSize: 16, fontWeight: "700", textAlign: "center" },
+  dangerConfirmText: { color: tokens.color.surfaceApp },
   stateGroup: { gap: tokens.spacing.md },
 });
 

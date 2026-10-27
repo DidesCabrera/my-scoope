@@ -35,7 +35,7 @@ export function LoadingState({ headerVisible = true, label = "Preparando tu día
 }) {
   const insets = useSafeAreaInsets();
   if (mode === "content") {
-    return <View style={styles.loadingContent}><MacroLoadingIndicator accessibilityLabel={label} /></View>;
+    return <View style={styles.loadingContent}><View style={styles.loadingContentIndicator}><MacroLoadingIndicator accessibilityLabel={label} /></View></View>;
   }
   const viewportOffset = headerVisible ? -(GLOBAL_HEADER_HEIGHT + insets.top) / 2 : 0;
   return (
@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
   progressTrack: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 8, overflow: "hidden" },
   progressFill: { borderRadius: tokens.radius.pill, height: "100%" },
   loadingContent: { alignItems: "center", flex: 1, justifyContent: "center" },
+  loadingContentIndicator: { transform: [{ scale: 0.7 }] },
   loadingState: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, justifyContent: "center", paddingBottom: 0, paddingTop: 0 },
   statusCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.card, gap: tokens.spacing.md, minWidth: 240, paddingHorizontal: tokens.spacing.xl, paddingVertical: tokens.spacing.xl },
   statusLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, textAlign: "center" },

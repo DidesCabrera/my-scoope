@@ -3,15 +3,14 @@ import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
-import { InlineNotice } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function ResponsibleUsePanel({ body, children, icon: Icon, title }: { body: string; children?: ReactNode; icon: LucideIcon; title: string }) {
   return (
     <View style={styles.panel}>
       <View style={styles.panelHeading}>
-        <View style={styles.panelIcon}><Icon color={tokens.color.textMain} size={20} /></View>
         <Text style={styles.panelTitle}>{title}</Text>
+        <View style={styles.panelIcon}><Icon color={tokens.color.textMain} size={20} /></View>
       </View>
       <Text style={[styles.panelBody, children ? styles.panelBodyWithActions : undefined]}>{body}</Text>
       {children}
@@ -25,8 +24,7 @@ export function ResponsibleUseContent({ policyActions }: { policyActions?: React
       <View style={styles.header}>
         <Text style={styles.eyebrow}>Uso responsable</Text>
         <View style={styles.headerIcon}><LockKeyhole color={tokens.color.textMain} size={27} /></View>
-        <Text style={styles.title}>Información importante antes de continuar</Text>
-        <Text style={styles.description}>Revisa qué hace My Scoope, qué no hace y qué decisiones quedan bajo tu responsabilidad.</Text>
+        <Text style={styles.title}>Información Importante</Text>
       </View>
       <View style={styles.panelStack}>
         <ResponsibleUsePanel
@@ -42,8 +40,24 @@ export function ResponsibleUseContent({ policyActions }: { policyActions?: React
           {policyActions}
         </ResponsibleUsePanel>
       </View>
-      <InlineNotice>Al continuar confirmas que comprendes estos límites. Podrás consultar las políticas completas cuando quieras.</InlineNotice>
     </>
+  );
+}
+
+export function ResponsibleUseConfirmationNotice() {
+  return <Text style={styles.confirmationText}>Al continuar confirmas que comprendes estos límites.</Text>;
+}
+
+export function ResponsibleUsePolicyLink({ label, onPress }: { label: string; onPress(): void }) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="link"
+      hitSlop={6}
+      onPress={onPress}
+      style={({ pressed }) => [styles.policyLink, pressed && styles.policyLinkPressed]}>
+      <Text style={styles.policyLinkLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -68,16 +82,19 @@ export function ResponsibleUseActionButton({ disabled = false, label = "Entiendo
 const styles = StyleSheet.create({
   header: { alignItems: "center", gap: tokens.spacing.sm },
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.2, textTransform: "uppercase" },
-  headerIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, height: 54, justifyContent: "center", marginTop: tokens.spacing.sm, width: 54 },
+  headerIcon: { alignItems: "center", height: 54, justifyContent: "center", marginTop: tokens.spacing.sm, width: 54 },
   title: { color: tokens.color.textMain, fontSize: 28, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 32, marginTop: tokens.spacing.lg, textAlign: "center" },
-  description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23, textAlign: "center" },
   panelStack: { gap: tokens.spacing.sm },
-  panel: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
-  panelHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
+  panel: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingHorizontal: tokens.spacing.xl, paddingVertical: tokens.spacing.xl },
+  panelHeading: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, marginBottom: tokens.spacing.xs },
   panelIcon: { alignItems: "center", backgroundColor: tokens.color.surfaceElevated, borderRadius: tokens.radius.md, height: 36, justifyContent: "center", width: 36 },
-  panelTitle: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
-  panelBody: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 17 },
+  panelTitle: { color: tokens.color.textMain, flex: 1, fontSize: 18, fontWeight: tokens.weight.bold, lineHeight: 22 },
+  panelBody: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
   panelBodyWithActions: { marginBottom: tokens.spacing.sm },
+  policyLink: { alignItems: "center", justifyContent: "center", minHeight: 32, paddingHorizontal: tokens.spacing.sm },
+  policyLinkPressed: { opacity: 0.62 },
+  policyLinkLabel: { color: "#0A84FF", fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, textAlign: "center" },
+  confirmationText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 19, textAlign: "center" },
   actionButton: { alignItems: "center", borderRadius: tokens.radius.lg, justifyContent: "center", minHeight: 48, overflow: "hidden", paddingHorizontal: tokens.spacing.lg },
   actionDisabled: { opacity: 0.55 },
   actionLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold },

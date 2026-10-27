@@ -79,7 +79,7 @@ function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecuti
                 isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
                 onToggle: (food) => onTogglePrepared(mealKey, food.id),
               } : undefined} />
-              {mealKey ? <View style={styles.addAction}><Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, returnTo: `/program/days/${dayId}` }))} /></View> : null}
+              {mealKey ? <View style={styles.addAction}><Button label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, returnTo: `/program/days/${dayId}` }))} variant="chipPrimary" /></View> : null}
             </NutritionEntityCard>
           </View>
         );
@@ -259,9 +259,9 @@ export default function ProgramDayScreen() {
             />
           </EntityDetailSection>
           <Button
-            bleed
             label="+ Agregar Comida"
             onPress={() => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id }))}
+            variant="chipPrimary"
           />
           {meals.length ? (
             <>

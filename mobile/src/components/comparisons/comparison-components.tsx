@@ -238,8 +238,8 @@ export function ComparisonBuilder({ addActionLabel, children, onAdd, onCompare, 
       </View>
       <View style={styles.builderSelections}>{children}</View>
       <View style={styles.builderActions}>
-        {onAdd ? <Button label={resolvedAddActionLabel} onPress={onAdd} variant="secondary" /> : null}
-        {onSave ? <Button label="Guardar comparación" onPress={onSave} variant="secondary" /> : null}
+        {onAdd ? <Button label={resolvedAddActionLabel} onPress={onAdd} surface="card" variant="secondary" /> : null}
+        {onSave ? <Button label="Guardar comparación" onPress={onSave} surface="card" variant="secondary" /> : null}
         {onCompare ? <Button label="Comparar" onPress={onCompare} /> : null}
       </View>
     </View>
@@ -346,7 +346,7 @@ export function SavedComparisonDetailPage({
         <View style={styles.savedDetailResults}>{children}</View>
       </View>
 
-      {onEdit ? <Button label="Editar comparación" onPress={onEdit} variant="secondary" /> : null}
+      {onEdit ? <Button label="Editar comparación" onPress={onEdit} surface="card" variant="secondary" /> : null}
     </View>
   );
 }

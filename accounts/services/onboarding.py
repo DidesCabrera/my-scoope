@@ -6,10 +6,8 @@ from typing import Iterable
 from django.db import transaction
 from django.utils import timezone
 
-from notas.application.ai_intake.dailyplan_generator import generate_dailyplan_proposal_from_brief_proposal
-from notas.application.ai_intake.proposal_from_brief import create_nutrition_brief_proposal
+from notas.application.ai_intake.onboarding_catalog_minutas import generate_onboarding_catalog_minutas
 from notas.application.ai_tools.preference_tools import DIETARY_PATTERNS
-from notas.application.ai_tools.proposal_tools import build_nutrition_brief_from_ai_drafts
 from notas.application.nutrition_engine.target_estimator import TargetEstimationProfile, estimate_daily_targets
 from notas.application.services.commands.proposal_commands import (
     apply_approved_create_dailyplan_proposal,
@@ -17,7 +15,15 @@ from notas.application.services.commands.proposal_commands import (
     cancel_proposal,
 )
 from notas.application.services.nutrition.body_metrics import calculate_age_years, record_weight
-from notas.domain.models import NutritionPreferenceProfile, NutritionProposal, Profile, WeightLog
+from notas.domain.models import (
+    CalendarizedDay,
+    DailyPlan,
+    NutritionPreferenceProfile,
+    NutritionProposal,
+    NutritionProposalAuditEvent,
+    Profile,
+    WeightLog,
+)
 from notas.domain.nutrition_profile_contracts import ACTIVITY_LEVEL_VALUES, NUTRITION_GOAL_VALUES
 
 
@@ -62,6 +68,29 @@ def _clean_preference_values(values: Iterable[str]) -> list[str]:
     return cleaned[:20]
 
 
+def onboarding_plan_proposal_ids(profile: Profile) -> list[int]:
+    """Keep an in-flight single-plan onboarding readable after the pair migration."""
+    ids = [value for value in profile.onboarding_plan_proposal_ids if type(value) is int and value > 0]
+    if not ids and profile.onboarding_plan_proposal_id:
+        ids = [profile.onboarding_plan_proposal_id]
+    return ids[:2]
+
+
+def onboarding_applied_dailyplan_ids(*, user, proposal_ids: list[int]) -> dict[int, int]:
+    proposals = {row.pk: row for row in NutritionProposal.objects.filter(pk__in=proposal_ids, created_by=user)}
+    applied_ids = {}
+    for event in NutritionProposalAuditEvent.objects.filter(
+        proposal_id__in=proposal_ids, action=NutritionProposalAuditEvent.ACTION_APPLIED,
+    ).order_by("created_at", "id"):
+        candidate = (event.metadata or {}).get("dailyplan_id")
+        if type(candidate) is int and candidate > 0:
+            applied_ids[event.proposal_id] = candidate
+    owned_ids = set(DailyPlan.objects.filter(created_by=user, pk__in=applied_ids.values()).values_list("pk", flat=True))
+    return {proposal_id: applied_ids[proposal_id] for proposal_id in proposal_ids
+            if proposals.get(proposal_id) and proposals[proposal_id].status == NutritionProposal.STATUS_APPLIED
+            and applied_ids.get(proposal_id) in owned_ids}
+
+
 def nutrition_onboarding_estimate(profile: Profile) -> dict:
     current_weight = profile.user.weight_logs.first()
     plan = estimate_daily_targets(TargetEstimationProfile(
@@ -102,12 +131,11 @@ def save_nutrition_onboarding_v2(
         raise ValueError("onboarding_dietary_pattern_invalid")
 
     profile = Profile.objects.select_for_update().get(user=user)
-    prior_proposal = NutritionProposal.objects.select_for_update().filter(
-        pk=profile.onboarding_plan_proposal_id,
-        created_by=user,
-    ).first()
-    if prior_proposal and not prior_proposal.is_final:
-        cancel_proposal(user=user, proposal=prior_proposal)
+    for prior_proposal in NutritionProposal.objects.select_for_update().filter(
+        pk__in=onboarding_plan_proposal_ids(profile), created_by=user,
+    ):
+        if not prior_proposal.is_final:
+            cancel_proposal(user=user, proposal=prior_proposal)
 
     profile.birth_date = birth_date
     profile.sex = sex
@@ -117,9 +145,10 @@ def save_nutrition_onboarding_v2(
     profile.training_frequency = training_frequency
     profile.onboarding_stage = Profile.ONBOARDING_STAGE_SUMMARY
     profile.onboarding_plan_proposal_id = None
+    profile.onboarding_plan_proposal_ids = []
     profile.save(update_fields=[
         "birth_date", "sex", "height_cm", "nutrition_goal", "activity_level",
-        "training_frequency", "onboarding_stage", "onboarding_plan_proposal_id",
+        "training_frequency", "onboarding_stage", "onboarding_plan_proposal_id", "onboarding_plan_proposal_ids",
     ])
     record_weight(user, weight_kg, source=WeightLog.SOURCE_ONBOARDING)
 
@@ -148,83 +177,62 @@ def mark_nutrition_onboarding_intro_complete(*, user) -> Profile:
 
 
 @transaction.atomic
-def generate_nutrition_onboarding_plan(*, user) -> NutritionProposal:
+def generate_nutrition_onboarding_plan(*, user) -> tuple[NutritionProposal, NutritionProposal]:
     profile = Profile.objects.select_for_update().get(user=user)
-    existing = NutritionProposal.objects.select_for_update().filter(
-        pk=profile.onboarding_plan_proposal_id,
-        created_by=user,
-    ).first()
-    if existing and existing.status in {
+    ids = onboarding_plan_proposal_ids(profile)
+    owned = {proposal.pk: proposal for proposal in NutritionProposal.objects.select_for_update().filter(
+        pk__in=ids, created_by=user,
+    )}
+    existing = [owned[pk] for pk in ids if pk in owned]
+    if len(existing) == 2 and all(proposal.status in {
         NutritionProposal.STATUS_PENDING_REVIEW,
         NutritionProposal.STATUS_APPROVED,
         NutritionProposal.STATUS_APPLIED,
-    }:
-        return existing
+    } for proposal in existing):
+        return existing[0], existing[1]
+    for proposal in existing:
+        if not proposal.is_final:
+            cancel_proposal(user=user, proposal=proposal)
 
     estimate = nutrition_onboarding_estimate(profile)
     preference_profile = NutritionPreferenceProfile.objects.filter(user=user).first()
     preferences = dict(preference_profile.preferences or {}) if preference_profile else {}
-    weight_log = user.weight_logs.first()
-    brief = build_nutrition_brief_from_ai_drafts(
-        profile_draft={
-            "weight_kg": float(weight_log.weight_kg) if weight_log else None,
-            "height_cm": profile.height_cm,
-            "age_years": calculate_age_years(profile.birth_date),
-            "sex": profile.sex,
-            "activity_level": profile.activity_level,
-            "training_frequency": profile.training_frequency,
-            "field_sources": {
-                "weight_kg": "profile", "height_cm": "profile", "age_years": "profile",
-                "sex": "profile", "activity_level": "profile", "training_frequency": "profile",
-            },
-        },
-        preference_draft={**preferences, "field_sources": dict.fromkeys(preferences, "profile")},
-        proposal_preferences={
-            "goal": profile.nutrition_goal,
-            "requested_entity": "daily_plan",
-            "calorie_target": round(estimate["total_kcal"]),
-            "protein_target": round(estimate["protein"]),
-            "carb_target": round(estimate["carbs"]),
-            "fat_target": round(estimate["fat"]),
-            "protein_per_kg_target": estimate["protein_per_kg"],
-        },
-        raw_prompt="Generar la primera minuta diaria desde el onboarding.",
-    )
-    source = create_nutrition_brief_proposal(user=user, brief=brief, source=NutritionProposal.SOURCE_SYSTEM)
-    generated = generate_dailyplan_proposal_from_brief_proposal(
-        user=user,
-        source_proposal=source.proposal,
-        source=NutritionProposal.SOURCE_SYSTEM,
-    )
-    # The brief is an internal input artifact. Keep the concrete daily-plan
-    # proposal as the only reviewable item shown to the user.
-    cancel_proposal(user=user, proposal=source.proposal)
-    profile.onboarding_plan_proposal_id = generated.proposal.id
+    proposals = generate_onboarding_catalog_minutas(user=user, estimate=estimate, preferences=preferences)
+    profile.onboarding_plan_proposal_id = proposals[0].id
+    profile.onboarding_plan_proposal_ids = [proposal.id for proposal in proposals]
     profile.onboarding_stage = Profile.ONBOARDING_STAGE_PLAN
-    profile.save(update_fields=["onboarding_plan_proposal_id", "onboarding_stage"])
-    return generated.proposal
+    profile.save(update_fields=["onboarding_plan_proposal_id", "onboarding_plan_proposal_ids", "onboarding_stage"])
+    return proposals
 
 
 @transaction.atomic
-def accept_nutrition_onboarding_plan(*, user) -> NutritionProposal:
+def accept_nutrition_onboarding_plan(*, user) -> tuple[NutritionProposal, ...]:
     profile = Profile.objects.select_for_update().get(user=user)
-    proposal = NutritionProposal.objects.select_for_update().filter(
-        pk=profile.onboarding_plan_proposal_id,
-        created_by=user,
-    ).first()
-    if proposal is None:
+    ids = onboarding_plan_proposal_ids(profile)
+    owned = {proposal.pk: proposal for proposal in NutritionProposal.objects.select_for_update().filter(
+        pk__in=ids, created_by=user,
+    )}
+    if not ids or len(owned) != len(ids):
         raise ValueError("onboarding_plan_not_generated")
-    if proposal.status == NutritionProposal.STATUS_PENDING_REVIEW:
-        approve_proposal(user=user, proposal=proposal)
-        proposal.refresh_from_db()
-    if proposal.status == NutritionProposal.STATUS_APPROVED:
-        apply_approved_create_dailyplan_proposal(user=user, proposal=proposal)
-        proposal.refresh_from_db()
-    if proposal.status != NutritionProposal.STATUS_APPLIED:
-        raise ValueError("onboarding_plan_not_applicable")
+    proposals = tuple(owned[pk] for pk in ids)
+    for proposal in proposals:
+        if proposal.status == NutritionProposal.STATUS_PENDING_REVIEW:
+            approve_proposal(user=user, proposal=proposal)
+            proposal.refresh_from_db()
+        if proposal.status == NutritionProposal.STATUS_APPROVED:
+            applied = apply_approved_create_dailyplan_proposal(user=user, proposal=proposal)
+            source_id = (proposal.current_snapshot or {}).get("source_dailyplan_id")
+            source = DailyPlan.objects.filter(pk=source_id).first() if source_id else None
+            if source is not None:
+                applied.dailyplan.forked_from = source.forked_from or source
+                applied.dailyplan.original_author = source.original_author or source.created_by
+                applied.dailyplan.save(update_fields=["forked_from", "original_author"])
+            proposal.refresh_from_db()
+        if proposal.status != NutritionProposal.STATUS_APPLIED:
+            raise ValueError("onboarding_plan_not_applicable")
     profile.onboarding_stage = Profile.ONBOARDING_STAGE_PLANS
     profile.save(update_fields=["onboarding_stage"])
-    return proposal
+    return proposals
 
 
 @transaction.atomic
@@ -232,6 +240,15 @@ def complete_nutrition_onboarding_v2(*, user) -> Profile:
     profile = Profile.objects.select_for_update().get(user=user)
     if profile.onboarding_stage != Profile.ONBOARDING_STAGE_PLANS:
         raise ValueError("onboarding_not_ready_to_complete")
+    proposal_ids = onboarding_plan_proposal_ids(profile)
+    if len(proposal_ids) == 2:
+        plan_ids = onboarding_applied_dailyplan_ids(user=user, proposal_ids=proposal_ids)
+        calendarized_ids = set(CalendarizedDay.objects.filter(
+            user=user, source_dailyplan_id__in=plan_ids.values(), source_kind=CalendarizedDay.SOURCE_MANUAL,
+            assignment_state=CalendarizedDay.STATE_CURRENT, plan_snapshot__isnull=False,
+        ).values_list("source_dailyplan_id", flat=True))
+        if len(plan_ids) != 2 or calendarized_ids != set(plan_ids.values()):
+            raise ValueError("onboarding_calendarization_incomplete")
     profile.onboarding_completed_at = profile.onboarding_completed_at or timezone.now()
     profile.onboarding_version = Profile.ONBOARDING_VERSION_NUTRITION_V2
     profile.onboarding_stage = Profile.ONBOARDING_STAGE_COMPLETED

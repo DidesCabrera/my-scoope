@@ -26,6 +26,7 @@ from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.culinary import CulinaryTemplate, CulinaryVariant
 from notas.domain.model_modules.dailyplans import (
     DailyPlan,
+    DailyPlanCatalogEntry,
     DailyPlanMeal,
     PinnedDailyPlan,
     PinnedDailyPlanMealExecution,
@@ -48,7 +49,8 @@ from notas.domain.model_modules.identity import (
     Subscription,
     WeightLog,
 )
-from notas.domain.model_modules.meals import Meal, MealAccess, MealFood
+from notas.domain.model_modules.meals import Meal, MealAccess, MealCatalogEntry, MealFood
+from notas.domain.model_modules.notification_center import ProductAnnouncement, ProductAnnouncementRead
 from notas.domain.model_modules.notification_delivery import (
     ApplePushSubscription,
     NotificationDelivery,
@@ -78,7 +80,7 @@ __all__ = [
     "CulinaryTemplate", "CulinaryVariant",
     "AiAssistantMessageFeedback", "AiNutritionChat", "ApplePushSubscription",
     "CalendarizedDay", "CalendarizedMealExecution", "CalendarCommitment", "CalendarProgressPeriod",
-    "CalendarizationMeasurementContext", "CalendarizationReview", "CalendarizationRevision", "DailyPlan",
+    "CalendarizationMeasurementContext", "CalendarizationReview", "CalendarizationRevision", "DailyPlan", "DailyPlanCatalogEntry",
     "DailyPlanMeal", "DailyPlanMealShare",
     "PinnedDailyPlan", "PinnedDailyPlanMealExecution",
     "DailyPlanShare", "Food",
@@ -86,8 +88,8 @@ __all__ = [
     "FoodLabelAIAnalysis", "FoodLabelCaptureReceipt", "FoodLocalizedName",
     "FoodPortion", "FoodShare", "InboxItem",
     "FoodSourceMetadata", "MCPUserToken", "Meal",
-    "MealAccess", "MealFood", "MealShare",
-    "NotificationDelivery", "NutritionProposal", "NutritionProposalAuditEvent",
+    "MealAccess", "MealCatalogEntry", "MealFood", "MealShare",
+    "NotificationDelivery", "NutritionProposal", "NutritionProposalAuditEvent", "ProductAnnouncement", "ProductAnnouncementRead",
     "NutritionPreferenceProfile", "NutritionistMemberRelationship",
     "OAuthAuthorizationCode", "OAuthClient",
     "OAuthDeviceSession", "OAuthRefreshToken",
@@ -95,6 +97,4 @@ __all__ = [
     "ProgramCalendarization", "ProgramDay",
     "ProgramShare", "ShareClaim", "ShareInvitation",
     "ShareResource", "SavedComparison",
-    "ScheduledNotificationEvent",
-    "Subscription",
-    "WebPushSubscription", "WeightLog", ]
+    "ScheduledNotificationEvent", "Subscription", "WebPushSubscription", "WeightLog", ]
