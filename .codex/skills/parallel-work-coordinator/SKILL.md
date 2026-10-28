@@ -1,6 +1,6 @@
 ---
 name: parallel-work-coordinator
-description: Audit parallel repository work across remote branches, worktrees, local branches, and Metro/Expo; maintain a local ownership registry and Metro leases. Use when coordinating simultaneous Codex tasks, diagnosing checkout confusion, assessing development-area health, reviewing integration readiness, or planning safe cleanup. Audits are read-only; registry writes require an explicit coordination request and never mutate Git or processes.
+description: Audit parallel repository work across remote branches, worktrees, local branches, and Metro/Expo; present current-state operational dashboards; maintain a local ownership registry and Metro leases. Use when coordinating simultaneous Codex tasks, diagnosing checkout confusion, assessing development-area health, reporting the state of the work area, reviewing integration readiness, or planning safe cleanup. Audits are read-only; registry writes require an explicit coordination request and never mutate Git or processes.
 ---
 
 # Parallel Work Coordinator
@@ -24,6 +24,10 @@ Establish a trustworthy snapshot before recommending any lifecycle action.
    [references/lifecycle-policy.md](references/lifecycle-policy.md).
 6. For the report contract and severity meanings, read
    [references/audit-report.md](references/audit-report.md).
+   When the user asks for the current state of the development area, work area,
+   branches, checkouts, or an equivalent dashboard in an established repository
+   coordination context, use the current-state dashboard defined there by
+   default.
 7. When assessing health or proposing improvements, read
    [references/target-state.md](references/target-state.md) and express the plan
    as gaps from current evidence to the target state.
