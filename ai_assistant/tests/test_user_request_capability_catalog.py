@@ -36,7 +36,7 @@ EXPECTED_PREFIX_COUNTS = {
     "M": 14,
     "DP": 14,
     "PG": 10,
-    "C": 10,
+    "C": 12,
     "X": 10,
     "A": 6,
 }
@@ -56,7 +56,7 @@ class UserRequestCapabilityCatalogContractTests(SimpleTestCase):
         rows = _catalog_rows()
         identifiers = [row["id"] for row in rows]
 
-        self.assertEqual(len(rows), 82)
+        self.assertEqual(len(rows), 84)
         self.assertEqual(len(identifiers), len(set(identifiers)))
         self.assertEqual(
             {
