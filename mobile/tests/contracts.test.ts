@@ -668,7 +668,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
-  assertSourceMatch(todayScreen, /<CurrentWeekSection key=\{today\.local_date\} localDate=\{today\.local_date\} onPressDay=\{[^\n]*\} weekDays=\{weekDays\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`💪🏻Vamos \$\{firstName\}!`\}/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection key=\{today\.local_date\} localDate=\{today\.local_date\} onOpenCalendar=\{\(\) => router\.push\("\/calendar" as Href\)\} onPressDay=\{[^\n]*\} weekDays=\{weekDays\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`💪🏻Vamos \$\{firstName\}!`\}/);
   assertSourceDoesNotMatch(todayScreen, /Fallar en planificar, es planificar fallar|greetingSubtitle/);
   assertSourceMatch(todayScreen, /<Chip backgroundColor=\{`\$\{planContext\.color\}1A`\} borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
   assertSourceMatch(todayScreen, /planContext: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
@@ -696,7 +696,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(currentWeek, /monthLabel: \{[^}]*fontFamily: font\.regular[^}]*fontSize: 9[^}]*fontWeight: tokens\.weight\.medium[^}]*lineHeight: 10/);
   assertSourceMatch(currentWeek, /monthLabelToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.bold \}/);
   assertSourceMatch(currentWeek, /<WeekDaySelectionRing \/>/);
-  assertSourceMatch(currentWeek, /dayCircleToday: \{ backgroundColor: tokens\.color\.entityIconForeground \}/);
+  assertSourceMatch(currentWeek, /dayCircleToday: \{ backgroundColor: tokens\.color\.entityIconForeground, height: 42, margin: 1, width: 42 \}/);
   assertSourceDoesNotMatch(currentWeek, /dayCircle: \{[^}]*(?:borderColor|borderStyle|borderWidth)/);
   assertSourceMatch(currentWeek, /dayNumberToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.bold \}/);
   assertSourceMatch(currentWeek, /compact && styles\.dayCircleCompact/);

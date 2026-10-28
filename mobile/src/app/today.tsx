@@ -429,7 +429,7 @@ export default function TodayScreen() {
     <>
       <Stack.Screen options={{ headerShown: true }} />
       <Screen headerMode="preserve" scrollToTopSignal={scrollToTopSignal}>
-      {today ? <View style={styles.weekRow}><CurrentWeekSection key={today.local_date} localDate={today.local_date} onPressDay={(date) => router.push(`/calendar/days/${date}?origin=home` as Href)} weekDays={weekDays} /></View> : null}
+      {today ? <View style={styles.weekRow}><CurrentWeekSection key={today.local_date} localDate={today.local_date} onOpenCalendar={() => router.push("/calendar" as Href)} onPressDay={(date) => router.push(`/calendar/days/${date}?origin=home` as Href)} weekDays={weekDays} /></View> : null}
       <View style={styles.greetingRow}>
         <View style={styles.greetingHeading}>
           <Text style={styles.greetingTitle}>{`💪🏻Vamos ${firstName}!`}</Text>
