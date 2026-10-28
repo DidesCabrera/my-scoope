@@ -67,7 +67,20 @@ test("header navigation and action icons use muted text color", async () => {
 
 test("compact header identities use a short transition", async () => {
   const navigation = await source("src/components/navigation/app-navigation.tsx");
-  assert.equal((navigation.match(/duration: 90/g) ?? []).length, 3);
+  assert.equal((navigation.match(/duration: 90/g) ?? []).length, 1);
+  assertSourceMatch(navigation, /function useHeaderIdentityProgress\(visible: boolean\)/);
+  assertSourceMatch(navigation, /const animation = Animated\.timing\(progress/);
+  assertSourceMatch(navigation, /return \(\) => animation\.stop\(\)/);
+});
+
+test("header presentation updates do not rerender setter-only screens or the sidebar", async () => {
+  const navigation = await source("src/components/navigation/app-navigation.tsx");
+  assertSourceMatch(navigation, /const HeaderPresentationContext = createContext<HeaderPresentation \| null>/);
+  assertSourceMatch(navigation, /const HeaderPresentationDispatchContext = createContext<SetHeaderPresentation \| null>/);
+  assertSourceMatch(navigation, /const NavigationMenuContext = createContext<NavigationMenuContextValue \| null>/);
+  assertSourceMatch(navigation, /<HeaderPresentationProvider>\{children\}<\/HeaderPresentationProvider>[\s\S]*<AppSidebar \/>/);
+  assertSourceDoesNotMatch(navigation, /type NavigationContextValue/);
+  assertSourceDoesNotMatch(navigation, /useAppNavigation/);
 });
 
 test("compact header identities appear only after twelve scroll points", async () => {

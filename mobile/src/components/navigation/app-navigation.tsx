@@ -61,17 +61,19 @@ type HeaderPresentation =
   | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; fallback?: Href; forceFallback?: boolean; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; secondaryAction?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string };
 
-type NavigationContextValue = {
+type NavigationMenuContextValue = {
   closeMenu(): void;
   finishClosingMenu(): void;
-  headerPresentation: HeaderPresentation;
   menuMounted: boolean;
   menuOpen: boolean;
   openMenu(): void;
-  setHeaderPresentation(presentation: HeaderPresentation): void;
 };
 
-const NavigationContext = createContext<NavigationContextValue | null>(null);
+type SetHeaderPresentation = (presentation: HeaderPresentation) => void;
+
+const HeaderPresentationContext = createContext<HeaderPresentation | null>(null);
+const HeaderPresentationDispatchContext = createContext<SetHeaderPresentation | null>(null);
+const NavigationMenuContext = createContext<NavigationMenuContextValue | null>(null);
 
 const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   assistant: Sparkles,
@@ -106,45 +108,66 @@ const libraryItems: EntitySidebarItemData[] = [
   { entity: "food", href: "/libraries/foods", label: "Mis Alimentos" },
 ];
 
-function useAppNavigation(): NavigationContextValue {
-  const context = useContext(NavigationContext);
-  if (!context) throw new Error("useAppNavigation must be used inside AppNavigationProvider");
+function useHeaderPresentationState(): HeaderPresentation {
+  const context = useContext(HeaderPresentationContext);
+  if (!context) throw new Error("useHeaderPresentationState must be used inside AppNavigationProvider");
+  return context;
+}
+
+function HeaderPresentationProvider({ children }: PropsWithChildren) {
+  const [headerPresentation, setHeaderPresentation] = useState<HeaderPresentation>({ mode: "default" });
+  return (
+    <HeaderPresentationDispatchContext.Provider value={setHeaderPresentation}>
+      <HeaderPresentationContext.Provider value={headerPresentation}>
+        {children}
+      </HeaderPresentationContext.Provider>
+    </HeaderPresentationDispatchContext.Provider>
+  );
+}
+
+function useNavigationMenu(): NavigationMenuContextValue {
+  const context = useContext(NavigationMenuContext);
+  if (!context) throw new Error("useNavigationMenu must be used inside AppNavigationProvider");
   return context;
 }
 
 export function AppNavigationProvider({ children }: PropsWithChildren) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
-  const [headerPresentation, setHeaderPresentation] = useState<HeaderPresentation>({ mode: "default" });
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const finishClosingMenu = useCallback(() => setMenuMounted(false), []);
   const openMenu = useCallback(() => { setMenuMounted(true); setMenuOpen(true); }, []);
-  const value = useMemo<NavigationContextValue>(() => ({ closeMenu, finishClosingMenu, headerPresentation, menuMounted, menuOpen, openMenu, setHeaderPresentation }), [closeMenu, finishClosingMenu, headerPresentation, menuMounted, menuOpen, openMenu]);
+  const value = useMemo<NavigationMenuContextValue>(() => ({ closeMenu, finishClosingMenu, menuMounted, menuOpen, openMenu }), [closeMenu, finishClosingMenu, menuMounted, menuOpen, openMenu]);
   return (
-    <NavigationContext.Provider value={value}>
-      {children}
+    <NavigationMenuContext.Provider value={value}>
+      <HeaderPresentationProvider>{children}</HeaderPresentationProvider>
       <AppSidebar />
-    </NavigationContext.Provider>
+    </NavigationMenuContext.Provider>
   );
 }
 
-function HeaderIdentity({ icon: Icon, title, visible }: { icon: LucideIcon; title: string; visible: boolean }) {
+function useHeaderIdentityProgress(visible: boolean) {
   const [progress] = useState(() => new Animated.Value(visible ? 1 : 0));
   useEffect(() => {
-    Animated.timing(progress, { duration: 90, toValue: visible ? 1 : 0, useNativeDriver: true }).start();
+    const animation = Animated.timing(progress, { duration: 90, toValue: visible ? 1 : 0, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
   }, [progress, visible]);
+  return progress;
+}
+
+function HeaderIdentity({ icon: Icon, title, visible }: { icon: LucideIcon; title: string; visible: boolean }) {
+  const progress = useHeaderIdentityProgress(visible);
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [-4, 0] }) }] }]}><View accessibilityLabel={title} accessible style={styles.routeIdentity}><Icon color={tokens.color.textMain} size={18} strokeWidth={2.2} /><Text numberOfLines={1} style={styles.routeIdentityTitle}>{title}</Text></View></Animated.View>;
 }
 
 function LibraryHeaderIdentity({ entity, title, visible }: { entity: LibraryEntity; title: string; visible: boolean }) {
-  const [progress] = useState(() => new Animated.Value(visible ? 1 : 0));
-  useEffect(() => { Animated.timing(progress, { duration: 90, toValue: visible ? 1 : 0, useNativeDriver: true }).start(); }, [progress, visible]);
+  const progress = useHeaderIdentityProgress(visible);
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress }]}><HeaderEntityIdentity entity={entity} title={title} /></Animated.View>;
 }
 
 function BackHeaderIdentity({ title, visible = true }: { title: string; visible?: boolean }) {
-  const [progress] = useState(() => new Animated.Value(visible ? 1 : 0));
-  useEffect(() => { Animated.timing(progress, { duration: 90, toValue: visible ? 1 : 0, useNativeDriver: true }).start(); }, [progress, visible]);
+  const progress = useHeaderIdentityProgress(visible);
   return <Animated.View accessibilityElementsHidden={!visible} accessibilityLabel={title} accessible importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.backHeaderIdentity, { opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [-4, 0] }) }] }]}><Text numberOfLines={1} style={styles.routeIdentityTitle}>{title}</Text></Animated.View>;
 }
 
@@ -172,7 +195,8 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
 }
 
 export function AppNavigationHeader() {
-  const { headerPresentation, openMenu } = useAppNavigation();
+  const headerPresentation = useHeaderPresentationState();
+  const { openMenu } = useNavigationMenu();
   const router = useRouter();
   const pathname = usePathname();
   const { status, profile } = useSession();
@@ -350,13 +374,15 @@ export function AppNavigationHeader() {
 }
 
 export function useHeaderPresentation() {
-  return useAppNavigation().setHeaderPresentation;
+  const context = useContext(HeaderPresentationDispatchContext);
+  if (!context) throw new Error("useHeaderPresentation must be used inside AppNavigationProvider");
+  return context;
 }
 
 function useSidebarItem(item: { href: Href }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { closeMenu } = useAppNavigation();
+  const { closeMenu } = useNavigationMenu();
   const assistantAliasActive = item.href === "/assistant" && pathname.startsWith("/proposals");
   const active = assistantAliasActive || pathname === item.href || (pathname.startsWith(String(item.href)) && item.href !== "/today");
   return { active, onPress: () => { closeMenu(); router.push(item.href); } };
@@ -390,7 +416,7 @@ function AppSidebar() {
   const { width } = useWindowDimensions();
   const drawerWidth = Math.min(width * 0.88, 360);
   const insets = useSafeAreaInsets();
-  const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useAppNavigation();
+  const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useNavigationMenu();
   const { apiRequest, profile, session, status } = useSession();
   const router = useRouter();
   const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
