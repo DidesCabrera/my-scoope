@@ -1,0 +1,4 @@
+interface:
+  display_name: "Parallel Work Coordinator"
+  short_description: "Audita worktrees, ramas y sesiones Metro sin modificar estado"
+  default_prompt: "Audita los trabajos paralelos del repositorio y entrega un reporte de riesgos y próximos pasos sin modificar Git, procesos ni archivos de trabajo."
