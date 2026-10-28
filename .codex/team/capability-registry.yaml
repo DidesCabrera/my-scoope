@@ -136,3 +136,13 @@ shared_skills:
       - "observability-lead"
       - "mobile-incident-specialist"
       - "incident-verifier"
+  - name: "supplier-billing-reconciliation"
+    area: "finance"
+    status: "pilot"
+    path: ".codex/skills/supplier-billing-reconciliation/SKILL.md"
+    purpose: "Reconcile recurring supplier billing histories with document, payment, evidence, bank, and tax queues kept distinct."
+    available_to: "all-finance-roles"
+    typical_users:
+      - "accounting-intake-recordkeeping-agent"
+      - "chile-tax-sii-compliance-advisor"
+      - "financial-planning-advisor"

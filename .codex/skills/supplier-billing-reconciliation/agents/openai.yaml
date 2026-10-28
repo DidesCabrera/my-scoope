@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conciliación de facturación de proveedores"
+  short_description: "Ordena facturas y pagos recurrentes con trazabilidad"
+  default_prompt: "Revisa la facturación del proveedor en la fuente autorizada, compárala con el registro financiero y deja documentos, pagos, faltantes y pendientes tributarios correctamente separados."
