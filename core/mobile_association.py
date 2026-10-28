@@ -20,7 +20,7 @@ def apple_app_site_association_payload() -> dict | None:
             "details": [
                 {
                     "appID": f"{team_id}.{IOS_BUNDLE_ID}",
-                    "paths": ["/s/*"],
+                    "paths": ["/s/*", "/mobile/confirm-email/*"],
                 }
             ],
         }

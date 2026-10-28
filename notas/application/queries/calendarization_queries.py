@@ -14,15 +14,14 @@ def owned_programs_for_calendarization(user):
     ).order_by("list_order", "-created_at", "-id")
 
 
-def current_calendarization_for_user(user):
-    return (
-        ProgramCalendarization.objects.filter(
-            user=user,
-            status__in=ProgramCalendarization.CURRENT_STATUSES,
-        )
-        .prefetch_related("days")
-        .first()
+def current_calendarization_for_user(user, *, prefetch_days=True):
+    queryset = ProgramCalendarization.objects.filter(
+        user=user,
+        status__in=ProgramCalendarization.CURRENT_STATUSES,
     )
+    if prefetch_days:
+        queryset = queryset.prefetch_related("days")
+    return queryset.first()
 
 
 def calendarization_history_for_user(user, *, limit=10):

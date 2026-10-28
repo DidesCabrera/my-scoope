@@ -28,8 +28,7 @@
                     <p class="auth-email">{{ confirmation.email_address.email }}</p>
                 </div>
 
-                {% url 'account_confirm_email' confirmation.key as action_url %}
-                <form method="post" action="{{ action_url }}" class="auth-form auth-form--message">
+                <form method="post" action="{{ request.path }}" class="auth-form auth-form--message">
                     {% csrf_token %}
                     {{ redirect_field }}
                     <button type="submit">Confirmar correo</button>

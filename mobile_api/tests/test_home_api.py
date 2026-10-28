@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-from django.core.cache import cache
-from django.test import override_settings
+from datetime import timedelta
+from unittest.mock import patch
 
-from mobile_api.read_cache import home_cache_key
+from django.core.cache import cache
+from django.db import connection
+from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
+
+from mobile_api.read_cache import home_cache_key, home_summary_cache_key
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import DailyPlan, Food, Meal, Program, WeightLog
+from notas.domain.models import CalendarizedDay, DailyPlan, Food, Meal, Program, ProgramCalendarization, WeightLog
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -32,6 +38,51 @@ class MobileHomeAPITests(AuthenticatedMobileAPITestCase):
         self.assertIn("active_program", data)
         self.assertIn("pending_proposal_count", data)
         self.assertTrue(data["version"])
+
+    def test_home_summary_skips_the_unused_active_program_projection(self) -> None:
+        with patch("mobile_api.home.active_program_payload", side_effect=AssertionError("active program was loaded")):
+            response = self.client.get("/api/v1/home/summary")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        data = response.json()["data"]
+        self.assertIn("today", data)
+        self.assertIn("library_counts", data)
+        self.assertNotIn("active_program", data)
+        self.assertTrue(data["version"])
+
+    def test_home_summary_is_smaller_and_uses_fewer_queries_with_an_active_program(self) -> None:
+        today = timezone.localdate()
+        program = Program.objects.create(name="Programa", created_by=self.user, duration_weeks=1)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            source_program=program,
+            program_name_snapshot=program.name,
+            start_date=today,
+            end_date=today + timedelta(days=6),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        CalendarizedDay.objects.bulk_create([
+            CalendarizedDay(
+                user=self.user,
+                calendarization=calendarization,
+                calendar_date=today + timedelta(days=index),
+                week_number=1,
+                day_number=index + 1,
+                plan_snapshot={"name": f"Plan {index}", "meals": []},
+            )
+            for index in range(7)
+        ])
+
+        with CaptureQueriesContext(connection) as summary_queries:
+            summary = self.client.get("/api/v1/home/summary")
+        with CaptureQueriesContext(connection) as complete_queries:
+            complete = self.client.get("/api/v1/home")
+
+        self.assertEqual(summary.status_code, 200, summary.content)
+        self.assertEqual(complete.status_code, 200, complete.content)
+        self.assertLess(len(summary_queries), len(complete_queries))
+        self.assertLess(len(summary.content), len(complete.content))
 
     def test_home_supports_private_conditional_revalidation(self) -> None:
         first = self.client.get("/api/v1/home")
@@ -74,7 +125,9 @@ class MobileHomeAPITests(AuthenticatedMobileAPITestCase):
 
     def test_successful_mobile_write_invalidates_cached_home(self) -> None:
         self.client.get("/api/v1/home")
+        self.client.get("/api/v1/home/summary")
         self.assertIsNotNone(cache.get(home_cache_key(self.user.id)))
+        self.assertIsNotNone(cache.get(home_summary_cache_key(self.user.id)))
 
         response = self.client.post(
             "/api/v1/weights",
@@ -84,6 +137,7 @@ class MobileHomeAPITests(AuthenticatedMobileAPITestCase):
 
         self.assertEqual(response.status_code, 200, response.content)
         self.assertIsNone(cache.get(home_cache_key(self.user.id)))
+        self.assertIsNone(cache.get(home_summary_cache_key(self.user.id)))
 
     def test_home_is_compressed_when_the_client_accepts_gzip(self) -> None:
         for index in range(12):

@@ -553,9 +553,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealCompletionSummary, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceMatch(mealCompletionSummary, /minHeight: 54/);
   assertSourceMatch(mealCompletionSummary, /paddingHorizontal: 14/);
-  assertSourceMatch(mealCompletionSummary, /\{"kcal   P:"\}[\s\S]*\{"g   C:"\}[\s\S]*\{"g   G:"\}/);
-  assertSourceMatch(mealCompletionSummary, /nutritionSummary: \{ alignSelf: "flex-end", color: tokens\.color\.textMuted, fontSize: tokens\.type\.label[^}]*fontWeight: "300"[^}]*marginTop: -16[^}]*textAlign: "right"/);
-  assertSourceMatch(mealCompletionSummary, /nutritionSummaryValue: \{ fontWeight: tokens\.weight\.semibold \}/);
+  assertSourceDoesNotMatch(mealCompletionSummary, /styles\.nutritionSummary/);
+  assertSourceMatch(mealCompletionSummary, /style=\{styles\.progressMetrics\}/);
   assertSourceMatch(mealCompletionSummary, /mealNutrition\.reduce\([\s\S]*completedKeys\.has\(meal\.key\)/);
 
   const activeProgram = await readTestFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
@@ -669,16 +668,16 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
-  assertSourceMatch(todayScreen, /<CurrentWeekSection localDate=\{today\.local_date\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`💪🏻Vamos \$\{firstName\}!`\}/);
+  assertSourceMatch(todayScreen, /<CurrentWeekSection key=\{today\.local_date\} localDate=\{today\.local_date\} onOpenCalendar=\{\(\) => router\.push\("\/calendar" as Href\)\} onPressDay=\{[^\n]*\} weekDays=\{weekDays\} \/>[\s\S]*?style=\{styles\.greetingTitle\}>\{`💪🏻Vamos \$\{firstName\}!`\}/);
   assertSourceDoesNotMatch(todayScreen, /Fallar en planificar, es planificar fallar|greetingSubtitle/);
   assertSourceMatch(todayScreen, /<Chip backgroundColor=\{`\$\{planContext\.color\}1A`\} borderColor=\{planContext\.color\} label=\{planContext\.label\} textColor=\{tokens\.color\.textMain\} \/>/);
   assertSourceMatch(todayScreen, /planContext: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
   assertSourceMatch(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle pinned>Tu plan para hoy<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
   assertSourceMatch(todayScreen, /pinned \? <Pin color=\{tokens\.color\.textMain\} size=\{18\} strokeWidth=\{2\.2\} \/>/);
-  assertSourceMatch(todayScreen, /eyebrow="PLAN DEL DÍA"/);
+  assertSourceMatch(todayScreen, /eyebrow="Minuta del día"/);
   assertSourceMatch(todayScreen, /greetingRow: \{ gap: 0, marginBottom: 0 \}/);
-  assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm \}/);
+  assertSourceMatch(todayScreen, /weekRow: \{ marginBottom: tokens\.spacing\.sm - 4 \}/);
   assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf('title="Progreso"'));
   assertSourceDoesNotMatch(todayScreen, /ActiveProgramSectionHeader|Tu programa en curso|activeProgram\?\.calendarization/);
   assertSourceMatch(todayScreen, /<Pressable accessibilityLabel="Ver calendario" accessibilityRole="button"[\s\S]*?onPress=\{\(\) => router\.push\("\/calendar" as Href\)\}/);
@@ -695,9 +694,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(currentWeek, /<Text[^>]*styles\.monthLabel[^>]*>\{day\.monthLabel\}<\/Text>/);
   assertSourceMatch(currentWeek, /dayCircle: \{[^}]*backgroundColor: tokens\.color\.surfaceCard[^}]*height: 44[^}]*width: 44/);
   assertSourceMatch(currentWeek, /monthLabel: \{[^}]*fontFamily: font\.regular[^}]*fontSize: 9[^}]*fontWeight: tokens\.weight\.medium[^}]*lineHeight: 10/);
-  assertSourceMatch(currentWeek, /monthLabelToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.semibold \}/);
+  assertSourceMatch(currentWeek, /monthLabelToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.bold \}/);
   assertSourceMatch(currentWeek, /<WeekDaySelectionRing \/>/);
-  assertSourceMatch(currentWeek, /dayCircleToday: \{ backgroundColor: tokens\.color\.entityIconForeground \}/);
+  assertSourceMatch(currentWeek, /dayCircleToday: \{ backgroundColor: tokens\.color\.entityIconForeground, height: 42, margin: 1, width: 42 \}/);
   assertSourceDoesNotMatch(currentWeek, /dayCircle: \{[^}]*(?:borderColor|borderStyle|borderWidth)/);
   assertSourceMatch(currentWeek, /dayNumberToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.bold \}/);
   assertSourceMatch(currentWeek, /compact && styles\.dayCircleCompact/);
@@ -739,7 +738,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUiSourceForIndicators, /guideMetricPpk: \{ backgroundColor: "transparent", borderColor: tokens\.color\.borderDefault, borderRadius: tokens\.radius\.pill/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValuePpk: \{ color: tokens\.color\.textMain, fontSize: 15, lineHeight: 18 \}/);
   assertSourceDoesNotMatch(productUiSourceForIndicators, /icon === "weight"/);
-  assertSourceMatch(todayScreen, /apiRequest<HomeData>\("\/api\/v1\/home"\)/);
+  assertSourceMatch(todayScreen, /apiRequest<HomeSummaryData>\("\/api\/v1\/home\/summary"\)/);
   assertSourceMatch(todayScreen, /home\.latest_weight\?\.weight_kg/);
   assertSourceMatch(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
   assertSourceMatch(todayScreen, /displayWeight\(currentWeightKg\)/);
@@ -1133,7 +1132,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /\{ key: "dailyPlan"[^\n]*\n  \{ key: "plans"/);
   assertSourceMatch(journey, /function GeneratedPlanPlaceholderCard[\s\S]*<NutritionEntityCard[\s\S]*entity="dailyPlan"[\s\S]*<MealPanels items=\{plan\.meals\} showEditTab=\{false\} \/>/);
   assertSourceMatch(journey, /actions=\{<View style=\{styles\.generatedPlanCardAction\}><Button bleed=\{false\}[^\n]*label="Calendarizar"/);
-  assertSourceMatch(journey, /generatedPlanCardAction: \{ flex: 1 \}/);
+  assertSourceMatch(journey, /generatedPlanCardAction: \{ flex: 1, gap: tokens\.spacing\.sm \}/);
   assertSourceMatch(journey, /generatedDailyPlanBottomSpacing: \{ height: 40 \}/);
   assertSourceMatch(journey, /screen: \{[^}]*paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18/);
   assertSourceMatch(journey, /topInsetReduction = 0/);
@@ -1250,9 +1249,9 @@ test("the onboarding gallery exposes every visual journey view without product s
   const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
   const onboardingPreview = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding-preview.tsx"), "utf8");
   assertSourceMatch(onboarding, /onboardingScreenChromeForStep\(step\)/);
-  assertSourceMatch(onboarding, /<Stack\.Screen options=\{\{ gestureEnabled: false, headerShown: false \}\} \/>/);
+  assertSourceMatch(onboarding, /<Stack\.Screen options=\{\{ gestureEnabled: false, headerShown: foodListOpen \}\}/);
   assertSourceMatch(journey, /headerCompensationTop: index >= 8 \? 88 : 0/);
-  assertSourceMatch(onboarding, /<Screen contentStyle=\{\[styles\.screen, \{ paddingTop: headerCompensationTop \}\]\}/);
+  assertSourceMatch(onboarding, /<Screen contentStyle=\{\[styles\.screen, \{ paddingTop: step === "dailyPlan" \? foodListOpen \? 22 : insets\.top \+ 48 : headerCompensationTop \}\]\}/);
   assertSourceDoesNotMatch(onboarding, /<Screen key=\{step\}/);
   assertSourceMatch(onboarding, /presentationPropsForOnboardingStep\(step\)/);
   assertSourceMatch(onboarding, /<OnboardingJourneyView controller=\{controller\} \{\.\.\.presentationProps\} step=\{step\} \/>/);
@@ -1486,7 +1485,7 @@ test("the iOS release contract declares only approved capabilities and privacy c
   };
   assert.equal(app.ios.usesAppleSignIn, true);
   assert.equal(app.ios.privacyManifests.NSPrivacyTracking, false);
-  assert.deepEqual(app.ios.associatedDomains, ["applinks:www.myscoope.com"]);
+  assert.deepEqual(app.ios.associatedDomains, ["applinks:www.myscoope.com", "applinks:myscoope-staging.onrender.com"]);
   assert.equal(app.android.intentFilters[0].autoVerify, true);
   assert.deepEqual(app.android.intentFilters[0].data, [
     { scheme: "https", host: "www.myscoope.com", pathPrefix: "/s/" },

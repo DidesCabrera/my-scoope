@@ -91,6 +91,34 @@ class AdminKnowledgeAccessTests(TestCase):
             "/staff/knowledge/documents/00_current/features/admin_knowledge/README.md",
         )
 
+    def test_project_evolution_recap_is_visible_and_links_to_new_guides(self):
+        self._staff_user("knowledge-evolution")
+
+        overview = self.client.get(reverse("admin_knowledge_overview"))
+        detail = self.client.get(
+            reverse(
+                "admin_knowledge_document",
+                kwargs={
+                    "document_path": (
+                        "00_current/features/admin_knowledge/project_evolution.md"
+                    )
+                },
+            )
+        )
+
+        self.assertContains(overview, "Evolución de My Scoope: julio a octubre de 2026")
+        self.assertContains(overview, "Calendario, planificación y progreso")
+        self.assertContains(overview, "Pagos, beneficios y salud de la beta")
+        self.assertEqual(detail.status_code, 200)
+        self.assertContains(detail, "Mapa mental actual")
+        self.assertContains(
+            detail,
+            (
+                "/staff/knowledge/documents/00_current/features/admin_knowledge/"
+                "calendar_and_progress.md"
+            ),
+        )
+
     def test_search_uses_only_explicit_human_catalog(self):
         self._staff_user("knowledge-search")
 

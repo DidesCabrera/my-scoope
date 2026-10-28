@@ -1,11 +1,12 @@
-import { type Href, Redirect, useLocalSearchParams, useRouter } from "expo-router";
+import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { ProfileData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ResponsibleUseActionButton, ResponsibleUseConfirmationNotice, ResponsibleUseContent, ResponsibleUsePolicyLink } from "@/components/disclosures/responsible-use-content";
 import { InlineNotice, Screen, textStyles } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
@@ -18,9 +19,25 @@ export default function DisclosuresScreen() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const returnHref = internalHref(returnTo);
   const router = useRouter();
-  const { status, profile, apiRequest, refreshProfile } = useSession();
+  const setHeaderPresentation = useHeaderPresentation();
+  const { status, profile, apiRequest, refreshProfile, signOut } = useSession();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({
+      mode: "back",
+      title: "Información importante",
+      identityVisible: true,
+      leadingAction: profile?.onboarding_completed
+        ? { label: "Salir", disabled: busy, onPress: () => void signOut() }
+        : { icon: "back", label: "Volver", disabled: busy, onPress: () => router.replace({
+          pathname: "/onboarding",
+          params: { reviewIntro: "1", ...(returnHref ? { returnTo: String(returnHref) } : {}) },
+        }) },
+    });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [busy, profile?.onboarding_completed, returnHref, router, setHeaderPresentation, signOut]));
 
   if (status === "anonymous") return <Redirect href={{ pathname: "/login", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
   if (status === "authenticated" && profile && !profile.review_disclosure_required) {

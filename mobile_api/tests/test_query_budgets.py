@@ -49,8 +49,33 @@ class MobileAPIQueryBudgetTests(AuthenticatedMobileAPITestCase):
     def test_home_query_budget(self) -> None:
         self.assert_get_query_budget("/api/v1/home", maximum=24)
 
+    def test_home_summary_query_budget(self) -> None:
+        self.assert_get_query_budget("/api/v1/home/summary", maximum=18)
+
     def test_active_program_query_budget(self) -> None:
         self.assert_get_query_budget("/api/v1/program/active", maximum=18)
+
+    def test_calendar_read_query_budgets(self) -> None:
+        self.assert_get_query_budget("/api/v1/calendar?days=42", maximum=10)
+        self.assert_get_query_budget("/api/v1/calendar/progress", maximum=10)
+
+    def test_calendar_query_count_does_not_grow_per_planned_day(self) -> None:
+        today = timezone.localdate()
+        monday = today - timedelta(days=today.weekday())
+        empty_overview = self.query_count("get", "/api/v1/calendar?days=42")
+        empty_progress = self.query_count("get", "/api/v1/calendar/progress")
+        CalendarizedDay.objects.bulk_create([
+            CalendarizedDay(
+                user=self.user,
+                calendar_date=monday + timedelta(days=index),
+                source_kind=CalendarizedDay.SOURCE_MANUAL,
+                plan_snapshot={"name": f"Plan {index}", "meals": [{"key": f"meal-{index}"}]},
+            )
+            for index in range(42)
+        ])
+
+        self.assertLessEqual(self.query_count("get", "/api/v1/calendar?days=42"), empty_overview + 1)
+        self.assertLessEqual(self.query_count("get", "/api/v1/calendar/progress"), empty_progress + 1)
 
     def test_library_programs_query_budget(self) -> None:
         self.assert_get_query_budget("/api/v1/library/programs", maximum=18)

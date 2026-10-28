@@ -106,9 +106,10 @@ commands through `scripts/ci_mobile_checks.sh`.
   future revisions.
 - Calendarization owns logical reminder times and upcoming events. CML07 selects
   APNs or deterministic local delivery per iPhone and never schedules both modes.
-- `Mi programa` activates an owned Program, displays its immutable dated snapshots
-  and delegates pause, resume and cancel to the versioned consumer API. Replacing
-  an active program and accepting empty days always require explicit confirmation.
+- `Calendario` owns dated planning and execution. It accepts plan snapshots projected
+  from an owned Program or assigned manually from the library, preserves history and
+  exposes Planificación, Progreso and dated commitments. Program replacement and
+  changes to occupied future dates require explicit confirmation.
 - `Propuestas` renders a bounded server projection and server-authorized actions.
   Approval and application are separate confirmations; external-subject PPK
   warnings require acknowledgement, and an applied result links to its trusted

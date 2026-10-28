@@ -46,6 +46,15 @@ test("current week remains correct across a month boundary", () => {
   assert.deepEqual(days.map((day) => day.monthLabel), ["Ago", "Sep", "Sep", "Sep", "Sep", "Sep", "Sep"]);
 });
 
+test("next week keeps seven days and does not mark another day as today", () => {
+  const days = currentWeekDays("2026-10-27", 1);
+  assert.deepEqual(days.map((day) => day.date), [
+    "2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05",
+    "2026-11-06", "2026-11-07", "2026-11-08",
+  ]);
+  assert.equal(days.some((day) => day.isToday), false);
+});
+
 test("active program selects today in the current week and day one in other weeks", () => {
   const days = [
     { calendar_date: "2026-09-08", day_number: 1, id: 1, week_number: 1 },

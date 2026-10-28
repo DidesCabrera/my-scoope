@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.test import override_settings
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
+from notas.application.ai_intake.onboarding_catalog_minutas import _candidate_payload
 from notas.domain.models import (
     DailyPlan,
     DailyPlanCatalogEntry,
@@ -15,6 +16,7 @@ from notas.domain.models import (
     NutritionProposal,
     Profile,
 )
+from nutrition_solver.domain.models import MacroTarget
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -153,12 +155,28 @@ class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
         self.assertEqual(accepted.status_code, 200, accepted.content)
         self.assertEqual([item["status"] for item in accepted.json()["data"]["items"]], [NutritionProposal.STATUS_APPLIED] * 2)
         self.assertEqual(DailyPlan.objects.filter(created_by=self.user).count(), 2)
+        library_meals = list(Meal.objects.library().filter(created_by=self.user).order_by("id"))
+        embedded_meals = list(Meal.objects.embedded().filter(created_by=self.user).order_by("id"))
+        self.assertEqual(len(library_meals), 7)
+        self.assertEqual(len(embedded_meals), 7)
+        library_response = self.client.get("/api/v1/library/meals?limit=20")
+        self.assertEqual(library_response.status_code, 200, library_response.content)
+        self.assertEqual(len(library_response.json()["data"]["items"]), 7)
+        self.assertEqual(
+            [list(meal.meal_food_set.values_list("food_id", "quantity", "order")) for meal in library_meals],
+            [list(meal.meal_food_set.values_list("food_id", "quantity", "order")) for meal in embedded_meals],
+        )
+        library_meals[0].name = "Comida editada en biblioteca"
+        library_meals[0].save(update_fields=["name"])
+        embedded_meals[0].refresh_from_db()
+        self.assertNotEqual(embedded_meals[0].name, library_meals[0].name)
         self.assertEqual(
             set(DailyPlan.objects.filter(created_by=self.user).values_list("forked_from_id", flat=True)),
             set(DailyPlanCatalogEntry.objects.values_list("dailyplan_id", flat=True)),
         )
         self.assertEqual(self.client.post("/api/v1/onboarding/accept-plan", content_type="application/json").status_code, 200)
         self.assertEqual(DailyPlan.objects.filter(created_by=self.user).count(), 2)
+        self.assertEqual(Meal.objects.library().filter(created_by=self.user).count(), 7)
 
         self.assertEqual(self.client.post("/api/v1/onboarding/complete", content_type="application/json").status_code, 409)
         local_today = date.fromisoformat(self.client.get("/api/v1/calendar?days=1").json()["data"]["local_date"])
@@ -174,6 +192,113 @@ class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
         self.assertEqual(completed.status_code, 200, completed.content)
         self.assertTrue(completed.json()["data"]["onboarding_completed"])
         self.assertEqual(completed.json()["data"]["onboarding_version"], Profile.ONBOARDING_VERSION_NUTRITION_V2)
+
+    def test_accepting_two_minutas_rolls_back_when_free_meal_capacity_is_insufficient(self):
+        self._create_minimal_food_catalog()
+        for index in range(6):
+            Meal.objects.create(created_by=self.user, name=f"Comida previa {index}", is_draft=False)
+        analyzed = self.client.post("/api/v1/onboarding/analyze", data={
+            "birth_date": "1990-05-10", "sex": "male", "height_cm": 178,
+            "weight_kg": 82.5, "goal": "fat_loss", "activity_level": "light",
+            "training_frequency": 3, "dietary_pattern": "omnivore",
+            "allergies_or_intolerances": [], "avoided_foods": [],
+        }, content_type="application/json")
+        self.assertEqual(analyzed.status_code, 200, analyzed.content)
+        generated = self.client.post("/api/v1/onboarding/generate-plan", content_type="application/json")
+        self.assertEqual(generated.status_code, 200, generated.content)
+
+        accepted = self.client.post("/api/v1/onboarding/accept-plan", content_type="application/json")
+        self.assertEqual(accepted.status_code, 409, accepted.content)
+        self.assertEqual(accepted.json()["error"]["code"], "max_meals_reached")
+        self.assertEqual(DailyPlan.objects.filter(created_by=self.user).count(), 0)
+        self.assertEqual(Meal.objects.library().filter(created_by=self.user).count(), 6)
+        self.assertEqual(NutritionProposal.objects.filter(created_by=self.user, status=NutritionProposal.STATUS_APPLIED).count(), 0)
+
+    def test_catalog_minutas_can_include_food_portions_measured_in_ml(self):
+        self._create_minimal_food_catalog()
+        oil = Food.objects.create(
+            name="Aceite de oliva", protein=0, carbs=0, fat=100,
+            portion_unit=Food.PORTION_UNIT_MILLILITERS,
+            created_by=None, is_global=True, is_verified=True,
+            solver_enabled=True, visibility=Food.VISIBILITY_CORE,
+            food_group="grasas", data_quality_score=90,
+            default_portion_g=8, min_portion_g=2, max_portion_g=20,
+            portion_step_g=1,
+            solver_capabilities={
+                "schema_version": "solver_food_capabilities.v1", "source": "test",
+                "values": {"functional_roles": ["fat_source"], "allergens": ["none"],
+                           "dietary_tags": ["vegan"]},
+                "confidence": {"functional_roles": 95, "allergens": 95},
+            },
+        )
+        for plan in DailyPlan.objects.all():
+            first_meal = plan.dailyplan_meals.order_by("order").first().meal
+            MealFood.objects.create(meal=first_meal, food=oil, quantity=8, order=5)
+
+        analyzed = self.client.post("/api/v1/onboarding/analyze", data={
+            "birth_date": "1990-05-10", "sex": "male", "height_cm": 178,
+            "weight_kg": 82.5, "goal": "fat_loss", "activity_level": "light",
+            "training_frequency": 3, "dietary_pattern": "omnivore",
+            "allergies_or_intolerances": [], "avoided_foods": [],
+        }, content_type="application/json")
+        self.assertEqual(analyzed.status_code, 200, analyzed.content)
+        generated = self.client.post("/api/v1/onboarding/generate-plan", content_type="application/json")
+        self.assertEqual(generated.status_code, 200, generated.content)
+        proposals = NutritionProposal.objects.filter(created_by=self.user)
+        self.assertEqual(proposals.count(), 2)
+        for proposal in proposals:
+            portions = [food for meal in proposal.proposed_payload["dailyplan"]["meals"]
+                        for food in meal["meal"]["foods"] if food["food_id"] == oil.id]
+            self.assertEqual(len(portions), 1)
+            self.assertEqual(portions[0]["unit"], "ml")
+        accepted = self.client.post("/api/v1/onboarding/accept-plan", content_type="application/json")
+        self.assertEqual(accepted.status_code, 200, accepted.content)
+        self.assertEqual(len(accepted.json()["data"]["items"]), 2)
+
+    def test_catalog_minutas_adjust_source_portions_above_food_maximum(self):
+        self._create_minimal_food_catalog()
+        rice = Food.objects.get(name="Arroz cocido")
+        rice.max_portion_g = 200  # Published catalog meals use 220 g.
+        rice.save(update_fields=["max_portion_g"])
+
+        analyzed = self.client.post("/api/v1/onboarding/analyze", data={
+            "birth_date": "1990-05-10", "sex": "male", "height_cm": 178,
+            "weight_kg": 82.5, "goal": "fat_loss", "activity_level": "light",
+            "training_frequency": 3, "dietary_pattern": "omnivore",
+            "allergies_or_intolerances": [], "avoided_foods": [],
+        }, content_type="application/json")
+        self.assertEqual(analyzed.status_code, 200, analyzed.content)
+
+        generated = self.client.post("/api/v1/onboarding/generate-plan", content_type="application/json")
+        self.assertEqual(generated.status_code, 200, generated.content)
+        self.assertEqual(len(generated.json()["data"]["items"]), 2)
+        for proposal in NutritionProposal.objects.filter(created_by=self.user):
+            rice_portions = [food["quantity"] for meal in proposal.proposed_payload["dailyplan"]["meals"]
+                             for food in meal["meal"]["foods"] if food["food_id"] == rice.id]
+            self.assertTrue(rice_portions)
+            self.assertTrue(all(quantity <= 200 for quantity in rice_portions))
+
+    def test_catalog_minuta_respects_fractional_upper_bound_when_solving(self):
+        self._create_minimal_food_catalog()
+        oil = Food.objects.create(
+            name="Aceite de oliva", protein=0, carbs=0, fat=100,
+            created_by=None, is_global=True, portion_unit=Food.PORTION_UNIT_MILLILITERS,
+            min_portion_g=2, max_portion_g=20,
+        )
+        entry = DailyPlanCatalogEntry.objects.order_by("sort_order").first()
+        first_meal = entry.dailyplan.dailyplan_meals.order_by("order").first().meal
+        MealFood.objects.create(meal=first_meal, food=oil, quantity=8, order=5)
+
+        candidate = _candidate_payload(
+            entry, pattern="omnivore", target=MacroTarget(kcal=2500, protein=145, carbs=245, fat=100),
+            exclusions=set(), allergens=set(),
+        )
+        self.assertIsNotNone(candidate)
+        payload = candidate[0]
+        oil_portions = [food["quantity"] for meal in payload["dailyplan"]["meals"]
+                        for food in meal["meal"]["foods"] if food["food_id"] == oil.id]
+        self.assertEqual(len(oil_portions), 1)
+        self.assertLessEqual(oil_portions[0], 17.6)  # 8 ml source × 2.2, rounded inward for the solver.
 
     def test_unknown_allergen_data_fails_without_partial_proposals(self):
         self._create_minimal_food_catalog()

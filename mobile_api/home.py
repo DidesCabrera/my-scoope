@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from mobile_api.read_cache import (
     cache_home,
+    cache_home_summary,
     get_cached_home,
+    get_cached_home_summary,
     mobile_read_generation,
     payload_version,
 )
@@ -38,6 +40,28 @@ def _latest_weight(user) -> dict | None:
     }
 
 
+def _home_summary(user, calendarization) -> dict:
+    return {
+        "today": today_payload(user, calendarization=calendarization),
+        "latest_weight": _latest_weight(user),
+        "library_counts": _library_counts(user),
+        "pending_proposal_count": get_available_proposal_queryset(user).filter(status="pending_review").count(),
+    }
+
+
+def home_summary_payload(user) -> dict:
+    generation = mobile_read_generation(user.id)
+    cached = get_cached_home_summary(user.id)
+    if cached is not None:
+        return cached
+
+    calendarization = current_calendarization_for_user(user, prefetch_days=False)
+    payload = _home_summary(user, calendarization)
+    payload["version"] = payload_version(payload)
+    cache_home_summary(user.id, payload, generation=generation)
+    return payload
+
+
 def home_payload(user) -> dict:
     generation = mobile_read_generation(user.id)
     cached = get_cached_home(user.id)
@@ -45,17 +69,13 @@ def home_payload(user) -> dict:
         return cached
 
     calendarization = current_calendarization_for_user(user)
-    current_weight = get_current_weight(user)
     payload = {
-        "today": today_payload(user, calendarization=calendarization),
+        **_home_summary(user, calendarization),
         "active_program": active_program_payload(
             user,
             calendarization=calendarization,
-            current_weight=current_weight,
+            current_weight=get_current_weight(user),
         ),
-        "latest_weight": _latest_weight(user),
-        "library_counts": _library_counts(user),
-        "pending_proposal_count": get_available_proposal_queryset(user).filter(status="pending_review").count(),
     }
     payload["version"] = payload_version(payload)
     cache_home(user.id, payload, generation=generation)

@@ -33,7 +33,7 @@ import { KpiAllocationBar, NutritionEntityCard, NutritionKpiSection, ProteinPerK
 import { GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
-import { AssistantGradientIcon, Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, textStyles, type EntityKind } from "@/components/ui";
+import { AssistantGradientIcon, Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, LoadingState, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, textStyles, type EntityKind } from "@/components/ui";
 import { useScreenScrollControl } from "@/components/ui/layout";
 import type { OnboardingCalendarization, OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
@@ -143,13 +143,17 @@ export type OnboardingJourneyController = {
   proposal?: ProposalDetail | null;
   proposals?: ProposalDetail[];
   calendarization?: OnboardingCalendarization | null;
+  foodListOpen?: boolean;
+  foodListLoading?: boolean;
   busy?: boolean;
   error?: string | null;
+  notice?: string | null;
   loginDisabled?: boolean;
   loginLabel?: string;
   onChange?(field: keyof OnboardingJourneyValues, value: string | number): void;
   onNext?(): void;
   onCalendarize?(proposalId: number): void;
+  onFoodListOpenChange?(open: boolean): void;
   onOpenMeal?(proposalId: number, mealIndex: number): void;
   onBack?(): void;
   onLogin?(): void;
@@ -539,6 +543,7 @@ function LoginView({ index }: { index: number }) {
         </View>
         <Text style={[textStyles.muted, styles.centeredText, styles.loginDescription]}>Planifica, Ejecuta y Aprende sobre alimentación para ver resultados importantes</Text>
         <View style={styles.loginAction}>
+          {controller.notice ? <InlineNotice tone="info">{controller.notice}</InlineNotice> : null}
           {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
           <Button disabled={controller.loginDisabled} label={controller.loginLabel ?? "Iniciar sesión o crear cuenta"} loading={controller.busy} multicolorSurface="app" onPress={controller.onLogin ?? noop} variant="multicolor" />
         </View>
@@ -1174,12 +1179,14 @@ function GeneratedPlanPlaceholderCard({ plan }: { plan: GeneratedPlanPlaceholder
 function GeneratedDailyPlanView() {
   const controller = useJourneyController();
   const { scrollToTop } = useScreenScrollControl();
-  const [showFoodList, setShowFoodList] = useState(false);
+  const [previewFoodListOpen, setPreviewFoodListOpen] = useState(false);
+  const showFoodList = controller.foodListOpen ?? previewFoodListOpen;
+  const setShowFoodList = controller.onFoodListOpenChange ?? setPreviewFoodListOpen;
   const generated = controller.proposals?.filter((item) => item.dailyplan) ?? [];
   if (generated.length === 2) {
     const calendarization = controller.calendarization;
     const scheduledPlans = calendarization?.plans.filter((plan) => plan.dates.length > 0).length ?? 0;
-    if (showFoodList) return <GeneratedFoodListPage calendarization={calendarization} onBack={() => setShowFoodList(false)} proposals={generated} />;
+    if (showFoodList) return <GeneratedFoodListPage calendarization={calendarization} loading={controller.foodListLoading} proposals={generated} />;
     return (
       <View style={[styles.generatedPlanPreview, styles.generatedPlanPreviewMain]}>
         <View style={styles.generatedPlanLogo}><MyScoopeBrandLogo compact /></View>
@@ -1187,17 +1194,24 @@ function GeneratedDailyPlanView() {
         <Text style={styles.generatedPlanSubtitle}>Asígnalas en el calendario y luego cumple con cada comida</Text>
         <View style={styles.generatedPlanCards}>
           {generated.map((item) => {
+            const isCalendarized = calendarization?.plans.some((plan) => plan.proposal_id === item.id && plan.dates.length > 0) ?? false;
             return <ProposalDailyPlanCard
-              actions={<View style={styles.generatedPlanCardAction}><Button bleed={false} icon={<CalendarDays color={tokens.color.surfaceApp} size={17} strokeWidth={2} />} label="Calendarizar" loading={controller.busy} onPress={() => controller.onCalendarize?.(item.id)} /></View>}
+              actions={<View style={styles.generatedPlanCardAction}>
+                {isCalendarized ? <Text style={styles.generatedPlanCalendarizedNotice}>Minuta asignada en el calendario!</Text> : null}
+                <Button bleed={false} icon={<CalendarDays color={tokens.color.surfaceApp} size={17} strokeWidth={2} />} label="Calendarizar" loading={controller.busy} onPress={() => controller.onCalendarize?.(item.id)} />
+              </View>}
               dailyplan={item.dailyplan!}
               key={item.id}
               onOpenMeal={(mealIndex) => controller.onOpenMeal?.(item.id, mealIndex)}
             />;
           })}
         </View>
-        <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
+        <View style={styles.generatedFoodListIntro}>
+          <Text style={styles.generatedFoodListHeading}>Revisa las listas de alimentos de las minutas generadas</Text>
+          <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
+        </View>
         {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
-        <CreditContinueButton disabled={scheduledPlans < 2} label="Continuar" />
+        <View style={styles.generatedPlanContinue}><CreditContinueButton disabled={scheduledPlans < 2} label="Continuar" /></View>
       </View>
     );
   }
@@ -1221,15 +1235,18 @@ function GeneratedDailyPlanView() {
       <View style={styles.generatedPlanCards}>
         {generatedPlanPlaceholders.map((plan) => <GeneratedPlanPlaceholderCard key={plan.name} plan={plan} />)}
       </View>
-      <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
-      <CreditContinueButton />
+      <View style={styles.generatedFoodListIntro}>
+        <Text style={styles.generatedFoodListHeading}>Revisa las listas de alimentos de las minutas generadas</Text>
+        <PreviewFoodListLink onPress={() => { scrollToTop(); setShowFoodList(true); }} />
+      </View>
+      <View style={styles.generatedPlanContinue}><CreditContinueButton /></View>
     </View>
   );
 }
 
 function PreviewFoodListLink({ onPress }: { onPress: () => void }) {
   return <Pressable accessibilityRole="button" onPress={onPress} style={styles.generatedFoodListMiniCard}>
-      <ShoppingBasket color={tokens.color.food} size={23} strokeWidth={1.9} />
+      <View style={styles.generatedFoodListIcon}><ShoppingBasket color={tokens.color.food} size={23} strokeWidth={1.9} /></View>
       <Text style={styles.generatedFoodListMiniCardLabel}>Ver lista de alimentos</Text>
       <ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={1.9} />
     </Pressable>;
@@ -1258,7 +1275,7 @@ function groupedPreviewFoodItems(): FoodPanelItem[] {
 
 function PreviewFoodListPage({ onBack }: { onBack: () => void }) {
   const [activeTab, setActiveTab] = useState<"grouped" | "individual">("grouped");
-  return <View style={styles.generatedPlanPreview}>
+  return <View style={[styles.generatedPlanPreview, styles.generatedFoodListPage]}>
     <Pressable accessibilityRole="button" onPress={onBack} style={styles.generatedFoodListBack}>
       <ChevronLeft color={tokens.color.textMain} size={22} />
       <Text style={styles.generatedFoodListBackLabel}>Volver</Text>
@@ -1272,16 +1289,14 @@ function PreviewFoodListPage({ onBack }: { onBack: () => void }) {
   </View>;
 }
 
-function GeneratedFoodListPage({ calendarization, onBack, proposals }: { calendarization?: OnboardingCalendarization | null; onBack: () => void; proposals: ProposalDetail[] }) {
+function GeneratedFoodListPage({ calendarization, loading = false, proposals }: { calendarization?: OnboardingCalendarization | null; loading?: boolean; proposals: ProposalDetail[] }) {
   const [activeTab, setActiveTab] = useState<"grouped" | "individual">("grouped");
   const daysCount = calendarization?.days_count ?? 0;
   return <View style={styles.generatedPlanPreview}>
-    <Pressable accessibilityRole="button" onPress={onBack} style={styles.generatedFoodListBack}>
-      <ChevronLeft color={tokens.color.textMain} size={22} />
-      <Text style={styles.generatedFoodListBackLabel}>Volver</Text>
-    </Pressable>
     <Text style={styles.generatedPlanHeadline}>Lista de alimentos</Text>
     <Text style={styles.generatedFoodListSubtitle}>Crea listas de alimentos para planificar tus compras o preparar tus comidas</Text>
+    {loading ? <LoadingState label="Sumando los alimentos de todos los días calendarizados…" /> : <>
+    <Text style={styles.generatedFoodListDayCount}>{daysCount} {daysCount === 1 ? "día calendarizado" : "días calendarizados"}</Text>
     <DistributedTabBar<"grouped" | "individual"> accessibilityLabel="Vista de la lista de alimentos" activeTab={activeTab} onChange={setActiveTab} style={styles.generatedFoodListTabs} tabs={[{ key: "grouped", label: "Agrupados" }, { key: "individual", label: "Individuales" }]} />
     {!daysCount ? <InlineNotice>Calendariza una minuta para ver aquí sus alimentos acumulados.</InlineNotice> : activeTab === "grouped"
       ? <GroupedFoodsCard items={(calendarization?.foods ?? []).map(commitmentFoodPanelItem)} quantityOnly showPreparationColumn={false} title="Ambas minutas" />
@@ -1289,6 +1304,7 @@ function GeneratedFoodListPage({ calendarization, onBack, proposals }: { calenda
           const plan = calendarization?.plans.find((item) => item.proposal_id === proposal.id);
           return <GroupedFoodsCard items={(plan?.foods ?? []).map(commitmentFoodPanelItem)} key={proposal.id} quantityOnly showPreparationColumn={false} title={proposal.dailyplan?.name ?? proposal.title} />;
         })}
+    </>}
   </View>;
 }
 
@@ -1391,8 +1407,6 @@ export function OnboardingJourneyView({
   const ViewComponent = views[step];
   const resolvedController = useMemo(() => controller ?? { values: onboardingJourneyPreviewValues }, [controller]);
   const { width } = useWindowDimensions();
-  const [translateX] = useState(() => new Animated.Value(0));
-  const [transitioning, setTransitioning] = useState(false);
   const [explanationTransitionWidth, setExplanationTransitionWidth] = useState(width);
   const interactiveExplanation = (Boolean(controller) || storyboardExplanationPresentation) && index >= 1 && index <= 7;
   const canSwipeExplanation = Boolean(controller) && interactiveExplanation;
@@ -1400,6 +1414,9 @@ export function OnboardingJourneyView({
   const explanationPageGap = 48;
   const explanationStride = transitionWidth + explanationPageGap;
   const explanationOffset = -(index - 1) * explanationStride;
+  // Opening the explanation directly on a later step must position its page before the first native render.
+  const [translateX] = useState(() => new Animated.Value(explanationOffset));
+  const [transitioning, setTransitioning] = useState(false);
   const handleExplanationViewportLayout = useCallback((event: LayoutChangeEvent) => {
     if (!fullWidthExplanationTransition) return;
     setExplanationTransitionWidth(event.nativeEvent.layout.width);
@@ -1496,6 +1513,7 @@ export function OnboardingJourneyView({
             topInsetReduction > 0 && {
               paddingTop: (index >= 9 && index <= 14 ? styles.profileScreen.paddingTop : styles.screen.paddingTop) - topInsetReduction,
             },
+            step === "dailyPlan" && styles.generatedPlanScreen,
           ]}
         >
           <ViewComponent index={index} />
@@ -1507,6 +1525,7 @@ export function OnboardingJourneyView({
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.lg, minHeight: 690, paddingBottom: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg + (tokens.spacing.md * 2) + 18 },
+  generatedPlanScreen: { paddingTop: 0 },
   interactiveExplanationScreen: { flex: 1 },
   interactiveExplanationScreenFlush: { paddingTop: 76 },
   fixedLoginScreen: { flex: 1, minHeight: 0 },
@@ -1713,17 +1732,24 @@ const styles = StyleSheet.create({
   summaryMetricLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: tokens.weight.semibold, lineHeight: 20, minWidth: 0 },
   summaryMetricUnit: { color: tokens.color.textSoft, fontSize: 11, fontWeight: tokens.weight.medium },
   generatedPlanPreview: { gap: tokens.spacing.lg, paddingBottom: tokens.spacing.xl },
+  generatedFoodListPage: { marginTop: -26 },
   generatedPlanPreviewMain: { paddingBottom: 96 },
   generatedPlanLogo: { alignItems: "flex-start", marginBottom: tokens.spacing.sm },
   generatedPlanHeadline: { color: tokens.color.textMain, fontSize: 30, fontWeight: tokens.weight.extraBold, letterSpacing: -0.8, lineHeight: 35 },
-  generatedPlanSubtitle: { color: tokens.color.textMain, fontSize: 19, fontWeight: tokens.weight.semibold, lineHeight: 26 },
-  generatedPlanCards: { gap: tokens.spacing.md, marginTop: tokens.spacing.sm },
-  generatedPlanCardAction: { flex: 1 },
+  generatedPlanSubtitle: { color: tokens.color.textMuted, fontSize: 19, fontWeight: tokens.weight.semibold, lineHeight: 26 },
+  generatedPlanCards: { gap: 32, marginTop: tokens.spacing.sm },
+  generatedPlanContinue: { marginTop: 32 },
+  generatedPlanCardAction: { flex: 1, gap: tokens.spacing.sm },
+  generatedPlanCalendarizedNotice: { color: tokens.color.success, fontSize: 15, fontWeight: tokens.weight.semibold, textAlign: "center" },
+  generatedFoodListIntro: { gap: tokens.spacing.md, marginTop: tokens.spacing.lg },
+  generatedFoodListHeading: { color: tokens.color.textMain, fontSize: 21, fontWeight: tokens.weight.bold, lineHeight: 27 },
   generatedFoodListMiniCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.md, marginHorizontal: -18, minHeight: 62, paddingHorizontal: tokens.spacing.lg },
+  generatedFoodListIcon: { alignItems: "center", backgroundColor: `${tokens.color.food}33`, borderRadius: tokens.radius.md, height: 40, justifyContent: "center", width: 40 },
   generatedFoodListMiniCardLabel: { color: tokens.color.textMain, flex: 1, fontSize: 16, fontWeight: tokens.weight.bold },
   generatedFoodListBack: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 44 },
   generatedFoodListBackLabel: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.semibold },
   generatedFoodListSubtitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.medium, lineHeight: 25 },
+  generatedFoodListDayCount: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
   generatedFoodListTabs: { marginHorizontal: -6, width: "auto" },
   generatedDailyPlanBottomSpacing: { height: 40 },
   adjustNutritionAction: { alignItems: "center", justifyContent: "center", minHeight: 40, paddingHorizontal: tokens.spacing.md },

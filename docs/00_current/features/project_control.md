@@ -1,7 +1,7 @@
 # Project Control, Clarity & Foresight
 
 Status: current
-Last updated: 2026-07-18
+Last updated: 2026-10-28
 
 ## Purpose
 
@@ -60,14 +60,17 @@ decision. Warnings include uncertainty that the system cannot resolve alone, suc
 OAuth clock validity without an external trusted time source. Staging operators should
 compare new probes against known reality before treating them as authoritative.
 
-## Staging handoff
+## Operational use
 
-1. Deploy the PCF branch commit and configure release identity.
-2. Confirm Project Control reports the deployed commit and zero pending migrations.
-3. Compare OAuth, email, Sentry, AI, solver, Food Catalog, and operational-food signals
-   against the known staging configuration.
-4. Confirm the route is staff-only and POST returns 405.
-5. Confirm a push to `staging` executes the full GitHub Actions gate.
+1. Run `project_status --json` in the environment being evaluated; local development
+   output is not evidence about staging or production.
+2. Confirm release identity and pending migrations before interpreting domain probes.
+3. Compare OAuth, email, Sentry, AI, solver, Food Catalog, billing and operational-food
+   signals against the intended configuration for that environment.
+4. Use `ai_project_context --json --domain <domain>` to obtain a compact working set,
+   then read the referenced current contract and relevant code/tests.
+5. Treat unavailable connectors or external provider state as an explicit confidence
+   gap, not as a healthy result.
 6. Record ambiguous or inaccurate probes as product evidence and correct them before
    relying on the surface for release decisions.
 

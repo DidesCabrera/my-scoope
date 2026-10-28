@@ -26,12 +26,13 @@ object containing `code`, `message` and `details`.
 The generated source of truth is `mobile-v1.openapi.json`. CI regenerates the
 schema in memory and fails when the committed contract drifts.
 
-`GET /home` is the canonical initial mobile read. It returns the complete Today
-and active-program projections, latest weight, exact library counts and pending
-proposal count in one private response. The response is short-lived in the
-shared cache, supports ETag revalidation and is invalidated after every successful
-authenticated mobile write. This consolidates transport work without reducing
-the information rendered by the existing Home screen.
+`GET /home/summary` is the compact initial native read. It returns Today, latest
+weight, exact library counts and pending proposal count without building the
+active-program projection. Inicio, the navigation drawer and native reminder
+reconciliation use it. `GET /home` retains the complete response, including the
+active program, for existing clients. Both private responses use short-lived
+shared caches, support ETag revalidation and are invalidated after a successful
+authenticated mobile write.
 
 ## Implementation navigation
 
@@ -107,6 +108,15 @@ with existing application services move before the composition-heavy library sur
 
 ## Authentication
 
+- A signup started through the iOS OAuth client sends a confirmation URL under
+  `/mobile/confirm-email/<key>/`. The web route remains the fallback when no app
+  handles the universal link. The app sends the key to anonymous
+  `POST /auth/confirm-email`; the server verifies ownership without creating a
+  session. The app then opens login, and an authenticated account with incomplete
+  onboarding continues through the existing onboarding gate.
+- iOS associates `www.myscoope.com` and `myscoope-staging.onrender.com` for this
+  route. Each host must serve an Apple association file containing the path and
+  the configured Apple team identifier.
 - Public clients use authorization code + mandatory PKCE S256.
 - Mobile OAuth clients require an app-generated device identifier and a declared
   platform at token exchange.

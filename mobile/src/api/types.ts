@@ -412,8 +412,7 @@ export type CalendarizationProgramOptionsData = {
   search: string | null;
 };
 
-export type HomeData = {
-  active_program: ActiveProgramData;
+export type HomeSummaryData = {
   latest_weight: WeightItem | null;
   library_counts: {
     daily_plan: number;
@@ -425,6 +424,7 @@ export type HomeData = {
   today: TodayData;
   version: string;
 };
+export type HomeData = HomeSummaryData & { active_program: ActiveProgramData };
 
 export type FoodPickerOption = {
   id: number;

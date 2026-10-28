@@ -157,7 +157,7 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceDoesNotMatch(sidebarItems, /active \? tokens\.color\.textMain : tokens\.color\.textMuted/);
   assertSourceMatch(sidebarItems, /countChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minWidth: 30[^}]*paddingVertical: tokens\.spacing\.xs/);
   assertSourceDoesNotMatch(sidebarItems, /singleDigitCount|countChipSingle/);
-  assertSourceMatch(navigation, /apiRequest<HomeData>\("\/api\/v1\/home"\)/);
+  assertSourceMatch(navigation, /apiRequest<HomeSummaryData>\("\/api\/v1\/home\/summary"\)/);
   assertSourceMatch(navigation, /entity === "dailyPlan" \? counts\.daily_plan : counts\[entity\]/);
   assertSourceMatch(navigation, /<EntitySidebarEntry count=\{libraryCount\(libraryCounts, item\.entity\)\}/);
   assertSourceMatch(sidebarItems, /item: \{[^}]*minHeight: 48/);
@@ -254,7 +254,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /Icon color=\{tokens\.color\.textMain\}/);
   assertSourceMatch(entityIdentity, /<EntityIcon entity=\{entity\} size="header" \/>/);
   assertSourceDoesNotMatch(entityIdentity, /tone="white"/);
-  assertSourceMatch(screenLayout, /isHeaderIdentityVisible\([^)]*nativeEvent\.contentOffset\.y\)/);
+  assertSourceMatch(screenLayout, /nextHeaderIdentityVisibility\([^)]*nativeEvent\.contentOffset\.y/);
   assertSourceMatch(headerScroll, /HEADER_IDENTITY_SCROLL_THRESHOLD = 12/);
   assertSourceMatch(headerScroll, /offsetY > HEADER_IDENTITY_SCROLL_THRESHOLD/);
   assertSourceMatch(screenLayout, /identityVisible: compactHeaderVisible/);

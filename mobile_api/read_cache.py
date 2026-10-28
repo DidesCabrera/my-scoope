@@ -13,6 +13,10 @@ def home_cache_key(user_id: int) -> str:
     return f"mobile-api:home:v1:user:{user_id}"
 
 
+def home_summary_cache_key(user_id: int) -> str:
+    return f"mobile-api:home-summary:v1:user:{user_id}"
+
+
 def read_generation_key(user_id: int) -> str:
     return f"mobile-api:read-generation:v1:user:{user_id}"
 
@@ -25,13 +29,23 @@ def get_cached_home(user_id: int):
     return cache.get(home_cache_key(user_id))
 
 
+def get_cached_home_summary(user_id: int):
+    return cache.get(home_summary_cache_key(user_id))
+
+
 def cache_home(user_id: int, payload: dict, *, generation: int) -> None:
     if mobile_read_generation(user_id) == generation:
         cache.set(home_cache_key(user_id), payload, timeout=HOME_CACHE_SECONDS)
 
 
+def cache_home_summary(user_id: int, payload: dict, *, generation: int) -> None:
+    if mobile_read_generation(user_id) == generation:
+        cache.set(home_summary_cache_key(user_id), payload, timeout=HOME_CACHE_SECONDS)
+
+
 def invalidate_mobile_read_cache(user_id: int) -> None:
     cache.delete(home_cache_key(user_id))
+    cache.delete(home_summary_cache_key(user_id))
     generation_key = read_generation_key(user_id)
     if not cache.add(generation_key, 1, timeout=None):
         try:

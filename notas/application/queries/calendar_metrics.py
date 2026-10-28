@@ -47,15 +47,17 @@ def calendar_adherence_summary(
     local_now = (now or timezone.now()).astimezone(local_zone)
     today = local_date_for_timezone(timezone_name, now=now)
     current_period = calendar_progress_period_for_user(user)
-    first_day = (
-        CalendarizedDay.objects.filter(
-            user=user, assignment_state=CalendarizedDay.STATE_CURRENT, plan_snapshot__isnull=False
+    first_day = None
+    if current_period is None and period_start is None:
+        first_day = (
+            CalendarizedDay.objects.filter(
+                user=user, assignment_state=CalendarizedDay.STATE_CURRENT, plan_snapshot__isnull=False
+            )
+            .exclude(plan_snapshot={})
+            .order_by("calendar_date")
+            .values_list("calendar_date", flat=True)
+            .first()
         )
-        .exclude(plan_snapshot={})
-        .order_by("calendar_date")
-        .values_list("calendar_date", flat=True)
-        .first()
-    )
     start = period_start or (current_period.starts_on if current_period else first_day or today)
     end = min(period_end or today, today)
     planned_days_query = CalendarizedDay.objects.filter(
@@ -66,17 +68,17 @@ def calendar_adherence_summary(
     ).exclude(plan_snapshot={})
     if period_end is not None:
         planned_days_query = planned_days_query.filter(calendar_date__lte=period_end)
-    planned_snapshots = list(planned_days_query.values_list("plan_snapshot", flat=True))
-    scheduled = sum(len(snapshot.get("meals", [])) for snapshot in planned_snapshots)
     days = list(
-        CalendarizedDay.objects.filter(
-            user=user,
-            assignment_state=CalendarizedDay.STATE_CURRENT,
-            plan_snapshot__isnull=False,
-            calendar_date__gte=start,
-            calendar_date__lte=end,
-        ).exclude(plan_snapshot={}).prefetch_related("meal_execution_events").order_by("calendar_date")
+        planned_days_query.filter(calendar_date__lte=end)
+        .prefetch_related("meal_execution_events")
+        .order_by("calendar_date")
     ) if start <= end else []
+    scheduled = sum(len((day.plan_snapshot or {}).get("meals", [])) for day in days)
+    scheduled += sum(
+        len(snapshot.get("meals", []))
+        for snapshot in planned_days_query.filter(calendar_date__gt=end)
+        .values_list("plan_snapshot", flat=True).iterator(chunk_size=128)
+    )
     elapsed = completed = skipped = 0
     for day in days:
         meals = (day.plan_snapshot or {}).get("meals", [])

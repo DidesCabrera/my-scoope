@@ -1,24 +1,29 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-08-31
+Last updated: 2026-10-28
 Audience: developers and AI assistants
 
 ## What My Scoope is
 
-My Scoope is a Django product for building, managing and evolving nutrition programs, food libraries, meals, daily plans, AI-assisted proposals and internal operational dashboards.
+My Scoope is a consumer-first nutrition planning product with a Django backend and
+an Expo/React Native client. It connects personal context, food and culinary
+libraries, reviewable AI assistance, daily plans and programs with a dated Calendar
+that owns planning, execution evidence and progress.
 
 The product is evolving from a monolithic `notas` origin toward clearer app boundaries, with AI-assisted workflows, food catalog governance, nutrition solving, account plans/credits and internal admin tooling.
 
-The accepted product direction is consumer-first: the first mobile client serves
-people who personally pursue fat loss, muscle gain or recomposition by weighing
-food and following their own calendarized program. Nutritionist workspaces,
-invited clients and seat purchasing are later product work, not mobile MVP
-constraints. See `CONSUMER_PRODUCT_BRIEF.md` and decisions 0176-0178.
+The accepted product direction serves people who personally pursue fat loss,
+muscle gain or recomposition by weighing food, building plans and following their
+own calendar. Nutritionist workspaces, invited clients and seat purchasing remain
+future product work, not constraints on the consumer journey. See
+`CONSUMER_PRODUCT_BRIEF.md` and decisions 0176-0184, 0191-0205.
 
 ## Current product posture
 
-My Scoope is past the first architecture-expansion phase. The current priority is operational confidence:
+My Scoope is in an integrated beta/release-hardening phase. The main product
+journey exists across web and mobile; the current priority is learning from real
+usage without weakening reliability, data history or commercial correctness:
 
 - staging must stay green;
 - production changes must flow from local `staging` work to pushed `staging`, then PR
@@ -27,6 +32,10 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - tests should protect regressions and rules without blocking healthy UI evolution;
 - docs should guide decisions without becoming a flat context dump;
 - admin tooling should support operation, not just raw database editing.
+- Calendar is now the planning spine; Programs remain reusable templates rather
+  than the sole owner of dated execution.
+- TestFlight, store providers, Sentry, Expo/EAS and Render provide different
+  evidence and must be correlated by build, release and environment.
 
 ## App responsibility map
 
@@ -43,6 +52,8 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 | `admin_operations` | Operational staff console for action-oriented workflows, separated from strategic analytics and raw Django Admin. |
 | `core` | Cross-cutting technical concerns such as rate limits, shared contracts and regression boot checks. |
 | `mobile_api` | Stable `/api/v1/` facade for consumer clients; route ownership is classified by product domain while extraction proceeds behind the public contract. |
+| `mobile` | Expo/React Native consumer client for onboarding, libraries, Assistant, Calendar, sharing, comparisons, label capture, billing and account management. |
+| `admin_knowledge` | Human-only explanatory Knowledge Center; explicitly non-authoritative and excluded from AI/product behavior inference. |
 
 ## Current architecture principles
 
@@ -69,6 +80,12 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - Nutrition Solver should provide reusable calculation/validation capability, mainly through AI Assistant and backend integrations.
 - Nutrition Solver consumes versioned capability snapshots from operational `notas.Food`; Food Catalog
   owns curated values/provenance and is never a live solver dependency.
+- Calendarized days own the plan snapshot for each local date. Programs and manual
+  assignments are origins that project into the same dated execution model.
+- Execution, sharing and saved comparisons preserve snapshots. Later source edits
+  do not silently rewrite historical or recipient-visible content.
+- Mobile is a client of Django authority: it does not reimplement nutrition,
+  ownership, billing or entitlement decisions.
 
 ## Testing posture
 
@@ -103,6 +120,8 @@ blocker before considering the task done.
 - `docs/20_decisions/` explains accepted rationale and history.
 - `docs/10_active_cycles/` prepares cycles but does not override current contracts.
 - `docs/90_archive/` is historical context only.
+- `docs/00_current/features/admin_knowledge/` is a human presentation surface and
+  must not be used as implementation or architecture context.
 
 Project control is also executable:
 
@@ -116,6 +135,29 @@ Project control is also executable:
 When a plan becomes real, durable outcomes should be promoted into `docs/00_current/` and decisions should be recorded in `docs/20_decisions/`.
 
 ## Recently closed baselines
+
+- Calendar Planning Spine: one current plan snapshot per user/local date is now
+  the authority for Today, meal execution and progress. Programs project dated
+  days without owning the global adherence period; manual plans share the same
+  history. Mobile and web expose monthly planning, future coverage, dated history,
+  progress periods and shopping/cooking/training commitments. Shopping commitments
+  may freeze a grouped food list for a selected period.
+- Consumer Mobile Experience: persistent onboarding, libraries and composition,
+  Assistant Chats/Proposals, nutrition panels, personal records, label capture,
+  sharing/Inbox, comparisons, Calendar, native inputs and account/subscription
+  surfaces now form one consumer journey rather than isolated technical demos.
+- Sharing and comparison baseline: Food, Meal, DailyPlan, Program and saved
+  Comparison resources use portable snapshots, explicit claims and recipient-owned
+  saves. Native preview survives authentication; expired resources and normalized
+  Inbox state are handled consistently.
+- Store commerce baseline: Apple and Google evidence is verified server-side,
+  environment-scoped, reconciled and projected into `accounts`. Store-localized
+  prices, restore/reconciliation, refunds/replacements and credit-pack lifecycle
+  are guarded independently from UI success messages.
+- Beta reliability baseline: mobile release/build/environment tagging, sanitized
+  breadcrumbs, migration-aware worker startup, native picker draft confirmation,
+  commercial-limit responses and query budgets were strengthened from observed
+  TestFlight, Sentry and Render evidence.
 
 - Mobile API Domain Decomposition MADD00-MADD07: all product routes, schemas and
   endpoint behavior tests now have vertical domain homes while `/api/v1/` and its
@@ -202,7 +244,7 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   optimizer preserves preparation, courses, ingredient bounds and ratios before
   adjusting portions. Raw-food composition is an explicit, observable transition
   fallback until staging proves robust catalog coverage and human review per family.
-- Project Control, Clarity & Foresight PCF00-PCF10 aligns staging CI; the executable environment contract now formalizes 90
+- Project Control, Clarity & Foresight PCF00-PCF10 aligns staging CI; the executable environment contract now formalizes 94
   environment variables, adds safe environment and OAuth diagnostics, exposes one
   executable status contract through CLI/Admin Operations/AI, validates the document
   registry, tracks explicit architectural transitions and maintains evidence-led
@@ -219,24 +261,30 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   retires Nutrition Solver compatibility bridges and migrates `Profile.plan`
   capabilities reversibly into accounts-owned subscriptions.
 
-## Planned near-term cycles
+## Current validation and next evidence
 
-- Consumer Mobile Launch CML00-CML08 is active. CML00 is complete and fixes the
-  B2C scope. CML01 is repository-complete and closes safety/privacy prerequisites;
-  its external recovery, staging and legal gates remain visible before release.
-  CML02-CML07 are repository-complete with the consumer API, Expo development
-  client, secure session lifecycle, translated visual grammar and lived-program
-  execution/adherence/reviews/revisions, review-first nutrition-label capture and
-  verified StoreKit purchase/restore/reconciliation, mutually exclusive native
-  reminders, Apple login, Keychain/privacy manifests and sanitized mobile crashes.
-  CML08 is repository-complete with versioned transparency acceptance, in-app
-  privacy/support/deletion, production legal-copy alignment, App Store metadata and
-  privacy-label sources, a reproducible reviewer demo program, screenshot manifest,
-  TestFlight copy and reviewer notes. CML03/CML05-CML08 physical-device, legal,
-  App Store Connect, TestFlight and submission gates remain explicit.
-- No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
-- The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
-  hypotheses to validate or reformulate, not a fixed feature sequence.
+- Calendar is repository-complete and integrated. Continue validating migrated
+  history, notifications, plan movement/replacement and progress against staging
+  and real user data rather than reopening the old active-program authority. Manual
+  day movement is supported; program-origin movement and automatic notification
+  parity for manual assignments remain explicit follow-up gaps.
+- Mobile launch work is repository-complete across CML00-CML08. Remaining evidence
+  is environment-specific: physical-device behavior, store configuration,
+  TestFlight/Play testing, legal/accounting confirmation and review submission.
+- Nutrition-label extraction still requires the governed physical-label matrix;
+  repository tests cannot replace camera, packaging and ambiguous-basis evidence.
+- Apple and Google billing require provider-environment reconciliation and observed
+  lifecycle proof. Sandbox success must not be presented as live commercial proof.
+- Food Catalog growth and culinary-first Solver quality require representative
+  curated coverage and staging evidence before widening activation.
+- AI Assistant changes should start from observed outcome or capability gaps and
+  pass offline plus targeted real-provider evidence. Do not reopen completed BA/PT
+  work through prompt-only patches.
+- Beta health work should correlate TestFlight/Expo, Sentry and Render, keep
+  expected commercial conflicts out of incident noise and verify new instrumentation
+  in a newly built client.
+- Current hypotheses and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
+  evidence-led bets, not a fixed feature sequence.
 
 ## Current work style
 
@@ -256,6 +304,13 @@ Avoid mixing documentation architecture, feature implementation, UI redesign, te
 ## Useful starting points
 
 - `docs/00_current/AI_README.md`
+- `docs/00_current/CONSUMER_PRODUCT_BRIEF.md`
+- `docs/00_current/features/calendarization.md`
+- `docs/00_current/features/ai_assistant/README.md`
+- `docs/00_current/features/food_catalog.md`
+- `docs/00_current/features/billing.md`
+- `docs/00_current/features/sharing.md`
+- `docs/00_current/features/beta_observability.md`
 - `docs/40_technical/operations/docs_information_architecture.md`
 - `docs/00_current/architecture/layers.md`
 - `docs/00_current/architecture/rules.md`

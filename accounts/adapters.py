@@ -1,13 +1,38 @@
+from urllib.parse import parse_qs, urlsplit
+
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.core import context as allauth_context
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib.sites.shortcuts import get_current_site
+from django.urls import reverse
 
 from email_delivery.models import EmailDeliveryAttempt
 from email_delivery.services import deliver_account_message
 
 
 class MyScoopeAccountAdapter(DefaultAccountAdapter):
+    def get_email_confirmation_url(self, request, emailconfirmation):
+        url = super().get_email_confirmation_url(request, emailconfirmation)
+        if request is None:
+            return url
+
+        next_url = request.POST.get("next") or request.GET.get("next", "")
+        destination = urlsplit(next_url)
+        parameters = parse_qs(destination.query)
+        is_mobile_signup = (
+            not destination.scheme
+            and not destination.netloc
+            and destination.path == reverse("oauth_authorize")
+            and parameters.get("client_id") == ["myscoope-ios"]
+            and parameters.get("redirect_uri") == ["myscoope://oauth/callback"]
+        )
+        if not is_mobile_signup:
+            return url
+
+        return request.build_absolute_uri(
+            reverse("mobile_confirm_email", kwargs={"key": emailconfirmation.key})
+        )
+
     def send_mail(self, template_prefix: str, email: str, context: dict) -> None:
         request = allauth_context.request
         ctx = {

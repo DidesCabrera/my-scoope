@@ -1,32 +1,55 @@
-# Calendarización de programas
+# Calendario y ejecución fechada
 
 Status: current
-Date: 2026-08-05
+Date: 2026-10-28
 
 ## Contrato funcional
 
-`Program` continúa siendo una plantilla relativa y editable. Al activar Calendarizar,
-`ProgramCalendarization` proyecta sus semanas sobre fechas reales y crea un
-`CalendarizedDay` por cada slot. Cada día ocupado guarda un snapshot JSON versionado
-con plan, comidas, alimentos, cantidades y totales; editar o eliminar el origen no
-cambia la agenda activada.
+Calendario es la autoridad de planificación por fecha local. `CalendarizedDay`
+conserva como máximo un plan vigente para cada usuario/fecha mediante un snapshot
+JSON versionado con comidas, alimentos, cantidades y totales. Ese snapshot puede
+provenir de una asignación manual de biblioteca o de la proyección de un `Program`;
+editar o eliminar el origen no reescribe el día ya planificado.
 
-En producto, esa `ProgramCalendarization` se presenta como **programa activo**: una
-instancia fechada que conserva la historia de lo planificado y lo que realmente pasó.
-El detalle activo se lee desde sus snapshots, progreso, mediciones, notas y revisiones;
-el `Program` de origen sólo se ofrece como enlace explícito a la plantilla original.
+`Program` continúa siendo una plantilla relativa y editable. `ProgramCalendarization`
+agrupa la procedencia y las revisiones especializadas de una proyección, pero ya no
+es la única entrada a la agenda ni la autoridad global del periodo de adherencia.
 
-- Solo se listan programas creados por el usuario.
+- Solo se proyectan programas y planes diarios creados por el usuario.
 - La fecha inicial corresponde a semana 1, día 1 y no puede estar en el pasado local.
 - Se permiten programas incompletos después de confirmación; los días vacíos no envían.
-- Solo existe una agenda `scheduled`, `active` o `paused` por usuario.
+- Durante la transición se mantiene una sola instancia de programa globalmente
+  vigente, pero sus días conviven con asignaciones manuales dentro del Calendario.
 - Reemplazar exige confirmación y cancela los eventos pendientes anteriores.
 - Un día futuro vacío puede recibir un plan diario de la biblioteca y uno ocupado puede
   reemplazarse tras confirmación. El servidor crea el snapshot y registra el antes y el
   después como una revisión aplicada; la plantilla original nunca se modifica.
 - La hora inicial es 07:00 y puede editarse.
 - `Profile.timezone_name` es el default; cada agenda conserva su propia timezone IANA.
-- Pausar, reanudar y cancelar son acciones del dashboard `/app/calendarization/`.
+- Asignar, quitar y reemplazar un plan conserva procedencia e historial. Mover está
+  soportado para asignaciones manuales; mover directamente un día originado en
+  Program sigue rechazado para no romper procedencia y recordatorios.
+- Pasado y presente con evidencia no se reescriben; los cambios de programa actúan
+  solo sobre días futuros elegibles.
+
+## Planificación y compromisos
+
+Web y móvil presentan una vista mensual con la semana actual, detalle por fecha,
+cobertura futura, cantidad de planes desde hoy y última fecha programada. Un día
+futuro puede recibir un plan de biblioteca sin exigir la creación previa de un
+programa.
+
+`CalendarCommitment` registra compromisos independientes de compra, cocina,
+entrenamiento o cita nutricional. Cada usuario puede tener como máximo uno de cada tipo por fecha. Un
+registro por lote admite entre 1 y 62 fechas futuras o presentes y una nota acotada.
+Los compromisos de compra pueden seleccionar un periodo alimentario de hasta 366 días:
+el servidor agrega los alimentos de los planes vigentes y guarda un snapshot agrupado
+con la cantidad de planes considerada. Editar después un plan no cambia esa lista
+guardada silenciosamente.
+
+En móvil, «Registrar compromisos» abre el registro con un calendario mensual y una
+lista filtrable por tipo. El botón de agregar abre las cuatro opciones y lleva al
+formulario de fechas de cada compromiso.
 
 ## Ejecución y progreso
 
@@ -46,15 +69,21 @@ La calendarización también es la autoridad del programa vivido:
   decisión explícita. Al aprobar, sólo cambia días estrictamente futuros, todavía
   sin evidencia, y recalcula sus eventos. Pasado y presente son inmutables.
 
-La selección semanal del programa activo sigue las fechas reales en orden cronológico.
-Por eso la primera semana puede comenzar cualquier día y cada círculo muestra el día de
-semana junto al número y el mes, manteniendo la acción de agregar en slots vacíos.
+La selección semanal y mensual sigue fechas reales en orden cronológico. Por eso una
+proyección puede comenzar cualquier día y los slots vacíos continúan siendo fechas
+válidas para una asignación manual.
 
 Las revisiones pueden respaldar una propuesta, pero no modifican automáticamente
 el plan. La API consumer permite decidir una revisión preparada por una autoridad
 interna; no acepta snapshots arbitrarios desde el cliente.
 
 ## Notificaciones
+
+La agenda de notificaciones descrita aquí corresponde a proyecciones de
+`ProgramCalendarization`. Los días asignados manualmente ya comparten Today,
+ejecución e historial, pero todavía no crean automáticamente el mismo conjunto de
+eventos de plan/comidas. No asumir paridad de recordatorios hasta que exista un
+command y una prueba explícitos para esa frontera.
 
 Cada aviso existe primero como `ScheduledNotificationEvent` en UTC, calculado desde
 fecha, hora local y timezone de la agenda. `NotificationDelivery` registra como máximo
@@ -89,8 +118,12 @@ Tocar una notificación abre Today tanto con la app viva como desde un arranque 
 ## Entradas técnicas
 
 - comandos: `notas/application/services/commands/calendarization_commands.py`;
+- asignación/movimiento de días: `notas/application/services/commands/calendar_day_commands.py`;
+- compromisos: `notas/application/services/commands/calendar_commitment_commands.py`;
 - cálculo/snapshot: `notas/application/services/calendarization/`;
 - lecturas: `notas/application/queries/calendarization_queries.py`;
+- métricas: `notas/application/queries/calendar_metrics.py`;
+- alimentos por periodo: `notas/application/queries/calendar_foods.py`;
 - ejecución/revisiones: `notas/application/services/commands/calendarization_execution_commands.py`;
 - lecturas de adherencia: `notas/application/queries/calendarization_execution_queries.py`;
 - adapters: `notas/application/services/notifications/web_push.py` y `apple_push.py`;
@@ -100,3 +133,5 @@ Tocar una notificación abre Today tanto con la app viva como desde un arranque 
 - migración base: `notas/migrations/0044_profile_timezone_name_programcalendarization_and_more.py`;
 - migración de ejecución: `notas/migrations/0048_calendarized_execution_reviews.py`.
 - migración APNs: `notas/migrations/0050_notificationdelivery_channel_applepushsubscription_and_more.py`.
+- autoridad por día y progreso: migraciones `0073` a `0076`;
+- compromisos: `notas/migrations/0077_calendar_commitment.py`.

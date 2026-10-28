@@ -34,9 +34,14 @@ POLICY = KnowledgeCenterPolicy(
 
 KNOWLEDGE_DOCUMENT_PATHS = (
     "00_current/features/admin_knowledge/README.md",
+    "00_current/features/admin_knowledge/project_evolution.md",
+    "00_current/features/admin_knowledge/calendar_and_progress.md",
+    "00_current/features/admin_knowledge/mobile_journey.md",
     "00_current/features/admin_knowledge/ai_assistant.md",
     "00_current/features/admin_knowledge/food_catalog.md",
     "00_current/features/admin_knowledge/nutrition_solver.md",
+    "00_current/features/admin_knowledge/sharing_and_comparisons.md",
+    "00_current/features/admin_knowledge/billing_and_beta.md",
 )
 
 

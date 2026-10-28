@@ -92,7 +92,7 @@ export default function CalendarCommitmentDetailScreen() {
     if (status !== "authenticated" || !month) return;
     let active = true;
     void monthCache.load(month)
-      .then((result) => { if (active) { setMonthOverview(result); monthCache.prefetchAdjacent(month); } })
+      .then((result) => { if (active) setMonthOverview(result); })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); });
     return () => { active = false; };
   }, [month, monthCache, status]);
@@ -101,7 +101,7 @@ export default function CalendarCommitmentDetailScreen() {
     if (status !== "authenticated" || actionMode !== "reschedule" || !rescheduleMonth) return;
     let active = true;
     void monthCache.load(rescheduleMonth)
-      .then((result) => { if (active) { setRescheduleOverview(result); monthCache.prefetchAdjacent(rescheduleMonth); } })
+      .then((result) => { if (active) setRescheduleOverview(result); })
       .catch((nextError) => { if (active) setActionError(userFacingError(nextError)); });
     return () => { active = false; };
   }, [actionMode, monthCache, rescheduleMonth, status]);
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
   gridNumberPast: { opacity: 0.8 },
   gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
-  monthArrow: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
+  monthArrow: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: tokens.spacing.md },
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
   noteCount: { color: tokens.color.textMuted, fontSize: 12, textAlign: "right" },

@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   headingText: { color: tokens.color.textMain, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.extraBold },
   icon: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", marginBottom: tokens.spacing.sm, width: 34 },
   pressed: { opacity: 0.65 },
-  section: { gap: tokens.spacing.md, marginHorizontal: -tokens.spacing.screen, marginTop: tokens.spacing.xxl },
+  section: { gap: tokens.spacing.md, marginHorizontal: -tokens.spacing.screen, marginTop: tokens.spacing.xxl + 12 },
   subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20, marginBottom: 4, marginHorizontal: tokens.spacing.screen },
   title: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold, lineHeight: 19, minHeight: 38 },
 });

@@ -19,6 +19,7 @@ ROUTE_DOMAIN_PREFIXES = (
     ("/subscriptions", "billing"),
     ("/credit-packs", "billing"),
     ("/entitlements", "billing"),
+    ("/auth/confirm-email", "accounts"),
     ("/account", "accounts"),
     ("/learning", "learning"),
     ("/onboarding", "accounts"),

@@ -15,13 +15,22 @@ class HomeLibraryCountsData(Schema):
     program: int
 
 
-class HomeData(Schema):
+class HomeSummaryData(Schema):
     today: TodayData
-    active_program: ActiveProgramData
     latest_weight: WeightItem | None = None
     library_counts: HomeLibraryCountsData
     pending_proposal_count: int
     version: str
+
+
+class HomeData(HomeSummaryData):
+    active_program: ActiveProgramData
+
+
+class HomeSummaryEnvelope(Schema):
+    ok: Literal[True] = True
+    data: HomeSummaryData
+    error: None = None
 
 
 class HomeEnvelope(Schema):

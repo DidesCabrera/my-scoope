@@ -1,0 +1,23 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Correo confirmado · My Scoope</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body class="auth-body">
+    <main class="auth-card auth-card--message">
+        <img class="auth-logo" src="{% static 'img/logo-white.png' %}" alt="My Scoope">
+        <h1 class="auth-title">Correo confirmado</h1>
+        <div class="auth-copy">
+            <p>Abre My Scoope e inicia sesión para continuar. Si aún no terminaste tu configuración, seguirás con el onboarding en la app.</p>
+        </div>
+        <p class="auth-links"><a href="myscoope://login?emailConfirmed=1">Abrir My Scoope</a></p>
+        <p class="auth-links"><a href="{% url 'account_login' %}">Continuar en la web</a></p>
+    </main>
+    <script>window.location.replace("myscoope://login?emailConfirmed=1");</script>
+</body>
+</html>

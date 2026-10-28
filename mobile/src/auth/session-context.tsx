@@ -25,6 +25,7 @@ type SessionContextValue = {
   authRestorePending: boolean;
   authReady: boolean;
   authReturnTo: Href | null;
+  finishEmailConfirmation(): void;
   startSignIn(returnTo?: Href): Promise<void>;
   apiRequest<T>(path: string, init?: RequestInit): Promise<T>;
   refreshProfile(): Promise<ProfileData>;
@@ -200,6 +201,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
       authRestorePending,
       authReady: Boolean(authRequest && authRequest.state === authorizationState),
       authReturnTo,
+      finishEmailConfirmation() {
+        resetAuthorization();
+        setAuthError(null);
+        setAuthReturnTo(null);
+      },
       async startSignIn(returnTo) {
         if (!authRequest || authRequest.state !== authorizationState) return;
         const version = authorizationFlow.start(authRequest.state);

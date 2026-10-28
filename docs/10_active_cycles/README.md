@@ -39,11 +39,6 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 - `mcp_mvp_validation_cycle.md`: MCP00-MCP04 valida una conexión privada desde
   Codex hacia un MCP de staging limitado a cuatro tools, con acceso PRO,
   identidad de usuario y propuesta nutricional revisable.
-- `calendar_as_planning_spine_cycle.md`: ciclo CALV00-CALV07 para convertir el
-  calendario en autoridad de un plan snapshot por fecha, proyectar programas sin
-  perder días cumplidos y medir la adherencia por periodos elegidos por el usuario.
-  La base aditiva de días y periodos está en desarrollo; el cutover web/móvil y la
-  migración de la exclusividad de programas siguen pendientes.
 - `onboarding_flow_normalization_cycle.md`: ciclo planificado OFN00-OFN08 para
   diseñar el recorrido inicial como storyboard en las galerías Web y Native,
   normalizar contenido y estética, resolver la semántica de `training_frequency` y
@@ -156,6 +151,14 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 - `export_cycle_aware_workspaces_cycle.md`: ciclo activo para mantener exports focalizados y conscientes del contexto de cada ciclo.
 
 ## Ciclos completados
+
+- `calendar_as_planning_spine_cycle.md`: CALV00-CALV07 completado e integrado;
+  Calendario es la autoridad de un snapshot por fecha para Today, ejecución y
+  progreso, mientras Programs proyecta plantillas y conserva procedencia. La
+  extensión de compromisos y listas alimentarias por periodo también está integrada;
+  mover días originados en Program y la paridad de recordatorios para asignaciones
+  manuales permanecen como brechas explícitas. La verificación desplegada continúa
+  como evidencia operacional por ambiente.
 
 - `code_quality_consolidation_cycle.md`: ciclo CQC00-CQC08 completado; alinea CI con
   `staging`, incorpora `mobile_api` a una cobertura por ramas de 78% con mínimo de

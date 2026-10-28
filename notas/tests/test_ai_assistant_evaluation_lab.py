@@ -46,7 +46,7 @@ class AIAssistantEvaluationLabTests(TestCase):
         self.assertEqual(EVALUATION_LAB_VERSION, "ai_assistant.evaluation_lab.v2")
         self.assertTrue(report.passed)
         self.assertEqual(report.ground_truth["libraries"]["foods"], 1)
-        self.assertEqual(report.catalog["total_capabilities"], 82)
+        self.assertEqual(report.catalog["total_capabilities"], 84)
         self.assertEqual(
             report.catalog["mapped_capability_ids"],
             ["DP-01", "F-01", "M-01", "PG-01"],

@@ -55,7 +55,8 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /needsTarget\s*\? isCalendarizedPicker/);
   matches(picker, /\/composition-options\?limit=50/);
   matches(picker, /nextError instanceof MobileApiError[^\n]*!\[404, 422\]\.includes\(nextError\.status\)/);
-  matches(picker, /onPress: \(\) => router\.dismissTo\(detailHref\)/);
+  matches(picker, /pickerCompleted=1/);
+  matches(picker, /onPress: \(\) => router\.dismissTo\(destination\)/);
   matches(picker, /<PickerOptionCard eyebrow=\{isFoodPicker \? "ALIMENTO SELECCIONADO" : isMealPicker \? "COMIDA SELECCIONADA" : undefined\} option=\{configuredSelection\} showPanels=\{!isMealPicker && kind !== "dailyplan-to-program"\}/);
   matches(picker, /eyebrow=\{eyebrow\}/);
   matches(picker, /\{kind === "dailyplan-to-program" \? configurationCard : null\}\s*\{selectedCard\}/);
@@ -279,7 +280,7 @@ test("Home and library cards expose their contextual composition actions below t
   const programPlanning = await readFile(path.resolve(process.cwd(), "src/components/calendarization/calendarized-program-planning.tsx"), "utf8");
 
   matches(today, /const todayDayId = today\?\.day_id/);
-  matches(today, /onAddMeal=\{todayDayId != null \? \(\) => router\.push\(pickerHref\("meal-to-calendarized-day", \{ dayId: todayDayId \}\)\) : undefined\}/);
+  matches(today, /onAddMeal=\{todayDayId != null \? \(\) => router\.push\(pickerHref\("meal-to-calendarized-day", \{ dayId: todayDayId, returnTo: "\/today" \}\)\) : undefined\}/);
   matches(card, /onAddMeal\?: \(\) => void/);
   matches(card, /<Button label="\+ Agregar Comida" onPress=\{onAddMeal\} variant="chipPrimary" \/>/);
   assert.ok(card.indexOf("<MealPanels") < card.indexOf('label="+ Agregar Comida"'));

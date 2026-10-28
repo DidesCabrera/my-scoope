@@ -1,7 +1,7 @@
 # Nutrition Solver: optimización V2 y operación
 
 Status: human_reference
-Date: 2026-07-17
+Date: 2026-10-28
 Audience: usuarios staff humanos de producto, operaciones, soporte y desarrollo
 Role: human_reference
 Authority: non_authoritative
@@ -108,6 +108,26 @@ La calidad se informa en dos ejes:
 Shadow mode también registra backend, estados, delta de ambos scores y solapamiento de selección.
 No confundir baja coincidencia de alimentos con regresión: una alternativa puede ser distinta y
 mejor. La decisión usa factibilidad y calidad, no identidad exacta de la composición.
+
+## Evolución hacia planificación culinaria
+
+El Solver evolucionó desde ajustar alimentos sueltos hacia conservar preparaciones reconocibles:
+
+- prioriza variantes culinarias validadas cuando la cobertura disponible lo permite;
+- protege preparación, cursos, relaciones entre ingredientes y límites antes de ajustar porciones;
+- puede proponer comidas, días y programas versionados de hasta varias semanas;
+- conserva requisitos semanales dentro de la propuesta para que la revisión no pierda la intención;
+- ofrece un portafolio de alternativas, normalmente tres, dentro de una misma propuesta pendiente;
+- permite seleccionar otra alternativa sin aprobar ni aplicar automáticamente.
+
+Los objetivos diarios relacionan energía, peso, proteína por kilogramo y distribución de macros. Si
+las instrucciones son incompatibles, el resultado correcto es pedir aclaración o devolver un
+diagnóstico estable; no se debe reescribir silenciosamente el objetivo. Un objetivo macro para una
+comida tampoco se convierte automáticamente en regla para todo el día o programa.
+
+Cuando la cobertura culinaria no alcanza, la composición por alimentos crudos puede actuar como
+fallback explícito y observable. Debe presentarse como una transición de cobertura, no como si una
+preparación validada hubiera existido.
 
 ## Gate de calidad
 

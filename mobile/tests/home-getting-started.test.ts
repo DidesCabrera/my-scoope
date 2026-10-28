@@ -9,17 +9,17 @@ import { assertSourceDoesNotMatch, assertSourceMatch, readTestFile } from "./sup
 test("Home guides people without a minuta even when they have a calendarization or commitment", async () => {
   const home = await readTestFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
 
-  assertSourceMatch(home, /apiRequest<CalendarDayDetailData>\(`\/api\/v1\/calendar\/days\/\$\{homeData\.today\.local_date\}`\)/);
+  assertSourceMatch(home, /apiRequest<CalendarDayDetailData>\(`\/api\/v1\/calendar\/days\/\$\{nextToday\.local_date\}`\)/);
   assertSourceMatch(home, /setTodayCommitments\(todayCalendar\?\.commitments \?\? \[\]\)/);
   assertSourceMatch(home, /const showGettingStarted = Boolean\(today && !hasDatedPlan && !today\.pinned_plan\)/);
   assertSourceDoesNotMatch(home, /Programa en curso/);
   assertSourceDoesNotMatch(home, /Tendencia del programa|styles\.measurementRow|styles\.measurementValue/);
-  assertSourceMatch(home, /<HomeEmptyDayNotice localDate=\{today\.local_date\} situation=\{emptyDaySituation\(upcomingOverview, today\.local_date\)\} \/>[\s\S]*?\{todayCommitments\.length \|\| commitmentsError \? commitmentsSection : null\}[\s\S]*?<HomeGettingStarted compactTop \/>[\s\S]*?\{calendarSection\}/);
+  assertSourceMatch(home, /<HomeEmptyDayNotice localDate=\{today\.local_date\} situation=\{emptyDaySituation\(upcomingOverview, today\.local_date\)\} \/>[\s\S]*?\{commitmentsSection\}[\s\S]*?<HomeGettingStarted compactTop \/>[\s\S]*?\{calendarSection\}/);
   assertSourceMatch(home, /const calendarSection = visibleMonth && today \? <View style=\{styles\.homeCalendarSection\}>[\s\S]*?title="Tu calendario"/);
   assertSourceMatch(home, /<Card style=\{styles\.homeCalendarCard\}>\s*<CalendarMonthCalendar[\s\S]*?embedded[\s\S]*?<Pressable accessibilityLabel="Ver calendario"[\s\S]*?styles\.homeActionChip[\s\S]*?<\/Card>/);
-  assertSourceMatch(home, /homeCalendarCard: \{ gap: 24 \}/);
+  assertSourceMatch(home, /homeCalendarCard: \{ paddingBottom: tokens\.card\.outerPadding \+ 2, paddingTop: tokens\.card\.outerPadding - 4 \}/);
   assertSourceMatch(home, /title="Tu calendario"\s+variant="home"/);
-  assertSourceMatch(home, /<ProgramSectionHeader\s+bottomSpacing=\{24\}\s+icon=\{CalendarDays\}/);
+  assertSourceMatch(home, /<ProgramSectionHeader\s+bottomSpacing=\{16\}\s+icon=\{CalendarDays\}/);
   assertSourceMatch(home, /title="Progreso"\s+variant="home"/);
   assertSourceMatch(home, /icon=\{ChartColumnIncreasing\}[\s\S]*?title="Progreso"/);
   assertSourceMatch(home, /subtitle="Tu elijes cuando partir\. Elije la fecha de inicio de tu progreso cuando te sientas comprometido"/);

@@ -1,7 +1,7 @@
 # Consumer Product Brief
 
 Status: current
-Date: 2026-08-05
+Date: 2026-10-28
 Audience: product, design, engineering and AI assistants
 
 ## Product direction
@@ -19,16 +19,19 @@ future expansion and must not shape the consumer mobile MVP.
 ```text
 define a physical goal
   -> build a nutrition program
-  -> calendarize it on real dates
+  -> project it or assign plans on real Calendar dates
+  -> organize shopping, cooking and training commitments
   -> follow planned meals and reminders
   -> record adherence and measurements
   -> review progress
   -> approve prospective adjustments
 ```
 
-`Program` is the editable template. `ProgramCalendarization` is the lived
-program: it owns the dated plan, reminders, execution evidence, measurement
-context and future adjustment boundary. Past execution is never silently
+`Program` is an editable template. `CalendarizedDay` is the authority for the
+plan snapshot of one local date, whether it came from a Program or a manual
+library assignment. Calendar owns execution evidence, progress periods,
+commitments and the boundary for future changes; program projections also own the
+currently supported automatic meal/plan reminders. Past execution is never silently
 rewritten.
 
 ## Initial goals
@@ -45,19 +48,23 @@ diagnose, treat disease or replace medical advice.
 The first React Native client covers:
 
 1. registration, login and physical-goal onboarding;
-2. Today, active program and calendarized-day detail;
-3. planned meals, meal times, reminders and adherence check-ins;
+2. Today, monthly Calendar, future plan coverage and dated detail;
+3. planned meals, meal times, reminders, adherence check-ins and progress periods;
 4. weight measurements and progress trends;
 5. foods, meals and daily plans needed by the active program;
 6. review-first nutrition-label capture with local image-quality checks, temporary
    external AI extraction and explicit user confirmation;
 7. AI Assistant over existing reviewable proposal boundaries;
-8. subscription, privacy and account deletion.
+8. portable sharing, Inbox claims/saves and nutrition comparisons;
+9. shopping, cooking and training commitments, including frozen food lists derived
+   from a selected calendar period;
+10. subscription, privacy, support and account deletion.
 
-The first release does not include nutritionist/client flows, seat purchases,
-professional sharing, mobile administration, Android, barcode lookup, widgets,
-Apple Watch, HealthKit writes, biometrics or a general-purpose offline mutation
-queue.
+The consumer baseline does not include nutritionist/client workspaces, seat
+purchases, mobile administration, barcode lookup, widgets, Apple Watch, HealthKit
+writes, biometrics or a general-purpose offline mutation queue. iOS and Google Play
+commercial integrations may progress through different external rollout gates even
+when they share the same Django product authority.
 
 ## Experience principles
 
@@ -65,7 +72,8 @@ queue.
 - Django remains the authority for nutrition, ownership and commercial rules.
 - The client receives screen-oriented API contracts and does not reimplement
   domain calculations.
-- Calendarization is the only active-program timeline.
+- Calendar is the only dated planning and execution authority. Programs remain
+  reusable templates and provenance.
 - Users review OCR and AI results before persistent product changes.
 - Denying camera, notification or future HealthKit permission never blocks the
   core planning experience.

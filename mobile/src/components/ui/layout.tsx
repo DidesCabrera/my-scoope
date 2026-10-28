@@ -1,12 +1,12 @@
 import type { ElementRef, PropsWithChildren, ReactElement, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useIsFocused } from "expo-router";
 import { Platform, type RefreshControlProps, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
+import { nextHeaderIdentityVisibility } from "@/components/navigation/header-scroll";
 import { tokens } from "@/design/tokens";
 
 const BOTTOM_SPACING = 96;
@@ -35,6 +35,8 @@ export function Screen({ children, scroll = true, contentStyle, fixedHeader, fix
   const setHeaderPresentation = useHeaderPresentation();
   const scrollRef = useRef<ElementRef<typeof NestableScrollContainer>>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
+  const compactHeaderVisibleRef = useRef(false);
+  const isFocused = useIsFocused();
   const [panelDragging, setPanelDragging] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
@@ -44,12 +46,19 @@ export function Screen({ children, scroll = true, contentStyle, fixedHeader, fix
   }, [scrollToTopSignal]);
   useFocusEffect(useCallback(() => {
     if (headerMode === "preserve") return undefined;
-    setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });
+    setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisibleRef.current });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [compactHeaderVisible, headerMode, setHeaderPresentation]));
+  }, [headerMode, setHeaderPresentation]));
+  useEffect(() => {
+    if (headerMode === "automatic" && isFocused) {
+      setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });
+    }
+  }, [compactHeaderVisible, headerMode, isFocused, setHeaderPresentation]);
   const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
   const stickyHeaderIndex = stickyHeader ? (scrollHeader ? 1 : 0) : undefined;
   const setCompactIdentityVisible = useCallback((visible: boolean) => {
+    if (compactHeaderVisibleRef.current === visible) return;
+    compactHeaderVisibleRef.current = visible;
     setCompactHeaderVisible(visible);
     onHeaderVisibilityChange?.(visible);
   }, [onHeaderVisibilityChange]);
@@ -70,7 +79,7 @@ export function Screen({ children, scroll = true, contentStyle, fixedHeader, fix
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={(_width, height) => setContentHeight(height)}
           onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
-          onScroll={(event) => setCompactIdentityVisible(isHeaderIdentityVisible(event.nativeEvent.contentOffset.y))}
+          onScroll={(event) => setCompactIdentityVisible(nextHeaderIdentityVisibility(event.nativeEvent.contentOffset.y, compactHeaderVisibleRef.current))}
           refreshControl={refreshControl}
           style={styles.scroll}
           scrollEnabled={scrollEnabled}
