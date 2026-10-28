@@ -3,12 +3,17 @@
     "allowed": {}
   },
   "mobile": {
-    "reviewed_on": "2026-10-01",
-    "reason": "node-forge GHSA-86w9-cpqp-85rv affects the latest published 1.4.0 with no patched release. Its Expo CLI and Sentry dependency chain is temporarily reviewed; new or more severe findings remain forbidden.",
+    "reviewed_on": "2026-10-28",
+    "reason": "node-forge GHSA-86w9-cpqp-85rv affects the latest published 1.4.0 with no patched release. deepmerge GHSA-gcqx-w48m-w2h4 affects the latest published 4.3.1 through the Expo 57 toolchain; npm only proposes the incompatible Expo 51 downgrade. These exact Expo CLI, Sentry, and configuration dependency chains are temporarily reviewed; new packages or more severe findings remain forbidden.",
     "allowed": {
       "@expo/cli": "high",
       "@expo/code-signing-certificates": "high",
+      "@expo/config": "low",
+      "@expo/local-build-cache-provider": "low",
+      "@expo/metro-config": "low",
+      "@expo/prebuild-config": "low",
       "@sentry/react-native": "high",
+      "deepmerge": "low",
       "expo": "high",
       "node-forge": "high"
     }

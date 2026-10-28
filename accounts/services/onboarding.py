@@ -9,12 +9,12 @@ from django.utils import timezone
 from notas.application.ai_intake.onboarding_catalog_minutas import generate_onboarding_catalog_minutas
 from notas.application.ai_tools.preference_tools import DIETARY_PATTERNS
 from notas.application.nutrition_engine.target_estimator import TargetEstimationProfile, estimate_daily_targets
+from notas.application.services.commands.meal_commands import save_dailyplan_meal_to_library
 from notas.application.services.commands.proposal_commands import (
     apply_approved_create_dailyplan_proposal,
     approve_proposal,
     cancel_proposal,
 )
-from notas.application.services.commands.meal_commands import save_dailyplan_meal_to_library
 from notas.application.services.nutrition.body_metrics import calculate_age_years, record_weight
 from notas.domain.models import (
     CalendarizedDay,
