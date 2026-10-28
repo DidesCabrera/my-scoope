@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
   gridNumberPast: { opacity: 0.8 },
   gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
-  monthArrow: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
+  monthArrow: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: tokens.spacing.md },
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
   noteCount: { color: tokens.color.textMuted, fontSize: 12, textAlign: "right" },

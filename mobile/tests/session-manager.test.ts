@@ -321,7 +321,7 @@ test("a mutation invalidates affected cached reads", async () => {
   assert.deepEqual(await manager.request("/api/v1/home"), { version: 2 });
 });
 
-test("calendar writes invalidate overview responses and shared month data", async () => {
+test("calendar writes invalidate overview, onboarding food totals, and shared month data", async () => {
   const saved = storage({
     accessToken: "access-current",
     refreshToken: "refresh-current",
@@ -346,9 +346,11 @@ test("calendar writes invalidate overview responses and shared month data", asyn
 
   await monthCache.load("2026-10");
   const overview = await manager.request<{ local_date: string }>("/api/v1/calendar?days=35");
+  const foodTotals = await manager.request<{ local_date: string }>("/api/v1/onboarding/calendarized-foods");
   await manager.request("/api/v1/calendar/days/2026-10-27/plan", { method: "DELETE" });
 
   assert.equal(monthCache.get("2026-10"), undefined);
   assert.notEqual((await monthCache.load("2026-10")).local_date, "2026-10-01");
   assert.notEqual((await manager.request<{ local_date: string }>("/api/v1/calendar?days=35")).local_date, overview.local_date);
+  assert.notEqual((await manager.request<{ local_date: string }>("/api/v1/onboarding/calendarized-foods")).local_date, foodTotals.local_date);
 });

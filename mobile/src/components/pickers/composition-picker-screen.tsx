@@ -482,7 +482,10 @@ export function CompositionPickerScreen({
           : payload;
       const result = await apiRequest<PickerCommitResult>(config.commitPath(targetId, mealKey), { method: "POST", body: JSON.stringify(body) });
       if (kind === "meal-to-calendarized-day") await refreshNativeReminders(apiRequest).catch(() => undefined);
-      Alert.alert("Listo", result.message, [{ text: "Aceptar", onPress: () => router.dismissTo(detailHref) }]);
+      const destination = kind === "meal-to-dailyplan" && String(detailHref).startsWith("/libraries/daily-plans/")
+        ? `${detailHref}${String(detailHref).includes("?") ? "&" : "?"}pickerCompleted=1` as Href
+        : detailHref;
+      Alert.alert("Listo", result.message, [{ text: "Aceptar", onPress: () => router.dismissTo(destination) }]);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {

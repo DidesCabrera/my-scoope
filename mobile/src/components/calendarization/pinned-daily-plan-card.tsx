@@ -43,7 +43,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const addMeal = () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: "/today" }));
-  const openDetail = () => router.push(`/libraries/daily-plans/${item.id}` as Href);
+  const openDetail = () => router.push(`/libraries/daily-plans/${item.id}?origin=home` as Href);
   const detailAction = (<>
     <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={item.id} name={item.name} onChanged={onChanged} />
     <EntityCardAction label="Ir al detalle del plan" onPress={openDetail} role="link">
@@ -58,7 +58,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
 
   if (meals.length === 0) {
     return (
-      <EntityCard actions={detailAction} entity="dailyPlan" eyebrow="PLAN DEL DÍA" headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }} indicators={indicators} title={item.name}>
+      <EntityCard actions={detailAction} entity="dailyPlan" eyebrow="Minuta del día" headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }} indicators={indicators} title={item.name}>
         <Button label="+ Agregar Comida" onPress={addMeal} variant="chipPrimary" />
       </EntityCard>
     );
@@ -72,7 +72,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
       actions={detailAction}
       afterNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} mealNutrition={meals.map((meal) => ({ calories: meal.calories, carbsGrams: meal.carbs_grams, fatGrams: meal.fat_grams, key: meal.id, proteinGrams: meal.protein_grams }))} />}
       entity="dailyPlan"
-      eyebrow="PLAN DEL DÍA"
+      eyebrow="Minuta del día"
       headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }}
       indicators={indicators}
       nutrition={libraryNutrition(item.nutrition)}

@@ -1,42 +1,114 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
+import type { CalendarCommitment, CalendarDay } from "@/api/calendar-types";
+import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { useWeekDayLayout, WeekDayCell, WeekDayGrid, WeekDaySelectionRing } from "@/components/ui";
 import { font, tokens } from "@/design/tokens";
 import { currentWeekDays, type CurrentWeekDay } from "./current-week";
 
-function CurrentWeekDayCell({ day }: { day: CurrentWeekDay }) {
+const WEEK_GAP = 18;
+
+function CurrentWeekDayCell({ commitments, day, planTone, onPress, panGesture }: { commitments: CalendarCommitment[]; day: CurrentWeekDay; planTone: "past" | "future" | null; onPress?: () => void; panGesture: ReturnType<typeof Gesture.Pan> }) {
   const { compact } = useWeekDayLayout();
+  const tapGesture = useMemo(() => Gesture.Tap()
+    .maxDistance(10)
+    .requireExternalGestureToFail(panGesture)
+    .runOnJS(true)
+    .onEnd((_event, success) => { if (success) onPress?.(); }), [onPress, panGesture]);
+  const circle = <View
+    accessibilityActions={onPress ? [{ name: "activate" }] : undefined}
+    accessibilityLabel={`Ver detalle del ${day.date}${day.isToday ? ", hoy" : ""}${commitments.length ? `; ${commitments.map((item) => commitmentPresentation[item.kind].label).join(", ")}` : ""}`}
+    accessibilityRole={onPress ? "button" : undefined}
+    accessible={Boolean(onPress)}
+    onAccessibilityAction={onPress ? (event) => { if (event.nativeEvent.actionName === "activate") onPress(); } : undefined}
+    style={[styles.dayCircle, compact && styles.dayCircleCompact, planTone === "past" && styles.dayCirclePastPlan, planTone === "future" && styles.dayCircleFuturePlan, day.isToday && styles.dayCircleToday]}>
+    {day.isToday ? <WeekDaySelectionRing /> : null}
+    <Text style={[styles.dayNumber, day.isToday && styles.dayNumberToday]}>{day.dayOfMonth}</Text>
+    <Text style={[styles.monthLabel, day.isToday && styles.monthLabelToday]}>{day.monthLabel}</Text>
+  </View>;
   return (
-    <WeekDayCell accessibilityLabel={`${day.label}, ${day.date}${day.isToday ? ", hoy" : ""}`} label={day.label}>
-      <View style={[styles.dayCircle, compact && styles.dayCircleCompact, day.isToday && styles.dayCircleToday]}>
-        {day.isToday ? <WeekDaySelectionRing /> : null}
-        <Text style={[styles.dayNumber, day.isToday && styles.dayNumberToday]}>{day.dayOfMonth}</Text>
-        <Text style={[styles.monthLabel, day.isToday && styles.monthLabelToday]}>{day.monthLabel}</Text>
+    <WeekDayCell label={day.label}>
+      {onPress ? <GestureDetector gesture={tapGesture}>{circle}</GestureDetector> : circle}
+      <View style={styles.commitmentDotsSlot}>
+        {day.isToday ? null : commitments.map((commitment) => <View key={commitment.id} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[commitment.kind].color }]} />)}
       </View>
     </WeekDayCell>
   );
 }
 
-export function CurrentWeekSection({ localDate }: { localDate: string }) {
-  const days = currentWeekDays(localDate);
+export function CurrentWeekSection({ localDate, onPressDay, weekDays = [] }: { localDate: string; onPressDay?: (date: string) => void; weekDays?: CalendarDay[] }) {
+  const { width: windowWidth } = useWindowDimensions();
+  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
+  const pageWidth = measuredWidth ?? windowWidth - tokens.spacing.screen * 2 + 12;
+  const pageStride = pageWidth + WEEK_GAP;
+  const selectedPage = useSharedValue(0);
+  const translateX = useSharedValue(0);
+  useEffect(() => {
+    translateX.set(-selectedPage.get() * pageStride);
+  }, [pageStride, selectedPage, translateX]);
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-12, 12])
+    .failOffsetY([-12, 12])
+    .onUpdate((event) => {
+      const atBoundary = (selectedPage.get() === 0 && event.translationX > 0)
+        || (selectedPage.get() === 1 && event.translationX < 0);
+      translateX.set(-selectedPage.get() * pageStride + event.translationX * (atBoundary ? 0.18 : 1));
+    })
+    .onEnd((event) => {
+      if (selectedPage.get() === 0 && (event.translationX < -48 || event.velocityX < -450)) selectedPage.set(1);
+      else if (selectedPage.get() === 1 && (event.translationX > 48 || event.velocityX > 450)) selectedPage.set(0);
+      translateX.set(withTiming(-selectedPage.get() * pageStride, { duration: 220 }));
+    })
+    .onFinalize((_event, success) => {
+      if (!success) translateX.set(withTiming(-selectedPage.get() * pageStride, { duration: 220 }));
+    });
+  const trackStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.get() }] }));
+  const weekDaysByDate = new Map(weekDays.map((day) => [day.calendar_date, day]));
   return (
-    <View accessibilityLabel="Calendario de la semana actual" style={styles.section}>
-      <WeekDayGrid>
-        {days.map((day) => (
-          <CurrentWeekDayCell day={day} key={day.date} />
-        ))}
-      </WeekDayGrid>
+    <View style={styles.section}>
+      <GestureDetector gesture={panGesture}>
+      <View
+        onLayout={({ nativeEvent }) => {
+          const width = Math.round(nativeEvent.layout.width);
+          setMeasuredWidth((current) => current === width ? current : width);
+        }}
+        style={styles.carousel}>
+          <Animated.View style={[styles.weekTrack, { width: pageWidth * 2 + WEEK_GAP }, trackStyle]}>
+          {[0, 1].map((page) => <Fragment key={page}>
+            {page === 1 ? <View pointerEvents="none" style={styles.weekGap} /> : null}
+            <View accessibilityLabel={page ? "Calendario de la semana siguiente" : "Calendario de la semana actual"} key={page} style={[styles.weekPage, { width: pageWidth }]}>
+              <WeekDayGrid>
+                {currentWeekDays(localDate, page).map((day) => (
+                  <CurrentWeekDayCell commitments={weekDaysByDate.get(day.date)?.commitments ?? []} day={day} key={day.date} onPress={onPressDay ? () => onPressDay(day.date) : undefined} panGesture={panGesture} planTone={weekDaysByDate.get(day.date)?.has_plan ? day.date < localDate ? "past" : day.date > localDate ? "future" : null : null} />
+                ))}
+              </WeekDayGrid>
+            </View>
+          </Fragment>)}
+        </Animated.View>
+      </View>
+      </GestureDetector>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  commitmentDot: { borderRadius: 3, height: 5, width: 5 },
+  commitmentDotsSlot: { alignItems: "center", flexDirection: "row", gap: 2, height: 5, justifyContent: "center", marginTop: -4 },
   dayCircle: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.pill, height: 44, justifyContent: "center", overflow: "visible", position: "relative", width: 44 },
   dayCircleCompact: { height: 40, width: 40 },
+  dayCirclePastPlan: { backgroundColor: `${tokens.color.dailyPlan}1A` },
+  dayCircleFuturePlan: { backgroundColor: `${tokens.color.dailyPlan}4D` },
   dayCircleToday: { backgroundColor: tokens.color.entityIconForeground },
   dayNumber: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"] },
   dayNumberToday: { color: tokens.color.surfaceApp, fontWeight: tokens.weight.bold },
   monthLabel: { color: tokens.color.textMuted, fontFamily: font.regular, fontSize: 9, fontWeight: tokens.weight.medium, lineHeight: 10 },
-  monthLabelToday: { color: tokens.color.surfaceApp, fontWeight: tokens.weight.semibold },
+  monthLabelToday: { color: tokens.color.surfaceApp, fontWeight: tokens.weight.bold },
+  carousel: { marginHorizontal: -6, overflow: "hidden" },
   section: { gap: tokens.spacing.md, minWidth: 0, width: "100%" },
+  weekPage: { paddingHorizontal: 6 },
+  weekGap: { width: WEEK_GAP },
+  weekTrack: { flexDirection: "row" },
 });

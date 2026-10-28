@@ -1,10 +1,12 @@
 import { type Href, Redirect, Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type { OnboardingAnalyzeInput, OnboardingCalendarization, OnboardingStateData, ProposalDetail } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import {
   OnboardingJourneyView,
   onboardingScreenChromeForStep,
@@ -36,6 +38,15 @@ const initialValues: OnboardingJourneyValues = {
 const allergyChoices = new Set(["gluten", "lácteos", "frutos secos", "mariscos"]);
 type OnboardingMinutas = { items: ProposalDetail[] };
 
+function FoodListHeader({ onBack, titleVisible }: { onBack(): void; titleVisible: boolean }) {
+  const setHeaderPresentation = useHeaderPresentation();
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ mode: "back", title: "Lista de alimentos", identityVisible: titleVisible, leadingAction: { icon: "back", label: "Volver a las minutas", onPress: onBack } });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [onBack, setHeaderPresentation, titleVisible]));
+  return null;
+}
+
 function stepForState(state: OnboardingStateData): OnboardingJourneyStep {
   if (state.stage === "summary") return "summary";
   if (state.stage === "plan") return "dailyPlan";
@@ -62,6 +73,7 @@ function valuesForState(state: OnboardingStateData): OnboardingJourneyValues {
 }
 
 export default function OnboardingScreen() {
+  const insets = useSafeAreaInsets();
   const { returnTo, reviewIntro } = useLocalSearchParams<{ returnTo?: string; reviewIntro?: string }>();
   const returnHref = internalHref(returnTo);
   const router = useRouter();
@@ -74,7 +86,11 @@ export default function OnboardingScreen() {
   const [calendarization, setCalendarization] = useState<OnboardingCalendarization | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [foodListOpen, setFoodListOpen] = useState(false);
+  const [foodListHeaderVisible, setFoodListHeaderVisible] = useState(false);
+  const [foodListLoading, setFoodListLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const closeFoodList = useCallback(() => setFoodListOpen(false), []);
 
   const load = useCallback(async () => {
     if (status !== "authenticated") return;
@@ -99,7 +115,8 @@ export default function OnboardingScreen() {
 
   if (status === "anonymous") return <Redirect href={{ pathname: "/login", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
   if (profile?.onboarding_completed) return <Redirect href={returnHref ?? ("/today" as Href)} />;
-  if (loading) return <LoadingState label="Preparando tu punto de partida…" />;
+  if (loading) return <><Stack.Screen options={{ animation: "none", headerShown: false }} /><LoadingState headerVisible={false} label="Preparando tu punto de partida…" /></>;
+  if (step === "summary" && busy) return <><Stack.Screen options={{ animation: "none", headerShown: false }} /><LoadingState headerVisible={false} label="Generando tus minutas…" /></>;
   if (step === "plans") {
     return <Redirect href={{ pathname: "/subscription", params: { origin: "onboarding", ...(returnHref ? { returnTo: String(returnHref) } : {}) } }} />;
   }
@@ -215,6 +232,26 @@ export default function OnboardingScreen() {
     }
   }
 
+  async function openFoodList(open: boolean) {
+    if (!open) {
+      setFoodListOpen(false);
+      setFoodListHeaderVisible(false);
+      return;
+    }
+    setFoodListHeaderVisible(false);
+    setFoodListOpen(true);
+    setFoodListLoading(true);
+    setError(null);
+    try {
+      setCalendarization(await apiRequest<OnboardingCalendarization>("/api/v1/onboarding/calendarized-foods", { cache: "no-store" }));
+    } catch (nextError) {
+      setFoodListOpen(false);
+      setError(userFacingError(nextError));
+    } finally {
+      setFoodListLoading(false);
+    }
+  }
+
   function back() {
     setError(null);
     const introIndex = introSteps.indexOf(step);
@@ -232,11 +269,14 @@ export default function OnboardingScreen() {
     proposal: proposals[0] ?? null,
     proposals,
     calendarization,
+    foodListOpen,
+    foodListLoading,
     busy,
     error,
     onChange: updateValue,
     onNext: () => void next(),
     onCalendarize: (proposalId) => void calendarize(proposalId),
+    onFoodListOpenChange: (open) => void openFoodList(open),
     onOpenMeal: (proposalId, mealIndex) => router.push(`/onboarding/minutas/${proposalId}/meals/${mealIndex}` as Href),
     onBack: back,
     onAdjust: () => setStep("goal"),
@@ -247,8 +287,9 @@ export default function OnboardingScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
-      <Screen contentStyle={[styles.screen, { paddingTop: headerCompensationTop }]} scroll={scroll}>
+      <Stack.Screen options={{ gestureEnabled: false, headerShown: foodListOpen }} />
+      <Screen contentStyle={[styles.screen, { paddingTop: step === "dailyPlan" ? foodListOpen ? 22 : insets.top + 48 : headerCompensationTop }]} headerMode={foodListOpen ? "preserve" : "automatic"} onHeaderVisibilityChange={foodListOpen ? setFoodListHeaderVisible : undefined} scroll={scroll}>
+        {foodListOpen ? <FoodListHeader onBack={closeFoodList} titleVisible={foodListHeaderVisible} /> : null}
         <OnboardingJourneyView controller={controller} {...presentationProps} step={step} />
       </Screen>
     </>

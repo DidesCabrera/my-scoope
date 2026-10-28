@@ -36,7 +36,8 @@ test("Screen has one implementation and never overrides externally owned headers
 
   assertSourceMatch(layout, /headerMode\?: "automatic" \| "preserve"/);
   assertSourceMatch(layout, /if \(headerMode === "preserve"\) return undefined;[\s\S]*setHeaderPresentation/);
-  assertSourceMatch(layout, /onScroll=\{\(event\) => setCompactIdentityVisible\(isHeaderIdentityVisible\(event\.nativeEvent\.contentOffset\.y\)\)\}/);
+  assertSourceMatch(layout, /onScroll=\{\(event\) => setCompactIdentityVisible\(nextHeaderIdentityVisibility\(event\.nativeEvent\.contentOffset\.y, compactHeaderVisibleRef\.current\)\)\}/);
+  assertSourceMatch(layout, /if \(compactHeaderVisibleRef\.current === visible\) return/);
   assertSourceMatch(layout, /BOTTOM_SPACING = 96/);
   assertSourceMatch(layout, /paddingBottom: BOTTOM_SPACING/);
   assertSourceMatch(layout, /scroll\?: boolean \| "auto"/);

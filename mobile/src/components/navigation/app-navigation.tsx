@@ -58,7 +58,7 @@ type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "cl
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
   | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; secondaryAction?: HeaderAction; title: string }
-  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; forceFallback?: boolean; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
+  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; fallback?: Href; forceFallback?: boolean; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; secondaryAction?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
@@ -180,13 +180,13 @@ export function AppNavigationHeader() {
   const detailFallback = headerPresentation.mode === "back"
     ? headerPresentation.fallback ?? "/today"
     : headerPresentation.mode === "library-detail"
-    ? headerPresentation.entity === "dailyPlan"
+    ? headerPresentation.fallback ?? (headerPresentation.entity === "dailyPlan"
       ? "/libraries/daily-plans"
       : headerPresentation.entity === "program"
         ? "/libraries/programs"
         : headerPresentation.entity === "meal"
           ? "/libraries/meals"
-          : "/libraries/foods"
+          : "/libraries/foods")
     : "/today";
   const routeIdentity = routeHeader(pathname);
   const isHome = pathname === "/today" || pathname === "/";

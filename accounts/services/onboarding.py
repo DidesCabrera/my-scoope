@@ -14,10 +14,12 @@ from notas.application.services.commands.proposal_commands import (
     approve_proposal,
     cancel_proposal,
 )
+from notas.application.services.commands.meal_commands import save_dailyplan_meal_to_library
 from notas.application.services.nutrition.body_metrics import calculate_age_years, record_weight
 from notas.domain.models import (
     CalendarizedDay,
     DailyPlan,
+    DailyPlanMeal,
     NutritionPreferenceProfile,
     NutritionProposal,
     NutritionProposalAuditEvent,
@@ -230,6 +232,27 @@ def accept_nutrition_onboarding_plan(*, user) -> tuple[NutritionProposal, ...]:
             proposal.refresh_from_db()
         if proposal.status != NutritionProposal.STATUS_APPLIED:
             raise ValueError("onboarding_plan_not_applicable")
+    plan_ids = onboarding_applied_dailyplan_ids(user=user, proposal_ids=ids)
+    if len(plan_ids) != len(proposals):
+        raise ValueError("onboarding_plan_not_applicable")
+    for proposal in proposals:
+        applied_event = NutritionProposalAuditEvent.objects.select_for_update().filter(
+            proposal=proposal, action=NutritionProposalAuditEvent.ACTION_APPLIED,
+            metadata__dailyplan_id=plan_ids[proposal.id],
+        ).order_by("-id").first()
+        if applied_event is None:
+            raise ValueError("onboarding_plan_not_applicable")
+        if "onboarding_library_meal_ids" in (applied_event.metadata or {}):
+            continue
+        saved_ids = []
+        slots = DailyPlanMeal.objects.filter(dailyplan_id=plan_ids[proposal.id]).select_related("meal").order_by("order", "id")
+        for slot in slots:
+            saved = save_dailyplan_meal_to_library(slot, user)
+            saved.name = slot.meal.name
+            saved.save(update_fields=["name"])
+            saved_ids.append(saved.id)
+        applied_event.metadata = {**(applied_event.metadata or {}), "onboarding_library_meal_ids": saved_ids}
+        applied_event.save(update_fields=["metadata"])
     profile.onboarding_stage = Profile.ONBOARDING_STAGE_PLANS
     profile.save(update_fields=["onboarding_stage"])
     return proposals

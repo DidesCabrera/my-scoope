@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1 },
   onboardingDescription: { color: tokens.color.textMuted, fontSize: 18, lineHeight: 25, textAlign: "center" },
   onboardingIntro: { alignItems: "center", gap: tokens.spacing.lg, paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.lg },
-  onboardingLogo: { marginBottom: tokens.spacing.lg },
+  onboardingLogo: { marginBottom: tokens.spacing.lg, marginTop: 56 },
   onboardingTitle: { color: tokens.color.textMain, fontSize: 34, fontWeight: tokens.weight.extraBold, lineHeight: 40, textAlign: "center" },
   planPriceChip: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.xs },
   planPriceChipLabel: { color: tokens.color.surfaceApp, fontSize: 16, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },

@@ -19,9 +19,9 @@ test("Home creates a dated snapshot while retaining legacy pinned-plan fallback"
   assertSourceMatch(home, /setToday\(optimisticMealExecution\(today, mealKey, completed\)\)/);
   assertSourceMatch(home, /apiRequest<CalendarProgressData>\("\/api\/v1\/calendar\/progress"\)/);
   assertSourceMatch(home, /setToday\(previousToday\);/);
-  assertSourceMatch(card, /<EntityCard actions=\{detailAction\} entity="dailyPlan" eyebrow="PLAN DEL DÍA" headingLink=\{\{ label: "Ir al detalle del plan", onPress: openDetail \}\} indicators=\{indicators\} title=\{item\.name\}>/);
+  assertSourceMatch(card, /<EntityCard actions=\{detailAction\} entity="dailyPlan" eyebrow="Minuta del día" headingLink=\{\{ label: "Ir al detalle del plan", onPress: openDetail \}\} indicators=\{indicators\} title=\{item\.name\}>/);
   assertSourceMatch(card, /label="Ir al detalle del plan"/);
-  assertSourceMatch(card, /router\.push\(`\/libraries\/daily-plans\/\$\{item\.id\}` as Href\)/);
+  assertSourceMatch(card, /router\.push\(`\/libraries\/daily-plans\/\$\{item\.id\}\?origin=home` as Href\)/);
   assertSourceMatch(card, /addMealAction: \{ marginTop: tokens\.spacing\.md \}/);
   assertSourceMatch(card, /label="\+ Agregar Comida"/);
   assertSourceMatch(card, /\{ icon: "meal" as const, label: "comidas", value: meals\.length \}/);

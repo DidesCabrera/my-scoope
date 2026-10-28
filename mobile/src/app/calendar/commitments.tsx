@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   foodPeriodAction: { marginTop: 30 - tokens.spacing.md },
   foodPeriodControls: { gap: tokens.spacing.md, marginBottom: 42 - tokens.spacing.lg },
   legend: { color: tokens.color.textMuted, fontSize: 12, textAlign: "center" },
-  monthArrow: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
+  monthArrow: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: tokens.spacing.md },
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
   noteCount: { color: tokens.color.textMuted, fontSize: 12, textAlign: "right" },

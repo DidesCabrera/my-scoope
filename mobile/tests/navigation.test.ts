@@ -254,7 +254,7 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assertSourceMatch(navigation, /Icon color=\{tokens\.color\.textMain\}/);
   assertSourceMatch(entityIdentity, /<EntityIcon entity=\{entity\} size="header" \/>/);
   assertSourceDoesNotMatch(entityIdentity, /tone="white"/);
-  assertSourceMatch(screenLayout, /isHeaderIdentityVisible\([^)]*nativeEvent\.contentOffset\.y\)/);
+  assertSourceMatch(screenLayout, /nextHeaderIdentityVisibility\([^)]*nativeEvent\.contentOffset\.y/);
   assertSourceMatch(headerScroll, /HEADER_IDENTITY_SCROLL_THRESHOLD = 12/);
   assertSourceMatch(headerScroll, /offsetY > HEADER_IDENTITY_SCROLL_THRESHOLD/);
   assertSourceMatch(screenLayout, /identityVisible: compactHeaderVisible/);

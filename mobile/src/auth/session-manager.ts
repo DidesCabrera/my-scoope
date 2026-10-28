@@ -324,7 +324,7 @@ export class MobileSessionManager {
       || path.startsWith("/api/v1/days/");
     if (changesCalendar) invalidateCalendarMonthCaches();
     const affectedPrefixes = path.startsWith("/api/v1/calendar/")
-      ? ["/api/v1/home", "/api/v1/today", "/api/v1/program/", "/api/v1/calendar"]
+      ? ["/api/v1/home", "/api/v1/today", "/api/v1/program/", "/api/v1/calendar", "/api/v1/onboarding/calendarized-foods"]
       : path.includes("/library/")
       ? ["/api/v1/home", "/api/v1/library/", "/api/v1/today", "/api/v1/program/"]
       : path.includes("/weights")

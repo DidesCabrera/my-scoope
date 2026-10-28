@@ -58,11 +58,11 @@ function dateValue(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-export function currentWeekDays(localDate: string): CurrentWeekDay[] {
+export function currentWeekDays(localDate: string, weekOffset = 0): CurrentWeekDay[] {
   const today = parseLocalDate(localDate);
   const mondayOffset = (today.getDay() + 6) % 7;
   const monday = new Date(today);
-  monday.setDate(today.getDate() - mondayOffset);
+  monday.setDate(today.getDate() - mondayOffset + weekOffset * 7);
 
   return weekdayLabels.map((label, index) => {
     const date = new Date(monday);

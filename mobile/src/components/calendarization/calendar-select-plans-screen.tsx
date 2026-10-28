@@ -11,9 +11,8 @@ import { useSession } from "@/auth/session-context";
 import { DailyPlanPreviewCard } from "@/components/calendarization/daily-plan-preview-card";
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
 import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
-import { CalendarMonthPlaceholder } from "@/components/calendarization/calendar-month-calendar";
 import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
-import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
+import { monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -27,6 +26,22 @@ import { tokens } from "@/design/tokens";
 
 function readableDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00`));
+}
+
+function emptyMonthOverview(month: string, localToday: string): CalendarOverviewData {
+  const { startDate, days } = monthWindow(month);
+  const start = new Date(`${startDate}T12:00:00Z`);
+  const dates = Array.from({ length: days }, (_, offset) => {
+    const date = new Date(start);
+    date.setUTCDate(start.getUTCDate() + offset);
+    return date.toISOString().slice(0, 10);
+  });
+  return {
+    local_date: localToday,
+    start_date: startDate,
+    end_date: dates[dates.length - 1],
+    days: dates.map((calendar_date) => ({ id: null, calendar_date, has_plan: false, plan_name: "", source_kind: null, source_program_name: null, has_execution: false })),
+  };
 }
 
 function calendarDayNutrition(day: CalendarDay) {
@@ -117,14 +132,15 @@ export default function SelectCalendarPlansScreen() {
       .then((overview) => {
         if (!active) return;
         setMonthOverview(overview);
+        setMonthLoading(false);
+        void monthCache.load(shiftMonth(visibleMonth, 1)).catch(() => undefined);
         setSelectedDaysByDate((current) => {
           const next = { ...current };
           for (const day of overview.days) if (current[day.calendar_date]) next[day.calendar_date] = day;
           return next;
         });
       })
-      .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
-      .finally(() => { if (active) setMonthLoading(false); });
+      .catch((nextError) => { if (active) setError(userFacingError(nextError)); });
     return () => { active = false; };
   }, [monthCache, selected, status, visibleMonth]);
 
@@ -174,6 +190,7 @@ export default function SelectCalendarPlansScreen() {
     try {
       const currentDays = await Promise.all(selectedDateList.map((selectedDate) => apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${selectedDate}`)));
       setSelectedDaysByDate((current) => ({ ...current, ...Object.fromEntries(currentDays.map((day) => [day.calendar_date, day])) }));
+      setMonthOverview((current) => current ? { ...current, days: current.days.map((day) => currentDays.find((fresh) => fresh.calendar_date === day.calendar_date) ?? day) } : current);
       const protectedDays = currentDays.filter((day) => day.has_execution);
       if (protectedDays.length) {
         setError(`${protectedDays.length === 1 ? "La fecha seleccionada tiene" : `${protectedDays.length} fechas seleccionadas tienen`} registros de cumplimiento y no se puede reemplazar su plan.`);
@@ -195,9 +212,18 @@ export default function SelectCalendarPlansScreen() {
     setError(null);
     try {
       const currentDays = await Promise.all(selectedDateList.map((selectedDate) => apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${selectedDate}`)));
+      setSelectedDaysByDate((current) => ({ ...current, ...Object.fromEntries(currentDays.map((day) => [day.calendar_date, day])) }));
+      setMonthOverview((current) => current ? { ...current, days: current.days.map((day) => currentDays.find((fresh) => fresh.calendar_date === day.calendar_date) ?? day) } : current);
       if (currentDays.some((day) => day.has_execution)) {
         setConfirmReplacement(null);
         setError("Una de las fechas seleccionadas ahora tiene registros de cumplimiento y ya no se puede reemplazar.");
+        return;
+      }
+      const confirmedDates = new Set(confirmReplacement.map((day) => day.calendar_date));
+      const currentReplacements = currentDays.filter((day) => day.has_plan);
+      if (currentReplacements.some((day) => !confirmedDates.has(day.calendar_date))) {
+        setConfirmReplacement(currentReplacements);
+        setError("Cambió la asignación de una fecha. Revisa qué minuta se reemplazará antes de continuar.");
         return;
       }
       await assign(currentDays);
@@ -240,7 +266,7 @@ export default function SelectCalendarPlansScreen() {
     const cached = monthCache.get(nextMonth);
     setMonthLoading(!cached);
     setError(null);
-    if (cached) setMonthOverview(cached);
+    setMonthOverview(cached ?? emptyMonthOverview(nextMonth, localToday));
     setVisibleMonth(nextMonth);
   }
 
@@ -259,37 +285,38 @@ export default function SelectCalendarPlansScreen() {
           <ChevronRight color={tokens.color.textMain} size={20} />
         </Pressable>
       </View>
-      {monthLoading ? <CalendarMonthPlaceholder /> : <View style={styles.grid}>
+      <View style={styles.grid}>
         {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
         {monthOverview?.days.map((day) => {
           const isPast = Boolean(localToday && day.calendar_date < localToday);
           const isProtected = day.has_execution;
           const isSelected = selectedDates.includes(day.calendar_date);
+          const isFuturePlanDimmed = day.has_plan && day.calendar_date >= localToday && monthKeyFromDate(day.calendar_date) !== visibleMonth;
           const commitmentKinds = commitmentDotKinds(day.commitments);
           return <Pressable
-            accessibilityLabel={`${readableDate(day.calendar_date)}: ${isSelected ? "seleccionado" : isPast ? "fecha anterior" : isProtected ? "con cumplimiento registrado" : day.has_plan ? "con plan" : "sin seleccionar"}${commitmentKinds.length ? `; ${commitmentKinds.map((kind) => commitmentPresentation[kind].label).join(", ")}` : ""}`}
+            accessibilityLabel={`${readableDate(day.calendar_date)}: ${isSelected ? "seleccionado" : isPast ? "fecha anterior" : isProtected ? "con cumplimiento registrado" : day.has_plan ? "con minuta asignada" : "sin minuta"}${commitmentKinds.length ? `; ${commitmentKinds.map((kind) => commitmentPresentation[kind].label).join(", ")}` : ""}`}
             accessibilityRole="checkbox"
-            accessibilityState={{ checked: isSelected, disabled: isPast || isProtected }}
-            disabled={isPast || isProtected}
+            accessibilityState={{ checked: isSelected, disabled: monthLoading || isPast || isProtected }}
+            disabled={monthLoading || isPast || isProtected}
             key={day.calendar_date}
             onLayout={day.calendar_date === localToday ? ({ nativeEvent: { layout } }) => {
               setTodaySize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
             } : undefined}
             onPress={() => toggleDate(day)}
-            style={[styles.gridDate, day.has_plan && styles.gridDateWithPlan, isSelected && styles.gridDateSelected, day.has_plan && isCurrentMonthFromToday(day.calendar_date, localToday) && styles.gridDateUpcomingWithPlan, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, (isPast || isProtected) && styles.gridDatePast, day.calendar_date === localToday && styles.gridDateToday]}>
+            style={[styles.gridDate, day.has_plan && styles.gridDateWithPlan, isFuturePlanDimmed && styles.gridDateFuturePlanDimmed, isSelected && styles.gridDateSelected, monthKeyFromDate(day.calendar_date) !== visibleMonth && !day.has_plan && styles.gridDateAdjacent, (isPast || isProtected) && styles.gridDatePast, day.calendar_date === localToday && styles.gridDateToday]}>
             <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, isPast && styles.gridNumberPast, isSelected && styles.gridNumberSelected]}>{day.calendar_date.slice(8, 10)}</Text>
             {commitmentKinds.length ? <View style={[styles.gridCommitmentDots, day.calendar_date === localToday && styles.gridCommitmentDotsToday]}>{commitmentKinds.map((kind) => <View key={kind} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
             {day.calendar_date === localToday ? <CalendarTodayOutline {...todaySize} /> : null}
           </Pressable>;
         })}
-      </View>}
+      </View>
     </View>
     <View style={styles.calendarAction}>
-      <Text style={styles.replacementCount}>{replacementDays.length === 1 ? "1 plan será reemplazado" : `${replacementDays.length} planes serán reemplazados`}</Text>
+      {replacementDays.length ? <Text style={styles.replacementCount}>{replacementDays.length === 1 ? "1 minuta será reemplazada" : `${replacementDays.length} minutas serán reemplazadas`}</Text> : null}
       {confirmReplacement ? <ConfirmationState
         busy={busy}
         confirmLabel={confirmReplacement.length === 1 ? "Reemplazar y calendarizar" : `Reemplazar ${confirmReplacement.length} planes`}
-        message={`${confirmReplacement.length === 1 ? "El plan actual conservará" : "Los planes actuales conservarán"} su historial. “${selected.name}” quedará asignado ${selectedDateList.length === 1 ? `al ${readableDate(selectedDateList[0])}` : `a las ${selectedDateList.length} fechas seleccionadas`}.`}
+        message={`${confirmReplacement.length === 1 ? `“${confirmReplacement[0].plan_name ?? "La minuta actual"}” ya está asignada al ${readableDate(confirmReplacement[0].calendar_date)}.` : `${confirmReplacement.length} fechas ya tienen una minuta asignada.`} ${confirmReplacement.length === 1 ? "Conservará" : "Conservarán"} su historial. “${selected.name}” quedará asignada ${selectedDateList.length === 1 ? `al ${readableDate(selectedDateList[0])}` : `a las ${selectedDateList.length} fechas seleccionadas`}.`}
         onCancel={() => setConfirmReplacement(null)}
         onConfirm={() => void confirmAssignments()}
         title={confirmReplacement.length === 1 ? "¿Reemplazar el plan de esta fecha?" : "¿Reemplazar los planes de estas fechas?"}
@@ -363,15 +390,15 @@ const styles = StyleSheet.create({
   gridDateToday: { borderWidth: 0 },
   gridDateAdjacent: { opacity: 0.5 },
   gridDatePast: { opacity: 0.35 },
-  gridDateSelected: { backgroundColor: `${tokens.color.dailyPlan}2E`, borderColor: tokens.color.dailyPlan },
-  gridDateWithPlan: { backgroundColor: `${tokens.color.dailyPlan}2E` },
-  gridDateUpcomingWithPlan: { backgroundColor: `${tokens.color.dailyPlan}59` },
+  gridDateSelected: { backgroundColor: `${tokens.color.dailyPlan}73`, borderColor: tokens.color.dailyPlan },
+  gridDateWithPlan: { backgroundColor: `${tokens.color.dailyPlan}59` },
+  gridDateFuturePlanDimmed: { backgroundColor: `${tokens.color.dailyPlan}33` },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
   gridNumberPast: { opacity: 0.8 },
-  gridNumberSelected: { color: tokens.color.dailyPlan, fontWeight: "700" },
+  gridNumberSelected: { color: tokens.color.textMain, fontWeight: "700" },
   gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
-  monthArrow: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
+  monthArrow: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },

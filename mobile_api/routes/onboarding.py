@@ -233,7 +233,8 @@ def onboarding_accept_plan(request):
     try:
         proposals = accept_nutrition_onboarding_plan(user=request.auth.user)
     except ValueError as exc:
-        raise MobileAPIError(code=str(exc), message="No pudimos guardar las minutas propuestas.", status_code=409) from exc
+        message = "No hay capacidad para guardar todas las comidas de las minutas. Libera espacio en Mis comidas o cambia de plan." if str(exc) == "max_meals_reached" else "No pudimos guardar las minutas propuestas."
+        raise MobileAPIError(code=str(exc), message=message, status_code=409) from exc
     return success({"items": [proposal_detail_payload(request.auth.user, proposal.id) for proposal in proposals]})
 
 

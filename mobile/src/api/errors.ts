@@ -66,6 +66,7 @@ export function userFacingError(error: unknown): string {
       library_name_too_long: "El nombre es demasiado largo.",
       library_share_email_invalid: "Ingresa un correo válido para compartir.",
       library_share_subject_too_long: "El asunto es demasiado largo.",
+      max_meals_reached: "No hay espacio para guardar más comidas en Mis comidas. Libera cupos o cambia de plan.",
       max_shared_imports_monthly_reached: "Ya alcanzaste el límite mensual de elementos recibidos agregados a tu biblioteca.",
       mobile_auth_required: "Tu sesión necesita renovarse. Inicia sesión nuevamente.",
       mobile_api_invalid_response: safeMessage(error.message),

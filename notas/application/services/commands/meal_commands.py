@@ -30,6 +30,7 @@ def clone_meal_foods(source: Meal, target: Meal) -> None:
             quantity=mf.quantity,
             portion_display_quantity=mf.portion_display_quantity,
             portion_display_measure=mf.portion_display_measure,
+            order=mf.order,
         )
         for mf in source.meal_food_set.all()
     ])
