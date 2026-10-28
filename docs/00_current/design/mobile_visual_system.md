@@ -85,15 +85,15 @@ retain a 44 pt effective touch target. The Native UI Gallery's
 Calendars section renders both production components inside 414 pt and 375 pt
 device frames so their responsive geometry can be compared in the browser.
 
-“Mi programa activo” uses the dated hybrid of those two recipes: chronological
+Calendar uses the dated hybrid of those two recipes: chronological
 `calendar_date` determines the visible weekday order, every circle shows day and
 three-letter month, and an empty editable future date carries a small add affordance.
-It therefore may begin on any weekday. Filled future dates retain an explicit action
-to replace their DailyPlan; present and past dates remain historical and non-editable.
-When a week becomes active in the UI, its first chronological program day is selected
-by default; the current week instead selects today's dated slot. Today uses the same
-white-filled circle as Home. An empty selected slot renders an explicit “Día sin plan”
-state rather than leaving the plan-detail area blank.
+It may contain days projected from a Program and manually assigned DailyPlans in the
+same chronology. Filled future dates retain explicit actions to move or replace their
+snapshot; present and past dates with evidence remain historical. The current week
+selects today's dated slot. Today uses the same white-filled circle as Home. An empty
+selected slot renders an explicit “Día sin plan” state rather than leaving the
+plan-detail area blank.
 
 `KpiAllocationBar` and `PanelAllocationBar` share percentage normalization and
 nutrition tones and overlay the value on the track. Entity panels use the

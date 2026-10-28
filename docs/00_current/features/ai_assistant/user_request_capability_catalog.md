@@ -1,7 +1,7 @@
 # Catálogo de requerimientos del usuario para el AI Assistant
 
 Status: living baseline
-Date: 2026-09-17
+Date: 2026-10-28
 
 ## Propósito
 
@@ -169,12 +169,12 @@ Leyenda de cobertura actual:
 | PG-09 | Copiar, guardar o compartir programa | Handoff | UI | Sharing opera sobre snapshots portables. |
 | PG-10 | Activar/calendarizar programa | Handoff confirmable | UI | Requiere fecha, timezone, revisión de días vacíos y posible reemplazo del activo. |
 
-### Programa activo y calendario
+### Calendario, ejecución y progreso
 
 | ID | Solicitud o ejemplos | Resolución | Cobertura actual | Observación |
 | --- | --- | --- | --- | --- |
-| C-01 | Consultar programa activo, fechas, progreso o historial | Lectura | Cubierta parcial | La consulta debe distinguir plantilla y calendarización. |
-| C-02 | Pausar, reanudar o cancelar | Patch de ciclo de vida | Cubierta | Cancelar es destructivo. |
+| C-01 | Consultar calendario, plan de una fecha, progreso o historial | Lectura | Cubierta parcial | La consulta debe distinguir plantilla Program, procedencia y snapshot fechado. |
+| C-02 | Pausar, reanudar o cancelar una proyección de programa | Patch de ciclo de vida | Cubierta | No equivale a borrar los días históricos; cancelar es destructivo. |
 | C-03 | Cambiar notificaciones, hora general o zona horaria | Handoff | UI | Afecta eventos y dispositivos; conserva formulario especializado. |
 | C-04 | Cambiar nombre/hora de una comida en un día futuro | Patch sobre snapshot | UI | Existen commands de snapshot; faltan adapters AI y política temporal. |
 | C-05 | Agregar, reemplazar, quitar o reordenar comidas/alimentos futuros | Patch o revisión | UI | Pasado y presente con evidencia no deben reescribirse. |
@@ -183,6 +183,8 @@ Leyenda de cobertura actual:
 | C-08 | Registrar comida completada/omitida, alimento preparado o nota | Evento de ejecución | UI | Es evidencia append-only, no edición de la plantilla. |
 | C-09 | Registrar peso o revisión de periodo | Evento/revisión | UI | Debe preservar fecha y contexto de calendarización. |
 | C-10 | Reoptimizar el resto del programa según progreso | Propuesta + revisión futura | Brecha | No puede alterar pasado/presente; requiere métricas y alternativas. |
+| C-11 | Asignar, mover o quitar un plan en una fecha | Patch determinista | UI | Calendar es la autoridad y debe conservar historial y colisiones explícitas. |
+| C-12 | Registrar compras, cocina, entrenamiento o lista alimentaria por periodo | Handoff | UI | Los compromisos son fechados y la lista guardada es un snapshot. |
 
 ### Propuestas, comparaciones, Inbox, sharing y cuenta
 
@@ -195,7 +197,7 @@ Leyenda de cobertura actual:
 | X-05 | Crear/actualizar/renombrar comparación guardada | Lectura, patch o handoff | Parcial | Sólo renombrar está en workspace patch. |
 | X-06 | Consultar recibidos, enviados y favoritos | Lectura | Cubierta | Debe usar Inbox normalizado. |
 | X-07 | Guardar, marcar favorito, descartar o eliminar recibido | Handoff | UI | Guardar crea copia propia separada. |
-| X-08 | Compartir Food/Meal/DailyPlan/Program | Handoff | UI | Requiere snapshot, canal, destinatario y controles antiabuso. |
+| X-08 | Compartir Food/Meal/DailyPlan/Program/SavedComparison | Handoff | UI | Requiere snapshot, canal, destinatario y controles antiabuso. |
 | X-09 | Consultar plan comercial, créditos, pagos o documentos | Lectura | Cubierta | Nunca debe revelar datos de otra cuenta. |
 | X-10 | Comprar, cambiar o cancelar suscripción | Handoff | UI | El modelo nunca opera directamente sobre el proveedor de pagos. |
 
@@ -220,7 +222,7 @@ Una interacción real puede agrupar varias operaciones:
 | “En Almuerzo cambia arroz por papa a 200 g y renómbrala Almuerzo post-entreno” | Un patch con `meal.update_food` y `meal.rename`. |
 | “Crea una comida de 450 kcal, vegetariana, dame tres opciones” | Una propuesta nutricional con tres alternativas, no tres Meals persistidas. |
 | “Usa los mismos alimentos del plan y llévalo a 2.000 kcal” | Propuesta proporcional sobre snapshots del DailyPlan. |
-| “En el programa activo cambia todos los lunes futuros” | Aclarar el cambio concreto; luego preparar una revisión calendarizada de alcance múltiple. |
+| “En el calendario cambia todos los lunes futuros” | Aclarar el cambio concreto y las fechas afectadas; luego preparar una revisión de alcance múltiple. |
 
 ## Política de ambigüedad
 

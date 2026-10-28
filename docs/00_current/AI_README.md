@@ -1,7 +1,7 @@
 # AI README - My Scoope
 
 Status: current
-Last updated: 2026-07-18
+Last updated: 2026-10-28
 Audience: AI assistants and developers working from exported project context
 
 ## Bienvenida de Felipe Dides para la AI
@@ -74,6 +74,10 @@ When documents disagree, prefer them in this order:
 5. Historical files in `docs/90_archive/`.
 6. Personal notes outside official docs, such as `manual_docs/`, should not guide implementation.
 
+`docs/00_current/features/admin_knowledge/` is an explicit exception inside the
+folder hierarchy: it feeds the human Knowledge Center and is not a source for AI
+understanding, product behavior or architecture.
+
 ## Mandatory branch and production workflow
 
 For any change that must reach production, the workflow is mandatory:
@@ -136,6 +140,60 @@ Read:
 2. `docs/00_current/features/food_catalog/food_catalog_app.md`
 3. `docs/00_current/architecture/nutrition_solver_extraction_map.md`
 4. Related decisions in `docs/20_decisions/`
+
+### Calendar, Today, Programs or progress patch
+
+Read:
+
+1. `docs/00_current/features/calendarization.md`
+2. `docs/00_current/features/programs.md`
+3. `docs/20_decisions/0205-calendar-as-planning-authority.md`
+4. `docs/10_active_cycles/calendar_as_planning_spine_cycle.md` for delivery history,
+   not as a replacement for the current feature contract
+5. `docs/40_technical/operations/calendarization_notifications_runbook.md` when
+   notifications, workers, timezones or provider delivery are involved
+
+The current authority is the dated `CalendarizedDay` snapshot. A Program is a
+template and provenance source; do not restore the former assumption that one
+`ProgramCalendarization` owns all planning and adherence.
+
+### Mobile client patch
+
+Read:
+
+1. `docs/00_current/CONSUMER_PRODUCT_BRIEF.md`
+2. `mobile/README.md`
+3. `docs/00_current/design/mobile_visual_system.md`
+4. `docs/00_current/api/mobile_api_v1.md`
+5. The current feature document for the surface being changed
+
+Use staging-backed local iteration for visual work and the focused mobile validation
+policy. Store/TestFlight behavior, physical-device behavior and repository correctness
+are separate evidence layers.
+
+### Sharing, Inbox or comparisons patch
+
+Read:
+
+1. `docs/00_current/features/sharing.md`
+2. `docs/00_current/features/inbox.md`
+3. `docs/00_current/features/comparators.md`
+4. `docs/20_decisions/0193-sharing-resource-invitation-claim-inbox-boundary.md`
+5. `docs/40_technical/operations/sharing_operations_runbook.md` for deployment or incidents
+
+### Billing or beta reliability patch
+
+Read:
+
+1. `docs/00_current/features/billing.md`
+2. `docs/00_current/features/beta_observability.md` when the task starts from an
+   observed crash, error, performance signal or support report
+3. `docs/20_decisions/0183-deterministic-multi-provider-subscription-evidence.md`
+4. The provider-specific active/closed cycle and release evidence
+5. `docs/40_technical/operations/testing_and_ci_policy.md`
+
+For observed beta incidents, correlate the exact client build and environment with
+TestFlight/Expo, Sentry and Render. Silence in one source is not proof of health.
 
 ### Admin Analytics / Admin Operations patch
 
@@ -217,6 +275,9 @@ docs/00_current/features/ai_assistant/tool_oriented_client_memory.md
 - Do not create large patches that mix planning, decisions, source code and unrelated cleanup.
 - Do not add UI tests that lock CSS classes, exact HTML structure or decorative copy.
 - Do not use `manual_docs/` as implementation context.
+- Do not use the human Knowledge Center to infer product behavior.
+- Do not treat a repository-complete mobile feature as proven in a store, physical
+  device or production environment without the corresponding external evidence.
 
 ## Patch discipline
 

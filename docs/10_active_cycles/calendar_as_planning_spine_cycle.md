@@ -1,7 +1,7 @@
 # Calendario como eje de planificación
 
-Status: active
-Date: 2026-10-20
+Status: completed baseline (planning authority integrated; manual notification parity deferred)
+Date: 2026-10-28
 
 ## Resultado buscado
 
@@ -73,35 +73,22 @@ sin repetir la misma suite de código como sustituto del despliegue.
 
 ## Estado de ejecución
 
-- CALV00: completado en rama de trabajo; contrato, ADR 0205 e inventario de
-  dependencias y migración documentados.
-- CALV01: base aditiva implementada y pruebas dirigidas verdes; falta backfill
-  contra una copia representativa de staging antes del cutover.
-- CALV02: asignar, quitar y mover planes manuales y reemplazar la proyección
-  futura de un programa implementados con historial. Mover un día originado en
-  programa sigue pendiente por su procedencia y recordatorios: no se habilitará
-  hasta resolver el slot original, los eventos pendientes y la trazabilidad. Se conserva la
-  restricción de un solo programa globalmente vigente: la revisión automática
-  rechazó quitarla y el reemplazo por fechas funciona sin ese cambio.
-- CALV03: ejecución append-only compartida para días manuales; notificaciones
-  manuales pendientes.
-- CALV04: periodos y cálculo básico de adherencia implementados; integración
-  de métricas en Hoy y web pendiente.
-- CALV05: endpoints aditivos de calendario, historial diario y progreso disponibles en rama;
-  Hoy lee el snapshot fechado y crear un plan para hoy crea una asignación. La
-  proyección heredada de programa excluye días sustituidos manualmente. Los
-  indicadores principales de Home/Inicio ya leen el periodo del calendario;
-  faltan recordatorios de planes individuales y revisar el contrato heredado
-  `TodayData.adherence` antes del cutover.
-- CALV06: vistas web y móvil de revisión accesibles desde el calendarizador
-  heredado; ambas muestran semana, cuatro semanas, agenda y cumplimiento. La
-  asignación, sustitución y movimiento de planes manuales ya tienen acciones e
-  historial consultable por fecha; faltan revisión visual en clientes y aprobación funcional
-  antes de sustituir la navegación principal.
-- CALV07: pendiente; no se ha publicado ni ejecutado integración.
+- CALV00-CALV05: completados con ADR 0205, autoridad por fecha, historial,
+  comandos, progreso, API y compatibilidad de lecturas.
+- CALV06: completado; Calendar reemplazó la navegación principal de “Mi programa
+  activo” en móvil y expone Planificación y Progreso. Web conserva una proyección
+  compatible sobre la misma autoridad.
+- CALV07: integración completada en `main` mediante el PR de staging. La migración
+  y los servicios calendarizados quedaron clasificados para validación `full` y el
+  bloqueo PostgreSQL se corrigió contra la frontera real de filas.
+- Extensión posterior integrada: vista mensual, cobertura futura, métricas de
+  progreso y compromisos de compra/cocina/entrenamiento con listas alimentarias
+  snapshot por periodo.
 
-Validación local: pruebas dirigidas de calendario, programas, planes fijados,
-contratos, límites de dominio, borrado de cuenta y vistas web durante el ciclo;
-lint Python y lint móvil focalizado. Antes de integrar faltan el gate relevante,
-revisión visual/funcional en cliente y prueba de migración sobre datos
-representativos. No se ha publicado ni desplegado esta rama.
+El movimiento de días originados en Program y la creación automática de eventos de
+recordatorio para asignaciones manuales quedan como brechas explícitas posteriores;
+no se presentan como cobertura cerrada de CALV.
+
+Los smokes de datos desplegados, recordatorios y comportamiento físico continúan
+siendo evidencia operacional por ambiente; no reabren el ciclo de implementación.
+El contrato vigente fue promovido a `docs/00_current/features/calendarization.md`.

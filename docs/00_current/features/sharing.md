@@ -1,5 +1,9 @@
 # Sharing
 
+Status: current
+Date: 2026-10-28
+Audience: developers and AI assistants
+
 Sharing is a product capability independent from entity-specific email records,
 with four separate responsibilities: resource, invitation, claim and Inbox delivery.
 
@@ -22,12 +26,13 @@ Implementation progress and transition evidence live in
 
 ## Entity adapters
 
-Food, Meal, DailyPlan, DailyPlanMeal and Program use explicit snapshot adapters.
+Food, Meal, DailyPlan, DailyPlanMeal, Program and SavedComparison use explicit snapshot adapters.
 Snapshots contain only the portable title, nutrition and required composition;
 they exclude account identity, source IDs and free-form notes. A DailyPlanMeal is
 represented as the Meal subject with a `daily_plan_meal` variant. Program snapshots
 nest detached DailyPlan snapshots for planned days. Later source edits never rewrite
-an existing share.
+an existing share. SavedComparison preserves both its kind and frozen result snapshot;
+the public renderer never recalculates against private source entities.
 
 The unlisted `/s/<public-id>/` page renders only the stored snapshot and sends
 `noindex`/`no-store` protections. Opening it never claims content. Claim is a
@@ -43,12 +48,12 @@ Program copy. Revoking a public URL does not erase an already claimed Inbox snap
 
 ## Mobile channels
 
-Every supported library entity in the native app creates the same portable resource
+Every supported library entity and saved comparison in the native app creates the same portable resource
 for the operating-system Share Sheet, explicit copy-link and protected email. Public pages
 offer the registered `myscoope://share/<id>` deep link; the native share screen can
 render before login and preserves its destination through OAuth, disclosures and
 onboarding. Native Inbox lists normalized claims and supports read, favorite,
-dismiss and idempotent save-to-library actions.
+dismiss and idempotent save-to-library or save-to-comparisons actions.
 
 ## Web and email channels
 

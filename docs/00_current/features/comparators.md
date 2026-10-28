@@ -1,5 +1,9 @@
 # Comparators
 
+Status: current
+Date: 2026-10-28
+Audience: developers and AI assistants
+
 ## Estado
 
 Feature vigente.
@@ -18,7 +22,8 @@ Programs queda fuera por decisión actual.
 
 La vista normal permite seleccionar múltiples entidades y comparar métricas.
 
-Foods usan cantidad en gramos.
+Foods usan cantidad en su unidad operativa configurada, `g` o `ml`, con 100 unidades
+como fallback de presentación cuando corresponde.
 
 La selección es posicional: comienza con dos slots, permite agregar o quitar
 posiciones y admite repetir una entidad. Esto permite, por ejemplo, comparar 100 g
@@ -39,6 +44,14 @@ Las comparaciones guardadas usan dos estructuras:
 
 El detail de una comparación guardada inicia en modo lectura. Al presionar editar, reaparecen selectores y acciones de edición.
 
+La comparación guardada puede compartirse mediante el sistema normalizado de
+`ShareResource`. El receptor previsualiza el snapshot, reclama el recurso de forma
+explícita y al guardar obtiene una `SavedComparison` propia. Cambios posteriores en
+la comparación original no reescriben la copia compartida.
+
+Web, móvil y AI Assistant deben reutilizar las mismas proyecciones canónicas de
+biblioteca y resultados. Paginación parcial no equivale al total de entidades.
+
 ## Ubicación de lógica
 
 ```text
@@ -55,3 +68,5 @@ notas/interface/views/comparators.py
 - El snapshot vive en services.
 - Las escrituras viven en commands.
 - El template debe consumir viewmodels preparados.
+- Sharing debe consumir `snapshot_payload`; nunca reconstruir un preview público
+  leyendo objetos privados del emisor.
