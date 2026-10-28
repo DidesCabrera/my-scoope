@@ -1,7 +1,7 @@
 # Food Catalog para Nutrition Solver
 
 Status: human_reference
-Date: 2026-07-17
+Date: 2026-10-28
 Audience: usuarios staff humanos de curación, operaciones, soporte y desarrollo
 Role: human_reference
 Authority: non_authoritative
@@ -102,6 +102,30 @@ El snapshot copia valores, confianza, fuente y versión. El solver recibe el ID 
 | Raw/cooked mezclados | `preparation_state` y fuente nutricional | Separar registros/estados y publicar el correcto. |
 | Cambio maestro no se refleja | versión/source del snapshot operativo | Ejecutar publicación/snapshot explícito y verificar trazabilidad. |
 | Resultado externo aparece como candidato | frontera de importación/curación | Detener flujo: FatSecret/OFF no son `CatalogFood` ni `notas.Food`. |
+
+## Evolución reciente del catálogo
+
+La operación ya no se limita a macros básicos y porciones expresadas implícitamente en gramos:
+
+- cada alimento puede declarar `g` o `ml` como unidad operativa;
+- porción natural, límites y paso deben interpretarse dentro de esa unidad;
+- la nutrición extendida incorpora, cuando existe evidencia, fibra, azúcares, grasas saturadas y
+  sodio, sin rellenar ausencias con ceros inventados;
+- las variantes culinarias validadas permiten diferenciar una preparación utilizable de un conjunto
+  arbitrario de ingredientes;
+- la publicación de porciones USDA amplió cobertura, pero sigue requiriendo trazabilidad y revisión;
+- las identidades visuales ayudan a reconocer alimentos en catálogo y móvil, pero nunca sustituyen
+  el nombre, la fuente ni el estado de curación.
+
+Una conversación frecuente de soporte es “hay alimentos duplicados”. Antes de borrar, distinguir:
+
+1. el registro maestro curado en Food Catalog;
+2. su snapshot operacional en `notas.Food`;
+3. un alimento privado creado por etiqueta o por el usuario;
+4. copias incluidas dentro de comidas, planes, programas o elementos compartidos.
+
+Esas capas pueden representar el mismo concepto para propósitos diferentes. La similitud del nombre
+no demuestra por sí sola un duplicado eliminable.
 
 ## Inventario y calidad en Admin Operations
 

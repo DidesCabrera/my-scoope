@@ -1,7 +1,7 @@
 # AI Assistant: paridad, seguridad y operación
 
 Status: human_reference
-Date: 2026-07-23
+Date: 2026-10-28
 Audience: usuarios staff humanos de producto, operaciones, soporte y desarrollo
 Role: human_reference
 Authority: non_authoritative
@@ -93,6 +93,26 @@ AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS=true
 Si una solicitud falla, revisar en orden: resolución de entidad, ownership/visibilidad, selección de
 capacidad, executor, validación del servicio de aplicación, estado de propuesta/acción preparada y
 gate del ambiente. Nunca corregir un problema de permisos abriendo una tool más amplia.
+
+## Evolución reciente de la experiencia
+
+Desde julio, el Assistant dejó de ser principalmente una superficie conversacional aislada y pasó
+a operar sobre el mismo espacio de trabajo que las pantallas del producto:
+
+- **Chats** y **Propuestas** comparten una sección, pero conservan estados y contratos separados.
+- Las listas de biblioteca informan total, cantidad devuelta y paginación; una primera página nunca
+  debe presentarse como toda la biblioteca.
+- Las respuestas pueden mostrar cards acotadas de alimentos, comidas, planes, programas,
+  comparaciones y registros personales.
+- Las solicitudes nutricionales complejas pueden terminar en programas culinarios revisables de
+  varias semanas, con requisitos semanales y alternativas explícitas.
+- Los cambios deterministas y acotados pueden prepararse como workspace patches; las decisiones de
+  composición o cantidades siguen usando propuestas revisables.
+- El seguimiento posterior a una tool debe explicar el resultado real. Un mensaje local degradado
+  no puede fingir que el proveedor confirmó una acción.
+
+La regla humana sigue siendo sencilla: conversar no equivale a aplicar. Buscar, explicar, preparar,
+aprobar y aplicar son etapas distintas y deben ser visibles como tales.
 
 ## Dónde verificar el comportamiento real
 
