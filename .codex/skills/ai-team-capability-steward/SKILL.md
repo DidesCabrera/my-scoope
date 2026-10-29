@@ -31,6 +31,10 @@ material business decisions.
   unused skills, or missing evaluation evidence.
 - **Lifecycle review:** recommend promotion, revision, merging, or retirement based
   on observed use.
+- **Portfolio report:** present roles, shared skills, lifecycle state, operational
+  maturity, evidence, gaps, and next evaluations in a decision-ready chat report.
+  Read [references/capability-portfolio-report.md](references/capability-portfolio-report.md)
+  when Felipe asks for this report or an overview of team development.
 
 ## Design capabilities from work
 

@@ -1,7 +1,7 @@
 # AI Team Organization
 
 Status: active
-Last reviewed: 2026-10-24
+Last reviewed: 2026-10-29
 
 ```mermaid
 flowchart TD
@@ -14,6 +14,7 @@ flowchart TD
     PT --> SPA[Strategic Product Advisor]
     PT --> ACS[AI Architecture and Context Steward]
     PT --> OL[Observability Lead]
+    PT --> PWC[Parallel Work Coordinator]
     OL --> MIS[Mobile Incident Specialist]
     OL --> BIS[Backend Incident Specialist]
     OL --> RIS[Release Incident Specialist]
@@ -69,3 +70,6 @@ do not transfer ownership or authority. Current pilots are:
   isolated checkout before technical work begins;
 - `mobile-simulator-review`, which establishes source, Metro, native-build, and API
   identity before presenting a mobile change for visual review.
+- `publish-to-staging`, which validates and publishes the exact completed task to
+  the current staging integration boundary, verifies remote CI, and closes only
+  the integrated task checkout.

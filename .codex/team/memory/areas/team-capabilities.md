@@ -1,7 +1,7 @@
 # Team Capabilities Memory
 
 Status: active
-Last reviewed: 2026-10-24
+Last reviewed: 2026-10-29
 Owner role: `ai-team-capability-steward`
 
 ## Objective
@@ -31,6 +31,11 @@ grows with real company needs.
    evidence packet prevents stale checkout, Metro, native-build, and API confusion.
 5. Pilot `fresh-task-checkout` on new technical tasks and verify that each begins
    from a fetched `origin/staging` commit without disturbing existing worktrees.
+6. Evaluate `parallel-work-coordinator` through repository-state audits and verify
+   that its ownership registry and Metro leases reduce cross-chat confusion.
+7. Evaluate `publish-to-staging` through completed technical tasks and verify that
+   it publishes the tested commit, confirms exact remote CI, and closes only the
+   integrated task boundary.
 
 ## Sources
 
