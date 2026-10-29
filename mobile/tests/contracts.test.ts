@@ -215,8 +215,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/ui/collection-page-header.tsx"),
     "utf8",
   );
+  const productSource = await readTestFile(
+    path.resolve(process.cwd(), "src/components/ui/product.tsx"),
+    "utf8",
+  );
   assertSourceMatch(collectionPageHeader, /container: \{ alignItems: "flex-start", gap: tokens\.spacing\.sm/);
-  assertSourceMatch(collectionPageHeader, /iconSlot: \{ alignSelf: "flex-start" \}/);
+  assertSourceMatch(collectionPageHeader, /iconSlot: \{ alignSelf: "flex-start", paddingVertical: 4 \}/);
   assertSourceMatch(collectionPageHeader, /function PageHeader[\s\S]*<View style=\{styles\.copy\}>[\s\S]*?<Text style=\{styles\.title\}>\{title\}<\/Text>[\s\S]*\{indicator\}/);
   assertSourceMatch(collectionPageHeader, /subtitle \? <Text style=\{\[styles\.subtitle, subtitleStyle\]\}>\{subtitle\}<\/Text>/);
   assertSourceMatch(collectionPageHeader, /subtitle: \{ color: tokens\.color\.textMuted, fontSize: tokens\.type\.caption, lineHeight: 20 \}/);
@@ -230,6 +234,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(chip, /label: \{[^}]*fontWeight: tokens\.weight\.semibold/);
   assertSourceMatch(collectionPageHeader, /export function SectionPageHeader/);
   assertSourceMatch(collectionPageHeader, /<SectionIcon section=\{section\} size="hero" \/>/);
+  assertSourceMatch(productSource, /sectionIconHero: \{ height: 28, width: 28 \}/);
   assertSourceMatch(collectionPageHeader, /style=\{styles\.countChip\}/);
 
   for (const [relativePath, section, title] of [

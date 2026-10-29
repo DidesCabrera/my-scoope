@@ -27,6 +27,7 @@ import { HomeGettingStarted } from "@/components/home/home-getting-started";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
+import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import type { MealPanelEditing, MealPanelItem } from "@/components/panels";
 import { ProgramActiveKpis } from "@/components/programs/program-active-kpis";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
@@ -38,7 +39,7 @@ const homeCommitmentChipLabels: Record<CalendarCommitment["kind"], string> = {
   shopping: "Hacer compras",
   cooking: "Cocinar",
   training: "Entrenar",
-  nutritionist: "Cita nutricionista",
+  nutritionist: "Nutricionista",
 };
 
 function displayWeight(value: number): string {
@@ -117,7 +118,7 @@ function NextCommitmentsCard({ day, onOpenDay }: { day: CalendarDay; onOpenDay()
           })}
         </View>)}
       </View>
-      <Button bleed={false} label="Ver detalle del día" onPress={onOpenDay} variant="secondary" />
+      <PickerCardAction label="Ver detalle del día" onPress={onOpenDay} subject={dateLabel} variant="mutedFullWidth" />
     </Card>;
 }
 

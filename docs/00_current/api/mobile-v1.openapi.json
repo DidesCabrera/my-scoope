@@ -2189,6 +2189,13 @@
             "title": "End Date",
             "type": "string"
           },
+          "future_commitments_count_by_kind": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Future Commitments Count By Kind",
+            "type": "object"
+          },
           "future_plans_count": {
             "title": "Future Plans Count",
             "type": "integer"
@@ -13025,6 +13032,81 @@
       }
     },
     "/api/v1/calendar/commitments": {
+      "get": {
+        "operationId": "mobile_api_api_list_calendar_commitments",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "shopping",
+                "cooking",
+                "training",
+                "nutritionist"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarCommitmentBatchEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "List Commitments"
+      },
       "post": {
         "operationId": "mobile_api_api_register_calendar_commitments",
         "parameters": [],

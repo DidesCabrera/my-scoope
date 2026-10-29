@@ -42,7 +42,7 @@ export async function syncCommitmentReminders(settings: CommitmentReminderSettin
     if (date <= now) continue;
     await Notifications.scheduleNotificationAsync({
       identifier: `commitment-${commitment.id}`,
-      content: { title: "My Scoope", body: `Hoy: ${commitment.kind === "shopping" ? "hacer compras" : commitment.kind === "cooking" ? "cocinar" : commitment.kind === "training" ? "entrenar" : "cita nutricionista"}`, data: { owner: OWNER, url: `/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` }, sound: "default" },
+      content: { title: "My Scoope", body: `Hoy: ${commitment.kind === "shopping" ? "hacer compras" : commitment.kind === "cooking" ? "cocinar" : commitment.kind === "training" ? "entrenar" : "nutricionista"}`, data: { owner: OWNER, url: `/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` }, sound: "default" },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
     });
     count += 1;

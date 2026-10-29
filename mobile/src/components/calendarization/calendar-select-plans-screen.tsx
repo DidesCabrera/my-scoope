@@ -305,7 +305,7 @@ export default function SelectCalendarPlansScreen() {
             onPress={() => toggleDate(day)}
             style={[styles.gridDate, day.has_plan && styles.gridDateWithPlan, isFuturePlanDimmed && styles.gridDateFuturePlanDimmed, isSelected && styles.gridDateSelected, monthKeyFromDate(day.calendar_date) !== visibleMonth && !day.has_plan && styles.gridDateAdjacent, (isPast || isProtected) && styles.gridDatePast, day.calendar_date === localToday && styles.gridDateToday]}>
             <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, isPast && styles.gridNumberPast, isSelected && styles.gridNumberSelected]}>{day.calendar_date.slice(8, 10)}</Text>
-            {commitmentKinds.length ? <View style={[styles.gridCommitmentDots, day.calendar_date === localToday && styles.gridCommitmentDotsToday]}>{commitmentKinds.map((kind) => <View key={kind} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
+            {commitmentKinds.length ? <View style={[styles.gridCommitmentDots, day.calendar_date < localToday && styles.gridCommitmentDotsPast, day.calendar_date === localToday && styles.gridCommitmentDotsToday]}>{commitmentKinds.map((kind) => <View key={kind} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
             {day.calendar_date === localToday ? <CalendarTodayOutline {...todaySize} /> : null}
           </Pressable>;
         })}
@@ -384,6 +384,7 @@ const styles = StyleSheet.create({
   emptyText: { color: tokens.color.textMuted, fontSize: tokens.type.body },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridCommitmentDots: { bottom: 3, flexDirection: "row", gap: 2, position: "absolute" },
+  gridCommitmentDotsPast: { opacity: 0.5 },
   gridCommitmentDotsToday: { bottom: 6 },
   gridCommitmentDot: { borderRadius: 3, height: 4, width: 4 },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 40, width: "13.5%" },

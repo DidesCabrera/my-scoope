@@ -7,10 +7,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { userFacingError } from "@/api/errors";
 import type { CalendarCommitment, CalendarDayDetailData, CalendarOverviewData } from "@/api/calendar-types";
 import { useSession } from "@/auth/session-context";
-import { commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
+import { commitmentActionLabel, commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
 import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
-import { calendarFoodDayRole, selectCalendarFoodDate, validCalendarFoodPeriod } from "@/components/calendarization/calendar-food-period";
 import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -27,6 +26,10 @@ function shortDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`));
 }
 
+function headerDate(value: string): string {
+  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00`));
+}
+
 export default function CalendarCommitmentDetailScreen() {
   const { id, date } = useLocalSearchParams<{ id: string; date: string }>();
   const router = useRouter();
@@ -34,14 +37,8 @@ export default function CalendarCommitmentDetailScreen() {
   const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const setHeaderPresentation = useHeaderPresentation();
   const [commitment, setCommitment] = useState<CalendarCommitment | null>(null);
-  const [month, setMonth] = useState<string | null>(null);
-  const [monthOverview, setMonthOverview] = useState<CalendarOverviewData | null>(null);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
-  const [savingPeriod, setSavingPeriod] = useState(false);
-  const [editingPeriod, setEditingPeriod] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -51,7 +48,6 @@ export default function CalendarCommitmentDetailScreen() {
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleMonth, setRescheduleMonth] = useState<string | null>(null);
   const [rescheduleOverview, setRescheduleOverview] = useState<CalendarOverviewData | null>(null);
-  const [todaySize, setTodaySize] = useState({ width: 0, height: 0 });
   const [rescheduleTodaySize, setRescheduleTodaySize] = useState({ width: 0, height: 0 });
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
 
@@ -65,11 +61,8 @@ export default function CalendarCommitmentDetailScreen() {
         const found = day.commitments?.find((item) => item.id === Number(id)) ?? null;
         setCommitment(found);
         if (!found) { setError("Este compromiso ya no está registrado en esta fecha."); return; }
-        setStart(found.food_period_start ?? "");
-        setEnd(found.food_period_end ?? "");
         setNote(found.note);
-        setMonth(monthKeyFromDate(found.food_period_start ?? date));
-        setEditingPeriod(false);
+        setNotice(null);
         setError(null);
       })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
@@ -83,19 +76,10 @@ export default function CalendarCommitmentDetailScreen() {
       fallback: date ? `/calendar/days/${date}` as Href : "/calendar",
       identityVisible: compactHeaderVisible,
       mode: "back",
-      title: commitment ? commitmentDayTitle[commitment.kind] : "Detalle de compromiso",
+      title: commitment ? commitmentActionLabel[commitment.kind] : "Detalle de compromiso",
     });
     return () => setHeaderPresentation({ mode: "default" });
   }, [commitment, compactHeaderVisible, date, setHeaderPresentation]));
-
-  useEffect(() => {
-    if (status !== "authenticated" || !month) return;
-    let active = true;
-    void monthCache.load(month)
-      .then((result) => { if (active) setMonthOverview(result); })
-      .catch((nextError) => { if (active) setError(userFacingError(nextError)); });
-    return () => { active = false; };
-  }, [month, monthCache, status]);
 
   useEffect(() => {
     if (status !== "authenticated" || actionMode !== "reschedule" || !rescheduleMonth) return;
@@ -106,22 +90,6 @@ export default function CalendarCommitmentDetailScreen() {
     return () => { active = false; };
   }, [actionMode, monthCache, rescheduleMonth, status]);
 
-  function changeMonth(delta: number) {
-    if (!month) return;
-    const nextMonth = shiftMonth(month, delta);
-    const cached = monthCache.get(nextMonth);
-    if (cached) setMonthOverview(cached);
-    setMonth(nextMonth);
-  }
-
-  const monthDates = useMemo(() => {
-    if (!month) return [];
-    const window = monthWindow(month);
-    const first = new Date(`${window.startDate}T12:00:00Z`);
-    return Array.from({ length: window.days }, (_, index) => new Date(first.getTime() + index * 86_400_000).toISOString().slice(0, 10));
-  }, [month]);
-  const monthDaysByDate = new Map(monthOverview?.start_date === (month ? monthWindow(month).startDate : "")
-    ? monthOverview.days.map((day) => [day.calendar_date, day] as const) : []);
   const periodSaved = Boolean(commitment?.food_period_start && commitment?.food_period_end);
   const rescheduleMonthDates = useMemo(() => {
     if (!rescheduleMonth) return [];
@@ -131,24 +99,6 @@ export default function CalendarCommitmentDetailScreen() {
   }, [rescheduleMonth]);
   const rescheduleDaysByDate = new Map(rescheduleOverview?.start_date === (rescheduleMonth ? monthWindow(rescheduleMonth).startDate : "")
     ? rescheduleOverview.days.map((day) => [day.calendar_date, day] as const) : []);
-
-  async function savePeriod(nextStart: string, nextEnd: string) {
-    if (!commitment || savingPeriod) return;
-    setSavingPeriod(true);
-    setError(null);
-    setNotice(null);
-    try {
-      const updated = await apiRequest<CalendarCommitment>(`/api/v1/calendar/commitments/${commitment.id}`, {
-        method: "PATCH", body: JSON.stringify({ update_food_period: true, food_period_start: nextStart || null, food_period_end: nextEnd || null }),
-      });
-      setCommitment(updated);
-      setStart(updated.food_period_start ?? "");
-      setEnd(updated.food_period_end ?? "");
-      setEditingPeriod(false);
-      setNotice(nextStart ? "Lista guardada en este compromiso." : "Lista quitada de este compromiso.");
-    } catch (nextError) { setError(userFacingError(nextError)); }
-    finally { setSavingPeriod(false); }
-  }
 
   async function saveNote() {
     if (!commitment || savingNote) return;
@@ -166,6 +116,10 @@ export default function CalendarCommitmentDetailScreen() {
     finally { setSavingNote(false); }
   }
 
+  function openFoodListGenerator() {
+    if (!commitment) return;
+    router.push(`/calendar/commitments/${commitment.id}/foods?date=${commitment.calendar_date}` as Href);
+  }
   function openReschedule() {
     if (!commitment) return;
     setActionError(null);
@@ -219,7 +173,7 @@ export default function CalendarCommitmentDetailScreen() {
       monthCache.invalidate([monthKeyFromDate(commitment.calendar_date)]);
       setActionMode(null);
       void refreshCommitmentReminders();
-      router.replace("/calendar/registry" as Href);
+      router.back();
     } catch (nextError) { setActionError(userFacingError(nextError)); }
     finally { setActionBusy(false); }
   }
@@ -233,62 +187,28 @@ export default function CalendarCommitmentDetailScreen() {
   const CommitmentIcon = presentation.icon;
   const savedStart = commitment.food_period_start;
   const savedEnd = commitment.food_period_end;
-  const controlsLocked = savingPeriod || periodSaved && !editingPeriod;
   return <>
   <Screen contentStyle={styles.content} headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
-    <SectionPageHeader icon={<CommitmentIcon color={presentation.color} size={28} strokeWidth={1.8} />} indicator={<Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={shortDate(date)} textColor={tokens.color.textMain} />} section="calendarization" title={commitmentDayTitle[commitment.kind]} />
-    {commitmentSupportsFoods(commitment.kind) ? <View style={styles.foodPeriodControls}>
-      <Text style={styles.foodInstruction}>Selecciona una fecha de inicio y de término.</Text>
-      <View style={styles.monthNavigation}>
-        <Pressable accessibilityLabel="Mes anterior del periodo" accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} onPress={() => changeMonth(-1)} style={styles.monthArrow}><ChevronLeft color={tokens.color.textMain} size={20} /></Pressable>
-        <Text accessibilityRole="header" style={styles.monthTitle}>{month ? monthLabel(month) : ""}</Text>
-        <Pressable accessibilityLabel="Mes siguiente del periodo" accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} onPress={() => changeMonth(1)} style={styles.monthArrow}><ChevronRight color={tokens.color.textMain} size={20} /></Pressable>
-      </View>
-      <View style={styles.grid}>
-        {(["L", "M", "M", "J", "V", "S", "D"] as const).map((label, index) => <Text key={`weekday-${index}`} style={styles.gridHeader}>{label}</Text>)}
-        {monthDates.map((day) => {
-          const role = calendarFoodDayRole(day, start, end);
-          const endpoint = role === "start" || role === "end" || role === "single";
-          const dayData = monthDaysByDate.get(day);
-          const shoppingDate = commitment.kind === "shopping" && day === date;
-          const dots = commitmentDotKinds(dayData?.commitments, shoppingDate ? "shopping" : undefined);
-          const accent = tokens.color.food;
-          return <Pressable
-            accessibilityLabel={`${shortDate(day)}${day === monthOverview?.local_date ? ", hoy" : ""}: ${shoppingDate ? "día para hacer compras, " : ""}${role === "single" ? "inicio y término" : role === "start" ? "inicio" : role === "end" ? "término" : role === "between" ? "dentro del periodo" : "fuera del periodo"}${dayData?.commitments?.length ? `; ${dayData.commitments.map((item) => commitmentPresentation[item.kind].label).join(", ")}` : ""}`}
-            accessibilityRole="button" accessibilityState={{ disabled: controlsLocked }} disabled={controlsLocked} key={day}
-            onLayout={day === monthOverview?.local_date ? ({ nativeEvent: { layout } }) => {
-              setTodaySize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
-            } : undefined}
-            onPress={() => {
-              const next = selectCalendarFoodDate(start, end, day);
-              if (next.tooLong) { setError("Elige un periodo de hasta 366 días."); return; }
-              setStart(next.start); setEnd(next.end); setError(null);
-            }}
-            style={[styles.gridDate, dayData?.has_plan && styles.gridDateFilled, dayData?.has_plan && isCurrentMonthFromToday(day, monthOverview?.local_date) && styles.gridDateUpcomingFilled, endpoint && { backgroundColor: `${accent}26`, borderColor: accent }, role === "between" && { backgroundColor: `${accent}33` }, monthKeyFromDate(day) !== month && styles.gridDateAdjacent, day === monthOverview?.local_date && styles.gridDateToday]}>
-            <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, Boolean(monthOverview?.local_date && day < monthOverview.local_date) && styles.gridNumberPast, endpoint && { color: accent, fontWeight: "700" }, role === "between" && { color: accent }]}>{day.slice(8, 10)}</Text>
-            {dots.length ? <View style={[styles.commitmentDots, day === monthOverview?.local_date && styles.commitmentDotsToday]}>{dots.map((kind) => <View key={kind} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
-            {day === monthOverview?.local_date ? <CalendarTodayOutline {...todaySize} /> : null}
-          </Pressable>;
-        })}
-      </View>
-      <View style={styles.foodPeriodAction}>
-        {periodSaved && !editingPeriod ? <>
-          <Button label="Editar periodo" onPress={() => setEditingPeriod(true)} variant="secondary" />
-          <Button label="Limpiar selección" loading={savingPeriod} onPress={() => void savePeriod("", "")} variant="secondary" />
-        </> : <Button disabled={!validCalendarFoodPeriod(start, end) || savingPeriod} label="Calcular lista de alimentos" loading={savingPeriod} onPress={() => void savePeriod(start, end)} />}
-      </View>
+    <SectionPageHeader icon={<CommitmentIcon color={presentation.color} size={28} strokeWidth={1.8} />} section="calendarization" subtitle={headerDate(date)} subtitleStyle={styles.dateSubtitle} title={commitmentActionLabel[commitment.kind]} />
+    {commitmentSupportsFoods(commitment.kind) && !periodSaved ? <View style={styles.emptyFoodSection}>
+      <InlineNotice tone="info">Aún no tiene una lista de alimentos asociada</InlineNotice>
+      <Button label="Generar lista de alimentos" onPress={openFoodListGenerator} />
     </View> : null}
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    {notice ? <InlineNotice tone="info">{notice}</InlineNotice> : null}
-    {savedStart && savedEnd ? <GroupedFoodsCard
-      intro={<Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={`${shortDate(savedStart)} – ${shortDate(savedEnd)}`} textColor={tokens.color.textMain} />}
-      items={commitment.foods.map(commitmentFoodPanelItem)}
-      onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
-      preparationFirst={commitment.kind === "shopping"}
-      showContents
-      summaryChips={<Chip backgroundColor={`${tokens.color.dailyPlan}1A`} borderColor={tokens.color.dailyPlan} label={`${commitment.food_plans_count} ${commitment.food_plans_count === 1 ? "plan" : "planes"}`} textColor={tokens.color.textMain} />}
-      title={commitment.kind === "cooking" ? "Alimentos para cocinar" : "Alimentos para comprar"}
-    /> : null}
+    {notice === "Nota guardada." ? <InlineNotice tone="info">{notice}</InlineNotice> : null}
+    {savedStart && savedEnd ? <View style={styles.associatedFoodSection}>
+      <Text accessibilityRole="header" style={styles.foodSectionTitle}>Lista de alimentos asociada</Text>
+      <GroupedFoodsCard
+        chipsAction={<Button bleed={false} label="Editar periodo" onPress={openFoodListGenerator} variant="secondary" />}
+        intro={<Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={`${shortDate(savedStart)} – ${shortDate(savedEnd)}`} textColor={tokens.color.textMain} />}
+        items={commitment.foods.map(commitmentFoodPanelItem)}
+        onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
+        preparationFirst={commitment.kind === "shopping"}
+        showContents
+        summaryChips={<Chip backgroundColor={`${tokens.color.dailyPlan}1A`} borderColor={tokens.color.dailyPlan} label={`${commitment.food_plans_count} ${commitment.food_plans_count === 1 ? "plan" : "planes"}`} textColor={tokens.color.textMain} />}
+        title={commitment.kind === "cooking" ? "Alimentos para cocinar" : "Alimentos para comprar"}
+      />
+    </View> : null}
     <Card>
       <Text style={styles.noteTitle}>Nota (opcional)</Text>
       <TextInput accessibilityLabel="Nota del compromiso" maxLength={500} multiline onChangeText={setNote} placeholder="Agrega una nota para recordar los detalles…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={note} />
@@ -337,7 +257,7 @@ export default function CalendarCommitmentDetailScreen() {
                 onPress={() => setRescheduleDate(day)}
                 style={[styles.gridDate, dayData?.has_plan && styles.gridDateFilled, dayData?.has_plan && isCurrentMonthFromToday(day, rescheduleOverview?.local_date) && styles.gridDateUpcomingFilled, selected && styles.rescheduleDateSelected, disabled && styles.gridDateDisabled, monthKeyFromDate(day) !== rescheduleMonth && styles.gridDateAdjacent, day === rescheduleOverview?.local_date && styles.gridDateToday]}>
                 <Text style={[styles.gridNumber, dayData?.has_plan && styles.gridNumberWithPlan, past && styles.gridNumberPast, selected && styles.rescheduleNumberSelected]}>{day.slice(8, 10)}</Text>
-                {dots.length ? <View style={[styles.commitmentDots, day === rescheduleOverview?.local_date && styles.commitmentDotsToday]}>{dots.map((kind) => <View key={kind} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
+                {dots.length ? <View style={[styles.commitmentDots, Boolean(rescheduleOverview?.local_date && day < rescheduleOverview.local_date) && styles.commitmentDotsPast, day === rescheduleOverview?.local_date && styles.commitmentDotsToday]}>{dots.map((kind) => <View key={kind} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[kind].color }]} />)}</View> : null}
                 {day === rescheduleOverview?.local_date ? <CalendarTodayOutline {...rescheduleTodaySize} /> : null}
               </Pressable>;
             })}
@@ -367,13 +287,15 @@ export default function CalendarCommitmentDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  associatedFoodSection: { gap: tokens.spacing.md },
   content: { gap: tokens.spacing.lg },
+  dateSubtitle: { fontSize: 17, fontWeight: "600", lineHeight: 23, marginTop: -4 },
   commitmentDots: { bottom: 4, flexDirection: "row", gap: 2, position: "absolute" },
+  commitmentDotsPast: { opacity: 0.5 },
   commitmentDotsToday: { bottom: 6 },
   commitmentDot: { borderRadius: 3, height: 5, width: 5 },
-  foodInstruction: { color: tokens.color.textMain, fontSize: 16, fontWeight: "700", lineHeight: 23 },
-  foodPeriodAction: { gap: tokens.spacing.sm, marginTop: 30 - tokens.spacing.md },
-  foodPeriodControls: { gap: tokens.spacing.md, marginBottom: 42 - tokens.spacing.lg },
+  emptyFoodSection: { gap: tokens.spacing.md },
+  foodSectionTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 40, width: "13.5%" },
   gridDateToday: { borderWidth: 0 },

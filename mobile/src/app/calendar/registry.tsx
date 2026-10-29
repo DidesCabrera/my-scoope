@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { Bell, CalendarDays, ChevronLeft, ChevronRight, MoreHorizontal, Pin } from "lucide-react-native";
+import { Bell, CalendarDays, ChevronLeft, ChevronRight, Clock, MoreHorizontal, Pin } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,23 +7,25 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { userFacingError } from "@/api/errors";
 import type { CalendarCommitment, CalendarCommitmentKind, CalendarOverviewData } from "@/api/calendar-types";
 import { useSession } from "@/auth/session-context";
-import { commitmentKinds, commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
+import { commitmentActionLabel, commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { commitmentsForMonth, type CommitmentListRange, type CommitmentScope } from "@/components/calendarization/calendar-commitment-registry";
 import { CalendarCommitmentListCard } from "@/components/calendarization/calendar-commitment-list-card";
-import { CalendarMonthPlaceholder } from "@/components/calendarization/calendar-month-calendar";
+import { CalendarDaySectionHeading } from "@/components/calendarization/calendar-day-section-heading";
+import { CalendarMonthPlaceholder, calendarTopSpacing } from "@/components/calendarization/calendar-month-calendar";
 import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
 import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Card, DistributedTabBar, InlineNotice, Screen, ScrollableTabBar } from "@/components/ui";
+import { Card, DistributedTabBar, InlineNotice, LoadingState, Screen, ScrollableTabBar } from "@/components/ui";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import { tokens } from "@/design/tokens";
 
 const tabLabels: Record<CalendarCommitmentKind, string> = {
   shopping: "Hacer compras",
   cooking: "Cocinar",
   training: "Entrenar",
-  nutritionist: "Cita nutricionista",
+  nutritionist: "Nutricionista",
 };
 
 function readableDate(value: string): string {
@@ -31,19 +33,42 @@ function readableDate(value: string): string {
     .format(new Date(`${value}T12:00:00`));
 }
 
-function CommitmentHeader() {
+function CommitmentHeader({ onOpenRegistration, upcomingCounts }: {
+  onOpenRegistration(kind: CalendarCommitmentKind): void;
+  upcomingCounts: Record<CalendarCommitmentKind, number>;
+}) {
   return <View style={styles.header}>
-    <View accessibilityLabel="Hacer compras, cocinar, entrenar y cita nutricionista" accessible style={styles.headerIcons}>
-      {commitmentKinds.map((kind) => {
-        const presentation = commitmentPresentation[kind];
-        const Icon = presentation.icon;
-        return <View key={kind} style={[styles.headerIcon, { backgroundColor: `${presentation.color}33` }]}>
-          <Icon color={presentation.color} size={24} strokeWidth={2.1} />
-        </View>;
-      })}
+    <View style={styles.mainIcon}>
+      <Pin accessibilityLabel="Mis compromisos" color={tokens.color.textMain} size={28} strokeWidth={2.1} />
     </View>
     <Text accessibilityRole="header" style={styles.title}>Mis compromisos</Text>
     <Text style={styles.subtitle}>Marca en el calendario tus compromisos y planifícate con anticipación</Text>
+    <View style={styles.headerDashboardHeading}>
+      <Clock color={tokens.color.textMain} size={16} strokeWidth={2.1} />
+      <Text accessibilityRole="header" style={styles.headerDashboardTitle}>Próximos compromisos</Text>
+    </View>
+    <View accessibilityLabel="Próximos compromisos agendados por tipo" style={styles.headerDashboard}>
+      {commitmentKinds.map((kind) => {
+        const presentation = commitmentPresentation[kind];
+        const Icon = presentation.icon;
+        return <Pressable
+          accessibilityLabel={`Registrar ${commitmentActionLabel[kind].toLowerCase()}`}
+          accessibilityRole="button"
+          key={kind}
+          onPress={() => onOpenRegistration(kind)}
+          style={({ pressed }) => [styles.headerDashboardMetric, { backgroundColor: `${presentation.color}33` }, pressed && styles.pressed]}>
+          <View style={styles.headerDashboardMetricValueRow}>
+            <View style={[styles.headerDashboardIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={14} strokeWidth={2.1} /></View>
+            <Text style={styles.headerDashboardValue}>{upcomingCounts[kind]}</Text>
+          </View>
+          <Text numberOfLines={1} style={styles.headerDashboardLabel}>{commitmentActionLabel[kind]}</Text>
+        </Pressable>;
+      })}
+    </View>
+    <View style={styles.calendarTabsHeading}>
+      <CalendarDays color={tokens.color.textMain} size={18} strokeWidth={2.1} />
+      <Text accessibilityRole="header" style={styles.calendarTabsTitle}>Calendario mis compromisos</Text>
+    </View>
   </View>;
 }
 
@@ -56,10 +81,7 @@ function CommitmentDayPreview({ commitments, date, onOpenCommitment, onOpenDay, 
 }) {
   const firstColumnCount = Math.ceil(commitments.length / 2);
   return <View style={styles.daySection}>
-    <View style={styles.dayHeading}>
-      <Pin color={tokens.color.textMain} size={16} strokeWidth={2} />
-      <Text accessibilityRole="header" style={styles.dayTitle}>{date === today ? "Hoy" : readableDate(date)}</Text>
-    </View>
+    <CalendarDaySectionHeading date={date} today={today} />
     <Card style={styles.dayCard}>
       {commitments.length ? <View style={styles.dayCommitmentColumns}>
         {[commitments.slice(0, firstColumnCount), commitments.slice(firstColumnCount)].map((column, index) => <View key={index} style={styles.dayCommitmentColumn}>
@@ -73,7 +95,7 @@ function CommitmentDayPreview({ commitments, date, onOpenCommitment, onOpenDay, 
           })}
         </View>)}
       </View> : <Text style={styles.empty}>No hay compromisos para este día.</Text>}
-      <View style={styles.dayDetailButton}><Button bleed={false} label="Ver detalle del día" onPress={onOpenDay} variant="secondary" /></View>
+      <View style={styles.dayDetailButton}><PickerCardAction label="Ver detalle del día" onPress={onOpenDay} subject={readableDate(date)} variant="mutedFullWidth" /></View>
     </Card>
   </View>;
 }
@@ -135,6 +157,16 @@ export default function CommitmentRegistryScreen() {
   const commitments = useMemo(() => visibleMonth && localToday ? commitmentsForMonth(monthDays, visibleMonth, localToday, activeScope, listRange) : [], [activeScope, listRange, localToday, monthDays, visibleMonth]);
   const selectedDay = overview?.days.find((day) => day.calendar_date === selectedDate);
   const selectedCommitments = (selectedDay?.commitments ?? []).filter((item) => activeScope === "all" || item.kind === activeScope);
+  const visibleUpcomingCommitmentCounts = useMemo(() => {
+    const counts: Record<CalendarCommitmentKind, number> = { shopping: 0, cooking: 0, training: 0, nutritionist: 0 };
+    if (!localToday) return counts;
+    monthDays.forEach((day) => {
+      if (day.calendar_date < localToday) return;
+      day.commitments?.forEach((commitment) => { counts[commitment.kind] += 1; });
+    });
+    return counts;
+  }, [localToday, monthDays]);
+  const upcomingCommitmentCounts = overview?.future_commitments_count_by_kind ?? visibleUpcomingCommitmentCounts;
 
   function openRegistration(kind: CalendarCommitmentKind) {
     setMenuVisible(false);
@@ -161,13 +193,14 @@ export default function CommitmentRegistryScreen() {
   }
 
   if (status === "anonymous") return <Redirect href="/login" />;
+  if (loading && !overview) return <LoadingState label="Preparando tus compromisos…" />;
 
   return <>
     <Screen
       contentStyle={styles.content}
       headerMode="preserve"
       onHeaderVisibilityChange={setCompactHeaderVisible}
-      scrollHeader={<CommitmentHeader />}
+      scrollHeader={<CommitmentHeader onOpenRegistration={openRegistration} upcomingCounts={upcomingCommitmentCounts} />}
       stickyHeader={<ScrollableTabBar<CommitmentScope>
         accessibilityLabel="Tipos de compromisos"
         activeTab={activeScope}
@@ -175,7 +208,15 @@ export default function CommitmentRegistryScreen() {
         onChange={setActiveScope}
         tabs={[
           { key: "all", label: "Todos" },
-          ...commitmentKinds.map((kind) => ({ key: kind, label: tabLabels[kind] })),
+          ...commitmentKinds.map((kind) => {
+            const presentation = commitmentPresentation[kind];
+            const Icon = presentation.icon;
+            return {
+              icon: (selected: boolean) => <Icon color={selected ? tokens.color.surfaceApp : presentation.color} size={14} strokeWidth={2.1} />,
+              key: kind,
+              label: tabLabels[kind],
+            };
+          }),
         ]}
       />}
       stickyHeaderStyle={styles.stickyHeader}>
@@ -207,7 +248,7 @@ export default function CommitmentRegistryScreen() {
               onPress={() => selectDate(day.calendar_date)}
               style={({ pressed }) => [styles.gridDate, selected && !isToday && styles.gridDateSelected, day.has_plan && styles.gridDateFilled, day.has_plan && isCurrentMonthFromToday(day.calendar_date, overview?.local_date) && styles.gridDateUpcomingFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, isToday && styles.gridDateToday, pressed && styles.pressed]}>
               <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, Boolean(overview?.local_date && day.calendar_date < overview.local_date) && styles.gridNumberPast]}>{day.calendar_date.slice(8, 10)}</Text>
-              {visibleCommitments.length ? <View style={styles.commitmentDots}>{visibleCommitments.map((item) => <View key={item.id} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
+              {visibleCommitments.length ? <View style={[styles.commitmentDots, Boolean(overview?.local_date && day.calendar_date < overview.local_date) && styles.commitmentDotsPast]}>{visibleCommitments.map((item) => <View key={item.id} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
               {isToday ? <CalendarTodayOutline {...todaySize} /> : null}
             </Pressable>;
           })}
@@ -220,14 +261,27 @@ export default function CommitmentRegistryScreen() {
         <DistributedTabBar<CommitmentListRange> accessibilityLabel="Periodo de compromisos" activeTab={listRange} onChange={setListRange} tabs={[{ key: "upcoming", label: "Próximos" }, { key: "all", label: "Todos" }]} />
       </View>
       {!loading && !error && !commitments.length ? <Card><Text style={styles.empty}>{listRange === "upcoming" ? "No hay próximos compromisos para este mes." : "No hay compromisos registrados para este mes."}</Text></Card> : null}
-      {!loading && commitments.map((commitment: CalendarCommitment) => <CalendarCommitmentListCard commitment={commitment} key={commitment.id} onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)} />)}
+      {!loading && commitments.map((commitment: CalendarCommitment) => <CalendarCommitmentListCard
+        commitment={commitment}
+        key={commitment.id}
+        onCreateFoodList={() => router.push(`/calendar/commitments/${commitment.id}/foods?date=${commitment.calendar_date}` as Href)}
+        onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)}
+        showFoodListDetails
+      />)}
     </Screen>
     <ActionSheetModal onRequestClose={() => setMenuVisible(false)} visible={menuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.sheet}>
-        <ActionSheetHeader icon={CalendarDays} onClose={() => setMenuVisible(false)} title="Registrar compromiso" />
+        <ActionSheetHeader icon={Pin} onClose={() => setMenuVisible(false)} title="Registrar compromiso" />
         <View style={styles.sheetContent}>
           <ActionSheetActions>
-            {commitmentKinds.map((kind) => <ActionSheetAction icon={commitmentPresentation[kind].icon} key={kind} label={kind === "nutritionist" ? commitmentPresentation[kind].label : commitmentRegistrationTitle[kind]} onPress={() => openRegistration(kind)} />)}
+            {commitmentKinds.map((kind) => <ActionSheetAction
+              icon={commitmentPresentation[kind].icon}
+              iconBackgroundColor={`${commitmentPresentation[kind].color}33`}
+              iconColor={commitmentPresentation[kind].color}
+              key={kind}
+              label={commitmentActionLabel[kind]}
+              onPress={() => openRegistration(kind)}
+            />)}
           </ActionSheetActions>
         </View>
       </SafeAreaView>
@@ -246,20 +300,21 @@ export default function CommitmentRegistryScreen() {
 }
 
 const styles = StyleSheet.create({
-  calendarSection: { paddingVertical: tokens.spacing.sm },
+  calendarSection: { marginTop: calendarTopSpacing, paddingVertical: tokens.spacing.sm },
+  calendarTabsHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs, marginTop: tokens.spacing.sm },
+  calendarTabsTitle: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.bold },
   commitmentDot: { borderRadius: 3, height: 5, width: 5 },
   commitmentDots: { bottom: 4, flexDirection: "row", gap: 2, position: "absolute" },
+  commitmentDotsPast: { opacity: 0.5 },
   content: { gap: tokens.spacing.lg },
   dayCard: { gap: tokens.spacing.sm, marginHorizontal: -6 },
   dayCommitmentColumn: { flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
   dayCommitmentColumns: { flexDirection: "row", gap: tokens.spacing.sm },
   dayCommitmentIcon: { alignItems: "center", borderRadius: 7, height: 22, justifyContent: "center", width: 22 },
   dayDetailButton: { marginHorizontal: -6 },
-  dayHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   dayRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 32 },
   dayRowTitle: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.semibold },
   daySection: { gap: tokens.spacing.sm },
-  dayTitle: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.bold },
   empty: { color: tokens.color.textMuted, fontSize: 13 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 1, justifyContent: "center", minHeight: 40, width: "13.5%" },
@@ -273,8 +328,15 @@ const styles = StyleSheet.create({
   gridNumberPast: { opacity: 0.8 },
   gridNumberWithPlan: { color: tokens.color.textMain, fontWeight: "700" },
   header: { gap: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
-  headerIcon: { alignItems: "center", borderRadius: tokens.radius.md, height: 40, justifyContent: "center", width: 40 },
-  headerIcons: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  mainIcon: { paddingVertical: 4 },
+  headerDashboard: { flexDirection: "row", gap: tokens.spacing.xs, marginBottom: 4, marginHorizontal: -6, marginTop: tokens.spacing.xs + 4 },
+  headerDashboardHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs, marginTop: tokens.spacing.sm },
+  headerDashboardTitle: { color: tokens.color.textMain, fontSize: 15, fontWeight: tokens.weight.semibold },
+  headerDashboardIcon: { alignItems: "center", borderRadius: 8, height: 24, justifyContent: "center", width: 24 },
+  headerDashboardLabel: { color: tokens.color.textMuted, fontSize: 10, textAlign: "center", width: "100%" },
+  headerDashboardMetric: { alignItems: "center", borderRadius: tokens.radius.md, flex: 1, gap: 3, minWidth: 0, paddingHorizontal: 3, paddingVertical: tokens.spacing.sm + 4 },
+  headerDashboardMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
+  headerDashboardValue: { color: tokens.color.textMain, fontSize: 18, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold },
   hint: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 18, marginTop: tokens.spacing.sm },
   listHeading: { gap: tokens.spacing.sm },
   listTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: tokens.weight.semibold },

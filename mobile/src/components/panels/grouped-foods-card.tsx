@@ -8,12 +8,13 @@ import { FoodPanels } from "./entity-panels";
 
 type GroupedFoodsCardProps = ComponentProps<typeof FoodPanels> & {
   title: string;
+  chipsAction?: ReactNode;
   intro?: ReactNode;
   summaryChips?: ReactNode;
   showContents?: boolean;
 };
 
-export function GroupedFoodsCard({ items, preparation, preparationFirst = false, title, intro, summaryChips, showContents = true, ...panelProps }: GroupedFoodsCardProps) {
+export function GroupedFoodsCard({ chipsAction, items, preparation, preparationFirst = false, title, intro, summaryChips, showContents = true, ...panelProps }: GroupedFoodsCardProps) {
   const [checkedIds, setCheckedIds] = useState<Set<string>>(() => new Set());
   const countLabel = `${items.length} ${items.length === 1 ? "alimento" : "alimentos"}`;
   const checklist = preparation ?? {
@@ -34,6 +35,7 @@ export function GroupedFoodsCard({ items, preparation, preparationFirst = false,
           <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={countLabel} textColor={tokens.color.textMain} />
           {summaryChips}
         </View>
+        {chipsAction}
         <FoodPanels items={items} preparation={checklist} preparationFirst={preparationFirst} showPreparationColumn {...panelProps} />
       </> : null}
     </Card>

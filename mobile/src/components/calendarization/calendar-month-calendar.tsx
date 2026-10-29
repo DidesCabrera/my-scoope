@@ -9,6 +9,8 @@ import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel } from "@/compone
 import { InlineNotice } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
+export const calendarTopSpacing = -24;
+
 function dateLabel(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00`));
 }
@@ -59,7 +61,7 @@ export function CalendarMonthCalendar({ days, embedded = false, error, localDate
           onPress={() => onOpenDay(day.calendar_date)}
           style={[styles.gridDate, day.has_plan && styles.gridDateFilled, day.has_plan && isCurrentMonthFromToday(day.calendar_date, localDate) && styles.gridDateUpcomingFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, day.calendar_date === localDate && styles.gridDateToday, day.calendar_date === selectedDate && day.calendar_date !== localDate && styles.gridDateSelected]}>
           <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, day.calendar_date < localDate && styles.gridNumberPast]}>{day.calendar_date.slice(8, 10)}</Text>
-          {day.commitments?.length ? <View style={[styles.gridCommitmentDots, day.calendar_date === localDate && styles.gridCommitmentDotsToday]}>{day.commitments.map((item) => <View key={item.id} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
+          {day.commitments?.length ? <View style={[styles.gridCommitmentDots, day.calendar_date < localDate && styles.gridCommitmentDotsPast, day.calendar_date === localDate && styles.gridCommitmentDotsToday]}>{day.commitments.map((item) => <View key={item.id} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
           {day.calendar_date === localDate ? <CalendarTodayOutline {...todaySize} /> : null}
         </Pressable>
       ))}
@@ -68,10 +70,11 @@ export function CalendarMonthCalendar({ days, embedded = false, error, localDate
 }
 
 const styles = StyleSheet.create({
-  calendarSection: { marginBottom: 12, marginTop: -12, paddingVertical: tokens.spacing.sm },
+  calendarSection: { marginBottom: 12, marginTop: calendarTopSpacing, paddingVertical: tokens.spacing.sm },
   calendarSectionEmbedded: { marginBottom: 0, marginTop: 0, paddingVertical: 0 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: tokens.spacing.sm },
   gridCommitmentDots: { bottom: 3, flexDirection: "row", gap: 2, position: "absolute" },
+  gridCommitmentDotsPast: { opacity: 0.5 },
   gridCommitmentDotsToday: { bottom: 6 },
   gridCommitmentDot: { borderRadius: 3, height: 4, width: 4 },
   gridDate: { alignItems: "center", borderColor: "transparent", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 38, width: "13.5%" },

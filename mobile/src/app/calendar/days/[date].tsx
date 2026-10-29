@@ -8,7 +8,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarDayDetailData, CalendarOverviewData } from "@/api/types";
 import type { CalendarCommitment } from "@/api/calendar-types";
 import { useSession } from "@/auth/session-context";
-import { commitmentDayTitle, commitmentKinds, commitmentPresentation, commitmentRegistrationTitle } from "@/components/calendarization/calendar-commitments";
+import { commitmentActionLabel, commitmentDayTitle, commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarPlanEditor } from "@/components/calendarization/calendar-plan-editor";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
@@ -119,7 +119,7 @@ export default function CalendarDayScreen() {
             {commitmentKinds.map((kind) => <ActionSheetAction
               icon={commitmentPresentation[kind].icon}
               key={kind}
-              label={kind === "nutritionist" ? commitmentPresentation[kind].label : commitmentRegistrationTitle[kind]}
+              label={commitmentActionLabel[kind]}
               onPress={() => {
                 setAddMenuVisible(false);
                 router.push(`/calendar/commitments?kind=${kind}&date=${date}${origin === "home" ? "&origin=home" : ""}` as Href);

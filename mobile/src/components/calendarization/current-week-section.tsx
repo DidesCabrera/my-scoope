@@ -13,7 +13,7 @@ import { currentWeekDays, type CurrentWeekDay } from "./current-week";
 const WEEK_GAP = 18;
 const CALENDAR_ACTION_GAP = 12;
 
-function CurrentWeekDayCell({ commitments, day, planTone, onPress, panGesture }: { commitments: CalendarCommitment[]; day: CurrentWeekDay; planTone: "past" | "future" | null; onPress?: () => void; panGesture: ReturnType<typeof Gesture.Pan> }) {
+function CurrentWeekDayCell({ commitments, day, localDate, planTone, onPress, panGesture }: { commitments: CalendarCommitment[]; day: CurrentWeekDay; localDate: string; planTone: "past" | "future" | null; onPress?: () => void; panGesture: ReturnType<typeof Gesture.Pan> }) {
   const { compact } = useWeekDayLayout();
   const tapGesture = useMemo(() => Gesture.Tap()
     .maxDistance(10)
@@ -34,7 +34,7 @@ function CurrentWeekDayCell({ commitments, day, planTone, onPress, panGesture }:
   return (
     <WeekDayCell label={day.label}>
       {onPress ? <GestureDetector gesture={tapGesture}>{circle}</GestureDetector> : circle}
-      <View style={styles.commitmentDotsSlot}>
+      <View style={[styles.commitmentDotsSlot, day.date < localDate && styles.commitmentDotsPast]}>
         {commitments.map((commitment) => <View key={commitment.id} style={[styles.commitmentDot, { backgroundColor: commitmentPresentation[commitment.kind].color }]} />)}
       </View>
     </WeekDayCell>
@@ -101,7 +101,7 @@ export function CurrentWeekSection({ localDate, onOpenCalendar, onPressDay, week
             <View accessibilityLabel={page === 0 ? "Calendario de la semana actual" : "Calendario de la semana siguiente"} style={[styles.weekPage, { width: pageWidth }]}>
               <WeekDayGrid>
                 {currentWeekDays(localDate, page).map((day) => (
-                  <CurrentWeekDayCell commitments={weekDaysByDate.get(day.date)?.commitments ?? []} day={day} key={day.date} onPress={onPressDay ? () => onPressDay(day.date) : undefined} panGesture={panGesture} planTone={weekDaysByDate.get(day.date)?.has_plan ? day.date < localDate ? "past" : day.date > localDate ? "future" : null : null} />
+                  <CurrentWeekDayCell commitments={weekDaysByDate.get(day.date)?.commitments ?? []} day={day} key={day.date} localDate={localDate} onPress={onPressDay ? () => onPressDay(day.date) : undefined} panGesture={panGesture} planTone={weekDaysByDate.get(day.date)?.has_plan ? day.date < localDate ? "past" : day.date > localDate ? "future" : null : null} />
                 ))}
               </WeekDayGrid>
             </View>
@@ -117,6 +117,7 @@ export function CurrentWeekSection({ localDate, onOpenCalendar, onPressDay, week
 const styles = StyleSheet.create({
   commitmentDot: { borderRadius: 3, height: 5, width: 5 },
   commitmentDotsSlot: { alignItems: "center", flexDirection: "row", gap: 2, height: 5, justifyContent: "center", marginTop: -2 },
+  commitmentDotsPast: { opacity: 0.5 },
   calendarActionGap: { width: CALENDAR_ACTION_GAP },
   calendarActionLabel: { color: tokens.color.textMain, fontSize: 13, fontWeight: tokens.weight.semibold, textAlign: "center" },
   calendarActionPage: { alignItems: "center", alignSelf: "stretch", backgroundColor: `${tokens.color.dailyPlan}80`, gap: 4, justifyContent: "center", paddingHorizontal: tokens.spacing.sm },

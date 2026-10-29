@@ -38,7 +38,7 @@ test("product action sheets blur the backdrop and preserve entity identity", () 
   assert.equal(source.includes("sheetTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, lineHeight: 25 }"), true);
   assert.equal(actionSheet.includes("sheetBorder"), false);
   assert.equal(actionSheet.includes("actionsTable: { backgroundColor: tokens.color.surfaceMuted, borderColor"), false);
-  assert.equal(actionSheet.includes('<View style={styles.actionIcon}>{iconNode ?? (Icon ? <Icon color={color} size={18} /> : null)}</View>'), true);
+  assert.equal(actionSheet.includes('<View style={[styles.actionIcon, iconBackgroundColor ? styles.actionIconColored : null, iconBackgroundColor ? { backgroundColor: iconBackgroundColor } : null]}>{iconNode ?? (Icon ? <Icon color={color} size={18} /> : null)}</View>'), true);
   assert.equal(actionSheet.includes('actionIcon: { alignItems: "center", justifyContent: "center", width: 20 }'), true);
   assert.equal(libraryActions.includes('<ActionSheetAction\n                    icon={Info}'), true);
   assert.equal(libraryActions.includes("styles.actionRow"), false);

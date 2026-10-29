@@ -162,11 +162,11 @@ export function ActionSheetActions({ children }: PropsWithChildren) {
   );
 }
 
-export function ActionSheetAction({ destructive = false, disabled = false, icon: Icon, iconNode, label, loading = false, onPress }: { destructive?: boolean; disabled?: boolean; icon?: LucideIcon; iconNode?: ReactNode; label: string; loading?: boolean; onPress(): void }) {
-  const color = destructive ? tokens.color.danger : tokens.color.textMain;
+export function ActionSheetAction({ destructive = false, disabled = false, icon: Icon, iconBackgroundColor, iconColor, iconNode, label, loading = false, onPress }: { destructive?: boolean; disabled?: boolean; icon?: LucideIcon; iconBackgroundColor?: string; iconColor?: string; iconNode?: ReactNode; label: string; loading?: boolean; onPress(): void }) {
+  const color = iconColor ?? (destructive ? tokens.color.danger : tokens.color.textMain);
   return (
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.actionRow, (pressed || disabled) && styles.pressed]}>
-      <View style={styles.actionIcon}>{iconNode ?? (Icon ? <Icon color={color} size={18} /> : null)}</View>
+      <View style={[styles.actionIcon, iconBackgroundColor ? styles.actionIconColored : null, iconBackgroundColor ? { backgroundColor: iconBackgroundColor } : null]}>{iconNode ?? (Icon ? <Icon color={color} size={18} /> : null)}</View>
       <Text style={[styles.actionLabel, destructive && styles.actionLabelDanger]}>{label}</Text>
       {loading ? <ActivityIndicator color={tokens.color.interactivePrimary} size="small" /> : null}
     </Pressable>
@@ -177,6 +177,7 @@ const styles = StyleSheet.create({
   actionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.medium },
   actionLabelDanger: { color: tokens.color.danger },
   actionIcon: { alignItems: "center", justifyContent: "center", width: 20 },
+  actionIconColored: { borderRadius: 10, height: 32, width: 32 },
   actionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: tokens.spacing.md, minHeight: 58, paddingHorizontal: tokens.spacing.lg },
   actionsEyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, marginBottom: tokens.spacing.sm },
   actionsTable: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden" },
