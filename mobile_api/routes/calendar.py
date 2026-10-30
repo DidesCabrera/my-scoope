@@ -10,6 +10,7 @@ from mobile_api.schema_domains.calendar import (
     CalendarAssignmentInput,
     CalendarCommitmentBatchEnvelope,
     CalendarCommitmentBatchInput,
+    CalendarCommitmentKind,
     CalendarCommitmentDeleteEnvelope,
     CalendarCommitmentEnvelope,
     CalendarCommitmentUpdateInput,
@@ -143,6 +144,11 @@ def calendar_overview(request, start_date: date | None = None, days: int = 28):
     if not 1 <= days <= 42:
         raise MobileAPIError(code="calendar_range_invalid", message="El rango debe tener entre 1 y 42 días.", status_code=422)
     local_today = local_date_for_user(request.auth.user)
+    future_commitments_count_by_kind = {kind: 0 for kind, _label in CalendarCommitment.KIND_CHOICES}
+    for row in CalendarCommitment.objects.filter(
+        user=request.auth.user, calendar_date__gte=local_today
+    ).values("kind").annotate(count=Count("id")):
+        future_commitments_count_by_kind[row["kind"]] = row["count"]
     first = start_date or (local_today - timedelta(days=local_today.weekday()))
     last = first + timedelta(days=days - 1)
     rows = CalendarizedDay.objects.filter(
@@ -176,8 +182,25 @@ def calendar_overview(request, start_date: date | None = None, days: int = 28):
         "start_date": first,
         "end_date": last,
         "days": items,
+        "future_commitments_count_by_kind": future_commitments_count_by_kind,
         **calendar_future_schedule_summary(request.auth.user, today=local_today),
     })
+
+
+@router.get(
+    "/calendar/commitments",
+    operation_id="mobile_api_api_list_calendar_commitments",
+    auth=mobile_bearer,
+    response={200: CalendarCommitmentBatchEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def list_commitments(request, kind: CalendarCommitmentKind, from_date: date | None = None):
+    first = from_date or local_date_for_user(request.auth.user)
+    commitments = CalendarCommitment.objects.filter(
+        user=request.auth.user,
+        kind=kind,
+        calendar_date__gte=first,
+    ).order_by("calendar_date", "id")
+    return success({"items": [_commitment_payload(item) for item in commitments]})
 
 
 @router.post(

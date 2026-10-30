@@ -1,6 +1,6 @@
 import { useContext, type ReactNode } from "react";
 import { Plus } from "lucide-react-native";
-import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View } from "react-native";
+import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View, ViewStyle } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
@@ -8,6 +8,7 @@ import { ButtonSurfaceContext } from "./button-surface-context";
 
 export function Button({
   bleed = true,
+  contentStyle,
   icon,
   label,
   onPress,
@@ -18,6 +19,7 @@ export function Button({
   loading = false,
 }: {
   bleed?: boolean;
+  contentStyle?: StyleProp<ViewStyle>;
   icon?: ReactNode;
   label: string;
   onPress(): void;
@@ -63,9 +65,11 @@ export function Button({
         </Svg>
         {!gradient ? <View style={[styles.buttonMulticolorInset, multicolorSurface === "app" && styles.buttonMulticolorInsetApp]} /> : null}
       </> : null}
-      {loading ? <ActivityIndicator color={variant === "primary" || gradient ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
-      {!loading ? icon ?? (chipHasPlus ? <Plus color={tokens.color.surfaceApp} size={18} strokeWidth={2.2} /> : null) : null}
-      <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{chipHasPlus ? label.slice(2) : label}</Text>
+      <View style={[styles.buttonContent, contentStyle]}>
+        {loading ? <ActivityIndicator color={variant === "primary" || gradient ? tokens.color.surfaceApp : tokens.color.textMain} /> : null}
+        {!loading ? icon ?? (chipHasPlus ? <Plus color={tokens.color.surfaceApp} size={18} strokeWidth={2.2} /> : null) : null}
+        <Text style={[textStyle, variant === "danger" && styles.buttonDangerText]}>{chipHasPlus ? label.slice(2) : label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -172,8 +176,9 @@ export function SystemSwitch({ accessibilityLabel, disabled = false, onValueChan
 }
 
 const styles = StyleSheet.create({
-  button: { alignItems: "center", borderRadius: tokens.radius.pill, flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 44, paddingHorizontal: tokens.spacing.lg },
+  button: { alignItems: "center", borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 44, paddingHorizontal: tokens.spacing.lg },
   buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
+  buttonContent: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center" },
   buttonPrimary: { backgroundColor: tokens.color.textMain },
   buttonMulticolor: { overflow: "hidden" },
   buttonMulticolorInset: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, bottom: 2, left: 2, position: "absolute", right: 2, top: 2 },

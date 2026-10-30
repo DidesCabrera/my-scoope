@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   change-scope:
-    name: Select validation tier
+    name: Select tier and run growth-budget preflight
     runs-on: ubuntu-latest
     outputs:
       tier: ${{ steps.scope.outputs.tier }}
@@ -61,6 +61,9 @@ jobs:
 
           echo "Selected validation tier: $tier"
           echo "tier=$tier" >> "$GITHUB_OUTPUT"
+
+      - name: Fail fast on repository growth budgets
+        run: scripts/ci_debt_preflight.sh
 
   django-fast:
     name: Django fast structural gate

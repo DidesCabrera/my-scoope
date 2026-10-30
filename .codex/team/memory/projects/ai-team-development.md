@@ -16,6 +16,10 @@ finance, and commercial and marketing work as My Scoope grows.
 - Existing roles are registered.
 - Technical incident, finance, Chilean tax compliance, and commercial roles have
   initial skill definitions.
+- Parallel-work coordination and staging publication are registered and available
+  for evaluation through real technical work.
+- The Capability Steward has a standard chat report for lifecycle, operational
+  maturity, evidence, gaps, and next evaluations.
 - Durable memory is separated into areas, projects, and accepted AI-team decisions.
 
 ## Evaluation plan

@@ -110,6 +110,7 @@ class CalendarOverviewData(Schema):
     end_date: date
     days: list[CalendarDayData]
     future_plans_count: int
+    future_commitments_count_by_kind: dict[str, int] = Field(default_factory=dict)
     last_scheduled_date: date | None = None
 
 

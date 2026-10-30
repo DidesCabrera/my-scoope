@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   entityIconHero: { borderRadius: tokens.radius.md, height: 40, width: 40 },
   sectionIcon: { alignItems: "center", backgroundColor: "transparent", height: 22, justifyContent: "center", width: 22 },
   sectionIconCompact: { height: 18, width: 18 },
-  sectionIconHero: { height: 40, width: 40 },
+  sectionIconHero: { height: 28, width: 28 },
   eyebrow: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
   headingTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.bold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop, minWidth: 0 },
   headingTitleRow: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0 },

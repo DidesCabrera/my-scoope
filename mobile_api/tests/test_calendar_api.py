@@ -101,6 +101,37 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         )
         self.assertEqual(invalid_foods.status_code, 422)
 
+    def test_calendar_overview_counts_all_future_commitments_by_kind(self):
+        CalendarCommitment.objects.create(user=self.user, calendar_date=self.today - timedelta(days=1), kind="shopping")
+        CalendarCommitment.objects.create(user=self.user, calendar_date=self.today, kind="shopping")
+        CalendarCommitment.objects.create(user=self.user, calendar_date=self.today + timedelta(days=90), kind="shopping")
+        CalendarCommitment.objects.create(user=self.user, calendar_date=self.today + timedelta(days=120), kind="nutritionist")
+
+        data = self.client.get("/api/v1/calendar?days=1").json()["data"]
+
+        self.assertEqual(data["future_commitments_count_by_kind"], {
+            "shopping": 2,
+            "cooking": 0,
+            "training": 0,
+            "nutritionist": 1,
+        })
+
+    def test_list_upcoming_commitments_filters_by_kind_and_date(self):
+        CalendarCommitment.objects.create(user=self.user, calendar_date=self.today - timedelta(days=1), kind="cooking")
+        first = CalendarCommitment.objects.create(user=self.user, calendar_date=self.today, kind="cooking")
+        second = CalendarCommitment.objects.create(user=self.user, calendar_date=self.today + timedelta(days=90), kind="cooking")
+        CalendarCommitment.objects.create(user=self.user, calendar_date=self.today + timedelta(days=1), kind="shopping")
+
+        response = self.client.get(
+            f"/api/v1/calendar/commitments?kind=cooking&from_date={self.today.isoformat()}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["id"] for item in response.json()["data"]["items"]],
+            [first.id, second.id],
+        )
+
     def test_reorder_calendar_plans_keeps_program_reference_and_dated_history(self):
         first = self.today + timedelta(days=1)
         second = first + timedelta(days=1)

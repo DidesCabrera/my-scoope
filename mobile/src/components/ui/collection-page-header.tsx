@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   container: { alignItems: "flex-start", gap: tokens.spacing.sm, minWidth: 0, paddingVertical: tokens.spacing.xs, width: "100%" },
   countChip: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.spacing.compact, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   countValue: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, lineHeight: 15 },
-  iconSlot: { alignSelf: "flex-start" },
+  iconSlot: { alignSelf: "flex-start", paddingVertical: 4 },
   subtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   copy: { alignItems: "flex-start", gap: tokens.spacing.sm, minWidth: 0, width: "100%" },
   titleRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minWidth: 0, width: "100%" },

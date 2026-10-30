@@ -30,6 +30,7 @@ assert_tier full mobile/src/app/oauth/callback.tsx
 assert_tier full requirements.txt
 assert_tier full mobile/package-lock.json
 assert_tier full .github/workflows/django-ci.yml
+assert_tier full scripts/ci_debt_preflight.sh
 assert_tier full scripts/ci_mobile_checks.sh
 assert_tier full scripts/check_dependency_audits.mjs
 assert_tier full mobile/patches/braces+3.0.3.patch

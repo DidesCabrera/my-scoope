@@ -23,7 +23,7 @@ test("the consumer navigation catalog includes every MCE product area", () => {
 test("only product areas with a functional route are exposed in the sidebar", () => {
   const available = listAvailableProductAreas();
   assert.deepEqual(available.map((area) => area.key), ["home", "calendar", "comparator", "inbox", "assistant"]);
-  assert.deepEqual(available.map((area) => area.label), ["Inicio", "Calendario", "Comparaciones", "Compartidos", "Asistente Nutricional"]);
+  assert.deepEqual(available.map((area) => area.label), ["Inicio", "Mi calendario", "Comparaciones", "Compartidos", "Asistente Nutricional"]);
   assert.equal(available.find((area) => area.key === "calendar")?.href, "/calendar");
   assert.ok(available.every((area) => String(area.href).startsWith("/")));
 });
