@@ -34,7 +34,8 @@ chooses an existing clean checkout whose identity has been verified.
    as a production audit or authorized hotfix, or when Felipe names it directly.
 4. Honor an explicitly named PR, commit, or remote branch when the task truly
    depends on it; record the exact resolved commit.
-5. Run `scripts/inspect_task_base.sh` from this skill after fetching. If
+5. Run `.codex/skills/fresh-task-checkout/scripts/inspect_task_base.sh` after
+   fetching. If
    `origin/main` contains commits absent from `origin/staging`, stop ordinary task
    preparation and report that the integration base requires reconciliation. Do
    not silently merge the branches.

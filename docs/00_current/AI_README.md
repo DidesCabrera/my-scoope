@@ -1,7 +1,7 @@
 # AI README - My Scoope
 
 Status: current
-Last updated: 2026-10-28
+Last updated: 2026-10-31
 Audience: AI assistants and developers working from exported project context
 
 ## Bienvenida de Felipe Dides para la AI
@@ -18,15 +18,16 @@ Antes de reconstruir manualmente el estado desde muchos archivos, una AI con acc
 repositorio puede consultar el contexto sanitizado y derivado de las fuentes vigentes:
 
 ```bash
-python manage.py ai_project_context
-python manage.py ai_project_context --json
-python manage.py ai_project_context --json --domain food_catalog
+scripts/manage.sh ai_project_context --compact --json --task-mode consult
+scripts/manage.sh ai_project_context --compact --json --task-mode iterate --domain food_catalog
+scripts/manage.sh ai_project_context --json
 ```
 
-La salida combina el estado ejecutable, ciclos vivos, decisiones recientes o del
-dominio solicitado, transiciones arquitectónicas y apuestas de producto. No contiene
-secretos ni filas privadas y no reemplaza la lectura del código o los documentos
-específicos cuando una decisión necesita mayor profundidad.
+La vista `--compact` entrega el límite de trabajo, atención operativa, ciclos activos,
+gates externos y decisiones relevantes para `consult`, `iterate`, `integrate` o
+`production`. La vista completa permanece disponible para auditorías amplias. Ambas
+son sanitizadas: no contienen secretos ni filas privadas y no reemplazan la lectura
+del código o contrato específico cuando una decisión necesita mayor profundidad.
 
 ## Purpose
 
@@ -78,25 +79,23 @@ When documents disagree, prefer them in this order:
 folder hierarchy: it feeds the human Knowledge Center and is not a source for AI
 understanding, product behavior or architecture.
 
-## Mandatory branch and production workflow
+## Operating mode and validation authority
 
-For any change that must reach production, the workflow is mandatory:
+Do not pay an integration cost during consultation or local refinement. Use the
+smallest mode that owns the requested outcome:
 
 ```text
-local `staging` work -> commit -> push `staging` -> PR `staging` to `main` -> merge -> verify production
+consult -> iterate locally -> integrate to staging -> promote to production
 ```
 
-Do not push functional corrections directly to `main`. Do not call a task complete
-when only a staging branch or staging PR changed and the user asked for production.
-The work is complete only after the production site visibly reflects the change, or
-after the deployment blocker has been identified and reported clearly.
+Read-only consultation needs no branch or suite. Edit work starts from a fresh,
+isolated `origin/staging` checkout and uses focused checks. Staging integration uses
+the changed-path CI tier. Production uses a staging-to-main PR, the `full` tier and
+post-merge deployment evidence.
 
-This rule matters because the full Django CI suite is expensive in time. A wrong
-branch, wrong PR target, or direct emergency correction can trigger avoidable long
-test runs, delay small CSS/image/copy fixes, and force repeated manual verification.
-For visual-only or docs-only changes, keep the patch narrow, state why the full
-suite was not run locally, and use the configured branch workflow/path filters
-instead of creating unnecessary CI churn.
+`docs/40_technical/operations/testing_and_ci_policy.md` is the single canonical
+workflow and validation policy. `AGENTS.md` carries only the universal boundaries;
+the GitHub workflow and changed-path classifier enforce the selected tier.
 
 ## Minimum reading path by task
 

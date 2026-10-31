@@ -1,7 +1,7 @@
 # AI Team Organization
 
 Status: active
-Last reviewed: 2026-10-29
+Last reviewed: 2026-10-31
 
 ```mermaid
 flowchart TD
@@ -71,5 +71,5 @@ do not transfer ownership or authority. Current pilots are:
 - `mobile-simulator-review`, which establishes source, Metro, native-build, and API
   identity before presenting a mobile change for visual review.
 - `publish-to-staging`, which validates and publishes the exact completed task to
-  the current staging integration boundary, verifies remote CI, and closes only
-  the integrated task checkout.
+  the current staging integration boundary and verifies remote CI. Checkout and
+  branch housekeeping remain a separate requested outcome.

@@ -52,6 +52,9 @@ Before proposing a new capability, establish:
 Prefer improving an existing skill when the evidence, authority, and validation
 boundary remain the same. Prefer a temporary instruction when the need is rare or
 still unclear. Do not create organizational symmetry for its own sake.
+Do not add another role merely to cover a concern already represented by an
+unevaluated pilot; test or revise the existing capability first unless authority,
+evidence, and validation differ materially.
 
 Create a shared workflow skill when multiple roles need the same repeatable
 procedure but the procedure does not own an outcome, change reporting lines, or
@@ -70,6 +73,29 @@ Use the registry states consistently:
 
 Record the evidence behind lifecycle recommendations. A role or shared skill does
 not become active merely because its files are complete.
+
+For every pilot or provisional capability under review, report the smallest useful
+evidence set:
+
+- real tasks where it was selected and the outcome it owned;
+- observed value, failure, overlap, or routing confusion;
+- last meaningful evaluation and the next decision trigger;
+- recommendation to keep, revise, merge, pause, or retire it.
+
+Missing usage evidence is an unknown, not proof of value. Prefer a small number of
+real conversations over speculative completeness.
+
+## Keep standing restrictions proportional
+
+When a skill or team policy adds a lasting restriction, record the concrete failure
+it prevents, the tasks it applies to, and the evidence that would allow it to be
+relaxed or removed. Prefer an executable contract, typed tool, test, or permission
+boundary over repeated prose. Once enforcement exists elsewhere, reduce the skill
+to a short reference instead of preserving a second copy of the rule.
+
+Treat restrictions without a current risk, owner, or review trigger as candidates
+for revision. Preserve hard authority and external-write boundaries even when they
+are rarely exercised.
 
 ## Create and revise skills
 

@@ -1,8 +1,8 @@
 # Testing & CI Policy
 
 Status: active
-Date: 2026-07-07
-Applies to: `staging`, pull requests, GitHub Actions, Django test suite
+Last updated: 2026-10-31
+Applies to: local iteration, `staging`, pull requests, GitHub Actions and deployment evidence
 
 ## Purpose
 
@@ -11,15 +11,31 @@ protect current product contracts, domain rules and integration boundaries. They
 should not preserve outdated behavior after a documented decision changes the
 architecture.
 
-## Branch policy
+## Operating modes
+
+Choose the smallest mode that owns the requested outcome. Moving to a later mode
+is an explicit boundary, not an automatic consequence of making a local change.
+
+| Mode | Source preparation | Validation | Completion evidence |
+| --- | --- | --- | --- |
+| Consult or audit | Current checkout is sufficient for read-only work | None unless a claim needs an executable check | Evidence-backed answer |
+| Iterate locally | Fresh `origin/staging` in an isolated task worktree | Focused check for the changed risk | Local behavior or reviewable patch |
+| Integrate to staging | Refresh and compare with current `origin/staging` | Changed-path CI tier | Exact remote commit and required CI summary |
+| Promote to production | Green staging content through a PR to `main` | Always `full` before merge | Deployment, migration, environment or smoke evidence |
+
+Do not fetch, create a branch, open a worktree, publish, or run a broad suite for a
+read-only consultation merely because those actions are required by later modes.
+
+## Branch and release policy
 
 ```text
 local work -> staging -> GitHub Actions -> staging web QA -> PR to main -> production
 ```
 
-`staging` is the integration branch. It may receive patches and corrective commits,
-but it should return to green before being used as the source of a production pull
-request.
+`staging` is the integration branch. Technical edits begin from the current remote
+staging commit in an isolated task branch. Staging may receive patches and
+corrective commits, but it must return to green before it becomes the source of a
+production pull request.
 
 `main` should only receive code from a green `staging` branch.
 
@@ -28,9 +44,9 @@ request.
 Production work must follow this order:
 
 ```text
-1. Make the change locally while working from `staging`.
-2. Commit only the intended files.
-3. Push `staging` to GitHub.
+1. Make and review the change locally from the current `origin/staging` base.
+2. Run the focused local evidence and commit only the intended files.
+3. Integrate the exact validated content into `staging` and require its selected CI tier.
 4. Open a pull request from `staging` to `main`.
 5. Merge the pull request to `main`.
 6. Verify the deployed production site or confirm the deployment blocker.
@@ -41,29 +57,50 @@ complete when the user asked for production visibility. The task is not complete
 until the production path has either visibly updated or the remaining deployment
 blocker has been identified.
 
-Skipping this order causes real cost. The full Django CI suite is intentionally
-heavy and can take a long time to complete. Opening the wrong PR, merging to the
-wrong branch, or pushing direct corrections to `main` can trigger unnecessary
-test runs, delay small visual fixes by many minutes, and force repeated manual
-verification. For CSS-only, image-only, copy-only or docs-only changes, keep the
-patch narrow and state why the full suite was not run locally; then rely on the
-branch workflow and any configured path filters instead of starting avoidable
-long-running checks.
+The production boundary is strict; the iteration boundary is intentionally light.
+Do not open a PR, deploy, or wait for broad CI merely to obtain local visual or
+functional feedback.
 
-## Workflow policy
+## Validation tiers
 
 GitHub Actions is the external quality gate because it runs in a clean environment,
 not on the developer machine.
 
-Recommended levels:
+The executable classifier is `scripts/ci_change_scope.sh`; the workflow enforcement
+is `.github/workflows/django-ci.yml`. Documentation describes the intent, while
+those files determine the actual selected tier.
 
-```text
-1. Local focused tests during patch work.
-2. Full GitHub Actions run on push to staging.
-3. Full GitHub Actions run on pull request to main.
-```
+| Tier | Typical scope | Required evidence |
+| --- | --- | --- |
+| `docs` | Markdown and canonical documentation only | Repository growth/debt preflight plus static correctness and dependency audit |
+| `mobile` | Mobile-only application changes | Static/dependency quality plus complete mobile contract and bundle gate |
+| `staging-fast` | Ordinary backend, frontend or mixed application work | Fast Django, MCP, browser smoke, frontend, mobile and quality gates |
+| `full` | Migrations, auth, billing, dependencies, release/CI configuration and other critical paths | `staging-fast` plus complete Django and PostgreSQL suites |
 
-A full green run is required before merging to `main`.
+`main` always selects `full`, regardless of changed paths. Staging uses the tier
+selected from the actual diff. A full green run is therefore required before
+merging to `main`, but ordinary staging work is not automatically a full-suite run.
+
+## Validation progression and evidence reuse
+
+1. During iteration, use the smallest focused check that can disprove the current
+   change. For visual mobile work, use `scripts/ci_mobile_visual_check.sh` with the
+   directly related test when one exists and reload through Fast Refresh.
+2. When a mobile refinement stage closes, run `scripts/ci_mobile_iteration.sh`
+   once. Run `scripts/ci_mobile_checks.sh` once before integration.
+3. Before staging integration, run the relevant local gate once, fetch again and
+   publish the exact tested content. CI then owns the changed-path tier.
+4. Reuse successful evidence only when the content is provably identical and the
+   result comes from a trusted required check. Branch names, commit messages and
+   assertions are not proof.
+5. If the base or content changes, rerun only the evidence invalidated by that
+   change. If identity cannot be established, fail safe with the complete tier.
+6. After merge, validate the deployed boundary: health, migrations, environment,
+   provider configuration, staging smoke, physical device or store behavior as
+   applicable. Repeating an identical code suite is not deployment evidence.
+
+State the chosen tier and its expected cost. Explain any deliberate duplicate run
+by naming the content change or evidence gap that prevented reuse.
 
 ## Test categories
 
@@ -219,8 +256,6 @@ plans
 AI proposals
 foods/meals/daily plans
 ```
-
-## Patch checklist
 
 ## Executable quality ratchets
 
