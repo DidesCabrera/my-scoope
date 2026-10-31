@@ -71,6 +71,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
     <NutritionEntityCard
       actions={detailAction}
       afterNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} mealNutrition={meals.map((meal) => ({ calories: meal.calories, carbsGrams: meal.carbs_grams, fatGrams: meal.fat_grams, key: meal.id, proteinGrams: meal.protein_grams }))} />}
+      collapsiblePanel
       entity="dailyPlan"
       eyebrow="Minuta del día"
       headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }}

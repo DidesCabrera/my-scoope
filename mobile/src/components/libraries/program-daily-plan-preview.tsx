@@ -123,6 +123,7 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onR
           ) : null}
         </>
       )}
+      collapsiblePanel
       entity="dailyPlan"
       eyebrow={`SEMANA ${week} · ${dayLabel.toUpperCase()}`}
       headingLink={openDetail ? { label: openDetailLabel, onPress: openDetail } : undefined}

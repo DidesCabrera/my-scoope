@@ -59,6 +59,7 @@ function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecuti
                 </EntityCardAction>
               ) : null}</>}
               completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
+              collapsiblePanel
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
               eyebrowAccessory={meal.hour ? <HeaderMetadataChip kind="time" value={meal.hour.slice(0, 5)} /> : undefined}

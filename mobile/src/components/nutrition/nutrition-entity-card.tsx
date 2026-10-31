@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 import {
@@ -20,6 +20,7 @@ export type NutritionEntityCardProps = {
   actions?: ReactNode;
   afterNutrition?: ReactNode;
   children?: ReactNode;
+  collapsiblePanel?: boolean;
   completion?: CompletionIndicatorCounts;
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
@@ -42,6 +43,7 @@ export function NutritionEntityCard({
   actions,
   afterNutrition,
   children,
+  collapsiblePanel = false,
   completion,
   kpiVariant = "regular",
   entity,
@@ -58,6 +60,8 @@ export function NutritionEntityCard({
   subtitle,
   title,
 }: NutritionEntityCardProps) {
+  const [panelExpanded, setPanelExpanded] = useState(true);
+  const hasCollapsiblePanel = collapsiblePanel && Boolean(children);
   const hasEntityIndicatorSpacing = Boolean(indicators?.length) && (entity === "food" || entity === "meal" || entity === "dailyPlan");
   const hasPanelSpacing = entity === "meal" || entity === "dailyPlan";
   return (
@@ -71,6 +75,7 @@ export function NutritionEntityCard({
       headingLink={headingLink}
       indicators={indicators}
       onPress={onPress}
+      panelToggle={hasCollapsiblePanel ? { expanded: panelExpanded, label: `detalles de ${title}`, onPress: () => setPanelExpanded((current) => !current) } : undefined}
       style={style}
       subtitle={subtitle}
       title={title}
@@ -79,7 +84,7 @@ export function NutritionEntityCard({
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />
       </View> : null}
       {afterNutrition}
-      {children ? <View style={showNutrition && hasPanelSpacing ? styles.panelsAfterNutrition : undefined}><EntityCardPanelSlot>{children}</EntityCardPanelSlot></View> : null}
+      {children && (!hasCollapsiblePanel || panelExpanded) ? <View style={showNutrition && hasPanelSpacing ? styles.panelsAfterNutrition : undefined}><EntityCardPanelSlot>{children}</EntityCardPanelSlot></View> : null}
     </EntityCard>
   );
 }

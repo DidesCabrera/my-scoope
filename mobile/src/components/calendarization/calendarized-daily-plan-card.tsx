@@ -57,6 +57,7 @@ export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId
       actions={<>{additionalActions}{showLibraryActions && (sourceDailyPlanId || onRemoveFromCalendar) ? <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={sourceDailyPlanId} name={snapshot.name ?? planName ?? "Minuta diaria"} onChanged={onChanged} onRemoveFromCalendar={onRemoveFromCalendar} /> : null}{openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}</>}
       afterNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} mealNutrition={meals.map((meal) => ({ calories: snapshotCalories(meal.totals), carbsGrams: meal.totals?.carbs_g ?? 0, fatGrams: meal.totals?.fat_g ?? 0, key: meal.key, proteinGrams: meal.totals?.protein_g ?? 0 }))} />}
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
+      collapsiblePanel
       entity="dailyPlan"
       eyebrow={eyebrow}
       eyebrowAccessory={<HeaderMetadataChip kind="date" value={dateLabel} />}

@@ -15,15 +15,15 @@ export function libraryNutrition(nutrition: LibraryNutrition): NutritionEntityCa
   };
 }
 
-export function libraryFoodNutritionFacts(macros: LibraryNutrition, facts: FoodNutritionFacts): NutritionFacts {
+export function libraryFoodNutritionFacts(macros: LibraryNutrition, facts?: FoodNutritionFacts | null): NutritionFacts {
   return {
     proteinG: macros.protein.grams,
     totalFatG: macros.fat.grams,
-    saturatedFatG: facts.saturated_fat_g,
+    saturatedFatG: facts?.saturated_fat_g ?? null,
     carbsG: macros.carbs.grams,
-    sugarG: facts.sugar_g,
-    fiberG: facts.fiber_g,
-    sodiumMg: facts.sodium_mg,
+    sugarG: facts?.sugar_g ?? null,
+    fiberG: facts?.fiber_g ?? null,
+    sodiumMg: facts?.sodium_mg ?? null,
   };
 }
 

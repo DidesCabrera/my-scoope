@@ -4,7 +4,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import type { LibraryActionResult, LibraryItem } from "@/api/types";
 import { NutritionEntityCard } from "@/components/nutrition";
-import type { FoodPanelEditing, FoodPanelItem, MealPanelEditing, MealPanelItem } from "@/components/panels";
+import { FoodNutritionPanel, type FoodPanelEditing, type FoodPanelItem, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, EntityCardAction, MutationStatusModal, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -12,7 +12,7 @@ import { CalendarizedEntityActions } from "@/components/calendarization/calendar
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
 
 import { FoodPanels, MealPanels, ProgramPanels } from "./entity-panels";
-import { libraryNutrition } from "./presentation-adapters";
+import { libraryFoodNutritionFacts, libraryNutrition } from "./presentation-adapters";
 import { ProgramChildCard, programDailyMetricData } from "./program-child-card";
 import { LibraryActions } from "./library-actions";
 
@@ -101,7 +101,8 @@ export function LibraryCard({ apiRequest, detailHref: detailHrefOverride, intera
     ) : card();
   }
   return (<>
-    <NutritionEntityCard actions={interactive || navigable || onSaveToLibrary ? <>{interactive && (item.actions?.length || canCalendarize) ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCalendarize={canCalendarize ? openCalendarAssignment : undefined} onCompare={item.entity === "meal" || item.entity === "dailyPlan" ? openComparison : undefined} onCompleted={onChanged} onEdit={item.entity === "food" ? openEdit : undefined} /> : null}{onSaveToLibrary ? <EntityCardAction label={savedToLibrary ? `${item.name} guardada en tu biblioteca` : `Guardar ${item.name} en mi biblioteca`} onPress={() => { if (!savedToLibrary && !savingToLibrary) void onSaveToLibrary(); }}>{savedToLibrary ? <BookmarkCheck color={tokens.color.success} size={22} strokeWidth={2.2} /> : <BookmarkPlus color={savingToLibrary ? tokens.color.textSoft : tokens.color.textMain} size={22} strokeWidth={2.2} />}</EntityCardAction> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} entity={item.entity} foodEmoji={item.emoji} foodVisualKey={item.visual_key} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
+    <NutritionEntityCard actions={interactive || navigable || onSaveToLibrary ? <>{interactive && (item.actions?.length || canCalendarize) ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCalendarize={canCalendarize ? openCalendarAssignment : undefined} onCompare={item.entity === "meal" || item.entity === "dailyPlan" ? openComparison : undefined} onCompleted={onChanged} onEdit={item.entity === "food" ? openEdit : undefined} /> : null}{onSaveToLibrary ? <EntityCardAction label={savedToLibrary ? `${item.name} guardada en tu biblioteca` : `Guardar ${item.name} en mi biblioteca`} onPress={() => { if (!savedToLibrary && !savingToLibrary) void onSaveToLibrary(); }}>{savedToLibrary ? <BookmarkCheck color={tokens.color.success} size={22} strokeWidth={2.2} /> : <BookmarkPlus color={savingToLibrary ? tokens.color.textSoft : tokens.color.textMain} size={22} strokeWidth={2.2} />}</EntityCardAction> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} collapsiblePanel entity={item.entity} foodEmoji={item.emoji} foodVisualKey={item.visual_key} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
+      {item.entity === "food" ? <FoodNutritionPanel facts={libraryFoodNutritionFacts(item.nutrition, item.food_nutrition)} portion={{ quantity: item.default_portion ?? null, unit: item.quantity_unit ?? "g" }} /> : null}
       {item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={item.panel.foods} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "meals" ? <MealPanels dailyPlanId={item.entity === "dailyPlan" ? item.id : undefined} editing={mealEditing} items={item.panel.meals} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}
