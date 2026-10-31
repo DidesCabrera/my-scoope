@@ -4,7 +4,7 @@ import { useState } from "react";
 import Svg, { Defs, Line, LinearGradient, Polygon, Polyline, Rect, Stop } from "react-native-svg";
 
 import type { LibraryNutrition } from "@/api/types";
-import { Card, EntityCardPanelToggle, EntityHeading, type EntityHeadingLink, layoutStyles } from "@/components/ui";
+import { Card, EntityCardAction, EntityCardActions, EntityCardPanelToggle, EntityHeading, type EntityHeadingLink, layoutStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ProgramMetricDatum = {
@@ -387,21 +387,19 @@ export function ProgramChildCard({
         title={title}
       />
 
-      {metricsExpanded ? <ProgramMetricPreview axisLabels={axisLabels} data={metricData} days={metricData?.length ?? 14} style={layoutStyles.cardContentBleed} /> : null}
-
-      <View style={styles.footer}>
-        <EntityCardPanelToggle expanded={metricsExpanded} label={`métricas de ${title}`} onPress={() => setMetricsExpanded((current) => !current)} />
-        <View style={styles.actions}>
-          {onMore ? <Pressable accessibilityLabel="Más acciones" accessibilityRole="button" onPress={onMore} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-            <MoreHorizontal color={tokens.color.textMuted} size={21} />
-          </Pressable> : null}
-          {onOpen ? <Pressable accessibilityLabel={openActionLabel ?? "Ver programa"} accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.actionButton, openActionLabel && styles.actionButtonLabeled, pressed && styles.pressed]}>
-            {openActionLabel
-              ? <Text style={styles.actionButtonLabel}>{openActionLabel}</Text>
-              : <ChevronRight color={tokens.color.textMuted} size={21} />}
-          </Pressable> : null}
-        </View>
+      <View style={[styles.footer, metricsExpanded ? styles.footerExpanded : styles.footerCollapsed]}>
+        <EntityCardActions leading={<EntityCardPanelToggle activeColor={tokens.color.dailyPlan} expanded={metricsExpanded} icon="chart" label={`métricas de ${title}`} onPress={() => setMetricsExpanded((current) => !current)} text="Semanas" />}>
+          {onMore ? <EntityCardAction label="Más acciones" onPress={onMore}>
+            <MoreHorizontal color={tokens.color.textMuted} size={19} strokeWidth={2.2} />
+          </EntityCardAction> : null}
+          {onOpen ? openActionLabel
+            ? <Pressable accessibilityLabel={openActionLabel} accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.actionButtonLabeled, pressed && styles.pressed]}><Text style={styles.actionButtonLabel}>{openActionLabel}</Text></Pressable>
+            : <EntityCardAction label="Ver programa" onPress={onOpen} role="link"><ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} /></EntityCardAction>
+          : null}
+        </EntityCardActions>
       </View>
+
+      {metricsExpanded ? <ProgramMetricPreview axisLabels={axisLabels} data={metricData} days={metricData?.length ?? 14} style={layoutStyles.cardContentBleed} /> : null}
     </Card>
   );
 }
@@ -449,9 +447,9 @@ const styles = StyleSheet.create({
   weekAllocationSegment: { borderRadius: 8, overflow: "hidden" },
   allocationSegmentLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: "900", zIndex: 1 },
   weekDivider: { borderLeftColor: tokens.color.borderSoft, borderLeftWidth: 1 },
-  footer: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.md },
-  actions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
-  actionButton: { alignItems: "center", minHeight: 34, justifyContent: "center", minWidth: 34 },
-  actionButtonLabeled: { backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.pill, minHeight: 38, minWidth: 112, paddingHorizontal: tokens.spacing.lg },
+  footer: { marginTop: 2 },
+  footerCollapsed: { marginBottom: -2 },
+  footerExpanded: { marginBottom: 2 },
+  actionButtonLabeled: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.pill, justifyContent: "center", minHeight: 38, minWidth: 112, paddingHorizontal: tokens.spacing.lg },
   actionButtonLabel: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: "800" },
 });

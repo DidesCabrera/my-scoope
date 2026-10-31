@@ -155,7 +155,7 @@ export function DailyPlanMealCards({ dailyPlanId, items, onChanged, onRemove, pi
                   Alert.alert("Listo", result.message);
                 } : undefined}
               /> : null}
-              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
+              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} /></EntityCardAction>
             </>}
             collapsiblePanel
             afterNutrition={pinnedTracking ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={pinnedTracking.completionError?.mealKey === item.id ? pinnedTracking.completionError.message : null} onToggle={(completed) => pinnedTracking.onToggleCompleted(item.id, completed)} saving={pinnedTracking.savingMealKey != null} /> : undefined}

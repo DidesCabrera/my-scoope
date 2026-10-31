@@ -9,8 +9,6 @@ import {
   ChartNoAxesCombined,
   Check,
   CheckCheck,
-  ChevronDown,
-  ChevronUp,
   CircleFadingPlus,
   CircleUserRound,
   ClipboardCheck,
@@ -18,6 +16,7 @@ import {
   Clock,
   FileDown,
   House,
+  Info,
   Send,
   type LucideIcon,
   MessageSquarePlus,
@@ -56,9 +55,12 @@ export type CompletionIndicatorCounts = {
 };
 
 export type EntityCardPanelToggleConfig = {
+  activeColor: string;
   expanded: boolean;
+  icon: "chart" | "food" | "information" | "meal";
   label: string;
   onPress(): void;
+  text: string;
 };
 
 export type EntityHeadingLink = {
@@ -120,6 +122,13 @@ const entityIcons: Record<EntityKind, LucideIcon> = {
   dailyPlan: ClipboardList,
   dpm: CalendarDays,
   program: ChartNoAxesCombined,
+};
+
+const entityCardPanelToggleIcons: Record<EntityCardPanelToggleConfig["icon"], LucideIcon> = {
+  chart: ChartNoAxesCombined,
+  food: Carrot,
+  information: Info,
+  meal: Utensils,
 };
 
 const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
@@ -382,16 +391,19 @@ export function EntityCardActions({ children, leading }: PropsWithChildren<{ lea
   return <View accessibilityLabel="Acciones de la card" style={styles.entityCardActions}>{leading}<View style={styles.entityCardActionGroup}>{children}</View></View>;
 }
 
-export function EntityCardPanelToggle({ expanded, label, onPress }: EntityCardPanelToggleConfig) {
+export function EntityCardPanelToggle({ activeColor, expanded, icon, label, onPress, text }: EntityCardPanelToggleConfig) {
+  const Icon = entityCardPanelToggleIcons[icon];
   return (
     <Pressable
       accessibilityLabel={`${expanded ? "Ocultar" : "Mostrar"} ${label}`}
       accessibilityRole="button"
       accessibilityState={{ expanded }}
       onPress={onPress}
-      style={({ pressed }) => [styles.entityCardPanelToggle, pressed && styles.pressed]}>
-      {expanded ? <ChevronUp color={tokens.color.textMuted} size={17} strokeWidth={2.2} /> : <ChevronDown color={tokens.color.textMuted} size={17} strokeWidth={2.2} />}
-      <Text style={styles.entityCardPanelToggleLabel}>{expanded ? "Ver menos" : "Ver más"}</Text>
+      style={({ pressed }) => [styles.entityCardPanelToggle, expanded && { backgroundColor: `${activeColor}1A`, borderColor: activeColor }, pressed && styles.pressed]}>
+      <View style={styles.entityCardPanelToggleIcon}>
+        <Icon color={expanded ? tokens.color.textMain : tokens.color.textMuted} size={14} strokeWidth={2.2} />
+      </View>
+      <Text style={[styles.entityCardPanelToggleLabel, expanded && styles.entityCardPanelToggleLabelActive]}>{text}</Text>
     </Pressable>
   );
 }
@@ -542,10 +554,12 @@ const styles = StyleSheet.create({
   entityCardInPressable: { marginHorizontal: 0 },
   entityCardWithActions: { paddingBottom: tokens.card.innerPadding },
   entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "space-between" },
-  entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginLeft: "auto" },
-  entityCardAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 36, justifyContent: "center", width: 36 },
-  entityCardPanelToggle: { alignItems: "center", borderRadius: tokens.radius.pill, flexDirection: "row", gap: tokens.spacing.xs, minHeight: 36, paddingHorizontal: tokens.spacing.sm },
-  entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginLeft: "auto", marginRight: -6 },
+  entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 34, justifyContent: "center", width: 34 },
+  entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, height: 34, justifyContent: "center", marginLeft: -6, paddingHorizontal: tokens.spacing.sm },
+  entityCardPanelToggleIcon: { marginLeft: 4 },
+  entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold, marginRight: 6 },
+  entityCardPanelToggleLabelActive: { color: tokens.color.textMain },
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
   headingLink: { borderRadius: tokens.radius.md },

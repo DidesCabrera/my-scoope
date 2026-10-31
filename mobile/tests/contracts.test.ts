@@ -920,11 +920,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUiSource, /entityCardPressable: \{ marginHorizontal: -tokens\.spacing\.screen \}/);
   assertSourceMatch(productUiSource, /export function EntityCardActions/);
   assertSourceMatch(productUiSource, /export function EntityCardAction/);
-  assertSourceMatch(productUiSource, /actions \? styles\.entityCardWithActions : null/);
+  assertSourceMatch(productUiSource, /hasFooter \? styles\.entityCardWithActions : null/);
   assertSourceMatch(productUiSource, /entityCardWithActions: \{ paddingBottom: tokens\.card\.innerPadding \}/);
   assertSourceDoesNotMatch(productUiSource, /entityCardActions: \{[^\n]*marginTop/);
-  assertSourceMatch(productUiSource, /entityCardAction: \{ alignItems: "center", borderRadius:/);
-  assertSourceDoesNotMatch(productUiSource, /entityCardAction: \{[^\n]*borderWidth/);
+  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderColor: tokens\.color\.borderStrong[^}]*borderRadius: tokens\.radius\.pill/);
+  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderWidth: 1[^}]*height: 34[^}]*width: 34/);
   assertSourceMatch(productUiSource, /entityCardPanelSlot: \{ minWidth: 0 \}/);
 
   const panelSurface = await readTestFile(
@@ -942,7 +942,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),
     "utf8",
   );
-  assertSourceMatch(programChart, /import \{ Card, EntityHeading, type EntityHeadingLink, layoutStyles \} from "@\/components\/ui"/);
+  assertSourceMatch(programChart, /import \{[^}]*Card[^}]*EntityCardAction[^}]*EntityCardActions[^}]*EntityCardPanelToggle[^}]*EntityHeading[^}]*layoutStyles[^}]*\} from "@\/components\/ui"/);
   assertSourceDoesNotMatch(programChart, /Card.*from "@\/components\/ui\/primitives"/);
   assertSourceMatch(programChart, /<Card accent=\{tokens\.color\.program\}>/);
   assertSourceMatch(programChart, /<ProgramMetricPreview[^\n]*style=\{layoutStyles\.cardContentBleed\}/);

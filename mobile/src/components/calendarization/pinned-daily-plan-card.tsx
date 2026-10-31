@@ -47,7 +47,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
   const detailAction = (<>
     <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={item.id} name={item.name} onChanged={onChanged} />
     <EntityCardAction label="Ir al detalle del plan" onPress={openDetail} role="link">
-      <ChevronRight color={tokens.color.textMuted} size={21} />
+      <ChevronRight color={tokens.color.textMuted} size={17} />
     </EntityCardAction>
   </>);
   const meals = item.panel.meals;

@@ -38,7 +38,8 @@ test("program cards omit creator metadata and configuration card has no accent b
 
   assert.doesNotMatch(screen, /<Card accent=\{tokens\.color\.program\}>/);
   assert.doesNotMatch(programCard, /CircleUserRound|Creado por|ownerText|owner:/);
-  assert.match(programCard, /footer: \{[^}]*justifyContent: "flex-end"/);
+  assert.ok(programCard.includes("<EntityCardActions leading={<EntityCardPanelToggle"));
+  assert.match(programCard, /footer: \{ marginTop: 2 \}/);
 });
 
 test("program selection uses the shared white action chip and the selected card has no change action", async () => {
@@ -47,7 +48,7 @@ test("program selection uses the shared white action chip and the selected card 
 
   assert.match(screen, /openActionLabel="Seleccionar"/);
   assert.doesNotMatch(screen, /Cambiar selección/);
-  assert.match(programCard, /openActionLabel\s*\? <Text style=\{styles\.actionButtonLabel\}>\{openActionLabel\}<\/Text>[\s\S]*: <ChevronRight/);
+  assert.match(programCard, /openActionLabel\s*\? <Pressable[\s\S]*?<Text style=\{styles\.actionButtonLabel\}>\{openActionLabel\}<\/Text><\/Pressable>[\s\S]*: <EntityCardAction[\s\S]*?<ChevronRight/);
   assert.match(programCard, /actionButtonLabeled: \{[^}]*backgroundColor: tokens\.color\.textMain[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 38[^}]*minWidth: 112/);
   assert.match(programCard, /actionButtonLabel: \{[^}]*color: tokens\.color\.surfaceApp[^}]*fontWeight: "800"/);
 });

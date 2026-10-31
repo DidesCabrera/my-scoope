@@ -221,7 +221,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     <>
       {renderTrigger ? renderTrigger(open) : (
         <EntityCardAction label={`Más acciones para ${item.name}`} onPress={open}>
-          <MoreHorizontal color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+          <MoreHorizontal color={tokens.color.textMuted} size={19} strokeWidth={2.2} />
         </EntityCardAction>
       )}
       <ActionSheetModal dismissImmediately={dismissShareImmediately} onRequestClose={close} visible={visible}>

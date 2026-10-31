@@ -55,7 +55,7 @@ function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecuti
                   label={`Ver detalle de ${meal.name ?? "la comida"}`}
                   onPress={openDetail}
                   role="link">
-                  <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+                  <ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} />
                 </EntityCardAction>
               ) : null}</>}
               completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
