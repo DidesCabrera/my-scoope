@@ -196,7 +196,7 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
   </>;
   return (<>
     {day.has_plan && day.plan_snapshot ? <CalendarizedDailyPlanCard
-      additionalActions={<EntityCardAction label="Opciones de la minuta diaria" onPress={() => setPlanMenuVisible(true)}><Ellipsis color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>}
+      additionalActions={<EntityCardAction label="Opciones de la minuta diaria" onPress={() => setPlanMenuVisible(true)}><Ellipsis color={tokens.color.textMuted} size={19} strokeWidth={2.2} /></EntityCardAction>}
       apiRequest={apiRequest}
       dateLabel={shortDate(day.calendar_date)}
       dayId={day.id}

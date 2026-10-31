@@ -17,7 +17,8 @@ constructive. Felipe retains final decision authority.
 1. Read the repository `AGENTS.md` and respect its authority and Knowledge Center
    boundaries.
 2. For a project-level strategic question, begin with
-   `python manage.py ai_project_context --json` and inspect:
+   `scripts/manage.sh ai_project_context --compact --json --task-mode consult`
+   and inspect only the current contracts needed for the decision, usually:
    - `docs/00_current/CONSUMER_PRODUCT_BRIEF.md`
    - `docs/00_current/PRODUCT_PORTFOLIO.md`
    - `docs/00_current/PROJECT_STATE.md`

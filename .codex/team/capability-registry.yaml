@@ -1,6 +1,6 @@
 schema_version: 2
 owner: "Felipe Dides"
-last_reviewed: "2026-10-29"
+last_reviewed: "2026-10-31"
 lifecycle_states:
   - "proposal"
   - "pilot"
@@ -146,7 +146,7 @@ shared_skills:
     area: "product-technology"
     status: "pilot"
     path: ".codex/skills/publish-to-staging/SKILL.md"
-    purpose: "Validate, publish, verify, and close a completed technical task against the current origin/staging boundary."
+    purpose: "Validate, publish, and verify a completed technical task against the current origin/staging boundary without implicit checkout cleanup."
     available_to: "all-technical-roles"
     typical_users:
       - "ai-architecture-context-steward"

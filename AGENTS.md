@@ -43,11 +43,20 @@ live under `.codex/skills/`.
 
 ## Fresh task checkout boundary
 
-Before starting a new technical task, fetch `origin` with pruning and resolve the
-task base from the updated remote-tracking refs. Ordinary product and engineering
-work starts from the exact current `origin/staging` commit in a new isolated
-worktree and `codex/<task>` branch. A local branch named `staging` or the branch in
-an already-open checkout is not proof of current code.
+Use the smallest operating mode that owns the requested outcome:
+
+- **Consult or audit:** read-only work may use the current checkout. It does not
+  require a fetch, branch, worktree, or test suite unless a specific claim needs an
+  executable check.
+- **Iterate locally:** code or documentation edits start from a freshly fetched
+  `origin/staging` in an isolated `codex/<task>` worktree and use focused checks.
+- **Integrate to staging:** refresh the remote again, validate the changed-path
+  tier, and publish the exact tested content.
+- **Promote to production:** use a staging-to-main PR, the full required gate, and
+  deployment evidence after merge.
+
+A local branch named `staging` or an already-open checkout is not proof of current
+code. Use the `fresh-task-checkout` workflow for edit tasks.
 
 - Do not reset, clean, switch, pull, or rebase a dirty or unrelated checkout to
   prepare new work.
@@ -61,50 +70,20 @@ an already-open checkout is not proof of current code.
 
 ## Efficient validation policy
 
-Engineering confidence must increase at every validation stage without paying
-twice for the same evidence. Prefer the smallest check that can disprove the
-current change, and reserve broad suites for integration boundaries.
+`docs/40_technical/operations/testing_and_ci_policy.md` is the canonical workflow
+and validation policy. `.github/workflows/django-ci.yml` and
+`scripts/ci_change_scope.sh` are its executable enforcement.
 
-- During product iteration, keep changes on a branch based on the current
-  `staging`, use the local development client and Fast Refresh, and run focused
-  tests, lint, or type checks for the affected area. Do not publish, open a PR,
-  deploy, or wait for the complete CI suite merely to obtain visual feedback.
-- For a visual mobile adjustment, use `scripts/ci_mobile_visual_check.sh` with
-  only the directly related test file when one exists. It lints changed mobile
-  files only and must not run the global typecheck or full mobile test set.
-- Use `scripts/ci_mobile_iteration.sh` once when the user closes a mobile
-  refinement stage. Use the complete `scripts/ci_mobile_checks.sh` gate once
-  before integration.
-- Obtain visual or functional approval before starting the integration cycle
-  when the user is actively iterating on UI behavior.
-- Before integration, run the relevant local gate once, then publish the exact
-  tested commit. A direct push to `staging` is allowed when remote staging is
-  genuinely needed; CI selects the `docs`, `mobile`, `staging-fast`, or `full`
-  tier from the changed paths. Ordinary and mixed application work uses
-  `staging-fast`; migrations, authentication, billing, dependencies, release
-  configuration, CI infrastructure, and other explicitly critical paths use
-  `full` even on `staging`.
-- `main` is a strict boundary: integrate through a PR, require the repository
-  checks, and always use the `full` tier. Do not repeat the same code suite
-  after merging the already validated PR; use deployment checks for the
-  post-merge evidence instead.
-- Reuse successful validation only when the content is provably identical and
-  the evidence comes from a trusted, required check. Commit messages, branch
-  names, or human assertions are not proof. Missing or unverifiable evidence
-  must fail safe by running the complete suite.
-- Post-merge validation must add different evidence: deployment health,
-  migrations, environment configuration, or a staging smoke test. Do not treat
-  a second execution of identical code tests as deployment validation.
-- Backend, schema, authentication, migration, dependency, or release changes
-  may justify broader and earlier checks. State the concrete risk instead of
-  defaulting every change to the slowest path.
-- Report which validation tier is running and its expected cost. If a check is
-  knowingly duplicated, explain why the earlier evidence cannot be reused.
-- Do not run `ci_mobile_iteration.sh`, a global typecheck, or the complete mobile
-  test set after each visual change. Reload the development client immediately
-  after the focused check. Browser or staging workflows require a concrete need;
-  existing staging-backed data is not a reason to repeat them.
+- During iteration, run the smallest focused check that can disprove the change.
+  Visual mobile work uses the focused visual check and Fast Refresh; complete
+  mobile checks run once at the integration boundary.
+- At staging integration, CI selects `docs`, `mobile`, `staging-fast`, or `full`
+  from changed paths. Critical paths use `full`; ordinary application work uses
+  `staging-fast`.
+- `main` always uses `full`. Reuse trusted evidence only for provably identical
+  content and add deployment, migration, environment, provider, or device
+  evidence after merge instead of repeating the same code suite.
+- State the selected tier and expected cost. If validation is duplicated, explain
+  which changed content or missing evidence invalidated the earlier result.
 
-The target feedback loop is seconds to a few minutes for local iteration and a
-single complete CI cycle at integration. Efficiency never permits skipping the
-one validation layer that owns the risk being introduced.
+Efficiency never permits skipping the one validation layer that owns the risk.

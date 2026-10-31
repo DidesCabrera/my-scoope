@@ -16,6 +16,7 @@ import { tokens } from "@/design/tokens";
 import { recordLibraryEditInteraction } from "@/observability/sentry";
 
 import { LibraryCard } from "./library-card";
+import { FoodAddActions } from "./food-add-actions";
 import { LibraryListActions } from "./library-list-actions";
 import { applyLibraryDeletion, containsSameLibraryItems } from "./library-list-edit-state";
 import { LibraryListEditor } from "./library-list-editor";
@@ -58,6 +59,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [foodAddActionsVisible, setFoodAddActionsVisible] = useState(false);
   const [mode, setMode] = useState<"list" | "edit">("list");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -235,7 +237,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
         action: mode === "list"
           ? { icon: "more", label: `Acciones de ${title}`, onPress: () => setActionsVisible(true) }
           : { disabled: loading || submitting, label: "Listo", onPress: finishEdit },
-        createAction: mode === "list" ? { label: createLabels[entity], onPress: () => void openCreate() } : undefined,
+        createAction: mode === "list" ? { label: createLabels[entity], onPress: entity === "food" ? () => setFoodAddActionsVisible(true) : () => void openCreate() } : undefined,
         secondaryAction: mode === "list" && (entity === "meal" || entity === "dailyPlan")
           ? { icon: "search", label: entity === "meal" ? "Explorar comidas" : "Explorar minutas", onPress: () => router.push((entity === "meal" ? "/explore/meals" : "/explore/daily-plans") as Href) }
           : undefined,
@@ -297,6 +299,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
         />
       ) : null}
       <LibraryListActions canCompare={entity !== "program"} entity={entity} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onEdit={() => void beginEdit()} title={title} visible={actionsVisible} />
+      {entity === "food" ? <FoodAddActions onClose={() => setFoodAddActionsVisible(false)} onManualAdd={() => void openCreate()} onScanLabel={() => router.push("/label-capture" as Href)} visible={foodAddActionsVisible} /> : null}
       {commercialLimit ? <CommercialLimitSheet {...commercialLimit} onClose={() => setCommercialLimit(null)} onUpgrade={() => { setCommercialLimit(null); router.push("/subscription"); }} visible /> : null}
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </NestableScrollContainer>

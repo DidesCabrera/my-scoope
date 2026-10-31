@@ -47,7 +47,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
   const detailAction = (<>
     <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={item.id} name={item.name} onChanged={onChanged} />
     <EntityCardAction label="Ir al detalle del plan" onPress={openDetail} role="link">
-      <ChevronRight color={tokens.color.textMuted} size={21} />
+      <ChevronRight color={tokens.color.textMuted} size={17} />
     </EntityCardAction>
   </>);
   const meals = item.panel.meals;
@@ -71,6 +71,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
     <NutritionEntityCard
       actions={detailAction}
       afterNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} mealNutrition={meals.map((meal) => ({ calories: meal.calories, carbsGrams: meal.carbs_grams, fatGrams: meal.fat_grams, key: meal.id, proteinGrams: meal.protein_grams }))} />}
+      collapsiblePanel
       entity="dailyPlan"
       eyebrow="Minuta del día"
       headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }}

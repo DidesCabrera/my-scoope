@@ -118,11 +118,12 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onR
               label={openDetailLabel}
               onPress={openDetail}
               role="link">
-              <ChevronRight color={tokens.color.textMuted} size={21} />
+              <ChevronRight color={tokens.color.textMuted} size={17} />
             </EntityCardAction>
           ) : null}
         </>
       )}
+      collapsiblePanel
       entity="dailyPlan"
       eyebrow={`SEMANA ${week} · ${dayLabel.toUpperCase()}`}
       headingLink={openDetail ? { label: openDetailLabel, onPress: openDetail } : undefined}

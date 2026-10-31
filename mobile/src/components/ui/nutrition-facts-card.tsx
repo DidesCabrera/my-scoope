@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
@@ -13,27 +13,33 @@ export type NutritionFactsCardProps = {
 };
 
 export function NutritionFactsCard({ facts, portion }: NutritionFactsCardProps) {
-  const rows = nutritionFactRows(facts, portion.quantity);
   return (
     <Fragment>
       <SectionTitle detail={`Tamaño porción aprox: ${formatNutritionPortion(portion.quantity, portion.unit)}`} title="Información Nutricional" />
       <Card muted style={styles.card}>
-        <View style={styles.table}>
-          <View accessibilityRole="header" style={[styles.row, styles.header]}>
-            <Text style={[styles.headerText, styles.labelColumn]}>Nutriente</Text>
-            <Text style={[styles.headerText, styles.valueColumn]}>{`100 ${portion.unit}`.toUpperCase()}</Text>
-            <Text style={[styles.headerText, styles.valueColumn, styles.portionColumn]}>{formatNutritionPortion(portion.quantity, portion.unit)}</Text>
-          </View>
-          {rows.map((row, index) => (
-            <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.lastRow]}>
-              <Text style={[styles.label, styles.labelColumn, row.emphasized && styles.labelEmphasized]}>{row.label}</Text>
-              <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={[styles.value, styles.valueColumn, row.emphasized && styles.valueEmphasized]}>{row.per100Value}</Text>
-              <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={[styles.value, styles.valueColumn, styles.portionColumn, row.emphasized && styles.valueEmphasized]}>{row.portionValue}</Text>
-            </View>
-          ))}
-        </View>
+        <NutritionFactsTable facts={facts} portion={portion} style={styles.table} />
       </Card>
     </Fragment>
+  );
+}
+
+export function NutritionFactsTable({ facts, portion, style }: NutritionFactsCardProps & { style?: StyleProp<ViewStyle> }) {
+  const rows = nutritionFactRows(facts, portion.quantity);
+  return (
+    <View style={style}>
+      <View accessibilityRole="header" style={[styles.row, styles.header]}>
+        <Text style={[styles.headerText, styles.labelColumn]}>Nutriente</Text>
+        <Text style={[styles.headerText, styles.valueColumn]}>{`100 ${portion.unit}`.toUpperCase()}</Text>
+        <Text style={[styles.headerText, styles.valueColumn, styles.portionColumn]}>{formatNutritionPortion(portion.quantity, portion.unit)}</Text>
+      </View>
+      {rows.map((row, index) => (
+        <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.lastRow]}>
+          <Text style={[styles.label, styles.labelColumn, row.emphasized && styles.labelEmphasized]}>{row.label}</Text>
+          <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={[styles.value, styles.valueColumn, row.emphasized && styles.valueEmphasized]}>{row.per100Value}</Text>
+          <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={[styles.value, styles.valueColumn, styles.portionColumn, row.emphasized && styles.valueEmphasized]}>{row.portionValue}</Text>
+        </View>
+      ))}
+    </View>
   );
 }
 

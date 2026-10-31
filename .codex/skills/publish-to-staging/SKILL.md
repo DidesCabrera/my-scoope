@@ -1,6 +1,6 @@
 ---
 name: publish-to-staging
-description: Publish the current My Scoope task to the latest origin/staging after proportionate validation, confirm the exact remote CI result, update the clean local staging control checkout, and close the integrated local worktree and branch. Use when Felipe says "publica este trabajo en staging", "integra este trabajo en staging", or an equivalent short instruction. Do not use for main, production deployment, remote-branch deletion, or unrelated cleanup.
+description: Publish the current My Scoope task to the latest origin/staging after proportionate validation and confirm the exact remote CI result. Use when Felipe says "publica este trabajo en staging", "integra este trabajo en staging", or an equivalent short instruction. Do not use for main, production deployment, worktree cleanup, branch deletion, or unrelated housekeeping.
 ---
 
 # Publish to Staging
@@ -28,14 +28,11 @@ cleanup outside the current task.
    change. The exact commit to publish must be the exact content validated.
 6. Push that commit to `origin/staging`, then wait for and report the required
    GitHub Actions result for the exact remote commit. A failed or missing required
-   check blocks cleanup.
-7. Update the local `staging` control checkout by fast-forward only when it is
-   clean and its identity has been verified. Never discard or overwrite another
-   task's local changes to make the control checkout current.
-8. After the published commit is confirmed reachable from `origin/staging`,
-   archive the current managed worktree recoverably when applicable and delete
-   only its integrated local task branch. Leave other checkouts and branches
-   untouched.
+   check blocks treating the staging integration as successful.
+7. Stop when the exact published commit and its required CI result are known.
+   Updating a local control checkout, archiving a worktree, and deleting an
+   integrated branch are separate housekeeping outcomes and require a separate
+   user request.
 
 ## Boundaries
 
@@ -43,6 +40,8 @@ This instruction does not authorize:
 
 - pushing or merging to `main`;
 - deploying or verifying production;
+- updating another checkout, including a local `staging` control checkout;
+- archiving or deleting the current worktree or local branch;
 - deleting remote branches;
 - force-updating shared refs;
 - deleting a dirty, unverified, or non-integrated branch;
@@ -53,6 +52,6 @@ those actions or without a user decision.
 
 ## Report
 
-Return the published commit, remote target, validation tier and outcome, exact CI
-run result, local `staging` state, and the checkout/branch cleanup performed or
-blocked.
+Return the published commit, remote target, validation tier and outcome, and exact
+CI run result. State that the task checkout and branch remain available unless the
+user separately requested their closure.

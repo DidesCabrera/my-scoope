@@ -12,7 +12,10 @@ Communicate in Spanish unless the user requests another language.
 ## Respect authority and scope
 
 1. Read the repository `AGENTS.md` first and obey its validation and Knowledge Center boundaries.
-2. Begin with `docs/00_current/AI_README.md` and `python manage.py ai_project_context --json`. Use the domain filter when the scope is narrow.
+2. Begin with `docs/00_current/AI_README.md` and the compact packet for the actual
+   mode, for example `scripts/manage.sh ai_project_context --compact --json
+   --task-mode consult`. Add the domain filter when the scope is narrow. Use the
+   complete context only for a genuinely cross-domain audit.
 3. Establish claims from current implementation, tests, migrations, and executable contracts; then reconcile them with `docs/00_current/`, accepted decisions, and active cycles. Use Git history and Codex conversations to discover intent or change history, never as the sole proof of current behavior.
 4. Treat `admin_knowledge/` and `docs/00_current/features/admin_knowledge/` only as human presentation. Never use them as architectural evidence or update them unless Felipe explicitly includes the Knowledge Center in the current request.
 5. An audit request is read-only by default. Change product code, canonical documents, decisions, cycles, or external systems only when the user asks for those changes.
@@ -30,7 +33,10 @@ For any mode, read [the comprehensibility rubric](references/comprehensibility-r
 ## Audit the evidence chain
 
 1. State the audit question and the affected domain or decision boundary.
-2. Build a compact current-state baseline with the executable project context, `PROJECT_STATE.md`, the applicable feature and architecture documents, and the relevant code, migrations, and focused tests.
+2. Build the smallest current-state baseline that can establish the claim. Start
+   with the task packet and applicable current contract; add `PROJECT_STATE.md`,
+   decisions, code, migrations, or tests only when they resolve a real boundary or
+   uncertainty.
 3. Identify the domain's authority, write path, consumers, permissions, terminology, failure boundaries, and owned validation. Record unknowns explicitly.
 4. Compare the intended or observed change against that baseline. Look especially for competing sources of truth, duplicated domain rules, reversed dependencies, hidden cross-domain coupling, new one-off concepts, stale terminology, and validation that cannot prove the claimed boundary.
 5. Classify every material finding as:
@@ -39,7 +45,9 @@ For any mode, read [the comprehensibility rubric](references/comprehensibility-r
    - **Intentional complexity:** may be justified, but its cost, authority, and rationale must be explicit and discoverable.
 6. Recommend the smallest correction that restores a clear path. Prefer consolidating authority, vocabulary, navigation, and contracts over adding explanatory prose around avoidable complexity.
 7. If updates are authorized, change the narrowest canonical sources and executable context needed. Do not rewrite history; mark superseded decisions or completed cycles using the repository's established conventions.
-8. Validate at the layer that owns the risk. For documentation/context work, run focused document and context checks plus `python manage.py document_registry --strict`; follow `AGENTS.md` before choosing any broader gate.
+8. Validate at the layer that owns the risk. For documentation/context work, run
+   focused document and context checks plus `scripts/manage.sh document_registry
+   --strict`; follow the canonical testing policy before choosing any broader gate.
 
 ## Project-specific drift signals
 

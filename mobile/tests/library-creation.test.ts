@@ -5,6 +5,7 @@ import test from "node:test";
 
 test("mobile libraries expose native creation for all four entities", async () => {
   const list = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-list-screen.tsx"), "utf8");
+  const foodAddActions = await readFile(path.resolve(process.cwd(), "src/components/libraries/food-add-actions.tsx"), "utf8");
   const create = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-create-screen.tsx"), "utf8");
   const route = await readFile(path.resolve(process.cwd(), "src/app/libraries/create.tsx"), "utf8");
 
@@ -12,8 +13,13 @@ test("mobile libraries expose native creation for all four entities", async () =
     assert.match(list, new RegExp(label));
   }
   assert.match(list, /pathname: "\/libraries\/create"/);
-  assert.match(list, /createAction: mode === "list" \? \{ label: createLabels\[entity\]/);
+  assert.match(list, /createAction: mode === "list" \? \{ label: createLabels\[entity\], onPress: entity === "food" \? \(\) => setFoodAddActionsVisible\(true\)/);
   assert.doesNotMatch(list, /<Button label=\{createLabels\[entity\]\}/);
+  assert.match(list, /onManualAdd=\{\(\) => void openCreate\(\)\}/);
+  assert.match(list, /onScanLabel=\{\(\) => router\.push\("\/label-capture" as Href\)\}/);
+  assert.match(foodAddActions, /title="Agregar alimento"/);
+  assert.match(foodAddActions, /label="Agregar manualmente"/);
+  assert.match(foodAddActions, /label="Digitalizar etiqueta"/);
   assert.match(list, /include_drafts/);
   assert.match(route, /LibraryCreateScreen/);
   assert.match(create, /mode: "back"/);

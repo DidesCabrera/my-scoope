@@ -1,4 +1,4 @@
 interface:
   display_name: "Publish to Staging"
-  short_description: "Publica trabajo validado y cierra su checkout"
-  default_prompt: "Usa $publish-to-staging para publicar este trabajo en staging y cerrar correctamente su checkout."
+  short_description: "Publica trabajo validado y confirma su CI"
+  default_prompt: "Usa $publish-to-staging para publicar este trabajo en staging y confirmar el CI exacto sin cerrar ni limpiar su checkout."

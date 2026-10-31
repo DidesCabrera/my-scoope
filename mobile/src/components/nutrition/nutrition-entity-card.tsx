@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 import {
   EntityCard,
+  EntityCardActions,
+  EntityCardPanelToggle,
   EntityCardPanelSlot,
   type CompletionIndicatorCounts,
   type EntityHeadingLink,
@@ -14,12 +16,14 @@ import {
   type NutritionKpiSectionProps,
 } from "./nutrition-kpi-section";
 import { FoodVisualIcon } from "./food-visual-icon";
+import { tokens } from "@/design/tokens";
 
 export type NutritionEntityCardProps = {
   accessory?: ReactNode;
   actions?: ReactNode;
   afterNutrition?: ReactNode;
   children?: ReactNode;
+  collapsiblePanel?: boolean;
   completion?: CompletionIndicatorCounts;
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
@@ -42,6 +46,7 @@ export function NutritionEntityCard({
   actions,
   afterNutrition,
   children,
+  collapsiblePanel = false,
   completion,
   kpiVariant = "regular",
   entity,
@@ -58,12 +63,18 @@ export function NutritionEntityCard({
   subtitle,
   title,
 }: NutritionEntityCardProps) {
+  const [panelExpanded, setPanelExpanded] = useState(true);
+  const hasCollapsiblePanel = collapsiblePanel && Boolean(children);
+  const panelToggleIcon = entity === "food" ? "information" : entity === "meal" ? "food" : entity === "program" ? "chart" : "meal";
+  const panelToggleText = entity === "food" ? "Más información" : entity === "meal" ? "Alimentos" : entity === "program" ? "Semanas" : "Comidas";
+  const panelToggleColor = entity === "food" || entity === "meal" ? tokens.color.food : entity === "dailyPlan" ? tokens.color.meal : tokens.color.dailyPlan;
+  const panelToggle = hasCollapsiblePanel ? <EntityCardPanelToggle activeColor={panelToggleColor} expanded={panelExpanded} icon={panelToggleIcon} label={`detalles de ${title}`} onPress={() => setPanelExpanded((current) => !current)} text={panelToggleText} /> : undefined;
   const hasEntityIndicatorSpacing = Boolean(indicators?.length) && (entity === "food" || entity === "meal" || entity === "dailyPlan");
   const hasPanelSpacing = entity === "meal" || entity === "dailyPlan";
   return (
     <EntityCard
       accessory={accessory}
-      actions={actions}
+      actions={hasCollapsiblePanel ? undefined : actions}
       completion={completion}
       entity={entity}
       eyebrow={eyebrow}
@@ -79,12 +90,16 @@ export function NutritionEntityCard({
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />
       </View> : null}
       {afterNutrition}
-      {children ? <View style={showNutrition && hasPanelSpacing ? styles.panelsAfterNutrition : undefined}><EntityCardPanelSlot>{children}</EntityCardPanelSlot></View> : null}
+      {hasCollapsiblePanel ? <View style={[styles.actionsBeforePanel, !panelExpanded && styles.actionsBeforePanelCollapsed]}><EntityCardActions leading={panelToggle}>{actions}</EntityCardActions></View> : null}
+      {children && (!hasCollapsiblePanel || panelExpanded) ? <View style={hasCollapsiblePanel ? styles.panelAfterActions : showNutrition && hasPanelSpacing ? styles.panelsAfterNutrition : undefined}><EntityCardPanelSlot>{children}</EntityCardPanelSlot></View> : null}
     </EntityCard>
   );
 }
 
 const styles = StyleSheet.create({
+  actionsBeforePanel: { marginTop: 2 },
+  actionsBeforePanelCollapsed: { marginBottom: -2 },
   nutritionAfterIndicators: { marginTop: 4 },
+  panelAfterActions: { marginTop: 2 },
   panelsAfterNutrition: { marginTop: 4 },
 });

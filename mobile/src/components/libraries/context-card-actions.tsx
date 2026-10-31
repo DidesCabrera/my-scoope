@@ -77,7 +77,7 @@ export function ContextCardActions({ actions, label, renderTrigger, title }: Con
     <>
       {renderTrigger ? renderTrigger(open) : (
         <EntityCardAction label={label} onPress={open}>
-          <MoreHorizontal color={tokens.color.textMuted} size={21} />
+          <MoreHorizontal color={tokens.color.textMuted} size={17} />
         </EntityCardAction>
       )}
       <ActionSheetModal onRequestClose={close} visible={visible}>
