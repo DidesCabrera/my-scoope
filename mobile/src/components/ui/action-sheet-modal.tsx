@@ -139,11 +139,11 @@ export function ActionSheetModal({ children, dismissImmediately = false, onDismi
   );
 }
 
-export function ActionSheetHeader({ entity, icon: Icon, iconColor = tokens.color.textMain, onClose, section, title }: { entity?: EntityKind; icon?: LucideIcon; iconColor?: string; onClose(): void; section?: SectionKind; title: string }) {
+export function ActionSheetHeader({ entity, icon: Icon, iconColor = tokens.color.textMain, iconNode, onClose, section, title }: { entity?: EntityKind; icon?: LucideIcon; iconColor?: string; iconNode?: ReactNode; onClose(): void; section?: SectionKind; title: string }) {
   return (
     <View style={styles.header}>
       <View style={styles.headerIdentity}>
-        {entity ? <EntityIcon entity={entity} size="header" /> : section ? <SectionIcon section={section} /> : Icon ? <Icon color={iconColor} size={24} strokeWidth={2.1} /> : null}
+        {iconNode ?? (entity ? <EntityIcon entity={entity} size="header" /> : section ? <SectionIcon section={section} /> : Icon ? <Icon color={iconColor} size={24} strokeWidth={2.1} /> : null)}
         <Text numberOfLines={2} style={styles.headerTitle}>{title}</Text>
       </View>
       <Pressable accessibilityLabel="Cerrar" accessibilityRole="button" onPress={onClose} style={({ pressed }) => [styles.close, pressed && styles.pressed]}>

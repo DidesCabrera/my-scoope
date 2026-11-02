@@ -25,15 +25,17 @@ import { ChatComposer } from "./chat-composer";
 import { ChatConversation } from "./chat-conversation";
 import { AssistantChatActions } from "./assistant-chat-actions";
 
-export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: number | null; comparisonId?: number | null }) {
+export function AssistantChatScreen({ chatId, comparisonId = null, initialMessage = null }: { chatId: number | null; comparisonId?: number | null; initialMessage?: string | null }) {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  const normalizedInitialMessage = initialMessage?.trim() || null;
+  const initialMessageRef = useRef(normalizedInitialMessage);
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [chat, setChat] = useState<AIChatDetail | null>(null);
   const [availability, setAvailability] = useState<AssistantAvailability | null>(null);
   const [pending, setPending] = useState<AIPendingTurn | null>(null);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(normalizedInitialMessage ?? "");
   const [optimisticMessage, setOptimisticMessage] = useState<AIChatMessage | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -102,8 +104,8 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
     return () => controller.abort();
   }, [apiRequest, chatId, load, pending, router, status]);
 
-  async function send() {
-    const normalized = message.trim();
+  const send = useCallback(async (draft = message) => {
+    const normalized = draft.trim();
     if (!normalized || sending || pending) return;
     const idempotencyKey = `mobile-${Crypto.randomUUID()}`;
     setSending(true);
@@ -134,7 +136,14 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
       setMessage(normalized);
       setSending(false);
     }
-  }
+  }, [apiRequest, chatId, comparisonId, message, pending, sending]);
+
+  useEffect(() => {
+    const initialDraft = initialMessageRef.current;
+    if (!initialDraft || loading || status !== "authenticated" || sending || pending || !availability?.is_available || availability.available_credits === 0) return;
+    initialMessageRef.current = null;
+    void send(initialDraft);
+  }, [availability, loading, pending, send, sending, status]);
 
   function handlePreparedAction(actionId: string, mode: "commit" | "cancel", destructive: boolean) {
     const execute = async () => {
