@@ -484,7 +484,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, self.program.name)
         self.assertNotContains(response, foreign.name)
         self.assertContains(response, 'data-empty-days="6"')
-        self.assertContains(response, "Calendarizador")
+        self.assertContains(response, "Programa en curso")
         self.assertContains(response, "Historial")
         self.assertNotContains(response, ">Zona horaria<")
         self.assertContains(response, '<input type="date" name="start_date" required data-start-date>')
@@ -497,7 +497,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.program.name)
         self.assertContains(response, "Historial")
-        self.assertContains(response, "Calendarizador")
+        self.assertContains(response, "Programa en curso")
 
     def test_calendar_preview_reads_manual_dated_snapshot_without_program(self):
         today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
@@ -509,7 +509,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         )
         response = self.client.get(reverse("calendar_preview"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Planes programados")
+        self.assertContains(response, "Minutas programadas")
         self.assertEqual(response.context["vm"]["content"]["schedule_summary"]["future_plans_count"], 1)
         self.assertEqual(response.context["vm"]["content"]["schedule_summary"]["last_scheduled_date"], today)
         self.assertContains(response, "Próximas cuatro semanas")

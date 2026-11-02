@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from notas.application.services.commands.calendar_day_commands import assign_dailyplan_to_calendar_date
-from notas.domain.models import CalendarizedDay, DailyPlan, ProgramCalendarization
+from notas.domain.models import CalendarCommitment, CalendarizedDay, DailyPlan, ProgramCalendarization
 
 UTC = dt_timezone.utc
 FIXED_NOW = datetime(2026, 7, 15, 12, tzinfo=UTC)
@@ -27,21 +27,21 @@ class HomeCalendarizationTests(TestCase):
         with patch(
             "notas.presentation.pages.home_calendarization.timezone.now",
             return_value=FIXED_NOW,
-        ):
+        ), patch("notas.interface.views.home.local_date_for_timezone", return_value=FIXED_NOW.date()):
             return self.client.get(reverse("home_view"), data=params or {})
 
     def test_home_renders_empty_calendarization_and_current_monday_to_sunday(self):
         response = self._get_home()
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Tu Plan para hoy, miércoles 15 de jul")
-        self.assertContains(response, "Tu Programa Activo")
-        self.assertContains(response, "Vamos, @home-calendar")
+        self.assertContains(response, "Tu plan para hoy, miércoles 15 de jul")
+        self.assertContains(response, "Programa en curso")
+        self.assertContains(response, "Vamos, home-calendar")
         self.assertContains(response, "Peso actual:")
         self.assertContains(response, "home-calendar__weight-chip")
-        self.assertNotContains(response, '<i data-lucide="weight"')
+        self.assertContains(response, '<i data-lucide="weight"')
         self.assertNotContains(response, "home-brand-entities")
-        self.assertContains(response, "Mis Librerias")
+        self.assertContains(response, "Mis librerías")
         self.assertContains(response, "Resume tus programas, minutas diarias, comidas y alimentos")
         self.assertContains(response, "Organiza estructuras semanales")
         self.assertContains(response, "Revisa tus minutas diarias")
@@ -50,13 +50,13 @@ class HomeCalendarizationTests(TestCase):
         self.assertNotContains(response, "home-footer")
         self.assertNotContains(response, "home-calendar__today-label")
         self.assertNotContains(response, "home-cta--icon")
-        self.assertContains(response, "Herramientas")
-        self.assertContains(response, "Accede a Comparaciones para revisar elementos lado a lado")
+        self.assertContains(response, "Accesos rápidos")
+        self.assertContains(response, "Compara elementos de tus librerías")
         self.assertContains(response, "Comparaciones")
-        self.assertContains(response, "Explorador")
-        self.assertContains(response, "Calendarizar")
+        self.assertContains(response, "Registrar peso corporal")
+        self.assertContains(response, "Compartidos")
         self.assertContains(response, reverse("comparator_index"))
-        self.assertContains(response, reverse("food_comparator"))
+        self.assertContains(response, reverse("inbox_list"))
         self.assertContains(response, reverse("calendarization_dashboard"))
         self.assertNotContains(response, 'type="button" aria-label="Semana anterior"')
         self.assertNotContains(response, 'type="button" aria-label="Semana siguiente"')
@@ -64,7 +64,7 @@ class HomeCalendarizationTests(TestCase):
         self.assertContains(response, "program-week-days-layout is-active")
         self.assertNotContains(response, "data-home-calendar-day")
         self.assertContains(response, "Aún no hay programa activo")
-        self.assertContains(response, "No hay un plan nutricional asignado para hoy.")
+        self.assertContains(response, "Hoy no tienes una minuta programada.")
         calendarization = response.context["vm"]["content"]["calendarization"]
         self.assertEqual(len(calendarization["days"]), 7)
         self.assertEqual(calendarization["days"][0]["iso_date"], "2026-07-13")
@@ -74,6 +74,27 @@ class HomeCalendarizationTests(TestCase):
         self.assertTrue(calendarization["days"][2]["is_selected"])
         self.assertEqual(len(calendarization["weeks"]), 1)
         self.assertFalse(calendarization["has_multiple_weeks"])
+
+    def test_home_shows_only_commitments_for_the_users_local_day(self):
+        CalendarCommitment.objects.create(
+            user=self.user,
+            calendar_date=date(2026, 7, 15),
+            kind=CalendarCommitment.KIND_SHOPPING,
+            note="Comprar verduras",
+        )
+        CalendarCommitment.objects.create(
+            user=self.user,
+            calendar_date=date(2026, 7, 16),
+            kind=CalendarCommitment.KIND_TRAINING,
+            note="Entrenar mañana",
+        )
+
+        response = self._get_home()
+
+        self.assertContains(response, "Tus compromisos para hoy")
+        self.assertContains(response, "Comprar verduras")
+        self.assertNotContains(response, "Entrenar mañana")
+        self.assertContains(response, reverse("calendar_preview"))
 
     def test_home_shows_individual_calendar_snapshot_without_a_program(self):
         plan = DailyPlan.objects.create(name="Plan individual", created_by=self.user)
@@ -88,7 +109,7 @@ class HomeCalendarizationTests(TestCase):
         self.assertContains(response, "Plan individual")
         self.assertNotContains(response, "Nombre editado en biblioteca")
         self.assertContains(response, reverse("calendarization_day_detail", args=[day.id]))
-        self.assertContains(response, "Cumplimiento del calendario")
+        self.assertContains(response, "Progreso")
 
     def test_home_shows_only_todays_plan_card(self):
         calendarization = ProgramCalendarization.objects.create(
@@ -150,7 +171,7 @@ class HomeCalendarizationTests(TestCase):
 
         self.assertContains(response, "Programa Fuerza")
         self.assertContains(response, "Programa activo")
-        self.assertContains(response, "Cumplimiento del calendario")
+        self.assertContains(response, "Progreso")
         self.assertNotContains(response, "program-active-kpis--metric-cards")
         self.assertContains(response, "Plan calendarizado")
         self.assertContains(response, "Comida snapshot")
@@ -162,8 +183,8 @@ class HomeCalendarizationTests(TestCase):
         )
         self.assertNotContains(response, "El programa calendarizado no tiene un plan asignado a esta fecha.")
         self.assertContains(response, "home-calendar__week-slider")
-        self.assertContains(response, "Tu Plan para hoy, miércoles 15 de jul")
-        self.assertContains(response, "Tu Programa Activo")
+        self.assertContains(response, "Tu plan para hoy, miércoles 15 de jul")
+        self.assertContains(response, "Programa en curso")
         html = response.content.decode()
         self.assertLess(
             html.index('class="home-calendar__plan-panel"'),

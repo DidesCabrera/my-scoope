@@ -108,7 +108,7 @@ def _can_check_in_today(day) -> bool:
 def _header(*, history=False, extra_actions=None):
     action = {
         "key": "calendarization_dashboard" if history else "calendarization_history",
-        "label": "Calendarizador" if history else "Historial",
+        "label": "Programa en curso" if history else "Historial",
         "method": "get",
         "icon": "calendar-clock" if history else "history",
         "desktop_position": "menu",

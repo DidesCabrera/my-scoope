@@ -1,13 +1,14 @@
 {% extends "notas/base.html" %}
 {% load static %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Inicio · My Scoope{% endblock %}
 {% block body_class %}page-home{% endblock %}
 {% block feature_css %}
 <link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}">
 {% endblock %}
 
 {% block content %}
+{% url 'calendar_preview' as calendar_preview_url %}
 <div class="page home-page">
   <div class="home-brand-strip js-home-brand-strip" aria-label="My Scoope">
     <img
@@ -41,9 +42,9 @@
                 <i data-lucide="thumbs-up" class="welcome-icon"></i>
                 <h1 class="welcome-title">{{ vm.content.hero.title }}</h1>
               </div>
-              <h1 class="home-banner-title">Gestion tu alimentacion con precisión</h1>
+              <h1 class="home-banner-title">Gestiona tu alimentación con precisión</h1>
               <p class="home-banner-text">
-                Contisigue tus objetivos con planes claros al alcance de tu mano
+                Avanza hacia tus objetivos con una planificación clara.
               </p>
             </div>
           </div>
@@ -57,9 +58,9 @@
               decoding="async"
             >
             <div class="home-banner-overlay">
-              <h1 class="home-banner-title">Como funciona</h1>
+              <h1 class="home-banner-title">Cómo funciona</h1>
               <p class="home-banner-text">
-                Construye minutas diarias de alimentacion, crea comidas recurrentes y ajusta las porciones de tus alimentos segun tus objetivos
+                Construye minutas diarias, crea comidas reutilizables y ajusta porciones según tus objetivos.
               </p>
             </div>
           </div>
@@ -73,9 +74,9 @@
               decoding="async"
             >
             <div class="home-banner-overlay">
-              <h1 class="home-banner-title">Recibe asistencia de tu IA</h1>
+              <h1 class="home-banner-title">Asistente Nutricional</h1>
               <p class="home-banner-text">
-                Conecta tu IA de preferencia para que pueda asistirte en la creacion de planes de alimentación.
+                Conversa, revisa propuestas y decide antes de aplicar cambios a tu planificación.
               </p>
             </div>
           </div>
@@ -112,11 +113,11 @@
   </section>
   <section class="home-calendar" aria-label="Plan de hoy">
     <div class="home-calendar__welcome-row">
-      <h1>Vamos, @{{ request.user.username }}</h1>
+      <h1>Vamos, {{ request.user.first_name|default:request.user.username }}</h1>
       {% if current_weight %}
-        <div class="home-calendar__weight-chip" aria-label="Peso actual: {{ current_weight_label }} kilogramos">
+        <button type="button" class="home-calendar__weight-chip" onclick="openWeightModal()" aria-label="Registrar peso corporal. Peso actual: {{ current_weight_label }} kilogramos">
           <span>{{ current_weight_label }} kg</span>
-        </div>
+        </button>
       {% endif %}
     </div>
 
@@ -140,13 +141,14 @@
 
     {% for day in vm.content.calendarization.days %}
       {% if day.is_today %}
-        <h2 class="home-calendar__today-title">Tu Plan para hoy, {{ day.home_plan_date_label }}</h2>
+        <h2 class="home-calendar__today-title">Tu plan para hoy, {{ day.home_plan_date_label }}</h2>
         <div id="{{ day.panel_id }}" class="home-calendar__plan-panel">
           {% if day.dailyplan_card %}
             {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True calendarized_day=day %}
           {% else %}
             <div class="home-calendar__empty-card">
-              <p>No hay un plan nutricional asignado para hoy.</p>
+              <p>Hoy no tienes una minuta programada.</p>
+              <a href="{{ calendar_preview_url }}?date={{ vm.content.today_date|date:'Y-m-d' }}#plan-editor">Asignar una minuta</a>
             </div>
           {% endif %}
         </div>
@@ -154,20 +156,43 @@
     {% endfor %}
   </section>
 
+  <section class="home-active-program home-today-commitments" aria-labelledby="home-today-commitments-title">
+    <h2 id="home-today-commitments-title" class="home-calendar__today-title">Tus compromisos para hoy</h2>
+    <div class="home-active-program__card">
+      {% if vm.content.today_commitments %}
+        <ul class="home-today-commitments__list">
+          {% for commitment in vm.content.today_commitments %}
+            <li><strong>{{ commitment.get_kind_display }}</strong>{% if commitment.note %}<span>{{ commitment.note }}</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="home-calendar__empty-state">No tienes compromisos registrados para hoy.</p>
+      {% endif %}
+      {% include "components/detail_link_row.html" with label="Ver mis compromisos" url=calendar_preview_url accessibility_label="Ver mis compromisos en Mi calendario" standalone=True %}
+    </div>
+  </section>
+
+  <section class="home-active-program home-calendar-entry" aria-labelledby="home-calendar-entry-title">
+    <h2 id="home-calendar-entry-title" class="home-calendar__today-title">Tu calendario</h2>
+    <div class="home-active-program__card">
+      <p>Planifica tus próximas fechas: asigna minutas y registra compromisos en Mi calendario.</p>
+      {% include "components/detail_link_row.html" with label="Ver Mi calendario" url=calendar_preview_url accessibility_label="Ver Mi calendario" standalone=True %}
+    </div>
+  </section>
+
   <section class="home-active-program" aria-labelledby="home-calendar-progress-title">
-    {% url 'calendar_preview' as calendar_preview_url %}
-    <h2 id="home-calendar-progress-title" class="home-calendar__today-title">Cumplimiento del calendario</h2>
+    <h2 id="home-calendar-progress-title" class="home-calendar__today-title">Progreso</h2>
     <div class="home-active-program__card">
       {% if vm.content.calendar_progress.elapsed_meals %}
         <strong>{{ vm.content.calendar_progress.adherence_percent }}%</strong>
         <p>{{ vm.content.calendar_progress.completed_meals }} de {{ vm.content.calendar_progress.elapsed_meals }} comidas transcurridas desde {{ vm.content.calendar_progress.period_start|date:"j M Y" }}.</p>
       {% else %}<p>Aún no hay comidas transcurridas en este periodo.</p>{% endif %}
-      {% include "components/detail_link_row.html" with label="Ver Calendario" url=calendar_preview_url accessibility_label="Ver Calendario" standalone=True %}
+      {% include "components/detail_link_row.html" with label="Ver progreso en Mi calendario" url=calendar_preview_url accessibility_label="Ver progreso en Mi calendario" standalone=True %}
     </div>
   </section>
 
   <section class="home-active-program" aria-labelledby="home-active-program-title">
-    <h2 id="home-active-program-title" class="home-calendar__today-title">Tu Programa Activo</h2>
+    <h2 id="home-active-program-title" class="home-calendar__today-title">Programa en curso</h2>
     <div class="home-active-program__card">
       {% if vm.content.calendarization.has_calendarization %}
         <div class="home-active-program__identity">
@@ -178,11 +203,11 @@
           <h3 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h3>
           <div class="home-active-program__indicators" aria-label="Estructura del programa">
             <span>{{ vm.content.calendarization.weeks_count }} semana{{ vm.content.calendarization.weeks_count|pluralize:"s" }}</span>
-            <span>{{ vm.content.calendarization.assigned_plans_count }} planes</span>
+            <span>{{ vm.content.calendarization.assigned_plans_count }} minutas</span>
             <span>{{ vm.content.calendarization.start_label }} — {{ vm.content.calendarization.end_label }}</span>
           </div>
         </div>
-        {% include "components/detail_link_row.html" with label="Ir a Mi programa activo" url=vm.content.calendarization.dashboard_url accessibility_label="Ir a Mi programa activo" standalone=True %}
+        {% include "components/detail_link_row.html" with label="Gestionar programa en curso" url=vm.content.calendarization.dashboard_url accessibility_label="Gestionar programa en curso" standalone=True %}
       {% else %}
         <div class="home-active-program__identity">
           <h3 class="home-calendar__program-name">Aún no hay programa activo</h3>
@@ -197,7 +222,7 @@
   <section class="home-libraries" aria-labelledby="home-libraries-section-title">
     <div class="home-calendar__section-title home-libraries__section-title">
       <i data-lucide="bookmark" aria-hidden="true"></i>
-      <h2 id="home-libraries-section-title">Mis Librerias</h2>
+      <h2 id="home-libraries-section-title">Mis librerías</h2>
       <details class="home-section-help" data-home-section-help="libraries" open>
         <summary aria-label="Información sobre Mis Librerías">
           <i data-lucide="info" aria-hidden="true"></i>
@@ -205,7 +230,7 @@
         <div class="home-section-help__popup">
           <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
           <div class="home-section-help__copy">
-            <h3>Mis Librerías</h3>
+            <h3>Mis librerías</h3>
             <p>Resume tus programas, minutas diarias, comidas y alimentos para acceder rápido a tus recursos principales.</p>
           </div>
           <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
@@ -217,12 +242,12 @@
 
     <div class="home-stats" aria-label="Resumen de Mis Librerías">
       <div class="home-stat-card">
-        <a href="{% url 'program_list' %}" class="home-stat-card__surface-link" aria-label="Ir a Mis programas semanales"></a>
+        <a href="{% url 'program_list' %}" class="home-stat-card__surface-link" aria-label="Ir a Mis Programas"></a>
         <div class="home-stat-top">
           <i data-lucide="calendar" class="home-stat-icon program"></i>
-          <span class="home-stat-label">Mis Programas Semanales</span>
+          <span class="home-stat-label">Mis Programas</span>
         </div>
-        <p class="home-stat-description">Organiza estructuras semanales listas para convertirlas en planes calendarizados.</p>
+        <p class="home-stat-description">Organiza estructuras semanales listas para llevarlas a tu calendario.</p>
 
         <div class="home-stat-value-row">
           <i data-lucide="bookmark" class="home-stat-kpi-icon"></i>
@@ -238,10 +263,10 @@
       </div>
 
       <div class="home-stat-card">
-        <a href="{% url 'dailyplan_list' %}" class="home-stat-card__surface-link" aria-label="Ir a Mis minutas diarias"></a>
+        <a href="{% url 'dailyplan_list' %}" class="home-stat-card__surface-link" aria-label="Ir a Mis Minutas"></a>
         <div class="home-stat-top">
           <i data-lucide="clipboard-list" class="home-stat-icon dailyplan"></i>
-          <span class="home-stat-label">Mis minutas diarias</span>
+          <span class="home-stat-label">Mis Minutas</span>
         </div>
         <p class="home-stat-description">Revisa tus minutas diarias y sus comidas, macros y distribución nutricional.</p>
 
@@ -307,16 +332,16 @@
   <section class="home-tools" aria-labelledby="home-tools-section-title">
     <div class="home-calendar__section-title home-tools__section-title">
       <i data-lucide="wrench" aria-hidden="true"></i>
-      <h2 id="home-tools-section-title">Herramientas</h2>
+      <h2 id="home-tools-section-title">Accesos rápidos</h2>
       <details class="home-section-help" data-home-section-help="tools" open>
-        <summary aria-label="Información sobre Herramientas">
+        <summary aria-label="Información sobre Accesos rápidos">
           <i data-lucide="info" aria-hidden="true"></i>
         </summary>
         <div class="home-section-help__popup">
           <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
           <div class="home-section-help__copy">
-            <h3>Herramientas</h3>
-            <p>Accede a Comparaciones para revisar elementos lado a lado, al Explorador para consultar opciones nutricionales y a Calendarizar para organizar programas en fechas.</p>
+            <h3>Accesos rápidos</h3>
+            <p>Compara elementos de tus librerías, registra tu peso o revisa lo que otros usuarios compartieron contigo.</p>
           </div>
           <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
             <i data-lucide="x" aria-hidden="true"></i>
@@ -331,28 +356,28 @@
           <i data-lucide="git-compare-arrows"></i>
         </span>
         <span class="home-tool-card__copy">
-          <strong>Comparaciones</strong>
+          <strong>Comparar</strong>
           <small>Compara alimentos, comidas o minutas diarias lado a lado.</small>
         </span>
       </a>
 
-      <a class="home-tool-card" href="{% url 'food_comparator' %}">
+      <button type="button" class="home-tool-card" onclick="openWeightModal()">
         <span class="home-tool-card__icon" aria-hidden="true">
-          <i data-lucide="search"></i>
+          <i data-lucide="weight"></i>
         </span>
         <span class="home-tool-card__copy">
-          <strong>Explorador</strong>
-          <small>Explora opciones para comparar y revisar información nutricional.</small>
+          <strong>Registrar peso corporal</strong>
+          <small>Actualiza tu registro de peso.</small>
         </span>
-      </a>
+      </button>
 
-      <a class="home-tool-card" href="{% url 'calendarization_dashboard' %}">
+      <a class="home-tool-card" href="{% url 'inbox_list' %}">
         <span class="home-tool-card__icon" aria-hidden="true">
-          <i data-lucide="calendar-clock"></i>
+          <i data-lucide="send"></i>
         </span>
         <span class="home-tool-card__copy">
-          <strong>Calendarizar</strong>
-          <small>Activa o administra un programa calendarizado.</small>
+          <strong>Compartidos</strong>
+          <small>Revisa lo que enviaste y recibiste.</small>
         </span>
       </a>
     </div>

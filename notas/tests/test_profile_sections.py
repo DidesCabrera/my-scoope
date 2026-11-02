@@ -123,7 +123,7 @@ class ProfileSectionsTests(TestCase):
         response = self.client.get(reverse("profile_detail"))
 
         self.assertContains(response, f'href="{reverse("profile_detail")}"')
-        self.assertContains(response, f'href="{reverse("profile_nutrition")}"')
+        self.assertContains(response, f'href="{reverse("personal_records")}"')
         self.assertContains(response, f'href="{reverse("profile_credits")}"')
         self.assertNotContains(response, "#profile-personal")
         self.assertNotContains(response, "#profile-credits")

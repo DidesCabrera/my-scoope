@@ -103,23 +103,23 @@ class SidebarBuilderTests(TestCase):
         sidebar = build_sidebar_vm(PROFILE_VIEWMODE)
 
         self.assertEqual([section["key"] for section in sidebar[:4]], ["primary", "workspace", "assistance", "account"])
-        self.assertEqual(sidebar[0]["label"], "Tools")
-        self.assertEqual(sidebar[1]["label"], "Mis librerias")
+        self.assertEqual(sidebar[0]["label"], "Navegación")
+        self.assertEqual(sidebar[1]["label"], "Mis librerías")
         self.assertEqual(
             [group["label"] for group in sidebar[0]["groups"][:8]],
             [
                 "Inicio",
-                "Fundamentos Sistema",
-                "Mi programa activo",
+                "Mi calendario",
                 "Comparaciones",
                 "Compartidos",
+                "Fundamentos Sistema",
             ],
         )
         self.assertEqual(
             [group["label"] for group in sidebar[1]["groups"]],
             [
-                "Mis Programas Semanales",
-                "Mis minutas diarias",
+                "Mis Programas",
+                "Mis Minutas",
                 "Mis Comidas",
                 "Mis Alimentos",
             ],
@@ -134,6 +134,7 @@ class SidebarBuilderTests(TestCase):
         self.assertNotIn("proposal", tool_groups)
         self.assertEqual(tool_groups["comparators"]["icon"], "scale")
         self.assertEqual(tool_groups["inbox"]["icon"], "user-plus")
+        self.assertEqual(tool_groups["calendarization"]["url_name"], "calendar_preview")
         self.assertNotIn("explore", tool_groups)
 
     def test_proposals_keep_the_assistant_sidebar_entry_active(self):

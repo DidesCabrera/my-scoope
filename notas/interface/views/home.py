@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import date
 from typing import List
 
 from django.contrib.auth.decorators import login_required
@@ -6,7 +7,9 @@ from django.shortcuts import render
 from django.urls import reverse
 
 from notas.application.queries.calendar_metrics import calendar_adherence_summary
+from notas.application.services.calendarization.scheduling import local_date_for_timezone
 from notas.domain.models import (
+    CalendarCommitment,
     DailyPlan,
     Food,
     Meal,
@@ -46,11 +49,14 @@ class HomeContentVM:
     stats: List[HomeStatVM]
     calendarization: HomeCalendarizationVM
     calendar_progress: dict
+    today_date: date
+    today_commitments: List[CalendarCommitment]
 
 
 @login_required
 def home_view(request):
     user = request.user
+    today_date = local_date_for_timezone(user.profile.timezone_name or "UTC")
 
     dailyplans_qs = (
         DailyPlan.objects.filter(
@@ -95,18 +101,18 @@ def home_view(request):
         hero=HomeHeroVM(
             title=f"Bienvenido {user.username}!",
             subtitle=(
-                "Organiza minutas diarias, comidas y alimentos en un solo lugar. Este es tu resumen de trabajo actual."
+                "Consulta tu planificación de hoy y organiza tus próximas fechas."
             ),
         ),
         stats=[
             HomeStatVM(
-                label="Programas Semanales",
+                label="Mis Programas",
                 value=programs_count,
                 icon="calendar",
                 url=reverse("program_list"),
             ),
             HomeStatVM(
-                label="Minutas diarias",
+                label="Mis Minutas",
                 value=dailyplans_count,
                 icon="clipboard-list",
                 url=reverse("dailyplan_list"),
@@ -126,6 +132,8 @@ def home_view(request):
         ],
         calendarization=build_home_calendarization_vm(user),
         calendar_progress=calendar_adherence_summary(user),
+        today_date=today_date,
+        today_commitments=list(CalendarCommitment.objects.filter(user=user, calendar_date=today_date)),
     )
 
     ui_vm = build_ui_vm(HOME_VIEWMODE)
