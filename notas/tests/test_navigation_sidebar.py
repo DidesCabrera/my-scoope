@@ -133,9 +133,10 @@ class SidebarBuilderTests(TestCase):
         self.assertEqual(tool_groups["chat"]["icon"], "sparkles")
         self.assertNotIn("proposal", tool_groups)
         self.assertEqual(tool_groups["comparators"]["icon"], "scale")
-        self.assertEqual(tool_groups["inbox"]["icon"], "user-plus")
+        self.assertEqual(tool_groups["inbox"]["icon"], "send")
         self.assertEqual(tool_groups["calendarization"]["url_name"], "calendar_preview")
         self.assertNotIn("explore", tool_groups)
+        self.assertNotIn("admin", [section["key"] for section in sidebar])
 
     def test_proposals_keep_the_assistant_sidebar_entry_active(self):
         sidebar = build_sidebar_vm(PROPOSAL_VIEWMODE_LIST)

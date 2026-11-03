@@ -2953,6 +2953,21 @@ body.page-ai-intake-chat::after {
   text-decoration: none;
 }
 
+.home-active-program__progress-link {
+  display: block;
+  padding: .85rem 1rem;
+  border-radius: 14px;
+  background: var(--surface-card-muted);
+  color: var(--text-main);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.home-active-program__progress-link:hover,
+.home-active-program__progress-link:focus-visible {
+  background: var(--surface-card);
+}
+
 .home-calendar__weekday {
   font-size: 0.72rem;
   font-weight: 700;

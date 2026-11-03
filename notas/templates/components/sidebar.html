@@ -7,17 +7,6 @@
             <img src="{% static 'img/logo-white.png' %}" alt="Logo" class="brand-logo">
         </a>
         {% if request.user.is_authenticated %}
-            <button
-                type="button"
-                class="sidebar-profile-shortcut {% if request.resolver_match.url_name == 'profile_detail' or request.resolver_match.url_name == 'profile_nutrition' or request.resolver_match.url_name == 'profile_credits' %}is-active{% endif %}"
-                aria-label="Abrir cuenta"
-                title="Mi cuenta"
-                data-profile-panel-open
-            >
-                <i data-lucide="circle-user-round" class="sidebar-profile-shortcut-icon"></i>
-            </button>
-        {% endif %}
-        {% if request.user.is_authenticated %}
             <a href="{% url 'notifications_list' %}" class="sidebar-notifications-btn{% if request.resolver_match.url_name == 'notifications_list' %} is-active{% endif %}" aria-label="Notificaciones{% if notification_unread_count %}: {{ notification_unread_count }} sin leer{% endif %}" title="Notificaciones">
                 <i data-lucide="bell" aria-hidden="true"></i>
                 {% if notification_unread_count %}<span class="sidebar-notifications-unread" aria-hidden="true"></span>{% endif %}
@@ -44,32 +33,20 @@
                             <div class="sidebar-group sidebar-group--{{ group.key }} {% if group.is_open %}is-open{% endif %} {% if group.is_link %}sidebar-group--link{% endif %} {% if group.is_active and not group.is_link %}is-current{% endif %}">
 
                             {% if group.is_link %}
-                                {% if group.action_url %}
-                                    <div class="sidebar-group-head">
-                                        <a href="{{ group.url }}"
-                                           class="sidebar-main sidebar-main--link {% if group.is_active %}is-active{% endif %}">
-                                            <span class="sidebar-left">
-                                                <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
-                                                <span class="sidebar-label">{{ group.label }}</span>
-                                            </span>
-                                        </a>
-
-                                        <a href="{{ group.action_url }}"
-                                           class="sidebar-group-action"
-                                           aria-label="{{ group.action_label|default:'Crear' }}"
-                                           title="{{ group.action_label|default:'Crear' }}">
-                                            <i data-lucide="{{ group.action_icon|default:'plus' }}" class="sidebar-group-action-icon"></i>
-                                        </a>
-                                    </div>
-                                {% else %}
                                     <a href="{{ group.url }}"
                                        class="sidebar-main sidebar-main--link {% if group.is_active %}is-active{% endif %}">
                                         <span class="sidebar-left">
                                             <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
                                             <span class="sidebar-label">{{ group.label }}</span>
                                         </span>
+                                        {% if section.key == 'workspace' %}
+                                            <span class="sidebar-library-count" aria-label="{% if group.key == 'program' %}{{ sidebar_library_counts.program }}{% elif group.key == 'dailyplan' %}{{ sidebar_library_counts.dailyplan }}{% elif group.key == 'meal' %}{{ sidebar_library_counts.meal }}{% elif group.key == 'food' %}{{ sidebar_library_counts.food }}{% endif %} elementos">
+                                                {% if group.key == 'program' %}{{ sidebar_library_counts.program }}{% elif group.key == 'dailyplan' %}{{ sidebar_library_counts.dailyplan }}{% elif group.key == 'meal' %}{{ sidebar_library_counts.meal }}{% elif group.key == 'food' %}{{ sidebar_library_counts.food }}{% endif %}
+                                            </span>
+                                        {% elif group.key == 'personal_records' and current_weight %}
+                                            <span class="sidebar-weight-chip">{{ current_weight_label }} kg</span>
+                                        {% endif %}
                                     </a>
-                                {% endif %}
                             {% else %}
                                 <div class="sidebar-group-head">
                                     <button type="button" class="sidebar-main">
@@ -110,45 +87,6 @@
         </nav>
         </div>
 
-        {% if request.user.is_authenticated %}
-            <div class="sidebar-profile-panel" aria-hidden="true">
-                <nav class="sidebar-profile-menu" aria-label="Cuenta">
-                    <a href="{% url 'profile_detail' %}"
-                       class="sidebar-profile-menu__item {% if request.resolver_match.url_name == 'profile_detail' %}is-active{% endif %}">
-                        <i data-lucide="user-round" class="sidebar-profile-menu__icon"></i>
-                        <span>Mi cuenta</span>
-                    </a>
-                    <a href="{% url 'personal_records' %}"
-                       class="sidebar-profile-menu__item {% if request.resolver_match.url_name == 'personal_records' %}is-active{% endif %}">
-                        <i data-lucide="id-card" class="sidebar-profile-menu__icon"></i>
-                        <span>Fichas personales</span>
-                    </a>
-                    <a href="{% url 'billing:overview' %}"
-                       class="sidebar-profile-menu__item {% if request.resolver_match.namespace == 'billing' %}is-active{% endif %}">
-                        <i data-lucide="credit-card" class="sidebar-profile-menu__icon"></i>
-                        <span>Suscripciones y Bolsas</span>
-                    </a>
-                    <a href="{% url 'profile_credits' %}"
-                       class="sidebar-profile-menu__item {% if request.resolver_match.url_name == 'profile_credits' %}is-active{% endif %}">
-                        <i data-lucide="wallet-cards" class="sidebar-profile-menu__icon"></i>
-                        <span>Uso de créditos</span>
-                    </a>
-
-                    <form method="post" action="{% url 'account_logout' %}" class="sidebar-profile-menu__form">
-                        {% csrf_token %}
-                        <button type="submit" class="sidebar-profile-menu__item sidebar-profile-menu__item--button">
-                            <i data-lucide="log-out" class="sidebar-profile-menu__icon"></i>
-                            <span>Cerrar sesión</span>
-                        </button>
-                    </form>
-
-                    <a href="{% url 'accounts:delete_account' %}" class="sidebar-profile-menu__item sidebar-profile-menu__item--danger">
-                        <i data-lucide="trash-2" class="sidebar-profile-menu__icon"></i>
-                        <span>Eliminar cuenta</span>
-                    </a>
-                </nav>
-            </div>
-        {% endif %}
 
     </div>
 
@@ -167,24 +105,6 @@
             </span>
         </a>
 
-        <div class="sidebar-footer">
-            <button type="button" class="user-block user-block--link" aria-label="Abrir cuenta" data-profile-panel-open>
-                <div class="user">
-                    <i data-lucide="circle-user-round" class="profile-icon"></i>
-                    <h2>{{ request.user.username }}</h2>
-                    <div class="label-rol">
-                        {% if request.user.profile.role == "member" %}Usuario{% endif %}
-                        {% if request.user.profile.role == "nutritionist" %}Nutri{% endif %}
-                    </div>
-                    <i data-lucide="chevron-right" class="enter-user-icon"></i>
-                </div>
-
-                <div class="personal-metrics">
-                    <i data-lucide="scale" class="sidebar-weight-icon"></i>
-                    <span class="weight-sidebar">{{ current_weight }}kg</span>
-                </div>
-            </button>
-        </div>
     {% endif %}
 
 </aside>

@@ -512,9 +512,34 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, "Minutas programadas")
         self.assertEqual(response.context["vm"]["content"]["schedule_summary"]["future_plans_count"], 1)
         self.assertEqual(response.context["vm"]["content"]["schedule_summary"]["last_scheduled_date"], today)
-        self.assertContains(response, "Próximas cuatro semanas")
+        self.assertContains(response, "Calendario mensual")
         self.assertContains(response, "Día original")
         self.assertNotContains(response, "calendarization-current__overview")
+
+    def test_calendar_preview_navigates_months_and_progress_tab(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
+        response = self.client.get(reverse("calendar_preview"), {"month": next_month.strftime("%Y-%m")})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["vm"]["content"]["month_start"], next_month)
+        self.assertEqual(len(response.context["vm"]["content"]["month_days"]), 42)
+        invalid_response = self.client.get(reverse("calendar_preview"), {"month": "9999-12"})
+        self.assertEqual(invalid_response.status_code, 200)
+        progress_response = self.client.get(reverse("calendar_preview"), {"tab": "progress"})
+        self.assertContains(progress_response, "Planes recorridos")
+        self.assertNotContains(progress_response, "Calendario mensual")
+
+    def test_calendar_progress_start_can_be_adjusted_from_web(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        new_start = today - timedelta(days=3)
+        response = self.client.post(reverse("calendar_preview_action"), {
+            "action": "adjust_progress",
+            "date": today.isoformat(),
+            "period_start": new_start.isoformat(),
+        })
+        self.assertRedirects(response, f"{reverse('calendar_preview')}?tab=progress", fetch_redirect_response=False)
+        progress_response = self.client.get(reverse("calendar_preview"), {"tab": "progress"})
+        self.assertEqual(progress_response.context["vm"]["content"]["progress"]["period_start"], new_start)
 
     def test_calendar_commitments_can_register_multiple_dates_and_show_in_preview(self):
         today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")

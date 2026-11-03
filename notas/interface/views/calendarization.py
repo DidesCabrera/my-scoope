@@ -8,7 +8,7 @@ from datetime import date, timedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -35,7 +35,10 @@ from notas.application.services.commands.calendar_day_commands import (
     move_calendar_date_plan,
     remove_calendar_date_plan,
 )
-from notas.application.services.commands.calendar_progress_commands import start_new_calendar_progress_period
+from notas.application.services.commands.calendar_progress_commands import (
+    adjust_calendar_progress_period_start,
+    start_new_calendar_progress_period,
+)
 from notas.application.services.commands.calendarization_commands import (
     activate_program_calendarization,
     cancel_calendarization,
@@ -51,7 +54,7 @@ from notas.application.services.commands.calendarization_commands import (
 from notas.application.services.commands.calendarization_execution_commands import (
     record_meal_execution,
 )
-from notas.domain.models import CalendarCommitment, CalendarizedDay, DailyPlan, Program, WebPushSubscription
+from notas.domain.models import CalendarCommitment, CalendarizedDay, DailyPlan, Program, WebPushSubscription, WeightLog
 from notas.interface.forms.calendarization_forms import (
     CalendarizationActivationForm,
     CalendarizationPreferencesForm,
@@ -170,31 +173,45 @@ def dashboard(request):
 def calendar_preview(request):
     today = local_date_for_timezone(request.user.profile.timezone_name or "UTC")
     monday = today - timedelta(days=today.weekday())
-    end_date = monday + timedelta(days=34)
+    requested_month = request.GET.get("month", "")
+    try:
+        month_start = date.fromisoformat(f"{requested_month}-01") if requested_month else today.replace(day=1)
+    except ValueError:
+        month_start = today.replace(day=1)
+    month_start = month_start.replace(day=1)
+    if month_start.year <= 1 or month_start.year >= 9999:
+        month_start = today.replace(day=1)
+    month_grid_start = month_start - timedelta(days=month_start.weekday())
+    month_grid_end = month_grid_start + timedelta(days=41)
+    previous_month = month_start - timedelta(days=1)
+    next_month = (month_start + timedelta(days=32)).replace(day=1)
+    range_start = min(monday, month_grid_start)
+    range_end = max(monday + timedelta(days=34), month_grid_end)
     extended = request.GET.get("extended") == "1"
+    active_tab = "progress" if request.GET.get("tab") == "progress" else "planning"
     requested = request.GET.get("date", "")
     try:
         selected_date = date.fromisoformat(requested) if requested else today
     except ValueError:
         selected_date = today
-    if not monday <= selected_date <= end_date:
+    if not range_start <= selected_date <= range_end:
         selected_date = today
     rows = CalendarizedDay.objects.filter(
         Q(user=request.user) | Q(user__isnull=True, calendarization__user=request.user),
         assignment_state=CalendarizedDay.STATE_CURRENT,
-        calendar_date__range=(monday, end_date),
+        calendar_date__range=(range_start, range_end),
     ).select_related("calendarization", "origin_calendarization")
     by_date = {day.calendar_date: day for day in rows}
     commitments_by_date = {}
     for commitment in CalendarCommitment.objects.filter(
-        user=request.user, calendar_date__range=(monday, end_date)
+        user=request.user, calendar_date__range=(range_start, range_end)
     ):
         commitments_by_date.setdefault(commitment.calendar_date, []).append(commitment)
-    dates = []
-    for offset in range(35):
-        current_date = monday + timedelta(days=offset)
+    dates_by_date = {}
+    for offset in range((range_end - range_start).days + 1):
+        current_date = range_start + timedelta(days=offset)
         day = by_date.get(current_date)
-        dates.append({
+        dates_by_date[current_date] = {
             "date": current_date,
             "weekday": ("L", "M", "M", "J", "V", "S", "D")[current_date.weekday()],
             "has_plan": bool(day and day.has_plan),
@@ -204,7 +221,27 @@ def calendar_preview(request):
             "is_selected": current_date == selected_date,
             "detail_url": reverse("calendarization_day_detail", args=[day.id]) if day and day.has_plan else "",
             "commitments": commitments_by_date.get(current_date, []),
-        })
+        }
+    upcoming_start = max(today, monday)
+    upcoming = [dates_by_date[upcoming_start + timedelta(days=offset)] for offset in range(7)]
+    commitment_counts = {kind: 0 for kind, _label in CalendarCommitment.KIND_CHOICES}
+    for row in CalendarCommitment.objects.filter(user=request.user, calendar_date__gte=today).values("kind").annotate(count=Count("id")):
+        commitment_counts[row["kind"]] = row["count"]
+    weight_history = list(WeightLog.objects.filter(user=request.user).order_by("-date", "-created_at")[:12])
+    progress = calendar_adherence_summary(request.user)
+    schedule_summary = calendar_future_schedule_summary(request.user, today=today)
+    future_plans_count = schedule_summary["future_plans_count"] or 0
+    calendar_coverage = min(100, round(progress["days_with_plan"] / future_plans_count * 100)) if future_plans_count else 0
+    meal_coverage = min(100, round(progress["completed_meals"] / progress["scheduled_meals"] * 100)) if progress["scheduled_meals"] else 0
+    ordered_weights = list(reversed(weight_history))
+    weight_values = [float(item.weight_kg) for item in ordered_weights]
+    weight_min = min(weight_values) if weight_values else 0
+    weight_max = max(weight_values) if weight_values else 0
+    weight_span = max(weight_max - weight_min, 1)
+    weight_chart_points = " ".join(
+        f"{10 + index * 280 / max(len(weight_values) - 1, 1):.1f},{100 - (value - weight_min) * 80 / weight_span:.1f}"
+        for index, value in enumerate(weight_values)
+    )
     selected_day = by_date.get(selected_date)
     return render(request, "notas/calendarization/calendar_preview.html", _context(
         CALENDARIZATION_VIEWMODE_DASHBOARD,
@@ -218,16 +255,29 @@ def calendar_preview(request):
             "selected_history": CalendarizedDay.objects.filter(
                 user=request.user, calendar_date=selected_date
             ).select_related("origin_calendarization", "calendarization").order_by("created_at", "id"),
-            "week": dates[:7],
-            "grid": dates[7:35],
-            "upcoming": [day for day in dates if day["date"] >= today][:7],
-            "extended_days": dates,
+            "week": [dates_by_date[monday + timedelta(days=offset)] for offset in range(7)],
+            "grid": [dates_by_date[monday + timedelta(days=offset)] for offset in range(7, 35)],
+            "month_days": [dates_by_date[month_grid_start + timedelta(days=offset)] for offset in range(42)],
+            "month_start": month_start,
+            "month_key": month_start.strftime("%Y-%m"),
+            "previous_month_key": previous_month.strftime("%Y-%m"),
+            "next_month_key": next_month.strftime("%Y-%m"),
+            "upcoming": upcoming,
+            "extended_days": [dates_by_date[monday + timedelta(days=offset)] for offset in range(35)],
             "extended": extended,
+            "active_tab": active_tab,
+            "commitment_counts": commitment_counts,
+            "weight_history": weight_history,
             "plans": DailyPlan.objects.filter(created_by=request.user).exclude(
                 source=DailyPlan.SOURCE_PROGRAM
             ).order_by("name", "id"),
-            "progress": calendar_adherence_summary(request.user),
-            "schedule_summary": calendar_future_schedule_summary(request.user, today=today),
+            "progress": progress,
+            "schedule_summary": schedule_summary,
+            "calendar_coverage": calendar_coverage,
+            "meal_coverage": meal_coverage,
+            "weight_chart_points": weight_chart_points,
+            "weight_min": weight_min,
+            "weight_max": weight_max,
         },
     ))
 
@@ -393,6 +443,13 @@ def calendar_preview_action(request):
                 target += "&extended=1"
         elif action == "reset_progress":
             start_new_calendar_progress_period(user=request.user)
+            target = f"{reverse('calendar_preview')}?tab=progress"
+        elif action == "adjust_progress":
+            adjust_calendar_progress_period_start(
+                user=request.user,
+                starts_on=date.fromisoformat(request.POST.get("period_start", "")),
+            )
+            target = f"{reverse('calendar_preview')}?tab=progress"
         else:
             raise ValueError("calendar_action_invalid")
     except (ValueError, TypeError) as exc:
@@ -402,6 +459,7 @@ def calendar_preview_action(request):
             "calendar_move_program_day_unsupported": "Por ahora, mueve desde el calendario solo planes asignados individualmente.",
             "calendar_date_in_past": "No se puede modificar una fecha pasada.",
             "calendar_dailyplan_not_owned": "Selecciona un plan de tu biblioteca.",
+            "calendar_progress_start_in_future": "La fecha de inicio no puede estar en el futuro.",
         }
         messages.error(request, errors.get(str(exc), "No pudimos actualizar esa fecha. Revisa los datos e inténtalo de nuevo."))
     else:

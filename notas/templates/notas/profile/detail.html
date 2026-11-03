@@ -16,6 +16,11 @@
     </section>
 
     {% if vm.content.account_section %}
+    <section class="profile-plan-card" aria-label="Plan y créditos">
+        <div><span>Plan actual</span><strong>{{ sidebar_credits.plan_name }}</strong></div>
+        <div><span>Créditos disponibles</span><strong>{{ sidebar_credits.available_credits }}</strong></div>
+        <a href="{% url 'billing:overview' %}">Mejorar mi suscripción <i data-lucide="chevron-right" aria-hidden="true"></i></a>
+    </section>
     <section class="profile-section-card profile-section-card--account" id="profile-account">
         <header class="profile-section-card__header">
             <div class="profile-section-card__title-wrap">
@@ -37,6 +42,32 @@
                 </article>
             {% endfor %}
         </div>
+
+        <details class="profile-account-rename">
+            <summary>Editar nombre de usuario</summary>
+            <form method="post" action="{% url 'profile_rename_username' %}">{% csrf_token %}
+                <label for="profile-username">Nombre de usuario</label>
+                <input id="profile-username" name="username" type="text" value="{{ request.user.username }}" maxlength="150" required>
+                <button type="submit">Guardar nombre</button>
+            </form>
+        </details>
+
+        <nav class="profile-account-links" aria-label="Opciones de cuenta">
+            <a href="{% url 'personal_records' %}"><i data-lucide="files" aria-hidden="true"></i>Fichas personales</a>
+            <a href="{% url 'billing:overview' %}"><i data-lucide="wallet-cards" aria-hidden="true"></i>Suscripciones y Bolsas</a>
+            <a href="{% url 'profile_credits' %}"><i data-lucide="sparkles" aria-hidden="true"></i>Uso de créditos</a>
+            <a href="{% url 'notifications_list' %}"><i data-lucide="bell" aria-hidden="true"></i>Notificaciones</a>
+            <a href="{% url 'calendarization_dashboard' %}"><i data-lucide="alarm-clock" aria-hidden="true"></i>Recordatorios del programa</a>
+            <a href="/support/"><i data-lucide="life-buoy" aria-hidden="true"></i>Centro de soporte</a>
+            {% if request.user.is_staff or request.user.is_superuser %}<a href="{% url 'admin_home' %}"><i data-lucide="shield" aria-hidden="true"></i>Administración web</a>{% endif %}
+        </nav>
+
+        <form method="post" action="{% url 'account_logout' %}" class="profile-account-logout">
+            {% csrf_token %}
+            <button type="submit"><i data-lucide="log-out" aria-hidden="true"></i>Cerrar sesión</button>
+        </form>
+
+        <p class="profile-account-medical-notice">My Scoope no reemplaza atención médica. Revisa cualquier cálculo, lectura OCR o propuesta asistida por IA antes de aplicarla.</p>
 
         <div class="profile-account-danger">
             <div>

@@ -34,9 +34,9 @@ class HomeCalendarizationTests(TestCase):
         response = self._get_home()
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Tu plan para hoy, miércoles 15 de jul")
+        self.assertContains(response, "Tu plan para hoy")
         self.assertContains(response, "Programa en curso")
-        self.assertContains(response, "Vamos, home-calendar")
+        self.assertContains(response, "Vamos home-calendar!")
         self.assertContains(response, "Peso actual:")
         self.assertContains(response, "home-calendar__weight-chip")
         self.assertContains(response, '<i data-lucide="weight"')
@@ -95,6 +95,18 @@ class HomeCalendarizationTests(TestCase):
         self.assertContains(response, "Comprar verduras")
         self.assertNotContains(response, "Entrenar mañana")
         self.assertContains(response, reverse("calendar_preview"))
+
+    def test_home_month_calendar_and_progress_follow_mobile_sections(self):
+        response = self._get_home({"month": "2026-08"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["vm"]["content"]["month_start"], date(2026, 8, 1))
+        self.assertEqual(len(response.context["vm"]["content"]["month_days"]), 42)
+        self.assertEqual(self._get_home({"month": "0001-01"}).status_code, 200)
+        self.assertContains(response, "home-month-card__grid")
+        self.assertContains(response, "Minutas recorridas")
+        self.assertContains(response, "Comidas cumplidas")
+        self.assertContains(response, "Tendencia de peso")
+        self.assertContains(response, f"{reverse('calendar_preview')}?date=2026-07-15#calendar-selected-day")
 
     def test_home_shows_individual_calendar_snapshot_without_a_program(self):
         plan = DailyPlan.objects.create(name="Plan individual", created_by=self.user)
@@ -183,7 +195,7 @@ class HomeCalendarizationTests(TestCase):
         )
         self.assertNotContains(response, "El programa calendarizado no tiene un plan asignado a esta fecha.")
         self.assertContains(response, "home-calendar__week-slider")
-        self.assertContains(response, "Tu plan para hoy, miércoles 15 de jul")
+        self.assertContains(response, "Tu plan para hoy")
         self.assertContains(response, "Programa en curso")
         html = response.content.decode()
         self.assertLess(

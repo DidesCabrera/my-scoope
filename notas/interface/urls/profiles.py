@@ -11,6 +11,7 @@ from notas.interface.views.profile import (
     personal_records,
     profile_credits,
     profile_detail,
+    profile_rename_username,
     profile_nutrition,
     profile_nutrition_update,
 )
@@ -18,6 +19,7 @@ from notas.interface.views.weight import register_weight
 
 urlpatterns = [
     path("profile/", profile_detail, name="profile_detail"),
+    path("profile/username/", profile_rename_username, name="profile_rename_username"),
     path("personal-records/", personal_records, name="personal_records"),
     path("personal-records/<str:section>/edit/", personal_record_edit, name="personal_record_edit"),
     path("profile/personal/", profile_nutrition, name="profile_nutrition"),

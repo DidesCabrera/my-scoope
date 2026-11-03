@@ -5,6 +5,8 @@
 {% block body_class %}page-home{% endblock %}
 {% block feature_css %}
 <link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}">
+<link rel="stylesheet" href="{% static 'notas/css/calendar_preview.css' %}?v=20261102-2">
+<link rel="stylesheet" href="{% static 'notas/css/home_alignment.css' %}?v=20261102-2">
 {% endblock %}
 
 {% block content %}
@@ -112,21 +114,11 @@
     </div>
   </section>
   <section class="home-calendar" aria-label="Plan de hoy">
-    <div class="home-calendar__welcome-row">
-      <h1>Vamos, {{ request.user.first_name|default:request.user.username }}</h1>
-      {% if current_weight %}
-        <button type="button" class="home-calendar__weight-chip" onclick="openWeightModal()" aria-label="Registrar peso corporal. Peso actual: {{ current_weight_label }} kilogramos">
-          <span>{{ current_weight_label }} kg</span>
-        </button>
-      {% endif %}
-    </div>
-
     <div class="home-calendar__week-slider home-calendar__week-slider--single" aria-label="Calendario de la semana actual">
-      <div class="home-calendar__week program-week-days-layout is-active" role="list">
+      <div class="home-calendar__week program-week-days-layout is-active">
         {% for day in vm.content.calendarization.days %}
-          <div
+          <a href="{{ calendar_preview_url }}?date={{ day.iso_date }}#calendar-selected-day"
             class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.is_today %} is-selected{% endif %}{% if day.has_plan %} has-plan{% endif %}"
-            role="listitem"
             aria-label="{{ day.accessible_date }}"
           >
             <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
@@ -134,14 +126,24 @@
               <strong>{{ day.date_number }}</strong>
               <small>{{ day.month_label }}</small>
             </span>
-          </div>
+          </a>
         {% endfor %}
       </div>
     </div>
 
+    <div class="home-calendar__welcome-row">
+      <h1>💪🏻Vamos {{ request.user.first_name|default:request.user.username }}!</h1>
+      {% if current_weight %}
+        <button type="button" class="home-calendar__weight-chip" onclick="openWeightModal()" aria-label="Registrar peso corporal. Peso actual: {{ current_weight_label }} kilogramos">
+          <span>{{ current_weight_label }} kg</span>
+        </button>
+      {% endif %}
+    </div>
+
     {% for day in vm.content.calendarization.days %}
       {% if day.is_today %}
-        <h2 class="home-calendar__today-title">Tu plan para hoy, {{ day.home_plan_date_label }}</h2>
+        <h2 class="home-calendar__today-title">Tu plan para hoy</h2>
+        {% if vm.content.today_commitments %}<div class="home-calendar__plan-context" aria-label="Compromisos de hoy">{% for commitment in vm.content.today_commitments %}<span class="home-calendar__commitment-chip home-calendar__commitment-chip--{{ commitment.kind }}">{{ commitment.get_kind_display }}</span>{% endfor %}</div>{% endif %}
         <div id="{{ day.panel_id }}" class="home-calendar__plan-panel">
           {% if day.dailyplan_card %}
             {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True calendarized_day=day %}
@@ -174,20 +176,37 @@
 
   <section class="home-active-program home-calendar-entry" aria-labelledby="home-calendar-entry-title">
     <h2 id="home-calendar-entry-title" class="home-calendar__today-title">Tu calendario</h2>
-    <div class="home-active-program__card">
-      <p>Planifica tus próximas fechas: asigna minutas y registra compromisos en Mi calendario.</p>
-      {% include "components/detail_link_row.html" with label="Ver Mi calendario" url=calendar_preview_url accessibility_label="Ver Mi calendario" standalone=True %}
+    <div class="home-active-program__card home-month-card">
+      <div class="home-month-card__heading">
+        <a href="?month={{ vm.content.previous_month_key }}#home-calendar-entry-title" aria-label="Mes anterior"><i data-lucide="chevron-left" aria-hidden="true"></i></a>
+        <h3>{{ vm.content.month_start|date:"F \d\e Y"|capfirst }}</h3>
+        <a href="?month={{ vm.content.next_month_key }}#home-calendar-entry-title" aria-label="Mes siguiente"><i data-lucide="chevron-right" aria-hidden="true"></i></a>
+      </div>
+      <div class="home-month-card__grid" aria-label="Fechas del mes">
+        {% for label in 'LMMJVSD' %}<span class="home-month-card__weekday" aria-hidden="true">{{ label }}</span>{% endfor %}
+        {% for day in vm.content.month_days %}
+          <a href="{{ calendar_preview_url }}?month={{ vm.content.month_start|date:'Y-m' }}&amp;date={{ day.date|date:'Y-m-d' }}#calendar-selected-day" class="home-month-card__day{% if not day.is_current_month %} is-outside{% endif %}{% if day.has_plan %} has-plan{% endif %}{% if day.is_today %} is-today{% endif %}" aria-label="{{ day.date|date:'j F Y' }}{% if day.has_plan %}: con minuta{% else %}: sin minuta{% endif %}{% for commitment in day.commitments %}, {{ commitment.get_kind_display }}{% endfor %}"><strong>{{ day.date|date:"d" }}</strong>{% if day.commitments %}<span class="calendar-preview__commitment-dots" aria-hidden="true">{% for commitment in day.commitments %}<i class="calendar-preview__commitment-dot calendar-preview__commitment-dot--{{ commitment.kind }}"></i>{% endfor %}</span>{% endif %}</a>
+        {% endfor %}
+      </div>
+      <a href="{{ calendar_preview_url }}" class="home-month-card__open"><i data-lucide="calendar-days" aria-hidden="true"></i>Ver calendario</a>
     </div>
   </section>
 
   <section class="home-active-program" aria-labelledby="home-calendar-progress-title">
     <h2 id="home-calendar-progress-title" class="home-calendar__today-title">Progreso</h2>
-    <div class="home-active-program__card">
-      {% if vm.content.calendar_progress.elapsed_meals %}
-        <strong>{{ vm.content.calendar_progress.adherence_percent }}%</strong>
-        <p>{{ vm.content.calendar_progress.completed_meals }} de {{ vm.content.calendar_progress.elapsed_meals }} comidas transcurridas desde {{ vm.content.calendar_progress.period_start|date:"j M Y" }}.</p>
-      {% else %}<p>Aún no hay comidas transcurridas en este periodo.</p>{% endif %}
-      {% include "components/detail_link_row.html" with label="Ver progreso en Mi calendario" url=calendar_preview_url accessibility_label="Ver progreso en Mi calendario" standalone=True %}
+    <div class="home-active-program__card home-progress-card">
+      <p class="calendar-preview__period-chip">Inicio el {{ vm.content.calendar_progress.period_start|date:"j F" }}</p>
+      <div class="calendar-preview__progress-metrics">
+        <div class="calendar-preview__progress-metric calendar-preview__progress-metric--plans"><i data-lucide="clock" aria-hidden="true"></i><span>Minutas recorridas</span><strong class="calendar-preview__progress-ring" style="--progress: {{ vm.content.calendar_coverage }}%"><span>{{ vm.content.calendar_progress.days_with_plan }}/{{ vm.content.future_plans_count }}<small>{{ vm.content.calendar_coverage }}%</small></span></strong></div>
+        <div class="calendar-preview__progress-metric calendar-preview__progress-metric--meals"><i data-lucide="check-check" aria-hidden="true"></i><span>Comidas cumplidas</span><strong class="calendar-preview__progress-ring" style="--progress: {{ vm.content.meal_coverage }}%"><span>{{ vm.content.calendar_progress.completed_meals }}/{{ vm.content.calendar_progress.scheduled_meals }}<small>{{ vm.content.meal_coverage }}%</small></span></strong></div>
+      </div>
+      <div class="calendar-preview__weight-history">
+        <h3><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i>Tendencia de peso</h3>
+        <p>{{ vm.content.weight_history|length }} registros</p>
+        {% if vm.content.weight_history %}<div class="calendar-preview__weight-chart" role="img" aria-label="Tendencia de peso"><svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true"><line x1="10" y1="20" x2="290" y2="20"/><line x1="10" y1="60" x2="290" y2="60"/><line x1="10" y1="100" x2="290" y2="100"/><polyline points="{{ vm.content.weight_chart_points }}"/></svg></div>{% else %}<p>Aún no hay registros de peso.</p>{% endif %}
+        <button type="button" onclick="openWeightModal()">Registrar peso corporal</button>
+      </div>
+      <a href="{{ calendar_preview_url }}?tab=progress" class="home-active-program__progress-link">Ver progreso en Mi calendario</a>
     </div>
   </section>
 

@@ -163,7 +163,7 @@ APP_NAVIGATION = (
             NavGroupSpec(
                 key="inbox",
                 label="Compartidos",
-                icon="user-plus",
+                icon="send",
                 page_icon="inbox",
                 url_name="inbox_list",
                 nav_root="inbox",
@@ -241,7 +241,7 @@ APP_NAVIGATION = (
             NavGroupSpec(
                 key="program",
                 label="Mis Programas",
-                icon="calendar",
+                icon="chart-no-axes-combined",
                 url_name="program_list",
                 nav_root="program",
                 scope="personal",
@@ -339,7 +339,7 @@ APP_NAVIGATION = (
                 key="admin",
                 label="Admin",
                 icon="shield",
-                show_in_sidebar=True,
+                show_in_sidebar=False,
                 items=(
                     NavItemSpec(
                         key="admin_home",

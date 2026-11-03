@@ -6,7 +6,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
+from accounts.services.identity import rename_username
 from accounts.services.personal_records import (
     update_body_record,
     update_planning_record,
@@ -68,6 +70,24 @@ class PersonalRecordsContentVM:
 @login_required
 def profile_detail(request):
     return _render_profile_detail(request, active_section="account")
+
+
+@login_required
+@require_POST
+def profile_rename_username(request):
+    try:
+        rename_username(user=request.user, username=request.POST.get("username", ""))
+    except ValueError as exc:
+        errors = {
+            "account_username_required": "Escribe un nombre de usuario.",
+            "account_username_too_long": "El nombre de usuario es demasiado largo.",
+            "account_username_invalid": "El nombre de usuario contiene caracteres no permitidos.",
+            "account_username_unavailable": "Ese nombre de usuario ya está en uso.",
+        }
+        messages.error(request, errors.get(str(exc), "No pudimos actualizar el nombre de usuario."))
+    else:
+        messages.success(request, "Nombre de usuario actualizado.")
+    return redirect("profile_detail")
 
 
 @login_required
@@ -241,15 +261,14 @@ def _render_profile_detail(request, *, active_section, nutrition_form=None):
         )
 
     account_section = ProfileSectionVM(
-        eyebrow="Cuenta",
+        eyebrow="Información de la cuenta",
         title="Información de cuenta",
         icon="user-round",
-        description="Datos principales de acceso, rol y plan asociado a tu cuenta.",
+        description="Tus datos principales de acceso.",
         fields=[
-            ProfileFieldVM("Usuario", profile.user.username),
-            ProfileFieldVM("Email", profile.user.email or "Sin email"),
-            ProfileFieldVM("Rol", profile.get_role_display()),
-            ProfileFieldVM("Miembro desde", profile.created_at.strftime("%Y-%m-%d")),
+            ProfileFieldVM("Nombre de usuario", profile.user.username),
+            ProfileFieldVM("Correo electrónico", profile.user.email or "No disponible"),
+            ProfileFieldVM("Fecha de ingreso", profile.user.date_joined.strftime("%d-%m-%Y")),
         ],
     )
 
@@ -367,7 +386,7 @@ def _render_profile_detail(request, *, active_section, nutrition_form=None):
     page_metadata = {
         "account": {
             "eyebrow": "Cuenta",
-            "title": "Datos de cuenta",
+            "title": "Mi cuenta",
             "subtitle": "Consulta la identidad y configuración general asociadas a tu acceso.",
             "icon": "user-round",
         },
