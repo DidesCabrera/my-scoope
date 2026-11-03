@@ -7,6 +7,7 @@ import type { OnboardingStateData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, NativeDateTimeField, NativeMeasurementField, Screen } from "@/components/ui";
+import { nextExclusivePicker } from "@/components/ui/exclusive-picker-state";
 import { tokens } from "@/design/tokens";
 import { localDateValue } from "@/presentation/date-time-values";
 
@@ -26,6 +27,7 @@ export default function PersonalRecordsEditScreen() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedPicker, setExpandedPicker] = useState<"birth-date" | "height" | null>(null);
 
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({ fallback: "/personal-records", mode: "back", title: titles[section] });
@@ -70,9 +72,9 @@ export default function PersonalRecordsEditScreen() {
       <Card style={styles.form}>
         {!record ? <Text style={styles.loading}>Cargando información…</Text> : null}
         {section === "body" ? <>
-          <NativeDateTimeField label="Fecha de nacimiento" maximumValue={localDateValue()} mode="date" onChange={(value) => set("birth_date", value)} value={values.birth_date ?? ""} />
+          <NativeDateTimeField expanded={expandedPicker === "birth-date"} label="Fecha de nacimiento" maximumValue={localDateValue()} mode="date" onChange={(value) => set("birth_date", value)} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "birth-date", expanded))} value={values.birth_date ?? ""} />
           <ChoiceRow label="Sexo para cálculo nutricional" onChange={(value) => set("sex", value)} options={[{ label: "Femenino", value: "female" }, { label: "Masculino", value: "male" }]} value={values.sex ?? ""} />
-          <NativeMeasurementField kind="height" label="Altura" onChange={(value) => set("height_cm", value)} value={values.height_cm ?? ""} />
+          <NativeMeasurementField expanded={expandedPicker === "height"} kind="height" label="Altura" onChange={(value) => set("height_cm", value)} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "height", expanded))} value={values.height_cm ?? ""} />
         </> : null}
         {section === "planning" ? <>
           <OptionGrid label="Objetivo nutricional" onChange={(value) => set("goal", value)} options={goalOptions} value={values.goal} />
