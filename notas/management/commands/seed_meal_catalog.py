@@ -22,7 +22,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         required_names = sorted({name for item in STARTER_MEAL_CATALOG for name, _quantity in item["foods"]})
-        foods_by_name = {food.name: food for food in Food.objects.filter(name__in=required_names, is_active=True)}
+        foods_by_name = {food.name: food for food in Food.objects.filter(
+            name__in=required_names,
+            is_active=True,
+            is_global=True,
+            is_verified=True,
+            created_by__isnull=True,
+            catalog_food_id__isnull=False,
+            catalog_sync_status=Food.CATALOG_SYNC_SNAPSHOT,
+        )}
         missing = [name for name in required_names if name not in foods_by_name]
         if missing:
             raise CommandError(f"Missing {len(missing)} operational foods: {', '.join(missing)}")
