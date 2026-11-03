@@ -34,6 +34,7 @@ import { GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } 
 import { ProposalDailyPlanCard } from "@/components/proposals/proposal-preview";
 import { commercialPlanBenefits, SubscriptionPlanCard, SubscriptionPurchaseButton } from "@/components/subscriptions/subscription-plan-card";
 import { AssistantGradientIcon, Button, Card, DistributedTabBar, EntityIcon, Field, InlineNotice, LoadingState, MyScoopeBrandLogo, NativeDateTimeField, NativeMeasurementField, textStyles, type EntityKind } from "@/components/ui";
+import { nextExclusivePicker } from "@/components/ui/exclusive-picker-state";
 import { useScreenScrollControl } from "@/components/ui/layout";
 import type { OnboardingCalendarization, OnboardingEstimate, ProposalDetail } from "@/api/types";
 import { tokens } from "@/design/tokens";
@@ -960,13 +961,14 @@ function MeasurementsView({ index }: { index: number }) {
   const controller = useJourneyController();
   const { profileQuestionSpacing } = useContext(JourneyPresentationContext);
   const profileQuestionStyle = useProfileQuestionStyle();
+  const [expandedMeasurement, setExpandedMeasurement] = useState<"height" | "weight" | null>(null);
   return (
     <ProfileStepLayout index={index}>
       <StepHeader description="La altura y el peso permiten estimar tu gasto energético y calcular referencias por kilogramo." eyebrow="Datos para el cálculo" icon={Scale} index={index} title="Ingresa tus medidas actuales" />
       <Card style={styles.profileCard}>
         <View style={[styles.measurementFields, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
-          <View style={styles.flex}><NativeMeasurementField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} kind="height" label="Altura" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("height", value)} value={controller.values.height} /></View>
-          <View style={[styles.flex, styles.profileSectionExtraTopSpacing]}><NativeMeasurementField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} kind="weight" label="Peso" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("weight", value)} value={controller.values.weight} /></View>
+          <View style={styles.flex}><NativeMeasurementField confirmationColor={tokens.color.carbs} expanded={expandedMeasurement === "height"} inputStyle={styles.profileInput} kind="height" label="Altura" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("height", value)} onExpandedChange={(expanded) => setExpandedMeasurement((current) => nextExclusivePicker(current, "height", expanded))} value={controller.values.height} /></View>
+          <View style={[styles.flex, styles.profileSectionExtraTopSpacing]}><NativeMeasurementField confirmationColor={tokens.color.carbs} expanded={expandedMeasurement === "weight"} inputStyle={styles.profileInput} kind="weight" label="Peso" labelStyle={profileQuestionStyle} onChange={(value) => controller.onChange?.("weight", value)} onExpandedChange={(expanded) => setExpandedMeasurement((current) => nextExclusivePicker(current, "weight", expanded))} value={controller.values.weight} /></View>
         </View>
       </Card>
     </ProfileStepLayout>
