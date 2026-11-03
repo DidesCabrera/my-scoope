@@ -1,4 +1,5 @@
 from io import StringIO
+from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
@@ -13,7 +14,15 @@ from notas.domain.models import DailyPlanCatalogEntry, Food
 class DailyPlanCatalogSeedTests(TestCase):
     def setUp(self):
         names = {name for definition in STARTER_MEAL_CATALOG for name, _quantity in definition["foods"]}
-        Food.objects.bulk_create([Food(name=name, protein=10, carbs=20, fat=5, is_global=True) for name in names])
+        Food.objects.bulk_create([
+            Food(
+                name=name, protein=10, carbs=20, fat=5,
+                is_global=True, is_verified=True, catalog_food_id=index,
+                catalog_food_ref=UUID(int=index),
+                catalog_sync_status=Food.CATALOG_SYNC_SNAPSHOT,
+            )
+            for index, name in enumerate(sorted(names), start=1)
+        ])
         call_command("seed_meal_catalog", apply=True, stdout=StringIO())
 
     def test_seed_builds_eight_private_plans_with_all_filters_idempotently(self):

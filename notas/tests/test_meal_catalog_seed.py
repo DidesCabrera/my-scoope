@@ -1,7 +1,9 @@
 from io import StringIO
+from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 
 from notas.application.meal_catalog_seed import STARTER_MEAL_CATALOG
@@ -12,9 +14,34 @@ class MealCatalogSeedTests(TestCase):
     def setUp(self):
         names = {name for definition in STARTER_MEAL_CATALOG for name, _quantity in definition["foods"]}
         Food.objects.bulk_create([
-            Food(name=name, protein=10, carbs=20, fat=5, is_global=True)
-            for name in names
+            Food(
+                name=name, protein=10, carbs=20, fat=5,
+                is_global=True, is_verified=True, catalog_food_id=index,
+                catalog_food_ref=UUID(int=index),
+                catalog_sync_status=Food.CATALOG_SYNC_SNAPSHOT,
+            )
+            for index, name in enumerate(sorted(names), start=1)
         ])
+
+    def test_seed_uses_curated_food_when_user_food_has_same_name(self):
+        name = "Palta"
+        curated_food = Food.objects.get(name=name)
+        user = get_user_model().objects.create_user(username="private-food-owner")
+        private_food = Food.objects.create(
+            name=name, protein=99, carbs=0, fat=0, created_by=user,
+        )
+
+        call_command("seed_meal_catalog", apply=True, stdout=StringIO())
+
+        self.assertTrue(Meal.objects.filter(catalog_entry__isnull=False, meal_food_set__food=curated_food).exists())
+        self.assertFalse(Meal.objects.filter(catalog_entry__isnull=False, meal_food_set__food=private_food).exists())
+
+    def test_seed_rejects_missing_curated_food_before_writing(self):
+        Food.objects.filter(name="Palta").update(catalog_sync_status=Food.CATALOG_SYNC_STALE)
+
+        with self.assertRaisesMessage(CommandError, "Missing 1 operational foods: Palta"):
+            call_command("seed_meal_catalog", apply=True, stdout=StringIO())
+        self.assertFalse(MealCatalogEntry.objects.exists())
 
     def test_seed_builds_exactly_thirty_private_catalog_meals_idempotently(self):
         call_command("seed_meal_catalog", apply=True, stdout=StringIO())
