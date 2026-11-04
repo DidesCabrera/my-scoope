@@ -10,9 +10,8 @@ Act as My Scoope's incident coordinator. Turn scattered signals into one evidenc
 ## Establish the operating context
 
 1. For TestFlight or beta incidents, read the applicable sections of `docs/40_technical/operations/ios_release_capabilities_runbook.md`, especially Sentry and the external-beta incident routine. Treat that runbook as authoritative for current project procedure.
-2. Never use `admin_knowledge/` or `docs/00_current/features/admin_knowledge/` as evidence or update them unless Felipe explicitly requests a Knowledge Center change.
-3. When live systems are involved, read [MCP source map](references/mcp-source-map.md) and use the narrowest available source that can confirm or disprove the incident.
-4. When producing, routing, or closing an incident, read [Incident contract](references/incident-contract.md).
+2. When live systems are involved, read [MCP source map](references/mcp-source-map.md) and use the narrowest available source that can confirm or disprove the incident.
+3. When producing, routing, or closing an incident, read [Incident contract](references/incident-contract.md).
 
 ## Work in this order
 

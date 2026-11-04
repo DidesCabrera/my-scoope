@@ -372,16 +372,6 @@ APP_NAVIGATION = (
                         show_in_sidebar=True,
                     ),
                     NavItemSpec(
-                        key="admin_knowledge",
-                        label="Knowledge Center",
-                        icon="library-big",
-                        page_icon="library-big",
-                        url_name="admin_knowledge_overview",
-                        nav_root="admin_knowledge",
-                        scope="overview",
-                        show_in_sidebar=True,
-                    ),
-                    NavItemSpec(
                         key="admin_food_catalog",
                         label="Foods Catalog",
                         icon="database",

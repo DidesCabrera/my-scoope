@@ -20,8 +20,6 @@ material business decisions.
    for role and shared-skill metadata.
 4. Read only the relevant `.codex/team/memory/areas/` or `projects/` file when
    durable context is needed.
-5. Never use the human Knowledge Center to infer team or product behavior.
-
 ## Choose the smallest useful mode
 
 - **Team consultation:** explain existing roles, status, boundaries, and routing.

@@ -35,7 +35,7 @@ performance and progressive static analysis.
 4. Existing debt is ratcheted before stricter whole-repository rules are enabled.
 5. Coverage and query budgets protect risk-bearing code without encouraging low-value assertions.
 6. UI tests protect behavior, accessibility and durable architecture seams, not decorative implementation details.
-7. No database migration, provider activation, product redesign or Knowledge Center change belongs to this cycle.
+7. No database migration, provider activation or product redesign belongs to this cycle.
 
 ## Patch sequence
 

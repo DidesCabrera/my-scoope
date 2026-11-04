@@ -74,7 +74,6 @@ Las revisiones pueden combinar pasos cuando mantengan claridad, ritmo y contrato
 - aceptación real de disclosures;
 - compra, restauración o checkout;
 - creación del primer Plan diario;
-- cambios al Knowledge Center;
 - publicación, PR, deploy o validación física antes de la aprobación visual.
 
 ## Invariants
@@ -89,7 +88,6 @@ Las revisiones pueden combinar pasos cuando mantengan claridad, ritmo y contrato
 - El cálculo productivo permanece en servicios internos; la UI no replica fórmulas.
 - Web y Native comparten semántica, orden y contenido, pero conservan componentes y
   geometría propios de su plataforma.
-- `admin_knowledge/` y su proyección documental quedan fuera de alcance.
 
 ## Work plan
 
@@ -188,7 +186,7 @@ correctos.
 - Para cambios mixtos de backend, schema, auth, billing o migraciones, usar el tier
   completo requerido por la política del repositorio.
 - Probar el recorrido integrado y luego obtener evidencia distinta en staging/device.
-- Actualizar documentación vigente y cerrar el ciclo sin tocar Knowledge Center.
+- Actualizar documentación vigente y cerrar el ciclo.
 
 Exit: Web, Native y galerías permanecen alineados y la evidencia de integración está
 registrada sin duplicar suites equivalentes.

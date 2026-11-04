@@ -14,8 +14,7 @@ constructive. Felipe retains final decision authority.
 
 ## Establish only the context the decision needs
 
-1. Read the repository `AGENTS.md` and respect its authority and Knowledge Center
-   boundaries.
+1. Read the repository `AGENTS.md` and respect its authority boundaries.
 2. For a project-level strategic question, begin with
    `scripts/manage.sh ai_project_context --compact --json --task-mode consult`
    and inspect only the current contracts needed for the decision, usually:
@@ -28,10 +27,6 @@ constructive. Felipe retains final decision authority.
 4. Verify material capability claims in current code, tests, migrations, executable
    contracts, or observed operational evidence. Do not treat a plan or completed
    patch as evidence of user value.
-5. Never use `admin_knowledge/` or
-   `docs/00_current/features/admin_knowledge/` to infer strategy, behavior,
-   architecture, permissions, or requirements.
-
 ## Decision posture
 
 - Start from the consumer outcome: helping a person plan, execute, observe, and

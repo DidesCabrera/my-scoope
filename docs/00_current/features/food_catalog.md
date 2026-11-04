@@ -93,11 +93,6 @@ Nutrition Solver sólo consume ese snapshot operacional.
 La ausencia de datos sigue siendo explícita. El adaptador puede derivar roles desde macros con una
 fuente y confianza menores, pero no inventa afinidades, alérgenos ni restricciones dietarias.
 
-La guía operativa actual está en:
-
-- [Knowledge Center: Food Catalog para el Solver](admin_knowledge/food_catalog.md)
-- [Knowledge Center: Nutrition Solver](admin_knowledge/nutrition_solver.md)
-
 Admin Operations expone además una pestaña staff-only de `Inventario y calidad`. Esta vista lee
 todos los `CatalogFood` persistidos, muestra sus campos y relaciones, permite filtrar el inventario y
 calcula cobertura por grupo, origen, estado, solver y brechas de completitud. La vista es de sólo

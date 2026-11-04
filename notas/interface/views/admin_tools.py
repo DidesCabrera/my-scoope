@@ -79,7 +79,7 @@ def admin_home(request):
 
     content = AdminHomeContentVM(
         title="Admin Workspace",
-        subtitle="Hub interno de Analytics, Operations y Knowledge.",
+        subtitle="Hub interno de Analytics y Operations.",
         cards=[
             AdminCardVM(
                 title="Admin Analytics",
@@ -92,12 +92,6 @@ def admin_home(request):
                 description="Resuelve colas, catálogo, cuentas y acciones auditables.",
                 url="admin_operations_overview",
                 icon="wrench",
-            ),
-            AdminCardVM(
-                title="Knowledge Center",
-                description="Consulta orientación humana no normativa del sistema.",
-                url="admin_knowledge_overview",
-                icon="library-big",
             ),
             AdminCardVM(
                 title="Foods Catalog",
