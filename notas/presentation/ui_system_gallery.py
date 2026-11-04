@@ -69,7 +69,7 @@ def build_ui_system_gallery_examples():
             "ui": {
                 "entity": "program",
                 "scope": "personal",
-                "section_label": "Mis librerias",
+                "section_label": "Mis librerías",
                 "page_icon": "bookmark",
                 "icon": "calendar",
                 "title": "Programas",

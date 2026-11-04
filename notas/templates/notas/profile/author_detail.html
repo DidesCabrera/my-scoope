@@ -6,13 +6,13 @@
   <h1>{{ profile.user.username }}</h1>
 
   <p>
-    <strong>Role:</strong> {{ profile.get_role_display }}
+    <strong>Rol:</strong> {{ profile.get_role_display }}
   </p>
 <br>
 <br>
   <nav class="author-nav">
     <a href="{% url 'author_programs' profile.user.username %}">
-      Programs
+      Programas
     </a>
     |
     <a href="{% url 'author_dailyplans' profile.user.username %}">
@@ -20,7 +20,7 @@
     </a>
     |
     <a href="{% url 'author_meals' profile.user.username %}">
-      Meals
+      Comidas
     </a>
   </nav>
 
@@ -45,7 +45,7 @@
   <br>
 
 
-  <h2>Meals</h2>
+  <h2>Comidas</h2>
   <br>
   <br>
   {% if meals %}
@@ -55,7 +55,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p>No public meals yet.</p>
+    <p>Todavía no hay comidas públicas.</p>
   {% endif %}
 
   <hr>

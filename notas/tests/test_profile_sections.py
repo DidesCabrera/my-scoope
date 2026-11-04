@@ -50,10 +50,22 @@ class ProfileSectionsTests(TestCase):
         self.assertNotContains(response, "home-eyebrow")
         self.assertNotContains(response, "profile-account-subtitle")
         self.assertContains(response, "Información de cuenta")
+        self.assertContains(response, "Mi cuenta")
+        self.assertContains(response, "Mejorar mi suscripción")
+        self.assertContains(response, "Editar nombre de usuario")
+        self.assertContains(response, "Recordatorios del programa")
         self.assertContains(response, '<section class="profile-section-card profile-section-card--account" id="profile-account">')
         self.assertNotContains(response, "Perfil nutricional")
         self.assertNotContains(response, "Uso comercial")
         self.assertNotContains(response, "Métricas corporales")
+
+    def test_account_can_rename_username_using_shared_identity_service(self):
+        user = self._completed_user("account_rename")
+        self.client.force_login(user)
+        response = self.client.post(reverse("profile_rename_username"), {"username": "nuevo_nombre"})
+        self.assertRedirects(response, reverse("profile_detail"))
+        user.refresh_from_db()
+        self.assertEqual(user.username, "nuevo_nombre")
 
     def test_profile_nutrition_renders_personal_data_and_body_metrics(self):
         user = self._completed_user("profile_nutrition_sections")
@@ -123,7 +135,7 @@ class ProfileSectionsTests(TestCase):
         response = self.client.get(reverse("profile_detail"))
 
         self.assertContains(response, f'href="{reverse("profile_detail")}"')
-        self.assertContains(response, f'href="{reverse("profile_nutrition")}"')
+        self.assertContains(response, f'href="{reverse("personal_records")}"')
         self.assertContains(response, f'href="{reverse("profile_credits")}"')
         self.assertNotContains(response, "#profile-personal")
         self.assertNotContains(response, "#profile-credits")

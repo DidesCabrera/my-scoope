@@ -1,6 +1,6 @@
 {% extends "notas/base.html" %}
 {% load static %}
-{% block title %}Asistente AI · Chats{% endblock %}
+{% block title %}Asistente Nutricional · Chats{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/ai_assistant.css' %}?v=20260908-3">{% endblock %}
 {% block content %}
 
@@ -84,7 +84,7 @@
         <div>
           <h3>No tienes chats todavía.</h3>
           <p>
-            Los chats iniciados desde Home aparecerán aquí para que puedas retomarlos o revisar el brief conversacional.
+            Las conversaciones iniciadas desde Inicio aparecerán aquí para que puedas retomarlas.
           </p>
         </div>
         <a href="{% url 'ai_nutrition_chat_new' %}" class="home-cta home-cta--primary ai-chat-history-empty-card__action">

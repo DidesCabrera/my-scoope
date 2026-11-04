@@ -1,4 +1,4 @@
-/* Home execution flow: current week, today's plan, then active program. */
+/* Home execution flow: today's plan, commitments, calendar and progress. */
 .page-home .home-calendar {
   display: grid;
   gap: var(--space-5);
@@ -35,6 +35,13 @@
   font-size: 0.94rem;
   font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.home-calendar__weight-chip:hover,
+.home-calendar__weight-chip:focus-visible {
+  border-color: var(--nutrition-ppk);
+  outline: none;
 }
 
 .page-home .home-calendar__week-slider {
@@ -128,4 +135,35 @@
 .home-active-program__card .detail-link-row--standalone {
   margin-inline: 0;
   width: 100%;
+}
+
+.home-today-commitments__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-today-commitments__list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-card-muted);
+}
+
+.home-today-commitments__list li span {
+  color: var(--text-muted);
+}
+
+.home-calendar-entry .home-active-program__card,
+.home-today-commitments .home-active-program__card {
+  border-top-color: var(--entity-dailyplan);
+}
+
+.home-calendar-entry,
+.home-today-commitments {
+  margin-bottom: 24px;
 }

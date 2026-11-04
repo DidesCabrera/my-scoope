@@ -1,30 +1,64 @@
 {% extends "notas/base.html" %}
 {% load static %}
-{% block title %}Calendario · MyScoope{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/calendar_preview.css' %}">{% endblock %}
+{% block title %}Mi calendario · My Scoope{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/calendar_preview.css' %}?v=20261102-2">{% endblock %}
 {% block content %}
 <div class="calendar-preview page list">
   <div class="list-page-header list-page-header--calendarization js-header-meta-sentinel">
     <div class="list-page-header__identity">
       <i data-lucide="calendar-days" class="list-page-header__icon list-page-header__icon--calendarization"></i>
-      <h1 class="list-page-header__title">Calendario</h1>
+      <h1 class="list-page-header__title">Mi calendario</h1>
     </div>
   </div>
-  <div class="calendar-preview__summary" aria-label="Resumen de planes programados">
+  <p class="calendar-preview__notice">Planifica tus minutas, programas y compromisos en el calendario.</p>
+  <nav class="calendar-preview__tabs" aria-label="Secciones del calendario">
+    <a href="?tab=planning&amp;month={{ vm.content.month_key }}" class="{% if vm.content.active_tab == 'planning' %}is-active{% endif %}" {% if vm.content.active_tab == 'planning' %}aria-current="page"{% endif %}>Planificación</a>
+    <a href="?tab=progress" class="{% if vm.content.active_tab == 'progress' %}is-active{% endif %}" {% if vm.content.active_tab == 'progress' %}aria-current="page"{% endif %}>Progreso</a>
+  </nav>
+  {% if vm.content.active_tab == 'planning' %}
+  <section class="calendar-preview__upcoming-metrics" aria-labelledby="calendar-upcoming-metrics-title">
+    <h2 id="calendar-upcoming-metrics-title"><i data-lucide="clock" aria-hidden="true"></i>Próximos compromisos</h2>
+    <div class="calendar-preview__metric-strip">
+      <span class="calendar-preview__metric calendar-preview__metric--dailyplan" aria-label="{{ vm.content.schedule_summary.future_plans_count }} minutas programadas"><i data-lucide="clipboard-list" aria-hidden="true"></i>{{ vm.content.schedule_summary.future_plans_count }}</span>
+      <span class="calendar-preview__metric calendar-preview__metric--shopping" aria-label="{{ vm.content.commitment_counts.shopping }} compras"><i data-lucide="shopping-basket" aria-hidden="true"></i>{{ vm.content.commitment_counts.shopping }}</span>
+      <span class="calendar-preview__metric calendar-preview__metric--cooking" aria-label="{{ vm.content.commitment_counts.cooking }} días de cocina"><i data-lucide="cooking-pot" aria-hidden="true"></i>{{ vm.content.commitment_counts.cooking }}</span>
+      <span class="calendar-preview__metric calendar-preview__metric--training" aria-label="{{ vm.content.commitment_counts.training }} entrenamientos"><i data-lucide="dumbbell" aria-hidden="true"></i>{{ vm.content.commitment_counts.training }}</span>
+      <span class="calendar-preview__metric calendar-preview__metric--nutritionist" aria-label="{{ vm.content.commitment_counts.nutritionist }} citas con nutricionista"><i data-lucide="stethoscope" aria-hidden="true"></i>{{ vm.content.commitment_counts.nutritionist }}</span>
+    </div>
+  </section>
+  <section class="calendar-preview__month" aria-label="Calendario mensual">
+    <div class="calendar-preview__month-heading">
+      <a href="?month={{ vm.content.previous_month_key }}" aria-label="Mes anterior"><i data-lucide="chevron-left" aria-hidden="true"></i></a>
+      <h2>{{ vm.content.month_start|date:"F \d\e Y"|capfirst }}</h2>
+      <a href="?month={{ vm.content.next_month_key }}" aria-label="Mes siguiente"><i data-lucide="chevron-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="calendar-preview__month-grid">
+      {% for label in 'LMMJVSD' %}<span class="calendar-preview__month-weekday" aria-hidden="true">{{ label }}</span>{% endfor %}
+      {% for day in vm.content.month_days %}
+        <a href="?month={{ vm.content.month_key }}&amp;date={{ day.date|date:'Y-m-d' }}#calendar-selected-day" class="calendar-preview__month-day{% if day.date.month != vm.content.month_start.month %} is-outside{% endif %}{% if day.has_plan %} has-plan{% endif %}{% if day.is_selected %} is-selected{% endif %}{% if day.is_today %} is-today{% endif %}" aria-label="{{ day.date|date:'j F Y' }}{% if day.has_plan %}: con minuta{% else %}: sin minuta{% endif %}{% for commitment in day.commitments %}, {{ commitment.get_kind_display }}{% endfor %}" {% if day.is_selected %}aria-current="date"{% endif %}>
+          <strong>{{ day.date|date:"d" }}</strong>
+          {% if day.commitments %}<span class="calendar-preview__commitment-dots" aria-hidden="true">{% for commitment in day.commitments %}<i class="calendar-preview__commitment-dot calendar-preview__commitment-dot--{{ commitment.kind }}"></i>{% endfor %}</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+    <div class="calendar-preview__month-actions"><a href="#plan-editor"><i data-lucide="plus" aria-hidden="true"></i>Añadir minuta</a><button type="button" data-open-commitment-choice><i data-lucide="plus" aria-hidden="true"></i>Añadir compromiso</button></div>
+  </section>
+  <div id="calendar-selected-day"></div>
+  <h2 class="calendar-preview__selected-heading">{% if vm.content.selected_date == vm.content.today %}<span>Hoy</span>{% endif %} {{ vm.content.selected_date|date:"j F Y" }}</h2>
+  <div class="calendar-preview__summary" aria-label="Resumen de minutas programadas">
     <div class="calendar-preview__summary-card">
-      <span>Planes programados</span>
+      <span>Minutas programadas</span>
       <strong>{{ vm.content.schedule_summary.future_plans_count }}</strong>
       <small>Desde hoy</small>
     </div>
     <div class="calendar-preview__summary-card">
-      <span>Última fecha con plan</span>
+      <span>Última fecha con minuta</span>
       <strong>{% if vm.content.schedule_summary.last_scheduled_date %}{{ vm.content.schedule_summary.last_scheduled_date|date:"j M Y" }}{% else %}Sin fecha{% endif %}</strong>
       <small>Horizonte programado</small>
     </div>
   </div>
-  <p class="calendar-preview__notice">Organiza un plan por fecha. Cada asignación conserva una copia independiente de tu biblioteca y los cambios quedan en el historial.</p>
   {% if not vm.content.extended %}
-  <section aria-labelledby="calendar-week-title" class="calendar-preview__section">
+  <section id="calendar-schedule" aria-labelledby="calendar-week-title" class="calendar-preview__section">
     <h2 id="calendar-week-title">Semana actual</h2>
     <div class="calendar-preview__week" aria-label="Fechas de la semana actual">
       {% for day in vm.content.week %}
@@ -51,12 +85,12 @@
         <ul class="calendar-preview__meals">
           {% for meal in vm.content.selected_day.plan_snapshot.meals %}
             <li><span>{{ meal.hour|default:"—" }}</span><strong>{{ meal.name }}</strong></li>
-          {% empty %}<li>Este plan aún no tiene comidas.</li>{% endfor %}
+          {% empty %}<li>Esta minuta aún no tiene comidas.</li>{% endfor %}
         </ul>
         <a href="{% url 'calendarization_day_detail' vm.content.selected_day.id %}">Ver detalle del día</a>
       {% else %}
         <p class="calendar-preview__eyebrow">{{ vm.content.selected_date|date:"j M" }}</p>
-        <h3>Sin plan asignado</h3>
+        <h3>Sin minuta asignada</h3>
         <p>La fecha permanece libre para planificarla más adelante.</p>
       {% endif %}
     </div>
@@ -67,46 +101,40 @@
         {% csrf_token %}
         <input type="hidden" name="action" value="assign">
         <input type="hidden" name="date" value="{{ vm.content.selected_date|date:'Y-m-d' }}">
-        <label for="calendar-plan-choice">Plan de la biblioteca</label>
+        <label for="calendar-plan-choice">Minuta de Mis Minutas</label>
         <select id="calendar-plan-choice" name="dailyplan_id" required>
-          <option value="">Selecciona un plan</option>
+          <option value="">Selecciona una minuta</option>
           {% for plan in vm.content.plans %}<option value="{{ plan.id }}">{{ plan.name }}</option>{% endfor %}
         </select>
-        {% if vm.content.selected_day %}<label><input type="checkbox" name="confirm_replace" value="1" required> Confirmo que reemplazaré el plan actual; su copia quedará en el historial.</label>{% endif %}
-        <button type="submit">{% if vm.content.selected_day %}Reemplazar plan{% else %}Asignar plan{% endif %}</button>
+        {% if vm.content.selected_day %}<label><input type="checkbox" name="confirm_replace" value="1" required> Confirmo que reemplazaré la minuta actual; su copia quedará en el historial.</label>{% endif %}
+        <button type="submit">{% if vm.content.selected_day %}Reemplazar minuta{% else %}Asignar minuta{% endif %}</button>
       </form>
       {% if vm.content.selected_day %}
         <form action="{% url 'calendar_preview_action' %}" method="post">
           {% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="date" value="{{ vm.content.selected_date|date:'Y-m-d' }}">
-          <button type="submit">Quitar plan de esta fecha</button>
+          <button type="submit">Quitar minuta de esta fecha</button>
         </form>
         {% if vm.content.selected_day.source_kind == 'manual' %}
           <form action="{% url 'calendar_preview_action' %}" method="post">
             {% csrf_token %}<input type="hidden" name="action" value="move"><input type="hidden" name="date" value="{{ vm.content.selected_date|date:'Y-m-d' }}">
             <label for="calendar-target-date">Mover esta copia a otra fecha</label><input id="calendar-target-date" type="date" name="target_date" min="{{ vm.content.today|date:'Y-m-d' }}" required>
-            <label><input type="checkbox" name="confirm_replace" value="1"> Si ya hay un plan en destino, confirmo su reemplazo.</label>
-            <button type="submit">Mover plan</button>
+        <label><input type="checkbox" name="confirm_replace" value="1"> Si ya hay una minuta en destino, confirmo su reemplazo.</label>
+            <button type="submit">Mover minuta</button>
           </form>
         {% endif %}
       {% endif %}
       <p>Los días pasados o con cumplimiento registrado no se pueden cambiar.</p>
-      {% else %}<p>Esta fecha ya pasó o tiene cumplimiento registrado. Puedes consultar su plan e historial, pero no modificarlo.</p>{% endif %}
+      {% else %}<p>Esta fecha ya pasó o tiene cumplimiento registrado. Puedes consultar su minuta e historial, pero no modificarla.</p>{% endif %}
     </div>
-    {% if vm.content.selected_history %}<div class="calendar-preview__history"><h3>Historial de esta fecha</h3><ul>{% for version in vm.content.selected_history %}<li><strong>{{ version.plan_snapshot.name|default:"Día sin plan" }}</strong> · {% if version.assignment_state == 'current' %}Vigente{% elif version.assignment_state == 'removed' %}Quitado{% else %}Sustituido{% endif %}{% if version.origin_calendarization %} · {{ version.origin_calendarization.program_name_snapshot }}{% endif %}</li>{% endfor %}</ul></div>{% endif %}
+    {% if vm.content.selected_history %}<div class="calendar-preview__history"><h3>Historial de esta fecha</h3><ul>{% for version in vm.content.selected_history %}<li><strong>{{ version.plan_snapshot.name|default:"Día sin minuta" }}</strong> · {% if version.assignment_state == 'current' %}Vigente{% elif version.assignment_state == 'removed' %}Quitada{% else %}Sustituida{% endif %}{% if version.origin_calendarization %} · {{ version.origin_calendarization.program_name_snapshot }}{% endif %}</li>{% endfor %}</ul></div>{% endif %}
   </section>
 
-  <section aria-labelledby="calendar-grid-title" class="calendar-preview__section">
-    <h2 id="calendar-grid-title">Próximas cuatro semanas</h2>
-    <p>Los días destacados tienen un plan asignado.</p>
-    <div class="calendar-preview__grid">
-      {% for day in vm.content.grid %}
-        <div class="calendar-preview__grid-date{% if day.has_plan %} has-plan{% endif %}" aria-label="{{ day.date|date:'l j F' }}{% if day.has_plan %}: con plan{% else %}: sin plan{% endif %}{% for commitment in day.commitments %}, {{ commitment.get_kind_display }}{% endfor %}"><small>{{ day.weekday }}</small><strong>{{ day.date|date:"j" }}</strong>{% if day.commitments %}<span class="calendar-preview__commitment-dots" aria-hidden="true">{% for commitment in day.commitments %}<i class="calendar-preview__commitment-dot calendar-preview__commitment-dot--{{ commitment.kind }}"></i>{% endfor %}</span>{% endif %}</div>
-      {% endfor %}
-    </div>
-  </section>
   {% endif %}
 
-  <div class="calendar-preview__commitment-action">
+  <section id="calendar-commitments" class="calendar-preview__section" aria-labelledby="calendar-commitments-title">
+    <h2 id="calendar-commitments-title">Mis compromisos</h2>
+    <p>Registra compras, cocina, entrenamiento o citas con nutricionista para organizar tus próximas fechas.</p>
+    <div class="calendar-preview__commitment-action">
     <button type="button" id="calendar-register-commitments">Registrar compromisos</button>
     <dialog id="calendar-commitment-choice" aria-labelledby="calendar-commitment-choice-title">
       <h2 id="calendar-commitment-choice-title">¿Qué compromiso quieres registrar?</h2>
@@ -118,36 +146,50 @@
       </div>
       <form method="dialog"><button type="submit">Cancelar</button></form>
     </dialog>
-  </div>
+    </div>
+  </section>
 
   <section aria-labelledby="calendar-upcoming-title" class="calendar-preview__section">
-    <h2 id="calendar-upcoming-title">{% if vm.content.extended %}Semana actual y próximas fechas{% else %}Próximas fechas{% endif %}</h2>
+    <h2 id="calendar-upcoming-title">{% if vm.content.extended %}Próximas minutas programadas{% else %}Próximas minutas{% endif %}</h2>
     <div class="calendar-preview__agenda">
       {% if vm.content.extended %}{% for day in vm.content.extended_days %}
-        <div class="calendar-preview__row"><time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"D j M" }}</time><span>{% if day.has_plan %}{{ day.plan_name }}{% else %}Sin plan asignado{% endif %}{% if day.program_name %}<small>{{ day.program_name }}</small>{% endif %}</span>{% if day.detail_url %}<a href="{{ day.detail_url }}">Ver día</a>{% endif %}<a href="{% url 'calendar_preview' %}?date={{ day.date|date:'Y-m-d' }}#plan-editor">Planificar</a></div>
+        <div class="calendar-preview__row"><time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"D j M" }}</time><span>{% if day.has_plan %}{{ day.plan_name }}{% else %}Sin minuta asignada{% endif %}{% if day.program_name %}<small>{{ day.program_name }}</small>{% endif %}</span>{% if day.detail_url %}<a href="{{ day.detail_url }}">Ver día</a>{% endif %}<a href="{% url 'calendar_preview' %}?date={{ day.date|date:'Y-m-d' }}#plan-editor">Planificar</a></div>
       {% endfor %}{% else %}{% for day in vm.content.upcoming %}
-        <div class="calendar-preview__row"><time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"D j M" }}</time><span>{% if day.has_plan %}{{ day.plan_name }}{% else %}Sin plan asignado{% endif %}{% if day.program_name %}<small>{{ day.program_name }}</small>{% endif %}</span>{% if day.detail_url %}<a href="{{ day.detail_url }}">Ver día</a>{% endif %}<a href="{% url 'calendar_preview' %}?date={{ day.date|date:'Y-m-d' }}#plan-editor">Planificar</a></div>
+        <div class="calendar-preview__row"><time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"D j M" }}</time><span>{% if day.has_plan %}{{ day.plan_name }}{% else %}Sin minuta asignada{% endif %}{% if day.program_name %}<small>{{ day.program_name }}</small>{% endif %}</span>{% if day.detail_url %}<a href="{{ day.detail_url }}">Ver día</a>{% endif %}<a href="{% url 'calendar_preview' %}?date={{ day.date|date:'Y-m-d' }}#plan-editor">Planificar</a></div>
       {% endfor %}{% endif %}
     </div>
     {% if not vm.content.extended %}<p><a href="{% url 'calendar_preview' %}?extended=1">Ver más fechas</a></p>{% endif %}
   </section>
 
-  {% if not vm.content.extended %}
+  {% endif %}
+  {% if vm.content.active_tab == 'progress' %}
   <section aria-labelledby="calendar-progress-title" class="calendar-preview__section calendar-preview__progress">
-    <h2 id="calendar-progress-title">Cumplimiento</h2>
-    <p>Desde {{ vm.content.progress.period_start|date:"j M Y" }}</p>
-    <strong>{{ vm.content.progress.adherence_percent }}%</strong>
-    <span>{{ vm.content.progress.completed_meals }} de {{ vm.content.progress.elapsed_meals }} comidas transcurridas</span>
-    {% if vm.content.progress.period_start < vm.content.today %}<form action="{% url 'calendar_preview_action' %}" method="post">{% csrf_token %}<input type="hidden" name="action" value="reset_progress"><input type="hidden" name="date" value="{{ vm.content.today|date:'Y-m-d' }}"><label><input type="checkbox" required> Comprendo que el contador empezará hoy y el historial se conservará.</label><button type="submit">Iniciar nuevo periodo</button></form>{% endif %}
+    <h2 id="calendar-progress-title">Progreso</h2>
+    <p class="calendar-preview__period-chip">Inicio el {{ vm.content.progress.period_start|date:"j F" }}</p>
+    <div class="calendar-preview__progress-metrics">
+      <div class="calendar-preview__progress-metric calendar-preview__progress-metric--plans"><i data-lucide="clock" aria-hidden="true"></i><span>Planes recorridos</span><strong class="calendar-preview__progress-ring" style="--progress: {{ vm.content.calendar_coverage }}%"><span>{{ vm.content.progress.days_with_plan }}/{{ vm.content.schedule_summary.future_plans_count }}<small>{{ vm.content.calendar_coverage }}%</small></span></strong></div>
+      <div class="calendar-preview__progress-metric calendar-preview__progress-metric--meals"><i data-lucide="check-check" aria-hidden="true"></i><span>Comidas cumplidas</span><strong class="calendar-preview__progress-ring" style="--progress: {{ vm.content.meal_coverage }}%"><span>{{ vm.content.progress.completed_meals }}/{{ vm.content.progress.scheduled_meals }}<small>{{ vm.content.meal_coverage }}%</small></span></strong></div>
+    </div>
+    <div class="calendar-preview__weight-history">
+      <h3><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i>Tendencia de peso</h3>
+      <p>{{ vm.content.weight_history|length }} registros</p>
+      {% if vm.content.weight_history %}<div class="calendar-preview__weight-chart" role="img" aria-label="Tendencia de peso de {{ vm.content.weight_max|floatformat:1 }} a {{ vm.content.weight_min|floatformat:1 }} kilogramos"><svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true"><line x1="10" y1="20" x2="290" y2="20"/><line x1="10" y1="60" x2="290" y2="60"/><line x1="10" y1="100" x2="290" y2="100"/><polyline points="{{ vm.content.weight_chart_points }}"/></svg></div><ol>{% for item in vm.content.weight_history reversed %}<li><time datetime="{{ item.date|date:'Y-m-d' }}">{{ item.date|date:"j M" }}</time><strong>{{ item.weight_kg|floatformat:1 }} kg</strong></li>{% endfor %}</ol>{% else %}<p>Aún no hay registros de peso.</p>{% endif %}
+      <button type="button" onclick="openWeightModal()">Registrar peso</button>
+    </div>
+    <details class="calendar-preview__progress-settings"><summary>Opciones de progreso</summary>
+      <form action="{% url 'calendar_preview_action' %}" method="post">{% csrf_token %}<input type="hidden" name="action" value="adjust_progress"><input type="hidden" name="date" value="{{ vm.content.today|date:'Y-m-d' }}"><label for="calendar-progress-start">Fecha de inicio</label><input id="calendar-progress-start" type="date" name="period_start" value="{{ vm.content.progress.period_start|date:'Y-m-d' }}" max="{{ vm.content.today|date:'Y-m-d' }}" required><button type="submit">Guardar fecha de inicio</button></form>
+      {% if vm.content.progress.period_start < vm.content.today %}<form action="{% url 'calendar_preview_action' %}" method="post">{% csrf_token %}<input type="hidden" name="action" value="reset_progress"><input type="hidden" name="date" value="{{ vm.content.today|date:'Y-m-d' }}"><label><input type="checkbox" required> Comprendo que el contador empezará hoy y el historial se conservará.</label><button type="submit">Iniciar nuevo periodo</button></form>{% endif %}
+    </details>
   </section>
   {% endif %}
-  <p><a href="{% url 'calendarization_dashboard' %}">Volver al calendarizador de programas</a></p>
+  <p><a href="{% url 'calendarization_dashboard' %}">Gestionar programa en curso</a></p>
 </div>
 <script>
   (() => {
     const trigger = document.getElementById("calendar-register-commitments");
     const dialog = document.getElementById("calendar-commitment-choice");
     trigger?.addEventListener("click", () => dialog?.showModal());
+    document.querySelector("[data-open-commitment-choice]")?.addEventListener("click", () => dialog?.showModal());
     dialog?.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
   })();
 </script>
