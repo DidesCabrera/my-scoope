@@ -27,21 +27,27 @@ function displayValue(value: string, kind: NativeMeasurementFieldProps["kind"], 
   return grams ? `${kilograms},${grams / 100} kg` : `${kilograms} kg`;
 }
 
-export function NativeMeasurementField({ confirmationColor = tokens.color.interactivePrimary, containerStyle, defaultValue, disabled = false, iconColor = tokens.color.textMuted, inlineLabel = false, inputStyle, kind, label, labelStyle, onChange, unit = "g", value }: NativeMeasurementFieldProps) {
+export function NativeMeasurementField({ confirmationColor = tokens.color.interactivePrimary, containerStyle, defaultValue, disabled = false, expanded, iconColor = tokens.color.textMuted, inlineLabel = false, inputStyle, kind, label, labelStyle, onChange, onExpandedChange, unit = "g", value }: NativeMeasurementFieldProps) {
   const pickerValue = value || defaultValue || "";
   const initialWeight = weightPartsFromValue(pickerValue);
-  const [visible, setVisible] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const visible = expanded ?? internalExpanded;
   const [height, setHeight] = useState(() => heightFromValue(pickerValue));
   const [portion, setPortion] = useState(() => portionFromValue(pickerValue));
   const [kilograms, setKilograms] = useState(initialWeight.kilograms);
   const [grams, setGrams] = useState(initialWeight.grams);
   const Icon = kind === "height" ? Ruler : Scale;
 
+  const setPickerExpanded = (nextExpanded: boolean) => {
+    if (expanded === undefined) setInternalExpanded(nextExpanded);
+    onExpandedChange?.(nextExpanded);
+  };
+
   const open = () => {
     if (disabled) return;
     if (visible) {
       recordWheelPickerInteraction(kind, "cancel");
-      setVisible(false);
+      setPickerExpanded(false);
       return;
     }
     const nextPickerValue = value || defaultValue || "";
@@ -51,7 +57,7 @@ export function NativeMeasurementField({ confirmationColor = tokens.color.intera
     setKilograms(nextWeight.kilograms);
     setGrams(nextWeight.grams);
     recordWheelPickerInteraction(kind, "open");
-    setVisible(true);
+    setPickerExpanded(true);
   };
 
   const changeHeight = (next: number) => {
@@ -80,7 +86,7 @@ export function NativeMeasurementField({ confirmationColor = tokens.color.intera
         : weightValueFromParts(kilograms, kilograms === 350 ? 0 : grams);
     recordWheelPickerInteraction(kind, "commit");
     onChange(nextValue);
-    setVisible(false);
+    setPickerExpanded(false);
   };
 
   const pickerStyle = Platform.OS === "ios" ? styles.iosPicker : styles.androidPicker;

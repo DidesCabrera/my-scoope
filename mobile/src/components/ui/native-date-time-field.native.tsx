@@ -27,6 +27,7 @@ export function NativeDateTimeField({
   confirmationColor = tokens.color.interactivePrimary,
   containerStyle,
   disabled = false,
+  expanded: controlledExpanded,
   hideLabel = false,
   iconColor = tokens.color.textMuted,
   iconInLabel = false,
@@ -40,9 +41,11 @@ export function NativeDateTimeField({
   minuteInterval = 5,
   mode,
   onChange,
+  onExpandedChange,
   value,
 }: NativeDateTimeFieldProps) {
-  const [expanded, setExpanded] = useState(Platform.OS === "ios" && initiallyExpanded);
+  const [internalExpanded, setInternalExpanded] = useState(Platform.OS === "ios" && initiallyExpanded);
+  const expanded = controlledExpanded ?? internalExpanded;
   const selected = pickerDateFromValue(value, mode);
   const [draft, setDraft] = useState<DateTimeDraft>(() => dateTimeDraftFromDate(selected));
   const minuteValues = Array.from({ length: Math.ceil(60 / minuteInterval) }, (_, index) => index * minuteInterval);
@@ -59,25 +62,31 @@ export function NativeDateTimeField({
     value: selected,
   } as const;
 
+  const setPickerExpanded = (nextExpanded: boolean) => {
+    if (controlledExpanded === undefined) setInternalExpanded(nextExpanded);
+    onExpandedChange?.(nextExpanded);
+  };
+
   const handleChange = (event: DateTimePickerEvent, next?: Date) => {
-    if (Platform.OS === "android") setExpanded(false);
+    if (Platform.OS === "android") setPickerExpanded(false);
     if (event.type === "set" && next) onChange(pickerValueFromDate(next, mode));
   };
 
   const open = () => {
     if (disabled) return;
     if (Platform.OS === "android") {
+      setPickerExpanded(true);
       DateTimePickerAndroid.open({ ...pickerProps, onChange: handleChange });
       return;
     }
     if (expanded) {
       recordWheelPickerInteraction(mode, "cancel");
-      setExpanded(false);
+      setPickerExpanded(false);
       return;
     }
     setDraft(dateTimeDraftFromDate(selected));
     recordWheelPickerInteraction(mode, "open");
-    setExpanded(true);
+    setPickerExpanded(true);
   };
 
   const changeTimePart = (part: "hour" | "minute", next: number) => {
@@ -92,7 +101,7 @@ export function NativeDateTimeField({
     const bounded = committedDateTimeDraft(draft, mode, selected, minimumDate, maximumDate);
     recordWheelPickerInteraction(mode, "commit");
     onChange(pickerValueFromDate(bounded, mode));
-    setExpanded(false);
+    setPickerExpanded(false);
   };
 
   const input = (
