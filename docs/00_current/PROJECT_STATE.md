@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-10-28
+Last updated: 2026-10-30
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -272,7 +272,13 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Apple and Google billing require provider-environment reconciliation and observed
   lifecycle proof. Sandbox success must not be presented as live commercial proof.
 - Food Catalog growth and culinary-first Solver quality require representative
-  curated coverage and staging evidence before widening activation.
+  curated coverage and staging evidence before widening activation. For Chile,
+  the editorial discovery phase now has a reviewable v0.1 matrix with 219
+  candidates across 11 families: 56 exact matches against the internal snapshot,
+  58 possible matches requiring review and 105 apparently new candidates. This
+  is not yet an import-ready nutritional dataset: Felipe's editorial review,
+  evidence and license completion, portions, governed dry-run and explicit
+  publication/snapshot decisions remain pending.
 - AI Assistant changes should start from observed outcome or capability gaps and
   pass offline plus targeted real-provider evidence. Do not reopen completed BA/PT
   work through prompt-only patches.

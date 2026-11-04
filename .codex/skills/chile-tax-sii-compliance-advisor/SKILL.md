@@ -16,6 +16,15 @@ review path are explicitly configured. Read `AGENTS.md` and
 `.codex/team/memory/areas/finance.md` before company-specific work. Team memory is
 context only and never establishes tax treatment.
 
+For company-specific work, also consult the dated fiscal profile linked from
+finance memory. It is an evidence index in the approved `FINANZAS` area, not a
+substitute for live SII records or professional review. Maintain it when the
+current task includes updating fiscal context and yields a durable new fact or
+correction; a read-only question alone does not authorize a write. Add the
+applicable period, evidence link, verification level, review date, and next check. Keep
+superseded conclusions traceable instead of silently overwriting them. Do not
+turn an owner confirmation or a prior chat answer into an SII-certified fact.
+
 ## Establish the tax basis
 
 For each request, identify the legal entity, applicable tax period, tax regime,

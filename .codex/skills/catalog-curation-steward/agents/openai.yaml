@@ -1,0 +1,6 @@
+interface:
+  display_name: "Catalog Curation Steward"
+  short_description: "Curate data for Foods, Meals, and Plans"
+  default_prompt: "Usa $catalog-curation-steward para auditar este catálogo, preparar sus datos y proponer un lote de curación trazable."
+policy:
+  allow_implicit_invocation: true
