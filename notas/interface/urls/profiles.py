@@ -11,9 +11,9 @@ from notas.interface.views.profile import (
     personal_records,
     profile_credits,
     profile_detail,
-    profile_rename_username,
     profile_nutrition,
     profile_nutrition_update,
+    profile_rename_username,
 )
 from notas.interface.views.weight import register_weight
 
