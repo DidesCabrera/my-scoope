@@ -64,14 +64,6 @@ documentos específicos y el código relevante.
 
 Si un documento en `00_current/` contradice un documento en `90_archive/`, gana `00_current/`.
 
-## Excepción: proyección humana de Knowledge Center
-
-`features/admin_knowledge/` alimenta exclusivamente la app humana Knowledge Center. Sus documentos
-son explicativos y no normativos: no deben usarse para comprender el código, decidir arquitectura
-ni implementar features. No se actualizan como parte de ciclos normales; solo cambian cuando Felipe
-solicita explícitamente una actualización del Knowledge Center. La autoridad permanece en el código,
-los tests, las decisiones y la documentación normativa aplicable.
-
 ## UI System
 
 `design/ui_system.md` es el contrato vigente para CSS, componentes visuales, tokens, z-index, breakpoints y criterios de crecimiento de UI. Debe consultarse antes de crear nuevos estilos o componentes.

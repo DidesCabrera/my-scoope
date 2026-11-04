@@ -53,7 +53,6 @@ usage without weakening reliability, data history or commercial correctness:
 | `core` | Cross-cutting technical concerns such as rate limits, shared contracts and regression boot checks. |
 | `mobile_api` | Stable `/api/v1/` facade for consumer clients; route ownership is classified by product domain while extraction proceeds behind the public contract. |
 | `mobile` | Expo/React Native consumer client for onboarding, libraries, Assistant, Calendar, sharing, comparisons, label capture, billing and account management. |
-| `admin_knowledge` | Human-only explanatory Knowledge Center; explicitly non-authoritative and excluded from AI/product behavior inference. |
 
 ## Current architecture principles
 
@@ -120,9 +119,6 @@ blocker before considering the task done.
 - `docs/20_decisions/` explains accepted rationale and history.
 - `docs/10_active_cycles/` prepares cycles but does not override current contracts.
 - `docs/90_archive/` is historical context only.
-- `docs/00_current/features/admin_knowledge/` is a human presentation surface and
-  must not be used as implementation or architecture context.
-
 Project control is also executable:
 
 - `diagnose_environment` reports sanitized environment and integration readiness;

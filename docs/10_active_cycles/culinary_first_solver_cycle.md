@@ -20,7 +20,6 @@ coverage and human-review gate in Decision 0204.
 - Every generated entity remains a pending `NutritionProposal` until human approval.
 - Variant evidence and portions are revalidated immediately before apply.
 - Raw-food fallback is recorded as fallback and can be disabled by configuration.
-- Knowledge Center is outside this cycle.
 
 ## Controlled tasks
 

@@ -24,9 +24,6 @@ product behavior, architecture, data contracts, permissions, tax treatment,
 accounting policy, pricing commitments, or accepted company decisions. Those
 claims must be verified in their applicable authoritative source.
 
-The Knowledge Center is outside this system and must not be used as evidence for
-AI-team or product behavior.
-
 ## Operating principle
 
 Keep the team small enough to understand and broad enough to cover recurring

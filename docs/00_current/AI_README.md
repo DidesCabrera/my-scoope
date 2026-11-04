@@ -75,10 +75,6 @@ When documents disagree, prefer them in this order:
 5. Historical files in `docs/90_archive/`.
 6. Personal notes outside official docs, such as `manual_docs/`, should not guide implementation.
 
-`docs/00_current/features/admin_knowledge/` is an explicit exception inside the
-folder hierarchy: it feeds the human Knowledge Center and is not a source for AI
-understanding, product behavior or architecture.
-
 ## Operating mode and validation authority
 
 Do not pay an integration cost during consultation or local refinement. Use the
@@ -274,7 +270,6 @@ docs/00_current/features/ai_assistant/tool_oriented_client_memory.md
 - Do not create large patches that mix planning, decisions, source code and unrelated cleanup.
 - Do not add UI tests that lock CSS classes, exact HTML structure or decorative copy.
 - Do not use `manual_docs/` as implementation context.
-- Do not use the human Knowledge Center to infer product behavior.
 - Do not treat a repository-complete mobile feature as proven in a store, physical
   device or production environment without the corresponding external evidence.
 

@@ -57,7 +57,7 @@ NSO00 freezes the current v2 behavior:
 | NSO07 | CP-SAT backend behind a backend selector. |
 | NSO08 | Whole-day optimization and diverse alternatives. |
 | NSO09 | Shadow comparison, explanations and quality telemetry. |
-| NSO10 | Activation gates, current docs, Knowledge Center and cycle closure. |
+| NSO10 | Activation gates, current docs and cycle closure. |
 
 ## Implementation status
 

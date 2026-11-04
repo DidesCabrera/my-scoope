@@ -16,7 +16,7 @@ candidato TestFlight. Inicialmente se pausó
 la integración por trabajo paralelo. Felipe confirmó después que no había otros
 cambios y autorizó continuar; su siguiente instrucción fue resolver la validación
 de precios antes de gastar otro ciclo TestFlight. Se conserva esa prioridad y se
-volverá a comprobar staging antes de integrar. No se modificó el Knowledge Center.
+volverá a comprobar staging antes de integrar.
 
 ## 1. Precio de las cards distinto de Apple
 

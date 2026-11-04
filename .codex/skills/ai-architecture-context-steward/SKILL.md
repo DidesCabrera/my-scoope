@@ -11,15 +11,14 @@ Communicate in Spanish unless the user requests another language.
 
 ## Respect authority and scope
 
-1. Read the repository `AGENTS.md` first and obey its validation and Knowledge Center boundaries.
+1. Read the repository `AGENTS.md` first and obey its authority and validation boundaries.
 2. Begin with `docs/00_current/AI_README.md` and the compact packet for the actual
    mode, for example `scripts/manage.sh ai_project_context --compact --json
    --task-mode consult`. Add the domain filter when the scope is narrow. Use the
    complete context only for a genuinely cross-domain audit.
 3. Establish claims from current implementation, tests, migrations, and executable contracts; then reconcile them with `docs/00_current/`, accepted decisions, and active cycles. Use Git history and Codex conversations to discover intent or change history, never as the sole proof of current behavior.
-4. Treat `admin_knowledge/` and `docs/00_current/features/admin_knowledge/` only as human presentation. Never use them as architectural evidence or update them unless Felipe explicitly includes the Knowledge Center in the current request.
-5. An audit request is read-only by default. Change product code, canonical documents, decisions, cycles, or external systems only when the user asks for those changes.
-6. Request specialist review when correctness depends on deep domain knowledge that the available evidence cannot establish. Preserve the uncertainty instead of inventing architectural certainty.
+4. An audit request is read-only by default. Change product code, canonical documents, decisions, cycles, or external systems only when the user asks for those changes.
+5. Request specialist review when correctness depends on deep domain knowledge that the available evidence cannot establish. Preserve the uncertainty instead of inventing architectural certainty.
 
 ## Choose the smallest useful mode
 
@@ -55,7 +54,6 @@ Raise a finding when evidence suggests, for example:
 
 - a second planning authority is introduced alongside the dated Calendar snapshot;
 - the mobile client begins owning a domain rule that belongs to the backend;
-- product behavior depends on the human Knowledge Center;
 - a resource type bypasses the generic sharing, claim, or Inbox contract without an explicit decision;
 - a current feature contract describes an intended flow that code and tests no longer implement;
 - a completed baseline remains presented as an active source of requirements;

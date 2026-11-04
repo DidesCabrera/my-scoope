@@ -41,8 +41,7 @@ contract. CI should compare like-for-like runs before enforcing performance budg
    replace it.
 6. MCP and browser tests become explicit quality surfaces instead of silently living
    outside CI.
-7. No provider rollout, billing activation, database redesign or Knowledge Center
-   expansion belongs to this cycle.
+7. No provider rollout, billing activation or database redesign belongs to this cycle.
 
 ## Patch sequence
 
@@ -174,4 +173,3 @@ registry, repository hygiene, CSS budgets and browser contracts are green.
 - changing nutrition solver rollout behavior;
 - redesigning the product UI;
 - completing staging/production operational gates owned by other cycles;
-- updating `admin_knowledge` or its human-facing content.
