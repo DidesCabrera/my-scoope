@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SessionProvider, useSession } from "@/auth/session-context";
 import { StoreBillingProvider } from "@/billing/store-billing-context";
+import { AssistantQuickChatPreferencesProvider } from "@/components/assistant/assistant-quick-chat-preferences";
 import { ComparatorSelectionProvider } from "@/components/comparisons/comparator-selection-context";
 import { AppNavigationHeader, AppNavigationProvider } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
@@ -156,7 +157,7 @@ function RootLayout() {
       <SafeAreaProvider>
         <SessionProvider>
           <SplashCoordinator />
-          <StoreBillingProvider><AppNavigationProvider>
+          <StoreBillingProvider><AssistantQuickChatPreferencesProvider><AppNavigationProvider>
             <ComparatorSelectionProvider>
               <AuthenticatedRouteGate />
               <NativeReminderReconciler />
@@ -170,7 +171,7 @@ function RootLayout() {
                 }}
               />
             </ComparatorSelectionProvider>
-          </AppNavigationProvider></StoreBillingProvider>
+          </AppNavigationProvider></AssistantQuickChatPreferencesProvider></StoreBillingProvider>
           <StatusBar style="light" />
         </SessionProvider>
       </SafeAreaProvider>
