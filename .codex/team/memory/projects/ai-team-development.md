@@ -20,6 +20,8 @@ finance, and commercial and marketing work as My Scoope grows.
   for evaluation through real technical work.
 - The Capability Steward has a standard chat report for lifecycle, operational
   maturity, evidence, gaps, and next evaluations.
+- Catalog Operations is recognized as a distinct company area and the
+  `catalog-curation-steward` role is available as a pilot.
 - Durable memory is separated into areas, projects, and accepted AI-team decisions.
 
 ## Evaluation plan

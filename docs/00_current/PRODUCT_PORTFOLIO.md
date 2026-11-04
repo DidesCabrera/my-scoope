@@ -1,7 +1,7 @@
 # Product Portfolio - My Scoope
 
 Status: current
-Last updated: 2026-07-18
+Last updated: 2026-10-30
 
 ## Purpose
 
@@ -28,7 +28,7 @@ python manage.py project_portfolio --json
 
 | Bet | Stage | Next evidence |
 | --- | --- | --- |
-| Generic food coverage for Chile | Validate | Governed staging samples and real selection quality |
+| Generic food coverage for Chile | Validate | Review Chile v0.1 matrix, curate first governed batch and run dry-run |
 | AI-assisted first useful plan | Validate | Complete staging journeys and behavioral/product evidence |
 | Solver V2 controlled quality | Validate | Shadow comparison over real solver-ready snapshots |
 | Operational confidence | Validate | Staging contrast of Project Control signals |

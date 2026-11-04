@@ -20,6 +20,11 @@ flowchart TD
     OL --> RIS[Release Incident Specialist]
     OL --> IV[Incident Verifier]
 
+    F --> CO[Catalog operations]
+    CO --> CCS[Catalog Curation Steward]
+    SPA -. defines product priorities .-> CCS
+    ACS -. protects data boundaries .-> CCS
+
     F --> FIN[Finance]
     FIN --> AIR[Accounting Intake and Recordkeeping Agent]
     FIN --> CTA[Chile Tax and SII Compliance Advisor]
@@ -47,6 +52,9 @@ flowchart TD
   value. Simple work stays with one role.
 - Specialists may collaborate temporarily across boundaries, then return a compact
   evidence packet to the coordinator or Felipe.
+- Catalog Operations is a permanent operating area. Its steward maintains catalog
+  data quality and preparation; Product determines which coverage creates value,
+  and Architecture protects authoritative data boundaries.
 
 ## Role classes
 
