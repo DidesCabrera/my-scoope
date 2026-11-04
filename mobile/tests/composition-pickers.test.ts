@@ -98,7 +98,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /foodPortionHouseholdAmount\(grams, selectedPortionConversion\)/);
   matches(picker, /householdMeasureDisplayLabel\(selected\.householdMeasureLabel, selectedHouseholdAmount\)/);
   matches(portionField, /selector: \{[^}]*marginRight: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
-  matches(dateTimeField, /const \[expanded, setExpanded\] = useState\(Platform\.OS === "ios" && initiallyExpanded\)[\s\S]*<Check color=\{confirmationColor\}/);
+  matches(dateTimeField, /const \[internalExpanded, setInternalExpanded\] = useState\(Platform\.OS === "ios" && initiallyExpanded\)[\s\S]*const expanded = controlledExpanded \?\? internalExpanded[\s\S]*<Check color=\{confirmationColor\}/);
   matches(dateTimeField, /inlinePicker: \{[^}]*marginBottom: tokens\.layout\.reducedInset - 6[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   matches(picker, /quantity: isFoodPicker \? String\(metricQuantity\) : quantity/);
   matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView/);
