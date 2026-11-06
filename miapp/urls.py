@@ -85,9 +85,6 @@ urlpatterns = [
     # Internal product operations
     path("staff/operations/", include("admin_operations.urls")),
 
-    # Internal product knowledge
-    path("staff/knowledge/", include("admin_knowledge.urls")),
-
     # Main app
     path("app/", include("notas.urls")),
 ]

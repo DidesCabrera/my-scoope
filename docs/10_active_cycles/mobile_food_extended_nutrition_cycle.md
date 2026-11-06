@@ -20,7 +20,7 @@ Expose the extended nutrition already preserved in the operational food snapshot
 - Keep the extended fields nullable and render null as `Sin información`.
 - Do not infer, calculate or replace missing nutrients with zero.
 - Do not change historical proposal or shared-resource snapshots, which do not currently preserve these four fields.
-- Do not change Food Catalog publication or Knowledge Center content.
+- Do not change Food Catalog publication.
 
 ## Acceptance
 

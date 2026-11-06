@@ -48,7 +48,7 @@ class NavSectionSpec:
 APP_NAVIGATION = (
     NavSectionSpec(
         key="primary",
-        label="Tools",
+        label="Navegación",
         groups=(
             NavGroupSpec(
                 key="home",
@@ -61,20 +61,11 @@ APP_NAVIGATION = (
                 show_in_sidebar=True,
             ),
             NavGroupSpec(
-                key="learning",
-                label="Fundamentos Sistema",
-                icon="book-open",
-                url_name="learning_home",
-                nav_root="learning",
-                scope="personal",
-                page_icon="book-open",
-            ),
-            NavGroupSpec(
                 key="proposal",
                 label="Propuestas",
                 icon="sparkles",
                 page_icon="sparkles",
-                page_title="Asistente AI",
+                page_title="Asistente Nutricional",
                 url_name="proposal_list",
                 nav_root="proposal",
                 scope="personal",
@@ -82,10 +73,10 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="calendarization",
-                label="Mi programa activo",
+                label="Mi calendario",
                 icon="calendar-clock",
                 page_icon="calendar-clock",
-                url_name="calendarization_dashboard",
+                url_name="calendar_preview",
                 nav_root="calendarization",
                 scope="personal",
             ),
@@ -172,11 +163,20 @@ APP_NAVIGATION = (
             NavGroupSpec(
                 key="inbox",
                 label="Compartidos",
-                icon="user-plus",
+                icon="send",
                 page_icon="inbox",
                 url_name="inbox_list",
                 nav_root="inbox",
                 scope="personal",
+            ),
+            NavGroupSpec(
+                key="learning",
+                label="Fundamentos Sistema",
+                icon="book-open",
+                url_name="learning_home",
+                nav_root="learning",
+                scope="personal",
+                page_icon="book-open",
             ),
             NavGroupSpec(
                 key="create",
@@ -236,19 +236,19 @@ APP_NAVIGATION = (
 
     NavSectionSpec(
         key="workspace",
-        label="Mis librerias",
+        label="Mis librerías",
         groups=(
             NavGroupSpec(
                 key="program",
-                label="Mis Programas Semanales",
-                icon="calendar",
+                label="Mis Programas",
+                icon="chart-no-axes-combined",
                 url_name="program_list",
                 nav_root="program",
                 scope="personal",
                 page_icon="calendar",
                 action_url_name="program_create",
                 action_icon="plus",
-                action_label="Nuevo programa semanal",
+                action_label="Nuevo programa",
             ),
             NavGroupSpec(
                 key="dailyplan",
@@ -260,7 +260,7 @@ APP_NAVIGATION = (
                 page_icon="bookmark",
                 action_url_name="dailyplan_create",
                 action_icon="plus",
-                action_label="Nuevo minuta diaria",
+                action_label="Nueva minuta diaria",
             ),
             NavGroupSpec(
                 key="meal",
@@ -298,7 +298,7 @@ APP_NAVIGATION = (
                 label="Asistente Nutricional",
                 icon="sparkles",
                 page_icon="sparkles",
-                page_title="Asistente AI",
+                page_title="Asistente Nutricional",
                 url_name="ai_nutrition_chat_list",
                 nav_root="chat",
                 scope="personal",
@@ -339,7 +339,7 @@ APP_NAVIGATION = (
                 key="admin",
                 label="Admin",
                 icon="shield",
-                show_in_sidebar=True,
+                show_in_sidebar=False,
                 items=(
                     NavItemSpec(
                         key="admin_home",
@@ -368,16 +368,6 @@ APP_NAVIGATION = (
                         page_icon="wrench",
                         url_name="admin_operations_overview",
                         nav_root="admin_operations",
-                        scope="overview",
-                        show_in_sidebar=True,
-                    ),
-                    NavItemSpec(
-                        key="admin_knowledge",
-                        label="Knowledge Center",
-                        icon="library-big",
-                        page_icon="library-big",
-                        url_name="admin_knowledge_overview",
-                        nav_root="admin_knowledge",
                         scope="overview",
                         show_in_sidebar=True,
                     ),

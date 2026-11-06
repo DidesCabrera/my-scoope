@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   Plus,
   Search,
+  Settings as SettingsIcon,
   Bell,
   Scale,
   Send,
@@ -44,6 +45,7 @@ import { useSession } from "@/auth/session-context";
 import type { EntitlementsData, HomeSummaryData, LibraryEntity } from "@/api/types";
 import type { NotificationFeed } from "@/api/notification-types";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
+import { AssistantQuickChatLauncher } from "@/components/assistant/assistant-quick-chat-launcher";
 import { tokens } from "@/design/tokens";
 import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/product-areas";
 import { MyScoopeBrandLogo } from "@/components/ui/my-scoope-brand-logo";
@@ -141,6 +143,7 @@ export function AppNavigationProvider({ children }: PropsWithChildren) {
   return (
     <NavigationMenuContext.Provider value={value}>
       <HeaderPresentationProvider>{children}</HeaderPresentationProvider>
+      <AssistantQuickChatLauncher />
       <AppSidebar />
     </NavigationMenuContext.Provider>
   );
@@ -188,6 +191,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname.startsWith("/share/")) return { icon: UserPlus, title: "Contenido compartido" };
   if (pathname === "/subscription" || pathname === "/subscription-details") return { icon: WalletCards, title: pathname === "/subscription" ? "Suscripciones y Bolsas" : "Detalles de suscripciones y bolsas" };
   if (pathname === "/account") return { icon: UserRound, title: "Mi cuenta" };
+  if (pathname === "/settings") return { icon: SettingsIcon, title: "Settings" };
   if (pathname === "/onboarding") return { icon: UserRound, title: "Tu ficha" };
   if (pathname === "/onboarding-preview") return { icon: WandSparkles, title: "Vista previa del onboarding" };
   if (pathname === "/disclosures") return { icon: FileCheck, title: "Información importante" };
@@ -527,6 +531,7 @@ function AppSidebar() {
                 <Text style={styles.menuSectionLabel}>Cuenta</Text>
                 <FunctionalSidebarEntry item={{ href: "/account", icon: UserRound, label: "Mi cuenta" }} />
                 <PersonalRecordsSidebarEntry weightKg={currentWeightKg} />
+                <FunctionalSidebarEntry item={{ href: "/settings", icon: SettingsIcon, label: "Settings" }} />
                 {session?.is_staff ? <FunctionalSidebarEntry item={{ href: "/onboarding-preview", icon: WandSparkles, label: "Vista previa del onboarding" }} /> : null}
               </View>
             </ScrollView>

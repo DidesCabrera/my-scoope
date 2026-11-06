@@ -38,8 +38,8 @@ prueba con evidencia simulada en una compra real ni promete ausencia de rechazos
   dos archivos. También se guardó su parche en
   `/private/tmp/my-scoope-mobile-corrections-preserved.patch`. Sus treinta
   consultas cada dos segundos no se adoptaron como solución de compra.
-- Durante la etapa inicial del 13 no se modificaron las notas personales ni el
-  Knowledge Center, y no se hicieron builds o integraciones. El cierre autorizado
+- Durante la etapa inicial del 13 no se modificaron las notas personales y no se
+  hicieron builds o integraciones. El cierre autorizado
   del 14 integró PR #111, desplegó el commit `2039165` y generó el único build 39.
   Las notas y privacidad de Connect se corrigieron y las siete compras quedaron
   preparadas en el mismo borrador. El seguimiento físico se documenta por separado.

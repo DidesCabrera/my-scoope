@@ -39,4 +39,4 @@ split by ownership, not removed or demoted.
   Django job.
 - Temporary compatibility facades are acceptable during controlled splits, but new
   dependencies cannot be added without an executable policy update.
-- Production rollout and Knowledge Center work remain outside this cycle.
+- Production rollout remains outside this cycle.

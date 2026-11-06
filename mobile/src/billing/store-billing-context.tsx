@@ -78,34 +78,46 @@ function AccountStoreBilling({ children }: PropsWithChildren) {
     const pending = Platform.OS === "ios" ? await getPendingTransactionsIOS() : await getAvailablePurchases();
     for (const purchase of pending) await coordinator.submit(purchase, retry, "recovery");
   }, [coordinator]);
-  const foreground = useMemo(() => new ForegroundRefresh({
-    refresh: async (signal) => {
-      if (store.connected) void refreshCatalog("foreground_or_reconnect");
-      const snapshot = Promise.allSettled([coordinator.refresh()]);
-      // Recovery can enqueue receipts. Reconcile after recovery so these writes
-      // use one coordinator queue, independently of the screen currently open.
-      if (store.connected) await recoverPending(true)
-        .then(() => { if (!signal.aborted) setStoreError(null); })
-        .catch(() => undefined);
-      if (signal.aborted) return;
-      const results = await Promise.allSettled([snapshot, coordinator.reconcile()]);
-      if (signal.aborted) return;
-      if (results[1].status === "rejected") throw results[1].reason;
-      await refreshProfile();
-    },
-    retry: (error) => isConnectionError(error) || error instanceof MobileApiError && (error.status >= 500 || error.status === 429),
-  }, AppState.currentState), [coordinator, recoverPending, refreshCatalog, refreshProfile, store.connected]);
+  const performForegroundRefresh = useCallback(async (signal: AbortSignal) => {
+    const snapshot = coordinator.refresh();
+    // Recovery can enqueue receipts. Reconcile after recovery so these writes
+    // use one coordinator queue, independently of the screen currently open.
+    if (store.connected) await recoverPending(true)
+      .then(() => { if (!signal.aborted) setStoreError(null); })
+      .catch(() => undefined);
+    if (signal.aborted) return;
+    const results = await Promise.allSettled([snapshot, coordinator.reconcile()]);
+    if (signal.aborted) return;
+    if (results[1].status === "rejected") throw results[1].reason;
+    await refreshProfile();
+  }, [coordinator, recoverPending, refreshProfile, store.connected]);
+  const retryForegroundRefresh = useCallback((error: unknown) => isConnectionError(error)
+    || error instanceof MobileApiError && (error.status >= 500 || error.status === 429), []);
+  // Keep one refresh owner for the lifetime of this authenticated account.
+  // Store connection and catalog changes re-render this provider; recreating the
+  // owner here would start another reconciliation instead of joining the first.
+  const [foreground] = useState(() => new ForegroundRefresh({
+    refresh: performForegroundRefresh,
+    retry: retryForegroundRefresh,
+  }, AppState.currentState));
+  useEffect(() => {
+    foreground.update({ refresh: performForegroundRefresh, retry: retryForegroundRefresh });
+  }, [foreground, performForegroundRefresh, retryForegroundRefresh]);
   useEffect(() => {
     void foreground.refresh().catch(() => undefined);
+    return () => foreground.dispose();
+  }, [foreground]);
+  useEffect(() => {
     const listener = AppState.addEventListener("change", (next) => {
       if (next !== "active") catalog.invalidate();
+      else if (store.connected) void refreshCatalog("foreground_return");
       foreground.transition(next);
     });
-    return () => { listener.remove(); foreground.dispose(); };
-  }, [catalog, foreground]);
+    return () => listener.remove();
+  }, [catalog, foreground, refreshCatalog, store.connected]);
   useEffect(() => {
-    if (store.connected) void refreshCatalog("catalog_or_connection");
-  }, [refreshCatalog, store.connected]);
+    if (store.connected) void foreground.refresh().catch(() => undefined);
+  }, [foreground, store.connected]);
 
   const restore = async () => {
     if (restoreLock.current || coordinator.state.busy) return;

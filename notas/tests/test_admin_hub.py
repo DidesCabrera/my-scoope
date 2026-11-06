@@ -5,7 +5,7 @@ from django.urls import reverse
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class AdminHubTests(TestCase):
-    def test_admin_workspace_connects_analytics_operations_and_knowledge(self):
+    def test_admin_workspace_connects_analytics_and_operations(self):
         User = get_user_model()
         user = User.objects.create_superuser(
             username="admin-hub@example.com",
@@ -20,9 +20,7 @@ class AdminHubTests(TestCase):
         self.assertContains(response, "Admin Workspace")
         self.assertContains(response, "Admin Analytics")
         self.assertContains(response, "Admin Operations")
-        self.assertContains(response, "Knowledge Center")
         self.assertContains(response, "Catálogo de comidas")
         self.assertContains(response, reverse("admin_analytics_overview"))
         self.assertContains(response, reverse("admin_operations_overview"))
-        self.assertContains(response, reverse("admin_knowledge_overview"))
         self.assertContains(response, reverse("admin:notas_mealcatalogentry_changelist"))

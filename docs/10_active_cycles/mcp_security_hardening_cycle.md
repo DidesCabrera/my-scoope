@@ -8,7 +8,7 @@ Date: 2026-10-22
 Congelar la superficie MVP de tools existentes. Este ciclo protege la identidad,
 el permiso comercial y la información que cruza al cliente MCP antes de añadir
 capacidades. Se trabaja en la rama `codex/mcp-mvp-validation`, basada en
-`staging`. No cambia el Knowledge Center ni habilita el MCP en producción.
+`staging`. No habilita el MCP en producción.
 
 ## Etapas y criterios de cierre
 

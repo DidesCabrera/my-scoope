@@ -1,0 +1,25 @@
+.home-month-card { display: grid; gap: 1rem; }
+.home-calendar__plan-context { display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0 1rem; }
+.home-calendar__commitment-chip { background: #202020; border: 1px solid var(--border-default); border-radius: 999px; color: var(--text-main); font-size: .8rem; font-weight: 700; padding: .4rem .7rem; }
+.home-calendar__commitment-chip--shopping { border-color: var(--color-food); }
+.home-calendar__commitment-chip--cooking { border-color: var(--color-meal); }
+.home-calendar__commitment-chip--training { border-color: #01e888; }
+.home-calendar__commitment-chip--nutritionist { border-color: var(--color-protein); }
+.home-month-card__heading { align-items: center; display: grid; grid-template-columns: 44px 1fr 44px; }
+.home-month-card__heading h3 { font-size: 1.25rem; margin: 0; text-align: center; }
+.home-month-card__heading > a { align-items: center; color: var(--text-main); display: flex; height: 44px; justify-content: center; }
+.home-month-card__heading > a svg { height: 20px; width: 20px; }
+.home-month-card__grid { display: grid; gap: .4rem; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.home-month-card__weekday { color: var(--text-muted); text-align: center; }
+.home-month-card__day { align-items: center; background: var(--surface-card-muted); border: 2px solid transparent; border-radius: 12px; color: var(--text-main); display: flex; flex-direction: column; justify-content: center; min-height: 52px; position: relative; text-decoration: none; }
+.home-month-card__day.has-plan { background: #34224f; }
+.home-month-card__day.is-outside { background: #171121; color: var(--text-soft); }
+.home-month-card__day.is-today { border-color: var(--color-carbs); }
+.home-month-card__day:hover { filter: brightness(1.18); }
+.home-month-card__open { align-items: center; background: var(--surface-card-muted); border-radius: 999px; color: var(--text-main); display: flex; font-weight: 700; gap: .5rem; justify-content: center; min-height: 44px; text-decoration: none; }
+.home-month-card__open svg { height: 18px; width: 18px; }
+.home-progress-card { display: grid; gap: 1rem; }
+.home-progress-card .calendar-preview__progress-metric { background: var(--surface-card-muted); }
+.home-progress-card .calendar-preview__progress-ring > span { background: var(--surface-card-muted); }
+.home-progress-card .calendar-preview__weight-history button { background: var(--surface-card-muted); border: 0; border-radius: 12px; color: var(--text-main); cursor: pointer; font: inherit; font-weight: 700; min-height: 44px; padding: .6rem 1rem; }
+@media (max-width: 620px) { .home-month-card__day { min-height: 40px; } .home-month-card__day strong { font-size: .9rem; } }

@@ -30,6 +30,30 @@ test("focus and reconnect coalesce, but a resume during an old read requests one
   assert.equal(calls, 2);
   foreground.dispose();
 });
+test("mount, StoreKit connection and screen focus share one in-flight refresh", async () => {
+  let release!: () => void;
+  let calls = 0;
+  const foreground = new ForegroundRefresh({
+    refresh: async () => {
+      calls += 1;
+      await new Promise<void>((resolve) => { release = resolve; });
+    },
+    retry: () => false,
+  }, "active");
+  const mount = foreground.refresh();
+  const connection = foreground.refresh();
+  const focus = foreground.refresh();
+  assert.equal(connection, mount);
+  assert.equal(focus, mount);
+  assert.equal(calls, 1);
+  release();
+  await mount;
+  assert.equal(calls, 1);
+  foreground.update({ refresh: async () => { calls += 10; }, retry: () => false });
+  await foreground.refresh();
+  assert.equal(calls, 11);
+  foreground.dispose();
+});
 test("offline failures retain known state, retry while active and update immediately on recovery", async () => {
   let offline = true;
   let plan = "Pro";

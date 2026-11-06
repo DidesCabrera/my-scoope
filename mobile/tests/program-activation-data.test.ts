@@ -28,7 +28,7 @@ test("program activation detects timezone and uses aligned consent-style notific
   assert.doesNotMatch(screen, /notificationDetail|detail="Recibe un aviso/);
   assert.doesNotMatch(screen, /<Card accent=\{tokens\.color\.program\}>/);
   assert.match(screen, /const \[meals, setMeals\] = useState<Toggle>\("on"\)/);
-  assert.match(screen, /style=\{styles\.dailyNotificationBlock\}[\s\S]*label="Aviso inicial de la minuta diaria"[\s\S]*\{daily === "on" \? <NativeDateTimeField hideLabel label="Hora del aviso diario"/);
+  assert.match(screen, /style=\{styles\.dailyNotificationBlock\}[\s\S]*label="Aviso inicial de la minuta diaria"[\s\S]*\{daily === "on" \? <NativeDateTimeField[^>]*hideLabel[^>]*label="Hora del aviso diario"/);
   assert.ok(screen.indexOf('label="Aviso inicial de la minuta diaria"') < screen.indexOf('label="Hora del aviso diario"'));
 });
 

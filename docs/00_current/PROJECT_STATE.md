@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-10-28
+Last updated: 2026-10-30
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -53,7 +53,6 @@ usage without weakening reliability, data history or commercial correctness:
 | `core` | Cross-cutting technical concerns such as rate limits, shared contracts and regression boot checks. |
 | `mobile_api` | Stable `/api/v1/` facade for consumer clients; route ownership is classified by product domain while extraction proceeds behind the public contract. |
 | `mobile` | Expo/React Native consumer client for onboarding, libraries, Assistant, Calendar, sharing, comparisons, label capture, billing and account management. |
-| `admin_knowledge` | Human-only explanatory Knowledge Center; explicitly non-authoritative and excluded from AI/product behavior inference. |
 
 ## Current architecture principles
 
@@ -120,9 +119,6 @@ blocker before considering the task done.
 - `docs/20_decisions/` explains accepted rationale and history.
 - `docs/10_active_cycles/` prepares cycles but does not override current contracts.
 - `docs/90_archive/` is historical context only.
-- `docs/00_current/features/admin_knowledge/` is a human presentation surface and
-  must not be used as implementation or architecture context.
-
 Project control is also executable:
 
 - `diagnose_environment` reports sanitized environment and integration readiness;
@@ -276,7 +272,13 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Apple and Google billing require provider-environment reconciliation and observed
   lifecycle proof. Sandbox success must not be presented as live commercial proof.
 - Food Catalog growth and culinary-first Solver quality require representative
-  curated coverage and staging evidence before widening activation.
+  curated coverage and staging evidence before widening activation. For Chile,
+  the editorial discovery phase now has a reviewable v0.1 matrix with 219
+  candidates across 11 families: 56 exact matches against the internal snapshot,
+  58 possible matches requiring review and 105 apparently new candidates. This
+  is not yet an import-ready nutritional dataset: Felipe's editorial review,
+  evidence and license completion, portions, governed dry-run and explicit
+  publication/snapshot decisions remain pending.
 - AI Assistant changes should start from observed outcome or capability gaps and
   pass offline plus targeted real-provider evidence. Do not reopen completed BA/PT
   work through prompt-only patches.

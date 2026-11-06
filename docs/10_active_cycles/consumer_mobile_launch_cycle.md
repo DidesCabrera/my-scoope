@@ -36,7 +36,7 @@ or adjustment claims; App Store work remains separate from general product work.
 | CML05 · Nutrition-label capture | superseded for extraction by reliability cycle; device gate pending | Product/native | Apple Vision provides local quality/OCR signals; an accepted processed image is extracted temporarily by external AI and creates an idempotent private food only after user confirmation. |
 | CML06 · B2C subscriptions | completed (repository; App Store sandbox gate pending) | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation are implemented, with physical sandbox proof still external. |
 | CML07 · iOS capabilities | completed (repository; device/App Store gate pending) | App Store | Apple login shares PKCE; APNs/local delivery is exclusive per device; Keychain, camera-only permission, privacy manifests and sanitized crash reporting pass repository/prebuild QA. Signing, OCR/camera/APNs and archive proof remain external. |
-| CML08 · Review readiness | completed (repository; App Store/TestFlight gates pending) | App Store | Versioned transparency acceptance, in-app privacy/support/deletion, reconciled privacy labels, metadata, screenshot plan, reproducible demo program and complete reviewer notes. Internal/external TestFlight and submission remain external. |
+| CML08 · Review readiness | completed (repository; App Review and purchase gates pending) | App Store | Versioned transparency acceptance, in-app privacy/support/deletion, reconciled privacy labels, metadata, screenshot plan, reproducible demo program and complete reviewer notes. External TestFlight build 45 showed the four subscription prices in CLP on iOS 27.2; a corrected review candidate, purchase lifecycle and approval remain pending. |
 
 ## Calendarization target
 
@@ -262,9 +262,17 @@ Keychain restore and sanitized-crash proof.
   tests, mobile lint, strict TypeScript, 12 Node tests, the 16-route Expo web
   export and an Xcode 26.6 build for the iPhone 17 Pro simulator.
 
-Repository completion does not claim legal approval, App Store Connect entry,
-screenshots, internal/external TestFlight, subscription submission or App Review
-approval. Those external gates are sequenced in
+External TestFlight build `1.0.0 (45)` showed the four subscription prices in CLP
+on iOS 27.2 after they were unavailable or incorrect on the same iPhone 17 with
+iOS 27.0. Apple DTS identified the issue as occurring in TestFlight and expected
+it to be resolved in iOS 27.2. This closes only the price-localization blocker
+for preparing another review candidate; purchase, restore, lifecycle, approval
+and production charging remain unverified. See
+[`app_review_build_45_storekit_2026_11_05.md`](../40_technical/qa/app_review_build_45_storekit_2026_11_05.md).
+
+Repository completion does not claim legal approval, completed App Store Connect
+entry, screenshots, subscription submission or App Review approval. The remaining
+external gates are sequenced in
 `docs/40_technical/operations/cml08_app_store_review_runbook.md` and require the
 same signed release candidate that passes the remaining CML07 physical-device matrix.
 

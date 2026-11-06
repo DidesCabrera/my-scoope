@@ -38,6 +38,6 @@ class VisibleProductVocabularyTests(SimpleTestCase):
         )
         daily_plan = payload["entities"]["daily_plan"]
         self.assertEqual(daily_plan["es"]["singular"], "Minuta diaria")
-        self.assertEqual(daily_plan["es"]["library_title"], "Mis minutas diarias")
+        self.assertEqual(daily_plan["es"]["library_title"], "Mis Minutas")
         self.assertEqual(daily_plan["en"]["singular"], "Daily meal plan")
         self.assertIn("DailyPlan", daily_plan["technical_identifiers"])

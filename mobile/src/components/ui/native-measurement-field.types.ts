@@ -5,6 +5,7 @@ export type NativeMeasurementFieldProps = {
   containerStyle?: StyleProp<ViewStyle>;
   defaultValue?: string;
   disabled?: boolean;
+  expanded?: boolean;
   iconColor?: string;
   inlineLabel?: boolean;
   inputStyle?: StyleProp<TextStyle>;
@@ -12,6 +13,7 @@ export type NativeMeasurementFieldProps = {
   label: string;
   labelStyle?: StyleProp<TextStyle>;
   onChange(value: string): void;
+  onExpandedChange?(expanded: boolean): void;
   unit?: "g" | "ml";
   value: string;
 };

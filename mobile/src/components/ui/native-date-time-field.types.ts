@@ -4,6 +4,7 @@ export type NativeDateTimeFieldProps = {
   confirmationColor?: string;
   containerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  expanded?: boolean;
   hideLabel?: boolean;
   iconColor?: string;
   iconInLabel?: boolean;
@@ -17,5 +18,6 @@ export type NativeDateTimeFieldProps = {
   minuteInterval?: 1 | 5 | 10 | 15 | 20 | 30;
   mode: "date" | "time";
   onChange(value: string): void;
+  onExpandedChange?(expanded: boolean): void;
   value: string;
 };

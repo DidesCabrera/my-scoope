@@ -40,7 +40,7 @@ Render tools can include mutating operations. Use reads only unless the user exp
 
 ## Repository: implementation truth
 
-Use source, migrations, tests, authoritative decisions, and current feature documentation to validate hypotheses. Do not infer product behavior from the Human Knowledge Center. Follow `AGENTS.md` and the smallest relevant validation tier.
+Use source, migrations, tests, authoritative decisions, and current feature documentation to validate hypotheses. Follow `AGENTS.md` and the smallest relevant validation tier.
 
 ## GitHub: durable coordination
 

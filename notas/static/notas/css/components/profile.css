@@ -709,6 +709,46 @@
     margin-top: 2px;
 }
 
+.profile-account-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.profile-account-links a,
+.profile-account-logout button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    background: var(--surface-card-muted);
+    color: var(--text-main);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.profile-account-links a:hover,
+.profile-account-logout button:hover {
+    background: var(--surface-elevated);
+    color: var(--text-main);
+}
+
+.profile-account-links svg,
+.profile-account-logout svg {
+    width: 20px;
+    height: 20px;
+}
+
+.profile-account-logout {
+    margin-top: 12px;
+}
+
 .profile-account-danger {
     display: flex;
     align-items: center;
@@ -777,6 +817,28 @@
     }
 }
 /* Personal records hub */
+.profile-plan-card {
+  background: linear-gradient(145deg, #161616, #202020);
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 1.25rem;
+}
+
+.profile-plan-card > div { display: grid; gap: .25rem; }
+.profile-plan-card span { color: var(--text-muted); font-size: .8rem; }
+.profile-plan-card strong { font-size: 1.7rem; }
+.profile-plan-card a { align-items: center; background: linear-gradient(100deg, #54c8dd, #a9f945); border-radius: 12px; color: #111; display: flex; font-weight: 800; grid-column: 1 / -1; justify-content: center; min-height: 44px; text-decoration: none; }
+.profile-plan-card a svg { height: 18px; margin-left: .35rem; width: 18px; }
+.profile-account-rename { border-top: 1px solid var(--border-default); padding-top: 1rem; }
+.profile-account-rename summary { cursor: pointer; font-weight: 700; }
+.profile-account-rename form { display: grid; gap: .6rem; margin-top: 1rem; max-width: 420px; }
+.profile-account-rename input { background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 10px; color: var(--text-main); min-height: 42px; padding: .5rem .7rem; }
+.profile-account-rename button { background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 10px; color: var(--text-main); cursor: pointer; font: inherit; font-weight: 700; min-height: 42px; }
+.profile-account-medical-notice { background: #372715; border: 1px solid #765022; border-radius: 12px; color: #f5dbb1; line-height: 1.5; margin: 0; padding: 1rem; }
+
 .personal-records-page__intro {
   color: var(--text-muted);
   line-height: 1.55;

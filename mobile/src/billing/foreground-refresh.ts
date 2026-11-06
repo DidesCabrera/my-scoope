@@ -10,11 +10,13 @@ export class ForegroundRefresh {
   private failures = 0;
   private lifetime = new AbortController();
 
-  constructor(private readonly deps: {
+  constructor(private deps: {
     refresh(signal: AbortSignal): Promise<void>;
     retry(error: unknown): boolean;
     schedule?(run: () => void, delay: number): () => void;
   }, initialState: string | null) { this.active = initialState === "active"; }
+
+  update(deps: ForegroundRefresh["deps"]): void { this.deps = deps; }
 
   transition(next: string): void {
     const wasActive = this.active;

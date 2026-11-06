@@ -109,4 +109,3 @@ account migrations executable.
 - changing provider prompts or product tool capabilities;
 - activating external billing, email, Web Push or provider credentials;
 - removing the legacy `notas.Plan` table when no consumer requires that separate step;
-- updating the Knowledge Center.

@@ -1,0 +1,99 @@
+schema_version: 1
+area: "catalog-operations"
+last_reviewed: "2026-10-29"
+contracts:
+  - id: "food-editorial-portion-dataset-v1"
+    catalog: "foods"
+    name: "My Scoope editorial portion dataset"
+    version: "myscoope.food_portions.v1"
+    authority: "food_catalog/data/myscoope_food_portions_v1.json"
+    producer: "Catalog Operations editorial process"
+    consumers:
+      - "food_catalog migration 0016"
+      - "notas migration 0083"
+    validation:
+      - "food_catalog/tests/test_myscoope_food_portions_data.py"
+    state: "integrated-needs-live-reconciliation"
+    required_semantics:
+      - "Stable catalog_ref and normalized identity"
+      - "Household amount and measure"
+      - "Metric amount and unit"
+      - "Source Sheet and range provenance"
+  - id: "catalog-food-publication-contract"
+    catalog: "foods"
+    name: "CatalogFood publication readiness"
+    version: "current-code"
+    authority: "food_catalog/application/publication.py"
+    producer: "Food Catalog curation and review"
+    consumers:
+      - "Food Catalog publication workflow"
+      - "Operational food snapshot workflow"
+    validation:
+      - "food_catalog tests for publication and contracts"
+    state: "implemented-needs-rubric-mapping"
+    required_semantics:
+      - "Canonical identity and valid macronutrients"
+      - "Traceable source and acceptable license status"
+      - "At least one portion and one default portion"
+      - "Quality and solver requirements when applicable"
+  - id: "catalog-food-operational-snapshot"
+    catalog: "foods"
+    name: "CatalogFood to notas.Food snapshot"
+    version: "current-code"
+    authority: "notas/application/services/food_catalog_snapshots.py"
+    producer: "Explicit publication or refresh operation"
+    consumers:
+      - "notas.Food"
+      - "Meals"
+      - "Daily Plans"
+      - "Programs"
+      - "Solver"
+    validation:
+      - "notas/tests/test_food_catalog_snapshot_protocol.py"
+    state: "implemented"
+    required_semantics:
+      - "CatalogFood and notas.Food remain separate authorities"
+      - "Snapshot creation or refresh is explicit"
+      - "Historical content is not silently rewritten"
+  - id: "food-mobile-library-contract"
+    catalog: "foods"
+    name: "Food library and picker API contract"
+    version: "mobile-v1-current"
+    authority: "docs/00_current/api/mobile-v1.openapi.json"
+    producer: "mobile_api presenters, schemas, and selectors"
+    consumers:
+      - "My Scoope mobile application"
+    validation:
+      - "mobile_api/tests/test_food_portion_contract_api.py"
+      - "mobile_api/tests/test_food_visuals_api.py"
+    state: "implemented"
+    required_semantics:
+      - "Metric quantity remains the nutritional calculation basis"
+      - "Household display selection remains traceable"
+      - "Visual identity is available consistently"
+  - id: "meal-catalog-contract"
+    catalog: "meals"
+    name: "Meal catalog authority and publication contract"
+    version: "to-baseline"
+    authority: "to-confirm"
+    producer: "to-confirm"
+    consumers:
+      - "Explore Meals"
+      - "User libraries"
+      - "Daily Plans"
+    validation: []
+    state: "needs-baseline"
+    required_semantics: []
+  - id: "daily-plan-catalog-contract"
+    catalog: "daily-plans"
+    name: "Daily Plan catalog authority and publication contract"
+    version: "to-baseline"
+    authority: "to-confirm"
+    producer: "to-confirm"
+    consumers:
+      - "Calendar"
+      - "Programs"
+      - "User libraries"
+    validation: []
+    state: "needs-baseline"
+    required_semantics: []

@@ -14,8 +14,9 @@ Use the files in this order:
 
 1. `organization.md` for the operating model and organigram;
 2. `capability-registry.yaml` for the machine-readable role and shared-skill inventory;
-3. the selected `.codex/skills/<name>/SKILL.md` for behavior and limits;
-4. `memory/README.md` and the relevant area or project memory for durable context.
+3. `areas/` for an area's operating model and maintained control registers;
+4. the selected `.codex/skills/<name>/SKILL.md` for behavior and limits;
+5. `memory/README.md` and the relevant area or project memory for durable context.
 
 ## Authority boundary
 
@@ -23,9 +24,6 @@ This directory is authoritative for AI-team organization only. It does not defin
 product behavior, architecture, data contracts, permissions, tax treatment,
 accounting policy, pricing commitments, or accepted company decisions. Those
 claims must be verified in their applicable authoritative source.
-
-The Knowledge Center is outside this system and must not be used as evidence for
-AI-team or product behavior.
 
 ## Operating principle
 

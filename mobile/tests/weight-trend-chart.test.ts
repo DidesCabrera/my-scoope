@@ -65,7 +65,7 @@ test("weight trend and history use the standard card surface", async () => {
   assert.match(screen, /label: historyDateLabel\(item\)/);
   assert.match(screen, /value: `\$\{item\.weight_kg\.toFixed\(1\)\} kg`/);
   assert.match(screen, /label=\{`Peso actual · \$\{formatDate\(localDateValue\(\)\)\}`\}/);
-  assert.match(screen, /<NativeDateTimeField label="Hora de medición \(Opcional\)" mode="time"/);
+  assert.match(screen, /<NativeDateTimeField[^>]*label="Hora de medición \(Opcional\)"[^>]*mode="time"/);
   assert.match(screen, /const payload: WeightInput = \{ comment: comment\.trim\(\), measured_on: localDateValue\(\), measured_time: measuredTime \|\| localTimeValue\(\), weight_kg: weight \}/);
   assert.doesNotMatch(screen, /Incluir hora|SystemSwitch/);
   assert.match(screen, /item\.measured_time\?\.slice\(0, 5\)/);

@@ -1,6 +1,6 @@
 {% extends "notas/base.html" %}
 {% load static %}
-{% block title %}Calendarizar · MyScoope{% endblock %}
+{% block title %}Programa en curso · My Scoope{% endblock %}
 {% block feature_css %}
 <link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}">
 {% endblock %}
@@ -11,10 +11,10 @@
   <div class="list-page-header list-page-header--calendarization js-header-meta-sentinel">
     <div class="list-page-header__identity">
       <i data-lucide="calendar-clock" class="list-page-header__icon list-page-header__icon--calendarization"></i>
-      <h1 class="list-page-header__title">Calendarizador</h1>
+      <h1 class="list-page-header__title">Programa en curso</h1>
     </div>
   </div>
-  <p><a href="{% url 'calendar_preview' %}">Vista previa del Calendario</a></p>
+  <p><a href="{% url 'calendar_preview' %}">Volver a Mi calendario</a></p>
 
   {% if vm.content.current %}
   <section class="home-calendar calendarization-current" aria-labelledby="calendarization-current-title" data-calendarization-controller>
@@ -28,7 +28,7 @@
         <div class="entity-indicators structural-indicators" aria-label="Estructura del programa">
           <span class="structural-item"><span class="structural-value">{{ vm.content.current_calendar.weeks_count }}</span><span class="structural-label program-structural-label">SEMANAS</span></span>
           <span class="structural-divider"></span>
-          <span class="structural-item"><span class="structural-value">{{ vm.content.current_calendar.assigned_plans_count }}</span><i data-lucide="clipboard-list" class="structural-icon main" aria-label="Planes asignados"></i></span>
+          <span class="structural-item"><span class="structural-value">{{ vm.content.current_calendar.assigned_plans_count }}</span><i data-lucide="clipboard-list" class="structural-icon main" aria-label="Minutas asignadas"></i></span>
           <span class="structural-divider"></span>
           <span class="structural-item"><span class="structural-value">{{ vm.content.current_calendar.foods_count }}</span><i data-lucide="carrot" class="structural-icon main" aria-label="Alimentos"></i></span>
           <span class="structural-divider"></span>
@@ -108,7 +108,7 @@
             {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card default_menu=True calendarized_day=day %}
           {% else %}
             <div class="home-calendar__empty-card">
-              <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
+              <p>El programa en curso no tiene una minuta asignada a esta fecha.</p>
             </div>
           {% endif %}
         </div>
@@ -122,7 +122,7 @@
     </section>
 
     <div class="calendarization-actions">
-      <form method="post" action="{% url 'calendarization_cancel' vm.content.current.id %}" data-confirm="¿Cancelar esta calendarización?">{% csrf_token %}<button class="btn-danger calendarization-button" type="submit">Cancelar Calendarizacion</button></form>
+      <form method="post" action="{% url 'calendarization_cancel' vm.content.current.id %}" data-confirm="¿Cancelar el programa en curso?">{% csrf_token %}<button class="btn-danger calendarization-button" type="submit">Cancelar programa en curso</button></form>
     </div>
   </section>
 
@@ -136,7 +136,7 @@
     <button class="btn-primary calendarization-button" type="submit">Guardar preferencias</button>
 
     <div class="calendarization-push">
-      <div><h4>Notificaciones en este dispositivo</h4><p>Autoriza las notificaciones para recibir alertas incluso con la app cerrada. En iPhone o iPad, instala MyScoope en la pantalla de inicio primero.</p></div>
+      <div><h4>Notificaciones en este navegador</h4><p>Autoriza las notificaciones del navegador para recibir alertas. En iPhone o iPad, añade My Scoope a la pantalla de inicio primero.</p></div>
       <div class="calendarization-push__actions">
       {% if vm.content.push_enabled and vm.content.vapid_public_key %}
         <button type="button" class="btn-secondary calendarization-button" data-push-button hidden>{% if vm.content.has_push_subscription %}Actualizar autorización{% else %}Activar notificaciones{% endif %}</button>
@@ -150,11 +150,11 @@
   </form>
   {% endif %}
   <section class="calendarization-card">
-    <h2>{% if vm.content.current %}Cambiar programa desde una fecha{% else %}Nueva calendarización{% endif %}</h2>
+    <h2>{% if vm.content.current %}Cambiar programa desde una fecha{% else %}Iniciar un programa{% endif %}</h2>
     {% if vm.content.programs %}
     <form method="post" action="{% url 'calendarization_activate' %}" class="calendarization-form" data-activation-form>
       {% csrf_token %}
-      <label>Programa semanal
+      <label>Programa de Mis Programas
         <select name="program_id" required data-program-select>
           <option value="">Selecciona un programa</option>
           {% for program in vm.content.programs %}
@@ -164,11 +164,11 @@
       </label>
       <label>Fecha de inicio <input type="date" name="start_date" required data-start-date></label>
       {% if vm.content.current %}<label class="calendarization-check"><input type="checkbox" name="replace_current" required> Confirmo que desde la fecha indicada se reemplazarán los días restantes de “{{ vm.content.current.program_name_snapshot }}”. Los días anteriores y su cumplimiento se conservarán. Los planes asignados individualmente no se sobrescriben.</label>{% endif %}
-      <div class="calendarization-preview" data-date-preview hidden>
+        <div class="calendarization-preview" data-date-preview hidden>
         <div class="calendarization-preview__heading">
           <p class="home-calendar__program-eyebrow">
             <i data-lucide="calendar-clock" aria-hidden="true"></i>
-            <span>Plan seleccionado</span>
+            <span>Programa seleccionado</span>
           </p>
           <h3 class="home-calendar__program-name" data-preview-program>—</h3>
         </div>
@@ -187,7 +187,7 @@
         <label class="calendarization-check"><input type="checkbox" name="meal_notifications_enabled"> ¿Quieres recibir una notificación con cada comida del plan?</label>
 
         <div class="calendarization-push">
-          <div><h4>Notificaciones en este dispositivo</h4><p>Autoriza las notificaciones para recibir alertas incluso con la app cerrada. En iPhone o iPad, instala MyScoope en la pantalla de inicio primero.</p></div>
+          <div><h4>Notificaciones en este navegador</h4><p>Autoriza las notificaciones del navegador para recibir alertas. En iPhone o iPad, añade My Scoope a la pantalla de inicio primero.</p></div>
           <div class="calendarization-push__actions">
           {% if vm.content.push_enabled and vm.content.vapid_public_key %}
             <button type="button" class="btn-secondary calendarization-button" data-push-button hidden>{% if vm.content.has_push_subscription %}Actualizar autorización{% else %}Activar notificaciones{% endif %}</button>
@@ -199,17 +199,17 @@
           </div>
         </div>
       </section>
-      <button class="btn-primary calendarization-button calendarization-button--primary" type="submit">Activar calendarización</button>
+      <button class="btn-primary calendarization-button calendarization-button--primary" type="submit">Iniciar programa</button>
       <div class="calendarization-warning" data-incomplete-warning hidden>
         <i data-lucide="triangle-alert"></i>
-        <div><strong>Programa incompleto</strong><p>Los días vacíos quedarán calendarizados sin plan ni notificación.</p>
+        <div><strong>Programa incompleto</strong><p>Los días vacíos quedarán sin minuta ni notificación.</p>
           <input type="hidden" name="confirm_incomplete" value="">
           <button class="btn-secondary calendarization-button" type="button" data-confirm-incomplete>Continuar de todos modos</button>
         </div>
       </div>
     </form>
     {% else %}
-    <div class="calendarization-empty"><p>Primero necesitas crear un programa semanal propio.</p><a class="btn-primary calendarization-button" href="{% url 'program_create' %}">Crear programa</a></div>
+    <div class="calendarization-empty"><p>Primero necesitas crear un programa propio en Mis Programas.</p><a class="btn-primary calendarization-button" href="{% url 'program_create' %}">Crear programa</a></div>
     {% endif %}
   </section>
 

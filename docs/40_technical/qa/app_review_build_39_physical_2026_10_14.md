@@ -19,8 +19,8 @@ Free; no se modificaron cuentas reales durante estas correcciones locales.
 
 La rama de corrección parte de `origin/staging`, commit
 `45233cd3ad0d49126934e13043367abcda73e937`, cuyo árbol de producto es idéntico al
-del candidato 39. El WIP anterior, las notas personales y el Knowledge Center
-quedan fuera del alcance. Este bloque reúne los siete fallos del reporte.
+del candidato 39. El WIP anterior y las notas personales quedan fuera del alcance.
+Este bloque reúne los siete fallos del reporte.
 No se crea ni publica otro build sin la autorización explícita de Felipe.
 
 ## Hallazgos y correcciones

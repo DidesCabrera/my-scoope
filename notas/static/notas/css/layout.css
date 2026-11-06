@@ -181,24 +181,25 @@ header {
 
 .sidebar-main {
   width: 100%;
-  padding: 6px 12px;
+  min-height: 48px;
+  padding: 8px 12px;
   background: none;
   border: none;
-  color: var(--sidebar-text);
-  font-weight: 500;
-  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 16px;
   cursor: pointer;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  border-radius: 6px;
+  border-radius: 12px;
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .sidebar-main:hover {
-  background-color: transparent;
+  background-color: var(--surface-card-muted);
   color: var(--sidebar-text-active);
 }
 
@@ -307,12 +308,14 @@ header {
 
 
 .group-name-sidebar {
-  margin-left: 8px;
-  margin-top: 12px;
-  margin-bottom: 4px;
-  color: var(--sidebar-text);
-  font-size: 12px;
-  font-weight: 600;
+  margin-left: 12px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
 }
 
 /* =========================

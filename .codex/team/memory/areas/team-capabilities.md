@@ -36,6 +36,10 @@ grows with real company needs.
 7. Evaluate `publish-to-staging` through completed technical tasks and verify that
    it publishes the tested commit, confirms exact remote CI, and closes only the
    integrated task boundary.
+8. Pilot `catalog-curation-steward` through the Curación de Catálogos project and
+   verify that it produces a reliable baseline, usable rubric, traceable Sheets,
+   and bounded publication batches without confusing source, snapshot, or
+   user-owned data.
 
 ## Sources
 

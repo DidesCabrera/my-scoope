@@ -1,10 +1,10 @@
 {% extends "notas/base.html" %}
-{% block title %}Import foods{% endblock %}
+{% block title %}Importar alimentos · My Scoope{% endblock %}
 {% block content %}
 
 
 <div class="page">
-  <h2>Import foods from Excel</h2>
+  <h2>Importar alimentos desde Excel</h2>
 
   <p>
   Upload an Excel file (.xlsx) with columns:
@@ -19,7 +19,7 @@
     {% csrf_token %}
     <input type="file" name="file" accept=".xlsx" required>
     <br><br>
-    <button type="submit">Import foods</button>
+    <button type="submit">Importar alimentos</button>
   </form>
 </div>
 {% endblock %}
