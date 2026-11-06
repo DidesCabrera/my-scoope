@@ -62,3 +62,7 @@ artifacts/
 
 
 e2e/auth/state.json
+
+# Notas personales; solo README.md documenta el límite del repositorio.
+manual_docs/*
+!manual_docs/README.md

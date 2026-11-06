@@ -31,7 +31,7 @@ pendiente`, no `completed`.
 |---|---|---|
 | Paddle | Catálogo sandbox; bolsa de 500 acreditada en staging; Pro anual de CLP 59.990 registrada como pago aprobado, suscripción autorizada y plan Pro efectivo desde billing. | Completar otras ofertas y eventos de ciclo de vida; configurar/verificar cuenta y catálogo live; probar cobro real. |
 | Google Play | Cuatro precios visibles en Android; compra de 500 créditos y reembolso conciliado de forma idempotente en staging. Pub/Sub/RTDN autenticado recibió una notificación de prueba con HTTP 200 el 2026-10-16. | Publicar cliente Android actualizado; probar compras y ciclo de vida de suscripciones y bolsas; habilitar conciliaciones después de esas pruebas; completar Play Console y comprobar compra real. [Guía para retomar Google Play](google_play_resume.md). |
-| App Store | Integración de repositorio y compilación iOS de staging preparada; envío de Expo a App Store Connect completado, disponibilidad en TestFlight no verificada. | Completar TestFlight físico, compras/restauración/eventos/reembolsos sandbox, aprobación comercial y compra real. |
+| App Store | Build 45 instalada desde el enlace público de TestFlight externo. En el mismo iPhone 17, iOS 27.0 no entregó precios utilizables y, después de actualizar a iOS 27.2, StoreKit mostró correctamente Basic CLP 3.990/34.990 y Pro CLP 6.990/59.990. Apple DTS Case-ID 23269821 confirmó que el defecto ocurre en TestFlight y debería estar resuelto en iOS 27.2. | Preparar el siguiente candidato corregido y completar App Review; todavía faltan compras/restauración/eventos/reembolsos sandbox, aprobación/publicación y compra real. |
 
 Este es un **inventario inicial**, no prueba de estado live. Al comenzar PPC00 se
 vuelve a leer cada consola y el despliegue efectivo; cualquier diferencia se
@@ -96,6 +96,16 @@ commit no son evidencia de una transacción ni de una liquidación.
   La clave API tiene solo permiso para crear sesiones del portal de clientes:
   una consulta de lectura de precios devuelve 403 por alcance mínimo, no por
   fallo del webhook ni del checkout. No ampliar permisos sin necesidad.
+- [x] Cerrar el bloqueo de localización de precios para la decisión de volver a
+  App Review. La misma build externa `1.0.0 (45)` en el mismo iPhone 17 pasó de
+  precios no disponibles/incorrectos en iOS 27.0 a mostrar los cuatro precios
+  de suscripción correctos en CLP después de actualizar a iOS 27.2. Apple DTS
+  Case-ID `23269821` confirmó el 5 de noviembre de 2026 que el defecto ocurre en
+  TestFlight y debería estar resuelto en iOS 27.2. La evidencia y sus límites se
+  registran en
+  [`app_review_build_45_storekit_2026_11_05.md`](../40_technical/qa/app_review_build_45_storekit_2026_11_05.md).
+  Esto habilita preparar un nuevo candidato, pero no prueba compra, restore,
+  lifecycle ni recaudación productiva.
 - [ ] Completar los datos de payout de Paddle por el titular. El formulario aún
   pide tipo de empresa, representante y método de recepción; no recopilar esos
   datos sensibles en el chat ni almacenarlos en el repositorio.
@@ -283,7 +293,7 @@ seguir el procedimiento y consentimiento del titular.
 |---|---|---|---|---|---|
 | Paddle | Desplegado y CI completo | Parcial; falta matriz integral | Catálogo Live listo; checkout apagado | Webhook Live activo; payout pendiente | **No realizada** |
 | Google Play | Desplegado y CI completo | Parcial; falta suscripción y build interna actualizada | Pendiente de aprobación/publicación | Refund validado solo en staging | **No realizada** |
-| App Store | Desplegado y CI completo | Build enviada; TestFlight y compras sin verificar | Pendiente de aprobación/publicación | Pendiente | **No realizada** |
+| App Store | Desplegado y CI completo | Build 45 externa: precios CLP verificados en iOS 27.2; compras y lifecycle sin verificar | Pendiente de aprobación/publicación | Pendiente | **No realizada** |
 
 Actualizar esta tabla solo con evidencia identificable. Cambiar `Status` a
 `active` al iniciar PPC00 y a `completed` únicamente cuando PPC00–PPC06 y las
