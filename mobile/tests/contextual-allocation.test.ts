@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { MealSnapshot } from "../src/api/types";
+import type { LibraryFoodPanelItem, LibraryMealPanelItem, MealSnapshot } from "../src/api/types";
 import {
+  libraryDailyPlanFoodPanelItems,
   snapshotDailyPlanFoodPanelItems,
   snapshotFoodPanelItems,
   snapshotMacroDistribution,
@@ -109,5 +110,66 @@ test("calendarized food panels retain and aggregate proposed household equivalen
   assert.deepEqual(
     snapshotDailyPlanFoodPanelItems(meals).map((food) => [food.portionDisplayQuantity, food.portionDisplayMeasure]),
     [[1.5, "cup"]],
+  );
+});
+
+test("program daily-plan cards reuse the detail aggregation for their foods panel", () => {
+  function food(quantity: number, protein: number, carbs: number, fat: number, portion: number): LibraryFoodPanelItem {
+    return {
+      calorie_distribution: { carbs: 0, fat: 0, protein: 0 },
+      calorie_share: 0,
+      calories: protein * 4 + carbs * 4 + fat * 9,
+      carbs_allocation: 0,
+      carbs_grams: carbs,
+      detail_id: 7,
+      fat_allocation: 0,
+      fat_grams: fat,
+      id: `oats-${quantity}`,
+      name: "Avena",
+      portion_display_measure: "cup",
+      portion_display_quantity: portion,
+      protein_allocation: 0,
+      protein_grams: protein,
+      protein_per_kilogram: null,
+      quantity,
+      quantity_unit: "g",
+      relation_id: null,
+    };
+  }
+  function meal(id: string, item: LibraryFoodPanelItem, proteinPerKilogram: number): LibraryMealPanelItem {
+    return {
+      calorie_distribution: { carbs: 0, fat: 0, protein: 0 },
+      calorie_share: 0,
+      calories: item.calories,
+      carbs_allocation: 0,
+      carbs_grams: item.carbs_grams,
+      detail_id: null,
+      fat_allocation: 0,
+      fat_grams: item.fat_grams,
+      foods: [item],
+      id,
+      name: id,
+      note: "",
+      protein_allocation: 0,
+      protein_grams: item.protein_grams,
+      protein_per_kilogram: proteinPerKilogram,
+      relation_id: null,
+      time: null,
+    };
+  }
+
+  const items = libraryDailyPlanFoodPanelItems([
+    meal("breakfast", food(80, 10, 30, 5, 0.5), 0.125),
+    meal("snack", food(160, 20, 60, 10, 1), 0.25),
+  ]);
+
+  assert.equal(items.length, 1);
+  assert.deepEqual(
+    [items[0].name, items[0].quantity, items[0].portionDisplayQuantity, items[0].portionDisplayMeasure],
+    ["Avena", 240, 1.5, "cup"],
+  );
+  assert.deepEqual(
+    [items[0].proteinGrams, items[0].carbsGrams, items[0].fatGrams, items[0].proteinPerKilogram],
+    [30, 90, 15, 0.375],
   );
 });

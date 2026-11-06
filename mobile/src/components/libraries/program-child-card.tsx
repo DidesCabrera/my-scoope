@@ -373,7 +373,7 @@ export function ProgramChildCard({
   metricData?: ProgramMetricDatum[];
   axisLabels?: string[];
 }) {
-  const [metricsExpanded, setMetricsExpanded] = useState(true);
+  const [metricsExpanded, setMetricsExpanded] = useState(false);
   return (
     <Card accent={tokens.color.program}>
       <EntityHeading

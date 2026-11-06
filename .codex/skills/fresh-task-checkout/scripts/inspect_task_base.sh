@@ -40,6 +40,12 @@ if git -C "$REPOSITORY_ROOT" rev-parse --verify --quiet 'origin/main^{commit}' >
   else
     printf 'staging_contains_main=no\n'
   fi
+  if git -C "$REPOSITORY_ROOT" diff --quiet origin/staging...origin/main; then
+    printf 'main_content_missing_from_staging=no\n'
+  else
+    printf 'main_content_missing_from_staging=yes\n'
+  fi
 else
   printf 'staging_contains_main=unknown\n'
+  printf 'main_content_missing_from_staging=unknown\n'
 fi

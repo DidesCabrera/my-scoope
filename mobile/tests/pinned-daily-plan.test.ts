@@ -11,7 +11,7 @@ test("Home creates a dated snapshot while retaining legacy pinned-plan fallback"
   assertSourceMatch(home, /label="Crear un plan para hoy"/);
   assertSourceMatch(home, /apiRequest<CalendarDayDetailData>\(`\/api\/v1\/calendar\/days\/\$\{today\.local_date\}\/plan\/draft`/);
   assertSourceMatch(home, /assignment_key: Crypto\.randomUUID\(\)/);
-  assertSourceMatch(home, /<PinnedDailyPlanCard apiRequest=\{apiRequest\} editing=\{pinnedMealEditing\} item=\{today\.pinned_plan\}/);
+  assertSourceMatch(home, /<PinnedDailyPlanCard apiRequest=\{apiRequest\} editing=\{pinnedMealEditing\} initialPanelExpanded item=\{today\.pinned_plan\}/);
   assertSourceMatch(home, /onToggleCompleted: \(meal, completed\) => \{ void toggleTodayMealCompletion\(meal\.id, completed, "calendarized"\); \}/);
   assertSourceMatch(home, /onToggleCompleted: \(meal, completed\) => \{ void toggleTodayMealCompletion\(meal\.id, completed, "pinned"\); \}/);
   assertSourceMatch(home, /`\/api\/v1\/days\/\$\{todayDayId\}\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/check-ins`/);

@@ -14,6 +14,7 @@ import { Button, EntityCard, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
+import { FoodPanels as LibraryFoodPanels } from "@/components/libraries/entity-panels";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
@@ -39,7 +40,7 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number], completedKey
   };
 }
 
-export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, onChangeMealTime, onChanged }: { apiRequest: ApiRequest; editing?: MealPanelEditing; item: LibraryItem; mealExecution?: MealExecutionItem[] | null; onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void>; onChanged(): Promise<void> | void }) {
+export function PinnedDailyPlanCard({ apiRequest, editing, initialPanelExpanded = false, item, mealExecution, onChangeMealTime, onChanged }: { apiRequest: ApiRequest; editing?: MealPanelEditing; initialPanelExpanded?: boolean; item: LibraryItem; mealExecution?: MealExecutionItem[] | null; onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void>; onChanged(): Promise<void> | void }) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const addMeal = () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: "/today" }));
@@ -72,9 +73,11 @@ export function PinnedDailyPlanCard({ apiRequest, editing, item, mealExecution, 
       actions={detailAction}
       afterNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} mealNutrition={meals.map((meal) => ({ calories: meal.calories, carbsGrams: meal.carbs_grams, fatGrams: meal.fat_grams, key: meal.id, proteinGrams: meal.protein_grams }))} />}
       collapsiblePanel
+      dailyPlanFoodsPanel={<LibraryFoodPanels items={item.panel.foods} nestedScroll showEditTab={false} />}
       entity="dailyPlan"
       eyebrow="Minuta del día"
       headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }}
+      initialPanelExpanded={initialPanelExpanded}
       indicators={indicators}
       nutrition={libraryNutrition(item.nutrition)}
       title={item.name}>

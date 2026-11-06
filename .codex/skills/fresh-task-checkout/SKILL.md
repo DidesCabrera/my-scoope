@@ -35,13 +35,15 @@ chooses an existing clean checkout whose identity has been verified.
 4. Honor an explicitly named PR, commit, or remote branch when the task truly
    depends on it; record the exact resolved commit.
 5. Run `.codex/skills/fresh-task-checkout/scripts/inspect_task_base.sh` after
-   fetching. If
-   `origin/main` contains commits absent from `origin/staging`, stop ordinary task
-   preparation and report that the integration base requires reconciliation. Do
-   not silently merge the branches.
+   fetching. Report main-only commits as history divergence, but stop ordinary
+   task preparation only when `git diff origin/staging...origin/main` contains
+   main-side content absent from staging. A content-empty promotion merge is safe
+   and must not be treated as missing production content. Do not silently merge
+   the branches when real content reconciliation is required.
 
 The fact that `origin/staging` is ahead of `origin/main` is normal during
-integration. The dangerous state is production history missing from staging.
+integration. A main-only merge commit whose content is already present in staging
+is also normal. The dangerous state is production content missing from staging.
 
 ## Create the task boundary
 
