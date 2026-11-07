@@ -19,18 +19,19 @@ test("entity cards expose a shared left-aligned panel visibility control", async
 
   expectSource(product, "export function EntityCardPanelToggle");
   expectSource(product, "accessibilityState={{ expanded }}");
-  expectSource(product, 'expanded && { backgroundColor: solidActive ? activeColor : `${activeColor}1A`, borderColor: activeColor }');
+  expectSource(product, 'expanded && { backgroundColor: solidActive ? activeColor : `${activeColor}1A`, borderColor: tokens.color.surfaceCard }');
+  assert.equal(/expanded && \{[^}]*borderColor: activeColor/.test(product), false);
   expectSource(product, "expanded && styles.entityCardPanelToggleLabelActive");
   expectSource(product, "entityCardPanelToggleLabelActive: { color: tokens.color.textMain }");
-  for (const mapping of ["chart: ChartNoAxesCombined", "food: Carrot", "information: Info", "meal: Utensils"]) expectSource(product, mapping);
-  expectSource(product, "<Icon color={expanded ? tokens.color.textMain : tokens.color.textMuted} size={14}");
-  expectSource(product, 'entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, height: 34, justifyContent: "center", marginLeft: -2, paddingHorizontal: tokens.spacing.sm }');
-  expectSource(product, "entityCardPanelToggleIcon: { marginLeft: 4 }");
-  expectSource(product, "entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold, marginRight: 6 }");
-  expectSource(product, 'entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 34, justifyContent: "center", width: 34 }');
+  for (const mapping of ["chart: ChartNoAxesCombined", "food: Carrot", "information: Info", "meal: Utensils", "supplement: Pill"]) expectSource(product, mapping);
+  expectSource(product, "<Icon color={expanded ? activeForeground : tokens.color.textMuted} size={14}");
+  expectSource(product, 'entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 2, height: 32, justifyContent: "center", paddingHorizontal: tokens.spacing.compact }');
+  expectSource(product, "entityCardPanelToggleIcon: { marginLeft: 1 }");
+  expectSource(product, "entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, marginRight: 2 }");
+  expectSource(product, 'entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 }');
   expectSource(product, "<EntityCardActions leading={panelToggle ? <EntityCardPanelToggle");
-  expectSource(product, 'entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "space-between" }');
-  expectSource(product, 'entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginLeft: "auto", marginRight: -2 }');
+  expectSource(product, 'entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginTop: 6 }');
+  expectSource(product, 'entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, marginLeft: "auto" }');
   expectSource(nutritionCard, "initialPanelExpanded = false");
   expectSource(nutritionCard, "const [panelExpanded, setPanelExpanded] = useState(initialPanelExpanded)");
   expectSource(nutritionCard, "const [foodsPanelExpanded, setFoodsPanelExpanded] = useState(false)");
@@ -87,9 +88,9 @@ test("daily-plan cards expose an adjacent foods-panel control backed by their ex
   expectSource(nutritionCard, 'text="Alimentos"');
   expectSource(nutritionCard, "if (shouldExpand && hasDailyPlanFoodsPanel) setFoodsPanelExpanded(false)");
   expectSource(nutritionCard, "if (shouldExpand) setPanelExpanded(false)");
-  expectSource(nutritionCard, "<View style={styles.panelToggleGroup}>{panelToggle}{foodsPanelToggle}</View>");
+  expectSource(nutritionCard, "<View style={styles.panelToggleGroup}>{panelToggle}{supplementPanelToggle}{foodsPanelToggle}</View>");
   expectSource(nutritionCard, "hasDailyPlanFoodsPanel && foodsPanelExpanded ? <EntityCardPanelSlot>{dailyPlanFoodsPanel}</EntityCardPanelSlot>");
-  expectSource(nutritionCard, 'panelToggleGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm + 2 }');
+  expectSource(nutritionCard, 'panelToggleGroup: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.compact }');
   for (const card of dailyPlanCards) expectSource(card, "dailyPlanFoodsPanel=");
 });
 

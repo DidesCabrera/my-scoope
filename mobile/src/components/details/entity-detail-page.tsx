@@ -1,4 +1,4 @@
-import { ChevronLeft } from "lucide-react-native";
+import { ChevronLeft, type LucideIcon } from "lucide-react-native";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -16,6 +16,7 @@ export type EntityDetailPageProps = PropsWithChildren<
     afterNutrition?: ReactNode;
     backLabel?: string;
     nutrition?: NutritionEntityCardProps["nutrition"];
+    identityIcon?: LucideIcon;
     onBack?: () => void;
     showNutrition?: boolean;
   }
@@ -35,6 +36,7 @@ export function EntityDetailPage({
   eyebrow,
   eyebrowAccessory,
   indicators,
+  identityIcon,
   nutrition,
   onBack,
   showNutrition = true,
@@ -69,6 +71,7 @@ export function EntityDetailPage({
             eyebrow={eyebrow}
             eyebrowAccessory={eyebrowAccessory}
             indicators={indicators}
+            identityIcon={identityIcon}
             subtitle={subtitle}
             title={title}
             titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}

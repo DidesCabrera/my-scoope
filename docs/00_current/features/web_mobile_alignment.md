@@ -18,7 +18,7 @@ La web usa navegación, formularios y paneles adecuados al navegador. Los nombre
 | Inicio | Semana navegable, saludo y plan del día, compromisos junto al plan, calendario mensual navegable, indicadores de planes y comidas, tendencia de peso y registro de peso. Se conservan las bibliotecas y el asistente accesibles desde la portada. |
 | Mi calendario | Pestañas Planificación y Progreso, cinco indicadores de compromisos próximos, mes navegable, fechas con minutas y compromisos, acciones para añadir minuta o compromiso, detalle y edición por fecha. El progreso muestra los dos indicadores, tendencia de peso, registro de peso y edición de fecha de inicio. |
 | Mi cuenta | Plan y créditos, información de acceso, edición de nombre de usuario mediante el mismo servicio de identidad que móvil, enlaces a fichas, suscripción, notificaciones, recordatorios del programa y soporte; salida y eliminación siguen disponibles. |
-| Nombres transversales | Inicio, Mi calendario, Comparaciones, Compartidos, Fundamentos Sistema, Mis Programas, Mis Minutas, Mis Comidas, Mis Alimentos y Asistente Nutricional en navegación y recorridos principales. |
+| Nombres transversales | Inicio, Mi calendario, Comparaciones, Compartidos, Fundamentos, Mis Programas, Mis Minutas, Mis Comidas, Mis Alimentos y Asistente Nutricional en navegación y recorridos principales. |
 
 ## Diferencias funcionales aún reales
 

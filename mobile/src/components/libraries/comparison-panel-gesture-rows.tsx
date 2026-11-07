@@ -14,11 +14,12 @@ export type ComparisonPanelAction = {
   onPress(): void;
 };
 
-type ComparisonPanelGestureRowsProps<T extends { id: string }> = {
+type ComparisonPanelGestureRowsProps<T extends { id: string | number }> = {
   actions(item: T, index: number): ComparisonPanelAction[];
   canDrag?(item: T, index: number): boolean;
   itemLabel(item: T): string;
   items: T[];
+  leftActions?(item: T, index: number): ComparisonPanelAction[];
   onReorder(items: T[]): Promise<void>;
   renderRow(item: T, index: number, onLongPress?: () => void): ReactNode;
   visibleSwipeActions?: boolean;
@@ -36,13 +37,14 @@ function DirectionalSwipeSurface({ children, direction, progress, side, style }:
   return <Animated.View style={[style, visibilityStyle]}>{children}</Animated.View>;
 }
 
-function GestureRow<T extends { id: string }>({ actions, canDrag, drag, isActive, item, itemLabel, onClose, onWillOpen, row, visibleSwipeActions }: {
+function GestureRow<T extends { id: string | number }>({ actions, canDrag, drag, isActive, item, itemLabel, leftActions, onClose, onWillOpen, row, visibleSwipeActions }: {
   actions: ComparisonPanelAction[];
   canDrag: boolean;
   drag(): void;
   isActive: boolean;
   item: T;
   itemLabel: string;
+  leftActions: ComparisonPanelAction[];
   onClose(methods: SwipeableMethods): void;
   onWillOpen(methods: SwipeableMethods): void;
   row: ReactNode;
@@ -51,43 +53,51 @@ function GestureRow<T extends { id: string }>({ actions, canDrag, drag, isActive
   const swipeableRef = useRef<SwipeableMethods>(null);
   const swipeDirection = useSharedValue(0);
   const adjacentActionColor = actions[0]?.backgroundColor ?? tokens.color.surfaceMuted;
-  const [swipeSide, setSwipeSide] = useState<"neutral" | "right">("neutral");
+  const adjacentLeftActionColor = leftActions[0]?.backgroundColor ?? tokens.color.surfaceMuted;
+  const [swipeSide, setSwipeSide] = useState<"left" | "neutral" | "right">("neutral");
+  const actionButtons = (items: ComparisonPanelAction[], methods: SwipeableMethods) => items.map((action) => (
+    <Pressable
+      accessibilityLabel={action.label}
+      accessibilityRole="button"
+      key={action.label}
+      onPress={() => { methods.close(); action.onPress(); }}
+      style={({ pressed }) => [styles.action, { backgroundColor: action.backgroundColor }, pressed && styles.pressed]}>
+      {action.icon}
+    </Pressable>
+  ));
   const renderRightActions = (progress: SharedValue<number>, _translation: SharedValue<number>, methods: SwipeableMethods) => {
-    const buttons = actions.map((action) => (
-        <Pressable
-          accessibilityLabel={action.label}
-          accessibilityRole="button"
-          key={action.label}
-          onPress={() => { methods.close(); action.onPress(); }}
-          style={({ pressed }) => [styles.action, { backgroundColor: action.backgroundColor }, pressed && styles.pressed]}>
-          {action.icon}
-        </Pressable>
-    ));
+    const buttons = actionButtons(actions, methods);
     const actionStyle = [styles.actions, { width: actions.length * 48 }];
     return visibleSwipeActions
       ? <View style={actionStyle}>{buttons}</View>
       : <DirectionalSwipeSurface direction={swipeDirection} progress={progress} side="right" style={actionStyle}>{buttons}</DirectionalSwipeSurface>;
   };
+  const renderLeftActions = (progress: SharedValue<number>, _translation: SharedValue<number>, methods: SwipeableMethods) => (
+    <DirectionalSwipeSurface direction={swipeDirection} progress={progress} side="left" style={[styles.actions, { width: leftActions.length * 48 }]}>
+      {actionButtons(leftActions, methods)}
+    </DirectionalSwipeSurface>
+  );
 
   return (
     <ScaleDecorator activeScale={1.018}>
       <View style={styles.swipeUnderlay}>
-      <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootLeft]} />
+      <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootLeft, { backgroundColor: swipeSide === "left" ? adjacentLeftActionColor : tokens.color.surfaceMuted }]} />
       <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootRight, { backgroundColor: swipeSide === "right" ? adjacentActionColor : tokens.color.surfaceMuted }]} />
       <ReanimatedSwipeable
         containerStyle={styles.swipeContainer}
         friction={2}
         onSwipeableClose={() => { swipeDirection.value = 0; setSwipeSide("neutral"); if (swipeableRef.current) onClose(swipeableRef.current); }}
-        onSwipeableOpenStartDrag={(direction) => { swipeDirection.value = direction === SwipeDirection.RIGHT ? 1 : -1; if (direction === SwipeDirection.LEFT) setSwipeSide("right"); }}
+        onSwipeableOpenStartDrag={(direction) => { swipeDirection.value = direction === SwipeDirection.RIGHT ? 1 : -1; setSwipeSide(direction === SwipeDirection.RIGHT ? "left" : "right"); }}
         onSwipeableWillOpen={() => { if (swipeableRef.current) onWillOpen(swipeableRef.current); }}
         overshootFriction={8}
         overshootLeft
         overshootRight
         ref={swipeableRef}
+        renderLeftActions={leftActions.length ? renderLeftActions : undefined}
         renderRightActions={actions.length ? renderRightActions : undefined}
         rightThreshold={36}>
         <Pressable
-          accessibilityHint={[actions.length ? "Desliza hacia la izquierda para ver acciones." : "", canDrag ? "Mantén pulsado y arrastra para reordenar." : ""].filter(Boolean).join(" ")}
+          accessibilityHint={[leftActions.length ? "Desliza hacia la derecha para ver cumplimiento y hora." : "", actions.length ? "Desliza hacia la izquierda para ver acciones." : "", canDrag ? "Mantén pulsado y arrastra para reordenar." : ""].filter(Boolean).join(" ")}
           accessibilityLabel={itemLabel}
           delayLongPress={320}
           disabled={isActive}
@@ -102,7 +112,7 @@ function GestureRow<T extends { id: string }>({ actions, canDrag, drag, isActive
   );
 }
 
-export function ComparisonPanelGestureRows<T extends { id: string }>({ actions, canDrag, itemLabel, items, onReorder, renderRow, visibleSwipeActions = false }: ComparisonPanelGestureRowsProps<T>) {
+export function ComparisonPanelGestureRows<T extends { id: string | number }>({ actions, canDrag, itemLabel, items, leftActions, onReorder, renderRow, visibleSwipeActions = false }: ComparisonPanelGestureRowsProps<T>) {
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
   const renderItem = ({ drag, getIndex, isActive, item }: RenderItemParams<T>) => (
     <GestureRow
@@ -112,6 +122,7 @@ export function ComparisonPanelGestureRows<T extends { id: string }>({ actions, 
       isActive={isActive}
       item={item}
       itemLabel={itemLabel(item)}
+      leftActions={leftActions?.(item, getIndex() ?? 0) ?? []}
       onClose={(methods) => { if (openSwipeableRef.current === methods) openSwipeableRef.current = null; }}
       onWillOpen={(methods) => {
         if (openSwipeableRef.current && openSwipeableRef.current !== methods) openSwipeableRef.current.close();
@@ -126,7 +137,7 @@ export function ComparisonPanelGestureRows<T extends { id: string }>({ actions, 
     <NestableDraggableFlatList
       activationDistance={20}
       data={items}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => String(item.id)}
       onDragBegin={() => {
         openSwipeableRef.current?.close();
         openSwipeableRef.current = null;
@@ -139,7 +150,7 @@ export function ComparisonPanelGestureRows<T extends { id: string }>({ actions, 
   );
 }
 
-export function StaticComparisonPanelRows<T extends { id: string }>({ items, renderRow }: Pick<ComparisonPanelGestureRowsProps<T>, "items" | "renderRow">) {
+export function StaticComparisonPanelRows<T extends { id: string | number }>({ items, renderRow }: Pick<ComparisonPanelGestureRowsProps<T>, "items" | "renderRow">) {
   return <>{items.map((item, index) => <Fragment key={item.id}>{renderRow(item, index)}</Fragment>)}</>;
 }
 

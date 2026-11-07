@@ -112,7 +112,7 @@ class SidebarBuilderTests(TestCase):
                 "Mi calendario",
                 "Comparaciones",
                 "Compartidos",
-                "Fundamentos Sistema",
+                "Fundamentos",
             ],
         )
         self.assertEqual(

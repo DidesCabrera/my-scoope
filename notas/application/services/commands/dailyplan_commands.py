@@ -112,6 +112,7 @@ def clone_dailyplan_meals(source: DailyPlan, target: DailyPlan) -> None:
     from notas.application.services.commands.meal_commands import (
         fork_meal_for_dailyplan,
     )
+    from notas.domain.models import SupplementIntake, SupplementIntakeItem
 
     prefetched = getattr(source, "_prefetched_objects_cache", {}).get("dailyplan_meals")
     source_meals = (
@@ -137,6 +138,24 @@ def clone_dailyplan_meals(source: DailyPlan, target: DailyPlan) -> None:
 
     if dailyplan_meals_to_create:
         DailyPlanMeal.objects.bulk_create(dailyplan_meals_to_create)
+
+    # Keep private supplement plans with every DailyPlan copy, including program
+    # snapshots. Cross-owner copies carry only the frozen product description.
+    for source_intake in source.supplement_intakes.prefetch_related("items__supplement").all():
+        target_intake = SupplementIntake.objects.create(
+            dailyplan=target, hour=source_intake.hour, order=source_intake.order,
+        )
+        SupplementIntakeItem.objects.bulk_create([
+            SupplementIntakeItem(
+                intake=target_intake,
+                supplement=item.supplement if item.supplement and item.supplement.created_by_id == target.created_by_id else None,
+                supplement_snapshot=item.supplement_snapshot,
+                quantity=item.quantity,
+                unit=item.unit,
+                order=item.order,
+            )
+            for item in source_intake.items.all()
+        ])
 
 # ==================================================
 # DAILYPLAN ACTIONS

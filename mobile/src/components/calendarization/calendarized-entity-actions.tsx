@@ -11,13 +11,14 @@ import { NativeDateTimeField } from "@/components/ui/native-date-time-field";
 import { tokens } from "@/design/tokens";
 
 type MealTimeFormProps = {
+  entity?: "meal" | "supplement";
   initialTime?: string | null;
   onCancel(): void;
   onSaved?(): void;
   onSubmit(hour: string): Promise<void>;
 };
 
-export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealTimeFormProps) {
+export function MealTimeForm({ entity = "meal", initialTime, onCancel, onSaved, onSubmit }: MealTimeFormProps) {
   const [hour, setHour] = useState(() => initialMealTime(initialTime));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +33,7 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
     try {
       await onSubmit(hour);
       (onSaved ?? onCancel)();
-      Alert.alert("Hora actualizada", `Esta comida quedó programada a las ${hour}.`);
+      Alert.alert("Hora actualizada", `${entity === "supplement" ? "Esta ingesta" : "Esta comida"} quedó programada a las ${hour}.`);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -44,14 +45,14 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
     <View style={styles.form}>
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       <NativeDateTimeField
-        confirmationColor={tokens.color.meal}
+        confirmationColor={entity === "supplement" ? tokens.color.supplement : tokens.color.meal}
         containerStyle={styles.timeInput}
         iconColor={tokens.color.textMain}
         iconInLabel
         initiallyExpanded
         inlineLabel
         inputStyle={styles.timeValue}
-        label="Hora de la comida"
+        label={entity === "supplement" ? "Hora de la ingesta" : "Hora de la comida"}
         labelStyle={styles.timeLabel}
         minuteInterval={5}
         mode="time"
@@ -73,6 +74,7 @@ type CalendarizedEntityActionsProps = {
     onSubmit(name: string): Promise<void>;
   };
   timeChange?: {
+    entity?: "meal" | "supplement";
     initialTime?: string | null;
     onSubmit(hour: string): Promise<void>;
   };
@@ -118,7 +120,7 @@ export function CalendarizedEntityActions({ entityName, initialAction, onOpenInf
   return (
     <ActionSheetModal onRequestClose={close} visible={visible}>
       <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
-        <ActionSheetHeader entity={selected === "change-time" ? "meal" : undefined} icon={CalendarClock} onClose={close} title={title} />
+        <ActionSheetHeader entity={selected === "change-time" ? timeChange?.entity ?? "meal" : undefined} icon={CalendarClock} onClose={close} title={title} />
         <ScrollView
           automaticallyAdjustKeyboardInsets={false}
           contentContainerStyle={styles.sheetContent}
@@ -140,7 +142,7 @@ export function CalendarizedEntityActions({ entityName, initialAction, onOpenInf
             </View>
           ) : null}
           {selected === "change-time" && timeChange ? (
-            <MealTimeForm initialTime={timeChange.initialTime} onCancel={initialAction ? close : () => setSelected(null)} onSaved={close} onSubmit={timeChange.onSubmit} />
+            <MealTimeForm entity={timeChange.entity} initialTime={timeChange.initialTime} onCancel={initialAction ? close : () => setSelected(null)} onSaved={close} onSubmit={timeChange.onSubmit} />
           ) : null}
         </ScrollView>
       </SafeAreaView>

@@ -171,7 +171,7 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="learning",
-                label="Fundamentos Sistema",
+                label="Fundamentos",
                 icon="book-open",
                 url_name="learning_home",
                 nav_root="learning",

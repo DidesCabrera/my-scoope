@@ -39,6 +39,7 @@ export const tokens = {
     "dailyPlan": "#7C4DDB",
     "dpm": "#0084A2",
     "program": "#1B6491",
+    "supplement": "#14A7BE",
     "proposal": "#121212",
     "inbox": "#121212",
     "comparator": "#3057FF",

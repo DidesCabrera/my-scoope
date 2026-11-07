@@ -34,6 +34,7 @@ import { NutritionFactsGallery } from "@/components/dev/nutrition-facts-gallery"
 import { LabelCaptureStoryboardGallery, OnboardingStoryboardGallery } from "@/components/dev/storyboard-gallery";
 import { ShareableElementsGallery } from "@/components/dev/shareable-elements-gallery";
 import { SubscriptionGallery } from "@/components/dev/subscription-gallery";
+import { SupplementCardGallery } from "@/components/dev/supplement-card-gallery";
 import { WheelPickerGallery } from "@/components/dev/wheel-picker-gallery";
 import {
   KpiAllocationBar,
@@ -76,15 +77,13 @@ import {
   textStyles,
 } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-// GalleryNavigation includes { key: "calendars", label: "Calendarios" }.
-const entities: { key: EntityKind; label: string }[] = [
-  { key: "food", label: "Food" },
+const entities: { key: EntityKind; label: string }[] = [{ key: "food", label: "Food" },
   { key: "meal", label: "Meal" },
   { key: "dailyPlan", label: "DailyPlan" },
   { key: "dpm", label: "DPM" },
   { key: "program", label: "Program" },
 ];
-const sections: { key: SectionKind; label: string; lucide: string }[] = [
+const sections: { key: SectionKind; label: string; lucide: string }[] = [ // GalleryNavigation includes { key: "calendars", label: "Calendarios" }.
   { key: "home", label: "Inicio", lucide: "house" },
   { key: "profile", label: "Perfil", lucide: "circle-user-round" },
   { key: "chatNew", label: "Nuevo chat", lucide: "message-square-plus" },
@@ -325,6 +324,7 @@ export default function UiGalleryScreen() {
             ]}
             title="Programa de recomposición"
           />
+          <SupplementCardGallery />
           <SectionTitle detail="Título, gráfico y acciones" title="Card-child de programa" />
           <ProgramChildCard
             filledDaysCount={12}

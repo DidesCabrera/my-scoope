@@ -195,7 +195,7 @@ class DailyPlan(models.Model):
         if not self.is_draft:
             return
 
-        if self.dailyplan_meals.exists():
+        if self.dailyplan_meals.exists() or self.supplement_intakes.exists():
             self.is_draft = False
             self.save(update_fields=["is_draft"])
 

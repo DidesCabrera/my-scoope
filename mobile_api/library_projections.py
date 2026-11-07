@@ -17,6 +17,36 @@ def food_nutrition_payload(food) -> dict:
     }
 
 
+def supplement_intake_panel_items(dailyplan) -> list[dict]:
+    """Read-only supplement composition; deliberately separate from nutrition."""
+    rows = dailyplan.supplement_intakes.all()
+    return [
+        {
+            "id": intake.id,
+            "key": f"supplement_intake:{intake.id}",
+            "label": f"Ingesta {number}",
+            "hour": intake.hour.strftime("%H:%M") if intake.hour else None,
+            "items": [
+                {
+                    "id": item.id,
+                    "supplement_id": item.supplement_id,
+                    "supplement": item.supplement_snapshot,
+                    "quantity": str(item.quantity),
+                    "unit": item.unit,
+                }
+                for item in intake.items.all()
+            ],
+        }
+        for number, intake in enumerate(rows, 1)
+    ]
+
+
+def supplement_indicator(dailyplan) -> list[dict]:
+    """Describe individual supplements across all intake groups."""
+    count = sum(len(intake.items.all()) for intake in dailyplan.supplement_intakes.all())
+    return [{"icon": "supplement", "label": "sups", "value": count}] if count else []
+
+
 def _number(value) -> float:
     return round(float(value or 0), 1)
 
