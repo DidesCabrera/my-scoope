@@ -85,4 +85,5 @@ from notas.domain.model_modules.supplements import (
     SupplementIntakePresetItem,
 )
 
+# Keep the compatibility façade small while its explicit public API lives in one manifest.
 __all__ = PUBLIC_MODEL_NAMES
