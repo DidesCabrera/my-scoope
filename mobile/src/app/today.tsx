@@ -454,6 +454,7 @@ export default function TodayScreen() {
           dateLabel={compactDateLabel(today.local_date)}
           editing={calendarizedMealEditing}
           eyebrow="Minuta del día"
+          initialPanelExpanded
           mealExecution={today.meal_execution}
           onChangeMealTime={async (meal, hour) => {
             await apiRequest(`/api/v1/program/days/${todayDayId}/meals/${encodeURIComponent(meal.id)}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
@@ -484,7 +485,7 @@ export default function TodayScreen() {
         </Card>
       ) : today?.pinned_plan ? (
         <>
-          <PinnedDailyPlanCard apiRequest={apiRequest} editing={pinnedMealEditing} item={today.pinned_plan} mealExecution={today.meal_execution} onChanged={load} onChangeMealTime={async (meal, hour) => {
+          <PinnedDailyPlanCard apiRequest={apiRequest} editing={pinnedMealEditing} initialPanelExpanded item={today.pinned_plan} mealExecution={today.meal_execution} onChanged={load} onChangeMealTime={async (meal, hour) => {
             if (meal.relationId == null) return;
             await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan!.id}/meals/${meal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
             await load();

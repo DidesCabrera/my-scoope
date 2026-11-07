@@ -59,7 +59,7 @@ class LibraryNutritionData(Schema):
 
 
 class LibraryIndicatorData(Schema):
-    icon: Literal["day", "food", "meal", "dailyPlan", "week"] | None = None
+    icon: Literal["day", "food", "meal", "dailyPlan", "supplement", "week"] | None = None
     label: str
     value: int | str
 
@@ -146,7 +146,7 @@ class LibraryWeekPanelItemData(Schema):
     fat_allocation: float
 
 
-class LibraryPanelData(Schema):
+class LibraryPanelData(library_common.SupplementLibraryPanelData):
     kind: Literal["none", "foods", "meals", "weeks"]
     foods: list[LibraryFoodPanelItemData] = Field(default_factory=list)
     meals: list[LibraryMealPanelItemData] = Field(default_factory=list)
@@ -171,7 +171,7 @@ class NamedLibraryCreateInput(Schema):
     name: str = Field(min_length=1, max_length=100)
 
 
-class LibraryItemData(library_common.OptionalFoodVisualIdentityData):
+class LibraryItemData(library_common.OptionalFoodVisualIdentityData, library_common.SupplementLibraryAccessData):
     id: int
     entity: Literal["food", "meal", "dailyPlan", "program"]
     name: str

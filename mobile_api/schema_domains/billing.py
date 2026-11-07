@@ -26,6 +26,7 @@ class EntitlementsData(Schema):
     purchased_credits: int = 0
     workspace_limits: dict[str, int | None] = {}
     workspace_usage: dict[str, int] = {}
+    workspace_features: dict[str, bool] = {}
 
 
 class EntitlementsEnvelope(Schema):

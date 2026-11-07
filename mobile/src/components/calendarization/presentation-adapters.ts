@@ -1,4 +1,4 @@
-import type { MacroTotals, MealSnapshot } from "@/api/types";
+import type { LibraryMealPanelItem, MacroTotals, MealSnapshot } from "@/api/types";
 import type { FoodPanelItem, MealPanelItem } from "@/components/panels";
 import { contextualMacroAllocations } from "@/components/panels/contextual-allocation";
 
@@ -164,6 +164,37 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     portionDisplayQuantity: food.portionDisplayQuantity,
     portionDisplayMeasure: food.portionDisplayMeasure,
   }));
+}
+
+export function libraryDailyPlanFoodPanelItems(meals: LibraryMealPanelItem[]): FoodPanelItem[] {
+  return snapshotDailyPlanFoodPanelItems(meals.map((meal) => ({
+    key: meal.id,
+    detail_id: meal.detail_id,
+    name: meal.name,
+    hour: meal.time,
+    note: meal.note,
+    totals: {
+      carbs_g: meal.carbs_grams,
+      fat_g: meal.fat_grams,
+      protein_g: meal.protein_grams,
+      protein_per_kilogram: meal.protein_per_kilogram,
+      total_kcal: meal.calories,
+    },
+    foods: meal.foods.map((food) => ({
+      key: food.id,
+      detail_id: food.detail_id,
+      name: food.name,
+      quantity_g: food.quantity,
+      quantity_unit: food.quantity_unit === "ml" ? "ml" : "g",
+      portion_display_quantity: food.portion_display_quantity,
+      portion_display_measure: food.portion_display_measure,
+      protein_g: food.protein_grams,
+      protein_per_kilogram: food.protein_per_kilogram,
+      carbs_g: food.carbs_grams,
+      fat_g: food.fat_grams,
+      total_kcal: food.calories,
+    })),
+  })));
 }
 
 function contextualAllocation(

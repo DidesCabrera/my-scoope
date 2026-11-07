@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.db.models import Count, Prefetch
 from django.utils import timezone
+from accounts.services.entitlements import resolve_account_entitlements
 
 from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
 from billing.application.services.credit_packs import may_buy_credit_packs
@@ -13,6 +14,7 @@ from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api import library_projections
 from mobile_api.calendar_today import current_dated_day, standalone_today_payload
+from mobile_api.calendarized_snapshot_foods import index_snapshot_food
 from mobile_api.errors import MobileAPIError
 from mobile_api.food_visuals import food_visual_payload
 from mobile_api.identity_selectors import local_date_for_user, profile_payload, session_payload
@@ -432,6 +434,8 @@ def library_dailyplans_payload(
     user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True
 ) -> dict:
     current_weight = get_current_weight(user)
+    entitlements = resolve_account_entitlements(user)
+    can_use_supplements = bool(settings.SUPPLEMENTS_FEATURE_ENABLED and entitlements and entitlements.enabled("can_use_supplements"))
     actions_for = library_list_actions_projector(user, enabled=include_actions)
     queryset = (
         DailyPlan.objects.filter(created_by=user)
@@ -442,6 +446,7 @@ def library_dailyplans_payload(
             library_food_count=Count("dailyplan_meals__meal__meal_food_set__food", distinct=True),
         )
         .prefetch_related(
+            "supplement_intakes__items",
             Prefetch(
                 "dailyplan_meals__meal__meal_food_set",
                 queryset=library_projections.meal_foods_for_library_projection(),
@@ -466,9 +471,11 @@ def library_dailyplans_payload(
                 {"icon": "meal", "label": "comidas", "value": dailyplan.library_meal_count},
                 {"icon": "food", "label": "alimentos", "value": dailyplan.library_food_count},
             ]
+            + (library_projections.supplement_indicator(dailyplan) if can_use_supplements else [])
             + ([{"label": "estado", "value": "Borrador"}] if dailyplan.is_draft else []),
             "panel": {
                 **_empty_library_panel("meals"),
+                "supplement_intakes": library_projections.supplement_intake_panel_items(dailyplan) if can_use_supplements else [],
                 "meals": [
                     _meal_panel_item(dailyplan_meal, dailyplan, current_weight)
                     for dailyplan_meal in dailyplan.dailyplan_meals.all()
@@ -477,6 +484,8 @@ def library_dailyplans_payload(
             "creator": _creator_name(dailyplan),
             "created_at": dailyplan.created_at,
             "is_draft": dailyplan.is_draft,
+            "can_use_supplements": can_use_supplements,
+            "supplements_available": bool(settings.SUPPLEMENTS_FEATURE_ENABLED),
             "actions": actions_for(dailyplan),
         },
     )
@@ -638,6 +647,8 @@ def program_week_picker_detail_payload(user, *, program_id: int, week_number: in
 
 def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     current_weight = get_current_weight(user)
+    entitlements = resolve_account_entitlements(user)
+    can_use_supplements = bool(settings.SUPPLEMENTS_FEATURE_ENABLED and entitlements and entitlements.enabled("can_use_supplements"))
     if entity == "foods":
         item = (
             get_readable_food_queryset(user)
@@ -702,6 +713,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 library_food_count=Count("dailyplan_meals__meal__meal_food_set__food", distinct=True),
             )
             .prefetch_related(
+                "supplement_intakes__items",
                 Prefetch(
                     "dailyplan_meals__meal__meal_food_set",
                     queryset=library_projections.meal_foods_for_library_projection(),
@@ -725,15 +737,19 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                     {"icon": "meal", "label": "comidas", "value": item.library_meal_count},
                     {"icon": "food", "label": "alimentos", "value": item.library_food_count},
                 ]
+                + (library_projections.supplement_indicator(item) if can_use_supplements else [])
                 + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {
                     **_empty_library_panel("meals"),
+                    "supplement_intakes": library_projections.supplement_intake_panel_items(item) if can_use_supplements else [],
                     "meals": [_meal_panel_item(row, item, current_weight) for row in item.dailyplan_meals.all()],
                     "foods": foods,
                 },
                 "creator": _creator_name(item),
                 "created_at": item.created_at,
                 "is_draft": item.is_draft,
+                "can_use_supplements": can_use_supplements,
+                "supplements_available": bool(settings.SUPPLEMENTS_FEATURE_ENABLED),
                 "actions": library_actions_payload(item, user, context="detail"),
             }
     elif entity == "programs":
@@ -1126,41 +1142,13 @@ def calendarization_history_payload(user, *, limit=20) -> dict:
     }
 
 
-def _snapshot_food_relation_id(food: dict) -> int | None:
-    food_key = food.get("key")
-    if not isinstance(food_key, str):
-        return None
-    for prefix in ("meal_food:", "source_meal_food:"):
-        if food_key.startswith(prefix):
-            try:
-                return int(food_key.removeprefix(prefix))
-            except ValueError:
-                return None
-    return None
-
-
-def _index_snapshot_food(
-    food: object,
-    *,
-    foods_by_source_id: dict[int, list[dict]],
-    foods_by_relation_id: dict[int, list[dict]],
-) -> None:
-    if not isinstance(food, dict):
-        return
-    food.pop("detail_id", None)
-    source_food_id = food.get("source_food_id")
-    if isinstance(source_food_id, int):
-        foods_by_source_id.setdefault(source_food_id, []).append(food)
-        return
-    relation_id = _snapshot_food_relation_id(food)
-    if relation_id is not None:
-        foods_by_relation_id.setdefault(relation_id, []).append(food)
-
-
 def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict | None:
     if not snapshot:
         return None
     payload = deepcopy(snapshot)
+    entitlements = resolve_account_entitlements(user)
+    if not settings.SUPPLEMENTS_FEATURE_ENABLED or entitlements is None or not entitlements.enabled("can_use_supplements"):
+        payload.pop("supplement_intakes", None)
     current_weight = get_current_weight(user)
 
     def add_protein_per_kilogram(totals) -> None:
@@ -1184,7 +1172,7 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
         meal.pop("detail_id", None)
         for food in meal.get("foods", []):
             add_protein_per_kilogram(food)
-            _index_snapshot_food(
+            index_snapshot_food(
                 food,
                 foods_by_source_id=foods_by_source_id,
                 foods_by_relation_id=foods_by_relation_id,

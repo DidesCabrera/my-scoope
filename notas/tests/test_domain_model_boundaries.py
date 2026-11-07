@@ -208,6 +208,7 @@ class DomainModelBoundaryTests(TestCase):
                 "food_catalog": "notas.domain.model_modules.food",
                 "meals": "notas.domain.model_modules.meals",
                 "dailyplans": "notas.domain.model_modules.dailyplans",
+                "supplements": "notas.domain.model_modules.supplements",
                 "programs": "notas.domain.model_modules.programs",
             },
         )

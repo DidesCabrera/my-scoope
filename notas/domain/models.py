@@ -1,10 +1,10 @@
 """Public compatibility façade for models owned by the ``notas`` Django app.
 
-Concrete models live in responsibility-focused modules. Existing imports from
-``notas.domain.models`` remain stable while new code may import the owning module
-when that makes the dependency boundary clearer.
+Concrete models live in responsibility-focused modules. Existing imports from ``notas.domain.models`` remain stable
+while new code may import the owning module when that makes the dependency boundary clearer.
 """
 
+from notas.domain.model_exports import PUBLIC_MODEL_NAMES
 from notas.domain.model_modules.auth_integration import (
     MCPUserToken,
     OAuthAuthorizationCode,
@@ -75,26 +75,15 @@ from notas.domain.model_modules.sharing import (
     ShareInvitation,
     ShareResource,
 )
+from notas.domain.model_modules.supplements import (
+    CalendarizedSupplementIntakeExecution,
+    PinnedSupplementIntakeExecution,
+    Supplement,
+    SupplementIntake,
+    SupplementIntakeItem,
+    SupplementIntakePreset,
+    SupplementIntakePresetItem,
+)
 
-__all__ = [
-    "CulinaryTemplate", "CulinaryVariant",
-    "AiAssistantMessageFeedback", "AiNutritionChat", "ApplePushSubscription",
-    "CalendarizedDay", "CalendarizedMealExecution", "CalendarCommitment", "CalendarProgressPeriod",
-    "CalendarizationMeasurementContext", "CalendarizationReview", "CalendarizationRevision", "DailyPlan", "DailyPlanCatalogEntry",
-    "DailyPlanMeal", "DailyPlanMealShare",
-    "PinnedDailyPlan", "PinnedDailyPlanMealExecution",
-    "DailyPlanShare", "Food",
-    "FoodAlias", "FoodImportBatch",
-    "FoodLabelAIAnalysis", "FoodLabelCaptureReceipt", "FoodLocalizedName",
-    "FoodPortion", "FoodShare", "InboxItem",
-    "FoodSourceMetadata", "MCPUserToken", "Meal",
-    "MealAccess", "MealCatalogEntry", "MealFood", "MealShare",
-    "NotificationDelivery", "NutritionProposal", "NutritionProposalAuditEvent", "ProductAnnouncement", "ProductAnnouncementRead",
-    "NutritionPreferenceProfile", "NutritionistMemberRelationship",
-    "OAuthAuthorizationCode", "OAuthClient",
-    "OAuthDeviceSession", "OAuthRefreshToken",
-    "Plan", "Profile", "Program",
-    "ProgramCalendarization", "ProgramDay",
-    "ProgramShare", "ShareClaim", "ShareInvitation",
-    "ShareResource", "SavedComparison",
-    "ScheduledNotificationEvent", "Subscription", "WebPushSubscription", "WeightLog", ]
+# Keep the compatibility façade small while its explicit public API lives in one manifest.
+__all__ = PUBLIC_MODEL_NAMES

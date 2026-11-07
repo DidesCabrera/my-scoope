@@ -41,8 +41,10 @@ code. Use the `fresh-task-checkout` workflow for edit tasks.
 - Use `origin/main` only when the task is explicitly scoped to the production line
   or the user names that base.
 - If fetching fails, report that freshness is unverified. If `origin/main` has
-  commits absent from `origin/staging`, report the divergence before ordinary work
-  begins rather than silently reconciling it.
+  commits absent from `origin/staging`, report the history divergence and compare
+  main-side content with `git diff origin/staging...origin/main`. A content-empty
+  promotion merge does not block work; non-empty main-side content requires
+  reconciliation before ordinary work begins.
 - Record the selected base ref and full commit SHA before editing. Fetch and compare
   again before integration because `origin/staging` may advance during the task.
 

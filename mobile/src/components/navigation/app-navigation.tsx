@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { type Href, usePathname, useRouter } from "expo-router";
 import {
@@ -12,6 +12,7 @@ import {
   BookOpen,
   House,
   PanelRight,
+  Pill,
   Pin,
   MoreHorizontal,
   Plus,
@@ -53,7 +54,7 @@ import { ModalBackdrop } from "@/components/ui/action-sheet-modal";
 import { HeaderMetadataChip } from "@/components/ui/product";
 import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { HeaderEntityIdentity } from "./header-entity-identity";
-import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
+import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData, SidebarProBadge } from "./sidebar-items";
 
 type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus" | "search"; label: string; onPress(): void };
 
@@ -100,15 +101,17 @@ const assistantItem: NavigationSidebarItemData = {
 };
 
 const secondaryPrimaryItems: NavigationSidebarItemData[] = [
-  { href: "/system-foundations", icon: BookOpen, label: "Fundamentos Sistema" },
+  { href: "/system-foundations", icon: BookOpen, label: "Fundamentos" },
 ];
 
-const libraryItems: EntitySidebarItemData[] = [
+const libraryItems: (EntitySidebarItemData & { entity: LibraryEntity })[] = [
   { entity: "program", href: "/libraries/programs", label: "Mis Programas" },
   { entity: "dailyPlan", href: "/libraries/daily-plans", label: PRODUCT_VOCABULARY_ES.dailyPlan.libraryTitle },
   { entity: "meal", href: "/libraries/meals", label: "Mis Comidas" },
   { entity: "food", href: "/libraries/foods", label: "Mis Alimentos" },
 ];
+const supplementsLibraryItem: EntitySidebarItemData = { entity: "supplement", href: "/libraries/supplements", label: "Mis Suplementos" };
+const supplementsUpgradeItem: EntitySidebarItemData = { ...supplementsLibraryItem, href: "/subscription" };
 
 function useHeaderPresentationState(): HeaderPresentation {
   const context = useContext(HeaderPresentationContext);
@@ -175,6 +178,7 @@ function BackHeaderIdentity({ title, visible = true }: { title: string; visible?
 }
 
 function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
+  if (pathname.startsWith("/libraries/supplements")) return { icon: Pill, title: "Mis Suplementos" };
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente Nutricional" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: pathname === "/proposals" ? Sparkles : ClipboardCheck, title: pathname === "/proposals" ? "Asistente Nutricional" : "Detalle de propuesta" };
   if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparaciones" };
@@ -261,8 +265,12 @@ export function AppNavigationHeader() {
             disabled={headerPresentation.secondaryAction.disabled}
             hitSlop={8}
             onPress={headerPresentation.secondaryAction.onPress}
-            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.secondaryAction?.icon === "plus" && styles.backHeaderIconAction, headerPresentation.secondaryAction?.disabled && styles.disabled, pressed && styles.pressed]}>
-            {headerPresentation.secondaryAction.icon === "plus" ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} /> : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.secondaryAction.label}</Text>}
+            style={({ pressed }) => [styles.backHeaderAction, (headerPresentation.secondaryAction?.icon === "clock" || headerPresentation.secondaryAction?.icon === "plus") && styles.backHeaderIconAction, headerPresentation.secondaryAction?.disabled && styles.disabled, pressed && styles.pressed]}>
+            {headerPresentation.secondaryAction.icon === "plus"
+              ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+              : headerPresentation.secondaryAction.icon === "clock"
+                ? <Clock3 color={tokens.color.textMuted} size={24} strokeWidth={2.2} />
+                : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.secondaryAction.label}</Text>}
           </Pressable> : null}
           {headerPresentation.action ? <Pressable
             accessibilityLabel={headerPresentation.action.label}
@@ -397,9 +405,9 @@ function FunctionalSidebarEntry({ item }: { item: NavigationSidebarItemData }) {
   return <NavigationSidebarItem {...state} icon={item.icon} iconTreatment={item.iconTreatment} label={item.label} />;
 }
 
-function EntitySidebarEntry({ count, item }: { count: number | null; item: EntitySidebarItemData }) {
+function EntitySidebarEntry({ accessory, count, item }: { accessory?: ReactNode; count?: number | null; item: EntitySidebarItemData }) {
   const state = useSidebarItem(item);
-  return <EntitySidebarItem {...state} count={count} entity={item.entity} label={item.label} />;
+  return <EntitySidebarItem {...state} accessory={accessory} count={count} entity={item.entity} label={item.label} />;
 }
 
 function PersonalRecordsSidebarEntry({ weightKg }: { weightKg: number | null }) {
@@ -423,7 +431,8 @@ function AppSidebar() {
   const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useNavigationMenu();
   const { apiRequest, profile, session, status } = useSession();
   const router = useRouter();
-  const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string } | null>(null);
+  const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string; planSlug: string } | null>(null);
+  const [supplementsAvailable, setSupplementsAvailable] = useState(false);
   const [libraryCounts, setLibraryCounts] = useState<HomeSummaryData["library_counts"] | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
@@ -451,7 +460,10 @@ function AppSidebar() {
   useEffect(() => {
     if (!menuOpen || status !== "authenticated") return;
     void apiRequest<EntitlementsData>("/api/v1/entitlements")
-      .then((entitlements) => setCreditSummary({ availableCredits: entitlements.available_credits, planName: entitlements.plan_name }))
+      .then((entitlements) => {
+        setCreditSummary({ availableCredits: entitlements.available_credits, planName: entitlements.plan_name, planSlug: entitlements.plan_slug });
+        setSupplementsAvailable(Boolean(entitlements.workspace_features?.supplements_available));
+      })
       .catch(() => undefined);
     void apiRequest<HomeSummaryData>("/api/v1/home/summary")
       .then((home) => {
@@ -477,6 +489,7 @@ function AppSidebar() {
     router.push("/notifications" as Href);
   };
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? null;
+  const supplementsRequirePro = creditSummary?.planSlug === "free" || creditSummary?.planSlug === "basic";
 
   return (
     <Modal animationType="none" onRequestClose={closeMenu} transparent visible={menuMounted}>
@@ -522,6 +535,11 @@ function AppSidebar() {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
                 {libraryItems.map((item) => <EntitySidebarEntry count={libraryCount(libraryCounts, item.entity)} item={item} key={String(item.href)} />)}
+                {supplementsAvailable ? <EntitySidebarEntry
+                  accessory={supplementsRequirePro ? <SidebarProBadge /> : undefined}
+                  count={!supplementsRequirePro && creditSummary ? libraryCounts?.supplement ?? null : undefined}
+                  item={supplementsRequirePro ? supplementsUpgradeItem : supplementsLibraryItem}
+                /> : null}
               </View>
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Asistencia AI</Text>

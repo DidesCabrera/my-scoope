@@ -25,6 +25,7 @@ import { Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotic
 import { tokens } from "@/design/tokens";
 import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
+import { SupplementIntakePanel } from "@/components/supplements/supplement-intake-panel";
 
 function completionFor(items: MealExecutionItem[]) {
   const normalized = normalizeMealExecution(items);
@@ -264,6 +265,7 @@ export default function ProgramDayScreen() {
             onPress={() => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id }))}
             variant="chipPrimary"
           />
+          {snapshot.supplement_intakes != null ? <EntityDetailSection title="Ingestas de suplementos"><SupplementIntakePanel calendarizedDayId={day.id} completionEndpoint={`/api/v1/days/${day.id}/supplement-intakes`} dailyPlanId={snapshot.source?.dailyplan_id ?? 0} intakes={snapshot.supplement_intakes} /></EntityDetailSection> : null}
           {meals.length ? (
             <>
               <ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" />

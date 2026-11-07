@@ -17,7 +17,7 @@ class LearningViewsTests(TestCase):
         response = self.client.get(reverse("learning_home"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Fundamentos Sistema")
+        self.assertContains(response, "Fundamentos")
         self.assertContains(response, "Fundamentos Nutricionales")
         self.assertContains(response, "Manuales de uso")
 

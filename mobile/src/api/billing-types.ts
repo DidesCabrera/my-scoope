@@ -53,4 +53,5 @@ export type EntitlementsData = {
   purchased_credits: number;
   workspace_limits: Record<string, number | null>;
   workspace_usage: Record<string, number>;
+  workspace_features?: Record<string, boolean>;
 };

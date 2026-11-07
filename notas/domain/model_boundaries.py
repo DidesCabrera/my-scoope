@@ -104,6 +104,16 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
         responsibility="Daily plans, curated Explore entries and the meals attached to each plan.",
     ),
     DomainModelBoundary(
+        slug="supplements",
+        label="Supplements",
+        models=(
+            "Supplement", "SupplementIntake", "SupplementIntakeItem",
+            "SupplementIntakePreset", "SupplementIntakePresetItem",
+            "PinnedSupplementIntakeExecution", "CalendarizedSupplementIntakeExecution",
+        ),
+        responsibility="Personal supplement library, reusable intake compositions, daily-plan intake groups and their dated completion evidence.",
+    ),
+    DomainModelBoundary(
         slug="programs",
         label="Programs",
         models=("Program", "ProgramDay"),
@@ -210,6 +220,11 @@ DOMAIN_MODEL_DEPENDENCY_POLICIES: tuple[DomainModelDependencyPolicy, ...] = (
         rationale="Daily plans attach meals through DailyPlanMeal.",
     ),
     DomainModelDependencyPolicy(
+        source_slug="supplements",
+        allowed_dependency_slugs=("dailyplans", "calendarization"),
+        rationale="Intakes belong to daily plans and completion events belong to pinned or calendarized days.",
+    ),
+    DomainModelDependencyPolicy(
         source_slug="programs",
         allowed_dependency_slugs=("dailyplans",),
         rationale="Programs store copied daily plans per program day.",
@@ -267,6 +282,7 @@ DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG: dict[str, str] = {
     "food_catalog": "notas.domain.model_modules.food",
     "meals": "notas.domain.model_modules.meals",
     "dailyplans": "notas.domain.model_modules.dailyplans",
+    "supplements": "notas.domain.model_modules.supplements",
     "programs": "notas.domain.model_modules.programs",
 }
 

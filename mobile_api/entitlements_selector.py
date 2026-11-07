@@ -1,6 +1,7 @@
 """Mobile projection of the centralized commercial entitlements."""
 
 from accounts.services.entitlements import resolve_account_entitlements
+from django.conf import settings
 from accounts.services.profile import build_account_credit_display
 from notas.application.commercial.limits import shared_imports_used_this_month, workspace_usage
 
@@ -33,4 +34,8 @@ def entitlements_payload(user) -> dict:
         "purchased_credits": account.purchased_credits,
         "workspace_limits": {key: entitlements.limit(key) for key in limit_keys} if entitlements else {},
         "workspace_usage": usage,
+        "workspace_features": {
+            "supplements_available": bool(settings.SUPPLEMENTS_FEATURE_ENABLED),
+            "can_use_supplements": bool(settings.SUPPLEMENTS_FEATURE_ENABLED and entitlements and entitlements.enabled("can_use_supplements")),
+        },
     }
