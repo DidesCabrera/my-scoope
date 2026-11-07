@@ -170,10 +170,10 @@ def dashboard(request):
 
 @login_required
 @require_GET
-def calendar_preview(request):
+def calendar_preview(request, day_date=None):
     today = local_date_for_timezone(request.user.profile.timezone_name or "UTC")
     monday = today - timedelta(days=today.weekday())
-    requested_month = request.GET.get("month", "")
+    requested_month = day_date[:7] if day_date else request.GET.get("month", "")
     try:
         month_start = date.fromisoformat(f"{requested_month}-01") if requested_month else today.replace(day=1)
     except ValueError:
@@ -189,12 +189,15 @@ def calendar_preview(request):
     range_end = max(monday + timedelta(days=34), month_grid_end)
     extended = request.GET.get("extended") == "1"
     active_tab = "progress" if request.GET.get("tab") == "progress" else "planning"
-    requested = request.GET.get("date", "")
+    requested = day_date or request.GET.get("date", "")
     try:
         selected_date = date.fromisoformat(requested) if requested else today
     except ValueError:
         selected_date = today
-    if not range_start <= selected_date <= range_end:
+    if day_date:
+        range_start = selected_date
+        range_end = selected_date
+    elif not range_start <= selected_date <= range_end:
         selected_date = today
     rows = CalendarizedDay.objects.filter(
         Q(user=request.user) | Q(user__isnull=True, calendarization__user=request.user),
@@ -223,10 +226,31 @@ def calendar_preview(request):
             "commitments": commitments_by_date.get(current_date, []),
         }
     upcoming_start = max(today, monday)
-    upcoming = [dates_by_date[upcoming_start + timedelta(days=offset)] for offset in range(7)]
+    upcoming = [] if day_date else [dates_by_date[upcoming_start + timedelta(days=offset)] for offset in range(7)]
     commitment_counts = {kind: 0 for kind, _label in CalendarCommitment.KIND_CHOICES}
     for row in CalendarCommitment.objects.filter(user=request.user, calendar_date__gte=today).values("kind").annotate(count=Count("id")):
         commitment_counts[row["kind"]] = row["count"]
+    commitment_scope = request.GET.get("commitment_scope", "all")
+    if commitment_scope not in {"all", *(kind for kind, _label in CalendarCommitment.KIND_CHOICES)}:
+        commitment_scope = "all"
+    commitment_range = request.GET.get("commitment_range", "upcoming")
+    if commitment_range not in {"upcoming", "all"}:
+        commitment_range = "upcoming"
+    month_commitments = sorted(
+        (commitment for day, entries in commitments_by_date.items()
+         if day.year == month_start.year and day.month == month_start.month
+         for commitment in entries
+         if (commitment_scope == "all" or commitment.kind == commitment_scope)
+         and (commitment_range == "all" or day >= today)),
+        key=lambda commitment: (commitment.calendar_date, commitment.id),
+    )
+    all_month_commitments = [commitment for day, entries in commitments_by_date.items()
+                             if day.year == month_start.year and day.month == month_start.month
+                             for commitment in entries]
+    future_month_commitments = sorted(
+        (commitment for commitment in all_month_commitments if commitment.calendar_date >= today),
+        key=lambda commitment: (commitment.calendar_date, commitment.id),
+    )
     weight_history = list(WeightLog.objects.filter(user=request.user).order_by("-date", "-created_at")[:12])
     progress = calendar_adherence_summary(request.user)
     schedule_summary = calendar_future_schedule_summary(request.user, today=today)
@@ -249,24 +273,32 @@ def calendar_preview(request):
             "header": _header(),
             "today": today,
             "selected_date": selected_date,
+            "detail_only": bool(day_date),
             "selected_day": selected_day,
             "selected_commitments": commitments_by_date.get(selected_date, []),
             "selected_day_has_execution": bool(selected_day and selected_day.meal_execution_events.exists()),
             "selected_history": CalendarizedDay.objects.filter(
                 user=request.user, calendar_date=selected_date
             ).select_related("origin_calendarization", "calendarization").order_by("created_at", "id"),
-            "week": [dates_by_date[monday + timedelta(days=offset)] for offset in range(7)],
-            "grid": [dates_by_date[monday + timedelta(days=offset)] for offset in range(7, 35)],
-            "month_days": [dates_by_date[month_grid_start + timedelta(days=offset)] for offset in range(42)],
+            "week": [] if day_date else [dates_by_date[monday + timedelta(days=offset)] for offset in range(7)],
+            "grid": [] if day_date else [dates_by_date[monday + timedelta(days=offset)] for offset in range(7, 35)],
+            "month_days": [] if day_date else [dates_by_date[month_grid_start + timedelta(days=offset)] for offset in range(42)],
             "month_start": month_start,
             "month_key": month_start.strftime("%Y-%m"),
             "previous_month_key": previous_month.strftime("%Y-%m"),
             "next_month_key": next_month.strftime("%Y-%m"),
             "upcoming": upcoming,
-            "extended_days": [dates_by_date[monday + timedelta(days=offset)] for offset in range(35)],
+            "extended_days": [] if day_date else [dates_by_date[monday + timedelta(days=offset)] for offset in range(35)],
             "extended": extended,
             "active_tab": active_tab,
             "commitment_counts": commitment_counts,
+            "commitment_scope": commitment_scope,
+            "commitment_range": commitment_range,
+            "commitment_kinds": CalendarCommitment.KIND_CHOICES,
+            "month_commitments": month_commitments,
+            "month_commitments_count": len(all_month_commitments),
+            "last_month_commitment": max(all_month_commitments, key=lambda item: item.calendar_date, default=None),
+            "next_month_commitment": future_month_commitments[0] if future_month_commitments else None,
             "weight_history": weight_history,
             "plans": DailyPlan.objects.filter(created_by=request.user).exclude(
                 source=DailyPlan.SOURCE_PROGRAM
@@ -280,6 +312,15 @@ def calendar_preview(request):
             "weight_max": weight_max,
         },
     ))
+
+
+@login_required
+def calendar_date_detail(request, day_date):
+    try:
+        date.fromisoformat(day_date)
+    except ValueError as exc:
+        raise Http404("Fecha no válida") from exc
+    return calendar_preview(request, day_date=day_date)
 
 
 @login_required

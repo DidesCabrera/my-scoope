@@ -42,7 +42,7 @@ export default function CommitmentFoodsScreen() {
 
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
-      fallback: id && date ? `/calendar/commitments/${id}?date=${date}` as Href : "/calendar/registry",
+      fallback: id && date ? `/calendar/commitments/${id}?date=${date}` as Href : "/calendar",
       identityVisible: compactHeaderVisible,
       mode: "back",
       title: "Generar lista de alimentos",

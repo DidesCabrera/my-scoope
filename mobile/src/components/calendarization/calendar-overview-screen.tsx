@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { CalendarClock, CalendarDays, ChartNoAxesCombined, ChevronRight, ClipboardList, Clock, Ellipsis, Pin, Plus, Weight } from "lucide-react-native";
+import { Bell, CalendarClock, CalendarDays, ChartNoAxesCombined, ClipboardList, Clock, Ellipsis, Pin, Plus, Weight } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,7 +14,9 @@ import { CalendarUpcomingPanels } from "@/components/calendarization/calendar-up
 import { CalendarMonthCalendar } from "@/components/calendarization/calendar-month-calendar";
 import { commitmentActionLabel, commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarWeekMetrics } from "@/components/calendarization/calendar-week-metrics";
-import { monthKeyFromDate, shiftMonth } from "@/components/calendarization/calendar-month";
+import { monthKeyFromDate, monthLabel, shiftMonth } from "@/components/calendarization/calendar-month";
+import { commitmentsForMonth, type CommitmentListRange, type CommitmentScope } from "@/components/calendarization/calendar-commitment-registry";
+import { CalendarCommitmentListCard } from "@/components/calendarization/calendar-commitment-list-card";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { calendarWeekRangeLabel, groupCalendarDaysByIsoWeek } from "@/components/calendarization/calendar-weeks";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
@@ -24,7 +26,7 @@ import { ProgramSectionHeader } from "@/components/programs/program-section-head
 import { ProgramActiveKpis } from "@/components/programs/program-active-kpis";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Card, Chip, DistributedTabBar, EntityIcon, InlineNotice, LoadingState, NativeDateTimeField, Screen, SectionPageHeader, WeightTrendCard } from "@/components/ui";
+import { Button, Card, Chip, DistributedTabBar, EntityIcon, InlineNotice, LoadingState, NativeDateTimeField, Screen, ScrollableTabBar, SectionPageHeader, WeightTrendCard } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function dateLabel(value: string, options: Intl.DateTimeFormatOptions): string {
@@ -38,6 +40,8 @@ function compactDate(value: string): string {
 function weekDay(value: string): string {
   return dateLabel(value, { weekday: "narrow" }).toUpperCase();
 }
+
+const commitmentTabLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Nutricionista" } as const;
 
 export function CalendarOverviewScreen({ extended = false }: { extended?: boolean }) {
   const router = useRouter();
@@ -53,11 +57,13 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const [weightItems, setWeightItems] = useState<WeightItem[]>([]);
   const [activeTab, setActiveTab] = useState<"planning" | "progress">("planning");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [calendarSelectedDate, setCalendarSelectedDate] = useState<string | null>(null);
+  const [commitmentScope, setCommitmentScope] = useState<CommitmentScope>("all");
+  const [commitmentRange, setCommitmentRange] = useState<CommitmentListRange>("upcoming");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressMenuVisible, setProgressMenuVisible] = useState(false);
   const [calendarMenuVisible, setCalendarMenuVisible] = useState(false);
+  const [calendarOptionsVisible, setCalendarOptionsVisible] = useState(false);
   const [commitmentMenuVisible, setCommitmentMenuVisible] = useState(false);
   const [planMenuVisible, setPlanMenuVisible] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -71,7 +77,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     if (extended) {
       setHeaderPresentation({ fallback: "/calendar", identityVisible: compactHeaderVisible, mode: "back", title: "Próximas minutas programadas" });
     } else {
-      setHeaderPresentation({ createAction: { icon: "plus", label: "Calendarizar", onPress: () => setCalendarMenuVisible(true) }, identityVisible: compactHeaderVisible, mode: "default", title: "Mi calendario" });
+      setHeaderPresentation({ action: { icon: "more", label: "Opciones de Mi calendario", onPress: () => setCalendarOptionsVisible(true) }, createAction: { icon: "plus", label: "Calendarizar", onPress: () => setCalendarMenuVisible(true) }, identityVisible: compactHeaderVisible, mode: "default", title: "Mi calendario" });
     }
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, extended, setHeaderPresentation]));
@@ -131,17 +137,15 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
 
   const week = useMemo(() => overview?.days.slice(0, 7) ?? [], [overview]);
   const monthDays = useMemo(() => monthOverview?.key === visibleMonth ? monthOverview.data.days : [], [monthOverview, visibleMonth]);
-  const selectedCalendarDate = calendarSelectedDate ?? overview?.local_date;
-  const selectedCalendarDay = monthDays.find((day) => day.calendar_date === selectedCalendarDate)
-    ?? overview?.days.find((day) => day.calendar_date === selectedCalendarDate);
-  const selectedCommitments = selectedCalendarDay?.commitments ?? [];
   const assignedCommitments = useMemo(() => monthDays
     .filter((day) => monthKeyFromDate(day.calendar_date) === visibleMonth)
     .flatMap((day) => day.commitments ?? []), [monthDays, visibleMonth]);
   const assignedCommitmentsCount = assignedCommitments.length;
   const nextAssignedCommitment = assignedCommitments.find((commitment) => commitment.calendar_date >= (overview?.local_date ?? "")) ?? null;
   const lastAssignedCommitmentDate = assignedCommitments.length ? assignedCommitments[assignedCommitments.length - 1].calendar_date : null;
-  const firstColumnCount = Math.ceil(selectedCommitments.length / 2);
+  const visibleCommitments = useMemo(() => visibleMonth && overview
+    ? commitmentsForMonth(monthDays, visibleMonth, overview.local_date, commitmentScope, commitmentRange) : [],
+  [commitmentRange, commitmentScope, monthDays, overview, visibleMonth]);
   const upcoming = useMemo(() => {
     if (!overview) return [];
     const future = overview.days.filter((day) => day.calendar_date >= overview.local_date);
@@ -261,162 +265,75 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!extended && activeTab === "planning" ? (
         <>
-          <View style={styles.upcomingCommitmentsSection}>
-            <View style={styles.upcomingCommitmentsHeading}>
-              <Clock color={tokens.color.textMain} size={16} strokeWidth={2.1} />
-              <Text accessibilityRole="header" style={styles.upcomingCommitmentsTitle}>Próximos compromisos</Text>
-            </View>
-            <View accessibilityLabel="Minutas y próximos compromisos programados" accessible style={styles.upcomingCommitmentsDashboard}>
-              <View accessibilityLabel={`${futurePlansCount} minutas programadas`} style={[styles.upcomingCommitmentsMetric, { backgroundColor: `${tokens.color.dailyPlan}33` }]}>
-                <View style={styles.upcomingCommitmentsMetricValueRow}>
-                  <View style={[styles.upcomingCommitmentsIcon, { backgroundColor: `${tokens.color.dailyPlan}33` }]}><ClipboardList color={tokens.color.dailyPlan} size={14} strokeWidth={2.1} /></View>
-                  <Text style={styles.upcomingCommitmentsValue}>{futurePlansCount}</Text>
-                </View>
-              </View>
-              {commitmentKinds.map((kind) => {
-                const presentation = commitmentPresentation[kind];
-                const Icon = presentation.icon;
-                return <View accessibilityLabel={`${futureCommitmentCounts[kind]} ${commitmentActionLabel[kind]}`} key={kind} style={[styles.upcomingCommitmentsMetric, { backgroundColor: `${presentation.color}33` }]}>
-                  <View style={styles.upcomingCommitmentsMetricValueRow}>
-                    <View style={[styles.upcomingCommitmentsIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={14} strokeWidth={2.1} /></View>
-                    <Text style={styles.upcomingCommitmentsValue}>{futureCommitmentCounts[kind]}</Text>
-                  </View>
-                </View>;
-              })}
-            </View>
-          </View>
           <View style={styles.calendarBlock}>
-            {visibleMonth && overview ? <CalendarMonthCalendar days={monthDays} error={monthError} localDate={overview.local_date} onChangeMonth={changeVisibleMonth} onOpenDay={setCalendarSelectedDate} onReturnToCurrentMonth={() => setVisibleMonth(monthKeyFromDate(overview.local_date))} selectedDate={selectedCalendarDate} visibleMonth={visibleMonth} /> : null}
+            {overview ? <CalendarDaySectionHeading date={overview.local_date} today={overview.local_date} /> : null}
+            {visibleMonth && overview ? <CalendarMonthCalendar days={monthDays} embedded error={monthError} localDate={overview.local_date} onChangeMonth={changeVisibleMonth} onOpenDay={openDay} onReturnToCurrentMonth={() => setVisibleMonth(monthKeyFromDate(overview.local_date))} visibleMonth={visibleMonth} /> : null}
+            <View style={styles.upcomingCommitmentsSection}>
+              <View style={styles.upcomingCommitmentsHeading}>
+                <Clock color={tokens.color.textMain} size={16} strokeWidth={2.1} />
+                <Text accessibilityRole="header" style={styles.upcomingCommitmentsTitle}>Próximos compromisos</Text>
+              </View>
+              <View accessibilityLabel="Minutas y próximos compromisos programados" accessible style={styles.upcomingCommitmentsDashboard}>
+                <View accessibilityLabel={`${futurePlansCount} minutas programadas`} style={[styles.upcomingCommitmentsMetric, { backgroundColor: `${tokens.color.dailyPlan}33` }]}>
+                  <View style={styles.upcomingCommitmentsMetricValueRow}>
+                    <View style={[styles.upcomingCommitmentsIcon, { backgroundColor: `${tokens.color.dailyPlan}33` }]}><ClipboardList color={tokens.color.dailyPlan} size={14} strokeWidth={2.1} /></View>
+                    <Text style={styles.upcomingCommitmentsValue}>{futurePlansCount}</Text>
+                  </View>
+                </View>
+                {commitmentKinds.map((kind) => {
+                  const presentation = commitmentPresentation[kind];
+                  const Icon = presentation.icon;
+                  return <View accessibilityLabel={`${futureCommitmentCounts[kind]} ${commitmentActionLabel[kind]}`} key={kind} style={[styles.upcomingCommitmentsMetric, { backgroundColor: `${presentation.color}33` }]}>
+                    <View style={styles.upcomingCommitmentsMetricValueRow}>
+                      <View style={[styles.upcomingCommitmentsIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={14} strokeWidth={2.1} /></View>
+                      <Text style={styles.upcomingCommitmentsValue}>{futureCommitmentCounts[kind]}</Text>
+                    </View>
+                  </View>;
+                })}
+              </View>
+            </View>
             <View style={styles.calendarAddActions}>
               <View style={styles.calendarAddAction}><PickerCardAction icon={<Plus color={tokens.color.textMain} size={17} strokeWidth={2.1} />} label="Añadir minuta" onPress={() => setPlanMenuVisible(true)} subject="Mi calendario" variant="cardFullWidth" /></View>
               <View style={styles.calendarAddAction}><PickerCardAction icon={<Plus color={tokens.color.textMain} size={17} strokeWidth={2.1} />} label="Añadir compromiso" onPress={() => setCommitmentMenuVisible(true)} subject="Mi calendario" variant="cardFullWidth" /></View>
             </View>
           </View>
-          <View style={styles.todaySection}>
-            {selectedCalendarDate && overview?.local_date ? <CalendarDaySectionHeading date={selectedCalendarDate} today={overview.local_date} /> : null}
-            <Card style={styles.todayCard}>
-              {selectedCalendarDay?.has_plan ? <Pressable accessibilityRole="button" onPress={() => selectedCalendarDay.id != null ? router.push(`/program/days/${selectedCalendarDay.id}` as Href) : openDay(selectedCalendarDay.calendar_date)} style={styles.todayRow}>
-                <EntityIcon cornerRadius={8} entity="dailyPlan" />
-                <Text numberOfLines={1} style={styles.todayRowTitle}>{selectedCalendarDay.plan_name}</Text>
-              </Pressable> : null}
-              {selectedCommitments.length ? <View style={styles.todayCommitmentColumns}>
-                {[selectedCommitments.slice(0, firstColumnCount), selectedCommitments.slice(firstColumnCount)].map((column, index) => <View key={index} style={styles.todayCommitmentColumn}>
-                  {column.map((commitment) => {
-                    const presentation = commitmentPresentation[commitment.kind];
-                    const Icon = presentation.icon;
-                    return <Pressable accessibilityRole="button" key={commitment.id} onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)} style={styles.todayRow}>
-                      <View style={[styles.todayCommitmentIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={16} strokeWidth={2.1} /></View>
-                      <Text numberOfLines={1} style={styles.todayRowTitle}>{presentation.label}</Text>
-                    </Pressable>;
-                  })}
-                </View>)}
-              </View> : null}
-              {!selectedCalendarDay?.has_plan && !selectedCalendarDay?.commitments?.length ? <Text style={styles.todayEmpty}>No hay minuta ni compromisos para esta fecha.</Text> : null}
-              {selectedCalendarDate ? <View style={styles.todayDetailButton}><PickerCardAction label="Ver detalle del día" onPress={() => openDay(selectedCalendarDate)} subject={dateLabel(selectedCalendarDate, { day: "numeric", month: "long", year: "numeric" })} variant="mutedFullWidth" /></View> : null}
-            </Card>
-          </View>
-          <ProgramSectionHeader icon={CalendarClock} title="Resumen minutas y compromisos" />
-          <View style={styles.calendarizeActions}>
-            <Card style={styles.commitmentsCard}>
-              <View style={styles.commitmentsCardOverview}>
-                <View style={styles.commitmentsCardCopy}>
-                  <View style={styles.commitmentsCardHeading}>
-                    <CalendarClock color={tokens.color.textMain} size={18} strokeWidth={2.1} />
-                    <Text accessibilityRole="header" style={styles.commitmentsCardTitle}>Minutas programadas</Text>
-                  </View>
-                </View>
-                <View accessibilityLabel="Minutas y programas" accessible style={styles.commitmentsCardIcons}>
-                  <View style={[styles.commitmentsCardIcon, { backgroundColor: tokens.color.dailyPlan }]}><ClipboardList color={tokens.color.entityIconForeground} size={14} strokeWidth={2.1} /></View>
-                  <View style={[styles.commitmentsCardIcon, { backgroundColor: tokens.color.program }]}><ChartNoAxesCombined color={tokens.color.entityIconForeground} size={14} strokeWidth={2.1} /></View>
+          <ProgramSectionHeader icon={ClipboardList} title="Mis minutas programadas" />
+          <Card style={styles.commitmentsCard}>
+            <View style={styles.commitmentsCardOverview}>
+              <View style={styles.commitmentsCardCopy}>
+                <View style={styles.commitmentsCardHeading}>
+                  <CalendarClock color={tokens.color.textMain} size={18} strokeWidth={2.1} />
+                  <Text accessibilityRole="header" style={styles.commitmentsCardTitle}>Minutas programadas</Text>
                 </View>
               </View>
-              <View style={styles.planningSummary}>
-                <View style={styles.planningSummaryMetrics}>
-                  <View style={styles.planningSummaryMetric}>
-                    <Text style={styles.planningSummaryLabel}>Planes programados</Text>
-                    <Text style={styles.planningSummaryValue}>{futurePlansCount}</Text>
-                  </View>
-                  <View style={styles.planningSummaryMetric}>
-                    <Text style={styles.planningSummaryLabel}>Última fecha con plan</Text>
-                    <Text numberOfLines={1} style={styles.planningSummaryDate}>{overview?.last_scheduled_date ? dateLabel(overview.last_scheduled_date, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
-                  </View>
+              <View accessibilityLabel="Minutas y programas" accessible style={styles.commitmentsCardIcons}>
+                <View style={[styles.commitmentsCardIcon, { backgroundColor: tokens.color.dailyPlan }]}><ClipboardList color={tokens.color.entityIconForeground} size={14} strokeWidth={2.1} /></View>
+                <View style={[styles.commitmentsCardIcon, { backgroundColor: tokens.color.program }]}><ChartNoAxesCombined color={tokens.color.entityIconForeground} size={14} strokeWidth={2.1} /></View>
+              </View>
+            </View>
+            <View style={styles.planningSummary}>
+              <View style={styles.planningSummaryMetrics}>
+                <View style={styles.planningSummaryMetric}>
+                  <Text style={styles.planningSummaryLabel}>Planes programados</Text>
+                  <Text style={styles.planningSummaryValue}>{futurePlansCount}</Text>
                 </View>
-                <View style={styles.planningNextPlan}>
-                  <Text style={styles.planningSummaryLabel}>Próxima minuta</Text>
-                  <View style={styles.planningNextPlanEntity}>
-                    <EntityIcon entity="dailyPlan" size="compact" />
-                    <View style={styles.planningNextPlanCopy}>
-                      <Text numberOfLines={1} style={styles.planningNextPlanName}>{nextScheduledPlan?.plan_name || "Sin próxima minuta"}</Text>
-                      <Text style={styles.planningNextPlanDate}>{nextScheduledPlan ? dateLabel(nextScheduledPlan.calendar_date, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
-                    </View>
+                <View style={styles.planningSummaryMetric}>
+                  <Text style={styles.planningSummaryLabel}>Última fecha con plan</Text>
+                  <Text numberOfLines={1} style={styles.planningSummaryDate}>{overview?.last_scheduled_date ? dateLabel(overview.last_scheduled_date, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
+                </View>
+              </View>
+              <View style={styles.planningNextPlan}>
+                <Text style={styles.planningSummaryLabel}>Próxima minuta</Text>
+                <View style={styles.planningNextPlanEntity}>
+                  <EntityIcon entity="dailyPlan" size="compact" />
+                  <View style={styles.planningNextPlanCopy}>
+                    <Text numberOfLines={1} style={styles.planningNextPlanName}>{nextScheduledPlan?.plan_name || "Sin próxima minuta"}</Text>
+                    <Text style={styles.planningNextPlanDate}>{nextScheduledPlan ? dateLabel(nextScheduledPlan.calendar_date, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
                   </View>
                 </View>
               </View>
-              <View style={styles.commitmentsCardActions}>
-                <Pressable accessibilityLabel="Calendarizar" accessibilityRole="button" onPress={() => setPlanMenuVisible(true)} style={({ pressed }) => [styles.commitmentsCardActionChip, styles.commitmentsCardAddButton, pressed && styles.pressed]}>
-                  <Plus color={tokens.color.textMain} size={18} strokeWidth={2.1} />
-                </Pressable>
-                <Pressable accessibilityRole="button" onPress={() => router.push("/calendar/plans" as Href)} style={({ pressed }) => [styles.commitmentsCardActionChip, pressed && styles.pressed]}>
-                  <Text adjustsFontSizeToFit numberOfLines={1} style={styles.commitmentsCardActionText}>Ver minutas programadas</Text>
-                  <ChevronRight color={tokens.color.textMain} size={18} strokeWidth={2.1} />
-                </Pressable>
-              </View>
-            </Card>
-            <Card style={styles.commitmentsCard}>
-              <View style={styles.commitmentsCardOverview}>
-                <View style={styles.commitmentsCardCopy}>
-                  <View style={styles.commitmentsCardHeading}>
-                    <Pin color={tokens.color.textMain} size={18} strokeWidth={2.1} />
-                    <Text accessibilityRole="header" style={styles.commitmentsCardTitle}>Mis compromisos</Text>
-                  </View>
-                </View>
-                <View accessibilityLabel="Compras, cocinar, entrenamiento y nutricionista" accessible style={styles.commitmentsCardIcons}>
-                  {commitmentKinds.map((kind) => {
-                    const presentation = commitmentPresentation[kind];
-                    const Icon = presentation.icon;
-                    return <View key={kind} style={[styles.commitmentsCardIcon, { backgroundColor: `${presentation.color}33` }]}>
-                      <Icon color={presentation.color} size={14} strokeWidth={2.1} />
-                    </View>;
-                  })}
-                </View>
-              </View>
-              <View style={styles.planningSummary}>
-                <View style={styles.planningSummaryMetrics}>
-                  <View style={styles.planningSummaryMetric}>
-                    <Text style={styles.planningSummaryLabel}>Compromisos asignados</Text>
-                    <Text style={styles.planningSummaryValue}>{assignedCommitmentsCount}</Text>
-                  </View>
-                  <View style={styles.planningSummaryMetric}>
-                    <Text style={styles.planningSummaryLabel}>Última fecha con compromiso</Text>
-                    <Text numberOfLines={1} style={styles.planningSummaryDate}>{lastAssignedCommitmentDate ? dateLabel(lastAssignedCommitmentDate, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
-                  </View>
-                </View>
-                <View style={styles.planningNextPlan}>
-                  <Text style={styles.planningSummaryLabel}>Próximo compromiso</Text>
-                  <View style={styles.planningNextPlanEntity}>
-                    {nextAssignedCommitment ? (() => {
-                      const presentation = commitmentPresentation[nextAssignedCommitment.kind];
-                      const Icon = presentation.icon;
-                      return <View style={[styles.commitmentsCardIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={14} strokeWidth={2.1} /></View>;
-                    })() : <Pin color={tokens.color.textMuted} size={18} strokeWidth={2.1} />}
-                    <View style={styles.planningNextPlanCopy}>
-                      <Text numberOfLines={1} style={styles.planningNextPlanName}>{nextAssignedCommitment ? commitmentPresentation[nextAssignedCommitment.kind].label : "Sin próximo compromiso"}</Text>
-                      <Text style={styles.planningNextPlanDate}>{nextAssignedCommitment ? dateLabel(nextAssignedCommitment.calendar_date, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-              <View style={styles.commitmentsCardActions}>
-                <Pressable accessibilityLabel="Agregar nuevo compromiso" accessibilityRole="button" onPress={() => setCommitmentMenuVisible(true)} style={({ pressed }) => [styles.commitmentsCardActionChip, styles.commitmentsCardAddButton, pressed && styles.pressed]}>
-                  <Plus color={tokens.color.textMain} size={18} strokeWidth={2.1} />
-                </Pressable>
-                <Pressable accessibilityLabel="Ver compromisos" accessibilityRole="button" onPress={() => router.push("/calendar/registry" as Href)} style={({ pressed }) => [styles.commitmentsCardActionChip, pressed && styles.pressed]}>
-                  <Text adjustsFontSizeToFit numberOfLines={1} style={styles.commitmentsCardActionText}>Ver compromisos</Text>
-                  <ChevronRight color={tokens.color.textMain} size={18} strokeWidth={2.1} />
-                </Pressable>
-              </View>
-            </Card>
-          </View>
+            </View>
+          </Card>
           <ProgramSectionHeader icon={CalendarDays} subtitle="Los próximos siete días, con o sin plan asignado." title="Próximas minutas" />
           <View style={styles.upcomingMetricsSpacing}>
             <CalendarWeekMetrics days={upcoming} weightKg={profile?.current_weight_kg ?? null} />
@@ -425,6 +342,77 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
             <CalendarUpcomingPanels days={upcoming} localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
           </View>
           <Button label="Ver más fechas" onPress={() => router.push("/calendar/future" as Href)} variant="secondary" />
+
+          <ProgramSectionHeader icon={Pin} title="Mis compromisos" />
+          <Card style={styles.commitmentsCard}>
+            <View style={styles.commitmentsCardOverview}>
+              <View style={styles.commitmentsCardCopy}>
+                <View style={styles.commitmentsCardHeading}>
+                  <Pin color={tokens.color.textMain} size={18} strokeWidth={2.1} />
+                  <Text accessibilityRole="header" style={styles.commitmentsCardTitle}>Mis compromisos</Text>
+                </View>
+              </View>
+              <View accessibilityLabel="Compras, cocinar, entrenamiento y nutricionista" accessible style={styles.commitmentsCardIcons}>
+                {commitmentKinds.map((kind) => {
+                  const presentation = commitmentPresentation[kind];
+                  const Icon = presentation.icon;
+                  return <View key={kind} style={[styles.commitmentsCardIcon, { backgroundColor: `${presentation.color}33` }]}>
+                    <Icon color={presentation.color} size={14} strokeWidth={2.1} />
+                  </View>;
+                })}
+              </View>
+            </View>
+            <View style={styles.planningSummary}>
+              <View style={styles.planningSummaryMetrics}>
+                <View style={styles.planningSummaryMetric}>
+                  <Text style={styles.planningSummaryLabel}>Compromisos asignados</Text>
+                  <Text style={styles.planningSummaryValue}>{assignedCommitmentsCount}</Text>
+                </View>
+                <View style={styles.planningSummaryMetric}>
+                  <Text style={styles.planningSummaryLabel}>Última fecha con compromiso</Text>
+                  <Text numberOfLines={1} style={styles.planningSummaryDate}>{lastAssignedCommitmentDate ? dateLabel(lastAssignedCommitmentDate, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
+                </View>
+              </View>
+              <View style={styles.planningNextPlan}>
+                <Text style={styles.planningSummaryLabel}>Próximo compromiso</Text>
+                <View style={styles.planningNextPlanEntity}>
+                  {nextAssignedCommitment ? (() => {
+                    const presentation = commitmentPresentation[nextAssignedCommitment.kind];
+                    const Icon = presentation.icon;
+                    return <View style={[styles.commitmentsCardIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={14} strokeWidth={2.1} /></View>;
+                  })() : <Pin color={tokens.color.textMuted} size={18} strokeWidth={2.1} />}
+                  <View style={styles.planningNextPlanCopy}>
+                    <Text numberOfLines={1} style={styles.planningNextPlanName}>{nextAssignedCommitment ? commitmentPresentation[nextAssignedCommitment.kind].label : "Sin próximo compromiso"}</Text>
+                    <Text style={styles.planningNextPlanDate}>{nextAssignedCommitment ? dateLabel(nextAssignedCommitment.calendar_date, { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha"}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </Card>
+          <ScrollableTabBar<CommitmentScope>
+            accessibilityLabel="Tipos de compromisos"
+            activeTab={commitmentScope}
+            density="compact"
+            onChange={setCommitmentScope}
+            tabs={[{ key: "all", label: "Todos" }, ...commitmentKinds.map((kind) => {
+              const presentation = commitmentPresentation[kind];
+              const Icon = presentation.icon;
+              return { icon: (selected: boolean) => <Icon color={selected ? tokens.color.surfaceApp : presentation.color} size={14} strokeWidth={2.1} />, key: kind, label: commitmentTabLabels[kind] };
+            })]}
+          />
+          <View style={styles.commitmentsListHeading}>
+            <Text accessibilityRole="header" style={styles.commitmentsListTitle}>{`Compromisos de ${visibleMonth ? monthLabel(visibleMonth) : "este mes"}`}</Text>
+            <DistributedTabBar<CommitmentListRange> accessibilityLabel="Periodo de compromisos" activeTab={commitmentRange} onChange={setCommitmentRange} tabs={[{ key: "upcoming", label: "Próximos" }, { key: "all", label: "Todos" }]} />
+          </View>
+          {!monthDays.length && !monthError ? <LoadingState label="Cargando compromisos…" mode="content" /> : null}
+          {monthDays.length && !visibleCommitments.length ? <Card><Text style={styles.commitmentsEmpty}>{commitmentRange === "upcoming" ? "No hay próximos compromisos para este mes." : "No hay compromisos registrados para este mes."}</Text></Card> : null}
+          {visibleCommitments.map((commitment) => <CalendarCommitmentListCard
+            commitment={commitment}
+            key={commitment.id}
+            onCreateFoodList={() => router.push(`/calendar/commitments/${commitment.id}/foods?date=${commitment.calendar_date}` as Href)}
+            onPress={() => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)}
+            showFoodListDetails
+          />)}
 
           <ProgramSectionHeader icon={CalendarDays} subtitle="Elige una fecha para revisar el plan que quedó programado." title="Semana actual" />
           <ProgramDaySelector
@@ -500,6 +488,16 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
       </View>) : null}
     </Screen>
     <CalendarizeActions onClose={() => setCalendarMenuVisible(false)} visible={calendarMenuVisible} />
+    <ActionSheetModal onRequestClose={() => setCalendarOptionsVisible(false)} visible={calendarOptionsVisible}>
+      <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
+        <ActionSheetHeader icon={Ellipsis} onClose={() => setCalendarOptionsVisible(false)} title="Opciones de Mi calendario" />
+        <View style={styles.progressSheetContent}>
+          <ActionSheetActions>
+            <ActionSheetAction icon={Bell} label="Configurar notificaciones de compromisos" onPress={() => { setCalendarOptionsVisible(false); router.push("/calendar/commitment-notifications" as Href); }} />
+          </ActionSheetActions>
+        </View>
+      </SafeAreaView>
+    </ActionSheetModal>
     <ActionSheetModal onRequestClose={() => setCommitmentMenuVisible(false)} visible={commitmentMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
         <ActionSheetHeader icon={Pin} onClose={() => setCommitmentMenuVisible(false)} title="Registrar compromiso" />
@@ -556,13 +554,11 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
 const styles = StyleSheet.create({
   calendarAddAction: { flex: 1, minWidth: 0 },
   calendarAddActions: { flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: -6 },
-  calendarBlock: { gap: 0, marginTop: 18 },
-  calendarizeActions: { gap: tokens.spacing.sm },
+  calendarBlock: { gap: tokens.spacing.sm, marginTop: 18 },
+  commitmentsEmpty: { color: tokens.color.textMuted, fontSize: 13 },
+  commitmentsListHeading: { gap: tokens.spacing.sm },
+  commitmentsListTitle: { color: tokens.color.textMain, fontSize: 16, fontWeight: tokens.weight.bold },
   commitmentsCard: { gap: tokens.spacing.sm, marginHorizontal: -12, paddingBottom: tokens.card.outerPadding - 6, paddingTop: tokens.card.outerPadding - 4 },
-  commitmentsCardActionChip: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 4, height: 40, justifyContent: "center", paddingHorizontal: tokens.spacing.md },
-  commitmentsCardActionText: { color: tokens.color.textMain, fontSize: 13, fontWeight: tokens.weight.semibold },
-  commitmentsCardAddButton: { borderRadius: 20, paddingHorizontal: 0, width: 40 },
-  commitmentsCardActions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "space-between", marginHorizontal: -6, marginTop: 8 },
   commitmentsCardCopy: { flex: 1 },
   commitmentsCardHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   commitmentsCardIcon: { alignItems: "center", borderRadius: 8, height: 24, justifyContent: "center", width: 24 },
@@ -593,15 +589,6 @@ const styles = StyleSheet.create({
   upcomingPanelsSpacing: { marginTop: -20 },
   upcomingMetricsSpacing: { marginBottom: 10, marginTop: -20 },
   stickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
-  todayCard: { gap: tokens.spacing.sm, marginHorizontal: -6 },
-  todayCommitmentColumn: { flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
-  todayCommitmentColumns: { flexDirection: "row", gap: tokens.spacing.sm },
-  todayCommitmentIcon: { alignItems: "center", borderRadius: 7, height: 22, justifyContent: "center", width: 22 },
-  todayDetailButton: { marginHorizontal: -6 },
-  todayEmpty: { color: tokens.color.textMuted, fontSize: 14 },
-  todayRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 32 },
-  todayRowTitle: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: "600" },
-  todaySection: { gap: tokens.spacing.sm, marginTop: 8 },
   upcomingCommitmentsDashboard: { flexDirection: "row", gap: tokens.spacing.xs, marginHorizontal: -6 },
   upcomingCommitmentsHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   upcomingCommitmentsIcon: { alignItems: "center", borderRadius: 8, height: 24, justifyContent: "center", width: 24 },

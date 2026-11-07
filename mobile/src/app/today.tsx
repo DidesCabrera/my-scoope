@@ -295,7 +295,7 @@ export default function TodayScreen() {
     nextDay={nextCommitmentDay}
     onOpen={(commitment) => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)}
     onOpenDay={() => { if (nextCommitmentDay) router.push(`/calendar/days/${nextCommitmentDay.calendar_date}?origin=home` as Href); }}
-    onOpenRegistry={() => router.push("/calendar/registry" as Href)}
+    onOpenRegistry={() => router.push("/calendar" as Href)}
   />;
 
   async function createTodayPlan() {

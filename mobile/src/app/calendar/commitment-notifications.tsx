@@ -26,7 +26,7 @@ export default function CommitmentNotificationsScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: "/calendar/registry", mode: "back", title: "Notificaciones de compromisos" });
+    setHeaderPresentation({ fallback: "/calendar", mode: "back", title: "Notificaciones de compromisos" });
     void loadCommitmentReminderSettings().then(setSettings).finally(() => setLoading(false));
     return () => setHeaderPresentation({ mode: "default" });
   }, [setHeaderPresentation]));

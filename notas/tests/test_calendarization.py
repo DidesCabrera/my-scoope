@@ -514,6 +514,8 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertEqual(response.context["vm"]["content"]["schedule_summary"]["last_scheduled_date"], today)
         self.assertContains(response, "Calendario mensual")
         self.assertContains(response, "Día original")
+        assigned_day = CalendarizedDay.objects.get(user=self.user, calendar_date=today, assignment_state=CalendarizedDay.STATE_CURRENT)
+        self.assertContains(response, f'href="{reverse("calendarization_day_detail", args=[assigned_day.id])}"')
         self.assertNotContains(response, "calendarization-current__overview")
 
     def test_calendar_preview_navigates_months_and_progress_tab(self):
@@ -555,7 +557,37 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         preview = self.client.get(reverse("calendar_preview"), {"date": today.isoformat()})
         self.assertContains(preview, "Hacer compras")
         self.assertContains(preview, "Mercado del barrio")
-        self.assertContains(preview, "Registrar compromisos")
+        self.assertContains(preview, "Añadir compromiso")
+
+    def test_calendar_preview_opens_dates_directly_and_keeps_today_as_calendar_heading(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        selected = today + timedelta(days=2)
+        preview = self.client.get(reverse("calendar_preview"))
+        markup = preview.content.decode()
+        day_url = reverse("calendar_date_detail", args=[selected.isoformat()])
+        self.assertIn(f'href="{day_url}"', markup)
+        self.assertLess(markup.index("Calendario mensual"), markup.index("Próximos compromisos"))
+        self.assertLess(markup.index("Próximos compromisos"), markup.index("Añadir minuta"))
+        self.assertLess(markup.index("Mis minutas programadas"), markup.index("Próximas minutas"))
+        self.assertLess(markup.index("Próximas minutas"), markup.index("Mis compromisos"))
+        self.assertIn(f'Hoy</span> {today.day}', markup)
+        detail = self.client.get(day_url)
+        self.assertContains(detail, "Plan del día")
+        self.assertContains(detail, "Sin minuta asignada")
+        self.assertNotContains(detail, "Calendario mensual")
+
+    def test_calendar_commitments_filter_by_month_kind_and_period(self):
+        today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
+        yesterday = today - timedelta(days=1)
+        shopping = CalendarCommitment.objects.create(user=self.user, calendar_date=yesterday, kind="shopping", note="Compra anterior")
+        cooking = CalendarCommitment.objects.create(user=self.user, calendar_date=today, kind="cooking", note="Cocinar hoy")
+        current = self.client.get(reverse("calendar_preview"), {"month": today.strftime("%Y-%m"), "commitment_scope": "cooking"})
+        self.assertEqual(current.context["vm"]["content"]["month_commitments"], [cooking])
+        past_month = yesterday.strftime("%Y-%m")
+        upcoming = self.client.get(reverse("calendar_preview"), {"month": past_month, "commitment_range": "upcoming"})
+        self.assertNotIn(shopping, upcoming.context["vm"]["content"]["month_commitments"])
+        all_items = self.client.get(reverse("calendar_preview"), {"month": past_month, "commitment_range": "all", "commitment_scope": "shopping"})
+        self.assertEqual(all_items.context["vm"]["content"]["month_commitments"], [shopping])
 
     def test_commitment_views_use_kind_specific_icons(self):
         for kind, icon in (("shopping", "shopping-basket"), ("cooking", "cooking-pot"), ("training", "dumbbell"), ("nutritionist", "stethoscope")):
