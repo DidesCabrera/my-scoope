@@ -1,4 +1,4 @@
-import { Check, Inbox, type LucideIcon, Scale, Sparkles } from "lucide-react-native";
+import { Check, Inbox, type LucideIcon, Pill, Scale, Sparkles } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
@@ -29,6 +29,7 @@ export const commercialPlanBenefits: Record<"Basic" | "Free" | "Pro", PlanBenefi
   ],
   Pro: [
     { icon: Check, label: "Incluye", value: "Todo lo de Basic" },
+    { icon: Pill, label: "Suplementos", value: "Biblioteca, ingestas y cumplimiento" },
     { icon: Sparkles, label: "Asistencia IA", value: "1.000 créditos al mes" },
   ],
 };

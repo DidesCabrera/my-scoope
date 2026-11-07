@@ -12,7 +12,7 @@ export default function SystemFoundationsScreen() {
   const { status } = useSession();
   if (status === "anonymous") return <Redirect href="/login" />;
   return <Screen>
-    <SectionPageHeader countLabel="contenidos" section="learning" title="Fundamentos Sistema" />
+    <SectionPageHeader countLabel="contenidos" section="learning" title="Fundamentos" />
     <Text style={learningStyles.intro}>Comprende los conceptos nutricionales esenciales y aprende a usar las herramientas principales del sistema.</Text>
     <Card accent={tokens.color.fat} style={learningStyles.card}>
       <View style={learningStyles.cardHeading}><View style={learningStyles.cardText}><Text style={learningStyles.title}>Fundamentos Nutricionales</Text><Text style={learningStyles.summary}>Conceptos básicos para interpretar energía, nutrientes y seguimiento.</Text></View><LearningIcon name="heart-pulse" /></View>

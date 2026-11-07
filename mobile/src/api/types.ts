@@ -1,10 +1,14 @@
 import type { ProposalMeal, ProposalDailyPlan, ProposalProgram } from "./proposal-entities";
 import type { OnboardingStage } from "./onboarding-types";
 import type { ActiveProgramDay } from "./calendar-types";
+import type { DailyPlanSnapshot } from "./daily-plan-snapshot-types";
+import type { SupplementIntake } from "./supplement-types";
 
 export type { EntitlementsData, SubscriptionData } from "./billing-types";
 export type { ActiveProgramDay, CalendarDay, CalendarDayDetailData, CalendarDayHistoryData, CalendarOverviewData, CalendarProgressData } from "./calendar-types";
+export type { DailyPlanSnapshot } from "./daily-plan-snapshot-types";
 export type { OnboardingAnalyzeInput, OnboardingCalendarization, OnboardingEstimate, OnboardingInput, OnboardingStage, OnboardingStateData } from "./onboarding-types";
+export type { Supplement, SupplementIntake, SupplementIntakePreset } from "./supplement-types";
 export type ApiErrorDetail = {
   code: string;
   message: string;
@@ -204,18 +208,6 @@ export type CalendarizationRevision = {
   created_at: string;
 };
 
-export type DailyPlanSnapshot = {
-  schema_version?: string;
-  source?: {
-    dailyplan_id?: number | null;
-    program_day_id?: number | null;
-  };
-  name?: string;
-  totals?: MacroTotals;
-  meals?: MealSnapshot[];
-  [key: string]: unknown;
-};
-
 export type MacroTotals = {
   protein_g?: number | null;
   protein_per_kilogram?: number | null;
@@ -271,7 +263,7 @@ export type LibraryNutrition = {
 };
 
 export type LibraryIndicator = {
-  icon?: "day" | "food" | "meal" | "dailyPlan" | "week";
+  icon?: "day" | "food" | "meal" | "dailyPlan" | "supplement" | "week";
   label: string;
   value: number | string;
 };
@@ -362,6 +354,7 @@ export type LibraryPanel = {
   foods: LibraryFoodPanelItem[];
   meals: LibraryMealPanelItem[];
   weeks: LibraryWeekPanelItem[];
+  supplement_intakes?: SupplementIntake[];
 };
 export type LibraryItem = {
   id: number;
@@ -381,6 +374,8 @@ export type LibraryItem = {
   actions: LibraryAction[];
   label_capture_receipt_id?: number | null;
   label_image_available?: boolean;
+  can_use_supplements?: boolean;
+  supplements_available?: boolean;
 };
 
 export type LibraryPageData = {
@@ -419,6 +414,7 @@ export type HomeSummaryData = {
     food: number;
     meal: number;
     program: number;
+    supplement: number;
   };
   pending_proposal_count: number;
   today: TodayData;

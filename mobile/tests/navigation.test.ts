@@ -157,9 +157,13 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceDoesNotMatch(sidebarItems, /active \? tokens\.color\.textMain : tokens\.color\.textMuted/);
   assertSourceMatch(sidebarItems, /countChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minWidth: 30[^}]*paddingVertical: tokens\.spacing\.xs/);
   assertSourceDoesNotMatch(sidebarItems, /singleDigitCount|countChipSingle/);
+  assertSourceMatch(sidebarItems, /export function SidebarProBadge\(\)[\s\S]*sidebar-pro-badge-macros[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat[\s\S]*>Pro</);
   assertSourceMatch(navigation, /apiRequest<HomeSummaryData>\("\/api\/v1\/home\/summary"\)/);
   assertSourceMatch(navigation, /entity === "dailyPlan" \? counts\.daily_plan : counts\[entity\]/);
   assertSourceMatch(navigation, /<EntitySidebarEntry count=\{libraryCount\(libraryCounts, item\.entity\)\}/);
+  assertSourceMatch(navigation, /const supplementsUpgradeItem:[^\n]*href: "\/subscription"/);
+  assertSourceMatch(navigation, /supplementsRequirePro = creditSummary\?\.planSlug === "free" \|\| creditSummary\?\.planSlug === "basic"/);
+  assertSourceMatch(navigation, /accessory=\{supplementsRequirePro \? <SidebarProBadge \/> : undefined\}[\s\S]*count=\{!supplementsRequirePro && creditSummary \? libraryCounts\?\.supplement \?\? null : undefined\}[\s\S]*item=\{supplementsRequirePro \? supplementsUpgradeItem : supplementsLibraryItem\}/);
   assertSourceMatch(sidebarItems, /item: \{[^}]*minHeight: 48/);
   assertSourceMatch(navigation, /<ScrollView[^>]*style=\{styles\.drawerScroll\}[\s\S]*<CreditDashboardGrid/);
   assertSourceMatch(creditDashboard, /LinearGradient id="credit-dashboard-grid-macros"[\s\S]*tokens\.color\.protein[\s\S]*tokens\.color\.carbs[\s\S]*tokens\.color\.fat/);
@@ -176,7 +180,7 @@ test("the native sidebar uses the app surface without section separators", async
   assertSourceMatch(creditDashboard, /planName: \{[^}]*fontSize: 24/);
   assertSourceMatch(creditDashboard, /actionColumn: \{[^}]*alignItems: "center"[^}]*width: 22/);
   assertSourceMatch(creditDashboard, /<Pressable[\s\S]*accessibilityLabel=\{onPress \? "Abrir Suscripciones y bolsas"[\s\S]*onPress=\{onPress\}[\s\S]*<ChevronRight/);
-  assertSourceMatch(navigation, /secondaryPrimaryItems[\s\S]*href: "\/system-foundations"[\s\S]*label: "Fundamentos Sistema"/);
+  assertSourceMatch(navigation, /secondaryPrimaryItems[\s\S]*href: "\/system-foundations"[\s\S]*label: "Fundamentos"/);
   assertSourceDoesNotMatch(navigation.match(/const secondaryPrimaryItems[\s\S]*?\];/)?.[0] ?? "", /personal-records/);
   assertSourceMatch(navigation, /item\.href === "\/inbox"[\s\S]*secondaryPrimaryItems\.map/);
   assertSourceMatch(navigation, /href: "\/account"[^\n]*label: "Mi cuenta"[\s\S]{0,250}<PersonalRecordsSidebarEntry weightKg=\{currentWeightKg\} \/>/);
@@ -221,7 +225,7 @@ test("system foundations exposes nutrition and product-manual journeys", async (
   assertSourceMatch(home, /<Card accent=\{tokens\.color\.carbs\} style=\{learningStyles\.card\}>[\s\S]*Manuales de uso/);
   assertSourceMatch(catalog, /const cardAccent = kind === "nutrition" \? tokens\.color\.fat : tokens\.color\.carbs/);
   assertSourceMatch(catalog, /<Card accent=\{cardAccent\} key=\{article\.slug\} style=\{learningStyles\.card\}>/);
-  assertSourceMatch(home, /<SectionPageHeader countLabel="contenidos" section="learning" title="Fundamentos Sistema" \/>/);
+  assertSourceMatch(home, /<SectionPageHeader countLabel="contenidos" section="learning" title="Fundamentos" \/>/);
   assertSourceDoesNotMatch(home, /<AppHeader|Aprender en My Scoope/);
   assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="heart-pulse"/);
   assertSourceMatch(home, /<View style=\{learningStyles\.cardText\}>[\s\S]*<LearningIcon name="cog"/);

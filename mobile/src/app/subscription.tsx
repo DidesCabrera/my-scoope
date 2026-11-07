@@ -249,8 +249,10 @@ export default function SubscriptionScreen() {
               );
               const monthlyDisplayPrice = Platform.OS === "android" ? monthlyAndroidOffer?.displayPrice : monthlyStoreProduct?.displayPrice;
               const monthlyNumericPrice = Platform.OS === "android" ? monthlyAndroidOffer?.price : monthlyStoreProduct?.price;
+              const planBenefits = (commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? [])
+                .filter((benefit) => benefit.label !== "Suplementos" || entitlements?.workspace_features?.supplements_available);
               return (
-              <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? []} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : unavailablePrice}>
+              <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={planBenefits} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : unavailablePrice}>
                 <Text style={textStyles.caption}>Elige la modalidad de tu suscripción.</Text>
                 {plan.products.map((configured) => {
                   const storeProduct = subscriptions.find((item) => item.id === configured.product_id);

@@ -2,7 +2,8 @@ import { type Href, useRouter } from "expo-router";
 import { Bookmark, ChevronRight, RefreshCw, Trash2 } from "lucide-react-native";
 
 import { NutritionEntityCard } from "@/components/nutrition";
-import { MealPanels, type MealPanelItem } from "@/components/panels";
+import { FoodPanels, MealPanels, type MealPanelItem } from "@/components/panels";
+import { libraryDailyPlanFoodPanelItems } from "@/components/calendarization/presentation-adapters";
 import { EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import type { LibraryWeekPanelItem } from "@/api/types";
@@ -90,6 +91,7 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onR
   const router = useRouter();
   const nutrition = day?.nutrition;
   const liveMeals = day ? (day.meals ?? []).map(mealPanelItem) : meals;
+  const foodItems = day ? libraryDailyPlanFoodPanelItems(day.meals ?? []) : [];
   const contextualActions: ContextCardAction[] = [
     ...(onSaveToLibrary ? [{ icon: Bookmark, key: "save-to-library", label: "Guardar en mi biblioteca", onPress: onSaveToLibrary }] : []),
     ...(onReplace ? [{ icon: RefreshCw, key: "replace", label: "Reemplazar minuta diaria", onPress: onReplace }] : []),
@@ -124,6 +126,7 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onOpen, onOpenMeal, onR
         </>
       )}
       collapsiblePanel
+      dailyPlanFoodsPanel={day ? <FoodPanels items={foodItems} nestedScroll onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} showEditTab={false} /> : undefined}
       entity="dailyPlan"
       eyebrow={`SEMANA ${week} · ${dayLabel.toUpperCase()}`}
       headingLink={openDetail ? { label: openDetailLabel, onPress: openDetail } : undefined}

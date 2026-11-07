@@ -2,7 +2,7 @@ import { type PropsWithChildren, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Check, CheckCheck } from "lucide-react-native";
 
-import type { MealExecutionItem } from "@/api/types";
+import type { MealExecutionItem, SupplementIntake } from "@/api/types";
 import { tokens } from "@/design/tokens";
 import { normalizeMealExecution } from "./meal-execution";
 
@@ -18,8 +18,42 @@ function rounded(value: number): string {
   return Number.isFinite(value) ? Math.round(value).toString() : "0";
 }
 
-export function MealCompletionSurface({ children }: PropsWithChildren) {
-  return <View style={styles.surface}>{children}</View>;
+export function MealCompletionSurface({ children, color = tokens.color.meal }: PropsWithChildren<{ color?: string }>) {
+  return <View style={[styles.surface, { backgroundColor: `${color}1A`, borderColor: `${color}B3` }]}>{children}</View>;
+}
+
+function CompletionSummaryRow({ accessibilityLabel, color, completed, keys, label }: { accessibilityLabel: string; color: string; completed: boolean[]; keys: string[]; label: string }) {
+  return (
+    <View accessibilityLabel={accessibilityLabel} accessible style={styles.row}>
+      <View style={[styles.completionIcon, { backgroundColor: color }]}>
+        <CheckCheck color={tokens.color.entityIconForeground} size={16} strokeWidth={2.2} />
+      </View>
+      <Text style={styles.label}>{label}</Text>
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.checks}>
+        {completed.map((isCompleted, index) => (
+          <View key={keys[index] ?? `${label}-${index}`} style={[styles.checkCircle, isCompleted ? { backgroundColor: color } : styles.checkCirclePending]}>
+            <Check color={isCompleted ? tokens.color.entityIconForeground : tokens.color.textMuted} size={14} strokeWidth={3} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function DailySupplementCompletionCard({ intakes }: { intakes: SupplementIntake[] }) {
+  const completed = intakes.map((intake) => intake.status === "completed");
+  const completedCount = completed.filter(Boolean).length;
+  return (
+    <MealCompletionSurface color={tokens.color.supplement}>
+      <CompletionSummaryRow
+        accessibilityLabel={`Cumplimiento sups: ${completedCount} de ${intakes.length} completadas`}
+        color={tokens.color.supplement}
+        completed={completed}
+        keys={intakes.map((intake) => intake.key)}
+        label="Cumplimiento sups"
+      />
+    </MealCompletionSurface>
+  );
 }
 
 export function DailyMealCompletionCard({ mealKeys, mealExecution, mealNutrition }: { mealKeys: (string | null | undefined)[]; mealExecution?: MealExecutionItem[] | null; mealNutrition: MealCompletionNutrition[] }) {
@@ -47,22 +81,13 @@ export function DailyMealCompletionCard({ mealKeys, mealExecution, mealNutrition
   const metricColumnWidth = Math.max(0, (metricsWidth - 3 * tokens.spacing.sm) / 4);
   return (
     <MealCompletionSurface>
-      <View accessibilityLabel={`Cumplimiento comidas: ${completedCount} de ${mealKeys.length} completadas`} accessible style={styles.row}>
-        <View style={styles.completionIcon}>
-          <CheckCheck color={tokens.color.entityIconForeground} size={16} strokeWidth={2.2} />
-        </View>
-        <Text style={styles.label}>Cumplimiento comidas</Text>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.checks}>
-          {mealKeys.map((key, index) => {
-            const completed = key != null && completedKeys.has(key);
-            return (
-              <View key={key ?? `meal-${index}`} style={[styles.checkCircle, completed ? styles.checkCircleCompleted : styles.checkCirclePending]}>
-                <Check color={completed ? tokens.color.entityIconForeground : tokens.color.textMuted} size={14} strokeWidth={3} />
-              </View>
-            );
-          })}
-        </View>
-      </View>
+      <CompletionSummaryRow
+        accessibilityLabel={`Cumplimiento comidas: ${completedCount} de ${mealKeys.length} completadas`}
+        color={tokens.color.meal}
+        completed={mealKeys.map((key) => key != null && completedKeys.has(key))}
+        keys={mealKeys.map((key, index) => key ?? `meal-${index}`)}
+        label="Cumplimiento comidas"
+      />
       <View onLayout={({ nativeEvent: { layout } }) => setMetricsWidth((current) => current === layout.width ? current : layout.width)} style={styles.progressMetrics}>
         {progressMetrics.map(({ color, consumed, label, programmed, unit }) => {
           const percentage = programmed > 0 ? Math.min(100, Math.max(0, consumed / programmed * 100)) : 0;
@@ -90,11 +115,10 @@ const styles = StyleSheet.create({
   progressMetrics: { flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: 2, marginTop: -12, paddingBottom: tokens.spacing.md + 4 },
   progressTrack: { backgroundColor: tokens.color.borderDefault, borderRadius: 999, height: 6, overflow: "hidden" },
   checkCircle: { alignItems: "center", borderRadius: tokens.radius.pill, height: 22, justifyContent: "center", width: 22 },
-  checkCircleCompleted: { backgroundColor: tokens.color.meal },
   checkCirclePending: { backgroundColor: tokens.color.borderDefault },
   checks: { alignItems: "center", flexDirection: "row", flexShrink: 1, flexWrap: "wrap", gap: tokens.spacing.xs, justifyContent: "flex-end" },
-  completionIcon: { alignItems: "center", backgroundColor: tokens.color.meal, borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
+  completionIcon: { alignItems: "center", borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
   label: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.bold, minWidth: 0 },
   row: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52 },
-  surface: { backgroundColor: `${tokens.color.meal}1A`, borderColor: `${tokens.color.meal}B3`, borderRadius: tokens.radius.lg + 4, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 54, paddingHorizontal: 14 },
+  surface: { borderRadius: tokens.radius.lg + 4, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 54, paddingHorizontal: 14 },
 });

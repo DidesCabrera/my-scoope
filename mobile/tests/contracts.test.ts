@@ -225,7 +225,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(collectionPageHeader, /subtitle \? <Text style=\{\[styles\.subtitle, subtitleStyle\]\}>\{subtitle\}<\/Text>/);
   assertSourceMatch(collectionPageHeader, /subtitle: \{ color: tokens\.color\.textMuted, fontSize: tokens\.type\.caption, lineHeight: 20 \}/);
   assertSourceDoesNotMatch(collectionPageHeader, /Bookmark|Mis librerías|eyebrow/);
-  assertSourceMatch(collectionPageHeader, /<Chip[\s\S]*backgroundColor=\{`\$\{tokens\.color\[entity\]\}4D`\}[\s\S]*borderless[\s\S]*label=\{`\$\{count\} \$\{collectionCountLabels\[entity\]\[count === 1 \? "singular" : "plural"\]\}`\}/);
+  assertSourceMatch(collectionPageHeader, /const labels = countLabels \?\? collectionCountLabels\[entity\][\s\S]*<Chip[\s\S]*backgroundColor=\{`\$\{tokens\.color\[entity\]\}4D`\}[\s\S]*borderless[\s\S]*label=\{`\$\{count\} \$\{labels\[count === 1 \? "singular" : "plural"\]\}`\}/);
 
   const chip = await readTestFile(
     path.resolve(process.cwd(), "src/components/ui/chip.tsx"),
@@ -393,7 +393,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(calendarizedDailyPlanCard, /<NutritionEntityCard/);
-  assertSourceMatch(calendarizedDailyPlanCard, /afterNutrition=\{<DailyMealCompletionCard mealExecution=\{mealExecution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} mealNutrition=/);
+  assertSourceMatch(calendarizedDailyPlanCard, /afterNutrition=\{meals\.length \? <DailyMealCompletionCard mealExecution=\{mealExecution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} mealNutrition=/);
   assertSourceMatch(calendarizedDailyPlanCard, /<MealPanels/);
   assertSourceMatch(calendarizedDailyPlanCard, /onOpenItem=/);
   assertSourceMatch(calendarizedDailyPlanCard, /pathname: "\/program\/days\/\[id\]\/meals\/\[mealKey\]"/);
@@ -479,18 +479,20 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /action: nextCompleted \? "completed" : "skipped"/);
   assertSourceMatch(mealAdherence, /export function MealCompletionCard/);
   assertSourceMatch(mealAdherence, /export function MealCompletionToggleCard/);
-  assertSourceMatch(mealAdherence, /accessibilityLabel="¿Cumpliste con tu comida\?"/);
-  assertSourceMatch(mealAdherence, /<View style=\{styles\.completionIcon\}>[\s\S]*<CheckCheck color=\{tokens\.color\.entityIconForeground\} size=\{16\}[^>]*\/>[\s\S]*<Text style=\{styles\.completionLabel\}>¿Cumpliste con tu comida\?/);
+  assertSourceMatch(mealAdherence, /export function EntityCompletionToggleCard/);
+  assertSourceMatch(mealAdherence, /entity === "supplement" \? "¿Cumpliste con tu ingesta\?" : "¿Cumpliste con tu comida\?"/);
+  assertSourceMatch(mealAdherence, /<View style=\{\[styles\.completionIcon, \{ backgroundColor: color \}\]\}>[\s\S]*<CheckCheck color=\{tokens\.color\.entityIconForeground\} size=\{16\}[^>]*\/>[\s\S]*<Text style=\{styles\.completionLabel\}>\{completionLabel\}/);
   assertSourceMatch(mealAdherence, /onToggle\(!completed\)/);
   assertSourceMatch(mealAdherence, /Haptics\.impactAsync\(Haptics\.ImpactFeedbackStyle\.Rigid\)/);
   assertSourceMatch(mealAdherence, /style=\{styles\.completionRow\}/);
   assertSourceDoesNotMatch(mealAdherence, /saving && styles\.saving|pressed && styles\.pressed[^\n]*completionRow/);
   assertSourceMatch(mealAdherence, /export function MealNoteCard/);
   assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
-  assertSourceMatch(mealAdherence, /<MealCompletionSurface>/);
+  assertSourceMatch(mealAdherence, /<MealCompletionSurface color=\{color\}>/);
   assertSourceMatch(mealAdherence, /checkbox: \{[^}]*borderRadius: tokens\.radius\.pill/);
   assertSourceMatch(mealAdherence, /completionLabel: \{[^}]*fontSize: 15/);
-  assertSourceMatch(mealAdherence, /completionIcon: \{[^}]*backgroundColor: tokens\.color\.meal[^}]*borderRadius: tokens\.radius\.sm[^}]*height: 22[^}]*width: 22/);
+  assertSourceMatch(mealAdherence, /<View style=\{\[styles\.completionIcon, \{ backgroundColor: color \}\]\}>/);
+  assertSourceMatch(mealAdherence, /completionIcon: \{[^}]*borderRadius: tokens\.radius\.sm[^}]*height: 22[^}]*width: 22/);
   assertSourceMatch(mealAdherence, /<SectionDivider spacing="compact" tone="soft" \/>[\s\S]*<SectionHeading title="Nota de esta comida" \/>/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>[\s\S]*<View style=\{styles\.noteSurface\}>/);
@@ -545,15 +547,17 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(mealCompletionSummary, /Cumplimiento comidas/);
-  assertSourceMatch(mealCompletionSummary, /<View style=\{styles\.completionIcon\}>[\s\S]*<CheckCheck color=\{tokens\.color\.entityIconForeground\}[^>]*\/>[\s\S]*<Text style=\{styles\.label\}>Cumplimiento comidas/);
+  assertSourceMatch(mealCompletionSummary, /<View style=\{\[styles\.completionIcon, \{ backgroundColor: color \}\]\}>[\s\S]*<CheckCheck color=\{tokens\.color\.entityIconForeground\}[^>]*\/>[\s\S]*<Text style=\{styles\.label\}>\{label\}/);
   assertSourceMatch(mealCompletionSummary, /label: \{[^}]*fontSize: 15/);
-  assertSourceMatch(mealCompletionSummary, /item\.status === "completed"/);
-  assertSourceMatch(mealCompletionSummary, /checkCircleCompleted: \{ backgroundColor: tokens\.color\.meal \}/);
+  assertSourceMatch(mealCompletionSummary, /status === "completed"/);
+  assertSourceMatch(mealCompletionSummary, /isCompleted \? \{ backgroundColor: color \} : styles\.checkCirclePending/);
   assertSourceMatch(mealCompletionSummary, /checkCirclePending: \{ backgroundColor: tokens\.color\.borderDefault \}/);
   assertSourceMatch(mealCompletionSummary, /<CheckCheck color=\{tokens\.color\.entityIconForeground\} size=\{16\}/);
-  assertSourceMatch(mealCompletionSummary, /completionIcon: \{[^}]*backgroundColor: tokens\.color\.meal[^}]*borderRadius: tokens\.radius\.sm[^}]*height: 22[^}]*width: 22/);
-  assertSourceMatch(mealCompletionSummary, /completed \? tokens\.color\.entityIconForeground : tokens\.color\.textMuted/);
-  assertSourceMatch(mealCompletionSummary, /surface: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: `\$\{tokens\.color\.meal\}B3`, borderRadius: tokens\.radius\.lg \+ 4, borderWidth: 1/);
+  assertSourceMatch(mealCompletionSummary, /completionIcon: \{[^}]*borderRadius: tokens\.radius\.sm[^}]*height: 22[^}]*width: 22/);
+  assertSourceMatch(mealCompletionSummary, /isCompleted \? tokens\.color\.entityIconForeground : tokens\.color\.textMuted/);
+  assertSourceMatch(mealCompletionSummary, /backgroundColor: `\$\{color\}1A`, borderColor: `\$\{color\}B3`/);
+  assertSourceMatch(mealCompletionSummary, /<MealCompletionSurface color=\{tokens\.color\.supplement\}>/);
+  assertSourceMatch(mealCompletionSummary, /surface: \{ borderRadius: tokens\.radius\.lg \+ 4, borderWidth: 1/);
   assertSourceMatch(mealCompletionSummary, /checks: \{[^}]*gap: tokens\.spacing\.xs/);
   assertSourceMatch(mealCompletionSummary, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceMatch(mealCompletionSummary, /minHeight: 54/);
@@ -922,9 +926,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUiSource, /export function EntityCardAction/);
   assertSourceMatch(productUiSource, /hasFooter \? styles\.entityCardWithActions : null/);
   assertSourceMatch(productUiSource, /entityCardWithActions: \{ paddingBottom: tokens\.card\.innerPadding \}/);
-  assertSourceDoesNotMatch(productUiSource, /entityCardActions: \{[^\n]*marginTop/);
+  assertSourceMatch(productUiSource, /entityCardActions: \{[^\n]*marginTop: 6/);
   assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderColor: tokens\.color\.borderStrong[^}]*borderRadius: tokens\.radius\.pill/);
-  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderWidth: 1[^}]*height: 34[^}]*width: 34/);
+  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderWidth: 1[^}]*height: 32[^}]*width: 32/);
   assertSourceMatch(productUiSource, /entityCardPanelSlot: \{ minWidth: 0 \}/);
 
   const panelSurface = await readTestFile(

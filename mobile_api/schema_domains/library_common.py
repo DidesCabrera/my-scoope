@@ -1,6 +1,6 @@
 from typing import Literal
 
-from ninja import Schema
+from ninja import Field, Schema
 
 
 class OptionalPortionUnitData(Schema):
@@ -25,6 +25,15 @@ class FoodPortionContractData(Schema):
 class OptionalFoodVisualIdentityData(Schema):
     emoji: str | None = None
     visual_key: str | None = None
+
+
+class SupplementLibraryAccessData(Schema):
+    can_use_supplements: bool = False
+    supplements_available: bool = False
+
+
+class SupplementLibraryPanelData(Schema):
+    supplement_intakes: list[dict] = Field(default_factory=list)
 
 
 class LibraryMacroData(Schema):

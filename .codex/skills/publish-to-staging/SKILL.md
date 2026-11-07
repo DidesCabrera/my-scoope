@@ -16,8 +16,11 @@ cleanup outside the current task.
    approval is still pending. Do not begin integration while active refinement
    still requires approval.
 2. Fetch `origin` with pruning. Verify the current `origin/staging` and
-   `origin/main` relationship. If production history is absent from staging,
-   stop and report the reconciliation requirement instead of publishing over it.
+   `origin/main` relationship. Report main-only commits as history divergence and
+   inspect `git diff origin/staging...origin/main`. A content-empty promotion
+   merge does not block publication; if that diff contains production content
+   absent from staging, stop and report the reconciliation requirement instead of
+   publishing over it.
 3. Inspect tracked, untracked, and relevant ignored files. Never include unrelated
    work merely because it is present in the checkout.
 4. Run the validation tier that owns the changed risk, following the repository's

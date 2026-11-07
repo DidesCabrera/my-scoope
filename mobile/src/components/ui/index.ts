@@ -17,6 +17,7 @@ export * from "./product";
 export * from "./section-divider";
 export * from "./search-field";
 export * from "./surfaces";
+export * from "./supplement-card";
 export * from "./tab-bars";
 export * from "./typography";
 export * from "./week-day-grid";

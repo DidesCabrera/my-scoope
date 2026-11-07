@@ -21,6 +21,7 @@ import {
   type LucideIcon,
   MessageSquarePlus,
   NotebookPen,
+  Pill,
   Scale,
   Search,
   Sparkles,
@@ -36,10 +37,10 @@ import { Chip } from "./chip";
 import { Button } from "./controls";
 import { Card } from "./surfaces";
 
-export type EntityKind = "comparison" | "food" | "meal" | "dailyPlan" | "dpm" | "program";
+export type EntityKind = "comparison" | "food" | "meal" | "dailyPlan" | "dpm" | "program" | "supplement";
 export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "notifications" | "learning" | "create" | "import";
 
-export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "week" | "weight";
+export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "supplement" | "week" | "weight";
 
 export type StructuralIndicator = {
   icon?: StructuralIndicatorKind;
@@ -56,10 +57,12 @@ export type CompletionIndicatorCounts = {
 
 export type EntityCardPanelToggleConfig = {
   activeColor: string;
+  activeForeground?: string;
   expanded: boolean;
-  icon: "chart" | "food" | "information" | "meal";
+  icon: "chart" | "food" | "information" | "meal" | "supplement";
   label: string;
   onPress(): void;
+  solidActive?: boolean;
   text: string;
 };
 
@@ -113,6 +116,7 @@ const entityLabels: Record<EntityKind, string> = {
   dailyPlan: PRODUCT_VOCABULARY_ES.dailyPlan.singular,
   dpm: PRODUCT_VOCABULARY_ES.dailyPlan.singular,
   program: "Programa",
+  supplement: "Suplemento",
 };
 
 const entityIcons: Record<EntityKind, LucideIcon> = {
@@ -122,6 +126,7 @@ const entityIcons: Record<EntityKind, LucideIcon> = {
   dailyPlan: ClipboardList,
   dpm: CalendarDays,
   program: ChartNoAxesCombined,
+  supplement: Pill,
 };
 
 const entityCardPanelToggleIcons: Record<EntityCardPanelToggleConfig["icon"], LucideIcon> = {
@@ -129,6 +134,7 @@ const entityCardPanelToggleIcons: Record<EntityCardPanelToggleConfig["icon"], Lu
   food: Carrot,
   information: Info,
   meal: Utensils,
+  supplement: Pill,
 };
 
 const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
@@ -137,6 +143,7 @@ const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
   food: Carrot,
   meal: Utensils,
   dailyPlan: ClipboardList,
+  supplement: Pill,
   week: CalendarRange,
   weight: Weight,
 };
@@ -147,6 +154,7 @@ const structuralIndicatorColors: Record<StructuralIndicatorKind, string> = {
   food: tokens.color.food,
   meal: tokens.color.meal,
   dailyPlan: tokens.color.dailyPlan,
+  supplement: tokens.color.supplement,
   week: tokens.color.program,
   weight: tokens.color.quantity,
 };
@@ -168,8 +176,8 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   import: FileDown,
 };
 
-export function EntityIcon({ backgroundColor, cornerRadius, entity, size = "regular", tone = "entity" }: { backgroundColor?: string; cornerRadius?: number; entity: EntityKind; size?: "benefit" | "compact" | "regular" | "header" | "intro" | "hero"; tone?: "entity" | "white" }) {
-  const Icon = entityIcons[entity];
+export function EntityIcon({ backgroundColor, cornerRadius, entity, icon: IconOverride, size = "regular", tone = "entity" }: { backgroundColor?: string; cornerRadius?: number; entity: EntityKind; icon?: LucideIcon; size?: "benefit" | "compact" | "regular" | "header" | "intro" | "hero"; tone?: "entity" | "white" }) {
+  const Icon = IconOverride ?? entityIcons[entity];
   const benefit = size === "benefit";
   const compact = size === "compact";
   const header = size === "header";
@@ -347,6 +355,7 @@ export function EntityCard({
   completion,
   accessory,
   headingLink,
+  identityIcon,
   identityColor,
   actions,
   children,
@@ -365,6 +374,7 @@ export function EntityCard({
   completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
   headingLink?: EntityHeadingLink;
+  identityIcon?: LucideIcon;
   identityColor?: string;
   actions?: ReactNode;
   onPress?: () => void;
@@ -374,7 +384,7 @@ export function EntityCard({
   const hasFooter = Boolean(actions || panelToggle);
   const content = (
     <Card accent={accent ?? tokens.color[entity]} style={[hasFooter ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
-      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} identityColor={identityColor} indicators={indicators} subtitle={subtitle} title={title} titleIcon={titleIcon} />
+      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} identityColor={identityColor} identityIcon={identityIcon} indicators={indicators} subtitle={subtitle} title={title} titleIcon={titleIcon} />
       {children}
       {hasFooter ? <EntityCardActions leading={panelToggle ? <EntityCardPanelToggle {...panelToggle} /> : undefined}>{actions}</EntityCardActions> : null}
     </Card>
@@ -391,7 +401,7 @@ export function EntityCardActions({ children, leading }: PropsWithChildren<{ lea
   return <View accessibilityLabel="Acciones de la card" style={styles.entityCardActions}>{leading}<View style={styles.entityCardActionGroup}>{children}</View></View>;
 }
 
-export function EntityCardPanelToggle({ activeColor, expanded, icon, label, onPress, text }: EntityCardPanelToggleConfig) {
+export function EntityCardPanelToggle({ activeColor, activeForeground = tokens.color.textMain, expanded, icon, label, onPress, solidActive = false, text }: EntityCardPanelToggleConfig) {
   const Icon = entityCardPanelToggleIcons[icon];
   return (
     <Pressable
@@ -399,11 +409,11 @@ export function EntityCardPanelToggle({ activeColor, expanded, icon, label, onPr
       accessibilityRole="button"
       accessibilityState={{ expanded }}
       onPress={onPress}
-      style={({ pressed }) => [styles.entityCardPanelToggle, expanded && { backgroundColor: `${activeColor}1A`, borderColor: activeColor }, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.entityCardPanelToggle, expanded && { backgroundColor: solidActive ? activeColor : `${activeColor}1A`, borderColor: tokens.color.surfaceCard }, pressed && styles.pressed]}>
       <View style={styles.entityCardPanelToggleIcon}>
-        <Icon color={expanded ? tokens.color.textMain : tokens.color.textMuted} size={14} strokeWidth={2.2} />
+        <Icon color={expanded ? activeForeground : tokens.color.textMuted} size={14} strokeWidth={2.2} />
       </View>
-      <Text style={[styles.entityCardPanelToggleLabel, expanded && styles.entityCardPanelToggleLabelActive]}>{text}</Text>
+      <Text style={[styles.entityCardPanelToggleLabel, expanded && styles.entityCardPanelToggleLabelActive, expanded && { color: activeForeground }]}>{text}</Text>
     </Pressable>
   );
 }
@@ -553,12 +563,12 @@ const styles = StyleSheet.create({
   entityCardPressable: { marginHorizontal: -tokens.spacing.screen },
   entityCardInPressable: { marginHorizontal: 0 },
   entityCardWithActions: { paddingBottom: tokens.card.innerPadding },
-  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "space-between" },
-  entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, marginLeft: "auto", marginRight: -6 },
-  entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 34, justifyContent: "center", width: 34 },
-  entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, height: 34, justifyContent: "center", marginLeft: -6, paddingHorizontal: tokens.spacing.sm },
-  entityCardPanelToggleIcon: { marginLeft: 4 },
-  entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold, marginRight: 6 },
+  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginTop: 6 },
+  entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, marginLeft: "auto" },
+  entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 },
+  entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 2, height: 32, justifyContent: "center", paddingHorizontal: tokens.spacing.compact },
+  entityCardPanelToggleIcon: { marginLeft: 1 },
+  entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, marginRight: 2 },
   entityCardPanelToggleLabelActive: { color: tokens.color.textMain },
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },

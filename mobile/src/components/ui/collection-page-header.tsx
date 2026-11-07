@@ -18,6 +18,7 @@ const collectionCountLabels: Record<EntityKind, { plural: string; singular: stri
   food: { plural: "Alimentos", singular: "Alimento" },
   meal: { plural: "Comidas", singular: "Comida" },
   program: { plural: "Programas semanales", singular: "Programa semanal" },
+  supplement: { plural: "Suplementos", singular: "Suplemento" },
 };
 
 function PageHeader({ action, icon, indicator, subtitle, subtitleStyle, title }: { action?: ReactNode; icon: ReactNode; indicator?: ReactNode; subtitle?: string; subtitleStyle?: StyleProp<TextStyle>; title: string }) {
@@ -39,16 +40,19 @@ function PageHeader({ action, icon, indicator, subtitle, subtitleStyle, title }:
 export function CollectionPageHeader({
   action,
   count,
+  countLabels,
   entity,
   icon,
   title,
 }: {
   action?: ReactNode;
   count?: number;
+  countLabels?: { plural: string; singular: string };
   entity: EntityKind;
   icon?: ReactNode;
   title: string;
 }) {
+  const labels = countLabels ?? collectionCountLabels[entity];
   return (
     <PageHeader
       action={action}
@@ -57,7 +61,7 @@ export function CollectionPageHeader({
         <Chip
           backgroundColor={`${tokens.color[entity]}4D`}
           borderless
-          label={`${count} ${collectionCountLabels[entity][count === 1 ? "singular" : "plural"]}`}
+          label={`${count} ${labels[count === 1 ? "singular" : "plural"]}`}
           textColor={tokens.color.textMain}
         />
       ) : undefined}

@@ -10,6 +10,7 @@ NUTRITION_WORKSPACE_KEY = "nutrition_workspace"
 MCP_INTEGRATION_KEY = "mcp"
 
 DEFAULT_NUTRITION_WORKSPACE_ENTITLEMENTS: dict[str, Any] = {
+    "can_use_supplements": False,
     "can_create_food": True,
     "can_create_meal": True,
     "can_create_dailyplan": True,

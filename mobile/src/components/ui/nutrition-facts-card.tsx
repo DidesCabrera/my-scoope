@@ -44,7 +44,7 @@ export function NutritionFactsTable({ facts, portion, style }: NutritionFactsCar
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.sm + 2 },
+  card: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.xs + 2 },
   table: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 46 },
   lastRow: { borderBottomWidth: 0 },

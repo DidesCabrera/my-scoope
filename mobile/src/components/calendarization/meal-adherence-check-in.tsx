@@ -98,11 +98,13 @@ export function useMealAdherenceCheckIn({ dayId, enabled = true, mealKey, mode =
 
 export type MealAdherenceController = ReturnType<typeof useMealAdherenceCheckIn>;
 
-export function MealCompletionToggleCard({ available = true, completed, error, onToggle, saving = false }: { available?: boolean; completed: boolean; error?: string | null; onToggle(nextCompleted: boolean): void; saving?: boolean }) {
+export function EntityCompletionToggleCard({ available = true, completed, entity = "meal", error, label, onToggle, saving = false }: { available?: boolean; completed: boolean; entity?: "meal" | "supplement"; error?: string | null; label?: string; onToggle(nextCompleted: boolean): void; saving?: boolean }) {
   if (!available) return null;
-  return <MealCompletionSurface>
+  const color = entity === "supplement" ? tokens.color.supplement : tokens.color.meal;
+  const completionLabel = label ?? (entity === "supplement" ? "¿Cumpliste con tu ingesta?" : "¿Cumpliste con tu comida?");
+  return <MealCompletionSurface color={color}>
     <Pressable
-      accessibilityLabel="¿Cumpliste con tu comida?"
+      accessibilityLabel={completionLabel}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: completed, disabled: saving }}
       disabled={saving}
@@ -111,14 +113,18 @@ export function MealCompletionToggleCard({ available = true, completed, error, o
         onToggle(!completed);
       }}
       style={styles.completionRow}>
-      <View style={styles.completionIcon}>
+      <View style={[styles.completionIcon, { backgroundColor: color }]}>
         <CheckCheck color={tokens.color.entityIconForeground} size={16} strokeWidth={2.2} />
       </View>
-      <Text style={styles.completionLabel}>¿Cumpliste con tu comida?</Text>
-      <View style={[styles.checkbox, completed && styles.checkboxChecked]}>{completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
+      <Text style={styles.completionLabel}>{completionLabel}</Text>
+      <View style={[styles.checkbox, completed && { backgroundColor: color, borderColor: color }]}>{completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
     </Pressable>
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
   </MealCompletionSurface>;
+}
+
+export function MealCompletionToggleCard(props: { available?: boolean; completed: boolean; error?: string | null; onToggle(nextCompleted: boolean): void; saving?: boolean }) {
+  return <EntityCompletionToggleCard {...props} entity="meal" />;
 }
 
 export function MealCompletionCard({ controller }: { controller: MealAdherenceController }) {
@@ -151,8 +157,7 @@ export function MealAdherenceCheckIn(props: Props) {
 
 const styles = StyleSheet.create({
   checkbox: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 2, height: 26, justifyContent: "center", width: 26 },
-  checkboxChecked: { backgroundColor: tokens.color.meal, borderColor: tokens.color.meal },
-  completionIcon: { alignItems: "center", backgroundColor: tokens.color.meal, borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
+  completionIcon: { alignItems: "center", borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
   completionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.bold, minWidth: 0 },
   completionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52 },
   noteBlock: { gap: tokens.spacing.xs },

@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from mobile_api.read_cache import home_cache_key, home_summary_cache_key
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import CalendarizedDay, DailyPlan, Food, Meal, Program, ProgramCalendarization, WeightLog
+from notas.domain.models import CalendarizedDay, DailyPlan, Food, Meal, Program, ProgramCalendarization, Supplement, WeightLog
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -25,6 +25,7 @@ class MobileHomeAPITests(AuthenticatedMobileAPITestCase):
         Meal.objects.create(name="Desayuno", created_by=self.user)
         DailyPlan.objects.create(name="Día base", created_by=self.user)
         Program.objects.create(name="Semana base", created_by=self.user)
+        Supplement.objects.create(name="Magnesio", created_by=self.user)
 
         response = self.client.get("/api/v1/home")
 
@@ -32,7 +33,7 @@ class MobileHomeAPITests(AuthenticatedMobileAPITestCase):
         data = response.json()["data"]
         self.assertEqual(
             data["library_counts"],
-            {"food": 1, "meal": 1, "daily_plan": 1, "program": 1},
+            {"food": 1, "meal": 1, "daily_plan": 1, "program": 1, "supplement": 1},
         )
         self.assertIn("today", data)
         self.assertIn("active_program", data)

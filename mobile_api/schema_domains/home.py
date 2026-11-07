@@ -13,6 +13,7 @@ class HomeLibraryCountsData(Schema):
     meal: int
     daily_plan: int
     program: int
+    supplement: int
 
 
 class HomeSummaryData(Schema):

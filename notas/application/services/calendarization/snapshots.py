@@ -174,6 +174,27 @@ def build_dailyplan_snapshot_from_dailyplan(
     source_program_day_id: int | None = None,
 ) -> DailyPlanSnapshotResult:
     meals = []
+    supplement_intakes = []
+
+    for number, intake in enumerate(dailyplan.supplement_intakes.prefetch_related("items").all(), 1):
+        supplement_intakes.append({
+            "id": intake.id,
+            "key": f"supplement_intake:{intake.id}",
+            "label": f"Ingesta {number}",
+            "order": intake.order,
+            "hour": intake.hour.strftime("%H:%M") if intake.hour else None,
+            "items": [
+                {
+                    "id": item.id,
+                    "key": f"supplement_intake_item:{item.id}",
+                    "supplement_id": item.supplement_id,
+                    "supplement": item.supplement_snapshot,
+                    "quantity": str(item.quantity),
+                    "unit": item.unit,
+                }
+                for item in intake.items.all()
+            ],
+        })
 
     for dailyplan_meal in dailyplan.dailyplan_meals.all():
         meal = dailyplan_meal.meal
@@ -230,6 +251,7 @@ def build_dailyplan_snapshot_from_dailyplan(
         },
         "name": dailyplan.name,
         "meals": meals,
+        "supplement_intakes": supplement_intakes,
         "totals": {
             "protein_g": _round(dailyplan.protein),
             "carbs_g": _round(dailyplan.carbs),
