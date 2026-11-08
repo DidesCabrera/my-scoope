@@ -35,6 +35,16 @@ that environment in the current task; in that exceptional mode, start Metro from
 the feature checkout with the local profile so it points to
 `http://127.0.0.1:8000`.
 
+The designated account for authenticated simulator reviews on staging is
+`myscoope@gmail.com`. Felipe has already signed in on the regular review iPhone;
+reuse that session while valid. Its password is stored in the macOS login keychain
+as `My Scoope staging — cuenta de pruebas`. If the session expires, attempt the
+normal sign-in with that account and the keychain credential; ask Felipe to take
+over only when macOS authentication, a verification challenge, or another step
+requires his participation. Never copy the password into this repository, a
+shell command, logs, or chat. The separate `developer@myscoope.com` account is
+for App Store review.
+
 A simulator displays one development bundle at a time. Two chats may keep separate
 Metro processes running, but showing another chat requires reconnecting the client
 to that chat's port.
@@ -59,24 +69,40 @@ terminating another chat's processes.
 1. Identify the checkout that contains the requested change and the expected
    screen from the current conversation. Do not inspect broad history or rediscover
    the feature.
-2. From that checkout, run `scripts/inspect_preview_context.sh`. Use its matching
-   Metro port when one exists; otherwise use the reported free port.
-3. Run `npm run start:staging -- --port <port>` from that checkout's `mobile/`
-   directory. This points the app at `https://myscoope-staging.onrender.com`.
-   Substitute a local backend and `npm run start:local` only when Felipe explicitly
-   requests that environment in the current task.
-4. Connect the existing development client directly to that Metro port with:
+2. From that checkout, run `scripts/inspect_preview_context.sh --route <route>`.
+   Reuse `matching_metro_port` when present. Otherwise start
+   `npm run start:staging -- --port <available_port>` from that checkout's
+   `mobile/` directory. This points the app at
+   `https://myscoope-staging.onrender.com`. Substitute a local backend and
+   `npm run start:local` only when Felipe explicitly requests that environment
+   in the current task.
+3. Use the inspector's `selected_device` for every simulator command. If multiple
+   devices are booted and none is selected, choose the regular review iPhone
+   rather than a named demo device and run the inspector once with
+   `--device <UDID> --remember-device`. This choice persists across worktrees.
+   If the saved device is off, boot that exact device and rerun the inspector.
+   Never use `booted` as a simctl target when more than one simulator is active:
+   each simulator has a separate app installation and SecureStore session.
+4. Connect the **existing** development client on that device directly to the
+   selected Metro port with the inspector's `client_url`:
 
    ```bash
-   xcrun simctl openurl booted "exp+my-scoope://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A<port>"
+   xcrun simctl openurl <UDID> "<client_url>"
    ```
 
    Do not rebuild it for JavaScript, TypeScript, styles, copy, or bundled assets.
-5. Open the known route. Retry once after a reload if Fast Refresh left stale
-   state. Then capture the result and stop.
+5. Open the inspector's `screen_url` on that same device. This points directly to
+   the requested route and reuses the saved session. If the app actually shows
+   login after session restoration, use `login_url` to preserve the requested
+   route through sign-in. Never bypass authentication or substitute fixture data
+   for an authenticated screen. Retry once after a reload if Fast Refresh left
+   stale state. Capture from the same UDID and stop.
 
 If the matching Metro is already running, do not restart the backend, reinstall
-dependencies, rebuild iOS, or launch another Metro.
+dependencies, rebuild iOS, or launch another Metro. Keep the same installed
+development client and simulator between reviews so its SecureStore session can
+be restored. A new simulator, erased app, logout, revoked session, or expired
+refresh token requires one genuine sign-in; report that need explicitly.
 
 ## When Fast Refresh is insufficient
 

@@ -47,6 +47,29 @@ npm run ios:staging     # only when the native simulator build must change
 npm run start:staging   # normal Metro development loop
 ```
 
+For a quick visual review from `mobile/`, inspect the requested screen first:
+
+```bash
+../scripts/inspect_preview_context.sh --route /today
+```
+
+Reuse `matching_metro_port`, or start `npm run start:staging -- --port
+<available_port>` if no matching Metro is running. With multiple simulators
+booted, pin the regular review device once using `--device <UDID>
+--remember-device`; then use that same UDID for the returned `client_url` and
+`screen_url` with `xcrun simctl openurl`. The `screen_url` opens the requested
+route directly. If the saved session has expired, use `login_url` to preserve that
+route through sign-in. Keep the development client installed so a valid
+SecureStore session survives later JavaScript previews. Do not erase or rebuild
+the simulator for ordinary UI changes.
+
+The designated staging simulator test account is `myscoope@gmail.com`. Felipe
+has signed in on the regular review iPhone; subsequent previews reuse its
+SecureStore session while valid. Its credential is in the macOS login keychain
+under `My Scoope staging — cuenta de pruebas`. Use normal sign-in if the session
+expires, and keep the password outside the repository, shell commands, logs, and
+chat. `developer@myscoope.com` is reserved for App Store review.
+
 The simulator command is rejected from `main`. Feature branches based on
 `staging` are allowed so changes can be tested before merging.
 
