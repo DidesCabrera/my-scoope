@@ -32,16 +32,16 @@ test("calendar opens a day directly and contains both consolidated sections", as
   const list = source.indexOf('Compromisos de ${visibleMonth', filters);
   const week = source.indexOf('title="Semana actual"', list);
   assert.ok(calendar < metrics && metrics < addActions && addActions < minutes && minutes < upcoming && upcoming < commitments && commitments < filters && filters < list && list < week);
-  assert.match(source, /onOpenDay=\{openDay\}/);
-  assert.match(source, /CalendarDaySectionHeading date=\{overview\.local_date\} today=\{overview\.local_date\}/);
+  assert.ok(source.includes("onOpenDay={openDay}"));
+  assert.ok(source.includes("CalendarDaySectionHeading date={overview.local_date} today={overview.local_date}"));
   assert.doesNotMatch(source, /todayCard|todaySection|\/calendar\/registry|\/calendar\/plans/);
 });
 
 test("removed calendar subviews redirect and commitment notifications return to calendar", async () => {
   for (const route of ["registry", "plans"]) {
     const source = await readTestFile(path.resolve(process.cwd(), `src/app/calendar/${route}.tsx`), "utf8");
-    assert.match(source, /<Redirect href="\/calendar" \/>/);
+    assert.ok(source.includes('<Redirect href="/calendar" />'));
   }
   const notificationSource = await readTestFile(path.resolve(process.cwd(), "src/app/calendar/commitment-notifications.tsx"), "utf8");
-  assert.match(notificationSource, /fallback: "\/calendar"/);
+  assert.ok(notificationSource.includes('fallback: "/calendar"'));
 });
