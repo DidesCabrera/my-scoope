@@ -155,19 +155,19 @@ class Meal(models.Model):
     def kcal_protein(self):
         if self.kcal_protein_cached is not None:
             return self.kcal_protein_cached
-        return sum(mf.kcal_protein for mf in self.meal_food_set.all()) + sum(mp.kcal_protein for mp in self.meal_preparation_set.select_related("version").all())
+        return sum(mf.kcal_protein for mf in self.meal_food_set.all()) + sum(mp.kcal_protein for mp in self.meal_preparation_set.all())
 
     @property
     def kcal_carbs(self):
         if self.kcal_carbs_cached is not None:
             return self.kcal_carbs_cached
-        return sum(mf.kcal_carbs for mf in self.meal_food_set.all()) + sum(mp.kcal_carbs for mp in self.meal_preparation_set.select_related("version").all())
+        return sum(mf.kcal_carbs for mf in self.meal_food_set.all()) + sum(mp.kcal_carbs for mp in self.meal_preparation_set.all())
 
     @property
     def kcal_fat(self):
         if self.kcal_fat_cached is not None:
             return self.kcal_fat_cached
-        return sum(mf.kcal_fat for mf in self.meal_food_set.all()) + sum(mp.kcal_fat for mp in self.meal_preparation_set.select_related("version").all())
+        return sum(mf.kcal_fat for mf in self.meal_food_set.all()) + sum(mp.kcal_fat for mp in self.meal_preparation_set.all())
 
     @property
     def total_kcal(self):

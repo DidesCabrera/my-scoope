@@ -13,7 +13,7 @@ from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api import library_projections
-from mobile_api.preparation_projections import preparation_panel_item
+from mobile_api.preparation_projections import meal_preparations_prefetch, preparation_panel_item
 from mobile_api.calendar_today import current_dated_day, standalone_today_payload
 from mobile_api.calendarized_snapshot_foods import index_snapshot_food
 from mobile_api.errors import MobileAPIError
@@ -400,8 +400,7 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
         .annotate(library_food_count=Count("meal_food_set", distinct=True), library_preparation_count=Count("meal_preparation_set", distinct=True))
         .prefetch_related(
             Prefetch("meal_food_set", queryset=library_projections.meal_foods_for_library_projection()),
-            "meal_preparation_set__preparation",
-            "meal_preparation_set__version__ingredients__food",
+            meal_preparations_prefetch(),
         )
         .order_by("list_order", "-created_at", "-id")
         .distinct()
@@ -687,8 +686,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
             .annotate(library_food_count=Count("meal_food_set", distinct=True), library_preparation_count=Count("meal_preparation_set", distinct=True))
             .prefetch_related(
                 Prefetch("meal_food_set", queryset=library_projections.meal_foods_for_library_projection()),
-                "meal_preparation_set__preparation",
-                "meal_preparation_set__version__ingredients__food",
+                meal_preparations_prefetch(),
             )
             .first()
         )

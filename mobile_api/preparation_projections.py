@@ -1,5 +1,18 @@
 """Preparation rows shared by the meal library and detail endpoints."""
 
+from django.db.models import Prefetch
+
+from notas.domain.models import MealPreparation, PreparationIngredient
+
+
+def meal_preparations_prefetch():
+    return Prefetch(
+        "meal_preparation_set",
+        queryset=MealPreparation.objects.select_related("preparation", "version").prefetch_related(
+            Prefetch("version__ingredients", queryset=PreparationIngredient.objects.select_related("food"))
+        ),
+    )
+
 
 def preparation_panel_item(relation) -> dict:
     version = relation.version

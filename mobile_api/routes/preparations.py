@@ -93,7 +93,7 @@ def _detail(preparation, *, units=None, grams=None):
     }
 
 
-@router.get("/preparations", auth=mobile_bearer, response={200: dict})
+@router.get("/preparations", operation_id="mobile_api_api_preparations", auth=mobile_bearer, response={200: dict})
 def preparations(request, search: str | None = None, offset: int = 0, limit: int = 30):
     queryset = Preparation.objects.select_related("current_version").filter(is_active=True, is_global=True, current_version__isnull=False)
     if search:
@@ -103,7 +103,7 @@ def preparations(request, search: str | None = None, offset: int = 0, limit: int
     return success({"items": items, "total": total, "offset": max(offset, 0), "limit": min(max(limit, 1), 100)})
 
 
-@router.get("/preparations/{preparation_id}", auth=mobile_bearer, response={200: dict})
+@router.get("/preparations/{preparation_id}", operation_id="mobile_api_api_preparation_detail", auth=mobile_bearer, response={200: dict})
 def preparation_detail(request, preparation_id: int, units: float | None = None, grams: float | None = None):
     return success(_detail(_available_preparation(request.auth.user, preparation_id), units=units, grams=grams))
 
@@ -131,7 +131,7 @@ def _save_selection(meal, preparation, *, units, grams, relation=None):
     return relation
 
 
-@router.post("/library/meals/{meal_id}/preparations", auth=mobile_bearer, response={200: dict})
+@router.post("/library/meals/{meal_id}/preparations", operation_id="mobile_api_api_add_preparation", auth=mobile_bearer, response={200: dict})
 @transaction.atomic
 def add_preparation(request, meal_id: int, payload: PreparationSelection):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
@@ -141,7 +141,7 @@ def add_preparation(request, meal_id: int, payload: PreparationSelection):
     return success({"target_id": meal.id, "created_id": relation.id, "preparation": _detail(preparation, units=payload.units, grams=payload.grams)})
 
 
-@router.patch("/library/meals/{meal_id}/preparations/{relation_id}", auth=mobile_bearer, response={200: dict})
+@router.patch("/library/meals/{meal_id}/preparations/{relation_id}", operation_id="mobile_api_api_update_preparation", auth=mobile_bearer, response={200: dict})
 @transaction.atomic
 def update_preparation(request, meal_id: int, relation_id: int, payload: PreparationPortionUpdate):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
@@ -153,7 +153,7 @@ def update_preparation(request, meal_id: int, relation_id: int, payload: Prepara
     return success({"target_id": meal.id, "affected_id": relation.id})
 
 
-@router.delete("/library/meals/{meal_id}/preparations/{relation_id}", auth=mobile_bearer, response={200: dict})
+@router.delete("/library/meals/{meal_id}/preparations/{relation_id}", operation_id="mobile_api_api_delete_preparation", auth=mobile_bearer, response={200: dict})
 @transaction.atomic
 def delete_preparation(request, meal_id: int, relation_id: int):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)

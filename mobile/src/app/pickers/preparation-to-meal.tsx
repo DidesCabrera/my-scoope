@@ -86,7 +86,7 @@ export default function PreparationToMealPicker() {
 
   if (!Number.isInteger(meal) || meal <= 0) return <Redirect href="/libraries/meals" />;
   if (status === "anonymous") return <Redirect href="/login" />;
-  return <SafeAreaView style={styles.screen}><ScrollView contentContainerStyle={styles.content}>
+  return <SafeAreaView style={styles.screen}><ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
     <Text style={styles.title}>Agregar preparación</Text>
     {!relation ? <><TextInput accessibilityLabel="Buscar preparación" onChangeText={setSearch} placeholder="Buscar preparación" style={styles.input} value={search} />
       {items.map((item) => <Pressable key={item.id} onPress={() => { setSelected(item); setMode("units"); setUnits(1); setGrams(""); }} style={styles.row}><Text style={styles.name}>{item.name}</Text><Text style={styles.body}>{item.default_portion_g} g por {item.household_label}</Text></Pressable>)}

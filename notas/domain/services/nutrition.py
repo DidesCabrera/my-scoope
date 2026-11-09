@@ -78,7 +78,7 @@ def compute_meal_nutrition(meal) -> dict:
     kcal_carbs = 0.0
     kcal_fat = 0.0
 
-    for mf in list(meal.meal_food_set.all()) + list(meal.meal_preparation_set.select_related("version").all()):
+    for mf in list(meal.meal_food_set.all()) + list(meal.meal_preparation_set.all()):
         protein += mf.protein
         carbs += mf.carbs
         fat += mf.fat

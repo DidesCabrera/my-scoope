@@ -78,6 +78,9 @@ MODEL_RETENTION_POLICY = {
     "food_catalog.CatalogFoodCapability": RetentionAction.RETAIN_OPERATIONAL,
     "food_catalog.CatalogFoodPortion": RetentionAction.FOLLOW_PARENT,
     "food_catalog.CatalogFoodSource": RetentionAction.FOLLOW_PARENT,
+    "food_catalog.CatalogPreparation": RetentionAction.RETAIN_OPERATIONAL,
+    "food_catalog.CatalogPreparationIngredient": RetentionAction.FOLLOW_PARENT,
+    "food_catalog.CatalogPreparationVersion": RetentionAction.ANONYMIZE,
     "food_catalog.CatalogImportBatch": RetentionAction.ANONYMIZE,
     "food_catalog.CatalogImportSourcePolicy": RetentionAction.ANONYMIZE,
     "food_catalog.CatalogRelease": RetentionAction.RETAIN_OPERATIONAL,
@@ -115,6 +118,7 @@ MODEL_RETENTION_POLICY = {
     "notas.MealAccess": RetentionAction.ERASE,
     "notas.MealCatalogEntry": RetentionAction.FOLLOW_PARENT,
     "notas.MealFood": RetentionAction.FOLLOW_PARENT,
+    "notas.MealPreparation": RetentionAction.FOLLOW_PARENT,
     "notas.MealShare": RetentionAction.ERASE,
     "notas.NotificationDelivery": RetentionAction.FOLLOW_PARENT,
     "notas.NutritionPreferenceProfile": RetentionAction.ERASE,
@@ -128,6 +132,9 @@ MODEL_RETENTION_POLICY = {
     "notas.ProductAnnouncement": RetentionAction.RETAIN_SYSTEM,
     "notas.ProductAnnouncementRead": RetentionAction.ERASE,
     "notas.Profile": RetentionAction.ERASE,
+    "notas.Preparation": RetentionAction.RETAIN_OPERATIONAL,
+    "notas.PreparationIngredient": RetentionAction.FOLLOW_PARENT,
+    "notas.PreparationVersion": RetentionAction.FOLLOW_PARENT,
     "notas.Program": RetentionAction.ERASE,
     "notas.ProgramCalendarization": RetentionAction.ERASE,
     "notas.ProgramDay": RetentionAction.FOLLOW_PARENT,
@@ -300,6 +307,7 @@ def _delete_user_account_data(*, user, source: str) -> AccountDeletionResult:
         "food_catalog.CatalogEnrichmentBatch": ("requested_by", "applied_by"),
         "food_catalog.CatalogFieldProposal": ("reviewed_by",),
         "food_catalog.CatalogEnrichmentChange": ("actor",),
+        "food_catalog.CatalogPreparationVersion": ("reviewed_by",),
     }.items():
         model = _model(label)
         for field in fields:

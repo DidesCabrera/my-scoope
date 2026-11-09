@@ -50,13 +50,18 @@ from notas.domain.model_modules.identity import (
     WeightLog,
 )
 from notas.domain.model_modules.meals import Meal, MealAccess, MealCatalogEntry, MealFood
-from notas.domain.model_modules.preparations import MealPreparation, Preparation, PreparationIngredient, PreparationVersion
 from notas.domain.model_modules.notification_center import ProductAnnouncement, ProductAnnouncementRead
 from notas.domain.model_modules.notification_delivery import (
     ApplePushSubscription,
     NotificationDelivery,
     ScheduledNotificationEvent,
     WebPushSubscription,
+)
+from notas.domain.model_modules.preparations import (
+    MealPreparation,
+    Preparation,
+    PreparationIngredient,
+    PreparationVersion,
 )
 from notas.domain.model_modules.programs import Program, ProgramDay
 from notas.domain.model_modules.proposals import (

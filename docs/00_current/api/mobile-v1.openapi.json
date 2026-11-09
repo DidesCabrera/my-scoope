@@ -18987,7 +18987,7 @@
     },
     "/api/v1/library/meals/{meal_id}/preparations": {
       "post": {
-        "operationId": "mobile_api_routes_preparations_add_preparation",
+        "operationId": "mobile_api_api_add_preparation",
         "parameters": [
           {
             "in": "path",
@@ -19033,7 +19033,7 @@
     },
     "/api/v1/library/meals/{meal_id}/preparations/{relation_id}": {
       "delete": {
-        "operationId": "mobile_api_routes_preparations_delete_preparation",
+        "operationId": "mobile_api_api_delete_preparation",
         "parameters": [
           {
             "in": "path",
@@ -19076,7 +19076,7 @@
         "summary": "Delete Preparation"
       },
       "patch": {
-        "operationId": "mobile_api_routes_preparations_update_preparation",
+        "operationId": "mobile_api_api_update_preparation",
         "parameters": [
           {
             "in": "path",
@@ -22028,7 +22028,7 @@
     },
     "/api/v1/preparations": {
       "get": {
-        "operationId": "mobile_api_routes_preparations_preparations",
+        "operationId": "mobile_api_api_preparations",
         "parameters": [
           {
             "in": "query",
@@ -22091,7 +22091,7 @@
     },
     "/api/v1/preparations/{preparation_id}": {
       "get": {
-        "operationId": "mobile_api_routes_preparations_preparation_detail",
+        "operationId": "mobile_api_api_preparation_detail",
         "parameters": [
           {
             "in": "path",

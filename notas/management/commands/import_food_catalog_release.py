@@ -15,9 +15,9 @@ from food_catalog.infrastructure.releases import (
     validate_release_envelope,
 )
 from food_catalog.models import CatalogFood, CatalogPreparation
-from notas.application.services.food_catalog_snapshots import PreparationSnapshotError
 from notas.application.services.commands.preparation_commands import materialize_preparation_and_refresh
 from notas.application.services.food_catalog_snapshots import (
+    PreparationSnapshotError,
     create_operational_food_snapshot_from_catalog,
     mark_operational_food_catalog_snapshot_stale,
     refresh_operational_food_snapshot_from_catalog,

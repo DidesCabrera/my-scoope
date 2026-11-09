@@ -19,10 +19,10 @@ from food_catalog.models import (
     CatalogFoodPortion,
     CatalogFoodSource,
     CatalogImportBatch,
-    CatalogRelease,
     CatalogPreparation,
     CatalogPreparationIngredient,
     CatalogPreparationVersion,
+    CatalogRelease,
 )
 
 CATALOG_RELEASE_SCHEMA_VERSION = "myscoope.food_catalog.release.v3"

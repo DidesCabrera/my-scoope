@@ -18,10 +18,10 @@ from food_catalog.models import (
     CatalogFoodSource,
     CatalogImportBatch,
     CatalogImportSourcePolicy,
-    CatalogRelease,
     CatalogPreparation,
     CatalogPreparationIngredient,
     CatalogPreparationVersion,
+    CatalogRelease,
     ExternalFoodReference,
     ExternalProviderFetchLog,
 )
