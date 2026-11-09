@@ -228,6 +228,15 @@ class PreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(MealPreparation.objects.filter(meal=meal).count(), 1)
         self.assertGreater(Meal.objects.get(pk=meal.pk).protein, original_protein)
         self.assertEqual(self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]["panel"]["preparations"][0]["name"], "Otra preparación")
+        rejected = self.client.patch(
+            f"/api/v1/library/meals/{meal.id}/preparations/{relation_id}",
+            data=json.dumps({"preparation_id": replacement.id + 1000000, "units": 2}),
+            content_type="application/json",
+        )
+        self.assertEqual(rejected.status_code, 404)
+        relation.refresh_from_db()
+        self.assertEqual(relation.preparation_id, replacement.id)
+        self.assertEqual(relation.quantity_g, Decimal("100"))
 
     def test_copy_and_share_preserve_preparation_identity(self):
         version = self._publish_and_materialize(self.v1)
