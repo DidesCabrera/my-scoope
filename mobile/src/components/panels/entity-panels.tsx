@@ -434,18 +434,6 @@ type FoodPreparation = {
   onToggle(item: FoodPanelItem): void;
 };
 
-type QuantitySortKey = "name" | "prepared" | "quantity";
-function QuantityHeader({ leadingLabel, preparation, preparationFirst = false, trailingLabel, ...sorting }: HeaderSortProps<QuantitySortKey> & { leadingLabel: string; preparation?: boolean; preparationFirst?: boolean; trailingLabel: string }) {
-  return (
-    <View style={[styles.row, styles.header]}>
-      {preparation && preparationFirst ? <SortablePanelHeaderCell direction={sorting.sort?.key === "prepared" ? sorting.sort.direction : undefined} icon={<View style={styles.preparationHeaderIcon}><Check color={tokens.color.surfaceApp} size={12} strokeWidth={3.3} /></View>} label="Listo" onPress={() => sorting.onSort("prepared")} style={styles.preparationValueFirst} /> : null}
-      <PanelHeaderCell {...sorting} align="left" sortKey="name" style={styles.quantityLeadingCell}>{leadingLabel}</PanelHeaderCell>
-      <PanelHeaderCell {...sorting} align="right" sortKey="quantity" style={styles.quantityValue}>{trailingLabel}</PanelHeaderCell>
-      {preparation && !preparationFirst ? <PanelHeaderCell {...sorting} sortKey="prepared" style={styles.preparationValue}>Listo</PanelHeaderCell> : null}
-    </View>
-  );
-}
-
 type MacrosSortKey = "carbs" | "fat" | "name" | "ppk" | "protein";
 function MacrosHeader({ leadingLabel, ...sorting }: HeaderSortProps<MacrosSortKey> & { leadingLabel: string }) {
   return (
@@ -490,17 +478,10 @@ function AllocationHeader({ leadingLabel, ...sorting }: HeaderSortProps<Allocati
 }
 
 export function FoodQuantityPanel({ editing, items, onOpenItem, preparation, preparationFirst = false }: { editing?: PanelRowEditing<FoodPanelItem>; items: FoodPanelItem[]; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; preparationFirst?: boolean }) {
-  const sorting = useTemporaryPanelSort(items, {
-    name: (item) => item.name,
-    prepared: (item) => preparation?.isPrepared(item) ?? false,
-    quantity: (item) => item.quantity,
-  });
-  const visibleItems = sorting.items;
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay alimentos." />;
   return (
     <PanelBody>
-      <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} preparationFirst={preparationFirst} trailingLabel="Qty" {...sorting} />
-      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => {
+      <PanelRows editing={editing} items={items} renderRow={(item, index, dragInteraction) => {
         const canOpen = item.detailId != null && Boolean(onOpenItem);
         const proposedPortion = proposedPortionLabel(item);
         const preparationCell = preparation ? (
@@ -515,7 +496,7 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation, pre
             <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
           </Pressable>
         ) : null;
-        return <View key={item.id} style={[styles.row, styles.foodQuantityRow, index === visibleItems.length - 1 && styles.rowLast]}>
+        return <View key={item.id} style={[styles.row, styles.foodQuantityRow, index === items.length - 1 && styles.rowLast]}>
           {preparationFirst ? preparationCell : null}
           <PanelItemName dragInteraction={dragInteraction} item={item} itemNameStyle={styles.quantityItemText} onOpenItem={canOpen ? onOpenItem : undefined} showNutritionSummary style={styles.quantityLeadingCell} />
           <View accessibilityLabel={`${decimal(item.quantity)} ${item.quantityUnit}${proposedPortion ? `. Equivale a ${proposedPortion}` : ""}`} style={[styles.quantityValue, styles.quantityValueStack]}>
@@ -893,7 +874,6 @@ const styles = StyleSheet.create({
   quantityEquivalent: { color: tokens.color.textMuted, fontSize: tokens.type.label, lineHeight: 15, textAlign: "right" },
   preparationValue: { width: 48 },
   preparationValueFirst: { width: 26 },
-  preparationHeaderIcon: { alignItems: "center", backgroundColor: tokens.color.food, borderColor: tokens.color.borderDefault, borderRadius: 9, borderWidth: 1, height: 18, justifyContent: "center", width: 18 },
   preparationButton: { alignItems: "center", alignSelf: "stretch", justifyContent: "center" },
   preparationMarker: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 2, height: 20, justifyContent: "center", width: 20 },
   preparationMarkerChecked: { backgroundColor: tokens.color.food, borderRadius: 5, height: 10, width: 10 },

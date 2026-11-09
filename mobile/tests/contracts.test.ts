@@ -517,8 +517,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.preparationValue, preparationFirst && styles\.preparationValueFirst, styles\.preparationButton\]\}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /styles\.preparationButton, preparation\.disabled && styles\.disabled/);
   assertSourceMatch(sharedEntityPanels, /quantityItemText: \{ fontSize: tokens\.type\.caption \+ 1 \}/);
-  assertSourceMatch(sharedEntityPanels, /sortKey="name" style=\{styles\.quantityLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);
-  assertSourceMatch(sharedEntityPanels, /sortKey="quantity" style=\{styles\.quantityValue\}>\{trailingLabel\}<\/PanelHeaderCell>/);
+  assertSourceDoesNotMatch(sharedEntityPanels, /<QuantityHeader/);
+  assertSourceMatch(sharedEntityPanels, /<PanelRows editing=\{editing\} items=\{items\} renderRow=/);
+  assertSourceMatch(sharedEntityPanels, /activeTab === "calories" \? <NutritionCaloriesPanel/);
+  assertSourceMatch(sharedEntityPanels, /activeTab === "macros" \? <NutritionMacrosPanel/);
+  assertSourceMatch(sharedEntityPanels, /activeTab === "distribution" \? <NutritionDistributionPanel/);
+  assertSourceMatch(sharedEntityPanels, /activeTab === "allocation" \? <NutritionAllocationPanel/);
   assertSourceDoesNotMatch(sharedEntityPanels, /quantityHeaderText/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} itemNameStyle=\{styles\.quantityItemText\}/);
   assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.quantityValue, styles\.quantityValueStack\]\}/);
@@ -538,7 +542,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /foodQuantityRow: \{ minHeight: 76, paddingVertical: tokens\.spacing\.sm \}/);
   assertSourceMatch(sharedEntityPanels, /editRow: \{ gap: 0 \}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /editRow: \{[^}]*minHeight/);
-  assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell \{\.\.\.sorting\} sortKey="prepared" style=\{styles\.preparationValue\}>Listo<\/PanelHeaderCell>/);
+  assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell \{\.\.\.sorting\} sortKey="calories" style=\{styles\.calorieValue\}>Cal<\/PanelHeaderCell>/);
   assertSourceDoesNotMatch(mealAdherence, /statusLabel|styles\.status/);
   assertSourceDoesNotMatch(mealAdherence, /Cumplimiento actualizado|Nota guardada|statusSaved|noteSaved/);
   assertSourceDoesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);
