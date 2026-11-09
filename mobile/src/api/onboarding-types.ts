@@ -32,6 +32,7 @@ export type OnboardingEstimate = {
 
 export type OnboardingStateData = {
   stage: OnboardingStage;
+  first_minutas_offer_available: boolean;
   birth_date: string | null;
   sex: string;
   height_cm: number | null;

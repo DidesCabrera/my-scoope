@@ -5,6 +5,7 @@ from accounts.services.onboarding import (
     accept_nutrition_onboarding_plan,
     complete_nutrition_onboarding,
     complete_nutrition_onboarding_v2,
+    first_minutas_offer_available,
     generate_nutrition_onboarding_plan,
     mark_nutrition_onboarding_intro_complete,
     nutrition_onboarding_estimate,
@@ -93,6 +94,7 @@ def _onboarding_state_payload(user):
         "estimate": estimate,
         "proposal_id": profile.onboarding_plan_proposal_id,
         "proposal_ids": onboarding_plan_proposal_ids(profile),
+        "first_minutas_offer_available": first_minutas_offer_available(profile),
     }
 
 
@@ -260,7 +262,5 @@ def onboarding_complete_v2(request):
     try:
         complete_nutrition_onboarding_v2(user=request.auth.user)
     except ValueError as exc:
-        message = ("Calendariza ambas minutas antes de completar el onboarding."
-                   if str(exc) == "onboarding_calendarization_incomplete" else "El onboarding aún no está listo para completarse.")
-        raise MobileAPIError(code=str(exc), message=message, status_code=409) from exc
+        raise MobileAPIError(code=str(exc), message="El onboarding aún no está listo para completarse.", status_code=409) from exc
     return success(profile_payload(request.auth.user))

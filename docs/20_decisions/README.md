@@ -250,3 +250,9 @@ Consequences
 - `0205-calendar-as-planning-authority.md`: establece un plan snapshot por fecha como
   autoridad de Hoy y del cumplimiento, con programas como proyecciones y periodos
   de progreso reiniciables sin borrar evidencia.
+- `0206-daily-minuta-visible-vocabulary.md`: adopta «Minuta diaria» como nombre visible
+  de `DailyPlan` para distinguirla de la planificación fechada del Calendario.
+- `0207-curated-preparations-as-meal-components.md`: define Preparaciones curadas como
+  componentes propios de Comida, publicados desde el catálogo central.
+- `0208-onboarding-estimate-first-welcome-minutas-offer.md`: cierra el onboarding tras
+  la estimación y traslada la primera generación gratuita a una invitación de Inicio.

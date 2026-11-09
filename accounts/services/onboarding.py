@@ -17,7 +17,6 @@ from notas.application.services.commands.proposal_commands import (
 )
 from notas.application.services.nutrition.body_metrics import calculate_age_years, record_weight
 from notas.domain.models import (
-    CalendarizedDay,
     DailyPlan,
     DailyPlanMeal,
     NutritionPreferenceProfile,
@@ -93,6 +92,16 @@ def onboarding_applied_dailyplan_ids(*, user, proposal_ids: list[int]) -> dict[i
             and applied_ids.get(proposal_id) in owned_ids}
 
 
+def first_minutas_offer_available(profile: Profile) -> bool:
+    """The welcome offer remains retryable until both free minutas are saved."""
+    if not profile.onboarding_completed_at or profile.onboarding_version != Profile.ONBOARDING_VERSION_NUTRITION_V2:
+        return False
+    ids = onboarding_plan_proposal_ids(profile)
+    return len(ids) != 2 or NutritionProposal.objects.filter(
+        pk__in=ids, created_by=profile.user, status=NutritionProposal.STATUS_APPLIED,
+    ).count() != 2
+
+
 def nutrition_onboarding_estimate(profile: Profile) -> dict:
     current_weight = profile.user.weight_logs.first()
     plan = estimate_daily_targets(TargetEstimationProfile(
@@ -133,6 +142,8 @@ def save_nutrition_onboarding_v2(
         raise ValueError("onboarding_dietary_pattern_invalid")
 
     profile = Profile.objects.select_for_update().get(user=user)
+    if profile.onboarding_completed_at:
+        raise ValueError("onboarding_already_completed")
     for prior_proposal in NutritionProposal.objects.select_for_update().filter(
         pk__in=onboarding_plan_proposal_ids(profile), created_by=user,
     ):
@@ -202,7 +213,8 @@ def generate_nutrition_onboarding_plan(*, user) -> tuple[NutritionProposal, Nutr
     proposals = generate_onboarding_catalog_minutas(user=user, estimate=estimate, preferences=preferences)
     profile.onboarding_plan_proposal_id = proposals[0].id
     profile.onboarding_plan_proposal_ids = [proposal.id for proposal in proposals]
-    profile.onboarding_stage = Profile.ONBOARDING_STAGE_PLAN
+    if profile.onboarding_stage != Profile.ONBOARDING_STAGE_COMPLETED:
+        profile.onboarding_stage = Profile.ONBOARDING_STAGE_PLAN
     profile.save(update_fields=["onboarding_plan_proposal_id", "onboarding_plan_proposal_ids", "onboarding_stage"])
     return proposals
 
@@ -253,25 +265,22 @@ def accept_nutrition_onboarding_plan(*, user) -> tuple[NutritionProposal, ...]:
             saved_ids.append(saved.id)
         applied_event.metadata = {**(applied_event.metadata or {}), "onboarding_library_meal_ids": saved_ids}
         applied_event.save(update_fields=["metadata"])
-    profile.onboarding_stage = Profile.ONBOARDING_STAGE_PLANS
-    profile.save(update_fields=["onboarding_stage"])
+    if profile.onboarding_stage != Profile.ONBOARDING_STAGE_COMPLETED:
+        profile.onboarding_stage = Profile.ONBOARDING_STAGE_PLANS
+        profile.save(update_fields=["onboarding_stage"])
     return proposals
 
 
 @transaction.atomic
 def complete_nutrition_onboarding_v2(*, user) -> Profile:
     profile = Profile.objects.select_for_update().get(user=user)
-    if profile.onboarding_stage != Profile.ONBOARDING_STAGE_PLANS:
+    if profile.onboarding_stage not in {
+        Profile.ONBOARDING_STAGE_SUMMARY,
+        Profile.ONBOARDING_STAGE_PLAN,
+        Profile.ONBOARDING_STAGE_PLANS,
+        Profile.ONBOARDING_STAGE_COMPLETED,
+    }:
         raise ValueError("onboarding_not_ready_to_complete")
-    proposal_ids = onboarding_plan_proposal_ids(profile)
-    if len(proposal_ids) == 2:
-        plan_ids = onboarding_applied_dailyplan_ids(user=user, proposal_ids=proposal_ids)
-        calendarized_ids = set(CalendarizedDay.objects.filter(
-            user=user, source_dailyplan_id__in=plan_ids.values(), source_kind=CalendarizedDay.SOURCE_MANUAL,
-            assignment_state=CalendarizedDay.STATE_CURRENT, plan_snapshot__isnull=False,
-        ).values_list("source_dailyplan_id", flat=True))
-        if len(plan_ids) != 2 or calendarized_ids != set(plan_ids.values()):
-            raise ValueError("onboarding_calendarization_incomplete")
     profile.onboarding_completed_at = profile.onboarding_completed_at or timezone.now()
     profile.onboarding_version = Profile.ONBOARDING_VERSION_NUTRITION_V2
     profile.onboarding_stage = Profile.ONBOARDING_STAGE_COMPLETED

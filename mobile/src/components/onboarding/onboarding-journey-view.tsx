@@ -1125,13 +1125,13 @@ function SummaryView({ index }: { index: number }) {
     </View>
   );
   return (
-    <ProfileStepLayout index={index} primary="Generar minutas">
+    <ProfileStepLayout index={index} primary="Continuar">
       <StepHeader description="Comprueba los datos y la estimación inicial antes de continuar." eyebrow="Resumen de la ficha" icon={Gauge} index={index} title="Revisa tu información" />
       <Card style={[styles.profileCard, styles.summaryCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
         {estimationInformationSection}
         {maintenanceSection}
         {nutritionGoalSection}
-        <Text style={[styles.description, styles.centeredText, styles.summaryClosingText]}>My Scoope generará 2 minutas que cumplan con este objetivo. Luego podrás llevarlas a tu calendario.</Text>
+        <Text style={[styles.description, styles.centeredText, styles.summaryClosingText]}>Este será tu punto de partida. En Inicio podrás probar gratis la creación de 2 minutas personalizadas y programarlas en tu calendario.</Text>
         {!storyboardSummaryLayout ? <Pressable accessibilityRole="button" onPress={controller.onAdjust ?? noop} style={styles.adjustNutritionAction}>
           <Text style={styles.adjustNutritionLabel}>Ajusta objetivo nutricional</Text>
         </Pressable> : null}

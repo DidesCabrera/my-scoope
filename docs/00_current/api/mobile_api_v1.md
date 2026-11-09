@@ -133,12 +133,13 @@ Mobile scopes are `mobile:read`, `mobile:write` and `mobile:account`.
 El onboarding Native usa un flujo reanudable sobre las mismas autoridades de perfil,
 Body Metrics, preferencias y propuestas que el resto del producto:
 
-- `GET /onboarding/state` devuelve la etapa y los datos ya persistidos;
+- `GET /onboarding/state` devuelve la etapa, los datos ya persistidos y `first_minutas_offer_available`;
 - `POST /onboarding/intro-complete` registra el término de la introducción;
 - `POST /onboarding/analyze` valida y guarda la ficha y devuelve la estimación;
-- `POST /onboarding/generate-plan` genera la propuesta del primer Plan diario;
-- `POST /onboarding/accept-plan` aprueba y aplica esa propuesta;
-- `POST /onboarding/complete` cierra la versión 2 tras llegar a la selección de plan.
+- `POST /onboarding/complete` cierra la versión 2 tras mostrar el cálculo nutricional y elegir plan; no depende de minutas ni calendario;
+- `PATCH /personal-records/preferences` recoge las preferencias al aceptar la invitación de Inicio;
+- `POST /onboarding/generate-plan` genera dos minutas sin consumir créditos y no cambia la etapa si el onboarding ya está completo;
+- `POST /onboarding/accept-plan` guarda ambas minutas y retira la invitación de Inicio; calendarizarlas es opcional y posterior.
 
 `POST /onboarding` permanece como contrato compatible de la versión 1 mientras el
 flujo Web productivo se normaliza. Ningún endpoint replica fórmulas nutricionales ni
