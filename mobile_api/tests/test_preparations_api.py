@@ -1,7 +1,9 @@
 import json
 from decimal import Decimal
+from datetime import timedelta
 
 from django.test import override_settings
+from django.utils import timezone
 
 from food_catalog.infrastructure.preparations import PreparationPublicationError, publish_preparation_version
 from food_catalog.infrastructure.releases import CatalogReleaseError, approve_catalog_release, build_catalog_release, import_catalog_release, release_envelope
@@ -14,7 +16,7 @@ from notas.application.services.cache.dailyplan_summary import refresh_dailyplan
 from notas.application.services.commands.meal_commands import copy_meal
 from notas.application.sharing.entities import build_meal_share_snapshot
 from notas.application.sharing.inbox import _meal_from_snapshot
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, MealPreparation, Preparation, Program, ProgramDay
+from notas.domain.models import CalendarizedDay, DailyPlan, DailyPlanMeal, Food, Meal, MealFood, MealPreparation, Preparation, Program, ProgramCalendarization, ProgramDay
 from notas.management.commands.import_food_catalog_release import _materialize_release
 
 
@@ -237,6 +239,51 @@ class PreparationAPITests(AuthenticatedMobileAPITestCase):
         relation.refresh_from_db()
         self.assertEqual(relation.preparation_id, replacement.id)
         self.assertEqual(relation.quantity_g, Decimal("100"))
+
+    def test_calendarized_meal_can_add_resize_and_remove_preparation_snapshot(self):
+        self._publish_and_materialize(self.v1)
+        preparation = Preparation.objects.get()
+        today = timezone.localdate()
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user, program_name_snapshot="Programa activo", start_date=today,
+            end_date=today + timedelta(days=6), timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization, calendar_date=today, week_number=1, day_number=1,
+            plan_snapshot={"schema_version": "calendarized_dailyplan.v1", "name": "Plan activo", "meals": [{"key": "meal:1", "name": "Almuerzo", "foods": [], "totals": {}}], "totals": {}},
+        )
+
+        added = self.client.post(
+            f"/api/v1/program/days/{day.id}/meals/meal:1/preparations",
+            data=json.dumps({"preparation_id": preparation.id, "units": 1}),
+            content_type="application/json",
+        )
+        self.assertEqual(added.status_code, 200)
+        day.refresh_from_db()
+        component = day.plan_snapshot["meals"][0]["foods"][0]
+        self.assertEqual(component["component_type"], "preparation")
+        self.assertEqual(component["source_preparation_id"], preparation.id)
+        self.assertEqual(component["portion_display_measure"], "unidad")
+
+        changed = self.client.patch(
+            f"/api/v1/program/days/{day.id}/meals/meal:1/preparations/{component['key']}",
+            data=json.dumps({"preparation_id": preparation.id, "grams": 20}),
+            content_type="application/json",
+        )
+        self.assertEqual(changed.status_code, 200)
+        day.refresh_from_db()
+        changed_component = day.plan_snapshot["meals"][0]["foods"][0]
+        self.assertEqual(changed_component["quantity_g"], 20)
+        self.assertEqual(changed_component["portion_display_measure"], "g")
+        self.assertEqual(len(changed_component["ingredients"]), 1)
+
+        removed = self.client.delete(
+            f"/api/v1/program/days/{day.id}/meals/meal:1/foods/{changed_component['key']}"
+        )
+        self.assertEqual(removed.status_code, 200)
+        day.refresh_from_db()
+        self.assertEqual(day.plan_snapshot["meals"][0]["foods"], [])
 
     def test_copy_and_share_preserve_preparation_identity(self):
         version = self._publish_and_materialize(self.v1)

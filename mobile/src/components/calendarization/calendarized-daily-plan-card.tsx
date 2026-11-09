@@ -79,7 +79,7 @@ export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId
       afterNutrition={meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} mealNutrition={meals.map((meal) => ({ calories: snapshotCalories(meal.totals), carbsGrams: meal.totals?.carbs_g ?? 0, fatGrams: meal.totals?.fat_g ?? 0, key: meal.key, proteinGrams: meal.totals?.protein_g ?? 0 }))} /> : undefined}
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       collapsiblePanel
-      dailyPlanFoodsPanel={<FoodPanels items={foods} nestedScroll onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} showEditTab={false} />}
+      dailyPlanFoodsPanel={<FoodPanels items={foods} nestedScroll onOpenItem={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }} showEditTab={false} />}
       entity="dailyPlan"
       eyebrow={eyebrow}
       eyebrowAccessory={<HeaderMetadataChip kind="date" value={dateLabel} />}
@@ -87,7 +87,7 @@ export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId
       initialPanelExpanded={initialPanelExpanded}
       indicators={[
         { icon: "meal", label: "comidas", value: meals.length },
-        { icon: "food", label: "alimentos", value: foodsCount },
+        { icon: "food", label: "componentes", value: foodsCount },
         ...(supplementsCount ? [{ icon: "supplement" as const, label: "sups", value: supplementsCount }] : []),
       ]}
       nutrition={{

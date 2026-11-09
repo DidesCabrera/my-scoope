@@ -65,8 +65,11 @@ export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
       carbsGrams: totals.carbs_g ?? 0,
       fatAllocation: contextualAllocation(totals, meal.totals, "fat_g"),
       fatGrams: totals.fat_g ?? 0,
-      detailId: food.detail_id ?? undefined,
+      detailId: food.component_type === "preparation"
+        ? food.source_preparation_id ?? undefined
+        : food.detail_id ?? food.source_food_id ?? undefined,
       id: food.key ?? `food-${index}`,
+      kind: food.component_type === "preparation" ? "preparation" : "food",
       name: food.name ?? "Alimento",
       proteinAllocation: contextualAllocation(totals, meal.totals, "protein_g"),
       proteinGrams: totals.protein_g ?? 0,
@@ -86,6 +89,7 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     carbsGrams: number;
     detailId?: number;
     fatGrams: number;
+    kind: "food" | "preparation";
     name: string;
     proteinGrams: number;
     quantity: number;
@@ -97,16 +101,20 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
   meals.forEach((meal) => {
     (meal.foods ?? []).forEach((food) => {
       const name = food.name?.trim() || "Alimento";
-      const detailId = food.detail_id ?? undefined;
+      const detailId = food.component_type === "preparation"
+        ? food.source_preparation_id ?? undefined
+        : food.detail_id ?? food.source_food_id ?? undefined;
       const quantityUnit = food.quantity_unit ?? "g";
+      const componentKind = food.component_type === "preparation" ? "preparation" : "food";
       const key = detailId != null
-        ? `food:${detailId}:${quantityUnit}`
+        ? `${componentKind}:${detailId}:${quantityUnit}`
         : `name:${name.toLocaleLowerCase("es-CL")}:${quantityUnit}`;
       const current = aggregated.get(key) ?? {
         carbsGrams: 0,
         detailId,
         fatGrams: 0,
         name,
+        kind: componentKind,
         proteinGrams: 0,
         quantity: 0,
         quantityUnit,
@@ -155,6 +163,7 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     fatGrams: food.fatGrams,
     detailId: food.detailId,
     id: food.id,
+    kind: food.kind,
     name: food.name,
     proteinAllocation: allocations[index].protein,
     proteinGrams: food.proteinGrams,

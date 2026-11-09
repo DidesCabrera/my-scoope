@@ -144,6 +144,13 @@ export default function CalendarizedMealDetailScreen() {
     ),
     onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
   };
+  const preparationEditing: FoodPanelEditing = {
+    ...foodEditing,
+    onEditPortion: (preparation) => {
+      if (preparation.detailId) router.push({ pathname: "/pickers/preparation-to-meal", params: { dayId: String(dayId), mealKey, preparationId: String(preparation.detailId), snapshotKey: preparation.id } } as Href);
+    },
+    onReplace: (preparation) => router.push({ pathname: "/pickers/preparation-to-meal", params: { dayId: String(dayId), mealKey, snapshotKey: preparation.id, replace: "1" } } as Href),
+  };
   return (
     <>
     <NestableScrollContainer
@@ -158,7 +165,7 @@ export default function CalendarizedMealDetailScreen() {
         completion={{ noteCount: execution && normalizeMealExecutionItem(execution).note.trim() ? 1 : 0 }}
         eyebrowAccessory={meal.hour ? <HeaderMetadataChip kind="time" value={meal.hour.slice(0, 5)} /> : undefined}
         indicators={[
-          { icon: "food", label: "alimentos", value: foods.length },
+          { icon: "food", label: "componentes", value: foods.length },
         ]}
         nutrition={{
           calories: snapshotCalories(totals),
@@ -172,7 +179,7 @@ export default function CalendarizedMealDetailScreen() {
             editing={foodEditing}
             items={foods}
             nestedScroll
-            onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
+            onOpenItem={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }}
             preparation={adherence.available ? {
               disabled: savingPreparedFood,
               isPrepared: (food) => execution ? normalizeMealExecutionItem(execution).prepared_food_keys.includes(food.id) : false,
@@ -180,12 +187,11 @@ export default function CalendarizedMealDetailScreen() {
             } : undefined}
           />
         </EntityDetailSection>
-        <Button
-          label="+ Agregar alimento"
-          onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
-          variant="chipPrimary"
-        />
-        {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" /><FoodDetailCardList editing={() => foodEditing} items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} /></> : null}
+        <View style={styles.componentActions}>
+          <Button label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))} variant="chipPrimary" />
+          <Button label="+ Agregar preparación" onPress={() => router.push({ pathname: "/pickers/preparation-to-meal", params: { dayId: String(dayId), mealKey } } as Href)} variant="chipPrimary" />
+        </View>
+        {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Revisa el aporte de cada alimento y preparación a esta comida en curso." title="Detalle de cada componente" /><FoodDetailCardList editing={(component) => component.kind === "preparation" ? preparationEditing : foodEditing} items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }} /></> : null}
         <MealNoteCard controller={adherence} />
       </EntityDetailPage>
     </NestableScrollContainer>
@@ -231,6 +237,7 @@ export default function CalendarizedMealDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  componentActions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },

@@ -506,7 +506,11 @@ export type MealSnapshot = {
   totals?: MacroTotals;
   foods?: {
     key?: string;
+    component_type?: "food" | "preparation";
     detail_id?: number | null;
+    source_food_id?: number | null;
+    source_preparation_id?: number | null;
+    source_preparation_version?: number | null;
     name?: string;
     quantity_g?: number | null;
     quantity_unit?: "g" | "ml" | null;
@@ -517,6 +521,13 @@ export type MealSnapshot = {
     carbs_g?: number | null;
     fat_g?: number | null;
     total_kcal?: number | null;
+    ingredients?: {
+      source_food_id?: number | null;
+      name?: string;
+      quantity_g?: number | null;
+      preparation_state?: string;
+      is_condiment?: boolean;
+    }[];
   }[];
 };
 

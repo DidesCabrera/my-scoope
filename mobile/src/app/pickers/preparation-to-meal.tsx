@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { PreparationDetail } from "@/api/preparations";
-import type { LibraryItem } from "@/api/types";
+import type { CalendarizedDayDetail, LibraryItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPortionField } from "@/components/pickers/food-portion-field";
@@ -22,8 +22,10 @@ import { tokens } from "@/design/tokens";
 const unitOptions = Array.from({ length: 20 }, (_, index) => (index + 1) / 2);
 
 export default function PreparationToMealPicker() {
-  const { mealId, relationId, preparationId, replace } = useLocalSearchParams<{ mealId?: string; relationId?: string; preparationId?: string; replace?: string }>();
+  const { dayId, mealId, mealKey, relationId, preparationId, replace, snapshotKey } = useLocalSearchParams<{ dayId?: string; mealId?: string; mealKey?: string; relationId?: string; preparationId?: string; replace?: string; snapshotKey?: string }>();
   const meal = Number(mealId);
+  const day = Number(dayId);
+  const calendarized = Number.isInteger(day) && day > 0 && Boolean(mealKey);
   const relation = Number(relationId);
   const selectedPreparationId = Number(preparationId);
   const router = useRouter();
@@ -41,9 +43,9 @@ export default function PreparationToMealPicker() {
   const [showEvidence, setShowEvidence] = useState(false);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ mode: "back", fallback: `/libraries/meals/${meal}` as Href, title: replace === "1" ? "Reemplazar preparación" : relation ? "Editar porción" : "Agregar preparación" });
+    setHeaderPresentation({ mode: "back", fallback: calendarized ? `/program/days/${day}/meals/${encodeURIComponent(mealKey!)}` as Href : `/libraries/meals/${meal}` as Href, title: replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Editar porción" : "Agregar preparación" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [meal, relation, replace, setHeaderPresentation]));
+  }, [calendarized, day, meal, mealKey, relation, replace, setHeaderPresentation, snapshotKey]));
 
   useEffect(() => {
     if (status !== "authenticated" || selectedPreparationId) return;
@@ -60,18 +62,26 @@ export default function PreparationToMealPicker() {
     let active = true;
     void (async () => {
       try {
-        const [detail, saved] = await Promise.all([
-          apiRequest<PreparationDetail>(`/api/v1/preparations/${selectedPreparationId}`),
-          apiRequest<LibraryItem>(`/api/v1/library/meals/${meal}`),
-        ]);
+        const detail = await apiRequest<PreparationDetail>(`/api/v1/preparations/${selectedPreparationId}`);
+        const saved = calendarized
+          ? await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day}`)
+          : await apiRequest<LibraryItem>(`/api/v1/library/meals/${meal}`);
         if (relation) {
-          const row = saved.panel.preparations?.find((item) => item.relation_id === relation);
+          const row = "panel" in saved ? saved.panel.preparations?.find((item) => item.relation_id === relation) : undefined;
           if (row && active) {
             setMode(row.selection_mode);
             setAmount(String(row.selection_mode === "units" ? row.selected_units ?? 1 : row.quantity_g));
           }
         }
-        if (active) { setSelected(detail); setMealItem(saved); }
+        if (calendarized && snapshotKey && "plan_snapshot" in saved) {
+          const row = saved.plan_snapshot?.meals?.find((item) => item.key === mealKey)?.foods?.find((item) => item.key === snapshotKey);
+          if (row && active) {
+            const household = row.portion_display_measure && row.portion_display_measure !== "g";
+            setMode(household ? "units" : "grams");
+            setAmount(String(household ? row.portion_display_quantity ?? 1 : row.quantity_g ?? detail.grams));
+          }
+        }
+        if (active) { setSelected(detail); if ("panel" in saved) setMealItem(saved); }
       } catch (failure) {
         if (active) setError(userFacingError(failure));
       } finally {
@@ -79,7 +89,7 @@ export default function PreparationToMealPicker() {
       }
     })();
     return () => { active = false; };
-  }, [apiRequest, meal, relation, selectedPreparationId, status]);
+  }, [apiRequest, calendarized, day, meal, mealKey, relation, selectedPreparationId, snapshotKey, status]);
 
   const selectedId = selected?.id;
   const numericAmount = Number(amount.replace(",", "."));
@@ -98,16 +108,16 @@ export default function PreparationToMealPicker() {
   }, [amountValid, apiRequest, mode, numericAmount, selectedId, status]);
 
   async function save() {
-    if (!selected || !previewReady || !mealItem || busy) return;
+    if (!selected || !previewReady || (!calendarized && !mealItem) || busy) return;
     setBusy(true);
     setError(null);
     try {
       const payload = mode === "units" ? { units: numericAmount, grams: null } : { units: null, grams: numericAmount };
-      const url = relation
-        ? `/api/v1/library/meals/${meal}/preparations/${relation}`
-        : `/api/v1/library/meals/${meal}/preparations`;
-      await apiRequest(url, { method: relation ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(relation && replace !== "1" ? payload : { preparation_id: selected.id, ...payload }) });
-      router.dismissTo(`/libraries/meals/${meal}` as Href);
+      const url = calendarized
+        ? `/api/v1/program/days/${day}/meals/${encodeURIComponent(mealKey!)}/preparations${snapshotKey ? `/${encodeURIComponent(snapshotKey)}` : ""}`
+        : relation ? `/api/v1/library/meals/${meal}/preparations/${relation}` : `/api/v1/library/meals/${meal}/preparations`;
+      await apiRequest(url, { method: relation || snapshotKey ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ preparation_id: selected.id, ...payload }) });
+      router.dismissTo((calendarized ? `/program/days/${day}/meals/${encodeURIComponent(mealKey!)}` : `/libraries/meals/${meal}`) as Href);
     } catch (failure) {
       setError(userFacingError(failure));
     } finally {
@@ -115,7 +125,7 @@ export default function PreparationToMealPicker() {
     }
   }
 
-  if (!Number.isInteger(meal) || meal <= 0) return <Redirect href="/libraries/meals" />;
+  if (!calendarized && (!Number.isInteger(meal) || meal <= 0)) return <Redirect href="/libraries/meals" />;
   if (status === "anonymous") return <Redirect href="/login" />;
   if (selectedPreparationId && loading && !selected) return <LoadingState label="Preparando la porción…" />;
 
@@ -127,7 +137,7 @@ export default function PreparationToMealPicker() {
           actionLabel="Seleccionar"
           detail={item}
           key={item.id}
-          onAction={() => router.push({ pathname: "/pickers/preparation-to-meal", params: { mealId: String(meal), preparationId: String(item.id), ...(relation && replace === "1" ? { relationId: String(relation), replace } : {}) } })}
+          onAction={() => router.push({ pathname: "/pickers/preparation-to-meal", params: { ...(calendarized ? { dayId: String(day), mealKey, snapshotKey } : { mealId: String(meal) }), preparationId: String(item.id), ...(replace === "1" ? { replace } : {}), ...(relation ? { relationId: String(relation) } : {}) } })}
           onOpenItem={(component) => {
             if (component.detailId != null) router.push((component.kind === "preparation" ? `/libraries/preparations/${component.detailId}` : `/libraries/foods/${component.detailId}`) as Href);
           }}
@@ -156,7 +166,7 @@ export default function PreparationToMealPicker() {
       <PreparationPickerCard detail={selected} onOpenItem={(item) => {
         if (item.detailId != null) router.push((item.kind === "preparation" ? `/libraries/preparations/${item.detailId}` : `/libraries/foods/${item.detailId}`) as Href);
       }} selected />
-      {previewReady && mealItem ? <PreparationMealPreviewCard meal={mealItem} relationId={relation || undefined} selected={selected} /> : <Text style={styles.empty}>Actualizando la previsualización de la comida…</Text>}
+      {previewReady && mealItem ? <PreparationMealPreviewCard meal={mealItem} relationId={relation || undefined} selected={selected} /> : calendarized ? <Text style={styles.empty}>El cambio se aplicará solo a esta comida en curso.</Text> : <Text style={styles.empty}>Actualizando la previsualización de la comida…</Text>}
       <Card muted>
         <Text style={styles.cardTitle}>Información adicional</Text>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Sodio</Text><Text style={styles.infoValue}>{selected.nutrition.sodium_mg == null ? "Sin dato" : `${formatPreparationNumber(selected.nutrition.sodium_mg, 0)} mg`}</Text></View>
@@ -165,7 +175,7 @@ export default function PreparationToMealPicker() {
         <Pressable accessibilityRole="button" onPress={() => setShowEvidence((current) => !current)} style={styles.evidenceToggle}><Text style={styles.evidenceToggleText}>{showEvidence ? "Ocultar estimación" : "Ver cómo se estimó la porción"}</Text></Pressable>
         {showEvidence ? <Text style={styles.sourceNote}>Versión {selected.version}{selected.evidence.yield_evidence ? ` · ${selected.evidence.yield_evidence}` : ""}</Text> : null}
       </Card>
-      <Button disabled={!previewReady || !mealItem} label={replace === "1" ? "Reemplazar preparación" : relation ? "Actualizar porción" : "Agregar a la comida"} loading={busy} onPress={() => void save()} />
+      <Button disabled={!previewReady || (!calendarized && !mealItem)} label={replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Actualizar porción" : "Agregar a la comida"} loading={busy} onPress={() => void save()} />
     </> : null}
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
   </Screen>;
