@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
   commitmentCopy: { flex: 1, gap: tokens.spacing.xs },
   commitmentIcon: { alignItems: "center", borderRadius: 10, height: 40, justifyContent: "center", width: 40 },
   commitmentNote: { color: tokens.color.textMuted, fontSize: 13, lineHeight: 19 },
-  homeActionChip: { alignItems: "center", alignSelf: "flex-end", borderColor: tokens.color.borderDefault, borderRadius: 999, borderWidth: 1, flexDirection: "row", gap: 6, justifyContent: "center", minHeight: 34, paddingHorizontal: 12 },
+  homeActionChip: { alignItems: "center", alignSelf: "flex-end", borderColor: tokens.color.borderDefault, borderRadius: 999, borderWidth: 1, flexDirection: "row", gap: 6, justifyContent: "center", marginRight: -12, minHeight: 34, paddingHorizontal: 12 },
   homeActionChipLabel: { color: tokens.color.textMain, fontSize: 13, fontWeight: "700" },
   homeCalendarActionChip: { borderColor: tokens.color.borderDefault, marginTop: tokens.spacing.sm + 6 },
   commitmentRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
