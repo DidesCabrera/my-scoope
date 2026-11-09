@@ -142,6 +142,12 @@ class PreparationAPITests(AuthenticatedMobileAPITestCase):
         response = self.client.get(f"/api/v1/preparations/{preparation.id}?units=1.5")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["data"]["grams"], 60)
+        ingredient = response.json()["data"]["ingredients"][0]
+        self.assertEqual(ingredient["quantity_g"], 75)
+        self.assertEqual(ingredient["protein_g"], 7.5)
+        self.assertEqual(ingredient["carbs_g"], 15)
+        self.assertEqual(ingredient["fat_g"], 3.75)
+        self.assertEqual(ingredient["calories"], 123.75)
         response = self.client.post(
             f"/api/v1/library/meals/{meal.id}/preparations",
             data=json.dumps({"preparation_id": preparation.id, "units": 1.5}),
@@ -150,6 +156,15 @@ class PreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(MealPreparation.objects.get().quantity_g, Decimal("60"))
         self.assertEqual(Meal.objects.get(pk=meal.pk).is_draft, False)
+        panel = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]["panel"]["preparations"][0]
+        self.assertEqual(panel["protein_g"], 7.5)
+        self.assertEqual(panel["carbs_g"], 15)
+        self.assertEqual(panel["fat_g"], 3.75)
+        self.assertEqual(panel["ingredients"][0]["calories"], 123.75)
+        self.operational_food.protein = 90
+        self.operational_food.save(update_fields=["protein"])
+        frozen = self.client.get(f"/api/v1/preparations/{preparation.id}?units=1.5").json()["data"]
+        self.assertEqual(frozen["ingredients"][0]["protein_g"], 7.5)
         invalid = self.client.post(
             f"/api/v1/library/meals/{meal.id}/preparations",
             data=json.dumps({"preparation_id": preparation.id, "units": 0.7}),

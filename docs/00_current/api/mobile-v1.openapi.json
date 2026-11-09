@@ -6822,6 +6822,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -7908,6 +7909,18 @@
       },
       "LibraryPreparationIngredientData": {
         "properties": {
+          "calories": {
+            "title": "Calories",
+            "type": "number"
+          },
+          "carbs_g": {
+            "title": "Carbs G",
+            "type": "number"
+          },
+          "fat_g": {
+            "title": "Fat G",
+            "type": "number"
+          },
           "food_id": {
             "title": "Food Id",
             "type": "integer"
@@ -7924,6 +7937,10 @@
             "title": "Preparation State",
             "type": "string"
           },
+          "protein_g": {
+            "title": "Protein G",
+            "type": "number"
+          },
           "quantity_g": {
             "title": "Quantity G",
             "type": "number"
@@ -7934,7 +7951,11 @@
           "name",
           "quantity_g",
           "preparation_state",
-          "is_condiment"
+          "is_condiment",
+          "protein_g",
+          "carbs_g",
+          "fat_g",
+          "calories"
         ],
         "title": "LibraryPreparationIngredientData",
         "type": "object"
@@ -7952,9 +7973,17 @@
             "title": "Calories",
             "type": "number"
           },
+          "carbs_g": {
+            "title": "Carbs G",
+            "type": "number"
+          },
           "detail_id": {
             "title": "Detail Id",
             "type": "integer"
+          },
+          "fat_g": {
+            "title": "Fat G",
+            "type": "number"
           },
           "household_label": {
             "title": "Household Label",
@@ -7970,6 +7999,10 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "protein_g": {
+            "title": "Protein G",
+            "type": "number"
           },
           "quantity_g": {
             "title": "Quantity G",
@@ -8023,6 +8056,9 @@
           "selection_mode",
           "household_label",
           "calories",
+          "protein_g",
+          "carbs_g",
+          "fat_g",
           "allergens",
           "ingredients"
         ],
@@ -9583,6 +9619,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -12080,6 +12117,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -12127,6 +12165,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12213,6 +12252,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12229,6 +12269,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12245,6 +12286,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12261,6 +12303,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12277,6 +12320,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12293,6 +12337,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12309,6 +12354,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12325,6 +12371,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {

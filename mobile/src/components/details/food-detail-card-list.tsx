@@ -24,8 +24,8 @@ export function FoodDetailCardList({ items, onOpenFood }: { items: FoodPanelItem
                 <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
               </EntityCardAction>
             ) : undefined}
-            entity="food"
-            eyebrow="Alimento"
+            entity={item.kind === "preparation" ? "meal" : "food"}
+            eyebrow={item.kind === "preparation" ? "Preparación" : "Alimento"}
             foodEmoji={item.emoji}
             foodVisualKey={item.visualKey}
             headingLink={openDetail ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined}

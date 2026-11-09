@@ -9,6 +9,10 @@ class LibraryPreparationIngredientData(Schema):
     quantity_g: float
     preparation_state: str
     is_condiment: bool
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    calories: float
 
 
 class LibraryPreparationPanelItemData(Schema):
@@ -21,6 +25,9 @@ class LibraryPreparationPanelItemData(Schema):
     selection_mode: Literal["units", "grams"]
     household_label: str
     calories: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
     sodium_mg: float | None = None
     allergens: list[str]
     ingredients: list[LibraryPreparationIngredientData]

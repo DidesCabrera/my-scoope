@@ -34,7 +34,11 @@ class LibraryProjectionPerformanceTests(PaidMobileAPITestCase):
             preparation=preparation, version=1, release_version="test", yield_g=Decimal("100"),
             default_portion_g=Decimal("50"), household_label="taza", protein_g=Decimal("13"),
             carbs_g=Decimal("68"), fat_g=Decimal("7"), sodium_mg=Decimal("0"),
-            allergens=[], allergen_status="confirmed", ingredients_snapshot=[{"name": "Avena"}],
+            allergens=[], allergen_status="confirmed", ingredients_snapshot=[{
+                "name": "Avena", "nutrition_per_100g": {
+                    "protein_g": "13", "carbs_g": "68", "fat_g": "7", "sodium_mg": "0",
+                },
+            }],
             content_sha256="test",
         )
         preparation.current_version = version

@@ -9,6 +9,7 @@ from ninja import Field, Router, Schema
 from mobile_api.api_support import require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
+from mobile_api.preparation_projections import ingredient_payload
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
@@ -80,16 +81,7 @@ def _detail(preparation, *, units=None, grams=None):
         "allergens": version.allergens,
         "allergen_status": version.allergen_status,
         "evidence": version.evidence,
-        "ingredients": [
-            {
-                "food_id": row.food_id,
-                "name": version.ingredients_snapshot[index]["name"],
-                "quantity_g": round(float(row.quantity_g * factor), 3),
-                "preparation_state": row.preparation_state,
-                "is_condiment": row.is_condiment,
-            }
-            for index, row in enumerate(ingredients)
-        ],
+        "ingredients": [ingredient_payload(row, version.ingredients_snapshot[index], factor) for index, row in enumerate(ingredients)],
     }
 
 

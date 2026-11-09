@@ -306,7 +306,7 @@ test("library details open every composition flow and program days remain editab
   const comparisonSection = detail.indexOf('title={sectionTitles[item.panel.kind]}');
   const addFoodAction = detail.indexOf('label="+ Agregar alimento"');
   assert.ok(comparisonSection < detail.indexOf('label="+ Agregar alimento"'));
-  assert.ok(addFoodAction < detail.indexOf('title="Detalle de cada Alimento"'));
+  assert.ok(addFoodAction < detail.indexOf('title="Detalle de cada componente"'));
   assert.ok(comparisonSection < detail.indexOf('label="+ Agregar Comida"'));
   assert.ok(detail.indexOf('label="+ Agregar Comida"') < detail.indexOf('title="Detalle de cada Comida"'));
   matches(detail, /FoodPanels editing=\{foodEditing\}/);

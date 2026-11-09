@@ -168,7 +168,12 @@ test("meal details reuse food entity cards across library and calendarized conte
   const calendarized = await source("src/app/program/days/[id]/meals/[mealKey].tsx");
   const foodCards = await source("src/components/details/food-detail-card-list.tsx");
 
-  assert.match(library, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada Alimento" \/><FoodDetailCardList/);
+  assert.match(library, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada componente" \/><FoodDetailCardList/);
+  assert.ok(library.includes("preparationPanelItem(preparation, item.nutrition)"));
+  assert.ok(library.includes('pathname: "/libraries/preparations/[id]"'));
+  const preparation = await source("src/app/libraries/preparations/[id].tsx");
+  assert.ok(preparation.includes("<FoodPanels items={ingredients}"));
+  assert.ok(preparation.includes("<FoodDetailCardList items={ingredients}"));
   assert.match(library, /\/libraries\/foods\/\$\{food\.detailId\}/);
   assert.match(calendarized, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada Alimento" \/><FoodDetailCardList/);
   assert.match(foodCards, /<NutritionEntityCard/);

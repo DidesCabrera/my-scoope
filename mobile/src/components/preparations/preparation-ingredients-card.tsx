@@ -22,6 +22,10 @@ const preparationStates: Record<string, string> = {
   steamed: "Al vapor",
 };
 
+export function preparationStateLabel(state: string): string {
+  return preparationStates[state] ?? state.replaceAll("_", " ");
+}
+
 const allergenNames: Record<string, string> = {
   egg: "Huevo", fish: "Pescado", gluten: "Gluten", milk: "Leche", peanut: "Maní", sesame: "Sésamo",
   shellfish: "Mariscos", soy: "Soya", tree_nut: "Frutos secos", wheat: "Trigo",
@@ -52,7 +56,7 @@ export function PreparationIngredientsCard({ ingredients, onOpenFood }: { ingred
             style={({ pressed }) => [styles.row, index === ingredients.length - 1 && styles.lastRow, pressed && styles.pressed]}>
             <View style={styles.copy}>
               <Text style={styles.name}>{ingredient.name}</Text>
-              <Text style={styles.meta}>{preparationStates[ingredient.preparation_state] ?? ingredient.preparation_state.replaceAll("_", " ")}{ingredient.is_condiment ? " · Condimento" : ""}</Text>
+              <Text style={styles.meta}>{preparationStateLabel(ingredient.preparation_state)}{ingredient.is_condiment ? " · Condimento" : ""}</Text>
             </View>
             <Text style={styles.amount}>{formatPreparationNumber(ingredient.quantity_g)} g</Text>
             <ChevronRight color={tokens.color.textSoft} size={18} />
