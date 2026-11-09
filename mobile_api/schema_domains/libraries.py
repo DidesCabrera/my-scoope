@@ -60,7 +60,7 @@ class LibraryNutritionData(Schema):
 
 
 class LibraryIndicatorData(Schema):
-    icon: Literal["day", "food", "meal", "dailyPlan", "supplement", "week"] | None = None
+    icon: Literal["day", "food", "meal", "preparation", "dailyPlan", "supplement", "week"] | None = None
     label: str
     value: int | str
 

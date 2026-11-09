@@ -1,4 +1,4 @@
-import { Bookmark, CalendarClock, Clock3, Copy, Info, MoreHorizontal, Pencil, Scale, Send, Trash2 } from "lucide-react-native";
+import { Bookmark, CalendarClock, Clock3, Copy, Info, MoreHorizontal, Pencil, RefreshCw, Scale, Send, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -41,6 +41,8 @@ type LibraryActionsProps = {
   onOpenInformation?: () => void;
   onRemoveFromCalendar?: () => Promise<void>;
   onRemove?: () => Promise<void>;
+  removeContext?: "calendarizedDay";
+  onReplace?: () => void;
   onSaveToLibrary?: () => Promise<void>;
   onVisibleChange?: (visible: boolean) => void;
   renderTrigger?: (open: () => void) => ReactNode;
@@ -65,7 +67,7 @@ const entityLabels = {
   program: "este programa",
 } as const;
 
-export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCalendarize, onCompare, onEdit, onOpenInformation, onRemoveFromCalendar, onRemove, onSaveToLibrary, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
+export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCalendarize, onCompare, onEdit, onOpenInformation, onRemoveFromCalendar, onRemove, onReplace, onSaveToLibrary, onVisibleChange, removeContext, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
   const shareAction = actions.find((action) => action.key === "share");
   const remainingActions = actions.filter((action) => action.key !== "share");
@@ -84,7 +86,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     onVisibleChange?.(nextVisible);
   };
 
-  if (!actions.length && !mealTimeChange && !onCalendarize && !onCompare && !onEdit && !onOpenInformation && !onRemoveFromCalendar && !onRemove && !onSaveToLibrary) return null;
+  if (!actions.length && !mealTimeChange && !onCalendarize && !onCompare && !onEdit && !onOpenInformation && !onRemoveFromCalendar && !onRemove && !onReplace && !onSaveToLibrary) return null;
 
   const close = () => {
     if (submitting) return;
@@ -286,6 +288,17 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                   />
                 ) : null}
 
+                {onReplace ? (
+                  <ActionSheetAction
+                    icon={RefreshCw}
+                    label="Reemplazar comida"
+                    onPress={() => {
+                      setVisible(false);
+                      onReplace();
+                    }}
+                  />
+                ) : null}
+
                 {onSaveToLibrary ? (
                   <ActionSheetAction
                     disabled={submitting}
@@ -373,7 +386,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
 
                 {selected?.key === "remove" ? (
                   <View style={styles.confirmation}>
-                    <Text style={styles.confirmationText}>Se quitará esta comida de la minuta diaria.</Text>
+                    <Text style={styles.confirmationText}>{removeContext === "calendarizedDay" ? "Se quitará esta comida del día calendarizado. La comida permanecerá en tu biblioteca." : "Se quitará esta comida de la minuta diaria."}</Text>
                     <Button label="Quitar comida" loading={submitting} onPress={() => void removeItem()} variant="danger" />
                     <Button label="Cancelar" onPress={() => setSelected(null)} variant="secondary" />
                   </View>

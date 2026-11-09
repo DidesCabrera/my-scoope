@@ -13,8 +13,33 @@ test("food rows expose a consistent detail navigation affordance", async () => {
   assertSourceMatch(panels, /onOpenItem\?\.\(item\)/);
   assertSourceDoesNotMatch(panels, /<ChevronRight color=\{tokens\.color\.textMuted\} size=\{17\}/);
   assertSourceMatch(detail, /`\/libraries\/foods\/\$\{food\.detailId\}`/);
-  assertSourceMatch(detail, /<FoodDetailCardList items=\{foodItems\} onOpenFood=\{openFood\}/);
-  assertSourceMatch(activeMeal, /<FoodDetailCardList items=\{foods\} onOpenFood=/);
+  assertSourceMatch(detail, /<FoodDetailCardList editing=\{\(component\) => component\.kind === "preparation" \? preparationEditing : foodEditing\} items=\{foodItems\} onOpenFood=\{openFood\}/);
+  assertSourceMatch(activeMeal, /<FoodDetailCardList editing=\{\(\) => foodEditing\} items=\{foods\} onOpenFood=/);
+});
+
+test("meal component cards offer portion, replacement, and scoped removal before detail navigation", async () => {
+  const cards = await readTestFile(path.resolve(process.cwd(), "src/components/details/food-detail-card-list.tsx"), "utf8");
+  const detail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
+  const picker = await readTestFile(path.resolve(process.cwd(), "src/app/pickers/preparation-to-meal.tsx"), "utf8");
+
+  assertSourceMatch(cards, /label: "Editar porción"/);
+  assertSourceMatch(cards, /label: `Reemplazar \$\{componentLabel\}`/);
+  assertSourceMatch(cards, /label: `Quitar \$\{componentLabel\}`/);
+  assertSourceMatch(cards, /<ContextCardActions[\s\S]*?<EntityCardAction label=\{`Ver detalle/);
+  assertSourceMatch(detail, /\/preparations\/\$\{preparation\.relationId\}`, \{ method: "DELETE" \}/);
+  assertSourceMatch(detail, /relationId: String\(preparation\.relationId\), replace: "1"/);
+  assertSourceMatch(picker, /relation && replace !== "1" \? payload : \{ preparation_id: selected\.id, \.\.\.payload \}/);
+});
+
+test("meal component cards expose contextual food and preparation panels, collapsed initially", async () => {
+  const cards = await readTestFile(path.resolve(process.cwd(), "src/components/details/food-detail-card-list.tsx"), "utf8");
+  const nutritionCard = await readTestFile(path.resolve(process.cwd(), "src/components/nutrition/nutrition-entity-card.tsx"), "utf8");
+
+  assertSourceMatch(cards, /collapsiblePanel=\{item\.detailId != null\}/);
+  assertSourceMatch(cards, /<PreparationComponentPanel item=\{item\} key=[^\n]+ onOpenFood=\{onOpenFood\}/);
+  assertSourceMatch(cards, /<FoodPanels items=\{detail\.ingredients\.map/);
+  assertSourceMatch(cards, /<PickerFoodNutritionPanel foodId=\{item\.detailId\} key=\{item\.detailId\} portion=/);
+  assertSourceMatch(nutritionCard, /initialPanelExpanded = false/);
 });
 
 test("menu rows always use their meal detail when no contextual route is provided", async () => {

@@ -72,7 +72,7 @@ export default function PreparationDetailScreen() {
     fat: { grams: detail.nutrition.fat_g, allocation: percentage(detail.nutrition.fat_g * 9, detail.nutrition.calories) },
   };
   const openIngredient = (ingredient: FoodPanelItem) => {
-    if (ingredient.detailId != null) router.push(`/libraries/foods/${ingredient.detailId}` as Href);
+    if (ingredient.detailId != null) router.push((ingredient.kind === "preparation" ? `/libraries/preparations/${ingredient.detailId}` : `/libraries/foods/${ingredient.detailId}`) as Href);
   };
   const remove = () => Alert.alert("Quitar preparación", `¿Quitar ${detail.name} de esta comida?`, [
     { text: "Cancelar", style: "cancel" },
@@ -84,7 +84,7 @@ export default function PreparationDetailScreen() {
   ]);
 
   return <NestableScrollContainer contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
-    <EntityDetailPage entity="meal" eyebrow="Preparación" nutrition={nutrition} subtitle={`${portion} · aprox. ${formatPreparationNumber(detail.grams)} g`} title={detail.name}>
+    <EntityDetailPage entity="preparation" nutrition={nutrition} subtitle={portion} title={detail.name}>
       <EntityDetailSection detail={`${ingredients.length} ${ingredients.length === 1 ? "ingrediente" : "ingredientes"}`} title="Composición de la preparación">
         <FoodPanels items={ingredients} nestedScroll onOpenItem={openIngredient} />
       </EntityDetailSection>
@@ -97,7 +97,7 @@ export default function PreparationDetailScreen() {
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Porción</Text><Text style={styles.infoValue}>{portion} · {formatPreparationNumber(detail.grams)} g</Text></View>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Sodio</Text><Text style={styles.infoValue}>{detail.nutrition.sodium_mg == null ? "Sin dato" : `${formatPreparationNumber(detail.nutrition.sodium_mg, 0)} mg`}</Text></View>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Alérgenos declarados</Text><Text style={styles.infoValue}>{formatPreparationAllergens(detail.allergens)}</Text></View>
-        <View style={styles.infoRow}><Text style={styles.infoLabel}>Estados</Text><Text style={styles.infoValue}>{[...new Set(detail.ingredients.map((ingredient) => preparationStateLabel(ingredient.preparation_state)))].join(", ")}</Text></View>
+        <View style={styles.infoRow}><Text style={styles.infoLabel}>Estados</Text><Text style={styles.infoValue}>{[...new Set(detail.ingredients.filter((ingredient) => "preparation_state" in ingredient).map((ingredient) => preparationStateLabel(ingredient.preparation_state)))].join(", ") || "Sin datos declarados"}</Text></View>
         <Text style={styles.source}>Estimación editorial · versión {detail.version}{detail.evidence.source_name ? ` · ${detail.evidence.source_name}` : ""}</Text>
       </Card>
       {inMeal ? <View style={styles.actions}>

@@ -590,13 +590,13 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertEqual(all_items.context["vm"]["content"]["month_commitments"], [shopping])
 
     def test_commitment_views_use_kind_specific_icons(self):
-        for kind, icon in (("shopping", "shopping-basket"), ("cooking", "cooking-pot"), ("training", "dumbbell"), ("nutritionist", "stethoscope")):
+        for kind, icon in (("shopping", "shopping-basket"), ("cooking", "chef-hat"), ("training", "dumbbell"), ("nutritionist", "stethoscope")):
             with self.subTest(kind=kind):
                 response = self.client.get(reverse("calendar_commitments", args=[kind]))
                 self.assertContains(response, f'data-kind="{kind}"')
                 self.assertContains(response, f'data-lucide="{icon}"')
         preview = self.client.get(reverse("calendar_preview"))
-        for icon in ("shopping-basket", "cooking-pot", "dumbbell", "stethoscope"):
+        for icon in ("shopping-basket", "chef-hat", "dumbbell", "stethoscope"):
             self.assertContains(preview, f'data-lucide="{icon}"')
 
     def test_nutritionist_commitment_uses_note_only_editor(self):

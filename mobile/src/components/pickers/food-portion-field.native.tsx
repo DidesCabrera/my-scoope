@@ -21,10 +21,13 @@ function displayNumber(value: number): string {
 }
 
 export function FoodPortionField({
+  accentColor = tokens.color.food,
   equivalentMetricAmount,
   householdDefaultAmount,
   householdDetail,
   householdMeasureLabel,
+  householdPluralLabel,
+  householdPortionValues = HOUSEHOLD_PORTION_VALUES,
   initiallyExpanded = false,
   label,
   measure,
@@ -73,7 +76,7 @@ export function FoodPortionField({
   };
 
   const selectedAmount = numericValue(value, 0);
-  const measureLabel = measure === "household" && householdAvailable && householdMeasureLabel ? householdMeasureDisplayLabel(householdMeasureLabel, selectedAmount) : metricUnit;
+  const measureLabel = measure === "household" && householdAvailable && householdMeasureLabel ? selectedAmount > 1 && householdPluralLabel ? householdPluralLabel : householdMeasureDisplayLabel(householdMeasureLabel, selectedAmount) : metricUnit;
   const selectorLabel = `${displayNumber(selectedAmount)} ${measureLabel}`;
   const equivalence = measure === "household" && equivalentMetricAmount > 0
     ? `Equivale a ${displayNumber(equivalentMetricAmount)} ${metricUnit}${householdDetail ? ` · ${householdDetail}` : ""}`
@@ -97,7 +100,7 @@ export function FoodPortionField({
           <View accessibilityLabel="Cantidad y medida de la porción" style={styles.pickers}>
             <View style={styles.amountPickerColumn}>
               <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => { setDraftAmount(Number(next)); setConfirmed(false); }} selectedValue={draftAmount} style={pickerStyle}>
-                {[...new Set([...(draftMeasure === "household" ? HOUSEHOLD_PORTION_VALUES : PORTION_VALUES), draftAmount])].sort((a, b) => a - b).map((option) => <Picker.Item key={option} label={displayNumber(option)} value={option} />)}
+                {[...new Set([...(draftMeasure === "household" ? householdPortionValues : PORTION_VALUES), draftAmount])].sort((a, b) => a - b).map((option) => <Picker.Item key={option} label={displayNumber(option)} value={option} />)}
               </Picker>
             </View>
             <View style={styles.measurePickerColumn}>
@@ -109,8 +112,8 @@ export function FoodPortionField({
           </View>
           <Pressable accessibilityLabel={confirmed ? "Cerrar selector de porción" : "Confirmar porción"} accessibilityRole="button" onPress={confirmed ? close : commit} style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}>
             {confirmed
-              ? <X color={tokens.color.food} size={22} strokeWidth={2.6} />
-              : <Check color={tokens.color.food} size={22} strokeWidth={2.6} />}
+              ? <X color={accentColor} size={22} strokeWidth={2.6} />
+              : <Check color={accentColor} size={22} strokeWidth={2.6} />}
           </Pressable>
         </View>
       ) : null}

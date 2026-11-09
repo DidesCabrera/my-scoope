@@ -13,6 +13,7 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   assert.equal(tokens.component.eyebrow.fontWeight, "500");
   assert.equal(tokens.component.entityDetail.kpiMarginTop, 4);
   assert.equal(tokens.color.surfaceApp, "#000000");
+  assert.equal(tokens.color.preparation, "#F46D6A");
   for (const key of ["protein", "carbs", "fat", "kcalSurface", "allocationBarTrack", "allocationPanelTrack", "food", "meal", "dailyPlan", "dpm", "program"] as const) {
     assertSourceMatch(tokens.color[key], /^#[0-9A-F]{6}$/);
   }
@@ -413,7 +414,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedMealDetail, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{dayId\}`\)/);
   assertSourceMatch(calendarizedMealDetail, /day\.plan_snapshot\?\.meals\?\.find/);
   assertSourceMatch(calendarizedMealDetail, /afterNutrition=\{<MealCompletionCard controller=\{adherence\} \/>\}/);
-  assertSourceMatch(calendarizedMealDetail, /<FoodPanels\s+editing=\{\{/);
+  assertSourceMatch(calendarizedMealDetail, /const foodEditing: FoodPanelEditing = \{/);
+  assertSourceMatch(calendarizedMealDetail, /<FoodPanels\s+editing=\{foodEditing\}/);
   assertSourceMatch(calendarizedMealDetail, /ordered_keys: items\.map\(\(item\) => item\.id\)/);
   assertSourceMatch(calendarizedMealDetail, /relationKey: food\.id/);
   assertSourceMatch(calendarizedMealDetail, /onEditPortion:/);

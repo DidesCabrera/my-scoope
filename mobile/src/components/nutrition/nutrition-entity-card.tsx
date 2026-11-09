@@ -80,9 +80,9 @@ export function NutritionEntityCard({
   const hasDailyPlanFoodsPanel = hasCollapsiblePanel && entity === "dailyPlan" && Boolean(dailyPlanFoodsPanel);
   const hasSupplementPanel = collapsiblePanel && entity === "dailyPlan" && (Boolean(supplementPanel) || Boolean(onLockedSupplementPress));
   const anyPanelExpanded = panelExpanded || (hasDailyPlanFoodsPanel && foodsPanelExpanded) || supplementPanelExpanded;
-  const panelToggleIcon = entity === "food" ? "information" : entity === "meal" ? "food" : entity === "program" ? "chart" : "meal";
-  const panelToggleText = entity === "food" ? "Más información" : entity === "meal" ? "Alimentos" : entity === "program" ? "Semanas" : "Comidas";
-  const panelToggleColor = entity === "food" || entity === "meal" ? tokens.color.food : entity === "dailyPlan" ? tokens.color.meal : tokens.color.dailyPlan;
+  const panelToggleIcon = entity === "food" ? "information" : entity === "meal" || entity === "preparation" ? "food" : entity === "program" ? "chart" : "meal";
+  const panelToggleText = entity === "food" ? "Más información" : entity === "meal" || entity === "preparation" ? "Alimentos" : entity === "program" ? "Semanas" : "Comidas";
+  const panelToggleColor = entity === "food" || entity === "meal" || entity === "preparation" ? tokens.color.food : entity === "dailyPlan" ? tokens.color.meal : tokens.color.dailyPlan;
   function togglePanel() {
     const shouldExpand = !panelExpanded;
     setPanelExpanded(shouldExpand);
@@ -107,7 +107,7 @@ export function NutritionEntityCard({
       setFoodsPanelExpanded(false);
     }
   }
-  const panelToggle = hasCollapsiblePanel ? <EntityCardPanelToggle activeColor={panelToggleColor} expanded={panelExpanded} icon={panelToggleIcon} label={`detalles de ${title}`} onPress={togglePanel} solidActive={hasDailyPlanFoodsPanel} text={panelToggleText} /> : undefined;
+  const panelToggle = hasCollapsiblePanel ? <EntityCardPanelToggle activeColor={panelToggleColor} expanded={panelExpanded} icon={panelToggleIcon} label={`detalles de ${title}`} onPress={togglePanel} solidActive={hasDailyPlanFoodsPanel || entity === "food" || entity === "meal" || entity === "preparation"} text={panelToggleText} /> : undefined;
   const foodsPanelToggle = hasDailyPlanFoodsPanel ? <EntityCardPanelToggle activeColor={tokens.color.food} expanded={foodsPanelExpanded} icon="food" label={`alimentos de ${title}`} onPress={toggleFoodsPanel} solidActive text="Alimentos" /> : undefined;
   const supplementPanelToggle = hasSupplementPanel ? <EntityCardPanelToggle activeColor={tokens.color.supplement} activeForeground={tokens.color.entityIconForeground} expanded={supplementPanelExpanded} icon="supplement" label={`suplementos de ${title}`} onPress={toggleSupplementPanel} solidActive text="Sups" /> : undefined;
   const panelToggles = hasCollapsiblePanel ? <View style={styles.panelToggleGroup}>{panelToggle}{supplementPanelToggle}{foodsPanelToggle}</View> : undefined;
@@ -127,7 +127,8 @@ export function NutritionEntityCard({
       style={style}
       subtitle={subtitle}
       title={title}
-      titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}>
+      titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
+      titleIconPosition={entity === "food" ? "trailing" : "leading"}>
       {showNutrition ? <View style={hasEntityIndicatorSpacing ? styles.nutritionAfterIndicators : undefined}>
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />
       </View> : null}

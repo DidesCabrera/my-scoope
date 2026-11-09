@@ -1,5 +1,5 @@
 import type { CalendarCommitmentKind } from "@/api/calendar-types";
-import { CookingPot, Dumbbell, ShoppingBasket, Stethoscope, type LucideIcon } from "lucide-react-native";
+import { ChefHat, Dumbbell, ShoppingBasket, Stethoscope, type LucideIcon } from "lucide-react-native";
 import type { LibraryFoodPanelItem } from "@/api/types";
 import type { FoodPanelItem } from "@/components/panels";
 import { tokens } from "@/design/tokens";
@@ -12,7 +12,7 @@ export function commitmentSupportsFoods(kind: CalendarCommitmentKind): boolean {
 
 export const commitmentPresentation: Record<CalendarCommitmentKind, { label: string; color: string; icon: LucideIcon }> = {
   shopping: { label: "Hacer compras", color: tokens.color.food, icon: ShoppingBasket },
-  cooking: { label: "Cocinar", color: tokens.color.meal, icon: CookingPot },
+  cooking: { label: "Cocinar", color: tokens.color.meal, icon: ChefHat },
   training: { label: "Entrenar", color: tokens.color.success, icon: Dumbbell },
   nutritionist: { label: "Nutricionista", color: tokens.color.protein, icon: Stethoscope },
 };

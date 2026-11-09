@@ -23,9 +23,10 @@ import type {
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { FoodPanels, MealPanels } from "@/components/libraries/entity-panels";
+import { FoodPanels, MealPanels, mealFoodPanelItems } from "@/components/libraries/entity-panels";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
+import { FoodPanels as SharedFoodPanels, type FoodPanelItem } from "@/components/panels";
 import { Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
@@ -35,6 +36,7 @@ import { defaultFoodPortionSelection, foodPortionHouseholdAmount, foodPortionMet
 import { PickerCardAction } from "./picker-card-action";
 import { buildCompositionPickerPayload } from "./composition-picker-payload";
 import { PickerEntryTabs } from "./picker-entry-tabs";
+import { PickerFoodNutritionPanel } from "./picker-food-nutrition-panel";
 import { PickerResultCard } from "./picker-result-card";
 import { pickerConfigureHref, pickerHref, type PickerKind } from "./picker-routes";
 
@@ -48,6 +50,8 @@ type PickerOption = {
   foodVisualKey?: string;
   indicators?: LibraryIndicator[];
   nutrition: LibraryNutrition;
+  foodBaseNutrition?: LibraryNutrition;
+  nutritionPortion?: number | null;
   panel?: LibraryItem["panel"];
   subtitle?: string;
   quantityUnit?: "g" | "ml";
@@ -191,6 +195,12 @@ function optionFromLibrary(item: LibraryItem | CompositionOption): PickerOption 
 }
 
 function optionFromFood(item: FoodPickerOption): PickerOption {
+  const nutrition: LibraryNutrition = {
+    calories: item.total_kcal,
+    protein: { grams: item.protein, allocation: item.protein_allocation, per_kilogram: null },
+    carbs: { grams: item.carbs, allocation: item.carbs_allocation },
+    fat: { grams: item.fat, allocation: item.fat_allocation },
+  };
   return {
     id: item.id,
     name: item.display_name,
@@ -200,25 +210,39 @@ function optionFromFood(item: FoodPickerOption): PickerOption {
     indicators: [{ label: "base nutricional", value: `100 ${item.quantity_unit}` }],
     quantityUnit: item.quantity_unit,
     defaultPortion: item.default_portion,
+    foodBaseNutrition: nutrition,
+    nutritionPortion: item.default_portion,
     householdAmount: item.household_amount,
     householdMeasure: item.household_measure,
     householdMeasureLabel: item.household_measure_label,
     householdDetail: item.household_detail,
-    nutrition: {
-      calories: item.total_kcal,
-      protein: { grams: item.protein, allocation: item.protein_allocation, per_kilogram: null },
-      carbs: { grams: item.carbs, allocation: item.carbs_allocation },
-      fat: { grams: item.fat, allocation: item.fat_allocation },
-    },
+    nutrition,
   };
 }
 
 function PickerOptionCard({ actionLabel, eyebrow, onAction, option, showPanels = true }: { actionLabel?: string; eyebrow?: string; onAction?(): void; option: PickerOption; showPanels?: boolean }) {
+  const router = useRouter();
+  const hasMealContents = option.entity === "meal" && option.panel?.kind === "foods";
+  const mealComponents = hasMealContents && option.panel ? mealFoodPanelItems(option.panel, option.nutrition) : [];
+  const openMealComponent = (component: FoodPanelItem) => {
+    if (component.detailId == null) return;
+    if (component.kind !== "preparation") {
+      router.push(`/libraries/foods/${component.detailId}` as Href);
+      return;
+    }
+    const preparation = option.panel?.preparations?.find((row) => row.relation_id === component.relationId);
+    if (!preparation) return;
+    router.push({ pathname: "/libraries/preparations/[id]", params: {
+      id: String(component.detailId), mealId: String(option.id), relationId: String(preparation.relation_id),
+      ...(preparation.selection_mode === "units" ? { units: String(preparation.selected_units ?? 1) } : { grams: String(preparation.quantity_g) }),
+    } } as Href);
+  };
   return (
     <NutritionEntityCard
       actions={actionLabel && onAction ? (
         <PickerCardAction label={actionLabel} onPress={onAction} subject={option.name} />
       ) : undefined}
+      collapsiblePanel={showPanels && (option.entity === "food" || hasMealContents)}
       entity={option.entity}
       foodEmoji={option.foodEmoji}
       foodVisualKey={option.foodVisualKey}
@@ -227,7 +251,9 @@ function PickerOptionCard({ actionLabel, eyebrow, onAction, option, showPanels =
       nutrition={libraryNutrition(option.nutrition)}
       subtitle={option.subtitle}
       title={option.name}>
-      {showPanels && option.panel?.kind === "foods" ? <FoodPanels items={option.panel.foods} /> : null}
+      {showPanels && option.entity === "food" ? <PickerFoodNutritionPanel foodId={option.id} nutrition={option.foodBaseNutrition ?? option.nutrition} portion={{ quantity: option.nutritionPortion ?? null, unit: option.quantityUnit ?? "g" }} /> : null}
+      {showPanels && hasMealContents ? <SharedFoodPanels items={mealComponents} nestedScroll onOpenItem={openMealComponent} showEditTab={false} /> : null}
+      {showPanels && !hasMealContents && option.panel?.kind === "foods" ? <FoodPanels items={option.panel.foods} /> : null}
       {showPanels && option.panel?.kind === "meals" ? <MealPanels items={option.panel.meals} /> : null}
     </NutritionEntityCard>
   );
@@ -430,6 +456,7 @@ export function CompositionPickerScreen({
     return {
       ...selected,
       indicators: [{ label: "porción seleccionada", value: selectedPortionLabel }],
+      nutritionPortion: grams,
       nutrition: scaleFoodNutrition(selected.nutrition, String(grams)),
     };
   }, [isFoodPicker, metricQuantity, portionMeasure, quantity, selected, selectedPortionConversion]);
@@ -545,7 +572,7 @@ export function CompositionPickerScreen({
 
   const selectedCard = (
     <View>
-      {configuredSelection ? <PickerOptionCard eyebrow={isFoodPicker ? "ALIMENTO SELECCIONADO" : isMealPicker ? "COMIDA SELECCIONADA" : undefined} option={configuredSelection} showPanels={!isMealPicker && kind !== "dailyplan-to-program"} /> : null}
+      {configuredSelection ? <PickerOptionCard eyebrow={isFoodPicker ? "ALIMENTO SELECCIONADO" : isMealPicker ? "COMIDA SELECCIONADA" : undefined} option={configuredSelection} showPanels={kind !== "dailyplan-to-program"} /> : null}
     </View>
   );
   const mealTimeCard = isMealPicker && selected ? (

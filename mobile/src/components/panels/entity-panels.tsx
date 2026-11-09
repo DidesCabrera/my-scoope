@@ -407,8 +407,11 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteraction, item, itemNameStyle, onOpenItem, showFoodPortion = false, showNutritionSummary = false, style = styles.gridLeadingCell }: { dragInteraction?: PanelRowDragInteraction; item: T; itemNameStyle?: StyleProp<TextStyle>; onOpenItem?: (item: T) => void; showFoodPortion?: boolean; showNutritionSummary?: boolean; style?: StyleProp<ViewStyle> }) {
   const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}>
     <View style={[styles.foodIdentityTitleRow, item.projectedLabel === "Por agregar" && styles.foodIdentityTitleRowWithBadge]}>
-      {item.kind === "preparation" ? <EntityIcon entity="meal" size="compact" /> : <FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} />}
-      <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>
+      {item.kind === "preparation" ? <EntityIcon entity="preparation" size="compact" /> : <FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} />}
+      {item.kind === "preparation" ? <View style={styles.preparationIdentityCopy}>
+        <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>
+        <Text style={styles.preparationSubtitle}>Preparación</Text>
+      </View> : <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>}
       {item.projectedLabel === "Por agregar" ? <Text style={[styles.projectedBadge, styles.foodInlineProjectedBadge]}>{item.projectedLabel}</Text> : null}
     </View>
     {showNutritionSummary ? <NutritionSummary item={item} /> : null}
@@ -916,6 +919,8 @@ const styles = StyleSheet.create({
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   foodIdentity: { alignItems: "stretch", flex: 1, gap: tokens.spacing.sm, justifyContent: "center", minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   foodIdentityTitleRow: { alignItems: "center", flexDirection: "row", gap: 2, minWidth: 0 },
+  preparationIdentityCopy: { flex: 1, minWidth: 0 },
+  preparationSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.label, lineHeight: 15, paddingHorizontal: tokens.spacing.xs },
   foodIdentityTitleRowWithBadge: { gap: 0 },
   foodNameWithBadge: { flexShrink: 1, minWidth: 0, paddingRight: 0 },
   foodInlineProjectedBadge: { borderColor: tokens.color.food, flexShrink: 0, marginLeft: tokens.spacing.sm },

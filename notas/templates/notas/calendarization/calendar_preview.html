@@ -40,7 +40,7 @@
     <div class="calendar-preview__metric-strip">
       <span class="calendar-preview__metric calendar-preview__metric--dailyplan" aria-label="{{ vm.content.schedule_summary.future_plans_count }} minutas programadas"><i data-lucide="clipboard-list" aria-hidden="true"></i>{{ vm.content.schedule_summary.future_plans_count }}</span>
       <span class="calendar-preview__metric calendar-preview__metric--shopping" aria-label="{{ vm.content.commitment_counts.shopping }} compras"><i data-lucide="shopping-basket" aria-hidden="true"></i>{{ vm.content.commitment_counts.shopping }}</span>
-      <span class="calendar-preview__metric calendar-preview__metric--cooking" aria-label="{{ vm.content.commitment_counts.cooking }} días de cocina"><i data-lucide="cooking-pot" aria-hidden="true"></i>{{ vm.content.commitment_counts.cooking }}</span>
+      <span class="calendar-preview__metric calendar-preview__metric--cooking" aria-label="{{ vm.content.commitment_counts.cooking }} días de cocina"><i data-lucide="chef-hat" aria-hidden="true"></i>{{ vm.content.commitment_counts.cooking }}</span>
       <span class="calendar-preview__metric calendar-preview__metric--training" aria-label="{{ vm.content.commitment_counts.training }} entrenamientos"><i data-lucide="dumbbell" aria-hidden="true"></i>{{ vm.content.commitment_counts.training }}</span>
       <span class="calendar-preview__metric calendar-preview__metric--nutritionist" aria-label="{{ vm.content.commitment_counts.nutritionist }} citas con nutricionista"><i data-lucide="stethoscope" aria-hidden="true"></i>{{ vm.content.commitment_counts.nutritionist }}</span>
     </div>
@@ -84,7 +84,7 @@
       <h2 id="calendar-commitment-choice-title">¿Qué compromiso quieres registrar?</h2>
       <div class="calendar-preview__commitment-options">
         <a href="{% url 'calendar_commitments' 'shopping' %}"><i data-lucide="shopping-basket" aria-hidden="true"></i>Registrar días de compras</a>
-        <a href="{% url 'calendar_commitments' 'cooking' %}"><i data-lucide="cooking-pot" aria-hidden="true"></i>Registrar días de cocinar</a>
+        <a href="{% url 'calendar_commitments' 'cooking' %}"><i data-lucide="chef-hat" aria-hidden="true"></i>Registrar días de cocinar</a>
         <a href="{% url 'calendar_commitments' 'training' %}"><i data-lucide="dumbbell" aria-hidden="true"></i>Registrar días de entrenamiento</a>
         <a href="{% url 'calendar_commitments' 'nutritionist' %}"><i data-lucide="stethoscope" aria-hidden="true"></i>Cita nutricionista</a>
       </div>
@@ -107,7 +107,7 @@
     </div>
     {% endif %}
     {% if vm.content.selected_commitments %}<div class="calendar-preview__selected-commitments"><h3>Compromisos de esta fecha</h3><ul>{% for commitment in vm.content.selected_commitments %}<li>
-      <strong class="calendar-preview__commitment-label"><i data-lucide="{% if commitment.kind == 'shopping' %}shopping-basket{% elif commitment.kind == 'cooking' %}cooking-pot{% elif commitment.kind == 'training' %}dumbbell{% else %}stethoscope{% endif %}" aria-hidden="true"></i>{{ commitment.get_kind_display }}</strong>{% if commitment.note %} · {{ commitment.note }}{% endif %}
+      <strong class="calendar-preview__commitment-label"><i data-lucide="{% if commitment.kind == 'shopping' %}shopping-basket{% elif commitment.kind == 'cooking' %}chef-hat{% elif commitment.kind == 'training' %}dumbbell{% else %}stethoscope{% endif %}" aria-hidden="true"></i>{{ commitment.get_kind_display }}</strong>{% if commitment.note %} · {{ commitment.note }}{% endif %}
       {% if commitment.food_period_start and commitment.food_period_end %}
         <p>Lista guardada · {{ commitment.food_period_start|date:"j M Y" }} al {{ commitment.food_period_end|date:"j M Y" }} · {{ commitment.food_plans_count }} plan{{ commitment.food_plans_count|pluralize:"es" }}</p>
         <div class="calendar-commitments__food-list">

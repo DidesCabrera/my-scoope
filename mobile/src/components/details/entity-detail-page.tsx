@@ -75,6 +75,7 @@ export function EntityDetailPage({
             subtitle={subtitle}
             title={title}
             titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
+            titleIconPosition={entity === "food" ? "trailing" : "leading"}
             variant="page"
           />
           {showNutrition && nutrition ? <View style={styles.kpiSection}><NutritionKpiSection variant={kpiVariant} {...nutrition} /></View> : null}

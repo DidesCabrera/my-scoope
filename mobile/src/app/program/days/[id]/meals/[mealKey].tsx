@@ -16,7 +16,7 @@ import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } f
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
-import { FoodPanels, type FoodPanelItem } from "@/components/panels";
+import { FoodPanels, type FoodPanelEditing, type FoodPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { Button, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, useMutationStatus } from "@/components/ui";
@@ -129,6 +129,21 @@ export default function CalendarizedMealDetailScreen() {
 
   const totals = meal.totals;
   const foods = snapshotFoodPanelItems(meal);
+  const foodEditing: FoodPanelEditing = {
+    onDelete: async (food) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { method: "DELETE" }),
+    onEditPortion: (food) => {
+      if (food.detailId) {
+        router.push(pickerConfigureHref("food-to-calendarized-meal", { mealKey, relationKey: food.id, selectedId: food.detailId, targetId: dayId, weekNumber: 1 }));
+        return;
+      }
+      setError("Este alimento no está disponible en tu biblioteca para editar su porción.");
+    },
+    onReorder: async (items: FoodPanelItem[]) => runWithStatus(
+      () => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
+      { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" },
+    ),
+    onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
+  };
   return (
     <>
     <NestableScrollContainer
@@ -154,21 +169,7 @@ export default function CalendarizedMealDetailScreen() {
         title={meal.name ?? "Comida"}>
         <EntityDetailSection title="Composición comida">
           <FoodPanels
-            editing={{
-              onDelete: async (food) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { method: "DELETE" }),
-              onEditPortion: (food) => {
-                if (food.detailId) {
-                  router.push(pickerConfigureHref("food-to-calendarized-meal", { mealKey, relationKey: food.id, selectedId: food.detailId, targetId: dayId, weekNumber: 1 }));
-                  return;
-                }
-                setError("Este alimento no está disponible en tu biblioteca para editar su porción.");
-              },
-              onReorder: async (items: FoodPanelItem[]) => runWithStatus(
-                () => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
-                { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" },
-              ),
-              onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
-            }}
+            editing={foodEditing}
             items={foods}
             nestedScroll
             onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
@@ -184,7 +185,7 @@ export default function CalendarizedMealDetailScreen() {
           onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
           variant="chipPrimary"
         />
-        {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" /><FoodDetailCardList items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} /></> : null}
+        {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" /><FoodDetailCardList editing={() => foodEditing} items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} /></> : null}
         <MealNoteCard controller={adherence} />
       </EntityDetailPage>
     </NestableScrollContainer>

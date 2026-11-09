@@ -263,7 +263,7 @@ export type LibraryNutrition = {
 };
 
 export type LibraryIndicator = {
-  icon?: "day" | "food" | "meal" | "dailyPlan" | "supplement" | "week";
+  icon?: "day" | "food" | "meal" | "preparation" | "dailyPlan" | "supplement" | "week";
   label: string;
   value: number | string;
 };

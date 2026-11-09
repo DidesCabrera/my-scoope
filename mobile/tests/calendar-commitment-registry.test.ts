@@ -19,6 +19,11 @@ test("upcoming commitment filters include today and stop after seven days", () =
   assert.deepEqual(commitmentsForUpcomingDays(days, "2026-10-27", 7, "cooking").map((item) => item.calendar_date), ["2026-10-27"]);
 });
 
+test("cooking commitments use the chef hat identity", async () => {
+  const source = await readTestFile(path.resolve(process.cwd(), "src/components/calendarization/calendar-commitments.ts"), "utf8");
+  assert.ok(source.includes('cooking: { label: "Cocinar", color: tokens.color.meal, icon: ChefHat }'));
+});
+
 test("calendar opens a day directly and contains both consolidated sections", async () => {
   const source = await readTestFile(path.resolve(process.cwd(), "src/components/calendarization/calendar-overview-screen.tsx"), "utf8");
   const calendar = source.indexOf("<CalendarMonthCalendar");

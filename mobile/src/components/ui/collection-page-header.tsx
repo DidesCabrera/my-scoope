@@ -17,6 +17,7 @@ const collectionCountLabels: Record<EntityKind, { plural: string; singular: stri
   dpm: PRODUCT_VOCABULARY_ES.dailyPlan,
   food: { plural: "Alimentos", singular: "Alimento" },
   meal: { plural: "Comidas", singular: "Comida" },
+  preparation: { plural: "Preparaciones", singular: "Preparación" },
   program: { plural: "Programas semanales", singular: "Programa semanal" },
   supplement: { plural: "Suplementos", singular: "Suplemento" },
 };

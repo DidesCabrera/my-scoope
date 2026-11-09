@@ -57,10 +57,12 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /nextError instanceof MobileApiError[^\n]*!\[404, 422\]\.includes\(nextError\.status\)/);
   matches(picker, /pickerCompleted=1/);
   matches(picker, /onPress: \(\) => router\.dismissTo\(destination\)/);
-  matches(picker, /<PickerOptionCard eyebrow=\{isFoodPicker \? "ALIMENTO SELECCIONADO" : isMealPicker \? "COMIDA SELECCIONADA" : undefined\} option=\{configuredSelection\} showPanels=\{!isMealPicker && kind !== "dailyplan-to-program"\}/);
+  matches(picker, /<PickerOptionCard eyebrow=\{isFoodPicker \? "ALIMENTO SELECCIONADO" : isMealPicker \? "COMIDA SELECCIONADA" : undefined\} option=\{configuredSelection\} showPanels=\{kind !== "dailyplan-to-program"\}/);
+  matches(picker, /collapsiblePanel=\{showPanels && \(option\.entity === "food" \|\| hasMealContents\)\}/);
   matches(picker, /eyebrow=\{eyebrow\}/);
   matches(picker, /\{kind === "dailyplan-to-program" \? configurationCard : null\}\s*\{selectedCard\}/);
-  matches(picker, /showPanels && option\.panel\?\.kind === "foods"/);
+  matches(picker, /showPanels && hasMealContents \? <SharedFoodPanels items=\{mealComponents\}/);
+  matches(picker, /showPanels && !hasMealContents && option\.panel\?\.kind === "foods"/);
   matches(picker, /showPanels && option\.panel\?\.kind === "meals"/);
   matches(picker, /nutrition: scaleFoodNutrition\(selected\.nutrition, String\(grams\)\)/);
   matches(picker, /label: "porción seleccionada"/);
@@ -82,13 +84,14 @@ test("composition pickers use independent native routes and one shared flow", as
   omits(picker, /<CalendarDays|Días de la Semana \{weekNumber\}<\/Text>/);
   matches(picker, /<FoodPortionField[\s\S]*equivalentMetricAmount=\{metricQuantity\}[\s\S]*householdMeasureLabel=\{selected\.householdMeasureLabel\}[\s\S]*initiallyExpanded[\s\S]*label="Porción del alimento"[\s\S]*measure=\{portionMeasure\}[\s\S]*metricUnit=\{selected\.quantityUnit \?\? "g"\}[\s\S]*onMeasureChange=\{setPortionMeasure\}[\s\S]*value=\{quantity\}/);
   matches(picker, /foodPortionMetricAmount\(quantity, portionMeasure, selectedPortionConversion\)/);
-  matches(portionField, /<Check color=\{tokens\.color\.food\}/);
+  matches(portionField, /accentColor = tokens\.color\.food/);
+  matches(portionField, /<Check color=\{accentColor\}/);
   matches(portionField, /const \[visible, setVisible\] = useState\(initiallyExpanded\)/);
   matches(portionField, /const \[confirmed, setConfirmed\] = useState\(false\)/);
   matches(portionField, /setConfirmed\(true\)/);
   matches(portionField, /accessibilityLabel=\{confirmed \? "Cerrar selector de porción" : "Confirmar porción"\}/);
   matches(portionField, /onPress=\{confirmed \? close : commit\}/);
-  matches(portionField, /confirmed[\s\S]*<X color=\{tokens\.color\.food\}[\s\S]*<Check color=\{tokens\.color\.food\}/);
+  matches(portionField, /confirmed[\s\S]*<X color=\{accentColor\}[\s\S]*<Check color=\{accentColor\}/);
   matches(portionField, /accessibilityLabel=\{`Porción: \$\{selectorLabel\}`\}/);
   matches(portionField, /householdMeasureDisplayLabel\(householdMeasureLabel, selectedAmount\)/);
   omits(portionField, /accessibilityLabel=\{`(?:Cantidad|Medida):/);
@@ -288,7 +291,7 @@ test("Home and library cards expose their contextual composition actions below t
   matches(libraryCard, /pickerHref\("food-to-meal", \{ mealId: item\.id, returnTo: String\(libraryHref\) \}\)/);
   matches(libraryCard, /interactive && item\.entity === "dailyPlan"/);
   matches(libraryCard, /pickerHref\("meal-to-dailyplan", \{ dailyPlanId: item\.id, returnTo: String\(libraryHref\) \}\)/);
-  assert.ok(libraryCard.indexOf("<FoodPanels") < libraryCard.indexOf('label="+ Agregar alimento"'));
+  assert.ok(libraryCard.indexOf("<SharedFoodPanels") < libraryCard.indexOf('label="+ Agregar alimento o preparación"'));
   assert.ok(libraryCard.indexOf("<MealPanels") < libraryCard.indexOf('label="+ Agregar Comida"'));
   matches(entityPanels, /pickerHref\("food-to-meal", \{ dailyPlanId, dailyPlanMealId, mealId, returnTo: `\/libraries\/daily-plans\/\$\{dailyPlanId\}` \}\)/);
   assert.ok(entityPanels.indexOf("<SharedFoodPanels") < entityPanels.indexOf('label="+ Agregar alimento"'));
@@ -301,12 +304,12 @@ test("library details open every composition flow and program days remain editab
   for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "week-to-program"]) {
     matches(detail, new RegExp(route));
   }
-  matches(detail, /label="\+ Agregar alimento"/);
+  assert.ok(detail.includes('label="+ Agregar alimento o preparación"'));
   matches(detail, /label="\+ Agregar Comida"/);
   const comparisonSection = detail.indexOf('title={sectionTitles[item.panel.kind]}');
-  const addFoodAction = detail.indexOf('label="+ Agregar alimento"');
-  assert.ok(comparisonSection < detail.indexOf('label="+ Agregar alimento"'));
-  assert.ok(addFoodAction < detail.indexOf('title="Detalle de cada componente"'));
+  const addComponentAction = detail.indexOf('label="+ Agregar alimento o preparación"');
+  assert.ok(comparisonSection < addComponentAction);
+  assert.ok(addComponentAction < detail.indexOf('title="Detalle de cada componente"'));
   assert.ok(comparisonSection < detail.indexOf('label="+ Agregar Comida"'));
   assert.ok(detail.indexOf('label="+ Agregar Comida"') < detail.indexOf('title="Detalle de cada Comida"'));
   matches(detail, /FoodPanels editing=\{foodEditing\}/);

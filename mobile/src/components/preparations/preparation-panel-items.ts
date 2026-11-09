@@ -1,7 +1,6 @@
-import type { LibraryPreparationPanelItem, PreparationDetail, PreparationIngredientDetail } from "@/api/preparations";
+import type { LibraryPreparationPanelItem, PreparationComponentDetail, PreparationDetail } from "@/api/preparations";
 import type { LibraryNutrition } from "@/api/types";
 import type { FoodPanelItem } from "@/components/panels";
-import { preparationStateLabel } from "./preparation-ingredients-card";
 
 function share(value: number, total: number): number {
   return total > 0 ? (value / total) * 100 : 0;
@@ -14,7 +13,6 @@ export function preparationPanelItem(preparation: LibraryPreparationPanelItem, m
     detailId: preparation.detail_id,
     relationId: preparation.relation_id,
     name: preparation.name,
-    projectedLabel: "Preparación",
     quantity: preparation.selection_mode === "units" ? preparation.selected_units ?? 1 : preparation.quantity_g,
     quantityUnit: preparation.selection_mode === "units" ? preparation.household_label : "g",
     portionDisplayQuantity: preparation.selection_mode === "units" ? preparation.quantity_g : null,
@@ -30,13 +28,14 @@ export function preparationPanelItem(preparation: LibraryPreparationPanelItem, m
   };
 }
 
-export function ingredientPanelItem(ingredient: PreparationIngredientDetail, index: number, preparation: PreparationDetail): FoodPanelItem {
+export function ingredientPanelItem(ingredient: PreparationComponentDetail, index: number, preparation: PreparationDetail): FoodPanelItem {
+  const nestedPreparation = "preparation_id" in ingredient && typeof ingredient.preparation_id === "number";
+  const detailId = nestedPreparation ? ingredient.preparation_id : ingredient.food_id;
   return {
-    id: `preparation-ingredient:${index}:${ingredient.food_id}`,
-    kind: "food",
-    detailId: ingredient.food_id,
+    id: `preparation-component:${index}:${nestedPreparation ? "preparation" : "food"}:${detailId}`,
+    kind: nestedPreparation ? "preparation" : "food",
+    detailId,
     name: ingredient.name,
-    projectedLabel: ingredient.is_condiment ? `${preparationStateLabel(ingredient.preparation_state)} · Condimento` : preparationStateLabel(ingredient.preparation_state),
     quantity: ingredient.quantity_g,
     quantityUnit: "g",
     calories: ingredient.calories,

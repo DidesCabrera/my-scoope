@@ -25,6 +25,7 @@ class PreparationSelection(Schema):
 
 
 class PreparationPortionUpdate(Schema):
+    preparation_id: int | None = Field(default=None, gt=0)
     units: float | None = Field(default=None, ge=0.5, le=10)
     grams: float | None = Field(default=None, gt=0, le=100000)
 
@@ -112,6 +113,7 @@ def _save_selection(meal, preparation, *, units, grams, relation=None):
     mode, count, quantity = _portion(version, units=units, grams=grams)
     if relation is None:
         relation = MealPreparation(meal=meal, preparation=preparation, order=meal.meal_food_set.count() + meal.meal_preparation_set.count() + 1)
+    relation.preparation = preparation
     relation.version = version
     relation.selection_mode = mode
     relation.selected_units = count
@@ -141,7 +143,8 @@ def update_preparation(request, meal_id: int, relation_id: int, payload: Prepara
     relation = MealPreparation.objects.select_related("preparation__current_version").filter(pk=relation_id, meal=meal).first()
     if relation is None:
         raise MobileAPIError("preparation_relation_not_found", "La porción no está disponible.", 404)
-    _save_selection(meal, relation.preparation, units=payload.units, grams=payload.grams, relation=relation)
+    preparation = _available_preparation(request.auth.user, payload.preparation_id) if payload.preparation_id is not None else relation.preparation
+    _save_selection(meal, preparation, units=payload.units, grams=payload.grams, relation=relation)
     return success({"target_id": meal.id, "affected_id": relation.id})
 
 

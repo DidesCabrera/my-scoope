@@ -9,9 +9,9 @@ function displayNumber(value: number): string {
   return value.toLocaleString("es-CL", { maximumFractionDigits: 2 });
 }
 
-export function FoodPortionField({ equivalentMetricAmount, householdDefaultAmount, householdDetail, householdMeasureLabel, label, measure, metricDefaultAmount, metricUnit, onChange, onMeasureChange, value }: FoodPortionFieldProps) {
+export function FoodPortionField({ equivalentMetricAmount, householdDefaultAmount, householdDetail, householdMeasureLabel, householdPluralLabel, label, measure, metricDefaultAmount, metricUnit, onChange, onMeasureChange, value }: FoodPortionFieldProps) {
   const householdAvailable = Boolean(householdMeasureLabel && householdDefaultAmount && householdDefaultAmount > 0 && metricDefaultAmount && metricDefaultAmount > 0);
-  const measureLabel = measure === "household" && householdAvailable ? householdMeasureLabel : metricUnit;
+  const measureLabel = measure === "household" && householdAvailable ? Number(value) > 1 && householdPluralLabel ? householdPluralLabel : householdMeasureLabel : metricUnit;
   const changeMeasure = () => {
     if (!householdAvailable) return;
     const next: FoodPortionMeasure = measure === "household" ? "metric" : "household";

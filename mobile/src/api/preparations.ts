@@ -13,7 +13,7 @@ export type LibraryPreparationPanelItem = {
   fat_g: number;
   sodium_mg: number | null;
   allergens: string[];
-  ingredients: PreparationIngredientDetail[];
+  ingredients: PreparationComponentDetail[];
 };
 
 export type PreparationIngredientDetail = {
@@ -26,6 +26,17 @@ export type PreparationIngredientDetail = {
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+};
+
+export type PreparationComponentDetail = PreparationIngredientDetail | {
+  preparation_id: number;
+  food_id?: null;
+  name: string;
+  quantity_g: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  calories: number;
 };
 
 export type PreparationDetail = {
@@ -42,5 +53,5 @@ export type PreparationDetail = {
   allergens: string[];
   allergen_status: string;
   evidence: { source_name?: string; source_url?: string; yield_evidence?: string; preparation_notes?: string };
-  ingredients: PreparationIngredientDetail[];
+  ingredients: PreparationComponentDetail[];
 };

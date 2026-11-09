@@ -156,7 +156,11 @@ class PreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(MealPreparation.objects.get().quantity_g, Decimal("60"))
         self.assertEqual(Meal.objects.get(pk=meal.pk).is_draft, False)
-        panel = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]["panel"]["preparations"][0]
+        detail = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]
+        self.assertEqual(detail["indicators"][1], {"icon": "preparation", "label": "preparaciones", "value": 1})
+        listing = self.client.get("/api/v1/library/meals").json()["data"]["items"]
+        self.assertEqual(listing[0]["indicators"][1], {"icon": "preparation", "label": "preparaciones", "value": 1})
+        panel = detail["panel"]["preparations"][0]
         self.assertEqual(panel["protein_g"], 7.5)
         self.assertEqual(panel["carbs_g"], 15)
         self.assertEqual(panel["fat_g"], 3.75)
@@ -186,6 +190,44 @@ class PreparationAPITests(AuthenticatedMobileAPITestCase):
         removed = self.client.delete(f"/api/v1/library/meals/{meal.id}/preparations/{relation_id}")
         self.assertEqual(removed.status_code, 200)
         self.assertFalse(MealPreparation.objects.filter(pk=relation_id).exists())
+
+    def test_replace_preparation_keeps_relation_and_recalculates_meal(self):
+        self._publish_and_materialize(self.v1)
+        original = Preparation.objects.get()
+        meal = Meal.objects.create(name="Comida de prueba", created_by=self.user)
+        added = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/preparations",
+            data=json.dumps({"preparation_id": original.id, "units": 1}),
+            content_type="application/json",
+        )
+        self.assertEqual(added.status_code, 200)
+        relation_id = added.json()["data"]["created_id"]
+        original_protein = Meal.objects.get(pk=meal.pk).protein
+        second_catalog = CatalogPreparation.objects.create(display_name="Otra preparación")
+        second_version = CatalogPreparationVersion.objects.create(
+            preparation=second_catalog, version=1, yield_g=Decimal("100"),
+            default_portion_g=Decimal("100"), household_label="unidad",
+            source_name="Fuente de prueba", yield_evidence="Medición de prueba",
+        )
+        CatalogPreparationIngredient.objects.create(
+            version=second_version, food=self.food, quantity_g=Decimal("100"),
+            preparation_state=CatalogFood.PREPARATION_COOKED,
+        )
+        publish_preparation_version(second_version, actor=self.user)
+        materialize_preparation_and_refresh(second_catalog, release_version="test-release")
+        replacement = Preparation.objects.get(name="Otra preparación")
+        changed = self.client.patch(
+            f"/api/v1/library/meals/{meal.id}/preparations/{relation_id}",
+            data=json.dumps({"preparation_id": replacement.id, "units": 1}),
+            content_type="application/json",
+        )
+        self.assertEqual(changed.status_code, 200)
+        relation = MealPreparation.objects.get(pk=relation_id)
+        self.assertEqual(relation.preparation_id, replacement.id)
+        self.assertEqual(relation.quantity_g, Decimal("100"))
+        self.assertEqual(MealPreparation.objects.filter(meal=meal).count(), 1)
+        self.assertGreater(Meal.objects.get(pk=meal.pk).protein, original_protein)
+        self.assertEqual(self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]["panel"]["preparations"][0]["name"], "Otra preparación")
 
     def test_copy_and_share_preserve_preparation_identity(self):
         version = self._publish_and_materialize(self.v1)
