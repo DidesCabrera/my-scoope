@@ -174,6 +174,7 @@ test("meal details reuse food entity cards across library and calendarized conte
   const preparation = await source("src/app/libraries/preparations/[id].tsx");
   assert.ok(preparation.includes("<FoodPanels items={ingredients}"));
   assert.ok(preparation.includes("<FoodDetailCardList items={ingredients}"));
+  assert.ok(preparation.includes("Math.round(detail.nutrition.calories * 10) / 10"));
   assert.match(library, /\/libraries\/foods\/\$\{food\.detailId\}/);
   assert.match(calendarized, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada Alimento" \/><FoodDetailCardList/);
   assert.match(foodCards, /<NutritionEntityCard/);

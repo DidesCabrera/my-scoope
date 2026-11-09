@@ -65,7 +65,8 @@ export default function PreparationDetailScreen() {
     ? `${formatPreparationNumber(detail.selected_units ?? 1)} ${detail.household_label}`
     : `${formatPreparationNumber(detail.grams)} g`;
   const nutrition = {
-    calories: detail.nutrition.calories,
+    // Meal components are displayed at one decimal before the KPI rounds to kcal.
+    calories: Math.round(detail.nutrition.calories * 10) / 10,
     protein: { grams: detail.nutrition.protein_g, allocation: percentage(detail.nutrition.protein_g * 4, detail.nutrition.calories) },
     carbs: { grams: detail.nutrition.carbs_g, allocation: percentage(detail.nutrition.carbs_g * 4, detail.nutrition.calories) },
     fat: { grams: detail.nutrition.fat_g, allocation: percentage(detail.nutrition.fat_g * 9, detail.nutrition.calories) },
