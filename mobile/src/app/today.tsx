@@ -469,7 +469,6 @@ export default function TodayScreen() {
           }}
           snapshot={snapshot}
           />
-          <HomeGettingStarted compactTop />
         </>
       ) : showGettingStarted && today ? (
         <>
@@ -502,6 +501,8 @@ export default function TodayScreen() {
       ) : null}
 
       {!showGettingStarted && today ? commitmentsSection : null}
+
+      {!showGettingStarted && today?.day_id != null && today.has_plan && snapshot ? <HomeGettingStarted compactTop /> : null}
 
       {!showGettingStarted ? calendarSection : null}
 
