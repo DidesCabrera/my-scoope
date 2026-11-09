@@ -3,6 +3,7 @@
 from django.contrib import admin, messages
 
 from food_catalog.application.curation import transition_catalog_foods_status
+from food_catalog.infrastructure.preparations import PreparationPublicationError, publish_preparation_version
 from food_catalog.models import (
     CatalogCapabilityDefinition,
     CatalogClientRequirement,
@@ -18,9 +19,52 @@ from food_catalog.models import (
     CatalogImportBatch,
     CatalogImportSourcePolicy,
     CatalogRelease,
+    CatalogPreparation,
+    CatalogPreparationIngredient,
+    CatalogPreparationVersion,
     ExternalFoodReference,
     ExternalProviderFetchLog,
 )
+
+
+@admin.register(CatalogPreparation)
+class CatalogPreparationAdmin(admin.ModelAdmin):
+    list_display = ("display_name", "catalog_ref", "current_version", "is_active")
+    search_fields = ("display_name", "catalog_ref")
+    readonly_fields = ("catalog_ref", "current_version")
+
+
+class CatalogPreparationIngredientInline(admin.TabularInline):
+    model = CatalogPreparationIngredient
+    extra = 1
+
+    def has_change_permission(self, request, obj=None):
+        return super().has_change_permission(request, obj) and (obj is None or obj.published_at is None)
+
+    def has_delete_permission(self, request, obj=None):
+        return super().has_delete_permission(request, obj) and (obj is None or obj.published_at is None)
+
+
+@admin.register(CatalogPreparationVersion)
+class CatalogPreparationVersionAdmin(admin.ModelAdmin):
+    list_display = ("preparation", "version", "yield_g", "default_portion_g", "published_at", "content_sha256")
+    list_filter = ("published_at",)
+    readonly_fields = ("nutrition", "ingredients_snapshot", "content_sha256", "published_at", "reviewed_by")
+    inlines = [CatalogPreparationIngredientInline]
+    actions = ["publish_selected_versions"]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.published_at:
+            return tuple(field.name for field in obj._meta.fields)
+        return super().get_readonly_fields(request, obj)
+
+    @admin.action(description="Publicar revisiones seleccionadas con validación nutricional")
+    def publish_selected_versions(self, request, queryset):
+        for version in queryset:
+            try:
+                publish_preparation_version(version, actor=request.user)
+            except PreparationPublicationError as exc:
+                self.message_user(request, f"{version}: {exc}", level=messages.ERROR)
 
 
 @admin.register(CatalogRelease)

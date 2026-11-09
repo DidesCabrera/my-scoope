@@ -5,6 +5,15 @@ from notas.domain.constants.nutrition import (
 )
 
 
+def iter_meal_shopping_ingredients(meal):
+    """Yield Food quantities for shopping, expanding served preparations once."""
+    for meal_food in meal.meal_food_set.all():
+        yield meal_food.food, float(meal_food.quantity)
+    for served in meal.meal_preparation_set.all():
+        for ingredient in served.version.ingredients.all():
+            yield ingredient.food, float(ingredient.quantity_g) * served.factor
+
+
 def kcal_from_macros(protein: float, carbs: float, fat: float) -> float:
     return (
         protein * PROTEIN_KCAL_PER_GRAM
@@ -69,7 +78,7 @@ def compute_meal_nutrition(meal) -> dict:
     kcal_carbs = 0.0
     kcal_fat = 0.0
 
-    for mf in meal.meal_food_set.all():
+    for mf in list(meal.meal_food_set.all()) + list(meal.meal_preparation_set.select_related("version").all()):
         protein += mf.protein
         carbs += mf.carbs
         fat += mf.fat

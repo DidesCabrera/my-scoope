@@ -290,6 +290,7 @@ export type LibraryFoodPanelItem = {
   projected_label?: string | null;
 };
 
+
 export type LibraryMealPanelItem = {
   id: string;
   relation_id: number | null;
@@ -352,6 +353,7 @@ export type LibraryCalorieDistribution = {
 export type LibraryPanel = {
   kind: "none" | "foods" | "meals" | "weeks";
   foods: LibraryFoodPanelItem[];
+  preparations?: import("./preparations").LibraryPreparationPanelItem[];
   meals: LibraryMealPanelItem[];
   weeks: LibraryWeekPanelItem[];
   supplement_intakes?: SupplementIntake[];

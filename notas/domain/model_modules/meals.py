@@ -155,19 +155,19 @@ class Meal(models.Model):
     def kcal_protein(self):
         if self.kcal_protein_cached is not None:
             return self.kcal_protein_cached
-        return sum(mf.kcal_protein for mf in self.meal_food_set.all())
+        return sum(mf.kcal_protein for mf in self.meal_food_set.all()) + sum(mp.kcal_protein for mp in self.meal_preparation_set.select_related("version").all())
 
     @property
     def kcal_carbs(self):
         if self.kcal_carbs_cached is not None:
             return self.kcal_carbs_cached
-        return sum(mf.kcal_carbs for mf in self.meal_food_set.all())
+        return sum(mf.kcal_carbs for mf in self.meal_food_set.all()) + sum(mp.kcal_carbs for mp in self.meal_preparation_set.select_related("version").all())
 
     @property
     def kcal_fat(self):
         if self.kcal_fat_cached is not None:
             return self.kcal_fat_cached
-        return sum(mf.kcal_fat for mf in self.meal_food_set.all())
+        return sum(mf.kcal_fat for mf in self.meal_food_set.all()) + sum(mp.kcal_fat for mp in self.meal_preparation_set.select_related("version").all())
 
     @property
     def total_kcal(self):
@@ -224,7 +224,7 @@ class Meal(models.Model):
     # ==================================================
 
     def update_draft_status(self):
-        if self.meal_food_set.exists():
+        if self.meal_food_set.exists() or self.meal_preparation_set.exists():
             if self.is_draft:
                 self.is_draft = False
                 self.save(update_fields=["is_draft"])

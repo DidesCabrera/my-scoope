@@ -1399,3 +1399,77 @@ class CatalogEnrichmentChange(models.Model):
     def delete(self, *args, **kwargs):
         from django.core.exceptions import ValidationError
         raise ValidationError("CatalogEnrichmentChange entries are append-only.")
+
+
+class CatalogPreparation(models.Model):
+    """Central identity for a curated preparation, separate from CatalogFood."""
+
+    catalog_ref = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    display_name = models.CharField(max_length=255)
+    current_version = models.ForeignKey(
+        "CatalogPreparationVersion", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.display_name
+
+
+class CatalogPreparationVersion(models.Model):
+    """Draft ingredients are compiled into a frozen, evidence-backed revision."""
+
+    preparation = models.ForeignKey(CatalogPreparation, on_delete=models.PROTECT, related_name="versions")
+    version = models.PositiveIntegerField()
+    yield_g = models.DecimalField(max_digits=10, decimal_places=3, validators=[MinValueValidator(Decimal("0.001"))])
+    default_portion_g = models.DecimalField(max_digits=10, decimal_places=3, validators=[MinValueValidator(Decimal("0.001"))])
+    household_label = models.CharField(max_length=80)
+    source_name = models.CharField(max_length=160)
+    source_url = models.URLField(blank=True)
+    yield_evidence = models.TextField()
+    preparation_notes = models.TextField(blank=True)
+    nutrition = models.JSONField(default=dict)
+    ingredients_snapshot = models.JSONField(default=list)
+    content_sha256 = models.CharField(max_length=64, blank=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["preparation", "version"], name="unique_catalog_preparation_version")]
+
+    def save(self, *args, **kwargs):
+        if self.pk and CatalogPreparationVersion.objects.filter(pk=self.pk, published_at__isnull=False).exists():
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Published preparation versions are immutable.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.published_at:
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Published preparation versions are immutable.")
+        return super().delete(*args, **kwargs)
+
+
+class CatalogPreparationIngredient(models.Model):
+    version = models.ForeignKey(CatalogPreparationVersion, on_delete=models.PROTECT, related_name="ingredients")
+    food = models.ForeignKey(CatalogFood, on_delete=models.PROTECT)
+    quantity_g = models.DecimalField(max_digits=10, decimal_places=3, validators=[MinValueValidator(Decimal("0.001"))])
+    preparation_state = models.CharField(max_length=30, choices=CatalogFood.PREPARATION_STATE_CHOICES)
+    is_condiment = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def save(self, *args, **kwargs):
+        if self.version.published_at:
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Published preparation ingredients are immutable.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.version.published_at:
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Published preparation ingredients are immutable.")
+        return super().delete(*args, **kwargs)

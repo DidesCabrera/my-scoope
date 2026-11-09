@@ -14,13 +14,15 @@ from food_catalog.infrastructure.releases import (
     import_catalog_release,
     validate_release_envelope,
 )
-from food_catalog.models import CatalogFood
+from food_catalog.models import CatalogFood, CatalogPreparation
+from notas.application.services.food_catalog_snapshots import PreparationSnapshotError
+from notas.application.services.commands.preparation_commands import materialize_preparation_and_refresh
 from notas.application.services.food_catalog_snapshots import (
     create_operational_food_snapshot_from_catalog,
     mark_operational_food_catalog_snapshot_stale,
     refresh_operational_food_snapshot_from_catalog,
 )
-from notas.domain.models import Food
+from notas.domain.models import Food, Preparation
 
 
 class Command(BaseCommand):
@@ -60,9 +62,9 @@ class Command(BaseCommand):
                 materialization = (
                     _materialize_release(version=result.release.version)
                     if options["materialize"]
-                    else {"created": 0, "refreshed": 0, "stale": 0}
+                    else {"created": 0, "refreshed": 0, "stale": 0, "preparations": 0}
                 )
-        except CatalogReleaseError as exc:
+        except (CatalogReleaseError, PreparationSnapshotError) as exc:
             raise CommandError(str(exc)) from exc
 
         self.stdout.write(
@@ -73,7 +75,8 @@ class Command(BaseCommand):
                 f"idempotent={result.idempotent}; operational_created="
                 f"{materialization['created']} operational_refreshed="
                 f"{materialization['refreshed']} operational_stale="
-                f"{materialization['stale']}"
+                f"{materialization['stale']} preparations="
+                f"{materialization['preparations']}"
             )
         )
 
@@ -148,4 +151,13 @@ def _materialize_release(*, version: str) -> dict[str, int]:
     for operational in Food.objects.filter(catalog_food_id__in=deprecated_ids, is_active=True):
         mark_operational_food_catalog_snapshot_stale(operational)
         stale += 1
-    return {"created": created, "refreshed": refreshed, "stale": stale}
+    active_preparations = CatalogPreparation.objects.filter(is_active=True, current_version__isnull=False)
+    delivered_preparation_refs = list(active_preparations.values_list("catalog_ref", flat=True))
+    preparation_count = 0
+    for preparation in active_preparations.order_by("id"):
+        materialize_preparation_and_refresh(preparation, release_version=version)
+        preparation_count += 1
+    Preparation.objects.filter(is_global=True, created_by__isnull=True, is_active=True).exclude(
+        catalog_ref__in=delivered_preparation_refs
+    ).update(is_active=False)
+    return {"created": created, "refreshed": refreshed, "stale": stale, "preparations": preparation_count}

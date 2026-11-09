@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from decimal import Decimal
 
 from django.db import transaction
 from django.utils import timezone
@@ -24,6 +25,9 @@ from notas.domain.models import (
     InboxItem,
     Meal,
     MealFood,
+    MealPreparation,
+    Preparation,
+    PreparationVersion,
     Program,
     ProgramDay,
     SavedComparison,
@@ -98,6 +102,38 @@ def _meal_from_snapshot(*, snapshot: dict, actor, scope=Meal.Scope.LIBRARY) -> M
         quantity = _number(food_snapshot.get("quantity_grams"))
         food = _food_from_snapshot(snapshot=food_snapshot, actor=actor, quantity_grams=quantity)
         MealFood.objects.create(meal=meal, food=food, quantity=quantity, order=position)
+    preparations = snapshot.get("preparations", [])
+    if not isinstance(preparations, list):
+        raise ShareUnavailable("share_snapshot_invalid")
+    for position, item in enumerate(preparations, len(foods)):
+        if not isinstance(item, dict):
+            raise ShareUnavailable("share_snapshot_invalid")
+        preparation = Preparation.objects.filter(catalog_ref=item.get("catalog_ref"), is_global=True, is_active=True).first()
+        if preparation is None:
+            raise ShareUnavailable("share_preparation_unavailable")
+        version = PreparationVersion.objects.filter(preparation=preparation, version=item.get("version")).first()
+        if version is None:
+            raise ShareUnavailable("share_preparation_version_unavailable")
+        try:
+            quantity = Decimal(str(item["quantity_grams"]))
+            selected_units = Decimal(str(item["selected_units"])) if item.get("selected_units") is not None else None
+            mode = item["selection_mode"]
+        except (KeyError, ValueError, TypeError) as exc:
+            raise ShareUnavailable("share_snapshot_invalid") from exc
+        if quantity <= 0 or mode not in {"units", "grams"} or (mode == "units" and selected_units is None):
+            raise ShareUnavailable("share_snapshot_invalid")
+        MealPreparation.objects.create(
+            meal=meal, preparation=preparation, version=version,
+            quantity_g=quantity, selected_units=selected_units, selection_mode=mode, order=position,
+        )
+    if preparations:
+        Meal.objects.filter(pk=meal.pk).update(
+            protein_cached=None, carbs_cached=None, fat_cached=None,
+            kcal_protein_cached=None, kcal_carbs_cached=None, kcal_fat_cached=None,
+            total_kcal_cached=None, alloc_protein_cached=None,
+            alloc_carbs_cached=None, alloc_fat_cached=None,
+        )
+        meal.refresh_from_db()
     return meal
 
 

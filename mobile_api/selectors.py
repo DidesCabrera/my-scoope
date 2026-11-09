@@ -13,6 +13,7 @@ from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api import library_projections
+from mobile_api.preparation_projections import preparation_panel_item
 from mobile_api.calendar_today import current_dated_day, standalone_today_payload
 from mobile_api.calendarized_snapshot_foods import index_snapshot_food
 from mobile_api.errors import MobileAPIError
@@ -94,7 +95,7 @@ def _library_nutrition_payload(entity, current_weight=None) -> dict:
 
 
 def _empty_library_panel(kind="none") -> dict:
-    return {"kind": kind, "foods": [], "meals": [], "weeks": []}
+    return {"kind": kind, "foods": [], "preparations": [], "meals": [], "weeks": []}
 
 
 def _creator_name(entity) -> str:
@@ -396,9 +397,11 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
     queryset = (
         Meal.objects.library().filter(created_by=user)
         .select_related("created_by")
-        .annotate(library_food_count=Count("meal_food_set", distinct=True))
+        .annotate(library_food_count=Count("meal_food_set", distinct=True), library_preparation_count=Count("meal_preparation_set", distinct=True))
         .prefetch_related(
-            Prefetch("meal_food_set", queryset=library_projections.meal_foods_for_library_projection())
+            Prefetch("meal_food_set", queryset=library_projections.meal_foods_for_library_projection()),
+            "meal_preparation_set__preparation",
+            "meal_preparation_set__version__ingredients__food",
         )
         .order_by("list_order", "-created_at", "-id")
         .distinct()
@@ -416,11 +419,12 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
             "name": meal.name, "meal_type": meal.meal_type or None,
             "subtitle": "",
             "nutrition": _library_nutrition_payload(meal, current_weight),
-            "indicators": [{"icon": "food", "label": "alimentos", "value": meal.library_food_count}]
+            "indicators": [{"icon": "food", "label": "alimentos", "value": meal.library_food_count}, {"label": "preparaciones", "value": meal.library_preparation_count}]
             + ([{"label": "estado", "value": "Borrador"}] if meal.is_draft else []),
             "panel": {
                 **_empty_library_panel("foods"),
                 "foods": [_food_panel_item(meal_food, current_weight) for meal_food in meal.meal_food_set.all()],
+                "preparations": [preparation_panel_item(row) for row in meal.meal_preparation_set.all()],
             },
             "creator": _creator_name(meal),
             "created_at": meal.created_at,
@@ -680,9 +684,11 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
         item = (
             Meal.objects.filter(pk=item_id, created_by=user)
             .select_related("created_by")
-            .annotate(library_food_count=Count("meal_food_set", distinct=True))
+            .annotate(library_food_count=Count("meal_food_set", distinct=True), library_preparation_count=Count("meal_preparation_set", distinct=True))
             .prefetch_related(
-                Prefetch("meal_food_set", queryset=library_projections.meal_foods_for_library_projection())
+                Prefetch("meal_food_set", queryset=library_projections.meal_foods_for_library_projection()),
+                "meal_preparation_set__preparation",
+                "meal_preparation_set__version__ingredients__food",
             )
             .first()
         )
@@ -693,11 +699,12 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "name": item.name, "meal_type": item.meal_type or None,
                 "subtitle": "",
                 "nutrition": _library_nutrition_payload(item, current_weight),
-                "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}]
+                "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}, {"label": "preparaciones", "value": item.library_preparation_count}]
                 + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {
                     **_empty_library_panel("foods"),
                     "foods": [_food_panel_item(row, current_weight) for row in item.meal_food_set.all()],
+                    "preparations": [preparation_panel_item(row) for row in item.meal_preparation_set.all()],
                 },
                 "creator": _creator_name(item),
                 "created_at": item.created_at,

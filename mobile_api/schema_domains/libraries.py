@@ -6,6 +6,7 @@ from typing import Literal
 from ninja import Field, Schema
 
 from mobile_api.schema_domains import library_common
+from mobile_api.schema_domains.preparations import LibraryPreparationPanelItemData
 from mobile_api.schema_domains.meal_creation import MealCreateInput
 
 OptionalPortionUnitData = library_common.OptionalPortionUnitData
@@ -89,8 +90,6 @@ class LibraryFoodPanelItemData(library_common.FoodVisualIdentityData):
     fat_allocation: float
     is_projected: bool = False
     projected_label: str | None = None
-
-
 class LibraryMealPanelItemData(Schema):
     id: str
     relation_id: int | None = None
@@ -149,6 +148,7 @@ class LibraryWeekPanelItemData(Schema):
 class LibraryPanelData(library_common.SupplementLibraryPanelData):
     kind: Literal["none", "foods", "meals", "weeks"]
     foods: list[LibraryFoodPanelItemData] = Field(default_factory=list)
+    preparations: list[LibraryPreparationPanelItemData] = Field(default_factory=list)
     meals: list[LibraryMealPanelItemData] = Field(default_factory=list)
     weeks: list[LibraryWeekPanelItemData] = Field(default_factory=list)
 

@@ -107,6 +107,7 @@ def build_food_snapshot(
     )
     return {
         "key": key,
+        "component_type": "food",
         "source_food_id": food.id,
         "name": food.name,
         "quantity_g": _round(quantity),
@@ -121,6 +122,40 @@ def build_food_snapshot(
         "carbs_g": _round(carbs),
         "fat_g": _round(fat),
         "total_kcal": _round((protein * 4) + (carbs * 4) + (fat * 9)),
+    }
+
+
+def build_preparation_snapshot(relation, *, key: str) -> dict:
+    version = relation.version
+    factor = relation.factor
+    ingredients = [
+        {
+            "source_food_id": row.food_id,
+            "name": version.ingredients_snapshot[index]["name"],
+            "quantity_g": _round(float(row.quantity_g) * factor),
+            "preparation_state": row.preparation_state,
+            "is_condiment": row.is_condiment,
+        }
+        for index, row in enumerate(relation.version.ingredients.select_related("food").order_by("order", "id"))
+    ]
+    return {
+        "key": key,
+        "component_type": "preparation",
+        "source_preparation_id": relation.preparation_id,
+        "source_preparation_version": version.version,
+        "name": relation.preparation.name,
+        "quantity_g": _round(relation.quantity_g),
+        "quantity_unit": "g",
+        "portion_display_quantity": _round(relation.selected_units if relation.selection_mode == "units" else relation.quantity_g),
+        "portion_display_measure": version.household_label if relation.selection_mode == "units" else "g",
+        "ingredients": ingredients,
+        "source_evidence": version.evidence,
+        "allergens": version.allergens,
+        "sodium_mg": _round(float(version.sodium_mg) * factor) if version.sodium_mg is not None else None,
+        "protein_g": _round(relation.protein),
+        "carbs_g": _round(relation.carbs),
+        "fat_g": _round(relation.fat),
+        "total_kcal": _round(relation.total_kcal),
     }
 
 
@@ -149,6 +184,10 @@ def build_meal_snapshot(
         )
         for meal_food in meal.meal_food_set.all()
     ]
+    foods.extend(
+        build_preparation_snapshot(row, key=f"source_meal_preparation:{row.id}")
+        for row in meal.meal_preparation_set.select_related("preparation", "version").all()
+    )
     return {
         "key": key,
         "source_meal_id": meal.id,
@@ -225,6 +264,10 @@ def build_dailyplan_snapshot_from_dailyplan(
                     "total_kcal": _round(meal_food.total_kcal),
                 }
             )
+        foods.extend(
+            build_preparation_snapshot(row, key=f"meal_preparation:{row.id}")
+            for row in meal.meal_preparation_set.select_related("preparation", "version").all()
+        )
 
         meals.append(
             {
