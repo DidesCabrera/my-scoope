@@ -57,6 +57,12 @@ from notas.domain.model_modules.notification_delivery import (
     ScheduledNotificationEvent,
     WebPushSubscription,
 )
+from notas.domain.model_modules.preparations import (
+    MealPreparation,
+    Preparation,
+    PreparationIngredient,
+    PreparationVersion,
+)
 from notas.domain.model_modules.programs import Program, ProgramDay
 from notas.domain.model_modules.proposals import (
     AiAssistantMessageFeedback,

@@ -1,7 +1,25 @@
 schema_version: 1
 area: "catalog-operations"
-last_reviewed: "2026-10-29"
+last_reviewed: "2026-11-09"
 contracts:
+  - id: "catalog-preparation-release-v3"
+    catalog: "preparations"
+    name: "Curated preparation to operational mobile library"
+    version: "myscoope.food_catalog.release.v3"
+    authority: "docs/00_current/features/preparations.md"
+    producer: "CatalogPreparation publication and approved Food Catalog release"
+    consumers:
+      - "notas.Preparation materialization"
+      - "mobile preparation picker and meal detail"
+    validation:
+      - "food_catalog/tests/test_completo_italiano_pilot.py"
+      - "mobile_api/tests/test_preparations_api.py"
+    state: "implemented-pilot-staging"
+    required_semantics:
+      - "Ingredients are published food references with frozen quantities and preparation states"
+      - "Sodium and allergen review are required for every ingredient"
+      - "One household unit has an evidence-backed estimated yield and scalable nutrition"
+      - "Release import materializes foods and preparation atomically"
   - id: "food-editorial-portion-dataset-v1"
     catalog: "foods"
     name: "My Scoope editorial portion dataset"

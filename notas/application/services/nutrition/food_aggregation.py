@@ -3,6 +3,7 @@ from collections import defaultdict
 from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
+from notas.domain.services.nutrition import iter_meal_shopping_ingredients
 
 
 def build_dailyplan_foods_aggregation(dailyplan_meals):
@@ -15,10 +16,7 @@ def build_dailyplan_foods_aggregation(dailyplan_meals):
     for dpm in dailyplan_meals:
         meal = dpm.meal
 
-        for meal_food in meal.meal_food_set.all():
-            food = meal_food.food
-            grams = meal_food.quantity
-
+        for food, grams in iter_meal_shopping_ingredients(meal):
             foods_aggregation[food.id]["food"] = food
             foods_aggregation[food.id]["display_name"] = resolve_food_display_name(food)
             foods_aggregation[food.id]["total_grams"] += grams

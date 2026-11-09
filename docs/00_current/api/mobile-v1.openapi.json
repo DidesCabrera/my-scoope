@@ -7877,6 +7877,13 @@
             "title": "Meals",
             "type": "array"
           },
+          "preparations": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryPreparationPanelItemData"
+            },
+            "title": "Preparations",
+            "type": "array"
+          },
           "supplement_intakes": {
             "items": {
               "additionalProperties": true,
@@ -7897,6 +7904,129 @@
           "kind"
         ],
         "title": "LibraryPanelData",
+        "type": "object"
+      },
+      "LibraryPreparationIngredientData": {
+        "properties": {
+          "food_id": {
+            "title": "Food Id",
+            "type": "integer"
+          },
+          "is_condiment": {
+            "title": "Is Condiment",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "preparation_state": {
+            "title": "Preparation State",
+            "type": "string"
+          },
+          "quantity_g": {
+            "title": "Quantity G",
+            "type": "number"
+          }
+        },
+        "required": [
+          "food_id",
+          "name",
+          "quantity_g",
+          "preparation_state",
+          "is_condiment"
+        ],
+        "title": "LibraryPreparationIngredientData",
+        "type": "object"
+      },
+      "LibraryPreparationPanelItemData": {
+        "properties": {
+          "allergens": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allergens",
+            "type": "array"
+          },
+          "calories": {
+            "title": "Calories",
+            "type": "number"
+          },
+          "detail_id": {
+            "title": "Detail Id",
+            "type": "integer"
+          },
+          "household_label": {
+            "title": "Household Label",
+            "type": "string"
+          },
+          "ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryPreparationIngredientData"
+            },
+            "title": "Ingredients",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "quantity_g": {
+            "title": "Quantity G",
+            "type": "number"
+          },
+          "relation_id": {
+            "title": "Relation Id",
+            "type": "integer"
+          },
+          "selected_units": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Units"
+          },
+          "selection_mode": {
+            "enum": [
+              "units",
+              "grams"
+            ],
+            "title": "Selection Mode",
+            "type": "string"
+          },
+          "sodium_mg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sodium Mg"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "relation_id",
+          "detail_id",
+          "name",
+          "version",
+          "quantity_g",
+          "selection_mode",
+          "household_label",
+          "calories",
+          "allergens",
+          "ingredients"
+        ],
+        "title": "LibraryPreparationPanelItemData",
         "type": "object"
       },
       "LibraryWeekDayData": {
@@ -9346,6 +9476,78 @@
           "dailyplan_id"
         ],
         "title": "PinnedDailyPlanInput",
+        "type": "object"
+      },
+      "PreparationPortionUpdate": {
+        "properties": {
+          "grams": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grams"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 0.5,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          }
+        },
+        "title": "PreparationPortionUpdate",
+        "type": "object"
+      },
+      "PreparationSelection": {
+        "properties": {
+          "grams": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grams"
+          },
+          "preparation_id": {
+            "exclusiveMinimum": 0,
+            "title": "Preparation Id",
+            "type": "integer"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 0.5,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          }
+        },
+        "required": [
+          "preparation_id"
+        ],
+        "title": "PreparationSelection",
         "type": "object"
       },
       "PresetApplyInput": {
@@ -18771,6 +18973,150 @@
         "summary": "Meal Food Update"
       }
     },
+    "/api/v1/library/meals/{meal_id}/preparations": {
+      "post": {
+        "operationId": "mobile_api_api_add_preparation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreparationSelection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Add Preparation"
+      }
+    },
+    "/api/v1/library/meals/{meal_id}/preparations/{relation_id}": {
+      "delete": {
+        "operationId": "mobile_api_api_delete_preparation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "relation_id",
+            "required": true,
+            "schema": {
+              "title": "Relation Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Delete Preparation"
+      },
+      "patch": {
+        "operationId": "mobile_api_api_update_preparation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "relation_id",
+            "required": true,
+            "schema": {
+              "title": "Relation Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreparationPortionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Preparation"
+      }
+    },
     "/api/v1/library/programs": {
       "get": {
         "operationId": "mobile_api_api_library_programs",
@@ -21666,6 +22012,137 @@
           }
         ],
         "summary": "Update Personal Preferences"
+      }
+    },
+    "/api/v1/preparations": {
+      "get": {
+        "operationId": "mobile_api_api_preparations",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Preparations"
+      }
+    },
+    "/api/v1/preparations/{preparation_id}": {
+      "get": {
+        "operationId": "mobile_api_api_preparation_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preparation_id",
+            "required": true,
+            "schema": {
+              "title": "Preparation Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "units",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Units"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grams",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grams"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Preparation Detail"
       }
     },
     "/api/v1/program/active": {

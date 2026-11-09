@@ -466,3 +466,93 @@ __all__ = [
     "mark_operational_food_catalog_snapshot_stale",
     "refresh_operational_food_snapshot_from_catalog",
 ]
+"""Explicit bridge from approved catalog preparations to operational copies."""
+
+from decimal import Decimal
+
+from django.db import transaction
+
+from food_catalog.models import CatalogPreparation
+from notas.domain.models import Food, MealPreparation, Preparation, PreparationIngredient, PreparationVersion
+
+
+class PreparationSnapshotError(ValueError):
+    pass
+
+
+@transaction.atomic
+def materialize_preparation(catalog_preparation: CatalogPreparation | int, *, release_version: str) -> PreparationVersion:
+    """Copy a published mirror version; never calculate a meal from CatalogFood."""
+
+    source = CatalogPreparation.objects.select_related("current_version").get(
+        pk=catalog_preparation.pk if isinstance(catalog_preparation, CatalogPreparation) else catalog_preparation
+    )
+    version = source.current_version
+    if not source.is_active or version is None or not version.published_at:
+        raise PreparationSnapshotError("preparation_not_published")
+    rows = version.ingredients_snapshot
+    if not isinstance(rows, list) or not rows:
+        raise PreparationSnapshotError("preparation_ingredients_missing")
+    food_refs = {row["catalog_food_ref"] for row in rows}
+    foods = {str(food.catalog_food_ref): food for food in Food.objects.filter(
+        is_global=True, is_active=True, catalog_food_ref__in=food_refs
+    )}
+    if set(foods) != food_refs:
+        raise PreparationSnapshotError("preparation_operational_ingredients_missing")
+    for row in rows:
+        if foods[row["catalog_food_ref"]].portion_unit != "g":
+            raise PreparationSnapshotError("preparation_ingredient_unit_invalid")
+    preparation, _ = Preparation.objects.select_for_update().get_or_create(
+        catalog_ref=source.catalog_ref,
+        defaults={"name": source.display_name, "is_global": True},
+    )
+    if not preparation.is_global or preparation.created_by_id:
+        raise PreparationSnapshotError("preparation_catalog_identity_conflict")
+    current = preparation.current_version
+    if current and current.version > version.version:
+        raise PreparationSnapshotError("preparation_version_regression")
+    copied, created = PreparationVersion.objects.get_or_create(
+        preparation=preparation,
+        version=version.version,
+        defaults={
+            "release_version": release_version,
+            "yield_g": version.yield_g,
+            "default_portion_g": version.default_portion_g,
+            "household_label": version.household_label,
+            "protein_g": Decimal(version.nutrition["protein_g"]),
+            "carbs_g": Decimal(version.nutrition["carbs_g"]),
+            "fat_g": Decimal(version.nutrition["fat_g"]),
+            "sodium_mg": Decimal(version.nutrition["sodium_mg"]),
+            "allergens": version.nutrition["allergens"],
+            "allergen_status": "confirmed",
+            "evidence": {
+                "source_name": version.source_name,
+                "source_url": version.source_url,
+                "yield_evidence": version.yield_evidence,
+                "preparation_notes": version.preparation_notes,
+            },
+            "ingredients_snapshot": rows,
+            "content_sha256": version.content_sha256,
+        },
+    )
+    if not created and copied.content_sha256 != version.content_sha256:
+        raise PreparationSnapshotError("preparation_version_checksum_conflict")
+    if created:
+        PreparationIngredient.objects.bulk_create([
+            PreparationIngredient(
+                version=copied, food=foods[row["catalog_food_ref"]],
+                quantity_g=row["quantity_g"], preparation_state=row["preparation_state"],
+                is_condiment=row["is_condiment"], order=index,
+            ) for index, row in enumerate(rows)
+        ])
+    preparation.name = source.display_name
+    preparation.is_active = True
+    preparation.current_version = copied
+    preparation.save(update_fields=["name", "is_active", "current_version"])
+    if current and current.pk != copied.pk:
+        for relation in MealPreparation.objects.filter(preparation=preparation).iterator():
+            relation.version = copied
+            if relation.selection_mode == "units":
+                relation.quantity_g = relation.selected_units * copied.default_portion_g
+            relation.save(update_fields=["version", "quantity_g"])
+    return copied

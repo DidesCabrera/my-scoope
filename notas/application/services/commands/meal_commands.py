@@ -5,7 +5,7 @@ from django.db import transaction
 
 from notas.application.commercial.limits import require_new_workspace_item
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
-from notas.domain.models import Food, Meal, MealFood
+from notas.domain.models import Food, Meal, MealFood, MealPreparation
 
 # ==================================================
 # MEAL HELPERS
@@ -33,6 +33,13 @@ def clone_meal_foods(source: Meal, target: Meal) -> None:
             order=mf.order,
         )
         for mf in source.meal_food_set.all()
+    ])
+    MealPreparation.objects.bulk_create([
+        MealPreparation(
+            meal=target, preparation=row.preparation, version=row.version,
+            quantity_g=row.quantity_g, selected_units=row.selected_units,
+            selection_mode=row.selection_mode, order=row.order,
+        ) for row in source.meal_preparation_set.select_related("version", "preparation").all()
     ])
 
 

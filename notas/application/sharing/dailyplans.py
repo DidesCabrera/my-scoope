@@ -11,6 +11,7 @@ from django.db.models import Prefetch, Q
 from django.utils import timezone
 
 from notas.application.sharing.contracts import SHARE_SNAPSHOT_SCHEMA_VERSION
+from notas.application.sharing.preparations import preparation_share_item
 from notas.domain.models import DailyPlan, MealFood, ShareResource
 
 
@@ -52,6 +53,7 @@ def build_dailyplan_share_snapshot(dailyplan: DailyPlan) -> dict:
     plan_carbs = 0.0
     plan_fat = 0.0
     food_count = 0
+    preparation_count = 0
 
     for dailyplan_meal in dailyplan.dailyplan_meals.all():
         foods = []
@@ -77,6 +79,13 @@ def build_dailyplan_share_snapshot(dailyplan: DailyPlan) -> dict:
             meal_fat += food_nutrition["fat_grams"]
             food_count += 1
 
+        preparations = [preparation_share_item(row) for row in dailyplan_meal.meal.meal_preparation_set.select_related("preparation", "version").all()]
+        for preparation in preparations:
+            meal_protein += preparation["nutrition"]["protein_grams"]
+            meal_carbs += preparation["nutrition"]["carbs_grams"]
+            meal_fat += preparation["nutrition"]["fat_grams"]
+            preparation_count += 1
+
         meal_nutrition = _nutrition(protein=meal_protein, carbs=meal_carbs, fat=meal_fat)
         plan_protein += meal_nutrition["protein_grams"]
         plan_carbs += meal_nutrition["carbs_grams"]
@@ -87,13 +96,14 @@ def build_dailyplan_share_snapshot(dailyplan: DailyPlan) -> dict:
                 "time": dailyplan_meal.hour.isoformat(timespec="minutes") if dailyplan_meal.hour else None,
                 "nutrition": meal_nutrition,
                 "foods": foods,
+                **({"preparations": preparations} if preparations else {}),
             }
         )
 
     return {
         "schema_version": SHARE_SNAPSHOT_SCHEMA_VERSION,
         "subject": {"type": ShareResource.SubjectType.DAILY_PLAN, "title": dailyplan.name},
-        "summary": {"meal_count": len(meals), "food_count": food_count},
+        "summary": {"meal_count": len(meals), "food_count": food_count, **({"preparation_count": preparation_count} if preparation_count else {})},
         "nutrition": _nutrition(protein=plan_protein, carbs=plan_carbs, fat=plan_fat),
         "meals": meals,
     }

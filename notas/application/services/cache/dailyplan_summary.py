@@ -7,10 +7,10 @@ from django.db.models import Prefetch
 from django.utils import timezone
 
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
-from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, Program
-from notas.domain.services.nutrition import macro_kcal_distribution
+from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, MealPreparation, Program
+from notas.domain.services.nutrition import iter_meal_shopping_ingredients, macro_kcal_distribution
 
-DAILYPLAN_SUMMARY_CACHE_VERSION = 3
+DAILYPLAN_SUMMARY_CACHE_VERSION = 4
 
 
 def _safe_percentage(part, total):
@@ -37,7 +37,11 @@ def _dailyplan_meals_base_queryset():
             Prefetch(
                 "meal__meal_food_set",
                 queryset=MealFood.objects.select_related("food").order_by("order", "id"),
-            )
+            ),
+            Prefetch(
+                "meal__meal_preparation_set",
+                queryset=MealPreparation.objects.select_related("preparation", "version").prefetch_related("version__ingredients__food"),
+            ),
         )
         .order_by("order", "id")
     )
@@ -60,6 +64,7 @@ def _meal_snapshot(meal) -> dict:
     fat = _cached_or_live(meal, "fat_cached", "fat")
     alloc = getattr(meal, "alloc", {})
     meal_foods = list(meal.meal_food_set.all())
+    meal_preparations = list(meal.meal_preparation_set.all())
     return {
         "id": meal.id,
         "name": meal.name,
@@ -75,7 +80,7 @@ def _meal_snapshot(meal) -> dict:
             "carbs": alloc.get("carbs", 0),
             "fat": alloc.get("fat", 0),
         },
-        "foods_count": len(meal.foods_aggregation_cached or meal_foods),
+        "foods_count": len(meal.foods_aggregation_cached or meal_foods) + len(meal_preparations),
     }
 
 
@@ -171,15 +176,24 @@ def build_dailyplan_summary(dailyplan: DailyPlan) -> dict:
         }
         meals.append(meal_item)
 
-        for meal_food in meal_foods:
-            food = meal_food.food
+        for food, quantity_g in iter_meal_shopping_ingredients(meal):
             display_name = resolve_food_display_name(food)
             foods_aggregation[food.id]["food"] = food
             foods_aggregation[food.id]["display_name"] = display_name
-            foods_aggregation[food.id]["total_grams"] += meal_food.quantity
+            foods_aggregation[food.id]["total_grams"] += quantity_g
+
+        for meal_food in meal_foods:
+            food = meal_food.food
+            display_name = resolve_food_display_name(food)
             menu_foods.append(
                 f"{display_name} ({_format_quantity(meal_food.quantity)}{food.portion_unit})"
             )
+        for served in meal.meal_preparation_set.all():
+            portion = (
+                f"{_format_quantity(served.selected_units)} {served.version.household_label}"
+                if served.selection_mode == "units" else f"{_format_quantity(served.quantity_g)}g"
+            )
+            menu_foods.append(f"{served.preparation.name} ({portion})")
 
     totals = _finalize_totals(totals)
 
