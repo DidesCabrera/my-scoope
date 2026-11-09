@@ -165,6 +165,9 @@ class PreparationAPITests(AuthenticatedMobileAPITestCase):
         self.operational_food.save(update_fields=["protein"])
         frozen = self.client.get(f"/api/v1/preparations/{preparation.id}?units=1.5").json()["data"]
         self.assertEqual(frozen["ingredients"][0]["protein_g"], 7.5)
+        by_weight = self.client.get(f"/api/v1/preparations/{preparation.id}?grams=20").json()["data"]
+        self.assertEqual(by_weight["ingredients"][0]["quantity_g"], 25)
+        self.assertEqual(by_weight["ingredients"][0]["protein_g"], 2.5)
         invalid = self.client.post(
             f"/api/v1/library/meals/{meal.id}/preparations",
             data=json.dumps({"preparation_id": preparation.id, "units": 0.7}),
