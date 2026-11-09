@@ -12,13 +12,15 @@ const entityConfig = {
   meal: { comparisonKind: "meals", slug: "meals" },
 } as const;
 
-export function ContextualLibraryActions({ apiRequest, entity, id, name, onChanged, onRemoveFromCalendar }: {
+export function ContextualLibraryActions({ apiRequest, entity, id, name, onChanged, onRemove, onRemoveFromCalendar, onReplace }: {
   apiRequest: ApiRequest;
   entity: Extract<LibraryEntity, "dailyPlan" | "meal">;
   id?: number;
   name: string;
   onChanged(): Promise<void> | void;
+  onRemove?: () => Promise<void>;
   onRemoveFromCalendar?: () => Promise<void>;
+  onReplace?: () => void;
 }) {
   const router = useRouter();
   const { publishSelection } = useComparatorSelectionTransfer();
@@ -27,7 +29,7 @@ export function ContextualLibraryActions({ apiRequest, entity, id, name, onChang
     { destructive: false, key: "share", label: "Compartir" },
     { destructive: false, key: "rename", label: "Renombrar" },
   ];
-  if (id != null && !onRemoveFromCalendar) {
+  if (id != null && !onRemoveFromCalendar && !onRemove) {
     actions.push({ destructive: true, key: "delete", label: "Eliminar" });
   }
 
@@ -51,6 +53,9 @@ export function ContextualLibraryActions({ apiRequest, entity, id, name, onChang
       onCompare={id != null ? () => void compare() : undefined}
       onCompleted={(_result: LibraryActionResult) => void onChanged()}
       onRemoveFromCalendar={onRemoveFromCalendar}
+      onRemove={onRemove}
+      onReplace={onReplace}
+      removeContext={onRemove ? "calendarizedDay" : undefined}
     />
   );
 }

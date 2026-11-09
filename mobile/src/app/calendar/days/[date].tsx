@@ -1,18 +1,18 @@
 import { type Href, Redirect, Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { CalendarDays, ClipboardList, Pin, Trash2 } from "lucide-react-native";
+import { CalendarDays, Pin, Trash2 } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarDayDetailData, CalendarOverviewData } from "@/api/types";
-import type { CalendarCommitment } from "@/api/calendar-types";
+import type { CalendarCommitment, CalendarCommitmentKind } from "@/api/calendar-types";
 import { useSession } from "@/auth/session-context";
 import { commitmentActionLabel, commitmentDayTitle, commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarPlanEditor } from "@/components/calendarization/calendar-plan-editor";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
+import { EntityIcon, InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
 import { ConfirmationState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { loadCommitmentReminderSettings, syncCommitmentReminders } from "@/notifications/commitment-reminders";
@@ -33,6 +33,8 @@ export default function CalendarDayScreen() {
   const [sectionOverride, setSection] = useState<DaySection | undefined>(undefined);
   const section = sectionOverride === undefined ? (initialSection === "assign" || initialSection === "replace" ? initialSection : null) : sectionOverride;
   const [addMenuVisible, setAddMenuVisible] = useState(false);
+  const [registeringCommitment, setRegisteringCommitment] = useState<CalendarCommitmentKind | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [commitmentToDelete, setCommitmentToDelete] = useState<CalendarCommitment | null>(null);
   const [deletingCommitment, setDeletingCommitment] = useState(false);
@@ -84,11 +86,30 @@ export default function CalendarDayScreen() {
       identityVisible: compactHeaderVisible,
       leadingAction: section == null ? undefined : { icon: "back", label: "Volver al día", onPress: () => setSection(null) },
       mode: "back",
-      secondaryAction: section == null ? { icon: "plus", label: "Agregar a esta fecha", onPress: () => setAddMenuVisible(true) } : undefined,
+      secondaryAction: section == null ? { icon: "plus", label: "Agregar a esta fecha", onPress: () => { setAddError(null); setAddMenuVisible(true); } } : undefined,
       title,
     });
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, origin, section, setHeaderPresentation, title]));
+
+  async function registerCommitment(kind: CalendarCommitmentKind) {
+    if (registeringCommitment || !date) return;
+    setRegisteringCommitment(kind);
+    setAddError(null);
+    try {
+      await apiRequest("/api/v1/calendar/commitments", {
+        method: "POST",
+        body: JSON.stringify({ kind, dates: [date] }),
+      });
+      setAddMenuVisible(false);
+      await load();
+      void loadCommitmentReminderSettings().then((settings) => syncCommitmentReminders(settings, apiRequest)).catch(() => undefined);
+    } catch (nextError) {
+      setAddError(userFacingError(nextError));
+    } finally {
+      setRegisteringCommitment(null);
+    }
+  }
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return <Redirect href="/calendar" />;
@@ -114,17 +135,20 @@ export default function CalendarDayScreen() {
       <SafeAreaView edges={["left", "right"]} style={{ backgroundColor: tokens.color.surfaceCard, flexShrink: 1 }}>
         <ActionSheetHeader icon={CalendarDays} onClose={() => setAddMenuVisible(false)} title="Agregar a esta fecha" />
         <View style={{ padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl }}>
+          {addError ? <InlineNotice tone="error">{addError}</InlineNotice> : null}
           <ActionSheetActions>
-            <ActionSheetAction icon={ClipboardList} label={day?.has_plan ? "Reemplazar minuta diaria" : "Agregar minuta diaria"} onPress={() => { setAddMenuVisible(false); setSection(day?.has_plan ? "replace" : "assign"); }} />
-            {commitmentKinds.map((kind) => <ActionSheetAction
-              icon={commitmentPresentation[kind].icon}
+            <ActionSheetAction disabled={registeringCommitment !== null} iconNode={<EntityIcon entity="dailyPlan" size="compact" />} label={day?.has_plan ? "Reemplazar minuta diaria" : "Agregar minuta diaria"} onPress={() => { setAddError(null); setAddMenuVisible(false); setSection(day?.has_plan ? "replace" : "assign"); }} />
+            {commitmentKinds.map((kind) => {
+              const presentation = commitmentPresentation[kind];
+              const Icon = presentation.icon;
+              return <ActionSheetAction
+              disabled={registeringCommitment !== null}
+              iconNode={<Icon color={presentation.color} size={18} />}
               key={kind}
               label={commitmentActionLabel[kind]}
-              onPress={() => {
-                setAddMenuVisible(false);
-                router.push(`/calendar/commitments?kind=${kind}&date=${date}${origin === "home" ? "&origin=home" : ""}` as Href);
-              }}
-            />)}
+              loading={registeringCommitment === kind}
+              onPress={() => void registerCommitment(kind)}
+            />;})}
           </ActionSheetActions>
         </View>
       </SafeAreaView>

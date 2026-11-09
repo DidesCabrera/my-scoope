@@ -3,13 +3,14 @@ import { ChevronRight } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
-import type { CompositionMutationResult, LibraryAction, LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem, MealExecutionItem } from "@/api/types";
+import type { CompositionMutationResult, LibraryAction, LibraryFoodPanelItem, LibraryMealPanelItem, LibraryNutrition, LibraryPanel, LibraryWeekPanelItem, MealExecutionItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
 import { pickerHref } from "@/components/pickers/picker-routes";
+import { preparationPanelItem } from "@/components/preparations/preparation-panel-items";
 import {
   FoodPanels as SharedFoodPanels,
   type FoodPanelEditing,
@@ -28,7 +29,7 @@ import { tokens } from "@/design/tokens";
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels/panel-surface";
 import { LibraryActions } from "./library-actions";
 
-function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
+export function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return {
     detailId: item.detail_id,
     id: item.id,
@@ -51,6 +52,13 @@ function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
     fatAllocation: item.fat_allocation,
     projectedLabel: item.projected_label,
   };
+}
+
+export function mealFoodPanelItems(panel: LibraryPanel, nutrition: LibraryNutrition): FoodPanelItem[] {
+  return [
+    ...panel.foods.map(toFoodPanelItem),
+    ...(panel.preparations ?? []).map((preparation) => preparationPanelItem(preparation, nutrition)),
+  ];
 }
 
 function toMealPanelItem(item: LibraryMealPanelItem): MealPanelItem {
@@ -150,6 +158,7 @@ export function DailyPlanMealCards({ dailyPlanId, items, onChanged, onRemove, pi
                 onCompare={compare}
                 onCompleted={() => { void onChanged?.(); }}
                 onRemove={onRemove ? () => onRemove(item) : undefined}
+                onReplace={dailyPlanMealId != null ? () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId, dailyPlanMealId })) : undefined}
                 onSaveToLibrary={dailyPlanMealId != null ? async () => {
                   const result = await apiRequest<CompositionMutationResult>(`/api/v1/library/daily-plans/${dailyPlanId}/meals/${dailyPlanMealId}/save-to-library`, { method: "POST" });
                   Alert.alert("Listo", result.message);

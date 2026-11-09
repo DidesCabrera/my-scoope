@@ -33,6 +33,7 @@ type NutritionPanelValues = {
 };
 
 export type FoodPanelItem = NutritionPanelValues & {
+  kind?: "food" | "preparation";
   detailId?: number | null;
   id: string;
   name: string;
@@ -132,7 +133,7 @@ function portionDecimal(value: number): string {
 function proposedPortionLabel(item: FoodPanelItem): string | null {
   const amount = item.portionDisplayQuantity;
   const measure = item.portionDisplayMeasure?.trim();
-  if (amount == null || !Number.isFinite(amount) || amount <= 0 || !measure || measure === item.quantityUnit || measure === "g" || measure === "ml") return null;
+  if (amount == null || !Number.isFinite(amount) || amount <= 0 || !measure || measure === item.quantityUnit || (item.kind !== "preparation" && (measure === "g" || measure === "ml"))) return null;
   return `~${portionDecimal(amount)} ${householdMeasureDisplayLabel(measure, amount)}`;
 }
 
@@ -156,7 +157,7 @@ function useFoodPanelPortionEquivalences(items: FoodPanelItem[]): FoodPanelItem[
   const { apiRequest, status } = useSession();
   const [options, setOptions] = useState<Record<number, FoodPickerOption>>({});
   const missingIds = useMemo(() => [...new Set(items
-    .filter((item) => item.detailId != null && proposedPortionLabel(item) == null)
+    .filter((item) => item.kind !== "preparation" && item.detailId != null && proposedPortionLabel(item) == null)
     .map((item) => item.detailId as number))], [items]);
   useEffect(() => {
     if (status !== "authenticated" || missingIds.length === 0) return undefined;
@@ -174,7 +175,7 @@ function useFoodPanelPortionEquivalences(items: FoodPanelItem[]): FoodPanelItem[
   }, [apiRequest, missingIds, status]);
 
   return items.map((item) => {
-    if (proposedPortionLabel(item) || item.detailId == null) return item;
+    if (item.kind === "preparation" || proposedPortionLabel(item) || item.detailId == null) return item;
     const option = options[item.detailId];
     if (!option?.household_measure) return item;
     const amount = foodPortionHouseholdAmount(item.quantity, {
@@ -406,8 +407,11 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteraction, item, itemNameStyle, onOpenItem, showFoodPortion = false, showNutritionSummary = false, style = styles.gridLeadingCell }: { dragInteraction?: PanelRowDragInteraction; item: T; itemNameStyle?: StyleProp<TextStyle>; onOpenItem?: (item: T) => void; showFoodPortion?: boolean; showNutritionSummary?: boolean; style?: StyleProp<ViewStyle> }) {
   const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}>
     <View style={[styles.foodIdentityTitleRow, item.projectedLabel === "Por agregar" && styles.foodIdentityTitleRowWithBadge]}>
-      <FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} />
-      <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>
+      {item.kind === "preparation" ? <EntityIcon entity="preparation" size="compact" /> : <FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} />}
+      {item.kind === "preparation" ? <View style={styles.preparationIdentityCopy}>
+        <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>
+        <Text style={styles.preparationSubtitle}>Preparación</Text>
+      </View> : <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>}
       {item.projectedLabel === "Por agregar" ? <Text style={[styles.projectedBadge, styles.foodInlineProjectedBadge]}>{item.projectedLabel}</Text> : null}
     </View>
     {showNutritionSummary ? <NutritionSummary item={item} /> : null}
@@ -790,7 +794,8 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
   const [optimisticOrder, setOptimisticOrder] = useState<{ items: FoodPanelItem[]; sourceSignature: string } | null>(null);
   const orderedItems = optimisticOrder?.sourceSignature === itemSignature ? optimisticOrder.items : itemsWithPortions;
 
-  const rowEditing: PanelRowEditing<FoodPanelItem> | undefined = editing ? {
+  // Food-only reorder and swipe endpoints cannot safely mutate a preparation.
+  const rowEditing: PanelRowEditing<FoodPanelItem> | undefined = editing && !orderedItems.some((item) => item.kind === "preparation") ? {
     deleteConfirmation: (item) => ({ message: `¿Eliminar ${item.name} de esta comida?`, title: "Eliminar alimento" }),
     editLabel: (item) => `Editar porción de ${item.name}`,
     onDelete: editing.onDelete,
@@ -815,7 +820,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
       {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
-      {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={orderedItems} key={orderedItems.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} /> : null}
+      {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={orderedItems.filter((item) => item.kind !== "preparation")} key={orderedItems.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} /> : null}
     </PanelSurface></NestedPanelScrollContext.Provider>
   );
 }
@@ -914,6 +919,8 @@ const styles = StyleSheet.create({
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   foodIdentity: { alignItems: "stretch", flex: 1, gap: tokens.spacing.sm, justifyContent: "center", minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   foodIdentityTitleRow: { alignItems: "center", flexDirection: "row", gap: 2, minWidth: 0 },
+  preparationIdentityCopy: { flex: 1, minWidth: 0 },
+  preparationSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.label, lineHeight: 15, paddingHorizontal: tokens.spacing.xs },
   foodIdentityTitleRowWithBadge: { gap: 0 },
   foodNameWithBadge: { flexShrink: 1, minWidth: 0, paddingRight: 0 },
   foodInlineProjectedBadge: { borderColor: tokens.color.food, flexShrink: 0, marginLeft: tokens.spacing.sm },

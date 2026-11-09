@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   Clock,
+  CookingPot,
   FileDown,
   House,
   Info,
@@ -33,14 +34,14 @@ import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, View
 import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { tokens } from "@/design/tokens";
 import { runGuardedNavigation } from "@/navigation/navigation-press-guard";
-import { Chip } from "./chip";
 import { Button } from "./controls";
+import { foodNutritionBasisLabel } from "./food-nutrition-basis";
 import { Card } from "./surfaces";
 
-export type EntityKind = "comparison" | "food" | "meal" | "dailyPlan" | "dpm" | "program" | "supplement";
+export type EntityKind = "comparison" | "food" | "meal" | "preparation" | "dailyPlan" | "dpm" | "program" | "supplement";
 export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "notifications" | "learning" | "create" | "import";
 
-export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "supplement" | "week" | "weight";
+export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "preparation" | "dailyPlan" | "supplement" | "week" | "weight";
 
 export type StructuralIndicator = {
   icon?: StructuralIndicatorKind;
@@ -75,8 +76,9 @@ function isFoodQuantity(value: number | string | undefined): value is string {
   return typeof value === "string" && (/^[\d.,]+\s*(?:g|ml)(?:\s*\(.+\))?$/i.test(value.trim()) || /^.+\([\d.,]+\s*(?:g|ml)\)$/i.test(value.trim()));
 }
 
-function FoodQuantityChip({ value }: { value: string }) {
-  return <Chip backgroundColor={`${tokens.color.food}1A`} borderColor={tokens.color.food} label={value} textColor={tokens.color.entityIconForeground} />;
+function NutritionBasisSubtitle({ entity, value }: { entity: "food" | "preparation"; value: string }) {
+  const label = entity === "food" ? foodNutritionBasisLabel(value) ?? value : `Información nutricional: ${value}`;
+  return <Text style={styles.headingSubtitle}>{label}</Text>;
 }
 
 export function HeaderMetadataChip({ kind, value }: { kind: "date" | "time" | "weight"; value: string }) {
@@ -113,6 +115,7 @@ const entityLabels: Record<EntityKind, string> = {
   comparison: "Comparación",
   food: "Alimento",
   meal: "Comida",
+  preparation: "Preparación",
   dailyPlan: PRODUCT_VOCABULARY_ES.dailyPlan.singular,
   dpm: PRODUCT_VOCABULARY_ES.dailyPlan.singular,
   program: "Programa",
@@ -123,6 +126,7 @@ const entityIcons: Record<EntityKind, LucideIcon> = {
   comparison: Scale,
   food: Carrot,
   meal: Utensils,
+  preparation: CookingPot,
   dailyPlan: ClipboardList,
   dpm: CalendarDays,
   program: ChartNoAxesCombined,
@@ -142,6 +146,7 @@ const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
   day: CalendarDays,
   food: Carrot,
   meal: Utensils,
+  preparation: CookingPot,
   dailyPlan: ClipboardList,
   supplement: Pill,
   week: CalendarRange,
@@ -153,6 +158,7 @@ const structuralIndicatorColors: Record<StructuralIndicatorKind, string> = {
   day: tokens.color.program,
   food: tokens.color.food,
   meal: tokens.color.meal,
+  preparation: tokens.color.preparation,
   dailyPlan: tokens.color.dailyPlan,
   supplement: tokens.color.supplement,
   week: tokens.color.program,
@@ -205,18 +211,19 @@ export function StructuralIndicators({ indicators, entity, tone = "identity" }: 
   if (indicators.length === 0) return null;
   return (
     <View
-      accessibilityLabel={indicators.map(({ label, value }) => `${value} ${label}`).join(", ")}
+      accessibilityLabel={indicators.map(({ label, value }) => entity === "food" && isFoodQuantity(value) ? foodNutritionBasisLabel(value) ?? `${value} ${label}` : `${value} ${label}`).join(", ")}
       accessible
       style={styles.structuralIndicators}>
       {indicators.map((indicator, index) => {
-        const key = `${indicator.icon ?? "text"}-${indicator.label}-${index}`;
+        const iconKind: StructuralIndicatorKind | undefined = indicator.icon ?? (indicator.label === "preparaciones" ? "preparation" : undefined);
+        const key = `${iconKind ?? "text"}-${indicator.label}-${index}`;
         if (entity === "food" && isFoodQuantity(indicator.value)) {
-          return <FoodQuantityChip key={key} value={indicator.value} />;
+          return <NutritionBasisSubtitle entity="food" key={key} value={indicator.value} />;
         }
-        const Icon = indicator.icon ? structuralIcons[indicator.icon] : null;
+        const Icon = iconKind ? structuralIcons[iconKind] : null;
         const itemTone = indicator.tone ?? tone;
-        const color = indicator.icon
-          ? structuralIndicatorColors[indicator.icon]
+        const color = iconKind
+          ? structuralIndicatorColors[iconKind]
           : entity
             ? tokens.color[entity]
             : tokens.color.textMuted;
@@ -273,6 +280,7 @@ export function CompletionIndicators({ completedCount = 0, noteCount = 0, summar
 export function EntityHeading({
   title,
   titleIcon,
+  titleIconPosition = "leading",
   entity,
   eyebrow,
   subtitle,
@@ -287,6 +295,7 @@ export function EntityHeading({
 }: {
   title: string;
   titleIcon?: ReactNode;
+  titleIconPosition?: "leading" | "trailing";
   entity: EntityKind;
   eyebrow?: string;
   subtitle?: string;
@@ -313,11 +322,12 @@ export function EntityHeading({
         </View>
         {eyebrowAccessory}
       </View>
-      <View style={styles.headingTitleRow}>
-        {titleIcon}
+      <View style={[styles.headingTitleRow, titleIconPosition === "trailing" && styles.headingTitleRowTrailing]}>
+        {titleIconPosition === "leading" ? titleIcon : null}
         <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
+        {titleIconPosition === "trailing" ? titleIcon : null}
       </View>
-      {subtitle ? entity === "food" && isFoodQuantity(subtitle) ? <FoodQuantityChip value={subtitle} /> : <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
+      {subtitle ? entity === "preparation" || entity === "food" && isFoodQuantity(subtitle) ? <NutritionBasisSubtitle entity={entity === "preparation" ? "preparation" : "food"} value={subtitle} /> : <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
       {indicators || completion ? (
         <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
           {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
@@ -348,6 +358,7 @@ export function EntityCard({
   accent,
   title,
   titleIcon,
+  titleIconPosition,
   eyebrow,
   eyebrowAccessory,
   subtitle,
@@ -367,6 +378,7 @@ export function EntityCard({
   accent?: string;
   title: string;
   titleIcon?: ReactNode;
+  titleIconPosition?: "leading" | "trailing";
   eyebrow?: string;
   eyebrowAccessory?: ReactNode;
   subtitle?: string;
@@ -384,7 +396,7 @@ export function EntityCard({
   const hasFooter = Boolean(actions || panelToggle);
   const content = (
     <Card accent={accent ?? tokens.color[entity]} style={[hasFooter ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
-      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} identityColor={identityColor} identityIcon={identityIcon} indicators={indicators} subtitle={subtitle} title={title} titleIcon={titleIcon} />
+      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} eyebrowAccessory={eyebrowAccessory} headingLink={headingLink} identityColor={identityColor} identityIcon={identityIcon} indicators={indicators} subtitle={subtitle} title={title} titleIcon={titleIcon} titleIconPosition={titleIconPosition} />
       {children}
       {hasFooter ? <EntityCardActions leading={panelToggle ? <EntityCardPanelToggle {...panelToggle} /> : undefined}>{actions}</EntityCardActions> : null}
     </Card>
@@ -563,7 +575,7 @@ const styles = StyleSheet.create({
   entityCardPressable: { marginHorizontal: -tokens.spacing.screen },
   entityCardInPressable: { marginHorizontal: 0 },
   entityCardWithActions: { paddingBottom: tokens.card.innerPadding },
-  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginTop: 6 },
+  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginHorizontal: -6, marginTop: 6 },
   entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, marginLeft: "auto" },
   entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 },
   entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 2, height: 32, justifyContent: "center", paddingHorizontal: tokens.spacing.compact },
@@ -589,6 +601,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
   headingTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.bold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop, minWidth: 0 },
   headingTitleRow: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0 },
+  headingTitleRowTrailing: { justifyContent: "space-between" },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
   completionIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },

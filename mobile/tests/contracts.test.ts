@@ -13,6 +13,7 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   assert.equal(tokens.component.eyebrow.fontWeight, "500");
   assert.equal(tokens.component.entityDetail.kpiMarginTop, 4);
   assert.equal(tokens.color.surfaceApp, "#000000");
+  assert.equal(tokens.color.preparation, "#F46D6A");
   for (const key of ["protein", "carbs", "fat", "kcalSurface", "allocationBarTrack", "allocationPanelTrack", "food", "meal", "dailyPlan", "dpm", "program"] as const) {
     assertSourceMatch(tokens.color[key], /^#[0-9A-F]{6}$/);
   }
@@ -413,7 +414,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedMealDetail, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{dayId\}`\)/);
   assertSourceMatch(calendarizedMealDetail, /day\.plan_snapshot\?\.meals\?\.find/);
   assertSourceMatch(calendarizedMealDetail, /afterNutrition=\{<MealCompletionCard controller=\{adherence\} \/>\}/);
-  assertSourceMatch(calendarizedMealDetail, /<FoodPanels\s+editing=\{\{/);
+  assertSourceMatch(calendarizedMealDetail, /const foodEditing: FoodPanelEditing = \{/);
+  assertSourceMatch(calendarizedMealDetail, /<FoodPanels\s+editing=\{foodEditing\}/);
   assertSourceMatch(calendarizedMealDetail, /ordered_keys: items\.map\(\(item\) => item\.id\)/);
   assertSourceMatch(calendarizedMealDetail, /relationKey: food\.id/);
   assertSourceMatch(calendarizedMealDetail, /onEditPortion:/);
@@ -1106,7 +1108,7 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceDoesNotMatch(journey, /annualPrice|\$3\.990|\$6\.990/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton/);
   assertSourceMatch(journey, /<SubscriptionPurchaseButton label="Continuar con Free"/);
-  assertSourceMatch(journey, /primary="Generar minutas"/);
+  assertSourceMatch(journey, /primary="Continuar"/);
   assertSourceMatch(journey, /\{estimationInformationSection\}[\s\S]*\{maintenanceSection\}[\s\S]*\{nutritionGoalSection\}/);
   assertSourceMatch(journey, /!storyboardSummaryLayout \? <Pressable accessibilityRole="button" onPress=\{controller\.onAdjust \?\? noop\}/);
   assertSourceMatch(journey, /summaryGridPanelBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
@@ -1258,13 +1260,19 @@ test("the onboarding gallery exposes every visual journey view without product s
   const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
   const onboardingPreview = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding-preview.tsx"), "utf8");
   assertSourceMatch(onboarding, /onboardingScreenChromeForStep\(step\)/);
-  assertSourceMatch(onboarding, /<Stack\.Screen options=\{\{ gestureEnabled: false, headerShown: foodListOpen \}\}/);
+  assertSourceMatch(onboarding, /<Stack\.Screen options=\{\{ gestureEnabled: false, headerShown: false \}\}/);
   assertSourceMatch(journey, /headerCompensationTop: index >= 8 \? 88 : 0/);
-  assertSourceMatch(onboarding, /<Screen contentStyle=\{\[styles\.screen, \{ paddingTop: step === "dailyPlan" \? foodListOpen \? 22 : insets\.top \+ 48 : headerCompensationTop \}\]\}/);
+  assertSourceMatch(onboarding, /<Screen contentStyle=\{\[styles\.screen, \{ paddingTop: headerCompensationTop \}\]\}/);
+  assertSourceDoesNotMatch(onboarding, /\/onboarding\/generate-plan|\/onboarding\/accept-plan/);
   assertSourceDoesNotMatch(onboarding, /<Screen key=\{step\}/);
   assertSourceMatch(onboarding, /presentationPropsForOnboardingStep\(step\)/);
   assertSourceMatch(onboarding, /<OnboardingJourneyView controller=\{controller\} \{\.\.\.presentationProps\} step=\{step\} \/>/);
   assertSourceMatch(onboarding, /pathname: "\/subscription", params: \{ origin: "onboarding"/);
+  const firstMinutas = await readTestFile(path.resolve(process.cwd(), "src/app/first-minutas.tsx"), "utf8");
+  const offer = await readTestFile(path.resolve(process.cwd(), "src/components/home/home-first-minutas-offer.tsx"), "utf8");
+  assertSourceMatch(offer, /Crea 2 minutas según tus objetivos/);
+  assertSourceMatch(firstMinutas, /\/onboarding\/generate-plan/);
+  assertSourceMatch(firstMinutas, /\/onboarding\/accept-plan/);
   const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
   assertSourceMatch(subscription, /<Stack\.Screen options=\{\{ headerShown: !isOnboarding \}\} \/>/);
   const layout = await readTestFile(path.resolve(process.cwd(), "src/app/_layout.tsx"), "utf8");

@@ -1,7 +1,7 @@
 # Calendario y ejecución fechada
 
 Status: current
-Date: 2026-10-28
+Date: 2026-11-07
 
 ## Contrato funcional
 
@@ -38,6 +38,17 @@ Web y móvil presentan una vista mensual con la semana actual, detalle por fecha
 cobertura futura, cantidad de planes desde hoy y última fecha programada. Un día
 futuro puede recibir un plan de biblioteca sin exigir la creación previa de un
 programa.
+
+«Mi calendario» muestra la fecha local de hoy como título fijo del mes; tocar
+cualquier día abre directamente su detalle, incluso cuando todavía no tiene
+minuta. Debajo del mes aparecen los indicadores de próximos compromisos y las
+acciones para añadir minuta o compromiso. La pantalla reúne «Mis minutas
+programadas» con «Próximas minutas» y «Mis compromisos» con filtros por tipo y
+periodo y una lista del mes visible. «Semana actual» permanece disponible. Las
+antiguas vistas móviles independientes de minutas y compromisos redirigen al
+calendario para conservar enlaces existentes. La configuración de recordatorios
+de compromisos del móvil se abre desde el menú del encabezado; la web enlaza
+desde allí a sus controles existentes de notificaciones del programa.
 
 `CalendarCommitment` registra compromisos independientes de compra, cocina,
 entrenamiento o cita nutricional. Cada usuario puede tener como máximo uno de cada tipo por fecha. Un

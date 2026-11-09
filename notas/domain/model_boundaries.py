@@ -92,6 +92,12 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
         responsibility="Reusable meals, curated Explore catalog entries, meal-food composition and meal-specific access metadata.",
     ),
     DomainModelBoundary(
+        slug="preparations",
+        label="Operational Preparations",
+        models=("Preparation", "PreparationVersion", "PreparationIngredient", "MealPreparation"),
+        responsibility="Versioned preparation copies and explicit served portions in meals.",
+    ),
+    DomainModelBoundary(
         slug="dailyplans",
         label="Daily Plans",
         models=(
@@ -215,6 +221,11 @@ DOMAIN_MODEL_DEPENDENCY_POLICIES: tuple[DomainModelDependencyPolicy, ...] = (
         rationale="Meals compose foods and may expose legacy links to daily plans.",
     ),
     DomainModelDependencyPolicy(
+        source_slug="preparations",
+        allowed_dependency_slugs=("food_catalog", "meals"),
+        rationale="Preparation ingredients resolve operational foods; portions belong to meals.",
+    ),
+    DomainModelDependencyPolicy(
         source_slug="dailyplans",
         allowed_dependency_slugs=("meals",),
         rationale="Daily plans attach meals through DailyPlanMeal.",
@@ -281,6 +292,7 @@ DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG: dict[str, str] = {
     "notification_center": "notas.domain.model_modules.notification_center",
     "food_catalog": "notas.domain.model_modules.food",
     "meals": "notas.domain.model_modules.meals",
+    "preparations": "notas.domain.model_modules.preparations",
     "dailyplans": "notas.domain.model_modules.dailyplans",
     "supplements": "notas.domain.model_modules.supplements",
     "programs": "notas.domain.model_modules.programs",

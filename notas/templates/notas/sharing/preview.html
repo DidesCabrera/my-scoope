@@ -45,20 +45,23 @@
       </dl>
       <p class="share-card__count">
         {% if resource.subject_type == "food" %}Valores por 100 {{ snapshot.summary.basis_unit|default:"g" }}
-        {% elif resource.subject_type == "meal" %}{{ snapshot.summary.food_count }} alimentos
+        {% elif resource.subject_type == "meal" %}{{ snapshot.summary.food_count }} alimentos · {{ snapshot.summary.preparation_count|default:0 }} preparaciones
         {% elif resource.subject_type == "program" %}{{ snapshot.summary.duration_weeks }} semanas · {{ snapshot.summary.filled_days }} días planificados
-        {% else %}{{ snapshot.summary.meal_count }} comidas · {{ snapshot.summary.food_count }} alimentos{% endif %}
+        {% else %}{{ snapshot.summary.meal_count }} comidas · {{ snapshot.summary.food_count }} alimentos · {{ snapshot.summary.preparation_count|default:0 }} preparaciones{% endif %}
       </p>
     </article>
 
     {% if resource.subject_type == "meal" %}
     <section class="share-meals" aria-labelledby="food-heading">
-      <h2 id="food-heading">Alimentos</h2>
+      <h2 id="food-heading">Alimentos y preparaciones</h2>
       <article class="share-meal">
         <ul>
           {% for food in snapshot.foods %}
             <li><span>{{ food.name }}</span><span>{{ food.quantity_grams|floatformat:0 }} {{ food.quantity_unit|default:"g" }}</span></li>
-          {% empty %}<li>Sin alimentos registrados</li>{% endfor %}
+          {% endfor %}
+          {% for preparation in snapshot.preparations %}
+            <li><span>{{ preparation.name }} · preparación</span><span>{{ preparation.quantity_grams|floatformat:0 }} g</span></li>
+          {% endfor %}
         </ul>
       </article>
     </section>
@@ -89,8 +92,9 @@
           <ul>
             {% for food in meal.foods %}
               <li><span>{{ food.name }}</span><span>{{ food.quantity_grams|floatformat:0 }} {{ food.quantity_unit|default:"g" }}</span></li>
-            {% empty %}
-              <li>Sin alimentos registrados</li>
+            {% endfor %}
+            {% for preparation in meal.preparations %}
+              <li><span>{{ preparation.name }} · preparación</span><span>{{ preparation.quantity_grams|floatformat:0 }} g</span></li>
             {% endfor %}
           </ul>
         </article>

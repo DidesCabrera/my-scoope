@@ -113,5 +113,5 @@ export function FoodVisualIcon({ emoji, name, size = "compact", visualKey }: { e
 const styles = StyleSheet.create({
   icon: { flexShrink: 0, fontSize: 18, lineHeight: 22, textAlign: "center", width: 24 },
   panelIcon: { fontSize: 14, lineHeight: 18, width: 20 },
-  titleIcon: { fontSize: 22, lineHeight: 28, width: 29 },
+  titleIcon: { fontSize: 31, lineHeight: 39, width: 41 },
 });

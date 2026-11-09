@@ -263,7 +263,7 @@ export type LibraryNutrition = {
 };
 
 export type LibraryIndicator = {
-  icon?: "day" | "food" | "meal" | "dailyPlan" | "supplement" | "week";
+  icon?: "day" | "food" | "meal" | "preparation" | "dailyPlan" | "supplement" | "week";
   label: string;
   value: number | string;
 };
@@ -289,6 +289,7 @@ export type LibraryFoodPanelItem = {
   is_projected?: boolean;
   projected_label?: string | null;
 };
+
 
 export type LibraryMealPanelItem = {
   id: string;
@@ -352,6 +353,7 @@ export type LibraryCalorieDistribution = {
 export type LibraryPanel = {
   kind: "none" | "foods" | "meals" | "weeks";
   foods: LibraryFoodPanelItem[];
+  preparations?: import("./preparations").LibraryPreparationPanelItem[];
   meals: LibraryMealPanelItem[];
   weeks: LibraryWeekPanelItem[];
   supplement_intakes?: SupplementIntake[];

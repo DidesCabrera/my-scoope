@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarCommitment, CalendarDay, CalendarOverviewData } from "@/api/calendar-types";
-import type { CalendarDayDetailData, CalendarProgressData, CalendarizedDayDetail, ComparisonKind, HomeSummaryData, MealCheckInInput, TodayData, WeightItem, WeightListData } from "@/api/types";
+import type { CalendarDayDetailData, CalendarProgressData, CalendarizedDayDetail, ComparisonKind, HomeSummaryData, MealCheckInInput, OnboardingStateData, TodayData, WeightItem, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { commitmentDayTitle, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarMonthCalendar } from "@/components/calendarization/calendar-month-calendar";
@@ -24,6 +24,7 @@ import { ComparisonCreateActions } from "@/components/comparisons";
 import { emptyDaySituation } from "@/components/home/home-empty-day";
 import { HomeEmptyDayNotice } from "@/components/home/home-empty-day-notice";
 import { HomeGettingStarted } from "@/components/home/home-getting-started";
+import { HomeFirstMinutasOffer } from "@/components/home/home-first-minutas-offer";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -168,6 +169,7 @@ export default function TodayScreen() {
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
   const [savingCompletionMealKey, setSavingCompletionMealKey] = useState<string | null>(null);
   const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
+  const [firstMinutasOfferAvailable, setFirstMinutasOfferAvailable] = useState(false);
   const loadSequence = useRef(0);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
@@ -181,10 +183,14 @@ export default function TodayScreen() {
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
     setLoading(true);
+    setFirstMinutasOfferAvailable(false);
     setError(null);
     setCommitmentsError(null);
     try {
       const progressRequest = apiRequest<CalendarProgressData>("/api/v1/calendar/progress").catch(() => null);
+      void apiRequest<OnboardingStateData>("/api/v1/onboarding/state", { cache: "no-store" })
+        .then((offer) => { if (sequence === loadSequence.current) setFirstMinutasOfferAvailable(offer.first_minutas_offer_available); })
+        .catch(() => undefined);
       const weightRequest = apiRequest<WeightListData>("/api/v1/weights?limit=12").catch(() => null);
       const home = await apiRequest<HomeSummaryData>("/api/v1/home/summary");
       if (sequence !== loadSequence.current) return;
@@ -295,7 +301,7 @@ export default function TodayScreen() {
     nextDay={nextCommitmentDay}
     onOpen={(commitment) => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)}
     onOpenDay={() => { if (nextCommitmentDay) router.push(`/calendar/days/${nextCommitmentDay.calendar_date}?origin=home` as Href); }}
-    onOpenRegistry={() => router.push("/calendar/registry" as Href)}
+    onOpenRegistry={() => router.push("/calendar" as Href)}
   />;
 
   async function createTodayPlan() {
@@ -437,6 +443,7 @@ export default function TodayScreen() {
           {currentWeightKg != null ? <GuideMetric onPress={() => router.push("/weight" as Href)} tone="ppk" value={`${displayWeight(currentWeightKg)} kg`} /> : null}
         </View>
       </View>
+      {firstMinutasOfferAvailable ? <HomeFirstMinutasOffer onPress={() => router.push("/first-minutas" as Href)} /> : null}
       {today ? <HomeSectionTitle pinned>Tu plan para hoy</HomeSectionTitle> : null}
       {planContext || todayCommitments.length ? <View style={[styles.planContext, showGettingStarted && styles.planContextBeforeGettingStarted]}>
         {planContext ? <Chip backgroundColor={`${planContext.color}1A`} borderColor={planContext.color} label={planContext.label} textColor={tokens.color.textMain} /> : null}
@@ -469,7 +476,6 @@ export default function TodayScreen() {
           }}
           snapshot={snapshot}
           />
-          <HomeGettingStarted compactTop />
         </>
       ) : showGettingStarted && today ? (
         <>
@@ -502,6 +508,8 @@ export default function TodayScreen() {
       ) : null}
 
       {!showGettingStarted && today ? commitmentsSection : null}
+
+      {!showGettingStarted && today?.day_id != null && today.has_plan && snapshot ? <HomeGettingStarted compactTop /> : null}
 
       {!showGettingStarted ? calendarSection : null}
 
@@ -594,7 +602,7 @@ const styles = StyleSheet.create({
   commitmentCopy: { flex: 1, gap: tokens.spacing.xs },
   commitmentIcon: { alignItems: "center", borderRadius: 10, height: 40, justifyContent: "center", width: 40 },
   commitmentNote: { color: tokens.color.textMuted, fontSize: 13, lineHeight: 19 },
-  homeActionChip: { alignItems: "center", alignSelf: "flex-end", borderColor: tokens.color.borderDefault, borderRadius: 999, borderWidth: 1, flexDirection: "row", gap: 6, justifyContent: "center", minHeight: 34, paddingHorizontal: 12 },
+  homeActionChip: { alignItems: "center", alignSelf: "flex-end", borderColor: tokens.color.borderDefault, borderRadius: 999, borderWidth: 1, flexDirection: "row", gap: 6, justifyContent: "center", marginRight: -12, minHeight: 34, paddingHorizontal: 12 },
   homeActionChipLabel: { color: tokens.color.textMain, fontSize: 13, fontWeight: "700" },
   homeCalendarActionChip: { borderColor: tokens.color.borderDefault, marginTop: tokens.spacing.sm + 6 },
   commitmentRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },

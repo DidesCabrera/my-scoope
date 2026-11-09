@@ -36,6 +36,7 @@ export const tokens = {
     "ppkMuted": "#FFB69F",
     "food": "#FF8800",
     "meal": "#CF34B0",
+    "preparation": "#F46D6A",
     "dailyPlan": "#7C4DDB",
     "dpm": "#0084A2",
     "program": "#1B6491",

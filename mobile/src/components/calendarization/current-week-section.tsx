@@ -12,6 +12,7 @@ import { currentWeekDays, type CurrentWeekDay } from "./current-week";
 
 const WEEK_GAP = 18;
 const CALENDAR_ACTION_GAP = 12;
+const VIEWPORT_GUTTER = 12;
 
 function CurrentWeekDayCell({ commitments, day, localDate, planTone, onPress, panGesture }: { commitments: CalendarCommitment[]; day: CurrentWeekDay; localDate: string; planTone: "past" | "future" | null; onPress?: () => void; panGesture: ReturnType<typeof Gesture.Pan> }) {
   const { compact } = useWeekDayLayout();
@@ -59,7 +60,7 @@ export function CurrentWeekSection({ localDate, onOpenCalendar, onPressDay, week
   const lastPage = onOpenCalendar ? 2 : 1;
   const { width: windowWidth } = useWindowDimensions();
   const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
-  const pageWidth = measuredWidth ?? windowWidth - tokens.spacing.screen * 2 + 12;
+  const pageWidth = measuredWidth != null ? measuredWidth - VIEWPORT_GUTTER * 2 : windowWidth - tokens.spacing.screen * 2 + 12;
   const pageStride = pageWidth + WEEK_GAP;
   const actionWidth = Math.min(144, Math.round(pageWidth * 0.42));
   const pageOffsets = useMemo(() => [0, pageStride, pageStride + CALENDAR_ACTION_GAP + actionWidth], [actionWidth, pageStride]);
@@ -131,9 +132,9 @@ const styles = StyleSheet.create({
   dayNumberToday: { color: tokens.color.surfaceApp, fontWeight: tokens.weight.bold },
   monthLabel: { color: tokens.color.textMuted, fontFamily: font.regular, fontSize: 9, fontWeight: tokens.weight.medium, lineHeight: 10 },
   monthLabelToday: { color: tokens.color.surfaceApp, fontWeight: tokens.weight.bold },
-  carousel: { marginHorizontal: -6, overflow: "hidden" },
+  carousel: { marginHorizontal: -tokens.spacing.screen, overflow: "hidden" },
   section: { gap: tokens.spacing.md, minWidth: 0, width: "100%" },
   weekPage: { paddingHorizontal: 6 },
   weekGap: { width: WEEK_GAP },
-  weekTrack: { flexDirection: "row" },
+  weekTrack: { flexDirection: "row", marginLeft: VIEWPORT_GUTTER },
 });

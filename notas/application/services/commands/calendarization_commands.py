@@ -483,6 +483,8 @@ def update_calendarized_food_quantity(
     )
     if food is None:
         raise ValueError("food_snapshot_key_invalid")
+    if food.get("component_type") == "preparation":
+        raise ValueError("calendarized_preparation_requires_component_editor")
     current_quantity = float(food.get("quantity_g") or 0)
     if current_quantity <= 0 or quantity <= 0:
         raise ValueError("calendarized_food_quantity_invalid")
@@ -532,6 +534,8 @@ def replace_calendarized_food(
     )
     if index is None:
         raise ValueError("food_snapshot_key_invalid")
+    if foods[index].get("component_type") == "preparation":
+        raise ValueError("calendarized_preparation_requires_component_editor")
     replacement_key = f"calendarized_food:{uuid4()}"
     foods[index] = build_food_snapshot(
         food=food,

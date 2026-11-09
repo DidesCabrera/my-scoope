@@ -727,7 +727,7 @@ La vista Profile debe mantener separadas estas áreas:
 
 En v1, actualizar `birth_date`, `sex` y `height_cm` se hace desde la ficha nutricional. Actualizar peso sigue el flujo de Body Metrics y escribe `WeightLog`; no debe sobrescribir silenciosamente historial corporal.
 
-## Actualización ONB v2 Native — ficha persistente y primer plan
+## Actualización ONB v2 Native — ficha persistente y primeras minutas opcionales
 
 La primera implementación funcional del storyboard Native amplía el onboarding sin
 crear una segunda autoridad de datos:
@@ -760,17 +760,19 @@ solver ajusta las cantidades de alimentos clave dentro de límites de porción;
 la simulación y el validador nutricional deben aprobar cada minuta. Si no hay dos
 opciones válidas, la operación no guarda propuestas parciales y responde 422.
 
-La respuesta de generación y aceptación contiene `data.items` con dos
+La finalización del onboarding depende de la ficha y la estimación, no de la
+generación ni de calendarizar. Tras elegir el plan, Inicio presenta una invitación
+gratuita y única a crear dos minutas personalizadas; allí se recogen las preferencias
+alimentarias. La respuesta de generación y aceptación contiene `data.items` con dos
 `NutritionProposal`; el estado reanudable contiene `proposal_ids` y conserva
 `proposal_id` como alias de la primera propuesta para clientes anteriores. La
-persona revisa ambas propuestas. Al calendarizar la primera, se crean juntas
-dos `DailyPlan` en su biblioteca, con referencia a las minutas fuente de
-Explorar. Se abre el selector de fechas del calendario con esa minuta ya
-elegida y, tras confirmar, vuelve al onboarding para calendarizar la segunda.
-El avance a suscripción requiere al menos una fecha vigente para cada minuta.
+persona revisa ambas propuestas y las guarda juntas como dos `DailyPlan` propios.
+La invitación desaparece al guardar ambas; un fallo 422 deja la app utilizable y
+permite reintentar. Programar las minutas en el calendario es posterior y opcional.
 `GET /api/v1/onboarding/calendarized-foods` devuelve las fechas vigentes y la
 lista de alimentos acumulada desde los snapshots de todos los días marcados;
 si se reemplaza una fecha, la lista se recalcula desde el estado actual.
 El endpoint v1 se conserva temporalmente para el onboarding Web existente.
 
-Decisión: `docs/20_decisions/0203-native-onboarding-v2-persistence-and-first-plan.md`.
+Decisión vigente: `docs/20_decisions/0208-onboarding-estimate-first-welcome-minutas-offer.md`.
+La decisión 0203 conserva el contexto histórico de la implementación anterior.

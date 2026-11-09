@@ -19,17 +19,22 @@ from food_catalog.models import (
     CatalogFoodPortion,
     CatalogFoodSource,
     CatalogImportBatch,
+    CatalogPreparation,
+    CatalogPreparationIngredient,
+    CatalogPreparationVersion,
     CatalogRelease,
 )
 
-CATALOG_RELEASE_SCHEMA_VERSION = "myscoope.food_catalog.release.v2"
-CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION = "myscoope.food_catalog.authority_snapshot.v2"
+CATALOG_RELEASE_SCHEMA_VERSION = "myscoope.food_catalog.release.v3"
+CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION = "myscoope.food_catalog.authority_snapshot.v3"
 CATALOG_RELEASE_SUPPORTED_SCHEMA_VERSIONS = {
     "myscoope.food_catalog.release.v1",
+    "myscoope.food_catalog.release.v2",
     CATALOG_RELEASE_SCHEMA_VERSION,
 }
 CATALOG_AUTHORITY_SNAPSHOT_SUPPORTED_SCHEMA_VERSIONS = {
     "myscoope.food_catalog.authority_snapshot.v1",
+    "myscoope.food_catalog.authority_snapshot.v2",
     CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
 }
 
@@ -106,12 +111,14 @@ def build_authority_snapshot_envelope() -> dict[str, object]:
         "foods": [
             _serialize_catalog_food(food, include_import_batch=True) for food in foods
         ],
+        "preparations": [_serialize_preparation(item) for item in CatalogPreparation.objects.filter(current_version__isnull=False).select_related("current_version").order_by("catalog_ref")],
     }
     return {
         "snapshot": {
             "schema_version": CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
             "food_count": len(foods),
             "import_batch_count": len(batches),
+            "preparation_count": len(payload["preparations"]),
             "payload_sha256": payload_sha256(payload),
         },
         "payload": payload,
@@ -123,6 +130,8 @@ def import_authority_snapshot(envelope: Mapping[str, object]) -> int:
     foods, batches = _validate_authority_snapshot_envelope(envelope)
     imported_batches = _import_authority_batches(batches)
     _restore_authority_foods(foods, imported_batches)
+    for item in envelope["payload"].get("preparations", []):
+        _import_preparation(item, release_version="authority-bootstrap")
     return len(foods)
 
 
@@ -151,6 +160,10 @@ def _validate_authority_snapshot_envelope(
         raise CatalogReleaseError("catalog_authority_snapshot_requires_empty_catalog")
     if CatalogImportBatch.objects.exists():
         raise CatalogReleaseError("catalog_authority_snapshot_requires_empty_batches")
+    if metadata.get("schema_version") == CATALOG_AUTHORITY_SNAPSHOT_SCHEMA_VERSION:
+        preparations = payload.get("preparations")
+        if not isinstance(preparations, list) or len(preparations) != int(metadata.get("preparation_count") or 0):
+            raise CatalogReleaseError("catalog_authority_snapshot_preparation_count_mismatch")
     return foods, batches
 
 
@@ -254,6 +267,7 @@ def build_catalog_release(
         "previous_version": previous,
         "generated_at": timezone.now().isoformat(),
         "foods": [_serialize_catalog_food(food) for food in foods],
+        "preparations": [_serialize_preparation(item) for item in CatalogPreparation.objects.filter(is_active=True, current_version__published_at__isnull=False).select_related("current_version").order_by("catalog_ref")],
     }
     return CatalogRelease.objects.create(
         version=normalized_version,
@@ -298,6 +312,7 @@ def release_envelope(release: CatalogRelease) -> dict[str, Any]:
             "status": release.status,
             "previous_version": release.previous_version,
             "food_count": release.food_count,
+            "preparation_count": len(release.payload.get("preparations", [])),
             "payload_sha256": release.payload_sha256,
             "approved_at": release.approved_at.isoformat() if release.approved_at else None,
         },
@@ -328,6 +343,10 @@ def validate_release_envelope(envelope: Mapping[str, object]) -> tuple[dict, dic
     foods = payload.get("foods")
     if not isinstance(foods, list) or len(foods) != int(metadata.get("food_count") or 0):
         raise CatalogReleaseError("catalog_release_food_count_mismatch")
+    if metadata.get("schema_version") == CATALOG_RELEASE_SCHEMA_VERSION:
+        preparations = payload.get("preparations")
+        if not isinstance(preparations, list) or len(preparations) != int(metadata.get("preparation_count") or 0):
+            raise CatalogReleaseError("catalog_release_preparation_count_mismatch")
     return metadata, payload
 
 
@@ -390,6 +409,12 @@ def import_catalog_release(envelope: Mapping[str, object]) -> CatalogReleaseImpo
         imported_release_version=version,
     )
 
+    for item in payload.get("preparations", []):
+        _import_preparation(item, release_version=version)
+    if metadata["schema_version"] == CATALOG_RELEASE_SCHEMA_VERSION:
+        delivered_preparations = {item["catalog_ref"] for item in payload["preparations"]}
+        CatalogPreparation.objects.exclude(catalog_ref__in=delivered_preparations).filter(current_version__isnull=False).update(is_active=False)
+
     release = CatalogRelease.objects.create(
         release_ref=metadata["release_ref"],
         version=version,
@@ -435,6 +460,97 @@ def _serialize_catalog_food(
         ],
         "sources": sources,
     }
+
+
+def _serialize_preparation(preparation: CatalogPreparation) -> dict[str, object]:
+    version = preparation.current_version
+    if version is None or not version.published_at:
+        raise CatalogReleaseError("catalog_preparation_not_published")
+    result = {
+        "catalog_ref": str(preparation.catalog_ref),
+        "name": preparation.display_name,
+        "version": version.version,
+        "yield_g": str(version.yield_g),
+        "default_portion_g": str(version.default_portion_g),
+        "household_label": version.household_label,
+        "source_name": version.source_name,
+        "source_url": version.source_url,
+        "yield_evidence": version.yield_evidence,
+        "preparation_notes": version.preparation_notes,
+        "nutrition": version.nutrition,
+        "ingredients": version.ingredients_snapshot,
+        "content_sha256": version.content_sha256,
+    }
+    digest = result.pop("content_sha256")
+    if payload_sha256(result) != digest:
+        raise CatalogReleaseError("catalog_preparation_checksum_mismatch")
+    refs = [row.get("catalog_food_ref") for row in version.ingredients_snapshot]
+    foods = {str(food.catalog_ref): food for food in CatalogFood.objects.filter(catalog_ref__in=refs)}
+    if len(foods) != len(set(refs)):
+        raise CatalogReleaseError("catalog_preparation_ingredient_missing")
+    for row in version.ingredients_snapshot:
+        food = foods[row["catalog_food_ref"]]
+        profile = row["nutrition_per_100g"]
+        if food.status != CatalogFood.STATUS_PUBLISHED or food.portion_unit != "g" or food.preparation_state != row["preparation_state"]:
+            raise CatalogReleaseError("catalog_preparation_ingredient_changed_requires_revision")
+        for key, field in (("protein_g", "protein_g_per_100g"), ("carbs_g", "carbs_g_per_100g"), ("fat_g", "fat_g_per_100g"), ("sodium_mg", "sodium_mg_per_100g")):
+            current = getattr(food, field)
+            if current is None or Decimal(profile[key]) != current:
+                raise CatalogReleaseError("catalog_preparation_ingredient_changed_requires_revision")
+        if food.allergens != row["allergens"]:
+            raise CatalogReleaseError("catalog_preparation_ingredient_changed_requires_revision")
+    result["content_sha256"] = digest
+    return result
+
+
+def _import_preparation(raw: object, *, release_version: str) -> None:
+    if not isinstance(raw, Mapping):
+        raise CatalogReleaseError("catalog_release_preparation_invalid")
+    values = dict(raw)
+    digest = values.pop("content_sha256", "")
+    if payload_sha256(values) != digest:
+        raise CatalogReleaseError("catalog_release_preparation_checksum_mismatch")
+    try:
+        ingredients = values["ingredients"]
+        if not isinstance(ingredients, list) or not ingredients:
+            raise ValueError
+        preparation, _ = CatalogPreparation.objects.get_or_create(
+            catalog_ref=values["catalog_ref"], defaults={"display_name": values["name"]}
+        )
+        version, created = CatalogPreparationVersion.objects.get_or_create(
+            preparation=preparation,
+            version=values["version"],
+            defaults={
+                "yield_g": values["yield_g"], "default_portion_g": values["default_portion_g"],
+                "household_label": values["household_label"], "source_name": values["source_name"],
+                "source_url": values["source_url"], "yield_evidence": values["yield_evidence"],
+                "preparation_notes": values["preparation_notes"], "nutrition": values["nutrition"],
+                "ingredients_snapshot": ingredients, "content_sha256": digest, "published_at": timezone.now(),
+            },
+        )
+        if not created and version.content_sha256 != digest:
+            raise CatalogReleaseError("catalog_release_preparation_version_conflict")
+        if created:
+            foods_by_ref = {str(food.catalog_ref): food for food in CatalogFood.objects.filter(catalog_ref__in=[item["catalog_food_ref"] for item in ingredients])}
+            if len(foods_by_ref) != len({item["catalog_food_ref"] for item in ingredients}):
+                raise CatalogReleaseError("catalog_release_preparation_food_missing")
+            CatalogPreparationIngredient.objects.bulk_create([
+                CatalogPreparationIngredient(
+                    version=version, food=foods_by_ref[item["catalog_food_ref"]],
+                    quantity_g=item["quantity_g"], preparation_state=item["preparation_state"],
+                    is_condiment=item["is_condiment"], order=index,
+                ) for index, item in enumerate(ingredients)
+            ])
+        if preparation.current_version and preparation.current_version.version > version.version:
+            raise CatalogReleaseError("catalog_release_preparation_version_regression")
+        preparation.display_name = values["name"]
+        preparation.current_version = version
+        preparation.is_active = True
+        preparation.save(update_fields=["display_name", "current_version", "is_active"])
+    except (KeyError, TypeError, ValueError) as exc:
+        if isinstance(exc, CatalogReleaseError):
+            raise
+        raise CatalogReleaseError("catalog_release_preparation_invalid") from exc
 
 
 def _serialize_import_batch(batch: CatalogImportBatch) -> dict[str, object]:

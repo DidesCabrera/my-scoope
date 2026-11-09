@@ -84,7 +84,7 @@
       row.setAttribute("aria-label", `Ver detalle: ${dayTitle} del ${dateLabel(value)}`);
       row.addEventListener("click", () => openFoodEditor(value));
       const symbol = document.createElement("i");
-      symbol.setAttribute("data-lucide", { shopping: "shopping-basket", cooking: "cooking-pot", training: "dumbbell", nutritionist: "stethoscope" }[page.dataset.kind]);
+      symbol.setAttribute("data-lucide", { shopping: "shopping-basket", cooking: "chef-hat", training: "dumbbell", nutritionist: "stethoscope" }[page.dataset.kind]);
       symbol.setAttribute("aria-hidden", "true");
       row.appendChild(symbol);
       const details = document.createElement("div");

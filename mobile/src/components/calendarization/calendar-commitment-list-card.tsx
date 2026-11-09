@@ -23,7 +23,7 @@ export function CalendarCommitmentListCard({ commitment, onCreateFoodList, onPre
   const Icon = presentation.icon;
   const hasAttachedFoods = Boolean(commitment.food_period_start && commitment.food_period_end);
   const showCreateFoodList = showFoodListDetails && commitmentSupportsFoods(commitment.kind) && !hasAttachedFoods && onCreateFoodList;
-  return <Card style={styles.card}>
+  return <Card style={[styles.card, showCreateFoodList && styles.cardWithAction]}>
     <Pressable accessibilityLabel={`Ver ${presentation.label} del ${readableDate(commitment.calendar_date)}`} accessibilityRole="link" onPress={onPress} style={({ pressed }) => [styles.content, pressed && styles.pressed]}>
       <View style={styles.row}>
         <View style={[styles.icon, { backgroundColor: `${presentation.color}33` }]}>
@@ -45,14 +45,18 @@ export function CalendarCommitmentListCard({ commitment, onCreateFoodList, onPre
         </View>
       </View> : null}
     </Pressable>
-    {showCreateFoodList ? <PickerCardAction icon={<List color={tokens.color.textMain} size={18} strokeWidth={2} />} label="Crear lista de alimentos" onPress={onCreateFoodList} subject={readableDate(commitment.calendar_date)} variant="mutedFullWidth" /> : null}
+    {showCreateFoodList ? <View style={styles.actionBleed}>
+      <PickerCardAction icon={<List color={tokens.color.textMain} size={18} strokeWidth={2} />} label="Crear lista de alimentos" onPress={onCreateFoodList} subject={readableDate(commitment.calendar_date)} variant="mutedFullWidth" />
+    </View> : null}
   </Card>;
 }
 
 const styles = StyleSheet.create({
+  actionBleed: { marginHorizontal: -6 },
   attachmentIcon: { alignItems: "center", justifyContent: "center", width: 40 },
   attachmentRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   card: { gap: tokens.spacing.sm },
+  cardWithAction: { gap: tokens.spacing.sm + 8 },
   chips: { alignItems: "center", flex: 1, flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },
   content: { gap: tokens.spacing.sm },
   copy: { flex: 1, gap: tokens.spacing.xs },

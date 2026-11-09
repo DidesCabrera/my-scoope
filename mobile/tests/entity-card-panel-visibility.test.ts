@@ -30,13 +30,13 @@ test("entity cards expose a shared left-aligned panel visibility control", async
   expectSource(product, "entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, marginRight: 2 }");
   expectSource(product, 'entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 }');
   expectSource(product, "<EntityCardActions leading={panelToggle ? <EntityCardPanelToggle");
-  expectSource(product, 'entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginTop: 6 }');
+  expectSource(product, 'entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginHorizontal: -6, marginTop: 6 }');
   expectSource(product, 'entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, marginLeft: "auto" }');
   expectSource(nutritionCard, "initialPanelExpanded = false");
   expectSource(nutritionCard, "const [panelExpanded, setPanelExpanded] = useState(initialPanelExpanded)");
   expectSource(nutritionCard, "const [foodsPanelExpanded, setFoodsPanelExpanded] = useState(false)");
-  expectSource(nutritionCard, 'entity === "food" ? "information" : entity === "meal" ? "food" : entity === "program" ? "chart" : "meal"');
-  expectSource(nutritionCard, 'entity === "food" || entity === "meal" ? tokens.color.food : entity === "dailyPlan" ? tokens.color.meal : tokens.color.dailyPlan');
+  expectSource(nutritionCard, 'entity === "food" ? "information" : entity === "meal" || entity === "preparation" ? "food" : entity === "program" ? "chart" : "meal"');
+  expectSource(nutritionCard, 'entity === "food" || entity === "meal" || entity === "preparation" ? tokens.color.food : entity === "dailyPlan" ? tokens.color.meal : tokens.color.dailyPlan');
   for (const label of ["Más información", "Alimentos", "Comidas", "Semanas"]) expectSource(nutritionCard, label);
   expectSource(nutritionCard, "<EntityCardActions leading={panelToggles}>{actions}</EntityCardActions>");
   expectSource(nutritionCard, "hasCollapsiblePanel && anyPanelExpanded");
@@ -44,6 +44,44 @@ test("entity cards expose a shared left-aligned panel visibility control", async
   expectSource(nutritionCard, "actionsBeforePanel: { marginTop: 2 }");
   expectSource(nutritionCard, "actionsBeforePanelCollapsed: { marginBottom: -2 }");
   expectSource(nutritionCard, "panelAfterActions: { marginTop: 2 }");
+});
+
+test("picker selection actions match the panel toggle height without changing full-width actions", async () => {
+  const pickerAction = await source("src/components/pickers/picker-card-action.tsx");
+  expectSource(pickerAction, "minHeight: 32, minWidth: 112, paddingHorizontal: tokens.spacing.compact");
+  expectSource(pickerAction, 'actionMutedFullWidth: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceMuted, minHeight: 38');
+  expectSource(pickerAction, 'actionCardFullWidth: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceCard, minHeight: 38');
+});
+
+test("picker list cards expose nutrition and ingredient panels without changing selection", async () => {
+  const [picker, foodPanel, preparationCard] = await Promise.all([
+    source("src/components/pickers/composition-picker-screen.tsx"),
+    source("src/components/pickers/picker-food-nutrition-panel.tsx"),
+    source("src/components/preparations/preparation-picker-card.tsx"),
+  ]);
+  expectSource(picker, 'collapsiblePanel={showPanels && (option.entity === "food" || hasMealContents)}');
+  expectSource(picker, '<PickerFoodNutritionPanel foodId={option.id}');
+  expectSource(picker, '<PickerCardAction label={actionLabel} onPress={onAction} subject={option.name} />');
+  expectSource(foodPanel, '`/api/v1/library/foods/${foodId}`');
+  expectSource(foodPanel, '<FoodNutritionPanel facts={libraryFoodNutritionFacts(baseNutrition, detail?.food_nutrition)} portion={portion} />');
+  expectSource(preparationCard, 'collapsiblePanel');
+  expectSource(preparationCard, '<FoodPanels items={detail.ingredients.map');
+  expectSource(preparationCard, '<PickerCardAction label={actionLabel} onPress={onAction} subject={detail.name} />');
+});
+
+test("meal picker cards keep the library's food and preparation rows behind a collapsed panel", async () => {
+  const [picker, libraryPanels, libraryCard] = await Promise.all([
+    source("src/components/pickers/composition-picker-screen.tsx"),
+    source("src/components/libraries/entity-panels.tsx"),
+    source("src/components/libraries/library-card.tsx"),
+  ]);
+  expectSource(picker, 'const hasMealContents = option.entity === "meal" && option.panel?.kind === "foods"');
+  expectSource(picker, 'collapsiblePanel={showPanels && (option.entity === "food" || hasMealContents)}');
+  expectSource(picker, '<SharedFoodPanels items={mealComponents} nestedScroll onOpenItem={openMealComponent} showEditTab={false} />');
+  expectSource(picker, 'showPanels={kind !== "dailyplan-to-program"}');
+  expectSource(libraryPanels, '...(panel.preparations ?? []).map((preparation) => preparationPanelItem(preparation, nutrition))');
+  expectSource(libraryCard, 'mealFoodPanelItems(item.panel, item.nutrition)');
+  expectSource(picker, 'mealFoodPanelItems(option.panel, option.nutrition)');
 });
 
 test("library entity cards collapse their corresponding detail panels", async () => {
@@ -83,7 +121,7 @@ test("daily-plan cards expose an adjacent foods-panel control backed by their ex
 
   expectSource(nutritionCard, 'entity === "dailyPlan" && Boolean(dailyPlanFoodsPanel)');
   expectSource(nutritionCard, '<EntityCardPanelToggle activeColor={tokens.color.food} expanded={foodsPanelExpanded} icon="food"');
-  expectSource(nutritionCard, "solidActive={hasDailyPlanFoodsPanel}");
+  expectSource(nutritionCard, 'solidActive={hasDailyPlanFoodsPanel || entity === "food" || entity === "meal" || entity === "preparation"}');
   expectSource(nutritionCard, 'solidActive text="Alimentos"');
   expectSource(nutritionCard, 'text="Alimentos"');
   expectSource(nutritionCard, "if (shouldExpand && hasDailyPlanFoodsPanel) setFoodsPanelExpanded(false)");

@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import type { CalendarDay } from "@/api/types";
-import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
 import { ComparisonPanelGestureRows } from "@/components/libraries/comparison-panel-gesture-rows";
@@ -33,16 +33,28 @@ function integer(value: number | null | undefined): string {
   return valid == null ? "—" : Math.round(valid).toLocaleString("es-CL");
 }
 
-function PlanIdentity({ day, isToday, tab }: { day: CalendarDay; isToday: boolean; tab: Tab }) {
-  const [todayDateSize, setTodayDateSize] = useState({ width: 0, height: 0 });
+function TodayRowMarker() {
+  const gradientId = useId().replace(/:/g, "");
+  return <View pointerEvents="none" style={styles.todayRowMarker}>
+    <Svg height="100%" width={2}>
+      <Defs>
+        <LinearGradient id={gradientId} x1="0" x2="0" y1="1" y2="0">
+          <Stop offset="0" stopColor={tokens.color.protein} />
+          <Stop offset="0.5" stopColor={tokens.color.carbs} />
+          <Stop offset="1" stopColor={tokens.color.fat} />
+        </LinearGradient>
+      </Defs>
+      <Rect fill={`url(#${gradientId})`} height="100%" width={2} />
+    </Svg>
+  </View>;
+}
+
+function PlanIdentity({ day, tab }: { day: CalendarDay; tab: Tab }) {
   return (
     <View style={styles.identity}>
-      {tab === "plans" ? <View onLayout={isToday ? ({ nativeEvent: { layout } }) => {
-        setTodayDateSize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
-      } : undefined} style={[styles.dateColumn, isToday && styles.dateColumnToday]}>
-        {isToday ? <CalendarTodayOutline cornerRadius={12} filled {...todayDateSize} /> : null}
-        <Text style={[styles.dateWeekday, isToday && styles.dateTextToday]}>{dateLabel(day.calendar_date, { weekday: "short" })}</Text>
-        <Text style={[styles.dateNumber, isToday && styles.dateTextToday]}>{day.calendar_date.slice(8, 10)}</Text>
+      {tab === "plans" ? <View style={styles.dateColumn}>
+        <Text style={styles.dateWeekday}>{dateLabel(day.calendar_date, { weekday: "short" })}</Text>
+        <Text style={styles.dateNumber}>{day.calendar_date.slice(8, 10)}</Text>
       </View> : null}
       <View style={styles.planCopy}>
         <View style={styles.planTitleRow}>
@@ -145,7 +157,8 @@ export function CalendarUpcomingPanels({ days, localDate, onAssign, onOpenDay, o
           onPress={() => runGuardedNavigation(() => onOpenDay(day))}
           style={[activeTab === "plans" ? styles.planRow : styles.analyticsRow, index === days.length - 1 && styles.lastRow]}>
           {activeTab === "plans" ? <>
-            <PlanIdentity day={day} isToday={day.calendar_date === localDate} tab={activeTab} />
+            {day.calendar_date === localDate ? <TodayRowMarker /> : null}
+            <PlanIdentity day={day} tab={activeTab} />
             {day.has_plan ? <View style={styles.planCalories}>
               <Text style={styles.planCaloriesValue}>{integer(calories)}</Text>
               <Text style={styles.planCaloriesUnit}>kcal</Text>
@@ -154,7 +167,8 @@ export function CalendarUpcomingPanels({ days, localDate, onAssign, onOpenDay, o
               <Text style={styles.assignChipLabel}>Asignar minuta</Text>
             </Pressable>}
           </> : <>
-            <View style={styles.leading}><PlanIdentity day={day} isToday={day.calendar_date === localDate} tab={activeTab} /></View>
+            {day.calendar_date === localDate ? <TodayRowMarker /> : null}
+            <View style={styles.leading}><PlanIdentity day={day} tab={activeTab} /></View>
             {activeTab === "calories" ? <>
               <Text style={[styles.value, styles.calorieCell]}>{integer(calories)}</Text>
               <View style={styles.shareCell}>{calories != null && totalCalories > 0
@@ -196,11 +210,10 @@ const styles = StyleSheet.create({
   leadingHeader: { textAlign: "left" },
   leading: { flex: 4, minWidth: 0 },
   identity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
-  dateColumn: { alignItems: "center", minWidth: 44 },
-  dateColumnToday: { backgroundColor: tokens.color.surfaceMuted, borderRadius: 12, height: 42, justifyContent: "center", width: 44 },
-  dateWeekday: { color: tokens.color.textMuted, fontSize: 12 },
-  dateNumber: { color: tokens.color.textMain, fontSize: 19, fontWeight: "700" },
-  dateTextToday: { color: tokens.color.surfaceApp },
+  dateColumn: { alignItems: "center", height: 42, justifyContent: "center", minWidth: 44, width: 44 },
+  dateWeekday: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 14 },
+  dateNumber: { color: tokens.color.textMain, fontSize: 19, fontWeight: "700", lineHeight: 22 },
+  todayRowMarker: { bottom: 0, left: 0, position: "absolute", top: 0, width: 2 },
   planCopy: { flex: 1, gap: 3, minWidth: 0 },
   planTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   planName: { color: tokens.color.textMain, flexShrink: 1, fontSize: 14, fontWeight: "600" },

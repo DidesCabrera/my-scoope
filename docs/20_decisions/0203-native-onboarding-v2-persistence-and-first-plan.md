@@ -1,7 +1,8 @@
 # 0203 — Onboarding Native v2 persistente y primer plan diario
 
-Status: accepted
+Status: superseded
 Date: 2026-10-05
+Superseded by: 0208 para el momento de cierre del onboarding y la primera generación.
 
 ## Contexto
 

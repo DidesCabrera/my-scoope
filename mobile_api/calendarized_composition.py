@@ -408,6 +408,8 @@ def preview_food_for_calendarized_meal(
         )
         if index is None:
             raise calendarization_error(ValueError("food_snapshot_key_invalid"))
+        if foods[index].get("component_type") == "preparation":
+            raise calendarization_error(ValueError("calendarized_preparation_requires_component_editor"))
         replaced_name = foods[index].get("name") or "Alimento"
         foods[index] = build_food_snapshot(
             food=food,

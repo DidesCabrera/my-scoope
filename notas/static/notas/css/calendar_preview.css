@@ -1,5 +1,12 @@
 .calendar-preview { display: grid; gap: 1.5rem; max-width: 1080px; }
-.calendar-preview > .list-page-header { margin-bottom: 0; }
+.calendar-preview > .list-page-header { align-items: center; flex-direction: row; justify-content: space-between; margin-bottom: 0; }
+.calendar-preview > .list-page-header .list-page-header__identity { width: auto; }
+.calendar-preview__header-menu { margin-left: auto; position: relative; z-index: 2; }
+.calendar-preview__header-menu summary { align-items: center; border: 1px solid var(--border-default); border-radius: 50%; cursor: pointer; display: flex; height: 42px; justify-content: center; list-style: none; width: 42px; }
+.calendar-preview__header-menu summary::-webkit-details-marker { display: none; }
+.calendar-preview__header-menu summary svg { height: 22px; width: 22px; }
+.calendar-preview__header-menu a { background: var(--surface-card); border: 1px solid var(--border-default); border-radius: 12px; color: var(--text-main); display: block; min-width: 235px; padding: .75rem; position: absolute; right: 0; text-decoration: none; top: 48px; }
+.calendar-preview__back { color: var(--text-main); }
 .calendar-preview__notice { color: var(--text-muted); margin: 0; }
 .calendar-preview__tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
 .calendar-preview__tabs a { align-items: center; border: 1px solid var(--border-default); border-radius: 999px; color: var(--text-muted); display: flex; font-weight: 600; justify-content: center; min-height: 44px; text-decoration: none; }
@@ -43,6 +50,13 @@
 .calendar-preview__summary-card span { font-weight: 600; }
 .calendar-preview__summary-card strong { font-size: clamp(1.35rem, 3vw, 2rem); }
 .calendar-preview__summary-card small { color: var(--text-muted); }
+.calendar-preview__commitment-tabs, .calendar-preview__commitment-list-heading nav { display: flex; flex-wrap: wrap; gap: .5rem; }
+.calendar-preview__commitment-tabs a, .calendar-preview__commitment-list-heading a { background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 999px; color: var(--text-main); padding: .55rem .85rem; text-decoration: none; }
+.calendar-preview__commitment-tabs a[aria-current], .calendar-preview__commitment-list-heading a[aria-current] { background: var(--text-main); border-color: var(--text-main); color: var(--surface-app); }
+.calendar-preview__commitment-list-heading { display: grid; gap: .65rem; }
+.calendar-preview__commitment-list { display: grid; gap: .6rem; }
+.calendar-preview__commitment-list-card { background: var(--surface-card-muted); border: 1px solid var(--border-default); border-radius: 14px; color: var(--text-main); display: grid; gap: .3rem; padding: .8rem 1rem; text-decoration: none; }
+.calendar-preview__commitment-list-card time, .calendar-preview__commitment-list-card small { color: var(--text-muted); }
 .calendar-preview__section { background: var(--surface-card); border: 1px solid var(--border-default); border-radius: 20px; display: grid; gap: 1rem; padding: 1.25rem; }
 .calendar-preview__section h2, .calendar-preview__section h3, .calendar-preview__section p { margin: 0; }
 .calendar-preview__week { display: grid; gap: .5rem; grid-template-columns: repeat(7, minmax(0, 1fr)); }

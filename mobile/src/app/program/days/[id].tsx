@@ -51,7 +51,7 @@ function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecuti
         return (
           <View key={meal.key ?? `${meal.name}-${index}`}>
             <NutritionEntityCard
-              actions={<>{meal.detail_id ? <ContextualLibraryActions apiRequest={apiRequest} entity="meal" id={meal.detail_id} name={meal.name ?? "Comida"} onChanged={onChanged} /> : null}{openDetail ? (
+              actions={<>{mealKey ? <ContextualLibraryActions apiRequest={apiRequest} entity="meal" id={meal.detail_id ?? undefined} name={meal.name ?? "Comida"} onChanged={onChanged} onRemove={async () => { await apiRequest(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}`, { method: "DELETE" }); await onChanged(); }} onReplace={() => router.push(pickerHref("meal-to-calendarized-day", { dayId, relationKey: mealKey }))} /> : null}{openDetail ? (
                 <EntityCardAction
                   label={`Ver detalle de ${meal.name ?? "la comida"}`}
                   onPress={openDetail}

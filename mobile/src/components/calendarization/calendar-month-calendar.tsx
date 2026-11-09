@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { CalendarDay } from "@/api/calendar-types";
 import { commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
-import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel } from "@/components/calendarization/calendar-month";
+import { monthKeyFromDate, monthLabel } from "@/components/calendarization/calendar-month";
 import { InlineNotice } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -59,7 +59,7 @@ export function CalendarMonthCalendar({ days, embedded = false, error, localDate
             setTodaySize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
           } : undefined}
           onPress={() => onOpenDay(day.calendar_date)}
-          style={[styles.gridDate, day.has_plan && styles.gridDateFilled, day.has_plan && isCurrentMonthFromToday(day.calendar_date, localDate) && styles.gridDateUpcomingFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, day.calendar_date === localDate && styles.gridDateToday, day.calendar_date === selectedDate && day.calendar_date !== localDate && styles.gridDateSelected]}>
+          style={[styles.gridDate, day.has_plan && styles.gridDateFilled, day.has_plan && day.calendar_date >= localDate && monthKeyFromDate(day.calendar_date) === visibleMonth && styles.gridDateCurrentOrFutureFilled, monthKeyFromDate(day.calendar_date) !== visibleMonth && styles.gridDateAdjacent, day.calendar_date === localDate && styles.gridDateToday, day.calendar_date === selectedDate && day.calendar_date !== localDate && styles.gridDateSelected]}>
           <Text style={[styles.gridNumber, day.has_plan && styles.gridNumberWithPlan, day.calendar_date < localDate && styles.gridNumberPast]}>{day.calendar_date.slice(8, 10)}</Text>
           {day.commitments?.length ? <View style={[styles.gridCommitmentDots, day.calendar_date < localDate && styles.gridCommitmentDotsPast, day.calendar_date === localDate && styles.gridCommitmentDotsToday]}>{day.commitments.map((item) => <View key={item.id} style={[styles.gridCommitmentDot, { backgroundColor: commitmentPresentation[item.kind].color }]} />)}</View> : null}
           {day.calendar_date === localDate ? <CalendarTodayOutline {...todaySize} /> : null}
@@ -81,8 +81,8 @@ const styles = StyleSheet.create({
   gridDateToday: { borderWidth: 0 },
   gridDateSelected: { borderColor: tokens.color.interactivePrimary },
   gridDateAdjacent: { opacity: 0.5 },
-  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}2E` },
-  gridDateUpcomingFilled: { backgroundColor: `${tokens.color.dailyPlan}59` },
+  gridDateFilled: { backgroundColor: `${tokens.color.dailyPlan}33` },
+  gridDateCurrentOrFutureFilled: { backgroundColor: `${tokens.color.dailyPlan}D9` },
   gridHeader: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center", width: "13.5%" },
   gridNumber: { color: tokens.color.textMain, fontSize: 14, fontWeight: "500" },
   gridNumberPast: { opacity: 0.8 },

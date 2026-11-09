@@ -9,6 +9,7 @@ class WebEyebrowTypographyTests(SimpleTestCase):
     def test_web_eyebrows_use_the_shared_medium_weight(self):
         generated = (STATIC / "ui-contract.generated.css").read_text()
         self.assertIn("--font-weight-eyebrow: 500;", generated)
+        self.assertIn("--entity-preparation: #F46D6A;", generated)
 
         sources = [
             STATIC / "sharing_preview.css",

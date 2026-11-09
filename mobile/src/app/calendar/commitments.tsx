@@ -397,7 +397,7 @@ export default function RegisterCommitmentsScreen() {
       });
       monthCache.invalidate(new Set(selected.map(monthKeyFromDate)));
       void loadCommitmentReminderSettings().then((reminderSettings) => syncCommitmentReminders(reminderSettings, apiRequest)).catch(() => undefined);
-      router.replace((origin === "home" ? "/today" : "/calendar/registry") as Href);
+      router.replace((origin === "home" ? "/today" : "/calendar") as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {

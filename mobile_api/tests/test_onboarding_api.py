@@ -1,4 +1,5 @@
 from datetime import date, time, timedelta
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import override_settings
@@ -130,6 +131,11 @@ class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
         self.assertEqual(preferences["allergies_or_intolerances"], ["mariscos"])
         self.assertEqual(preferences["avoided_foods"], ["cilantro", "aceitunas"])
 
+        completed = self.client.post("/api/v1/onboarding/complete", content_type="application/json")
+        self.assertEqual(completed.status_code, 200, completed.content)
+        self.assertTrue(completed.json()["data"]["onboarding_completed"])
+        self.assertTrue(self.client.get("/api/v1/onboarding/state").json()["data"]["first_minutas_offer_available"])
+
         generated = self.client.post("/api/v1/onboarding/generate-plan", content_type="application/json")
         self.assertEqual(generated.status_code, 200, generated.content)
         items = generated.json()["data"]["items"]
@@ -144,7 +150,7 @@ class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.onboarding_plan_proposal_ids, [item["id"] for item in items])
         self.assertEqual(self.user.profile.onboarding_plan_proposal_id, items[0]["id"])
-        self.assertEqual(self.user.profile.onboarding_stage, Profile.ONBOARDING_STAGE_PLAN)
+        self.assertEqual(self.user.profile.onboarding_stage, Profile.ONBOARDING_STAGE_COMPLETED)
 
         resumed = self.client.get("/api/v1/onboarding/state")
         self.assertEqual(resumed.json()["data"]["proposal_ids"], [item["id"] for item in items])
@@ -155,6 +161,7 @@ class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
         self.assertEqual(accepted.status_code, 200, accepted.content)
         self.assertEqual([item["status"] for item in accepted.json()["data"]["items"]], [NutritionProposal.STATUS_APPLIED] * 2)
         self.assertEqual(DailyPlan.objects.filter(created_by=self.user).count(), 2)
+        self.assertFalse(self.client.get("/api/v1/onboarding/state").json()["data"]["first_minutas_offer_available"])
         library_meals = list(Meal.objects.library().filter(created_by=self.user).order_by("id"))
         embedded_meals = list(Meal.objects.embedded().filter(created_by=self.user).order_by("id"))
         self.assertEqual(len(library_meals), 7)
@@ -178,7 +185,6 @@ class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
         self.assertEqual(DailyPlan.objects.filter(created_by=self.user).count(), 2)
         self.assertEqual(Meal.objects.library().filter(created_by=self.user).count(), 7)
 
-        self.assertEqual(self.client.post("/api/v1/onboarding/complete", content_type="application/json").status_code, 409)
         local_today = date.fromisoformat(self.client.get("/api/v1/calendar?days=1").json()["data"]["local_date"])
         for offset, item in enumerate(accepted.json()["data"]["items"]):
             assigned = self.client.put(
@@ -192,6 +198,35 @@ class MobileAPIOnboardingV2Tests(AuthenticatedMobileAPITestCase):
         self.assertEqual(completed.status_code, 200, completed.content)
         self.assertTrue(completed.json()["data"]["onboarding_completed"])
         self.assertEqual(completed.json()["data"]["onboarding_version"], Profile.ONBOARDING_VERSION_NUTRITION_V2)
+
+    def test_onboarding_cannot_complete_before_estimate(self):
+        response = self.client.post("/api/v1/onboarding/complete", content_type="application/json")
+        self.assertEqual(response.status_code, 409, response.content)
+        self.assertFalse(self.client.get("/api/v1/onboarding/state").json()["data"]["first_minutas_offer_available"])
+
+    def test_failed_generation_keeps_completed_user_and_welcome_offer(self):
+        analyzed = self.client.post("/api/v1/onboarding/analyze", data={
+            "birth_date": "1990-05-10", "sex": "male", "height_cm": 178,
+            "weight_kg": 82.5, "goal": "muscle_gain", "activity_level": "high",
+            "training_frequency": 3, "dietary_pattern": "omnivore",
+            "allergies_or_intolerances": [], "avoided_foods": [],
+        }, content_type="application/json")
+        self.assertEqual(analyzed.status_code, 200, analyzed.content)
+        self.assertEqual(self.client.post("/api/v1/onboarding/complete", content_type="application/json").status_code, 200)
+        with patch("accounts.services.onboarding.generate_onboarding_catalog_minutas", side_effect=ValueError("no_viable_pair")):
+            failed = self.client.post("/api/v1/onboarding/generate-plan", content_type="application/json")
+        self.assertEqual(failed.status_code, 422, failed.content)
+        self.assertTrue(self.client.get("/api/v1/onboarding/state").json()["data"]["first_minutas_offer_available"])
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.onboarding_stage, Profile.ONBOARDING_STAGE_COMPLETED)
+        self.assertIsNotNone(self.user.profile.onboarding_completed_at)
+        restarted = self.client.post("/api/v1/onboarding/analyze", data={
+            "birth_date": "1990-05-10", "sex": "male", "height_cm": 178,
+            "weight_kg": 82.5, "goal": "fat_loss", "activity_level": "light",
+            "training_frequency": 3, "dietary_pattern": "omnivore",
+        }, content_type="application/json")
+        self.assertEqual(restarted.status_code, 422, restarted.content)
+        self.assertEqual(restarted.json()["error"]["code"], "onboarding_already_completed")
 
     def test_accepting_two_minutas_rolls_back_when_free_meal_capacity_is_insufficient(self):
         self._create_minimal_food_catalog()

@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from notas.application.sharing.contracts import SHARE_SNAPSHOT_SCHEMA_VERSION
 from notas.application.sharing.dailyplans import build_dailyplan_share_snapshot
+from notas.application.sharing.preparations import preparation_share_item
 from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
@@ -66,6 +67,7 @@ def build_food_share_snapshot(food: Food) -> dict:
 
 def _meal_snapshot(meal: Meal, *, variant: str = "library", time=None) -> dict:
     foods = []
+    preparations = [preparation_share_item(row) for row in meal.meal_preparation_set.select_related("preparation", "version").all()]
     protein = carbs = fat = 0.0
     for meal_food in meal.meal_food_set.all():
         item_nutrition = _nutrition(
@@ -84,15 +86,20 @@ def _meal_snapshot(meal: Meal, *, variant: str = "library", time=None) -> dict:
         protein += item_nutrition["protein_grams"]
         carbs += item_nutrition["carbs_grams"]
         fat += item_nutrition["fat_grams"]
+    for preparation in preparations:
+        protein += preparation["nutrition"]["protein_grams"]
+        carbs += preparation["nutrition"]["carbs_grams"]
+        fat += preparation["nutrition"]["fat_grams"]
     subject = {"type": ShareResource.SubjectType.MEAL, "title": meal.name}
     if variant != "library":
         subject["variant"] = variant
     snapshot = {
         "schema_version": SHARE_SNAPSHOT_SCHEMA_VERSION,
         "subject": subject,
-        "summary": {"food_count": len(foods)},
+        "summary": {"food_count": len(foods), **({"preparation_count": len(preparations)} if preparations else {})},
         "nutrition": _nutrition(protein=protein, carbs=carbs, fat=fat),
         "foods": foods,
+        **({"preparations": preparations} if preparations else {}),
     }
     if time is not None:
         snapshot["time"] = time.isoformat(timespec="minutes") if hasattr(time, "isoformat") else str(time)[:5]

@@ -47,6 +47,7 @@ class PersonalWeightInput(Schema):
 
 class OnboardingStateData(Schema):
     stage: str
+    first_minutas_offer_available: bool = False
     birth_date: date | None = None
     sex: str = ""
     height_cm: int | None = None

@@ -7,8 +7,8 @@ from django.db.models import Prefetch
 from django.utils import timezone
 
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
-from notas.domain.models import DailyPlan, MealFood, Program, ProgramDay
-from notas.domain.services.nutrition import macro_kcal_distribution
+from notas.domain.models import DailyPlan, MealFood, MealPreparation, Program, ProgramDay
+from notas.domain.services.nutrition import iter_meal_shopping_ingredients, macro_kcal_distribution
 
 DAY_LABELS = (
     (1, "Lun"),
@@ -20,7 +20,7 @@ DAY_LABELS = (
     (7, "Dom"),
 )
 
-PROGRAM_SUMMARY_CACHE_VERSION = 2
+PROGRAM_SUMMARY_CACHE_VERSION = 3
 
 
 def _dailyplan_meals_for(dailyplan: DailyPlan):
@@ -32,7 +32,11 @@ def _dailyplan_meals_for(dailyplan: DailyPlan):
             Prefetch(
                 "meal__meal_food_set",
                 queryset=MealFood.objects.select_related("food"),
-            )
+            ),
+            Prefetch(
+                "meal__meal_preparation_set",
+                queryset=MealPreparation.objects.select_related("preparation", "version").prefetch_related("version__ingredients__food"),
+            ),
         ).order_by("order", "id")
     )
 
@@ -175,11 +179,10 @@ def _food_row(food, display_name, total_grams, program_totals):
 def _foods_table_from_dailyplan_meals(dailyplan_meals, totals):
     aggregation = defaultdict(lambda: {"food": None, "display_name": "", "total_grams": 0})
     for dpm in dailyplan_meals:
-        for meal_food in dpm.meal.meal_food_set.all():
-            food = meal_food.food
+        for food, quantity_g in iter_meal_shopping_ingredients(dpm.meal):
             aggregation[food.id]["food"] = food
             aggregation[food.id]["display_name"] = resolve_food_display_name(food)
-            aggregation[food.id]["total_grams"] += meal_food.quantity
+            aggregation[food.id]["total_grams"] += quantity_g
     ordered = sorted(aggregation.values(), key=lambda item: (-item["total_grams"], item["display_name"]))
     return [_food_row(item["food"], item["display_name"], item["total_grams"], totals) for item in ordered]
 
@@ -263,6 +266,7 @@ def build_program_summary(program: Program) -> dict:
 def refresh_program_summary_cache(program: Program) -> dict:
     hydrated_program = Program.objects.prefetch_related(
         "program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food",
+        "program_dailyplan__dailyplan__dailyplan_meals__meal__meal_preparation_set__version__ingredients__food",
     ).get(pk=program.pk)
     summary = build_program_summary(hydrated_program)
     updated_at = timezone.now()

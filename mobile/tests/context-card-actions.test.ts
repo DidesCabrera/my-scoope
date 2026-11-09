@@ -87,7 +87,7 @@ test("current cards retain library actions while today's plan removes only its c
   }
   assert.ok(contextualActions.indexOf('key: "share"') < contextualActions.indexOf('key: "rename"'));
   assert.match(contextualActions, /onCompare=\{id != null \? \(\) => void compare\(\) : undefined\}/);
-  assertSourceMatch(contextualActions, /if \(id != null && !onRemoveFromCalendar\) \{\s*actions\.push\(\{ destructive: true, key: "delete", label: "Eliminar" \}\)/);
+  assertSourceMatch(contextualActions, /if \(id != null && !onRemoveFromCalendar && !onRemove\) \{\s*actions\.push\(\{ destructive: true, key: "delete", label: "Eliminar" \}\)/);
   assert.match(calendarizedPlan, /snapshot\.source\?\.dailyplan_id/);
   assert.match(calendarizedPlan, /<ContextualLibraryActions[^>]*entity="dailyPlan"/);
   assertSourceMatch(calendarizedPlan, /onRemoveFromCalendar=\{onRemoveFromCalendar\}/);

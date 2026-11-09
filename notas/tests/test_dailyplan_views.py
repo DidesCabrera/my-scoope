@@ -189,7 +189,7 @@ class DailyPlanViewTests(TestCase):
         self.assertContains(response, 'class="data-grid-meal-time">07:05</span>')
 
         dailyplan.refresh_from_db()
-        self.assertEqual(dailyplan.summary_cache["version"], 3)
+        self.assertEqual(dailyplan.summary_cache["version"], 4)
         self.assertEqual(dailyplan.summary_cache["menu"][0]["hour"], "07:05")
 
     def test_dailyplan_fork_creates_new_plan_for_logged_user(self):
