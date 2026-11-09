@@ -9002,6 +9002,11 @@
             ],
             "title": "Estimate"
           },
+          "first_minutas_offer_available": {
+            "default": false,
+            "title": "First Minutas Offer Available",
+            "type": "boolean"
+          },
           "goal": {
             "default": "",
             "title": "Goal",
