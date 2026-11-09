@@ -30,7 +30,7 @@ test("entity cards expose a shared left-aligned panel visibility control", async
   expectSource(product, "entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, marginRight: 2 }");
   expectSource(product, 'entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 }');
   expectSource(product, "<EntityCardActions leading={panelToggle ? <EntityCardPanelToggle");
-  expectSource(product, 'entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginTop: 6 }');
+  expectSource(product, 'entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginHorizontal: -6, marginTop: 6 }');
   expectSource(product, 'entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, marginLeft: "auto" }');
   expectSource(nutritionCard, "initialPanelExpanded = false");
   expectSource(nutritionCard, "const [panelExpanded, setPanelExpanded] = useState(initialPanelExpanded)");
