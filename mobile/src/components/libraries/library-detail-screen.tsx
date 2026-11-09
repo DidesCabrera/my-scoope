@@ -2,7 +2,7 @@ import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } 
 import * as Crypto from "expo-crypto";
 import { Carrot, Utensils } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -16,6 +16,7 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
+import { MealPreparationCard } from "@/components/preparations/meal-preparation-card";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { Button as ActionButton, HeaderMetadataChip, LoadingState, MutationStatusModal, NutritionFactsCard, SectionDivider, type MutationStatus } from "@/components/ui";
 import { Button, InlineNotice } from "@/components/ui/primitives";
@@ -409,7 +410,13 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       <Button label="Eliminar copia" loading={labelImageBusy} onPress={deleteLabelImage} variant="secondary" />
     </EntityDetailSection></> : null}
     {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={item.panel.kind === "weeks" ? `${panelCount} elementos` : undefined} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} nestedScroll onOpenItem={openFood} preparation={isPinnedMealContext && pinnedMealAdherence.available ? { disabled: savingMealKey != null, isPrepared: (food) => normalizedPinnedMealExecution?.prepared_food_keys.includes(food.id) ?? false, onToggle: (food) => void togglePinnedMealDetailFood(food.id) } : undefined} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} nestedScroll onOpenItem={mealEditing?.onOpen} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
-    {item.entity === "meal" && (item.panel.preparations?.length ?? 0) > 0 ? <EntityDetailSection title="Preparaciones en esta comida">{item.panel.preparations?.map((preparation) => <View key={preparation.relation_id} style={{ marginBottom: 18, gap: 6 }}><Text style={{ color: tokens.color.textMain, fontWeight: "700" }}>{preparation.name} · {preparation.selection_mode === "units" ? `${preparation.selected_units} ${preparation.household_label}` : `${preparation.quantity_g} g`} · {preparation.calories} kcal</Text><Text style={{ color: tokens.color.textMain }}>Equivalente: {preparation.quantity_g} g · Sodio: {preparation.sodium_mg ?? "sin dato"} mg · Alérgenos: {preparation.allergens.length ? preparation.allergens.join(", ") : "ninguno confirmado"}</Text>{preparation.ingredients.map((ingredient, index) => <Pressable key={`${ingredient.food_id}:${index}`} onPress={() => router.push(`/libraries/foods/${ingredient.food_id}` as Href)}><Text style={{ color: tokens.color.textMain }}>{ingredient.name} · {ingredient.quantity_g} g · {ingredient.preparation_state}{ingredient.is_condiment ? " · condimento" : ""} ›</Text></Pressable>)}<ActionButton label="Editar porción" onPress={() => router.push(`/pickers/preparation-to-meal?mealId=${item.id}&relationId=${preparation.relation_id}&preparationId=${preparation.detail_id}` as Href)} variant="chipPrimary" /><ActionButton label="Quitar preparación" onPress={() => void mutateComposition(`/api/v1/library/meals/${item.id}/preparations/${preparation.relation_id}`, { method: "DELETE" })} variant="chipPrimary" /></View>)}</EntityDetailSection> : null}
+    {item.entity === "meal" && (item.panel.preparations?.length ?? 0) > 0 ? <EntityDetailSection title="Preparaciones en esta comida">{item.panel.preparations?.map((preparation) => <MealPreparationCard
+      key={preparation.relation_id}
+      onEdit={() => router.push(`/pickers/preparation-to-meal?mealId=${item.id}&relationId=${preparation.relation_id}&preparationId=${preparation.detail_id}` as Href)}
+      onOpenFood={(foodId) => router.push(`/libraries/foods/${foodId}` as Href)}
+      onRemove={() => void mutateComposition(`/api/v1/library/meals/${item.id}/preparations/${preparation.relation_id}`, { method: "DELETE" })}
+      preparation={preparation}
+    />)}</EntityDetailSection> : null}
     {item.entity === "meal" ? <ActionButton label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation || isLibraryMealCreation ? { returnTo: String(currentDetailHref) } : {}) }))} variant="chipPrimary" /> : null}
     {item.entity === "meal" ? <ActionButton label="+ Agregar preparación" onPress={() => router.push(`/pickers/preparation-to-meal?mealId=${item.id}` as Href)} variant="chipPrimary" /> : null}
     {item.entity === "meal" && foodItems.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Familiarízate com los alimentos que conforman tu comida y determina su relevancia e impacto." title="Detalle de cada Alimento" /><FoodDetailCardList items={foodItems} onOpenFood={openFood} /></> : null}
