@@ -26,7 +26,6 @@ import { tokens } from "@/design/tokens";
 import type { FoodLabelImage } from "@/label-capture/types";
 import { internalHref } from "@/navigation/internal-href";
 import { SupplementIntakePanel } from "@/components/supplements/supplement-intake-panel";
-import { SupplementProSheet } from "@/components/supplements/supplement-pro-sheet";
 
 import { DailyPlanMealCards, ProgramPanels } from "./entity-panels";
 import { libraryFoodNutritionFacts, libraryNutrition } from "./presentation-adapters";
@@ -64,7 +63,6 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const [pinnedMealExecution, setPinnedMealExecution] = useState<MealExecutionItem | null>(null);
   const [mutationStatus, setMutationStatus] = useState<MutationStatus | null>(null);
   const [contextTime, setContextTime] = useState(mealTime?.slice(0, 5) ?? "");
-  const [supplementUpsell, setSupplementUpsell] = useState(false);
   const [addComponentVisible, setAddComponentVisible] = useState(false);
   const contextDailyPlanId = Number(dailyPlanId);
   const contextDailyPlanMealId = Number(dailyPlanMealId);
@@ -437,13 +435,13 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     {item.entity === "meal" ? <ActionButton label="+ Agregar alimento o preparación" onPress={() => setAddComponentVisible(true)} variant="chipPrimary" /> : null}
     {item.entity === "meal" && foodItems.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Revisa el aporte de cada alimento y preparación a tu comida." title="Detalle de cada componente" /><FoodDetailCardList editing={(component) => component.kind === "preparation" ? preparationEditing : foodEditing} items={foodItems} onOpenFood={openFood} /></> : null}
     {item.entity === "dailyPlan" ? <ActionButton label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, ...(isLibraryDailyPlanCreation || origin === "home" ? { returnTo: String(currentDetailHref) } : {}) }))} variant="chipPrimary" /> : null}
-    {item.entity === "dailyPlan" && item.supplements_available ? <EntityDetailSection title="Ingestas de suplementos">{item.can_use_supplements ? <SupplementIntakePanel completionEndpoint={isPinnedPlan ? "/api/v1/today/pinned-plan/supplement-intakes" : undefined} dailyPlanId={item.id} editable intakes={item.panel.supplement_intakes ?? []} pinned={isPinnedPlan} /> : <Button label="Suplementos · Pro" onPress={() => setSupplementUpsell(true)} variant="secondary" />}</EntityDetailSection> : null}
+    {item.entity === "dailyPlan" && item.can_use_supplements ? <EntityDetailSection title="Ingestas de suplementos"><SupplementIntakePanel completionEndpoint={isPinnedPlan ? "/api/v1/today/pinned-plan/supplement-intakes" : undefined} dailyPlanId={item.id} editable intakes={item.panel.supplement_intakes ?? []} pinned={isPinnedPlan} /></EntityDetailSection> : null}
     {item.entity === "meal" && isPinnedMealContext ? <MealNoteCard controller={pinnedMealAdherence} /> : null}
     {item.entity === "meal" && !isPinnedMealContext && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" /><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onChanged={load} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></> : null}
     {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en esta minuta diaria" /><GroupedFoodsCard items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} title="Alimentos de la minuta diaria" /></> : null}
     {item.entity === "dailyPlan" && !item.is_draft ? <Button bleed label="Asignar al calendario" onPress={openCalendarAssignment} variant="primary" /> : null}
-  </EntityDetailPage></NestableScrollContainer>{actionsModal}{mutationStatusModal}<MealComponentAddActions onClose={() => setAddComponentVisible(false)} onFood={addFood} onPreparation={addPreparation} visible={addComponentVisible && item.entity === "meal"} /><SupplementProSheet onClose={() => setSupplementUpsell(false)} visible={supplementUpsell} /><CalendarizedEntityActions
+  </EntityDetailPage></NestableScrollContainer>{actionsModal}{mutationStatusModal}<MealComponentAddActions onClose={() => setAddComponentVisible(false)} onFood={addFood} onPreparation={addPreparation} visible={addComponentVisible && item.entity === "meal"} /><CalendarizedEntityActions
     entityName={panelTimeMeal?.name ?? "Comida"}
     initialAction="change-time"
     key={panelTimeMeal?.id ?? "closed-panel-time-change"}

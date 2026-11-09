@@ -43,7 +43,9 @@ test("Home creates a dated snapshot while retaining legacy pinned-plan fallback"
   assertSourceMatch(card, /supplementCompletion=\{item\.can_use_supplements && supplementIntakes\.length \? <DailySupplementCompletionCard/);
   assertSourceMatch(card, /supplementsCount[\s\S]*icon: "supplement" as const, label: "sups", value: supplementsCount/);
   assertSourceMatch(calendarizedCard, /supplementsCount[\s\S]*icon: "supplement" as const, label: "sups", value: supplementsCount/);
-  assertSourceMatch(calendarizedCard, /const canUseSupplements = entitlementSupplementAccess \?\? Array\.isArray\(sourceSupplementIntakes\)/);
+  assertSourceMatch(calendarizedCard, /const canUseSupplements = entitlementSupplementAccess === true/);
+  assertSourceDoesNotMatch(nutritionCard, /onLockedSupplementPress/);
+  assertSourceDoesNotMatch(card, /SupplementProSheet/);
   assertSourceMatch(nutritionCard, /afterNutrition \? supplementCompletion \? <View style=\{styles\.completionStack\}>\{afterNutrition\}\{supplementCompletion\}<\/View>/);
   assertSourceMatch(nutritionCard, /completionStack: \{ gap: 8 \}/);
   assertSourceMatch(nutritionCard, /activeForeground=\{tokens\.color\.entityIconForeground\}[\s\S]*text="Sups"/);

@@ -15,7 +15,6 @@ import { normalizeMealExecution } from "./meal-execution";
 import { CalendarizedEntityActions } from "./calendarized-entity-actions";
 import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
 import { SupplementIntakePanel } from "@/components/supplements/supplement-intake-panel";
-import { SupplementProSheet } from "@/components/supplements/supplement-pro-sheet";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
@@ -40,20 +39,17 @@ type Props = {
 export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId, dateLabel, editing, eyebrow, initialPanelExpanded = false, mealExecution = [], onAddMeal, onChangeMealTime, onChanged, onRemoveFromCalendar, planName, showLibraryActions = true, snapshot }: Props) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
-  const [supplementUpsell, setSupplementUpsell] = useState(false);
   const sourceSupplementIntakes = snapshot.supplement_intakes;
   const [entitlementSupplementAccess, setEntitlementSupplementAccess] = useState<boolean | null>(null);
-  const [supplementsAvailable, setSupplementsAvailable] = useState(false);
   const [supplementIntakes, setSupplementIntakes] = useState(sourceSupplementIntakes ?? []);
-  const canUseSupplements = entitlementSupplementAccess ?? Array.isArray(sourceSupplementIntakes);
+  const canUseSupplements = entitlementSupplementAccess === true;
   useFocusEffect(useCallback(() => {
     let active = true;
     void apiRequest<EntitlementsData>("/api/v1/entitlements").then((data) => {
       if (active) {
         setEntitlementSupplementAccess(Boolean(data.workspace_features?.can_use_supplements));
-        setSupplementsAvailable(Boolean(data.workspace_features?.supplements_available));
       }
-    }).catch(() => { if (active) setSupplementsAvailable(false); });
+    }).catch(() => { if (active) setEntitlementSupplementAccess(false); });
     return () => { active = false; };
   }, [apiRequest]));
   const meals = snapshot.meals ?? [];
@@ -88,7 +84,7 @@ export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId
       indicators={[
         { icon: "meal", label: "comidas", value: meals.length },
         { icon: "food", label: "componentes", value: foodsCount },
-        ...(supplementsCount ? [{ icon: "supplement" as const, label: "sups", value: supplementsCount }] : []),
+        ...(canUseSupplements && supplementsCount ? [{ icon: "supplement" as const, label: "sups", value: supplementsCount }] : []),
       ]}
       nutrition={{
         calories: totalCalories,
@@ -96,7 +92,6 @@ export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId
         fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
         protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
       }}
-      onLockedSupplementPress={supplementsAvailable && !canUseSupplements ? () => setSupplementUpsell(true) : undefined}
       supplementCompletion={canUseSupplements && supplementIntakes.length ? <DailySupplementCompletionCard intakes={supplementIntakes} /> : undefined}
       supplementPanel={canUseSupplements && dayId != null ? <SupplementIntakePanel calendarizedDayId={dayId} completionEndpoint={`/api/v1/days/${dayId}/supplement-intakes`} dailyPlanId={sourceDailyPlanId ?? 0} intakes={supplementIntakes} onChange={setSupplementIntakes} /> : undefined}
       title={snapshot.name ?? planName ?? "Minuta diaria"}>
@@ -123,7 +118,6 @@ export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId
       timeChange={timeChangeMeal && onChangeMealTime ? { initialTime: timeChangeMeal.time, onSubmit: (hour) => onChangeMealTime(timeChangeMeal, hour) } : undefined}
       visible={timeChangeMeal != null}
     />
-    <SupplementProSheet onClose={() => setSupplementUpsell(false)} visible={supplementUpsell} />
   </>);
 }
 

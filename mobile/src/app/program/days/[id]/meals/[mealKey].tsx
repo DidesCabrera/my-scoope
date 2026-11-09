@@ -15,6 +15,7 @@ import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components
 import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { MealComponentAddActions } from "@/components/libraries/meal-component-add-actions";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { FoodPanels, type FoodPanelEditing, type FoodPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -34,6 +35,7 @@ export default function CalendarizedMealDetailScreen() {
   const [savingPreparedFood, setSavingPreparedFood] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionSheet, setActionSheet] = useState<"change-time" | "menu" | null>(null);
+  const [addComponentVisible, setAddComponentVisible] = useState(false);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
   const dayId = Number(id);
@@ -187,10 +189,7 @@ export default function CalendarizedMealDetailScreen() {
             } : undefined}
           />
         </EntityDetailSection>
-        <View style={styles.componentActions}>
-          <Button label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))} variant="chipPrimary" />
-          <Button label="+ Agregar preparación" onPress={() => router.push({ pathname: "/pickers/preparation-to-meal", params: { dayId: String(dayId), mealKey } } as Href)} variant="chipPrimary" />
-        </View>
+        <Button label="+ Agregar alimento o preparación" onPress={() => setAddComponentVisible(true)} variant="chipPrimary" />
         {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Revisa el aporte de cada alimento y preparación a esta comida en curso." title="Detalle de cada componente" /><FoodDetailCardList editing={(component) => component.kind === "preparation" ? preparationEditing : foodEditing} items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }} /></> : null}
         <MealNoteCard controller={adherence} />
       </EntityDetailPage>
@@ -232,12 +231,17 @@ export default function CalendarizedMealDetailScreen() {
       visible={actionSheet != null}
     />
     <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
+    <MealComponentAddActions
+      onClose={() => setAddComponentVisible(false)}
+      onFood={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
+      onPreparation={() => router.push({ pathname: "/pickers/preparation-to-meal", params: { dayId: String(dayId), mealKey } } as Href)}
+      visible={addComponentVisible}
+    />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  componentActions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },

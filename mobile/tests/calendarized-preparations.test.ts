@@ -13,9 +13,14 @@ test("calendarized snapshot adapters preserve preparation identity", async () =>
 
 test("active meal detail exposes preparation navigation and instance actions", async () => {
   const detail = await readTestFile(path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"), "utf8");
+  const day = await readTestFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
   const picker = await readTestFile(path.resolve(process.cwd(), "src/app/pickers/preparation-to-meal.tsx"), "utf8");
   assert.match(detail, /component\.kind === "preparation" \? preparationEditing : foodEditing/);
-  assert.match(detail, /label="\+ Agregar preparación"/);
+  assert.match(detail, /label="\+ Agregar alimento o preparación"/);
+  assert.match(day, /label="\+ Agregar alimento o preparación"/);
+  assert.match(detail, /<MealComponentAddActions/);
+  assert.match(day, /<MealComponentAddActions/);
   assert.match(picker, /preparations\$\{snapshotKey/);
   assert.match(detail, /food\.kind === "preparation" \? `\/libraries\/preparations/);
+  assert.match(day, /food\.kind === "preparation" \? `\/libraries\/preparations/);
 });

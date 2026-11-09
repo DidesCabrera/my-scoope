@@ -215,7 +215,7 @@ test("meal details reuse food entity cards across library and calendarized conte
   assert.ok(preparation.includes("<FoodDetailCardList items={ingredients}"));
   assert.ok(preparation.includes("Math.round(detail.nutrition.calories * 10) / 10"));
   assert.match(library, /\/libraries\/foods\/\$\{food\.detailId\}/);
-  assert.match(calendarized, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada Alimento" \/><FoodDetailCardList/);
+  assert.match(calendarized, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada componente" \/><FoodDetailCardList/);
   assert.match(foodCards, /<NutritionEntityCard/);
   assert.ok(foodCards.includes('entity={isPreparation ? "preparation" : "food"}'));
   assert.match(foodCards, /subtitle=\{`\$\{item\.quantity\} \$\{item\.quantityUnit\}`\}/);

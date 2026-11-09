@@ -28,7 +28,6 @@ export type NutritionEntityCardProps = {
   dailyPlanFoodsPanel?: ReactNode;
   supplementPanel?: ReactNode;
   supplementCompletion?: ReactNode;
-  onLockedSupplementPress?: () => void;
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
   foodEmoji?: string | null;
@@ -56,7 +55,6 @@ export function NutritionEntityCard({
   dailyPlanFoodsPanel,
   supplementPanel,
   supplementCompletion,
-  onLockedSupplementPress,
   kpiVariant = "regular",
   entity,
   foodEmoji,
@@ -78,7 +76,7 @@ export function NutritionEntityCard({
   const [supplementPanelExpanded, setSupplementPanelExpanded] = useState(false);
   const hasCollapsiblePanel = collapsiblePanel && Boolean(children);
   const hasDailyPlanFoodsPanel = hasCollapsiblePanel && entity === "dailyPlan" && Boolean(dailyPlanFoodsPanel);
-  const hasSupplementPanel = collapsiblePanel && entity === "dailyPlan" && (Boolean(supplementPanel) || Boolean(onLockedSupplementPress));
+  const hasSupplementPanel = collapsiblePanel && entity === "dailyPlan" && Boolean(supplementPanel);
   const anyPanelExpanded = panelExpanded || (hasDailyPlanFoodsPanel && foodsPanelExpanded) || supplementPanelExpanded;
   const panelToggleIcon = entity === "food" ? "information" : entity === "meal" || entity === "preparation" ? "food" : entity === "program" ? "chart" : "meal";
   const panelToggleText = entity === "food" ? "Más información" : entity === "meal" || entity === "preparation" ? "Alimentos" : entity === "program" ? "Semanas" : "Comidas";
@@ -96,10 +94,6 @@ export function NutritionEntityCard({
     if (shouldExpand) setSupplementPanelExpanded(false);
   }
   function toggleSupplementPanel() {
-    if (onLockedSupplementPress) {
-      onLockedSupplementPress();
-      return;
-    }
     const shouldExpand = !supplementPanelExpanded;
     setSupplementPanelExpanded(shouldExpand);
     if (shouldExpand) {
