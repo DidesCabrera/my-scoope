@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from food_catalog.application.curation import transition_catalog_food_status
+from food_catalog.infrastructure.preparations import publish_preparation_version
 from food_catalog.models import (
     CatalogFood,
     CatalogFoodPortion,
@@ -17,8 +18,6 @@ from food_catalog.models import (
     CatalogPreparationIngredient,
     CatalogPreparationVersion,
 )
-from food_catalog.infrastructure.preparations import publish_preparation_version
-
 
 # Stable identities make a retry safe after a deployment or interrupted command.
 PILOT_REF = UUID("2d0bb5e6-94c4-56a6-a08b-2f51079194f7")

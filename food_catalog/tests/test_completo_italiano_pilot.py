@@ -5,8 +5,8 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 
-from food_catalog.management.commands.seed_completo_italiano_pilot import PILOT_REF
 from food_catalog.infrastructure.releases import build_catalog_release
+from food_catalog.management.commands.seed_completo_italiano_pilot import PILOT_REF
 from food_catalog.models import CatalogFood, CatalogPreparation
 
 
