@@ -409,9 +409,9 @@ function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteractio
     <View style={[styles.foodIdentityTitleRow, item.projectedLabel === "Por agregar" && styles.foodIdentityTitleRowWithBadge]}>
       {item.kind === "preparation" ? <EntityIcon entity="preparation" size="compact" /> : <FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} />}
       {item.kind === "preparation" ? <View style={styles.preparationIdentityCopy}>
-        <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>
+        <View style={styles.foodNameAndPortion}><Text numberOfLines={showFoodPortion ? 1 : 2} style={[styles.itemName, styles.foodItemName, styles.foodNameTruncated, itemNameStyle]}>{item.name}</Text>{showFoodPortion ? <Text numberOfLines={1} style={styles.foodPortionSuffix}>{`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</View>
         <Text style={styles.preparationSubtitle}>Preparación</Text>
-      </View> : <Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]}>{item.name}{showFoodPortion ? <Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</Text>}
+      </View> : <View style={styles.foodNameAndPortion}><Text numberOfLines={showFoodPortion ? 1 : 2} style={[styles.itemName, styles.foodItemName, styles.foodNameTruncated, item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]}>{item.name}</Text>{showFoodPortion ? <Text numberOfLines={1} style={styles.foodPortionSuffix}>{`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</View>}
       {item.projectedLabel === "Por agregar" ? <Text style={[styles.projectedBadge, styles.foodInlineProjectedBadge]}>{item.projectedLabel}</Text> : null}
     </View>
     {showNutritionSummary ? <NutritionSummary item={item} /> : null}
@@ -863,7 +863,9 @@ const styles = StyleSheet.create({
   gridLeadingCell: { alignSelf: "stretch", flexBasis: "40%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
   itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   foodItemName: { fontWeight: tokens.weight.medium },
-  foodPortionSuffix: { color: tokens.color.textMuted, fontStyle: "italic", fontWeight: tokens.weight.regular },
+  foodNameAndPortion: { alignItems: "center", flex: 1, flexDirection: "row", minWidth: 0 },
+  foodNameTruncated: { flexShrink: 1, minWidth: 0 },
+  foodPortionSuffix: { color: tokens.color.textMuted, flexShrink: 0, fontStyle: "italic", fontWeight: tokens.weight.regular },
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
   foodDetailCopy: { flex: 1, justifyContent: "center", minWidth: 0 },
   quantityItemText: { fontSize: tokens.type.caption + 1 },

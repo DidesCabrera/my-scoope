@@ -833,8 +833,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /nutritionSummaryValue: \{ fontWeight: tokens\.weight\.semibold \}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /cal · P |cal P:\$\{/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} itemNameStyle=\{styles\.quantityItemText\} onOpenItem=\{canOpen \? onOpenItem : undefined\} showNutritionSummary style=\{styles\.quantityLeadingCell\} \/>/);
-  assertSourceMatch(sharedEntityPanels, /showFoodPortion \? <Text style=\{styles\.foodPortionSuffix\}> \{`\(\$\{decimal\(item\.quantity\)\}\$\{item\.quantityUnit\}\)`\}<\/Text> : null/);
-  assertSourceMatch(sharedEntityPanels, /foodPortionSuffix: \{ color: tokens\.color\.textMuted, fontStyle: "italic"/);
+  assertSourceMatch(sharedEntityPanels, /<View style=\{styles\.foodNameAndPortion\}><Text numberOfLines=\{showFoodPortion \? 1 : 2\} style=\{\[styles\.itemName, styles\.foodItemName, styles\.foodNameTruncated/);
+  assertSourceMatch(sharedEntityPanels, /showFoodPortion \? <Text numberOfLines=\{1\} style=\{styles\.foodPortionSuffix\}>\{`\(\$\{decimal\(item\.quantity\)\}\$\{item\.quantityUnit\}\)`\}<\/Text> : null/);
+  assertSourceMatch(sharedEntityPanels, /foodNameTruncated: \{ flexShrink: 1, minWidth: 0 \}/);
+  assertSourceMatch(sharedEntityPanels, /foodPortionSuffix: \{ color: tokens\.color\.textMuted, flexShrink: 0, fontStyle: "italic"/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} onOpenItem=\{onOpenItem\} showFoodPortion=\{leadingLabel === "Alimentos"\}/);
   assertSourceMatch(sharedEntityPanels, /styles\.editName\]\}>\{item\.name\}<Text style=\{styles\.foodPortionSuffix\}>/);
   assertSourceMatch(sharedEntityPanels, /quantityLeadingCell: \{[^}]*flex: 1/);
