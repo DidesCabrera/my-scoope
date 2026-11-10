@@ -1,8 +1,19 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import ts from "typescript";
 
-import { readTestFile } from "./support/source-contract";
+function displayedLabels(source: string, file: string): string[] {
+  const parsed = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const labels: string[] = [];
+  const visit = (node: ts.Node) => {
+    if (ts.isStringLiteral(node) || ts.isJsxText(node)) labels.push(node.text.trim());
+    ts.forEachChild(node, visit);
+  };
+  visit(parsed);
+  return labels;
+}
 
 test("fat panel headers and comparison legends use G for grasas", async () => {
   const files = [
@@ -14,12 +25,15 @@ test("fat panel headers and comparison legends use G for grasas", async () => {
     "src/sharing/presentation.ts",
   ];
   for (const file of files) {
-    const source = await readTestFile(path.resolve(process.cwd(), file), "utf8");
-    assert.doesNotMatch(source, /P\|C\|F|label: "F(?:g|%)?"|>F(?:%)?(?: <\/Text>|<\/Text>)|"F%"/);
+    const source = await readFile(path.resolve(process.cwd(), file), "utf8");
+    const labels = displayedLabels(source, file);
+    for (const oldLabel of ["F", "Fg", "F%", "P|C|F"]) {
+      assert.ok(!labels.includes(oldLabel), `${file} todavía muestra ${oldLabel}`);
+    }
   }
 
-  const panels = await readTestFile(path.resolve(process.cwd(), files[0]!), "utf8");
-  assert.match(panels, /\["C", "G"\]/);
-  assert.match(panels, /\["P%", "C%", "G%"\]/);
-  assert.match(panels, />P\|C\|G<\/PanelHeaderCell>/);
+  const panels = displayedLabels(await readFile(path.resolve(process.cwd(), files[0]!), "utf8"), files[0]!);
+  for (const newLabel of ["G", "G%", "P|C|G"]) {
+    assert.ok(panels.includes(newLabel), `El panel de alimentos debe mostrar ${newLabel}`);
+  }
 });

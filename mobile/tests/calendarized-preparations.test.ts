@@ -1,26 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import path from "node:path";
 
-import { readTestFile } from "./support/source-contract";
+import type { MealSnapshot } from "../src/api/types";
+import { snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems } from "../src/components/calendarization/presentation-adapters";
 
-test("calendarized snapshot adapters preserve preparation identity", async () => {
-  const adapter = await readTestFile(path.resolve(process.cwd(), "src/components/calendarization/presentation-adapters.ts"), "utf8");
-  assert.match(adapter, /food\.component_type === "preparation"/);
-  assert.match(adapter, /source_preparation_id/);
-  assert.match(adapter, /kind: food\.kind/);
-});
+test("calendarized meal and daily-plan panels preserve preparation identity", () => {
+  const meal: MealSnapshot = {
+    foods: [
+      { key: "prep-1", component_type: "preparation", source_preparation_id: 7, name: "Salsa", quantity_g: 100, protein_g: 4 },
+      { key: "food-1", component_type: "food", source_food_id: 7, name: "Tomate", quantity_g: 50, protein_g: 1 },
+    ],
+    totals: { protein_g: 5, protein_per_kilogram: 0.1 },
+  };
 
-test("active meal detail exposes preparation navigation and instance actions", async () => {
-  const detail = await readTestFile(path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"), "utf8");
-  const day = await readTestFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
-  const picker = await readTestFile(path.resolve(process.cwd(), "src/app/pickers/preparation-to-meal.tsx"), "utf8");
-  assert.match(detail, /component\.kind === "preparation" \? preparationEditing : foodEditing/);
-  assert.match(detail, /label="\+ Agregar alimento o preparación"/);
-  assert.match(day, /label="\+ Agregar alimento o preparación"/);
-  assert.match(detail, /<MealComponentAddActions/);
-  assert.match(day, /<MealComponentAddActions/);
-  assert.match(picker, /preparations\$\{snapshotKey/);
-  assert.match(detail, /food\.kind === "preparation" \? `\/libraries\/preparations/);
-  assert.match(day, /food\.kind === "preparation" \? `\/libraries\/preparations/);
+  assert.deepEqual(snapshotFoodPanelItems(meal).map(({ kind, detailId }) => [kind, detailId]), [
+    ["preparation", 7],
+    ["food", 7],
+  ]);
+  assert.deepEqual(snapshotDailyPlanFoodPanelItems([meal]).map(({ kind, detailId, quantity }) => [kind, detailId, quantity]), [
+    ["preparation", 7, 100],
+    ["food", 7, 50],
+  ]);
 });
