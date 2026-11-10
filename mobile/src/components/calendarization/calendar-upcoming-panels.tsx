@@ -80,13 +80,13 @@ function Header({ tab }: { tab: Exclude<Tab, "plans"> }) {
       <Text style={[styles.headerLabel, styles.ppkCell]}>PpK</Text>
       <Text style={[styles.headerLabel, styles.macroCell]}>P</Text>
       <Text style={[styles.headerLabel, styles.macroCell]}>C</Text>
-      <Text style={[styles.headerLabel, styles.macroCell]}>F</Text>
+      <Text style={[styles.headerLabel, styles.macroCell]}>G</Text>
     </> : null}
     {tab === "distribution" ? <>
       <Text style={[styles.headerLabel, styles.percentCell]}>P%</Text>
       <Text style={[styles.headerLabel, styles.percentCell]}>C%</Text>
-      <Text style={[styles.headerLabel, styles.percentCell]}>F%</Text>
-      <Text style={[styles.headerLabel, styles.distributionCell]}>P|C|F</Text>
+      <Text style={[styles.headerLabel, styles.percentCell]}>G%</Text>
+      <Text style={[styles.headerLabel, styles.distributionCell]}>P|C|G</Text>
     </> : null}
   </View>;
 }

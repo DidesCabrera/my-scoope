@@ -84,9 +84,9 @@ overwrite confirmation before the established mutation is submitted.
   `dash-kpi-comp`, responsive tabs and data grids). Meal projections expose the
   Alimentos, Tabla Alimentos, Calorías, Macros, Dist and Alloc panels;
   DailyPlan projections expose Menú, Tabla Nutricional, Calorías, Macros, Dist
-  and Alloc. Macros owns PpK plus P/C/F grams; Dist owns the intrinsic P/C/F
+  and Alloc. Macros owns PpK plus P/C/G grams; Dist owns the intrinsic P/C/G
   percentages and their stacked distribution bar.
-- Every projected table row recalculates `% Cal`, intrinsic P|C|F distribution
+- Every projected table row recalculates `% Cal`, intrinsic P|C|G distribution
   and macro allocation against the resulting entity. Quantity, selected Meal,
   Hora and Nota remain provisional until the user submits the fixed footer.
 - `picker-layout` is a neutral scroll container with no padding, background,

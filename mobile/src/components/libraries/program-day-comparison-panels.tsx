@@ -121,7 +121,7 @@ function MacrosPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: Prog
   const visibleRows = sorting.items;
   return (
     <PanelBody>
-      <Header columns={[{ key: "ppk", label: "PpK", style: styles.ppkDataCell }, { key: "protein", label: "P" }, { key: "carbs", label: "C" }, { key: "fat", label: "F" }]} leadingKey="day" {...sorting} />
+      <Header columns={[{ key: "ppk", label: "PpK", style: styles.ppkDataCell }, { key: "protein", label: "P" }, { key: "carbs", label: "C" }, { key: "fat", label: "G" }]} leadingKey="day" {...sorting} />
       <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => (
         <View key={row.id} style={[styles.row, index === visibleRows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
@@ -140,7 +140,7 @@ function DistributionPanel({ gestures, rows }: { gestures?: DayRowGestures; rows
   const visibleRows = sorting.items;
   return (
     <PanelBody>
-      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }, { key: "protein", label: "P|C|F", style: styles.distributionBar }]} leadingKey="day" {...sorting} />
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "G%" }, { key: "protein", label: "P|C|G", style: styles.distributionBar }]} leadingKey="day" {...sorting} />
       <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => {
         const distribution = macroCalorieShares(row);
         return (
@@ -165,7 +165,7 @@ function AllocationPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: 
   const allocations = contextualMacroAllocations(visibleRows);
   return (
     <PanelBody>
-      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }]} leadingKey="day" {...sorting} />
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "G%" }]} leadingKey="day" {...sorting} />
       <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => (
         <View key={row.id} style={[styles.row, styles.allocationRow, index === visibleRows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>

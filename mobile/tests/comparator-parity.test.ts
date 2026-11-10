@@ -112,7 +112,7 @@ test("comparison percentage bars match the compact progress height", async () =>
   assertSourceMatch(source, /bars: \{ gap: tokens\.spacing\.lg \}/);
   assertSourceMatch(source, /allocationValue: \{ fontSize: tokens\.type\.caption/);
   assertSourceMatch(source, /allocationKey: \{ color: tokens\.color\.textMain, fontWeight: tokens\.weight\.regular \}/);
-  assertSourceMatch(source, /styles\.allocationKey}>P <\/Text>\{compactPercentage\(proteinBar\.formatted_value\)\}[\s\S]*styles\.allocationKey}>C <\/Text>\{compactPercentage\(carbsBar\.formatted_value\)\}[\s\S]*styles\.allocationKey}>F <\/Text>\{compactPercentage\(fatBar\.formatted_value\)\}/);
+  assertSourceMatch(source, /styles\.allocationKey}>P <\/Text>\{compactPercentage\(proteinBar\.formatted_value\)\}[\s\S]*styles\.allocationKey}>C <\/Text>\{compactPercentage\(carbsBar\.formatted_value\)\}[\s\S]*styles\.allocationKey}>G <\/Text>\{compactPercentage\(fatBar\.formatted_value\)\}/);
   assertSourceMatch(source, /return value\.replace\(\/\\s\+%\$\/, "%"\)/);
   assertSourceDoesNotMatch(source, /styles\.metricUnit/);
 });

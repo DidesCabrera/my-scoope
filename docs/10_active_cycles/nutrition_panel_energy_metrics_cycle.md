@@ -71,7 +71,7 @@ Django panel templates.
 ### NPE04 — Mobile panel split
 
 - Add a `Calorías` tab with entity, kcal and `% kcal` columns.
-- Keep `Macros` focused on entity, P/C/F grams and the distribution bar.
+- Keep `Macros` focused on entity, P/C/G grams and the distribution bar.
 - Leave `Alloc` unchanged.
 - Preserve the existing quantity/menu and edit tabs.
 
@@ -86,11 +86,11 @@ Django panel templates.
 ## Acceptance
 
 - Absolute kcal and contextual `% kcal` never share the same visual cell.
-- A row with energy has a P/C/F calorie distribution totaling 100% within normal
+- A row with energy has a P/C/G calorie distribution totaling 100% within normal
   floating-point tolerance.
 - A zero-energy row renders a stable empty distribution without division errors.
 - Stacked segments omit interior numbers while preserving their accessible
-  P/C/F meaning.
+  P/C/G meaning.
 - Desktop tables expose all metrics in one row.
 - Responsive web panels expose `Calorías`, `Macros` and the unchanged `Alloc`
   views with no horizontal page overflow at the supported panel widths.
@@ -131,8 +131,8 @@ Complete Django suite                           -> 1,756 passed in 272.451s
 Responsive browser QA
   -> 1280x900 Food and Meal desktop grids fit all new columns
   -> 390x844 Calorías and Macros panels have no page overflow
-  -> P/C/F percentages remain available through the accessible component label
-  -> Alloc panel retains entity + P% + C% + F%
+  -> P/C/G percentages remain available through the accessible component label
+  -> Alloc panel retains entity + P% + C% + G%
   -> browser console reported no warnings or errors
 ```
 

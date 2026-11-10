@@ -199,7 +199,7 @@ export function sharedProgramLibraryItem(snapshot: ShareSnapshot, title: string)
 const comparisonMetricSpecs = [
   ["total_kcal", "Calorías", "kcal"], ["ppk", "P/kg", "g/kg"], ["protein", "Proteína", "g"],
   ["carbs", "Carbohidratos", "g"], ["fat", "Grasas", "g"], ["alloc_protein", "P%", "%"],
-  ["alloc_carbs", "C%", "%"], ["alloc_fat", "F%", "%"],
+  ["alloc_carbs", "C%", "%"], ["alloc_fat", "G%", "%"],
 ] as const;
 
 export function sharedComparisonResult(snapshot: ShareSnapshot): ComparisonResult | null {

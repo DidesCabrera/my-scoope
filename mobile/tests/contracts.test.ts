@@ -311,8 +311,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(programWeekPanels, /cell: \{[^}]*fontSize: 11/);
   assertSourceDoesNotMatch(programWeekPanels, /label: "Alloc"|function AllocationPanel|PanelAllocationBar/);
   assertSourceDoesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.(?:protein|carbs|fat)(?:[,}\]])/);
-  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK" \}, \{ key: "protein", label: "Pg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "carbs", label: "Cg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "fat", label: "Fg", textStyle: styles\.mixedCaseHeaderText \}\]\}/);
-  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "F%" \}, \{ key: "protein", label: "P\|C\|F"/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK" \}, \{ key: "protein", label: "Pg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "carbs", label: "Cg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "fat", label: "Gg", textStyle: styles\.mixedCaseHeaderText \}\]\}/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "G%" \}, \{ key: "protein", label: "P\|C\|G"/);
   assertSourceMatch(programWeekPanels, /SortablePanelHeaderCell/);
   assertSourceMatch(programWeekPanels, /useTemporaryPanelSort/);
 
@@ -1051,7 +1051,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programDayPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
   assertSourceMatch(programDayPanels, /Header columns=\{\[\{ key: "calories", label: "Cal" \}, \{ key: "share", label: "% Cal"/);
   assertSourceMatch(programDayPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK"/);
-  assertSourceMatch(programDayPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "F%" \}, \{ key: "protein", label: "P\|C\|F"/);
+  assertSourceMatch(programDayPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "G%" \}, \{ key: "protein", label: "P\|C\|G"/);
 
   const programMetricPanels = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),

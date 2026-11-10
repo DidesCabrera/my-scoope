@@ -108,7 +108,7 @@ function MacrosPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: P
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay datos de macros." />;
   return (
     <PanelBody>
-      <Header columns={[{ key: "ppk", label: "PpK" }, { key: "protein", label: "Pg", textStyle: styles.mixedCaseHeaderText }, { key: "carbs", label: "Cg", textStyle: styles.mixedCaseHeaderText }, { key: "fat", label: "Fg", textStyle: styles.mixedCaseHeaderText }]} leadingKey="week" {...sorting} />
+      <Header columns={[{ key: "ppk", label: "PpK" }, { key: "protein", label: "Pg", textStyle: styles.mixedCaseHeaderText }, { key: "carbs", label: "Cg", textStyle: styles.mixedCaseHeaderText }, { key: "fat", label: "Gg", textStyle: styles.mixedCaseHeaderText }]} leadingKey="week" {...sorting} />
       <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => (
         <View key={week.id} style={[styles.row, index === visibleWeeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
@@ -128,7 +128,7 @@ function DistributionPanel({ gestures, weeks }: { gestures?: WeekRowGestures; we
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
   return (
     <PanelBody>
-      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }, { key: "protein", label: "P|C|F", style: styles.distributionBar }]} leadingKey="week" {...sorting} />
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "G%" }, { key: "protein", label: "P|C|G", style: styles.distributionBar }]} leadingKey="week" {...sorting} />
       <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => {
         const distribution = macroCalorieShares(week);
         return (

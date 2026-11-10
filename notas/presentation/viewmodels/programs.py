@@ -260,7 +260,7 @@ def build_program_metric_chart(
         alloc_segments = [
             {"key": "protein", "label": "P%", "value": float(point["alloc_protein"] or 0), "valueLabel": _format_chart_number(point["alloc_protein"])},
             {"key": "carbs", "label": "C%", "value": float(point["alloc_carbs"] or 0), "valueLabel": _format_chart_number(point["alloc_carbs"])},
-            {"key": "fat", "label": "F%", "value": float(point["alloc_fat"] or 0), "valueLabel": _format_chart_number(point["alloc_fat"])},
+            {"key": "fat", "label": "G%", "value": float(point["alloc_fat"] or 0), "valueLabel": _format_chart_number(point["alloc_fat"])},
         ]
         alloc_label = " · ".join(f"{segment['label']} {segment['valueLabel']}" for segment in alloc_segments)
         alloc_bars.append(_chart_bar_payload(
@@ -289,7 +289,7 @@ def build_program_metric_chart(
         "legendItems": [
             {"key": "protein", "label": "P%"},
             {"key": "carbs", "label": "C%"},
-            {"key": "fat", "label": "F%"},
+            {"key": "fat", "label": "G%"},
         ],
         "bars": alloc_bars,
     })

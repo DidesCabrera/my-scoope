@@ -16,7 +16,7 @@ test("week comparison uses full identities and per-plan macro averages", async (
   assert.ok(source.includes("function averagePerPlan(value: number, plans: number): number | null"));
   assert.ok(source.includes('label: "Pg"'));
   assert.ok(source.includes('label: "Cg"'));
-  assert.ok(source.includes('label: "Fg"'));
+  assert.ok(source.includes('label: "Gg"'));
   assert.ok(source.includes('mixedCaseHeaderText: { textTransform: "none" }'));
   assert.ok(source.includes("integer(week.proteinGrams / week.dailyPlans)"));
   assert.ok(source.includes("integer(week.carbsGrams / week.dailyPlans)"));

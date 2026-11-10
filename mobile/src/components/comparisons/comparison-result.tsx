@@ -108,7 +108,7 @@ export function ComparisonResultCards({ hideHeader = false, interactive = true, 
                     <View style={styles.allocationLegend}>
                       <Text style={[styles.allocationValue, { color: tokens.color.protein }]}><Text style={styles.allocationKey}>P </Text>{compactPercentage(proteinBar.formatted_value)}</Text>
                       <Text style={[styles.allocationValue, { color: tokens.color.carbs }]}><Text style={styles.allocationKey}>C </Text>{compactPercentage(carbsBar.formatted_value)}</Text>
-                      <Text style={[styles.allocationValue, { color: tokens.color.fat }]}><Text style={styles.allocationKey}>F </Text>{compactPercentage(fatBar.formatted_value)}</Text>
+                      <Text style={[styles.allocationValue, { color: tokens.color.fat }]}><Text style={styles.allocationKey}>G </Text>{compactPercentage(fatBar.formatted_value)}</Text>
                     </View>
                   </View>
                   <View style={styles.allocationTrack}>

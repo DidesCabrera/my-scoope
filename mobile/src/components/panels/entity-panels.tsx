@@ -467,7 +467,7 @@ function MacrosHeader({ leadingLabel, ...sorting }: HeaderSortProps<MacrosSortKe
       <PanelHeaderCell {...sorting} align="left" sortKey="name" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
       <PanelHeaderCell {...sorting} sortKey="protein" style={styles.macroValue}>P</PanelHeaderCell>
       <PanelHeaderCell {...sorting} sortKey="ppk" style={styles.ppkValue}>PpK</PanelHeaderCell>
-      {(["C", "F"] as const).map((label) => <PanelHeaderCell {...sorting} key={label} sortKey={{ C: "carbs", F: "fat" }[label]} style={styles.macroValue}>{label}</PanelHeaderCell>)}
+      {(["C", "G"] as const).map((label) => <PanelHeaderCell {...sorting} key={label} sortKey={{ C: "carbs", G: "fat" }[label]} style={styles.macroValue}>{label}</PanelHeaderCell>)}
     </View>
   );
 }
@@ -477,8 +477,8 @@ function DistributionHeader({ leadingLabel, ...sorting }: HeaderSortProps<Distri
   return (
     <View style={[styles.row, styles.header]}>
       <PanelHeaderCell {...sorting} align="left" sortKey="name" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
-      {(["P%", "C%", "F%"] as const).map((label) => <PanelHeaderCell {...sorting} key={label} sortKey={{ "P%": "protein", "C%": "carbs", "F%": "fat" }[label]} style={styles.distributionValue}>{label}</PanelHeaderCell>)}
-      <PanelHeaderCell {...sorting} sortKey="protein" style={styles.distributionBar}>P|C|F</PanelHeaderCell>
+      {(["P%", "C%", "G%"] as const).map((label) => <PanelHeaderCell {...sorting} key={label} sortKey={{ "P%": "protein", "C%": "carbs", "G%": "fat" }[label]} style={styles.distributionValue}>{label}</PanelHeaderCell>)}
+      <PanelHeaderCell {...sorting} sortKey="protein" style={styles.distributionBar}>P|C|G</PanelHeaderCell>
     </View>
   );
 }
@@ -499,7 +499,7 @@ function AllocationHeader({ leadingLabel, ...sorting }: HeaderSortProps<Allocati
   return (
     <View style={[styles.row, styles.header, styles.allocationRow]}>
       <PanelHeaderCell {...sorting} align="left" sortKey="name" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
-      {(["P%", "C%", "F%"] as const).map((label) => <PanelHeaderCell {...sorting} key={label} sortKey={{ "P%": "protein", "C%": "carbs", "F%": "fat" }[label]} style={styles.allocationCell}>{label}</PanelHeaderCell>)}
+      {(["P%", "C%", "G%"] as const).map((label) => <PanelHeaderCell {...sorting} key={label} sortKey={{ "P%": "protein", "C%": "carbs", "G%": "fat" }[label]} style={styles.allocationCell}>{label}</PanelHeaderCell>)}
     </View>
   );
 }

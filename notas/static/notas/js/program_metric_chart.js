@@ -777,7 +777,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : [
           { key: "protein", label: "P%" },
           { key: "carbs", label: "C%" },
-          { key: "fat", label: "F%" },
+          { key: "fat", label: "G%" },
         ];
 
     items.forEach((item) => {
