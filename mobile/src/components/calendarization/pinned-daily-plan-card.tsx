@@ -15,6 +15,7 @@ import { tokens } from "@/design/tokens";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
 import { FoodPanels as LibraryFoodPanels } from "@/components/libraries/entity-panels";
+import { dailyPlanFoodPanelItems } from "@/components/libraries/daily-plan-foods";
 import { SupplementIntakePanel } from "@/components/supplements/supplement-intake-panel";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -70,7 +71,7 @@ export function PinnedDailyPlanCard({ apiRequest, editing, initialPanelExpanded 
       actions={detailAction}
       afterNutrition={meals.length ? <DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} mealNutrition={meals.map((meal) => ({ calories: meal.calories, carbsGrams: meal.carbs_grams, fatGrams: meal.fat_grams, key: meal.id, proteinGrams: meal.protein_grams }))} /> : undefined}
       collapsiblePanel
-      dailyPlanFoodsPanel={<LibraryFoodPanels items={item.panel.foods} nestedScroll showEditTab={false} />}
+      dailyPlanFoodsPanel={<LibraryFoodPanels items={dailyPlanFoodPanelItems(item.panel, item.nutrition)} nestedScroll showEditTab={false} />}
       entity="dailyPlan"
       eyebrow="Minuta del día"
       headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }}
