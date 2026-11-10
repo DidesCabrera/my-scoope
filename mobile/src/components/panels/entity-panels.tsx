@@ -439,8 +439,9 @@ function MacrosHeader({ leadingLabel, ...sorting }: HeaderSortProps<MacrosSortKe
   return (
     <View style={[styles.row, styles.header]}>
       <PanelHeaderCell {...sorting} align="left" sortKey="name" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
+      <PanelHeaderCell {...sorting} sortKey="protein" style={styles.macroValue}>P</PanelHeaderCell>
       <PanelHeaderCell {...sorting} sortKey="ppk" style={styles.ppkValue}>PpK</PanelHeaderCell>
-      {(["P", "C", "F"] as const).map((label) => <PanelHeaderCell {...sorting} key={label} sortKey={{ P: "protein", C: "carbs", F: "fat" }[label]} style={styles.macroValue}>{label}</PanelHeaderCell>)}
+      {(["C", "F"] as const).map((label) => <PanelHeaderCell {...sorting} key={label} sortKey={{ C: "carbs", F: "fat" }[label]} style={styles.macroValue}>{label}</PanelHeaderCell>)}
     </View>
   );
 }
@@ -546,10 +547,10 @@ export function NutritionMacrosPanel<T extends FoodPanelItem | MealPanelItem>({ 
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => (
         <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
           <PanelItemName dragInteraction={dragInteraction} item={item} onOpenItem={onOpenItem} showFoodPortion={leadingLabel === "Alimentos"} />
+          <Text style={[styles.cell, styles.macroValue]}>{decimal(item.proteinGrams)}</Text>
           <View style={[styles.ppkValue, styles.ppkCell]}>
             {item.proteinPerKilogram == null ? <Text style={styles.unavailableValue}>—</Text> : <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={item.proteinPerKilogram} />}
           </View>
-          <Text style={[styles.cell, styles.macroValue]}>{decimal(item.proteinGrams)}</Text>
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.carbsGrams)}</Text>
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.fatGrams)}</Text>
         </View>
