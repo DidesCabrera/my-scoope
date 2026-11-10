@@ -133,7 +133,7 @@ def preparation_detail(request, preparation_id: int, units: float | None = None,
     return success(_detail(_available_preparation(request.auth.user, preparation_id), units=units, grams=grams))
 
 
-@router.post("/program/days/{day_id}/meals/{meal_snapshot_key}/preparations", auth=mobile_bearer, response={200: dict})
+@router.post("/program/days/{day_id}/meals/{meal_snapshot_key}/preparations", operation_id="mobile_api_routes_preparations_add_calendarized_preparation", auth=mobile_bearer, response={200: dict})
 def add_calendarized_preparation(request, day_id: int, meal_snapshot_key: str, payload: PreparationSelection):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     preparation = _available_preparation(request.auth.user, payload.preparation_id)
@@ -149,7 +149,7 @@ def add_calendarized_preparation(request, day_id: int, meal_snapshot_key: str, p
     return success({"target_id": day_id, "created_id": preparation.id})
 
 
-@router.patch("/program/days/{day_id}/meals/{meal_snapshot_key}/preparations/{component_snapshot_key}", auth=mobile_bearer, response={200: dict})
+@router.patch("/program/days/{day_id}/meals/{meal_snapshot_key}/preparations/{component_snapshot_key}", operation_id="mobile_api_routes_preparations_update_calendarized_preparation", auth=mobile_bearer, response={200: dict})
 def update_calendarized_preparation(request, day_id: int, meal_snapshot_key: str, component_snapshot_key: str, payload: PreparationPortionUpdate):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     if payload.preparation_id is None:
