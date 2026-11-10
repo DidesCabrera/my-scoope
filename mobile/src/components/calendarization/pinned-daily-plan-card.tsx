@@ -15,8 +15,8 @@ import { tokens } from "@/design/tokens";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
 import { FoodPanels as LibraryFoodPanels } from "@/components/libraries/entity-panels";
+import { dailyPlanFoodPanelItems } from "@/components/libraries/daily-plan-foods";
 import { SupplementIntakePanel } from "@/components/supplements/supplement-intake-panel";
-import { SupplementProSheet } from "@/components/supplements/supplement-pro-sheet";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
@@ -45,7 +45,6 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number], completedKey
 export function PinnedDailyPlanCard({ apiRequest, editing, initialPanelExpanded = false, item, mealExecution, onChangeMealTime, onChanged }: { apiRequest: ApiRequest; editing?: MealPanelEditing; initialPanelExpanded?: boolean; item: LibraryItem; mealExecution?: MealExecutionItem[] | null; onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void>; onChanged(): Promise<void> | void }) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
-  const [supplementUpsell, setSupplementUpsell] = useState(false);
   const sourceSupplementIntakes = item.panel.supplement_intakes;
   const [supplementIntakes, setSupplementIntakes] = useState(sourceSupplementIntakes ?? []);
   const addMeal = () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: "/today" }));
@@ -72,14 +71,13 @@ export function PinnedDailyPlanCard({ apiRequest, editing, initialPanelExpanded 
       actions={detailAction}
       afterNutrition={meals.length ? <DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} mealNutrition={meals.map((meal) => ({ calories: meal.calories, carbsGrams: meal.carbs_grams, fatGrams: meal.fat_grams, key: meal.id, proteinGrams: meal.protein_grams }))} /> : undefined}
       collapsiblePanel
-      dailyPlanFoodsPanel={<LibraryFoodPanels items={item.panel.foods} nestedScroll showEditTab={false} />}
+      dailyPlanFoodsPanel={<LibraryFoodPanels items={dailyPlanFoodPanelItems(item.panel, item.nutrition)} nestedScroll showEditTab={false} />}
       entity="dailyPlan"
       eyebrow="Minuta del día"
       headingLink={{ label: "Ir al detalle del plan", onPress: openDetail }}
       initialPanelExpanded={initialPanelExpanded}
       indicators={indicators}
       nutrition={libraryNutrition(item.nutrition)}
-      onLockedSupplementPress={item.supplements_available && !item.can_use_supplements ? () => setSupplementUpsell(true) : undefined}
       supplementCompletion={item.can_use_supplements && supplementIntakes.length ? <DailySupplementCompletionCard intakes={supplementIntakes} /> : undefined}
       supplementPanel={item.can_use_supplements ? <SupplementIntakePanel completionEndpoint="/api/v1/today/pinned-plan/supplement-intakes" dailyPlanId={item.id} editable intakes={supplementIntakes} onChange={setSupplementIntakes} pinned /> : undefined}
       title={item.name}>
@@ -101,7 +99,6 @@ export function PinnedDailyPlanCard({ apiRequest, editing, initialPanelExpanded 
       </View>
     </NutritionEntityCard>
     <CalendarizedEntityActions entityName={timeChangeMeal?.name ?? "Comida"} initialAction="change-time" key={timeChangeMeal?.id ?? "closed-card-time-change"} onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }} timeChange={timeChangeMeal && onChangeMealTime ? { initialTime: timeChangeMeal.time, onSubmit: (hour) => onChangeMealTime(timeChangeMeal, hour) } : undefined} visible={timeChangeMeal != null} />
-    <SupplementProSheet onClose={() => setSupplementUpsell(false)} visible={supplementUpsell} />
   </>);
 }
 

@@ -11,13 +11,13 @@ import { tokens } from "@/design/tokens";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
 import { SupplementIntakePanel } from "@/components/supplements/supplement-intake-panel";
-import { SupplementProSheet } from "@/components/supplements/supplement-pro-sheet";
 
 import { FoodPanels, MealPanels, ProgramPanels, mealFoodPanelItems } from "./entity-panels";
 import { libraryFoodNutritionFacts, libraryNutrition } from "./presentation-adapters";
 import { ProgramChildCard, programDailyMetricData } from "./program-child-card";
 import { LibraryActions } from "./library-actions";
 import { MealComponentAddActions } from "./meal-component-add-actions";
+import { dailyPlanFoodPanelItems } from "./daily-plan-foods";
 
 function indicatorValue(item: LibraryItem, icon: "week" | "dailyPlan" | "food"): number {
   const value = item.indicators.find((indicator) => indicator.icon === icon)?.value;
@@ -30,13 +30,13 @@ export function LibraryCard({ apiRequest, detailHref: detailHrefOverride, intera
   const router = useRouter();
   const { publishSelection } = useComparatorSelectionTransfer();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
-  const [supplementUpsell, setSupplementUpsell] = useState(false);
   const [addComponentVisible, setAddComponentVisible] = useState(false);
   const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const segment = item.entity === "dailyPlan" ? "daily-plans" : item.entity === "program" ? "programs" : item.entity === "meal" ? "meals" : "foods";
   const detailHref = detailHrefOverride ?? `/libraries/${segment}/${item.id}` as Href;
   const libraryHref = `/libraries/${segment}` as Href;
   const mealComponents = item.entity === "meal" && item.panel.kind === "foods" ? mealFoodPanelItems(item.panel, item.nutrition) : [];
+  const dailyPlanFoods = item.entity === "dailyPlan" ? dailyPlanFoodPanelItems(item.panel, item.nutrition) : [];
   const openDetail = () => router.push(detailHref);
   const openMealComponent = (component: FoodPanelItem) => {
     if (component.detailId == null) return;
@@ -122,7 +122,7 @@ export function LibraryCard({ apiRequest, detailHref: detailHrefOverride, intera
     ) : card();
   }
   return (<>
-    <NutritionEntityCard actions={interactive || navigable || onSaveToLibrary ? <>{interactive && (item.actions?.length || canCalendarize) ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCalendarize={canCalendarize ? openCalendarAssignment : undefined} onCompare={item.entity === "meal" || item.entity === "dailyPlan" ? openComparison : undefined} onCompleted={onChanged} onEdit={item.entity === "food" ? openEdit : undefined} /> : null}{onSaveToLibrary ? <EntityCardAction label={savedToLibrary ? `${item.name} guardada en tu biblioteca` : `Guardar ${item.name} en mi biblioteca`} onPress={() => { if (!savedToLibrary && !savingToLibrary) void onSaveToLibrary(); }}>{savedToLibrary ? <BookmarkCheck color={tokens.color.success} size={22} strokeWidth={2.2} /> : <BookmarkPlus color={savingToLibrary ? tokens.color.textSoft : tokens.color.textMain} size={22} strokeWidth={2.2} />}</EntityCardAction> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} collapsiblePanel dailyPlanFoodsPanel={item.entity === "dailyPlan" ? <FoodPanels items={item.panel.foods} nestedScroll showEditTab={false} /> : undefined} entity={item.entity} foodEmoji={item.emoji} foodVisualKey={item.visual_key} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} onLockedSupplementPress={item.entity === "dailyPlan" && item.supplements_available && item.can_use_supplements === false ? () => setSupplementUpsell(true) : undefined} supplementPanel={item.entity === "dailyPlan" && item.can_use_supplements ? <SupplementIntakePanel dailyPlanId={item.id} editable={interactive} intakes={item.panel.supplement_intakes ?? []} /> : undefined} subtitle={item.subtitle || undefined} title={item.name}>
+    <NutritionEntityCard actions={interactive || navigable || onSaveToLibrary ? <>{interactive && (item.actions?.length || canCalendarize) ? <LibraryActions apiRequest={apiRequest} entitySlug={segment} item={item} onCalendarize={canCalendarize ? openCalendarAssignment : undefined} onCompare={item.entity === "meal" || item.entity === "dailyPlan" ? openComparison : undefined} onCompleted={onChanged} onEdit={item.entity === "food" ? openEdit : undefined} /> : null}{onSaveToLibrary ? <EntityCardAction label={savedToLibrary ? `${item.name} guardada en tu biblioteca` : `Guardar ${item.name} en mi biblioteca`} onPress={() => { if (!savedToLibrary && !savingToLibrary) void onSaveToLibrary(); }}>{savedToLibrary ? <BookmarkCheck color={tokens.color.success} size={22} strokeWidth={2.2} /> : <BookmarkPlus color={savingToLibrary ? tokens.color.textSoft : tokens.color.textMain} size={22} strokeWidth={2.2} />}</EntityCardAction> : null}{navigable ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} /></EntityCardAction> : null}</> : undefined} collapsiblePanel dailyPlanFoodsPanel={item.entity === "dailyPlan" ? <FoodPanels items={dailyPlanFoods} nestedScroll showEditTab={false} /> : undefined} entity={item.entity} foodEmoji={item.emoji} foodVisualKey={item.visual_key} headingLink={navigable ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} supplementPanel={item.entity === "dailyPlan" && item.can_use_supplements ? <SupplementIntakePanel dailyPlanId={item.id} editable={interactive} intakes={item.panel.supplement_intakes ?? []} /> : undefined} subtitle={item.subtitle || undefined} title={item.name}>
       {item.entity === "food" ? <FoodNutritionPanel facts={libraryFoodNutritionFacts(item.nutrition, item.food_nutrition)} portion={{ quantity: item.default_portion ?? null, unit: item.quantity_unit ?? "g" }} /> : null}
       {item.panel.kind === "foods" ? item.entity === "meal" ? <SharedFoodPanels editing={foodEditing} items={mealComponents} nestedScroll onOpenItem={openMealComponent} showEditTab={false} /> : <FoodPanels editing={foodEditing} items={item.panel.foods} nestedScroll showEditTab={false} /> : null}
       {item.panel.kind === "meals" ? <MealPanels dailyPlanId={item.entity === "dailyPlan" ? item.id : undefined} editing={mealEditing} items={item.panel.meals} nestedScroll showEditTab={false} /> : null}
@@ -133,7 +133,6 @@ export function LibraryCard({ apiRequest, detailHref: detailHrefOverride, intera
     <CalendarizedEntityActions entityName={timeChangeMeal?.name ?? "Comida"} initialAction="change-time" key={timeChangeMeal?.id ?? "closed-library-card-time-change"} onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }} timeChange={timeChangeMeal?.relationId != null ? { initialTime: timeChangeMeal.time, onSubmit: async (hour) => mutate(`/api/v1/library/daily-plans/${item.id}/meals/${timeChangeMeal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" }, "Hora actualizada") } : undefined} visible={timeChangeMeal != null} />
     <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     <MealComponentAddActions onClose={() => setAddComponentVisible(false)} onFood={addFood} onPreparation={addPreparation} visible={addComponentVisible && interactive && item.entity === "meal"} />
-    <SupplementProSheet onClose={() => setSupplementUpsell(false)} visible={supplementUpsell} />
   </>);
 }
 

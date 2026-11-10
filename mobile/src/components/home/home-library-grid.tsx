@@ -56,7 +56,7 @@ export function HomeLibraryGrid({ counts }: { counts: HomeLibraryCounts }) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.color.surfaceCard, borderColor: "transparent", borderRadius: tokens.radius.card, borderTopWidth: 3, borderWidth: 1, flexBasis: "47%", flexGrow: 1, minHeight: 172, overflow: "hidden", padding: tokens.card.outerPadding },
+  card: { backgroundColor: tokens.color.surfaceCard, borderColor: "transparent", borderRadius: tokens.radius.card, borderTopWidth: 2, borderWidth: 1, flexBasis: "47%", flexGrow: 1, minHeight: 172, overflow: "hidden", padding: tokens.card.outerPadding },
   cardMain: { flex: 1 },
   count: { alignItems: "center", flexDirection: "row", gap: 3 },
   countText: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold },

@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from django.test import SimpleTestCase
@@ -7,6 +8,15 @@ STATIC = Path(__file__).resolve().parents[1] / "static" / "notas"
 
 
 class ProgramDetailWebParityTests(SimpleTestCase):
+    def test_fat_panel_headers_use_spanish_abbreviation(self):
+        obsolete = re.compile(r">F(?:g|%)?<|P\|C\|F|Dist\. PCF")
+        for template in TEMPLATES.glob("*.html"):
+            with self.subTest(template=template.name):
+                self.assertNotRegex(template.read_text(), obsolete)
+
+        self.assertIn('role="columnheader">Gg</div>', (TEMPLATES / "program_week_table_macros.html").read_text())
+        self.assertIn('role="columnheader">G%</div>', (TEMPLATES / "program_week_table_alloc.html").read_text())
+
     def test_program_chart_uses_thin_curves_and_compact_day_markers(self):
         styles = (STATIC / "css" / "components" / "programs_charts.css").read_text()
         script = (STATIC / "js" / "program_metric_chart.js").read_text()
@@ -47,7 +57,7 @@ class ProgramDetailWebParityTests(SimpleTestCase):
         for source in (macros, combined):
             self.assertIn('role="columnheader">Pg</div>', source)
             self.assertIn('role="columnheader">Cg</div>', source)
-            self.assertIn('role="columnheader">Fg</div>', source)
+            self.assertIn('role="columnheader">Gg</div>', source)
             self.assertIn("average_protein_per_assigned_day", source)
             self.assertIn("average_carbs_per_assigned_day", source)
             self.assertIn("average_fat_per_assigned_day", source)

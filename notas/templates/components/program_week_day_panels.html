@@ -26,11 +26,11 @@
         <div class="data-grid-col data-grid-col--macro" role="columnheader">C g</div>
         <div class="data-grid-col data-grid-col--macro" role="columnheader">F g</div>
         <div class="program-week-day-table__distribution-group program-week-day-table__distribution-group--header" role="presentation">
-          <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">Dist. PCF</div>
+          <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">Dist. PCG</div>
           <span class="program-nutrition-bars__separator" role="presentation"></span>
           <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
           <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
-          <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
+          <div class="data-grid-col data-grid-col--alloc" role="columnheader">G%</div>
         </div>
       </div>
 
@@ -133,7 +133,7 @@
         <div class="data-grid-col data-grid-col--ppk" role="columnheader">PpK</div>
         <div class="data-grid-col data-grid-col--macro" role="columnheader">P</div>
         <div class="data-grid-col data-grid-col--macro" role="columnheader">C</div>
-        <div class="data-grid-col data-grid-col--macro" role="columnheader">F</div>
+        <div class="data-grid-col data-grid-col--macro" role="columnheader">G</div>
       </div>
 
       {% for row in rows %}
@@ -156,8 +156,8 @@
         <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
         <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">P%</div>
         <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">C%</div>
-        <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">F%</div>
-        <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">P|C|F</div>
+        <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">G%</div>
+        <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">P|C|G</div>
       </div>
       {% for row in rows %}
         <div class="data-grid-row data-grid-row--program-week-days-mobile-distribution{% if row.is_empty %} is-empty{% endif %}" role="row" data-day-number="{{ row.day_number }}">
@@ -181,7 +181,7 @@
         <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
         <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
         <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
-        <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
+        <div class="data-grid-col data-grid-col--alloc" role="columnheader">G%</div>
       </div>
 
       {% for row in rows %}

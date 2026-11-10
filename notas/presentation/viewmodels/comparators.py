@@ -215,7 +215,7 @@ def build_metrics(
         ("fat", "Grasas", "g"),
         ("alloc_protein", "P%", "%"),
         ("alloc_carbs", "C%", "%"),
-        ("alloc_fat", "F%", "%"),
+        ("alloc_fat", "G%", "%"),
     ])
 
     return [

@@ -39,12 +39,12 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, variant, fontSi
   return (
     <View style={[styles.macroRow, refined && styles.macroRowSlightlyTight, nested && styles.macroRowCompact, isLast && styles.macroRowLast]}>
       <Text style={[styles.macroLabel, nested && styles.macroLabelCompact, { fontSize }]}>{label}</Text>
+      <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)}g</Text>
       <View style={[styles.ppkSlot, nested && styles.ppkSlotCompact]}>
         {perKilogram != null ? (
-          <ProteinPerKilogramBadge density={density} textSize={12} value={perKilogram} />
+          <ProteinPerKilogramBadge density={density} textSize={12} unitLabel="/kg" value={perKilogram} />
         ) : null}
       </View>
-      <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)}g</Text>
       <KpiAllocationBar
         accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribución`}
         size={density}
@@ -113,10 +113,10 @@ const styles = StyleSheet.create({
   macroRowLast: { borderBottomWidth: 0 },
   macroLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0, width: 52 },
   macroLabelCompact: { width: 52 },
-  ppkSlot: { alignItems: "stretch", justifyContent: "center", width: 60 },
-  ppkSlotCompact: { width: 60 },
-  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
-  gramsCompact: { width: 40 },
+  ppkSlot: { alignItems: "stretch", justifyContent: "center", width: 52 },
+  ppkSlotCompact: { width: 52 },
+  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 48 },
+  gramsCompact: { width: 48 },
   allocationBar: { flex: 1, minWidth: 0, width: "auto" },
   allocationBarSlightlyTight: { height: tokens.component.nutritionKpi.regular.narrowBarHeight },
 });

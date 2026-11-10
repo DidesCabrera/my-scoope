@@ -263,16 +263,16 @@ test("active program details expose snapshot-only composition actions after comp
   matches(dayDetail, /pickerHref\("meal-to-calendarized-day", \{ dayId: day\.id \}\)/);
   matches(dayDetail, /label="\+ Agregar Comida"/);
   matches(dayDetail, /<Button\s+label="\+ Agregar Comida"[\s\S]*?variant="chipPrimary"/);
-  matches(dayDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey, returnTo: `\/program\/days\/\$\{dayId\}` \}\)/);
-  matches(dayDetail, /<Button label="\+ Agregar alimento"[\s\S]*?variant="chipPrimary"/);
+  matches(dayDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey: addComponentMealKey, returnTo: `\/program\/days\/\$\{dayId\}` \}\)/);
+  matches(dayDetail, /<Button label="\+ Agregar alimento o preparación"[\s\S]*?variant="chipPrimary"/);
   assert.ok(dayDetail.indexOf('title="Composición de la minuta diaria"') < dayDetail.indexOf('label="+ Agregar Comida"'));
   assert.ok(dayDetail.indexOf('label="+ Agregar Comida"') < dayDetail.indexOf('title="Detalle de cada Comida"'));
 
   matches(mealDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey \}\)/);
-  matches(mealDetail, /label="\+ Agregar alimento"/);
-  matches(mealDetail, /<Button\s+label="\+ Agregar alimento"[\s\S]*?variant="chipPrimary"/);
-  assert.ok(mealDetail.indexOf('title="Composición comida"') < mealDetail.indexOf('label="+ Agregar alimento"'));
-  assert.ok(mealDetail.indexOf('label="+ Agregar alimento"') < mealDetail.indexOf('title="Detalle de cada Alimento"'));
+  matches(mealDetail, /label="\+ Agregar alimento o preparación"/);
+  matches(mealDetail, /<Button\s+label="\+ Agregar alimento o preparación"[\s\S]*?variant="chipPrimary"/);
+  assert.ok(mealDetail.indexOf('title="Composición comida"') < mealDetail.indexOf('label="+ Agregar alimento o preparación"'));
+  assert.ok(mealDetail.indexOf('label="+ Agregar alimento o preparación"') < mealDetail.indexOf('title="Detalle de cada componente"'));
 });
 
 test("Home and library cards expose their contextual composition actions below the panels", async () => {

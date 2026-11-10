@@ -50,7 +50,7 @@ const comparisonEntityColors: Record<ComparisonScope, string> = {
 };
 
 function entityBorderStyle(entity: ComparisonScope) {
-  return { borderTopColor: comparisonEntityColors[entity], borderTopWidth: 3 } as const;
+  return { borderTopColor: comparisonEntityColors[entity], borderTopWidth: 2 } as const;
 }
 
 function formatComparisonQuantity(value: string): string {

@@ -171,9 +171,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(nutritionKpi, /height: tokens\.component\.nutritionKpi\.nested\.totalSize/);
   assertSourceMatch(nutritionKpi, /variant\?: "nested" \| "regular"/);
   assertSourceMatch(nutritionKpi, /grams: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
+  assertSourceMatch(nutritionKpi, /ppkSlot: \{[^}]*width: 52 \}/);
+  assertSourceMatch(nutritionKpi, /grams: \{[^}]*width: 48 \}/);
   assertSourceMatch(nutritionKpi, /const macroFontSize = width < 420 \? 13 : 14/);
-  assertSourceMatch(nutritionKpi, /<ProteinPerKilogramBadge density=\{density\} textSize=\{12\}/);
+  assertSourceMatch(nutritionKpi, /<ProteinPerKilogramBadge density=\{density\} textSize=\{12\} unitLabel="\/kg" value=\{perKilogram\} \/>/);
   assertSourceMatch(nutritionKpi, /\{rounded\(grams\)\}g<\/Text>/);
+  assertSourceMatch(nutritionKpi, /\{label\}<\/Text>\s*<Text style=\{\[styles\.grams[\s\S]*?\{rounded\(grams\)\}g<\/Text>\s*<View style=\{\[styles\.ppkSlot[\s\S]*?<\/View>\s*<KpiAllocationBar/);
   assertSourceDoesNotMatch(nutritionKpi, />kcal<|caloriesUnit/);
   assertSourceMatch(nutritionKpi, /caloriesContent: \{ alignItems: "center", gap: 1, transform: \[\{ translateY: -6 \}\] \}/);
   assertSourceDoesNotMatch(nutritionKpi, /density\?: "compact" \| "regular"/);
@@ -194,7 +197,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(proteinPerKilogramBadge, /text: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
-  assertSourceMatch(proteinPerKilogramBadge, /showUnit \? "g\/kg" : ""/);
+  assertSourceMatch(proteinPerKilogramBadge, /unitLabel = "g\/kg"/);
+  assertSourceMatch(proteinPerKilogramBadge, /showUnit \? unitLabel : ""/);
 
   const allocationBar = await readTestFile(
     path.resolve(process.cwd(), "src/components/nutrition/allocation-bar.tsx"),
@@ -307,8 +311,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(programWeekPanels, /cell: \{[^}]*fontSize: 11/);
   assertSourceDoesNotMatch(programWeekPanels, /label: "Alloc"|function AllocationPanel|PanelAllocationBar/);
   assertSourceDoesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.(?:protein|carbs|fat)(?:[,}\]])/);
-  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK" \}, \{ key: "protein", label: "Pg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "carbs", label: "Cg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "fat", label: "Fg", textStyle: styles\.mixedCaseHeaderText \}\]\}/);
-  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "F%" \}, \{ key: "protein", label: "P\|C\|F"/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK" \}, \{ key: "protein", label: "Pg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "carbs", label: "Cg", textStyle: styles\.mixedCaseHeaderText \}, \{ key: "fat", label: "Gg", textStyle: styles\.mixedCaseHeaderText \}\]\}/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "G%" \}, \{ key: "protein", label: "P\|C\|G"/);
   assertSourceMatch(programWeekPanels, /SortablePanelHeaderCell/);
   assertSourceMatch(programWeekPanels, /useTemporaryPanelSort/);
 
@@ -453,6 +457,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(libraryEntityPanels, /NutritionAllocationPanel/);
   assertSourceMatch(sharedEntityPanels, /key: "distribution", label: "Dist"/);
   assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell \{\.\.\.sorting\} sortKey="ppk" style=\{styles\.ppkValue\}>PpK<\/PanelHeaderCell>/);
+  assertSourceMatch(sharedEntityPanels, /sortKey="protein" style=\{styles\.macroValue\}>P<\/PanelHeaderCell>\s*<PanelHeaderCell \{\.\.\.sorting\} sortKey="ppk"/);
+  assertSourceMatch(sharedEntityPanels, /\{decimal\(item\.proteinGrams\)\}<\/Text>\s*<View style=\{\[styles\.ppkValue, styles\.ppkCell\]\}>/);
   assertSourceMatch(sharedEntityPanels, /<MacroCalorieDistribution \{\.\.\.item\} style=\{styles\.distributionBar\} \/>/);
 
   const completionUi = await readTestFile(
@@ -517,8 +523,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.preparationValue, preparationFirst && styles\.preparationValueFirst, styles\.preparationButton\]\}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /styles\.preparationButton, preparation\.disabled && styles\.disabled/);
   assertSourceMatch(sharedEntityPanels, /quantityItemText: \{ fontSize: tokens\.type\.caption \+ 1 \}/);
-  assertSourceMatch(sharedEntityPanels, /sortKey="name" style=\{styles\.quantityLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);
-  assertSourceMatch(sharedEntityPanels, /sortKey="quantity" style=\{styles\.quantityValue\}>\{trailingLabel\}<\/PanelHeaderCell>/);
+  assertSourceDoesNotMatch(sharedEntityPanels, /<QuantityHeader/);
+  assertSourceMatch(sharedEntityPanels, /<PanelRows editing=\{editing\} items=\{items\} renderRow=/);
+  assertSourceMatch(sharedEntityPanels, /activeTab === "calories" \? <NutritionCaloriesPanel/);
+  assertSourceMatch(sharedEntityPanels, /activeTab === "macros" \? <NutritionMacrosPanel/);
+  assertSourceMatch(sharedEntityPanels, /activeTab === "distribution" \? <NutritionDistributionPanel/);
+  assertSourceMatch(sharedEntityPanels, /activeTab === "allocation" \? <NutritionAllocationPanel/);
   assertSourceDoesNotMatch(sharedEntityPanels, /quantityHeaderText/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} itemNameStyle=\{styles\.quantityItemText\}/);
   assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.quantityValue, styles\.quantityValueStack\]\}/);
@@ -538,7 +548,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /foodQuantityRow: \{ minHeight: 76, paddingVertical: tokens\.spacing\.sm \}/);
   assertSourceMatch(sharedEntityPanels, /editRow: \{ gap: 0 \}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /editRow: \{[^}]*minHeight/);
-  assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell \{\.\.\.sorting\} sortKey="prepared" style=\{styles\.preparationValue\}>Listo<\/PanelHeaderCell>/);
+  assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell \{\.\.\.sorting\} sortKey="calories" style=\{styles\.calorieValue\}>Cal<\/PanelHeaderCell>/);
   assertSourceDoesNotMatch(mealAdherence, /statusLabel|styles\.status/);
   assertSourceDoesNotMatch(mealAdherence, /Cumplimiento actualizado|Nota guardada|statusSaved|noteSaved/);
   assertSourceDoesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);
@@ -772,7 +782,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(homeLibraryGrid, /SectionDivider|sectionDivider/);
   assertSourceMatch(homeLibraryGrid, /padding: tokens\.card\.outerPadding/);
   assertSourceMatch(homeLibraryGrid, /borderTopColor: tokens\.color\[entry\.entity\]/);
-  assertSourceMatch(homeLibraryGrid, /borderTopWidth: 3/);
+  assertSourceMatch(homeLibraryGrid, /borderTopWidth: 2/);
   assertSourceMatch(homeLibraryGrid, /title: \{[^}]*fontSize: tokens\.type\.body/);
   assertSourceDoesNotMatch(homeLibraryGrid, /description:/);
   assertSourceDoesNotMatch(todayScreen, /<ProgramActiveCard/);
@@ -829,8 +839,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /nutritionSummaryValue: \{ fontWeight: tokens\.weight\.semibold \}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /cal · P |cal P:\$\{/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} itemNameStyle=\{styles\.quantityItemText\} onOpenItem=\{canOpen \? onOpenItem : undefined\} showNutritionSummary style=\{styles\.quantityLeadingCell\} \/>/);
-  assertSourceMatch(sharedEntityPanels, /showFoodPortion \? <Text style=\{styles\.foodPortionSuffix\}> \{`\(\$\{decimal\(item\.quantity\)\}\$\{item\.quantityUnit\}\)`\}<\/Text> : null/);
-  assertSourceMatch(sharedEntityPanels, /foodPortionSuffix: \{ color: tokens\.color\.textMuted, fontStyle: "italic"/);
+  assertSourceMatch(sharedEntityPanels, /nativeEvent\.lines\.length > 1 \? Math\.min\(name\.length, nativeEvent\.lines\[0\]\.text\.length\) : -1/);
+  assertSourceMatch(sharedEntityPanels, /<Text numberOfLines=\{1\} style=\{titleStyle\}>\{firstLine\}<\/Text>/);
+  assertSourceMatch(sharedEntityPanels, /<View style=\{styles\.foodNameFinalLine\}>[\s\S]*<Text numberOfLines=\{1\} style=\{styles\.foodPortionSuffix\}>\{portionText\}<\/Text>/);
+  assertSourceMatch(sharedEntityPanels, /portion=\{showFoodPortion \? `\$\{decimal\(item\.quantity\)\}\$\{item\.quantityUnit\}` : null\}/);
+  assertSourceMatch(sharedEntityPanels, /foodNameTruncated: \{ flexShrink: 1, minWidth: 0 \}/);
+  assertSourceMatch(sharedEntityPanels, /foodPortionSuffix: \{ color: tokens\.color\.textMuted, flexShrink: 0, fontStyle: "italic"/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} onOpenItem=\{onOpenItem\} showFoodPortion=\{leadingLabel === "Alimentos"\}/);
   assertSourceMatch(sharedEntityPanels, /styles\.editName\]\}>\{item\.name\}<Text style=\{styles\.foodPortionSuffix\}>/);
   assertSourceMatch(sharedEntityPanels, /quantityLeadingCell: \{[^}]*flex: 1/);
@@ -1037,7 +1051,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programDayPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
   assertSourceMatch(programDayPanels, /Header columns=\{\[\{ key: "calories", label: "Cal" \}, \{ key: "share", label: "% Cal"/);
   assertSourceMatch(programDayPanels, /Header columns=\{\[\{ key: "ppk", label: "PpK"/);
-  assertSourceMatch(programDayPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "F%" \}, \{ key: "protein", label: "P\|C\|F"/);
+  assertSourceMatch(programDayPanels, /Header columns=\{\[\{ key: "protein", label: "P%" \}, \{ key: "carbs", label: "C%" \}, \{ key: "fat", label: "G%" \}, \{ key: "protein", label: "P\|C\|G"/);
 
   const programMetricPanels = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),

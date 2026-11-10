@@ -24,6 +24,7 @@ import { ProgramSectionHeader } from "@/components/programs/program-section-head
 import { Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
+import { MealComponentAddActions } from "@/components/libraries/meal-component-add-actions";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 import { SupplementIntakePanel } from "@/components/supplements/supplement-intake-panel";
 
@@ -36,6 +37,7 @@ function completionFor(items: MealExecutionItem[]) {
 
 function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecution, meals, onChanged, onToggleCompleted, onTogglePrepared, savingMealKey }: { apiRequest: <T>(path: string, init?: RequestInit) => Promise<T>; completionError: { mealKey: string; message: string } | null; dayId: number; mealExecution: MealExecutionItem[]; meals: MealSnapshot[]; onChanged(): Promise<void> | void; onToggleCompleted(mealKey: string, completed: boolean): void; onTogglePrepared(mealKey: string, foodKey: string): void; savingMealKey: string | null }) {
   const router = useRouter();
+  const [addComponentMealKey, setAddComponentMealKey] = useState<string | null>(null);
   const normalizedMealExecution = normalizeMealExecution(mealExecution);
   return (
     <View style={styles.mealCardList}>
@@ -76,16 +78,22 @@ function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecuti
               }}
               afterNutrition={mealKey ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={completionError?.mealKey === mealKey ? completionError.message : null} onToggle={(completed) => onToggleCompleted(mealKey, completed)} saving={savingMealKey != null} /> : null}
               title={meal.name ?? "Comida"}>
-              <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={mealKey ? {
+              <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }} preparation={mealKey ? {
                 disabled: savingMealKey != null,
                 isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
                 onToggle: (food) => onTogglePrepared(mealKey, food.id),
               } : undefined} />
-              {mealKey ? <View style={styles.addAction}><Button label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, returnTo: `/program/days/${dayId}` }))} variant="chipPrimary" /></View> : null}
+              {mealKey ? <View style={styles.addAction}><Button label="+ Agregar alimento o preparación" onPress={() => setAddComponentMealKey(mealKey)} variant="chipPrimary" /></View> : null}
             </NutritionEntityCard>
           </View>
         );
       })}
+      <MealComponentAddActions
+        onClose={() => setAddComponentMealKey(null)}
+        onFood={() => { if (addComponentMealKey) router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey: addComponentMealKey, returnTo: `/program/days/${dayId}` })); }}
+        onPreparation={() => { if (addComponentMealKey) router.push({ pathname: "/pickers/preparation-to-meal", params: { dayId: String(dayId), mealKey: addComponentMealKey } } as Href); }}
+        visible={addComponentMealKey != null}
+      />
     </View>
   );
 }

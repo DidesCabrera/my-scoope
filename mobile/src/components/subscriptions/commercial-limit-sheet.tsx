@@ -153,6 +153,6 @@ const styles = StyleSheet.create({
   usageIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm },
   usageDisclaimer: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold, textAlign: "center" },
   usageLabel: { color: tokens.color.textMain, flex: 1, fontSize: 18, fontWeight: tokens.weight.bold },
-  usagePanel: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderTopWidth: 3, borderWidth: 1, gap: tokens.spacing.sm, marginHorizontal: -6, overflow: "hidden", padding: tokens.spacing.md },
+  usagePanel: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderTopWidth: 2, borderWidth: 1, gap: tokens.spacing.sm, marginHorizontal: -6, overflow: "hidden", padding: tokens.spacing.md },
   usageValue: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.extraBold },
 });

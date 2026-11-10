@@ -103,7 +103,7 @@
   gap: var(--space-4);
   padding: var(--space-5);
   border: 1px solid var(--border-soft);
-  border-top: 3px solid var(--entity-program);
+  border-top: 2px solid var(--entity-program);
   border-radius: var(--radius-card);
   background: var(--surface-card);
 }

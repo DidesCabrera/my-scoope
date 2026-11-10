@@ -20,7 +20,7 @@
 }
 
 .comparator-entity-card {
-  border-top: 3px solid var(--comparator-entity-color);
+  border-top: 2px solid var(--comparator-entity-color);
 }
 
 .comparator-tabs {

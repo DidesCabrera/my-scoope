@@ -23921,6 +23921,125 @@
         "summary": "Calendarized Meal Rename"
       }
     },
+    "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/preparations": {
+      "post": {
+        "operationId": "mobile_api_routes_preparations_add_calendarized_preparation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreparationSelection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Add Calendarized Preparation"
+      }
+    },
+    "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/preparations/{component_snapshot_key}": {
+      "patch": {
+        "operationId": "mobile_api_routes_preparations_update_calendarized_preparation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "component_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Component Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreparationPortionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Calendarized Preparation"
+      }
+    },
     "/api/v1/program/reviews": {
       "get": {
         "operationId": "mobile_api_api_program_reviews",

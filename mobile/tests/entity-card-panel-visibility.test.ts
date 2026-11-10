@@ -130,6 +130,8 @@ test("daily-plan cards expose an adjacent foods-panel control backed by their ex
   expectSource(nutritionCard, "hasDailyPlanFoodsPanel && foodsPanelExpanded ? <EntityCardPanelSlot>{dailyPlanFoodsPanel}</EntityCardPanelSlot>");
   expectSource(nutritionCard, 'panelToggleGroup: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.compact }');
   for (const card of dailyPlanCards) expectSource(card, "dailyPlanFoodsPanel=");
+  expectSource(dailyPlanCards[0] ?? "", "dailyPlanFoodPanelItems(item.panel, item.nutrition)");
+  expectSource(dailyPlanCards[1] ?? "", "dailyPlanFoodPanelItems(item.panel, item.nutrition)");
 });
 
 test("only today's home plan cards start with their panels expanded", async () => {

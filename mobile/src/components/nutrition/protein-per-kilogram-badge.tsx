@@ -14,12 +14,14 @@ export function ProteinPerKilogramBadge({
   value,
   density = "regular",
   showUnit = true,
+  unitLabel = "g/kg",
   style,
   textSize = 13,
 }: {
   value: number;
   density?: "compact" | "regular";
   showUnit?: boolean;
+  unitLabel?: "g/kg" | "/kg";
   style?: StyleProp<ViewStyle>;
   textSize?: number;
 }) {
@@ -32,7 +34,7 @@ export function ProteinPerKilogramBadge({
       <Text
         numberOfLines={1}
         style={[styles.text, { fontSize: textSize }]}>
-        {formattedValue(value)}{showUnit ? "g/kg" : ""}
+        {formattedValue(value)}{showUnit ? unitLabel : ""}
       </Text>
     </View>
   );

@@ -14,7 +14,7 @@ test("food rows expose a consistent detail navigation affordance", async () => {
   assertSourceDoesNotMatch(panels, /<ChevronRight color=\{tokens\.color\.textMuted\} size=\{17\}/);
   assertSourceMatch(detail, /`\/libraries\/foods\/\$\{food\.detailId\}`/);
   assertSourceMatch(detail, /<FoodDetailCardList editing=\{\(component\) => component\.kind === "preparation" \? preparationEditing : foodEditing\} items=\{foodItems\} onOpenFood=\{openFood\}/);
-  assertSourceMatch(activeMeal, /<FoodDetailCardList editing=\{\(\) => foodEditing\} items=\{foods\} onOpenFood=/);
+  assertSourceMatch(activeMeal, /<FoodDetailCardList editing=\{\(component\) => component\.kind === "preparation" \? preparationEditing : foodEditing\} items=\{foods\} onOpenFood=/);
 });
 
 test("meal component cards offer portion, replacement, and scoped removal before detail navigation", async () => {
@@ -28,7 +28,7 @@ test("meal component cards offer portion, replacement, and scoped removal before
   assertSourceMatch(cards, /<ContextCardActions[\s\S]*?<EntityCardAction label=\{`Ver detalle/);
   assertSourceMatch(detail, /\/preparations\/\$\{preparation\.relationId\}`, \{ method: "DELETE" \}/);
   assertSourceMatch(detail, /relationId: String\(preparation\.relationId\), replace: "1"/);
-  assertSourceMatch(picker, /relation && replace !== "1" \? payload : \{ preparation_id: selected\.id, \.\.\.payload \}/);
+  assertSourceMatch(picker, /body: JSON\.stringify\(\{ preparation_id: selected\.id, \.\.\.payload \}\)/);
 });
 
 test("meal component cards expose contextual food and preparation panels, collapsed initially", async () => {

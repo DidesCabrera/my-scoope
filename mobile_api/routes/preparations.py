@@ -6,13 +6,14 @@ from django.db import transaction
 from django.db.models import Q
 from ninja import Field, Router, Schema
 
-from mobile_api.api_support import require_scope, success
+from mobile_api.api_support import calendarization_error, require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
 from mobile_api.preparation_projections import ingredient_payload
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
+from notas.application.services.commands.calendarization_commands import save_calendarized_preparation
 from notas.domain.models import Meal, MealPreparation, Preparation
 
 router = Router()
@@ -86,6 +87,37 @@ def _detail(preparation, *, units=None, grams=None):
     }
 
 
+def _calendarized_snapshot(preparation, *, units=None, grams=None):
+    detail = _detail(preparation, units=units, grams=grams)
+    return {
+        "component_type": "preparation",
+        "source_preparation_id": preparation.id,
+        "source_preparation_version": detail["version"],
+        "name": detail["name"],
+        "quantity_g": detail["grams"],
+        "quantity_unit": "g",
+        "portion_display_quantity": detail["selected_units"] if detail["selection_mode"] == "units" else detail["grams"],
+        "portion_display_measure": detail["household_label"] if detail["selection_mode"] == "units" else "g",
+        "ingredients": [
+            {
+                "source_food_id": item.get("food_id"),
+                "name": item["name"],
+                "quantity_g": item["quantity_g"],
+                "preparation_state": item.get("preparation_state", ""),
+                "is_condiment": item.get("is_condiment", False),
+            }
+            for item in detail["ingredients"]
+        ],
+        "source_evidence": detail["evidence"],
+        "allergens": detail["allergens"],
+        "sodium_mg": detail["nutrition"]["sodium_mg"],
+        "protein_g": detail["nutrition"]["protein_g"],
+        "carbs_g": detail["nutrition"]["carbs_g"],
+        "fat_g": detail["nutrition"]["fat_g"],
+        "total_kcal": detail["nutrition"]["calories"],
+    }
+
+
 @router.get("/preparations", operation_id="mobile_api_api_preparations", auth=mobile_bearer, response={200: dict})
 def preparations(request, search: str | None = None, offset: int = 0, limit: int = 30):
     queryset = Preparation.objects.select_related("current_version").filter(is_active=True, is_global=True, current_version__isnull=False)
@@ -99,6 +131,41 @@ def preparations(request, search: str | None = None, offset: int = 0, limit: int
 @router.get("/preparations/{preparation_id}", operation_id="mobile_api_api_preparation_detail", auth=mobile_bearer, response={200: dict})
 def preparation_detail(request, preparation_id: int, units: float | None = None, grams: float | None = None):
     return success(_detail(_available_preparation(request.auth.user, preparation_id), units=units, grams=grams))
+
+
+@router.post("/program/days/{day_id}/meals/{meal_snapshot_key}/preparations", operation_id="mobile_api_routes_preparations_add_calendarized_preparation", auth=mobile_bearer, response={200: dict})
+def add_calendarized_preparation(request, day_id: int, meal_snapshot_key: str, payload: PreparationSelection):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    preparation = _available_preparation(request.auth.user, payload.preparation_id)
+    try:
+        save_calendarized_preparation(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key,
+            preparation_snapshot=_calendarized_snapshot(preparation, units=payload.units, grams=payload.grams),
+        )
+    except ValueError as exc:
+        raise calendarization_error(exc) from exc
+    return success({"target_id": day_id, "created_id": preparation.id})
+
+
+@router.patch("/program/days/{day_id}/meals/{meal_snapshot_key}/preparations/{component_snapshot_key}", operation_id="mobile_api_routes_preparations_update_calendarized_preparation", auth=mobile_bearer, response={200: dict})
+def update_calendarized_preparation(request, day_id: int, meal_snapshot_key: str, component_snapshot_key: str, payload: PreparationPortionUpdate):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    if payload.preparation_id is None:
+        raise MobileAPIError("preparation_not_found", "La preparación no está disponible.", 404)
+    preparation = _available_preparation(request.auth.user, payload.preparation_id)
+    try:
+        save_calendarized_preparation(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key,
+            component_snapshot_key=component_snapshot_key,
+            preparation_snapshot=_calendarized_snapshot(preparation, units=payload.units, grams=payload.grams),
+        )
+    except ValueError as exc:
+        raise calendarization_error(exc) from exc
+    return success({"target_id": day_id, "created_id": preparation.id})
 
 
 def _owned_meal(user, meal_id):

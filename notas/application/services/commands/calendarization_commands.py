@@ -520,6 +520,35 @@ def remove_calendarized_food(
 
 
 @transaction.atomic
+def save_calendarized_preparation(
+    *, user, day_id: int, meal_snapshot_key: str, preparation_snapshot: dict,
+    component_snapshot_key: str | None = None,
+) -> CalendarizedDay:
+    """Add or replace one preparation inside a single active meal snapshot."""
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meal = _calendarized_meal(snapshot, meal_snapshot_key)
+    components = _calendarized_foods(meal)
+    preparation_snapshot = deepcopy(preparation_snapshot)
+    preparation_snapshot["key"] = f"calendarized_preparation:{uuid4()}"
+    if component_snapshot_key:
+        index = next(
+            (index for index, item in enumerate(components) if isinstance(item, dict) and item.get("key") == component_snapshot_key),
+            None,
+        )
+        if index is None:
+            raise ValueError("food_snapshot_key_invalid")
+        if components[index].get("component_type") != "preparation":
+            raise ValueError("calendarized_preparation_snapshot_invalid")
+        components[index] = preparation_snapshot
+    else:
+        components.append(preparation_snapshot)
+    _refresh_calendarized_meal_totals(snapshot, meal)
+    _save_calendarized_snapshot(day, snapshot)
+    return day
+
+
+@transaction.atomic
 def replace_calendarized_food(
     *, user, day_id: int, meal_snapshot_key: str, food_snapshot_key: str, food, quantity: float,
     portion_display_quantity: float | None = None, portion_display_measure: str = "",

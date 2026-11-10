@@ -14,7 +14,7 @@ export function Card({
 }: PropsWithChildren<{ accent?: string; muted?: boolean; style?: StyleProp<ViewStyle> }>) {
   return (
     <ButtonSurfaceContext.Provider value={!muted}>
-      <View style={[styles.card, muted && styles.cardMuted, accent ? { borderTopColor: accent, borderTopWidth: 3 } : null, style]}>
+      <View style={[styles.card, muted && styles.cardMuted, accent ? { borderTopColor: accent, borderTopWidth: 2 } : null, style]}>
         {children}
       </View>
     </ButtonSurfaceContext.Provider>
