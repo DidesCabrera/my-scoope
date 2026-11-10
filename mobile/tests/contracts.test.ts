@@ -782,7 +782,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(homeLibraryGrid, /SectionDivider|sectionDivider/);
   assertSourceMatch(homeLibraryGrid, /padding: tokens\.card\.outerPadding/);
   assertSourceMatch(homeLibraryGrid, /borderTopColor: tokens\.color\[entry\.entity\]/);
-  assertSourceMatch(homeLibraryGrid, /borderTopWidth: 3/);
+  assertSourceMatch(homeLibraryGrid, /borderTopWidth: 2/);
   assertSourceMatch(homeLibraryGrid, /title: \{[^}]*fontSize: tokens\.type\.body/);
   assertSourceDoesNotMatch(homeLibraryGrid, /description:/);
   assertSourceDoesNotMatch(todayScreen, /<ProgramActiveCard/);
