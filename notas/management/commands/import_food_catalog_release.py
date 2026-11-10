@@ -15,6 +15,7 @@ from food_catalog.infrastructure.releases import (
     validate_release_envelope,
 )
 from food_catalog.models import CatalogFood, CatalogPreparation
+from notas.application.services.commands.food_commands import refresh_meal_and_parent_caches_for_food
 from notas.application.services.commands.preparation_commands import materialize_preparation_and_refresh
 from notas.application.services.food_catalog_snapshots import (
     PreparationSnapshotError,
@@ -141,6 +142,7 @@ def _materialize_release(*, version: str) -> dict[str, int]:
                 operational,
                 catalog_food=catalog_food,
             )
+            refresh_meal_and_parent_caches_for_food(operational)
             refreshed += 1
 
     deprecated_ids = CatalogFood.objects.filter(

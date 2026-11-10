@@ -72,7 +72,8 @@ contracts:
     required_semantics:
       - "CatalogFood and notas.Food remain separate authorities"
       - "Snapshot creation or refresh is explicit"
-      - "Historical content is not silently rewritten"
+      - "A materialized correction rebuilds affected Meal, DailyPlan and Program caches"
+      - "Calendarized, comparison and sharing snapshots are not silently rewritten"
   - id: "food-mobile-library-contract"
     catalog: "foods"
     name: "Food library and picker API contract"

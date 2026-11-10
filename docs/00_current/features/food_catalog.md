@@ -23,6 +23,9 @@ Food Catalog central (BD propia)
 
 La operación y el bootstrap se documentan en
 `docs/40_technical/operations/food_catalog_authority_runbook.md`.
+Para corregir nutrientes, evaluar propagación a composiciones y preservar
+históricos, seguir
+`docs/40_technical/operations/food_nutrition_correction_protocol.md`.
 
 ## Concepto
 
@@ -81,7 +84,11 @@ notas.Food es la única verdad nutricional operacional.
 Meals, DailyPlans, Programs, Proposals, Comparators, Solver y MCP no dependen directamente del catálogo maestro.
 ```
 
-Esto permite que Food Catalog evolucione como app/sistema propio sin romper el flujo actual de creación de Meals ni alterar planes históricos cuando cambie el catálogo maestro.
+Esto permite que Food Catalog evolucione como app/sistema propio sin romper el
+flujo actual de creación de Meals. Una corrección publicada puede actualizar las
+composiciones vivas y sus cachés mediante materialización explícita, pero no
+reescribe automáticamente snapshots fechados o compartidos; el protocolo de
+corrección enlazado arriba distingue ambos casos.
 
 ## Integración vigente con Nutrition Solver Optimization V2
 
