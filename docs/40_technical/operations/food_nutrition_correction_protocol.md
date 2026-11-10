@@ -85,6 +85,6 @@ Código propietario: `notas/management/commands/import_food_catalog_release.py`,
    snapshots históricos permanecen como fueron registrados.
 
 Prueba focal de la cadena viva e historia congelada:
-`food_catalog.tests.test_catalog_releases.CatalogReleaseTests.test_new_release_refreshes_live_caches_without_rewriting_calendar_snapshot`.
+`notas.tests.test_catalog_release_cache_refresh.CatalogReleaseCacheRefreshTests.test_new_release_refreshes_live_caches_without_rewriting_calendar_snapshot`.
 El runbook de autoridad y release sigue en
 `docs/40_technical/operations/food_catalog_authority_runbook.md`.
