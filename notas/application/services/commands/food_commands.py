@@ -12,7 +12,7 @@ from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cac
 from notas.domain.models import Food, FoodLabelCaptureReceipt, Meal, MealFood
 
 
-def _rebuild_meals_and_parent_caches_for_food(food):
+def refresh_meal_and_parent_caches_for_food(food):
     """Refresh every cached projection affected by an edited food."""
     meal_ids = MealFood.objects.filter(food=food).values_list("meal_id", flat=True).distinct()
     for meal in Meal.objects.filter(pk__in=meal_ids).iterator():
@@ -329,7 +329,7 @@ def update_food(
             "portion_unit",
         ]
     )
-    _rebuild_meals_and_parent_caches_for_food(food)
+    refresh_meal_and_parent_caches_for_food(food)
 
     return FoodUpdateResult(
         food=food,

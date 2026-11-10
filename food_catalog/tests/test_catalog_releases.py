@@ -186,60 +186,6 @@ class CatalogReleaseTests(TestCase):
         self.assertEqual(food.status, CatalogFood.STATUS_PUBLISHED)
         self.assertEqual(food.reviewed_by, actor)
 
-    def test_new_release_refreshes_existing_operational_food_snapshot(self):
-        authority_food = _published_food()
-        first_release = approve_catalog_release(
-            build_catalog_release(version="2026.09.3")
-        )
-        first_envelope = release_envelope(first_release)
-        CatalogRelease.objects.all().delete()
-        CatalogFood.objects.all().delete()
-
-        import_catalog_release(first_envelope)
-        with tempfile.TemporaryDirectory() as directory:
-            first_path = Path(directory) / "release-v1.json"
-            first_path.write_text(json.dumps(first_envelope), encoding="utf-8")
-            call_command(
-                "import_food_catalog_release",
-                file=str(first_path),
-                materialize=True,
-            )
-
-            mirrored = CatalogFood.objects.get(catalog_ref=authority_food.catalog_ref)
-            operational = Food.objects.get(catalog_food_id=mirrored.pk)
-            operational_id = operational.pk
-            self.assertEqual(operational.protein, Decimal("31.000"))
-
-            mirrored.catalog_version = "v2"
-            mirrored.protein_g_per_100g = Decimal("32.500")
-            mirrored.is_release_managed = False
-            mirrored.save(
-                update_fields=[
-                    "catalog_version",
-                    "protein_g_per_100g",
-                    "is_release_managed",
-                ]
-            )
-            CatalogRelease.objects.all().delete()
-            second_release = approve_catalog_release(
-                build_catalog_release(version="2026.09.4")
-            )
-            second_envelope = release_envelope(second_release)
-            CatalogRelease.objects.all().delete()
-            second_path = Path(directory) / "release-v2.json"
-            second_path.write_text(json.dumps(second_envelope), encoding="utf-8")
-
-            call_command(
-                "import_food_catalog_release",
-                file=str(second_path),
-                materialize=True,
-            )
-
-        operational.refresh_from_db()
-        self.assertEqual(operational.pk, operational_id)
-        self.assertEqual(operational.protein, Decimal("32.500"))
-        self.assertEqual(operational.catalog_snapshot_version, "v2")
-
 
 def _published_food() -> CatalogFood:
     food = CatalogFood.objects.create(

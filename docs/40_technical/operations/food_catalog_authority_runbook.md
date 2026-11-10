@@ -131,8 +131,10 @@ command must report an idempotent import and create no duplicate foods.
 7. Retain release records and evidence; never edit an approved payload.
 
 For a nutrition correction, increment the food's `catalog_version`, build a new
-release and import it. The current reusable operational food is refreshed in place;
-existing composed entities are not rebuilt automatically.
+release and import it with `--materialize`. The current reusable operational food
+is refreshed in place, and the import rebuilds affected live Meal, DailyPlan and
+Program caches transactionally. Historical calendar snapshots remain unchanged.
+See `food_nutrition_correction_protocol.md` for preflight and verification.
 
 ## Failure and rollback
 
