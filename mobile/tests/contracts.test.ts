@@ -172,7 +172,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(nutritionKpi, /variant\?: "nested" \| "regular"/);
   assertSourceMatch(nutritionKpi, /grams: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
   assertSourceMatch(nutritionKpi, /const macroFontSize = width < 420 \? 13 : 14/);
-  assertSourceMatch(nutritionKpi, /<ProteinPerKilogramBadge density=\{density\} textSize=\{12\}/);
+  assertSourceMatch(nutritionKpi, /<ProteinPerKilogramBadge density=\{density\} textSize=\{12\} unitLabel="\/kg" value=\{perKilogram\} \/>/);
   assertSourceMatch(nutritionKpi, /\{rounded\(grams\)\}g<\/Text>/);
   assertSourceMatch(nutritionKpi, /\{label\}<\/Text>\s*<Text style=\{\[styles\.grams[\s\S]*?\{rounded\(grams\)\}g<\/Text>\s*<View style=\{\[styles\.ppkSlot[\s\S]*?<\/View>\s*<KpiAllocationBar/);
   assertSourceDoesNotMatch(nutritionKpi, />kcal<|caloriesUnit/);
@@ -195,7 +195,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(proteinPerKilogramBadge, /text: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
-  assertSourceMatch(proteinPerKilogramBadge, /showUnit \? "g\/kg" : ""/);
+  assertSourceMatch(proteinPerKilogramBadge, /unitLabel = "g\/kg"/);
+  assertSourceMatch(proteinPerKilogramBadge, /showUnit \? unitLabel : ""/);
 
   const allocationBar = await readTestFile(
     path.resolve(process.cwd(), "src/components/nutrition/allocation-bar.tsx"),
@@ -836,8 +837,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /nutritionSummaryValue: \{ fontWeight: tokens\.weight\.semibold \}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /cal · P |cal P:\$\{/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} itemNameStyle=\{styles\.quantityItemText\} onOpenItem=\{canOpen \? onOpenItem : undefined\} showNutritionSummary style=\{styles\.quantityLeadingCell\} \/>/);
-  assertSourceMatch(sharedEntityPanels, /<View style=\{styles\.foodNameAndPortion\}><Text numberOfLines=\{showFoodPortion \? 1 : 2\} style=\{\[styles\.itemName, styles\.foodItemName, styles\.foodNameTruncated/);
-  assertSourceMatch(sharedEntityPanels, /showFoodPortion \? <Text numberOfLines=\{1\} style=\{styles\.foodPortionSuffix\}>\{`\(\$\{decimal\(item\.quantity\)\}\$\{item\.quantityUnit\}\)`\}<\/Text> : null/);
+  assertSourceMatch(sharedEntityPanels, /nativeEvent\.lines\.length > 1 \? Math\.min\(name\.length, nativeEvent\.lines\[0\]\.text\.length\) : -1/);
+  assertSourceMatch(sharedEntityPanels, /<Text numberOfLines=\{1\} style=\{titleStyle\}>\{firstLine\}<\/Text>/);
+  assertSourceMatch(sharedEntityPanels, /<View style=\{styles\.foodNameFinalLine\}>[\s\S]*<Text numberOfLines=\{1\} style=\{styles\.foodPortionSuffix\}>\{portionText\}<\/Text>/);
+  assertSourceMatch(sharedEntityPanels, /portion=\{showFoodPortion \? `\$\{decimal\(item\.quantity\)\}\$\{item\.quantityUnit\}` : null\}/);
   assertSourceMatch(sharedEntityPanels, /foodNameTruncated: \{ flexShrink: 1, minWidth: 0 \}/);
   assertSourceMatch(sharedEntityPanels, /foodPortionSuffix: \{ color: tokens\.color\.textMuted, flexShrink: 0, fontStyle: "italic"/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName dragInteraction=\{dragInteraction\} item=\{item\} onOpenItem=\{onOpenItem\} showFoodPortion=\{leadingLabel === "Alimentos"\}/);

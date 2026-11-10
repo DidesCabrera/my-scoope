@@ -404,14 +404,40 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
   return "foods" in item;
 }
 
+function FoodNameAndPortion({ name, portion, style }: { name: string; portion: string | null; style: StyleProp<TextStyle> }) {
+  const [firstLineLength, setFirstLineLength] = useState<number | null>(null);
+  const titleStyle = [styles.itemName, styles.foodItemName, style];
+  if (!portion) return <View style={styles.foodNameAndPortion}><Text numberOfLines={2} style={titleStyle}>{name}</Text></View>;
+
+  const hasSecondLine = firstLineLength != null && firstLineLength >= 0;
+  const firstLine = hasSecondLine ? name.slice(0, firstLineLength).trimEnd() : name;
+  const secondLine = hasSecondLine ? name.slice(firstLineLength).trimStart() : "";
+  const portionText = `(${portion})`;
+  return <View style={styles.foodNameAndPortion}>
+    <Text
+      accessible={false}
+      onTextLayout={({ nativeEvent }) => {
+        const nextLength = nativeEvent.lines.length > 1 ? Math.min(name.length, nativeEvent.lines[0].text.length) : -1;
+        setFirstLineLength((current) => current === nextLength ? current : nextLength);
+      }}
+      pointerEvents="none"
+      style={[...titleStyle, styles.foodNameMeasure]}>{name}<Text style={styles.foodPortionSuffix}> {portionText}</Text></Text>
+    {hasSecondLine ? <Text numberOfLines={1} style={titleStyle}>{firstLine}</Text> : null}
+    <View style={styles.foodNameFinalLine}>
+      <Text numberOfLines={1} style={[...titleStyle, styles.foodNameTruncated]}>{hasSecondLine ? secondLine : name}</Text>
+      <Text numberOfLines={1} style={styles.foodPortionSuffix}>{portionText}</Text>
+    </View>
+  </View>;
+}
+
 function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteraction, item, itemNameStyle, onOpenItem, showFoodPortion = false, showNutritionSummary = false, style = styles.gridLeadingCell }: { dragInteraction?: PanelRowDragInteraction; item: T; itemNameStyle?: StyleProp<TextStyle>; onOpenItem?: (item: T) => void; showFoodPortion?: boolean; showNutritionSummary?: boolean; style?: StyleProp<ViewStyle> }) {
   const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}>
     <View style={[styles.foodIdentityTitleRow, item.projectedLabel === "Por agregar" && styles.foodIdentityTitleRowWithBadge]}>
       {item.kind === "preparation" ? <EntityIcon entity="preparation" size="compact" /> : <FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} />}
       {item.kind === "preparation" ? <View style={styles.preparationIdentityCopy}>
-        <View style={styles.foodNameAndPortion}><Text numberOfLines={showFoodPortion ? 1 : 2} style={[styles.itemName, styles.foodItemName, styles.foodNameTruncated, itemNameStyle]}>{item.name}</Text>{showFoodPortion ? <Text numberOfLines={1} style={styles.foodPortionSuffix}>{`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</View>
+        <FoodNameAndPortion name={item.name} portion={showFoodPortion ? `${decimal(item.quantity)}${item.quantityUnit}` : null} style={itemNameStyle} />
         <Text style={styles.preparationSubtitle}>Preparación</Text>
-      </View> : <View style={styles.foodNameAndPortion}><Text numberOfLines={showFoodPortion ? 1 : 2} style={[styles.itemName, styles.foodItemName, styles.foodNameTruncated, item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]}>{item.name}</Text>{showFoodPortion ? <Text numberOfLines={1} style={styles.foodPortionSuffix}>{`(${decimal(item.quantity)}${item.quantityUnit})`}</Text> : null}</View>}
+      </View> : <FoodNameAndPortion name={item.name} portion={showFoodPortion ? `${decimal(item.quantity)}${item.quantityUnit}` : null} style={[item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]} />}
       {item.projectedLabel === "Por agregar" ? <Text style={[styles.projectedBadge, styles.foodInlineProjectedBadge]}>{item.projectedLabel}</Text> : null}
     </View>
     {showNutritionSummary ? <NutritionSummary item={item} /> : null}
@@ -864,7 +890,9 @@ const styles = StyleSheet.create({
   gridLeadingCell: { alignSelf: "stretch", flexBasis: "40%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
   itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   foodItemName: { fontWeight: tokens.weight.medium },
-  foodNameAndPortion: { alignItems: "center", flex: 1, flexDirection: "row", minWidth: 0 },
+  foodNameAndPortion: { flex: 1, justifyContent: "center", minWidth: 0 },
+  foodNameMeasure: { left: 0, opacity: 0, position: "absolute", right: 0, top: 0 },
+  foodNameFinalLine: { alignItems: "center", flexDirection: "row", minWidth: 0 },
   foodNameTruncated: { flexShrink: 1, minWidth: 0 },
   foodPortionSuffix: { color: tokens.color.textMuted, flexShrink: 0, fontStyle: "italic", fontWeight: tokens.weight.regular },
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },

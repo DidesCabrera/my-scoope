@@ -42,7 +42,7 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, variant, fontSi
       <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)}g</Text>
       <View style={[styles.ppkSlot, nested && styles.ppkSlotCompact]}>
         {perKilogram != null ? (
-          <ProteinPerKilogramBadge density={density} textSize={12} value={perKilogram} />
+          <ProteinPerKilogramBadge density={density} textSize={12} unitLabel="/kg" value={perKilogram} />
         ) : null}
       </View>
       <KpiAllocationBar
