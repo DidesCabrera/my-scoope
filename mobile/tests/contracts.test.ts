@@ -171,6 +171,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(nutritionKpi, /height: tokens\.component\.nutritionKpi\.nested\.totalSize/);
   assertSourceMatch(nutritionKpi, /variant\?: "nested" \| "regular"/);
   assertSourceMatch(nutritionKpi, /grams: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
+  assertSourceMatch(nutritionKpi, /ppkSlot: \{[^}]*width: 52 \}/);
+  assertSourceMatch(nutritionKpi, /grams: \{[^}]*width: 48 \}/);
   assertSourceMatch(nutritionKpi, /const macroFontSize = width < 420 \? 13 : 14/);
   assertSourceMatch(nutritionKpi, /<ProteinPerKilogramBadge density=\{density\} textSize=\{12\} unitLabel="\/kg" value=\{perKilogram\} \/>/);
   assertSourceMatch(nutritionKpi, /\{rounded\(grams\)\}g<\/Text>/);
