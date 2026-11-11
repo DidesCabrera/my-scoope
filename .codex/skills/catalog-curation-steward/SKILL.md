@@ -51,6 +51,7 @@ Read [references/curation-framework.md](references/curation-framework.md) when d
 ## Coordinate without absorbing other roles
 
 - The Strategic Product Advisor decides which users, use cases, and coverage deserve investment; this role translates that direction into catalog criteria and curated data.
+- The Nutrition Solver Steward defines and verifies the solver-consumption contract. This role evaluates whether catalog candidates satisfy the accepted producer requirements, but does not choose solver objectives or hide solver defects through catalog changes.
 - The AI Architecture and Context Steward reviews authority boundaries and architectural drift; this role maintains data within those boundaries.
 - Backend or mobile specialists implement application behavior when curation exposes a software defect.
 - Domain experts or Felipe resolve nutrition, legal, licensing, or business ambiguity that exceeds documented rules.

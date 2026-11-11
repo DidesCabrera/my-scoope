@@ -62,6 +62,15 @@ Raise a finding when evidence suggests, for example:
 
 Do not flag complexity merely because it is unfamiliar or spans several files. Show the concrete wrong turn a new AI could take and the evidence that makes it plausible.
 
+## Coordinate with the applied-AI platform steward
+
+The `ai-application-platform-steward` owns implementation, evaluation, MCP
+projection, and operational quality for the AI Assistant and governed AI
+capabilities. This role reviews whether that platform preserves architectural
+authority, dependency direction, canonical context, and a comprehensible change
+path. Route implementation and model-quality work to the platform steward; retain
+architectural drift and project-comprehension findings here.
+
 ## Report for action
 
 Lead with whether a new AI can act safely in the audited area. Include:

@@ -106,6 +106,40 @@ class CatalogEnrichmentTests(TestCase):
         revert_enrichment_batch(batch=self.batch, reason="Revert proposed portion.")
         self.assertFalse(self.food.portions.filter(is_default=True).exists())
 
+    def test_existing_source_portion_becomes_default_with_its_label_and_reverts(self):
+        alternative = CatalogFoodPortion.objects.create(
+            catalog_food=self.food, label="1/2 taza", grams=Decimal("90"),
+            source="USDA SR Legacy", is_default=False,
+        )
+        manifest = self._manifest(field_name="default_portion_g", value="90.000")
+        manifest["food_proposals"][0]["profile_key"] = ""
+        result = dry_run_enrichment_manifest(batch=self.batch, manifest=manifest)
+        self.assertEqual((result.valid, result.invalid), (1, 0))
+
+        apply_enrichment_batch(batch=self.batch, manifest=manifest, reason="Use source portion.")
+        default = self.food.portions.get(is_default=True)
+        self.assertEqual(default.pk, alternative.pk)
+        self.assertEqual(default.label, "1/2 taza")
+        self.assertEqual(default.source, "USDA SR Legacy")
+
+        revert_enrichment_batch(batch=self.batch, reason="Restore original portion.")
+        self.assertEqual(self.food.portions.get(is_default=True).label, "1 taza")
+
+    def test_derived_household_portion_preserves_label_and_source(self):
+        manifest = self._manifest(
+            field_name="default_portion_g",
+            value={"grams": "45.000", "label": "1/4 taza", "source": "USDA cup weight / 4"},
+        )
+        manifest["food_proposals"][0]["profile_key"] = ""
+        result = dry_run_enrichment_manifest(batch=self.batch, manifest=manifest)
+        self.assertEqual((result.valid, result.invalid), (1, 0))
+        apply_enrichment_batch(batch=self.batch, manifest=manifest, reason="Use derived household portion.")
+        default = self.food.portions.get(is_default=True)
+        self.assertEqual((default.label, default.grams, default.source), ("1/4 taza", Decimal("45"), "USDA cup weight / 4"))
+        revert_enrichment_batch(batch=self.batch, reason="Restore original portion.")
+        self.assertEqual(self.food.portions.get(is_default=True).label, "1 taza")
+        self.assertEqual(self.food.portions.count(), 1)
+
     def test_revert_creates_compensating_ledger_event(self):
         manifest = self._manifest()
         dry_run_enrichment_manifest(batch=self.batch, manifest=manifest)

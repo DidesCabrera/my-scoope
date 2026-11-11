@@ -76,6 +76,7 @@ Primary output: **catalog health report and prioritized backlog**.
 |---|---|
 | Catalog Curation Steward | Own source, contract, curation, state, and quality records; prepare batches and recommendations. |
 | Strategic Product Advisor | Define priority users, adoption needs, desired coverage, and investment tradeoffs. |
+| Nutrition Solver Steward | Define solver-consumption requirements, provide failing scenarios, verify solver usefulness, and return contract exceptions. |
 | AI Architecture and Context Steward | Review authority boundaries, snapshots, contracts, and architectural drift. |
 | Backend specialists | Implement or correct imports, validations, migrations, APIs, and publication mechanics. |
 | Felipe Dides | Approve material scope, policies, external commitments, and consequential publication. |

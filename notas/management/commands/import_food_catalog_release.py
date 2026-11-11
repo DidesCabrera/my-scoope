@@ -15,7 +15,7 @@ from food_catalog.infrastructure.releases import (
     validate_release_envelope,
 )
 from food_catalog.models import CatalogFood, CatalogPreparation
-from notas.application.services.commands.food_commands import refresh_meal_and_parent_caches_for_food
+from notas.application.services.cache.dailyplan_summary import refresh_dailyplan_and_related_program_caches
 from notas.application.services.commands.preparation_commands import materialize_preparation_and_refresh
 from notas.application.services.food_catalog_snapshots import (
     PreparationSnapshotError,
@@ -23,7 +23,8 @@ from notas.application.services.food_catalog_snapshots import (
     mark_operational_food_catalog_snapshot_stale,
     refresh_operational_food_snapshot_from_catalog,
 )
-from notas.domain.models import Food, Preparation
+from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Preparation
 
 
 class Command(BaseCommand):
@@ -117,6 +118,7 @@ def _materialize_release(*, version: str) -> dict[str, int]:
     created = 0
     refreshed = 0
     stale = 0
+    refreshed_food_ids = []
     published_foods = CatalogFood.objects.filter(
         is_release_managed=True,
         imported_release_version=version,
@@ -142,8 +144,10 @@ def _materialize_release(*, version: str) -> dict[str, int]:
                 operational,
                 catalog_food=catalog_food,
             )
-            refresh_meal_and_parent_caches_for_food(operational)
+            refreshed_food_ids.append(operational.pk)
             refreshed += 1
+
+    _refresh_related_caches_for_foods(refreshed_food_ids)
 
     deprecated_ids = CatalogFood.objects.filter(
         is_release_managed=True,
@@ -163,3 +167,25 @@ def _materialize_release(*, version: str) -> dict[str, int]:
         catalog_ref__in=delivered_preparation_refs
     ).update(is_active=False)
     return {"created": created, "refreshed": refreshed, "stale": stale, "preparations": preparation_count}
+
+
+def _refresh_related_caches_for_foods(food_ids: list[int]) -> None:
+    if not food_ids:
+        return
+    meal_ids = list(
+        MealFood.objects.filter(food_id__in=food_ids)
+        .order_by()
+        .values_list("meal_id", flat=True)
+        .distinct()
+    )
+    for meal in Meal.objects.filter(pk__in=meal_ids).order_by("pk").iterator():
+        rebuild_meal_cached_state(meal)
+
+    dailyplan_ids = list(
+        DailyPlanMeal.objects.filter(meal_id__in=meal_ids)
+        .order_by()
+        .values_list("dailyplan_id", flat=True)
+        .distinct()
+    )
+    for dailyplan in DailyPlan.objects.filter(pk__in=dailyplan_ids).order_by("pk").iterator():
+        refresh_dailyplan_and_related_program_caches(dailyplan)
