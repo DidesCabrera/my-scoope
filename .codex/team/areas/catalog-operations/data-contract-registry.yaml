@@ -2,6 +2,26 @@ schema_version: 1
 area: "catalog-operations"
 last_reviewed: "2026-11-09"
 contracts:
+  - id: "solver-food-first-pass-219-v1"
+    catalog: "foods"
+    name: "Source-linked first pass for original solver foods"
+    version: "myscoope.solver_food_curation.v1"
+    authority: "food_catalog/data/curation/solver_219_first_pass_v1.csv"
+    producer: "Catalog Operations policy and reconciled USDA SR Legacy source payload"
+    consumers:
+      - "food_catalog/management/commands/prepare_solver_food_v1.py"
+      - "CatalogFood publication and operational snapshot pipeline"
+    validation:
+      - "food_catalog/data/curation/solver_219_source_assessment_2026-11-11.md"
+      - "food_catalog/tests/test_enrichment.py"
+      - "food_catalog/tests/test_solver_readiness.py"
+    state: "prepared-local-not-published"
+    required_semantics:
+      - "Match by source_food_id and exact name across environments; catalog_ref in the CSV is local only"
+      - "Direct candidate requires edible preparation state, source identity, source license, explicit portion bounds and roles"
+      - "Unknown allergen status is not an affirmative absence claim"
+      - "Raw and dry preparation-required foods and recipe components stay solver-disabled until a preparation or recipe contract exists"
+      - "Changing catalog_version triggers explicit operational snapshot refresh on release import"
   - id: "catalog-preparation-release-v3"
     catalog: "preparations"
     name: "Curated preparation to operational mobile library"

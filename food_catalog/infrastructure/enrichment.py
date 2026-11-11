@@ -40,11 +40,14 @@ ALLOWED_CATALOG_FIELDS = {
     "food_form",
     "functional_roles",
     "meal_affinities",
+    "dietary_tags",
+    "allergens",
     "preparation_effort",
     "cost_band",
+    "catalog_version",
 }
 DECIMAL_FIELDS = {"default_portion_g", "solver_min_portion_g", "solver_max_portion_g", "solver_portion_step_g"}
-LIST_FIELDS = {"functional_roles", "meal_affinities"}
+LIST_FIELDS = {"functional_roles", "meal_affinities", "dietary_tags", "allergens"}
 CHOICE_FIELDS = {
     "food_form": {value for value, _label in CatalogFood.FOOD_FORM_CHOICES},
     "preparation_effort": {value for value, _label in CatalogFood.PREPARATION_EFFORT_CHOICES},
@@ -203,12 +206,18 @@ def apply_enrichment_batch(
         food = locked_foods[proposal.catalog_food_id]
         before_timestamp = food.updated_at
         before = _json_value(_read_value(food, proposal))
+        portion_ids_before = set(food.portions.values_list("id", flat=True)) if proposal.field_name == "default_portion_g" else set()
         _write_value(food, proposal, actor=actor)
         food.refresh_from_db(fields=["updated_at"])
+        after = proposal.proposed_value
+        if proposal.field_name == "default_portion_g" and isinstance(after, dict):
+            default = food.portions.filter(is_default=True).order_by("id").first()
+            if default is not None and default.pk not in portion_ids_before:
+                after = {**after, "_created_portion_id": default.pk}
         CatalogEnrichmentChange.objects.create(
             batch=batch, proposal=proposal, catalog_food=food, field_name=proposal.field_name,
             action=CatalogEnrichmentChange.ACTION_APPLY, value_before=before,
-            value_after=proposal.proposed_value, food_updated_at_before=before_timestamp,
+            value_after=after, food_updated_at_before=before_timestamp,
             food_updated_at_after=food.updated_at, actor=_authenticated_or_none(actor), reason=reason.strip(),
         )
         proposal.status = CatalogFieldProposal.STATUS_APPLIED
@@ -245,6 +254,15 @@ def revert_enrichment_batch(*, batch: CatalogEnrichmentBatch, actor=None, reason
     for change in reversed(applied_changes):
         food = locked_foods[change.catalog_food_id]
         before_timestamp = food.updated_at
+        if change.field_name == "default_portion_g" and isinstance(change.value_after, dict):
+            created_id = change.value_after.get("_created_portion_id")
+            if created_id is not None:
+                created = food.portions.filter(pk=created_id, is_default=True).first()
+                if (created is None or created.grams != Decimal(str(change.value_after["grams"]))
+                        or created.label != change.value_after["label"]
+                        or created.source != change.value_after["source"]):
+                    raise CatalogEnrichmentError("Derived portion changed after apply; safe revert is blocked.")
+                created.delete()
         _write_raw_value(food, change.proposal, change.value_before, actor=actor)
         food.refresh_from_db(fields=["updated_at"])
         CatalogEnrichmentChange.objects.create(
@@ -291,15 +309,22 @@ def _validate_change(food, row, change) -> tuple[str, ...]:
         errors.append("confidence must be numeric")
     if field_name in DECIMAL_FIELDS:
         try:
-            value = Decimal(str(change.get("proposed_value")))
+            raw_value = change.get("proposed_value")
+            value = Decimal(str(raw_value.get("grams"))) if field_name == "default_portion_g" and isinstance(raw_value, dict) else Decimal(str(raw_value))
             if value <= 0:
                 errors.append(f"{field_name} must be positive")
-        except (InvalidOperation, TypeError):
+        except (InvalidOperation, TypeError, KeyError):
             errors.append(f"{field_name} must be decimal")
+        if field_name == "default_portion_g" and isinstance(change.get("proposed_value"), dict):
+            proposed = change["proposed_value"]
+            if not str(proposed.get("label") or "").strip() or not str(proposed.get("source") or "").strip():
+                errors.append("derived default portion requires label and source")
     elif field_name in LIST_FIELDS and not isinstance(change.get("proposed_value"), list):
         errors.append(f"{field_name} must be a list")
     elif field_name == "solver_enabled" and not isinstance(change.get("proposed_value"), bool):
         errors.append("solver_enabled must be boolean")
+    elif field_name == "catalog_version" and (not isinstance(change.get("proposed_value"), str) or not change["proposed_value"].strip() or len(change["proposed_value"]) > 64):
+        errors.append("catalog_version must be a nonempty label of at most 64 characters")
     elif field_name in CHOICE_FIELDS and change.get("proposed_value") not in CHOICE_FIELDS[field_name]:
         errors.append(f"unsupported {field_name} value")
     if field_name in DECIMAL_FIELDS:
@@ -324,9 +349,17 @@ def _validate_portion_triplet(food, row) -> tuple[str, ...]:
     if minimum is not None and maximum is not None and minimum > maximum:
         errors.append("solver minimum cannot exceed maximum")
     default = food.portions.filter(is_default=True).order_by("id").first()
-    if default and minimum is not None and minimum > default.grams:
+    default_grams = default.grams if default else None
+    for change in row.get("changes", []):
+        if change.get("field_name") == "default_portion_g":
+            try:
+                raw_value = change.get("proposed_value")
+                default_grams = Decimal(str(raw_value.get("grams"))) if isinstance(raw_value, dict) else Decimal(str(raw_value))
+            except (InvalidOperation, TypeError, KeyError):
+                pass
+    if default_grams is not None and minimum is not None and minimum > default_grams:
         errors.append("solver minimum cannot exceed default portion")
-    if default and maximum is not None and maximum < default.grams:
+    if default_grams is not None and maximum is not None and maximum < default_grams:
         errors.append("solver maximum cannot be below default portion")
     profile_key = row.get("profile_key", "")
     if profile_key and None not in (minimum, maximum, step):
@@ -429,8 +462,25 @@ def _write_raw_value(food, proposal, value, *, actor=None):
             if current is not None:
                 current.delete()
         else:
-            grams = Decimal(str(value))
-            if current is None:
+            structured = value if isinstance(value, dict) else None
+            grams = Decimal(str(structured["grams"])) if structured else Decimal(str(value))
+            existing = food.portions.filter(grams=grams).order_by("id").first()
+            if existing is not None:
+                if current is not None and current.pk != existing.pk:
+                    current.is_default = False
+                    current.save(update_fields=["is_default", "updated_at"])
+                if not existing.is_default:
+                    existing.is_default = True
+                    existing.save(update_fields=["is_default", "updated_at"])
+            elif structured:
+                if current is not None:
+                    current.is_default = False
+                    current.save(update_fields=["is_default", "updated_at"])
+                CatalogFoodPortion.objects.create(
+                    catalog_food=food, label=str(structured["label"]), grams=grams,
+                    source=str(structured["source"]), is_default=True,
+                )
+            elif current is None:
                 CatalogFoodPortion.objects.create(
                     catalog_food=food,
                     label="porción",
