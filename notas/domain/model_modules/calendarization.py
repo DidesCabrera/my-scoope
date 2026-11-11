@@ -257,13 +257,14 @@ class CalendarCommitment(models.Model):
         (KIND_SHOPPING, "Hacer compras"),
         (KIND_COOKING, "Cocinar"),
         (KIND_TRAINING, "Entrenar"),
-        (KIND_NUTRITIONIST, "Cita nutricionista"),
+        (KIND_NUTRITIONIST, "Evaluación"),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="calendar_commitments")
     calendar_date = models.DateField()
     kind = models.CharField(max_length=12, choices=KIND_CHOICES)
     note = models.CharField(max_length=500, blank=True)
+    hour = models.TimeField(null=True, blank=True)
     food_period_start = models.DateField(null=True, blank=True)
     food_period_end = models.DateField(null=True, blank=True)
     food_plans_count = models.PositiveIntegerField(default=0)

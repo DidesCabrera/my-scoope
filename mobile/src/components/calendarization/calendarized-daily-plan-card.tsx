@@ -30,13 +30,20 @@ type Props = {
   onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void>;
   onAddMeal?: () => void;
   onRemoveFromCalendar?: () => Promise<void>;
+  onRenameCalendarized?: (name: string) => Promise<void>;
+  onReplacePlan?: () => void;
+  onMovePlan?: () => Promise<void> | void;
+  calendarDate?: string;
+  localToday?: string;
+  sourceKind?: "program" | "manual" | null;
+  calendarActionsDisabled?: boolean;
   planName?: string;
   snapshot: DailyPlanSnapshot;
   apiRequest: ApiRequest;
   onChanged(): Promise<void> | void;
 };
 
-export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId, dateLabel, editing, eyebrow, initialPanelExpanded = false, mealExecution = [], onAddMeal, onChangeMealTime, onChanged, onRemoveFromCalendar, planName, showLibraryActions = true, snapshot }: Props) {
+export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId, dateLabel, editing, eyebrow, initialPanelExpanded = false, mealExecution = [], onAddMeal, onChangeMealTime, onChanged, onRemoveFromCalendar, onRenameCalendarized, onReplacePlan, onMovePlan, calendarDate, localToday, sourceKind, calendarActionsDisabled, planName, showLibraryActions = true, snapshot }: Props) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const sourceSupplementIntakes = snapshot.supplement_intakes;
@@ -69,9 +76,31 @@ export function CalendarizedDailyPlanCard({ additionalActions, apiRequest, dayId
   const cardEditing = editing && onChangeMealTime ? { ...editing, onChangeTime: setTimeChangeMeal } : editing;
   const openDetail = dayId ? () => router.push(`/program/days/${dayId}` as Href) : undefined;
   const sourceDailyPlanId = snapshot.source?.dailyplan_id ?? undefined;
+  const movePlan = calendarDate && localToday && onMovePlan ? {
+    sourceDate: calendarDate,
+    localToday,
+    disabled: sourceKind !== "manual" || calendarDate < localToday,
+    onMoved: onMovePlan,
+  } : undefined;
   return (<>
     <NutritionEntityCard
-      actions={<>{additionalActions}{showLibraryActions && (sourceDailyPlanId || onRemoveFromCalendar) ? <ContextualLibraryActions apiRequest={apiRequest} entity="dailyPlan" id={sourceDailyPlanId} name={snapshot.name ?? planName ?? "Minuta diaria"} onChanged={onChanged} onRemoveFromCalendar={onRemoveFromCalendar} /> : null}{openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={17} /></EntityCardAction> : null}</>}
+      actions={<>
+        {additionalActions}
+        {showLibraryActions && (sourceDailyPlanId || onRemoveFromCalendar) ? <ContextualLibraryActions
+          apiRequest={apiRequest}
+          calendarActionsDisabled={calendarActionsDisabled}
+          entity="dailyPlan"
+          id={sourceDailyPlanId}
+          movePlan={movePlan}
+          name={snapshot.name ?? planName ?? "Minuta diaria"}
+          onChanged={onChanged}
+          onRemoveFromCalendar={onRemoveFromCalendar}
+          onRenameCalendarized={onRenameCalendarized}
+          onReplacePlan={onReplacePlan}
+          sourceActionsDisabled={sourceKind === "program"}
+        /> : null}
+        {openDetail ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={openDetail} role="link"><ChevronRight color={tokens.color.textMuted} size={17} /></EntityCardAction> : null}
+      </>}
       afterNutrition={meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} mealNutrition={meals.map((meal) => ({ calories: snapshotCalories(meal.totals), carbsGrams: meal.totals?.carbs_g ?? 0, fatGrams: meal.totals?.fat_g ?? 0, key: meal.key, proteinGrams: meal.totals?.protein_g ?? 0 }))} /> : undefined}
       completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       collapsiblePanel

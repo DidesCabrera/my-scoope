@@ -501,7 +501,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /completionLabel: \{[^}]*fontSize: 15/);
   assertSourceMatch(mealAdherence, /<View style=\{\[styles\.completionIcon, \{ backgroundColor: color \}\]\}>/);
   assertSourceMatch(mealAdherence, /completionIcon: \{[^}]*borderRadius: tokens\.radius\.sm[^}]*height: 22[^}]*width: 22/);
-  assertSourceMatch(mealAdherence, /<SectionDivider spacing="compact" tone="soft" \/>[\s\S]*<SectionHeading title="Nota de esta comida" \/>/);
+  assertSourceMatch(mealAdherence, /<View style=\{styles\.noteTitleRow\}>[\s\S]*<SectionHeading title="Nota de esta comida" \/>[\s\S]*<Text style=\{styles\.noteCount\}>/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>[\s\S]*<View style=\{styles\.noteSurface\}>/);
   assertSourceDoesNotMatch(mealAdherence, /<ContentPanel/);
@@ -509,8 +509,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /noteInput: \{[^}]*backgroundColor: tokens\.color\.surfaceMuted/);
   assertSourceMatch(mealAdherence, /noteInput: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceDoesNotMatch(mealAdherence, /noteInput: \{[^}]*borderColor|noteInput: \{[^}]*borderWidth/);
-  assertSourceMatch(mealAdherence, /noteSurface: \{[^}]*backgroundColor: "transparent"[^}]*marginTop: tokens\.spacing\.xs/);
-  assertSourceMatch(mealAdherence, /noteLabel: \{[^}]*fontSize: tokens\.type\.label - 1[^}]*fontWeight: tokens\.component\.eyebrow\.fontWeight[^}]*textTransform: "uppercase"/);
+  assertSourceMatch(mealAdherence, /noteSurface: \{[^}]*backgroundColor: "transparent"[^}]*marginTop: tokens\.spacing\.sm/);
+  assertSourceDoesNotMatch(mealAdherence, /noteLabel:|>NOTA<\/Text>/);
   assertSourceDoesNotMatch(mealAdherence, /styles\.divider/);
 
   assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked/);

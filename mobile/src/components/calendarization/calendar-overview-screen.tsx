@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { Bell, CalendarCheck2, CalendarClock, CalendarDays, ClipboardList, Ellipsis, Pin, Plus, Weight } from "lucide-react-native";
+import { Bell, CalendarCheck2, CalendarClock, CalendarDays, ClipboardList, Ellipsis, Plus, Weight } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,7 +30,7 @@ function dateLabel(value: string, options: Intl.DateTimeFormatOptions): string {
   return new Intl.DateTimeFormat("es-CL", options).format(new Date(`${value}T12:00:00`));
 }
 
-const commitmentTabLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Nutricionista" } as const;
+const commitmentTabLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Evaluación" } as const;
 const commitmentMetricLabels = { shopping: "Compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Evaluación" } as const;
 
 export function CalendarOverviewScreen({ extended = false }: { extended?: boolean }) {
@@ -112,6 +112,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     return () => { active = false; };
   }, [extended, monthCache, status, visibleMonth]));
   const todayDay = useMemo(() => overview?.days.find((day) => day.calendar_date === overview.local_date) ?? null, [overview]);
+  const hasTodayPlanChips = Boolean(todayDay?.has_plan || todayDay?.commitments?.length);
   const monthDays = useMemo(() => monthOverview?.key === visibleMonth ? monthOverview.data.days : [], [monthOverview, visibleMonth]);
   const visibleCommitments = useMemo(() => overview
     ? commitmentsForUpcomingDays(overview.days, overview.local_date, 7, commitmentScope) : [],
@@ -121,8 +122,9 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     const future = overview.days.filter((day) => day.calendar_date >= overview.local_date);
     return extended ? future : future.slice(0, 7);
   }, [extended, overview]);
-  const upcomingWeeks = useMemo(() => groupCalendarDaysByIsoWeek(upcoming), [upcoming]);
-  const fullCalendarWeeks = useMemo(() => new Map(groupCalendarDaysByIsoWeek(overview?.days ?? []).map((week) => [week.key, week.days])), [overview]);
+  const upcomingWeeks = useMemo(() => extended && overview
+    ? groupCalendarDaysByIsoWeek(overview.days).filter((week) => week.days.at(-1)!.calendar_date >= overview.local_date)
+    : groupCalendarDaysByIsoWeek(upcoming), [extended, overview, upcoming]);
   const futurePlansCount = overview?.future_plans_count ?? 0;
   const visibleFutureCommitmentCounts = useMemo(() => {
     const counts = { shopping: 0, cooking: 0, training: 0, nutritionist: 0 };
@@ -228,36 +230,36 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         tabs={[{ key: "planning", label: "Planificación" }, { key: "progress", label: "Progreso" }]}
       /> : undefined}
       stickyHeaderStyle={styles.stickyHeader}>
-      {extended ? <SectionPageHeader countLabel="fechas" section="calendarization" subtitle="Fechas próximas, tengan o no un plan asignado." title="Próximas minutas programadas" /> : null}
+      {extended ? <SectionPageHeader countLabel="fechas" icon={<ClipboardList color={tokens.color.textMain} size={28} strokeWidth={1.8} />} section="calendarization" subtitle="Fechas próximas, tengan o no un plan asignado." title="Próximas minutas programadas" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!extended && activeTab === "planning" ? (
         <>
           <View style={styles.calendarBlock}>
-            {overview ? <CalendarDaySectionHeading commitments={todayDay?.commitments} date={overview.local_date} hasPlan={todayDay?.has_plan} today={overview.local_date} /> : null}
+            {overview ? <View style={[styles.todayHeadingSpacing, hasTodayPlanChips && styles.todayHeadingWithChips]}><CalendarDaySectionHeading commitments={todayDay?.commitments} date={overview.local_date} hasPlan={todayDay?.has_plan} today={overview.local_date} /></View> : null}
             {visibleMonth && overview ? <View style={styles.calendarMonthSpacing}><CalendarMonthCalendar days={monthDays} embedded error={monthError} localDate={overview.local_date} onChangeMonth={changeVisibleMonth} onOpenDay={openDay} onReturnToCurrentMonth={() => setVisibleMonth(monthKeyFromDate(overview.local_date))} visibleMonth={visibleMonth} /></View> : null}
             <View style={styles.upcomingCommitmentsSection}>
               <View style={styles.upcomingCommitmentsHeading}>
                 <CalendarCheck2 color={tokens.color.textMain} size={16} strokeWidth={2.1} />
                 <Text accessibilityRole="header" style={styles.upcomingCommitmentsTitle}>Minutas y compromisos programados</Text>
               </View>
-              <View accessibilityLabel="Minutas y próximos compromisos programados" accessible style={styles.upcomingCommitmentsDashboard}>
-                <View accessibilityLabel={`${futurePlansCount} minutas programadas`} style={[styles.upcomingCommitmentsMetric, { backgroundColor: `${tokens.color.dailyPlan}33` }]}>
+              <View style={styles.upcomingCommitmentsDashboard}>
+                <Pressable accessibilityLabel={`Ver próximas minutas programadas: ${futurePlansCount} ${futurePlansCount === 1 ? "minuta" : "minutas"}`} accessibilityRole="button" onPress={() => router.push("/calendar/future" as Href)} style={({ pressed }) => [styles.upcomingCommitmentsMetric, { backgroundColor: `${tokens.color.dailyPlan}33` }, pressed && styles.pressed]}>
                   <View style={styles.upcomingCommitmentsMetricValueRow}>
                     <View style={[styles.upcomingCommitmentsIcon, { backgroundColor: tokens.color.dailyPlan }]}><ClipboardList color={tokens.color.entityIconForeground} size={14} strokeWidth={2.1} /></View>
                     <Text style={styles.upcomingCommitmentsValue}>{futurePlansCount}</Text>
                   </View>
                   <Text numberOfLines={2} style={styles.upcomingCommitmentsMetricLabel}>Minutas</Text>
-                </View>
+                </Pressable>
                 {commitmentKinds.map((kind) => {
                   const presentation = commitmentPresentation[kind];
                   const Icon = presentation.icon;
-                  return <View accessibilityLabel={`${futureCommitmentCounts[kind]} ${commitmentActionLabel[kind]}`} key={kind} style={[styles.upcomingCommitmentsMetric, { backgroundColor: `${presentation.color}33` }]}>
+                  return <Pressable accessibilityLabel={`Ver compromisos de ${commitmentMetricLabels[kind]}: ${futureCommitmentCounts[kind]}`} accessibilityRole="button" key={kind} onPress={() => router.push({ pathname: "/calendar/future-commitments", params: { kind } })} style={({ pressed }) => [styles.upcomingCommitmentsMetric, { backgroundColor: `${presentation.color}33` }, pressed && styles.pressed]}>
                     <View style={styles.upcomingCommitmentsMetricValueRow}>
                       <View style={[styles.upcomingCommitmentsIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={14} strokeWidth={2.1} /></View>
                       <Text style={styles.upcomingCommitmentsValue}>{futureCommitmentCounts[kind]}</Text>
                     </View>
                     <Text numberOfLines={2} style={styles.upcomingCommitmentsMetricLabel}>{commitmentMetricLabels[kind]}</Text>
-                  </View>;
+                  </Pressable>;
                 })}
               </View>
             </View>
@@ -275,7 +277,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
           </View>
           <Button label="Ver más fechas" onPress={() => router.push("/calendar/future" as Href)} variant="secondary" />
 
-          <ProgramSectionHeader bottomSpacing={0} icon={Pin} subtitle="Tus compromisos en los próximos siete días." title="Mis compromisos programados" />
+          <ProgramSectionHeader bottomSpacing={0} icon={CalendarCheck2} subtitle="Tus compromisos en los próximos siete días." title="Mis compromisos programados" />
           <View style={styles.commitmentFilters}>
             <ScrollableTabBar<CommitmentScope>
               accessibilityLabel="Tipos de compromisos"
@@ -340,9 +342,9 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         />
         <View style={styles.futureWeekPanels}>
           <View style={styles.futureWeekMetrics}>
-            <CalendarWeekMetrics days={fullCalendarWeeks.get(calendarWeek.key) ?? calendarWeek.days} weightKg={profile?.current_weight_kg ?? null} />
+              <CalendarWeekMetrics days={calendarWeek.days} expandedLayout localDate={overview?.local_date} weightKg={profile?.current_weight_kg ?? null} />
           </View>
-          <CalendarUpcomingPanels days={calendarWeek.days} localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
+          <CalendarUpcomingPanels days={calendarWeek.days} expandedLayout localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
         </View>
       </View>) : null}
     </Screen>
@@ -359,7 +361,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     </ActionSheetModal>
     <ActionSheetModal onRequestClose={() => setCommitmentMenuVisible(false)} visible={commitmentMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.progressSheet}>
-        <ActionSheetHeader icon={Pin} onClose={() => setCommitmentMenuVisible(false)} title="Registrar compromiso" />
+        <ActionSheetHeader icon={CalendarCheck2} onClose={() => setCommitmentMenuVisible(false)} title="Registrar compromiso" />
         <View style={styles.progressSheetContent}>
           <ActionSheetActions>
             {commitmentKinds.map((kind) => <ActionSheetAction
@@ -432,13 +434,15 @@ const styles = StyleSheet.create({
   minutePanels: { gap: tokens.spacing.md },
   upcomingMetricsSpacing: { marginTop: -20 },
   stickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
+  todayHeadingSpacing: { marginBottom: 12 },
+  todayHeadingWithChips: { marginBottom: 4 },
   upcomingCommitmentsDashboard: { flexDirection: "row", gap: tokens.spacing.xs, marginBottom: 4, marginHorizontal: -6 },
   upcomingCommitmentsHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   upcomingCommitmentsIcon: { alignItems: "center", borderRadius: 8, height: 24, justifyContent: "center", width: 24 },
   upcomingCommitmentsMetric: { alignItems: "center", borderRadius: tokens.radius.md, flex: 1, gap: 3, minWidth: 0, paddingHorizontal: 3, paddingVertical: tokens.spacing.sm + 4 },
   upcomingCommitmentsMetricLabel: { color: tokens.color.textMain, flexShrink: 1, fontSize: 10, lineHeight: 12, textAlign: "center", width: "100%" },
   upcomingCommitmentsMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
-  upcomingCommitmentsSection: { gap: tokens.spacing.md },
+  upcomingCommitmentsSection: { gap: tokens.spacing.md, marginTop: 12 },
   upcomingCommitmentsTitle: { color: tokens.color.textMain, fontSize: 15, fontWeight: tokens.weight.semibold },
   upcomingCommitmentsValue: { color: tokens.color.textMain, fontSize: 18, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold },
   pressed: { opacity: 0.65 },

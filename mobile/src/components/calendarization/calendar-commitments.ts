@@ -14,28 +14,28 @@ export const commitmentPresentation: Record<CalendarCommitmentKind, { label: str
   shopping: { label: "Hacer compras", color: tokens.color.food, icon: ShoppingBasket },
   cooking: { label: "Cocinar", color: tokens.color.meal, icon: ChefHat },
   training: { label: "Entrenar", color: tokens.color.success, icon: Dumbbell },
-  nutritionist: { label: "Nutricionista", color: tokens.color.protein, icon: Stethoscope },
+  nutritionist: { label: "Evaluación", color: tokens.color.protein, icon: Stethoscope },
 };
 
 export const commitmentRegistrationTitle: Record<CalendarCommitmentKind, string> = {
   shopping: "Registrar días de compras",
   cooking: "Registrar días de cocinar",
   training: "Registrar días de entrenamiento",
-  nutritionist: "Registrar citas con nutricionista",
+  nutritionist: "Registrar evaluaciones",
 };
 
 export const commitmentActionLabel: Record<CalendarCommitmentKind, string> = {
   shopping: "Compras",
   cooking: "Cocinar",
   training: "Entrenamiento",
-  nutritionist: "Nutricionista",
+  nutritionist: "Evaluación",
 };
 
 export const commitmentDayTitle: Record<CalendarCommitmentKind, string> = {
   shopping: "Día de compras",
   cooking: "Día de cocinar",
   training: "Día de entrenamiento",
-  nutritionist: "Nutricionista",
+  nutritionist: "Evaluación",
 };
 
 export function commitmentFoodPanelItem(food: LibraryFoodPanelItem): FoodPanelItem {

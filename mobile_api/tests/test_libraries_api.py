@@ -132,8 +132,10 @@ class MobileAPILibrariesTests(PaidMobileAPITestCase):
                 self.assertEqual(data["items"][0]["name"], name)
                 self.assertIn("nutrition", data["items"][0])
                 self.assertIn("panel", data["items"][0])
-
         meal_item = self.client.get("/api/v1/library/meals").json()["data"]["items"][0]
+        self.assertEqual(meal_item["indicators"], [{"icon": "food", "label": "alimentos", "value": 1}])
+        meal_detail = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]
+        self.assertEqual(meal_detail["indicators"], [{"icon": "food", "label": "alimentos", "value": 1}])
         self.assertEqual(meal_item["panel"]["kind"], "foods")
         self.assertEqual(meal_item["panel"]["foods"][0]["name"], "Avena personal")
         self.assertEqual(meal_item["panel"]["foods"][0]["quantity"], 100.0)
@@ -141,7 +143,6 @@ class MobileAPILibrariesTests(PaidMobileAPITestCase):
         self.assertIn("calorie_distribution", meal_item["panel"]["foods"][0])
         self.assertEqual(meal_item["panel"]["foods"][0]["protein_per_kilogram"], 0.2)
         self.assertAlmostEqual(sum(meal_item["panel"]["foods"][0]["calorie_distribution"].values()), 100, places=1)
-
         dailyplan_item = self.client.get("/api/v1/library/daily-plans").json()["data"]["items"][0]
         self.assertEqual(dailyplan_item["panel"]["kind"], "meals")
         self.assertEqual(dailyplan_item["panel"]["meals"][0]["name"], "Instancia del plan")
@@ -154,7 +155,6 @@ class MobileAPILibrariesTests(PaidMobileAPITestCase):
         self.assertIn("calorie_share", dailyplan_item["panel"]["meals"][0])
         self.assertIn("calorie_distribution", dailyplan_item["panel"]["meals"][0])
         self.assertEqual(dailyplan_item["panel"]["meals"][0]["protein_per_kilogram"], 0.2)
-
         program_item = self.client.get("/api/v1/library/programs").json()["data"]["items"][0]
         self.assertEqual(program_item["panel"]["kind"], "weeks")
         self.assertTrue(program_item["can_calendarize"])

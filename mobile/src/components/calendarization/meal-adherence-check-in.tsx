@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { MealCheckInInput, MealExecutionItem, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { Button, InlineNotice, SectionDivider, SectionHeading } from "@/components/ui";
+import { Button, InlineNotice, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { MealCompletionSurface } from "./meal-completion-summary";
 import { normalizeMealExecution, type NormalizedMealExecutionItem } from "./meal-execution";
@@ -133,19 +133,18 @@ export function MealCompletionCard({ controller }: { controller: MealAdherenceCo
 
 export function MealNoteCard({ controller }: { controller: MealAdherenceController }) {
   if (!controller.available) return null;
-  return <View style={styles.section}>
-    <SectionDivider spacing="compact" tone="soft" />
-    <SectionHeading title="Nota de esta comida" />
+  return <View style={styles.noteSection}>
+    <View style={styles.noteTitleRow}>
+      <View style={styles.noteTitle}><SectionHeading title="Nota de esta comida" /></View>
+      <Text style={styles.noteCount}>{controller.note.length}/500</Text>
+      {!controller.editingNote ? <Pressable accessibilityLabel="Editar nota" accessibilityRole="button" hitSlop={8} onPress={() => controller.setEditingNote(true)} style={({ pressed }) => [styles.noteEdit, pressed && styles.pressed]}><Pencil color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable> : null}
+    </View>
     <View style={styles.noteSurface}>
       <View style={styles.noteBlock}>
-        <View style={styles.noteHeader}>
-          <Text style={styles.noteLabel}>Nota</Text>
-          {controller.editingNote ? <Text style={styles.noteCount}>{controller.note.length}/500</Text> : <Pressable accessibilityLabel="Editar nota" accessibilityRole="button" hitSlop={8} onPress={() => controller.setEditingNote(true)} style={({ pressed }) => [styles.noteEdit, pressed && styles.pressed]}><Pencil color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>}
-        </View>
         {controller.editingNote ? <TextInput accessibilityLabel="Nota sobre el cumplimiento de la comida" maxLength={500} multiline onChangeText={controller.setNote} placeholder="Escribe una observación opcional…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={controller.note} /> : <Text style={[styles.noteText, !controller.note.trim() && styles.noteTextEmpty]}>{controller.note.trim() || "Sin nota registrada."}</Text>}
       </View>
       {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
-      {controller.editingNote ? <Button label="Guardar nota" loading={controller.savingNote} onPress={() => void controller.saveNote()} /> : null}
+      {controller.editingNote ? <Button label="Guardar nota" loading={controller.savingNote} onPress={() => void controller.saveNote()} variant="secondary" /> : null}
     </View>
   </View>;
 }
@@ -163,11 +162,12 @@ const styles = StyleSheet.create({
   noteBlock: { gap: tokens.spacing.xs },
   noteCount: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   noteEdit: { alignItems: "center", height: 32, justifyContent: "center", width: 32 },
-  noteHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   noteInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: tokens.type.caption, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 104, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
-  noteSurface: { backgroundColor: "transparent", gap: tokens.card.gap, marginTop: tokens.spacing.xs },
-  noteLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label - 1, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 1.1, textTransform: "uppercase" },
+  noteSection: { minWidth: 0 },
+  noteSurface: { backgroundColor: "transparent", gap: tokens.card.gap, marginTop: tokens.spacing.sm },
   noteText: { color: tokens.color.textMain, fontSize: tokens.type.caption, lineHeight: 21, minHeight: 42 },
   noteTextEmpty: { color: tokens.color.textMuted },
+  noteTitle: { flex: 1, minWidth: 0 },
+  noteTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   pressed: { opacity: 0.65 }, section: { gap: tokens.spacing.sm, minWidth: 0 },
 });

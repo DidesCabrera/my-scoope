@@ -42,7 +42,7 @@
       <span class="calendar-preview__metric calendar-preview__metric--shopping" aria-label="{{ vm.content.commitment_counts.shopping }} compras"><i data-lucide="shopping-basket" aria-hidden="true"></i>{{ vm.content.commitment_counts.shopping }}</span>
       <span class="calendar-preview__metric calendar-preview__metric--cooking" aria-label="{{ vm.content.commitment_counts.cooking }} días de cocina"><i data-lucide="chef-hat" aria-hidden="true"></i>{{ vm.content.commitment_counts.cooking }}</span>
       <span class="calendar-preview__metric calendar-preview__metric--training" aria-label="{{ vm.content.commitment_counts.training }} entrenamientos"><i data-lucide="dumbbell" aria-hidden="true"></i>{{ vm.content.commitment_counts.training }}</span>
-      <span class="calendar-preview__metric calendar-preview__metric--nutritionist" aria-label="{{ vm.content.commitment_counts.nutritionist }} citas con nutricionista"><i data-lucide="stethoscope" aria-hidden="true"></i>{{ vm.content.commitment_counts.nutritionist }}</span>
+      <span class="calendar-preview__metric calendar-preview__metric--nutritionist" aria-label="{{ vm.content.commitment_counts.nutritionist }} evaluaciones"><i data-lucide="stethoscope" aria-hidden="true"></i>{{ vm.content.commitment_counts.nutritionist }}</span>
     </div>
   </section>
     <div class="calendar-preview__month-actions"><a href="{% url 'calendar_date_detail' vm.content.today|date:'Y-m-d' %}#plan-editor"><i data-lucide="plus" aria-hidden="true"></i>Añadir minuta</a><button type="button" data-open-commitment-choice><i data-lucide="plus" aria-hidden="true"></i>Añadir compromiso</button></div>
@@ -86,7 +86,7 @@
         <a href="{% url 'calendar_commitments' 'shopping' %}"><i data-lucide="shopping-basket" aria-hidden="true"></i>Registrar días de compras</a>
         <a href="{% url 'calendar_commitments' 'cooking' %}"><i data-lucide="chef-hat" aria-hidden="true"></i>Registrar días de cocinar</a>
         <a href="{% url 'calendar_commitments' 'training' %}"><i data-lucide="dumbbell" aria-hidden="true"></i>Registrar días de entrenamiento</a>
-        <a href="{% url 'calendar_commitments' 'nutritionist' %}"><i data-lucide="stethoscope" aria-hidden="true"></i>Cita nutricionista</a>
+        <a href="{% url 'calendar_commitments' 'nutritionist' %}"><i data-lucide="stethoscope" aria-hidden="true"></i>Evaluación</a>
       </div>
       <form method="dialog"><button type="submit">Cancelar</button></form>
     </dialog>

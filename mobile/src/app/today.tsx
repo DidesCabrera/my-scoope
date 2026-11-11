@@ -3,12 +3,13 @@ import * as Crypto from "expo-crypto";
 import { CalendarCheck2, CalendarDays, Camera, ChartColumnIncreasing, ChevronRight, Pin, Scale, Weight } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarCommitment, CalendarDay, CalendarOverviewData } from "@/api/calendar-types";
+import type { CalendarCommitment, CalendarCommitmentKind, CalendarDay, CalendarOverviewData } from "@/api/calendar-types";
 import type { CalendarDayDetailData, CalendarProgressData, CalendarizedDayDetail, ComparisonKind, HomeSummaryData, MealCheckInInput, OnboardingStateData, TodayData, WeightItem, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { commitmentDayTitle, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
+import { commitmentActionLabel, commitmentDayTitle, commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarMonthCalendar } from "@/components/calendarization/calendar-month-calendar";
 import { CalendarizeActions } from "@/components/calendarization/calendarize-actions";
 import { monthKeyFromDate, shiftMonth } from "@/components/calendarization/calendar-month";
@@ -22,25 +23,26 @@ import { CurrentWeekSection } from "@/components/calendarization/current-week-se
 import { HomeActions } from "@/components/home-actions";
 import { ComparisonCreateActions } from "@/components/comparisons";
 import { emptyDaySituation } from "@/components/home/home-empty-day";
-import { HomeEmptyDayNotice } from "@/components/home/home-empty-day-notice";
+import { HomeEmptyCommitmentsNotice, HomeEmptyDayNotice } from "@/components/home/home-empty-day-notice";
 import { HomeGettingStarted } from "@/components/home/home-getting-started";
 import { HomeFirstMinutasOffer } from "@/components/home/home-first-minutas-offer";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import type { MealPanelEditing, MealPanelItem } from "@/components/panels";
 import { ProgramActiveKpis } from "@/components/programs/program-active-kpis";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { Button, Card, Chip, GuideMetric, InlineNotice, LoadingState, MutationStatusModal, Screen, SectionTitle, textStyles, useMutationStatus, WeightTrendCard } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { loadCommitmentReminderSettings, syncCommitmentReminders } from "@/notifications/commitment-reminders";
 import { syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
 const homeCommitmentChipLabels: Record<CalendarCommitment["kind"], string> = {
   shopping: "Hacer compras",
   cooking: "Cocinar",
   training: "Entrenar",
-  nutritionist: "Nutricionista",
+  nutritionist: "Evaluación",
 };
 
 function displayWeight(value: number): string {
@@ -101,45 +103,23 @@ function TodayCommitmentCard({ commitment, onPress }: { commitment: CalendarComm
   </Pressable>;
 }
 
-function NextCommitmentsCard({ day, onOpenDay }: { day: CalendarDay; onOpenDay(): void }) {
-  const commitments = day.commitments ?? [];
-  const firstColumnCount = Math.ceil(commitments.length / 2);
-  const dateLabel = new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long" }).format(new Date(`${day.calendar_date}T12:00:00`));
-  return <Card style={styles.nextCommitmentsCard}>
-      <Text style={styles.nextCommitmentsIntro}>Sin compromisos para este día. Los próximos compromisos son el {dateLabel}</Text>
-      <View style={styles.nextCommitmentsColumns}>
-        {[commitments.slice(0, firstColumnCount), commitments.slice(firstColumnCount)].map((column, index) => <View key={index} style={styles.nextCommitmentsColumn}>
-          {column.map((commitment) => {
-            const presentation = commitmentPresentation[commitment.kind];
-            const Icon = presentation.icon;
-            return <View key={commitment.id} style={styles.nextCommitmentsRow}>
-              <View style={[styles.nextCommitmentsIcon, { backgroundColor: `${presentation.color}33` }]}><Icon color={presentation.color} size={16} strokeWidth={2.1} /></View>
-              <Text numberOfLines={1} style={styles.nextCommitmentsName}>{presentation.label}</Text>
-            </View>;
-          })}
-        </View>)}
-      </View>
-      <PickerCardAction label="Ver detalle del día" onPress={onOpenDay} subject={dateLabel} variant="mutedFullWidth" />
-    </Card>;
-}
-
-function TodayCommitmentsSection({ commitments, error, nextDay, onOpen, onOpenDay, onOpenRegistry }: {
+function TodayCommitmentsSection({ commitments, error, nextDay, onAdd, onOpen, onOpenRegistry }: {
   commitments: CalendarCommitment[];
   error: string | null;
   nextDay: CalendarDay | null;
+  onAdd(): void;
   onOpen(commitment: CalendarCommitment): void;
-  onOpenDay(): void;
   onOpenRegistry(): void;
 }) {
   return <>
-    <TodayCommitmentsSectionHeader />
+    {commitments.length ? <TodayCommitmentsSectionHeader /> : null}
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : commitments.length ? <View style={styles.todayCommitmentCards}>{commitments.map((commitment) => (
       <TodayCommitmentCard commitment={commitment} key={commitment.id} onPress={() => onOpen(commitment)} />
-    ))}</View> : nextDay ? <NextCommitmentsCard day={nextDay} onOpenDay={onOpenDay} /> : <Card muted><Text style={textStyles.muted}>Sin compromisos para este día.</Text></Card>}
-    <Pressable accessibilityLabel="Ver mis compromisos" accessibilityRole="button" hitSlop={6} onPress={onOpenRegistry} style={({ pressed }) => [styles.homeActionChip, pressed && styles.pressed]}>
+    ))}</View> : <HomeEmptyCommitmentsNotice nextDate={nextDay?.calendar_date} onAdd={onAdd} />}
+    {commitments.length ? <Pressable accessibilityLabel="Ver mis compromisos" accessibilityRole="button" hitSlop={6} onPress={onOpenRegistry} style={({ pressed }) => [styles.homeActionChip, pressed && styles.pressed]}>
       <Pin color={tokens.color.textMain} size={16} strokeWidth={2.2} />
       <Text style={styles.homeActionChipLabel}>Ver mis compromisos</Text>
-    </Pressable>
+    </Pressable> : null}
   </>;
 }
 
@@ -157,6 +137,7 @@ export default function TodayScreen() {
   const [monthError, setMonthError] = useState<string | null>(null);
   const [weightItems, setWeightItems] = useState<WeightItem[]>([]);
   const [todayCommitments, setTodayCommitments] = useState<CalendarCommitment[]>([]);
+  const [todayCalendarDay, setTodayCalendarDay] = useState<CalendarDayDetailData | null>(null);
   const [scrollToTopSignal, setScrollToTopSignal] = useState(0);
   const [commitmentsError, setCommitmentsError] = useState<string | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
@@ -164,6 +145,9 @@ export default function TodayScreen() {
   const [error, setError] = useState<string | null>(null);
   const [homeActionsVisible, setHomeActionsVisible] = useState(false);
   const [calendarizeActionsVisible, setCalendarizeActionsVisible] = useState(false);
+  const [commitmentActionsVisible, setCommitmentActionsVisible] = useState(false);
+  const [registeringCommitment, setRegisteringCommitment] = useState<CalendarCommitmentKind | null>(null);
+  const [addCommitmentError, setAddCommitmentError] = useState<string | null>(null);
   const [comparisonActionsVisible, setComparisonActionsVisible] = useState(false);
   const [openComparisonAfterHomeActions, setOpenComparisonAfterHomeActions] = useState(false);
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
@@ -228,6 +212,7 @@ export default function TodayScreen() {
       setFuturePlansCount(nextOverview?.future_plans_count ?? 0);
       setUpcomingOverview(nextOverview);
       setWeekDays(weekOverview?.days ?? []);
+      setTodayCalendarDay(todayCalendar);
       setTodayCommitments(todayCalendar?.commitments ?? []);
       setWeightItems(weightHistory?.items ?? []);
     } catch (nextError) {
@@ -299,10 +284,38 @@ export default function TodayScreen() {
     commitments={todayCommitments}
     error={commitmentsError}
     nextDay={nextCommitmentDay}
+    onAdd={() => { setAddCommitmentError(null); setCommitmentActionsVisible(true); }}
     onOpen={(commitment) => router.push(`/calendar/commitments/${commitment.id}?date=${commitment.calendar_date}` as Href)}
-    onOpenDay={() => { if (nextCommitmentDay) router.push(`/calendar/days/${nextCommitmentDay.calendar_date}?origin=home` as Href); }}
     onOpenRegistry={() => router.push("/calendar" as Href)}
   />;
+
+  async function registerTodayCommitment(kind: CalendarCommitmentKind) {
+    if (!today?.local_date || registeringCommitment) return;
+    const date = today.local_date;
+    setRegisteringCommitment(kind);
+    setAddCommitmentError(null);
+    try {
+      await apiRequest("/api/v1/calendar/commitments", {
+        method: "POST",
+        body: JSON.stringify({ kind, dates: [date] }),
+      });
+      setCommitmentActionsVisible(false);
+      const month = monthKeyFromDate(date);
+      monthCache.invalidate([month]);
+      await load();
+      const overview = await monthCache.load(month).catch((nextError) => {
+        setMonthError(userFacingError(nextError));
+        return null;
+      });
+      if (overview && visibleMonth === month) setMonthOverview({ key: month, data: overview });
+      void loadCommitmentReminderSettings().then((settings) => syncCommitmentReminders(settings, apiRequest)).catch(() => undefined);
+    } catch (nextError) {
+      setAddCommitmentError(userFacingError(nextError));
+      setCommitmentActionsVisible(true);
+    } finally {
+      setRegisteringCommitment(null);
+    }
+  }
 
   async function createTodayPlan() {
     if (!today) return;
@@ -457,11 +470,14 @@ export default function TodayScreen() {
         <>
           <CalendarizedDailyPlanCard
           apiRequest={apiRequest}
+          calendarActionsDisabled={todayCalendarDay?.has_execution ?? false}
+          calendarDate={today.local_date}
           dayId={todayDayId ?? null}
           dateLabel={compactDateLabel(today.local_date)}
           editing={calendarizedMealEditing}
           eyebrow="Minuta del día"
           initialPanelExpanded
+          localToday={today.local_date}
           mealExecution={today.meal_execution}
           onChangeMealTime={async (meal, hour) => {
             await apiRequest(`/api/v1/program/days/${todayDayId}/meals/${encodeURIComponent(meal.id)}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
@@ -469,12 +485,19 @@ export default function TodayScreen() {
           }}
           onAddMeal={todayDayId != null ? () => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId, returnTo: "/today" })) : undefined}
           onChanged={load}
+          onMovePlan={load}
+          onRenameCalendarized={todayDayId != null ? async (name) => {
+            await apiRequest(`/api/v1/program/days/${todayDayId}`, { body: JSON.stringify({ name }), method: "PATCH" });
+            await load();
+          } : undefined}
+          onReplacePlan={() => router.push({ pathname: "/calendar/days/[date]", params: { date: today.local_date, origin: "home", section: "replace" } } as Href)}
           onRemoveFromCalendar={async () => {
             await apiRequest(`/api/v1/calendar/days/${today.local_date}/plan`, { method: "DELETE" });
             await load();
             setScrollToTopSignal((current) => current + 1);
           }}
           snapshot={snapshot}
+          sourceKind={todayCalendarDay?.source_kind ?? null}
           />
         </>
       ) : showGettingStarted && today ? (
@@ -580,6 +603,21 @@ export default function TodayScreen() {
         visible={homeActionsVisible}
       />
       <CalendarizeActions onClose={() => setCalendarizeActionsVisible(false)} origin="home" visible={calendarizeActionsVisible} />
+      <ActionSheetModal onRequestClose={() => { if (!registeringCommitment) setCommitmentActionsVisible(false); }} visible={commitmentActionsVisible}>
+        <SafeAreaView edges={["left", "right"]} style={styles.commitmentActionsSheet}>
+          <ActionSheetHeader icon={CalendarCheck2} iconColor={commitmentPresentation.nutritionist.color} onClose={() => { if (!registeringCommitment) setCommitmentActionsVisible(false); }} title="Compromiso para hoy" />
+          <View style={styles.commitmentActionsContent}>
+            {addCommitmentError ? <InlineNotice tone="error">{addCommitmentError}</InlineNotice> : null}
+            <ActionSheetActions>
+              {commitmentKinds.map((kind) => {
+                const presentation = commitmentPresentation[kind];
+                const Icon = presentation.icon;
+                return <ActionSheetAction disabled={registeringCommitment !== null} iconNode={<Icon color={presentation.color} size={18} />} key={kind} label={commitmentActionLabel[kind]} loading={registeringCommitment === kind} onPress={() => void registerTodayCommitment(kind)} />;
+              })}
+            </ActionSheetActions>
+          </View>
+        </SafeAreaView>
+      </ActionSheetModal>
       <ComparisonCreateActions onClose={() => setComparisonActionsVisible(false)} onSelect={openComparisonBuilder} visible={comparisonActionsVisible} />
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </>
@@ -587,14 +625,9 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
+  commitmentActionsContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
+  commitmentActionsSheet: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   todayCommitmentCards: { gap: tokens.spacing.lg - 4 },
-  nextCommitmentsCard: { gap: tokens.spacing.lg },
-  nextCommitmentsColumn: { flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
-  nextCommitmentsColumns: { flexDirection: "row", gap: tokens.spacing.sm },
-  nextCommitmentsIntro: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 22 },
-  nextCommitmentsIcon: { alignItems: "center", borderRadius: 10, height: 28, justifyContent: "center", width: 28 },
-  nextCommitmentsName: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.semibold },
-  nextCommitmentsRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   activeProgramSectionHeader: { gap: tokens.spacing.sm, marginTop: tokens.spacing.xxl },
   activeProgramSectionHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   activeProgramSectionSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },

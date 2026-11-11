@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import date
+from datetime import date, time
 
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
@@ -83,6 +83,7 @@ def register_calendar_commitments(
 @transaction.atomic
 def update_calendar_commitment(
     *, user: User, commitment_id: int, note: str | None = None,
+    hour: time | None = None,
     calendar_date: date | None = None,
     update_food_period: bool = False,
     food_period_start: date | None = None, food_period_end: date | None = None,
@@ -109,6 +110,9 @@ def update_calendar_commitment(
             raise ValueError("calendar_commitment_note_too_long")
         commitment.note = clean_note
         update_fields.append("note")
+    if hour is not None:
+        commitment.hour = hour
+        update_fields.append("hour")
     if update_food_period:
         if commitment.kind not in {CalendarCommitment.KIND_SHOPPING, CalendarCommitment.KIND_COOKING}:
             raise ValueError("calendar_food_period_wrong_kind")

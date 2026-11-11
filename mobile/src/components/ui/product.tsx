@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import {
   BookOpen,
   Bell,
+  CalendarCheck2,
   CalendarClock,
   CalendarDays,
   CalendarRange,
@@ -39,7 +40,7 @@ import { foodNutritionBasisLabel } from "./food-nutrition-basis";
 import { Card } from "./surfaces";
 
 export type EntityKind = "comparison" | "food" | "meal" | "preparation" | "dailyPlan" | "dpm" | "program" | "supplement";
-export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "weight" | "explore" | "inbox" | "notifications" | "learning" | "create" | "import";
+export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "commitments" | "comparator" | "weight" | "explore" | "inbox" | "notifications" | "learning" | "create" | "import";
 
 export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "preparation" | "dailyPlan" | "supplement" | "week" | "weight";
 
@@ -172,6 +173,7 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   chat: Sparkles,
   proposal: ClipboardCheck,
   calendarization: CalendarClock,
+  commitments: CalendarCheck2,
   comparator: Scale,
   weight: Weight,
   explore: Search,

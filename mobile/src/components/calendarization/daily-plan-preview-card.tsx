@@ -5,12 +5,12 @@ import { NutritionEntityCard } from "@/components/nutrition";
 import { PickerCardAction } from "@/components/pickers/picker-card-action";
 
 export function DailyPlanPreviewCard({ action, eyebrow, item }: {
-  action?: { label: string; onPress(): void };
+  action?: { disabled?: boolean; label: string; onPress(): void };
   eyebrow?: string;
   item: LibraryItem;
 }) {
   return <NutritionEntityCard
-    actions={action ? <PickerCardAction label={action.label} onPress={action.onPress} subject={item.name} /> : undefined}
+    actions={action ? <PickerCardAction disabled={action.disabled} label={action.label} onPress={action.onPress} subject={item.name} /> : undefined}
     entity="dailyPlan"
     eyebrow={eyebrow}
     indicators={item.indicators}

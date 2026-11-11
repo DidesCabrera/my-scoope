@@ -40,14 +40,14 @@ const addCommitmentTitle: Record<CalendarCommitmentKind, string> = {
   shopping: "Agregar compras al calendario",
   cooking: "Agregar cocinar al calendario",
   training: "Agregar entrenamiento al calendario",
-  nutritionist: "Agregar nutricionista al calendario",
+  nutritionist: "Agregar evaluación al calendario",
 };
 
 const commitmentRegistrationSubject: Record<CalendarCommitmentKind, string> = {
   shopping: "de compras",
   cooking: "de cocinar",
   training: "de entrenamiento",
-  nutritionist: "con nutricionista",
+  nutritionist: "de evaluación",
 };
 
 function CommitmentDots({ commitments, draftKind, muted = false }: { commitments?: CalendarCommitment[]; draftKind?: CalendarCommitmentKind; muted?: boolean }) {
@@ -427,7 +427,7 @@ export default function RegisterCommitmentsScreen() {
       </View> : null}
       <Card>
         <Text style={styles.sectionTitle}>Nota (opcional)</Text>
-        <TextInput accessibilityLabel={`Nota de ${kind === "nutritionist" ? "la cita nutricionista" : `el ${commitmentDayTitle[kind].toLowerCase()}`} del ${shortDate(editingFoodDate)}`} maxLength={500} multiline onChangeText={(value) => setNotesByDate((current) => ({ ...current, [editingFoodDate]: value }))} placeholder="Agrega una nota para recordar los detalles…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={notesByDate[editingFoodDate] ?? ""} />
+        <TextInput accessibilityLabel={`Nota de ${kind === "nutritionist" ? "la evaluación" : `el ${commitmentDayTitle[kind].toLowerCase()}`} del ${shortDate(editingFoodDate)}`} maxLength={500} multiline onChangeText={(value) => setNotesByDate((current) => ({ ...current, [editingFoodDate]: value }))} placeholder="Agrega una nota para recordar los detalles…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={notesByDate[editingFoodDate] ?? ""} />
         <Text style={styles.noteCount}>{(notesByDate[editingFoodDate] ?? "").length}/500</Text>
       </Card>
     </Screen>;

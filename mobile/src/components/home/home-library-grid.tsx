@@ -1,7 +1,9 @@
 import { type Href, useRouter } from "expo-router";
 import { Bookmark, CalendarDays, Carrot, ClipboardList, Plus, Utensils } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
+import { useId, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import type { LibraryEntity } from "@/api/types";
 import { tokens } from "@/design/tokens";
@@ -22,6 +24,26 @@ const entries: LibraryEntry[] = [
   { entity: "food", href: "/libraries/foods", icon: Carrot, title: "Mis Alimentos" },
 ];
 
+function LibraryCardGradient({ color }: { color: string }) {
+  const gradientId = useId().replace(/:/g, "");
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const gradientLength = size.width * Math.cos(Math.PI / 6) + size.height * Math.sin(Math.PI / 6);
+
+  return <View onLayout={({ nativeEvent: { layout } }) => {
+    setSize((current) => current.width === layout.width && current.height === layout.height ? current : { width: layout.width, height: layout.height });
+  }} pointerEvents="none" style={StyleSheet.absoluteFill}>
+    {size.width && size.height ? <Svg height={size.height} width={size.width}>
+      <Defs>
+        <LinearGradient gradientUnits="userSpaceOnUse" id={gradientId} x1={0} x2={gradientLength * Math.cos(Math.PI / 6)} y1={0} y2={gradientLength * Math.sin(Math.PI / 6)}>
+          <Stop offset="0" stopColor={color} stopOpacity={0.2} />
+          <Stop offset="1" stopColor={color} stopOpacity={0.13} />
+        </LinearGradient>
+      </Defs>
+      <Rect fill={`url(#${gradientId})`} height={size.height} width={size.width} />
+    </Svg> : null}
+  </View>;
+}
+
 export function HomeLibraryGrid({ counts }: { counts: HomeLibraryCounts }) {
   const router = useRouter();
   return (
@@ -37,6 +59,7 @@ export function HomeLibraryGrid({ counts }: { counts: HomeLibraryCounts }) {
           const accessibleTitle = entry.title.replace("\n", " ");
           return (
             <View key={entry.entity} style={[styles.card, { borderTopColor: tokens.color[entry.entity] }]}>
+              <LibraryCardGradient color={tokens.color[entry.entity]} />
               <Pressable accessibilityLabel={`Abrir ${accessibleTitle}`} accessibilityRole="link" onPress={() => router.push(entry.href)} style={({ pressed }) => [styles.cardMain, pressed && styles.pressed]}>
                 <View style={[styles.icon, { backgroundColor: tokens.color[entry.entity] }]}><Icon color={tokens.color.entityIconForeground} size={20} strokeWidth={2.2} /></View>
                 <Text numberOfLines={2} style={styles.title}>{entry.title}</Text>
@@ -56,7 +79,7 @@ export function HomeLibraryGrid({ counts }: { counts: HomeLibraryCounts }) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.color.surfaceCard, borderColor: "transparent", borderRadius: tokens.radius.card, borderTopWidth: 2, borderWidth: 1, flexBasis: "47%", flexGrow: 1, minHeight: 172, overflow: "hidden", padding: tokens.card.outerPadding },
+  card: { backgroundColor: tokens.color.surfaceApp, borderColor: "transparent", borderRadius: tokens.radius.card, borderTopWidth: 2, borderWidth: 1, flexBasis: "47%", flexGrow: 1, minHeight: 172, overflow: "hidden", padding: tokens.card.outerPadding },
   cardMain: { flex: 1 },
   count: { alignItems: "center", flexDirection: "row", gap: 3 },
   countText: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold },

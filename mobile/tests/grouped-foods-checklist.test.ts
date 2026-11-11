@@ -43,7 +43,7 @@ test("commitment detail delegates food-list generation to a dedicated screen", a
   assertSourceMatch(detail, />Lista de alimentos asociada<\/Text>[\s\S]*chipsAction=\{<Button bleed=\{false\} label="Editar periodo" onPress=\{openFoodListGenerator\}/);
   assertSourceDoesNotMatch(detail, /calendarFoodDayRole|Calcular lista de alimentos|foodPeriodControls/);
   assertSourceDoesNotMatch(detail, /Lista guardada en este compromiso/);
-  assertSourceMatch(detail, /notice === "Nota guardada\." \? <InlineNotice tone="info">\{notice\}<\/InlineNotice>/);
+  assertSourceMatch(detail, /setCommitment\(updated\);[\s\S]*setNote\(updated\.note\);[\s\S]*setEditingNote\(false\)/);
   assertSourceMatch(generator, /title="Generar lista de alimentos"/);
   assertSourceMatch(generator, /icon=\{<List color=\{tokens\.color\.textMain\} size=\{28\}/);
   assertSourceMatch(generator, /apiRequest<CalendarPeriodFoodsData>\(`\/api\/v1\/calendar\/foods\?start_date=\$\{start\}&end_date=\$\{end\}`\)/);
@@ -68,7 +68,7 @@ test("shopping and cooking registration cards use a compact full-width muted lis
   assertSourceMatch(registration, /Agregar compras al calendario/);
   assertSourceMatch(registration, /Selecciona las fechas que desees/);
   assertSourceMatch(registration, /Días seleccionados · \{selected\.length\}[\s\S]*label=\{`Registrar \$\{selected\.length\} \$\{selected\.length === 1 \? "día" : "días"\} \$\{commitmentRegistrationSubject\[kind\]\}`\}[\s\S]*Días comprometidos previamente/);
-  assertSourceMatch(registration, /shopping: "de compras"[\s\S]*cooking: "de cocinar"[\s\S]*training: "de entrenamiento"[\s\S]*nutritionist: "con nutricionista"/);
+  assertSourceMatch(registration, /shopping: "de compras"[\s\S]*cooking: "de cocinar"[\s\S]*training: "de entrenamiento"[\s\S]*nutritionist: "de evaluación"/);
   assertSourceMatch(registration, /calendar\/commitments\?kind=\$\{kind\}&from_date=\$\{today\}/);
   assertSourceMatch(registration, /loadExistingCommitments\(result\.local_date, result\.future_commitments_count_by_kind\?\.\[kind\]/);
   assertSourceMatch(registration, /apiRequest<\{ deleted_id: number \}>\(`\/api\/v1\/calendar\/commitments\/\$\{commitment\.id\}`[\s\S]*method: "DELETE"/);

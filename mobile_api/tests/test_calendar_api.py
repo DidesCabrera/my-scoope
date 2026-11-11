@@ -81,6 +81,7 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(item["note"], "Control mensual")
         self.assertEqual(item["foods"], [])
         self.assertIsNone(item["food_period_start"])
+        self.assertIsNone(item["hour"])
 
         saved = self.client.patch(
             f"/api/v1/calendar/commitments/{item['id']}",
@@ -92,6 +93,16 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         overview = self.client.get("/api/v1/calendar").json()["data"]
         appointment = next(row for row in overview["days"] if row["calendar_date"] == day.isoformat())
         self.assertEqual(appointment["commitments"][0]["kind"], "nutritionist")
+
+        timed = self.client.patch(
+            f"/api/v1/calendar/commitments/{item['id']}",
+            data={"hour": "14:35"},
+            content_type="application/json",
+        )
+        self.assertEqual(timed.status_code, 200)
+        self.assertEqual(timed.json()["data"]["hour"][:5], "14:35")
+        detail = self.client.get(f"/api/v1/calendar/days/{day.isoformat()}").json()["data"]
+        self.assertEqual(detail["commitments"][0]["hour"][:5], "14:35")
 
         invalid_foods = self.client.post(
             "/api/v1/calendar/commitments",

@@ -18,7 +18,7 @@
   const foodAttachments = new Map();
   const foodPreviews = new Map();
   const notesByDate = new Map();
-  const dayTitle = { shopping: "Día de compras", cooking: "Día de cocinar", training: "Día de entrenamiento", nutritionist: "Cita nutricionista" }[page.dataset.kind];
+  const dayTitle = { shopping: "Día de compras", cooking: "Día de cocinar", training: "Día de entrenamiento", nutritionist: "Evaluación" }[page.dataset.kind];
   let openFoodEditor = () => {};
   const weekdayLabels = ["L", "M", "M", "J", "V", "S", "D"];
   const todayDate = new Date(`${today}T12:00:00Z`);
@@ -26,7 +26,7 @@
   let month = todayDate.getUTCMonth();
   const commitmentMonths = new Map();
   const commitmentRequests = new Set();
-  const kindLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Cita nutricionista" };
+  const kindLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Evaluación" };
   let refreshFoodCommitments = () => {};
 
   function monthKey(targetYear, targetMonth) { return `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}`; }

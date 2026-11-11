@@ -1528,6 +1528,18 @@
             "title": "Foods",
             "type": "array"
           },
+          "hour": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hour"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -1696,6 +1708,18 @@
               }
             ],
             "title": "Food Period Start"
+          },
+          "hour": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hour"
           },
           "note": {
             "anyOf": [

@@ -1,5 +1,5 @@
-import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { Pin } from "lucide-react-native";
+import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { CalendarCheck2 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,14 +15,16 @@ import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetMo
 import { Card, InlineNotice, LoadingState, Screen, ScrollableTabBar, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-const commitmentTabLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Nutricionista" } as const;
+const commitmentTabLabels = { shopping: "Hacer compras", cooking: "Cocinar", training: "Entrenar", nutritionist: "Evaluación" } as const;
 
 export default function FutureCommitmentsScreen() {
   const router = useRouter();
+  const { kind: requestedKind } = useLocalSearchParams<{ kind?: string }>();
+  const requestedScope = commitmentKinds.find((kind) => kind === requestedKind) ?? "all";
   const setHeaderPresentation = useHeaderPresentation();
   const { apiRequest, status } = useSession();
   const [commitments, setCommitments] = useState<CalendarCommitment[]>([]);
-  const [scope, setScope] = useState<CommitmentScope>("all");
+  const [scope, setScope] = useState<CommitmentScope>(requestedScope);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -57,13 +59,14 @@ export default function FutureCommitmentsScreen() {
   if (loading && !commitments.length) return <LoadingState label="Cargando compromisos futuros…" />;
 
   return <><Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
-    <SectionPageHeader icon={<Pin color={tokens.color.textMain} size={28} strokeWidth={1.8} />} section="calendarization" subtitle="Todos tus compromisos desde hoy, ordenados por fecha." title="Compromisos futuros" />
+    <SectionPageHeader section="commitments" subtitle="Todos tus compromisos desde hoy, ordenados por fecha." title="Compromisos futuros" />
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     <ScrollableTabBar<CommitmentScope>
       accessibilityLabel="Tipos de compromisos futuros"
       activeTab={scope}
       density="compact"
       onChange={setScope}
+      revealActiveTab
       tabs={[{ key: "all", label: "Todos" }, ...commitmentKinds.map((kind) => {
         const presentation = commitmentPresentation[kind];
         const Icon = presentation.icon;
@@ -81,7 +84,7 @@ export default function FutureCommitmentsScreen() {
   </Screen>
     <ActionSheetModal onRequestClose={() => setCreationMenuVisible(false)} visible={creationMenuVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.sheet}>
-        <ActionSheetHeader icon={Pin} onClose={() => setCreationMenuVisible(false)} title="Registrar compromiso" />
+        <ActionSheetHeader icon={CalendarCheck2} onClose={() => setCreationMenuVisible(false)} title="Registrar compromiso" />
         <View style={styles.sheetContent}>
           <ActionSheetActions>
             {commitmentKinds.map((kind) => <ActionSheetAction

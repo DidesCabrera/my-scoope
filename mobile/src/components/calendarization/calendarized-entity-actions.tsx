@@ -11,14 +11,15 @@ import { NativeDateTimeField } from "@/components/ui/native-date-time-field";
 import { tokens } from "@/design/tokens";
 
 type MealTimeFormProps = {
-  entity?: "meal" | "supplement";
+  entity?: "meal" | "supplement" | "commitment";
+  confirmationColor?: string;
   initialTime?: string | null;
   onCancel(): void;
   onSaved?(): void;
   onSubmit(hour: string): Promise<void>;
 };
 
-export function MealTimeForm({ entity = "meal", initialTime, onCancel, onSaved, onSubmit }: MealTimeFormProps) {
+export function MealTimeForm({ confirmationColor, entity = "meal", initialTime, onCancel, onSaved, onSubmit }: MealTimeFormProps) {
   const [hour, setHour] = useState(() => initialMealTime(initialTime));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export function MealTimeForm({ entity = "meal", initialTime, onCancel, onSaved, 
     try {
       await onSubmit(hour);
       (onSaved ?? onCancel)();
-      Alert.alert("Hora actualizada", `${entity === "supplement" ? "Esta ingesta" : "Esta comida"} quedó programada a las ${hour}.`);
+      Alert.alert("Hora actualizada", entity === "commitment" ? `La hora de cumplimiento quedó fijada a las ${hour}.` : `${entity === "supplement" ? "Esta ingesta" : "Esta comida"} quedó programada a las ${hour}.`);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -45,14 +46,14 @@ export function MealTimeForm({ entity = "meal", initialTime, onCancel, onSaved, 
     <View style={styles.form}>
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       <NativeDateTimeField
-        confirmationColor={entity === "supplement" ? tokens.color.supplement : tokens.color.meal}
+        confirmationColor={confirmationColor ?? (entity === "supplement" ? tokens.color.supplement : tokens.color.meal)}
         containerStyle={styles.timeInput}
         iconColor={tokens.color.textMain}
         iconInLabel
         initiallyExpanded
         inlineLabel
         inputStyle={styles.timeValue}
-        label={entity === "supplement" ? "Hora de la ingesta" : "Hora de la comida"}
+        label={entity === "supplement" ? "Hora de la ingesta" : entity === "commitment" ? "Hora de cumplimiento" : "Hora de la comida"}
         labelStyle={styles.timeLabel}
         minuteInterval={5}
         mode="time"

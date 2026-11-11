@@ -172,6 +172,8 @@ canonical Lucide glyphs render on a transparent background, and their complete
 mapping is visible in the Tokens gallery. `StructuralIndicators` is independent from the
 heading and renders accessible value/icon pairs with automatic dividers; it
 can therefore be reused in cards, detail headers and future picker results.
+The `commitments` section uses `CalendarCheck2` for its page and section headings,
+matching the shared UI System iconography.
 Entity icon vectors and structural-indicator content use explicit white
 foreground tokens for contrast on native surfaces.
 Structural indicators may omit their icon when the structural value is already

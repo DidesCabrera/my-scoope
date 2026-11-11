@@ -16,6 +16,7 @@ export type CalendarCommitment = {
   calendar_date: string;
   kind: CalendarCommitmentKind;
   note: string;
+  hour: string | null;
   food_period_start: string | null;
   food_period_end: string | null;
   food_plans_count: number;

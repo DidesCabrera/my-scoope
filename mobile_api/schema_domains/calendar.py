@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, time
 from typing import Any, Literal
 
 from ninja import Field, Schema
@@ -13,6 +13,7 @@ class CalendarCommitmentData(Schema):
     calendar_date: date
     kind: CalendarCommitmentKind
     note: str
+    hour: time | None = None
     food_period_start: date | None = None
     food_period_end: date | None = None
     food_plans_count: int = 0
@@ -52,6 +53,7 @@ class CalendarCommitmentBatchEnvelope(Schema):
 
 class CalendarCommitmentUpdateInput(Schema):
     note: str | None = Field(default=None, max_length=500)
+    hour: time | None = None
     calendar_date: date | None = None
     update_food_period: bool = False
     food_period_start: date | None = None

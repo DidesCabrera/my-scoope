@@ -37,6 +37,14 @@ activar los media queries reales de mobile web.
 Las galerías son consumidores y superficies de validación. No son fuentes de
 estilos. Los componentes y recetas compartidas viven fuera de ellas.
 
+### Iconografía de compromisos
+
+El icono semántico de **Compromisos** es el calendario con un check en la parte
+inferior (`calendar-check-2` de Lucide; `CalendarCheck2` en React Native). Se usa
+en los encabezados de la vista y la sección de compromisos programados, así como
+en sus avisos y acciones de registro. El calendario sin check representa el
+calendario general; los encabezados de compromisos no usan el pin.
+
 ---
 
 ## Capas CSS oficiales
