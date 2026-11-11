@@ -43,22 +43,9 @@ def _positive_decimal(value, *, maximum=Decimal("100000")) -> Decimal:
     return amount
 
 
-@transaction.atomic
-def save_personal_preparation(
-    *, user, name, yield_g, default_portion_g, household_label, ingredients, preparation_id=None
-):
-    require_personal_preparations_pro(user)
-    name = str(name or "").strip()
-    household_label = str(household_label or "").strip()
-    if not name or len(name) > 255 or not household_label or len(household_label) > 80:
-        raise PersonalPreparationError("preparation_identity_invalid")
-    yield_amount = _positive_decimal(yield_g)
-    portion_amount = _positive_decimal(default_portion_g)
-    if portion_amount > yield_amount:
-        raise PersonalPreparationError("preparation_portion_invalid")
+def _clean_ingredients(ingredients):
     if not isinstance(ingredients, list) or not 1 <= len(ingredients) <= 100:
         raise PersonalPreparationError("preparation_ingredients_invalid")
-
     cleaned = []
     ids = set()
     for item in ingredients:
@@ -72,16 +59,10 @@ def save_personal_preparation(
             raise PersonalPreparationError("preparation_ingredients_invalid")
         ids.add(food_id)
         cleaned.append((food_id, _positive_decimal(item.get("quantity_g"))))
+    return cleaned, ids
 
-    foods = {
-        food.pk: food
-        for food in get_food_picker_queryset(user).filter(
-            pk__in=ids, is_active=True, portion_unit=Food.PORTION_UNIT_GRAMS
-        )
-    }
-    if set(foods) != ids:
-        raise PersonalPreparationError("preparation_ingredient_unavailable")
 
+def _ingredient_nutrition(cleaned, foods):
     totals = {key: Decimal("0") for key in ("protein_g", "carbs_g", "fat_g", "sodium_mg")}
     has_sodium = True
     snapshots = []
@@ -113,9 +94,36 @@ def save_personal_preparation(
                 },
             }
         )
-
     if any(value > Decimal("9999999") for value in totals.values()):
         raise PersonalPreparationError("preparation_ingredient_nutrition_invalid")
+    return totals, has_sodium, snapshots
+
+
+@transaction.atomic
+def save_personal_preparation(
+    *, user, name, yield_g, default_portion_g, household_label, ingredients, preparation_id=None
+):
+    require_personal_preparations_pro(user)
+    name = str(name or "").strip()
+    household_label = str(household_label or "").strip()
+    if not name or len(name) > 255 or not household_label or len(household_label) > 80:
+        raise PersonalPreparationError("preparation_identity_invalid")
+    yield_amount = _positive_decimal(yield_g)
+    portion_amount = _positive_decimal(default_portion_g)
+    if portion_amount > yield_amount:
+        raise PersonalPreparationError("preparation_portion_invalid")
+    cleaned, ids = _clean_ingredients(ingredients)
+
+    foods = {
+        food.pk: food
+        for food in get_food_picker_queryset(user).filter(
+            pk__in=ids, is_active=True, portion_unit=Food.PORTION_UNIT_GRAMS
+        )
+    }
+    if set(foods) != ids:
+        raise PersonalPreparationError("preparation_ingredient_unavailable")
+
+    totals, has_sodium, snapshots = _ingredient_nutrition(cleaned, foods)
 
     if preparation_id is None:
         preparation = Preparation.objects.create(name=name, is_global=False, created_by=user)
