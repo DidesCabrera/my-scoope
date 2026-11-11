@@ -56,6 +56,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [progressMenuStage, setProgressMenuStage] = useState<"actions" | "date">("actions");
   const [progressStartDate, setProgressStartDate] = useState("");
+  const [progressDatePickerExpanded, setProgressDatePickerExpanded] = useState(false);
   const [progressDateError, setProgressDateError] = useState<string | null>(null);
   const [progressDateBusy, setProgressDateBusy] = useState(false);
   const loadSequence = useRef(0);
@@ -147,6 +148,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     setVisibleMonth(nextMonth);
   }
   async function adjustProgressStart() {
+    if (progressDatePickerExpanded || !progressStartDate || progressStartDate === progress?.period_start) return;
     setProgressDateBusy(true);
     setProgressDateError(null);
     try {
@@ -168,10 +170,12 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     setProgressMenuVisible(false);
     setProgressMenuStage("actions");
     setProgressDateError(null);
+    setProgressDatePickerExpanded(false);
   }
   function openProgressDatePicker() {
     setProgressStartDate(progress?.period_start ?? overview?.local_date ?? "");
     setProgressDateError(null);
+    setProgressDatePickerExpanded(false);
     setProgressMenuStage("date");
   }
   function openDay(date: string) {
@@ -397,8 +401,8 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
           {progressDateError ? <InlineNotice tone="error">{progressDateError}</InlineNotice> : null}
           {progressMenuStage === "date" ? <>
             <Text style={styles.progressDateHelp}>Elige desde qué fecha quieres revisar tu progreso. Los registros anteriores permanecerán intactos.</Text>
-            <NativeDateTimeField label="Fecha de inicio" maximumValue={overview?.local_date} mode="date" onChange={setProgressStartDate} value={progressStartDate} />
-            <Button disabled={!progressStartDate || progressStartDate === progress?.period_start} label="Guardar fecha de inicio" loading={progressDateBusy} onPress={() => void adjustProgressStart()} />
+            <NativeDateTimeField label="Fecha de inicio" maximumValue={overview?.local_date} mode="date" onChange={setProgressStartDate} onExpandedChange={setProgressDatePickerExpanded} value={progressStartDate} />
+            <Button disabled={progressDatePickerExpanded || !progressStartDate || progressStartDate === progress?.period_start} label="Guardar fecha de inicio" loading={progressDateBusy} onPress={() => void adjustProgressStart()} />
             <Button label="Volver" onPress={() => setProgressMenuStage("actions")} variant="secondary" />
           </> : <>
             <ActionSheetActions>

@@ -22,6 +22,8 @@ export default function ConfigureSupplementIntakeScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [timeConfirmed, setTimeConfirmed] = useState(false);
+  const [timePickerExpanded, setTimePickerExpanded] = useState(false);
   const returnHref = internalHref(returnTo) ?? `/libraries/daily-plans/${id}` as Href;
   const selectionHref = useMemo(() => ({
     pathname: "/libraries/daily-plans/[id]/supplement-intakes/add" as const,
@@ -48,7 +50,7 @@ export default function ConfigureSupplementIntakeScreen() {
   }, [apiRequest, presetId]));
 
   async function add() {
-    if (!item || saving) return;
+    if (!item || saving || !timeConfirmed || timePickerExpanded) return;
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(hour)) { setError("Ingresa una hora válida entre 00:00 y 23:59."); return; }
     setSaving(true); setError(null);
     try {
@@ -81,13 +83,14 @@ export default function ConfigureSupplementIntakeScreen() {
           labelStyle={styles.timeLabel}
           minuteInterval={5}
           mode="time"
-          onChange={setHour}
+          onChange={(value) => { setHour(value); setTimeConfirmed(true); }}
+          onExpandedChange={setTimePickerExpanded}
           value={hour}
         />
       </Card>
       {item ? <SupplementIntakePresetCard contained item={item} /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      <View style={styles.action}><Button disabled={!item || saving} label="Agregar ingesta" loading={saving} onPress={() => void add()} variant="primary" /></View>
+      <View style={styles.action}><Button disabled={!item || saving || !timeConfirmed || timePickerExpanded} label="Agregar ingesta" loading={saving} onPress={() => void add()} variant="primary" /></View>
     </ScrollView>
   </SafeAreaView>;
 }

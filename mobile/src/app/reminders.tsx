@@ -32,6 +32,7 @@ export default function RemindersScreen() {
   const [error, setError] = useState<string | null>(null);
   const [nativeState, setNativeState] = useState<NativeReminderState | null>(null);
   const [syncingNative, setSyncingNative] = useState(false);
+  const [timePickerExpanded, setTimePickerExpanded] = useState(false);
   const currentAgenda = useRef({ settings, calendarizationStatus });
   useEffect(() => { currentAgenda.current = { settings, calendarizationStatus }; }, [settings, calendarizationStatus]);
 
@@ -92,9 +93,15 @@ export default function RemindersScreen() {
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading) return <LoadingState label="Cargando tu agenda…" />;
+  const agendaChanged = settings != null && (
+    timezoneName !== settings.timezone_name
+    || dailyTime !== settings.daily_notification_time.slice(0, 5)
+    || (daily === "on") !== settings.daily_notifications_enabled
+    || (meals === "on") !== settings.meal_notifications_enabled
+  );
 
   async function save() {
-    if (!settings) return;
+    if (!settings || !agendaChanged || timePickerExpanded) return;
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(dailyTime)) {
       setError("Usa una hora válida en formato HH:MM.");
       return;
@@ -147,10 +154,10 @@ export default function RemindersScreen() {
         <>
           <Card accent={tokens.color.meal}>
             <Field label="Zona horaria IANA" onChangeText={setTimezoneName} placeholder="America/Santiago" value={timezoneName} />
-            <NativeDateTimeField label="Aviso de la minuta diaria" minuteInterval={5} mode="time" onChange={setDailyTime} value={dailyTime} />
+            <NativeDateTimeField label="Aviso de la minuta diaria" minuteInterval={5} mode="time" onChange={setDailyTime} onExpandedChange={setTimePickerExpanded} value={dailyTime} />
             <ChoiceRow<Toggle> label="Recordatorio diario" onChange={setDaily} options={toggleOptions} value={daily} />
             <ChoiceRow<Toggle> label="Recordatorios según hora de cada comida" onChange={setMeals} options={toggleOptions} value={meals} />
-            <Button label="Guardar agenda" loading={saving} onPress={() => void save()} />
+            <Button disabled={!agendaChanged || timePickerExpanded} label="Guardar agenda" loading={saving} onPress={() => void save()} />
           </Card>
           <SectionTitle detail={`${settings.upcoming.length} próximos`} title="Eventos coordinados" />
           <Card muted>

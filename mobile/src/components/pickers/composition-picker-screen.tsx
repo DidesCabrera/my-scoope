@@ -2,7 +2,7 @@ import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { ClipboardList, NotebookPen, Pencil, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
@@ -316,7 +316,10 @@ export function CompositionPickerScreen({
   const [selected, setSelected] = useState<PickerOption | null>(null);
   const [quantity, setQuantity] = useState("100");
   const [portionMeasure, setPortionMeasure] = useState<FoodPortionMeasure>("metric");
+  const [portionConfirmed, setPortionConfirmed] = useState(false);
   const [hour, setHour] = useState("08:00");
+  const [hourConfirmed, setHourConfirmed] = useState(false);
+  const [hourPickerExpanded, setHourPickerExpanded] = useState(false);
   const [note, setNote] = useState("");
   const [noteEditing, setNoteEditing] = useState(false);
   const [dayNumbers, setDayNumbers] = useState<number[]>(() => initialDayNumber ? [initialDayNumber] : [1]);
@@ -454,6 +457,8 @@ export function CompositionPickerScreen({
     : portionGrams(quantity);
   const quantityValid = !isFoodPicker || metricQuantity > 0;
   const configurationValid = Boolean(selected) && hourValid && quantityValid && (kind !== "dailyplan-to-program" || dayNumbers.length > 0);
+  const pickerConfirmed = (!isMealPicker || (hourConfirmed && !hourPickerExpanded))
+    && (!isFoodPicker || Platform.OS === "web" || portionConfirmed);
   const configuredSelection = useMemo(() => {
     if (!selected || !isFoodPicker) return selected;
     const grams = metricQuantity;
@@ -512,6 +517,7 @@ export function CompositionPickerScreen({
 
   async function commit(confirmReplacements = false) {
     if (!payload || !preview || previewPayloadKey !== payloadKey) return;
+    if (!pickerConfirmed) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -596,7 +602,7 @@ export function CompositionPickerScreen({
   const mealTimeCard = isMealPicker && selected ? (
     <View style={styles.mealFixedTime}>
       <Card style={styles.fixedControlCard}>
-        <NativeDateTimeField confirmationColor={tokens.color.meal} containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel initiallyExpanded inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={setHour} value={hour} />
+        <NativeDateTimeField confirmationColor={tokens.color.meal} containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel initiallyExpanded inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setHourConfirmed(true); }} onExpandedChange={(expanded) => { setHourPickerExpanded(expanded); if (expanded) setConfirming(false); }} value={hour} />
         {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
       </Card>
     </View>
@@ -631,6 +637,7 @@ export function CompositionPickerScreen({
           metricDefaultAmount={selected.defaultPortion}
           metricUnit={selected.quantityUnit ?? "g"}
           onChange={setQuantity}
+          onConfirmationChange={(confirmed) => { setPortionConfirmed(confirmed); if (!confirmed) setConfirming(false); }}
           onMeasureChange={setPortionMeasure}
           value={quantity}
         />
@@ -668,7 +675,7 @@ export function CompositionPickerScreen({
   ) : preview ? (
     <Button
       bleed
-      disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
+      disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey || !pickerConfirmed}
       label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar minuta diaria"}
       loading={submitting}
       onPress={() => preview.confirmation_required && kind !== "dailyplan-to-program" ? setConfirming(true) : void commit(preview.confirmation_required)}

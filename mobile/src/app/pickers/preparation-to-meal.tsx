@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { PreparationDetail } from "@/api/preparations";
@@ -40,6 +40,7 @@ export default function PreparationToMealPicker() {
   const [mealItem, setMealItem] = useState<LibraryItem | null>(null);
   const [mode, setMode] = useState<"units" | "grams">("units");
   const [amount, setAmount] = useState("1");
+  const [portionConfirmed, setPortionConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +117,7 @@ export default function PreparationToMealPicker() {
   }, [amountValid, apiRequest, mode, numericAmount, selectedId, status]);
 
   async function save() {
-    if (!selected || !previewReady || (!calendarized && !mealItem) || busy) return;
+    if (!selected || !previewReady || (!calendarized && !mealItem) || busy || (Platform.OS !== "web" && !portionConfirmed)) return;
     setBusy(true);
     setError(null);
     try {
@@ -172,6 +173,7 @@ export default function PreparationToMealPicker() {
           metricDefaultAmount={selected.default_portion_g}
           metricUnit="g"
           onChange={setAmount}
+          onConfirmationChange={setPortionConfirmed}
           onMeasureChange={(measure) => setMode(measure === "household" ? "units" : "grams")}
           value={amount}
         />
@@ -188,7 +190,7 @@ export default function PreparationToMealPicker() {
         <Pressable accessibilityRole="button" onPress={() => setShowEvidence((current) => !current)} style={styles.evidenceToggle}><Text style={styles.evidenceToggleText}>{showEvidence ? "Ocultar estimación" : "Ver cómo se estimó la porción"}</Text></Pressable>
         {showEvidence ? <Text style={styles.sourceNote}>Versión {selected.version}{selected.evidence.yield_evidence ? ` · ${selected.evidence.yield_evidence}` : ""}</Text> : null}
       </Card>
-      <Button disabled={!previewReady || (!calendarized && !mealItem)} label={replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Actualizar porción" : "Agregar a la comida"} loading={busy} onPress={() => void save()} />
+      <Button disabled={!previewReady || (!calendarized && !mealItem) || (Platform.OS !== "web" && !portionConfirmed)} label={replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Actualizar porción" : "Agregar a la comida"} loading={busy} onPress={() => void save()} />
     </> : null}
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
   </Screen>;

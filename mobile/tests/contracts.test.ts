@@ -1165,13 +1165,13 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /topInsetReduction = 0/);
   assertSourceMatch(journey, /index >= 9 && index <= 14 && styles\.profileScreen/);
   assertSourceMatch(journey, /profileScreen: \{ paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18 - 32 \}/);
-  assertSourceMatch(journey, /index === 8 \? <CreditContinueButton label=\{primary\} \/> : <Button label=\{primary\} loading=\{controller\.busy\} onPress=\{controller\.onNext \?\? noop\} \/>/);
+  assertSourceMatch(journey, /index === 8 \? <CreditContinueButton disabled=\{disabled\} label=\{primary\} \/> : <Button disabled=\{disabled\} label=\{primary\} loading=\{controller\.busy\} onPress=\{controller\.onNext \?\? noop\} \/>/);
   assertSourceMatch(journey, /if \(controller\.proposal\?\.dailyplan\)[\s\S]*<ProposalDailyPlanCard dailyplan=\{controller\.proposal\.dailyplan\}/);
   assertSourceMatch(typography, /normalizedTitle\.startsWith\("composición"\)[^\n]*return "comparison"/);
   assertSourceDoesNotMatch(journey, /subtitle="Creado a partir de tu objetivo y nivel de actividad"/);
   assertSourceMatch(journey, /id="daily-plan-credit-button"/);
   assertSourceMatch(journey, /<Text style=\{\[styles\.creditContinueLabel, chip && styles\.creditContinueLabelChip\]\}>\{label\}<\/Text>/);
-  assertSourceMatch(journey, /if \(index >= 9 && index <= 14\)[\s\S]*index === 14 \? <CreditContinueButton chip label=\{primary\} \/> : <ContinueChip label=\{primary\} \/>/);
+  assertSourceMatch(journey, /if \(index >= 9 && index <= 14\)[\s\S]*index === 14 \? <CreditContinueButton chip disabled=\{disabled\} label=\{primary\} \/> : <ContinueChip disabled=\{disabled\} label=\{primary\} \/>/);
   assertSourceMatch(journey, /creditContinueButtonChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34[^}]*paddingHorizontal: tokens\.spacing\.lg/);
   assertSourceMatch(journey, /<ChevronLeft color=\{tokens\.color\.textMuted\} size=\{16\} \/>/);
   assertSourceDoesNotMatch(journey, /<ArrowLeft/);

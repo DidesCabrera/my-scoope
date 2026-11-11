@@ -90,6 +90,8 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(portionField, /const \[visible, setVisible\] = useState\(initiallyExpanded\)/);
   matches(portionField, /const \[confirmed, setConfirmed\] = useState\(false\)/);
   matches(portionField, /setConfirmed\(true\)/);
+  matches(portionField, /onConfirmationChange\?\.\(true\)/);
+  matches(portionField, /onConfirmationChange\?\.\(false\)/);
   matches(portionField, /accessibilityLabel=\{confirmed \? "Cerrar selector de porción" : "Confirmar porción"\}/);
   matches(portionField, /onPress=\{confirmed \? close : commit\}/);
   matches(portionField, /confirmed[\s\S]*<X color=\{accentColor\}[\s\S]*<Check color=\{accentColor\}/);
@@ -108,12 +110,13 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView/);
   matches(picker, /foodFixedPortion: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
   omits(picker, /setQuantity\(value\); setPreview\(null\)/);
-  matches(picker, /mode="time" onChange=\{setHour\} value=\{hour\}/);
+  matches(picker, /mode="time" onChange=\{\(value\) => \{ setHour\(value\); setHourConfirmed\(true\); \}\} onExpandedChange=\{\(expanded\) => \{ setHourPickerExpanded\(expanded\)/);
+  matches(picker, /onConfirmationChange=\{\(confirmed\) => \{ setPortionConfirmed\(confirmed\)/);
   matches(picker, /onChangeText=\{setNote\}/);
   omits(picker, /setHour\(value\); setPreview\(null\)/);
   omits(picker, /setNote\(value\); setPreview\(null\)/);
   matches(picker, /setPreviewPayloadKey\(payloadKey\)/);
-  matches(picker, /disabled=\{!configurationValid \|\| previewing \|\| previewPayloadKey !== payloadKey\}/);
+  matches(picker, /disabled=\{!configurationValid \|\| previewing \|\| previewPayloadKey !== payloadKey \|\| !pickerConfirmed\}/);
   matches(picker, /<MacroLoadingIndicator accessibilityLabel="Actualizando previsualización" size="small" style=\{styles\.previewActivity\} \/>/);
   matches(picker, /previewActivity: \{ alignSelf: "center", marginVertical: tokens\.spacing\.xs \}/);
   matches(picker, /label="Hora de la comida"/);

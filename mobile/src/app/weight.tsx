@@ -53,6 +53,8 @@ export default function WeightScreen() {
   const [saved, setSaved] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [expandedPicker, setExpandedPicker] = useState<"current-time" | "current-weight" | "history-date" | "history-time" | "history-weight" | null>(null);
+  const [currentWeightConfirmed, setCurrentWeightConfirmed] = useState(false);
+  const [historyConfirmed, setHistoryConfirmed] = useState({ date: false, time: false, weight: false });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -79,6 +81,7 @@ export default function WeightScreen() {
   if (loading && !items.length) return <LoadingState label="Cargando tus mediciones…" />;
 
   async function save() {
+    if (!currentWeightConfirmed || expandedPicker != null) return;
     const weight = Number(value.replace(",", "."));
     if (!Number.isFinite(weight) || weight < 25 || weight > 350) {
       setError("Ingresa un peso válido entre 25 y 350 kg.");
@@ -93,6 +96,7 @@ export default function WeightScreen() {
       await Promise.all([load(), refreshProfile()]);
       setMeasuredTime("");
       setComment("");
+      setCurrentWeightConfirmed(false);
       setSaved(true);
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -109,6 +113,7 @@ export default function WeightScreen() {
     setEditDate(item.measured_on);
     setEditTime(item.measured_time?.slice(0, 5) ?? "");
     setEditError(null);
+    setHistoryConfirmed({ date: false, time: false, weight: false });
   }
 
   function openCreate() {
@@ -119,6 +124,7 @@ export default function WeightScreen() {
     setEditDate("");
     setEditTime("");
     setEditError(null);
+    setHistoryConfirmed({ date: false, time: false, weight: false });
   }
 
   function closeEdit() {
@@ -130,6 +136,10 @@ export default function WeightScreen() {
 
   async function saveHistory() {
     if (!historyFormMode) return;
+    const historyReady = historyFormMode === "create"
+      ? historyConfirmed.weight && historyConfirmed.date
+      : historyConfirmed.weight || historyConfirmed.date || historyConfirmed.time;
+    if (!historyReady || expandedPicker != null) return;
     const weight = Number(editValue.replace(",", "."));
     if (!Number.isFinite(weight) || weight < 25 || weight > 350) {
       setEditError("Ingresa un peso válido entre 25 y 350 kg.");
@@ -188,11 +198,11 @@ export default function WeightScreen() {
       <Card accent={tokens.color.protein}>
         <CardHeader title="Registro de peso actual" />
         <Text style={textStyles.muted}>Mídete en condiciones similares para que la tendencia sea comparable.</Text>
-        <NativeMeasurementField expanded={expandedPicker === "current-weight"} kind="weight" label={`Peso actual · ${formatDate(localDateValue())}`} onChange={setValue} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "current-weight", expanded))} value={value} />
+        <NativeMeasurementField expanded={expandedPicker === "current-weight"} kind="weight" label={`Peso actual · ${formatDate(localDateValue())}`} onChange={(next) => { setValue(next); setCurrentWeightConfirmed(true); }} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "current-weight", expanded))} value={value} />
         <NativeDateTimeField expanded={expandedPicker === "current-time"} label="Hora de medición (Opcional)" mode="time" onChange={setMeasuredTime} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "current-time", expanded))} value={measuredTime} />
         <Field autoCapitalize="sentences" label="Comentario (Opcional)" maxLength={500} onChangeText={setComment} placeholder="Agrega contexto sobre esta medición" value={comment} />
         <View style={styles.saveButtonSpacing}>
-          <Button label="Guardar medición" loading={saving} onPress={save} />
+          <Button disabled={!currentWeightConfirmed || expandedPicker != null} label="Guardar medición" loading={saving} onPress={save} />
         </View>
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         {saved ? <InlineNotice>Medición guardada. Tu Today ya usa el peso actualizado.</InlineNotice> : null}
@@ -267,11 +277,11 @@ export default function WeightScreen() {
           showsVerticalScrollIndicator={false}
           style={styles.editFormScroll}>
           {historyFormMode === "create" ? <Text style={textStyles.muted}>Puedes ingresar una medición antigua que no registraste en el momento.</Text> : null}
-          <NativeMeasurementField defaultValue={historyFormMode === "create" ? profile?.current_weight_kg?.toString() : undefined} expanded={expandedPicker === "history-weight"} kind="weight" label="Peso" onChange={setEditValue} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "history-weight", expanded))} value={editValue} />
-          <NativeDateTimeField expanded={expandedPicker === "history-date"} label="Fecha" maximumValue={localDateValue()} mode="date" onChange={setEditDate} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "history-date", expanded))} value={editDate} />
-          <NativeDateTimeField expanded={expandedPicker === "history-time"} label="Hora (Opcional)" mode="time" onChange={setEditTime} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "history-time", expanded))} value={editTime} />
+          <NativeMeasurementField defaultValue={historyFormMode === "create" ? profile?.current_weight_kg?.toString() : undefined} expanded={expandedPicker === "history-weight"} kind="weight" label="Peso" onChange={(next) => { setEditValue(next); setHistoryConfirmed((current) => ({ ...current, weight: true })); }} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "history-weight", expanded))} value={editValue} />
+          <NativeDateTimeField expanded={expandedPicker === "history-date"} label="Fecha" maximumValue={localDateValue()} mode="date" onChange={(next) => { setEditDate(next); setHistoryConfirmed((current) => ({ ...current, date: true })); }} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "history-date", expanded))} value={editDate} />
+          <NativeDateTimeField expanded={expandedPicker === "history-time"} label="Hora (Opcional)" mode="time" onChange={(next) => { setEditTime(next); setHistoryConfirmed((current) => ({ ...current, time: true })); }} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "history-time", expanded))} value={editTime} />
           {editError ? <InlineNotice tone="error">{editError}</InlineNotice> : null}
-          <Button bleed={false} label={historyFormMode === "create" ? "Guardar medición" : "Guardar cambios"} loading={saving} onPress={saveHistory} />
+          <Button bleed={false} disabled={expandedPicker != null || (historyFormMode === "create" ? !historyConfirmed.weight || !historyConfirmed.date : !Object.values(historyConfirmed).some(Boolean))} label={historyFormMode === "create" ? "Guardar medición" : "Guardar cambios"} loading={saving} onPress={saveHistory} />
         </ScrollView>
       </ActionSheetModal>
     </Screen>

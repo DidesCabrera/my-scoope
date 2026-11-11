@@ -14,6 +14,7 @@ export type FoodPortionFieldProps = {
   metricDefaultAmount?: number | null;
   metricUnit: "g" | "ml";
   onChange(value: string): void;
+  onConfirmationChange?(confirmed: boolean): void;
   onMeasureChange(measure: FoodPortionMeasure): void;
   value: string;
 };

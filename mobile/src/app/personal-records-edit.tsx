@@ -27,7 +27,8 @@ export default function PersonalRecordsEditScreen() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedPicker, setExpandedPicker] = useState<"birth-date" | "height" | null>(null);
+  const [expandedPicker, setExpandedPicker] = useState<"birth-date" | "height" | "weight" | null>(null);
+  const [dirty, setDirty] = useState(false);
 
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({ fallback: "/personal-records", mode: "back", title: titles[section] });
@@ -38,6 +39,7 @@ export default function PersonalRecordsEditScreen() {
     if (status !== "authenticated") return;
     void apiRequest<OnboardingStateData>("/api/v1/onboarding/state").then((next) => {
       setRecord(next);
+      setDirty(false);
       setValues({
         activity_level: next.activity_level, allergies_or_intolerances: next.allergies_or_intolerances.join(", "),
         avoided_foods: next.avoided_foods.join(", "), birth_date: next.birth_date ?? "", dietary_pattern: next.dietary_pattern,
@@ -48,9 +50,13 @@ export default function PersonalRecordsEditScreen() {
   }, [apiRequest, status]);
 
   if (status === "anonymous") return <Redirect href="/login" />;
-  const set = (key: string, value: string) => setValues((current) => ({ ...current, [key]: value }));
+  const set = (key: string, value: string) => {
+    setValues((current) => ({ ...current, [key]: value }));
+    setDirty(true);
+  };
 
   async function save() {
+    if (!record || !dirty || expandedPicker != null) return;
     setBusy(true); setError(null);
     const split = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
     const payload = section === "body"
@@ -86,9 +92,9 @@ export default function PersonalRecordsEditScreen() {
           <Field label="Alergias o intolerancias, separadas por comas" onChangeText={(value) => set("allergies_or_intolerances", value)} value={values.allergies_or_intolerances ?? ""} />
           <Field label="Alimentos evitados, separados por comas" onChangeText={(value) => set("avoided_foods", value)} value={values.avoided_foods ?? ""} />
         </> : null}
-        {section === "metrics" ? <NativeMeasurementField kind="weight" label="Peso actual" onChange={(value) => set("weight_kg", value)} value={values.weight_kg ?? ""} /> : null}
+        {section === "metrics" ? <NativeMeasurementField expanded={expandedPicker === "weight"} kind="weight" label="Peso actual" onChange={(value) => set("weight_kg", value)} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "weight", expanded))} value={values.weight_kg ?? ""} /> : null}
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-        <Button disabled={!record} label="Guardar cambios" loading={busy} onPress={() => void save()} />
+        <Button disabled={!record || !dirty || expandedPicker != null} label="Guardar cambios" loading={busy} onPress={() => void save()} />
         <Button disabled={busy} label="Cancelar" onPress={() => router.back()} variant="secondary" />
       </Card>
     </Screen>

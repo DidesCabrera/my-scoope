@@ -294,10 +294,11 @@ function ExplanationDots({ action, compact = false, forceVisible = false, index 
   );
 }
 
-function ContinueChip({ label = "Continuar", onPress }: { label?: string; onPress?: () => void }) {
+function ContinueChip({ disabled = false, label = "Continuar", onPress }: { disabled?: boolean; label?: string; onPress?: () => void }) {
   const controller = useJourneyController();
+  const isDisabled = controller.busy || disabled;
   return (
-    <Pressable accessibilityRole="button" disabled={controller.busy} onPress={onPress ?? controller.onNext ?? noop} style={[styles.continueChip, controller.busy && styles.actionDisabled]}>
+    <Pressable accessibilityRole="button" disabled={isDisabled} onPress={onPress ?? controller.onNext ?? noop} style={[styles.continueChip, isDisabled && styles.actionDisabled]}>
       <Svg aria-hidden pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="continue-chip-border" x1="0" x2="1" y1="0" y2="1">
@@ -410,13 +411,13 @@ function ProfileProgress({ index }: { index: number }) {
   );
 }
 
-function ProfileStepLayout({ children, index, primary }: { children: ReactNode; index: number; primary?: string }) {
+function ProfileStepLayout({ children, disabled = false, index, primary }: { children: ReactNode; disabled?: boolean; index: number; primary?: string }) {
   const { fixedProfileChrome, fixedProfileFooterBottomSpacing } = useContext(JourneyPresentationContext);
   const [contentHeight, setContentHeight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
   const contentOverflows = contentHeight > viewportHeight + 1;
   if (!fixedProfileChrome) {
-    return <>{children}<JourneyFooter index={index} primary={primary} /></>;
+    return <>{children}<JourneyFooter disabled={disabled} index={index} primary={primary} /></>;
   }
   return (
     <View style={styles.fixedProfileLayout}>
@@ -435,7 +436,7 @@ function ProfileStepLayout({ children, index, primary }: { children: ReactNode; 
         {children}
       </ScrollView>
       <View style={fixedProfileFooterBottomSpacing > 0 ? { marginBottom: fixedProfileFooterBottomSpacing } : undefined}>
-        <JourneyFooter index={index} primary={primary} />
+        <JourneyFooter disabled={disabled} index={index} primary={primary} />
       </View>
     </View>
   );
@@ -470,7 +471,7 @@ function DisclosuresStepLayout({ children, index }: { children: ReactNode; index
   );
 }
 
-function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: { index: number; primary?: string; secondary?: string }) {
+function JourneyFooter({ disabled = false, index, primary = "Continuar", secondary = "Atrás" }: { disabled?: boolean; index: number; primary?: string; secondary?: string }) {
   const controller = useJourneyController();
   if (index >= 9 && index <= 14) {
     return (
@@ -480,14 +481,14 @@ function JourneyFooter({ index, primary = "Continuar", secondary = "Atrás" }: {
           <Text style={styles.backLabel}>{secondary}</Text>
         </Pressable>
         <View style={styles.profilePrimaryAction}>
-          {index === 14 ? <CreditContinueButton chip label={primary} /> : <ContinueChip label={primary} />}
+          {index === 14 ? <CreditContinueButton chip disabled={disabled} label={primary} /> : <ContinueChip disabled={disabled} label={primary} />}
         </View>
       </View>
     );
   }
   return (
     <View style={styles.footer}>
-      {index === 8 ? <CreditContinueButton label={primary} /> : <Button label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
+      {index === 8 ? <CreditContinueButton disabled={disabled} label={primary} /> : <Button disabled={disabled} label={primary} loading={controller.busy} onPress={controller.onNext ?? noop} />}
       {index === 8 ? <View style={styles.disclosuresConfirmationSpacing}><ResponsibleUseConfirmationNotice /></View> : null}
       {index > 0 ? (
         <Pressable accessibilityRole="button" disabled={controller.busy} onPress={controller.onBack ?? noop} style={[styles.backAction, index === 8 && styles.disclosuresBackAction]}>
@@ -930,13 +931,14 @@ function GoalView({ index }: { index: number }) {
 
 function IdentityView({ index }: { index: number }) {
   const controller = useJourneyController();
+  const [birthDatePickerExpanded, setBirthDatePickerExpanded] = useState(false);
   const { conciseSexEyebrow, profileQuestionSpacing, showProfileControlBleed } = useContext(JourneyPresentationContext);
   const profileQuestionStyle = useProfileQuestionStyle();
   return (
-    <ProfileStepLayout index={index}>
+    <ProfileStepLayout disabled={!controller.values.birthDate || birthDatePickerExpanded} index={index}>
       <StepHeader description="La edad y el sexo usado para el cálculo forman parte de la estimación de tu gasto basal." eyebrow="Datos para el cálculo" icon={CircleUserRound} index={index} title="Ingresa tus datos personales" />
       <Card style={[styles.profileCard, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
-        <NativeDateTimeField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={profileQuestionStyle} maximumValue={localDateValue()} mode="date" onChange={(value) => controller.onChange?.("birthDate", value)} value={controller.values.birthDate} />
+        <NativeDateTimeField confirmationColor={tokens.color.carbs} inputStyle={styles.profileInput} label="Fecha de nacimiento" labelStyle={profileQuestionStyle} maximumValue={localDateValue()} mode="date" onChange={(value) => controller.onChange?.("birthDate", value)} onExpandedChange={setBirthDatePickerExpanded} value={controller.values.birthDate} />
         <View accessibilityRole="radiogroup" style={[styles.identityChoiceField, styles.profileSectionExtraTopSpacing]}>
           <Text style={profileQuestionStyle}>{conciseSexEyebrow ? "Sexo" : "Sexo usado para el cálculo nutricional"}</Text>
           <View style={[styles.identityChoiceRow, showProfileControlBleed && styles.profileControlBleed]}>
@@ -963,7 +965,7 @@ function MeasurementsView({ index }: { index: number }) {
   const profileQuestionStyle = useProfileQuestionStyle();
   const [expandedMeasurement, setExpandedMeasurement] = useState<"height" | "weight" | null>(null);
   return (
-    <ProfileStepLayout index={index}>
+    <ProfileStepLayout disabled={!controller.values.height || !controller.values.weight || expandedMeasurement != null} index={index}>
       <StepHeader description="La altura y el peso permiten estimar tu gasto energético y calcular referencias por kilogramo." eyebrow="Datos para el cálculo" icon={Scale} index={index} title="Ingresa tus medidas actuales" />
       <Card style={styles.profileCard}>
         <View style={[styles.measurementFields, profileQuestionSpacing > 0 && { gap: profileQuestionSpacing }]}>
