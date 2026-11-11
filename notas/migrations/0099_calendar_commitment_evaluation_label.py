@@ -8,6 +8,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="calendarcommitment",
             name="kind",
+            # Existing records keep their stored key; only the user-facing label changes.
             field=models.CharField(
                 choices=[
                     ("shopping", "Hacer compras"),
