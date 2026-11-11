@@ -2,6 +2,7 @@ from django.db import migrations
 
 
 def enable_pro_personal_preparations(apps, schema_editor):
+    """Enable personal preparations on existing Pro plans without replacing other entitlements."""
     AccountPlan = apps.get_model("accounts", "AccountPlan")
     for plan in AccountPlan.objects.filter(slug="pro"):
         entitlements = dict(plan.entitlements or {})
@@ -13,6 +14,7 @@ def enable_pro_personal_preparations(apps, schema_editor):
 
 
 def disable_pro_personal_preparations(apps, schema_editor):
+    """Remove only the entitlement introduced by this migration on rollback."""
     AccountPlan = apps.get_model("accounts", "AccountPlan")
     for plan in AccountPlan.objects.filter(slug="pro"):
         entitlements = dict(plan.entitlements or {})
