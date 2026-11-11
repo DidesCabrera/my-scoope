@@ -1,0 +1,6588 @@
+[
+  {
+    "id": "S01",
+    "request": "Omnívoro, 1800 kcal, 3 comidas",
+    "target_kcal": 1800,
+    "meals": 3,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 5.011,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 91.52,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 91.5/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1790.72,
+      "protein": 124.56,
+      "carbs": 219.11,
+      "fat": 46.22
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 112,
+        "name": "Garbanzos cocidos",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 336.86,
+          "protein": 17.72,
+          "carbs": 54.84,
+          "fat": 5.18
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 95.0,
+        "nutrients": {
+          "kcal": 131.77,
+          "protein": 11.93,
+          "carbs": 0.68,
+          "fat": 9.03
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 234,
+        "name": "Durazno crudo",
+        "quantity_g": 80.0,
+        "nutrients": {
+          "kcal": 35.24,
+          "protein": 0.73,
+          "carbs": 7.63,
+          "fat": 0.2
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 154,
+        "name": "Arvejas de ojo negro cocidas",
+        "quantity_g": 270.0,
+        "nutrients": {
+          "kcal": 321.0,
+          "protein": 20.87,
+          "carbs": 56.16,
+          "fat": 1.43
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 355.24,
+          "protein": 34.58,
+          "carbs": 15.88,
+          "fat": 17.04
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 290.0,
+        "nutrients": {
+          "kcal": 348.06,
+          "protein": 26.16,
+          "carbs": 58.38,
+          "fat": 1.1
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 247,
+        "name": "Mozzarella fresca",
+        "quantity_g": 55.0,
+        "nutrients": {
+          "kcal": 163.52,
+          "protein": 12.21,
+          "carbs": 1.32,
+          "fat": 12.16
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 316,
+        "name": "Taro cocido",
+        "quantity_g": 70.0,
+        "nutrients": {
+          "kcal": 99.03,
+          "protein": 0.36,
+          "carbs": 24.22,
+          "fat": 0.08
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Garbanzos cocidos",
+          "Huevo entero",
+          "Durazno crudo"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Arvejas de ojo negro cocidas",
+          "Soya cocida"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Mozzarella fresca",
+          "Taro cocido"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S02",
+    "request": "Omnívoro, 2200 kcal, 4 comidas",
+    "target_kcal": 2200,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.591,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 90.14,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 90.1/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2194.1000000000004,
+      "protein": 153.66,
+      "carbs": 282.37,
+      "fat": 49.980000000000004
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 112,
+        "name": "Garbanzos cocidos",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 320.02,
+          "protein": 16.83,
+          "carbs": 52.1,
+          "fat": 4.92
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 295,
+        "name": "Guayaba cruda",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 68.36,
+          "protein": 2.29,
+          "carbs": 12.87,
+          "fat": 0.85
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 45.0,
+        "nutrients": {
+          "kcal": 171.94,
+          "protein": 5.92,
+          "carbs": 30.47,
+          "fat": 2.93
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 360.0,
+        "nutrients": {
+          "kcal": 432.07,
+          "protein": 32.47,
+          "carbs": 72.47,
+          "fat": 1.37
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 119,
+        "name": "Salmón cocido",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 174.93,
+          "protein": 25.44,
+          "carbs": 0.0,
+          "fat": 8.13
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 194,
+        "name": "Sandía cruda",
+        "quantity_g": 430.0,
+        "nutrients": {
+          "kcal": 146.16,
+          "protein": 2.62,
+          "carbs": 32.46,
+          "fat": 0.64
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 256,
+        "name": "Membrillo crudo",
+        "quantity_g": 50.0,
+        "nutrients": {
+          "kcal": 31.85,
+          "protein": 0.2,
+          "carbs": 7.65,
+          "fat": 0.05
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 300.05,
+          "protein": 22.55,
+          "carbs": 50.32,
+          "fat": 0.95
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 155,
+        "name": "Hinojo bulbo crudo",
+        "quantity_g": 75.0,
+        "nutrients": {
+          "kcal": 26.97,
+          "protein": 0.93,
+          "carbs": 5.47,
+          "fat": 0.15
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 209,
+        "name": "Champiñón blanco cocido",
+        "quantity_g": 310.0,
+        "nutrients": {
+          "kcal": 105.62,
+          "protein": 6.73,
+          "carbs": 16.4,
+          "fat": 1.46
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Garbanzos cocidos",
+          "Huevo entero",
+          "Guayaba cruda"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Avena tradicional",
+          "Lentejas cocidas",
+          "Huevo entero"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Salmón cocido",
+          "Sandía cruda",
+          "Membrillo crudo"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Huevo entero",
+          "Hinojo bulbo crudo",
+          "Champiñón blanco cocido"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S03",
+    "request": "Omnívoro, 2600 kcal, 4 comidas",
+    "target_kcal": 2600,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.558,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 96.49,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 96.5/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2558.5600000000004,
+      "protein": 185.26999999999998,
+      "carbs": 294.45,
+      "fat": 71.08
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 106,
+        "name": "Arroz blanco cocido",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 239.32,
+          "protein": 5.11,
+          "carbs": 53.52,
+          "fat": 0.53
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 174.15,
+          "protein": 31.0,
+          "carbs": 6.8,
+          "fat": 2.55
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 254,
+        "name": "Ricotta entera",
+        "quantity_g": 140.0,
+        "nutrients": {
+          "kcal": 211.46,
+          "protein": 10.56,
+          "carbs": 10.18,
+          "fat": 14.28
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 40.0,
+        "nutrients": {
+          "kcal": 152.83,
+          "protein": 5.26,
+          "carbs": 27.08,
+          "fat": 2.61
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 154,
+        "name": "Arvejas de ojo negro cocidas",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 297.23,
+          "protein": 19.33,
+          "carbs": 52.0,
+          "fat": 1.33
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 230.0,
+        "nutrients": {
+          "kcal": 430.03,
+          "protein": 41.86,
+          "carbs": 19.23,
+          "fat": 20.63
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 300.05,
+          "protein": 22.55,
+          "carbs": 50.32,
+          "fat": 0.95
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 126,
+        "name": "Nueces",
+        "quantity_g": 15.0,
+        "nutrients": {
+          "kcal": 105.4,
+          "protein": 2.28,
+          "carbs": 2.06,
+          "fat": 9.78
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 360.0,
+        "nutrients": {
+          "kcal": 432.07,
+          "protein": 32.47,
+          "carbs": 72.47,
+          "fat": 1.37
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 55.0,
+        "nutrients": {
+          "kcal": 216.02,
+          "protein": 14.85,
+          "carbs": 0.79,
+          "fat": 17.05
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Arroz blanco cocido",
+          "Requesón bajo en grasa",
+          "Ricotta entera"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Avena tradicional",
+          "Arvejas de ojo negro cocidas",
+          "Soya cocida"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Lentejas cocidas",
+          "Nueces"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Queso suizo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S04",
+    "request": "Omnívoro, 3000 kcal, 4 comidas",
+    "target_kcal": 3000,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.562,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 91.88,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 91.9/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2963.08,
+      "protein": 200.03,
+      "carbs": 366.19,
+      "fat": 77.56
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 107,
+        "name": "Arroz integral cocido",
+        "quantity_g": 270.0,
+        "nutrients": {
+          "kcal": 298.35,
+          "protein": 7.02,
+          "carbs": 62.1,
+          "fat": 2.43
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 124,
+        "name": "Palta",
+        "quantity_g": 95.0,
+        "nutrients": {
+          "kcal": 165.36,
+          "protein": 1.9,
+          "carbs": 8.1,
+          "fat": 13.93
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 370.0,
+        "nutrients": {
+          "kcal": 257.74,
+          "protein": 45.88,
+          "carbs": 10.06,
+          "fat": 3.77
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 110,
+        "name": "Camote cocido",
+        "quantity_g": 400.0,
+        "nutrients": {
+          "kcal": 310.48,
+          "protein": 5.48,
+          "carbs": 70.88,
+          "fat": 0.56
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 114,
+        "name": "Pechuga de pollo cocida",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 312.42,
+          "protein": 62.04,
+          "carbs": 0.0,
+          "fat": 7.14
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 126,
+        "name": "Nueces",
+        "quantity_g": 30.0,
+        "nutrients": {
+          "kcal": 210.79,
+          "protein": 4.57,
+          "carbs": 4.11,
+          "fat": 19.56
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 156,
+        "name": "Papa horneada con piel",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 177.9,
+          "protein": 4.6,
+          "carbs": 39.2,
+          "fat": 0.3
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 276,
+        "name": "Carambola cruda",
+        "quantity_g": 180.0,
+        "nutrients": {
+          "kcal": 61.29,
+          "protein": 1.87,
+          "carbs": 12.11,
+          "fat": 0.59
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 295,
+        "name": "Guayaba cruda",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 250.63,
+          "protein": 8.41,
+          "carbs": 47.19,
+          "fat": 3.13
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 360.0,
+        "nutrients": {
+          "kcal": 432.07,
+          "protein": 32.47,
+          "carbs": 72.47,
+          "fat": 1.37
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 124,
+        "name": "Palta",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 174.06,
+          "protein": 2.0,
+          "carbs": 8.53,
+          "fat": 14.66
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 195,
+        "name": "Porotos mung cocidos",
+        "quantity_g": 160.0,
+        "nutrients": {
+          "kcal": 173.28,
+          "protein": 11.23,
+          "carbs": 30.72,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Arroz integral cocido",
+          "Palta",
+          "Requesón bajo en grasa"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Camote cocido",
+          "Pechuga de pollo cocida",
+          "Nueces",
+          "Papa horneada con piel"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Huevo entero",
+          "Carambola cruda",
+          "Guayaba cruda"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Palta",
+          "Porotos mung cocidos"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S05",
+    "request": "Omnívoro, alto en proteína",
+    "target_kcal": 2300,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "high_protein",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.561,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 94.5,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 94.5/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2293.33,
+      "protein": 214.15,
+      "carbs": 249.8,
+      "fat": 48.629999999999995
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 107,
+        "name": "Arroz integral cocido",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 265.2,
+          "protein": 6.24,
+          "carbs": 55.2,
+          "fat": 2.16
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 114,
+        "name": "Pechuga de pollo cocida",
+        "quantity_g": 140.0,
+        "nutrients": {
+          "kcal": 218.69,
+          "protein": 43.43,
+          "carbs": 0.0,
+          "fat": 5.0
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 15.0,
+        "nutrients": {
+          "kcal": 58.91,
+          "protein": 4.05,
+          "carbs": 0.22,
+          "fat": 4.65
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 113,
+        "name": "Porotos negros cocidos",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 445.96,
+          "protein": 29.24,
+          "carbs": 78.24,
+          "fat": 1.78
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 114,
+        "name": "Pechuga de pollo cocida",
+        "quantity_g": 130.0,
+        "nutrients": {
+          "kcal": 203.07,
+          "protein": 40.33,
+          "carbs": 0.0,
+          "fat": 4.64
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 35.0,
+        "nutrients": {
+          "kcal": 137.47,
+          "protein": 9.45,
+          "carbs": 0.5,
+          "fat": 10.85
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 140.0,
+        "nutrients": {
+          "kcal": 168.11,
+          "protein": 6.16,
+          "carbs": 29.82,
+          "fat": 2.69
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 118,
+        "name": "Atún en agua drenado",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 109.42,
+          "protein": 25.51,
+          "carbs": 0.0,
+          "fat": 0.82
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 275,
+        "name": "Leche entera",
+        "quantity_g": 150.0,
+        "nutrients": {
+          "kcal": 91.72,
+          "protein": 4.72,
+          "carbs": 7.17,
+          "fat": 4.91
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 270.0,
+        "nutrients": {
+          "kcal": 324.05,
+          "protein": 24.35,
+          "carbs": 54.35,
+          "fat": 1.03
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 215,
+        "name": "Porotos pintos cocidos",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 132.02,
+          "protein": 8.11,
+          "carbs": 23.58,
+          "fat": 0.59
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Arroz integral cocido",
+          "Pechuga de pollo cocida",
+          "Queso suizo"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Porotos negros cocidos",
+          "Pechuga de pollo cocida",
+          "Queso suizo"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Quinoa cocida",
+          "Atún en agua drenado",
+          "Leche entera"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Huevo entero",
+          "Porotos pintos cocidos"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S06",
+    "request": "Omnívoro, alto en carbohidratos",
+    "target_kcal": 2300,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "high_carbs",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.561,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 95.01,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 95.0/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2258.65,
+      "protein": 113.61,
+      "carbs": 307.61,
+      "fat": 63.739999999999995
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 113,
+        "name": "Porotos negros cocidos",
+        "quantity_g": 210.0,
+        "nutrients": {
+          "kcal": 283.79,
+          "protein": 18.61,
+          "carbs": 49.79,
+          "fat": 1.13
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 275,
+        "name": "Leche entera",
+        "quantity_g": 430.0,
+        "nutrients": {
+          "kcal": 262.94,
+          "protein": 13.54,
+          "carbs": 20.55,
+          "fat": 14.06
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 50.0,
+        "nutrients": {
+          "kcal": 69.36,
+          "protein": 6.28,
+          "carbs": 0.36,
+          "fat": 4.75
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 180.0,
+        "nutrients": {
+          "kcal": 336.55,
+          "protein": 32.76,
+          "carbs": 15.05,
+          "fat": 16.15
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 316,
+        "name": "Taro cocido",
+        "quantity_g": 260.0,
+        "nutrients": {
+          "kcal": 367.82,
+          "protein": 1.35,
+          "carbs": 89.96,
+          "fat": 0.29
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 122,
+        "name": "Leche descremada",
+        "quantity_g": 400.0,
+        "nutrients": {
+          "kcal": 138.0,
+          "protein": 13.6,
+          "carbs": 20.0,
+          "fat": 0.4
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 126,
+        "name": "Nueces",
+        "quantity_g": 15.0,
+        "nutrients": {
+          "kcal": 105.4,
+          "protein": 2.28,
+          "carbs": 2.06,
+          "fat": 9.78
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 261,
+        "name": "Melón calameño crudo",
+        "quantity_g": 260.0,
+        "nutrients": {
+          "kcal": 98.05,
+          "protein": 2.18,
+          "carbs": 21.22,
+          "fat": 0.49
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 300.0,
+        "nutrients": {
+          "kcal": 360.24,
+          "protein": 13.2,
+          "carbs": 63.9,
+          "fat": 5.76
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 35.0,
+        "nutrients": {
+          "kcal": 137.47,
+          "protein": 9.45,
+          "carbs": 0.5,
+          "fat": 10.85
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 316,
+        "name": "Taro cocido",
+        "quantity_g": 70.0,
+        "nutrients": {
+          "kcal": 99.03,
+          "protein": 0.36,
+          "carbs": 24.22,
+          "fat": 0.08
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Porotos negros cocidos",
+          "Leche entera"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Huevo entero",
+          "Soya cocida",
+          "Taro cocido"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Leche descremada",
+          "Nueces",
+          "Melón calameño crudo"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Quinoa cocida",
+          "Queso suizo",
+          "Taro cocido"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S07",
+    "request": "Vegetariano, 1800 kcal",
+    "target_kcal": 1800,
+    "meals": 4,
+    "dietary_pattern": "vegetarian",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 145,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.557,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 95.62,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 95.6/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1840.81,
+      "protein": 132.28,
+      "carbs": 209.91,
+      "fat": 52.449999999999996
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 129,
+        "name": "Manzana",
+        "quantity_g": 310.0,
+        "nutrients": {
+          "kcal": 179.21,
+          "protein": 0.81,
+          "carbs": 42.81,
+          "fat": 0.53
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 30.0,
+        "nutrients": {
+          "kcal": 117.83,
+          "protein": 8.1,
+          "carbs": 0.43,
+          "fat": 9.3
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 132.35,
+          "protein": 23.56,
+          "carbs": 5.17,
+          "fat": 1.94
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 300.05,
+          "protein": 22.55,
+          "carbs": 50.32,
+          "fat": 0.95
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 50.0,
+        "nutrients": {
+          "kcal": 196.38,
+          "protein": 13.5,
+          "carbs": 0.72,
+          "fat": 15.5
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 264,
+        "name": "Habas cocidas",
+        "quantity_g": 180.0,
+        "nutrients": {
+          "kcal": 115.38,
+          "protein": 8.64,
+          "carbs": 18.18,
+          "fat": 0.9
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 30.0,
+        "nutrients": {
+          "kcal": 114.62,
+          "protein": 3.94,
+          "carbs": 20.31,
+          "fat": 1.96
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 122,
+        "name": "Leche descremada",
+        "quantity_g": 360.0,
+        "nutrients": {
+          "kcal": 124.2,
+          "protein": 12.24,
+          "carbs": 18.0,
+          "fat": 0.36
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 197,
+        "name": "Queso de cabra semiduro",
+        "quantity_g": 25.0,
+        "nutrients": {
+          "kcal": 88.77,
+          "protein": 5.4,
+          "carbs": 0.03,
+          "fat": 7.45
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 230.0,
+        "nutrients": {
+          "kcal": 276.05,
+          "protein": 20.75,
+          "carbs": 46.3,
+          "fat": 0.87
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 117,
+        "name": "Clara de huevo",
+        "quantity_g": 65.0,
+        "nutrients": {
+          "kcal": 31.23,
+          "protein": 7.09,
+          "carbs": 0.47,
+          "fat": 0.11
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 125,
+        "name": "Almendras",
+        "quantity_g": 25.0,
+        "nutrients": {
+          "kcal": 155.04,
+          "protein": 5.29,
+          "carbs": 5.39,
+          "fat": 12.48
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 228,
+        "name": "Apio crudo",
+        "quantity_g": 60.0,
+        "nutrients": {
+          "kcal": 9.7,
+          "protein": 0.41,
+          "carbs": 1.78,
+          "fat": 0.1
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Manzana",
+          "Queso suizo",
+          "Requesón bajo en grasa"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Queso suizo",
+          "Habas cocidas"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Avena tradicional",
+          "Leche descremada",
+          "Queso de cabra semiduro"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Clara de huevo",
+          "Almendras",
+          "Apio crudo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S08",
+    "request": "Vegetariano, 2300 kcal",
+    "target_kcal": 2300,
+    "meals": 4,
+    "dietary_pattern": "vegetarian",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 145,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.558,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 93.95,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 94.0/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2268.85,
+      "protein": 165.26,
+      "carbs": 254.12,
+      "fat": 65.69
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 228.15,
+          "protein": 8.36,
+          "carbs": 40.47,
+          "fat": 3.65
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 241,
+        "name": "Queso cheddar",
+        "quantity_g": 35.0,
+        "nutrients": {
+          "kcal": 141.67,
+          "protein": 8.01,
+          "carbs": 1.18,
+          "fat": 11.65
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 230.0,
+        "nutrients": {
+          "kcal": 430.03,
+          "protein": 41.86,
+          "carbs": 19.23,
+          "fat": 20.63
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 240,
+        "name": "Arvejas verdes cocidas",
+        "quantity_g": 320.0,
+        "nutrients": {
+          "kcal": 274.62,
+          "protein": 17.15,
+          "carbs": 49.92,
+          "fat": 0.7
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 150.0,
+        "nutrients": {
+          "kcal": 180.03,
+          "protein": 13.53,
+          "carbs": 30.2,
+          "fat": 0.57
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 210.02,
+          "protein": 11.8,
+          "carbs": 15.84,
+          "fat": 11.05
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 350.0,
+        "nutrients": {
+          "kcal": 420.07,
+          "protein": 31.57,
+          "carbs": 70.45,
+          "fat": 1.33
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 50.0,
+        "nutrients": {
+          "kcal": 196.38,
+          "protein": 13.5,
+          "carbs": 0.72,
+          "fat": 15.5
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Quinoa cocida",
+          "Queso cheddar",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Soya cocida",
+          "Arvejas verdes cocidas"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Lentejas cocidas",
+          "Yogur natural entero sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Queso suizo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S09",
+    "request": "Vegetariano, alto en proteína",
+    "target_kcal": 2300,
+    "meals": 4,
+    "dietary_pattern": "vegetarian",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "high_protein",
+    "candidate_count": 145,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.562,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 99.3,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 99.3/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2307.15,
+      "protein": 230.25,
+      "carbs": 231.16,
+      "fat": 51.28
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 85.0,
+        "nutrients": {
+          "kcal": 117.9,
+          "protein": 10.68,
+          "carbs": 0.61,
+          "fat": 8.08
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 129,
+        "name": "Manzana",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 190.77,
+          "protein": 0.86,
+          "carbs": 45.57,
+          "fat": 0.56
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 350.0,
+        "nutrients": {
+          "kcal": 243.81,
+          "protein": 43.4,
+          "carbs": 9.52,
+          "fat": 3.57
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 173,
+        "name": "Mantequilla con sal",
+        "quantity_g": 15.0,
+        "nutrients": {
+          "kcal": 110.03,
+          "protein": 0.13,
+          "carbs": 0.01,
+          "fat": 12.16
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 430.0,
+        "nutrients": {
+          "kcal": 299.54,
+          "protein": 53.32,
+          "carbs": 11.7,
+          "fat": 4.39
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 313,
+        "name": "Porotos cranberry cocidos",
+        "quantity_g": 270.0,
+        "nutrients": {
+          "kcal": 376.65,
+          "protein": 25.22,
+          "carbs": 66.15,
+          "fat": 1.24
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 55.0,
+        "nutrients": {
+          "kcal": 76.29,
+          "protein": 6.91,
+          "carbs": 0.4,
+          "fat": 5.23
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 129,
+        "name": "Manzana",
+        "quantity_g": 220.0,
+        "nutrients": {
+          "kcal": 127.18,
+          "protein": 0.57,
+          "carbs": 30.38,
+          "fat": 0.37
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 167.18,
+          "protein": 29.76,
+          "carbs": 6.53,
+          "fat": 2.45
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 109,
+        "name": "Papa cocida sin piel",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 222.25,
+          "protein": 4.68,
+          "carbs": 50.32,
+          "fat": 0.25
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 236.84,
+          "protein": 42.16,
+          "carbs": 9.25,
+          "fat": 3.47
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Huevo entero",
+          "Manzana",
+          "Requesón bajo en grasa"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Mantequilla con sal",
+          "Requesón bajo en grasa",
+          "Porotos cranberry cocidos"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Huevo entero",
+          "Manzana",
+          "Requesón bajo en grasa"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Papa cocida sin piel",
+          "Huevo entero",
+          "Requesón bajo en grasa"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S10",
+    "request": "Vegano, 1800 kcal",
+    "target_kcal": 1800,
+    "meals": 4,
+    "dietary_pattern": "vegan",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 124,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.548,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 89.2,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 89.2/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1801.9,
+      "protein": 124.76,
+      "carbs": 206.98999999999998,
+      "fat": 52.769999999999996
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 120.0,
+        "nutrients": {
+          "kcal": 224.36,
+          "protein": 21.84,
+          "carbs": 10.03,
+          "fat": 10.76
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 295,
+        "name": "Guayaba cruda",
+        "quantity_g": 270.0,
+        "nutrients": {
+          "kcal": 205.07,
+          "protein": 6.88,
+          "carbs": 38.61,
+          "fat": 2.56
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 109,
+        "name": "Papa cocida sin piel",
+        "quantity_g": 220.0,
+        "nutrients": {
+          "kcal": 195.58,
+          "protein": 4.11,
+          "carbs": 44.29,
+          "fat": 0.22
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 210.0,
+        "nutrients": {
+          "kcal": 392.64,
+          "protein": 38.22,
+          "carbs": 17.56,
+          "fat": 18.84
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 293,
+        "name": "Chirivía cocida",
+        "quantity_g": 40.0,
+        "nutrients": {
+          "kcal": 30.39,
+          "protein": 0.53,
+          "carbs": 6.8,
+          "fat": 0.12
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 112,
+        "name": "Garbanzos cocidos",
+        "quantity_g": 120.0,
+        "nutrients": {
+          "kcal": 202.12,
+          "protein": 10.63,
+          "carbs": 32.9,
+          "fat": 3.11
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 151,
+        "name": "Berro crudo",
+        "quantity_g": 65.0,
+        "nutrients": {
+          "kcal": 9.92,
+          "protein": 1.49,
+          "carbs": 0.84,
+          "fat": 0.07
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 264,
+        "name": "Habas cocidas",
+        "quantity_g": 120.0,
+        "nutrients": {
+          "kcal": 76.92,
+          "protein": 5.76,
+          "carbs": 12.12,
+          "fat": 0.6
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 30.0,
+        "nutrients": {
+          "kcal": 114.62,
+          "protein": 3.94,
+          "carbs": 20.31,
+          "fat": 1.96
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 160.0,
+        "nutrients": {
+          "kcal": 299.15,
+          "protein": 29.12,
+          "carbs": 13.38,
+          "fat": 14.35
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 246,
+        "name": "Repollo blanco crudo",
+        "quantity_g": 175.0,
+        "nutrients": {
+          "kcal": 51.13,
+          "protein": 2.24,
+          "carbs": 10.15,
+          "fat": 0.18
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Soya cocida",
+          "Guayaba cruda"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Papa cocida sin piel",
+          "Soya cocida",
+          "Chirivía cocida"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Garbanzos cocidos",
+          "Berro crudo",
+          "Habas cocidas"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Avena tradicional",
+          "Soya cocida",
+          "Repollo blanco crudo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S11",
+    "request": "Vegano, 2300 kcal",
+    "target_kcal": 2300,
+    "meals": 4,
+    "dietary_pattern": "vegan",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 124,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.549,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 88.43,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 88.4/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2228.16,
+      "protein": 173.46,
+      "carbs": 274.17,
+      "fat": 48.62
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 129,
+        "name": "Manzana",
+        "quantity_g": 260.0,
+        "nutrients": {
+          "kcal": 150.31,
+          "protein": 0.68,
+          "carbs": 35.91,
+          "fat": 0.44
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 213,
+        "name": "Lupino cocido",
+        "quantity_g": 260.0,
+        "nutrients": {
+          "kcal": 333.32,
+          "protein": 40.56,
+          "carbs": 25.69,
+          "fat": 7.59
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 215,
+        "name": "Porotos pintos cocidos",
+        "quantity_g": 310.0,
+        "nutrients": {
+          "kcal": 454.74,
+          "protein": 27.93,
+          "carbs": 81.22,
+          "fat": 2.02
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 289,
+        "name": "Tofu blando",
+        "quantity_g": 490.0,
+        "nutrients": {
+          "kcal": 326.39,
+          "protein": 35.13,
+          "carbs": 5.78,
+          "fat": 18.08
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 112,
+        "name": "Garbanzos cocidos",
+        "quantity_g": 160.0,
+        "nutrients": {
+          "kcal": 269.49,
+          "protein": 14.18,
+          "carbs": 43.87,
+          "fat": 4.14
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 133,
+        "name": "Espinaca cruda",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 29.47,
+          "protein": 2.86,
+          "carbs": 3.63,
+          "fat": 0.39
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 135,
+        "name": "Espárrago crudo",
+        "quantity_g": 260.0,
+        "nutrients": {
+          "kcal": 66.04,
+          "protein": 5.72,
+          "carbs": 10.09,
+          "fat": 0.31
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 184,
+        "name": "Porotos blancos cocidos",
+        "quantity_g": 210.0,
+        "nutrients": {
+          "kcal": 299.25,
+          "protein": 17.28,
+          "carbs": 54.6,
+          "fat": 1.3
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 160.0,
+        "nutrients": {
+          "kcal": 299.15,
+          "protein": 29.12,
+          "carbs": 13.38,
+          "fat": 14.35
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Manzana",
+          "Lupino cocido"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Porotos pintos cocidos",
+          "Tofu blando"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Garbanzos cocidos",
+          "Espinaca cruda",
+          "Espárrago crudo"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Porotos blancos cocidos",
+          "Soya cocida"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S12",
+    "request": "Vegano, alto en proteína",
+    "target_kcal": 2300,
+    "meals": 4,
+    "dietary_pattern": "vegan",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "high_protein",
+    "candidate_count": 124,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.553,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 92.95,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 92.9/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2230.56,
+      "protein": 225.14999999999998,
+      "carbs": 232.52000000000004,
+      "fat": 44.44
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 213,
+        "name": "Lupino cocido",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 423.06,
+          "protein": 51.48,
+          "carbs": 32.6,
+          "fat": 9.64
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 276,
+        "name": "Carambola cruda",
+        "quantity_g": 180.0,
+        "nutrients": {
+          "kcal": 61.29,
+          "protein": 1.87,
+          "carbs": 12.11,
+          "fat": 0.59
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 112,
+        "name": "Garbanzos cocidos",
+        "quantity_g": 150.0,
+        "nutrients": {
+          "kcal": 252.65,
+          "protein": 13.29,
+          "carbs": 41.13,
+          "fat": 3.88
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 133,
+        "name": "Espinaca cruda",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 29.47,
+          "protein": 2.86,
+          "carbs": 3.63,
+          "fat": 0.39
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 135,
+        "name": "Espárrago crudo",
+        "quantity_g": 260.0,
+        "nutrients": {
+          "kcal": 66.04,
+          "protein": 5.72,
+          "carbs": 10.09,
+          "fat": 0.31
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 151,
+        "name": "Berro crudo",
+        "quantity_g": 65.0,
+        "nutrients": {
+          "kcal": 9.92,
+          "protein": 1.49,
+          "carbs": 0.84,
+          "fat": 0.07
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 213,
+        "name": "Lupino cocido",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 423.06,
+          "protein": 51.48,
+          "carbs": 32.6,
+          "fat": 9.64
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 213,
+        "name": "Lupino cocido",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 307.68,
+          "protein": 37.44,
+          "carbs": 23.71,
+          "fat": 7.01
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 276,
+        "name": "Carambola cruda",
+        "quantity_g": 175.0,
+        "nutrients": {
+          "kcal": 59.59,
+          "protein": 1.82,
+          "carbs": 11.78,
+          "fat": 0.58
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 40.0,
+        "nutrients": {
+          "kcal": 152.83,
+          "protein": 5.26,
+          "carbs": 27.08,
+          "fat": 2.61
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 213,
+        "name": "Lupino cocido",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 423.06,
+          "protein": 51.48,
+          "carbs": 32.6,
+          "fat": 9.64
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 246,
+        "name": "Repollo blanco crudo",
+        "quantity_g": 75.0,
+        "nutrients": {
+          "kcal": 21.91,
+          "protein": 0.96,
+          "carbs": 4.35,
+          "fat": 0.08
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Lupino cocido",
+          "Carambola cruda"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Garbanzos cocidos",
+          "Espinaca cruda",
+          "Espárrago crudo",
+          "Berro crudo",
+          "Lupino cocido"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Lupino cocido",
+          "Carambola cruda"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Avena tradicional",
+          "Lupino cocido",
+          "Repollo blanco crudo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S13",
+    "request": "Pescetariano, 1800 kcal",
+    "target_kcal": 1800,
+    "meals": 4,
+    "dietary_pattern": "pescatarian",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 153,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.56,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 95.36,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 95.4/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1800.24,
+      "protein": 123.72999999999999,
+      "carbs": 213.11,
+      "fat": 50.309999999999995
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 120.08,
+          "protein": 4.4,
+          "carbs": 21.3,
+          "fat": 1.92
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 127,
+        "name": "Mantequilla de maní natural",
+        "quantity_g": 19.0,
+        "nutrients": {
+          "kcal": 120.44,
+          "protein": 4.77,
+          "carbs": 3.8,
+          "fat": 9.57
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 113,
+        "name": "Porotos negros cocidos",
+        "quantity_g": 280.0,
+        "nutrients": {
+          "kcal": 378.39,
+          "protein": 24.81,
+          "carbs": 66.39,
+          "fat": 1.51
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 117,
+        "name": "Clara de huevo",
+        "quantity_g": 65.0,
+        "nutrients": {
+          "kcal": 31.23,
+          "protein": 7.09,
+          "carbs": 0.47,
+          "fat": 0.11
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 124,
+        "name": "Palta",
+        "quantity_g": 40.0,
+        "nutrients": {
+          "kcal": 69.62,
+          "protein": 0.8,
+          "carbs": 3.41,
+          "fat": 5.86
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 35.0,
+        "nutrients": {
+          "kcal": 133.73,
+          "protein": 4.6,
+          "carbs": 23.7,
+          "fat": 2.28
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 121,
+        "name": "Yogur griego natural sin azúcar",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 100.64,
+          "protein": 17.51,
+          "carbs": 6.12,
+          "fat": 0.68
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 124,
+        "name": "Palta",
+        "quantity_g": 30.0,
+        "nutrients": {
+          "kcal": 52.22,
+          "protein": 0.6,
+          "carbs": 2.56,
+          "fat": 4.4
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 240.16,
+          "protein": 8.8,
+          "carbs": 42.6,
+          "fat": 3.84
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 251,
+        "name": "Repollo de Bruselas crudo",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 88.43,
+          "protein": 5.75,
+          "carbs": 15.21,
+          "fat": 0.51
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Quinoa cocida",
+          "Mantequilla de maní natural",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Porotos negros cocidos",
+          "Huevo entero",
+          "Clara de huevo",
+          "Palta"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Avena tradicional",
+          "Yogur griego natural sin azúcar",
+          "Palta"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Quinoa cocida",
+          "Huevo entero",
+          "Repollo de Bruselas crudo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S14",
+    "request": "Pescetariano, 2300 kcal",
+    "target_kcal": 2300,
+    "meals": 4,
+    "dietary_pattern": "pescatarian",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 153,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.559,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 91.17,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 91.2/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2305.39,
+      "protein": 162.25,
+      "carbs": 271.96,
+      "fat": 63.16
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 180.0,
+        "nutrients": {
+          "kcal": 216.14,
+          "protein": 7.92,
+          "carbs": 38.34,
+          "fat": 3.46
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 241,
+        "name": "Queso cheddar",
+        "quantity_g": 35.0,
+        "nutrients": {
+          "kcal": 141.67,
+          "protein": 8.01,
+          "carbs": 1.18,
+          "fat": 11.65
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 300.05,
+          "protein": 22.55,
+          "carbs": 50.32,
+          "fat": 0.95
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 112,
+        "name": "Garbanzos cocidos",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 320.02,
+          "protein": 16.83,
+          "carbs": 52.1,
+          "fat": 4.92
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 117,
+        "name": "Clara de huevo",
+        "quantity_g": 60.0,
+        "nutrients": {
+          "kcal": 28.83,
+          "protein": 6.54,
+          "carbs": 0.44,
+          "fat": 0.1
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 125,
+        "name": "Almendras",
+        "quantity_g": 30.0,
+        "nutrients": {
+          "kcal": 186.05,
+          "protein": 6.34,
+          "carbs": 6.46,
+          "fat": 14.98
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 112,
+        "name": "Garbanzos cocidos",
+        "quantity_g": 230.0,
+        "nutrients": {
+          "kcal": 387.39,
+          "protein": 20.38,
+          "carbs": 63.07,
+          "fat": 5.96
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 117,
+        "name": "Clara de huevo",
+        "quantity_g": 65.0,
+        "nutrients": {
+          "kcal": 31.23,
+          "protein": 7.09,
+          "carbs": 0.47,
+          "fat": 0.11
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 217,
+        "name": "Zapallo italiano cocido",
+        "quantity_g": 220.0,
+        "nutrients": {
+          "kcal": 40.83,
+          "protein": 2.51,
+          "carbs": 5.92,
+          "fat": 0.79
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Quinoa cocida",
+          "Queso cheddar",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Garbanzos cocidos",
+          "Huevo entero",
+          "Clara de huevo"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Almendras",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Garbanzos cocidos",
+          "Huevo entero",
+          "Clara de huevo",
+          "Zapallo italiano cocido"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S15",
+    "request": "Pescetariano, alto en proteína",
+    "target_kcal": 2300,
+    "meals": 4,
+    "dietary_pattern": "pescatarian",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "high_protein",
+    "candidate_count": 153,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.562,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 95.11,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 95.1/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2285.98,
+      "protein": 235.8,
+      "carbs": 230.0,
+      "fat": 46.98
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 107,
+        "name": "Arroz integral cocido",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 221.0,
+          "protein": 5.2,
+          "carbs": 46.0,
+          "fat": 1.8
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 75.0,
+        "nutrients": {
+          "kcal": 104.03,
+          "protein": 9.42,
+          "carbs": 0.54,
+          "fat": 7.13
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 229.88,
+          "protein": 40.92,
+          "carbs": 8.98,
+          "fat": 3.37
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 118,
+        "name": "Atún en agua drenado",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 109.42,
+          "protein": 25.51,
+          "carbs": 0.0,
+          "fat": 0.82
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 160,
+        "name": "Porotos adzuki cocidos",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 325.45,
+          "protein": 18.8,
+          "carbs": 62.0,
+          "fat": 0.25
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 355.24,
+          "protein": 34.58,
+          "carbs": 15.88,
+          "fat": 17.04
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 129,
+        "name": "Manzana",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 115.62,
+          "protein": 0.52,
+          "carbs": 27.62,
+          "fat": 0.34
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 229.88,
+          "protein": 40.92,
+          "carbs": 8.98,
+          "fat": 3.37
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 113,
+        "name": "Porotos negros cocidos",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 337.85,
+          "protein": 22.15,
+          "carbs": 59.28,
+          "fat": 1.35
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 164,
+        "name": "Centolla cocida",
+        "quantity_g": 130.0,
+        "nutrients": {
+          "kcal": 118.9,
+          "protein": 25.22,
+          "carbs": 0.0,
+          "fat": 2.0
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Arroz integral cocido",
+          "Huevo entero",
+          "Requesón bajo en grasa"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Atún en agua drenado",
+          "Porotos adzuki cocidos",
+          "Soya cocida"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Manzana",
+          "Requesón bajo en grasa"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Porotos negros cocidos",
+          "Huevo entero",
+          "Centolla cocida"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S16",
+    "request": "Alergia a leche",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [
+      "milk"
+    ],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 19,
+    "status": "impossible",
+    "reason": "no_feasible_alternative",
+    "elapsed_seconds": 0.012,
+    "alternative_count": 0
+  },
+  {
+    "id": "S17",
+    "request": "Alergia a huevo",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [
+      "egg"
+    ],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 36,
+    "status": "optimal",
+    "reason": "",
+    "solver_status": "OPTIMAL",
+    "elapsed_seconds": 2.098,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 93.24,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 93.2/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1984.05,
+      "protein": 162.72,
+      "carbs": 197.97,
+      "fat": 60.129999999999995
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 122,
+        "name": "Leche descremada",
+        "quantity_g": 400.0,
+        "nutrients": {
+          "kcal": 138.0,
+          "protein": 13.6,
+          "carbs": 20.0,
+          "fat": 0.4
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 169,
+        "name": "Leche semidescremada",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 125.55,
+          "protein": 8.25,
+          "carbs": 12.0,
+          "fat": 4.95
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 168.27,
+          "protein": 16.38,
+          "carbs": 7.52,
+          "fat": 8.07
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 210.02,
+          "protein": 11.8,
+          "carbs": 15.84,
+          "fat": 11.05
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 110.0,
+        "nutrients": {
+          "kcal": 205.67,
+          "protein": 20.02,
+          "carbs": 9.2,
+          "fat": 9.87
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 122,
+        "name": "Leche descremada",
+        "quantity_g": 130.0,
+        "nutrients": {
+          "kcal": 44.85,
+          "protein": 4.42,
+          "carbs": 6.5,
+          "fat": 0.13
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 124,
+        "name": "Palta",
+        "quantity_g": 60.0,
+        "nutrients": {
+          "kcal": 104.44,
+          "protein": 1.2,
+          "carbs": 5.12,
+          "fat": 8.8
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 105.01,
+          "protein": 5.9,
+          "carbs": 7.92,
+          "fat": 5.52
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 168.27,
+          "protein": 16.38,
+          "carbs": 7.52,
+          "fat": 8.07
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Leche descremada",
+          "Tomate",
+          "Leche semidescremada",
+          "Soya cocida"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Tomate",
+          "Yogur natural entero sin azúcar",
+          "Soya cocida",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Leche descremada",
+          "Palta",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Tomate",
+          "Yogur natural entero sin azúcar",
+          "Soya cocida",
+          "Yogur natural descremado sin azúcar"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S18",
+    "request": "Alergia a frutos secos",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [
+      "nuts"
+    ],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 35,
+    "status": "optimal",
+    "reason": "",
+    "solver_status": "OPTIMAL",
+    "elapsed_seconds": 2.854,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 93.52,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 93.5/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1963.47,
+      "protein": 162.89000000000001,
+      "carbs": 196.55,
+      "fat": 58.39
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 122,
+        "name": "Leche descremada",
+        "quantity_g": 400.0,
+        "nutrients": {
+          "kcal": 138.0,
+          "protein": 13.6,
+          "carbs": 20.0,
+          "fat": 0.4
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 169,
+        "name": "Leche semidescremada",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 125.55,
+          "protein": 8.25,
+          "carbs": 12.0,
+          "fat": 4.95
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 168.27,
+          "protein": 16.38,
+          "carbs": 7.52,
+          "fat": 8.07
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 117,
+        "name": "Clara de huevo",
+        "quantity_g": 35.0,
+        "nutrients": {
+          "kcal": 16.82,
+          "protein": 3.81,
+          "carbs": 0.26,
+          "fat": 0.06
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 210.02,
+          "protein": 11.8,
+          "carbs": 15.84,
+          "fat": 11.05
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 168.27,
+          "protein": 16.38,
+          "carbs": 7.52,
+          "fat": 8.07
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 122,
+        "name": "Leche descremada",
+        "quantity_g": 130.0,
+        "nutrients": {
+          "kcal": 44.85,
+          "protein": 4.42,
+          "carbs": 6.5,
+          "fat": 0.13
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 124,
+        "name": "Palta",
+        "quantity_g": 60.0,
+        "nutrients": {
+          "kcal": 104.44,
+          "protein": 1.2,
+          "carbs": 5.12,
+          "fat": 8.8
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 105.01,
+          "protein": 5.9,
+          "carbs": 7.92,
+          "fat": 5.52
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 168.27,
+          "protein": 16.38,
+          "carbs": 7.52,
+          "fat": 8.07
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Leche descremada",
+          "Tomate",
+          "Leche semidescremada",
+          "Soya cocida"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Clara de huevo",
+          "Tomate",
+          "Yogur natural entero sin azúcar",
+          "Soya cocida",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Leche descremada",
+          "Palta",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Tomate",
+          "Yogur natural entero sin azúcar",
+          "Soya cocida",
+          "Yogur natural descremado sin azúcar"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S19",
+    "request": "Alergia a soya",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [
+      "soy"
+    ],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 34,
+    "status": "impossible",
+    "reason": "no_feasible_alternative",
+    "elapsed_seconds": 0.001,
+    "alternative_count": 0
+  },
+  {
+    "id": "S20",
+    "request": "Alergia a pescado",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [
+      "fish"
+    ],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 36,
+    "status": "optimal",
+    "reason": "",
+    "solver_status": "OPTIMAL",
+    "elapsed_seconds": 3.068,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 93.52,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 93.5/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1963.47,
+      "protein": 162.89000000000001,
+      "carbs": 196.55,
+      "fat": 58.39
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 122,
+        "name": "Leche descremada",
+        "quantity_g": 400.0,
+        "nutrients": {
+          "kcal": 138.0,
+          "protein": 13.6,
+          "carbs": 20.0,
+          "fat": 0.4
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 169,
+        "name": "Leche semidescremada",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 125.55,
+          "protein": 8.25,
+          "carbs": 12.0,
+          "fat": 4.95
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 168.27,
+          "protein": 16.38,
+          "carbs": 7.52,
+          "fat": 8.07
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 117,
+        "name": "Clara de huevo",
+        "quantity_g": 35.0,
+        "nutrients": {
+          "kcal": 16.82,
+          "protein": 3.81,
+          "carbs": 0.26,
+          "fat": 0.06
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 210.02,
+          "protein": 11.8,
+          "carbs": 15.84,
+          "fat": 11.05
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 168.27,
+          "protein": 16.38,
+          "carbs": 7.52,
+          "fat": 8.07
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 122,
+        "name": "Leche descremada",
+        "quantity_g": 130.0,
+        "nutrients": {
+          "kcal": 44.85,
+          "protein": 4.42,
+          "carbs": 6.5,
+          "fat": 0.13
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 124,
+        "name": "Palta",
+        "quantity_g": 60.0,
+        "nutrients": {
+          "kcal": 104.44,
+          "protein": 1.2,
+          "carbs": 5.12,
+          "fat": 8.8
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 131,
+        "name": "Tomate",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 50.11,
+          "protein": 2.11,
+          "carbs": 9.34,
+          "fat": 0.48
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 105.01,
+          "protein": 5.9,
+          "carbs": 7.92,
+          "fat": 5.52
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 168.27,
+          "protein": 16.38,
+          "carbs": 7.52,
+          "fat": 8.07
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Leche descremada",
+          "Tomate",
+          "Leche semidescremada",
+          "Soya cocida"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Clara de huevo",
+          "Tomate",
+          "Yogur natural entero sin azúcar",
+          "Soya cocida",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Leche descremada",
+          "Palta",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Tomate",
+          "Yogur natural entero sin azúcar",
+          "Soya cocida",
+          "Yogur natural descremado sin azúcar"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S21",
+    "request": "Vegano y alergia a soya",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "vegan",
+    "allergies": [
+      "soy"
+    ],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 5,
+    "status": "impossible",
+    "reason": "no_feasible_alternative",
+    "elapsed_seconds": 0.0,
+    "alternative_count": 0
+  },
+  {
+    "id": "S22",
+    "request": "Vegetariano y alergia a leche",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "vegetarian",
+    "allergies": [
+      "milk"
+    ],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 11,
+    "status": "impossible",
+    "reason": "no_feasible_alternative",
+    "elapsed_seconds": 0.008,
+    "alternative_count": 0
+  },
+  {
+    "id": "S23",
+    "request": "Sin pollo",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [
+      "pollo"
+    ],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 150,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.558,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 92.31,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 92.3/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2000.89,
+      "protein": 149.55,
+      "carbs": 231.1,
+      "fat": 53.160000000000004
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 320.0,
+        "nutrients": {
+          "kcal": 384.06,
+          "protein": 28.86,
+          "carbs": 64.42,
+          "fat": 1.22
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 197,
+        "name": "Queso de cabra semiduro",
+        "quantity_g": 45.0,
+        "nutrients": {
+          "kcal": 159.79,
+          "protein": 9.72,
+          "carbs": 0.05,
+          "fat": 13.41
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 360.0,
+        "nutrients": {
+          "kcal": 432.07,
+          "protein": 32.47,
+          "carbs": 72.47,
+          "fat": 1.37
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 247,
+        "name": "Mozzarella fresca",
+        "quantity_g": 55.0,
+        "nutrients": {
+          "kcal": 163.52,
+          "protein": 12.21,
+          "carbs": 1.32,
+          "fat": 12.16
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 228.04,
+          "protein": 17.14,
+          "carbs": 38.25,
+          "fat": 0.72
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 30.0,
+        "nutrients": {
+          "kcal": 117.83,
+          "protein": 8.1,
+          "carbs": 0.43,
+          "fat": 9.3
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 80.0,
+        "nutrients": {
+          "kcal": 305.66,
+          "protein": 10.52,
+          "carbs": 54.16,
+          "fat": 5.22
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 119,
+        "name": "Salmón cocido",
+        "quantity_g": 120.0,
+        "nutrients": {
+          "kcal": 209.92,
+          "protein": 30.53,
+          "carbs": 0.0,
+          "fat": 9.76
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Lentejas cocidas",
+          "Queso de cabra semiduro"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Mozzarella fresca"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Lentejas cocidas",
+          "Queso suizo"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Avena tradicional",
+          "Salmón cocido"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S24",
+    "request": "Sin arroz",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [
+      "arroz"
+    ],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 155,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.564,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 95.85,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 95.9/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2076.6,
+      "protein": 158.39,
+      "carbs": 242.04999999999998,
+      "fat": 52.76
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 300.2,
+          "protein": 11.0,
+          "carbs": 53.25,
+          "fat": 4.8
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 85.0,
+        "nutrients": {
+          "kcal": 117.9,
+          "protein": 10.68,
+          "carbs": 0.61,
+          "fat": 8.08
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 223,
+        "name": "Requesón bajo en grasa",
+        "quantity_g": 130.0,
+        "nutrients": {
+          "kcal": 90.56,
+          "protein": 16.12,
+          "carbs": 3.54,
+          "fat": 1.33
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 204.14,
+          "protein": 7.48,
+          "carbs": 36.21,
+          "fat": 3.26
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 238,
+        "name": "Arvejas partidas cocidas",
+        "quantity_g": 180.0,
+        "nutrients": {
+          "kcal": 218.29,
+          "protein": 15.01,
+          "carbs": 37.98,
+          "fat": 0.7
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 289,
+        "name": "Tofu blando",
+        "quantity_g": 430.0,
+        "nutrients": {
+          "kcal": 286.42,
+          "protein": 30.83,
+          "carbs": 5.07,
+          "fat": 15.87
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 120,
+        "name": "Carne magra cocida",
+        "quantity_g": 90.0,
+        "nutrients": {
+          "kcal": 158.76,
+          "protein": 23.49,
+          "carbs": 0.0,
+          "fat": 7.2
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 256,
+        "name": "Membrillo crudo",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 108.29,
+          "protein": 0.68,
+          "carbs": 26.01,
+          "fat": 0.17
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 276,
+        "name": "Carambola cruda",
+        "quantity_g": 175.0,
+        "nutrients": {
+          "kcal": 59.59,
+          "protein": 1.82,
+          "carbs": 11.78,
+          "fat": 0.58
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 310.0,
+        "nutrients": {
+          "kcal": 372.06,
+          "protein": 27.96,
+          "carbs": 62.4,
+          "fat": 1.18
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 310,
+        "name": "Betarraga cocida",
+        "quantity_g": 45.0,
+        "nutrients": {
+          "kcal": 21.68,
+          "protein": 0.76,
+          "carbs": 4.48,
+          "fat": 0.08
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Quinoa cocida",
+          "Huevo entero",
+          "Requesón bajo en grasa"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Quinoa cocida",
+          "Arvejas partidas cocidas",
+          "Tofu blando"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Carne magra cocida",
+          "Membrillo crudo",
+          "Carambola cruda"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Huevo entero",
+          "Betarraga cocida"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S25",
+    "request": "Prefiere legumbres",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [
+      "lenteja",
+      "garbanzo"
+    ],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.561,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 90.58,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 90.6/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1964.23,
+      "protein": 150.01,
+      "carbs": 236.03,
+      "fat": 46.67
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 280.0,
+        "nutrients": {
+          "kcal": 336.06,
+          "protein": 25.26,
+          "carbs": 56.36,
+          "fat": 1.06
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 45.0,
+        "nutrients": {
+          "kcal": 176.74,
+          "protein": 12.15,
+          "carbs": 0.65,
+          "fat": 13.95
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 360.0,
+        "nutrients": {
+          "kcal": 432.07,
+          "protein": 32.47,
+          "carbs": 72.47,
+          "fat": 1.37
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 190.0,
+        "nutrients": {
+          "kcal": 228.04,
+          "protein": 17.14,
+          "carbs": 38.25,
+          "fat": 0.72
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 165,
+        "name": "Queso suizo",
+        "quantity_g": 30.0,
+        "nutrients": {
+          "kcal": 117.83,
+          "protein": 8.1,
+          "carbs": 0.43,
+          "fat": 9.3
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 330.0,
+        "nutrients": {
+          "kcal": 396.07,
+          "protein": 29.77,
+          "carbs": 66.43,
+          "fat": 1.25
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Lentejas cocidas",
+          "Queso suizo"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Huevo entero"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Lentejas cocidas",
+          "Queso suizo"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Huevo entero"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S26",
+    "request": "Poco tiempo para cocinar",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "low",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.565,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 86.76,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 86.8/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 1939.4099999999999,
+      "protein": 135.75,
+      "carbs": 247.6,
+      "fat": 45.13
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 220.0,
+        "nutrients": {
+          "kcal": 264.04,
+          "protein": 19.84,
+          "carbs": 44.29,
+          "fat": 0.84
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 275,
+        "name": "Leche entera",
+        "quantity_g": 400.0,
+        "nutrients": {
+          "kcal": 244.6,
+          "protein": 12.6,
+          "carbs": 19.12,
+          "fat": 13.08
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 360.0,
+        "nutrients": {
+          "kcal": 432.07,
+          "protein": 32.47,
+          "carbs": 72.47,
+          "fat": 1.37
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 204.03,
+          "protein": 15.33,
+          "carbs": 34.22,
+          "fat": 0.65
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 124,
+        "name": "Palta",
+        "quantity_g": 60.0,
+        "nutrients": {
+          "kcal": 104.44,
+          "protein": 1.2,
+          "carbs": 5.12,
+          "fat": 8.8
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 130,
+        "name": "Arándanos",
+        "quantity_g": 45.0,
+        "nutrients": {
+          "kcal": 28.75,
+          "protein": 0.33,
+          "carbs": 6.52,
+          "fat": 0.15
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 320.0,
+        "nutrients": {
+          "kcal": 384.06,
+          "protein": 28.86,
+          "carbs": 64.42,
+          "fat": 1.22
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Lentejas cocidas",
+          "Leche entera"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Huevo entero"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Lentejas cocidas",
+          "Palta",
+          "Arándanos"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Huevo entero"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S27",
+    "request": "Presupuesto bajo",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "low",
+    "macro_style": "",
+    "candidate_count": 157,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.569,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 91.67,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 91.7/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2057.8199999999997,
+      "protein": 148.71,
+      "carbs": 236.91000000000003,
+      "fat": 57.25
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 120.0,
+        "nutrients": {
+          "kcal": 144.1,
+          "protein": 5.28,
+          "carbs": 25.56,
+          "fat": 2.3
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 254,
+        "name": "Ricotta entera",
+        "quantity_g": 110.0,
+        "nutrients": {
+          "kcal": 166.14,
+          "protein": 8.29,
+          "carbs": 8.0,
+          "fat": 11.22
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 154,
+        "name": "Arvejas de ojo negro cocidas",
+        "quantity_g": 280.0,
+        "nutrients": {
+          "kcal": 332.89,
+          "protein": 21.64,
+          "carbs": 58.24,
+          "fat": 1.48
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 373.94,
+          "protein": 36.4,
+          "carbs": 16.72,
+          "fat": 17.94
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 120.08,
+          "protein": 4.4,
+          "carbs": 21.3,
+          "fat": 1.92
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 210.02,
+          "protein": 11.8,
+          "carbs": 15.84,
+          "fat": 11.05
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 111,
+        "name": "Lentejas cocidas",
+        "quantity_g": 320.0,
+        "nutrients": {
+          "kcal": 384.06,
+          "protein": 28.86,
+          "carbs": 64.42,
+          "fat": 1.22
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Quinoa cocida",
+          "Ricotta entera",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Arvejas de ojo negro cocidas",
+          "Soya cocida"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Quinoa cocida",
+          "Yogur natural entero sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Lentejas cocidas",
+          "Huevo entero"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S28",
+    "request": "Vegano, poco tiempo y bajo presupuesto",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "vegan",
+    "allergies": [],
+    "exclusions": [],
+    "preferred": [],
+    "cooking_time": "low",
+    "budget": "low",
+    "macro_style": "",
+    "candidate_count": 124,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.557,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 93.71,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 93.7/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2101.37,
+      "protein": 152.67000000000002,
+      "carbs": 239.36,
+      "fat": 59.26
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 210.0,
+        "nutrients": {
+          "kcal": 252.17,
+          "protein": 9.24,
+          "carbs": 44.73,
+          "fat": 4.03
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 213,
+        "name": "Lupino cocido",
+        "quantity_g": 180.0,
+        "nutrients": {
+          "kcal": 230.76,
+          "protein": 28.08,
+          "carbs": 17.78,
+          "fat": 5.26
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 224,
+        "name": "Clementina cruda",
+        "quantity_g": 40.0,
+        "nutrients": {
+          "kcal": 21.1,
+          "protein": 0.34,
+          "carbs": 4.8,
+          "fat": 0.06
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 35.0,
+        "nutrients": {
+          "kcal": 133.73,
+          "protein": 4.6,
+          "carbs": 23.7,
+          "fat": 2.28
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 230.0,
+        "nutrients": {
+          "kcal": 430.03,
+          "protein": 41.86,
+          "carbs": 19.23,
+          "fat": 20.63
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 208,
+        "name": "Alcachofa cocida",
+        "quantity_g": 240.0,
+        "nutrients": {
+          "kcal": 150.29,
+          "protein": 6.94,
+          "carbs": 28.8,
+          "fat": 0.82
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 110.0,
+        "nutrients": {
+          "kcal": 205.67,
+          "protein": 20.02,
+          "carbs": 9.2,
+          "fat": 9.87
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 299,
+        "name": "Papaya cruda",
+        "quantity_g": 270.0,
+        "nutrients": {
+          "kcal": 128.03,
+          "protein": 1.27,
+          "carbs": 29.16,
+          "fat": 0.7
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 112,
+        "name": "Garbanzos cocidos",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 336.86,
+          "protein": 17.72,
+          "carbs": 54.84,
+          "fat": 5.18
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 294,
+        "name": "Tofu firme",
+        "quantity_g": 250.0,
+        "nutrients": {
+          "kcal": 212.73,
+          "protein": 22.6,
+          "carbs": 7.12,
+          "fat": 10.43
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Quinoa cocida",
+          "Lupino cocido",
+          "Clementina cruda"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Avena tradicional",
+          "Soya cocida",
+          "Alcachofa cocida"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Soya cocida",
+          "Papaya cruda"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Garbanzos cocidos",
+          "Tofu firme"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S29",
+    "request": "Vegetariano, sin huevos ni lácteos por exclusión",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "vegetarian",
+    "allergies": [],
+    "exclusions": [
+      "huevo",
+      "leche",
+      "yogur",
+      "queso"
+    ],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 129,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.551,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 95.09,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 95.1/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2098.1400000000003,
+      "protein": 157.35999999999999,
+      "carbs": 229.53000000000003,
+      "fat": 61.18
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 113,
+        "name": "Porotos negros cocidos",
+        "quantity_g": 180.0,
+        "nutrients": {
+          "kcal": 243.25,
+          "protein": 15.95,
+          "carbs": 42.68,
+          "fat": 0.97
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 133,
+        "name": "Espinaca cruda",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 29.47,
+          "protein": 2.86,
+          "carbs": 3.63,
+          "fat": 0.39
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 135,
+        "name": "Espárrago crudo",
+        "quantity_g": 260.0,
+        "nutrients": {
+          "kcal": 66.04,
+          "protein": 5.72,
+          "carbs": 10.09,
+          "fat": 0.31
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 247,
+        "name": "Mozzarella fresca",
+        "quantity_g": 55.0,
+        "nutrients": {
+          "kcal": 163.52,
+          "protein": 12.21,
+          "carbs": 1.32,
+          "fat": 12.16
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 215,
+        "name": "Porotos pintos cocidos",
+        "quantity_g": 290.0,
+        "nutrients": {
+          "kcal": 425.4,
+          "protein": 26.13,
+          "carbs": 75.98,
+          "fat": 1.89
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 289,
+        "name": "Tofu blando",
+        "quantity_g": 430.0,
+        "nutrients": {
+          "kcal": 286.42,
+          "protein": 30.83,
+          "carbs": 5.07,
+          "fat": 15.87
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 138,
+        "name": "Piña cruda",
+        "quantity_g": 210.0,
+        "nutrients": {
+          "kcal": 116.84,
+          "protein": 1.13,
+          "carbs": 27.51,
+          "fat": 0.25
+        },
+        "functional_roles": [
+          "fruit"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 120.0,
+        "nutrients": {
+          "kcal": 224.36,
+          "protein": 21.84,
+          "carbs": 10.03,
+          "fat": 10.76
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 373.94,
+          "protein": 36.4,
+          "carbs": 16.72,
+          "fat": 17.94
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 246,
+        "name": "Repollo blanco crudo",
+        "quantity_g": 175.0,
+        "nutrients": {
+          "kcal": 51.13,
+          "protein": 2.24,
+          "carbs": 10.15,
+          "fat": 0.18
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 293,
+        "name": "Chirivía cocida",
+        "quantity_g": 155.0,
+        "nutrients": {
+          "kcal": 117.77,
+          "protein": 2.05,
+          "carbs": 26.35,
+          "fat": 0.46
+        },
+        "functional_roles": [
+          "vegetable"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Porotos negros cocidos",
+          "Espinaca cruda",
+          "Espárrago crudo",
+          "Mozzarella fresca"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Porotos pintos cocidos",
+          "Tofu blando"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Piña cruda",
+          "Soya cocida"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Soya cocida",
+          "Repollo blanco crudo",
+          "Chirivía cocida"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "S30",
+    "request": "Omnívoro, sin carnes ni pescados por exclusión",
+    "target_kcal": 2100,
+    "meals": 4,
+    "dietary_pattern": "omnivore",
+    "allergies": [],
+    "exclusions": [
+      "pollo",
+      "pavo",
+      "carne",
+      "cerdo",
+      "pescado",
+      "salmon",
+      "atun"
+    ],
+    "preferred": [],
+    "cooking_time": "",
+    "budget": "",
+    "macro_style": "",
+    "candidate_count": 146,
+    "status": "acceptable",
+    "reason": "",
+    "solver_status": "FEASIBLE",
+    "elapsed_seconds": 4.557,
+    "alternative_count": 3,
+    "quality": {
+      "nutritional_score": 95.32,
+      "functional_score": 100.0,
+      "hard_constraints_satisfied": true,
+      "explanations": [
+        "Average preferred-range proximity: 95.3/100.",
+        "Meal-grammar coverage: 100.0/100."
+      ],
+      "warnings": []
+    },
+    "daily_totals": {
+      "kcal": 2123.22,
+      "protein": 159.5,
+      "carbs": 244.63,
+      "fat": 56.29
+    },
+    "selected_foods": [
+      {
+        "slot_id": "meal_0",
+        "food_id": 109,
+        "name": "Papa cocida sin piel",
+        "quantity_g": 220.0,
+        "nutrients": {
+          "kcal": 195.58,
+          "protein": 4.11,
+          "carbs": 44.29,
+          "fat": 0.22
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 121,
+        "name": "Yogur griego natural sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 201.28,
+          "protein": 35.02,
+          "carbs": 12.24,
+          "fat": 1.36
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_0",
+        "food_id": 203,
+        "name": "Mantequilla sin sal",
+        "quantity_g": 15.0,
+        "nutrients": {
+          "kcal": 110.03,
+          "protein": 0.13,
+          "carbs": 0.01,
+          "fat": 12.16
+        },
+        "functional_roles": [
+          "added_or_dense_fat"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 109,
+        "name": "Papa cocida sin piel",
+        "quantity_g": 210.0,
+        "nutrients": {
+          "kcal": 186.69,
+          "protein": 3.93,
+          "carbs": 42.27,
+          "fat": 0.21
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 198,
+        "name": "Soya cocida",
+        "quantity_g": 210.0,
+        "nutrients": {
+          "kcal": 392.64,
+          "protein": 38.22,
+          "carbs": 17.56,
+          "fat": 18.84
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_1",
+        "food_id": 264,
+        "name": "Habas cocidas",
+        "quantity_g": 200.0,
+        "nutrients": {
+          "kcal": 128.2,
+          "protein": 9.6,
+          "carbs": 20.2,
+          "fat": 1.0
+        },
+        "functional_roles": [
+          "supporting_protein",
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 105,
+        "name": "Avena tradicional",
+        "quantity_g": 20.0,
+        "nutrients": {
+          "kcal": 76.42,
+          "protein": 2.63,
+          "carbs": 13.54,
+          "fat": 1.3
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 177,
+        "name": "Yogur natural entero sin azúcar",
+        "quantity_g": 170.0,
+        "nutrients": {
+          "kcal": 105.01,
+          "protein": 5.9,
+          "carbs": 7.92,
+          "fat": 5.52
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_2",
+        "food_id": 283,
+        "name": "Yogur natural descremado sin azúcar",
+        "quantity_g": 340.0,
+        "nutrients": {
+          "kcal": 187.88,
+          "protein": 19.48,
+          "carbs": 26.11,
+          "fat": 0.61
+        },
+        "functional_roles": [
+          "supporting_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 108,
+        "name": "Quinoa cocida",
+        "quantity_g": 280.0,
+        "nutrients": {
+          "kcal": 336.22,
+          "protein": 12.32,
+          "carbs": 59.64,
+          "fat": 5.38
+        },
+        "functional_roles": [
+          "starch_or_carbohydrate"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 116,
+        "name": "Huevo entero",
+        "quantity_g": 100.0,
+        "nutrients": {
+          "kcal": 138.71,
+          "protein": 12.56,
+          "carbs": 0.72,
+          "fat": 9.51
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      },
+      {
+        "slot_id": "meal_3",
+        "food_id": 144,
+        "name": "Camarón cocido",
+        "quantity_g": 65.0,
+        "nutrients": {
+          "kcal": 64.56,
+          "protein": 15.6,
+          "carbs": 0.13,
+          "fat": 0.18
+        },
+        "functional_roles": [
+          "primary_protein"
+        ]
+      }
+    ],
+    "meal_compositions": [
+      {
+        "slot": "meal_0",
+        "archetype": "breakfast_composition",
+        "foods": [
+          "Papa cocida sin piel",
+          "Yogur griego natural sin azúcar",
+          "Mantequilla sin sal"
+        ]
+      },
+      {
+        "slot": "meal_1",
+        "archetype": "main_plate",
+        "foods": [
+          "Papa cocida sin piel",
+          "Soya cocida",
+          "Habas cocidas"
+        ]
+      },
+      {
+        "slot": "meal_2",
+        "archetype": "snack_pair",
+        "foods": [
+          "Avena tradicional",
+          "Yogur natural entero sin azúcar",
+          "Yogur natural descremado sin azúcar"
+        ]
+      },
+      {
+        "slot": "meal_3",
+        "archetype": "main_plate",
+        "foods": [
+          "Quinoa cocida",
+          "Huevo entero",
+          "Camarón cocido"
+        ]
+      }
+    ]
+  }
+]
