@@ -418,7 +418,8 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
             "name": meal.name, "meal_type": meal.meal_type or None,
             "subtitle": "",
             "nutrition": _library_nutrition_payload(meal, current_weight),
-            "indicators": [{"icon": "food", "label": "alimentos", "value": meal.library_food_count}, {"icon": "preparation", "label": "preparaciones", "value": meal.library_preparation_count}]
+            "indicators": [{"icon": "food", "label": "alimentos", "value": meal.library_food_count}]
+            + ([{"icon": "preparation", "label": "preparaciones", "value": meal.library_preparation_count}] if meal.library_preparation_count else [])
             + ([{"label": "estado", "value": "Borrador"}] if meal.is_draft else []),
             "panel": {
                 **_empty_library_panel("foods"),
@@ -697,7 +698,8 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "name": item.name, "meal_type": item.meal_type or None,
                 "subtitle": "",
                 "nutrition": _library_nutrition_payload(item, current_weight),
-                "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}, {"icon": "preparation", "label": "preparaciones", "value": item.library_preparation_count}]
+                "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}]
+                + ([{"icon": "preparation", "label": "preparaciones", "value": item.library_preparation_count}] if item.library_preparation_count else [])
                 + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {
                     **_empty_library_panel("foods"),

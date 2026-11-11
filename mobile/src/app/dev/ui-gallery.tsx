@@ -2,8 +2,7 @@ import { Redirect } from "expo-router";
 import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { useState } from "react";
 import { Image, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { ComparisonBuilder,
-  ComparisonEditorCard,
+import { ComparisonBuilder, ComparisonEditorCard,
   ComparisonMetricCard,
   ComparisonScopeTabs,
   ComparisonSelectionCard,
@@ -90,6 +89,7 @@ const sections: { key: SectionKind; label: string; lucide: string }[] = [ // Gal
   { key: "chat", label: "Asistente", lucide: "sparkles" },
   { key: "proposal", label: "Propuestas", lucide: "clipboard-check" },
   { key: "calendarization", label: "Calendarizar", lucide: "calendar-clock" },
+  { key: "commitments", label: "Compromisos", lucide: "calendar-check-2" },
   { key: "comparator", label: "Comparaciones", lucide: "scale" },
   { key: "explore", label: "Explorar", lucide: "search" },
   { key: "inbox", label: "Inbox", lucide: "inbox" },

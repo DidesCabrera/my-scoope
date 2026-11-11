@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Pressable, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
@@ -24,6 +24,7 @@ type TabBarProps<T extends TabKey> = {
 
 type ScrollableTabBarProps<T extends TabKey> = TabBarProps<T> & {
   density?: "compact" | "regular";
+  revealActiveTab?: boolean;
 };
 
 function renderIcon<T extends TabKey>(tab: TabBarItem<T>, selected: boolean) {
@@ -40,7 +41,16 @@ function TabContent<T extends TabKey>({ selected, tab }: { selected: boolean; ta
   );
 }
 
-export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeTab, density = "regular", onChange, style, tabs }: ScrollableTabBarProps<T>) {
+export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeTab, density = "regular", onChange, revealActiveTab = false, style, tabs }: ScrollableTabBarProps<T>) {
+  const scrollRef = useRef<ScrollView>(null);
+  const tabOffsets = useRef(new Map<T, number>());
+
+  useEffect(() => {
+    if (!revealActiveTab) return;
+    const offset = tabOffsets.current.get(activeTab);
+    if (offset != null) scrollRef.current?.scrollTo({ x: Math.max(0, offset - tokens.spacing.sm), animated: false });
+  }, [activeTab, revealActiveTab]);
+
   return (
     <View style={[styles.scrollableViewport, style]}>
       <ScrollView
@@ -50,6 +60,7 @@ export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeT
         directionalLockEnabled
         horizontal
         nestedScrollEnabled
+        ref={scrollRef}
         showsHorizontalScrollIndicator={false}
         style={styles.scrollableBar}>
         {tabs.map((tab) => {
@@ -60,6 +71,11 @@ export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeT
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               key={tab.key}
+              onLayout={revealActiveTab ? (event) => {
+                const offset = event.nativeEvent.layout.x;
+                tabOffsets.current.set(tab.key, offset);
+                if (selected) scrollRef.current?.scrollTo({ x: Math.max(0, offset - tokens.spacing.sm), animated: false });
+              } : undefined}
               onPress={() => { if (!selected) onChange(tab.key); }}
               style={({ pressed }) => [styles.scrollableTab, density === "compact" && styles.scrollableTabCompact, selected && styles.tabSelected, pressed && styles.pressed]}>
               <TabContent selected={selected} tab={tab} />

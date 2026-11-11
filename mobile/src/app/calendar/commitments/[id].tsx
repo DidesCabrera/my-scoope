@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { CalendarDays, ChevronLeft, ChevronRight, MoreHorizontal, Trash2 } from "lucide-react-native";
+import { CalendarDays, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,17 +10,18 @@ import { useSession } from "@/auth/session-context";
 import { commitmentActionLabel, commitmentDayTitle, commitmentFoodPanelItem, commitmentPresentation, commitmentSupportsFoods } from "@/components/calendarization/calendar-commitments";
 import { commitmentDotKinds } from "@/components/calendarization/calendar-commitment-dots";
 import { CalendarTodayOutline } from "@/components/calendarization/calendar-today-outline";
+import { MealTimeForm } from "@/components/calendarization/calendarized-entity-actions";
 import { isCurrentMonthFromToday, monthKeyFromDate, monthLabel, monthWindow, shiftMonth } from "@/components/calendarization/calendar-month";
 import { createCalendarMonthCache } from "@/components/calendarization/calendar-month-cache";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { GroupedFoodsCard } from "@/components/panels";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, Card, Chip, InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
+import { Button, Chip, EntityIcon, InlineNotice, LoadingState, Screen, SectionHeading, SectionPageHeader } from "@/components/ui";
 import { ConfirmationState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { loadCommitmentReminderSettings, syncCommitmentReminders } from "@/notifications/commitment-reminders";
 
-type CommitmentActionMode = "menu" | "reschedule" | "delete" | null;
+type CommitmentActionMode = "menu" | "time" | "reschedule" | "delete" | null;
 
 function shortDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`));
@@ -40,8 +41,8 @@ export default function CalendarCommitmentDetailScreen() {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingNote, setSavingNote] = useState(false);
+  const [editingNote, setEditingNote] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [actionMode, setActionMode] = useState<CommitmentActionMode>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export default function CalendarCommitmentDetailScreen() {
         setCommitment(found);
         if (!found) { setError("Este compromiso ya no está registrado en esta fecha."); return; }
         setNote(found.note);
-        setNotice(null);
+        setEditingNote(!found.note.trim());
         setError(null);
       })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
@@ -73,6 +74,7 @@ export default function CalendarCommitmentDetailScreen() {
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
       action: { icon: "more", label: "Opciones del compromiso", onPress: () => setActionMode("menu") },
+      secondaryAction: commitment ? { icon: "clock", label: "Cambiar hora de cumplimiento", onPress: () => setActionMode("time") } : undefined,
       fallback: date ? `/calendar/days/${date}` as Href : "/calendar",
       identityVisible: compactHeaderVisible,
       mode: "back",
@@ -104,14 +106,13 @@ export default function CalendarCommitmentDetailScreen() {
     if (!commitment || savingNote) return;
     setSavingNote(true);
     setError(null);
-    setNotice(null);
     try {
       const updated = await apiRequest<CalendarCommitment>(`/api/v1/calendar/commitments/${commitment.id}`, {
         method: "PATCH", body: JSON.stringify({ note }),
       });
       setCommitment(updated);
       setNote(updated.note);
-      setNotice("Nota guardada.");
+      setEditingNote(false);
     } catch (nextError) { setError(userFacingError(nextError)); }
     finally { setSavingNote(false); }
   }
@@ -190,12 +191,12 @@ export default function CalendarCommitmentDetailScreen() {
   return <>
   <Screen contentStyle={styles.content} headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
     <SectionPageHeader icon={<CommitmentIcon color={presentation.color} size={28} strokeWidth={1.8} />} section="calendarization" subtitle={headerDate(date)} subtitleStyle={styles.dateSubtitle} title={commitmentActionLabel[commitment.kind]} />
+    {commitment.hour ? <Chip backgroundColor={`${presentation.color}1A`} borderColor={presentation.color} label={`Hora de cumplimiento: ${commitment.hour.slice(0, 5)}`} textColor={tokens.color.textMain} /> : null}
     {commitmentSupportsFoods(commitment.kind) && !periodSaved ? <View style={styles.emptyFoodSection}>
       <InlineNotice tone="info">Aún no tiene una lista de alimentos asociada</InlineNotice>
       <Button label="Generar lista de alimentos" onPress={openFoodListGenerator} />
     </View> : null}
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    {notice === "Nota guardada." ? <InlineNotice tone="info">{notice}</InlineNotice> : null}
     {savedStart && savedEnd ? <View style={styles.associatedFoodSection}>
       <Text accessibilityRole="header" style={styles.foodSectionTitle}>Lista de alimentos asociada</Text>
       <GroupedFoodsCard
@@ -209,12 +210,19 @@ export default function CalendarCommitmentDetailScreen() {
         title={commitment.kind === "cooking" ? "Alimentos para cocinar" : "Alimentos para comprar"}
       />
     </View> : null}
-    <Card>
-      <Text style={styles.noteTitle}>Nota (opcional)</Text>
-      <TextInput accessibilityLabel="Nota del compromiso" maxLength={500} multiline onChangeText={setNote} placeholder="Agrega una nota para recordar los detalles…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={note} />
-      <Text style={styles.noteCount}>{note.length}/500</Text>
-      {note !== commitment.note ? <Button label="Guardar nota" loading={savingNote} onPress={() => void saveNote()} /> : null}
-    </Card>
+    <View style={styles.noteSection}>
+      <View style={styles.noteTitleRow}>
+        <View style={styles.noteTitle}><SectionHeading title="Nota de este compromiso" /></View>
+        <Text style={styles.noteCount}>{note.length}/500</Text>
+        {!editingNote ? <Pressable accessibilityLabel="Editar nota" accessibilityRole="button" hitSlop={8} onPress={() => setEditingNote(true)} style={({ pressed }) => [styles.noteEdit, pressed && styles.pressed]}><Pencil color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable> : null}
+      </View>
+      <View style={styles.noteSurface}>
+        <View style={styles.noteBlock}>
+          {editingNote ? <TextInput accessibilityLabel="Nota del compromiso" maxLength={500} multiline onChangeText={setNote} placeholder="Escribe una observación opcional…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={note} /> : <Text style={[styles.noteText, !note.trim() && styles.noteTextEmpty]}>{note.trim() || "Sin nota registrada."}</Text>}
+        </View>
+        {editingNote ? <Button label="Guardar nota" loading={savingNote} onPress={() => void saveNote()} variant="secondary" /> : null}
+      </View>
+    </View>
   </Screen>
   <ActionSheetModal onRequestClose={() => { if (!actionBusy) setActionMode(null); }} visible={actionMode != null}>
     <SafeAreaView edges={["left", "right"]} style={styles.sheet}>
@@ -225,6 +233,17 @@ export default function CalendarCommitmentDetailScreen() {
             <ActionSheetAction icon={CalendarDays} label="Recalendarizar compromiso" onPress={openReschedule} />
             <ActionSheetAction destructive icon={Trash2} label="Eliminar compromiso" onPress={() => { setActionError(null); setActionMode("delete"); }} />
           </ActionSheetActions>
+        </View>
+      </> : null}
+      {actionMode === "time" ? <>
+        <ActionSheetHeader iconNode={<EntityIcon backgroundColor={presentation.color} entity="meal" icon={CommitmentIcon} size="header" />} onClose={() => setActionMode(null)} title="Cambiar hora" />
+        <View style={styles.sheetContent}>
+          <MealTimeForm confirmationColor={presentation.color} entity="commitment" initialTime={commitment.hour} onCancel={() => setActionMode(null)} onSaved={() => setActionMode(null)} onSubmit={async (hour) => {
+            const updated = await apiRequest<CalendarCommitment>(`/api/v1/calendar/commitments/${commitment.id}`, {
+              method: "PATCH", body: JSON.stringify({ hour }),
+            });
+            setCommitment(updated);
+          }} />
         </View>
       </> : null}
       {actionMode === "reschedule" ? <>
@@ -310,9 +329,17 @@ const styles = StyleSheet.create({
   monthArrow: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: tokens.spacing.md },
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
-  noteCount: { color: tokens.color.textMuted, fontSize: 12, textAlign: "right" },
-  noteInput: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, minHeight: 96, padding: tokens.spacing.md },
-  noteTitle: { color: tokens.color.textMain, fontSize: 16, fontWeight: "600" },
+  noteBlock: { gap: tokens.spacing.xs },
+  noteCount: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
+  noteEdit: { alignItems: "center", height: 32, justifyContent: "center", width: 32 },
+  noteInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: tokens.type.caption, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 104, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
+  noteSection: { minWidth: 0 },
+  noteSurface: { backgroundColor: "transparent", gap: tokens.card.gap, marginTop: tokens.spacing.sm },
+  noteText: { color: tokens.color.textMain, fontSize: tokens.type.caption, lineHeight: 21, minHeight: 42 },
+  noteTextEmpty: { color: tokens.color.textMuted },
+  noteTitle: { flex: 1, minWidth: 0 },
+  noteTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
+  pressed: { opacity: 0.65 },
   rescheduleDateSelected: { backgroundColor: `${tokens.color.interactivePrimary}26`, borderColor: tokens.color.interactivePrimary },
   rescheduleInstruction: { color: tokens.color.textMain, fontSize: 15, fontWeight: "600" },
   rescheduleNumberSelected: { color: tokens.color.interactivePrimary, fontWeight: "700" },

@@ -6,7 +6,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
+import type { CalendarDayDetailData, CalendarOverviewData, CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { compactDateLabel } from "@/components/calendarization/current-week";
@@ -103,6 +103,8 @@ export default function ProgramDayScreen() {
   const router = useRouter();
   const { status, apiRequest } = useSession();
   const [day, setDay] = useState<CalendarizedDayDetail | null>(null);
+  const [calendarDay, setCalendarDay] = useState<CalendarDayDetailData | null>(null);
+  const [localToday, setLocalToday] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -187,6 +189,12 @@ export default function ProgramDayScreen() {
     try {
       const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${id}`);
       setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
+      const [dated, overview] = await Promise.all([
+        apiRequest<CalendarDayDetailData>(`/api/v1/calendar/days/${updated.calendar_date}`),
+        apiRequest<CalendarOverviewData>("/api/v1/calendar?days=1"),
+      ]);
+      setCalendarDay(dated);
+      setLocalToday(overview.local_date);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -294,20 +302,27 @@ export default function ProgramDayScreen() {
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     </NestableScrollContainer>
-    <CalendarizedEntityActions
-      entityName={snapshot?.name ?? day.plan_name ?? "Minuta diaria"}
+    <ContextualLibraryActions
+      apiRequest={apiRequest}
+      calendarActionsDisabled={!localToday || day.calendar_date < localToday || Boolean(calendarDay?.has_execution)}
+      entity="dailyPlan"
+      id={snapshot?.source?.dailyplan_id ?? undefined}
+      movePlan={localToday ? { sourceDate: day.calendar_date, localToday, disabled: calendarDay?.source_kind !== "manual" || day.calendar_date < localToday, onMoved: () => router.back() } : undefined}
+      name={snapshot?.name ?? day.plan_name ?? "Minuta diaria"}
+      onChanged={load}
       onOpenInformation={() => router.push(`/program/days/${day.id}/information` as Href)}
-      onVisibleChange={setActionsVisible}
-      rename={{
-        onSubmit: async (name) => {
-          const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`, {
-            body: JSON.stringify({ name }),
-            headers: { "Content-Type": "application/json" },
-            method: "PATCH",
-          });
-          setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
-        },
+      onRemoveFromCalendar={async () => {
+        await apiRequest(`/api/v1/calendar/days/${day.calendar_date}/plan`, { method: "DELETE" });
+        router.back();
       }}
+      onRenameCalendarized={async (name) => {
+        await apiRequest(`/api/v1/program/days/${day.id}`, { body: JSON.stringify({ name }), method: "PATCH" });
+        await load();
+      }}
+      onReplacePlan={() => router.push({ pathname: "/calendar/days/[date]", params: { date: day.calendar_date, section: "replace" } } as Href)}
+      onVisibleChange={setActionsVisible}
+      renderTrigger={() => null}
+      sourceActionsDisabled={calendarDay?.source_kind === "program"}
       visible={actionsVisible}
     />
     <CalendarizedEntityActions

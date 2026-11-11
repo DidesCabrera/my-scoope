@@ -10,6 +10,7 @@ import type { CalendarCommitment, CalendarCommitmentKind } from "@/api/calendar-
 import { useSession } from "@/auth/session-context";
 import { commitmentActionLabel, commitmentDayTitle, commitmentKinds, commitmentPresentation } from "@/components/calendarization/calendar-commitments";
 import { CalendarPlanEditor } from "@/components/calendarization/calendar-plan-editor";
+import { CalendarPlanRemovalConfirmation } from "@/components/calendarization/calendar-plan-removal-confirmation";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { EntityIcon, InlineNotice, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
@@ -17,7 +18,7 @@ import { ConfirmationState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 import { loadCommitmentReminderSettings, syncCommitmentReminders } from "@/notifications/commitment-reminders";
 
-type DaySection = "assign" | "replace" | "remove" | "move" | "history" | null;
+type DaySection = "assign" | "replace" | "history" | null;
 
 function dayLabel(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00`));
@@ -36,6 +37,9 @@ export default function CalendarDayScreen() {
   const [registeringCommitment, setRegisteringCommitment] = useState<CalendarCommitmentKind | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [removePlanSelected, setRemovePlanSelected] = useState(false);
+  const [removingPlan, setRemovingPlan] = useState(false);
+  const [removePlanError, setRemovePlanError] = useState<string | null>(null);
   const [commitmentToDelete, setCommitmentToDelete] = useState<CalendarCommitment | null>(null);
   const [deletingCommitment, setDeletingCommitment] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -59,6 +63,31 @@ export default function CalendarDayScreen() {
     } finally {
       setDeletingCommitment(false);
     }
+  }
+
+  async function removePlan() {
+    if (!day?.has_plan || removingPlan || day.calendar_date < localToday || day.has_execution) return;
+    setRemovingPlan(true);
+    setRemovePlanError(null);
+    try {
+      await apiRequest(`/api/v1/calendar/days/${day.calendar_date}/plan`, { method: "DELETE" });
+      await load();
+      setRemovePlanSelected(false);
+      setMenuVisible(false);
+    } catch (nextError) {
+      setRemovePlanError(userFacingError(nextError));
+    } finally {
+      setRemovingPlan(false);
+    }
+  }
+
+  function closeMenu() {
+    if (removingPlan || deletingCommitment) return;
+    setMenuVisible(false);
+    setRemovePlanSelected(false);
+    setRemovePlanError(null);
+    setCommitmentToDelete(null);
+    setDeleteError(null);
   }
 
   const load = useCallback(async () => {
@@ -137,7 +166,7 @@ export default function CalendarDayScreen() {
         <View style={{ padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl }}>
           {addError ? <InlineNotice tone="error">{addError}</InlineNotice> : null}
           <ActionSheetActions>
-            <ActionSheetAction disabled={registeringCommitment !== null} iconNode={<EntityIcon entity="dailyPlan" size="compact" />} label={day?.has_plan ? "Reemplazar minuta diaria" : "Agregar minuta diaria"} onPress={() => { setAddError(null); setAddMenuVisible(false); setSection(day?.has_plan ? "replace" : "assign"); }} />
+            <ActionSheetAction disabled={registeringCommitment !== null} iconNode={<EntityIcon entity="dailyPlan" size="compact" />} label={day?.has_plan ? "Reemplazar minuta diaria" : "Agregar minuta"} onPress={() => { setAddError(null); setAddMenuVisible(false); setSection(day?.has_plan ? "replace" : "assign"); }} />
             {commitmentKinds.map((kind) => {
               const presentation = commitmentPresentation[kind];
               const Icon = presentation.icon;
@@ -153,16 +182,19 @@ export default function CalendarDayScreen() {
         </View>
       </SafeAreaView>
     </ActionSheetModal>
-    <ActionSheetModal onRequestClose={() => { setMenuVisible(false); setCommitmentToDelete(null); }} visible={menuVisible}>
+    <ActionSheetModal onRequestClose={closeMenu} visible={menuVisible}>
       <SafeAreaView edges={["left", "right"]} style={{ backgroundColor: tokens.color.surfaceCard, flexShrink: 1 }}>
-        <ActionSheetHeader icon={commitmentToDelete ? Trash2 : CalendarDays} onClose={() => { setMenuVisible(false); setCommitmentToDelete(null); }} title={commitmentToDelete ? "Eliminar compromiso" : "Esta fecha"} />
-        <View style={{ padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl }}>
-          {commitmentToDelete ? <>
+        <ActionSheetHeader entity={removePlanSelected ? "dailyPlan" : undefined} icon={commitmentToDelete ? Trash2 : CalendarDays} onClose={closeMenu} title={removePlanSelected ? "¿Eliminar del calendario?" : commitmentToDelete ? "Eliminar compromiso" : "Esta fecha"} />
+        <View style={[styles.menuContent, removePlanSelected && styles.removePlanMenuContent]}>
+          {removePlanSelected ? <>
+            {removePlanError ? <InlineNotice tone="error">{removePlanError}</InlineNotice> : null}
+            <CalendarPlanRemovalConfirmation busy={removingPlan} onCancel={() => { setRemovePlanSelected(false); setRemovePlanError(null); }} onConfirm={() => void removePlan()} />
+          </> : commitmentToDelete ? <>
             {deleteError ? <InlineNotice tone="error">{deleteError}</InlineNotice> : null}
             <ConfirmationState busy={deletingCommitment} confirmLabel="Eliminar compromiso" danger message={`Se eliminará ${commitmentDayTitle[commitmentToDelete.kind].toLowerCase()} del ${dayLabel(commitmentToDelete.calendar_date)}.`} onCancel={() => { setCommitmentToDelete(null); setDeleteError(null); }} onConfirm={() => void deleteCommitment()} title="¿Eliminar este compromiso?" />
           </> : <ActionSheetActions>
             <ActionSheetAction icon={CalendarDays} label="Ver historial de esta fecha" onPress={() => { setMenuVisible(false); setSection("history"); }} />
-            {day?.has_plan ? <ActionSheetAction destructive disabled={day.calendar_date < localToday || day.has_execution} icon={Trash2} label="Eliminar minuta" onPress={() => { setMenuVisible(false); setSection("remove"); }} /> : null}
+            {day?.has_plan ? <ActionSheetAction destructive disabled={day.calendar_date < localToday || day.has_execution} icon={Trash2} label="Eliminar minuta" onPress={() => { setRemovePlanError(null); setRemovePlanSelected(true); }} /> : null}
             {day?.commitments?.map((commitment) => <ActionSheetAction destructive icon={commitmentPresentation[commitment.kind].icon} key={commitment.id} label={`Eliminar ${commitmentPresentation[commitment.kind].label.toLowerCase()}`} onPress={() => { setDeleteError(null); setCommitmentToDelete(commitment); }} />)}
           </ActionSheetActions>}
         </View>
@@ -173,4 +205,6 @@ export default function CalendarDayScreen() {
 
 const styles = StyleSheet.create({
   dateSubtitle: { fontSize: 17, fontWeight: "600", lineHeight: 23, marginTop: -4 },
+  menuContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
+  removePlanMenuContent: { paddingTop: 0 },
 });

@@ -54,12 +54,15 @@ export function ConfirmationState({
     <Card accent={accent} style={[styles.confirmationCard, { backgroundColor: `${accent}1A`, borderColor: `${accent}80`, borderTopColor: `${accent}80` }]}>
       <SectionTitle title={title} />
       <Text style={textStyles.muted}>{message}</Text>
+      {busy ? <View accessibilityLiveRegion="polite" style={styles.busyStatus}>
+        <ActivityIndicator color={accent} size="small" />
+        <Text style={styles.busyStatusText}>Procesando…</Text>
+      </View> : null}
       <View style={styles.actions}>
         <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={onCancel} style={[styles.actionChip, { borderColor: accent }, busy && styles.actionDisabled]}>
           <Text style={[styles.actionChipText, { color: accent }]}>Cancelar</Text>
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={onConfirm} style={[styles.actionChip, styles.confirmChip, danger && { backgroundColor: accent }, busy && styles.actionDisabled]}>
-          {busy ? <ActivityIndicator color={danger ? tokens.color.textMain : tokens.color.surfaceApp} /> : null}
           <Text style={[styles.confirmChipText, danger && styles.dangerConfirmText]}>{confirmLabel}</Text>
         </Pressable>
       </View>
@@ -72,6 +75,8 @@ const styles = StyleSheet.create({
   actionChipText: { fontSize: 16, fontWeight: "700", textAlign: "center" },
   actionDisabled: { opacity: 0.55 },
   actions: { flexDirection: "row", gap: tokens.spacing.sm },
+  busyStatus: { alignItems: "center", alignSelf: "flex-end", flexDirection: "row", gap: tokens.spacing.xs },
+  busyStatusText: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
   confirmationCard: { borderTopWidth: 1 },
   confirmChip: { backgroundColor: tokens.color.textMain, borderColor: "transparent" },
   confirmChipText: { color: tokens.color.surfaceApp, fontSize: 16, fontWeight: "700", textAlign: "center" },

@@ -17,7 +17,9 @@ test("in-progress program, plan and meal menus open dedicated information views"
   assert.doesNotMatch(day, /title="Información del día"/);
   assert.match(meal, /onOpenInformation=\{\(\) => router\.push\(`\/program\/days\/\$\{dayId\}\/meals\/\$\{encodeURIComponent\(mealKey\)\}\/information` as Href\)\}/);
   assert.match(entityActions, /<ActionSheetAction icon=\{Info\} label="Ver información del elemento"/);
-  assertSourceMatch(entityActions, /<NativeDateTimeField[\s\S]*confirmationColor=\{entity === "supplement" \? tokens\.color\.supplement : tokens\.color\.meal\}[\s\S]*initiallyExpanded[\s\S]*label=\{entity === "supplement" \? "Hora de la ingesta" : "Hora de la comida"\}/);
+  assertSourceMatch(entityActions, /confirmationColor=\{confirmationColor \?\? \(entity === "supplement" \? tokens\.color\.supplement : tokens\.color\.meal\)\}/);
+  assertSourceMatch(entityActions, /<NativeDateTimeField[\s\S]*initiallyExpanded[\s\S]*label=\{entity === "supplement" \? "Hora de la ingesta" : entity === "commitment" \? "Hora de cumplimiento" : "Hora de la comida"\}/);
+  assertSourceMatch(entityActions, /<MealTimeForm entity=\{timeChange\.entity\}/);
 });
 
 test("in-progress information routes preserve the current element hierarchy", async () => {

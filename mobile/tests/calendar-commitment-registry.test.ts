@@ -8,7 +8,7 @@ import { readTestFile } from "./support/source-contract";
 
 function day(date: string, kind: CalendarCommitment["kind"]): CalendarDay {
   return {
-    calendar_date: date, commitments: [{ id: Number(date.slice(-2)), calendar_date: date, kind, note: "", food_period_start: null, food_period_end: null, food_plans_count: 0, foods: [] }],
+    calendar_date: date, commitments: [{ id: Number(date.slice(-2)), calendar_date: date, kind, note: "", hour: null, food_period_start: null, food_period_end: null, food_plans_count: 0, foods: [] }],
     has_execution: false, has_plan: false, id: null, plan_name: "", source_kind: null, source_program_name: null,
   };
 }

@@ -81,6 +81,7 @@ export function Button({
   surface,
   disabled = false,
   loading = false,
+  style,
 }: {
   bleed?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
@@ -91,6 +92,7 @@ export function Button({
   surface?: "app" | "card";
   disabled?: boolean;
   loading?: boolean;
+  style?: StyleProp<ViewStyle>;
 }) {
   const onCard = useContext(ButtonSurfaceContext);
   const buttonStyle = variant === "primary" ? styles.buttonPrimary : styles.buttonSecondary;
@@ -107,6 +109,7 @@ export function Button({
         buttonStyle,
         variant === "secondary" && (surface === "card" || (surface !== "app" && onCard)) && styles.buttonSecondaryOnCard,
         variant === "danger" && styles.buttonDanger,
+        style,
         (disabled || loading) && styles.buttonDisabled,
         pressed && styles.buttonPressed,
       ]}>

@@ -1,4 +1,5 @@
 import { type Href, useRouter } from "expo-router";
+import type { ReactNode } from "react";
 
 import type { LibraryAction, LibraryActionResult, LibraryEntity, LibraryItem } from "@/api/types";
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
@@ -12,7 +13,7 @@ const entityConfig = {
   meal: { comparisonKind: "meals", slug: "meals" },
 } as const;
 
-export function ContextualLibraryActions({ apiRequest, entity, id, name, onChanged, onRemove, onRemoveFromCalendar, onReplace }: {
+export function ContextualLibraryActions({ apiRequest, entity, id, name, onChanged, onRemove, onRemoveFromCalendar, onRenameCalendarized, onReplace, onReplacePlan, movePlan, calendarActionsDisabled, sourceActionsDisabled, onOpenInformation, onVisibleChange, renderTrigger, visible }: {
   apiRequest: ApiRequest;
   entity: Extract<LibraryEntity, "dailyPlan" | "meal">;
   id?: number;
@@ -20,7 +21,16 @@ export function ContextualLibraryActions({ apiRequest, entity, id, name, onChang
   onChanged(): Promise<void> | void;
   onRemove?: () => Promise<void>;
   onRemoveFromCalendar?: () => Promise<void>;
+  onRenameCalendarized?: (name: string) => Promise<void>;
   onReplace?: () => void;
+  onReplacePlan?: () => void;
+  movePlan?: { sourceDate: string; localToday: string; disabled?: boolean; onMoved(): Promise<void> | void };
+  calendarActionsDisabled?: boolean;
+  sourceActionsDisabled?: boolean;
+  onOpenInformation?: () => void;
+  onVisibleChange?: (visible: boolean) => void;
+  renderTrigger?: (open: () => void) => ReactNode;
+  visible?: boolean;
 }) {
   const router = useRouter();
   const { publishSelection } = useComparatorSelectionTransfer();
@@ -29,6 +39,7 @@ export function ContextualLibraryActions({ apiRequest, entity, id, name, onChang
     { destructive: false, key: "share", label: "Compartir" },
     { destructive: false, key: "rename", label: "Renombrar" },
   ];
+  if (id == null && onRenameCalendarized) actions.push({ destructive: false, key: "rename", label: "Renombrar" });
   if (id != null && !onRemoveFromCalendar && !onRemove) {
     actions.push({ destructive: true, key: "delete", label: "Eliminar" });
   }
@@ -53,8 +64,17 @@ export function ContextualLibraryActions({ apiRequest, entity, id, name, onChang
       onCompare={id != null ? () => void compare() : undefined}
       onCompleted={(_result: LibraryActionResult) => void onChanged()}
       onRemoveFromCalendar={onRemoveFromCalendar}
+      onRenameCalendarized={onRenameCalendarized}
       onRemove={onRemove}
       onReplace={onReplace}
+      onReplacePlan={onReplacePlan}
+      movePlan={movePlan}
+      calendarActionsDisabled={calendarActionsDisabled}
+      sourceActionsDisabled={sourceActionsDisabled}
+      onOpenInformation={onOpenInformation}
+      onVisibleChange={onVisibleChange}
+      renderTrigger={renderTrigger}
+      visible={visible}
       removeContext={onRemove ? "calendarizedDay" : undefined}
     />
   );

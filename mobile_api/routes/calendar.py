@@ -93,6 +93,7 @@ def _commitment_payload(commitment: CalendarCommitment) -> dict:
         "calendar_date": commitment.calendar_date,
         "kind": commitment.kind,
         "note": commitment.note,
+        "hour": commitment.hour,
         "food_period_start": commitment.food_period_start,
         "food_period_end": commitment.food_period_end,
         "food_plans_count": commitment.food_plans_count,
@@ -237,6 +238,7 @@ def update_commitment(request, commitment_id: int, payload: CalendarCommitmentUp
     try:
         item = update_calendar_commitment(
             user=request.auth.user, commitment_id=commitment_id, note=payload.note,
+            hour=payload.hour,
             calendar_date=payload.calendar_date,
             update_food_period=payload.update_food_period,
             food_period_start=payload.food_period_start,

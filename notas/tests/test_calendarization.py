@@ -602,7 +602,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
     def test_nutritionist_commitment_uses_note_only_editor(self):
         today = local_date_for_timezone(self.user.profile.timezone_name or "UTC")
         page = self.client.get(reverse("calendar_commitments", args=["nutritionist"]))
-        self.assertContains(page, "Registrar citas con nutricionista")
+        self.assertContains(page, "Registrar evaluaciones")
         self.assertContains(page, 'id="calendar-commitments-food-card"')
         self.assertContains(page, 'hidden>')
         response = self.client.post(reverse("calendar_commitments", args=["nutritionist"]), {
@@ -614,7 +614,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertIsNone(commitment.food_period_start)
         self.assertEqual(commitment.foods_snapshot, [])
         preview = self.client.get(reverse("calendar_preview"), {"date": today.isoformat()})
-        self.assertContains(preview, "Cita nutricionista")
+        self.assertContains(preview, "Evaluación")
         self.assertContains(preview, "Revisar avances")
 
     def test_calendar_commitments_reject_duplicate_batch_without_partial_write(self):

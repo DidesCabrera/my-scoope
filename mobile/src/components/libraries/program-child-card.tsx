@@ -101,10 +101,10 @@ function MetricIdentity({ metricKey, label, range, color }: Pick<MetricRow, "lab
   );
 }
 
-function InlineDayLabels({ labels }: { labels: string[] }) {
+function InlineDayLabels({ labels, pastDayCount = 0 }: { labels: string[]; pastDayCount?: number }) {
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={styles.inlineDayLabels}>
-      {labels.map((label, index) => <Text key={`${label}-${index}`} style={styles.inlineDayLabel}>{label}</Text>)}
+      {labels.map((label, index) => <Text key={`${label}-${index}`} style={[styles.inlineDayLabel, index < pastDayCount && styles.pastDay]}>{label}</Text>)}
     </View>
   );
 }
@@ -128,7 +128,7 @@ function AllocationSegment({ color, fullWidth, id, value }: { color: string; ful
   );
 }
 
-function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: providedValues }: { axisLabels?: string[]; days: number; fullWidth?: boolean; metric: MetricRow; values?: number[] }) {
+function MetricPlot({ axisLabels, days, fullWidth = false, metric, pastDayCount = 0, values: providedValues }: { axisLabels?: string[]; days: number; fullWidth?: boolean; metric: MetricRow; pastDayCount?: number; values?: number[] }) {
   const [renderedSize, setRenderedSize] = useState({ height: 116, width: 320 });
   const rawValues = (providedValues ?? metric.values).slice(0, days);
   const maximum = Math.max(...rawValues, 1);
@@ -179,6 +179,7 @@ function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: provi
             fill={`url(#metric-bar-${metric.key})`}
             height={Math.max(1, plotBaseline - y)}
             key={`${metric.key}-bar-${index}`}
+            opacity={index < pastDayCount ? 0.5 : 1}
             rx={barRadiusX}
             ry={barRadiusY}
             width={barWidth}
@@ -201,6 +202,7 @@ function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: provi
               numberOfLines={1}
               style={[
                 styles.pointLabel,
+                index < pastDayCount && styles.pastDay,
                 {
                   left: `${((index + 0.5) / slotCount) * 100}%`,
                   top: `${Math.max(0, (y / plotHeight) * 100 - 12)}%`,
@@ -211,12 +213,12 @@ function MetricPlot({ axisLabels, days, fullWidth = false, metric, values: provi
           ))}
         </View>
       ) : null}
-      {fullWidth && axisLabels ? <InlineDayLabels labels={axisLabels.slice(0, days)} /> : null}
+      {fullWidth && axisLabels ? <InlineDayLabels labels={axisLabels.slice(0, days)} pastDayCount={pastDayCount} /> : null}
     </View>
   );
 }
 
-function AllocationPlot({ axisLabels, days, fullWidth = false, values = allocationValues }: { axisLabels?: string[]; days: number; fullWidth?: boolean; values?: number[][] }) {
+function AllocationPlot({ axisLabels, days, fullWidth = false, pastDayCount = 0, values = allocationValues }: { axisLabels?: string[]; days: number; fullWidth?: boolean; pastDayCount?: number; values?: number[][] }) {
   return (
     <View accessibilityLabel="Distribución de macronutrientes por día" style={[styles.metricPlot, styles.allocationPlot, fullWidth && styles.weekFullWidthPlot, fullWidth && styles.weekAllocationPlot]}>
       {fullWidth ? <Text style={styles.inlineChartTitle}>Alloc</Text> : null}
@@ -224,7 +226,7 @@ function AllocationPlot({ axisLabels, days, fullWidth = false, values = allocati
       {values.slice(0, days).map(([protein, carbs, fat], index) => {
         const hasAllocation = protein + carbs + fat > 0;
         return (
-          <View key={`allocation-${index}`} style={[styles.allocationSlot, index > 0 && index % 7 === 0 && styles.weekDivider]}>
+          <View key={`allocation-${index}`} style={[styles.allocationSlot, index > 0 && index % 7 === 0 && styles.weekDivider, index < pastDayCount && styles.pastDay]}>
             {hasAllocation ? <>
               <AllocationSegment color={tokens.color.protein} fullWidth={fullWidth} id={`allocation-protein-${index}`} value={protein} />
               <AllocationSegment color={tokens.color.carbs} fullWidth={fullWidth} id={`allocation-carbs-${index}`} value={carbs} />
@@ -233,7 +235,7 @@ function AllocationPlot({ axisLabels, days, fullWidth = false, values = allocati
           </View>
         );
       })}
-      {fullWidth && axisLabels ? <InlineDayLabels labels={axisLabels.slice(0, days)} /> : null}
+      {fullWidth && axisLabels ? <InlineDayLabels labels={axisLabels.slice(0, days)} pastDayCount={pastDayCount} /> : null}
     </View>
   );
 }
@@ -249,6 +251,7 @@ type MetricPreviewProps = {
   axisLabels?: string[];
   data?: ProgramMetricDatum[];
   days?: number;
+  pastDayCount?: number;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -260,6 +263,7 @@ function MetricPreview({
   data,
   days = 14,
   filter = "all",
+  pastDayCount = 0,
   scope,
   style,
 }: MetricPreviewProps & { filter?: WeekMetricFilter; scope: "program" | "week" }) {
@@ -293,12 +297,12 @@ function MetricPreview({
         {visibleMetrics.map((metric, index) => (
           <View key={metric.key} style={[styles.weekMetricRow, index > 0 && styles.weekMetricRowSeparated]}>
             {index > 0 ? <View pointerEvents="none" style={styles.weekMetricSeparator} /> : null}
-            <MetricPlot axisLabels={axisLabels} days={days} fullWidth metric={metric} values={metricValues?.[metric.key]} />
+            <MetricPlot axisLabels={axisLabels} days={days} fullWidth metric={metric} pastDayCount={pastDayCount} values={metricValues?.[metric.key]} />
           </View>
         ))}
         {showAllocation ? <View style={[styles.weekMetricRow, visibleMetrics.length > 0 && styles.weekMetricRowSeparated]}>
           {visibleMetrics.length > 0 ? <View pointerEvents="none" style={styles.weekMetricSeparator} /> : null}
-          <AllocationPlot axisLabels={axisLabels} days={days} fullWidth values={liveAllocationValues} />
+          <AllocationPlot axisLabels={axisLabels} days={days} fullWidth pastDayCount={pastDayCount} values={liveAllocationValues} />
         </View> : null}
       </View>
     );
@@ -433,6 +437,7 @@ const styles = StyleSheet.create({
   weekMetricPlot: { height: 116, paddingVertical: 0 },
   pointLabels: { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   pointLabel: { color: tokens.color.textMain, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, marginLeft: -25, position: "absolute", textAlign: "center", transform: [{ translateY: -2 }], width: 50 },
+  pastDay: { opacity: 0.5 },
   inlineDayLabels: { alignItems: "flex-end", bottom: 3, flexDirection: "row", left: 0, position: "absolute", right: 0 },
   inlineDayLabel: { color: tokens.color.textMuted, flex: 1, fontSize: 10, fontWeight: tokens.weight.medium, textAlign: "center" },
   inlineChartTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, left: tokens.spacing.xs, lineHeight: 20, position: "absolute", top: tokens.spacing.xs, zIndex: 1 },

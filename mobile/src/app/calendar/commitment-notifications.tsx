@@ -14,7 +14,7 @@ const descriptions: Record<CalendarCommitmentKind, string> = {
   shopping: "Avisarme cuando tenga compras programadas.",
   cooking: "Avisarme cuando tenga que cocinar.",
   training: "Avisarme cuando tenga un entrenamiento.",
-  nutritionist: "Avisarme cuando tenga una cita nutricional.",
+  nutritionist: "Avisarme cuando tenga una evaluación.",
 };
 
 export default function CommitmentNotificationsScreen() {

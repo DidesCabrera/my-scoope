@@ -49,9 +49,9 @@ function TodayRowMarker() {
   </View>;
 }
 
-function PlanIdentity({ day, tab }: { day: CalendarDay; tab: Tab }) {
+function PlanIdentity({ day, muted = false, tab }: { day: CalendarDay; muted?: boolean; tab: Tab }) {
   return (
-    <View style={styles.identity}>
+    <View style={[styles.identity, muted && styles.pastContent]}>
       {tab === "plans" ? <View style={styles.dateColumn}>
         <Text style={styles.dateWeekday}>{dateLabel(day.calendar_date, { weekday: "short" })}</Text>
         <Text style={styles.dateNumber}>{day.calendar_date.slice(8, 10)}</Text>
@@ -71,16 +71,16 @@ function PlanIdentity({ day, tab }: { day: CalendarDay; tab: Tab }) {
 
 function Header({ tab }: { tab: Exclude<Tab, "plans"> }) {
   return <View style={[styles.analyticsRow, styles.header]}>
-    <Text style={[styles.headerLabel, styles.leading, styles.leadingHeader]}>Minutas diarias</Text>
+    <Text style={[styles.headerLabel, tab === "macros" ? styles.macroLeading : tab === "calories" ? styles.calorieLeading : styles.leading, styles.leadingHeader]}>Minutas diarias</Text>
     {tab === "calories" ? <>
       <Text style={[styles.headerLabel, styles.calorieCell]}>Cal</Text>
       <Text style={[styles.headerLabel, styles.shareCell]}>% Cal</Text>
     </> : null}
     {tab === "macros" ? <>
-      <Text style={[styles.headerLabel, styles.ppkCell]}>PpK</Text>
-      <Text style={[styles.headerLabel, styles.macroCell]}>P</Text>
-      <Text style={[styles.headerLabel, styles.macroCell]}>C</Text>
-      <Text style={[styles.headerLabel, styles.macroCell]}>G</Text>
+      <Text style={[styles.headerLabel, styles.macroMetricCell]}>P</Text>
+      <Text style={[styles.headerLabel, styles.macroMetricCell]}>PpK</Text>
+      <Text style={[styles.headerLabel, styles.macroMetricCell]}>C</Text>
+      <Text style={[styles.headerLabel, styles.macroMetricCell]}>G</Text>
     </> : null}
     {tab === "distribution" ? <>
       <Text style={[styles.headerLabel, styles.percentCell]}>P%</Text>
@@ -93,8 +93,9 @@ function Header({ tab }: { tab: Exclude<Tab, "plans"> }) {
 
 type RowItem = { id: string; day: CalendarDay };
 
-export function CalendarUpcomingPanels({ days, localDate, onAssign, onOpenDay, onRemove, onReorder, onReplace, weightKg }: {
+export function CalendarUpcomingPanels({ days, expandedLayout = false, localDate, onAssign, onOpenDay, onRemove, onReorder, onReplace, weightKg }: {
   days: CalendarDay[];
+  expandedLayout?: boolean;
   localDate: string;
   onAssign(day: CalendarDay): void;
   onOpenDay(day: CalendarDay): void;
@@ -129,7 +130,7 @@ export function CalendarUpcomingPanels({ days, localDate, onAssign, onOpenDay, o
       ] : []),
     ];
   }
-  return <PanelSurface style={styles.surface}>
+  return <PanelSurface style={[styles.surface, expandedLayout && styles.expandedSurface]}>
     <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
     <PanelBody>
       {activeTab !== "plans" ? <Header tab={activeTab} /> : null}
@@ -149,45 +150,46 @@ export function CalendarUpcomingPanels({ days, localDate, onAssign, onOpenDay, o
         const fat = day.has_plan ? number(day.plan_fat_grams) : null;
         const hasMacros = protein != null && carbs != null && fat != null && protein * 4 + carbs * 4 + fat * 9 > 0;
         const distribution = hasMacros ? macroCalorieShares({ proteinGrams: protein, carbsGrams: carbs, fatGrams: fat }) : null;
+        const isPast = day.calendar_date < localDate;
         return <Pressable
           accessibilityLabel={`${day.calendar_date === localDate ? "Hoy: " : ""}${day.has_plan ? `Ver detalle de ${day.plan_name}` : `Ver el ${dateLabel(day.calendar_date, { day: "numeric", month: "long" })} sin minuta`}`}
           accessibilityRole="button"
           delayLongPress={320}
           onLongPress={onLongPress}
           onPress={() => runGuardedNavigation(() => onOpenDay(day))}
-          style={[activeTab === "plans" ? styles.planRow : styles.analyticsRow, index === days.length - 1 && styles.lastRow]}>
+          style={[activeTab === "plans" ? styles.planRow : styles.analyticsRow, index === days.length - 1 && styles.lastRow, isPast && styles.pastBackground]}>
           {activeTab === "plans" ? <>
             {day.calendar_date === localDate ? <TodayRowMarker /> : null}
-            <PlanIdentity day={day} tab={activeTab} />
-            {day.has_plan ? <View style={styles.planCalories}>
+            <PlanIdentity day={day} muted={isPast} tab={activeTab} />
+            {day.has_plan ? <View style={[styles.planCalories, isPast && styles.pastContent]}>
               <Text style={styles.planCaloriesValue}>{integer(calories)}</Text>
               <Text style={styles.planCaloriesUnit}>kcal</Text>
-            </View> : <Pressable accessibilityLabel={`Asignar minuta al ${dateLabel(day.calendar_date, { day: "numeric", month: "long" })}`} accessibilityRole="button" onPress={(event) => { event.stopPropagation(); onAssign(day); }} style={({ pressed }) => [styles.assignChip, pressed && styles.pressed]}>
+            </View> : <Pressable accessibilityLabel={`Asignar minuta al ${dateLabel(day.calendar_date, { day: "numeric", month: "long" })}`} accessibilityRole="button" onPress={(event) => { event.stopPropagation(); onAssign(day); }} style={({ pressed }) => [styles.assignChip, isPast && styles.pastContent, pressed && styles.pressed]}>
               <Plus color={tokens.color.textMain} size={15} strokeWidth={2.2} />
               <Text style={styles.assignChipLabel}>Asignar minuta</Text>
             </Pressable>}
           </> : <>
             {day.calendar_date === localDate ? <TodayRowMarker /> : null}
-            <View style={styles.leading}><PlanIdentity day={day} tab={activeTab} /></View>
+            <View style={[activeTab === "macros" ? styles.macroLeading : activeTab === "calories" ? styles.calorieLeading : styles.leading, isPast && styles.pastContent]}><PlanIdentity day={day} tab={activeTab} /></View>
             {activeTab === "calories" ? <>
-              <Text style={[styles.value, styles.calorieCell]}>{integer(calories)}</Text>
-              <View style={styles.shareCell}>{calories != null && totalCalories > 0
+              <Text style={[styles.value, styles.calorieCell, isPast && styles.pastContent]}>{integer(calories)}</Text>
+              <View style={[styles.shareCell, isPast && styles.pastContent]}>{calories != null && totalCalories > 0
                 ? <PanelAllocationBar tone="calories" value={calories / totalCalories * 100} />
                 : <Text style={styles.emptyValue}>—</Text>}</View>
             </> : null}
             {activeTab === "macros" ? <>
-              <View style={styles.ppkCell}>{ppk != null
+              <Text style={[styles.value, styles.macroMetricCell, isPast && styles.pastContent]}>{integer(protein)}</Text>
+              <View style={[styles.macroMetricCell, isPast && styles.pastContent]}>{ppk != null
                 ? <ProteinPerKilogramBadge density="compact" showUnit={false} value={ppk} />
                 : <Text style={styles.emptyValue}>—</Text>}</View>
-              <Text style={[styles.value, styles.macroCell]}>{integer(protein)}</Text>
-              <Text style={[styles.value, styles.macroCell]}>{integer(carbs)}</Text>
-              <Text style={[styles.value, styles.macroCell]}>{integer(fat)}</Text>
+              <Text style={[styles.value, styles.macroMetricCell, isPast && styles.pastContent]}>{integer(carbs)}</Text>
+              <Text style={[styles.value, styles.macroMetricCell, isPast && styles.pastContent]}>{integer(fat)}</Text>
             </> : null}
             {activeTab === "distribution" ? <>
-              <Text style={[styles.value, styles.percentCell, styles.protein]}>{distribution ? `${distribution.protein}%` : "—"}</Text>
-              <Text style={[styles.value, styles.percentCell, styles.carbs]}>{distribution ? `${distribution.carbs}%` : "—"}</Text>
-              <Text style={[styles.value, styles.percentCell, styles.fat]}>{distribution ? `${distribution.fat}%` : "—"}</Text>
-              <View style={styles.distributionCell}>{distribution
+              <Text style={[styles.value, styles.percentCell, styles.protein, isPast && styles.pastContent]}>{distribution ? `${distribution.protein}%` : "—"}</Text>
+              <Text style={[styles.value, styles.percentCell, styles.carbs, isPast && styles.pastContent]}>{distribution ? `${distribution.carbs}%` : "—"}</Text>
+              <Text style={[styles.value, styles.percentCell, styles.fat, isPast && styles.pastContent]}>{distribution ? `${distribution.fat}%` : "—"}</Text>
+              <View style={[styles.distributionCell, isPast && styles.pastContent]}>{distribution
                 ? <MacroCalorieDistribution proteinGrams={protein!} carbsGrams={carbs!} fatGrams={fat!} />
                 : <Text style={styles.emptyValue}>—</Text>}</View>
             </> : null}
@@ -200,15 +202,20 @@ export function CalendarUpcomingPanels({ days, localDate, onAssign, onOpenDay, o
 
 const styles = StyleSheet.create({
   surface: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -6 },
+  expandedSurface: { marginHorizontal: -18 },
   assignChip: { alignItems: "center", backgroundColor: `${tokens.color.dailyPlan}1A`, borderColor: tokens.color.dailyPlan, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 4, marginRight: -6, minHeight: 30, paddingHorizontal: 9 },
   assignChipLabel: { color: tokens.color.textMain, fontSize: 12, fontWeight: "600" },
   planRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 68, paddingLeft: tokens.card.outerPadding - 10, paddingRight: tokens.card.outerPadding, paddingVertical: tokens.spacing.sm },
-  analyticsRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 62, paddingLeft: tokens.spacing.md, paddingRight: tokens.spacing.sm },
+  analyticsRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 76, paddingLeft: tokens.spacing.md, paddingRight: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
   lastRow: { borderBottomWidth: 0 },
-  header: { minHeight: 32 },
+  pastBackground: { backgroundColor: `${tokens.color.surfaceApp}80` },
+  pastContent: { opacity: 0.35 },
+  header: { minHeight: 32, paddingVertical: 0 },
   headerLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: "600", textAlign: "center", textTransform: "uppercase" },
   leadingHeader: { textAlign: "left" },
   leading: { flex: 4, minWidth: 0 },
+  macroLeading: { flexBasis: "40%", flexGrow: 0, flexShrink: 0, minWidth: 0 },
+  calorieLeading: { flexBasis: "50%", flexGrow: 0, flexShrink: 0, minWidth: 0 },
   identity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   dateColumn: { alignItems: "center", height: 42, justifyContent: "center", minWidth: 44, width: 44 },
   dateWeekday: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 14 },
@@ -227,8 +234,7 @@ const styles = StyleSheet.create({
   emptyValue: { color: tokens.color.textMuted, fontSize: 12, textAlign: "center" },
   calorieCell: { flex: 1.2, minWidth: 0 },
   shareCell: { flex: 1.7, minWidth: 0 },
-  ppkCell: { flex: 1, minWidth: 0 },
-  macroCell: { flex: 0.75, minWidth: 0 },
+  macroMetricCell: { flex: 1, minWidth: 0 },
   percentCell: { flex: 0.8, minWidth: 0 },
   distributionCell: { flex: 1.6, minWidth: 0 },
   protein: { color: tokens.color.protein, fontWeight: "600" },

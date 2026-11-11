@@ -1,4 +1,4 @@
-import { Bookmark, CalendarClock, Clock3, Copy, Info, MoreHorizontal, Pencil, RefreshCw, Scale, Send, Trash2 } from "lucide-react-native";
+import { Bookmark, CalendarClock, Clock3, Copy, Info, MoreHorizontal, MoveRight, Pencil, RefreshCw, Scale, Send, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -23,6 +23,8 @@ import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { EntityCardAction } from "@/components/ui";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { MealTimeForm } from "@/components/calendarization/calendarized-entity-actions";
+import { CalendarPlanRemovalConfirmation } from "@/components/calendarization/calendar-plan-removal-confirmation";
+import { CalendarPlanMoveForm } from "@/components/calendarization/calendar-plan-move-form";
 import { tokens } from "@/design/tokens";
 import { openNativeShare } from "@/sharing/native-share";
 
@@ -40,6 +42,11 @@ type LibraryActionsProps = {
   onEdit?: () => void;
   onOpenInformation?: () => void;
   onRemoveFromCalendar?: () => Promise<void>;
+  onRenameCalendarized?: (name: string) => Promise<void>;
+  onReplacePlan?: () => void;
+  movePlan?: { sourceDate: string; localToday: string; disabled?: boolean; onMoved(): Promise<void> | void };
+  calendarActionsDisabled?: boolean;
+  sourceActionsDisabled?: boolean;
   onRemove?: () => Promise<void>;
   removeContext?: "calendarizedDay";
   onReplace?: () => void;
@@ -67,12 +74,12 @@ const entityLabels = {
   program: "este programa",
 } as const;
 
-export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCalendarize, onCompare, onEdit, onOpenInformation, onRemoveFromCalendar, onRemove, onReplace, onSaveToLibrary, onVisibleChange, removeContext, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
+export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onCalendarize, onCompare, onEdit, onOpenInformation, onRemoveFromCalendar, onRenameCalendarized, onReplacePlan, movePlan, calendarActionsDisabled = false, sourceActionsDisabled = false, onRemove, onReplace, onSaveToLibrary, onVisibleChange, removeContext, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
   const shareAction = actions.find((action) => action.key === "share");
   const remainingActions = actions.filter((action) => action.key !== "share");
   const [internalVisible, setInternalVisible] = useState(false);
-  const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | { destructive: true; key: "remove" | "remove-calendar"; label: string } | null>(
+  const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time" | "move-calendar"; label: string } | { destructive: true; key: "remove" | "remove-calendar"; label: string } | null>(
     initialAction === "change-time" ? { destructive: false, key: "change-time", label: "Cambiar hora" } : null,
   );
   const [name, setName] = useState(item.name);
@@ -86,7 +93,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     onVisibleChange?.(nextVisible);
   };
 
-  if (!actions.length && !mealTimeChange && !onCalendarize && !onCompare && !onEdit && !onOpenInformation && !onRemoveFromCalendar && !onRemove && !onReplace && !onSaveToLibrary) return null;
+  if (!actions.length && !mealTimeChange && !onCalendarize && !onCompare && !onEdit && !onOpenInformation && !onRemoveFromCalendar && !onRemove && !onReplace && !onReplacePlan && !movePlan && !onSaveToLibrary) return null;
 
   const close = () => {
     if (submitting) return;
@@ -209,12 +216,29 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     }
   };
 
+  const saveName = async () => {
+    if (!onRenameCalendarized) { await execute({ action: "rename", name }); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onRenameCalendarized(name.trim());
+      setVisible(false);
+      setSelected(null);
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const actionTitle = selected?.key === "delete"
     ? `¿Eliminar ${entityLabels[item.entity]}?`
     : selected?.key === "remove"
       ? "¿Quitar comida?"
     : selected?.key === "remove-calendar"
       ? "¿Eliminar del calendario?"
+    : selected?.key === "move-calendar"
+      ? "Mover minuta"
     : selected?.key === "duplicate"
       ? `¿Duplicar ${entityLabels[item.entity]}?`
       : selected?.label;
@@ -234,10 +258,11 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
               {!selected ? (
                 <View style={styles.sheetContent}>
                   {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+                  {sourceActionsDisabled ? <InlineNotice>Compartir, comparar y mover no están disponibles para una minuta proveniente de un programa.</InlineNotice> : null}
                   <ActionSheetActions>
                 {shareAction ? (
                   <ActionSheetAction
-                    disabled={submitting}
+                    disabled={sourceActionsDisabled || submitting}
                     icon={actionIcons.share}
                     label={shareAction.label}
                     onPress={() => selectAction(shareAction)}
@@ -257,6 +282,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
 
                 {onCompare ? (
                   <ActionSheetAction
+                    disabled={sourceActionsDisabled}
                     icon={Scale}
                     label="Comparar"
                     onPress={() => {
@@ -322,6 +348,10 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                   );
                 })}
 
+                {onReplacePlan ? <ActionSheetAction disabled={calendarActionsDisabled || submitting} icon={RefreshCw} label="Reemplazar minuta" onPress={() => { setVisible(false); onReplacePlan(); }} /> : null}
+
+                {movePlan ? <ActionSheetAction disabled={calendarActionsDisabled || movePlan.disabled || submitting} icon={MoveRight} label="Mover minuta" onPress={() => { setError(null); setSelected({ destructive: false, key: "move-calendar", label: "Mover minuta" }); }} /> : null}
+
                 {mealTimeChange && mealTimeInMenu ? (
                   <ActionSheetAction
                     icon={Clock3}
@@ -343,7 +373,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                 {onRemoveFromCalendar ? (
                   <ActionSheetAction
                     destructive
-                    disabled={submitting}
+                    disabled={calendarActionsDisabled || submitting}
                     icon={Trash2}
                     label="Eliminar del calendario"
                     onPress={() => setSelected({ destructive: true, key: "remove-calendar", label: "Eliminar del calendario" })}
@@ -352,7 +382,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                   </ActionSheetActions>
                 </View>
               ) : (
-                <ScrollView automaticallyAdjustKeyboardInsets={false} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
+                <ScrollView automaticallyAdjustKeyboardInsets={false} contentContainerStyle={[styles.sheetContent, selected?.key === "remove-calendar" && styles.removeCalendarSheetContent]} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
                 {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
                 {selected?.key === "change-time" && mealTimeChange ? (
@@ -362,7 +392,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                 {selected?.key === "rename" ? (
                   <View style={styles.form}>
                     <Field autoCapitalize="sentences" label="Nombre" onChangeText={setName} value={name} />
-                    <Button disabled={!name.trim()} label="Guardar nombre" loading={submitting} onPress={() => void execute({ action: "rename", name })} />
+                    <Button disabled={!name.trim()} label="Guardar nombre" loading={submitting} onPress={() => void saveName()} />
                     <Button label="Volver" onPress={() => setSelected(null)} variant="secondary" />
                   </View>
                 ) : null}
@@ -393,12 +423,17 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                 ) : null}
 
                 {selected?.key === "remove-calendar" ? (
-                  <View style={styles.confirmation}>
-                    <Text style={styles.confirmationText}>La minuta dejará de estar asignada a esta fecha. La minuta de tu biblioteca y el historial permanecerán guardados. No se puede quitar si ya registraste cumplimiento.</Text>
-                    <Button label="Eliminar del calendario" loading={submitting} onPress={() => void removeFromCalendar()} variant="danger" />
-                    <Button label="Cancelar" onPress={() => setSelected(null)} variant="secondary" />
-                  </View>
+                  <CalendarPlanRemovalConfirmation busy={submitting} onCancel={() => setSelected(null)} onConfirm={() => void removeFromCalendar()} />
                 ) : null}
+
+                {selected?.key === "move-calendar" && movePlan ? <CalendarPlanMoveForm
+                  apiRequest={apiRequest}
+                  localToday={movePlan.localToday}
+                  name={item.name}
+                  onCancel={() => setSelected(null)}
+                  onMoved={async () => { await movePlan.onMoved(); setVisible(false); setSelected(null); }}
+                  sourceDate={movePlan.sourceDate}
+                /> : null}
 
                 </ScrollView>
               )}
@@ -413,6 +448,7 @@ const styles = StyleSheet.create({
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },
   sheet: { backgroundColor: tokens.color.surfaceCard },
   sheetContent: { gap: tokens.spacing.md, padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
+  removeCalendarSheetContent: { paddingTop: 0 },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   form: { gap: tokens.spacing.md },
   confirmation: { gap: tokens.spacing.md },
