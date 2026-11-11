@@ -14,6 +14,7 @@ flowchart TD
     PT --> SPA[Strategic Product Advisor]
     PT --> NSS[Nutrition Solver Steward]
     PT --> ACS[AI Architecture and Context Steward]
+    PT --> AAPS[AI Application Platform Steward]
     PT --> OL[Observability Lead]
     PT --> PWC[Parallel Work Coordinator]
     OL --> MIS[Mobile Incident Specialist]
@@ -29,6 +30,9 @@ flowchart TD
     NSS -. specifies consumption contracts .-> CCS
     CCS -. supplies eligible curated data .-> NSS
     ACS -. protects solver boundaries .-> NSS
+    ACS -. governs AI architecture .-> AAPS
+    NSS -. supplies solver quality contracts .-> AAPS
+    AAPS -. supplies AI diagnostics .-> OL
 
     F --> FIN[Finance]
     FIN --> AIR[Accounting Intake and Recordkeeping Agent]
@@ -64,6 +68,10 @@ flowchart TD
   contracts, evaluation evidence, and the improvement backlog. Catalog Operations
   owns the source data and publication process; neither role silently changes the
   other's authority.
+- The AI Application Platform Steward owns implementation and evaluation of the
+  assistant, governed action mechanisms, model integration, MCP projection, and
+  AI release evidence. Architecture protects the wider system boundaries, while
+  domain roles retain their calculation, data, and product authorities.
 
 ## Role classes
 

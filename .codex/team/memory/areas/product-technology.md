@@ -13,6 +13,7 @@ coherence, and a fast path from observed problem to verified correction.
 - `strategic-product-advisor`
 - `nutrition-solver-steward`
 - `ai-architecture-context-steward`
+- `ai-application-platform-steward`
 - `observability-lead`
 - incident specialists for mobile, backend, and release boundaries
 - `incident-verifier`
@@ -34,3 +35,10 @@ model, catalog-consumption contract, evaluation scenarios, failure classificatio
 and improvement backlog. Product retains outcome and investment decisions;
 Catalog Operations retains source, curation, and publication authority; accepted
 architecture and implementation remain authoritative in code and current docs.
+
+`ai-application-platform-steward` entered pilot on 2026-11-11. It owns the applied
+AI platform lifecycle: assistant orchestration, model/provider integration,
+governed capabilities and actions, MCP projection, evaluation environments,
+quality gates, observability, and controlled rollout. The current executable
+baseline is the AI Assistant capability catalog and Evaluation Lab v2; this team
+memory does not replace their current feature contracts or implementation.
