@@ -2,7 +2,7 @@ from django.db import migrations
 
 
 def enable_pro_personal_preparations(apps, schema_editor):
-    """Enable personal preparations on existing Pro plans without replacing other entitlements."""
+    """Enable existing Pro plans without replacing entitlements; seeds cover future plans."""
     AccountPlan = apps.get_model("accounts", "AccountPlan")
     for plan in AccountPlan.objects.filter(slug="pro"):
         entitlements = dict(plan.entitlements or {})
