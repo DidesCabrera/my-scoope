@@ -966,7 +966,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assertSourceMatch(programChart, /import \{[^}]*Card[^}]*EntityCardAction[^}]*EntityCardActions[^}]*EntityCardPanelToggle[^}]*EntityHeading[^}]*layoutStyles[^}]*\} from "@\/components\/ui"/);
   assertSourceDoesNotMatch(programChart, /Card.*from "@\/components\/ui\/primitives"/);
-  assertSourceMatch(programChart, /<Card accent=\{tokens\.color\.program\}>/);
+  assertSourceMatch(programChart, /<Card accent=\{tokens\.color\.program\} style=\{metricsExpanded && styles\.expandedCard\}>/);
   assertSourceMatch(programChart, /<ProgramMetricPreview[^\n]*style=\{layoutStyles\.cardContentBleed\}/);
   assertSourceDoesNotMatch(programChart, /footer: \{[^}]*borderTop/);
   assertSourceMatch(programChart, /allocationSlot: \{[^\n]*gap: 2[^\n]*paddingHorizontal: 1/);
