@@ -37,5 +37,7 @@ def entitlements_payload(user) -> dict:
         "workspace_features": {
             "supplements_available": bool(settings.SUPPLEMENTS_FEATURE_ENABLED),
             "can_use_supplements": bool(settings.SUPPLEMENTS_FEATURE_ENABLED and entitlements and entitlements.enabled("can_use_supplements")),
+            "personal_preparations_available": bool(settings.PERSONAL_PREPARATIONS_FEATURE_ENABLED),
+            "can_use_personal_preparations": bool(settings.PERSONAL_PREPARATIONS_FEATURE_ENABLED and entitlements and entitlements.enabled("can_use_personal_preparations")),
         },
     }

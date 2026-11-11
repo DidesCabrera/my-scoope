@@ -23,8 +23,11 @@ export function MealTimeForm({ confirmationColor, entity = "meal", initialTime, 
   const [hour, setHour] = useState(() => initialMealTime(initialTime));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [timeConfirmed, setTimeConfirmed] = useState(false);
+  const [timePickerExpanded, setTimePickerExpanded] = useState(false);
 
   const save = async () => {
+    if (!timeConfirmed || timePickerExpanded) return;
     if (!isValidMealTime(hour)) {
       setError("Ingresa una hora válida en formato HH:MM.");
       return;
@@ -57,10 +60,11 @@ export function MealTimeForm({ confirmationColor, entity = "meal", initialTime, 
         labelStyle={styles.timeLabel}
         minuteInterval={5}
         mode="time"
-        onChange={(value) => setHour(value)}
+        onChange={(value) => { setHour(value); setTimeConfirmed(true); }}
+        onExpandedChange={setTimePickerExpanded}
         value={hour}
       />
-      <Button disabled={!isValidMealTime(hour)} label="Guardar hora" loading={submitting} onPress={() => void save()} />
+      <Button disabled={!timeConfirmed || timePickerExpanded || !isValidMealTime(hour)} label="Guardar hora" loading={submitting} onPress={() => void save()} />
       <Button disabled={submitting} label="Cancelar" onPress={onCancel} variant="secondary" />
     </View>
   );

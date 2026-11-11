@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import AccountDeletionRecord, AccountSubscription
+from accounts.models import AccountDeletionRecord, AccountPlan, AccountSubscription
 from accounts.seed_plans import seed_account_plans
 from accounts.services.deletion import (
     MODEL_RETENTION_POLICY,
@@ -78,6 +78,29 @@ class AccountDeletionViewTests(TestCase):
         self.assertTrue(CulinaryTemplate.objects.filter(pk=public.pk).exists())
         reviewed.refresh_from_db()
         self.assertIsNone(reviewed.reviewed_by_id)
+
+    @override_settings(PERSONAL_PREPARATIONS_FEATURE_ENABLED=True)
+    def test_deletion_erases_personal_preparation_versions_before_private_foods(self):
+        from accounts.services.deletion import delete_user_account
+        from notas.application.services.commands.personal_preparation_commands import save_personal_preparation
+        from notas.domain.models import Meal, MealPreparation, Preparation, PreparationIngredient, PreparationVersion
+
+        AccountSubscription.objects.update_or_create(user=self.user, defaults={"plan": AccountPlan.objects.get(slug="pro")})
+        food = Food.objects.create(name="Ingrediente privado", protein=10, carbs=20, fat=5, created_by=self.user)
+        preparation = save_personal_preparation(
+            user=self.user, name="Receta privada", yield_g=100, default_portion_g=50,
+            household_label="porción", ingredients=[{"food_id": food.id, "quantity_g": 100}],
+        )
+        meal = Meal.objects.create(name="Comida privada", created_by=self.user)
+        MealPreparation.objects.create(meal=meal, preparation=preparation, version=preparation.current_version,
+                                       quantity_g=50, selected_units=1, selection_mode="units")
+
+        delete_user_account(user=self.user, source="test")
+
+        self.assertFalse(Preparation.objects.filter(pk=preparation.pk).exists())
+        self.assertFalse(PreparationVersion.objects.filter(preparation_id=preparation.pk).exists())
+        self.assertFalse(PreparationIngredient.objects.filter(food_id=food.pk).exists())
+        self.assertFalse(Food.objects.filter(pk=food.pk).exists())
 
     def test_deletion_erases_saved_shopping_commitment_and_food_snapshot(self):
         from accounts.services.deletion import delete_user_account

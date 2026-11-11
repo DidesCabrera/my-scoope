@@ -56,13 +56,14 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [progressMenuStage, setProgressMenuStage] = useState<"actions" | "date">("actions");
   const [progressStartDate, setProgressStartDate] = useState("");
+  const [progressDatePickerExpanded, setProgressDatePickerExpanded] = useState(false);
   const [progressDateError, setProgressDateError] = useState<string | null>(null);
   const [progressDateBusy, setProgressDateBusy] = useState(false);
   const loadSequence = useRef(0);
 
   useFocusEffect(useCallback(() => {
     if (extended) {
-      setHeaderPresentation({ action: { icon: "plus", label: "Calendarizar minuta o programa", onPress: () => setPlanMenuVisible(true) }, fallback: "/calendar", identityVisible: compactHeaderVisible, mode: "back", title: "Próximas minutas programadas" });
+      setHeaderPresentation({ action: { icon: "plus", label: "Calendarizar minuta o programa", onPress: () => setPlanMenuVisible(true) }, fallback: "/calendar", identityVisible: compactHeaderVisible, mode: "back", title: "Mis minutas programadas" });
     } else {
       setHeaderPresentation({ action: { icon: "more", label: "Opciones de Mi calendario", onPress: () => setCalendarOptionsVisible(true) }, createAction: { icon: "plus", label: "Calendarizar", onPress: () => setCalendarMenuVisible(true) }, identityVisible: compactHeaderVisible, mode: "default", title: "Mi calendario" });
     }
@@ -147,6 +148,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     setVisibleMonth(nextMonth);
   }
   async function adjustProgressStart() {
+    if (progressDatePickerExpanded || !progressStartDate || progressStartDate === progress?.period_start) return;
     setProgressDateBusy(true);
     setProgressDateError(null);
     try {
@@ -168,10 +170,12 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     setProgressMenuVisible(false);
     setProgressMenuStage("actions");
     setProgressDateError(null);
+    setProgressDatePickerExpanded(false);
   }
   function openProgressDatePicker() {
     setProgressStartDate(progress?.period_start ?? overview?.local_date ?? "");
     setProgressDateError(null);
+    setProgressDatePickerExpanded(false);
     setProgressMenuStage("date");
   }
   function openDay(date: string) {
@@ -230,7 +234,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         tabs={[{ key: "planning", label: "Planificación" }, { key: "progress", label: "Progreso" }]}
       /> : undefined}
       stickyHeaderStyle={styles.stickyHeader}>
-      {extended ? <SectionPageHeader countLabel="fechas" icon={<ClipboardList color={tokens.color.textMain} size={28} strokeWidth={1.8} />} section="calendarization" subtitle="Fechas próximas, tengan o no un plan asignado." title="Próximas minutas programadas" /> : null}
+      {extended ? <SectionPageHeader countLabel="fechas" icon={<ClipboardList color={tokens.color.textMain} size={28} strokeWidth={1.8} />} section="calendarization" subtitle="Fechas próximas, tengan o no un plan asignado." title="Mis minutas programadas" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!extended && activeTab === "planning" ? (
         <>
@@ -342,9 +346,9 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         />
         <View style={styles.futureWeekPanels}>
           <View style={styles.futureWeekMetrics}>
-              <CalendarWeekMetrics days={calendarWeek.days} expandedLayout localDate={overview?.local_date} weightKg={profile?.current_weight_kg ?? null} />
+              <CalendarWeekMetrics days={calendarWeek.days} localDate={overview?.local_date} weightKg={profile?.current_weight_kg ?? null} />
           </View>
-          <CalendarUpcomingPanels days={calendarWeek.days} expandedLayout localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
+          <CalendarUpcomingPanels days={calendarWeek.days} localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
         </View>
       </View>) : null}
     </Screen>
@@ -397,8 +401,8 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
           {progressDateError ? <InlineNotice tone="error">{progressDateError}</InlineNotice> : null}
           {progressMenuStage === "date" ? <>
             <Text style={styles.progressDateHelp}>Elige desde qué fecha quieres revisar tu progreso. Los registros anteriores permanecerán intactos.</Text>
-            <NativeDateTimeField label="Fecha de inicio" maximumValue={overview?.local_date} mode="date" onChange={setProgressStartDate} value={progressStartDate} />
-            <Button disabled={!progressStartDate || progressStartDate === progress?.period_start} label="Guardar fecha de inicio" loading={progressDateBusy} onPress={() => void adjustProgressStart()} />
+            <NativeDateTimeField label="Fecha de inicio" maximumValue={overview?.local_date} mode="date" onChange={setProgressStartDate} onExpandedChange={setProgressDatePickerExpanded} value={progressStartDate} />
+            <Button disabled={progressDatePickerExpanded || !progressStartDate || progressStartDate === progress?.period_start} label="Guardar fecha de inicio" loading={progressDateBusy} onPress={() => void adjustProgressStart()} />
             <Button label="Volver" onPress={() => setProgressMenuStage("actions")} variant="secondary" />
           </> : <>
             <ActionSheetActions>

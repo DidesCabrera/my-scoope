@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { PreparationDetail } from "@/api/preparations";
@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/controls";
 import { Screen } from "@/components/ui/layout";
 import { InlineNotice } from "@/components/ui/primitives";
 import { SearchField } from "@/components/ui/search-field";
+import { SearchSuggestions } from "@/components/ui/search-suggestions";
+import { useSearchSuggestions } from "@/components/ui/use-search-suggestions";
 import { Card } from "@/components/ui/surfaces";
 import { LoadingState } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -32,11 +34,13 @@ export default function PreparationToMealPicker() {
   const setHeaderPresentation = useHeaderPresentation();
   const { status, apiRequest } = useSession();
   const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
   const [items, setItems] = useState<PreparationDetail[]>([]);
   const [selected, setSelected] = useState<PreparationDetail | null>(null);
   const [mealItem, setMealItem] = useState<LibraryItem | null>(null);
   const [mode, setMode] = useState<"units" | "grams">("units");
   const [amount, setAmount] = useState("1");
+  const [portionConfirmed, setPortionConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,15 +51,20 @@ export default function PreparationToMealPicker() {
     return () => setHeaderPresentation({ mode: "default" });
   }, [calendarized, day, meal, mealKey, relation, replace, setHeaderPresentation, snapshotKey]));
 
+  const loadPreparations = useCallback((term: string, limit: number) =>
+    apiRequest<{ items: PreparationDetail[] }>(`/api/v1/preparations?limit=${limit}&search=${encodeURIComponent(term)}`)
+      .then((page) => page.items), [apiRequest]);
+  const suggestions = useSearchSuggestions({ enabled: status === "authenticated" && !selectedPreparationId, load: useCallback((term: string) => loadPreparations(term, 5), [loadPreparations]), query: search, submittedQuery: submittedSearch });
+
   useEffect(() => {
     if (status !== "authenticated" || selectedPreparationId) return;
     let active = true;
-    void apiRequest<{ items: PreparationDetail[] }>(`/api/v1/preparations?search=${encodeURIComponent(search)}`)
-      .then((page) => { if (active) setItems(page.items); })
+    void loadPreparations(submittedSearch, 30)
+      .then((nextItems) => { if (active) setItems(nextItems); })
       .catch((failure) => { if (active) setError(userFacingError(failure)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [apiRequest, search, selectedPreparationId, status]);
+  }, [loadPreparations, selectedPreparationId, status, submittedSearch]);
 
   useEffect(() => {
     if (status !== "authenticated" || !selectedPreparationId) return;
@@ -108,7 +117,7 @@ export default function PreparationToMealPicker() {
   }, [amountValid, apiRequest, mode, numericAmount, selectedId, status]);
 
   async function save() {
-    if (!selected || !previewReady || (!calendarized && !mealItem) || busy) return;
+    if (!selected || !previewReady || (!calendarized && !mealItem) || busy || (Platform.OS !== "web" && !portionConfirmed)) return;
     setBusy(true);
     setError(null);
     try {
@@ -129,15 +138,20 @@ export default function PreparationToMealPicker() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (selectedPreparationId && loading && !selected) return <LoadingState label="Preparando la porción…" />;
 
+  const choosePreparation = (item: PreparationDetail) => router.push({ pathname: "/pickers/preparation-to-meal", params: { ...(calendarized ? { dayId: String(day), mealKey, snapshotKey } : { mealId: String(meal) }), preparationId: String(item.id), ...(replace === "1" ? { replace } : {}), ...(relation ? { relationId: String(relation) } : {}) } });
+
   return <Screen contentStyle={styles.content} headerMode="preserve">
     {!selectedPreparationId ? <>
-      <SearchField accessibilityLabel="Buscar preparación" autoCapitalize="words" onChangeText={(value) => { setSearch(value); setLoading(true); }} onClear={() => { setSearch(""); setLoading(true); }} placeholder="Busca una preparación" value={search} />
+      <View style={styles.searchWrap}>
+        <SearchField accessibilityLabel="Buscar preparación" autoCapitalize="words" onChangeText={setSearch} onClear={() => { setSearch(""); setSubmittedSearch(""); if (submittedSearch) setLoading(true); }} onSubmitEditing={() => { const term = search.trim(); if (term !== submittedSearch) { setSubmittedSearch(term); setLoading(true); } }} placeholder="Busca una preparación" returnKeyType="search" value={search} />
+        <SearchSuggestions items={suggestions} onSelect={choosePreparation} />
+      </View>
       <View style={styles.results}>
         {items.map((item) => <PreparationPickerCard
           actionLabel="Seleccionar"
           detail={item}
           key={item.id}
-          onAction={() => router.push({ pathname: "/pickers/preparation-to-meal", params: { ...(calendarized ? { dayId: String(day), mealKey, snapshotKey } : { mealId: String(meal) }), preparationId: String(item.id), ...(replace === "1" ? { replace } : {}), ...(relation ? { relationId: String(relation) } : {}) } })}
+          onAction={() => choosePreparation(item)}
           onOpenItem={(component) => {
             if (component.detailId != null) router.push((component.kind === "preparation" ? `/libraries/preparations/${component.detailId}` : `/libraries/foods/${component.detailId}`) as Href);
           }}
@@ -159,6 +173,7 @@ export default function PreparationToMealPicker() {
           metricDefaultAmount={selected.default_portion_g}
           metricUnit="g"
           onChange={setAmount}
+          onConfirmationChange={setPortionConfirmed}
           onMeasureChange={(measure) => setMode(measure === "household" ? "units" : "grams")}
           value={amount}
         />
@@ -175,7 +190,7 @@ export default function PreparationToMealPicker() {
         <Pressable accessibilityRole="button" onPress={() => setShowEvidence((current) => !current)} style={styles.evidenceToggle}><Text style={styles.evidenceToggleText}>{showEvidence ? "Ocultar estimación" : "Ver cómo se estimó la porción"}</Text></Pressable>
         {showEvidence ? <Text style={styles.sourceNote}>Versión {selected.version}{selected.evidence.yield_evidence ? ` · ${selected.evidence.yield_evidence}` : ""}</Text> : null}
       </Card>
-      <Button disabled={!previewReady || (!calendarized && !mealItem)} label={replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Actualizar porción" : "Agregar a la comida"} loading={busy} onPress={() => void save()} />
+      <Button disabled={!previewReady || (!calendarized && !mealItem) || (Platform.OS !== "web" && !portionConfirmed)} label={replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Actualizar porción" : "Agregar a la comida"} loading={busy} onPress={() => void save()} />
     </> : null}
     {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
   </Screen>;
@@ -183,7 +198,8 @@ export default function PreparationToMealPicker() {
 
 const styles = StyleSheet.create({
   content: { gap: tokens.spacing.lg },
-  results: { gap: tokens.spacing.lg },
+  searchWrap: { position: "relative", zIndex: 2 },
+  results: { gap: tokens.spacing.lg, marginHorizontal: -6 },
   portionCard: { paddingVertical: tokens.spacing.sm },
   empty: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   cardTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.bold },

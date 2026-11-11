@@ -33,7 +33,7 @@ class MobileHomeAPITests(AuthenticatedMobileAPITestCase):
         data = response.json()["data"]
         self.assertEqual(
             data["library_counts"],
-            {"food": 1, "meal": 1, "daily_plan": 1, "program": 1, "supplement": 1},
+            {"food": 1, "meal": 1, "daily_plan": 1, "program": 1, "supplement": 1, "preparation": 0},
         )
         self.assertIn("today", data)
         self.assertIn("active_program", data)

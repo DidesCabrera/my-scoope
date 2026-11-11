@@ -22,6 +22,8 @@ import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { MealPanels as SnapshotMealPanels } from "@/components/panels";
 import { Button, InlineNotice, LoadingState, Screen, SearchField, SectionHeading } from "@/components/ui";
 import { ConfirmationState } from "@/components/ui/screen-states";
+import { SearchSuggestions } from "@/components/ui/search-suggestions";
+import { useSearchSuggestions } from "@/components/ui/use-search-suggestions";
 import { tokens } from "@/design/tokens";
 
 function readableDate(value: string): string {
@@ -69,6 +71,7 @@ export default function SelectCalendarPlansScreen() {
   const setHeaderPresentation = useHeaderPresentation();
   const [plans, setPlans] = useState<LibraryItem[]>([]);
   const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [selected, setSelected] = useState<LibraryItem | null>(null);
   const [localToday, setLocalToday] = useState("");
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
@@ -86,6 +89,15 @@ export default function SelectCalendarPlansScreen() {
   const replacementDays = useMemo(() => selectedDateList
     .map((selectedDate) => selectedDaysByDate[selectedDate])
     .filter((day): day is CalendarDay => Boolean(day?.has_plan)), [selectedDateList, selectedDaysByDate]);
+  const loadPlans = useCallback((search: string, limit: number) =>
+    apiRequest<LibraryPageData>(`/api/v1/library/daily-plans?limit=${limit}&search=${encodeURIComponent(search)}`)
+      .then((page) => page.items), [apiRequest]);
+  const suggestions = useSearchSuggestions({
+    enabled: status === "authenticated" && !selected && !initialPlanId,
+    load: useCallback((search: string) => loadPlans(search, 5), [loadPlans]),
+    query,
+    submittedQuery,
+  });
 
   useFocusEffect(useCallback(() => {
     const cancel = () => router.dismissTo(returnHref as Href);
@@ -166,13 +178,13 @@ export default function SelectCalendarPlansScreen() {
     const timeout = setTimeout(() => {
       setLoading(true);
       setError(null);
-      void apiRequest<LibraryPageData>(`/api/v1/library/daily-plans?limit=50&search=${encodeURIComponent(query)}`)
-        .then((page) => { if (active) setPlans(page.items); })
+      void loadPlans(submittedQuery, 50)
+        .then((items) => { if (active) setPlans(items); })
         .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
         .finally(() => { if (active) setLoading(false); });
-    }, query ? 220 : 0);
+    }, submittedQuery ? 220 : 0);
     return () => { active = false; clearTimeout(timeout); };
-  }, [apiRequest, query, status]));
+  }, [loadPlans, status, submittedQuery]));
 
   async function assign(days: CalendarDayDetailData[]) {
     if (!selected) return;
@@ -363,7 +375,10 @@ export default function SelectCalendarPlansScreen() {
       stickyHeaderIndices={[0]}>
       <View style={styles.selectionSticky}>
         <PickerEntryTabs createLabel="Crear Nuevo" onCreate={() => router.push({ pathname: "/libraries/create", params: { entity: "dailyPlan" } })} />
-        <SearchField accessibilityLabel="Buscar minuta diaria" autoCapitalize="words" bleed busy={loading} onChangeText={setQuery} placeholder="Escribe el nombre de una minuta" value={query} />
+        <View style={styles.searchWrap}>
+          <SearchField accessibilityLabel="Buscar minuta diaria" autoCapitalize="words" bleed busy={loading} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); }} onSubmitEditing={() => setSubmittedQuery(query.trim())} placeholder="Escribe el nombre de una minuta" returnKeyType="search" value={query} />
+          <SearchSuggestions bleed items={suggestions} onSelect={(plan) => { setSelected(plan); setError(null); }} />
+        </View>
       </View>
       <View style={styles.options}>
         <SectionHeading detail={`${plans.length} disponibles`} title="Selecciona una minuta diaria" />
@@ -402,9 +417,10 @@ const styles = StyleSheet.create({
   monthArrow: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   monthNavigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   monthTitle: { color: tokens.color.textMain, fontSize: 17, fontWeight: "600" },
-  options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
+  options: { gap: tokens.spacing.lg, marginHorizontal: -6, paddingHorizontal: tokens.spacing.screen },
   replacementSection: { gap: tokens.spacing.lg },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
+  searchWrap: { position: "relative", zIndex: 2 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

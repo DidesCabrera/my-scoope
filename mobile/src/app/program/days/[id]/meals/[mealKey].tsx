@@ -191,7 +191,7 @@ export default function CalendarizedMealDetailScreen() {
         </EntityDetailSection>
         <Button label="+ Agregar alimento o preparación" onPress={() => setAddComponentVisible(true)} variant="chipPrimary" />
         {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Revisa el aporte de cada alimento y preparación a esta comida en curso." title="Detalle de cada componente" /><FoodDetailCardList editing={(component) => component.kind === "preparation" ? preparationEditing : foodEditing} items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }} /></> : null}
-        <MealNoteCard controller={adherence} />
+        <View style={styles.noteSpacing}><MealNoteCard controller={adherence} /></View>
       </EntityDetailPage>
     </NestableScrollContainer>
     <CalendarizedEntityActions
@@ -244,5 +244,6 @@ export default function CalendarizedMealDetailScreen() {
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
+  noteSpacing: { marginTop: 12 },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
 });

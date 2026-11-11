@@ -43,6 +43,7 @@ export default function SupplementIntakeDetailScreen() {
   const [selected, setSelected] = useState<Picked[]>([]);
   const [persistedSelected, setPersistedSelected] = useState<Picked[]>([]);
   const [hour, setHour] = useState("");
+  const [hourPickerExpanded, setHourPickerExpanded] = useState(false);
   const [label, setLabel] = useState("Nueva ingesta");
   const [actionSheet, setActionSheet] = useState<"change-time" | "menu" | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,6 +180,7 @@ export default function SupplementIntakeDetailScreen() {
     } finally { setSavingCompletion(false); }
   }
   async function save() {
+    if (hourPickerExpanded) return;
     if (!selected.length) { setError("Elige al menos un suplemento."); return; }
     if (hour && !/^([01]\d|2[0-3]):[0-5]\d$/.test(hour)) { setError("Usa el formato de hora HH:MM."); return; }
     if (selected.some((row) => !(Number(row.quantity) > 0))) { setError("Escribe una cantidad válida para cada suplemento."); return; }
@@ -221,7 +223,7 @@ export default function SupplementIntakeDetailScreen() {
     {!availableFeature ? <InlineNotice tone="info">Las ingestas de suplementos aún no están disponibles.</InlineNotice> : !pro ? <Button label="Abrir Suplementos Pro" onPress={() => setUpsell(true)} variant="primary" /> : <>
       {!creating && liveEndpoint ? <EntityCompletionToggleCard completed={completed} entity="supplement" error={completionError} onToggle={(nextCompleted) => void toggleCompletion(nextCompleted)} saving={savingCompletion} /> : null}
       {creating ? <EntityDetailSection detail="Opcional" title="Horario de la ingesta">
-        <NativeDateTimeField confirmationColor={tokens.color.supplement} iconColor={tokens.color.supplement} label="Hora de la ingesta" mode="time" onChange={setHour} value={hour} />
+        <NativeDateTimeField confirmationColor={tokens.color.supplement} iconColor={tokens.color.supplement} label="Hora de la ingesta" mode="time" onChange={setHour} onExpandedChange={setHourPickerExpanded} value={hour} />
       </EntityDetailSection> : null}
       <EntityDetailSection detail={`${selected.length} ${selected.length === 1 ? "suplemento" : "suplementos"}`} title="Composición de la ingesta">
         <SupplementIntakeItemsTable
@@ -265,7 +267,7 @@ export default function SupplementIntakeDetailScreen() {
         </View>
       </> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      {creating ? <Button label="Crear ingesta" loading={saving} onPress={() => void save()} variant="primary" /> : null}
+      {creating ? <Button disabled={hourPickerExpanded} label="Crear ingesta" loading={saving} onPress={() => void save()} variant="primary" /> : null}
     </>}
     {!pro && error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     </EntityDetailPage>

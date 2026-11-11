@@ -1,4 +1,4 @@
-"""Read published preparations and serve them as distinct meal components."""
+"""Serve curated and personal preparations as distinct meal components."""
 
 from decimal import Decimal, InvalidOperation
 
@@ -11,9 +11,16 @@ from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
 from mobile_api.preparation_projections import ingredient_payload
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
+from notas.application.services.commands.calendarization_commands import save_calendarized_preparation
+from notas.application.services.commands.personal_preparation_commands import (
+    PersonalPreparationError,
+    can_use_personal_preparations,
+    remove_personal_preparation,
+    require_personal_preparations_pro,
+    save_personal_preparation,
+)
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
-from notas.application.services.commands.calendarization_commands import save_calendarized_preparation
 from notas.domain.models import Meal, MealPreparation, Preparation
 
 router = Router()
@@ -31,11 +38,41 @@ class PreparationPortionUpdate(Schema):
     grams: float | None = Field(default=None, gt=0, le=100000)
 
 
-def _available_preparation(user, preparation_id):
-    preparation = Preparation.objects.select_related("current_version").filter(
-        pk=preparation_id, is_active=True
-    ).filter(Q(is_global=True) | Q(created_by=user)).first()
-    if preparation is None or preparation.current_version is None:
+class PersonalPreparationIngredientInput(Schema):
+    food_id: int = Field(gt=0)
+    quantity_g: float = Field(gt=0, le=100000)
+
+
+class PersonalPreparationInput(Schema):
+    name: str
+    yield_g: float = Field(gt=0, le=100000)
+    default_portion_g: float = Field(gt=0, le=100000)
+    household_label: str
+    ingredients: list[PersonalPreparationIngredientInput]
+
+
+def _personal_access(user):
+    try:
+        require_personal_preparations_pro(user)
+    except PermissionError as exc:
+        raise MobileAPIError("personal_preparations_pro_required", "Las preparaciones personales requieren Pro y estar habilitadas.", 403) from exc
+
+
+def _personal_error(exc):
+    code = str(exc)
+    if code == "preparation_not_found":
+        raise MobileAPIError(code, "La preparación no está disponible.", 404) from exc
+    raise MobileAPIError(code, "Revisa los datos de la preparación y sus ingredientes.", 422) from exc
+
+
+def _available_preparation(user, preparation_id, *, allow_inactive_personal=False):
+    queryset = Preparation.objects.select_related("current_version").filter(pk=preparation_id).filter(Q(is_global=True) | Q(created_by=user))
+    if allow_inactive_personal:
+        queryset = queryset.filter(Q(is_active=True) | Q(is_global=False, created_by=user))
+    else:
+        queryset = queryset.filter(is_active=True)
+    preparation = queryset.first()
+    if preparation is None or preparation.current_version is None or (not preparation.is_global and not can_use_personal_preparations(user)):
         raise MobileAPIError("preparation_not_found", "La preparación no está disponible.", 404)
     return preparation
 
@@ -66,6 +103,8 @@ def _detail(preparation, *, units=None, grams=None):
     return {
         "id": preparation.id,
         "name": preparation.name,
+        "is_personal": not preparation.is_global,
+        "is_active": preparation.is_active,
         "version": version.version,
         "household_label": version.household_label,
         "default_portion_g": float(version.default_portion_g),
@@ -84,6 +123,7 @@ def _detail(preparation, *, units=None, grams=None):
         "allergen_status": version.allergen_status,
         "evidence": version.evidence,
         "ingredients": [ingredient_payload(row, version.ingredients_snapshot[index], factor) for index, row in enumerate(ingredients)],
+        "recipe_ingredients": [{"food_id": row.food_id, "name": version.ingredients_snapshot[index]["name"], "quantity_g": float(row.quantity_g)} for index, row in enumerate(ingredients)],
     }
 
 
@@ -120,7 +160,10 @@ def _calendarized_snapshot(preparation, *, units=None, grams=None):
 
 @router.get("/preparations", operation_id="mobile_api_api_preparations", auth=mobile_bearer, response={200: dict})
 def preparations(request, search: str | None = None, offset: int = 0, limit: int = 30):
-    queryset = Preparation.objects.select_related("current_version").filter(is_active=True, is_global=True, current_version__isnull=False)
+    visible = Q(is_global=True)
+    if can_use_personal_preparations(request.auth.user):
+        visible |= Q(is_global=False, created_by=request.auth.user)
+    queryset = Preparation.objects.select_related("current_version").filter(is_active=True, current_version__isnull=False).filter(visible)
     if search:
         queryset = queryset.filter(name__icontains=search.strip())
     total = queryset.count()
@@ -130,7 +173,51 @@ def preparations(request, search: str | None = None, offset: int = 0, limit: int
 
 @router.get("/preparations/{preparation_id}", operation_id="mobile_api_api_preparation_detail", auth=mobile_bearer, response={200: dict})
 def preparation_detail(request, preparation_id: int, units: float | None = None, grams: float | None = None):
-    return success(_detail(_available_preparation(request.auth.user, preparation_id), units=units, grams=grams))
+    return success(_detail(_available_preparation(request.auth.user, preparation_id, allow_inactive_personal=True), units=units, grams=grams))
+
+
+@router.get("/library/preparations", operation_id="mobile_api_personal_preparations", auth=mobile_bearer, response={200: dict})
+def personal_preparations(request, search: str | None = None, offset: int = 0, limit: int = 30):
+    _personal_access(request.auth.user)
+    queryset = Preparation.objects.select_related("current_version").filter(is_active=True, is_global=False, created_by=request.auth.user, current_version__isnull=False)
+    if search:
+        queryset = queryset.filter(name__icontains=search.strip())
+    safe_offset = max(offset, 0)
+    safe_limit = min(max(limit, 1), 100)
+    return success({"items": [_detail(item) for item in queryset.order_by("name", "id")[safe_offset:safe_offset + safe_limit]], "total": queryset.count(), "offset": safe_offset, "limit": safe_limit})
+
+
+@router.post("/library/preparations", operation_id="mobile_api_create_personal_preparation", auth=mobile_bearer, response={200: dict})
+def create_personal_preparation(request, payload: PersonalPreparationInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _personal_access(request.auth.user)
+    try:
+        preparation = save_personal_preparation(user=request.auth.user, **payload.model_dump())
+    except PersonalPreparationError as exc:
+        _personal_error(exc)
+    return success(_detail(preparation))
+
+
+@router.put("/library/preparations/{preparation_id}", operation_id="mobile_api_update_personal_preparation", auth=mobile_bearer, response={200: dict})
+def update_personal_preparation(request, preparation_id: int, payload: PersonalPreparationInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _personal_access(request.auth.user)
+    try:
+        preparation = save_personal_preparation(user=request.auth.user, preparation_id=preparation_id, **payload.model_dump())
+    except PersonalPreparationError as exc:
+        _personal_error(exc)
+    return success(_detail(preparation))
+
+
+@router.delete("/library/preparations/{preparation_id}", operation_id="mobile_api_remove_personal_preparation", auth=mobile_bearer, response={200: dict})
+def delete_personal_preparation(request, preparation_id: int):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _personal_access(request.auth.user)
+    try:
+        remove_personal_preparation(user=request.auth.user, preparation_id=preparation_id)
+    except PersonalPreparationError as exc:
+        _personal_error(exc)
+    return success({"affected_id": preparation_id})
 
 
 @router.post("/program/days/{day_id}/meals/{meal_snapshot_key}/preparations", operation_id="mobile_api_routes_preparations_add_calendarized_preparation", auth=mobile_bearer, response={200: dict})
@@ -210,7 +297,7 @@ def update_preparation(request, meal_id: int, relation_id: int, payload: Prepara
     relation = MealPreparation.objects.select_related("preparation__current_version").filter(pk=relation_id, meal=meal).first()
     if relation is None:
         raise MobileAPIError("preparation_relation_not_found", "La porción no está disponible.", 404)
-    preparation = _available_preparation(request.auth.user, payload.preparation_id) if payload.preparation_id is not None else relation.preparation
+    preparation = _available_preparation(request.auth.user, payload.preparation_id or relation.preparation_id)
     _save_selection(meal, preparation, units=payload.units, grams=payload.grams, relation=relation)
     return success({"target_id": meal.id, "affected_id": relation.id})
 

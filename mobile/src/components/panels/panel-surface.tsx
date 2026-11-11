@@ -37,8 +37,8 @@ export function PanelSurface({ children, style }: PropsWithChildren<{ style?: St
   return <View style={[styles.surface, style]}>{children}</View>;
 }
 
-export function PanelBody({ children }: PropsWithChildren) {
-  return <View style={styles.body}>{children}</View>;
+export function PanelBody({ children, style }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
+  return <View style={[styles.body, style]}>{children}</View>;
 }
 
 export function PanelEmptyState({ label }: { label: string }) {

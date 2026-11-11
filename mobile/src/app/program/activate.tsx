@@ -79,6 +79,7 @@ export default function ActivateProgramScreen() {
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation>(null);
   const [expandedPicker, setExpandedPicker] = useState<"daily-time" | "start-date" | null>(null);
+  const [startDateConfirmed, setStartDateConfirmed] = useState(false);
   const setHeaderPresentation = useHeaderPresentation();
 
   const selected = useMemo(() => programs.find((program) => program.id === selectedId) ?? null, [programs, selectedId]);
@@ -164,6 +165,7 @@ export default function ActivateProgramScreen() {
 
   async function activate(overrides: Partial<Pick<CalendarizationActivationInput, "confirm_incomplete" | "replace_current">> = {}) {
     if (!selectedId) return;
+    if (!startDateConfirmed || expandedPicker != null) return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
       setError("Usa una fecha válida en formato AAAA-MM-DD.");
       return;
@@ -226,7 +228,7 @@ export default function ActivateProgramScreen() {
 
           <Card>
             <SectionHeading title="Configura la selección" />
-            <NativeDateTimeField expanded={expandedPicker === "start-date"} label="Fecha de inicio" minimumValue={localDate()} mode="date" onChange={(value) => { setStartDate(value); setConfirmation(null); }} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "start-date", expanded))} value={startDate} />
+            <NativeDateTimeField expanded={expandedPicker === "start-date"} label="Fecha de inicio" minimumValue={localDate()} mode="date" onChange={(value) => { setStartDate(value); setStartDateConfirmed(true); setConfirmation(null); }} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "start-date", expanded))} value={startDate} />
             <View style={styles.dailyNotificationBlock}>
               <NotificationToggle
                 label="Aviso inicial de la minuta diaria"
@@ -246,7 +248,7 @@ export default function ActivateProgramScreen() {
           </Card>
           {confirmation ? (
             <ConfirmationState busy={saving} confirmLabel={confirmation.kind === "replacement" ? "Cambiar programa" : "Continuar igualmente"} danger={confirmation.kind === "replacement"} message={confirmation.message} onCancel={() => setConfirmation(null)} onConfirm={() => void activate(confirmation.kind === "incomplete" ? { confirm_incomplete: true } : { replace_current: true })} title={confirmation.kind === "replacement" ? "¿Reemplazar tu programa actual?" : "Este programa está incompleto"} />
-          ) : <Button bleed label="Calendarizar programa" loading={saving} onPress={() => void activate()} />}
+          ) : <Button bleed disabled={!startDateConfirmed || expandedPicker != null} label="Calendarizar programa" loading={saving} onPress={() => void activate()} />}
         </>
       ) : null}
     </Screen>

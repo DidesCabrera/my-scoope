@@ -236,9 +236,11 @@ SHR10 adds equivalent owner-only creation routes at `/shares/foods/{food_id}`,
 Inbox save use the subject discriminator and support Food, Meal, DailyPlan and
 Program snapshots without reading the sender's source object.
 
-MCE04 adds supported-kind metadata and owner-scoped selectable options through
+MCE04 adds supported-kind metadata and selectable options through
 `GET /comparisons/metadata` and `GET /comparisons/options/{kind}`. Dynamic
-option rows carry the canonical entity-card projection: identity, structural
+Food options include the user's active foods and visible, active global/system
+foods; Meal and DailyPlan options remain owner-scoped. Dynamic option rows carry
+the canonical entity-card projection: identity, structural
 indicators, nutrition KPIs and the Food or Meal composition panel required by the
 selected kind; library mutation actions are intentionally excluded. Dynamic
 comparison uses `POST /comparisons/compare`; Food slots use the established 100 g

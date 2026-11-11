@@ -61,7 +61,7 @@ test("Home creates a dated snapshot while retaining legacy pinned-plan fallback"
   assertSourceMatch(supplementIntakeDetail, /setHeaderPresentation\(\{[\s\S]*fallback: fallbackHref[\s\S]*mode: "back"[\s\S]*secondaryAction: !creating && pro \? \{ icon: "clock", label: "Cambiar hora"/);
   assertSourceMatch(supplementIntakeDetail, /action: !creating && pro \? \{ icon: "more"[\s\S]*<ActionSheetAction destructive icon=\{Trash2\} label="Eliminar ingesta"/);
   assertSourceMatch(supplementIntakeDetail, /useEffect\(\(\) => \{[\s\S]*method: "PUT"[\s\S]*setPersistedSelected\(savedRows\)/);
-  assertSourceMatch(supplementIntakeDetail, /creating \? <Button label="Crear ingesta"/);
+  assertSourceMatch(supplementIntakeDetail, /creating \? <Button disabled=\{hourPickerExpanded\} label="Crear ingesta"/);
   assertSourceDoesNotMatch(supplementIntakeDetail, /<Button label="Guardar ingesta"/);
   assertSourceDoesNotMatch(supplementIntakeDetail, /<Button label="Eliminar ingesta"/);
   assertSourceMatch(supplementIntakeDetail, /<EntityDetailPage[\s\S]*entity="supplement"[\s\S]*showNutrition=\{false\}/);

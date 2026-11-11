@@ -18,13 +18,14 @@ export function CalendarPlanMoveForm({ apiRequest, localToday, name, onCancel, o
   sourceDate: string;
 }) {
   const [targetDate, setTargetDate] = useState(sourceDate);
+  const [datePickerExpanded, setDatePickerExpanded] = useState(false);
   const [target, setTarget] = useState<CalendarDayDetailData | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function review() {
-    if (targetDate < localToday || targetDate === sourceDate || reviewing) return;
+    if (datePickerExpanded || targetDate < localToday || targetDate === sourceDate || reviewing) return;
     setReviewing(true);
     setError(null);
     try {
@@ -63,8 +64,8 @@ export function CalendarPlanMoveForm({ apiRequest, localToday, name, onCancel, o
       <Button disabled={target.has_execution} label="Mover minuta" loading={submitting} onPress={() => void move()} />
       <Button disabled={submitting} label="Cambiar fecha" onPress={() => setTarget(null)} variant="secondary" />
     </> : <>
-      <NativeDateTimeField label="Nueva fecha" minimumValue={localToday} mode="date" onChange={setTargetDate} value={targetDate} />
-      <Button disabled={reviewing || targetDate < localToday || targetDate === sourceDate} label="Revisar movimiento" loading={reviewing} onPress={() => void review()} />
+      <NativeDateTimeField label="Nueva fecha" minimumValue={localToday} mode="date" onChange={setTargetDate} onExpandedChange={setDatePickerExpanded} value={targetDate} />
+      <Button disabled={datePickerExpanded || reviewing || targetDate < localToday || targetDate === sourceDate} label="Revisar movimiento" loading={reviewing} onPress={() => void review()} />
       <Button disabled={reviewing} label="Cancelar" onPress={onCancel} variant="secondary" />
     </>}
   </View>;

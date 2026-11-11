@@ -2,7 +2,7 @@ import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { ClipboardList, NotebookPen, Pencil, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
@@ -29,6 +29,8 @@ import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels as SharedFoodPanels, type FoodPanelItem } from "@/components/panels";
 import { Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
+import { SearchSuggestions } from "@/components/ui/search-suggestions";
+import { useSearchSuggestions } from "@/components/ui/use-search-suggestions";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 import { FoodPortionField } from "./food-portion-field";
@@ -309,11 +311,15 @@ export function CompositionPickerScreen({
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [options, setOptions] = useState<PickerOption[]>([]);
   const [selected, setSelected] = useState<PickerOption | null>(null);
   const [quantity, setQuantity] = useState("100");
   const [portionMeasure, setPortionMeasure] = useState<FoodPortionMeasure>("metric");
+  const [portionConfirmed, setPortionConfirmed] = useState(false);
   const [hour, setHour] = useState("08:00");
+  const [hourConfirmed, setHourConfirmed] = useState(false);
+  const [hourPickerExpanded, setHourPickerExpanded] = useState(false);
   const [note, setNote] = useState("");
   const [noteEditing, setNoteEditing] = useState(false);
   const [dayNumbers, setDayNumbers] = useState<number[]>(() => initialDayNumber ? [initialDayNumber] : [1]);
@@ -404,6 +410,26 @@ export function CompositionPickerScreen({
     return () => { active = false; };
   }, [apiRequest, config.targetSlug, isCalendarizedPicker, isFoodPicker, isMealPicker, kind, mealKey, relationId, relationKey, retryNonce, selectedId, status, targetId]);
 
+  const loadOptions = useCallback((search: string, limit: number): Promise<PickerOption[]> => {
+    const term = search ? `&search=${encodeURIComponent(search)}` : "";
+    const entitySlug = isMealPicker ? "meals" : "daily-plans";
+    return isFoodPicker
+      ? apiRequest<FoodPickerPageData>(`/api/v1/foods?limit=${limit}${term}`).then((page) => page.items.map(optionFromFood))
+      : apiRequest<CompositionOptionsData>(`/api/v1/library/${entitySlug}/composition-options?limit=${limit}${term}`)
+        .catch((nextError) => {
+          if (!(nextError instanceof MobileApiError) || ![404, 422].includes(nextError.status)) throw nextError;
+          return apiRequest<LibraryPageData>(`/api/v1/library/${entitySlug}?limit=${limit}${term}`);
+        })
+        .then((page) => page.items.map(optionFromLibrary));
+  }, [apiRequest, isFoodPicker, isMealPicker]);
+
+  const suggestions = useSearchSuggestions({
+    enabled: status === "authenticated" && !selectedId,
+    load: useCallback((search: string) => loadOptions(search, 5), [loadOptions]),
+    query,
+    submittedQuery,
+  });
+
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || selectedId) return;
     // Recreate the focused request after an explicit retry, even when the search text is unchanged.
@@ -411,23 +437,13 @@ export function CompositionPickerScreen({
     let active = true;
     const timer = setTimeout(() => {
       setSearching(true);
-      const search = query.trim() ? `&search=${encodeURIComponent(query.trim())}` : "";
-      const entitySlug = isMealPicker ? "meals" : "daily-plans";
-      const request = isFoodPicker
-        ? apiRequest<FoodPickerPageData>(`/api/v1/foods?limit=50${search}`).then((page) => page.items.map(optionFromFood))
-        : apiRequest<CompositionOptionsData>(`/api/v1/library/${entitySlug}/composition-options?limit=50${search}`)
-          .catch((nextError) => {
-            if (!(nextError instanceof MobileApiError) || ![404, 422].includes(nextError.status)) throw nextError;
-            return apiRequest<LibraryPageData>(`/api/v1/library/${entitySlug}?limit=50${search}`);
-          })
-          .then((page) => page.items.map(optionFromLibrary));
-      void request
+      void loadOptions(submittedQuery, 50)
         .then((items) => active && setOptions(items))
         .catch((nextError) => active && setError(userFacingError(nextError)))
         .finally(() => active && setSearching(false));
     }, 220);
     return () => { active = false; clearTimeout(timer); };
-  }, [apiRequest, isFoodPicker, isMealPicker, query, retryNonce, selectedId, status]));
+  }, [loadOptions, retryNonce, selectedId, status, submittedQuery]));
 
   const hourValid = !isMealPicker || /^([01]\d|2[0-3]):[0-5]\d$/.test(hour);
   const selectedPortionConversion = useMemo(() => ({
@@ -441,6 +457,8 @@ export function CompositionPickerScreen({
     : portionGrams(quantity);
   const quantityValid = !isFoodPicker || metricQuantity > 0;
   const configurationValid = Boolean(selected) && hourValid && quantityValid && (kind !== "dailyplan-to-program" || dayNumbers.length > 0);
+  const pickerConfirmed = (!isMealPicker || (hourConfirmed && !hourPickerExpanded))
+    && (!isFoodPicker || Platform.OS === "web" || portionConfirmed);
   const configuredSelection = useMemo(() => {
     if (!selected || !isFoodPicker) return selected;
     const grams = metricQuantity;
@@ -499,6 +517,7 @@ export function CompositionPickerScreen({
 
   async function commit(confirmReplacements = false) {
     if (!payload || !preview || previewPayloadKey !== payloadKey) return;
+    if (!pickerConfirmed) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -519,6 +538,8 @@ export function CompositionPickerScreen({
       setSubmitting(false);
     }
   }
+
+  const chooseOption = (option: PickerOption) => router.push(pickerConfigureHref(kind, { contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo, selectedId: option.id, targetId, weekNumber, mealKey }));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading) return <LoadingState label="Preparando el selector…" />;
@@ -550,7 +571,10 @@ export function CompositionPickerScreen({
                 },
               })}
             />
-            <SearchField accessibilityLabel={config.searchLabel} autoCapitalize="words" bleed busy={searching} onChangeText={setQuery} placeholder={config.searchPlaceholder} value={query} />
+            <View style={styles.searchWrap}>
+              <SearchField accessibilityLabel={config.searchLabel} autoCapitalize="words" bleed busy={searching} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); }} onSubmitEditing={() => setSubmittedQuery(query.trim())} placeholder={config.searchPlaceholder} returnKeyType="search" value={query} />
+              <SearchSuggestions bleed items={suggestions} onSelect={chooseOption} />
+            </View>
           </View>
 
           <View style={styles.options}>
@@ -558,7 +582,7 @@ export function CompositionPickerScreen({
               <PickerOptionCard
                 actionLabel="Seleccionar"
                 key={`${option.entity}-${option.id}`}
-                onAction={() => router.push(pickerConfigureHref(kind, { contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo, selectedId: option.id, targetId, weekNumber, mealKey }))}
+                onAction={() => chooseOption(option)}
                 option={option}
               />
             ))}
@@ -578,7 +602,7 @@ export function CompositionPickerScreen({
   const mealTimeCard = isMealPicker && selected ? (
     <View style={styles.mealFixedTime}>
       <Card style={styles.fixedControlCard}>
-        <NativeDateTimeField confirmationColor={tokens.color.meal} containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel initiallyExpanded inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={setHour} value={hour} />
+        <NativeDateTimeField confirmationColor={tokens.color.meal} containerStyle={styles.compactControlField} iconColor={tokens.color.textMain} iconInLabel initiallyExpanded inlineLabel inputStyle={styles.mealTimeValue} label="Hora de la comida" labelStyle={styles.mealTimeLabel} minuteInterval={5} mode="time" onChange={(value) => { setHour(value); setHourConfirmed(true); }} onExpandedChange={(expanded) => { setHourPickerExpanded(expanded); if (expanded) setConfirming(false); }} value={hour} />
         {!hourValid ? <InlineNotice tone="warning">Ingresa una hora válida entre 00:00 y 23:59.</InlineNotice> : null}
       </Card>
     </View>
@@ -613,6 +637,7 @@ export function CompositionPickerScreen({
           metricDefaultAmount={selected.defaultPortion}
           metricUnit={selected.quantityUnit ?? "g"}
           onChange={setQuantity}
+          onConfirmationChange={(confirmed) => { setPortionConfirmed(confirmed); if (!confirmed) setConfirming(false); }}
           onMeasureChange={setPortionMeasure}
           value={quantity}
         />
@@ -650,7 +675,7 @@ export function CompositionPickerScreen({
   ) : preview ? (
     <Button
       bleed
-      disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
+      disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey || !pickerConfirmed}
       label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar minuta diaria"}
       loading={submitting}
       onPress={() => preview.confirmation_required && kind !== "dailyplan-to-program" ? setConfirming(true) : void commit(preview.confirmation_required)}
@@ -707,7 +732,7 @@ const styles = StyleSheet.create({
   noteBlock: { gap: tokens.spacing.sm },
   noteHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 32 },
   noteInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 42, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
-  options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
+  options: { gap: tokens.spacing.lg, marginHorizontal: -6, paddingHorizontal: tokens.spacing.screen },
   previewActivity: { alignSelf: "center", marginVertical: tokens.spacing.xs },
   previewSection: { gap: tokens.spacing.lg },
   pressed: { opacity: 0.68 },
@@ -716,5 +741,6 @@ const styles = StyleSheet.create({
   programConfigurationScrollContent: { paddingTop: 0 },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
+  searchWrap: { position: "relative", zIndex: 2 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs + 4, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

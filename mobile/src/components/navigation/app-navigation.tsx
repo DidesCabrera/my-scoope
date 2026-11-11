@@ -6,6 +6,7 @@ import {
   Camera,
   ChevronLeft,
   ClipboardCheck,
+  CookingPot,
   Clock3,
   FileCheck,
   Files,
@@ -112,6 +113,8 @@ const libraryItems: (EntitySidebarItemData & { entity: LibraryEntity })[] = [
 ];
 const supplementsLibraryItem: EntitySidebarItemData = { entity: "supplement", href: "/libraries/supplements", label: "Mis Suplementos" };
 const supplementsUpgradeItem: EntitySidebarItemData = { ...supplementsLibraryItem, href: "/subscription" };
+const preparationsLibraryItem: EntitySidebarItemData = { entity: "preparation", href: "/libraries/preparations", label: "Mis Preparaciones" };
+const preparationsUpgradeItem: EntitySidebarItemData = { ...preparationsLibraryItem, href: "/subscription" };
 
 function useHeaderPresentationState(): HeaderPresentation {
   const context = useContext(HeaderPresentationContext);
@@ -178,6 +181,7 @@ function BackHeaderIdentity({ title, visible = true }: { title: string; visible?
 }
 
 function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
+  if (pathname.startsWith("/libraries/preparations")) return { icon: CookingPot, title: "Mis Preparaciones" };
   if (pathname.startsWith("/libraries/supplements")) return { icon: Pill, title: "Mis Suplementos" };
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente Nutricional" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: pathname === "/proposals" ? Sparkles : ClipboardCheck, title: pathname === "/proposals" ? "Asistente Nutricional" : "Detalle de propuesta" };
@@ -433,6 +437,7 @@ function AppSidebar() {
   const router = useRouter();
   const [creditSummary, setCreditSummary] = useState<{ availableCredits: number; planName: string; planSlug: string } | null>(null);
   const [supplementsAvailable, setSupplementsAvailable] = useState(false);
+  const [preparationsAvailable, setPreparationsAvailable] = useState(false);
   const [libraryCounts, setLibraryCounts] = useState<HomeSummaryData["library_counts"] | null>(null);
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
@@ -463,6 +468,7 @@ function AppSidebar() {
       .then((entitlements) => {
         setCreditSummary({ availableCredits: entitlements.available_credits, planName: entitlements.plan_name, planSlug: entitlements.plan_slug });
         setSupplementsAvailable(Boolean(entitlements.workspace_features?.supplements_available));
+        setPreparationsAvailable(Boolean(entitlements.workspace_features?.personal_preparations_available));
       })
       .catch(() => undefined);
     void apiRequest<HomeSummaryData>("/api/v1/home/summary")
@@ -490,6 +496,7 @@ function AppSidebar() {
   };
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? null;
   const supplementsRequirePro = creditSummary?.planSlug === "free" || creditSummary?.planSlug === "basic";
+  const preparationsRequirePro = supplementsRequirePro;
 
   return (
     <Modal animationType="none" onRequestClose={closeMenu} transparent visible={menuMounted}>
@@ -535,6 +542,11 @@ function AppSidebar() {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
                 {libraryItems.map((item) => <EntitySidebarEntry count={libraryCount(libraryCounts, item.entity)} item={item} key={String(item.href)} />)}
+                {preparationsAvailable ? <EntitySidebarEntry
+                  accessory={preparationsRequirePro ? <SidebarProBadge /> : undefined}
+                  count={!preparationsRequirePro && creditSummary ? libraryCounts?.preparation ?? null : undefined}
+                  item={preparationsRequirePro ? preparationsUpgradeItem : preparationsLibraryItem}
+                /> : null}
                 {supplementsAvailable ? <EntitySidebarEntry
                   accessory={supplementsRequirePro ? <SidebarProBadge /> : undefined}
                   count={!supplementsRequirePro && creditSummary ? libraryCounts?.supplement ?? null : undefined}

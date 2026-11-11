@@ -34,6 +34,7 @@ export function FoodPortionField({
   metricDefaultAmount,
   metricUnit,
   onChange,
+  onConfirmationChange,
   onMeasureChange,
   value,
 }: FoodPortionFieldProps) {
@@ -49,6 +50,7 @@ export function FoodPortionField({
     setDraftMeasure(measure);
     setDraftAmount(numericValue(value, measure === "household" ? householdDefaultAmount ?? 1 : metricDefaultAmount ?? 100));
     setConfirmed(false);
+    onConfirmationChange?.(false);
     setVisible(true);
   };
 
@@ -62,12 +64,14 @@ export function FoodPortionField({
     setDraftMeasure(next);
     setDraftAmount(numericValue(converted, draftAmount));
     setConfirmed(false);
+    onConfirmationChange?.(false);
   };
 
   const commit = () => {
     onMeasureChange(draftMeasure);
     onChange(String(draftAmount));
     setConfirmed(true);
+    onConfirmationChange?.(true);
   };
 
   const close = () => {
@@ -99,7 +103,7 @@ export function FoodPortionField({
         <View style={styles.inlinePicker}>
           <View accessibilityLabel="Cantidad y medida de la porción" style={styles.pickers}>
             <View style={styles.amountPickerColumn}>
-              <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => { setDraftAmount(Number(next)); setConfirmed(false); }} selectedValue={draftAmount} style={pickerStyle}>
+              <Picker dropdownIconColor={tokens.color.textMain} itemStyle={styles.pickerItem} mode="dropdown" onValueChange={(next) => { setDraftAmount(Number(next)); setConfirmed(false); onConfirmationChange?.(false); }} selectedValue={draftAmount} style={pickerStyle}>
                 {[...new Set([...(draftMeasure === "household" ? householdPortionValues : PORTION_VALUES), draftAmount])].sort((a, b) => a - b).map((option) => <Picker.Item key={option} label={displayNumber(option)} value={option} />)}
               </Picker>
             </View>

@@ -1,0 +1,5416 @@
+{
+  "source": "staging",
+  "snapshot_version": "2026-11-solver-v1",
+  "count": 157,
+  "foods": [
+    {
+      "carbs": 67.7,
+      "fat": 6.52,
+      "id": 105,
+      "max_portion_g": 80,
+      "min_portion_g": 20,
+      "name": "Avena tradicional",
+      "portion_step_g": 5,
+      "preparation_state": "dry",
+      "protein": 13.15,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 28.17,
+      "fat": 0.28,
+      "id": 106,
+      "max_portion_g": 300,
+      "min_portion_g": 75,
+      "name": "Arroz blanco cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 2.69,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 23,
+      "fat": 0.9,
+      "id": 107,
+      "max_portion_g": 300,
+      "min_portion_g": 75,
+      "name": "Arroz integral cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 2.6,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 21.3,
+      "fat": 1.92,
+      "id": 108,
+      "max_portion_g": 300,
+      "min_portion_g": 75,
+      "name": "Quinoa cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 4.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 20.13,
+      "fat": 0.1,
+      "id": 109,
+      "max_portion_g": 400,
+      "min_portion_g": 100,
+      "name": "Papa cocida sin piel",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 1.87,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 17.72,
+      "fat": 0.14,
+      "id": 110,
+      "max_portion_g": 400,
+      "min_portion_g": 100,
+      "name": "Camote cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 1.37,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 20.13,
+      "fat": 0.38,
+      "id": 111,
+      "max_portion_g": 360,
+      "min_portion_g": 90,
+      "name": "Lentejas cocidas",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 9.02,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 27.42,
+      "fat": 2.59,
+      "id": 112,
+      "max_portion_g": 300,
+      "min_portion_g": 75,
+      "name": "Garbanzos cocidos",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 8.86,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 23.71,
+      "fat": 0.54,
+      "id": 113,
+      "max_portion_g": 340,
+      "min_portion_g": 85,
+      "name": "Porotos negros cocidos",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 8.86,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 3.57,
+      "id": 114,
+      "max_portion_g": 300,
+      "min_portion_g": 75,
+      "name": "Pechuga de pollo cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 31.02,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 1.6,
+      "id": 115,
+      "max_portion_g": 300,
+      "min_portion_g": 75,
+      "name": "Pechuga de pavo cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 29,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0.72,
+      "fat": 9.51,
+      "id": 116,
+      "max_portion_g": 100,
+      "min_portion_g": 25,
+      "name": "Huevo entero",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 12.56,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "egg"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0.73,
+      "fat": 0.17,
+      "id": 117,
+      "max_portion_g": 66,
+      "min_portion_g": 16.5,
+      "name": "Clara de huevo",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 10.9,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "egg"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 0.82,
+      "id": 118,
+      "max_portion_g": 240,
+      "min_portion_g": 60,
+      "name": "Atún en agua drenado",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 25.51,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "fish"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 8.13,
+      "id": 119,
+      "max_portion_g": 300,
+      "min_portion_g": 75,
+      "name": "Salmón cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 25.44,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "fish"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 8,
+      "id": 120,
+      "max_portion_g": 300,
+      "min_portion_g": 75,
+      "name": "Carne magra cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 26.1,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.6,
+      "fat": 0.4,
+      "id": 121,
+      "max_portion_g": 340,
+      "min_portion_g": 170,
+      "name": "Yogur griego natural sin azúcar",
+      "portion_step_g": 170,
+      "preparation_state": "ready_to_eat",
+      "protein": 10.3,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 5,
+      "fat": 0.1,
+      "id": 122,
+      "max_portion_g": 400,
+      "min_portion_g": 100,
+      "name": "Leche descremada",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 3.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "beverage",
+          "functional_roles": [
+            "supporting_protein"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 100,
+      "id": 123,
+      "max_portion_g": 15,
+      "min_portion_g": 7.5,
+      "name": "Aceite de oliva",
+      "portion_step_g": 1,
+      "preparation_state": "ready_to_eat",
+      "protein": 0,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "condiment",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 8.53,
+      "fat": 14.66,
+      "id": 124,
+      "max_portion_g": 100,
+      "min_portion_g": 25,
+      "name": "Palta",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 2,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "none"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 21.55,
+      "fat": 49.93,
+      "id": 125,
+      "max_portion_g": 60,
+      "min_portion_g": 15,
+      "name": "Almendras",
+      "portion_step_g": 5,
+      "preparation_state": "dry",
+      "protein": 21.15,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "nuts"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 13.71,
+      "fat": 65.21,
+      "id": 126,
+      "max_portion_g": 60,
+      "min_portion_g": 15,
+      "name": "Nueces",
+      "portion_step_g": 5,
+      "preparation_state": "dry",
+      "protein": 15.23,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "nuts"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 20,
+      "fat": 50.39,
+      "id": 127,
+      "max_portion_g": 32,
+      "min_portion_g": 8,
+      "name": "Mantequilla de maní natural",
+      "portion_step_g": 1,
+      "preparation_state": "ready_to_eat",
+      "protein": 25.09,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "peanut"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 22.84,
+      "fat": 0.33,
+      "id": 128,
+      "max_portion_g": 236,
+      "min_portion_g": 59,
+      "name": "Plátano",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 1.09,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 13.81,
+      "fat": 0.17,
+      "id": 129,
+      "max_portion_g": 364,
+      "min_portion_g": 91,
+      "name": "Manzana",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 0.26,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 14.49,
+      "fat": 0.33,
+      "id": 130,
+      "max_portion_g": 160,
+      "min_portion_g": 40,
+      "name": "Arándanos",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 0.74,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.89,
+      "fat": 0.2,
+      "id": 131,
+      "max_portion_g": 246,
+      "min_portion_g": 61.5,
+      "name": "Tomate",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 0.88,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "none"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.18,
+      "fat": 0.41,
+      "id": 132,
+      "max_portion_g": 200,
+      "min_portion_g": 50,
+      "name": "Brócoli cocido",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 2.38,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.63,
+      "fat": 0.39,
+      "id": 133,
+      "max_portion_g": 100,
+      "min_portion_g": 25,
+      "name": "Espinaca cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 2.86,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 9.58,
+      "fat": 0.24,
+      "id": 134,
+      "max_portion_g": 122,
+      "min_portion_g": 30.5,
+      "name": "Zanahoria cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 0.93,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.88,
+      "fat": 0.12,
+      "id": 135,
+      "max_portion_g": 268,
+      "min_portion_g": 67,
+      "name": "Espárrago crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 2.2,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.11,
+      "fat": 0.32,
+      "id": 136,
+      "max_portion_g": 392,
+      "min_portion_g": 98,
+      "name": "Zapallo italiano crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.21,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 15.2,
+      "fat": 0.14,
+      "id": 137,
+      "max_portion_g": 332,
+      "min_portion_g": 83,
+      "name": "Pera cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.36,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 13.1,
+      "fat": 0.12,
+      "id": 138,
+      "max_portion_g": 330,
+      "min_portion_g": 82.5,
+      "name": "Piña cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.54,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 15,
+      "fat": 0.38,
+      "id": 139,
+      "max_portion_g": 330,
+      "min_portion_g": 82.5,
+      "name": "Mango crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.82,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 14.7,
+      "fat": 0.52,
+      "id": 140,
+      "max_portion_g": 296,
+      "min_portion_g": 74,
+      "name": "Kiwi verde crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.14,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 11.8,
+      "fat": 0.12,
+      "id": 141,
+      "max_portion_g": 360,
+      "min_portion_g": 90,
+      "name": "Naranja cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.94,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.68,
+      "fat": 0.3,
+      "id": 142,
+      "max_portion_g": 294,
+      "min_portion_g": 73.5,
+      "name": "Frutilla cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.67,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 11.9,
+      "fat": 0.65,
+      "id": 143,
+      "max_portion_g": 246,
+      "min_portion_g": 61.5,
+      "name": "Frambuesa cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.2,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0.2,
+      "fat": 0.28,
+      "id": 144,
+      "max_portion_g": 170,
+      "min_portion_g": 42.5,
+      "name": "Camarón cocido",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 24,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "shellfish"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.1,
+      "fat": 0.5,
+      "id": 147,
+      "max_portion_g": 156,
+      "min_portion_g": 39,
+      "name": "Repollo de Bruselas cocido",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 2.55,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 8.73,
+      "fat": 0.23,
+      "id": 148,
+      "max_portion_g": 198,
+      "min_portion_g": 49.5,
+      "name": "Berenjena cocida",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 0.83,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 9.09,
+      "fat": 0.14,
+      "id": 149,
+      "max_portion_g": 268,
+      "min_portion_g": 67,
+      "name": "Melón tuna crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.54,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 1.29,
+      "fat": 0.1,
+      "id": 151,
+      "max_portion_g": 68,
+      "min_portion_g": 17,
+      "name": "Berro crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 2.3,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 25.6,
+      "fat": 0.2,
+      "id": 152,
+      "max_portion_g": 200,
+      "min_portion_g": 50,
+      "name": "Palmito crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 2.7,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 20.8,
+      "fat": 0.53,
+      "id": 154,
+      "max_portion_g": 342,
+      "min_portion_g": 85.5,
+      "name": "Arvejas de ojo negro cocidas",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 7.73,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.3,
+      "fat": 0.2,
+      "id": 155,
+      "max_portion_g": 174,
+      "min_portion_g": 43.5,
+      "name": "Hinojo bulbo crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.24,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 19.6,
+      "fat": 0.15,
+      "id": 156,
+      "max_portion_g": 346,
+      "min_portion_g": 86.5,
+      "name": "Papa horneada con piel",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 2.3,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 5.13,
+      "fat": 1.95,
+      "id": 158,
+      "max_portion_g": 170,
+      "min_portion_g": 42.5,
+      "name": "Almejas cocidas",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 25.6,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "shellfish"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 21,
+      "fat": 1.5,
+      "id": 159,
+      "max_portion_g": 206,
+      "min_portion_g": 51.5,
+      "name": "Choclo amarillo cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 3.41,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 24.8,
+      "fat": 0.1,
+      "id": 160,
+      "max_portion_g": 460,
+      "min_portion_g": 115,
+      "name": "Porotos adzuki cocidos",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 7.52,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 9.61,
+      "fat": 0.49,
+      "id": 162,
+      "max_portion_g": 288,
+      "min_portion_g": 72,
+      "name": "Mora cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.39,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 13.3,
+      "fat": 0.31,
+      "id": 163,
+      "max_portion_g": 218,
+      "min_portion_g": 54.5,
+      "name": "Mandarina cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.81,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 1.54,
+      "id": 164,
+      "max_portion_g": 170,
+      "min_portion_g": 42.5,
+      "name": "Centolla cocida",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 19.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "shellfish"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 1.44,
+      "fat": 31,
+      "id": 165,
+      "max_portion_g": 56.7,
+      "min_portion_g": 14.175,
+      "name": "Queso suizo",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 27,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.8,
+      "fat": 1.98,
+      "id": 169,
+      "max_portion_g": 480,
+      "min_portion_g": 120,
+      "name": "Leche semidescremada",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 3.3,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "beverage",
+          "functional_roles": [
+            "supporting_protein"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 23.4,
+      "fat": 0.7,
+      "id": 172,
+      "max_portion_g": 472,
+      "min_portion_g": 118,
+      "name": "Maracuyá cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 2.2,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0.06,
+      "fat": 81.1,
+      "id": 173,
+      "max_portion_g": 28.4,
+      "min_portion_g": 7.1,
+      "name": "Mantequilla con sal",
+      "portion_step_g": 1,
+      "preparation_state": "ready_to_eat",
+      "protein": 0.85,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.26,
+      "fat": 0.22,
+      "id": 176,
+      "max_portion_g": 170,
+      "min_portion_g": 42.5,
+      "name": "Lechuga hoja roja cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.33,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.66,
+      "fat": 3.25,
+      "id": 177,
+      "max_portion_g": 340,
+      "min_portion_g": 170,
+      "name": "Yogur natural entero sin azúcar",
+      "portion_step_g": 170,
+      "preparation_state": "ready_to_eat",
+      "protein": 3.47,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.01,
+      "fat": 0.11,
+      "id": 178,
+      "max_portion_g": 492,
+      "min_portion_g": 123,
+      "name": "Tomate cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 0.95,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 17.7,
+      "fat": 0.68,
+      "id": 179,
+      "max_portion_g": 320,
+      "min_portion_g": 80,
+      "name": "Chirimoya cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.57,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 6.94,
+      "fat": 0.09,
+      "id": 180,
+      "max_portion_g": 150,
+      "min_portion_g": 37.5,
+      "name": "Repollo morado cocido",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 1.51,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.97,
+      "fat": 0.28,
+      "id": 182,
+      "max_portion_g": 214,
+      "min_portion_g": 53.5,
+      "name": "Coliflor cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.92,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 26,
+      "fat": 0.62,
+      "id": 184,
+      "max_portion_g": 364,
+      "min_portion_g": 91,
+      "name": "Porotos blancos cocidos",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 8.23,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.35,
+      "fat": 0.2,
+      "id": 185,
+      "max_portion_g": 50,
+      "min_portion_g": 12.5,
+      "name": "Endivia cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.25,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 62.6,
+      "fat": 0.51,
+      "id": 186,
+      "max_portion_g": 65,
+      "min_portion_g": 16.25,
+      "name": "Damasco seco",
+      "portion_step_g": 5,
+      "preparation_state": "dry",
+      "protein": 3.39,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 11.4,
+      "fat": 0.28,
+      "id": 187,
+      "max_portion_g": 302,
+      "min_portion_g": 75.5,
+      "name": "Ciruela cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.7,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.42,
+      "fat": 1.49,
+      "id": 188,
+      "max_portion_g": 42,
+      "min_portion_g": 10.5,
+      "name": "Kale crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 2.92,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.4,
+      "fat": 2.08,
+      "id": 189,
+      "max_portion_g": 170,
+      "min_portion_g": 42.5,
+      "name": "Pulpo cocido",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 29.8,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "shellfish"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 5.41,
+      "fat": 0.84,
+      "id": 190,
+      "max_portion_g": 170,
+      "min_portion_g": 42.5,
+      "name": "Ostiones cocidos",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 20.5,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "shellfish"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 63.9,
+      "fat": 0.93,
+      "id": 191,
+      "max_portion_g": 74.5,
+      "min_portion_g": 18.625,
+      "name": "Higo seco",
+      "portion_step_g": 5,
+      "preparation_state": "dry",
+      "protein": 3.3,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 18.7,
+      "fat": 1.17,
+      "id": 192,
+      "max_portion_g": 174,
+      "min_portion_g": 43.5,
+      "name": "Granada cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.67,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.55,
+      "fat": 0.15,
+      "id": 194,
+      "max_portion_g": 560,
+      "min_portion_g": 140,
+      "name": "Sandía cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.61,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 19.2,
+      "fat": 0.38,
+      "id": 195,
+      "max_portion_g": 404,
+      "min_portion_g": 101,
+      "name": "Porotos mung cocidos",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 7.02,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0.12,
+      "fat": 29.8,
+      "id": 197,
+      "max_portion_g": 56.7,
+      "min_portion_g": 14.175,
+      "name": "Queso de cabra semiduro",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 21.6,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 8.36,
+      "fat": 8.97,
+      "id": 198,
+      "max_portion_g": 344,
+      "min_portion_g": 86,
+      "name": "Soya cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 18.2,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "soy"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 10.6,
+      "fat": 0.32,
+      "id": 199,
+      "max_portion_g": 280,
+      "min_portion_g": 70,
+      "name": "Nectarina cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.06,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 13.8,
+      "fat": 0.17,
+      "id": 201,
+      "max_portion_g": 484,
+      "min_portion_g": 121,
+      "name": "Manzana con piel cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.26,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.75,
+      "fat": 0.26,
+      "id": 202,
+      "max_portion_g": 360,
+      "min_portion_g": 90,
+      "name": "Espinaca cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 2.97,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0.06,
+      "fat": 81.1,
+      "id": 203,
+      "max_portion_g": 28.4,
+      "min_portion_g": 7.1,
+      "name": "Mantequilla sin sal",
+      "portion_step_g": 1,
+      "preparation_state": "ready_to_eat",
+      "protein": 0.85,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.9,
+      "fat": 0.07,
+      "id": 204,
+      "max_portion_g": 490,
+      "min_portion_g": 122.5,
+      "name": "Zapallo camote cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 0.72,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 10.5,
+      "fat": 0.09,
+      "id": 205,
+      "max_portion_g": 410,
+      "min_portion_g": 102.5,
+      "name": "Zapallo butternut cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 0.9,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.23,
+      "fat": 0.22,
+      "id": 206,
+      "max_portion_g": 110,
+      "min_portion_g": 27.5,
+      "name": "Lechuga francesa cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.35,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 5.06,
+      "fat": 0.08,
+      "id": 207,
+      "max_portion_g": 312,
+      "min_portion_g": 78,
+      "name": "Nabo cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 0.71,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 12,
+      "fat": 0.34,
+      "id": 208,
+      "max_portion_g": 240,
+      "min_portion_g": 60,
+      "name": "Alcachofa cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 2.89,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 5.29,
+      "fat": 0.47,
+      "id": 209,
+      "max_portion_g": 312,
+      "min_portion_g": 78,
+      "name": "Champiñón blanco cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 2.17,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 19.2,
+      "fat": 0.3,
+      "id": 210,
+      "max_portion_g": 100,
+      "min_portion_g": 25,
+      "name": "Higo fresco",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 0.75,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 9.88,
+      "fat": 2.92,
+      "id": 213,
+      "max_portion_g": 332,
+      "min_portion_g": 83,
+      "name": "Lupino cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 15.6,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 26.2,
+      "fat": 0.65,
+      "id": 215,
+      "max_portion_g": 342,
+      "min_portion_g": 85.5,
+      "name": "Porotos pintos cocidos",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 9.01,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 6.64,
+      "fat": 0.37,
+      "id": 216,
+      "max_portion_g": 296,
+      "min_portion_g": 74,
+      "name": "Brócoli crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 2.82,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.69,
+      "fat": 0.36,
+      "id": 217,
+      "max_portion_g": 240,
+      "min_portion_g": 60,
+      "name": "Zapallo italiano cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 1.14,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 14.7,
+      "id": 219,
+      "max_portion_g": 82,
+      "min_portion_g": 20.5,
+      "name": "Trutro de pollo cocido con piel",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 23.3,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.63,
+      "fat": 0.11,
+      "id": 220,
+      "max_portion_g": 104,
+      "min_portion_g": 26,
+      "name": "Pepino con piel crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 0.65,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.22,
+      "fat": 27.4,
+      "id": 221,
+      "max_portion_g": 56.7,
+      "min_portion_g": 14.175,
+      "name": "Queso gauda",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 24.9,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.18,
+      "fat": 0.2,
+      "id": 222,
+      "max_portion_g": 140,
+      "min_portion_g": 35,
+      "name": "Bok choy crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.5,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.72,
+      "fat": 1.02,
+      "id": 223,
+      "max_portion_g": 452,
+      "min_portion_g": 113,
+      "name": "Requesón bajo en grasa",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 12.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 12,
+      "fat": 0.15,
+      "id": 224,
+      "max_portion_g": 148,
+      "min_portion_g": 37,
+      "name": "Clementina cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 0.85,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 13.8,
+      "fat": 0.2,
+      "id": 226,
+      "max_portion_g": 224,
+      "min_portion_g": 56,
+      "name": "Grosella roja cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.97,
+      "fat": 0.17,
+      "id": 228,
+      "max_portion_g": 220,
+      "min_portion_g": 55,
+      "name": "Apio crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.69,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 6.03,
+      "fat": 0.3,
+      "id": 229,
+      "max_portion_g": 238,
+      "min_portion_g": 59.5,
+      "name": "Pimentón rojo crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.99,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.11,
+      "fat": 0.22,
+      "id": 231,
+      "max_portion_g": 180,
+      "min_portion_g": 45,
+      "name": "Espárrago cocido",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 2.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 9.54,
+      "fat": 0.25,
+      "id": 234,
+      "max_portion_g": 294,
+      "min_portion_g": 73.5,
+      "name": "Durazno crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.91,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.65,
+      "fat": 0.66,
+      "id": 236,
+      "max_portion_g": 20,
+      "min_portion_g": 5,
+      "name": "Rúcula cruda",
+      "portion_step_g": 1,
+      "preparation_state": "raw",
+      "protein": 2.58,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.13,
+      "fat": 0.08,
+      "id": 237,
+      "max_portion_g": 350,
+      "min_portion_g": 87.5,
+      "name": "Acelga cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 1.88,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 21.1,
+      "fat": 0.39,
+      "id": 238,
+      "max_portion_g": 392,
+      "min_portion_g": 98,
+      "name": "Arvejas partidas cocidas",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 8.34,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 63.9,
+      "fat": 0.38,
+      "id": 239,
+      "max_portion_g": 87,
+      "min_portion_g": 21.75,
+      "name": "Ciruela seca",
+      "portion_step_g": 5,
+      "preparation_state": "dry",
+      "protein": 2.18,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 15.6,
+      "fat": 0.22,
+      "id": 240,
+      "max_portion_g": 320,
+      "min_portion_g": 80,
+      "name": "Arvejas verdes cocidas",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 5.36,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.37,
+      "fat": 33.3,
+      "id": 241,
+      "max_portion_g": 56.7,
+      "min_portion_g": 14.175,
+      "name": "Queso cheddar",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 22.9,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 8.22,
+      "fat": 0.18,
+      "id": 242,
+      "max_portion_g": 156,
+      "min_portion_g": 39,
+      "name": "Zanahoria cocida",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 0.76,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.62,
+      "fat": 11.4,
+      "id": 243,
+      "max_portion_g": 200,
+      "min_portion_g": 50,
+      "name": "Tempeh cocido",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 19.9,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "soy"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 11.1,
+      "fat": 0.39,
+      "id": 244,
+      "max_portion_g": 310,
+      "min_portion_g": 77.5,
+      "name": "Damasco crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 9.56,
+      "fat": 0.17,
+      "id": 245,
+      "max_portion_g": 272,
+      "min_portion_g": 68,
+      "name": "Betarraga cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.61,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 5.8,
+      "fat": 0.1,
+      "id": 246,
+      "max_portion_g": 178,
+      "min_portion_g": 44.5,
+      "name": "Repollo blanco crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.28,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.4,
+      "fat": 22.1,
+      "id": 247,
+      "max_portion_g": 56.7,
+      "min_portion_g": 14.175,
+      "name": "Mozzarella fresca",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 22.2,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.11,
+      "fat": 0.45,
+      "id": 248,
+      "max_portion_g": 124,
+      "min_portion_g": 31,
+      "name": "Coliflor cocida",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 1.84,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.64,
+      "fat": 0.17,
+      "id": 250,
+      "max_portion_g": 238,
+      "min_portion_g": 59.5,
+      "name": "Pimentón verde crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.86,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 8.95,
+      "fat": 0.3,
+      "id": 251,
+      "max_portion_g": 176,
+      "min_portion_g": 44,
+      "name": "Repollo de Bruselas crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 3.38,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 6.43,
+      "fat": 0.1,
+      "id": 252,
+      "max_portion_g": 244,
+      "min_portion_g": 61,
+      "name": "Nabo crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.9,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 6.32,
+      "fat": 0.21,
+      "id": 253,
+      "max_portion_g": 104,
+      "min_portion_g": 26,
+      "name": "Pimentón amarillo crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.27,
+      "fat": 10.2,
+      "id": 254,
+      "max_portion_g": 248,
+      "min_portion_g": 62,
+      "name": "Ricotta entera",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 7.54,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 6.2,
+      "fat": 0.1,
+      "id": 255,
+      "max_portion_g": 270,
+      "min_portion_g": 67.5,
+      "name": "Colinabo crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.7,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 15.3,
+      "fat": 0.1,
+      "id": 256,
+      "max_portion_g": 184,
+      "min_portion_g": 46,
+      "name": "Membrillo crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 0.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.22,
+      "fat": 25,
+      "id": 257,
+      "max_portion_g": 56.7,
+      "min_portion_g": 14.175,
+      "name": "Queso parmesano",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 35.8,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 12.2,
+      "fat": 0.3,
+      "id": 259,
+      "max_portion_g": 206,
+      "min_portion_g": 51.5,
+      "name": "Guinda cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 18.6,
+      "fat": 0.19,
+      "id": 260,
+      "max_portion_g": 336,
+      "min_portion_g": 84,
+      "name": "Caqui crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.58,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 8.16,
+      "fat": 0.19,
+      "id": 261,
+      "max_portion_g": 268,
+      "min_portion_g": 67,
+      "name": "Melón calameño crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.84,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 10.1,
+      "fat": 0.5,
+      "id": 264,
+      "max_portion_g": 200,
+      "min_portion_g": 50,
+      "name": "Habas cocidas",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 4.8,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.84,
+      "fat": 36.1,
+      "id": 265,
+      "max_portion_g": 30,
+      "min_portion_g": 7.5,
+      "name": "Crema de leche",
+      "portion_step_g": 1,
+      "preparation_state": "ready_to_eat",
+      "protein": 2.84,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 27.5,
+      "fat": 0.14,
+      "id": 267,
+      "max_portion_g": 272,
+      "min_portion_g": 68,
+      "name": "Ñame cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 1.49,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 22.8,
+      "fat": 0.5,
+      "id": 268,
+      "max_portion_g": 354,
+      "min_portion_g": 88.5,
+      "name": "Porotos rojos cocidos",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 8.67,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.29,
+      "fat": 0.3,
+      "id": 269,
+      "max_portion_g": 170,
+      "min_portion_g": 42.5,
+      "name": "Lechuga costina cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.23,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 1.78,
+      "fat": 0.16,
+      "id": 271,
+      "max_portion_g": 340,
+      "min_portion_g": 85,
+      "name": "Bok choy cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 1.56,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 9.2,
+      "fat": 0.3,
+      "id": 274,
+      "max_portion_g": 312,
+      "min_portion_g": 78,
+      "name": "Apio nabo crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.5,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.78,
+      "fat": 3.27,
+      "id": 275,
+      "max_portion_g": 480,
+      "min_portion_g": 120,
+      "name": "Leche entera",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 3.15,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "beverage",
+          "functional_roles": [
+            "supporting_protein"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 6.73,
+      "fat": 0.33,
+      "id": 276,
+      "max_portion_g": 182,
+      "min_portion_g": 45.5,
+      "name": "Carambola cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.04,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 18,
+      "fat": 0.3,
+      "id": 280,
+      "max_portion_g": 266,
+      "min_portion_g": 66.5,
+      "name": "Chirivía cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.2,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.68,
+      "fat": 0.18,
+      "id": 283,
+      "max_portion_g": 340,
+      "min_portion_g": 170,
+      "name": "Yogur natural descremado sin azúcar",
+      "portion_step_g": 170,
+      "preparation_state": "ready_to_eat",
+      "protein": 5.73,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 8.19,
+      "fat": 0.1,
+      "id": 285,
+      "max_portion_g": 460,
+      "min_portion_g": 115,
+      "name": "Pomelo crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.63,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 1.18,
+      "fat": 3.69,
+      "id": 289,
+      "max_portion_g": 496,
+      "min_portion_g": 124,
+      "name": "Tofu blando",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 7.17,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "soy"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 17,
+      "fat": 0.3,
+      "id": 293,
+      "max_portion_g": 156,
+      "min_portion_g": 39,
+      "name": "Chirivía cocida",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 1.32,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.85,
+      "fat": 4.17,
+      "id": 294,
+      "max_portion_g": 252,
+      "min_portion_g": 63,
+      "name": "Tofu firme",
+      "portion_step_g": 10,
+      "preparation_state": "ready_to_eat",
+      "protein": 9.04,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "soy"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 14.3,
+      "fat": 0.95,
+      "id": 295,
+      "max_portion_g": 330,
+      "min_portion_g": 82.5,
+      "name": "Guayaba cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 2.55,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.4,
+      "fat": 0.1,
+      "id": 298,
+      "max_portion_g": 232,
+      "min_portion_g": 58,
+      "name": "Rábano crudo",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.68,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 10.8,
+      "fat": 0.26,
+      "id": 299,
+      "max_portion_g": 290,
+      "min_portion_g": 72.5,
+      "name": "Papaya cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 0.47,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 16,
+      "fat": 0.2,
+      "id": 301,
+      "max_portion_g": 280,
+      "min_portion_g": 70,
+      "name": "Cereza cruda",
+      "portion_step_g": 10,
+      "preparation_state": "raw",
+      "protein": 1.06,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 3.74,
+      "fat": 0.2,
+      "id": 303,
+      "max_portion_g": 72,
+      "min_portion_g": 18,
+      "name": "Acelga cruda",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.8,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 75,
+      "fat": 0.15,
+      "id": 304,
+      "max_portion_g": 48,
+      "min_portion_g": 12,
+      "name": "Dátil seco",
+      "portion_step_g": 5,
+      "preparation_state": "dry",
+      "protein": 1.81,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 2.34,
+      "fat": 28.7,
+      "id": 307,
+      "max_portion_g": 56.7,
+      "min_portion_g": 14.175,
+      "name": "Queso azul",
+      "portion_step_g": 5,
+      "preparation_state": "ready_to_eat",
+      "protein": 21.4,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 0,
+      "fat": 0.86,
+      "id": 308,
+      "max_portion_g": 290,
+      "min_portion_g": 72.5,
+      "name": "Langosta cocida",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 19,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "shellfish"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "primary_protein"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 9.96,
+      "fat": 0.18,
+      "id": 310,
+      "max_portion_g": 170,
+      "min_portion_g": 42.5,
+      "name": "Betarraga cocida",
+      "portion_step_g": 5,
+      "preparation_state": "cooked",
+      "protein": 1.68,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 24.5,
+      "fat": 0.46,
+      "id": 313,
+      "max_portion_g": 354,
+      "min_portion_g": 88.5,
+      "name": "Porotos cranberry cocidos",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 9.34,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "supporting_protein",
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 34.6,
+      "fat": 0.11,
+      "id": 316,
+      "max_portion_g": 264,
+      "min_portion_g": 66,
+      "name": "Taro cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 0.52,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "starch_or_carbohydrate"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 4.63,
+      "fat": 19.4,
+      "id": 319,
+      "max_portion_g": 24,
+      "min_portion_g": 6,
+      "name": "Crema ácida",
+      "portion_step_g": 1,
+      "preparation_state": "ready_to_eat",
+      "protein": 2.44,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [
+            "milk"
+          ],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "added_or_dense_fat"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 7.37,
+      "fat": 0.16,
+      "id": 321,
+      "max_portion_g": 178,
+      "min_portion_g": 44.5,
+      "name": "Repollo morado crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 1.43,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 12,
+      "fat": 0.13,
+      "id": 322,
+      "max_portion_g": 200,
+      "min_portion_g": 50,
+      "name": "Cranberry crudo",
+      "portion_step_g": 5,
+      "preparation_state": "raw",
+      "protein": 0.46,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "fruit"
+          ],
+          "meal_affinities": [
+            "breakfast",
+            "snack"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    },
+    {
+      "carbs": 5.3,
+      "fat": 1.21,
+      "id": 323,
+      "max_portion_g": 236,
+      "min_portion_g": 59,
+      "name": "Kale cocido",
+      "portion_step_g": 10,
+      "preparation_state": "cooked",
+      "protein": 2.94,
+      "solver_capabilities": {
+        "confidence": {},
+        "schema_version": "solver_food_capabilities.v1",
+        "source": "food_catalog_snapshot",
+        "values": {
+          "allergens": [],
+          "cost_band": "unknown",
+          "dietary_tags": [
+            "vegan",
+            "vegetarian",
+            "pescatarian"
+          ],
+          "food_form": "ingredient",
+          "functional_roles": [
+            "vegetable"
+          ],
+          "meal_affinities": [
+            "main",
+            "dinner"
+          ],
+          "preparation_effort": "unknown"
+        }
+      }
+    }
+  ]
+}

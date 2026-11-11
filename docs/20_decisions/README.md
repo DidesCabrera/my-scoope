@@ -256,3 +256,5 @@ Consequences
   componentes propios de Comida, publicados desde el catálogo central.
 - `0208-onboarding-estimate-first-welcome-minutas-offer.md`: cierra el onboarding tras
   la estimación y traslada la primera generación gratuita a una invitación de Inicio.
+- `0209-personal-preparations-pro.md`: habilita la librería personal Pro de
+  Preparaciones con cálculo y versiones operacionales separadas del catálogo curado.

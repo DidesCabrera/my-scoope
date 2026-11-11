@@ -362,13 +362,14 @@ def _library_page(queryset, *, search, offset, limit, builder) -> dict:
     }
 
 
-def library_foods_payload(user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True) -> dict:
+def library_foods_payload(user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True, queryset=None) -> dict:
     current_weight = get_current_weight(user)
-    queryset = (
-        Food.objects.filter(created_by=user, is_active=True)
-        .select_related("created_by")
-        .order_by("list_order", "name", "id")
-    )
+    if queryset is None:
+        queryset = (
+            Food.objects.filter(created_by=user, is_active=True)
+            .select_related("created_by")
+            .order_by("list_order", "name", "id")
+        )
     return _library_page(
         queryset,
         search=search,

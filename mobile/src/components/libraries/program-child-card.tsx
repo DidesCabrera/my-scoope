@@ -379,7 +379,7 @@ export function ProgramChildCard({
 }) {
   const [metricsExpanded, setMetricsExpanded] = useState(false);
   return (
-    <Card accent={tokens.color.program}>
+    <Card accent={tokens.color.program} style={metricsExpanded && styles.expandedCard}>
       <EntityHeading
         entity="program"
         headingLink={headingLink}
@@ -410,6 +410,7 @@ export function ProgramChildCard({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.62 },
+  expandedCard: { paddingBottom: tokens.card.outerPadding + 12 },
   chartPreview: { alignItems: "stretch" },
   programChartPreview: { flexDirection: "row", marginTop: tokens.spacing.sm },
   weekChartPreview: { gap: tokens.spacing.lg, marginTop: tokens.spacing.sm },

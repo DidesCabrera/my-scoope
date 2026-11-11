@@ -172,7 +172,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(nutritionKpi, /variant\?: "nested" \| "regular"/);
   assertSourceMatch(nutritionKpi, /grams: \{[^}]*fontWeight: tokens\.weight\.bold[^}]*letterSpacing: 0/);
   assertSourceMatch(nutritionKpi, /ppkSlot: \{[^}]*width: 52 \}/);
-  assertSourceMatch(nutritionKpi, /grams: \{[^}]*width: 48 \}/);
+  assertSourceMatch(nutritionKpi, /macroLabel: \{[^}]*width: 60 \}/);
+  assertSourceMatch(nutritionKpi, /grams: \{[^}]*width: 40 \}/);
+  assertSourceMatch(nutritionKpi, /<Text numberOfLines=\{1\} style=\{\[styles\.macroLabel/);
   assertSourceMatch(nutritionKpi, /const macroFontSize = width < 420 \? 13 : 14/);
   assertSourceMatch(nutritionKpi, /<ProteinPerKilogramBadge density=\{density\} textSize=\{12\} unitLabel="\/kg" value=\{perKilogram\} \/>/);
   assertSourceMatch(nutritionKpi, /\{rounded\(grams\)\}g<\/Text>/);
@@ -943,7 +945,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUiSource, /hasFooter \? styles\.entityCardWithActions : null/);
   assertSourceMatch(productUiSource, /entityCardWithActions: \{ paddingBottom: tokens\.card\.innerPadding \}/);
   assertSourceMatch(productUiSource, /entityCardActions: \{[^\n]*marginTop: 6/);
-  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderColor: tokens\.color\.borderStrong[^}]*borderRadius: tokens\.radius\.pill/);
+  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderColor: tokens\.color\.borderSoft[^}]*borderRadius: tokens\.radius\.pill/);
   assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderWidth: 1[^}]*height: 32[^}]*width: 32/);
   assertSourceMatch(productUiSource, /entityCardPanelSlot: \{ minWidth: 0 \}/);
 
@@ -964,7 +966,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assertSourceMatch(programChart, /import \{[^}]*Card[^}]*EntityCardAction[^}]*EntityCardActions[^}]*EntityCardPanelToggle[^}]*EntityHeading[^}]*layoutStyles[^}]*\} from "@\/components\/ui"/);
   assertSourceDoesNotMatch(programChart, /Card.*from "@\/components\/ui\/primitives"/);
-  assertSourceMatch(programChart, /<Card accent=\{tokens\.color\.program\}>/);
+  assertSourceMatch(programChart, /<Card accent=\{tokens\.color\.program\} style=\{metricsExpanded && styles\.expandedCard\}>/);
   assertSourceMatch(programChart, /<ProgramMetricPreview[^\n]*style=\{layoutStyles\.cardContentBleed\}/);
   assertSourceDoesNotMatch(programChart, /footer: \{[^}]*borderTop/);
   assertSourceMatch(programChart, /allocationSlot: \{[^\n]*gap: 2[^\n]*paddingHorizontal: 1/);
@@ -1163,13 +1165,13 @@ test("the onboarding gallery exposes every visual journey view without product s
   assertSourceMatch(journey, /topInsetReduction = 0/);
   assertSourceMatch(journey, /index >= 9 && index <= 14 && styles\.profileScreen/);
   assertSourceMatch(journey, /profileScreen: \{ paddingTop: tokens\.spacing\.lg \+ \(tokens\.spacing\.md \* 2\) \+ 18 - 32 \}/);
-  assertSourceMatch(journey, /index === 8 \? <CreditContinueButton label=\{primary\} \/> : <Button label=\{primary\} loading=\{controller\.busy\} onPress=\{controller\.onNext \?\? noop\} \/>/);
+  assertSourceMatch(journey, /index === 8 \? <CreditContinueButton disabled=\{disabled\} label=\{primary\} \/> : <Button disabled=\{disabled\} label=\{primary\} loading=\{controller\.busy\} onPress=\{controller\.onNext \?\? noop\} \/>/);
   assertSourceMatch(journey, /if \(controller\.proposal\?\.dailyplan\)[\s\S]*<ProposalDailyPlanCard dailyplan=\{controller\.proposal\.dailyplan\}/);
   assertSourceMatch(typography, /normalizedTitle\.startsWith\("composición"\)[^\n]*return "comparison"/);
   assertSourceDoesNotMatch(journey, /subtitle="Creado a partir de tu objetivo y nivel de actividad"/);
   assertSourceMatch(journey, /id="daily-plan-credit-button"/);
   assertSourceMatch(journey, /<Text style=\{\[styles\.creditContinueLabel, chip && styles\.creditContinueLabelChip\]\}>\{label\}<\/Text>/);
-  assertSourceMatch(journey, /if \(index >= 9 && index <= 14\)[\s\S]*index === 14 \? <CreditContinueButton chip label=\{primary\} \/> : <ContinueChip label=\{primary\} \/>/);
+  assertSourceMatch(journey, /if \(index >= 9 && index <= 14\)[\s\S]*index === 14 \? <CreditContinueButton chip disabled=\{disabled\} label=\{primary\} \/> : <ContinueChip disabled=\{disabled\} label=\{primary\} \/>/);
   assertSourceMatch(journey, /creditContinueButtonChip: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*minHeight: 34[^}]*paddingHorizontal: tokens\.spacing\.lg/);
   assertSourceMatch(journey, /<ChevronLeft color=\{tokens\.color\.textMuted\} size=\{16\} \/>/);
   assertSourceDoesNotMatch(journey, /<ArrowLeft/);

@@ -38,7 +38,7 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, variant, fontSi
   const density = nested ? "compact" : "regular";
   return (
     <View style={[styles.macroRow, refined && styles.macroRowSlightlyTight, nested && styles.macroRowCompact, isLast && styles.macroRowLast]}>
-      <Text style={[styles.macroLabel, nested && styles.macroLabelCompact, { fontSize }]}>{label}</Text>
+      <Text numberOfLines={1} style={[styles.macroLabel, nested && styles.macroLabelCompact, { fontSize }]}>{label}</Text>
       <Text style={[styles.grams, nested && styles.gramsCompact, { fontSize }]}>{rounded(grams)}g</Text>
       <View style={[styles.ppkSlot, nested && styles.ppkSlotCompact]}>
         {perKilogram != null ? (
@@ -111,12 +111,12 @@ const styles = StyleSheet.create({
   macroRowSlightlyTight: { paddingVertical: tokens.spacing.xs },
   macroRowCompact: { gap: tokens.spacing.xs, paddingVertical: 4 },
   macroRowLast: { borderBottomWidth: 0 },
-  macroLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0, width: 52 },
-  macroLabelCompact: { width: 52 },
+  macroLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0, width: 60 },
+  macroLabelCompact: { width: 60 },
   ppkSlot: { alignItems: "stretch", justifyContent: "center", width: 52 },
   ppkSlotCompact: { width: 52 },
-  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 48 },
-  gramsCompact: { width: 48 },
+  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
+  gramsCompact: { width: 40 },
   allocationBar: { flex: 1, minWidth: 0, width: "auto" },
   allocationBarSlightlyTight: { height: tokens.component.nutritionKpi.regular.narrowBarHeight },
 });
