@@ -1,0 +1,6 @@
+interface:
+  display_name: "Nutrition Solver Steward"
+  short_description: "Improve nutrition solver quality and contracts"
+  default_prompt: "Usa $nutrition-solver-steward para analizar estas ideas o resultados del solver, definir el contrato necesario y proponer el siguiente experimento medible."
+policy:
+  allow_implicit_invocation: true

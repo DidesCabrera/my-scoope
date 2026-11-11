@@ -1,7 +1,7 @@
 # Product and Technology Memory
 
 Status: active
-Last reviewed: 2026-10-23
+Last reviewed: 2026-11-11
 
 ## Objective
 
@@ -11,6 +11,7 @@ coherence, and a fast path from observed problem to verified correction.
 ## Roles
 
 - `strategic-product-advisor`
+- `nutrition-solver-steward`
 - `ai-architecture-context-steward`
 - `observability-lead`
 - incident specialists for mobile, backend, and release boundaries
@@ -27,3 +28,9 @@ also valid when Felipe already knows the affected boundary.
 
 The four incident specialist skills are pilots. Promote them after repeated cases
 show distinct evidence sources, decisions, and validation responsibilities.
+
+`nutrition-solver-steward` entered pilot on 2026-11-11. It owns the solver quality
+model, catalog-consumption contract, evaluation scenarios, failure classification,
+and improvement backlog. Product retains outcome and investment decisions;
+Catalog Operations retains source, curation, and publication authority; accepted
+architecture and implementation remain authoritative in code and current docs.

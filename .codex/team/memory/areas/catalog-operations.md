@@ -1,7 +1,7 @@
 # Catalog Operations Memory
 
 Status: pilot
-Last reviewed: 2026-10-30
+Last reviewed: 2026-11-11
 Owner role: `catalog-curation-steward`
 
 ## Objective
@@ -22,6 +22,9 @@ Maintain Foods, Meals, and Daily Plans as trustworthy operational assets through
 - Product chooses priority users, use cases, and investment.
 - Catalog Operations prepares and maintains the information needed to serve those priorities.
 - Architecture protects authority, snapshots, and downstream integrity.
+- The Nutrition Solver Steward defines and verifies the contract required by the
+  solver, while Catalog Operations owns the records, provenance, curation, and
+  publication that satisfy the accepted producer side of that contract.
 
 ## Evaluation target
 

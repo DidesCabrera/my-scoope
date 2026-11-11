@@ -1,6 +1,6 @@
 schema_version: 2
 owner: "Felipe Dides"
-last_reviewed: "2026-10-31"
+last_reviewed: "2026-11-11"
 lifecycle_states:
   - "proposal"
   - "pilot"
@@ -21,6 +21,12 @@ roles:
     status: "active"
     path: ".codex/skills/strategic-product-advisor/SKILL.md"
     purpose: "Guide product bets, priorities, and learning decisions."
+  - name: "nutrition-solver-steward"
+    area: "product-technology"
+    class: "steward"
+    status: "pilot"
+    path: ".codex/skills/nutrition-solver-steward/SKILL.md"
+    purpose: "Maintain nutrition solver quality, contracts, evaluation evidence, and a prioritized improvement system."
   - name: "ai-architecture-context-steward"
     area: "product-technology"
     class: "steward"

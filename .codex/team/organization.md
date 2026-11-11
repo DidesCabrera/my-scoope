@@ -1,7 +1,7 @@
 # AI Team Organization
 
 Status: active
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-11
 
 ```mermaid
 flowchart TD
@@ -12,6 +12,7 @@ flowchart TD
 
     F --> PT[Product and technology]
     PT --> SPA[Strategic Product Advisor]
+    PT --> NSS[Nutrition Solver Steward]
     PT --> ACS[AI Architecture and Context Steward]
     PT --> OL[Observability Lead]
     PT --> PWC[Parallel Work Coordinator]
@@ -24,6 +25,10 @@ flowchart TD
     CO --> CCS[Catalog Curation Steward]
     SPA -. defines product priorities .-> CCS
     ACS -. protects data boundaries .-> CCS
+    SPA -. defines solver outcomes .-> NSS
+    NSS -. specifies consumption contracts .-> CCS
+    CCS -. supplies eligible curated data .-> NSS
+    ACS -. protects solver boundaries .-> NSS
 
     F --> FIN[Finance]
     FIN --> AIR[Accounting Intake and Recordkeeping Agent]
@@ -55,6 +60,10 @@ flowchart TD
 - Catalog Operations is a permanent operating area. Its steward maintains catalog
   data quality and preparation; Product determines which coverage creates value,
   and Architecture protects authoritative data boundaries.
+- The Nutrition Solver Steward owns solver quality criteria, consumption
+  contracts, evaluation evidence, and the improvement backlog. Catalog Operations
+  owns the source data and publication process; neither role silently changes the
+  other's authority.
 
 ## Role classes
 
