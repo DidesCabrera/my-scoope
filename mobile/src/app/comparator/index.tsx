@@ -116,7 +116,7 @@ function ComparatorDashboard() {
       <Screen
         headerMode="preserve"
         onHeaderVisibilityChange={setCompactHeaderVisible}
-        scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" subtitle="Compara los elementos de tu librería. Comprende las similitudes y diferencias, y reemplázalos en tu dieta." title="Comparaciones" />}
+        scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" subtitle="Compara alimentos disponibles, comidas y minutas de tu librería. Comprende sus similitudes y diferencias." title="Comparaciones" />}
         stickyHeader={<ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />}
         stickyHeaderStyle={styles.dashboardStickyHeader}>
         {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}

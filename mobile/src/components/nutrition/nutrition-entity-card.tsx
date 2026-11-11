@@ -118,7 +118,7 @@ export function NutritionEntityCard({
       headingLink={headingLink}
       indicators={indicators}
       onPress={onPress}
-      style={style}
+      style={[style, hasCollapsiblePanel && anyPanelExpanded && styles.expandedCard]}
       subtitle={subtitle}
       title={title}
       titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
   actionsBeforePanel: { marginTop: 2 },
   actionsBeforePanelCollapsed: { marginBottom: -2 },
   completionStack: { gap: 8 },
+  expandedCard: { paddingBottom: tokens.card.outerPadding + 12 },
   nutritionAfterIndicators: { marginTop: 4 },
   panelAfterActions: { marginTop: 2 },
   panelStack: { gap: tokens.spacing.sm },

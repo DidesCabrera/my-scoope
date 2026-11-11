@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -14,6 +14,8 @@ import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { LoadingState, SearchField, textStyles } from "@/components/ui";
+import { visibleSearchSuggestions } from "@/components/ui/search-suggestion-state";
+import { SearchSuggestions } from "@/components/ui/search-suggestions";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 
@@ -49,7 +51,9 @@ export default function ComparatorSelectScreen() {
   const { publishSelection } = useComparatorSelectionTransfer();
   const setHeaderPresentation = useHeaderPresentation();
   const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [options, setOptions] = useState<ComparisonOption[]>([]);
+  const [suggestions, setSuggestions] = useState<{ search: string; items: ComparisonOption[] }>({ search: "", items: [] });
   const [searching, setSearching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
@@ -66,16 +70,29 @@ export default function ComparatorSelectScreen() {
     const timer = setTimeout(() => {
       setSearching(true);
       setError(null);
-      const search = query.trim() ? `&search=${encodeURIComponent(query.trim())}` : "";
+      const search = submittedQuery ? `&search=${encodeURIComponent(submittedQuery)}` : "";
       void apiRequest<ComparisonOptionsData>(`/api/v1/comparisons/options/${kind}?limit=100${search}`)
         .then((page) => active && setOptions(page.items))
         .catch((nextError) => active && setError(userFacingError(nextError)))
         .finally(() => active && setSearching(false));
     }, 220);
     return () => { active = false; clearTimeout(timer); };
-  }, [apiRequest, kind, query, retryNonce, slotKey, status]));
+  }, [apiRequest, kind, retryNonce, slotKey, status, submittedQuery]));
+
+  useEffect(() => {
+    const search = query.trim();
+    if (status !== "authenticated" || !search || search === submittedQuery) return;
+    let active = true;
+    const timer = setTimeout(() => {
+      void apiRequest<ComparisonOptionsData>(`/api/v1/comparisons/options/${kind}?limit=5&search=${encodeURIComponent(search)}`)
+        .then((page) => { if (active) setSuggestions({ search, items: page.items }); })
+        .catch(() => { if (active) setSuggestions({ search, items: [] }); });
+    }, 180);
+    return () => { active = false; clearTimeout(timer); };
+  }, [apiRequest, kind, query, status, submittedQuery]);
 
   function select(option: ComparisonOption) {
+    setSuggestions({ search: "", items: [] });
     publishSelection({ kind, option, slotKey });
     if (router.canGoBack()) router.back();
     else router.replace(returnHref);
@@ -99,7 +116,10 @@ export default function ComparatorSelectScreen() {
             createLabel={config.createLabel}
             onCreate={() => router.push({ pathname: "/libraries/create", params: { entity: config.createEntity } })}
           />
-          <SearchField accessibilityLabel={config.searchLabel} autoCapitalize="words" bleed busy={searching} onChangeText={setQuery} placeholder={config.searchPlaceholder} value={query} />
+          <View style={styles.searchWrap}>
+            <SearchField accessibilityLabel={config.searchLabel} autoCapitalize="words" bleed busy={searching} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); setSuggestions({ search: "", items: [] }); }} onSubmitEditing={() => { setSubmittedQuery(query.trim()); setSuggestions({ search: "", items: [] }); }} placeholder={config.searchPlaceholder} returnKeyType="search" value={query} />
+            <SearchSuggestions bleed items={visibleSearchSuggestions(suggestions, query, submittedQuery)} onSelect={select} />
+          </View>
         </View>
 
         <View style={styles.options}>
@@ -125,8 +145,9 @@ export default function ComparatorSelectScreen() {
 }
 
 const styles = StyleSheet.create({
-  options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
+  options: { gap: tokens.spacing.lg, marginHorizontal: -6, paddingHorizontal: tokens.spacing.screen },
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 42 },
+  searchWrap: { position: "relative", zIndex: 2 },
   stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

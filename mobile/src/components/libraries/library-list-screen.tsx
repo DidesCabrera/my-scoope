@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
@@ -11,6 +11,8 @@ import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { reachedCommercialLimit } from "@/components/subscriptions/commercial-limit";
 import { CommercialLimitSheet, type CommercialLimitState } from "@/components/subscriptions/commercial-limit-sheet";
 import { CollectionPageHeader, LoadingState, MacroLoadingIndicator, MutationStatusModal, SearchField, useMutationStatus } from "@/components/ui";
+import { visibleSearchSuggestions } from "@/components/ui/search-suggestion-state";
+import { SearchSuggestions } from "@/components/ui/search-suggestions";
 import { Button, Card, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { recordLibraryEditInteraction } from "@/observability/sentry";
@@ -51,6 +53,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const [page, setPage] = useState<LibraryPageData | null>(null);
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<{ search: string; items: LibraryPageData["items"] }>({ search: "", items: [] });
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
@@ -117,6 +120,20 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       setLoadingMore(false);
     }
   }, [apiRequest, endpoint, entity, submittedQuery]);
+
+  useEffect(() => {
+    const search = query.trim();
+    if (status !== "authenticated" || mode !== "list" || !search || search === submittedQuery) return;
+    let active = true;
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ limit: "5", search });
+      if (entity === "meal" || entity === "dailyPlan") params.set("include_drafts", "true");
+      void apiRequest<LibraryPageData>(`${endpoint}?${params.toString()}`)
+        .then((result) => { if (active) setSuggestions({ search, items: result.items }); })
+        .catch(() => { if (active) setSuggestions({ search, items: [] }); });
+    }, 180);
+    return () => { active = false; clearTimeout(timer); };
+  }, [apiRequest, endpoint, entity, mode, query, status, submittedQuery]);
 
   const handleScroll = useCallback(({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
     setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y));
@@ -268,7 +285,12 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       style={styles.screen}>
       <CollectionPageHeader count={page?.total} entity={entity} title={title} />
       {mode === "list" ? <View style={styles.stickySearch}>
-        <SearchField accessibilityLabel={`Buscar en ${title}`} autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); }} onSubmitEditing={() => setSubmittedQuery(query.trim())} placeholder="Buscar por nombre" returnKeyType="search" value={query} />
+        <SearchField accessibilityLabel={`Buscar en ${title}`} autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} onClear={() => { setQuery(""); setSubmittedQuery(""); setSuggestions({ search: "", items: [] }); }} onSubmitEditing={() => { setSubmittedQuery(query.trim()); setSuggestions({ search: "", items: [] }); }} placeholder="Buscar por nombre" returnKeyType="search" value={query} />
+        <SearchSuggestions items={visibleSearchSuggestions(suggestions, query, submittedQuery)} onSelect={(item) => {
+          setSuggestions({ search: "", items: [] });
+          const segment = entity === "dailyPlan" ? "daily-plans" : entity === "program" ? "programs" : entity === "meal" ? "meals" : "foods";
+          router.push(`/libraries/${segment}/${item.id}` as Href);
+        }} />
       </View> : null}
       {error ? (
         <Card>

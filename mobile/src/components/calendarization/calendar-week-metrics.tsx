@@ -35,11 +35,11 @@ function weekday(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "narrow" }).format(new Date(`${value}T12:00:00`)).toUpperCase();
 }
 
-export function CalendarWeekMetrics({ days, expandedLayout = false, localDate, weightKg }: { days: CalendarDay[]; expandedLayout?: boolean; localDate?: string; weightKg: number | null }) {
+export function CalendarWeekMetrics({ days, localDate, weightKg }: { days: CalendarDay[]; localDate?: string; weightKg: number | null }) {
   const [activeTab, setActiveTab] = useState<WeekMetricFilter>("calories");
   return <View style={styles.section}>
-    <View style={expandedLayout && styles.expandedTabs}><EntityPanelTabs activeTab={activeTab} contentContainerStyle={styles.tabs} onChange={setActiveTab} tabs={tabs} /></View>
-    <PanelSurface style={[styles.panel, expandedLayout && styles.expandedPanel]}>
+    <View style={styles.tabsBleed}><EntityPanelTabs activeTab={activeTab} contentContainerStyle={styles.tabs} onChange={setActiveTab} tabs={tabs} /></View>
+    <PanelSurface style={styles.panel}>
       <View style={styles.panelBody}>
         <WeekMetricPreview axisLabels={days.map((day) => weekday(day.calendar_date))} data={metricData(days, weightKg)} days={days.length} filter={activeTab} pastDayCount={localDate ? days.filter((day) => day.calendar_date < localDate).length : 0} />
       </View>
@@ -50,8 +50,7 @@ export function CalendarWeekMetrics({ days, expandedLayout = false, localDate, w
 const styles = StyleSheet.create({
   section: { gap: 0 },
   tabs: { paddingLeft: 0 },
-  expandedTabs: { marginHorizontal: -9 },
-  panel: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -6 },
-  expandedPanel: { marginHorizontal: -18 },
+  tabsBleed: { marginHorizontal: -9 },
+  panel: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen },
   panelBody: { paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.layout.reducedInset, paddingTop: tokens.spacing.sm },
 });

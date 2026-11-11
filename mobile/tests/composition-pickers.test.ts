@@ -53,7 +53,8 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /router\.push\(pickerConfigureHref/);
   matches(picker, /const needsTarget = Boolean\(relationId \|\| relationKey\)/);
   matches(picker, /needsTarget\s*\? isCalendarizedPicker/);
-  matches(picker, /\/composition-options\?limit=50/);
+  matches(picker, /\/composition-options\?limit=\$\{limit\}/);
+  matches(picker, /loadOptions\(submittedQuery, 50\)/);
   matches(picker, /nextError instanceof MobileApiError[^\n]*!\[404, 422\]\.includes\(nextError\.status\)/);
   matches(picker, /pickerCompleted=1/);
   matches(picker, /onPress: \(\) => router\.dismissTo\(destination\)/);

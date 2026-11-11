@@ -1,6 +1,6 @@
 import * as Crypto from "expo-crypto";
 import { type Href, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -11,6 +11,8 @@ import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendar
 import { DailyPlanPreviewCard } from "@/components/calendarization/daily-plan-preview-card";
 import { ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, Card, InlineNotice, LoadingState, SearchField } from "@/components/ui";
+import { SearchSuggestions } from "@/components/ui/search-suggestions";
+import { useSearchSuggestions } from "@/components/ui/use-search-suggestions";
 import { tokens } from "@/design/tokens";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -30,6 +32,7 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
 }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
   const [plans, setPlans] = useState<LibraryPageData["items"]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
   const [history, setHistory] = useState<CalendarDayHistoryData["items"]>([]);
@@ -39,19 +42,28 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
   const [busy, setBusy] = useState(false);
   const assigningRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const loadPlans = useCallback((term: string, limit: number) =>
+    apiRequest<LibraryPageData>(`/api/v1/library/daily-plans?limit=${limit}&search=${encodeURIComponent(term)}`)
+      .then((result) => result.items), [apiRequest]);
+  const suggestions = useSearchSuggestions({
+    enabled: selectedItem === "assign" || selectedItem === "replace" || !day.has_plan,
+    load: useCallback((term: string) => loadPlans(term, 5), [loadPlans]),
+    query: search,
+    submittedQuery: submittedSearch,
+  });
 
   useEffect(() => {
     if (day.has_plan && selectedItem !== "replace") return;
     let active = true;
     const timeout = setTimeout(() => {
       setPlansLoading(true);
-      void apiRequest<LibraryPageData>(`/api/v1/library/daily-plans?limit=50&search=${encodeURIComponent(search)}`)
-        .then((result) => { if (active) setPlans(result.items); })
+      void loadPlans(submittedSearch, 50)
+        .then((items) => { if (active) setPlans(items); })
         .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
         .finally(() => { if (active) setPlansLoading(false); });
-    }, search ? 200 : 0);
+    }, submittedSearch ? 200 : 0);
     return () => { active = false; clearTimeout(timeout); };
-  }, [apiRequest, day.has_plan, search, selectedItem]);
+  }, [day.has_plan, loadPlans, selectedItem, submittedSearch]);
   useEffect(() => {
     if (selectedItem !== "history") return;
     let active = true;
@@ -95,12 +107,21 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
       <ActivityIndicator color={tokens.color.dailyPlan} size="small" />
       <Text style={styles.assignmentStatusText}>Agregando minuta…</Text>
     </View> : null}
-    <SearchField busy={plansLoading} onChangeText={setSearch} onClear={() => setSearch("")} placeholder="Buscar minuta diaria" value={search} />
-    {plans.map((plan) => <DailyPlanPreviewCard action={{ disabled: busy, label: "Seleccionar", onPress: () => {
-      const choice = { id: plan.id, name: plan.name };
-      if (replacing) setSelectedPlan(choice);
-      else void assign(false, choice);
-    } }} item={plan} key={plan.id} />)}
+    <View style={styles.searchWrap}>
+      <SearchField busy={plansLoading} onChangeText={setSearch} onClear={() => { setSearch(""); setSubmittedSearch(""); }} onSubmitEditing={() => setSubmittedSearch(search.trim())} placeholder="Buscar minuta diaria" returnKeyType="search" value={search} />
+      <SearchSuggestions items={suggestions} onSelect={(plan) => {
+        const choice = { id: plan.id, name: plan.name };
+        if (replacing) setSelectedPlan(choice);
+        else void assign(false, choice);
+      }} />
+    </View>
+    <View style={styles.alternatives}>
+      {plans.map((plan) => <DailyPlanPreviewCard action={{ disabled: busy, label: "Seleccionar", onPress: () => {
+        const choice = { id: plan.id, name: plan.name };
+        if (replacing) setSelectedPlan(choice);
+        else void assign(false, choice);
+      } }} item={plan} key={plan.id} />)}
+    </View>
     {!plansLoading && !plans.length && !error ? <Text style={styles.helper}>No encontramos minutas diarias.</Text> : null}
     {replacing ? <ActionSheetModal onRequestClose={() => { if (!busy) setSelectedPlan(null); }} visible={selectedPlan != null}>
       <SafeAreaView edges={["left", "right"]} style={styles.planMenu}>
@@ -159,8 +180,13 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {locked ? <InlineNotice>{past ? "Los días anteriores no se modifican. Su evidencia permanece en el historial." : "Este día ya tiene cumplimiento registrado y no se puede sustituir ni mover."}</InlineNotice> : (
         <View style={styles.group}>
-          <SearchField onChangeText={setSearch} onClear={() => setSearch("")} placeholder="Buscar plan de biblioteca" value={search} />
-          {plans.map((plan) => <DailyPlanPreviewCard action={{ label: "Asignar", onPress: () => { if (!busy) void assignPlanFromChoice(plan.id, plan.name); } }} item={plan} key={plan.id} />)}
+          <View style={styles.searchWrap}>
+            <SearchField onChangeText={setSearch} onClear={() => { setSearch(""); setSubmittedSearch(""); }} onSubmitEditing={() => setSubmittedSearch(search.trim())} placeholder="Buscar plan de biblioteca" returnKeyType="search" value={search} />
+            <SearchSuggestions items={suggestions} onSelect={(plan) => { if (!busy) void assignPlanFromChoice(plan.id, plan.name); }} />
+          </View>
+          <View style={styles.alternatives}>
+            {plans.map((plan) => <DailyPlanPreviewCard action={{ label: "Asignar", onPress: () => { if (!busy) void assignPlanFromChoice(plan.id, plan.name); } }} item={plan} key={plan.id} />)}
+          </View>
         </View>
       )}
     </> : null}
@@ -187,10 +213,12 @@ export function CalendarPlanEditor({ apiRequest, day, localToday, onChanged, onC
 }
 
 const styles = StyleSheet.create({
+  alternatives: { gap: tokens.spacing.md, marginHorizontal: -6 },
   assignmentStatus: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   assignmentStatusText: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
   assignmentTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: "700" },
   group: { gap: tokens.spacing.md },
+  searchWrap: { position: "relative", zIndex: 2 },
   helper: { color: tokens.color.textMuted, fontSize: 13 },
   historyMeta: { color: tokens.color.textMuted, fontSize: 12 },
   planMenu: { backgroundColor: tokens.color.surfaceCard, flexShrink: 1 },

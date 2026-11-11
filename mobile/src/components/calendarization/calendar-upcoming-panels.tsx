@@ -4,18 +4,17 @@ import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import type { CalendarDay } from "@/api/types";
-import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
+import { MacroCalorieDistribution, macroCalorieShares, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
 import { ComparisonPanelGestureRows } from "@/components/libraries/comparison-panel-gesture-rows";
 import { EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { runGuardedNavigation } from "@/navigation/navigation-press-guard";
 
-type Tab = "plans" | "calories" | "macros" | "distribution";
+type Tab = "plans" | "macros" | "distribution";
 
 const tabs = [
   { key: "plans", label: "Minutas" },
-  { key: "calories", label: "Calorías" },
   { key: "macros", label: "Macros" },
   { key: "distribution", label: "Dist" },
 ] satisfies Parameters<typeof EntityPanelTabs<Tab>>[0]["tabs"];
@@ -33,37 +32,42 @@ function integer(value: number | null | undefined): string {
   return valid == null ? "—" : Math.round(valid).toLocaleString("es-CL");
 }
 
-function TodayRowMarker() {
+function TodayIndicator() {
   const gradientId = useId().replace(/:/g, "");
-  return <View pointerEvents="none" style={styles.todayRowMarker}>
-    <Svg height="100%" width={2}>
+  return <View pointerEvents="none" style={styles.todayIndicator}>
+    <Svg height={3} width={22}>
       <Defs>
-        <LinearGradient id={gradientId} x1="0" x2="0" y1="1" y2="0">
+        <LinearGradient id={gradientId} x1="0%" x2="100%" y1="0%" y2="0%">
           <Stop offset="0" stopColor={tokens.color.protein} />
           <Stop offset="0.5" stopColor={tokens.color.carbs} />
           <Stop offset="1" stopColor={tokens.color.fat} />
         </LinearGradient>
       </Defs>
-      <Rect fill={`url(#${gradientId})`} height="100%" width={2} />
+      <Rect fill={`url(#${gradientId})`} height={3} rx={1.5} width={22} />
     </Svg>
   </View>;
 }
 
-function PlanIdentity({ day, muted = false, tab }: { day: CalendarDay; muted?: boolean; tab: Tab }) {
+function PlanIdentity({ day, isToday, muted = false, tab }: { day: CalendarDay; isToday: boolean; muted?: boolean; tab: Tab }) {
+  const icon = day.has_plan ? <EntityIcon entity="dailyPlan" size="compact" /> : <View style={styles.emptyPlanIcon}><Text style={styles.emptyPlanIconLabel}>—</Text></View>;
   return (
     <View style={[styles.identity, muted && styles.pastContent]}>
       {tab === "plans" ? <View style={styles.dateColumn}>
         <Text style={styles.dateWeekday}>{dateLabel(day.calendar_date, { weekday: "short" })}</Text>
         <Text style={styles.dateNumber}>{day.calendar_date.slice(8, 10)}</Text>
+        <View style={styles.todayIndicatorSlot}>{isToday ? <TodayIndicator /> : null}</View>
       </View> : null}
       <View style={styles.planCopy}>
         <View style={styles.planTitleRow}>
-          {day.has_plan ? <EntityIcon entity="dailyPlan" size="compact" /> : null}
+          {tab === "plans" ? icon : <View style={[styles.analyticsIcon, isToday && styles.analyticsIconWithTodayIndicator]}>
+            {icon}
+            {isToday ? <View style={styles.analyticsTodayIndicator}><TodayIndicator /></View> : null}
+          </View>}
           <Text numberOfLines={2} style={[styles.planName, !day.has_plan && styles.planNameEmpty]}>{day.has_plan ? day.plan_name : "Sin minuta"}</Text>
         </View>
-        {tab === "plans"
-          ? day.has_plan && day.source_program_name ? <Text numberOfLines={1} style={styles.subtitle}>{day.source_program_name}</Text> : null
-          : <Text style={[styles.subtitle, styles.analyticsDate]}>{dateLabel(day.calendar_date, { weekday: "short", day: "numeric", month: "short" })}</Text>}
+        {tab === "plans" && day.has_plan && day.source_program_name
+          ? <Text numberOfLines={1} style={styles.subtitle}>{day.source_program_name}</Text>
+          : null}
       </View>
     </View>
   );
@@ -71,11 +75,7 @@ function PlanIdentity({ day, muted = false, tab }: { day: CalendarDay; muted?: b
 
 function Header({ tab }: { tab: Exclude<Tab, "plans"> }) {
   return <View style={[styles.analyticsRow, styles.header]}>
-    <Text style={[styles.headerLabel, tab === "macros" ? styles.macroLeading : tab === "calories" ? styles.calorieLeading : styles.leading, styles.leadingHeader]}>Minutas diarias</Text>
-    {tab === "calories" ? <>
-      <Text style={[styles.headerLabel, styles.calorieCell]}>Cal</Text>
-      <Text style={[styles.headerLabel, styles.shareCell]}>% Cal</Text>
-    </> : null}
+    <Text style={[styles.headerLabel, styles.leading, styles.leadingHeader]}>Minutas diarias</Text>
     {tab === "macros" ? <>
       <Text style={[styles.headerLabel, styles.macroMetricCell]}>P</Text>
       <Text style={[styles.headerLabel, styles.macroMetricCell]}>PpK</Text>
@@ -93,9 +93,8 @@ function Header({ tab }: { tab: Exclude<Tab, "plans"> }) {
 
 type RowItem = { id: string; day: CalendarDay };
 
-export function CalendarUpcomingPanels({ days, expandedLayout = false, localDate, onAssign, onOpenDay, onRemove, onReorder, onReplace, weightKg }: {
+export function CalendarUpcomingPanels({ days, localDate, onAssign, onOpenDay, onRemove, onReorder, onReplace, weightKg }: {
   days: CalendarDay[];
-  expandedLayout?: boolean;
   localDate: string;
   onAssign(day: CalendarDay): void;
   onOpenDay(day: CalendarDay): void;
@@ -104,13 +103,13 @@ export function CalendarUpcomingPanels({ days, expandedLayout = false, localDate
   onReplace(day: CalendarDay): void;
   weightKg: number | null;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>("plans");
+  const [requestedTab, setActiveTab] = useState<Tab>("plans");
+  const activeTab = requestedTab === "macros" || requestedTab === "distribution" ? requestedTab : "plans";
   const [optimistic, setOptimistic] = useState<{ signature: string; items: RowItem[] } | null>(null);
   const signature = days.map((day) => `${day.calendar_date}:${day.id ?? "empty"}`).join("|");
   const sourceItems = days.map((day) => ({ id: day.id == null ? `empty-${day.calendar_date}` : `plan-${day.id}`, day }));
   const items = optimistic?.signature === signature ? optimistic.items : sourceItems;
   const visibleDay = (item: RowItem, index: number): CalendarDay => ({ ...item.day, calendar_date: days[index].calendar_date });
-  const totalCalories = days.reduce((sum, day) => sum + (day.has_plan ? number(day.plan_calories) ?? 0 : 0), 0);
   async function reorder(nextItems: RowItem[]) {
     setOptimistic({ signature, items: nextItems });
     try {
@@ -130,9 +129,10 @@ export function CalendarUpcomingPanels({ days, expandedLayout = false, localDate
       ] : []),
     ];
   }
-  return <PanelSurface style={[styles.surface, expandedLayout && styles.expandedSurface]}>
-    <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
-    <PanelBody>
+  return <View style={styles.section}>
+    <View style={styles.tabsBleed}><EntityPanelTabs activeTab={activeTab} contentContainerStyle={styles.tabs} onChange={setActiveTab} tabs={tabs} /></View>
+    <PanelSurface style={styles.surface}>
+    <PanelBody style={[styles.tableBody, activeTab !== "plans" && styles.analyticsTableBody]}>
       {activeTab !== "plans" ? <Header tab={activeTab} /> : null}
       <ComparisonPanelGestureRows
         actions={actions}
@@ -159,8 +159,7 @@ export function CalendarUpcomingPanels({ days, expandedLayout = false, localDate
           onPress={() => runGuardedNavigation(() => onOpenDay(day))}
           style={[activeTab === "plans" ? styles.planRow : styles.analyticsRow, index === days.length - 1 && styles.lastRow, isPast && styles.pastBackground]}>
           {activeTab === "plans" ? <>
-            {day.calendar_date === localDate ? <TodayRowMarker /> : null}
-            <PlanIdentity day={day} muted={isPast} tab={activeTab} />
+            <PlanIdentity day={day} isToday={day.calendar_date === localDate} muted={isPast} tab={activeTab} />
             {day.has_plan ? <View style={[styles.planCalories, isPast && styles.pastContent]}>
               <Text style={styles.planCaloriesValue}>{integer(calories)}</Text>
               <Text style={styles.planCaloriesUnit}>kcal</Text>
@@ -169,18 +168,11 @@ export function CalendarUpcomingPanels({ days, expandedLayout = false, localDate
               <Text style={styles.assignChipLabel}>Asignar minuta</Text>
             </Pressable>}
           </> : <>
-            {day.calendar_date === localDate ? <TodayRowMarker /> : null}
-            <View style={[activeTab === "macros" ? styles.macroLeading : activeTab === "calories" ? styles.calorieLeading : styles.leading, isPast && styles.pastContent]}><PlanIdentity day={day} tab={activeTab} /></View>
-            {activeTab === "calories" ? <>
-              <Text style={[styles.value, styles.calorieCell, isPast && styles.pastContent]}>{integer(calories)}</Text>
-              <View style={[styles.shareCell, isPast && styles.pastContent]}>{calories != null && totalCalories > 0
-                ? <PanelAllocationBar tone="calories" value={calories / totalCalories * 100} />
-                : <Text style={styles.emptyValue}>—</Text>}</View>
-            </> : null}
+            <View style={[styles.leading, isPast && styles.pastContent]}><PlanIdentity day={day} isToday={day.calendar_date === localDate} tab={activeTab} /></View>
             {activeTab === "macros" ? <>
               <Text style={[styles.value, styles.macroMetricCell, isPast && styles.pastContent]}>{integer(protein)}</Text>
               <View style={[styles.macroMetricCell, isPast && styles.pastContent]}>{ppk != null
-                ? <ProteinPerKilogramBadge density="compact" showUnit={false} value={ppk} />
+                ? <ProteinPerKilogramBadge density="compact" showUnit={false} style={styles.ppkBadge} value={ppk} />
                 : <Text style={styles.emptyValue}>—</Text>}</View>
               <Text style={[styles.value, styles.macroMetricCell, isPast && styles.pastContent]}>{integer(carbs)}</Text>
               <Text style={[styles.value, styles.macroMetricCell, isPast && styles.pastContent]}>{integer(fat)}</Text>
@@ -197,44 +189,51 @@ export function CalendarUpcomingPanels({ days, expandedLayout = false, localDate
         </Pressable>;
       }} visibleSwipeActions />
     </PanelBody>
-  </PanelSurface>;
+    </PanelSurface>
+  </View>;
 }
 
 const styles = StyleSheet.create({
-  surface: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -6 },
-  expandedSurface: { marginHorizontal: -18 },
+  section: { gap: 0 },
+  tabs: { paddingLeft: 0 },
+  tabsBleed: { marginHorizontal: -9 },
+  tableBody: { borderTopWidth: 0 },
+  analyticsTableBody: { paddingTop: 4 },
+  surface: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen },
   assignChip: { alignItems: "center", backgroundColor: `${tokens.color.dailyPlan}1A`, borderColor: tokens.color.dailyPlan, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 4, marginRight: -6, minHeight: 30, paddingHorizontal: 9 },
   assignChipLabel: { color: tokens.color.textMain, fontSize: 12, fontWeight: "600" },
   planRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 68, paddingLeft: tokens.card.outerPadding - 10, paddingRight: tokens.card.outerPadding, paddingVertical: tokens.spacing.sm },
-  analyticsRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 76, paddingLeft: tokens.spacing.md, paddingRight: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
+  analyticsRow: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, columnGap: tokens.spacing.sm, flexDirection: "row", minHeight: 60, paddingLeft: tokens.spacing.md, paddingRight: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
   lastRow: { borderBottomWidth: 0 },
   pastBackground: { backgroundColor: `${tokens.color.surfaceApp}80` },
   pastContent: { opacity: 0.35 },
   header: { minHeight: 32, paddingVertical: 0 },
   headerLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: "600", textAlign: "center", textTransform: "uppercase" },
   leadingHeader: { textAlign: "left" },
-  leading: { flex: 4, minWidth: 0 },
-  macroLeading: { flexBasis: "40%", flexGrow: 0, flexShrink: 0, minWidth: 0 },
-  calorieLeading: { flexBasis: "50%", flexGrow: 0, flexShrink: 0, minWidth: 0 },
+  leading: { flexBasis: "38%", flexGrow: 0, flexShrink: 0, minWidth: 0 },
   identity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
-  dateColumn: { alignItems: "center", height: 42, justifyContent: "center", minWidth: 44, width: 44 },
+  dateColumn: { alignItems: "center", height: 46, justifyContent: "center", minWidth: 44, width: 44 },
   dateWeekday: { color: tokens.color.textMuted, fontSize: 12, lineHeight: 14 },
   dateNumber: { color: tokens.color.textMain, fontSize: 19, fontWeight: "700", lineHeight: 22 },
-  todayRowMarker: { bottom: 0, left: 0, position: "absolute", top: 0, width: 2 },
+  todayIndicatorSlot: { height: 7, justifyContent: "flex-end" },
+  todayIndicator: { height: 3, width: 22 },
   planCopy: { flex: 1, gap: 3, minWidth: 0 },
   planTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  analyticsIcon: { height: 18, width: 18 },
+  analyticsIconWithTodayIndicator: { height: 29 },
+  analyticsTodayIndicator: { left: -2, position: "absolute", top: 26 },
+  emptyPlanIcon: { alignItems: "center", height: 18, justifyContent: "center", width: 18 },
+  emptyPlanIconLabel: { color: tokens.color.textMuted, fontSize: 14 },
   planName: { color: tokens.color.textMain, flexShrink: 1, fontSize: 14, fontWeight: "600" },
   planNameEmpty: { color: tokens.color.textMuted, fontWeight: "400" },
   subtitle: { color: tokens.color.textMuted, fontSize: 11 },
-  analyticsDate: { paddingLeft: 18 + tokens.spacing.sm },
   planCalories: { alignItems: "flex-end", minWidth: 62 },
   planCaloriesValue: { color: tokens.color.textMain, fontSize: 14, fontVariant: ["tabular-nums"], fontWeight: "700" },
   planCaloriesUnit: { color: tokens.color.textMuted, fontSize: 11 },
   value: { color: tokens.color.textMain, fontSize: 12, fontVariant: ["tabular-nums"], textAlign: "center" },
   emptyValue: { color: tokens.color.textMuted, fontSize: 12, textAlign: "center" },
-  calorieCell: { flex: 1.2, minWidth: 0 },
-  shareCell: { flex: 1.7, minWidth: 0 },
   macroMetricCell: { flex: 1, minWidth: 0 },
+  ppkBadge: { height: 24, minHeight: 24 },
   percentCell: { flex: 0.8, minWidth: 0 },
   distributionCell: { flex: 1.6, minWidth: 0 },
   protein: { color: tokens.color.protein, fontWeight: "600" },

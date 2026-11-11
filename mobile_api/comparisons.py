@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from mobile_api.selectors import library_dailyplans_payload, library_foods_payload, library_meals_payload
+from notas.application.queries.food_picker_queries import get_food_picker_queryset
 from notas.application.services.commands.saved_comparison_commands import (
     create_saved_comparison,
     update_saved_comparison,
@@ -11,7 +12,7 @@ from notas.application.services.comparisons.nutrition import comparable_rows, en
 from notas.application.services.comparisons.payloads import parse_quantity
 from notas.application.services.comparisons.snapshots import comparable_rows_from_snapshot
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.domain.models import DailyPlan, Food, Meal, SavedComparison
+from notas.domain.models import DailyPlan, Meal, SavedComparison
 from notas.presentation.viewmodels.comparators import build_metrics
 
 COMPARISON_KINDS = {
@@ -54,7 +55,7 @@ def comparison_metadata_payload() -> dict:
 
 def _queryset_for_kind(kind: str, user):
     if kind == SavedComparison.KIND_FOODS:
-        return Food.objects.filter(created_by=user, is_active=True).order_by("list_order", "name", "id")
+        return get_food_picker_queryset(user).filter(is_active=True)
     if kind == SavedComparison.KIND_MEALS:
         return (
             Meal.objects.library().filter(created_by=user, is_draft=False)
@@ -71,16 +72,25 @@ def _queryset_for_kind(kind: str, user):
 
 
 def comparison_options_payload(user, *, kind: str, search=None, offset=0, limit=30) -> dict:
-    builders = {
-        SavedComparison.KIND_FOODS: library_foods_payload,
-        SavedComparison.KIND_MEALS: library_meals_payload,
-        SavedComparison.KIND_DAILYPLANS: library_dailyplans_payload,
-    }
-    try:
-        builder = builders[kind]
-    except KeyError as exc:
-        raise ValueError("comparison_kind_not_supported") from exc
-    page = builder(user, search=search, offset=offset, limit=limit, include_actions=False)
+    if kind == SavedComparison.KIND_FOODS:
+        page = library_foods_payload(
+            user,
+            search=search,
+            offset=offset,
+            limit=limit,
+            include_actions=False,
+            queryset=_queryset_for_kind(kind, user),
+        )
+    else:
+        builders = {
+            SavedComparison.KIND_MEALS: library_meals_payload,
+            SavedComparison.KIND_DAILYPLANS: library_dailyplans_payload,
+        }
+        try:
+            builder = builders[kind]
+        except KeyError as exc:
+            raise ValueError("comparison_kind_not_supported") from exc
+        page = builder(user, search=search, offset=offset, limit=limit, include_actions=False)
     visual_fields = {"id", "entity", "name", "subtitle", "nutrition", "indicators", "panel", "quantity_unit"}
     return {
         **page,

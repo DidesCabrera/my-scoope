@@ -62,7 +62,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
 
   useFocusEffect(useCallback(() => {
     if (extended) {
-      setHeaderPresentation({ action: { icon: "plus", label: "Calendarizar minuta o programa", onPress: () => setPlanMenuVisible(true) }, fallback: "/calendar", identityVisible: compactHeaderVisible, mode: "back", title: "Próximas minutas programadas" });
+      setHeaderPresentation({ action: { icon: "plus", label: "Calendarizar minuta o programa", onPress: () => setPlanMenuVisible(true) }, fallback: "/calendar", identityVisible: compactHeaderVisible, mode: "back", title: "Mis minutas programadas" });
     } else {
       setHeaderPresentation({ action: { icon: "more", label: "Opciones de Mi calendario", onPress: () => setCalendarOptionsVisible(true) }, createAction: { icon: "plus", label: "Calendarizar", onPress: () => setCalendarMenuVisible(true) }, identityVisible: compactHeaderVisible, mode: "default", title: "Mi calendario" });
     }
@@ -230,7 +230,7 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         tabs={[{ key: "planning", label: "Planificación" }, { key: "progress", label: "Progreso" }]}
       /> : undefined}
       stickyHeaderStyle={styles.stickyHeader}>
-      {extended ? <SectionPageHeader countLabel="fechas" icon={<ClipboardList color={tokens.color.textMain} size={28} strokeWidth={1.8} />} section="calendarization" subtitle="Fechas próximas, tengan o no un plan asignado." title="Próximas minutas programadas" /> : null}
+      {extended ? <SectionPageHeader countLabel="fechas" icon={<ClipboardList color={tokens.color.textMain} size={28} strokeWidth={1.8} />} section="calendarization" subtitle="Fechas próximas, tengan o no un plan asignado." title="Mis minutas programadas" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {!extended && activeTab === "planning" ? (
         <>
@@ -342,9 +342,9 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
         />
         <View style={styles.futureWeekPanels}>
           <View style={styles.futureWeekMetrics}>
-              <CalendarWeekMetrics days={calendarWeek.days} expandedLayout localDate={overview?.local_date} weightKg={profile?.current_weight_kg ?? null} />
+              <CalendarWeekMetrics days={calendarWeek.days} localDate={overview?.local_date} weightKg={profile?.current_weight_kg ?? null} />
           </View>
-          <CalendarUpcomingPanels days={calendarWeek.days} expandedLayout localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
+          <CalendarUpcomingPanels days={calendarWeek.days} localDate={overview?.local_date ?? ""} onAssign={assignUpcomingDay} onOpenDay={openUpcomingDay} onRemove={removeUpcomingDay} onReorder={reorderUpcomingDays} onReplace={replaceUpcomingDay} weightKg={profile?.current_weight_kg ?? null} />
         </View>
       </View>) : null}
     </Screen>
