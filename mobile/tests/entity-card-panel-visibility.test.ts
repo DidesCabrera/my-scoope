@@ -25,10 +25,10 @@ test("entity cards expose a shared left-aligned panel visibility control", async
   expectSource(product, "entityCardPanelToggleLabelActive: { color: tokens.color.textMain }");
   for (const mapping of ["chart: ChartNoAxesCombined", "food: Carrot", "information: Info", "meal: Utensils", "supplement: Pill"]) expectSource(product, mapping);
   expectSource(product, "<Icon color={expanded ? activeForeground : tokens.color.textMuted} size={14}");
-  expectSource(product, 'entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 2, height: 32, justifyContent: "center", paddingHorizontal: tokens.spacing.compact }');
+  expectSource(product, 'entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 2, height: 32, justifyContent: "center", paddingHorizontal: tokens.spacing.compact }');
   expectSource(product, "entityCardPanelToggleIcon: { marginLeft: 1 }");
   expectSource(product, "entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, marginRight: 2 }");
-  expectSource(product, 'entityCardAction: { alignItems: "center", borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 }');
+  expectSource(product, 'entityCardAction: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 }');
   expectSource(product, "<EntityCardActions leading={panelToggle ? <EntityCardPanelToggle");
   expectSource(product, 'entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginHorizontal: -6, marginTop: 6 }');
   expectSource(product, 'entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, marginLeft: "auto" }');

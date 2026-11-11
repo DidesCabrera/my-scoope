@@ -943,7 +943,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUiSource, /hasFooter \? styles\.entityCardWithActions : null/);
   assertSourceMatch(productUiSource, /entityCardWithActions: \{ paddingBottom: tokens\.card\.innerPadding \}/);
   assertSourceMatch(productUiSource, /entityCardActions: \{[^\n]*marginTop: 6/);
-  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderColor: tokens\.color\.borderStrong[^}]*borderRadius: tokens\.radius\.pill/);
+  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderColor: tokens\.color\.borderSoft[^}]*borderRadius: tokens\.radius\.pill/);
   assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderWidth: 1[^}]*height: 32[^}]*width: 32/);
   assertSourceMatch(productUiSource, /entityCardPanelSlot: \{ minWidth: 0 \}/);
 
