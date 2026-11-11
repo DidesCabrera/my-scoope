@@ -11,6 +11,7 @@ export function DailyPlanPreviewCard({ action, eyebrow, item }: {
 }) {
   return <NutritionEntityCard
     actions={action ? <PickerCardAction disabled={action.disabled} label={action.label} onPress={action.onPress} subject={item.name} /> : undefined}
+    collapsiblePanel={item.panel.kind === "meals"}
     entity="dailyPlan"
     eyebrow={eyebrow}
     indicators={item.indicators}
