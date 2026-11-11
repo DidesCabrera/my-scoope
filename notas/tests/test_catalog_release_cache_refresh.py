@@ -3,6 +3,7 @@ import tempfile
 from datetime import date, time
 from decimal import Decimal
 from pathlib import Path
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
@@ -18,10 +19,30 @@ from food_catalog.models import CatalogFood, CatalogFoodPortion, CatalogFoodSour
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplan_and_related_program_caches
 from notas.application.services.calendarization.snapshots import build_dailyplan_snapshot_from_dailyplan
 from notas.domain.models import CalendarizedDay, DailyPlanMeal, Food, Program, ProgramDay
-from notas.tests.builders import attach_food, create_dailyplan, create_meal
+from notas.management.commands.import_food_catalog_release import _refresh_related_caches_for_foods
+from notas.tests.builders import attach_food, create_dailyplan, create_food, create_meal
 
 
 class CatalogReleaseCacheRefreshTests(TestCase):
+    def test_shared_meal_and_plan_are_refreshed_once_for_multiple_foods(self):
+        owner = get_user_model().objects.create_user(username="catalog-cache-owner")
+        first = create_food(created_by=owner, name="Primer alimento")
+        second = create_food(created_by=owner, name="Segundo alimento")
+        meal = create_meal(created_by=owner)
+        attach_food(meal=meal, food=first, order=1)
+        attach_food(meal=meal, food=second, order=2)
+        dailyplan = create_dailyplan(created_by=owner)
+        DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=meal, hour=time(12, 0))
+
+        with (
+            patch("notas.management.commands.import_food_catalog_release.rebuild_meal_cached_state") as refresh_meal,
+            patch("notas.management.commands.import_food_catalog_release.refresh_dailyplan_and_related_program_caches") as refresh_plan,
+        ):
+            _refresh_related_caches_for_foods([first.pk, second.pk])
+
+        self.assertEqual(refresh_meal.call_count, 1)
+        self.assertEqual(refresh_plan.call_count, 1)
+
     def test_new_release_refreshes_live_caches_without_rewriting_calendar_snapshot(self):
         authority_food = _published_food()
         first_release = approve_catalog_release(build_catalog_release(version="2026.09.3"))
