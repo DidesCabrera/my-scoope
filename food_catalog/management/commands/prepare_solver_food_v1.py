@@ -16,7 +16,6 @@ from food_catalog.infrastructure.enrichment import (
 )
 from food_catalog.models import CatalogFood
 
-
 DATASET = Path(__file__).resolve().parents[2] / "data/curation/solver_219_first_pass_v1.csv"
 POLICY_VERSION = "myscoope.solver_food_curation.v1"
 CATALOG_VERSION = "2026-11-solver-v1"

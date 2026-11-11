@@ -16,7 +16,6 @@ import zipfile
 from decimal import Decimal
 from pathlib import Path
 
-
 NUTRIENT_IDS = {
     "protein_g": 1003,
     "carbs_g": 1005,

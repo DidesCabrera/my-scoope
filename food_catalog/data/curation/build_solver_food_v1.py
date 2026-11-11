@@ -14,7 +14,6 @@ from collections import Counter
 from decimal import Decimal
 from pathlib import Path
 
-
 VERSION = "myscoope.solver_food_curation.v1"
 FIELDS = (
     "catalog_ref", "display_name", "source_type", "source_food_id", "source_url",
