@@ -95,6 +95,7 @@ ACCOUNT_PLAN_SEEDS: tuple[dict[str, Any], ...] = (
             },
             "nutrition_workspace": {
                 "can_use_supplements": True,
+                "can_use_personal_preparations": True,
                 "can_create_meal": True,
                 "can_create_dailyplan": True,
                 "can_create_program": True,

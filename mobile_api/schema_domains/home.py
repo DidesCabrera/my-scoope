@@ -14,6 +14,7 @@ class HomeLibraryCountsData(Schema):
     daily_plan: int
     program: int
     supplement: int
+    preparation: int
 
 
 class HomeSummaryData(Schema):

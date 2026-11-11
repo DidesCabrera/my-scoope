@@ -8,7 +8,7 @@ from notas.domain.models import MealPreparation, PreparationIngredient
 
 
 def ingredient_payload(row, snapshot: dict, factor: Decimal) -> dict:
-    """Project the approved, frozen ingredient nutrition for a served portion."""
+    """Project frozen ingredient nutrition for a served portion."""
     quantity = row.quantity_g * factor
     per_100g = snapshot["nutrition_per_100g"]
     macro_factor = quantity / Decimal("100")

@@ -30,10 +30,10 @@ const meal = {
 } as unknown as LibraryItem;
 
 const selected = {
-  id: 9, name: "Completo italiano", version: 1, household_label: "completo mediano",
+  id: 9, name: "Completo italiano", is_personal: false, is_active: true, version: 1, household_label: "completo mediano",
   default_portion_g: 179, yield_g: 179, selection_mode: "units", selected_units: 0.5, grams: 89.5,
   nutrition: { calories: 198, protein_g: 6, carbs_g: 14, fat_g: 13, sodium_mg: null },
-  allergens: [], allergen_status: "", evidence: {}, ingredients: [],
+  allergens: [], allergen_status: "", evidence: {}, ingredients: [], recipe_ingredients: [],
 } as PreparationDetail;
 
 test("adding a preparation includes its selected portion in the meal total and panel", () => {

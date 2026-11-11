@@ -8,7 +8,7 @@ from django.db import models
 
 
 class Preparation(models.Model):
-    """Stable identity; personal ownership can use the same model in a later stage."""
+    """Stable identity for curated and user-owned preparations."""
 
     catalog_ref = models.UUIDField(default=uuid.uuid4, unique=True)
     name = models.CharField(max_length=255)
@@ -24,7 +24,7 @@ class Preparation(models.Model):
 
 
 class PreparationVersion(models.Model):
-    """Immutable operational copy of one approved catalog preparation revision."""
+    """Immutable operational revision from the catalog or personal authoring."""
 
     preparation = models.ForeignKey(Preparation, on_delete=models.PROTECT, related_name="versions")
     version = models.PositiveIntegerField()

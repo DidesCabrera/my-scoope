@@ -249,8 +249,13 @@ export default function SubscriptionScreen() {
               );
               const monthlyDisplayPrice = Platform.OS === "android" ? monthlyAndroidOffer?.displayPrice : monthlyStoreProduct?.displayPrice;
               const monthlyNumericPrice = Platform.OS === "android" ? monthlyAndroidOffer?.price : monthlyStoreProduct?.price;
-              const planBenefits = (commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? [])
-                .filter((benefit) => benefit.label !== "Suplementos" || entitlements?.workspace_features?.supplements_available);
+              const planBenefits = [
+                ...(commercialPlanBenefits[plan.planName as "Basic" | "Pro"] ?? [])
+                  .filter((benefit) => benefit.label !== "Suplementos" || entitlements?.workspace_features?.supplements_available),
+                ...(plan.planName === "Pro" && entitlements?.workspace_features?.personal_preparations_available
+                  ? [{ entity: "preparation" as const, label: "Preparaciones", value: "Biblioteca personal y uso en comidas" }]
+                  : []),
+              ];
               return (
               <SubscriptionPlanCard accent={subscriptionPlanAccent(plan.planName) ?? tokens.color.contextual} benefits={planBenefits} key={plan.planName} name={plan.planName} price={monthlyDisplayPrice ? `${monthlyDisplayPrice}/mes` : unavailablePrice}>
                 <Text style={textStyles.caption}>Elige la modalidad de tu suscripción.</Text>

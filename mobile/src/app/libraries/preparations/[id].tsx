@@ -38,9 +38,9 @@ export default function PreparationDetailScreen() {
   const inMeal = Number.isInteger(meal) && meal > 0 && Number.isInteger(relation) && relation > 0;
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ mode: "back", fallback: inMeal ? `/libraries/meals/${meal}` as Href : "/libraries/meals", title: detail?.name ?? "Preparación" });
+    setHeaderPresentation({ mode: "back", fallback: inMeal ? `/libraries/meals/${meal}` as Href : detail?.is_personal ? "/libraries/preparations" : "/libraries/meals", title: detail?.name ?? "Preparación" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [detail?.name, inMeal, meal, setHeaderPresentation]));
+  }, [detail?.is_personal, detail?.name, inMeal, meal, setHeaderPresentation]));
 
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || !validId) return undefined;
@@ -82,6 +82,14 @@ export default function PreparationDetailScreen() {
         .catch((failure) => Alert.alert("No pudimos quitarla", userFacingError(failure)));
     } },
   ]);
+  const removePersonal = () => Alert.alert("Eliminar preparación", `¿Eliminar ${detail.name} de tu biblioteca? Las comidas existentes conservarán su composición.`, [
+    { text: "Cancelar", style: "cancel" },
+    { text: "Eliminar", style: "destructive", onPress: () => {
+      void apiRequest(`/api/v1/library/preparations/${detail.id}`, { method: "DELETE" })
+        .then(() => router.replace("/libraries/preparations" as Href))
+        .catch((failure) => Alert.alert("No pudimos eliminarla", userFacingError(failure)));
+    } },
+  ]);
 
   return <NestableScrollContainer contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
     <EntityDetailPage entity="preparation" nutrition={nutrition} subtitle={portion} title={detail.name}>
@@ -96,12 +104,16 @@ export default function PreparationDetailScreen() {
         <Text style={styles.infoTitle}>Información de la preparación</Text>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Porción</Text><Text style={styles.infoValue}>{portion} · {formatPreparationNumber(detail.grams)} g</Text></View>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Sodio</Text><Text style={styles.infoValue}>{detail.nutrition.sodium_mg == null ? "Sin dato" : `${formatPreparationNumber(detail.nutrition.sodium_mg, 0)} mg`}</Text></View>
-        <View style={styles.infoRow}><Text style={styles.infoLabel}>Alérgenos declarados</Text><Text style={styles.infoValue}>{formatPreparationAllergens(detail.allergens)}</Text></View>
+        <View style={styles.infoRow}><Text style={styles.infoLabel}>Alérgenos</Text><Text style={styles.infoValue}>{detail.allergen_status === "unknown" ? "Sin evaluación" : formatPreparationAllergens(detail.allergens)}</Text></View>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Estados</Text><Text style={styles.infoValue}>{[...new Set(detail.ingredients.filter((ingredient) => "preparation_state" in ingredient).map((ingredient) => preparationStateLabel(ingredient.preparation_state)))].join(", ") || "Sin datos declarados"}</Text></View>
-        <Text style={styles.source}>Estimación editorial · versión {detail.version}{detail.evidence.source_name ? ` · ${detail.evidence.source_name}` : ""}</Text>
+        <Text style={styles.source}>{detail.is_personal ? "Estimación personal" : "Estimación editorial"} · versión {detail.version}{detail.evidence.source_name ? ` · ${detail.evidence.source_name}` : ""}</Text>
       </Card>
+      {detail.is_personal && detail.is_active ? <View style={styles.actions}>
+        <Button label="Editar preparación" onPress={() => router.push(`/libraries/preparations/${detail.id}/edit` as Href)} variant="secondary" />
+        <Button label="Eliminar preparación" onPress={removePersonal} variant="danger" />
+      </View> : null}
       {inMeal ? <View style={styles.actions}>
-        <Button label="Editar porción en esta comida" onPress={() => router.push(`/pickers/preparation-to-meal?mealId=${meal}&relationId=${relation}&preparationId=${detail.id}` as Href)} variant="secondary" />
+        {detail.is_active ? <Button label="Editar porción en esta comida" onPress={() => router.push(`/pickers/preparation-to-meal?mealId=${meal}&relationId=${relation}&preparationId=${detail.id}` as Href)} variant="secondary" /> : null}
         <Button label="Quitar de esta comida" onPress={remove} variant="danger" />
       </View> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}

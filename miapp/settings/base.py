@@ -558,6 +558,7 @@ def _env_bool(name: str, default: bool = False) -> bool:
 
 # Keep the supplements rollout closed unless a deployment enables it explicitly.
 SUPPLEMENTS_FEATURE_ENABLED = _env_bool("SUPPLEMENTS_FEATURE_ENABLED", False)
+PERSONAL_PREPARATIONS_FEATURE_ENABLED = _env_bool("PERSONAL_PREPARATIONS_FEATURE_ENABLED", False)
 
 
 # External MCP access must never become free because a deployment omitted a flag.

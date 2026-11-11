@@ -417,6 +417,7 @@ export type HomeSummaryData = {
     meal: number;
     program: number;
     supplement: number;
+    preparation: number;
   };
   pending_proposal_count: number;
   today: TodayData;

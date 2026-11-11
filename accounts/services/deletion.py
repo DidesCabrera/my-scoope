@@ -132,7 +132,7 @@ MODEL_RETENTION_POLICY = {
     "notas.ProductAnnouncement": RetentionAction.RETAIN_SYSTEM,
     "notas.ProductAnnouncementRead": RetentionAction.ERASE,
     "notas.Profile": RetentionAction.ERASE,
-    "notas.Preparation": RetentionAction.RETAIN_OPERATIONAL,
+    "notas.Preparation": RetentionAction.RETAIN_OPERATIONAL,  # Global catalog copies remain; personal records are erased below.
     "notas.PreparationIngredient": RetentionAction.FOLLOW_PARENT,
     "notas.PreparationVersion": RetentionAction.FOLLOW_PARENT,
     "notas.Program": RetentionAction.ERASE,
@@ -395,6 +395,13 @@ def _delete_user_account_data(*, user, source: str) -> AccountDeletionResult:
 
     Food = _model("notas.Food")
     _delete_private_culinary_library(user, deleted_counts)
+    Preparation = _model("notas.Preparation")
+    personal_preparations = Preparation.objects.filter(created_by=user, is_global=False)
+    personal_preparations.update(current_version=None)
+    _delete_queryset(_model("notas.PreparationIngredient").objects.filter(version__preparation__in=personal_preparations), deleted_counts)
+    _delete_queryset(_model("notas.PreparationVersion").objects.filter(preparation__in=personal_preparations), deleted_counts)
+    _delete_queryset(personal_preparations, deleted_counts)
+    Preparation.objects.filter(created_by=user, is_global=True).update(created_by=None)
     Food.objects.filter(created_by=user, is_global=True).update(created_by=None)
     _delete_queryset(Food.objects.filter(created_by=user, is_global=False), deleted_counts)
 

@@ -42,6 +42,8 @@ export type PreparationComponentDetail = PreparationIngredientDetail | {
 export type PreparationDetail = {
   id: number;
   name: string;
+  is_personal: boolean;
+  is_active: boolean;
   version: number;
   household_label: string;
   default_portion_g: number;
@@ -54,4 +56,5 @@ export type PreparationDetail = {
   allergen_status: string;
   evidence: { source_name?: string; source_url?: string; yield_evidence?: string; preparation_notes?: string };
   ingredients: PreparationComponentDetail[];
+  recipe_ingredients: { food_id: number; name: string; quantity_g: number }[];
 };

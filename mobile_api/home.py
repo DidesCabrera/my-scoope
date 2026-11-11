@@ -12,7 +12,7 @@ from mobile_api.selectors import active_program_payload, today_payload
 from notas.application.queries.calendarization_queries import current_calendarization_for_user
 from notas.application.queries.proposal_queries import get_available_proposal_queryset
 from notas.application.services.nutrition.weight import get_current_weight, get_current_weight_log
-from notas.domain.models import DailyPlan, Food, Meal, Program, Supplement
+from notas.domain.models import DailyPlan, Food, Meal, Preparation, Program, Supplement
 
 
 def _library_counts(user) -> dict[str, int]:
@@ -22,6 +22,7 @@ def _library_counts(user) -> dict[str, int]:
         "daily_plan": DailyPlan.objects.filter(created_by=user).exclude(source=DailyPlan.SOURCE_PROGRAM).count(),
         "program": Program.objects.filter(created_by=user).count(),
         "supplement": Supplement.objects.filter(created_by=user).count(),
+        "preparation": Preparation.objects.filter(created_by=user, is_global=False, is_active=True).count(),
     }
 
 
