@@ -93,130 +93,120 @@ def _selected_portion(row: sqlite3.Row, source_portions: list[dict]) -> tuple[De
     return grams, label, f"Medida USDA alternativa más próxima a objetivo editorial {target} g."
 
 
+def _usda_semantics(name: str, group: str):
+    plant_tags = ["vegan", "vegetarian", "pescatarian"]
+    if group == "fruits_and_fruit_juices":
+        if name in CONDIMENT_FRUIT:
+            return ["vegetable"], ["main", "dinner"], plant_tags, "condiment"
+        return ["fruit"], ["breakfast", "snack"], plant_tags, "ingredient"
+    if group == "vegetables_and_vegetable_products":
+        roles = ["vegetable"]
+        if name in VEGETABLE_STARCH:
+            roles = ["starch_or_carbohydrate"]
+        elif name in VEGETABLE_LEGUME:
+            roles = ["supporting_protein", "starch_or_carbohydrate"]
+        form = "condiment" if name in RECIPE_SEASONING else "ingredient"
+        return roles, ["main", "dinner"], plant_tags, form
+    if group == "legumes_and_legume_products":
+        roles = ["primary_protein"] if name.startswith(("Tofu", "Tempeh")) else ["supporting_protein", "starch_or_carbohydrate"]
+        return roles, ["main", "dinner"], plant_tags, "ingredient"
+    if group == "dairy_and_egg_products":
+        tags = ["vegetarian", "pescatarian"]
+        if name.startswith(("Mantequilla", "Crema")):
+            return ["added_or_dense_fat"], ["breakfast", "main", "dinner"], tags, "ingredient"
+        if name.startswith("Leche"):
+            return ["supporting_protein"], ["breakfast", "snack"], tags, "beverage"
+        if name.startswith("Yogur"):
+            return ["supporting_protein"], ["breakfast", "snack"], tags, "ingredient"
+        return ["supporting_protein", "added_or_dense_fat"], ["breakfast", "snack", "main", "dinner"], tags, "ingredient"
+    if group == "finfish_and_shellfish_products":
+        return ["primary_protein"], ["main", "dinner"], ["pescatarian"], "ingredient"
+    return ["primary_protein"], ["main", "dinner"], [], "ingredient"
+
+
+def _core_semantics(name: str, group: str):
+    plant_tags = ["vegan", "vegetarian", "pescatarian"]
+    if group == "cereals":
+        affinities = ["breakfast", "snack"] if name == "Avena tradicional" else ["main", "dinner"]
+        return ["starch_or_carbohydrate"], affinities, plant_tags, "ingredient"
+    if group == "tubers":
+        return ["starch_or_carbohydrate"], ["main", "dinner"], plant_tags, "ingredient"
+    if group == "legumes":
+        return ["supporting_protein", "starch_or_carbohydrate"], ["main", "dinner"], plant_tags, "ingredient"
+    if group == "dairy":
+        form = "beverage" if name.startswith("Leche") else "ingredient"
+        return ["supporting_protein"], ["breakfast", "snack"], ["vegetarian", "pescatarian"], form
+    if group == "fats":
+        affinities = ["breakfast", "snack"] if name in {"Almendras", "Nueces", "Mantequilla de maní natural"} else ["main", "dinner"]
+        form = "condiment" if name == "Aceite de oliva" else "ingredient"
+        return ["added_or_dense_fat"], affinities, plant_tags, form
+    if group == "fruit":
+        return ["fruit"], ["breakfast", "snack"], plant_tags, "ingredient"
+    if group == "vegetables":
+        return ["vegetable"], ["main", "dinner"], plant_tags, "ingredient"
+    if name in {"Huevo entero", "Clara de huevo"}:
+        return ["primary_protein"], ["breakfast", "main", "dinner"], ["vegetarian", "pescatarian"], "ingredient"
+    tags = ["pescatarian"] if name in {"Atún en agua drenado", "Salmón cocido"} else []
+    return ["primary_protein"], ["main", "dinner"], tags, "ingredient"
+
+
+def _solver_use(name: str, group: str, state: str):
+    animal_groups = {"beef_products", "pork_products", "poultry_products", "lamb_veal_and_game_products", "finfish_and_shellfish_products"}
+    requires_preparation = (
+        state == "dry" and group not in {"fruits_and_fruit_juices", "cereals", "fats"}
+        or state == "raw" and group in animal_groups
+        or name in PREPARATION_REQUIRED_PLANTS or name in RAW_MUSHROOMS
+    )
+    if name in RECIPE_SEASONING:
+        return "recipe_component", "Uso culinario como componente; no como porción independiente."
+    if requires_preparation:
+        return "preparation_required", "Debe vincularse a una preparación comestible antes de ser candidato directo."
+    return "direct_candidate", ""
+
+
+def _positive_allergen(name: str, group: str) -> str:
+    if group in {"dairy_and_egg_products", "dairy"}:
+        return "milk"
+    if name in {"Huevo entero", "Clara de huevo"}:
+        return "egg"
+    if name in {"Atún en agua drenado", "Salmón cocido"} or name in FISH:
+        return "fish"
+    if name in {"Almendras", "Nueces"}:
+        return "nuts"
+    if name == "Mantequilla de maní natural":
+        return "peanut"
+    if group == "finfish_and_shellfish_products":
+        return "shellfish"
+    return "soy" if name in SOY else ""
+
+
+def _bounds(name: str, selected: Decimal, form: str):
+    minimum = max(Decimal("1"), selected * Decimal("0.5"))
+    maximum = max(selected, selected * Decimal("2"))
+    step = Decimal("1") if selected <= 20 else Decimal("5") if selected <= 100 else Decimal("10")
+    if name.startswith("Yogur"):
+        return selected, selected * 2, selected, "whole_unit"
+    if form == "condiment":
+        maximum = selected
+    return minimum, maximum, step, "flexible_weight"
+
+
 def _profile(row: sqlite3.Row) -> dict[str, str]:
     name, group, state = row["display_name"], row["food_group"], row["preparation_state"]
     default = Decimal(str(row["default_portion_g"]))
     source = json.loads(row["evidence_payload"] or "{}")
     source_portions = source.get("source_portions", [])
     selected, selected_label, change_reason = _selected_portion(row, source_portions)
-    roles: list[str]
-    affinities: list[str]
-    tags: list[str] = []
-    use = "direct_candidate"
-    reasons: list[str] = []
-    form = "ingredient"
-
-    if group == "fruits_and_fruit_juices":
-        roles, affinities = ["fruit"], ["breakfast", "snack"]
-        if name in CONDIMENT_FRUIT:
-            roles, affinities = ["vegetable"], ["main", "dinner"]
-            form = "condiment"
-        tags = ["vegan", "vegetarian", "pescatarian"]
-    elif group == "vegetables_and_vegetable_products":
-        roles, affinities = ["vegetable"], ["main", "dinner"]
-        if name in VEGETABLE_STARCH:
-            roles = ["starch_or_carbohydrate"]
-        elif name in VEGETABLE_LEGUME:
-            roles = ["supporting_protein", "starch_or_carbohydrate"]
-        if name in RECIPE_SEASONING:
-            form = "condiment"
-        tags = ["vegan", "vegetarian", "pescatarian"]
-    elif group == "legumes_and_legume_products":
-        roles, affinities = ["supporting_protein", "starch_or_carbohydrate"], ["main", "dinner"]
-        if name.startswith("Tofu") or name.startswith("Tempeh"):
-            roles = ["primary_protein"]
-        tags = ["vegan", "vegetarian", "pescatarian"]
-    elif group == "dairy_and_egg_products":
-        tags = ["vegetarian", "pescatarian"]
-        if name.startswith(("Mantequilla", "Crema")):
-            roles, affinities = ["added_or_dense_fat"], ["breakfast", "main", "dinner"]
-        elif name.startswith("Leche"):
-            roles, affinities, form = ["supporting_protein"], ["breakfast", "snack"], "beverage"
-        elif name.startswith("Yogur"):
-            roles, affinities = ["supporting_protein"], ["breakfast", "snack"]
-        else:
-            roles, affinities = ["supporting_protein", "added_or_dense_fat"], ["breakfast", "snack", "main", "dinner"]
-    elif group == "cereals":
-        roles = ["starch_or_carbohydrate"]
-        affinities = ["breakfast", "snack"] if name == "Avena tradicional" else ["main", "dinner"]
-        tags = ["vegan", "vegetarian", "pescatarian"]
-    elif group == "tubers":
-        roles, affinities = ["starch_or_carbohydrate"], ["main", "dinner"]
-        tags = ["vegan", "vegetarian", "pescatarian"]
-    elif group == "legumes":
-        roles, affinities = ["supporting_protein", "starch_or_carbohydrate"], ["main", "dinner"]
-        tags = ["vegan", "vegetarian", "pescatarian"]
-    elif group == "dairy":
-        roles, affinities = ["supporting_protein"], ["breakfast", "snack"]
-        tags = ["vegetarian", "pescatarian"]
-        if name.startswith("Leche"):
-            form = "beverage"
-    elif group == "fats":
-        roles = ["added_or_dense_fat"]
-        affinities = ["breakfast", "snack"] if name in {"Almendras", "Nueces", "Mantequilla de maní natural"} else ["main", "dinner"]
-        tags = ["vegan", "vegetarian", "pescatarian"]
-        if name == "Aceite de oliva":
-            form = "condiment"
-    elif group == "fruit":
-        roles, affinities = ["fruit"], ["breakfast", "snack"]
-        tags = ["vegan", "vegetarian", "pescatarian"]
-    elif group == "vegetables":
-        roles, affinities = ["vegetable"], ["main", "dinner"]
-        tags = ["vegan", "vegetarian", "pescatarian"]
-    elif group == "protein":
-        roles, affinities = ["primary_protein"], ["main", "dinner"]
-        if name in {"Huevo entero", "Clara de huevo"}:
-            affinities = ["breakfast", "main", "dinner"]
-            tags = ["vegetarian", "pescatarian"]
-        elif name in {"Atún en agua drenado", "Salmón cocido"}:
-            tags = ["pescatarian"]
+    if group in {"fruits_and_fruit_juices", "vegetables_and_vegetable_products", "legumes_and_legume_products", "dairy_and_egg_products", "finfish_and_shellfish_products", "beef_products", "pork_products", "poultry_products", "lamb_veal_and_game_products"}:
+        roles, affinities, tags, form = _usda_semantics(name, group)
     else:
-        roles, affinities = ["primary_protein"], ["main", "dinner"]
-        if group == "finfish_and_shellfish_products":
-            tags = ["pescatarian"]
-
-    if (state == "dry" and group not in {"fruits_and_fruit_juices", "cereals", "fats"}) or (state == "raw" and group in {
-        "beef_products", "pork_products", "poultry_products", "lamb_veal_and_game_products", "finfish_and_shellfish_products",
-    }) or name in PREPARATION_REQUIRED_PLANTS or name in RAW_MUSHROOMS:
-        use = "preparation_required"
-        reasons.append("Debe vincularse a una preparación comestible antes de ser candidato directo.")
-    if name in RECIPE_SEASONING:
-        use = "recipe_component"
-        reasons.append("Uso culinario como componente; no como porción independiente.")
+        roles, affinities, tags, form = _core_semantics(name, group)
+    use, use_reason = _solver_use(name, group, state)
+    allergen = _positive_allergen(name, group)
+    minimum, maximum, step, portion_mode = _bounds(name, selected, form)
+    reasons = [use_reason] if use_reason else []
     if row["default_portion_label"] == "100 g (base nutricional)":
         reasons.append("Porción de 100 g sólo como base nutricional; revisar medida doméstica.")
-
-    allergen = ""
-    if group == "dairy_and_egg_products":
-        allergen = "milk"
-    elif group == "dairy":
-        allergen = "milk"
-    elif name in {"Huevo entero", "Clara de huevo"}:
-        allergen = "egg"
-    elif name in {"Atún en agua drenado", "Salmón cocido"}:
-        allergen = "fish"
-    elif name in {"Almendras", "Nueces"}:
-        allergen = "nuts"
-    elif name == "Mantequilla de maní natural":
-        allergen = "peanut"
-    elif name in FISH:
-        allergen = "fish"
-    elif group == "finfish_and_shellfish_products":
-        allergen = "shellfish"
-    elif name in SOY:
-        allergen = "soy"
-
-    # Whole foods and generic yogurt are sold in varied amounts. Do not assume
-    # that a source household measure represents an indivisible retail package.
-    minimum = max(Decimal("1"), selected * Decimal("0.5"))
-    maximum = max(selected, selected * Decimal("2"))
-    step = Decimal("1") if selected <= 20 else Decimal("5") if selected <= 100 else Decimal("10")
-    portion_mode = "flexible_weight"
-    if name.startswith("Yogur"):
-        minimum, maximum, step = selected, selected * 2, selected
-        portion_mode = "whole_unit"
-    if form == "condiment":
-        maximum = selected
     if change_reason:
         reasons.append(change_reason)
     if not source_portions and row["source_type"] == "usda":

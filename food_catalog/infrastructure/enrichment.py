@@ -307,29 +307,33 @@ def _validate_change(food, row, change) -> tuple[str, ...]:
             errors.append("confidence must be between 0 and 100")
     except (InvalidOperation, TypeError):
         errors.append("confidence must be numeric")
+    errors.extend(_validate_field_value(field_name, change.get("proposed_value")))
+    if field_name in DECIMAL_FIELDS:
+        errors.extend(_validate_portion_triplet(food, row))
+    return tuple(dict.fromkeys(errors))
+
+
+def _validate_field_value(field_name, raw_value) -> tuple[str, ...]:
+    errors = []
     if field_name in DECIMAL_FIELDS:
         try:
-            raw_value = change.get("proposed_value")
             value = Decimal(str(raw_value.get("grams"))) if field_name == "default_portion_g" and isinstance(raw_value, dict) else Decimal(str(raw_value))
             if value <= 0:
                 errors.append(f"{field_name} must be positive")
         except (InvalidOperation, TypeError, KeyError):
             errors.append(f"{field_name} must be decimal")
-        if field_name == "default_portion_g" and isinstance(change.get("proposed_value"), dict):
-            proposed = change["proposed_value"]
-            if not str(proposed.get("label") or "").strip() or not str(proposed.get("source") or "").strip():
+        if field_name == "default_portion_g" and isinstance(raw_value, dict):
+            if not str(raw_value.get("label") or "").strip() or not str(raw_value.get("source") or "").strip():
                 errors.append("derived default portion requires label and source")
-    elif field_name in LIST_FIELDS and not isinstance(change.get("proposed_value"), list):
+    elif field_name in LIST_FIELDS and not isinstance(raw_value, list):
         errors.append(f"{field_name} must be a list")
-    elif field_name == "solver_enabled" and not isinstance(change.get("proposed_value"), bool):
+    elif field_name == "solver_enabled" and not isinstance(raw_value, bool):
         errors.append("solver_enabled must be boolean")
-    elif field_name == "catalog_version" and (not isinstance(change.get("proposed_value"), str) or not change["proposed_value"].strip() or len(change["proposed_value"]) > 64):
+    elif field_name == "catalog_version" and (not isinstance(raw_value, str) or not raw_value.strip() or len(raw_value) > 64):
         errors.append("catalog_version must be a nonempty label of at most 64 characters")
-    elif field_name in CHOICE_FIELDS and change.get("proposed_value") not in CHOICE_FIELDS[field_name]:
+    elif field_name in CHOICE_FIELDS and raw_value not in CHOICE_FIELDS[field_name]:
         errors.append(f"unsupported {field_name} value")
-    if field_name in DECIMAL_FIELDS:
-        errors.extend(_validate_portion_triplet(food, row))
-    return tuple(dict.fromkeys(errors))
+    return tuple(errors)
 
 
 def _validate_portion_triplet(food, row) -> tuple[str, ...]:

@@ -47,31 +47,8 @@ class Command(BaseCommand):
         foods = []
         prepared_rows = []
         for entry in rows:
-            matches = [(food, source) for food, source in by_source.get(entry["source_food_id"], [])
-                       if food.display_name == entry["display_name"]]
-            if len(matches) != 1:
-                raise CommandError(f"Expected one food for source {entry['source_food_id']} and {entry['display_name']}; found {len(matches)}.")
-            food, source = matches[0]
+            food, changes = _prepare_food(entry, by_source)
             foods.append(food)
-            if source.license_status != source.LICENSE_ALLOWED or source.source_url != entry["source_url"]:
-                raise CommandError(f"Source mismatch for {entry['display_name']}")
-            if food.display_name != entry["display_name"] or food.preparation_state != entry["preparation_state"]:
-                raise CommandError(f"Identity or preparation mismatch for {entry['display_name']}")
-            default = next((portion for portion in food.portions.all() if portion.is_default), None)
-            allowed_defaults = {Decimal(entry["default_portion_g"])}
-            if entry["display_name"] in KNOWN_OPERATIONAL_DEFAULTS:
-                allowed_defaults.add(KNOWN_OPERATIONAL_DEFAULTS[entry["display_name"]])
-            if default is None or default.grams not in allowed_defaults:
-                raise CommandError(f"Default portion changed for {entry['display_name']}")
-            selected = default.grams if default.grams != Decimal(entry["default_portion_g"]) else Decimal(entry["proposed_default_portion_g"])
-            if selected != default.grams and not any(portion.grams == selected for portion in food.portions.all()):
-                if entry["display_name"] not in {"Higo seco", "Ciruela seca", "Damasco seco"} or entry["proposed_default_portion_label"] != "1/4 taza":
-                    raise CommandError(f"Proposed portion has no source option for {entry['display_name']}")
-            if entry["solver_use"] not in {"direct_candidate", "preparation_required", "recipe_component"}:
-                raise CommandError(f"Unknown solver use for {entry['display_name']}")
-            if entry["solver_use"] == "direct_candidate" and entry["preparation_state"] == "dry" and food.food_group not in {"fruits_and_fruit_juices", "cereals", "fats"}:
-                raise CommandError(f"Dry direct candidate requires explicit review: {entry['display_name']}")
-            changes = _changes(food, entry, default, selected=selected)
             if changes:
                 prepared_rows.append({"catalog_food_id": food.pk, "expected_updated_at": food.updated_at.isoformat(), "changes": changes})
         if len({food.pk for food in foods}) != 219:
@@ -94,6 +71,33 @@ class Command(BaseCommand):
         }, sort_keys=True))
         if result.invalid:
             raise CommandError("Dry-run contains invalid proposals; no changes applied.")
+
+
+def _prepare_food(entry, by_source):
+    matches = [(food, source) for food, source in by_source.get(entry["source_food_id"], [])
+               if food.display_name == entry["display_name"]]
+    if len(matches) != 1:
+        raise CommandError(f"Expected one food for source {entry['source_food_id']} and {entry['display_name']}; found {len(matches)}.")
+    food, source = matches[0]
+    if source.license_status != source.LICENSE_ALLOWED or source.source_url != entry["source_url"]:
+        raise CommandError(f"Source mismatch for {entry['display_name']}")
+    if food.preparation_state != entry["preparation_state"]:
+        raise CommandError(f"Preparation mismatch for {entry['display_name']}")
+    default = next((portion for portion in food.portions.all() if portion.is_default), None)
+    allowed_defaults = {Decimal(entry["default_portion_g"])}
+    if entry["display_name"] in KNOWN_OPERATIONAL_DEFAULTS:
+        allowed_defaults.add(KNOWN_OPERATIONAL_DEFAULTS[entry["display_name"]])
+    if default is None or default.grams not in allowed_defaults:
+        raise CommandError(f"Default portion changed for {entry['display_name']}")
+    selected = default.grams if default.grams != Decimal(entry["default_portion_g"]) else Decimal(entry["proposed_default_portion_g"])
+    if selected != default.grams and not any(portion.grams == selected for portion in food.portions.all()):
+        if entry["display_name"] not in {"Higo seco", "Ciruela seca", "Damasco seco"} or entry["proposed_default_portion_label"] != "1/4 taza":
+            raise CommandError(f"Proposed portion has no source option for {entry['display_name']}")
+    if entry["solver_use"] not in {"direct_candidate", "preparation_required", "recipe_component"}:
+        raise CommandError(f"Unknown solver use for {entry['display_name']}")
+    if entry["solver_use"] == "direct_candidate" and entry["preparation_state"] == "dry" and food.food_group not in {"fruits_and_fruit_juices", "cereals", "fats"}:
+        raise CommandError(f"Dry direct candidate requires explicit review: {entry['display_name']}")
+    return food, _changes(food, entry, default, selected=selected)
 
 
 def _changes(food, entry, default, *, selected):
