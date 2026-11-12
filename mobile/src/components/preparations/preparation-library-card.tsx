@@ -24,7 +24,7 @@ export function PreparationLibraryCard({ item, onOpen }: { item: PersonalPrepara
     headingLink={{ label, onPress: onOpen }}
     title={item.name}
   />;
-  const { calories, protein_g, carbs_g, fat_g } = item.nutrition;
+  const { calories, protein_g, protein_per_kilogram, carbs_g, fat_g } = item.nutrition;
   return <View>
     <NutritionEntityCard
       actions={openAction}
@@ -34,7 +34,7 @@ export function PreparationLibraryCard({ item, onOpen }: { item: PersonalPrepara
       headingLink={{ label, onPress: onOpen }}
       nutrition={{
         calories,
-        protein: { grams: protein_g, allocation: allocation(protein_g, 4, calories) },
+        protein: { grams: protein_g, allocation: allocation(protein_g, 4, calories), perKilogram: protein_per_kilogram },
         carbs: { grams: carbs_g, allocation: allocation(carbs_g, 4, calories) },
         fat: { grams: fat_g, allocation: allocation(fat_g, 9, calories) },
       }}

@@ -14,6 +14,7 @@ export type EntityDetailPageProps = PropsWithChildren<
   Omit<NutritionEntityCardProps, "children" | "nutrition" | "onPress" | "style"> & {
     action?: ReactNode;
     afterNutrition?: ReactNode;
+    beforeNutrition?: ReactNode;
     backLabel?: string;
     nutrition?: NutritionEntityCardProps["nutrition"];
     identityIcon?: LucideIcon;
@@ -25,6 +26,7 @@ export type EntityDetailPageProps = PropsWithChildren<
 export function EntityDetailPage({
   action,
   afterNutrition,
+  beforeNutrition,
   backLabel = "Volver",
   children,
   accessory,
@@ -78,6 +80,7 @@ export function EntityDetailPage({
             titleIconPosition={entity === "food" ? "trailing" : "leading"}
             variant="page"
           />
+          {beforeNutrition}
           {showNutrition && nutrition ? <View style={styles.kpiSection}><NutritionKpiSection variant={kpiVariant} {...nutrition} /></View> : null}
           {afterNutrition}
         </View>

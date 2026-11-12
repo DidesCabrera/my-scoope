@@ -53,7 +53,7 @@ export type PreparationDetail = {
   selection_mode: "units" | "grams";
   selected_units: number | null;
   grams: number;
-  nutrition: { calories: number; protein_g: number; carbs_g: number; fat_g: number; sodium_mg: number | null };
+  nutrition: { calories: number; protein_g: number; protein_per_kilogram?: number | null; carbs_g: number; fat_g: number; sodium_mg: number | null };
   allergens: string[];
   allergen_status: string;
   evidence: { source_name?: string; source_url?: string; yield_evidence?: string; preparation_notes?: string };

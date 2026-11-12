@@ -193,6 +193,10 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertAlmostEqual(sum(row["quantity_g"] for row in portion["ingredients"]), 100)
         self.assertAlmostEqual(recipe["nutrition"]["protein_g"], 13.4)
         self.assertAlmostEqual(portion["nutrition"]["protein_g"], 13.4 * 100 / 270, places=3)
+        self.assertEqual(recipe["nutrition"]["protein_per_kilogram"], 0.2)
+        self.assertEqual(portion["nutrition"]["protein_per_kilogram"], 0.1)
+        library_item = self.client.get("/api/v1/library/preparations").json()["data"]["items"][0]
+        self.assertEqual(library_item["nutrition"], portion["nutrition"])
 
         revised = self.client.put(
             f"/api/v1/library/preparations/{preparation_id}",

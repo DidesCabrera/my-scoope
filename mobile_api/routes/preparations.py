@@ -127,7 +127,7 @@ def _portion(version, *, units, grams):
         raise MobileAPIError("preparation_portion_invalid", "La porción no es válida.", 422) from exc
 
 
-def _detail(preparation, *, units=None, grams=None, full_recipe=False):
+def _detail(preparation, *, units=None, grams=None, full_recipe=False, current_weight=None):
     version = preparation.current_version
     if full_recipe:
         mode, selected_units, quantity = "grams", None, version.yield_g
@@ -153,6 +153,7 @@ def _detail(preparation, *, units=None, grams=None, full_recipe=False):
         "grams": float(quantity),
         "nutrition": {
             "protein_g": round(float(version.protein_g * factor), 3),
+            "protein_per_kilogram": round(float(version.protein_g * factor) / current_weight, 1) if current_weight and version.protein_g else None,
             "carbs_g": round(float(version.carbs_g * factor), 3),
             "fat_g": round(float(version.fat_g * factor), 3),
             "sodium_mg": round(float(version.sodium_mg * factor), 3) if version.sodium_mg is not None else None,
@@ -206,7 +207,8 @@ def preparations(request, search: str | None = None, offset: int = 0, limit: int
     if search:
         queryset = queryset.filter(name__icontains=search.strip())
     total = queryset.count()
-    items = [_detail(item) for item in queryset.order_by("name", "id")[max(offset, 0):max(offset, 0) + min(max(limit, 1), 100)]]
+    current_weight = get_current_weight(request.auth.user)
+    items = [_detail(item, current_weight=current_weight) for item in queryset.order_by("name", "id")[max(offset, 0):max(offset, 0) + min(max(limit, 1), 100)]]
     return success({"items": items, "total": total, "offset": max(offset, 0), "limit": min(max(limit, 1), 100)})
 
 
@@ -215,7 +217,7 @@ def preparation_detail(request, preparation_id: int, units: float | None = None,
     preparation = _available_preparation(request.auth.user, preparation_id, allow_inactive_personal=True, allow_personal_draft=True)
     if preparation.current_version is None:
         return success(_personal_draft(preparation))
-    return success(_detail(preparation, units=units, grams=grams, full_recipe=full_recipe))
+    return success(_detail(preparation, units=units, grams=grams, full_recipe=full_recipe, current_weight=get_current_weight(request.auth.user)))
 
 
 @router.get("/library/preparations", operation_id="mobile_api_personal_preparations", auth=mobile_bearer, response={200: dict})
@@ -226,7 +228,8 @@ def personal_preparations(request, search: str | None = None, offset: int = 0, l
         queryset = queryset.filter(name__icontains=search.strip())
     safe_offset = max(offset, 0)
     safe_limit = min(max(limit, 1), 100)
-    return success({"items": [_detail(item) if item.current_version_id else _personal_draft(item) for item in queryset.order_by("name", "id")[safe_offset:safe_offset + safe_limit]], "total": queryset.count(), "offset": safe_offset, "limit": safe_limit})
+    current_weight = get_current_weight(request.auth.user)
+    return success({"items": [_detail(item, current_weight=current_weight) if item.current_version_id else _personal_draft(item) for item in queryset.order_by("name", "id")[safe_offset:safe_offset + safe_limit]], "total": queryset.count(), "offset": safe_offset, "limit": safe_limit})
 
 
 @router.post("/library/preparations/drafts", operation_id="mobile_api_create_personal_preparation_draft", auth=mobile_bearer, response={200: dict})
@@ -309,7 +312,7 @@ def create_personal_preparation(request, payload: PersonalPreparationInput):
         preparation = save_personal_preparation(user=request.auth.user, **payload.model_dump())
     except PersonalPreparationError as exc:
         _personal_error(exc)
-    return success(_detail(preparation))
+    return success(_detail(preparation, current_weight=get_current_weight(request.auth.user)))
 
 
 @router.put("/library/preparations/{preparation_id}", operation_id="mobile_api_update_personal_preparation", auth=mobile_bearer, response={200: dict})
@@ -320,7 +323,7 @@ def update_personal_preparation(request, preparation_id: int, payload: PersonalP
         preparation = save_personal_preparation(user=request.auth.user, preparation_id=preparation_id, **payload.model_dump())
     except PersonalPreparationError as exc:
         _personal_error(exc)
-    return success(_detail(preparation))
+    return success(_detail(preparation, current_weight=get_current_weight(request.auth.user)))
 
 
 @router.delete("/library/preparations/{preparation_id}", operation_id="mobile_api_remove_personal_preparation", auth=mobile_bearer, response={200: dict})

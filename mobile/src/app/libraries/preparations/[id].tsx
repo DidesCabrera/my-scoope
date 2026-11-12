@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Carrot } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -32,6 +32,8 @@ export default function PreparationDetailScreen() {
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [detail, setDetail] = useState<PersonalPreparation | null>(null);
+  const [portionDetail, setPortionDetail] = useState<PersonalPreparation | null>(null);
+  const [kpiView, setKpiView] = useState<"recipe" | "portion">("recipe");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -42,6 +44,14 @@ export default function PreparationDetailScreen() {
   const inMeal = Number.isInteger(meal) && meal > 0 && Number.isInteger(relation) && relation > 0;
 
   const openActions = useCallback(() => setActionsVisible(true), []);
+  const loadDetails = useCallback(async () => {
+    const [recipe, portion] = await Promise.all([
+      apiRequest<PersonalPreparation>(`/api/v1/preparations/${id}?full_recipe=true`, { cache: "no-store" }),
+      apiRequest<PersonalPreparation>(`/api/v1/preparations/${id}`, { cache: "no-store" }),
+    ]);
+    setDetail(recipe);
+    setPortionDetail(portion);
+  }, [apiRequest, id]);
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
       mode: "library-detail",
@@ -59,8 +69,11 @@ export default function PreparationDetailScreen() {
     let active = true;
     setLoading(true);
     setError(null);
-    void apiRequest<PersonalPreparation>(`/api/v1/preparations/${id}?full_recipe=true`, { cache: "no-store" })
-      .then((result) => { if (active) setDetail(result); })
+    void Promise.all([
+      apiRequest<PersonalPreparation>(`/api/v1/preparations/${id}?full_recipe=true`, { cache: "no-store" }),
+      apiRequest<PersonalPreparation>(`/api/v1/preparations/${id}`, { cache: "no-store" }),
+    ])
+      .then(([recipe, portion]) => { if (active) { setDetail(recipe); setPortionDetail(portion); } })
       .catch((failure) => { if (active) setError(userFacingError(failure)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -96,6 +109,7 @@ export default function PreparationDetailScreen() {
         method: "PATCH", body: JSON.stringify({ name }),
       });
       setDetail(updated);
+      setPortionDetail(updated);
       return;
     }
     await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}`, {
@@ -107,7 +121,7 @@ export default function PreparationDetailScreen() {
         ingredients: detail.recipe_ingredients.map(({ food_id, quantity_g }) => ({ food_id, quantity_g })),
       }),
     });
-    setDetail(await apiRequest<PersonalPreparation>(`/api/v1/preparations/${detail.id}?full_recipe=true`, { cache: "no-store" }));
+    await loadDetails();
   };
   const actions = <PreparationDetailActions
     advanced={!detail.is_draft ? {
@@ -143,12 +157,14 @@ export default function PreparationDetailScreen() {
   const ingredients = detail.ingredients.map((ingredient, index) => ingredientPanelItem(ingredient, index, detail));
   const portionCount = detail.yield_g / detail.default_portion_g;
   const subtitle = `Rinde ${formatPreparationNumber(detail.yield_g, 2)} g · ${formatPreparationNumber(portionCount, 2)} ${portionCount === 1 ? "porción" : "porciones"} de ${formatPreparationNumber(detail.default_portion_g, 2)} g`;
+  const displayedDetail = kpiView === "portion" && portionDetail && !portionDetail.is_draft ? portionDetail : detail;
+  const displayedNutrition = displayedDetail.nutrition;
   const nutrition = {
     // Meal components are displayed at one decimal before the KPI rounds to kcal.
-    calories: Math.round(detail.nutrition.calories * 10) / 10,
-    protein: { grams: detail.nutrition.protein_g, allocation: percentage(detail.nutrition.protein_g * 4, detail.nutrition.calories) },
-    carbs: { grams: detail.nutrition.carbs_g, allocation: percentage(detail.nutrition.carbs_g * 4, detail.nutrition.calories) },
-    fat: { grams: detail.nutrition.fat_g, allocation: percentage(detail.nutrition.fat_g * 9, detail.nutrition.calories) },
+    calories: Math.round(displayedNutrition.calories * 10) / 10,
+    protein: { grams: displayedNutrition.protein_g, allocation: percentage(displayedNutrition.protein_g * 4, displayedNutrition.calories), perKilogram: displayedNutrition.protein_per_kilogram },
+    carbs: { grams: displayedNutrition.carbs_g, allocation: percentage(displayedNutrition.carbs_g * 4, displayedNutrition.calories) },
+    fat: { grams: displayedNutrition.fat_g, allocation: percentage(displayedNutrition.fat_g * 9, displayedNutrition.calories) },
   };
   const openIngredient = (ingredient: FoodPanelItem) => {
     if (ingredient.detailId != null) router.push((ingredient.kind === "preparation" ? `/libraries/preparations/${ingredient.detailId}` : `/libraries/foods/${ingredient.detailId}`) as Href);
@@ -159,6 +175,7 @@ export default function PreparationDetailScreen() {
       if (!next.length) {
         const draft = await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}/foods`, { method: "DELETE" });
         setDetail(draft);
+        setPortionDetail(draft);
         setError(null);
         return;
       }
@@ -171,7 +188,7 @@ export default function PreparationDetailScreen() {
           ingredients: next,
         }),
       });
-      setDetail(await apiRequest<PersonalPreparation>(`/api/v1/preparations/${detail.id}?full_recipe=true`, { cache: "no-store" }));
+      await loadDetails();
       setError(null);
     } catch (failure) {
       setError(userFacingError(failure));
@@ -202,7 +219,17 @@ export default function PreparationDetailScreen() {
   } : undefined;
 
   return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
-    <EntityDetailPage entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={subtitle} title={detail.name}>
+    <EntityDetailPage beforeNutrition={<View style={styles.kpiViewSelector}>
+      <Text style={styles.kpiViewTitle}>Información nutricional</Text>
+      <View accessibilityLabel="Información nutricional mostrada" style={styles.kpiViewOptions}>
+        <Pressable accessibilityLabel="Ver información de la receta completa" accessibilityRole="button" accessibilityState={{ selected: kpiView === "recipe" }} onPress={() => setKpiView("recipe")} style={[styles.kpiViewOption, kpiView === "recipe" && styles.kpiViewOptionSelected]}>
+          <Text style={[styles.kpiViewOptionText, kpiView === "recipe" && styles.kpiViewOptionTextSelected]}>Receta completa</Text>
+        </Pressable>
+        <Pressable accessibilityLabel={`Ver información de una porción de ${formatPreparationNumber(detail.default_portion_g, 2)} gramos`} accessibilityRole="button" accessibilityState={{ selected: kpiView === "portion" }} onPress={() => setKpiView("portion")} style={[styles.kpiViewOption, kpiView === "portion" && styles.kpiViewOptionSelected]}>
+          <Text style={[styles.kpiViewOptionText, kpiView === "portion" && styles.kpiViewOptionTextSelected]}>Porción · {formatPreparationNumber(detail.default_portion_g, 2)} g</Text>
+        </Pressable>
+      </View>
+    </View>} entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={subtitle} title={detail.name}>
       <EntityDetailSection title="Composición de la preparación">
         <FoodPanels editing={editing} items={ingredients} nestedScroll onOpenItem={openIngredient} ownerLabel="esta preparación" />
       </EntityDetailSection>
@@ -220,4 +247,11 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
   feedback: { padding: tokens.spacing.screen },
+  kpiViewSelector: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
+  kpiViewTitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  kpiViewOptions: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, flexDirection: "row", padding: 3 },
+  kpiViewOption: { alignItems: "center", borderRadius: tokens.radius.pill, flex: 1, justifyContent: "center", minHeight: 38, paddingHorizontal: tokens.spacing.sm },
+  kpiViewOptionSelected: { backgroundColor: tokens.color.textMain },
+  kpiViewOptionText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, textAlign: "center" },
+  kpiViewOptionTextSelected: { color: tokens.color.surfaceApp },
 });
