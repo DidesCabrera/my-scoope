@@ -8,6 +8,7 @@ from ninja import Field, Router, Schema
 
 from mobile_api.api_support import calendarization_error, require_scope, success
 from mobile_api.auth import mobile_bearer
+from mobile_api.composition_projections import project_preparation_food_result
 from mobile_api.errors import MobileAPIError
 from mobile_api.preparation_projections import ingredient_payload
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
@@ -25,6 +26,7 @@ from notas.application.services.commands.personal_preparation_commands import (
     preview_personal_preparation_food,
 )
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 from notas.domain.models import Meal, MealPreparation, Preparation
 
@@ -266,14 +268,23 @@ def clear_personal_preparation_ingredients_route(request, preparation_id: int):
 def preparation_food_picker_preview(request, preparation_id: int, payload: PersonalPreparationFoodPickerInput):
     _personal_access(request.auth.user)
     try:
-        _, food, _ = preview_personal_preparation_food(
+        preparation, food, cleaned, foods = preview_personal_preparation_food(
             user=request.auth.user, preparation_id=preparation_id, **payload.model_dump()
         )
     except PersonalPreparationError as exc:
         _personal_error(exc)
     return success({
         "selection": {"id": food.id, "entity": "food", "name": food.name, "nutrition": None, "quantity": payload.quantity_g, "hour": None},
-        "impacts": [], "result": None, "replacements": [], "confirmation_required": False,
+        "impacts": [],
+        "result": project_preparation_food_result(
+            preparation=preparation,
+            selected_food_id=food.id,
+            cleaned=cleaned,
+            foods=foods,
+            current_weight=get_current_weight(request.auth.user),
+            replacing=payload.replace_food_id is not None,
+        ),
+        "replacements": [], "confirmation_required": False,
     })
 
 

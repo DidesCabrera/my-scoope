@@ -87,6 +87,14 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         preview = self.client.post(f"{picker}/preview", data=first, content_type="application/json")
         self.assertEqual(preview.status_code, 200, preview.content)
         self.assertEqual(preview.json()["data"]["selection"]["id"], self.food.id)
+        projected = preview.json()["data"]["result"]
+        self.assertEqual(projected["entity"], "preparation")
+        self.assertEqual(projected["name"], "Avena casera")
+        self.assertEqual(projected["yield_g"], 80)
+        self.assertEqual(projected["default_portion_g"], 100)
+        self.assertEqual(projected["nutrition"]["protein"]["grams"], 8)
+        self.assertEqual(projected["panel"]["foods"][0]["quantity"], 80)
+        self.assertEqual(projected["panel"]["foods"][0]["projected_label"], "Por agregar")
         self.assertTrue(self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]["is_draft"])
         committed = self.client.post(f"{picker}/commit", data=first, content_type="application/json")
         self.assertEqual(committed.status_code, 200, committed.content)
@@ -97,6 +105,9 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
 
         other_food = Food.objects.create(name="Leche", protein=3, carbs=5, fat=3, is_global=True)
         second = {"food_id": other_food.id, "quantity_g": 120}
+        second_preview = self.client.post(f"{picker}/preview", data=second, content_type="application/json").json()["data"]["result"]
+        self.assertEqual(second_preview["yield_g"], 200)
+        self.assertEqual([row["quantity"] for row in second_preview["panel"]["foods"]], [80, 120])
         self.assertEqual(self.client.post(f"{picker}/commit", data=second, content_type="application/json").status_code, 200)
         detail = self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]
         self.assertEqual(detail["version"], 2)
@@ -106,7 +117,10 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(duplicate.status_code, 422)
         replacement_food = Food.objects.create(name="Tomate", protein=1, carbs=4, fat=0, is_global=True)
         replacement = {"food_id": replacement_food.id, "quantity_g": 95, "replace_food_id": other_food.id}
-        self.assertEqual(self.client.post(f"{picker}/preview", data=replacement, content_type="application/json").status_code, 200)
+        replacement_preview = self.client.post(f"{picker}/preview", data=replacement, content_type="application/json")
+        self.assertEqual(replacement_preview.status_code, 200)
+        self.assertEqual(replacement_preview.json()["data"]["result"]["panel"]["foods"][1]["projected_label"], "Reemplazo")
+        self.assertEqual(replacement_preview.json()["data"]["result"]["yield_g"], 175)
         self.assertEqual(self.client.post(f"{picker}/commit", data=replacement, content_type="application/json").status_code, 200)
         detail = self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]
         self.assertEqual([(row["food_id"], row["quantity_g"]) for row in detail["recipe_ingredients"]], [(self.food.id, 80), (replacement_food.id, 95)])

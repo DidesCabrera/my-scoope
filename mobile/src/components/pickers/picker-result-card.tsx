@@ -7,6 +7,7 @@ import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { EntityPanelTabs, FoodPanels, MealPanels, PanelSurface, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { Card, EntityHeading } from "@/components/ui";
+import { formatPreparationNumber } from "@/components/preparations/preparation-ingredients-card";
 import { tokens } from "@/design/tokens";
 
 const weekMetricTabs: { key: WeekMetricFilter; label: string }[] = [
@@ -69,6 +70,9 @@ export function PickerResultCard({ preview }: { preview: PickerPreview }) {
   if (!result) return null;
   const week = result.panel.weeks[0];
   const entity = result.entity === "week" ? "program" : result.entity;
+  const preparationSubtitle = result.entity === "preparation" && result.yield_g != null && result.default_portion_g
+    ? `Rinde ${formatPreparationNumber(result.yield_g)} g · ${formatPreparationNumber(result.yield_g / result.default_portion_g)} porciones de ${formatPreparationNumber(result.default_portion_g)} g`
+    : undefined;
   const projectedMeal = preview.selection.entity === "food" && result.panel.kind === "meals"
     ? result.panel.meals.find((meal) => meal.is_projected)
     : undefined;
@@ -120,9 +124,10 @@ export function PickerResultCard({ preview }: { preview: PickerPreview }) {
       ) : null}
       <NutritionEntityCard
         entity={entity}
-        eyebrow={result.entity === "meal" ? "Previsualización Comida" : result.entity === "dailyPlan" ? "Previsualización de minuta diaria" : "Resultado proyectado"}
+        eyebrow={result.entity === "meal" ? "Previsualización Comida" : result.entity === "preparation" ? "Previsualización preparación" : result.entity === "dailyPlan" ? "Previsualización de minuta diaria" : "Resultado proyectado"}
         indicators={result.indicators}
         nutrition={libraryNutrition(result.nutrition)}
+        subtitle={preparationSubtitle}
         title={result.name}>
         {result.panel.kind === "foods" ? <FoodPanels items={result.panel.foods.map(foodPanelItem)} /> : null}
         {result.panel.kind === "meals" ? <MealPanels items={result.panel.meals.map(mealPanelItem)} /> : null}

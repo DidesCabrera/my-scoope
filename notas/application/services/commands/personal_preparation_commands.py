@@ -227,7 +227,7 @@ def preview_personal_preparation_food(*, user, preparation_id, food_id, quantity
     if set(foods) != ids:
         raise PersonalPreparationError("preparation_ingredient_unavailable")
     _ingredient_nutrition(cleaned, foods)
-    return preparation, foods[food_id], cleaned
+    return preparation, foods[food_id], cleaned, foods
 
 
 @transaction.atomic
@@ -239,7 +239,7 @@ def add_personal_preparation_food(*, user, preparation_id, food_id, quantity_g, 
     ).first()
     if preparation is None:
         raise PersonalPreparationError("preparation_not_found")
-    _, _, cleaned = preview_personal_preparation_food(
+    _, _, cleaned, _ = preview_personal_preparation_food(
         user=user, preparation_id=preparation_id, food_id=food_id, quantity_g=quantity_g, replace_food_id=replace_food_id
     )
     version = preparation.current_version

@@ -476,11 +476,13 @@ export type PickerPreview = {
   impacts: PickerImpact[];
   result: {
     id: number;
-    entity: "meal" | "dailyPlan" | "week";
+    entity: "meal" | "preparation" | "dailyPlan" | "week";
     name: string;
     nutrition: LibraryNutrition;
     indicators: LibraryIndicator[];
     panel: LibraryPanel;
+    yield_g?: number;
+    default_portion_g?: number;
   } | null;
   replacements: string[];
   confirmation_required: boolean;
