@@ -10,7 +10,8 @@ from pathlib import Path
 from statistics import mean
 
 from nutrition_solver.application.optimizer_v2 import (
-    solve_optimization_alternatives, solve_optimization_problem,
+    solve_optimization_alternatives,
+    solve_optimization_problem,
 )
 from nutrition_solver.application.problem_v2 import MealSlotProblem, NutrientRange, OptimizationProblemV2
 from nutrition_solver.domain.food_profiles import SolverFeatureValue, SolverFoodProfile

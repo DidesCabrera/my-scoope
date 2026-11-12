@@ -14,9 +14,9 @@ assistant runtime. Provider execution is always opt-in at the command boundary.
 
 from __future__ import annotations
 
-import logging
 import hashlib
 import json
+import logging
 import re
 import uuid
 from collections import Counter, defaultdict
@@ -28,9 +28,9 @@ from typing import Any, Mapping, Sequence
 from django.conf import settings
 from django.test.utils import override_settings
 
-from ai_assistant.models import AIPreparedAction
 from ai_assistant.application.prompt_contract import ASSISTANT_PROMPT_CONTRACT_VERSION
 from ai_assistant.application.tools.registry import list_mcp_tool_specs, list_provider_tool_specs
+from ai_assistant.models import AIPreparedAction
 from notas.application.ai_intake.capability_scenarios import PATCH_CASES
 from notas.application.ai_intake.evaluation_artifacts import capture_review_artifacts
 from notas.application.ai_intake.evaluation_dataset import EVALUATION_DATASET_VERSION, evaluate_assistant_task_dataset
