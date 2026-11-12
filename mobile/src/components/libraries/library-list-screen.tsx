@@ -255,8 +255,8 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           ? { icon: "more", label: `Acciones de ${title}`, onPress: () => setActionsVisible(true) }
           : { disabled: loading || submitting, label: "Listo", onPress: finishEdit },
         createAction: mode === "list" ? { label: createLabels[entity], onPress: entity === "food" ? () => setFoodAddActionsVisible(true) : () => void openCreate() } : undefined,
-        secondaryAction: mode === "list" && (entity === "meal" || entity === "dailyPlan")
-          ? { icon: "search", label: entity === "meal" ? "Explorar comidas" : "Explorar minutas", onPress: () => router.push((entity === "meal" ? "/explore/meals" : "/explore/daily-plans") as Href) }
+        secondaryAction: mode === "list" && (entity === "food" || entity === "meal" || entity === "dailyPlan")
+          ? { icon: "search", label: entity === "food" ? "Explorar alimentos globales" : entity === "meal" ? "Explorar comidas" : "Explorar minutas", onPress: () => router.push((entity === "food" ? "/explore/foods" : entity === "meal" ? "/explore/meals" : "/explore/daily-plans") as Href) }
           : undefined,
         entity,
         identityVisible: compactHeaderVisible,

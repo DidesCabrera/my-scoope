@@ -3,7 +3,12 @@ from ninja import Router
 from mobile_api.api_support import require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
-from mobile_api.explore import explore_dailyplan_detail_payload, explore_dailyplans_payload, explore_meal_detail_payload, explore_meals_payload
+from mobile_api.explore import (
+    explore_dailyplan_detail_payload,
+    explore_dailyplans_payload,
+    explore_meal_detail_payload,
+    explore_meals_payload,
+)
 from mobile_api.schema_domains.explore import (
     ExploreDailyPlanItemEnvelope,
     ExploreDailyPlanPageEnvelope,
@@ -12,14 +17,34 @@ from mobile_api.schema_domains.explore import (
     ExploreMealPageEnvelope,
     ExploreMealSaveResultEnvelope,
 )
+from mobile_api.schema_domains.libraries import LibraryPageEnvelope
 from mobile_api.schemas import ErrorEnvelope
+from mobile_api.selectors import library_foods_payload
 from notas.application.commercial.limits import CommercialLimitReached
-from notas.application.services.commands.meal_catalog_commands import save_catalog_meal_to_library
+from notas.application.queries.global_food_queries import get_visible_global_food_queryset
 from notas.application.services.commands.dailyplan_catalog_commands import save_catalog_dailyplan_to_library
+from notas.application.services.commands.meal_catalog_commands import save_catalog_meal_to_library
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 from notas.domain.models import DailyPlanCatalogEntry, Meal, MealCatalogEntry
 
 router = Router()
+
+
+@router.get(
+    "/explore/foods",
+    operation_id="mobile_api_api_explore_foods",
+    auth=mobile_bearer,
+    response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def explore_foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
+    return success(library_foods_payload(
+        request.auth.user,
+        search=search,
+        offset=offset,
+        limit=limit,
+        include_actions=False,
+        queryset=get_visible_global_food_queryset().select_related("created_by"),
+    ))
 
 
 @router.get(
