@@ -17,6 +17,7 @@ import { Button, LoadingState } from "@/components/ui";
 import { InlineNotice } from "@/components/ui/primitives";
 import { Card } from "@/components/ui/surfaces";
 import { tokens } from "@/design/tokens";
+import { pickerHref } from "@/components/pickers/picker-routes";
 
 function percentage(value: number, total: number): number {
   return total > 0 ? (value / total) * 100 : 0;
@@ -61,7 +62,7 @@ export default function PreparationDetailScreen() {
   if (!detail) return <View style={styles.feedback}><InlineNotice tone="error">{error ?? "No encontramos esta preparación."}</InlineNotice></View>;
   if (detail.is_draft) return <View style={styles.feedback}>
     <InlineNotice tone="info">Agrega los alimentos de la receta para calcular su información nutricional.</InlineNotice>
-    <Button label="Agregar ingredientes" onPress={() => router.push(`/libraries/preparations/${detail.id}/edit` as Href)} variant="primary" />
+    <Button label="Agregar alimento" onPress={() => router.push(pickerHref("food-to-preparation", { preparationId: detail.id, returnTo: `/libraries/preparations/${detail.id}` }))} variant="primary" />
   </View>;
 
   const ingredients = detail.ingredients.map((ingredient, index) => ingredientPanelItem(ingredient, index, detail));
@@ -113,6 +114,7 @@ export default function PreparationDetailScreen() {
         <Text style={styles.source}>{detail.is_personal ? "Estimación personal" : "Estimación editorial"} · versión {detail.version}{detail.evidence.source_name ? ` · ${detail.evidence.source_name}` : ""}</Text>
       </Card>
       {detail.is_personal && detail.is_active ? <View style={styles.actions}>
+        <Button label="Agregar alimento" onPress={() => router.push(pickerHref("food-to-preparation", { preparationId: detail.id, returnTo: `/libraries/preparations/${detail.id}` }))} variant="primary" />
         <Button label="Editar preparación" onPress={() => router.push(`/libraries/preparations/${detail.id}/edit` as Href)} variant="secondary" />
         <Button label="Eliminar preparación" onPress={removePersonal} variant="danger" />
       </View> : null}

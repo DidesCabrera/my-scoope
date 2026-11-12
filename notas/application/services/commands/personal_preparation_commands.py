@@ -198,6 +198,54 @@ def save_personal_preparation(
     return preparation
 
 
+def preview_personal_preparation_food(*, user, preparation_id, food_id, quantity_g):
+    """Validate a picker selection against the same recipe rules used on save."""
+    require_personal_preparations_pro(user)
+    preparation = Preparation.objects.select_related("current_version").filter(
+        pk=preparation_id, is_global=False, created_by=user, is_active=True
+    ).first()
+    if preparation is None:
+        raise PersonalPreparationError("preparation_not_found")
+    current = list(preparation.current_version.ingredients.order_by("order", "id")) if preparation.current_version_id else []
+    if any(row.food_id == food_id for row in current):
+        raise PersonalPreparationError("preparation_ingredient_already_added")
+    ingredients = [{"food_id": row.food_id, "quantity_g": row.quantity_g} for row in current]
+    ingredients.append({"food_id": food_id, "quantity_g": quantity_g})
+    cleaned, ids = _clean_ingredients(ingredients)
+    foods = {
+        food.pk: food for food in get_food_picker_queryset(user).filter(
+            pk__in=ids, is_active=True, portion_unit=Food.PORTION_UNIT_GRAMS
+        )
+    }
+    if set(foods) != ids:
+        raise PersonalPreparationError("preparation_ingredient_unavailable")
+    _ingredient_nutrition(cleaned, foods)
+    return preparation, foods[food_id], cleaned
+
+
+@transaction.atomic
+def add_personal_preparation_food(*, user, preparation_id, food_id, quantity_g):
+    require_personal_preparations_pro(user)
+    preparation = Preparation.objects.select_for_update().select_related("current_version").filter(
+        pk=preparation_id, is_global=False, created_by=user, is_active=True
+    ).first()
+    if preparation is None:
+        raise PersonalPreparationError("preparation_not_found")
+    _, _, cleaned = preview_personal_preparation_food(
+        user=user, preparation_id=preparation_id, food_id=food_id, quantity_g=quantity_g
+    )
+    version = preparation.current_version
+    return save_personal_preparation(
+        user=user,
+        preparation_id=preparation_id,
+        name=preparation.name,
+        ingredients=[{"food_id": item_id, "quantity_g": amount} for item_id, amount in cleaned],
+        yield_g=version.yield_g if version and version.evidence.get("yield_is_manual") else None,
+        default_portion_g=version.default_portion_g if version else 100,
+        household_label=version.household_label if version else "porción",
+    )
+
+
 @transaction.atomic
 def remove_personal_preparation(*, user, preparation_id):
     require_personal_preparations_pro(user)

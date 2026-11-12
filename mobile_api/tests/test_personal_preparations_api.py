@@ -72,6 +72,44 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertFalse(detail["yield_is_manual"])
         self.assertEqual(self.client.get("/api/v1/preparations").json()["data"]["total"], 1)
 
+    def test_food_picker_completes_draft_and_adds_to_existing_recipe(self):
+        draft = self.client.post(
+            "/api/v1/library/preparations/drafts", data={"name": "Avena casera"}, content_type="application/json"
+        ).json()["data"]
+        picker = f"/api/v1/library/preparations/{draft['id']}/food-picker"
+        first = {"food_id": self.food.id, "quantity_g": 80}
+        preview = self.client.post(f"{picker}/preview", data=first, content_type="application/json")
+        self.assertEqual(preview.status_code, 200, preview.content)
+        self.assertEqual(preview.json()["data"]["selection"]["id"], self.food.id)
+        self.assertTrue(self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]["is_draft"])
+        committed = self.client.post(f"{picker}/commit", data=first, content_type="application/json")
+        self.assertEqual(committed.status_code, 200, committed.content)
+        detail = self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]
+        self.assertFalse(detail["is_draft"])
+        self.assertEqual(detail["yield_g"], 80)
+        self.assertEqual(detail["default_portion_g"], 100)
+
+        other_food = Food.objects.create(name="Leche", protein=3, carbs=5, fat=3, is_global=True)
+        second = {"food_id": other_food.id, "quantity_g": 120}
+        self.assertEqual(self.client.post(f"{picker}/commit", data=second, content_type="application/json").status_code, 200)
+        detail = self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]
+        self.assertEqual(detail["version"], 2)
+        self.assertEqual(detail["yield_g"], 200)
+        self.assertEqual(len(detail["recipe_ingredients"]), 2)
+        duplicate = self.client.post(f"{picker}/commit", data=second, content_type="application/json")
+        self.assertEqual(duplicate.status_code, 422)
+
+    def test_food_picker_cannot_access_another_users_draft(self):
+        other = User.objects.create_user(username="other-picker-owner")
+        AccountSubscription.objects.update_or_create(
+            user=other, defaults={"plan": AccountPlan.objects.get(slug="pro")}
+        )
+        draft = create_personal_preparation_draft(user=other, name="Privada")
+        path = f"/api/v1/library/preparations/{draft.id}/food-picker"
+        body = {"food_id": self.food.id, "quantity_g": 50}
+        self.assertEqual(self.client.post(f"{path}/preview", data=body, content_type="application/json").status_code, 404)
+        self.assertEqual(self.client.post(f"{path}/commit", data=body, content_type="application/json").status_code, 404)
+
     def test_yield_tracks_ingredients_until_manually_corrected(self):
         created = self.client.post(
             "/api/v1/library/preparations",

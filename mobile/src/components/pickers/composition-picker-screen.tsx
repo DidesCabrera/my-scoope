@@ -70,12 +70,22 @@ type PickerConfig = {
   title: string;
   searchLabel: string;
   searchPlaceholder: string;
-  targetSlug: "meals" | "daily-plans" | "programs";
+  targetSlug: "meals" | "preparations" | "daily-plans" | "programs";
   previewPath(targetId: number, mealKey?: string): string;
   commitPath(targetId: number, mealKey?: string): string;
 };
 
 const configs: Record<PickerKind, PickerConfig> = {
+  "food-to-preparation": {
+    createEntity: "food",
+    createLabel: "Crear alimento",
+    title: "Agregar alimento",
+    searchLabel: "Buscar alimento",
+    searchPlaceholder: "Escribe el nombre de un alimento",
+    targetSlug: "preparations",
+    previewPath: (id) => `/api/v1/library/preparations/${id}/food-picker/preview`,
+    commitPath: (id) => `/api/v1/library/preparations/${id}/food-picker/commit`,
+  },
   "food-to-meal": {
     createEntity: "food",
     createLabel: "Crear alimento",
@@ -287,7 +297,7 @@ export function CompositionPickerScreen({
   returnTo?: Href;
 }) {
   const config = configs[kind];
-  const isFoodPicker = kind === "food-to-meal" || kind === "food-to-calendarized-meal";
+  const isFoodPicker = kind === "food-to-meal" || kind === "food-to-preparation" || kind === "food-to-calendarized-meal";
   const isMealPicker = kind === "meal-to-dailyplan" || kind === "meal-to-calendarized-day";
   const isCalendarizedPicker = kind === "dailyplan-to-calendarized-day" || kind === "meal-to-calendarized-day" || kind === "food-to-calendarized-meal";
   const title = relationId || relationKey
@@ -414,14 +424,14 @@ export function CompositionPickerScreen({
     const term = search ? `&search=${encodeURIComponent(search)}` : "";
     const entitySlug = isMealPicker ? "meals" : "daily-plans";
     return isFoodPicker
-      ? apiRequest<FoodPickerPageData>(`/api/v1/foods?limit=${limit}${term}`).then((page) => page.items.map(optionFromFood))
+      ? apiRequest<FoodPickerPageData>(`/api/v1/foods?limit=${limit}${term}`).then((page) => page.items.filter((food) => kind !== "food-to-preparation" || food.quantity_unit === "g").map(optionFromFood))
       : apiRequest<CompositionOptionsData>(`/api/v1/library/${entitySlug}/composition-options?limit=${limit}${term}`)
         .catch((nextError) => {
           if (!(nextError instanceof MobileApiError) || ![404, 422].includes(nextError.status)) throw nextError;
           return apiRequest<LibraryPageData>(`/api/v1/library/${entitySlug}?limit=${limit}${term}`);
         })
         .then((page) => page.items.map(optionFromLibrary));
-  }, [apiRequest, isFoodPicker, isMealPicker]);
+  }, [apiRequest, isFoodPicker, isMealPicker, kind]);
 
   const suggestions = useSearchSuggestions({
     enabled: status === "authenticated" && !selectedId,

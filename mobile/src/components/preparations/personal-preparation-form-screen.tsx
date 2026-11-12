@@ -11,6 +11,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { Button, Card, CollectionPageHeader, InlineNotice, LoadingState, SearchField } from "@/components/ui";
 import { Field } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
+import { pickerHref } from "@/components/pickers/picker-routes";
 
 type IngredientDraft = { food_id: number; name: string; quantity_g: string };
 
@@ -99,7 +100,7 @@ export function PersonalPreparationFormScreen() {
         const draft = await apiRequest<PreparationDraft>("/api/v1/library/preparations/drafts", {
           method: "POST", body: JSON.stringify({ name: name.trim() }),
         });
-        router.replace(`/libraries/preparations/${draft.id}/edit` as Href);
+        router.replace(pickerHref("food-to-preparation", { preparationId: draft.id, returnTo: `/libraries/preparations/${draft.id}` }));
       } catch (failure) { setError(userFacingError(failure)); }
       finally { setSaving(false); }
       return;

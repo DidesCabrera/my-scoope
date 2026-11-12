@@ -14,11 +14,13 @@ from notas.application.services.cache.dailyplan_summary import refresh_dailyplan
 from notas.application.services.commands.calendarization_commands import save_calendarized_preparation
 from notas.application.services.commands.personal_preparation_commands import (
     PersonalPreparationError,
+    add_personal_preparation_food,
     can_use_personal_preparations,
     create_personal_preparation_draft,
     remove_personal_preparation,
     require_personal_preparations_pro,
     save_personal_preparation,
+    preview_personal_preparation_food,
 )
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
@@ -55,6 +57,11 @@ class PersonalPreparationDraftInput(Schema):
     name: str
 
 
+class PersonalPreparationFoodPickerInput(Schema):
+    food_id: int = Field(gt=0)
+    quantity_g: float = Field(gt=0, le=100000)
+
+
 def _personal_access(user):
     try:
         require_personal_preparations_pro(user)
@@ -66,6 +73,8 @@ def _personal_error(exc):
     code = str(exc)
     if code == "preparation_not_found":
         raise MobileAPIError(code, "La preparación no está disponible.", 404) from exc
+    if code == "preparation_ingredient_already_added":
+        raise MobileAPIError(code, "Este alimento ya está en la preparación. Puedes ajustar su cantidad en Editar preparación.", 422) from exc
     raise MobileAPIError(code, "Revisa los datos de la preparación y sus ingredientes.", 422) from exc
 
 
@@ -220,6 +229,34 @@ def create_personal_preparation_draft_route(request, payload: PersonalPreparatio
     except PersonalPreparationError as exc:
         _personal_error(exc)
     return success(_personal_draft(preparation))
+
+
+@router.post("/library/preparations/{preparation_id}/food-picker/preview", operation_id="mobile_api_preparation_food_picker_preview", auth=mobile_bearer, response={200: dict})
+def preparation_food_picker_preview(request, preparation_id: int, payload: PersonalPreparationFoodPickerInput):
+    _personal_access(request.auth.user)
+    try:
+        _, food, _ = preview_personal_preparation_food(
+            user=request.auth.user, preparation_id=preparation_id, **payload.model_dump()
+        )
+    except PersonalPreparationError as exc:
+        _personal_error(exc)
+    return success({
+        "selection": {"id": food.id, "entity": "food", "name": food.name, "nutrition": None, "quantity": payload.quantity_g, "hour": None},
+        "impacts": [], "result": None, "replacements": [], "confirmation_required": False,
+    })
+
+
+@router.post("/library/preparations/{preparation_id}/food-picker/commit", operation_id="mobile_api_preparation_food_picker_commit", auth=mobile_bearer, response={200: dict})
+def preparation_food_picker_commit(request, preparation_id: int, payload: PersonalPreparationFoodPickerInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _personal_access(request.auth.user)
+    try:
+        preparation = add_personal_preparation_food(
+            user=request.auth.user, preparation_id=preparation_id, **payload.model_dump()
+        )
+    except PersonalPreparationError as exc:
+        _personal_error(exc)
+    return success({"message": "Alimento agregado a la preparación.", "target_id": preparation_id, "created_id": preparation.id})
 
 
 @router.post("/library/preparations", operation_id="mobile_api_create_personal_preparation", auth=mobile_bearer, response={200: dict})

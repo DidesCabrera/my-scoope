@@ -12,6 +12,14 @@ const defaults = {
   weekNumber: 1,
 };
 
+test("preparation food picker sends grams for the recipe", () => {
+  assert.deepEqual(buildCompositionPickerPayload({
+    ...defaults,
+    kind: "food-to-preparation",
+    quantity: "125,5",
+  }), { food_id: 77, quantity_g: 125.5 });
+});
+
 test("calendarized food replacements preserve the exact snapshot key", () => {
   assert.deepEqual(buildCompositionPickerPayload({
     ...defaults,

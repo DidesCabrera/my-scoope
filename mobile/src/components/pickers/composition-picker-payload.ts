@@ -43,6 +43,10 @@ export function buildCompositionPickerPayload({
       portion_display_measure: portionDisplayMeasure,
     } : {}),
   };
+  if (kind === "food-to-preparation") return {
+    food_id: selectedId,
+    quantity_g: portionGrams(quantity),
+  };
   if (kind === "food-to-calendarized-meal") return {
     food_id: selectedId,
     food_snapshot_key: relationKey,
