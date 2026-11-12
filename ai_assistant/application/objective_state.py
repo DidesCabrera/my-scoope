@@ -152,10 +152,7 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
 
     resource = _resource(text)
     mutation_action = _mutation_action(text)
-    mentions_supplements = bool(re.search(r"\b(?:suplement\w*|supplement\w*)\b", text))
-    if mentions_supplements and (
-        mutation_action or _CREATE_PATTERN.search(text)
-    ):
+    if _requests_supplement_mutation(text, mutation_action):
         return {
             "objective": "handoff_to_supplements_ui",
             "expected_outcome": "response_only",
@@ -249,6 +246,10 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": "create",
         }
 
+    return _classify_fallback_objective(text, resource)
+
+
+def _classify_fallback_objective(text: str, resource: str) -> dict[str, str] | None:
     if _PROFILE_FACT_PATTERN.search(text) and "?" not in text:
         return {
             "objective": "record_conversation_facts",
@@ -281,6 +282,11 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": "update_draft",
         }
     return None
+
+
+def _requests_supplement_mutation(text: str, mutation_action: str) -> bool:
+    mentions_supplements = re.search(r"\b(?:suplement\w*|supplement\w*)\b", text)
+    return bool(mentions_supplements and (mutation_action or _CREATE_PATTERN.search(text)))
 
 
 def _active_payload(objective: Mapping[str, str], *, source: str) -> dict[str, Any]:

@@ -1,6 +1,5 @@
 {
   "ai_assistant/application/orchestrator_turn.py::run_provider_turn": 21,
-  "ai_assistant/application/objective_state.py::_classify_objective": 16,
   "food_catalog/application/core_natural_foods.py::validate_core_natural_foods_seed": 18,
   "food_catalog/application/publication.py::check_catalog_food_publishable": 21,
   "food_catalog/application/solver_readiness.py::check_catalog_food_solver_ready": 19,
