@@ -36,7 +36,7 @@ export function PreparationMealPreviewCard({ meal, selected, relationId }: { mea
 }
 
 const styles = StyleSheet.create({
-  contribution: { backgroundColor: tokens.color.surfaceMuted, borderLeftColor: tokens.color.preparation, borderLeftWidth: 3, borderRadius: tokens.radius.sm, gap: 3, marginTop: tokens.spacing.sm, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
+  contribution: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.panel, gap: 3, marginHorizontal: -6, marginTop: tokens.spacing.sm, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
   contributionLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   contributionValue: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
 });
