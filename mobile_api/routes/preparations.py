@@ -15,6 +15,7 @@ from notas.application.services.commands.calendarization_commands import save_ca
 from notas.application.services.commands.personal_preparation_commands import (
     PersonalPreparationError,
     can_use_personal_preparations,
+    create_personal_preparation_draft,
     remove_personal_preparation,
     require_personal_preparations_pro,
     save_personal_preparation,
@@ -45,10 +46,13 @@ class PersonalPreparationIngredientInput(Schema):
 
 class PersonalPreparationInput(Schema):
     name: str
-    yield_g: float = Field(gt=0, le=100000)
-    default_portion_g: float = Field(gt=0, le=100000)
-    household_label: str
+    yield_g: float | None = Field(default=None, gt=0, le=100000)
+    default_portion_g: float = Field(default=100, gt=0, le=100000)
     ingredients: list[PersonalPreparationIngredientInput]
+
+
+class PersonalPreparationDraftInput(Schema):
+    name: str
 
 
 def _personal_access(user):
@@ -65,16 +69,30 @@ def _personal_error(exc):
     raise MobileAPIError(code, "Revisa los datos de la preparación y sus ingredientes.", 422) from exc
 
 
-def _available_preparation(user, preparation_id, *, allow_inactive_personal=False):
+def _available_preparation(user, preparation_id, *, allow_inactive_personal=False, allow_personal_draft=False):
     queryset = Preparation.objects.select_related("current_version").filter(pk=preparation_id).filter(Q(is_global=True) | Q(created_by=user))
     if allow_inactive_personal:
         queryset = queryset.filter(Q(is_active=True) | Q(is_global=False, created_by=user))
     else:
         queryset = queryset.filter(is_active=True)
     preparation = queryset.first()
-    if preparation is None or preparation.current_version is None or (not preparation.is_global and not can_use_personal_preparations(user)):
+    owned_draft = (
+        preparation is not None
+        and allow_personal_draft
+        and not preparation.is_global
+        and preparation.created_by_id == user.id
+    )
+    if (
+        preparation is None
+        or (preparation.current_version is None and not owned_draft)
+        or (not preparation.is_global and not can_use_personal_preparations(user))
+    ):
         raise MobileAPIError("preparation_not_found", "La preparación no está disponible.", 404)
     return preparation
+
+
+def _personal_draft(preparation):
+    return {"id": preparation.id, "name": preparation.name, "is_personal": True, "is_active": preparation.is_active, "is_draft": True}
 
 
 def _portion(version, *, units, grams):
@@ -100,15 +118,18 @@ def _detail(preparation, *, units=None, grams=None):
     mode, selected_units, quantity = _portion(version, units=1 if units is None and grams is None else units, grams=grams)
     factor = quantity / version.yield_g
     ingredients = list(version.ingredients.select_related("food").order_by("order", "id"))
+    inferred_yield = sum((row.quantity_g for row in ingredients), Decimal("0"))
     return {
         "id": preparation.id,
         "name": preparation.name,
         "is_personal": not preparation.is_global,
         "is_active": preparation.is_active,
+        "is_draft": False,
         "version": version.version,
         "household_label": version.household_label,
         "default_portion_g": float(version.default_portion_g),
         "yield_g": float(version.yield_g),
+        "yield_is_manual": bool(version.evidence.get("yield_is_manual", version.yield_g != inferred_yield)),
         "selection_mode": mode,
         "selected_units": float(selected_units) if selected_units is not None else None,
         "grams": float(quantity),
@@ -173,18 +194,32 @@ def preparations(request, search: str | None = None, offset: int = 0, limit: int
 
 @router.get("/preparations/{preparation_id}", operation_id="mobile_api_api_preparation_detail", auth=mobile_bearer, response={200: dict})
 def preparation_detail(request, preparation_id: int, units: float | None = None, grams: float | None = None):
-    return success(_detail(_available_preparation(request.auth.user, preparation_id, allow_inactive_personal=True), units=units, grams=grams))
+    preparation = _available_preparation(request.auth.user, preparation_id, allow_inactive_personal=True, allow_personal_draft=True)
+    if preparation.current_version is None:
+        return success(_personal_draft(preparation))
+    return success(_detail(preparation, units=units, grams=grams))
 
 
 @router.get("/library/preparations", operation_id="mobile_api_personal_preparations", auth=mobile_bearer, response={200: dict})
 def personal_preparations(request, search: str | None = None, offset: int = 0, limit: int = 30):
     _personal_access(request.auth.user)
-    queryset = Preparation.objects.select_related("current_version").filter(is_active=True, is_global=False, created_by=request.auth.user, current_version__isnull=False)
+    queryset = Preparation.objects.select_related("current_version").filter(is_active=True, is_global=False, created_by=request.auth.user)
     if search:
         queryset = queryset.filter(name__icontains=search.strip())
     safe_offset = max(offset, 0)
     safe_limit = min(max(limit, 1), 100)
-    return success({"items": [_detail(item) for item in queryset.order_by("name", "id")[safe_offset:safe_offset + safe_limit]], "total": queryset.count(), "offset": safe_offset, "limit": safe_limit})
+    return success({"items": [_detail(item) if item.current_version_id else _personal_draft(item) for item in queryset.order_by("name", "id")[safe_offset:safe_offset + safe_limit]], "total": queryset.count(), "offset": safe_offset, "limit": safe_limit})
+
+
+@router.post("/library/preparations/drafts", operation_id="mobile_api_create_personal_preparation_draft", auth=mobile_bearer, response={200: dict})
+def create_personal_preparation_draft_route(request, payload: PersonalPreparationDraftInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _personal_access(request.auth.user)
+    try:
+        preparation = create_personal_preparation_draft(user=request.auth.user, name=payload.name)
+    except PersonalPreparationError as exc:
+        _personal_error(exc)
+    return success(_personal_draft(preparation))
 
 
 @router.post("/library/preparations", operation_id="mobile_api_create_personal_preparation", auth=mobile_bearer, response={200: dict})

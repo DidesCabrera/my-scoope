@@ -33,6 +33,14 @@ def require_personal_preparations_pro(user) -> None:
         raise PermissionError("personal_preparations_pro_required")
 
 
+def create_personal_preparation_draft(*, user, name):
+    require_personal_preparations_pro(user)
+    name = str(name or "").strip()
+    if not name or len(name) > 255:
+        raise PersonalPreparationError("preparation_identity_invalid")
+    return Preparation.objects.create(name=name, is_global=False, created_by=user)
+
+
 def _positive_decimal(value, *, maximum=Decimal("100000")) -> Decimal:
     try:
         amount = Decimal(str(value))
@@ -101,18 +109,16 @@ def _ingredient_nutrition(cleaned, foods):
 
 @transaction.atomic
 def save_personal_preparation(
-    *, user, name, yield_g, default_portion_g, household_label, ingredients, preparation_id=None
+    *, user, name, ingredients, yield_g=None, default_portion_g=100, household_label="porción", preparation_id=None
 ):
     require_personal_preparations_pro(user)
     name = str(name or "").strip()
     household_label = str(household_label or "").strip()
     if not name or len(name) > 255 or not household_label or len(household_label) > 80:
         raise PersonalPreparationError("preparation_identity_invalid")
-    yield_amount = _positive_decimal(yield_g)
-    portion_amount = _positive_decimal(default_portion_g)
-    if portion_amount > yield_amount:
-        raise PersonalPreparationError("preparation_portion_invalid")
     cleaned, ids = _clean_ingredients(ingredients)
+    yield_amount = _positive_decimal(yield_g if yield_g is not None else sum((quantity for _, quantity in cleaned), Decimal("0")))
+    portion_amount = _positive_decimal(default_portion_g)
 
     foods = {
         food.pk: food
@@ -158,7 +164,7 @@ def save_personal_preparation(
         sodium_mg=totals["sodium_mg"] if has_sodium else None,
         allergens=[],
         allergen_status="unknown",
-        evidence={"source_name": "Registro personal"},
+        evidence={"source_name": "Registro personal", "yield_is_manual": yield_g is not None},
         ingredients_snapshot=snapshots,
         content_sha256=hashlib.sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
     )

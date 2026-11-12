@@ -6851,6 +6851,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -9244,6 +9245,19 @@
         "title": "PersonalPreferencesInput",
         "type": "object"
       },
+      "PersonalPreparationDraftInput": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "PersonalPreparationDraftInput",
+        "type": "object"
+      },
       "PersonalPreparationIngredientInput": {
         "properties": {
           "food_id": {
@@ -9268,14 +9282,11 @@
       "PersonalPreparationInput": {
         "properties": {
           "default_portion_g": {
+            "default": 100,
             "exclusiveMinimum": 0,
             "maximum": 100000,
             "title": "Default Portion G",
             "type": "number"
-          },
-          "household_label": {
-            "title": "Household Label",
-            "type": "string"
           },
           "ingredients": {
             "items": {
@@ -9289,17 +9300,21 @@
             "type": "string"
           },
           "yield_g": {
-            "exclusiveMinimum": 0,
-            "maximum": 100000,
-            "title": "Yield G",
-            "type": "number"
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yield G"
           }
         },
         "required": [
           "name",
-          "yield_g",
-          "default_portion_g",
-          "household_label",
           "ingredients"
         ],
         "title": "PersonalPreparationInput",
@@ -9721,6 +9736,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -12218,6 +12234,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -12265,6 +12282,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12351,6 +12369,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12367,6 +12386,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12383,6 +12403,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12399,6 +12420,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12415,6 +12437,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12431,6 +12454,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12447,6 +12471,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12463,6 +12488,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -19355,6 +19381,42 @@
           }
         ],
         "summary": "Create Personal Preparation"
+      }
+    },
+    "/api/v1/library/preparations/drafts": {
+      "post": {
+        "operationId": "mobile_api_create_personal_preparation_draft",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalPreparationDraftInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Personal Preparation Draft Route"
       }
     },
     "/api/v1/library/preparations/{preparation_id}": {

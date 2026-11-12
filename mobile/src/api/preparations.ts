@@ -44,10 +44,12 @@ export type PreparationDetail = {
   name: string;
   is_personal: boolean;
   is_active: boolean;
+  is_draft?: false;
   version: number;
   household_label: string;
   default_portion_g: number;
   yield_g: number;
+  yield_is_manual?: boolean;
   selection_mode: "units" | "grams";
   selected_units: number | null;
   grams: number;
@@ -58,3 +60,13 @@ export type PreparationDetail = {
   ingredients: PreparationComponentDetail[];
   recipe_ingredients: { food_id: number; name: string; quantity_g: number }[];
 };
+
+export type PreparationDraft = {
+  id: number;
+  name: string;
+  is_personal: true;
+  is_active: boolean;
+  is_draft: true;
+};
+
+export type PersonalPreparation = PreparationDetail | PreparationDraft;

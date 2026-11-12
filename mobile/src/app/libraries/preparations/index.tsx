@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { PreparationDetail } from "@/api/preparations";
+import type { PersonalPreparation } from "@/api/preparations";
 import type { EntitlementsData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -15,7 +15,7 @@ export default function PreparationsLibraryScreen() {
   const router = useRouter();
   const { apiRequest, status } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
-  const [items, setItems] = useState<PreparationDetail[]>([]);
+  const [items, setItems] = useState<PersonalPreparation[]>([]);
   const [available, setAvailable] = useState(false);
   const [allowed, setAllowed] = useState(false);
   const [query, setQuery] = useState("");
@@ -32,10 +32,10 @@ export default function PreparationsLibraryScreen() {
       setAvailable(enabled);
       setAllowed(canUse);
       if (canUse) {
-        const all: PreparationDetail[] = [];
+        const all: PersonalPreparation[] = [];
         let total = 0;
         do {
-          const page = await apiRequest<{ items: PreparationDetail[]; total: number }>(`/api/v1/library/preparations?limit=100&offset=${all.length}`);
+          const page = await apiRequest<{ items: PersonalPreparation[]; total: number }>(`/api/v1/library/preparations?limit=100&offset=${all.length}`);
           all.push(...page.items);
           total = page.total;
           if (!page.items.length) break;
@@ -66,7 +66,7 @@ export default function PreparationsLibraryScreen() {
     {!available ? <Card><InlineNotice tone="info">La biblioteca de preparaciones aún no está disponible.</InlineNotice></Card> : null}
     {available && !allowed ? <Card><InlineNotice tone="info">Las preparaciones personales están disponibles con el plan Pro.</InlineNotice><Button label="Conocer Pro" onPress={() => router.push("/subscription" as Href)} /></Card> : null}
     {available && allowed && !visible.length ? <CollectionEmptyState description={normalized ? "Prueba con otra búsqueda." : "Registra una preparación para reutilizarla en tus comidas."} title={normalized ? "Sin resultados" : "Aún no tienes preparaciones"} /> : null}
-    {available && allowed ? visible.map((item) => <PreparationLibraryCard item={item} key={item.id} onOpen={() => router.push(`/libraries/preparations/${item.id}` as Href)} />) : null}
+    {available && allowed ? visible.map((item) => <PreparationLibraryCard item={item} key={item.id} onOpen={() => router.push(`/libraries/preparations/${item.id}${item.is_draft ? "/edit" : ""}` as Href)} />) : null}
   </ScrollView>;
 }
 

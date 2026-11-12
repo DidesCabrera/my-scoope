@@ -5,7 +5,7 @@ import { Alert, StyleSheet, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
-import type { PreparationDetail } from "@/api/preparations";
+import type { PersonalPreparation } from "@/api/preparations";
 import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -29,7 +29,7 @@ export default function PreparationDetailScreen() {
   const router = useRouter();
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
-  const [detail, setDetail] = useState<PreparationDetail | null>(null);
+  const [detail, setDetail] = useState<PersonalPreparation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const validId = Number.isInteger(Number(id)) && Number(id) > 0;
@@ -48,7 +48,7 @@ export default function PreparationDetailScreen() {
     setLoading(true);
     setError(null);
     const portion = units && Number(units) > 0 ? `?units=${encodeURIComponent(units)}` : grams && Number(grams) > 0 ? `?grams=${encodeURIComponent(grams)}` : "";
-    void apiRequest<PreparationDetail>(`/api/v1/preparations/${id}${portion}`)
+    void apiRequest<PersonalPreparation>(`/api/v1/preparations/${id}${portion}`)
       .then((result) => { if (active) setDetail(result); })
       .catch((failure) => { if (active) setError(userFacingError(failure)); })
       .finally(() => { if (active) setLoading(false); });
@@ -59,6 +59,10 @@ export default function PreparationDetailScreen() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading) return <LoadingState label="Cargando preparación" />;
   if (!detail) return <View style={styles.feedback}><InlineNotice tone="error">{error ?? "No encontramos esta preparación."}</InlineNotice></View>;
+  if (detail.is_draft) return <View style={styles.feedback}>
+    <InlineNotice tone="info">Agrega los alimentos de la receta para calcular su información nutricional.</InlineNotice>
+    <Button label="Agregar ingredientes" onPress={() => router.push(`/libraries/preparations/${detail.id}/edit` as Href)} variant="primary" />
+  </View>;
 
   const ingredients = detail.ingredients.map((ingredient, index) => ingredientPanelItem(ingredient, index, detail));
   const portion = detail.selection_mode === "units"

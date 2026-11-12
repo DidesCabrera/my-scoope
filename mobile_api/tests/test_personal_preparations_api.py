@@ -33,6 +33,67 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.status_code, 200, response.content)
         return response.json()["data"]
 
+    def test_name_only_draft_is_unselectable_and_becomes_usable_after_ingredients(self):
+        response = self.client.post(
+            "/api/v1/library/preparations/drafts", data={"name": "  Salsa casera  "}, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        draft = response.json()["data"]
+        self.assertEqual(draft["name"], "Salsa casera")
+        self.assertTrue(draft["is_draft"])
+        self.assertEqual(self.client.get("/api/v1/library/preparations").json()["data"]["items"][0]["id"], draft["id"])
+        self.assertEqual(self.client.get("/api/v1/preparations").json()["data"]["total"], 0)
+        self.assertTrue(self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]["is_draft"])
+        meal = Meal.objects.create(name="Almuerzo", created_by=self.user)
+        unusable = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/preparations",
+            data={"preparation_id": draft["id"], "units": 1}, content_type="application/json",
+        )
+        self.assertEqual(unusable.status_code, 404)
+        self.assertEqual(
+            self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]["name"], "Salsa casera"
+        )
+        saved = self.client.put(
+            f"/api/v1/library/preparations/{draft['id']}",
+            data={"name": "Salsa casera", "ingredients": [{"food_id": self.food.id, "quantity_g": 80}]},
+            content_type="application/json",
+        )
+        self.assertEqual(saved.status_code, 200, saved.content)
+        detail = saved.json()["data"]
+        self.assertFalse(detail["is_draft"])
+        self.assertEqual(detail["version"], 1)
+        self.assertEqual(detail["yield_g"], 80)
+        self.assertEqual(detail["default_portion_g"], 100)
+        self.assertEqual(detail["household_label"], "porción")
+        self.assertEqual(detail["nutrition"]["protein_g"], 10)
+        self.assertFalse(detail["yield_is_manual"])
+        self.assertEqual(self.client.get("/api/v1/preparations").json()["data"]["total"], 1)
+
+    def test_yield_tracks_ingredients_until_manually_corrected(self):
+        created = self.client.post(
+            "/api/v1/library/preparations",
+            data={"name": "Avena", "ingredients": [{"food_id": self.food.id, "quantity_g": 100}]},
+            content_type="application/json",
+        )
+        self.assertEqual(created.status_code, 200, created.content)
+        preparation_id = created.json()["data"]["id"]
+        revised = self.client.put(
+            f"/api/v1/library/preparations/{preparation_id}",
+            data={"name": "Avena", "ingredients": [{"food_id": self.food.id, "quantity_g": 150}]},
+            content_type="application/json",
+        )
+        self.assertEqual(revised.json()["data"]["yield_g"], 150)
+        corrected = self.client.put(
+            f"/api/v1/library/preparations/{preparation_id}",
+            data={"name": "Avena", "yield_g": 120, "default_portion_g": 75,
+                  "ingredients": [{"food_id": self.food.id, "quantity_g": 150}]},
+            content_type="application/json",
+        )
+        self.assertEqual(corrected.status_code, 200, corrected.content)
+        self.assertEqual(corrected.json()["data"]["yield_g"], 120)
+        self.assertEqual(corrected.json()["data"]["default_portion_g"], 75)
+        self.assertTrue(corrected.json()["data"]["yield_is_manual"])
+
     def test_create_list_and_use_personal_preparation_in_meal(self):
         created = self.create_preparation()
         self.assertTrue(created["is_personal"])
@@ -119,6 +180,10 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
             content_type="application/json",
         )
         self.assertEqual(blocked.status_code, 404)
+        draft_blocked = self.client.post(
+            "/api/v1/library/preparations/drafts", data={"name": "Sin Pro"}, content_type="application/json"
+        )
+        self.assertEqual(draft_blocked.status_code, 403)
         bypass = self.client.patch(
             f"/api/v1/library/meals/{meal.id}/preparations/{relation_id}",
             data={"units": 2},
