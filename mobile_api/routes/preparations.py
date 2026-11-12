@@ -162,7 +162,7 @@ def _detail(preparation, *, units=None, grams=None, full_recipe=False, current_w
         "allergens": version.allergens,
         "allergen_status": version.allergen_status,
         "evidence": version.evidence,
-        "ingredients": [ingredient_payload(row, version.ingredients_snapshot[index], factor) for index, row in enumerate(ingredients)],
+        "ingredients": [ingredient_payload(row, version.ingredients_snapshot[index], factor, current_weight) for index, row in enumerate(ingredients)],
         "recipe_ingredients": [{"food_id": row.food_id, "name": version.ingredients_snapshot[index]["name"], "quantity_g": float(row.quantity_g)} for index, row in enumerate(ingredients)],
     }
 
@@ -403,7 +403,7 @@ def add_preparation(request, meal_id: int, payload: PreparationSelection):
     meal = _owned_meal(request.auth.user, meal_id)
     preparation = _available_preparation(request.auth.user, payload.preparation_id)
     relation = _save_selection(meal, preparation, units=payload.units, grams=payload.grams)
-    return success({"target_id": meal.id, "created_id": relation.id, "preparation": _detail(preparation, units=payload.units, grams=payload.grams)})
+    return success({"target_id": meal.id, "created_id": relation.id, "preparation": _detail(preparation, units=payload.units, grams=payload.grams, current_weight=get_current_weight(request.auth.user))})
 
 
 @router.patch("/library/meals/{meal_id}/preparations/{relation_id}", operation_id="mobile_api_api_update_preparation", auth=mobile_bearer, response={200: dict})

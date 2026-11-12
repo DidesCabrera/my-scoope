@@ -10,6 +10,7 @@ class LibraryPreparationIngredientData(Schema):
     preparation_state: str
     is_condiment: bool
     protein_g: float
+    protein_per_kilogram: float | None = None
     carbs_g: float
     fat_g: float
     calories: float
@@ -26,6 +27,7 @@ class LibraryPreparationPanelItemData(Schema):
     household_label: str
     calories: float
     protein_g: float
+    protein_per_kilogram: float | None = None
     carbs_g: float
     fat_g: float
     sodium_mg: float | None = None

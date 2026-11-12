@@ -34,7 +34,7 @@ test("preparation cards show selected portions while the detail states recipe yi
 
   assertSourceMatch(picker, /subtitle=\{preparationPortionLabel\(detail\)\}/);
   assertSourceDoesNotMatch(picker, /indicators=\{\[\{ label: "porción"/);
-  assertSourceMatch(detail, /<EntityDetailPage entity="preparation"[^>]*subtitle=\{subtitle\}/);
+  assertSourceMatch(detail, /entity="preparation"[^>]*subtitle=\{subtitle\}/);
   assertSourceMatch(detail, /Rinde \$\{formatPreparationNumber\(detail\.yield_g, 2\)\} g/);
   assertSourceMatch(detail, /\/api\/v1\/preparations\/\$\{id\}\?full_recipe=true/);
   assertSourceMatch(componentCards, /entity=\{isPreparation \? "preparation" : "food"\}[\s\S]*subtitle=\{`\$\{item\.quantity\} \$\{item\.quantityUnit\}`\}/);

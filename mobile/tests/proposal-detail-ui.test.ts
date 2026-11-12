@@ -210,10 +210,12 @@ test("meal details reuse food entity cards across library and calendarized conte
   assert.ok(pickerCard.includes('allocation(fat_g, 9, calories)'));
   assert.ok(library.includes('pathname: "/libraries/preparations/[id]"'));
   const preparation = await source("src/app/libraries/preparations/[id].tsx");
-  assert.ok(preparation.includes('<EntityDetailPage entity="preparation"'));
+  assert.ok(preparation.includes('entity="preparation" indicators='));
   assert.ok(preparation.includes("<FoodPanels editing={editing} items={ingredients}"));
   assert.ok(preparation.includes("<FoodDetailCardList editing={() => editing} items={ingredients}"));
-  assert.ok(preparation.includes("Math.round(detail.nutrition.calories * 10) / 10"));
+  assert.ok(preparation.includes("Math.round(displayedNutrition.calories * 10) / 10"));
+  assert.ok(preparation.includes('activeTab={kpiView}'));
+  assert.ok(preparation.includes('perKilogram: displayedNutrition.protein_per_kilogram'));
   assert.match(library, /\/libraries\/foods\/\$\{food\.detailId\}/);
   assert.match(calendarized, /<ProgramSectionHeader icon=\{Carrot\}[^>]*title="Detalle de cada componente" \/><FoodDetailCardList/);
   assert.match(foodCards, /<NutritionEntityCard/);

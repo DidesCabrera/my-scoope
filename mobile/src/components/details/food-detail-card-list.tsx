@@ -77,7 +77,7 @@ export function FoodDetailCardList({ editing, items, onOpenFood, ownerLabel = "e
             key={item.id}
             nutrition={{
               calories,
-              protein: { grams: item.proteinGrams, allocation: macroShare(item.proteinGrams, 4, calories) },
+              protein: { grams: item.proteinGrams, allocation: macroShare(item.proteinGrams, 4, calories), perKilogram: item.proteinPerKilogram },
               carbs: { grams: item.carbsGrams, allocation: macroShare(item.carbsGrams, 4, calories) },
               fat: { grams: item.fatGrams, allocation: macroShare(item.fatGrams, 9, calories) },
             }}

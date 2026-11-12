@@ -9,6 +9,7 @@ export type LibraryPreparationPanelItem = {
   household_label: string;
   calories: number;
   protein_g: number;
+  protein_per_kilogram?: number | null;
   carbs_g: number;
   fat_g: number;
   sodium_mg: number | null;
@@ -24,6 +25,7 @@ export type PreparationIngredientDetail = {
   is_condiment: boolean;
   calories: number;
   protein_g: number;
+  protein_per_kilogram?: number | null;
   carbs_g: number;
   fat_g: number;
 };
@@ -34,6 +36,7 @@ export type PreparationComponentDetail = PreparationIngredientDetail | {
   name: string;
   quantity_g: number;
   protein_g: number;
+  protein_per_kilogram?: number | null;
   carbs_g: number;
   fat_g: number;
   calories: number;

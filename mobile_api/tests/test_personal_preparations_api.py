@@ -8,6 +8,7 @@ from notas.application.services.commands.personal_preparation_commands import (
     create_personal_preparation_draft,
     save_personal_preparation,
 )
+from notas.application.services.nutrition.body_metrics import record_weight
 from notas.application.sharing.entities import build_meal_share_snapshot
 from notas.application.sharing.services import ShareUnavailable
 from notas.domain.models import Food, Meal, MealPreparation, Preparation
@@ -195,6 +196,8 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertAlmostEqual(portion["nutrition"]["protein_g"], 13.4 * 100 / 270, places=3)
         self.assertEqual(recipe["nutrition"]["protein_per_kilogram"], 0.2)
         self.assertEqual(portion["nutrition"]["protein_per_kilogram"], 0.1)
+        self.assertEqual([row["protein_per_kilogram"] for row in recipe["ingredients"]], [0.1, 0.0])
+        self.assertEqual([row["protein_per_kilogram"] for row in portion["ingredients"]], [0.0, 0.0])
         library_item = self.client.get("/api/v1/library/preparations").json()["data"]["items"][0]
         self.assertEqual(library_item["nutrition"], portion["nutrition"])
 
@@ -252,8 +255,35 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         )
         self.assertEqual(added.status_code, 200, added.content)
         self.assertEqual(MealPreparation.objects.get(meal=meal).version.version, 1)
+        meal_panel = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]["panel"]["preparations"][0]
+        self.assertEqual(meal_panel["protein_per_kilogram"], 0.1)
+        self.assertEqual(meal_panel["ingredients"][0]["protein_per_kilogram"], 0.1)
         with self.assertRaises(ShareUnavailable):
             build_meal_share_snapshot(meal)
+
+    def test_preparation_ppk_follows_weight_and_selected_quantity(self):
+        record_weight(self.user, 50)
+        created = self.create_preparation()
+        recipe = self.client.get(f"/api/v1/preparations/{created['id']}?full_recipe=true").json()["data"]
+        portion = self.client.get(f"/api/v1/preparations/{created['id']}").json()["data"]
+        self.assertEqual(recipe["nutrition"]["protein_per_kilogram"], 0.2)
+        self.assertEqual(recipe["ingredients"][0]["protein_per_kilogram"], 0.2)
+        self.assertEqual(portion["nutrition"]["protein_per_kilogram"], 0.1)
+        self.assertEqual(portion["ingredients"][0]["protein_per_kilogram"], 0.1)
+
+        meal = Meal.objects.create(name="Desayuno", created_by=self.user)
+        added = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/preparations",
+            data={"preparation_id": created["id"], "units": 2},
+            content_type="application/json",
+        )
+        self.assertEqual(added.status_code, 200, added.content)
+        self.assertEqual(added.json()["data"]["preparation"]["nutrition"]["protein_per_kilogram"], 0.2)
+        panel_item = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]["panel"]["preparations"][0]
+        self.assertEqual(panel_item["protein_per_kilogram"], 0.2)
+        self.assertEqual(panel_item["ingredients"][0]["protein_per_kilogram"], 0.2)
+        list_item = self.client.get("/api/v1/library/meals").json()["data"]["items"][0]["panel"]["preparations"][0]
+        self.assertEqual(list_item["protein_per_kilogram"], 0.2)
 
     def test_revision_updates_live_meal_but_not_frozen_snapshot(self):
         created = self.create_preparation()

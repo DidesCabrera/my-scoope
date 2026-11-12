@@ -7970,6 +7970,17 @@
             "title": "Protein G",
             "type": "number"
           },
+          "protein_per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein Per Kilogram"
+          },
           "quantity_g": {
             "title": "Quantity G",
             "type": "number"
@@ -8032,6 +8043,17 @@
           "protein_g": {
             "title": "Protein G",
             "type": "number"
+          },
+          "protein_per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein Per Kilogram"
           },
           "quantity_g": {
             "title": "Quantity G",
