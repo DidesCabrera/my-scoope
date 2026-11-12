@@ -91,17 +91,43 @@ export default function PreparationDetailScreen() {
         .catch((failure) => Alert.alert("No pudimos eliminarla", userFacingError(failure)));
     } },
   ]);
+  const saveMetadata = async (name: string, options?: { manualYield: boolean; yieldG: number; portionG: number }) => {
+    if (detail.is_draft) {
+      const updated = await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}/draft`, {
+        method: "PATCH", body: JSON.stringify({ name }),
+      });
+      setDetail(updated);
+      return;
+    }
+    const updated = await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name,
+        ...((options?.manualYield ?? detail.yield_is_manual) ? { yield_g: options?.yieldG ?? detail.yield_g } : {}),
+        default_portion_g: options?.portionG ?? detail.default_portion_g,
+        ingredients: detail.recipe_ingredients.map(({ food_id, quantity_g }) => ({ food_id, quantity_g })),
+      }),
+    });
+    setDetail(updated);
+  };
   const actions = <PreparationDetailActions
+    advanced={!detail.is_draft ? {
+      estimatedYieldG: detail.recipe_ingredients.reduce((sum, row) => sum + row.quantity_g, 0),
+      manualYield: Boolean(detail.yield_is_manual),
+      yieldG: detail.yield_g,
+      portionG: detail.default_portion_g,
+    } : undefined}
     inMeal={inMeal}
     isActive={detail.is_active}
     isPersonal={detail.is_personal}
     name={detail.name}
     onClose={() => setActionsVisible(false)}
-    onEdit={() => router.push(`/libraries/preparations/${detail.id}/edit` as Href)}
     onEditMealPortion={() => router.push(`/pickers/preparation-to-meal?mealId=${meal}&relationId=${relation}&preparationId=${detail.id}` as Href)}
     onOpenInformation={openInformation}
     onRemoveFromMeal={remove}
     onRemovePersonal={removePersonal}
+    onRename={(name) => saveMetadata(name)}
+    onSaveAdvanced={(options) => saveMetadata(detail.name, options)}
     visible={actionsVisible}
   />;
 

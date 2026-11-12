@@ -29,7 +29,6 @@ export function PersonalPreparationFormScreen() {
   const [yieldG, setYieldG] = useState("");
   const [portionG, setPortionG] = useState("100");
   const [manualYield, setManualYield] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [isDraft, setIsDraft] = useState(false);
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -134,17 +133,8 @@ export function PersonalPreparationFormScreen() {
             <Field label="Nombre" onChangeText={setName} placeholder="Ej: Salsa de tomate casera" value={name} />
             {creating ? <Text style={styles.helper}>Después podrás agregar los alimentos de la receta.</Text> : null}
           </Card>
-          {!creating && !isDraft ? <Card style={styles.section}>
-            <Text style={styles.helper}>Rendimiento estimado: {ingredients.reduce((sum, row) => sum + (Number(row.quantity_g.replace(",", ".")) || 0), 0)} g, según los alimentos de la receta. Porción habitual: {portionG} g.</Text>
-            <Button label={advancedOpen ? "Ocultar opciones avanzadas" : "Opciones avanzadas"} onPress={() => setAdvancedOpen((open) => !open)} variant="secondary" />
-            {advancedOpen ? <>
-              <Button label={manualYield ? "Usar rendimiento estimado" : "Corregir rendimiento final"} onPress={() => setManualYield((value) => !value)} variant="secondary" />
-              {manualYield ? <Field keyboardType="decimal-pad" label="Rendimiento final (g)" onChangeText={setYieldG} placeholder="Ej: 500" value={yieldG} /> : null}
-              <Field keyboardType="decimal-pad" label="Porción habitual (g)" onChangeText={setPortionG} value={portionG} />
-            </> : null}
-          </Card> : null}
           {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-          <Button disabled={saving} label={creating ? "Crear y continuar" : "Guardar preparación"} loading={saving} onPress={() => void save()} variant="primary" />
+          <Button disabled={saving} label={creating ? "Crear y continuar" : "Guardar nombre"} loading={saving} onPress={() => void save()} variant="primary" />
           {isDraft ? <Button label="Eliminar borrador" onPress={removeDraft} variant="danger" /> : null}
         </>}
       </ScrollView>
