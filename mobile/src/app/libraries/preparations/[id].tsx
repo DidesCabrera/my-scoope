@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   feedback: { padding: tokens.spacing.screen },
   kpiViewSelector: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: tokens.spacing.sm },
   kpiViewTitle: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  kpiViewAction: { alignItems: "center", backgroundColor: `${tokens.color.preparation}1A`, borderColor: `${tokens.color.preparation}80`, borderRadius: tokens.radius.pill, borderWidth: 1, justifyContent: "center", minHeight: 34, paddingHorizontal: tokens.spacing.md },
-  kpiViewActionPressed: { opacity: 0.65 },
-  kpiViewActionText: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  kpiViewAction: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 30, justifyContent: "center", paddingHorizontal: tokens.spacing.md },
+  kpiViewActionPressed: { opacity: 0.72 },
+  kpiViewActionText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
 });
