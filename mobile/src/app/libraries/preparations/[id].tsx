@@ -226,6 +226,8 @@ export default function PreparationDetailScreen() {
       <DistributedTabBar<KpiView>
         accessibilityLabel="Información nutricional de la preparación"
         activeTab={kpiView}
+        bleed
+        density="compact"
         onChange={setKpiView}
         tabs={[{ key: "recipe", label: "Receta completa" }, { key: "portion", label: `Porción (${formatPreparationNumber(detail.default_portion_g, 2)}g)` }]}
       />

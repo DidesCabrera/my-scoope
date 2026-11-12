@@ -17,13 +17,13 @@ type TabBarProps<T extends TabKey> = {
   accessibilityLabel: string;
   activeTab: T;
   bleed?: boolean;
+  density?: "compact" | "regular";
   onChange(tab: T): void;
   style?: StyleProp<ViewStyle>;
   tabs: readonly TabBarItem<T>[];
 };
 
 type ScrollableTabBarProps<T extends TabKey> = TabBarProps<T> & {
-  density?: "compact" | "regular";
   revealActiveTab?: boolean;
 };
 
@@ -87,7 +87,7 @@ export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeT
   );
 }
 
-export function DistributedTabBar<T extends TabKey>({ accessibilityLabel, activeTab, bleed = false, onChange, style, tabs }: TabBarProps<T>) {
+export function DistributedTabBar<T extends TabKey>({ accessibilityLabel, activeTab, bleed = false, density = "regular", onChange, style, tabs }: TabBarProps<T>) {
   return (
     <View accessibilityLabel={accessibilityLabel} accessibilityRole="tablist" style={[styles.distributedBar, bleed && styles.distributedBarBleed, style]}>
       {tabs.map((tab) => {
@@ -99,7 +99,7 @@ export function DistributedTabBar<T extends TabKey>({ accessibilityLabel, active
             accessibilityState={{ selected }}
             key={tab.key}
             onPress={() => { if (!selected) onChange(tab.key); }}
-            style={({ pressed }) => [styles.distributedTab, selected && styles.tabSelected, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.distributedTab, density === "compact" && styles.distributedTabCompact, selected && styles.tabSelected, pressed && styles.pressed]}>
             <TabContent selected={selected} tab={tab} />
           </Pressable>
         );
@@ -113,6 +113,7 @@ const styles = StyleSheet.create({
   distributedBar: { flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, width: "100%" },
   distributedBarBleed: { alignSelf: "stretch", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, width: "auto" },
   distributedTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flex: 1, flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "center", minHeight: 34, minWidth: 0, paddingHorizontal: tokens.spacing.sm },
+  distributedTabCompact: { height: 30, minHeight: 30 },
   label: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium },
   labelSelected: { color: tokens.color.surfaceApp },
   pressed: { opacity: 0.68 },
