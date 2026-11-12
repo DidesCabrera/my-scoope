@@ -198,7 +198,7 @@ def save_personal_preparation(
     return preparation
 
 
-def preview_personal_preparation_food(*, user, preparation_id, food_id, quantity_g):
+def preview_personal_preparation_food(*, user, preparation_id, food_id, quantity_g, replace_food_id=None):
     """Validate a picker selection against the same recipe rules used on save."""
     require_personal_preparations_pro(user)
     preparation = Preparation.objects.select_related("current_version").filter(
@@ -207,10 +207,17 @@ def preview_personal_preparation_food(*, user, preparation_id, food_id, quantity
     if preparation is None:
         raise PersonalPreparationError("preparation_not_found")
     current = list(preparation.current_version.ingredients.order_by("order", "id")) if preparation.current_version_id else []
-    if any(row.food_id == food_id for row in current):
+    if replace_food_id is not None and not any(row.food_id == replace_food_id for row in current):
+        raise PersonalPreparationError("preparation_ingredient_unavailable")
+    if any(row.food_id == food_id and row.food_id != replace_food_id for row in current):
         raise PersonalPreparationError("preparation_ingredient_already_added")
-    ingredients = [{"food_id": row.food_id, "quantity_g": row.quantity_g} for row in current]
-    ingredients.append({"food_id": food_id, "quantity_g": quantity_g})
+    ingredients = [
+        {"food_id": food_id, "quantity_g": quantity_g} if row.food_id == replace_food_id
+        else {"food_id": row.food_id, "quantity_g": row.quantity_g}
+        for row in current
+    ]
+    if replace_food_id is None:
+        ingredients.append({"food_id": food_id, "quantity_g": quantity_g})
     cleaned, ids = _clean_ingredients(ingredients)
     foods = {
         food.pk: food for food in get_food_picker_queryset(user).filter(
@@ -224,7 +231,7 @@ def preview_personal_preparation_food(*, user, preparation_id, food_id, quantity
 
 
 @transaction.atomic
-def add_personal_preparation_food(*, user, preparation_id, food_id, quantity_g):
+def add_personal_preparation_food(*, user, preparation_id, food_id, quantity_g, replace_food_id=None):
     require_personal_preparations_pro(user)
     # current_version is nullable for drafts; joining it here makes FOR UPDATE fail on PostgreSQL.
     preparation = Preparation.objects.select_for_update().filter(
@@ -233,7 +240,7 @@ def add_personal_preparation_food(*, user, preparation_id, food_id, quantity_g):
     if preparation is None:
         raise PersonalPreparationError("preparation_not_found")
     _, _, cleaned = preview_personal_preparation_food(
-        user=user, preparation_id=preparation_id, food_id=food_id, quantity_g=quantity_g
+        user=user, preparation_id=preparation_id, food_id=food_id, quantity_g=quantity_g, replace_food_id=replace_food_id
     )
     version = preparation.current_version
     return save_personal_preparation(
@@ -245,6 +252,35 @@ def add_personal_preparation_food(*, user, preparation_id, food_id, quantity_g):
         default_portion_g=version.default_portion_g if version else 100,
         household_label=version.household_label if version else "porción",
     )
+
+
+@transaction.atomic
+def rename_personal_preparation_draft(*, user, preparation_id, name):
+    require_personal_preparations_pro(user)
+    name = str(name or "").strip()
+    if not name or len(name) > 255:
+        raise PersonalPreparationError("preparation_identity_invalid")
+    preparation = Preparation.objects.select_for_update().filter(
+        pk=preparation_id, is_global=False, created_by=user, is_active=True, current_version__isnull=True
+    ).first()
+    if preparation is None:
+        raise PersonalPreparationError("preparation_not_found")
+    preparation.name = name
+    preparation.save(update_fields=["name"])
+    return preparation
+
+
+@transaction.atomic
+def clear_personal_preparation_ingredients(*, user, preparation_id):
+    require_personal_preparations_pro(user)
+    preparation = Preparation.objects.select_for_update().filter(
+        pk=preparation_id, is_global=False, created_by=user, is_active=True
+    ).first()
+    if preparation is None:
+        raise PersonalPreparationError("preparation_not_found")
+    preparation.current_version = None
+    preparation.save(update_fields=["current_version"])
+    return preparation
 
 
 @transaction.atomic

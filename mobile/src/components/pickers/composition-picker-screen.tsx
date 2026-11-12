@@ -358,7 +358,7 @@ export function CompositionPickerScreen({
         ? apiRequest<FoodPickerOption>(`/api/v1/food-picker-options/${selectedId}`).then(optionFromFood)
         : apiRequest<LibraryItem>(`/api/v1/library/${isMealPicker ? "meals" : "daily-plans"}/${selectedId}`).then(optionFromLibrary)
       : Promise.resolve(null);
-    const needsTarget = Boolean(relationId || relationKey);
+    const needsTarget = kind !== "food-to-preparation" && Boolean(relationId || relationKey);
     Promise.all([
       needsTarget
         ? isCalendarizedPicker

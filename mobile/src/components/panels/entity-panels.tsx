@@ -731,7 +731,7 @@ function EditDragHandle({ disabled, drag, label }: { disabled: boolean; drag(): 
   );
 }
 
-function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: FoodPanelItem[] }) {
+function FoodEditPanel({ editing, items, ownerLabel }: { editing: FoodPanelEditing; items: FoodPanelItem[]; ownerLabel: string }) {
   const [draftItems, setDraftItems] = useState(items);
   const [busy, setBusy] = useState(false);
 
@@ -759,7 +759,7 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
             <View style={[styles.editActions, styles.foodEditActions]}>
               <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
               <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMain} size={16} /></IconAction>
-              <IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert("Eliminar alimento", `¿Eliminar ${item.name} de esta comida?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void editing.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
+              <IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert("Eliminar alimento", `¿Eliminar ${item.name} de ${ownerLabel}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void editing.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
             </View>
           </View>
         </View>
@@ -795,7 +795,7 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
   );
 }
 
-export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation, preparationFirst = false, quantityOnly = false, showEditTab = true, showPreparationColumn = false }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; preparationFirst?: boolean; quantityOnly?: boolean; showEditTab?: boolean; showPreparationColumn?: boolean }) {
+export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, ownerLabel = "esta comida", preparation, preparationFirst = false, quantityOnly = false, showEditTab = true, showPreparationColumn = false }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; ownerLabel?: string; preparation?: FoodPreparation; preparationFirst?: boolean; quantityOnly?: boolean; showEditTab?: boolean; showPreparationColumn?: boolean }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
   const itemsWithPortions = useFoodPanelPortionEquivalences(items);
   const itemSignature = itemsWithPortions.map(({ id, name, quantity }) => `${id}:${name}:${quantity}`).join("|");
@@ -804,7 +804,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
 
   // Food-only reorder and swipe endpoints cannot safely mutate a preparation.
   const rowEditing: PanelRowEditing<FoodPanelItem> | undefined = editing && !orderedItems.some((item) => item.kind === "preparation") ? {
-    deleteConfirmation: (item) => ({ message: `¿Eliminar ${item.name} de esta comida?`, title: "Eliminar alimento" }),
+    deleteConfirmation: (item) => ({ message: `¿Eliminar ${item.name} de ${ownerLabel}?`, title: "Eliminar alimento" }),
     editLabel: (item) => `Editar porción de ${item.name}`,
     onDelete: editing.onDelete,
     onEdit: editing.onEditPortion,
@@ -828,7 +828,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
       {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
-      {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={orderedItems.filter((item) => item.kind !== "preparation")} key={orderedItems.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} /> : null}
+      {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={orderedItems.filter((item) => item.kind !== "preparation")} key={orderedItems.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} ownerLabel={ownerLabel} /> : null}
     </PanelSurface></NestedPanelScrollContext.Provider>
   );
 }

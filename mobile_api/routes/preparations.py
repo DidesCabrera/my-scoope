@@ -16,8 +16,10 @@ from notas.application.services.commands.personal_preparation_commands import (
     PersonalPreparationError,
     add_personal_preparation_food,
     can_use_personal_preparations,
+    clear_personal_preparation_ingredients,
     create_personal_preparation_draft,
     remove_personal_preparation,
+    rename_personal_preparation_draft,
     require_personal_preparations_pro,
     save_personal_preparation,
     preview_personal_preparation_food,
@@ -60,6 +62,7 @@ class PersonalPreparationDraftInput(Schema):
 class PersonalPreparationFoodPickerInput(Schema):
     food_id: int = Field(gt=0)
     quantity_g: float = Field(gt=0, le=100000)
+    replace_food_id: int | None = Field(default=None, gt=0)
 
 
 def _personal_access(user):
@@ -74,7 +77,7 @@ def _personal_error(exc):
     if code == "preparation_not_found":
         raise MobileAPIError(code, "La preparación no está disponible.", 404) from exc
     if code == "preparation_ingredient_already_added":
-        raise MobileAPIError(code, "Este alimento ya está en la preparación. Puedes ajustar su cantidad en Editar preparación.", 422) from exc
+        raise MobileAPIError(code, "Este alimento ya está en la preparación. Puedes ajustar su cantidad desde el detalle.", 422) from exc
     raise MobileAPIError(code, "Revisa los datos de la preparación y sus ingredientes.", 422) from exc
 
 
@@ -226,6 +229,30 @@ def create_personal_preparation_draft_route(request, payload: PersonalPreparatio
     _personal_access(request.auth.user)
     try:
         preparation = create_personal_preparation_draft(user=request.auth.user, name=payload.name)
+    except PersonalPreparationError as exc:
+        _personal_error(exc)
+    return success(_personal_draft(preparation))
+
+
+@router.patch("/library/preparations/{preparation_id}/draft", operation_id="mobile_api_rename_personal_preparation_draft", auth=mobile_bearer, response={200: dict})
+def rename_personal_preparation_draft_route(request, preparation_id: int, payload: PersonalPreparationDraftInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _personal_access(request.auth.user)
+    try:
+        preparation = rename_personal_preparation_draft(
+            user=request.auth.user, preparation_id=preparation_id, name=payload.name
+        )
+    except PersonalPreparationError as exc:
+        _personal_error(exc)
+    return success(_personal_draft(preparation))
+
+
+@router.delete("/library/preparations/{preparation_id}/foods", operation_id="mobile_api_clear_personal_preparation_ingredients", auth=mobile_bearer, response={200: dict})
+def clear_personal_preparation_ingredients_route(request, preparation_id: int):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _personal_access(request.auth.user)
+    try:
+        preparation = clear_personal_preparation_ingredients(user=request.auth.user, preparation_id=preparation_id)
     except PersonalPreparationError as exc:
         _personal_error(exc)
     return success(_personal_draft(preparation))

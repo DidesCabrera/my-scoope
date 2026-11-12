@@ -46,6 +46,7 @@ export function buildCompositionPickerPayload({
   if (kind === "food-to-preparation") return {
     food_id: selectedId,
     quantity_g: portionGrams(quantity),
+    ...(relationId ? { replace_food_id: relationId } : {}),
   };
   if (kind === "food-to-calendarized-meal") return {
     food_id: selectedId,

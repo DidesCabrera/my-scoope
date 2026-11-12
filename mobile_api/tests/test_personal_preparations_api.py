@@ -56,6 +56,12 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(
             self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]["name"], "Salsa casera"
         )
+        renamed = self.client.patch(
+            f"/api/v1/library/preparations/{draft['id']}/draft",
+            data={"name": "Salsa renovada"}, content_type="application/json",
+        )
+        self.assertEqual(renamed.status_code, 200, renamed.content)
+        self.assertEqual(renamed.json()["data"]["name"], "Salsa renovada")
         saved = self.client.put(
             f"/api/v1/library/preparations/{draft['id']}",
             data={"name": "Salsa casera", "ingredients": [{"food_id": self.food.id, "quantity_g": 80}]},
@@ -98,6 +104,12 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(len(detail["recipe_ingredients"]), 2)
         duplicate = self.client.post(f"{picker}/commit", data=second, content_type="application/json")
         self.assertEqual(duplicate.status_code, 422)
+        replacement_food = Food.objects.create(name="Tomate", protein=1, carbs=4, fat=0, is_global=True)
+        replacement = {"food_id": replacement_food.id, "quantity_g": 95, "replace_food_id": other_food.id}
+        self.assertEqual(self.client.post(f"{picker}/preview", data=replacement, content_type="application/json").status_code, 200)
+        self.assertEqual(self.client.post(f"{picker}/commit", data=replacement, content_type="application/json").status_code, 200)
+        detail = self.client.get(f"/api/v1/preparations/{draft['id']}").json()["data"]
+        self.assertEqual([(row["food_id"], row["quantity_g"]) for row in detail["recipe_ingredients"]], [(self.food.id, 80), (replacement_food.id, 95)])
 
     def test_food_picker_cannot_access_another_users_draft(self):
         other = User.objects.create_user(username="other-picker-owner")
@@ -109,6 +121,13 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         body = {"food_id": self.food.id, "quantity_g": 50}
         self.assertEqual(self.client.post(f"{path}/preview", data=body, content_type="application/json").status_code, 404)
         self.assertEqual(self.client.post(f"{path}/commit", data=body, content_type="application/json").status_code, 404)
+
+    def test_removing_last_food_returns_preparation_to_draft(self):
+        preparation = self.create_preparation()
+        response = self.client.delete(f"/api/v1/library/preparations/{preparation['id']}/foods")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(response.json()["data"]["is_draft"])
+        self.assertTrue(self.client.get(f"/api/v1/preparations/{preparation['id']}").json()["data"]["is_draft"])
 
     def test_yield_tracks_ingredients_until_manually_corrected(self):
         created = self.client.post(

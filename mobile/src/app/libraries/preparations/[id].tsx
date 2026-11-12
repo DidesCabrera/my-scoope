@@ -129,16 +129,63 @@ export default function PreparationDetailScreen() {
   const openIngredient = (ingredient: FoodPanelItem) => {
     if (ingredient.detailId != null) router.push((ingredient.kind === "preparation" ? `/libraries/preparations/${ingredient.detailId}` : `/libraries/foods/${ingredient.detailId}`) as Href);
   };
+  const editable = detail.is_personal && detail.is_active;
+  const saveIngredients = async (next: { food_id: number; quantity_g: number }[]) => {
+    try {
+      if (!next.length) {
+        const draft = await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}/foods`, { method: "DELETE" });
+        setDetail(draft);
+        setError(null);
+        return;
+      }
+      const updated = await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          name: detail.name,
+          ...(detail.yield_is_manual ? { yield_g: detail.yield_g } : {}),
+          default_portion_g: detail.default_portion_g,
+          ingredients: next,
+        }),
+      });
+      if (!updated.is_draft) setDetail(updated);
+      setError(null);
+    } catch (failure) {
+      setError(userFacingError(failure));
+      throw failure;
+    }
+  };
+  const editing = editable ? {
+    onDelete: async (food: FoodPanelItem) => {
+      await saveIngredients(detail.recipe_ingredients.filter((row) => row.food_id !== food.detailId));
+    },
+    onEditPortion: (food: FoodPanelItem) => {
+      if (food.detailId == null) return;
+      Alert.prompt("Editar cantidad", `Cantidad de ${food.name} en la receta (g)`, [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Guardar", onPress: (value?: string) => {
+          const quantity = Number(String(value ?? "").trim().replace(",", "."));
+          if (!Number.isFinite(quantity) || quantity <= 0) { Alert.alert("Cantidad inválida", "Ingresa una cantidad mayor que cero."); return; }
+          void saveIngredients(detail.recipe_ingredients.map((row) => row.food_id === food.detailId ? { food_id: row.food_id, quantity_g: quantity } : row)).catch(() => undefined);
+        } },
+      ], "plain-text", String(food.quantity), "decimal-pad");
+    },
+    onReorder: async (foods: FoodPanelItem[]) => {
+      await saveIngredients(foods.map((food) => ({ food_id: Number(food.detailId), quantity_g: food.quantity })));
+    },
+    onReplace: (food: FoodPanelItem) => {
+      if (food.detailId != null) router.push(pickerHref("food-to-preparation", { preparationId: detail.id, replaceFoodId: food.detailId, returnTo: `/libraries/preparations/${detail.id}` }));
+    },
+  } : undefined;
 
   return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
     <EntityDetailPage entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={portion} title={detail.name}>
       <EntityDetailSection title="Composición de la preparación">
-        <FoodPanels items={ingredients} nestedScroll onOpenItem={openIngredient} />
+        <FoodPanels editing={editing} items={ingredients} nestedScroll onOpenItem={openIngredient} ownerLabel="esta preparación" />
       </EntityDetailSection>
       {detail.is_personal && detail.is_active ? <Button label="+ Agregar alimento" onPress={addFood} variant="chipPrimary" /> : null}
       {ingredients.length > 0 ? <>
         <ProgramSectionHeader icon={Carrot} subtitle="Compara el aporte de cada ingrediente y abre su ficha de alimento." title="Detalle de cada ingrediente" />
-        <FoodDetailCardList items={ingredients} onOpenFood={openIngredient} />
+        <FoodDetailCardList editing={() => editing} items={ingredients} onOpenFood={openIngredient} ownerLabel="esta preparación" />
       </> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     </EntityDetailPage>
