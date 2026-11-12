@@ -31,6 +31,17 @@ servidor, vuelve a validar y simular, y no aplica el plan.
 
 ## Paridad de capacidades del sistema
 
+La consulta de suplementos Pro se expone al asistente mediante `query_workspace`
+para biblioteca personal, presets y tomas de una minuta propia. El backend aplica
+flag, entitlement y ownership. La nutrición de etiqueta es informativa y no entra
+en kcal/macros de comidas o minutas. Los cambios se derivan a la UI de Suplementos;
+no existe patch genérico ni proyección MCP para esta capacidad. La calidad de la
+respuesta y del handoff requiere evaluación live antes de declararla cubierta.
+
+Preparaciones sigue como módulo en evolución paralela. El asistente no debe
+tratarla como Food ni prometer edición hasta fijar el contrato final de porción,
+versión, permisos y snapshots.
+
 El inventario vivo de solicitudes posibles, su clasificación entre lectura, patch,
 propuesta, aclaración y handoff, y las brechas actuales está en
 [`user_request_capability_catalog.md`](user_request_capability_catalog.md). Ese catálogo
@@ -165,7 +176,7 @@ fue satisfecho además del estado técnico.
 
 El prompt runtime usa `ai_assistant_prompt.v4`: las consultas usan lectura, las
 mutaciones persistentes preparan patches revisables y el asistente se detiene cuando
-el outcome ya está satisfecho. La calidad se gobierna con Lab v2, 64 casos de routing,
+el outcome ya está satisfecho. La calidad se gobierna con Lab v2, 72 casos de routing,
 doce trayectorias live, repeticiones, revisión humana explícita y feedback por respuesta.
 Ver `evaluation_lab.md`.
 

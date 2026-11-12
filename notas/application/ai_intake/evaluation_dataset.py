@@ -8,7 +8,7 @@ from ai_assistant.application.tool_selection import select_provider_tools
 from ai_assistant.application.tools import list_provider_tool_specs
 from ai_assistant.domain import AssistantMessage, AssistantMessageRole, AssistantTurnRequest
 
-EVALUATION_DATASET_VERSION = "ai_assistant.task_dataset.v1"
+EVALUATION_DATASET_VERSION = "ai_assistant.task_dataset.v2"
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,23 @@ class AssistantTaskCase:
     action: str
     required_capability: str
 
-    def as_dict(self) -> dict[str, str]:
+    @property
+    def partition(self) -> str:
+        # Keep the last two examples in each family reserved for candidate checks.
+        # Case wording is synthetic and is never sent as model context.
+        return "holdout" if int(self.key.rsplit("_", 1)[-1]) >= 7 else "development"
+
+    @property
+    def allowed_effects(self) -> tuple[str, ...]:
+        if self.expected_outcome == "nutrition_proposal":
+            return ("pending_nutrition_proposal",)
+        if self.expected_outcome == "prepared_patch":
+            return ("unconfirmed_prepared_action",)
+        if self.expected_outcome == "workspace_advanced":
+            return ("temporary_conversation_draft",)
+        return ()
+
+    def as_dict(self) -> dict[str, Any]:
         return {
             "key": self.key,
             "family": self.family,
@@ -32,11 +48,19 @@ class AssistantTaskCase:
             "resource": self.resource,
             "action": self.action,
             "required_capability": self.required_capability,
+            "partition": self.partition,
+            "source": "synthetic_product_request",
+            "data_classification": "synthetic_no_user_data",
+            "permission": "repository_evaluation",
+            "fixture": "controlled_user_workspace",
+            "allowed_effects": list(self.allowed_effects),
+            "forbidden_effects": ["final_product_mutation_without_approval", "cross_owner_access"],
+            "grading_criteria": ["objective", "expected_outcome", "resource", "action", "required_capability"],
         }
 
 
 def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
-    """Return 64 versioned routing cases that complement full live trajectories."""
+    """Return synthetic routing cases with a reserved per-family holdout."""
 
     cases: list[AssistantTaskCase] = []
     cases.extend(
@@ -205,13 +229,42 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
             capability="natural_response",
         )
     )
+    supplement_cases = (
+        ("Muéstrame mis suplementos.", "workspace_query", "supplements", "read", "query_workspace"),
+        ("¿Qué suplementos tengo?", "workspace_query", "supplements", "read", "query_workspace"),
+        ("Busca el suplemento Omega 3.", "workspace_query", "supplements", "read", "query_workspace"),
+        ("Lista mis presets de suplementos.", "workspace_query", "supplement_presets", "read", "query_workspace"),
+        ("Muéstrame las tomas de suplementos.", "workspace_query", "supplement_intakes", "read", "query_workspace"),
+        ("Agrega un suplemento a mi plan.", "response_only", "supplements", "handoff", "natural_response"),
+        ("Cambia la toma de suplementos de mi plan.", "response_only", "supplement_intakes", "handoff", "natural_response"),
+        ("Crea un preset de suplementos.", "response_only", "supplement_presets", "handoff", "natural_response"),
+    )
+    for index, (message, outcome, resource, action, capability) in enumerate(supplement_cases, start=1):
+        cases.append(
+            AssistantTaskCase(
+                key=f"supplements_{index:02d}",
+                family="supplements",
+                message=message,
+                objective="query_workspace" if outcome == "workspace_query" else "handoff_to_supplements_ui",
+                expected_outcome=outcome,
+                resource=resource,
+                action=action,
+                required_capability=capability,
+            )
+        )
     return tuple(cases)
 
 
 def evaluate_assistant_task_dataset(
     cases: Sequence[AssistantTaskCase] | None = None,
+    *,
+    partition: str | None = None,
 ) -> dict[str, Any]:
+    if partition not in {None, "development", "holdout"}:
+        raise ValueError(f"Unsupported task dataset partition: {partition}")
     selected = tuple(cases or assistant_task_dataset())
+    if partition is not None:
+        selected = tuple(case for case in selected if case.partition == partition)
     failures: list[dict[str, Any]] = []
     tool_surface_failures: list[dict[str, Any]] = []
     family_counts: dict[str, int] = {}
@@ -279,6 +332,10 @@ def evaluate_assistant_task_dataset(
         "version": EVALUATION_DATASET_VERSION,
         "case_count": len(selected),
         "family_counts": dict(sorted(family_counts.items())),
+        "partition_counts": {
+            name: sum(case.partition == name for case in selected)
+            for name in ("development", "holdout")
+        },
         "passed_count": len(selected) - len({item["key"] for item in all_failures}),
         "failure_count": len(all_failures),
         "passed": not all_failures,

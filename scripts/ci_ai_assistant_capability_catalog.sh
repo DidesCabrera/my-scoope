@@ -20,6 +20,7 @@ export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000
   ai_assistant.tests.test_goal_directed_agency \
   ai_assistant.tests.test_response_quality \
   notas.tests.test_ai_workspace_query_tool \
+  notas.tests.test_ai_supplement_queries \
   notas.tests.test_ai_workspace_library_coherence \
   notas.tests.test_solver_food_candidates_query \
   notas.tests.test_macro_target_policy \

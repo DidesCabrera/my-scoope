@@ -146,6 +146,23 @@ def evaluate_expected_outcome(scenario, turns, *, state_before, state_after):
             for name in successful_tools
         )
         detail = "the typed conversational workspace advanced"
+    elif expected == "nutritional_limitation":
+        solver_error = any(
+            item.get("tool_name") == "create_nutrition_solver_meal_proposal"
+            and item.get("status") == "error"
+            for turn in turns
+            for item in turn.tool_results
+        )
+        visible = _normalized_visible_text(final_turn.assistant_message if final_turn else "")
+        limitation_explained = any(
+            marker in visible for marker in (
+                "no hay", "no puedo", "no pude", "no se pudo", "no es posible",
+                "imposible", "inviable", "falt", "insuficient", "sin candidat",
+            )
+        )
+        no_artifact = deltas.get("nutrition_proposals", 0) == 0 and deltas.get("prepared_actions", 0) == 0
+        passed = solver_error and no_artifact and limitation_explained
+        detail = "the assistant explained the solver limitation after a tool error without creating an artifact"
     elif expected == "clarification_required":
         visible_question = bool(
             final_turn

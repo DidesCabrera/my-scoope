@@ -61,19 +61,32 @@ siguiente paso requieren una anotación humana explícita.
 
 Lab v2 combina capas distintas sin confundir su alcance:
 
-1. `task_dataset`: 64 casos versionados, ocho por familia, para objetivo,
-   outcome y disponibilidad de capacidad;
+1. `task_dataset`: 72 casos sintéticos versionados, ocho por familia, para
+   objetivo, outcome y disponibilidad de capacidad; 54 son de desarrollo y 18
+   quedan reservados para comparar candidatos después de congelarlos. El
+   preflight usa desarrollo por defecto; `--task-partition holdout` ejecuta
+   sólo los reservados y `all` ejecuta ambos;
 2. `scenario_preflight`: datos reales, proyecciones canónicas y factibilidad del
    solver para el usuario seleccionado;
-3. `live_validations`: 32 escenarios disponibles, repetibles entre 1 y 10 veces;
+3. `live_validations`: 33 escenarios base y dos casos opt-in,
+   `comida_sin_candidatos` y `comida_solver_inviable`, repetibles entre 1 y 10 veces;
 4. `quality_evaluation`: checks automáticos por dimensión y revisión humana
    obligatoria por trayectoria;
 5. `product_feedback`: señal agregada de respuestas útiles/no útiles del usuario,
    sin incluir contenido ni comentarios en el reporte.
 
-Los 64 casos son un gate determinista de routing, no un sustituto de las
+Los 72 casos son un gate determinista de routing, no un sustituto de las
 conversaciones reales. Las pruebas live validan selección/argumentos de tools,
 grounding, continuidad, límites de aprobación y resultado observable.
+
+El escenario `comida_sin_candidatos` exige una cuenta de laboratorio con una
+minuta propia y cero alimentos elegibles para el solver. `comida_solver_inviable`
+exige alimentos elegibles, pero un probe de 450 kcal imposible. Ambos verifican
+la tool fallida, ausencia de propuesta y explicación visible. No se ejecutan por
+defecto porque sus fixtures contradicen los escenarios de propuesta factible.
+La calidad nutricional insuficiente de una propuesta parcial sigue pendiente.
+El plan y las puertas de calidad están en
+`docs/10_active_cycles/ai_application_quality_cycle.md`.
 
 ## Tres fases
 
@@ -152,6 +165,8 @@ Puede usarse `--keep-artifacts` cuando se necesite revisar las cards manualmente
 | Recuperación | error de tool y recuperación | `response_only` | Sin falsa confirmación |
 | Consultas | bibliotecas coherentes | `workspace_query` | Sólo lectura |
 | Nutrición | comida 450 kcal y plan 2400 con 30/50/20 | `nutrition_proposal` | Sólo propuesta revisable |
+| Nutrición sin candidatos | comida 450 kcal con biblioteca no apta | `nutritional_limitation` | Tool fallida, explicación y ninguna propuesta |
+| Nutrición inviable | comida 450 kcal con candidatos pero sin solución factible | `nutritional_limitation` | Tool fallida, explicación y ninguna propuesta |
 | Cambio de producto | reemplazo de alimento a 200 g | `prepared_patch` | Patch preparado, nunca aplicado |
 | Operaciones exactas | 18 casos de alimentos, comidas, planes y programas | `prepared_patch` | Compara objetivo, parámetros y cantidad exacta de operaciones persistidas |
 | Programas completos | 1 y 8 semanas, 2400 kcal y 30/50/20 | `nutrition_proposal` | Verifica todos los días, cuatro comidas por día y macros recalculados |
@@ -167,6 +182,10 @@ También se puede repetir `--scenario` para ejecutar un subconjunto.
 ## Lectura del reporte
 
 El JSON conserva siete niveles de evidencia:
+
+`contract_manifest` agrega versiones de lab, dataset, grader y prompt, más
+huellas SHA-256 de las superficies provider-facing y MCP. La identidad del commit,
+modelo, fixture y configuración debe acompañar el reporte de cada corrida live.
 
 1. `task_dataset`: cobertura determinista y fallos de surface/routing;
 2. `ground_truth`: verdad calculada directamente desde BBDD y solver;

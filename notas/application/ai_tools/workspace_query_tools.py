@@ -14,6 +14,7 @@ from notas.application.ai_tools.read_tools import (
 )
 from notas.application.ai_tools.results import tool_error
 from notas.application.ai_tools.runtime import run_ai_tool
+from notas.application.ai_tools.supplement_read_tools import query_supplements_tool
 from notas.application.ai_tools.workspace_tools import (
     read_calendarization_tool,
     read_program_tool,
@@ -149,6 +150,16 @@ def query_workspace_tool(
 
     normalized_resource = str(resource or "").strip().lower()
     normalized_search = str(search or "").strip()
+
+    if normalized_resource in {"supplements", "supplement_presets", "supplement_intakes"}:
+        return query_supplements_tool(
+            user,
+            resource=normalized_resource,
+            object_id=object_id,
+            search=normalized_search,
+            limit=limit,
+            offset=offset,
+        )
 
     if normalized_resource == "calendarization":
         return read_calendarization_tool(user, history_limit=limit)

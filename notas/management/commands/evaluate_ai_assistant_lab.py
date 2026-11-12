@@ -6,7 +6,6 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 
 from notas.application.ai_intake.evaluation_lab import (
-    DEFAULT_LAB_SCENARIOS,
     run_evaluation_lab,
 )
 from notas.application.ai_intake.evaluation_progress import evaluation_progress
@@ -83,6 +82,12 @@ class Command(BaseCommand):
             help="Optional JSON path for the explicit human-review worksheet.",
         )
         parser.add_argument("--json", action="store_true", help="Print the complete JSON report.")
+        parser.add_argument(
+            "--task-partition",
+            choices=("development", "holdout", "all"),
+            default="development",
+            help="Run the routine development cases, the reserved holdout, or all routing cases.",
+        )
         parser.add_argument("--trace-progress", action="store_true", help="Flush safe runtime stages and stalled stacks to stderr; JSON stays on stdout.")
         parser.add_argument(
             "--fail-on-regression",
@@ -96,7 +101,7 @@ class Command(BaseCommand):
             return
         if options["list_scenarios"]:
             catalog = built_in_real_provider_scenarios()
-            for key in DEFAULT_LAB_SCENARIOS:
+            for key in catalog:
                 scenario = catalog[key]
                 capabilities = ", ".join(scenario.capability_ids) or "sin mapeo"
                 self.stdout.write(
@@ -122,6 +127,7 @@ class Command(BaseCommand):
                     charge_user_credits=bool(options.get("charge_user_credits")),
                     repetitions=int(options.get("repetitions") or 1),
                     quality_annotations=quality_annotations,
+                    task_partition=options["task_partition"],
                 )
         except Exception as exc:  # pragma: no cover - command boundary
             raise CommandError(str(exc)) from exc

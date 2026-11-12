@@ -15,6 +15,8 @@ assistant runtime. Provider execution is always opt-in at the command boundary.
 from __future__ import annotations
 
 import logging
+import hashlib
+import json
 import re
 import uuid
 from collections import Counter, defaultdict
@@ -27,10 +29,12 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from ai_assistant.models import AIPreparedAction
+from ai_assistant.application.prompt_contract import ASSISTANT_PROMPT_CONTRACT_VERSION
+from ai_assistant.application.tools.registry import list_mcp_tool_specs, list_provider_tool_specs
 from notas.application.ai_intake.capability_scenarios import PATCH_CASES
 from notas.application.ai_intake.evaluation_artifacts import capture_review_artifacts
-from notas.application.ai_intake.evaluation_dataset import evaluate_assistant_task_dataset
-from notas.application.ai_intake.evaluation_quality import grade_validation_reports
+from notas.application.ai_intake.evaluation_dataset import EVALUATION_DATASET_VERSION, evaluate_assistant_task_dataset
+from notas.application.ai_intake.evaluation_quality import QUALITY_EVALUATION_VERSION, grade_validation_reports
 from notas.application.ai_intake.message_feedback import summarize_message_feedback
 from notas.application.ai_intake.program_scenarios import PROGRAM_SCENARIOS
 from notas.application.ai_intake.real_provider_validation import (
@@ -71,7 +75,7 @@ DEFAULT_LAB_SCENARIOS = (
 ) + tuple(case[0] for case in PATCH_CASES) + PROGRAM_SCENARIOS
 
 _CATALOG_ROW_PATTERN = re.compile(
-    r"^\| (?P<id>(?:PR|F|M|DP|PG|C|X|A)-\d{2}) "
+    r"^\| (?P<id>(?:PR|F|M|DP|PG|C|X|A|S|P)-\d{2}) "
     r"\| (?P<request>.+?) \| (?P<resolution>.+?) "
     r"\| (?P<coverage>.+?) \| (?P<observation>.+?) \|$"
 )
@@ -115,6 +119,7 @@ class EvaluationLabReport:
     user_id: int
     mode: str
     status: str
+    contract_manifest: Mapping[str, Any]
     catalog: Mapping[str, Any]
     ground_truth: Mapping[str, Any]
     scenario_preflight: Sequence[Mapping[str, Any]]
@@ -138,6 +143,7 @@ class EvaluationLabReport:
             "user_id": self.user_id,
             "mode": self.mode,
             "status": self.status,
+            "contract_manifest": dict(self.contract_manifest),
             "passed": self.passed,
             "catalog": dict(self.catalog),
             "ground_truth": dict(self.ground_truth),
@@ -166,11 +172,14 @@ def run_evaluation_lab(
     charge_user_credits: bool = False,
     repetitions: int = 1,
     quality_annotations: Mapping[str, Any] | None = None,
+    task_partition: str = "development",
 ) -> EvaluationLabReport:
     if not getattr(user, "pk", None):
         raise ValueError("AI Assistant evaluation lab requires a persisted authenticated user.")
     if not 1 <= int(repetitions) <= 10:
         raise ValueError("AI Assistant evaluation repetitions must be between 1 and 10.")
+    if task_partition not in {"development", "holdout", "all"}:
+        raise ValueError(f"Unknown task dataset partition: {task_partition}")
 
     selected_keys = tuple(scenario_keys or DEFAULT_LAB_SCENARIOS)
     catalog = built_in_real_provider_scenarios()
@@ -179,7 +188,9 @@ def run_evaluation_lab(
         raise ValueError(f"Unknown evaluation lab scenario(s): {', '.join(unknown)}")
 
     validation_run_id = run_id or uuid.uuid4().hex
-    task_dataset = evaluate_assistant_task_dataset()
+    task_dataset = evaluate_assistant_task_dataset(
+        partition=None if task_partition == "all" else task_partition
+    )
     specialized = {
         key: _specialize_scenario_for_user(catalog[key], user=user)
         for key in selected_keys
@@ -271,6 +282,7 @@ def run_evaluation_lab(
         user_id=int(user.pk),
         mode="live_provider" if live else "deterministic_preflight",
         status=status,
+        contract_manifest=_contract_manifest(),
         catalog=_catalog_summary(specialized),
         ground_truth=ground_truth,
         scenario_preflight=preflight,
@@ -288,6 +300,36 @@ def run_evaluation_lab(
             "credit_block_reasons": credit_blocks,
         },
     )
+
+
+def _contract_manifest() -> dict[str, Any]:
+    """Fingerprint the contracts a candidate was evaluated against."""
+
+    provider_specs = list_provider_tool_specs()
+    mcp_specs = [
+        {
+            "name": spec.mcp_name,
+            "description": spec.description,
+            "api_path": spec.mcp_api_path,
+            "input_schema": spec.mcp_input_schema or spec.input_schema,
+        }
+        for spec in list_mcp_tool_specs()
+    ]
+
+    def digest(value: Any) -> str:
+        payload = json.dumps(value, sort_keys=True, ensure_ascii=False, default=str)
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    return {
+        "lab_version": EVALUATION_LAB_VERSION,
+        "task_dataset_version": EVALUATION_DATASET_VERSION,
+        "quality_grader_version": QUALITY_EVALUATION_VERSION,
+        "prompt_contract_version": ASSISTANT_PROMPT_CONTRACT_VERSION,
+        "provider_tool_count": len(provider_specs),
+        "provider_tool_sha256": digest(provider_specs),
+        "mcp_tool_count": len(mcp_specs),
+        "mcp_tool_sha256": digest(mcp_specs),
+    }
 
 
 def _log_validation_failures(logger, repetition, report):
@@ -363,6 +405,12 @@ def _scenario_preflight(scenario: Any, *, ground_truth: Mapping[str, Any]) -> di
             failures.append({"requirement": requirement, "reason": "no_owned_dailyplan"})
         elif requirement == "solver_candidates" and not solver_candidates["total_eligible_count"]:
             failures.append({"requirement": requirement, "reason": "no_solver_enabled_foods"})
+        elif requirement == "no_solver_candidates" and solver_candidates["total_eligible_count"]:
+            failures.append({"requirement": requirement, "reason": "solver_candidates_are_available"})
+        elif requirement == "solver_450_infeasible":
+            probe = ground_truth["solver_450_probe"]
+            if probe.get("status") != "impossible":
+                failures.append({"requirement": requirement, "reason": "solver_probe_is_not_impossible"})
         elif requirement == "culinary_library" and not ground_truth.get("culinary_library", {}).get("variants"):
             failures.append({"requirement": requirement, "reason": "no_validated_culinary_variants"})
         elif requirement == "solver_450_feasible":
@@ -444,7 +492,7 @@ def _build_diagnostics(
         for failure in item.get("failures", []):
             domain = (
                 "solver_feasibility"
-                if failure.get("requirement") == "solver_450_feasible"
+                if failure.get("requirement") in {"solver_450_feasible", "solver_450_infeasible"}
                 else "catalog_data"
             )
             failures_by_domain[domain].append(
