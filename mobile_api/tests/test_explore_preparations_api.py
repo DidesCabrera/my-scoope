@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import Client, override_settings
 
+from accounts.models import AccountPlan, AccountSubscription
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.domain.models import Preparation, PreparationVersion
 
@@ -25,6 +26,9 @@ class ExplorePreparationsAPITests(AuthenticatedMobileAPITestCase):
         return preparation
 
     def test_exploration_only_lists_active_versioned_global_preparations(self):
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="pro")}
+        )
         curator = User.objects.create_user(username="preparation-curator")
         first = self.create_preparation("Completo italiano")
         second = self.create_preparation("Sopa global")
