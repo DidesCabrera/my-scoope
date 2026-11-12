@@ -51,7 +51,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /<PickerCardAction label=\{actionLabel\} onPress=\{onAction\} subject=\{option\.name\} \/>/);
   matches(picker, /actionLabel="Seleccionar"/);
   matches(picker, /router\.push\(pickerConfigureHref/);
-  matches(picker, /const needsTarget = Boolean\(relationId \|\| relationKey\)/);
+  matches(picker, /const needsTarget = kind !== "food-to-preparation" && Boolean\(relationId \|\| relationKey\)/);
   matches(picker, /needsTarget\s*\? isCalendarizedPicker/);
   matches(picker, /\/composition-options\?limit=\$\{limit\}/);
   matches(picker, /loadOptions\(submittedQuery, 50\)/);
