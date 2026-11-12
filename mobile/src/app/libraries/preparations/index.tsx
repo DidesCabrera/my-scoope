@@ -51,6 +51,7 @@ export default function PreparationsLibraryScreen() {
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
       createAction: available && allowed ? { label: "Crear preparación", onPress: () => router.push("/libraries/preparations/new" as Href) } : undefined,
+      secondaryAction: { icon: "search", label: "Explorar preparaciones globales", onPress: () => router.push("/explore/preparations" as Href) },
       mode: "default", title: "Mis Preparaciones",
     });
     return () => setHeaderPresentation({ mode: "default" });

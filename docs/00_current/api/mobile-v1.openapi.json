@@ -16906,6 +16906,69 @@
         "summary": "Save Explore Meal"
       }
     },
+    "/api/v1/explore/preparations": {
+      "get": {
+        "operationId": "mobile_api_explore_preparations",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Explore Preparations"
+      }
+    },
     "/api/v1/food-picker-options/{food_id}": {
       "get": {
         "operationId": "mobile_api_api_food_detail",

@@ -19,11 +19,11 @@ from notas.application.services.commands.personal_preparation_commands import (
     can_use_personal_preparations,
     clear_personal_preparation_ingredients,
     create_personal_preparation_draft,
+    preview_personal_preparation_food,
     remove_personal_preparation,
     rename_personal_preparation_draft,
     require_personal_preparations_pro,
     save_personal_preparation,
-    preview_personal_preparation_food,
 )
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.application.services.nutrition.weight import get_current_weight
@@ -203,13 +203,22 @@ def preparations(request, search: str | None = None, offset: int = 0, limit: int
     visible = Q(is_global=True)
     if can_use_personal_preparations(request.auth.user):
         visible |= Q(is_global=False, created_by=request.auth.user)
-    queryset = Preparation.objects.select_related("current_version").filter(is_active=True, current_version__isnull=False).filter(visible)
+    return success(_preparation_page(request, visible, search=search, offset=offset, limit=limit))
+
+
+@router.get("/explore/preparations", operation_id="mobile_api_explore_preparations", auth=mobile_bearer, response={200: dict})
+def explore_preparations(request, search: str | None = None, offset: int = 0, limit: int = 30):
+    return success(_preparation_page(request, Q(is_global=True), search=search, offset=offset, limit=limit))
+
+
+def _preparation_page(request, visibility, *, search, offset, limit):
+    queryset = Preparation.objects.select_related("current_version").filter(is_active=True, current_version__isnull=False).filter(visibility)
     if search:
         queryset = queryset.filter(name__icontains=search.strip())
     total = queryset.count()
     current_weight = get_current_weight(request.auth.user)
     items = [_detail(item, current_weight=current_weight) for item in queryset.order_by("name", "id")[max(offset, 0):max(offset, 0) + min(max(limit, 1), 100)]]
-    return success({"items": items, "total": total, "offset": max(offset, 0), "limit": min(max(limit, 1), 100)})
+    return {"items": items, "total": total, "offset": max(offset, 0), "limit": min(max(limit, 1), 100)}
 
 
 @router.get("/preparations/{preparation_id}", operation_id="mobile_api_api_preparation_detail", auth=mobile_bearer, response={200: dict})
