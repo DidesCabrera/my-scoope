@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
   noteBlock: { gap: tokens.spacing.sm },
   noteHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 32 },
   noteInput: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, color: tokens.color.textMain, fontSize: 16, minHeight: 42, paddingHorizontal: tokens.spacing.md, paddingVertical: tokens.spacing.sm },
-  options: { gap: tokens.spacing.lg, marginHorizontal: -6, paddingHorizontal: tokens.spacing.screen },
+  options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   previewActivity: { alignSelf: "center", marginVertical: tokens.spacing.xs },
   previewSection: { gap: tokens.spacing.lg },
   pressed: { opacity: 0.68 },
