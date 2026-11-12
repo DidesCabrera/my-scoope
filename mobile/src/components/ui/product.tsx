@@ -78,7 +78,7 @@ function isFoodQuantity(value: number | string | undefined): value is string {
 }
 
 function NutritionBasisSubtitle({ entity, value }: { entity: "food" | "preparation"; value: string }) {
-  const label = entity === "food" ? foodNutritionBasisLabel(value) ?? value : `Información nutricional: ${value}`;
+  const label = entity === "food" ? foodNutritionBasisLabel(value) ?? value : value.startsWith("Rinde ") ? value : `Información nutricional: ${value}`;
   return <Text style={styles.headingSubtitle}>{label}</Text>;
 }
 

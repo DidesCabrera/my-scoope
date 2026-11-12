@@ -125,10 +125,14 @@ def _portion(version, *, units, grams):
         raise MobileAPIError("preparation_portion_invalid", "La porción no es válida.", 422) from exc
 
 
-def _detail(preparation, *, units=None, grams=None):
+def _detail(preparation, *, units=None, grams=None, full_recipe=False):
     version = preparation.current_version
-    mode, selected_units, quantity = _portion(version, units=1 if units is None and grams is None else units, grams=grams)
-    factor = quantity / version.yield_g
+    if full_recipe:
+        mode, selected_units, quantity = "grams", None, version.yield_g
+        factor = Decimal("1")
+    else:
+        mode, selected_units, quantity = _portion(version, units=1 if units is None and grams is None else units, grams=grams)
+        factor = quantity / version.yield_g
     ingredients = list(version.ingredients.select_related("food").order_by("order", "id"))
     inferred_yield = sum((row.quantity_g for row in ingredients), Decimal("0"))
     return {
@@ -205,11 +209,11 @@ def preparations(request, search: str | None = None, offset: int = 0, limit: int
 
 
 @router.get("/preparations/{preparation_id}", operation_id="mobile_api_api_preparation_detail", auth=mobile_bearer, response={200: dict})
-def preparation_detail(request, preparation_id: int, units: float | None = None, grams: float | None = None):
+def preparation_detail(request, preparation_id: int, units: float | None = None, grams: float | None = None, full_recipe: bool = False):
     preparation = _available_preparation(request.auth.user, preparation_id, allow_inactive_personal=True, allow_personal_draft=True)
     if preparation.current_version is None:
         return success(_personal_draft(preparation))
-    return success(_detail(preparation, units=units, grams=grams))
+    return success(_detail(preparation, units=units, grams=grams, full_recipe=full_recipe))
 
 
 @router.get("/library/preparations", operation_id="mobile_api_personal_preparations", auth=mobile_bearer, response={200: dict})

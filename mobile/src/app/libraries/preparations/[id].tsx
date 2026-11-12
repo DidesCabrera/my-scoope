@@ -59,13 +59,12 @@ export default function PreparationDetailScreen() {
     let active = true;
     setLoading(true);
     setError(null);
-    const portion = units && Number(units) > 0 ? `?units=${encodeURIComponent(units)}` : grams && Number(grams) > 0 ? `?grams=${encodeURIComponent(grams)}` : "";
-    void apiRequest<PersonalPreparation>(`/api/v1/preparations/${id}${portion}`)
+    void apiRequest<PersonalPreparation>(`/api/v1/preparations/${id}?full_recipe=true`, { cache: "no-store" })
       .then((result) => { if (active) setDetail(result); })
       .catch((failure) => { if (active) setError(userFacingError(failure)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [apiRequest, grams, id, status, units, validId]));
+  }, [apiRequest, id, status, validId]));
 
   if (!validId) return <Redirect href="/libraries/meals" />;
   if (status === "anonymous") return <Redirect href="/login" />;
@@ -99,7 +98,7 @@ export default function PreparationDetailScreen() {
       setDetail(updated);
       return;
     }
-    const updated = await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}`, {
+    await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}`, {
       method: "PUT",
       body: JSON.stringify({
         name,
@@ -108,7 +107,7 @@ export default function PreparationDetailScreen() {
         ingredients: detail.recipe_ingredients.map(({ food_id, quantity_g }) => ({ food_id, quantity_g })),
       }),
     });
-    setDetail(updated);
+    setDetail(await apiRequest<PersonalPreparation>(`/api/v1/preparations/${detail.id}?full_recipe=true`, { cache: "no-store" }));
   };
   const actions = <PreparationDetailActions
     advanced={!detail.is_draft ? {
@@ -142,9 +141,8 @@ export default function PreparationDetailScreen() {
   </>;
 
   const ingredients = detail.ingredients.map((ingredient, index) => ingredientPanelItem(ingredient, index, detail));
-  const portion = detail.selection_mode === "units"
-    ? `${formatPreparationNumber(detail.selected_units ?? 1)} ${detail.household_label}`
-    : `${formatPreparationNumber(detail.grams)} g`;
+  const portionCount = detail.yield_g / detail.default_portion_g;
+  const subtitle = `Rinde ${formatPreparationNumber(detail.yield_g, 2)} g · ${formatPreparationNumber(portionCount, 2)} ${portionCount === 1 ? "porción" : "porciones"} de ${formatPreparationNumber(detail.default_portion_g, 2)} g`;
   const nutrition = {
     // Meal components are displayed at one decimal before the KPI rounds to kcal.
     calories: Math.round(detail.nutrition.calories * 10) / 10,
@@ -164,7 +162,7 @@ export default function PreparationDetailScreen() {
         setError(null);
         return;
       }
-      const updated = await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}`, {
+      await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${detail.id}`, {
         method: "PUT",
         body: JSON.stringify({
           name: detail.name,
@@ -173,7 +171,7 @@ export default function PreparationDetailScreen() {
           ingredients: next,
         }),
       });
-      if (!updated.is_draft) setDetail(updated);
+      setDetail(await apiRequest<PersonalPreparation>(`/api/v1/preparations/${detail.id}?full_recipe=true`, { cache: "no-store" }));
       setError(null);
     } catch (failure) {
       setError(userFacingError(failure));
@@ -204,7 +202,7 @@ export default function PreparationDetailScreen() {
   } : undefined;
 
   return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
-    <EntityDetailPage entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={portion} title={detail.name}>
+    <EntityDetailPage entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={subtitle} title={detail.name}>
       <EntityDetailSection title="Composición de la preparación">
         <FoodPanels editing={editing} items={ingredients} nestedScroll onOpenItem={openIngredient} ownerLabel="esta preparación" />
       </EntityDetailSection>

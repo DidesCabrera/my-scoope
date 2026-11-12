@@ -154,6 +154,49 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(corrected.json()["data"]["default_portion_g"], 75)
         self.assertTrue(corrected.json()["data"]["yield_is_manual"])
 
+    def test_full_recipe_detail_keeps_recipe_quantities_and_nutrition(self):
+        second_food = Food.objects.create(name="Acelga", protein=2, carbs=3, fat=0, is_global=True)
+        created = self.client.post(
+            "/api/v1/library/preparations",
+            data={
+                "name": "Humita con acelga",
+                "ingredients": [
+                    {"food_id": self.food.id, "quantity_g": 100},
+                    {"food_id": second_food.id, "quantity_g": 170},
+                ],
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(created.status_code, 200, created.content)
+        preparation_id = created.json()["data"]["id"]
+        portion = self.client.get(f"/api/v1/preparations/{preparation_id}").json()["data"]
+        recipe = self.client.get(f"/api/v1/preparations/{preparation_id}?full_recipe=true").json()["data"]
+        self.assertEqual(recipe["yield_g"], 270)
+        self.assertEqual(recipe["default_portion_g"], 100)
+        self.assertEqual(recipe["grams"], 270)
+        self.assertEqual([row["quantity_g"] for row in recipe["ingredients"]], [100, 170])
+        self.assertEqual([row["quantity_g"] for row in recipe["recipe_ingredients"]], [100, 170])
+        self.assertAlmostEqual(sum(row["quantity_g"] for row in portion["ingredients"]), 100)
+        self.assertAlmostEqual(recipe["nutrition"]["protein_g"], 13.4)
+        self.assertAlmostEqual(portion["nutrition"]["protein_g"], 13.4 * 100 / 270, places=3)
+
+        revised = self.client.put(
+            f"/api/v1/library/preparations/{preparation_id}",
+            data={
+                "name": "Humita con acelga", "yield_g": 300, "default_portion_g": 75,
+                "ingredients": [
+                    {"food_id": self.food.id, "quantity_g": 100},
+                    {"food_id": second_food.id, "quantity_g": 170},
+                ],
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(revised.status_code, 200, revised.content)
+        recipe = self.client.get(f"/api/v1/preparations/{preparation_id}?full_recipe=true").json()["data"]
+        self.assertEqual(recipe["grams"], 300)
+        self.assertEqual([row["quantity_g"] for row in recipe["ingredients"]], [100, 170])
+        self.assertAlmostEqual(recipe["nutrition"]["protein_g"], 13.4)
+
     def test_another_users_draft_is_not_visible_or_editable(self):
         other = User.objects.create_user(username="other-draft-owner")
         AccountSubscription.objects.update_or_create(
