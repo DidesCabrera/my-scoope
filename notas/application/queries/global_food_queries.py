@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass
 
 from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 
+from notas.application.services.food_imports.normalization import normalize_food_name
 from notas.domain.models import Food
 
 DEFAULT_GLOBAL_FOOD_LIMIT = 50
@@ -186,12 +187,16 @@ def _apply_global_food_search(
     if not search:
         return queryset
 
-    return queryset.filter(
+    filters = (
         Q(name__icontains=search)
         | Q(canonical_name__icontains=search)
         | Q(aliases__name__icontains=search)
-        | Q(aliases__normalized_name__icontains=search)
     )
+    normalized_search = normalize_food_name(search)
+    if normalized_search:
+        filters |= Q(canonical_name__icontains=normalized_search)
+        filters |= Q(aliases__normalized_name__icontains=normalized_search)
+    return queryset.filter(filters)
 
 
 def _resolve_source(food: Food) -> str:
