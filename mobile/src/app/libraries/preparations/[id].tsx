@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Carrot } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -15,7 +15,7 @@ import { formatPreparationNumber } from "@/components/preparations/preparation-i
 import { PreparationDetailActions } from "@/components/preparations/preparation-detail-actions";
 import { ingredientPanelItem } from "@/components/preparations/preparation-panel-items";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
-import { Button, LoadingState } from "@/components/ui";
+import { Button, DistributedTabBar, LoadingState } from "@/components/ui";
 import { InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { pickerHref } from "@/components/pickers/picker-routes";
@@ -23,6 +23,8 @@ import { pickerHref } from "@/components/pickers/picker-routes";
 function percentage(value: number, total: number): number {
   return total > 0 ? (value / total) * 100 : 0;
 }
+
+type KpiView = "recipe" | "portion";
 
 export default function PreparationDetailScreen() {
   const { id, mealId, relationId, units, grams } = useLocalSearchParams<{
@@ -33,7 +35,7 @@ export default function PreparationDetailScreen() {
   const setHeaderPresentation = useHeaderPresentation();
   const [detail, setDetail] = useState<PersonalPreparation | null>(null);
   const [portionDetail, setPortionDetail] = useState<PersonalPreparation | null>(null);
-  const [kpiView, setKpiView] = useState<"recipe" | "portion">("recipe");
+  const [kpiView, setKpiView] = useState<KpiView>("recipe");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -221,9 +223,12 @@ export default function PreparationDetailScreen() {
   return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
     <EntityDetailPage beforeNutrition={<View style={styles.kpiViewSelector}>
       <Text style={styles.kpiViewTitle}>Información nutricional</Text>
-      <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setKpiView((current) => current === "recipe" ? "portion" : "recipe")} style={({ pressed }) => [styles.kpiViewAction, pressed && styles.kpiViewActionPressed]}>
-        <Text style={styles.kpiViewActionText}>{kpiView === "recipe" ? "Ver por porción" : "Ver por receta"}</Text>
-      </Pressable>
+      <DistributedTabBar<KpiView>
+        accessibilityLabel="Información nutricional de la preparación"
+        activeTab={kpiView}
+        onChange={setKpiView}
+        tabs={[{ key: "recipe", label: "Receta completa" }, { key: "portion", label: `Porción (${formatPreparationNumber(detail.default_portion_g, 2)}g)` }]}
+      />
     </View>} entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={subtitle} title={detail.name}>
       <EntityDetailSection title="Composición de la preparación">
         <FoodPanels editing={editing} items={ingredients} nestedScroll onOpenItem={openIngredient} ownerLabel="esta preparación" />
@@ -242,9 +247,6 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
   feedback: { padding: tokens.spacing.screen },
-  kpiViewSelector: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: tokens.spacing.sm },
-  kpiViewTitle: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  kpiViewAction: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 30, justifyContent: "center", marginRight: -tokens.spacing.compact, paddingHorizontal: tokens.spacing.md },
-  kpiViewActionPressed: { opacity: 0.72 },
-  kpiViewActionText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
+  kpiViewSelector: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
+  kpiViewTitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
 });
