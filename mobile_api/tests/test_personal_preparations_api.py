@@ -4,7 +4,10 @@ from django.test import override_settings
 from accounts.models import AccountPlan, AccountSubscription
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.services.calendarization.snapshots import build_meal_snapshot
-from notas.application.services.commands.personal_preparation_commands import save_personal_preparation
+from notas.application.services.commands.personal_preparation_commands import (
+    create_personal_preparation_draft,
+    save_personal_preparation,
+)
 from notas.application.sharing.entities import build_meal_share_snapshot
 from notas.application.sharing.services import ShareUnavailable
 from notas.domain.models import Food, Meal, MealPreparation, Preparation
@@ -93,6 +96,22 @@ class PersonalPreparationAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(corrected.json()["data"]["yield_g"], 120)
         self.assertEqual(corrected.json()["data"]["default_portion_g"], 75)
         self.assertTrue(corrected.json()["data"]["yield_is_manual"])
+
+    def test_another_users_draft_is_not_visible_or_editable(self):
+        other = User.objects.create_user(username="other-draft-owner")
+        AccountSubscription.objects.update_or_create(
+            user=other, defaults={"plan": AccountPlan.objects.get(slug="pro")}
+        )
+        draft = create_personal_preparation_draft(user=other, name="Receta privada")
+        self.assertEqual(self.client.get(f"/api/v1/preparations/{draft.id}").status_code, 404)
+        self.assertEqual(self.client.get("/api/v1/library/preparations").json()["data"]["total"], 0)
+        self.assertEqual(self.client.delete(f"/api/v1/library/preparations/{draft.id}").status_code, 404)
+        update = self.client.put(
+            f"/api/v1/library/preparations/{draft.id}",
+            data={"name": "Ajena", "ingredients": [{"food_id": self.food.id, "quantity_g": 100}]},
+            content_type="application/json",
+        )
+        self.assertEqual(update.status_code, 404)
 
     def test_create_list_and_use_personal_preparation_in_meal(self):
         created = self.create_preparation()
