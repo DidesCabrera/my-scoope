@@ -226,7 +226,8 @@ def preview_personal_preparation_food(*, user, preparation_id, food_id, quantity
 @transaction.atomic
 def add_personal_preparation_food(*, user, preparation_id, food_id, quantity_g):
     require_personal_preparations_pro(user)
-    preparation = Preparation.objects.select_for_update().select_related("current_version").filter(
+    # current_version is nullable for drafts; joining it here makes FOR UPDATE fail on PostgreSQL.
+    preparation = Preparation.objects.select_for_update().filter(
         pk=preparation_id, is_global=False, created_by=user, is_active=True
     ).first()
     if preparation is None:
