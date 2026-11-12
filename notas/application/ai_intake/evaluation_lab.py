@@ -59,6 +59,7 @@ from nutrition_solver.application.contracts import (
 from nutrition_solver.domain.models import MacroTarget
 
 EVALUATION_LAB_VERSION = "ai_assistant.evaluation_lab.v2"
+LAB_SOLVER_PROBE_CANDIDATE_LIMIT = 40
 DEFAULT_LAB_SCENARIOS = (
     "saludo_y_descubrimiento",
     "tema_externo_breve",
@@ -341,9 +342,17 @@ def _log_validation_failures(logger, repetition, report):
 def _build_ground_truth(*, user: Any, scenarios: Mapping[str, Any]) -> dict[str, Any]:
     from notas.application.culinary_library import load_culinary_candidates
     culinary, _ = load_culinary_candidates(user=user)
-    candidates = list_solver_food_candidates(user, limit=250)
+    candidates = list_solver_food_candidates(user, limit=LAB_SOLVER_PROBE_CANDIDATE_LIMIT)
     role_counts = Counter(candidate.role for candidate in candidates.candidates)
-    solver_450 = _solver_450_probe(candidates.candidates)
+    needs_450_probe = any(
+        {"solver_450_feasible", "solver_450_infeasible"}.intersection(scenario.fixture_requirements)
+        for scenario in scenarios.values()
+    )
+    solver_450 = (
+        _solver_450_probe(candidates.candidates)
+        if needs_450_probe
+        else {"status": "not_run", "reason_code": "not_required_by_selected_scenarios"}
+    )
     specialized_truth = {
         key: dict(scenario.ground_truth)
         for key, scenario in scenarios.items()
@@ -359,6 +368,7 @@ def _build_ground_truth(*, user: Any, scenarios: Mapping[str, Any]) -> dict[str,
         },
         "solver_candidates": {
             "returned_count": candidates.count,
+            "probe_candidate_limit": LAB_SOLVER_PROBE_CANDIDATE_LIMIT,
             "total_eligible_count": candidates.total_eligible_count,
             "active_visible_count": candidates.active_visible_count,
             "excluded_solver_disabled_count": candidates.excluded_solver_disabled_count,

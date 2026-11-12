@@ -97,7 +97,9 @@ seleccionado:
 
 - calcula los totales desde las mismas proyecciones de biblioteca que usa la web;
 - cuenta alimentos activos, visibles y habilitados para el solver;
-- ejecuta una prueba pura del solver para una comida de 450 kcal con 30/50/20;
+- ejecuta una prueba pura del solver para una comida de 450 kcal con 30/50/20
+  sólo cuando el escenario seleccionado la exige; el probe usa hasta 40
+  candidatos, el límite por defecto de la tool de propuesta de comida;
 - resuelve entidades reales para el caso de reemplazo de alimento;
 - determina qué escenarios están listos y cuáles están bloqueados por fixture o datos.
 
@@ -178,6 +180,24 @@ python manage.py evaluate_ai_assistant_lab --list-scenarios
 ```
 
 También se puede repetir `--scenario` para ejecutar un subconjunto.
+
+## Corridas eficientes en staging
+
+Ejecutar el comando del laboratorio directamente en un proceso temporal de
+staging, con la cuenta de prueba indicada y el proveedor configurado en el
+servicio. No se necesitan navegación web, contraseña de la cuenta ni una clave
+API copiada al entorno local. Primero ejecutar el preflight de **un** escenario
+sin `--live`; después seleccionar sólo los escenarios listos y correr uno por
+vez con `--live`, revisando el costo registrado antes del siguiente. La primera
+corrida live debe ser corta; las tres repeticiones y los demás escenarios se
+autorizan por el saldo real del presupuesto y los resultados previos.
+
+El proceso temporal usa el build y las variables del servicio desplegado. Por
+eso su reporte debe identificar el commit de staging: un cambio que exista
+solamente en un worktree local no fue evaluado por esa corrida. Guardar el
+resumen, reporte, revisión humana y costo por escenario; detenerse ante un
+preflight lento, una regresión dura o un presupuesto sin margen. El costo del
+proceso temporal de cómputo se registra aparte del costo estimado del proveedor.
 
 ## Lectura del reporte
 

@@ -71,6 +71,26 @@ crítico bloquea el avance aunque la respuesta parezca aceptable.
 | 7. Comparación live | Baseline y candidato con fixtures sintéticos o autorizados, tres repeticiones, costo acotado, reporte por capa y revisión humana. | Tope autorizado: USD 2. Pendiente de identificador de cuenta aislada de staging, credencial configurada y revisión humana. |
 | 8. Rollout | Cohorte, métricas, alarma, disparador de rollback y evidencia de despliegue. | Pendiente de aprobación de activación. |
 
+## Evidencia inicial de staging (12 de noviembre de 2026)
+
+La cuenta de prueba `myscoope@gmail.com` respondió dos turnos con el modelo
+`gpt-5.6-luna`: una consulta contó un alimento, coherente con su biblioteca; una
+solicitud de comida de 450 kcal invocó una tool y dejó el chat activo sin
+propuesta asociada. La vista previa persistida explicó que sólo estaba disponible
+Humillas y que faltaba variedad para una solución suficiente. Ambos eventos de
+uso terminaron `completed`; el costo estimado del proveedor fue USD 0,001098 y
+USD 0,001672, USD 0,002770 en total. No se ha revisado la trayectoria completa
+ni su calidad humana.
+
+El staging evaluado estaba en el commit `3b569223d65da312e4bec3411cb157cf3b92cae9`,
+anterior a esta implementación local. Un preflight directo de `comida_450_kcal`
+en ese build se canceló tras unos tres minutos sin resultado. La causa probable
+es el probe de hasta 250 candidatos del laboratorio: la tool de comida usa 40
+por defecto. La corrección local limita el probe a 40 y lo omite para escenarios
+que no lo necesitan; debe volver a medirse en staging después de integrar el
+commit corregido. El proceso temporal de Render genera costo de cómputo separado
+del consumo de OpenAI.
+
 ## Siguiente corrida permitida
 
 Ejecutar los tests locales de contratos y el preflight sin proveedor. Para el caso

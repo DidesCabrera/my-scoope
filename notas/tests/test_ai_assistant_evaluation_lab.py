@@ -40,10 +40,12 @@ class AIAssistantEvaluationLabTests(TestCase):
             created_by=self.user,
         )
 
-        report = run_evaluation_lab(
-            user=self.user,
-            scenario_keys=("bibliotecas_coherentes",),
-        )
+        with patch("notas.application.ai_intake.evaluation_lab._solver_450_probe") as probe:
+            report = run_evaluation_lab(
+                user=self.user,
+                scenario_keys=("bibliotecas_coherentes",),
+            )
+        probe.assert_not_called()
 
         self.assertEqual(report.status, "preflight_ready")
         self.assertEqual(EVALUATION_LAB_VERSION, "ai_assistant.evaluation_lab.v2")
@@ -52,6 +54,8 @@ class AIAssistantEvaluationLabTests(TestCase):
         self.assertEqual(len(report.contract_manifest["provider_tool_sha256"]), 64)
         self.assertTrue(report.passed)
         self.assertEqual(report.ground_truth["libraries"]["foods"], 1)
+        self.assertEqual(report.ground_truth["solver_450_probe"]["status"], "not_run")
+        self.assertEqual(report.ground_truth["solver_candidates"]["probe_candidate_limit"], 40)
         self.assertEqual(report.catalog["total_capabilities"], 91)
         self.assertEqual(
             report.catalog["mapped_capability_ids"],
