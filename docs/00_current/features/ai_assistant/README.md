@@ -6,6 +6,21 @@ Baseline vigente y operativa. CM00-CM24, PT00-PT06 y BA00-BA07 están cerrados. 
 
 El contrato actual prioriza libertad del LLM guiada por propósito, estado, capacidades y límites tipados. My Scoope conserva la autoridad sobre validación, permisos, cálculo, persistencia, presentación de objetos y observabilidad.
 
+## Laboratorio de evaluación: entrada obligada para medir calidad
+
+El [laboratorio interno](evaluation_lab.md) es un activo permanente del AI Assistant,
+no una prueba puntual ni una pantalla de demostración. Permite ensayar el mismo
+runtime y las mismas tools sin depender de la interfaz, medir resultados por
+escenario y distinguir fallas de comprensión, tools, catálogo, solver, proveedor
+y permisos. Una respuesta nutricional insuficiente también es un caso valioso:
+el asistente debe reconocer el límite sin inventar una solución.
+
+Antes de probar o ampliar el asistente, revisar allí el preflight, los escenarios
+live y la revisión humana. Las llamadas live usan el proveedor y pueden tener
+costo; el preflight no. Los cambios de capacidad y los incidentes observados deben
+alimentar el laboratorio con casos y fixtures reproducibles. Un caso agregado o
+un pase automático no acreditan por sí solos calidad conversacional ni un rollout.
+
 ## Patch de capacidades y propuestas con alternativas
 
 La decisión 0195 reemplaza la selección de micro-tools de mutación por
