@@ -142,7 +142,27 @@ export default function PreparationToMealPicker() {
 
   const choosePreparation = (item: PreparationDetail) => router.push({ pathname: "/pickers/preparation-to-meal", params: { ...(calendarized ? { dayId: String(day), mealKey, snapshotKey } : { mealId: String(meal) }), preparationId: String(item.id), ...(replace === "1" ? { replace } : {}), ...(relation ? { relationId: String(relation) } : {}) } });
 
-  return <Screen contentStyle={styles.content} headerMode="preserve">
+  const portionSelector = selectedPreparationId && selected ? <Card style={styles.portionCard}>
+    <FoodPortionField
+      accentColor={tokens.color.preparation}
+      equivalentMetricAmount={selected.grams}
+      householdDefaultAmount={1}
+      householdMeasureLabel={selected.household_label === "completo mediano" ? "completo" : selected.household_label}
+      householdPluralLabel={selected.household_label === "completo mediano" ? "completos" : undefined}
+      householdPortionValues={unitOptions}
+      initiallyExpanded
+      label="Porción"
+      measure={mode === "units" ? "household" : "metric"}
+      metricDefaultAmount={selected.default_portion_g}
+      metricUnit="g"
+      onChange={setAmount}
+      onConfirmationChange={setPortionConfirmed}
+      onMeasureChange={(measure) => setMode(measure === "household" ? "units" : "grams")}
+      value={amount}
+    />
+  </Card> : null;
+
+  return <Screen contentStyle={styles.content} fixedHeader={portionSelector} fixedHeaderStyle={styles.portionHeader} headerMode="preserve">
     {!selectedPreparationId ? <>
       <View style={styles.searchWrap}>
         <SearchField accessibilityLabel="Buscar preparación" autoCapitalize="words" onChangeText={setSearch} onClear={() => { setSearch(""); setSubmittedSearch(""); if (submittedSearch) setLoading(true); }} onSubmitEditing={() => { const term = search.trim(); if (term !== submittedSearch) { setSubmittedSearch(term); setLoading(true); } }} placeholder="Busca una preparación" returnKeyType="search" value={search} />
@@ -161,25 +181,6 @@ export default function PreparationToMealPicker() {
       </View>
       {!loading && !items.length && !error ? <Text style={styles.empty}>No encontramos preparaciones con ese nombre.</Text> : null}
     </> : selected ? <>
-      <Card style={styles.portionCard}>
-        <FoodPortionField
-          accentColor={tokens.color.preparation}
-          equivalentMetricAmount={selected.grams}
-          householdDefaultAmount={1}
-          householdMeasureLabel={selected.household_label === "completo mediano" ? "completo" : selected.household_label}
-          householdPluralLabel={selected.household_label === "completo mediano" ? "completos" : undefined}
-          householdPortionValues={unitOptions}
-          initiallyExpanded
-          label="Porción"
-          measure={mode === "units" ? "household" : "metric"}
-          metricDefaultAmount={selected.default_portion_g}
-          metricUnit="g"
-          onChange={setAmount}
-          onConfirmationChange={setPortionConfirmed}
-          onMeasureChange={(measure) => setMode(measure === "household" ? "units" : "grams")}
-          value={amount}
-        />
-      </Card>
       <PreparationPickerCard detail={selected} onOpenItem={(item) => {
         if (item.detailId != null) router.push((item.kind === "preparation" ? `/libraries/preparations/${item.detailId}` : `/libraries/foods/${item.detailId}`) as Href);
       }} selected />
@@ -204,6 +205,7 @@ const styles = StyleSheet.create({
   content: { gap: tokens.spacing.lg },
   searchWrap: { position: "relative", zIndex: 2 },
   results: { gap: tokens.spacing.lg, marginHorizontal: -6 },
+  portionHeader: { paddingBottom: tokens.spacing.sm },
   portionCard: { paddingVertical: tokens.spacing.sm },
   empty: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
   infoContent: { gap: tokens.spacing.md, paddingHorizontal: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
