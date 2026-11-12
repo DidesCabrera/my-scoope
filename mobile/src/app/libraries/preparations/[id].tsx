@@ -221,14 +221,9 @@ export default function PreparationDetailScreen() {
   return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
     <EntityDetailPage beforeNutrition={<View style={styles.kpiViewSelector}>
       <Text style={styles.kpiViewTitle}>Información nutricional</Text>
-      <View accessibilityLabel="Información nutricional mostrada" style={styles.kpiViewOptions}>
-        <Pressable accessibilityLabel="Ver información de la receta completa" accessibilityRole="button" accessibilityState={{ selected: kpiView === "recipe" }} onPress={() => setKpiView("recipe")} style={[styles.kpiViewOption, kpiView === "recipe" && styles.kpiViewOptionSelected]}>
-          <Text style={[styles.kpiViewOptionText, kpiView === "recipe" && styles.kpiViewOptionTextSelected]}>Receta completa</Text>
-        </Pressable>
-        <Pressable accessibilityLabel={`Ver información de una porción de ${formatPreparationNumber(detail.default_portion_g, 2)} gramos`} accessibilityRole="button" accessibilityState={{ selected: kpiView === "portion" }} onPress={() => setKpiView("portion")} style={[styles.kpiViewOption, kpiView === "portion" && styles.kpiViewOptionSelected]}>
-          <Text style={[styles.kpiViewOptionText, kpiView === "portion" && styles.kpiViewOptionTextSelected]}>Porción · {formatPreparationNumber(detail.default_portion_g, 2)} g</Text>
-        </Pressable>
-      </View>
+      <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setKpiView((current) => current === "recipe" ? "portion" : "recipe")} style={({ pressed }) => [styles.kpiViewAction, pressed && styles.kpiViewActionPressed]}>
+        <Text style={styles.kpiViewActionText}>{kpiView === "recipe" ? "Ver por porción" : "Ver por receta"}</Text>
+      </Pressable>
     </View>} entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={subtitle} title={detail.name}>
       <EntityDetailSection title="Composición de la preparación">
         <FoodPanels editing={editing} items={ingredients} nestedScroll onOpenItem={openIngredient} ownerLabel="esta preparación" />
@@ -247,11 +242,9 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
   feedback: { padding: tokens.spacing.screen },
-  kpiViewSelector: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
-  kpiViewTitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  kpiViewOptions: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, flexDirection: "row", padding: 3 },
-  kpiViewOption: { alignItems: "center", borderRadius: tokens.radius.pill, flex: 1, justifyContent: "center", minHeight: 38, paddingHorizontal: tokens.spacing.sm },
-  kpiViewOptionSelected: { backgroundColor: tokens.color.textMain },
-  kpiViewOptionText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, textAlign: "center" },
-  kpiViewOptionTextSelected: { color: tokens.color.surfaceApp },
+  kpiViewSelector: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: tokens.spacing.sm },
+  kpiViewTitle: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  kpiViewAction: { alignItems: "center", justifyContent: "center", minHeight: 38, paddingLeft: tokens.spacing.sm },
+  kpiViewActionPressed: { opacity: 0.65 },
+  kpiViewActionText: { color: tokens.color.interactivePrimary, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
 });
