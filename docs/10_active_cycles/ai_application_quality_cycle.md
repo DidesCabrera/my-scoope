@@ -1,7 +1,7 @@
 # Ciclo de calidad medible del AI Assistant
 
-Estado: implementación local inicial; evaluación live y revisión humana pendientes  
-Base: `origin/staging` `d5d31c6045dd216b8d87836124e2a079be71109b`  
+Estado: implementación local inicial; evaluación live y revisión humana pendientes
+Base: `origin/staging` `d5d31c6045dd216b8d87836124e2a079be71109b`
 Autoridad: `docs/00_current/features/ai_assistant/`, registro de tools y servicios de producto
 
 ## Resultado buscado
