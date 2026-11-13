@@ -1,10 +1,10 @@
 # Propuesta visual para los conflictos del Food Catalog (v0.1)
 
-Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote y los seis conceptos del segundo; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. El tercer lote de diez conceptos está pendiente de revisión.
+Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo y los diez del tercero; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. El cuarto lote de diez conceptos está pendiente de revisión.
 
 Fuente: planilla [Food Catalog central — 219 alimentos y porciones](https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit#gid=2005160404), pestaña `Alimentos`, filas 5–223, columnas B/E/O/P/X/Y/Z/AA. La auditoría histórica marca 103 «Crear icono», 36 «Compartir icono», 3 «Cambiar emoji» y 77 «Mantener». Esta tabla cubre los **142 alimentos con acción pendiente** mediante **106 conceptos visuales**; agrupar variantes no equivale a afirmar que todos los estados se vean idénticos.
 
-Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (22 con boceto seleccionado: 2 recuperados, 10 aprobados por Felipe y 10 propuestos en el lote actual) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
+Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (32 con boceto seleccionado: 2 recuperados, 20 aprobados por Felipe y 10 propuestos en el lote actual) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
 
 | Boceto visible | Archivo |
 |---|---|
@@ -28,7 +28,7 @@ Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo
 
 Método: imagen raster generada con la herramienta integrada, fondo transparente, con almeja y tofu aprobados como referencias de estilo. Las vistas reducidas son muestras de 128 px; queda pendiente la prueba de legibilidad a 20/24/41 px y contraste en temas claro/oscuro. Se descartaron las primeras variantes de kelp, avena y carne molida por resplandor, forma de grano y hebras excesivas, respectivamente.
 
-### Tercer lote · diez conceptos en orden, pendiente de revisión
+### Tercer lote · diez conceptos en orden, aprobado conceptualmente
 
 Se saltan bocetos ya trabajados y los dos cambios Unicode que no requieren ilustración. Las diez propuestas cubren doce fichas del inventario.
 
@@ -46,6 +46,25 @@ Se saltan bocetos ya trabajados y los dos cambios Unicode que no requieren ilust
 | 18 | Bok choy crudo; cocido | ![Bok choy](assets/visual_identity_catalog/bok-choy-preview.png) | [PNG](assets/visual_identity_catalog/bok-choy-prototype.png) | Base cruda; revisar si la cocida requiere variante. |
 
 Método: diez llamadas independientes a la generación de imágenes integrada, con los prototipos aprobados como referencias de estilo; recortes de alimento con fondo transparente, silueta compacta y sin marca ni texto. Las vistas de revisión son de 192 px para evitar la pixelación de una muestra reducida a píxeles físicos; no sustituyen una comprobación dentro de la app. El lote no se ha publicado ni conectado al catálogo operativo.
+
+### Cuarto lote · diez conceptos en orden, pendiente de revisión
+
+Se salta carne molida (#23) y chirimoya (#25), que ya tienen boceto. Hay once imágenes para diez conceptos porque la ciruela fresca y la seca reciben versiones propias. Las carnes de cabra y conejo son representaciones de cortes y no pueden probar especie por imagen sola: el nombre debe acompañarlas siempre.
+
+| # de la tabla | Alimento(s) | Vista de revisión | Original | Observación |
+|---:|---|---|---|---|
+| 19 | Caqui crudo | ![Caqui](assets/visual_identity_catalog/persimmon-preview.png) | [PNG](assets/visual_identity_catalog/persimmon-prototype.png) | Cáliz de cuatro hojas y pulpa naranja. |
+| 20 | Carambola cruda | ![Carambola](assets/visual_identity_catalog/starfruit-preview.png) | [PNG](assets/visual_identity_catalog/starfruit-prototype.png) | Rodaja en estrella. |
+| 21 | Carne de cabra cruda | ![Carne de cabra](assets/visual_identity_catalog/goat-meat-preview.png) | [PNG](assets/visual_identity_catalog/goat-meat-prototype.png) | Corte magro oscuro con hueso; no usar sin nombre. |
+| 22 | Carne de conejo cruda | ![Carne de conejo](assets/visual_identity_catalog/rabbit-meat-preview.png) | [PNG](assets/visual_identity_catalog/rabbit-meat-prototype.png) | Porción rosada clara; no usar sin nombre. |
+| 24 | Cebollín crudo | ![Cebollín](assets/visual_identity_catalog/scallion-preview.png) | [PNG](assets/visual_identity_catalog/scallion-prototype.png) | Tallos finos y bulbos pequeños, no puerro. |
+| 26 | Chirivía cruda; cocida | ![Chirivía](assets/visual_identity_catalog/parsnip-preview.png) | [PNG](assets/visual_identity_catalog/parsnip-prototype.png) | Base cruda; pendiente decidir variante cocida. |
+| 27 | Ciruela cruda; seca | ![Ciruela fresca](assets/visual_identity_catalog/plum-fresh-preview.png) ![Ciruela seca](assets/visual_identity_catalog/plum-dried-preview.png) | [Fresca](assets/visual_identity_catalog/plum-fresh-prototype.png) · [Seca](assets/visual_identity_catalog/plum-dried-prototype.png) | Dos imágenes para conservar la diferencia de estado. |
+| 28 | Clara de huevo | ![Clara de huevo](assets/visual_identity_catalog/egg-white-preview.png) | [PNG](assets/visual_identity_catalog/egg-white-prototype.png) | Representa clara líquida sin yema; verificar estado de la ficha antes de integrar. |
+| 29 | Coliflor cruda; cocida | ![Coliflor](assets/visual_identity_catalog/cauliflower-preview.png) | [PNG](assets/visual_identity_catalog/cauliflower-prototype.png) | Base cruda; pendiente decidir variante cocida. |
+| 30 | Colinabo crudo | ![Colinabo](assets/visual_identity_catalog/kohlrabi-preview.png) | [PNG](assets/visual_identity_catalog/kohlrabi-prototype.png) | Bulbo verde liso con hojas laterales. |
+
+Método: once generaciones independientes con la herramienta integrada y referencias visuales aprobadas; sujeto aislado, fondo transparente y silueta legible. Se descartaron las primeras versiones de cabra y conejo por bordes/fondo residuales. Las vistas son de 192 px para revisión, no una prueba de producto. No se publicó ni vinculó ninguna imagen al catálogo operativo.
 
 | # | Alimento(s) | Propuesta gráfica | Tratamiento |
 |---:|---|---|---|
@@ -67,18 +86,18 @@ Método: diez llamadas independientes a la generación de imágenes integrada, c
 | 16 | Berro crudo | Ramita de berro con hojas redondas pequeñas. | Boceto nuevo · `watercress` |
 | 17 | Betarraga cocida; Betarraga cruda | Betarraga redonda color vino con raíz fina y hojas; base compartida. | Boceto nuevo · `beet` |
 | 18 | Bok choy cocido; Bok choy crudo | Manojo de hojas verde oscuro y tallos blancos anchos. | Boceto nuevo · `bok_choy` |
-| 19 | Caqui crudo | Caqui naranja con cáliz verde de cuatro puntas. | Icono original · `persimmon` |
-| 20 | Carambola cruda | Carambola amarilla con una rodaja en estrella. | Icono original · `starfruit` |
-| 21 | Carne de cabra cruda | Corte magro rojo oscuro; distintivo de cabra sin usar animal vivo. | Icono original · `goat_meat` |
-| 22 | Carne de conejo cruda | Corte pálido rosado y pequeño; evitar caricatura de conejo. | Icono original · `rabbit_meat` |
+| 19 | Caqui crudo | Caqui naranja con cáliz verde de cuatro puntas. | Boceto nuevo · `persimmon` |
+| 20 | Carambola cruda | Carambola amarilla con una rodaja en estrella. | Boceto nuevo · `starfruit` |
+| 21 | Carne de cabra cruda | Corte magro rojo oscuro; distintivo de cabra sin usar animal vivo. | Boceto nuevo · `goat_meat` |
+| 22 | Carne de conejo cruda | Corte pálido rosado y pequeño; evitar caricatura de conejo. | Boceto nuevo · `rabbit_meat` |
 | 23 | Carne molida de vacuno magra cruda | Montículo de carne molida roja con hebras definidas. | Boceto nuevo · `ground_beef` |
-| 24 | Cebollín crudo | Tres cebollines largos, bulbos blancos y tallos verdes. | Icono original · `scallion` |
+| 24 | Cebollín crudo | Tres cebollines largos, bulbos blancos y tallos verdes. | Boceto nuevo · `scallion` |
 | 25 | Chirimoya cruda | Chirimoya verde de escamas suaves, una mitad blanca con semillas negras. | Boceto nuevo · `cherimoya` |
-| 26 | Chirivía cocida; Chirivía cruda | Raíz cónica crema con hojas cortas, distinta de zanahoria. | Icono original · `parsnip` |
-| 27 | Ciruela cruda; Ciruela seca | Ciruela fresca morada con pulpa amarilla; para la seca, variante arrugada oscura. | Icono original · `plum` |
-| 28 | Clara de huevo | Clara translúcida en plato pequeño, sin yema. | Icono original · `egg_white` |
-| 29 | Coliflor cocida; Coliflor cruda | Cabeza blanca de coliflor con hojas verdes. | Icono original · `cauliflower` |
-| 30 | Colinabo crudo | Bulbo verde claro redondo con tallos laterales. | Icono original · `kohlrabi` |
+| 26 | Chirivía cocida; Chirivía cruda | Raíz cónica crema con hojas cortas, distinta de zanahoria. | Boceto nuevo · `parsnip` |
+| 27 | Ciruela cruda; Ciruela seca | Ciruela fresca morada con pulpa amarilla; para la seca, variante arrugada oscura. | Boceto nuevo · `plum` |
+| 28 | Clara de huevo | Clara translúcida en plato pequeño, sin yema. | Boceto nuevo · `egg_white` |
+| 29 | Coliflor cocida; Coliflor cruda | Cabeza blanca de coliflor con hojas verdes. | Boceto nuevo · `cauliflower` |
+| 30 | Colinabo crudo | Bulbo verde claro redondo con tallos laterales. | Boceto nuevo · `kohlrabi` |
 | 31 | Cordero molido crudo | Carne de cordero molida roja en hebras; evitar oveja viva. | Icono original · `lamb` |
 | 32 | Costilla de cerdo cruda | Costilla cruda rosada con hueso curvo visible. | Icono original · `pork_rib` |
 | 33 | Cranberry crudo | Tres cranberries rojos pequeños, una cortada para distinguir de cereza. | Icono original · `cranberry` |
