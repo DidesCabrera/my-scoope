@@ -36,6 +36,7 @@ from notas.domain.models import (
     PinnedDailyPlan,
     PinnedSupplementIntakeExecution,
     Supplement,
+    SupplementCatalogEntry,
     SupplementIntake,
     SupplementIntakePreset,
 )
@@ -138,6 +139,59 @@ def _supplement_payload(row):
         "default_quantity": str(row.default_quantity) if row.default_quantity is not None else None,
         "default_unit": row.default_unit,
     }
+
+
+def _catalog_payload(row, saved_ids):
+    return {
+        "id": row.id, "name": row.name, "brand": row.brand, "form": row.form,
+        "description": row.description, "components": row.components,
+        "nutrition": row.nutrition, "default_quantity": str(row.default_quantity) if row.default_quantity is not None else None,
+        "default_unit": row.default_unit, "source_name": row.source_name,
+        "source_url": row.source_url, "reviewed_at": row.reviewed_at.isoformat(),
+        "saved_supplement_id": saved_ids.get(row.id),
+    }
+
+
+@router.get("/explore/supplements", operation_id="explore_supplements", auth=mobile_bearer, response={200: dict, 403: ErrorEnvelope})
+def explore_supplements(request, search: str = ""):
+    _pro(request.auth.user)
+    rows = SupplementCatalogEntry.objects.filter(is_published=True)
+    if search.strip():
+        rows = rows.filter(name__icontains=search.strip()[:100])
+    rows = list(rows[:100])
+    saved_ids = dict(Supplement.objects.filter(created_by=request.auth.user, catalog_entry_id__in=[row.id for row in rows]).values_list("catalog_entry_id", "id"))
+    return success({"items": [_catalog_payload(row, saved_ids) for row in rows]})
+
+
+@router.get("/explore/supplements/{catalog_id}", operation_id="explore_supplement_detail", auth=mobile_bearer, response={200: dict, 403: ErrorEnvelope, 404: ErrorEnvelope})
+def explore_supplement_detail(request, catalog_id: int):
+    _pro(request.auth.user)
+    row = SupplementCatalogEntry.objects.filter(pk=catalog_id, is_published=True).first()
+    if row is None:
+        raise MobileAPIError("explore_supplement_not_found", "Este suplemento no está disponible en Explorar.", 404)
+    saved_ids = dict(Supplement.objects.filter(created_by=request.auth.user, catalog_entry=row).values_list("catalog_entry_id", "id"))
+    return success(_catalog_payload(row, saved_ids))
+
+
+@router.post("/explore/supplements/{catalog_id}/save", operation_id="save_explore_supplement", auth=mobile_bearer, response={200: dict, 403: ErrorEnvelope, 404: ErrorEnvelope})
+def save_explore_supplement(request, catalog_id: int):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _pro(request.auth.user)
+    row = SupplementCatalogEntry.objects.filter(pk=catalog_id, is_published=True).first()
+    if row is None:
+        raise MobileAPIError("explore_supplement_not_found", "Este suplemento no está disponible en Explorar.", 404)
+    try:
+        with transaction.atomic():
+            personal, created = Supplement.objects.get_or_create(
+                created_by=request.auth.user, catalog_entry=row,
+                defaults={"name": row.name, "brand": row.brand, "form": row.form, "description": row.description,
+                          "components": row.components, "nutrition": row.nutrition,
+                          "default_quantity": row.default_quantity, "default_unit": row.default_unit},
+            )
+    except IntegrityError:
+        personal = Supplement.objects.get(created_by=request.auth.user, catalog_entry=row)
+        created = False
+    return success({"saved_supplement_id": personal.id, "already_saved": not created})
 
 
 def _intake_payload(intake, number):

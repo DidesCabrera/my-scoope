@@ -10,6 +10,7 @@ from django.db import models
 
 class Supplement(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="supplements")
+    catalog_entry = models.ForeignKey("notas.SupplementCatalogEntry", null=True, blank=True, on_delete=models.SET_NULL, related_name="saved_supplements")
     name = models.CharField(max_length=100)
     brand = models.CharField(max_length=100, blank=True)
     form = models.CharField(max_length=32, blank=True)
@@ -27,6 +28,31 @@ class Supplement(models.Model):
     class Meta:
         ordering = ["list_order", "name", "id"]
         indexes = [models.Index(fields=["created_by", "list_order", "name"], name="supp_user_library_idx")]
+        constraints = [models.UniqueConstraint(fields=["created_by", "catalog_entry"], condition=models.Q(catalog_entry__isnull=False), name="supp_one_catalog_copy_per_user")]
+
+    def __str__(self):
+        return self.name
+
+
+class SupplementCatalogEntry(models.Model):
+    """Reviewed global template; saving makes an independent user-owned copy."""
+
+    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=100)
+    brand = models.CharField(max_length=100, blank=True)
+    form = models.CharField(max_length=32, blank=True)
+    description = models.TextField(blank=True)
+    components = models.JSONField(default=list, blank=True)
+    nutrition = models.JSONField(default=dict, blank=True)
+    default_quantity = models.DecimalField(max_digits=9, decimal_places=3, null=True, blank=True)
+    default_unit = models.CharField(max_length=20, blank=True)
+    source_name = models.CharField(max_length=120)
+    source_url = models.URLField()
+    reviewed_at = models.DateField()
+    is_published = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["name", "id"]
 
     def __str__(self):
         return self.name

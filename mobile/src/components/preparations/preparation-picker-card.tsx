@@ -27,7 +27,7 @@ export function PreparationPickerCard({ actionLabel, detail, onAction, onOpenIte
   onOpenItem?: (item: FoodPanelItem) => void;
   selected?: boolean;
 }) {
-  const { calories, protein_g, carbs_g, fat_g } = detail.nutrition;
+  const { calories, protein_g, protein_per_kilogram, carbs_g, fat_g } = detail.nutrition;
   return <NutritionEntityCard
     actions={actionLabel && onAction ? <PickerCardAction label={actionLabel} onPress={onAction} subject={detail.name} /> : undefined}
     collapsiblePanel
@@ -36,7 +36,7 @@ export function PreparationPickerCard({ actionLabel, detail, onAction, onOpenIte
     subtitle={preparationPortionLabel(detail)}
     nutrition={{
       calories,
-      protein: { grams: protein_g, allocation: allocation(protein_g, 4, calories) },
+      protein: { grams: protein_g, allocation: allocation(protein_g, 4, calories), perKilogram: protein_per_kilogram },
       carbs: { grams: carbs_g, allocation: allocation(carbs_g, 4, calories) },
       fat: { grams: fat_g, allocation: allocation(fat_g, 9, calories) },
     }}

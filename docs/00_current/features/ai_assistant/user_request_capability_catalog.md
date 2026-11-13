@@ -212,6 +212,31 @@ Leyenda de cobertura actual:
 | A-05 | Consejo nutricional general sin modificar datos | Conversación | Cubierta con límites | No debe fingir personalización clínica ni crear estado implícitamente. |
 | A-06 | Solicitud de riesgo médico o ingesta extrema | Orientación segura | Cubierta con límites | Puede informar y pedir contexto; no sustituye atención profesional. |
 
+### Suplementos
+
+El módulo de producto tiene biblioteca personal Pro, tomas, presets y registro de
+cumplimiento. El asistente todavía no expone esas capacidades. La nutrición de
+etiqueta es informativa y nunca se suma a los totales de comidas o planes.
+
+| ID | Solicitud o ejemplos | Resolución | Cobertura actual | Observación |
+| --- | --- | --- | --- | --- |
+| S-01 | Consultar mis suplementos, dosis o componentes | Lectura owner-scoped | Parcial | La lectura AI local exige flag y permiso Pro; falta validar trayectoria live y presentación. No interpretar componentes como beneficios médicos. |
+| S-02 | Consultar tomas o presets de un plan | Lectura owner-scoped | Parcial | La lectura AI local distingue preset de toma incorporada al plan; falta validar trayectoria live y cumplimiento fechado. |
+| S-03 | Agregar o cambiar una toma de suplemento | Handoff confiable | UI | El módulo de producto ya tiene edición; el asistente no debe simular una toma ni contarla como macro. |
+| S-04 | Preguntar si un suplemento cubre un requerimiento clínico | Orientación segura | Brecha intencional | La etiqueta no prueba eficacia, necesidad ni seguridad individual. |
+
+### Preparaciones
+
+Este módulo sigue en evolución paralela. La evaluación del asistente debe medir la
+brecha de comprensión y handoff sin fijar un contrato de escritura antes de cerrar
+la integración de preparaciones personales, versiones y snapshots.
+
+| ID | Solicitud o ejemplos | Resolución | Cobertura actual | Observación |
+| --- | --- | --- | --- | --- |
+| P-01 | Buscar o consultar una Preparación y su porción | Lectura owner-scoped | Brecha | Diferenciar preparación curada y personal, con sus permisos y evidencia. |
+| P-02 | Incorporar una Preparación a una comida | Handoff confiable | UI | Requiere porción, versión y recálculo de producto; no tratarla como Food. |
+| P-03 | Crear o editar una Preparación personal | Handoff confiable | UI | Depende del flag y permiso Pro; conservar versiones y sus efectos sobre comidas vivas. |
+
 ## Combinaciones frecuentes
 
 Una interacción real puede agrupar varias operaciones:

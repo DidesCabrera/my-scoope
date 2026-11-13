@@ -23,7 +23,9 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
 13. `architecture/component_inventory.md`
 14. `architecture/ai_implementation_guide.md`
 15. `features/food_catalog.md`
-16. `features/ai_assistant/README.md`
+16. `features/ai_assistant/README.md` y, para pruebas o evolución de su calidad,
+    `features/ai_assistant/evaluation_lab.md`: laboratorio interno sin dependencia
+    de la interfaz, con preflight, escenarios live y revisión humana.
 17. `features/project_control.md` cuando el trabajo toque ambientes, CI, estado ejecutable, Admin Operations Project Control o contexto para AI.
 18. `../20_decisions/0020-ai-assistant-django-app-and-chat-engine.md`
 19. `../20_decisions/0028-ai-assistant-activation-cycle.md`

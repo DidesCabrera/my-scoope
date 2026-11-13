@@ -113,7 +113,7 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
         slug="supplements",
         label="Supplements",
         models=(
-            "Supplement", "SupplementIntake", "SupplementIntakeItem",
+            "Supplement", "SupplementCatalogEntry", "SupplementIntake", "SupplementIntakeItem",
             "SupplementIntakePreset", "SupplementIntakePresetItem",
             "PinnedSupplementIntakeExecution", "CalendarizedSupplementIntakeExecution",
         ),

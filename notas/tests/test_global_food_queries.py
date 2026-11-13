@@ -219,6 +219,14 @@ class GlobalFoodQueryTests(TestCase):
 
         self.assertEqual(names, ["Oats, raw"])
 
+    def test_list_global_foods_normalizes_accented_or_punctuated_alias_search(self):
+        for search in ("Avéna", "Avena,"):
+            with self.subTest(search=search):
+                self.assertEqual(
+                    [food.name for food in search_global_foods(search=search)],
+                    ["Oats, raw"],
+                )
+
     def test_search_global_foods_returns_items(self):
         foods = search_global_foods(
             search="oats",

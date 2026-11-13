@@ -12,10 +12,13 @@ from notas.application.ai_intake.evaluation_lab import (
     EVALUATION_LAB_VERSION,
     _build_diagnostics,
     _credit_block_reasons,
+    _scenario_preflight,
     run_evaluation_lab,
 )
+from notas.application.ai_intake.real_provider_behavior_checks import evaluate_expected_outcome
 from notas.application.ai_intake.real_provider_validation import (
     RealProviderValidationReport,
+    built_in_real_provider_scenarios,
 )
 from notas.domain.models import Food, Meal, MealFood
 
@@ -37,16 +40,23 @@ class AIAssistantEvaluationLabTests(TestCase):
             created_by=self.user,
         )
 
-        report = run_evaluation_lab(
-            user=self.user,
-            scenario_keys=("bibliotecas_coherentes",),
-        )
+        with patch("notas.application.ai_intake.evaluation_lab._solver_450_probe") as probe:
+            report = run_evaluation_lab(
+                user=self.user,
+                scenario_keys=("bibliotecas_coherentes",),
+            )
+        probe.assert_not_called()
 
         self.assertEqual(report.status, "preflight_ready")
         self.assertEqual(EVALUATION_LAB_VERSION, "ai_assistant.evaluation_lab.v2")
+        self.assertEqual(report.contract_manifest["task_dataset_version"], "ai_assistant.task_dataset.v2")
+        self.assertEqual(report.contract_manifest["mcp_tool_count"], 10)
+        self.assertEqual(len(report.contract_manifest["provider_tool_sha256"]), 64)
         self.assertTrue(report.passed)
         self.assertEqual(report.ground_truth["libraries"]["foods"], 1)
-        self.assertEqual(report.catalog["total_capabilities"], 84)
+        self.assertEqual(report.ground_truth["solver_450_probe"]["status"], "not_run")
+        self.assertEqual(report.ground_truth["solver_candidates"]["probe_candidate_limit"], 40)
+        self.assertEqual(report.catalog["total_capabilities"], 91)
         self.assertEqual(
             report.catalog["mapped_capability_ids"],
             ["DP-01", "F-01", "M-01", "PG-01"],
@@ -55,7 +65,8 @@ class AIAssistantEvaluationLabTests(TestCase):
         self.assertEqual(report.live_validations, ())
         self.assertEqual(report.quality_evaluation["status"], "not_run")
         self.assertTrue(report.task_dataset["passed"])
-        self.assertEqual(report.task_dataset["case_count"], 64)
+        self.assertEqual(report.task_dataset["case_count"], 54)
+        self.assertEqual(report.task_dataset["partition_counts"], {"development": 54, "holdout": 0})
         self.assertEqual(report.product_feedback["scope"], "selected_user")
         self.assertEqual(AIUsageEvent.objects.count(), 0)
 
@@ -75,6 +86,49 @@ class AIAssistantEvaluationLabTests(TestCase):
         self.assertIn("catalog_data", report.diagnostics["failed_domains"])
         self.assertIn("solver_feasibility", report.diagnostics["failed_domains"])
         self.assertEqual(AIUsageEvent.objects.count(), 0)
+
+    def test_no_candidate_scenario_is_ready_only_for_a_sparse_catalog(self):
+        scenario = built_in_real_provider_scenarios()["comida_sin_candidatos"]
+        truth = {
+            "solver_candidates": {"total_eligible_count": 0},
+            "scenarios": {scenario.key: {"context_dailyplan_id": 7}},
+        }
+
+        ready = _scenario_preflight(scenario, ground_truth=truth)
+        truth["solver_candidates"]["total_eligible_count"] = 2
+        blocked = _scenario_preflight(scenario, ground_truth=truth)
+
+        self.assertEqual(ready["status"], "ready")
+        self.assertEqual(blocked["status"], "blocked_by_fixture")
+        self.assertEqual(blocked["failures"][0]["requirement"], "no_solver_candidates")
+
+    def test_infeasible_scenario_requires_candidates_and_an_impossible_probe(self):
+        scenario = built_in_real_provider_scenarios()["comida_solver_inviable"]
+        truth = {
+            "solver_candidates": {"total_eligible_count": 2},
+            "solver_450_probe": {"status": "impossible"},
+            "scenarios": {scenario.key: {"context_dailyplan_id": 7}},
+        }
+        ready = _scenario_preflight(scenario, ground_truth=truth)
+        truth["solver_450_probe"]["status"] = "partial"
+        blocked = _scenario_preflight(scenario, ground_truth=truth)
+
+        self.assertEqual(ready["status"], "ready")
+        self.assertEqual(blocked["status"], "blocked_by_fixture")
+        self.assertEqual(blocked["failures"][0]["requirement"], "solver_450_infeasible")
+
+    def test_no_candidate_outcome_requires_tool_error_explanation_and_no_artifact(self):
+        scenario = SimpleNamespace(expected_outcome="nutritional_limitation")
+        turn = SimpleNamespace(
+            assistant_message="No hay alimentos aptos para el cálculo. Agrega alimentos y vuelve a intentarlo.",
+            tool_results=({"tool_name": "create_nutrition_solver_meal_proposal", "status": "error"},),
+        )
+        before = {"nutrition_proposals": 0, "prepared_actions": 0}
+        self.assertTrue(evaluate_expected_outcome(scenario, (turn,), state_before=before, state_after=before)[0])
+        invented = {"nutrition_proposals": 1, "prepared_actions": 0}
+        self.assertFalse(evaluate_expected_outcome(scenario, (turn,), state_before=before, state_after=invented)[0])
+        silent = SimpleNamespace(assistant_message="Listo.", tool_results=turn.tool_results)
+        self.assertFalse(evaluate_expected_outcome(scenario, (silent,), state_before=before, state_after=before)[0])
 
     def test_replacement_scenario_binds_exact_database_entities(self):
         source = Food.objects.create(
@@ -120,6 +174,16 @@ class AIAssistantEvaluationLabTests(TestCase):
         self.assertIn("bibliotecas_coherentes", text)
         self.assertIn("comida_450_kcal", text)
         self.assertIn("M-08", text)
+
+    def test_holdout_partition_is_opt_in(self):
+        report = run_evaluation_lab(
+            user=self.user,
+            scenario_keys=("bibliotecas_coherentes",),
+            task_partition="holdout",
+        )
+
+        self.assertEqual(report.task_dataset["case_count"], 18)
+        self.assertEqual(report.task_dataset["partition_counts"], {"development": 0, "holdout": 18})
 
     @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
     def test_live_lab_is_unmetered_by_default_but_can_opt_in_to_user_credits(self):

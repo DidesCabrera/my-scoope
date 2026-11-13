@@ -1,7 +1,7 @@
 # AI README - My Scoope
 
 Status: current
-Last updated: 2026-10-31
+Last updated: 2026-11-12
 Audience: AI assistants and developers working from exported project context
 
 ## Bienvenida de Felipe Dides para la AI
@@ -120,12 +120,19 @@ Read:
 Read:
 
 1. `docs/00_current/features/ai_assistant/README.md`
-2. `docs/00_current/features/ai_assistant/tool_oriented_client_memory.md` when the task touches profile/preference memory, proposal drafts, comparison tools or chat cards
-3. `docs/00_current/architecture/ai_implementation_guide.md`
-4. Latest AI Assistant decisions in `docs/20_decisions/`
-5. `docs/10_active_cycles/ai_assistant_client_memory_profile_objects_cycle.md` for historical cycle context only; prefer the current feature contract above for implementation
-6. `docs/20_decisions/0086-ai-assistant-tool-oriented-operator.md` when the task changes LLM tools, profile/preference memory, proposals or comparators
-7. `docs/40_technical/operations/testing_and_ci_policy.md`
+2. `docs/00_current/features/ai_assistant/evaluation_lab.md` **before evaluating behavior or choosing a test route**: it is the internal, UI-independent path for preflight, live scenarios and human review. Use it to separate assistant, tool, catalog and solver failures; do not infer quality from a passing unit test or a UI conversation alone.
+3. `docs/00_current/features/ai_assistant/tool_oriented_client_memory.md` when the task touches profile/preference memory, proposal drafts, comparison tools or chat cards
+4. `docs/00_current/architecture/ai_implementation_guide.md`
+5. Latest AI Assistant decisions in `docs/20_decisions/`
+6. `docs/10_active_cycles/ai_assistant_client_memory_profile_objects_cycle.md` for historical cycle context only; prefer the current feature contract above for implementation
+7. `docs/20_decisions/0086-ai-assistant-tool-oriented-operator.md` when the task changes LLM tools, profile/preference memory, proposals or comparators
+8. `docs/40_technical/operations/testing_and_ci_policy.md`
+
+When a new assistant capability, failure mode or product dependency appears, add a
+representative case and the necessary fixture or preflight to the lab. Record the
+observed outcome separately from the expected one; a new scenario is coverage,
+not evidence that the provider passed it. Check the target environment and cost
+before running live evaluations.
 
 ### Food Catalog / Nutrition Solver patch
 

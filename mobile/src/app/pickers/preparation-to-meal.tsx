@@ -11,6 +11,7 @@ import { FoodPortionField } from "@/components/pickers/food-portion-field";
 import { formatPreparationAllergens, formatPreparationNumber } from "@/components/preparations/preparation-ingredients-card";
 import { PreparationMealPreviewCard } from "@/components/preparations/preparation-meal-preview-card";
 import { PreparationPickerCard } from "@/components/preparations/preparation-picker-card";
+import { ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button } from "@/components/ui/controls";
 import { Screen } from "@/components/ui/layout";
 import { InlineNotice } from "@/components/ui/primitives";
@@ -45,11 +46,12 @@ export default function PreparationToMealPicker() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEvidence, setShowEvidence] = useState(false);
+  const [infoVisible, setInfoVisible] = useState(false);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ mode: "back", fallback: calendarized ? `/program/days/${day}/meals/${encodeURIComponent(mealKey!)}` as Href : `/libraries/meals/${meal}` as Href, title: replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Editar porción" : "Agregar preparación" });
+    setHeaderPresentation({ action: selectedPreparationId ? { icon: "more", label: "Información adicional de la preparación", onPress: () => setInfoVisible(true) } : undefined, mode: "back", fallback: calendarized ? `/program/days/${day}/meals/${encodeURIComponent(mealKey!)}` as Href : `/libraries/meals/${meal}` as Href, title: replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Editar porción" : "Agregar preparación" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [calendarized, day, meal, mealKey, relation, replace, setHeaderPresentation, snapshotKey]));
+  }, [calendarized, day, meal, mealKey, relation, replace, selectedPreparationId, setHeaderPresentation, snapshotKey]));
 
   const loadPreparations = useCallback((term: string, limit: number) =>
     apiRequest<{ items: PreparationDetail[] }>(`/api/v1/preparations?limit=${limit}&search=${encodeURIComponent(term)}`)
@@ -140,7 +142,27 @@ export default function PreparationToMealPicker() {
 
   const choosePreparation = (item: PreparationDetail) => router.push({ pathname: "/pickers/preparation-to-meal", params: { ...(calendarized ? { dayId: String(day), mealKey, snapshotKey } : { mealId: String(meal) }), preparationId: String(item.id), ...(replace === "1" ? { replace } : {}), ...(relation ? { relationId: String(relation) } : {}) } });
 
-  return <Screen contentStyle={styles.content} headerMode="preserve">
+  const portionSelector = selectedPreparationId && selected ? <Card style={styles.portionCard}>
+    <FoodPortionField
+      accentColor={tokens.color.preparation}
+      equivalentMetricAmount={selected.grams}
+      householdDefaultAmount={1}
+      householdMeasureLabel={selected.household_label === "completo mediano" ? "completo" : selected.household_label}
+      householdPluralLabel={selected.household_label === "completo mediano" ? "completos" : undefined}
+      householdPortionValues={unitOptions}
+      initiallyExpanded
+      label="Porción"
+      measure={mode === "units" ? "household" : "metric"}
+      metricDefaultAmount={selected.default_portion_g}
+      metricUnit="g"
+      onChange={setAmount}
+      onConfirmationChange={setPortionConfirmed}
+      onMeasureChange={(measure) => setMode(measure === "household" ? "units" : "grams")}
+      value={amount}
+    />
+  </Card> : null;
+
+  return <Screen contentStyle={styles.content} fixedHeader={portionSelector} fixedHeaderStyle={styles.portionHeader} headerMode="preserve">
     {!selectedPreparationId ? <>
       <View style={styles.searchWrap}>
         <SearchField accessibilityLabel="Buscar preparación" autoCapitalize="words" onChangeText={setSearch} onClear={() => { setSearch(""); setSubmittedSearch(""); if (submittedSearch) setLoading(true); }} onSubmitEditing={() => { const term = search.trim(); if (term !== submittedSearch) { setSubmittedSearch(term); setLoading(true); } }} placeholder="Busca una preparación" returnKeyType="search" value={search} />
@@ -159,40 +181,23 @@ export default function PreparationToMealPicker() {
       </View>
       {!loading && !items.length && !error ? <Text style={styles.empty}>No encontramos preparaciones con ese nombre.</Text> : null}
     </> : selected ? <>
-      <Card style={styles.portionCard}>
-        <FoodPortionField
-          accentColor={tokens.color.preparation}
-          equivalentMetricAmount={selected.grams}
-          householdDefaultAmount={1}
-          householdMeasureLabel={selected.household_label === "completo mediano" ? "completo" : selected.household_label}
-          householdPluralLabel={selected.household_label === "completo mediano" ? "completos" : undefined}
-          householdPortionValues={unitOptions}
-          initiallyExpanded
-          label="Porción"
-          measure={mode === "units" ? "household" : "metric"}
-          metricDefaultAmount={selected.default_portion_g}
-          metricUnit="g"
-          onChange={setAmount}
-          onConfirmationChange={setPortionConfirmed}
-          onMeasureChange={(measure) => setMode(measure === "household" ? "units" : "grams")}
-          value={amount}
-        />
-      </Card>
       <PreparationPickerCard detail={selected} onOpenItem={(item) => {
         if (item.detailId != null) router.push((item.kind === "preparation" ? `/libraries/preparations/${item.detailId}` : `/libraries/foods/${item.detailId}`) as Href);
       }} selected />
       {previewReady && mealItem ? <PreparationMealPreviewCard meal={mealItem} relationId={relation || undefined} selected={selected} /> : calendarized ? <Text style={styles.empty}>El cambio se aplicará solo a esta comida en curso.</Text> : <Text style={styles.empty}>Actualizando la previsualización de la comida…</Text>}
-      <Card muted>
-        <Text style={styles.cardTitle}>Información adicional</Text>
+      <Button disabled={!previewReady || (!calendarized && !mealItem) || (Platform.OS !== "web" && !portionConfirmed)} label={replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Actualizar porción" : "Agregar a la comida"} loading={busy} onPress={() => void save()} />
+    </> : null}
+    {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+    <ActionSheetModal onRequestClose={() => setInfoVisible(false)} visible={infoVisible && Boolean(selected)}>
+      <ActionSheetHeader entity="preparation" onClose={() => setInfoVisible(false)} title="Información adicional" />
+      {selected ? <View style={styles.infoContent}>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Sodio</Text><Text style={styles.infoValue}>{selected.nutrition.sodium_mg == null ? "Sin dato" : `${formatPreparationNumber(selected.nutrition.sodium_mg, 0)} mg`}</Text></View>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Alérgenos declarados</Text><Text style={styles.infoValue}>{formatPreparationAllergens(selected.allergens)}</Text></View>
         <View style={styles.infoRow}><Text style={styles.infoLabel}>Fuente</Text><Text style={styles.infoValue}>{selected.evidence.source_name || "No indicada"}</Text></View>
         <Pressable accessibilityRole="button" onPress={() => setShowEvidence((current) => !current)} style={styles.evidenceToggle}><Text style={styles.evidenceToggleText}>{showEvidence ? "Ocultar estimación" : "Ver cómo se estimó la porción"}</Text></Pressable>
         {showEvidence ? <Text style={styles.sourceNote}>Versión {selected.version}{selected.evidence.yield_evidence ? ` · ${selected.evidence.yield_evidence}` : ""}</Text> : null}
-      </Card>
-      <Button disabled={!previewReady || (!calendarized && !mealItem) || (Platform.OS !== "web" && !portionConfirmed)} label={replace === "1" ? "Reemplazar preparación" : relation || snapshotKey ? "Actualizar porción" : "Agregar a la comida"} loading={busy} onPress={() => void save()} />
-    </> : null}
-    {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+      </View> : null}
+    </ActionSheetModal>
   </Screen>;
 }
 
@@ -200,9 +205,10 @@ const styles = StyleSheet.create({
   content: { gap: tokens.spacing.lg },
   searchWrap: { position: "relative", zIndex: 2 },
   results: { gap: tokens.spacing.lg, marginHorizontal: -6 },
+  portionHeader: { paddingBottom: tokens.spacing.sm },
   portionCard: { paddingVertical: tokens.spacing.sm },
   empty: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 23 },
-  cardTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.bold },
+  infoContent: { gap: tokens.spacing.md, paddingHorizontal: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   infoRow: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between", gap: tokens.spacing.md },
   infoLabel: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption },
   infoValue: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, textAlign: "right" },

@@ -51,6 +51,57 @@ class RealProviderValidationScenario:
 
 def build_lab_scenarios() -> dict[str, Any]:
     return {
+        "comida_solver_inviable": RealProviderValidationScenario(
+            key="comida_solver_inviable",
+            description=(
+                "Explain a meal request that the solver cannot satisfy despite eligible foods, "
+                "without inventing a feasible proposal."
+            ),
+            user_messages=(
+                "Crea una propuesta revisable de comida de 450 kcal con 30% proteína, "
+                "50% carbohidratos y 20% grasas usando mi minuta diaria ID {dailyplan_id}. "
+                "Si las restricciones no permiten una solución, explícame el motivo.",
+            ),
+            required_tool_names=("create_nutrition_solver_meal_proposal",),
+            expected_tool_errors={"create_nutrition_solver_meal_proposal": "error"},
+            max_tool_calls=3,
+            capability_ids=("M-04", "A-03"),
+            diagnostic_domains=("solver_feasibility", "grounding", "state_mutation"),
+            fixture_requirements=("owned_dailyplan", "solver_candidates", "solver_450_infeasible"),
+            mutation_policy="read_only",
+            default_enabled=False,
+            expected_outcome="nutritional_limitation",
+            manual_review_prompts=(
+                "¿La explicación distingue inviabilidad del solver de falta de datos?",
+                "¿Evita prometer una propuesta y ofrece una alternativa o aclaración viable?",
+            ),
+        ),
+        "comida_sin_candidatos": RealProviderValidationScenario(
+            key="comida_sin_candidatos",
+            description=(
+                "Explain an unavailable meal proposal when the selected account has no "
+                "solver-eligible foods, without inventing a recipe or proposal."
+            ),
+            user_messages=(
+                "Crea una propuesta revisable de comida de 450 kcal usando mi minuta "
+                "diaria ID {dailyplan_id} y los alimentos disponibles. Si no es posible, "
+                "explica qué falta y qué puedo hacer para avanzar.",
+            ),
+            required_tool_names=("create_nutrition_solver_meal_proposal",),
+            expected_tool_errors={"create_nutrition_solver_meal_proposal": "error"},
+            max_final_card_counts={"nutrition_proposal": 0},
+            max_tool_calls=3,
+            capability_ids=("M-04", "A-03"),
+            diagnostic_domains=("catalog_data", "solver_feasibility", "grounding", "state_mutation"),
+            fixture_requirements=("owned_dailyplan", "no_solver_candidates"),
+            mutation_policy="read_only",
+            default_enabled=False,
+            expected_outcome="nutritional_limitation",
+            manual_review_prompts=(
+                "¿Explica la falta de candidatos sin atribuirla falsamente a la comprensión del modelo?",
+                "¿Ofrece un paso viable sin inventar alimentos ni afirmar que creó una propuesta?",
+            ),
+        ),
         "comida_450_kcal": RealProviderValidationScenario(
             key="comida_450_kcal",
             description=(
@@ -162,7 +213,7 @@ def specialize_lab_scenario(scenario: Any, *, user: Any) -> Any | None:
             },
         )
 
-    if scenario.key == "comida_450_kcal":
+    if scenario.key in {"comida_450_kcal", "comida_sin_candidatos", "comida_solver_inviable"}:
         dailyplan = dailyplan_library_queryset(user).order_by("id").first()
         dailyplan_id = int(dailyplan.id) if dailyplan is not None else 0
         return replace(

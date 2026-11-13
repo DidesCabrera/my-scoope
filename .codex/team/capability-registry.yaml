@@ -85,7 +85,7 @@ roles:
     class: "steward"
     status: "pilot"
     path: ".codex/skills/catalog-curation-steward/SKILL.md"
-    purpose: "Maintain traceable, normalized, and useful Foods, Meals, and Daily Plans catalogs through evidence-backed curation operations."
+    purpose: "Maintain traceable, normalized, and useful Foods, Meals, Daily Plans, and Supplements catalogs through evidence-backed curation operations."
   - name: "accounting-intake-recordkeeping-agent"
     area: "finance"
     class: "operator"

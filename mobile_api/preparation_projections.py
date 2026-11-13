@@ -7,7 +7,7 @@ from django.db.models import Prefetch
 from notas.domain.models import MealPreparation, PreparationIngredient
 
 
-def ingredient_payload(row, snapshot: dict, factor: Decimal) -> dict:
+def ingredient_payload(row, snapshot: dict, factor: Decimal, current_weight=None) -> dict:
     """Project frozen ingredient nutrition for a served portion."""
     quantity = row.quantity_g * factor
     per_100g = snapshot["nutrition_per_100g"]
@@ -22,6 +22,7 @@ def ingredient_payload(row, snapshot: dict, factor: Decimal) -> dict:
         "preparation_state": row.preparation_state,
         "is_condiment": row.is_condiment,
         "protein_g": round(float(protein), 3),
+        "protein_per_kilogram": round(float(protein) / current_weight, 1) if current_weight and protein else None,
         "carbs_g": round(float(carbs), 3),
         "fat_g": round(float(fat), 3),
         "calories": round(float(protein * 4 + carbs * 4 + fat * 9), 3),
@@ -37,7 +38,7 @@ def meal_preparations_prefetch():
     )
 
 
-def preparation_panel_item(relation) -> dict:
+def preparation_panel_item(relation, current_weight=None) -> dict:
     version = relation.version
     factor = Decimal(str(relation.factor))
     ingredients = sorted(version.ingredients.all(), key=lambda row: (row.order, row.id))
@@ -52,9 +53,10 @@ def preparation_panel_item(relation) -> dict:
         "household_label": version.household_label,
         "calories": round(relation.total_kcal, 1),
         "protein_g": round(float(version.protein_g * factor), 3),
+        "protein_per_kilogram": round(float(version.protein_g * factor) / current_weight, 1) if current_weight and version.protein_g else None,
         "carbs_g": round(float(version.carbs_g * factor), 3),
         "fat_g": round(float(version.fat_g * factor), 3),
         "sodium_mg": round(float(version.sodium_mg * factor), 1) if version.sodium_mg is not None else None,
         "allergens": version.allergens,
-        "ingredients": [ingredient_payload(row, version.ingredients_snapshot[index], factor) for index, row in enumerate(ingredients)],
+        "ingredients": [ingredient_payload(row, version.ingredients_snapshot[index], factor, current_weight) for index, row in enumerate(ingredients)],
     }

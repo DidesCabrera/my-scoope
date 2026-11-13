@@ -17,7 +17,9 @@ test("food cards use a larger visual on the right while panel rows remain compac
   assert.ok(icon.includes('const genericVisual: FoodVisual = { emoji: "🍽️", visualKey: "food_generic" }'));
   assert.ok(card.includes('titleIcon={entity === "food" ? <FoodVisualIcon'));
   assert.ok(card.includes('titleIconPosition={entity === "food" ? "trailing" : "leading"}'));
-  assert.ok(panel.includes('<FoodVisualIcon emoji={item.emoji} name={item.name} size="panel" visualKey={item.visualKey} />'));
+  assert.ok(panel.includes('<FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} size="panel" visualKey={item.visualKey} />'));
+  assert.ok(icon.includes('const remoteUrl = useRemoteFoodVisual(name, foodId)'));
+  assert.ok(icon.includes('onError={() => setFailedUrl(remoteUrl)}'));
   assert.ok(icon.includes('panelIcon: { fontSize: 14, lineHeight: 18, width: 20 }'));
   assert.ok(icon.includes('titleIcon: { fontSize: 31, lineHeight: 39, width: 41 }'));
 });

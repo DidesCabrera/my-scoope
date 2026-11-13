@@ -4,7 +4,7 @@ import type { LibraryEntity } from "@/api/types";
 import { EntityIcon } from "@/components/ui/product";
 import { tokens } from "@/design/tokens";
 
-export function HeaderEntityIdentity({ entity, title }: { entity: LibraryEntity; title: string }) {
+export function HeaderEntityIdentity({ entity, title }: { entity: LibraryEntity | "preparation"; title: string }) {
   return <View accessibilityLabel={title} accessible style={styles.identity}><EntityIcon entity={entity} size="header" /><Text numberOfLines={1} style={styles.title}>{title}</Text></View>;
 }
 const styles = StyleSheet.create({

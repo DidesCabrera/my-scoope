@@ -60,9 +60,9 @@ import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, t
 type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus" | "search"; label: string; onPress(): void };
 
 type HeaderPresentation =
-  | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; title?: string }
+  | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; secondaryAction?: HeaderAction; title?: string }
   | { mode: "back"; action?: HeaderAction; fallback?: Href; forceFallback?: boolean; identityVisible?: boolean; leadingAction?: HeaderAction; secondaryAction?: HeaderAction; title: string }
-  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; fallback?: Href; forceFallback?: boolean; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
+  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity | "preparation"; fallback?: Href; forceFallback?: boolean; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; secondaryAction?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationMenuContextValue = {
@@ -170,7 +170,7 @@ function HeaderIdentity({ icon: Icon, title, visible }: { icon: LucideIcon; titl
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [-4, 0] }) }] }]}><View accessibilityLabel={title} accessible style={styles.routeIdentity}><Icon color={tokens.color.textMain} size={18} strokeWidth={2.2} /><Text numberOfLines={1} style={styles.routeIdentityTitle}>{title}</Text></View></Animated.View>;
 }
 
-function LibraryHeaderIdentity({ entity, title, visible }: { entity: LibraryEntity; title: string; visible: boolean }) {
+function LibraryHeaderIdentity({ entity, title, visible }: { entity: LibraryEntity | "preparation"; title: string; visible: boolean }) {
   const progress = useHeaderIdentityProgress(visible);
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress }]}><HeaderEntityIdentity entity={entity} title={title} /></Animated.View>;
 }
@@ -222,6 +222,8 @@ export function AppNavigationHeader() {
         ? "/libraries/programs"
         : headerPresentation.entity === "meal"
           ? "/libraries/meals"
+          : headerPresentation.entity === "preparation"
+            ? "/libraries/preparations"
           : "/libraries/foods")
     : "/today";
   const routeIdentity = routeHeader(pathname);
@@ -354,8 +356,18 @@ export function AppNavigationHeader() {
               </Pressable>
             ) : null}
           </View>
-        ) : headerPresentation.mode === "default" && (headerPresentation.createAction || headerPresentation.action) ? (
+        ) : headerPresentation.mode === "default" && (headerPresentation.secondaryAction || headerPresentation.createAction || headerPresentation.action) ? (
           <View style={styles.libraryHeaderActions}>
+            {headerPresentation.secondaryAction ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.secondaryAction.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.secondaryAction.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <Search color={tokens.color.textMuted} size={24} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
             {headerPresentation.createAction ? (
               <Pressable
                 accessibilityLabel={headerPresentation.createAction.label}

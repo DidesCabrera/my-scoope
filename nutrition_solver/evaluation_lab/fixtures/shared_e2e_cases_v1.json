@@ -1,0 +1,39 @@
+{
+  "schema_version": "solver_assistant_shared_cases.v1",
+  "owner": "nutrition_solver_evaluation_lab",
+  "cases": [
+    {
+      "id": "E2E-01",
+      "request": "Propón una minuta revisable de cuatro comidas, 2200 kcal, alimentación omnívora.",
+      "solver_case_id": "S02",
+      "expected": "A pending-review DailyPlan proposal with explicit targets, three alternatives or a recorded fallback.",
+      "failure_attribution": {
+        "catalog": "The operational snapshot lacks eligible foods or validated variants.",
+        "solver": "The same normalized input fails the solver-only S02 case or violates hard bounds.",
+        "assistant": "Solver output is valid but intent, preference, alternatives, explanation or review boundary is lost."
+      }
+    },
+    {
+      "id": "E2E-02",
+      "request": "Propón una minuta vegetariana revisable sin leche por alergia, con cuatro comidas.",
+      "solver_case_id": "S22",
+      "expected": "A safe proposal or a clear, accurate infeasibility explanation; never a silent allergy relaxation.",
+      "failure_attribution": {
+        "catalog": "Allergen review state or vegetarian capability is absent or ambiguous.",
+        "solver": "Filtered candidates or optimizer contradict the solver-only S22 diagnostic.",
+        "assistant": "A valid solver diagnostic is hidden, altered or represented as a safe plan."
+      }
+    },
+    {
+      "id": "E2E-03",
+      "request": "Propón un programa revisable de siete días, cuatro comidas diarias, con variedad y objetivos explícitos.",
+      "solver_case_id": null,
+      "expected": "A complete pending-review Program with seven days, declared repetition, nutritional validation and culinary evidence or fallback.",
+      "failure_attribution": {
+        "catalog": "Validated variants or ingredient coverage for the requested pattern are insufficient.",
+        "solver": "Daily or weekly constraints, variety or portions fail before assistant presentation.",
+        "assistant": "Duration, targets, review boundary or solver caveats are lost in the user experience."
+      }
+    }
+  ]
+}

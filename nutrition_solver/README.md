@@ -37,6 +37,8 @@ directly from this app.
 - selectable `heuristic_v2` and deterministic `cp_sat_v1` backends;
 - per-meal and whole-day hard ranges, portion steps, repetition and distinct alternatives;
 - nutritional/functional quality reports and shadow regression comparisons.
+- a read-only, fixed-fixture evaluation lab; see
+  `docs/40_technical/qa/nutrition_solver_evaluation_lab.md`.
 
 ## Still owned by `notas` until later patches
 

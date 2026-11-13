@@ -425,7 +425,7 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
             "panel": {
                 **_empty_library_panel("foods"),
                 "foods": [_food_panel_item(meal_food, current_weight) for meal_food in meal.meal_food_set.all()],
-                "preparations": [preparation_panel_item(row) for row in meal.meal_preparation_set.all()],
+                "preparations": [preparation_panel_item(row, current_weight) for row in meal.meal_preparation_set.all()],
             },
             "creator": _creator_name(meal),
             "created_at": meal.created_at,
@@ -705,7 +705,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "panel": {
                     **_empty_library_panel("foods"),
                     "foods": [_food_panel_item(row, current_weight) for row in item.meal_food_set.all()],
-                    "preparations": [preparation_panel_item(row) for row in item.meal_preparation_set.all()],
+                    "preparations": [preparation_panel_item(row, current_weight) for row in item.meal_preparation_set.all()],
                 },
                 "creator": _creator_name(item),
                 "created_at": item.created_at,

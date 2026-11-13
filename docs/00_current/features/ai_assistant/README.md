@@ -6,6 +6,21 @@ Baseline vigente y operativa. CM00-CM24, PT00-PT06 y BA00-BA07 están cerrados. 
 
 El contrato actual prioriza libertad del LLM guiada por propósito, estado, capacidades y límites tipados. My Scoope conserva la autoridad sobre validación, permisos, cálculo, persistencia, presentación de objetos y observabilidad.
 
+## Laboratorio de evaluación: entrada obligada para medir calidad
+
+El [laboratorio interno](evaluation_lab.md) es un activo permanente del AI Assistant,
+no una prueba puntual ni una pantalla de demostración. Permite ensayar el mismo
+runtime y las mismas tools sin depender de la interfaz, medir resultados por
+escenario y distinguir fallas de comprensión, tools, catálogo, solver, proveedor
+y permisos. Una respuesta nutricional insuficiente también es un caso valioso:
+el asistente debe reconocer el límite sin inventar una solución.
+
+Antes de probar o ampliar el asistente, revisar allí el preflight, los escenarios
+live y la revisión humana. Las llamadas live usan el proveedor y pueden tener
+costo; el preflight no. Los cambios de capacidad y los incidentes observados deben
+alimentar el laboratorio con casos y fixtures reproducibles. Un caso agregado o
+un pase automático no acreditan por sí solos calidad conversacional ni un rollout.
+
 ## Patch de capacidades y propuestas con alternativas
 
 La decisión 0195 reemplaza la selección de micro-tools de mutación por
@@ -30,6 +45,17 @@ en Proposal Review antes de aprobar. Cada selección usa un payload almacenado p
 servidor, vuelve a validar y simular, y no aplica el plan.
 
 ## Paridad de capacidades del sistema
+
+La consulta de suplementos Pro se expone al asistente mediante `query_workspace`
+para biblioteca personal, presets y tomas de una minuta propia. El backend aplica
+flag, entitlement y ownership. La nutrición de etiqueta es informativa y no entra
+en kcal/macros de comidas o minutas. Los cambios se derivan a la UI de Suplementos;
+no existe patch genérico ni proyección MCP para esta capacidad. La calidad de la
+respuesta y del handoff requiere evaluación live antes de declararla cubierta.
+
+Preparaciones sigue como módulo en evolución paralela. El asistente no debe
+tratarla como Food ni prometer edición hasta fijar el contrato final de porción,
+versión, permisos y snapshots.
 
 El inventario vivo de solicitudes posibles, su clasificación entre lectura, patch,
 propuesta, aclaración y handoff, y las brechas actuales está en
@@ -165,7 +191,7 @@ fue satisfecho además del estado técnico.
 
 El prompt runtime usa `ai_assistant_prompt.v4`: las consultas usan lectura, las
 mutaciones persistentes preparan patches revisables y el asistente se detiene cuando
-el outcome ya está satisfecho. La calidad se gobierna con Lab v2, 64 casos de routing,
+el outcome ya está satisfecho. La calidad se gobierna con Lab v2, 72 casos de routing,
 doce trayectorias live, repeticiones, revisión humana explícita y feedback por respuesta.
 Ver `evaluation_lab.md`.
 

@@ -10,6 +10,9 @@ from ai_assistant.application.personal_record_intent import parse_personal_recor
 ACTIVE_WORK_VERSION = "ai_assistant.active_work.v1"
 
 _RESOURCE_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("supplement_intakes", r"\b(?:tomas?|ingestas?)\s+(?:de\s+)?suplement\w*\b"),
+    ("supplement_presets", r"\b(?:presets?|composiciones?)\s+(?:de\s+)?suplement\w*\b"),
+    ("supplements", r"\b(?:suplement\w*|supplement\w*)\b"),
     ("calendarization", r"\b(?:calendari\w*|calendariz\w*)\b"),
     ("saved_comparison", r"\b(?:comparacion\w*|comparison\w*)\b"),
     ("program", r"\b(?:programas?|programs?|semana\w*)\b"),
@@ -149,6 +152,13 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
 
     resource = _resource(text)
     mutation_action = _mutation_action(text)
+    if _requests_supplement_mutation(text, mutation_action):
+        return {
+            "objective": "handoff_to_supplements_ui",
+            "expected_outcome": "response_only",
+            "resource": resource if resource in {"supplements", "supplement_presets", "supplement_intakes"} else "supplements",
+            "action": "handoff",
+        }
     if resource and mutation_action:
         return {
             "objective": "prepare_reviewable_workspace_patch",
@@ -236,6 +246,10 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": "create",
         }
 
+    return _classify_fallback_objective(text, resource)
+
+
+def _classify_fallback_objective(text: str, resource: str) -> dict[str, str] | None:
     if _PROFILE_FACT_PATTERN.search(text) and "?" not in text:
         return {
             "objective": "record_conversation_facts",
@@ -268,6 +282,11 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
             "action": "update_draft",
         }
     return None
+
+
+def _requests_supplement_mutation(text: str, mutation_action: str) -> bool:
+    mentions_supplements = re.search(r"\b(?:suplement\w*|supplement\w*)\b", text)
+    return bool(mentions_supplements and (mutation_action or _CREATE_PATTERN.search(text)))
 
 
 def _active_payload(objective: Mapping[str, str], *, source: str) -> dict[str, Any]:

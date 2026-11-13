@@ -42,7 +42,7 @@ function PreparationComponentPanel({ item, onOpenFood }: { item: FoodPanelItem; 
   </View>;
 }
 
-export function FoodDetailCardList({ editing, items, onOpenFood }: { editing?(item: FoodPanelItem): Pick<FoodPanelEditing, "onDelete" | "onEditPortion" | "onReplace"> | null | undefined; items: FoodPanelItem[]; onOpenFood?(item: FoodPanelItem): void }) {
+export function FoodDetailCardList({ editing, items, onOpenFood, ownerLabel = "esta comida" }: { editing?(item: FoodPanelItem): Pick<FoodPanelEditing, "onDelete" | "onEditPortion" | "onReplace"> | null | undefined; items: FoodPanelItem[]; onOpenFood?(item: FoodPanelItem): void; ownerLabel?: string }) {
   return (
     <View style={styles.list}>
       {items.map((item) => {
@@ -55,7 +55,7 @@ export function FoodDetailCardList({ editing, items, onOpenFood }: { editing?(it
         const componentActions: ContextCardAction[] = componentEditing ? [
           { icon: Pencil, key: "portion", label: "Editar porción", onPress: () => componentEditing.onEditPortion(item) },
           { icon: RefreshCw, key: "replace", label: `Reemplazar ${componentLabel}`, onPress: () => componentEditing.onReplace(item) },
-          { confirmation: { confirmLabel: `Quitar ${componentLabel}`, message: `Se quitará ${item.name} de esta comida. Permanecerá en tu biblioteca.`, title: `¿Quitar ${componentLabel}?` }, destructive: true, icon: Trash2, key: "remove", label: `Quitar ${componentLabel}`, onPress: () => componentEditing.onDelete(item) },
+          { confirmation: { confirmLabel: `Quitar ${componentLabel}`, message: `Se quitará ${item.name} de ${ownerLabel}. Permanecerá en tu biblioteca.`, title: `¿Quitar ${componentLabel}?` }, destructive: true, icon: Trash2, key: "remove", label: `Quitar ${componentLabel}`, onPress: () => componentEditing.onDelete(item) },
         ] : [];
         const nutritionQuantity = item.quantityUnit === "g" || item.quantityUnit === "ml"
           ? item.quantity
@@ -72,12 +72,13 @@ export function FoodDetailCardList({ editing, items, onOpenFood }: { editing?(it
             entity={isPreparation ? "preparation" : "food"}
             eyebrow={isPreparation ? "Preparación" : "Alimento"}
             foodEmoji={item.emoji}
+            foodId={isPreparation ? undefined : item.detailId}
             foodVisualKey={item.visualKey}
             headingLink={openDetail ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined}
             key={item.id}
             nutrition={{
               calories,
-              protein: { grams: item.proteinGrams, allocation: macroShare(item.proteinGrams, 4, calories) },
+              protein: { grams: item.proteinGrams, allocation: macroShare(item.proteinGrams, 4, calories), perKilogram: item.proteinPerKilogram },
               carbs: { grams: item.carbsGrams, allocation: macroShare(item.carbsGrams, 4, calories) },
               fat: { grams: item.fatGrams, allocation: macroShare(item.fatGrams, 9, calories) },
             }}

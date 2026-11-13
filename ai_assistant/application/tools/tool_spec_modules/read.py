@@ -12,7 +12,9 @@ READ_TOOL_SPECS = {
         name=TOOL_QUERY_WORKSPACE,
         description=(
             "Query the authenticated user's My Scoope workspace. This is the primary read capability for "
-            "foods, meals, daily meal plans, programs, calendarization, proposals and saved comparisons. "
+            "foods, meals, daily meal plans, programs, calendarization, proposals, saved comparisons "
+            "and Pro supplements, supplement presets or planned intakes. Supplement label nutrition "
+            "is informational and never contributes to meal or plan totals. "
             "Use it before saying stored product data is unavailable. Omit object_id to list or search; "
             "include object_id to read one object. For count questions, always report total_count "
             "(also exposed as count_for_user_questions), never returned_count or the page length. "
@@ -40,11 +42,14 @@ READ_TOOL_SPECS = {
                         "calendarization",
                         "proposals",
                         "saved_comparisons",
+                        "supplements",
+                        "supplement_presets",
+                        "supplement_intakes",
                     ],
                 },
                 "object_id": {
                     "type": "integer",
-                    "description": "Optional owned object ID for a detail read.",
+                    "description": "Optional owned object ID for a detail read; for supplement_intakes, use the owned daily plan ID.",
                 },
                 "search": {
                     "type": "string",

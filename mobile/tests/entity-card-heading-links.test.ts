@@ -19,7 +19,7 @@ test("entity card headings expose an accessible detail link without making the w
   assertSourceMatch(product, /<EntityHeading[\s\S]*headingLink=\{headingLink\}/);
   assertSourceMatch(product, /function isFoodQuantity[\s\S]*g\|ml/);
   assertSourceMatch(product, /import \{ foodNutritionBasisLabel \} from "\.\/food-nutrition-basis"/);
-  assertSourceMatch(product, /function NutritionBasisSubtitle[\s\S]*entity === "food" \? foodNutritionBasisLabel\(value\) \?\? value : `Información nutricional: \$\{value\}`/);
+  assertSourceMatch(product, /function NutritionBasisSubtitle[\s\S]*foodNutritionBasisLabel\(value\)[\s\S]*value\.startsWith\("Rinde "\)[\s\S]*Información nutricional:/);
   assertSourceMatch(product, /return <Text style=\{styles\.headingSubtitle\}>\{label\}<\/Text>/);
   assertSourceMatch(product, /entity === "food" && isFoodQuantity\(indicator\.value\)[\s\S]*<NutritionBasisSubtitle entity="food" key=\{key\} value=\{indicator\.value\}/);
   assertSourceMatch(product, /subtitle \? entity === "preparation" \|\| entity === "food" && isFoodQuantity\(subtitle\) \? <NutritionBasisSubtitle/);
@@ -27,14 +27,16 @@ test("entity card headings expose an accessible detail link without making the w
   assertSourceMatch(nutritionCard, /headingLink=\{headingLink\}/);
 });
 
-test("preparation cards and details use the same nutrition-basis subtitle", async () => {
+test("preparation cards show selected portions while the detail states recipe yield", async () => {
   const picker = await readTestFile(path.resolve(process.cwd(), "src/components/preparations/preparation-picker-card.tsx"), "utf8");
   const detail = await readTestFile(path.resolve(process.cwd(), "src/app/libraries/preparations/[id].tsx"), "utf8");
   const componentCards = await readTestFile(path.resolve(process.cwd(), "src/components/details/food-detail-card-list.tsx"), "utf8");
 
   assertSourceMatch(picker, /subtitle=\{preparationPortionLabel\(detail\)\}/);
   assertSourceDoesNotMatch(picker, /indicators=\{\[\{ label: "porción"/);
-  assertSourceMatch(detail, /<EntityDetailPage entity="preparation"[^>]*subtitle=\{portion\}/);
+  assertSourceMatch(detail, /entity="preparation"[^>]*subtitle=\{subtitle\}/);
+  assertSourceMatch(detail, /Rinde \$\{formatPreparationNumber\(detail\.yield_g, 2\)\} g/);
+  assertSourceMatch(detail, /\/api\/v1\/preparations\/\$\{id\}\?full_recipe=true/);
   assertSourceMatch(componentCards, /entity=\{isPreparation \? "preparation" : "food"\}[\s\S]*subtitle=\{`\$\{item\.quantity\} \$\{item\.quantityUnit\}`\}/);
 });
 

@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import type { PropsWithChildren } from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -40,6 +40,7 @@ export function SupplementCard({
   contained = false,
   name,
   onOpen,
+  onMore,
   quantity,
   unit,
 }: PropsWithChildren<{
@@ -48,6 +49,7 @@ export function SupplementCard({
   contained?: boolean;
   name: string;
   onOpen?: () => void;
+  onMore?: () => void;
   quantity?: string | null;
   unit?: string | null;
 }>) {
@@ -59,7 +61,10 @@ export function SupplementCard({
   return (
     <EntityCard
       accent={tokens.color.supplement}
-      actions={onOpen ? <EntityCardAction label={detailLabel} onPress={onOpen} role="link"><ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} /></EntityCardAction> : undefined}
+      actions={onOpen || onMore ? <>
+        {onMore ? <EntityCardAction label={`Más acciones para ${name}`} onPress={onMore}><MoreHorizontal color={tokens.color.textMuted} size={19} strokeWidth={2.2} /></EntityCardAction> : null}
+        {onOpen ? <EntityCardAction label={detailLabel} onPress={onOpen} role="link"><ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} /></EntityCardAction> : null}
+      </> : undefined}
       entity="supplement"
       eyebrow="Suplemento"
       headingLink={onOpen ? { label: detailLabel, onPress: onOpen } : undefined}

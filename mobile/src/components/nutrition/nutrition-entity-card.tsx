@@ -31,6 +31,7 @@ export type NutritionEntityCardProps = {
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
   foodEmoji?: string | null;
+  foodId?: number | string | null;
   foodVisualKey?: string | null;
   initialPanelExpanded?: boolean;
   eyebrow?: string;
@@ -58,6 +59,7 @@ export function NutritionEntityCard({
   kpiVariant = "regular",
   entity,
   foodEmoji,
+  foodId,
   foodVisualKey,
   initialPanelExpanded = false,
   eyebrow,
@@ -121,7 +123,7 @@ export function NutritionEntityCard({
       style={[style, hasCollapsiblePanel && anyPanelExpanded && styles.expandedCard]}
       subtitle={subtitle}
       title={title}
-      titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
+      titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} foodId={foodId} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
       titleIconPosition={entity === "food" ? "trailing" : "leading"}>
       {showNutrition ? <View style={hasEntityIndicatorSpacing ? styles.nutritionAfterIndicators : undefined}>
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />

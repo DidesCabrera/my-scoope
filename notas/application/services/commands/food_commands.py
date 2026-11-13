@@ -273,6 +273,10 @@ def create_food(
     protein,
     carbs,
     fat,
+    saturated_fat_g=None,
+    sugar_g=None,
+    fiber_g=None,
+    sodium_mg=None,
     portion_unit=Food.PORTION_UNIT_GRAMS,
 ) -> FoodCreateResult:
     if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
@@ -286,6 +290,10 @@ def create_food(
         protein=protein,
         carbs=carbs,
         fat=fat,
+        saturated_fat_g_per_100g=saturated_fat_g,
+        sugar_g_per_100g=sugar_g,
+        fiber_g_per_100g=fiber_g,
+        sodium_mg_per_100g=sodium_mg,
         portion_unit=portion_unit,
         created_by=user,
         list_order=_next_food_list_order(user),
@@ -296,6 +304,9 @@ def create_food(
     )
 
 
+_UNSET_NUTRIENT = object()
+
+
 @transaction.atomic
 def update_food(
     *,
@@ -304,6 +315,10 @@ def update_food(
     protein,
     carbs,
     fat,
+    saturated_fat_g=_UNSET_NUTRIENT,
+    sugar_g=_UNSET_NUTRIENT,
+    fiber_g=_UNSET_NUTRIENT,
+    sodium_mg=_UNSET_NUTRIENT,
     portion_unit=None,
 ) -> FoodUpdateResult:
     portion_unit = portion_unit or food.portion_unit
@@ -316,6 +331,17 @@ def update_food(
     food.protein = protein
     food.carbs = carbs
     food.fat = fat
+    optional_nutrition = {
+        "saturated_fat_g_per_100g": saturated_fat_g,
+        "sugar_g_per_100g": sugar_g,
+        "fiber_g_per_100g": fiber_g,
+        "sodium_mg_per_100g": sodium_mg,
+    }
+    changed_optional_fields = []
+    for field, value in optional_nutrition.items():
+        if value is not _UNSET_NUTRIENT:
+            setattr(food, field, value)
+            changed_optional_fields.append(field)
     food.portion_unit = portion_unit
 
     food.save(
@@ -327,6 +353,7 @@ def update_food(
             "carbs",
             "fat",
             "portion_unit",
+            *changed_optional_fields,
         ]
     )
     refresh_meal_and_parent_caches_for_food(food)

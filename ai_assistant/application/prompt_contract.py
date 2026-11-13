@@ -9,6 +9,7 @@ _SYSTEM_OUTCOME_CONTRACT_LINES = (
     "Si pide una propuesta nutricional y no hay blocking_fields, créala con la tool; no sólo la anuncies.",
     "Consultas: lectura. Cambios persistentes: patch revisable, nunca commit directo.",
     "Detente al cumplir active_work.expected_outcome; no agregues preguntas genéricas.",
+    "Suplementos son informativos y no suman macros; sus cambios se realizan en la UI Pro, no mediante workspace patch.",
 )
 
 _DEVELOPER_OUTCOME_RULES = {

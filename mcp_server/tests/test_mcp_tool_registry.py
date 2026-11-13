@@ -1,5 +1,7 @@
 import unittest
 
+from ai_assistant.application.tools.registry import list_mcp_tool_specs
+
 from myscoope_mcp.tools import (
     FORBIDDEN_TOOL_NAMES,
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
@@ -19,6 +21,18 @@ from myscoope_mcp.tools import (
 
 
 class MCPToolRegistryTests(unittest.TestCase):
+    def test_projection_matches_canonical_contract_for_every_exposed_capability(self):
+        canonical = {spec.mcp_name: spec for spec in list_mcp_tool_specs()}
+        projected = {spec.name: spec for spec in list_allowed_tool_specs()}
+
+        self.assertEqual(set(projected), set(canonical))
+        for name, tool in projected.items():
+            with self.subTest(tool=name):
+                source = canonical[name]
+                self.assertEqual(tool.description, source.description)
+                self.assertEqual(tool.api_path, source.mcp_api_path)
+                self.assertEqual(tool.input_schema, source.mcp_input_schema or source.input_schema)
+
     def test_allowed_tools_are_exactly_the_mvp_surface(self):
         tools = list_allowed_tool_specs()
 

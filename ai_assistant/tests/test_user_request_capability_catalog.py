@@ -15,7 +15,7 @@ CATALOG_PATH = (
     / "user_request_capability_catalog.md"
 )
 ROW_PATTERN = re.compile(
-    r"^\| (?P<id>(?:PR|F|M|DP|PG|C|X|A)-\d{2}) "
+    r"^\| (?P<id>(?:PR|F|M|DP|PG|C|X|A|S|P)-\d{2}) "
     r"\| (?P<request>.+?) \| (?P<resolution>.+?) "
     r"\| (?P<coverage>.+?) \| (?P<observation>.+?) \|$"
 )
@@ -39,6 +39,8 @@ EXPECTED_PREFIX_COUNTS = {
     "C": 12,
     "X": 10,
     "A": 6,
+    "S": 4,
+    "P": 3,
 }
 
 
@@ -56,7 +58,7 @@ class UserRequestCapabilityCatalogContractTests(SimpleTestCase):
         rows = _catalog_rows()
         identifiers = [row["id"] for row in rows]
 
-        self.assertEqual(len(rows), 84)
+        self.assertEqual(len(rows), 91)
         self.assertEqual(len(identifiers), len(set(identifiers)))
         self.assertEqual(
             {

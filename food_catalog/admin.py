@@ -1,5 +1,6 @@
 """Admin registrations for the master Food Catalog app."""
 
+from django import forms
 from django.contrib import admin, messages
 
 from food_catalog.application.curation import transition_catalog_foods_status
@@ -24,7 +25,50 @@ from food_catalog.models import (
     CatalogRelease,
     ExternalFoodReference,
     ExternalProviderFetchLog,
+    FoodVisualAsset,
 )
+from food_catalog.visual_assets import prepare_food_visual
+
+
+class FoodVisualAssetForm(forms.ModelForm):
+    upload = forms.FileField(label="PNG del alimento", required=False)
+
+    class Meta:
+        model = FoodVisualAsset
+        fields = ("food", "is_published", "source_note")
+
+    def clean(self):
+        cleaned = super().clean()
+        food = cleaned.get("food")
+        if cleaned.get("is_published") and food and food.status != CatalogFood.STATUS_PUBLISHED:
+            self.add_error("is_published", "Solo se muestran imágenes de alimentos publicados.")
+        if cleaned.get("is_published") and not cleaned.get("source_note", "").strip():
+            self.add_error("source_note", "Registra el origen o la aprobación de la imagen.")
+        if not cleaned.get("upload") and not self.instance.pk:
+            self.add_error("upload", "Selecciona un PNG para crear el recurso.")
+        return cleaned
+
+    def clean_upload(self):
+        upload = self.cleaned_data.get("upload")
+        if upload:
+            self.prepared_image = prepare_food_visual(upload)
+        return upload
+
+
+@admin.register(FoodVisualAsset)
+class FoodVisualAssetAdmin(admin.ModelAdmin):
+    form = FoodVisualAssetForm
+    fields = ("food", "upload", "is_published", "source_note", "content_sha256", "updated_at")
+    list_display = ("food", "is_published", "content_sha256", "updated_at")
+    list_filter = ("is_published",)
+    search_fields = ("food__display_name", "food__catalog_ref")
+    readonly_fields = ("content_sha256", "updated_at")
+
+    def save_model(self, request, obj, form, change):
+        prepared = getattr(form, "prepared_image", None)
+        if prepared:
+            obj.image_data, obj.mobile_image_data, obj.content_sha256 = prepared
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(CatalogPreparation)

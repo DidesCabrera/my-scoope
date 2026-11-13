@@ -177,6 +177,40 @@ def project_meal_result(*, meal, food, quantity, current_weight, replaced=None) 
     }
 
 
+def project_preparation_food_result(*, preparation, selected_food_id, cleaned, foods, current_weight, replacing=False) -> dict:
+    """Project the complete recipe after a food picker change, without saving it."""
+    macros = tuple(
+        sum(float(getattr(foods[food_id], nutrient)) * float(quantity) / 100 for food_id, quantity in cleaned)
+        for nutrient in ("protein", "carbs", "fat")
+    )
+    kcal = (macros[0] * 4, macros[1] * 4, macros[2] * 9)
+    rows = [
+        _food_row(
+            food=foods[food_id],
+            quantity=quantity,
+            relation_id=None,
+            parent_kcal=kcal,
+            current_weight=current_weight,
+            projected=food_id == selected_food_id,
+            projected_label=("Reemplazo" if replacing else "Por agregar") if food_id == selected_food_id else None,
+            row_id=f"preparation-food:{food_id}",
+        )
+        for food_id, quantity in cleaned
+    ]
+    version = preparation.current_version
+    estimated_yield = sum(float(quantity) for _, quantity in cleaned)
+    return {
+        "id": preparation.id,
+        "entity": "preparation",
+        "name": preparation.name,
+        "nutrition": _nutrition(macros, kcal, current_weight),
+        "indicators": [{"icon": "food", "label": "alimentos", "value": len(rows)}],
+        "panel": {"kind": "foods", "foods": rows, "meals": [], "weeks": []},
+        "yield_g": float(version.yield_g) if version and version.evidence.get("yield_is_manual") else estimated_yield,
+        "default_portion_g": float(version.default_portion_g) if version else 100,
+    }
+
+
 def _meal_row(*, meal, relation_id, hour, note, parent_kcal, current_weight, projected=False, projected_label=None, projected_macros=None, projected_kcal=None, projected_foods=None):
     macros = projected_macros or _macros(meal)
     kcal = projected_kcal or _kcal(meal)

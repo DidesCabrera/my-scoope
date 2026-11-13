@@ -1,31 +1,50 @@
-import { ChevronRight } from "lucide-react-native";
-import { StyleSheet, View } from "react-native";
+import { ChevronRight, MoreHorizontal } from "lucide-react-native";
+import { View } from "react-native";
 
-import type { PreparationDetail } from "@/api/preparations";
+import type { PersonalPreparation } from "@/api/preparations";
 import { tokens } from "@/design/tokens";
-import { Chip } from "@/components/ui/chip";
+import { NutritionEntityCard } from "@/components/nutrition";
+import { FoodPanels } from "@/components/panels";
 import { EntityCard, EntityCardAction } from "@/components/ui/product";
-import { formatPreparationNumber } from "./preparation-ingredients-card";
+import { ingredientPanelItem } from "./preparation-panel-items";
+import { preparationPortionLabel } from "./preparation-picker-card";
 
-export function PreparationLibraryCard({ item, onOpen }: { item: PreparationDetail; onOpen(): void }) {
-  const label = `Ver detalle de ${item.name}`;
-  return <EntityCard
-    accent={tokens.color.preparation}
-    actions={<EntityCardAction label={label} onPress={onOpen} role="link"><ChevronRight color={tokens.color.textMuted} size={19} /></EntityCardAction>}
-    entity="preparation"
-    eyebrow="Preparación"
-    headingLink={{ label, onPress: onOpen }}
-    style={styles.card}
-    title={item.name}>
-    <View style={styles.metadata}>
-      <Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`${formatPreparationNumber(item.default_portion_g)} g por ${item.household_label}`} textColor={tokens.color.textMain} />
-      <Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`${item.recipe_ingredients.length} ${item.recipe_ingredients.length === 1 ? "ingrediente" : "ingredientes"}`} textColor={tokens.color.textMain} />
-      <Chip backgroundColor={tokens.color.surfaceMuted} borderColor={tokens.color.borderDefault} label={`${formatPreparationNumber(item.nutrition.calories, 0)} kcal`} textColor={tokens.color.textMain} />
-    </View>
-  </EntityCard>;
+function allocation(grams: number, factor: number, calories: number): number {
+  return calories > 0 ? grams * factor / calories * 100 : 0;
 }
 
-const styles = StyleSheet.create({
-  card: { marginHorizontal: -18 },
-  metadata: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
-});
+export function PreparationLibraryCard({ item, onMore, onOpen }: { item: PersonalPreparation; onMore?: () => void; onOpen(): void }) {
+  const label = item.is_draft ? `Continuar ${item.name}` : `Ver detalle de ${item.name}`;
+  const openAction = <EntityCardAction label={label} onPress={onOpen} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>;
+  const actions = <>
+    {onMore ? <EntityCardAction label={`Más acciones para ${item.name}`} onPress={onMore}><MoreHorizontal color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}
+    {openAction}
+  </>;
+  if (item.is_draft) return <EntityCard
+    accent={tokens.color.preparation}
+    actions={actions}
+    entity="preparation"
+    eyebrow="Preparación pendiente de ingredientes"
+    headingLink={{ label, onPress: onOpen }}
+    title={item.name}
+  />;
+  const { calories, protein_g, protein_per_kilogram, carbs_g, fat_g } = item.nutrition;
+  return <View>
+    <NutritionEntityCard
+      actions={actions}
+      collapsiblePanel
+      entity="preparation"
+      eyebrow="Preparación"
+      headingLink={{ label, onPress: onOpen }}
+      nutrition={{
+        calories,
+        protein: { grams: protein_g, allocation: allocation(protein_g, 4, calories), perKilogram: protein_per_kilogram },
+        carbs: { grams: carbs_g, allocation: allocation(carbs_g, 4, calories) },
+        fat: { grams: fat_g, allocation: allocation(fat_g, 9, calories) },
+      }}
+      subtitle={preparationPortionLabel(item)}
+      title={item.name}>
+      <FoodPanels items={item.ingredients.map((ingredient, index) => ingredientPanelItem(ingredient, index, item))} showEditTab={false} />
+    </NutritionEntityCard>
+  </View>;
+}

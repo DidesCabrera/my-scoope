@@ -6,7 +6,7 @@ from mobile_api.selectors import _calendarized_snapshot_with_meal_links
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.services.calendarization.snapshots import build_dailyplan_snapshot_from_dailyplan
 from notas.application.services.commands.dailyplan_commands import copy_dailyplan
-from notas.domain.models import CalendarizedDay, DailyPlan, PinnedDailyPlan, Supplement, SupplementIntake
+from notas.domain.models import CalendarizedDay, DailyPlan, PinnedDailyPlan, Supplement, SupplementCatalogEntry, SupplementIntake
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False, SUPPLEMENTS_FEATURE_ENABLED=True)
@@ -17,6 +17,26 @@ class SupplementAPITests(AuthenticatedMobileAPITestCase):
             user=self.user, defaults={"plan": AccountPlan.objects.get(slug="pro")},
         )
         self.plan = DailyPlan.objects.create(name="Solo suplementos", created_by=self.user)
+
+    def test_global_catalog_is_published_and_saved_as_independent_copy(self):
+        entry = SupplementCatalogEntry.objects.get(slug="vitamina-d3-generica")
+        listing = self.client.get("/api/v1/explore/supplements")
+        self.assertEqual(listing.status_code, 200, listing.content)
+        self.assertIn(entry.id, [item["id"] for item in listing.json()["data"]["items"]])
+        endpoint = f"/api/v1/explore/supplements/{entry.id}/save"
+        first = self.client.post(endpoint)
+        second = self.client.post(endpoint)
+        self.assertEqual(first.status_code, 200, first.content)
+        self.assertEqual(second.json()["data"]["already_saved"], True)
+        self.assertEqual(Supplement.objects.filter(created_by=self.user, catalog_entry=entry).count(), 1)
+        saved = Supplement.objects.get(created_by=self.user, catalog_entry=entry)
+        saved.description = "Mi versión"
+        saved.save(update_fields=["description"])
+        self.assertNotEqual(saved.description, entry.description)
+        entry.is_published = False
+        entry.save(update_fields=["is_published"])
+        self.assertEqual(self.client.get(f"/api/v1/explore/supplements/{entry.id}").status_code, 404)
+        self.assertEqual(self.client.post(endpoint).status_code, 404)
 
     def _create_supplement(self):
         response = self.client.post(
@@ -65,6 +85,18 @@ class SupplementAPITests(AuthenticatedMobileAPITestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json()["data"]["nutrition"]["energy_kcal"], "5")
+
+    def test_measurement_units_can_be_used_as_supplement_forms(self):
+        for unit in ("ml", "g", "mg", "mcg", "iu", "scoop", "tsp"):
+            with self.subTest(unit=unit):
+                response = self.client.post(
+                    "/api/v1/library/supplements",
+                    data={"name": f"Suplemento {unit}", "form": unit, "default_quantity": "1", "default_unit": unit},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 200, response.content)
+                self.assertEqual(response.json()["data"]["form"], unit)
+                self.assertEqual(response.json()["data"]["default_unit"], unit)
 
     def test_reusable_intake_preset_can_be_added_to_multiple_plans(self):
         supplement = self._create_supplement()

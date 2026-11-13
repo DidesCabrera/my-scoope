@@ -38,7 +38,7 @@ test("current program actions live in the header ellipsis sheet", async () => {
   const cancelIndex = actions.indexOf('label="Cancelar programa"');
   assert.ok(informationIndex < remindersIndex && remindersIndex < originalIndex && originalIndex < historyIndex && historyIndex < cancelIndex);
   assert.match(actions, /<ActionSheetModal/);
-  assert.match(navigation, /headerPresentation\.mode === "default" && \(headerPresentation\.createAction \|\| headerPresentation\.action\)/);
+  assert.match(navigation, /headerPresentation\.mode === "default" && \(headerPresentation\.secondaryAction \|\| headerPresentation\.createAction \|\| headerPresentation\.action\)/);
   assert.match(navigation, /<MoreHorizontal/);
 });
 

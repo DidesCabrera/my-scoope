@@ -2,6 +2,7 @@ import type { Href } from "expo-router";
 
 export type PickerKind =
   | "food-to-meal"
+  | "food-to-preparation"
   | "meal-to-dailyplan"
   | "dailyplan-to-program"
   | "dailyplan-to-calendarized-day"
