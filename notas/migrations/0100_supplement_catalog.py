@@ -4,7 +4,7 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
-def seed_example(apps, schema_editor):
+def seed_vitamin_d_example(apps, schema_editor):
     Catalog = apps.get_model("notas", "SupplementCatalogEntry")
     Catalog.objects.get_or_create(
         slug="vitamina-d3-generica",
@@ -52,5 +52,5 @@ class Migration(migrations.Migration):
             model_name="supplement",
             constraint=models.UniqueConstraint(fields=["created_by", "catalog_entry"], condition=models.Q(catalog_entry__isnull=False), name="supp_one_catalog_copy_per_user"),
         ),
-        migrations.RunPython(seed_example, migrations.RunPython.noop),
+        migrations.RunPython(seed_vitamin_d_example, migrations.RunPython.noop),
     ]
