@@ -1,10 +1,10 @@
 # Propuesta visual para los conflictos del Food Catalog (v0.1)
 
-Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote (almeja, chirimoya, tofu, trucha); el segundo lote está pendiente de revisión.
+Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote y los seis conceptos del segundo; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. El tercer lote de diez conceptos está pendiente de revisión.
 
 Fuente: planilla [Food Catalog central — 219 alimentos y porciones](https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit#gid=2005160404), pestaña `Alimentos`, filas 5–223, columnas B/E/O/P/X/Y/Z/AA. La auditoría histórica marca 103 «Crear icono», 36 «Compartir icono», 3 «Cambiar emoji» y 77 «Mantener». Esta tabla cubre los **142 alimentos con acción pendiente** mediante **106 conceptos visuales**; agrupar variantes no equivale a afirmar que todos los estados se vean idénticos.
 
-Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (incluyendo 2 prototipos recuperados, 4 bocetos aprobados y 6 bocetos nuevos pendientes de revisión) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los 12 archivos preliminares se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
+Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (22 con boceto seleccionado: 2 recuperados, 10 aprobados por Felipe y 10 propuestos en el lote actual) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
 
 | Boceto visible | Archivo |
 |---|---|
@@ -15,7 +15,7 @@ Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo
 | Tofu | [Abrir](assets/visual_identity_catalog/tofu-prototype.png) |
 | Trucha arcoíris | [Abrir](assets/visual_identity_catalog/trout-prototype.png) |
 
-### Segundo lote · pendiente de revisión
+### Segundo lote · aprobado conceptualmente
 
 | Alimento del catálogo | Vista reducida | Archivo original | Reutilización propuesta |
 |---|---|---|---|
@@ -24,9 +24,28 @@ Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo
 | Arvejas de ojo negro cocidas; secas | ![Arvejas de ojo negro](assets/visual_identity_catalog/black-eyed-peas-preview.png) | [PNG](assets/visual_identity_catalog/black-eyed-peas-prototype.png) | Base compartida; revisar variante cocida. |
 | Avena tradicional | ![Avena](assets/visual_identity_catalog/oats-preview.png) | [PNG](assets/visual_identity_catalog/oats-prototype.png) | Un concepto para esta ficha. |
 | Carne molida de vacuno magra cruda | ![Carne molida](assets/visual_identity_catalog/ground-beef-preview.png) | [PNG](assets/visual_identity_catalog/ground-beef-prototype.png) | Un concepto para esta ficha. |
-| Yogur griego natural sin azúcar; natural descremado; natural entero | ![Yogur](assets/visual_identity_catalog/yogurt-preview.png) | [PNG](assets/visual_identity_catalog/yogurt-prototype.png) | Base compartida: no inventar diferencias visuales por grasa. |
+| Yogur griego natural sin azúcar; natural descremado; natural entero | ![Yogur en pote](assets/visual_identity_catalog/yogurt-pot-preview.png) | [PNG](assets/visual_identity_catalog/yogurt-pot-prototype.png) | Pote aprobado; el [cuenco anterior](assets/visual_identity_catalog/yogurt-prototype.png) se reserva como referencia para salsas/cremas. No inventar diferencias visuales por grasa. |
 
 Método: imagen raster generada con la herramienta integrada, fondo transparente, con almeja y tofu aprobados como referencias de estilo. Las vistas reducidas son muestras de 128 px; queda pendiente la prueba de legibilidad a 20/24/41 px y contraste en temas claro/oscuro. Se descartaron las primeras variantes de kelp, avena y carne molida por resplandor, forma de grano y hebras excesivas, respectivamente.
+
+### Tercer lote · diez conceptos en orden, pendiente de revisión
+
+Se saltan bocetos ya trabajados y los dos cambios Unicode que no requieren ilustración. Las diez propuestas cubren doce fichas del inventario.
+
+| # de la tabla | Alimento(s) | Vista de revisión | Original | Observación |
+|---:|---|---|---|---|
+| 5 | Almendras | ![Almendras](assets/visual_identity_catalog/almond-preview.png) | [PNG](assets/visual_identity_catalog/almond-prototype.png) | Una partida muestra la pulpa. |
+| 6 | Anchoa cruda | ![Anchoa](assets/visual_identity_catalog/anchovy-preview.png) | [PNG](assets/visual_identity_catalog/anchovy-prototype.png) | Pez entero fino, distinto del bacalao. |
+| 7 | Apio crudo | ![Apio](assets/visual_identity_catalog/celery-preview.png) | [PNG](assets/visual_identity_catalog/celery-prototype.png) | Dominan los tallos. |
+| 8 | Apio nabo crudo | ![Apio nabo](assets/visual_identity_catalog/celeriac-preview.png) | [PNG](assets/visual_identity_catalog/celeriac-prototype.png) | Domina la raíz bulbosa; segunda generación sin halo. |
+| 11 | Arvejas partidas cocidas | ![Arvejas partidas](assets/visual_identity_catalog/split-peas-preview.png) | [PNG](assets/visual_identity_catalog/split-peas-prototype.png) | Mitades visibles; segunda generación para evitar aspecto de aceitunas. |
+| 13 | Atún en agua drenado | ![Atún drenado](assets/visual_identity_catalog/tuna-drained-preview.png) | [PNG](assets/visual_identity_catalog/tuna-drained-prototype.png) | Porción en hebras, no pez entero. |
+| 15 | Bacalao crudo | ![Bacalao](assets/visual_identity_catalog/cod-preview.png) | [PNG](assets/visual_identity_catalog/cod-prototype.png) | Tres aletas dorsales y barbilla. |
+| 16 | Berro crudo | ![Berro](assets/visual_identity_catalog/watercress-preview.png) | [PNG](assets/visual_identity_catalog/watercress-prototype.png) | Hojas pequeñas y redondeadas. |
+| 17 | Betarraga cruda; cocida | ![Betarraga](assets/visual_identity_catalog/beet-preview.png) | [PNG](assets/visual_identity_catalog/beet-prototype.png) | Base cruda; revisar si la cocida requiere variante sin hojas. |
+| 18 | Bok choy crudo; cocido | ![Bok choy](assets/visual_identity_catalog/bok-choy-preview.png) | [PNG](assets/visual_identity_catalog/bok-choy-prototype.png) | Base cruda; revisar si la cocida requiere variante. |
+
+Método: diez llamadas independientes a la generación de imágenes integrada, con los prototipos aprobados como referencias de estilo; recortes de alimento con fondo transparente, silueta compacta y sin marca ni texto. Las vistas de revisión son de 192 px para evitar la pixelación de una muestra reducida a píxeles físicos; no sustituyen una comprobación dentro de la app. El lote no se ha publicado ni conectado al catálogo operativo.
 
 | # | Alimento(s) | Propuesta gráfica | Tratamiento |
 |---:|---|---|---|
@@ -34,20 +53,20 @@ Método: imagen raster generada con la herramienta integrada, fondo transparente
 | 2 | Alcachofa cocida | Alcachofa cerrada verde oliva, brácteas superpuestas y punta redondeada. | Boceto nuevo · `artichoke` |
 | 3 | Alga kelp cruda | Cinta larga de alga pardo-oliva ondulada, sin parecer lechuga. | Boceto nuevo · `kelp` |
 | 4 | Almejas cocidas | Concha de almeja redondeada abierta con carne beige; no usar 🦪 de ostra como sustituto definitivo. | Boceto nuevo · `clam` |
-| 5 | Almendras | Tres almendras beige, una partida que muestre interior claro. | Icono original · `almond` |
-| 6 | Anchoa cruda | Pez pequeño plateado, cuerpo fino, lomo azul oscuro. | Icono original · `anchovy` |
-| 7 | Apio crudo | Dos tallos verdes acanalados con hojas pequeñas en la punta. | Icono original · `celery` |
-| 8 | Apio nabo crudo | Bulbo nudoso beige con pequeños brotes verdes; no apio en rama. | Icono original · `celeriac` |
+| 5 | Almendras | Tres almendras beige, una partida que muestre interior claro. | Boceto nuevo · `almond` |
+| 6 | Anchoa cruda | Pez pequeño plateado, cuerpo fino, lomo azul oscuro. | Boceto nuevo · `anchovy` |
+| 7 | Apio crudo | Dos tallos verdes acanalados con hojas pequeñas en la punta. | Boceto nuevo · `celery` |
+| 8 | Apio nabo crudo | Bulbo nudoso beige con pequeños brotes verdes; no apio en rama. | Boceto nuevo · `celeriac` |
 | 9 | Arándanos | 🫐 Sustituir la manzana actual por arándanos azules. | Cambiar emoji · `blueberry` |
 | 10 | Arvejas de ojo negro cocidas; Arvejas de ojo negro secas | Tres granos crema con el ojo negro bien visible. | Boceto nuevo · `black_eyed_peas` |
-| 11 | Arvejas partidas cocidas | Pequeño montón de medias arvejas verdes partidas. | Icono original · `split_peas` |
+| 11 | Arvejas partidas cocidas | Pequeño montón de medias arvejas verdes partidas. | Boceto nuevo · `split_peas` |
 | 12 | Arvejas verdes cocidas | 🫛 Sustituir el símbolo actual por vaina abierta con arvejas. | Cambiar emoji · `green_peas` |
-| 13 | Atún en agua drenado | Porción de atún rosado drenado, hebras compactas; no pez entero. | Icono original · `tuna` |
+| 13 | Atún en agua drenado | Porción de atún rosado drenado, hebras compactas; no pez entero. | Boceto nuevo · `tuna` |
 | 14 | Avena tradicional | Copos de avena beige en pequeño montón; sin bowl genérico. | Boceto nuevo · `oats` |
-| 15 | Bacalao crudo | Bacalao gris plateado con aleta dorsal marcada. | Icono original · `cod` |
-| 16 | Berro crudo | Ramita de berro con hojas redondas pequeñas. | Icono original · `watercress` |
-| 17 | Betarraga cocida; Betarraga cruda | Betarraga redonda color vino con raíz fina y hojas; base compartida. | Icono original · `beet` |
-| 18 | Bok choy cocido; Bok choy crudo | Manojo de hojas verde oscuro y tallos blancos anchos. | Icono original · `bok_choy` |
+| 15 | Bacalao crudo | Bacalao gris plateado con aleta dorsal marcada. | Boceto nuevo · `cod` |
+| 16 | Berro crudo | Ramita de berro con hojas redondas pequeñas. | Boceto nuevo · `watercress` |
+| 17 | Betarraga cocida; Betarraga cruda | Betarraga redonda color vino con raíz fina y hojas; base compartida. | Boceto nuevo · `beet` |
+| 18 | Bok choy cocido; Bok choy crudo | Manojo de hojas verde oscuro y tallos blancos anchos. | Boceto nuevo · `bok_choy` |
 | 19 | Caqui crudo | Caqui naranja con cáliz verde de cuatro puntas. | Icono original · `persimmon` |
 | 20 | Carambola cruda | Carambola amarilla con una rodaja en estrella. | Icono original · `starfruit` |
 | 21 | Carne de cabra cruda | Corte magro rojo oscuro; distintivo de cabra sin usar animal vivo. | Icono original · `goat_meat` |
