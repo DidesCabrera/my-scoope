@@ -2,6 +2,37 @@
 
 Status: local implementation, pending staging integration
 
+## Catálogo global inicial
+
+`SupplementCatalogEntry` conserva las fichas editoriales globales con fuente,
+fecha de revisión y estado de publicación. Explorar muestra solo fichas publicadas
+a usuarios con acceso a Suplementos Pro. Guardar crea una copia personal independiente;
+las ediciones del usuario no cambian el catálogo. La primera ficha es una referencia
+genérica de vitamina D3, sin marca, dosis ni composición comercial. Su fuente
+identifica la forma D3; no demuestra las características de un producto concreto.
+
+Para agregar productos de marca, curación debe registrar identidad del fabricante,
+nombre y presentación exactos, fuente primaria de etiqueta, fecha de revisión,
+componentes con unidades y base por porción, y cualquier dato de nutrición de la
+etiqueta. Datos desconocidos quedan vacíos. Revisar duplicados por marca, nombre,
+presentación y versión de etiqueta; retirar una ficha si la fuente deja de respaldarla.
+Priorizar omega 3, citrato de magnesio, citrato de potasio, vitamina D3,
+multivitamínicos y sodio como cola de investigación, no como fichas aprobadas.
+Una ficha pasa de candidata a publicada solo tras revisión de identidad, evidencia,
+licencia de uso y consistencia de unidades. Los suplementos nunca alimentan los
+totales nutricionales de comidas o minutas.
+
+Referencias iniciales para investigar familias, sin atribuirles dosis de producto:
+
+| Familia | Referencia general | Pendiente para ficha de marca |
+| --- | --- | --- |
+| Omega 3 | [NIH ODS](https://ods.od.nih.gov/factsheets/Omega3FattyAcids-Consumer/) | Fuente del aceite y EPA/DHA por porción de etiqueta |
+| Citrato de magnesio | [NIH ODS](https://ods.od.nih.gov/factsheets/Magnesium-Consumer/) | Magnesio elemental por porción y forma declarada |
+| Citrato de potasio | [NIH ODS](https://ods.od.nih.gov/factsheets/Potassium-Consumer/) | Potasio elemental por porción y forma declarada |
+| Vitamina D3 | [NIH ODS](https://ods.od.nih.gov/factsheets/VitaminD-Consumer/) | D3 por porción y origen declarado por fabricante |
+| Multivitamínicos | [NIH ODS](https://ods.od.nih.gov/factsheets/MVMS-Consumer/) | Lista completa y cantidades por porción de cada fórmula |
+| Sodio / electrolitos | [NIH ODS](https://ods.od.nih.gov/News/odsdigest20260702/) | Producto exacto, forma y sodio por porción de etiqueta |
+
 Suplementos are a Pro-only personal library. They are informational and never
 contribute to nutritional totals. A DailyPlan can contain ordered supplement
 intakes alongside meals; each intake has an optional time and one or more

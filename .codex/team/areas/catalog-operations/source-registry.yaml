@@ -2,6 +2,18 @@ schema_version: 1
 area: "catalog-operations"
 last_reviewed: "2026-11-09"
 sources:
+  - id: "nih-ods-vitamin-d-generic-supplement"
+    name: "NIH ODS — Vitamin D consumer fact sheet"
+    type: "institutional-reference"
+    catalog: "supplements"
+    location: "https://ods.od.nih.gov/factsheets/VitaminD-Consumer/"
+    scope: "Generic D3 form identity for the first explore example; no brand, dose, or label composition."
+    authority: "General supplement form reference, not a manufacturer product label."
+    license_status: "linked-factual-reference"
+    state: "local-example"
+    last_evidence: "notas/migrations/0100_supplement_catalog.py"
+    gaps:
+      - "Manufacturer labels are required for brand-specific dose and composition."
   - id: "usda-fdc-fndds-2021-23-completo-pilot"
     name: "USDA FoodData Central FNDDS 2021-2023"
     type: "official-external-dataset"

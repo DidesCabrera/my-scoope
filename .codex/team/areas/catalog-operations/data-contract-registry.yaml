@@ -2,6 +2,23 @@ schema_version: 1
 area: "catalog-operations"
 last_reviewed: "2026-11-09"
 contracts:
+  - id: "supplement-global-to-personal-v1"
+    catalog: "supplements"
+    name: "Published global supplement template to personal copy"
+    version: "myscoope.supplement_catalog.v1"
+    authority: "docs/00_current/features/supplements.md"
+    producer: "Catalog Operations reviewed SupplementCatalogEntry"
+    consumers:
+      - "mobile_api/routes/supplements.py"
+      - "mobile explore supplements and personal library"
+    validation:
+      - "mobile_api/tests/test_supplements_api.py"
+    state: "implemented-local"
+    required_semantics:
+      - "Only published entries are discoverable and saveable"
+      - "A saved supplement is an independent user-owned copy, once per catalog entry"
+      - "Unknown product-specific quantities remain empty"
+      - "Supplement information does not enter meal or daily plan nutrition totals"
   - id: "solver-food-first-pass-219-v1"
     catalog: "foods"
     name: "Source-linked first pass for original solver foods"

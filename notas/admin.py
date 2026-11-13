@@ -44,9 +44,18 @@ from .domain.models import (
     ProgramCalendarization,
     ProgramDay,
     ScheduledNotificationEvent,
+    SupplementCatalogEntry,
     WebPushSubscription,
     WeightLog,
 )
+
+
+@admin.register(SupplementCatalogEntry)
+class SupplementCatalogEntryAdmin(admin.ModelAdmin):
+    list_display = ("name", "brand", "source_name", "reviewed_at", "is_published")
+    list_filter = ("is_published", "reviewed_at")
+    search_fields = ("name", "brand", "slug", "source_name")
+    ordering = ("name",)
 
 
 @admin.register(ProductAnnouncement)

@@ -85,6 +85,7 @@ from notas.domain.model_modules.supplements import (
     CalendarizedSupplementIntakeExecution,
     PinnedSupplementIntakeExecution,
     Supplement,
+    SupplementCatalogEntry,
     SupplementIntake,
     SupplementIntakeItem,
     SupplementIntakePreset,

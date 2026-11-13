@@ -14,6 +14,19 @@ Check occasion and intended use, constituent Foods, servings, reproducible nutri
 
 Check target segment and purpose, meal distribution, daily nutrition totals, constraints, diversity, repeat rules, dependence on published Meals, and whether the plan is reusable without private assumptions.
 
+## Supplements
+
+Distinguish a generic ingredient or form reference from an exact branded product.
+For branded entries, require manufacturer, product name, presentation, label version
+or review date, source URL, serving basis, active components with units, and
+unambiguous quantities. Keep unknown values blank and do not infer equivalent
+forms, doses, benefits, safety, dietary suitability, or nutrition from the generic
+ingredient. Check duplicates by brand, name, form, strength, and package variant.
+Manufacturer labels are primary evidence for product-specific facts; an
+institutional fact sheet may support general identity only. Record source and
+review state before publication. Saving to a user library creates an independent
+copy; no supplement contributes to meal or daily-plan nutrition totals.
+
 ## Review states
 
 - `raw`: preserved source data.

@@ -77,6 +77,7 @@ export default function SupplementsLibraryScreen() {
   useFocusEffect(useCallback(() => { if (tab === "intakes") setActiveTab("intakes"); }, [tab]));
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
+      secondaryAction: available && pro && activeTab === "supplements" ? { icon: "search", label: "Explorar suplementos", onPress: () => router.push("/explore/supplements" as Href) } : undefined,
       createAction: available && pro ? {
         label: activeTab === "supplements" ? "Crear suplemento" : "Crear ingesta",
         onPress: activeTab === "supplements" ? openCreateSupplement : openCreatePreset,
@@ -86,7 +87,7 @@ export default function SupplementsLibraryScreen() {
       title: "Mis Suplementos",
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [activeTab, available, compactHeaderVisible, openCreatePreset, openCreateSupplement, pro, setHeaderPresentation]));
+  }, [activeTab, available, compactHeaderVisible, openCreatePreset, openCreateSupplement, pro, router, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !items.length) return <LoadingState label="Cargando tu librería…" />;

@@ -1,11 +1,11 @@
 ---
 name: catalog-curation-steward
-description: "Curate and expand My Scoope's Foods, Meals, and Daily Plans catalogs through source evaluation, spreadsheet preparation, normalization, quality control, and publication-ready evidence. Use for catalog inventories, data cleanup, imports, duplicate review, nutrition completeness, curation criteria, or recurring catalog operations. Do not use to set product strategy, rewrite nutrition algorithms, or publish unreviewed data."
+description: "Curate and expand My Scoope's Foods, Meals, Daily Plans, and Supplements catalogs through source evaluation, normalization, quality control, and publication-ready evidence. Use for catalog inventories, data cleanup, imports, duplicate review, curation criteria, or recurring catalog operations. Do not use to set product strategy, rewrite nutrition algorithms, or publish unreviewed data."
 ---
 
 # Catalog Curation Steward
 
-Maintain useful, trustworthy, and traceable catalogs for My Scoope. Convert source material and operational evidence into normalized, reviewable records for Foods, Meals, and Daily Plans. Communicate in Spanish unless Felipe requests another language.
+Maintain useful, trustworthy, and traceable catalogs for My Scoope. Convert source material and operational evidence into normalized, reviewable records for Foods, Meals, Daily Plans, and Supplements. Communicate in Spanish unless Felipe requests another language.
 
 This is a steward role: it owns catalog quality and the curation system over time. Felipe retains final authority over material scope decisions and consequential external writes.
 
@@ -17,6 +17,7 @@ This is a steward role: it owns catalog quality and the curation system over tim
    `data-contract-registry.yaml`; verify registry claims against their recorded
    evidence before relying on them.
 3. For Foods, preserve: `CatalogFood -> explicit snapshot -> notas.Food -> Meals / Daily Plans / Programs / Solver`.
+   For Supplements, preserve: `SupplementCatalogEntry -> independent user-owned Supplement copy -> intake snapshot`.
 4. Distinguish global curated content, operational snapshots, user-owned content, candidates, and external search results. Never merge these categories silently.
 5. Treat Sheets and CSV files as controlled working datasets, not as authority by themselves. Record source, transformation, review state, and destination.
 
