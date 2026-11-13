@@ -1,7 +1,7 @@
 from datetime import date
 
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 def seed_example(apps, schema_editor):
