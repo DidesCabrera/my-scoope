@@ -147,6 +147,7 @@ MODEL_RETENTION_POLICY = {
     "notas.ScheduledNotificationEvent": RetentionAction.FOLLOW_PARENT,
     "notas.Subscription": RetentionAction.ERASE,
     "notas.Supplement": RetentionAction.ERASE,
+    "notas.SupplementCatalogEntry": RetentionAction.RETAIN_SYSTEM,
     "notas.SupplementIntake": RetentionAction.FOLLOW_PARENT,
     "notas.SupplementIntakeItem": RetentionAction.FOLLOW_PARENT,
     "notas.SupplementIntakePreset": RetentionAction.ERASE,
