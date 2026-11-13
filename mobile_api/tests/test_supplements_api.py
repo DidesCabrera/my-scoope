@@ -86,6 +86,18 @@ class SupplementAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json()["data"]["nutrition"]["energy_kcal"], "5")
 
+    def test_measurement_units_can_be_used_as_supplement_forms(self):
+        for unit in ("ml", "g", "mg", "mcg", "iu", "scoop", "tsp"):
+            with self.subTest(unit=unit):
+                response = self.client.post(
+                    "/api/v1/library/supplements",
+                    data={"name": f"Suplemento {unit}", "form": unit, "default_quantity": "1", "default_unit": unit},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 200, response.content)
+                self.assertEqual(response.json()["data"]["form"], unit)
+                self.assertEqual(response.json()["data"]["default_unit"], unit)
+
     def test_reusable_intake_preset_can_be_added_to_multiple_plans(self):
         supplement = self._create_supplement()
         created = self.client.post(

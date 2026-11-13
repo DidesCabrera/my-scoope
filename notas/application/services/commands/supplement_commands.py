@@ -19,8 +19,8 @@ from notas.domain.models import (
     SupplementIntakePresetItem,
 )
 
-SUPPLEMENT_FORMS = frozenset({"capsule", "tablet", "softgel", "gummy", "sachet", "powder", "liquid", "drop"})
 SUPPLEMENT_UNITS = frozenset({"capsule", "tablet", "softgel", "gummy", "sachet", "scoop", "drop", "ml", "g", "mg", "mcg", "iu", "tsp"})
+SUPPLEMENT_FORMS = SUPPLEMENT_UNITS | {"powder", "liquid"}
 COMPONENT_UNITS = frozenset({"g", "mg", "mcg", "ml", "iu"})
 SUPPLEMENT_NUTRITION_FIELDS = frozenset({"energy_kcal", "protein_g", "carbs_g", "fat_g", "saturated_fat_g", "sugar_g", "fiber_g", "sodium_mg"})
 

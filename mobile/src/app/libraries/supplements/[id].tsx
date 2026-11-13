@@ -1,8 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Pencil } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Alert, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { Supplement } from "@/api/types";
@@ -10,20 +8,27 @@ import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
+import { SupplementActionsSheet } from "@/components/supplements/supplement-actions-sheet";
 import { SupplementInformationTable } from "@/components/supplements/supplement-information-table";
-import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, InlineNotice, LoadingState } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 const formLabels: Record<string, string> = {
   capsule: "Cápsula",
   drop: "Gota",
+  g: "g",
   gummy: "Gomita",
+  iu: "UI",
   liquid: "Líquido",
+  mcg: "mcg",
+  mg: "mg",
+  ml: "ml",
   powder: "Polvo",
   sachet: "Sobre",
+  scoop: "Medida",
   softgel: "Cápsula blanda",
   tablet: "Comprimido",
+  tsp: "Cucharadita",
 };
 
 const unitLabels: Record<string, { plural?: string; singular: string }> = {
@@ -79,6 +84,14 @@ export default function SupplementDetailScreen() {
   const [actionsVisible, setActionsVisible] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const openActions = useCallback(() => setActionsVisible(true), []);
+  const remove = useCallback(() => {
+    if (!item) return;
+    setActionsVisible(false);
+    Alert.alert("Eliminar suplemento", "Se quitará de tu biblioteca. Las ingestas guardadas conservarán su descripción.", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Eliminar", style: "destructive", onPress: () => { void apiRequest(`/api/v1/library/supplements/${item.id}`, { method: "DELETE" }).then(() => router.replace("/libraries/supplements" as Href)).catch((nextError) => setError(userFacingError(nextError))); } },
+    ]);
+  }, [apiRequest, item, router]);
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -152,19 +165,10 @@ export default function SupplementDetailScreen() {
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       </EntityDetailPage>
     </ScrollView>
-    <ActionSheetModal onRequestClose={() => setActionsVisible(false)} visible={actionsVisible}>
-      <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
-        <ActionSheetHeader entity="supplement" onClose={() => setActionsVisible(false)} title={item.name} />
-        <View style={styles.sheetContent}>
-          <ActionSheetActions>
-            <ActionSheetAction icon={Pencil} label="Editar suplemento" onPress={() => {
-              setActionsVisible(false);
-              router.push(`/libraries/supplements/${item.id}/edit` as Href);
-            }} />
-          </ActionSheetActions>
-        </View>
-      </SafeAreaView>
-    </ActionSheetModal>
+    <SupplementActionsSheet name={item.name} onClose={() => setActionsVisible(false)} onDelete={remove} onEdit={() => {
+      setActionsVisible(false);
+      router.push(`/libraries/supplements/${item.id}/edit` as Href);
+    }} visible={actionsVisible} />
   </>;
 }
 
@@ -173,6 +177,4 @@ const styles = StyleSheet.create({
   description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 24 },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
-  sheetSafeArea: { backgroundColor: tokens.color.surfaceCard },
 });
