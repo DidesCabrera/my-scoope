@@ -1,10 +1,10 @@
 # Propuesta visual para los conflictos del Food Catalog (v0.1)
 
-Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo y los diez conceptos de cada uno de los lotes tercero, cuarto y quinto; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. En el sexto lote aprobó nueve conceptos y solicitó revisar la frambuesa: dos frutos sin partes verdes. La variante corregida está pendiente de su revisión.
+Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo y los diez conceptos de cada uno de los lotes tercero, cuarto, quinto y sexto; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. Para frambuesa eligió definitivamente la variante de dos frutos sin partes verdes y con cavidad visible (`raspberry-v2`).
 
 Fuente: planilla [Food Catalog central — 219 alimentos y porciones](https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit#gid=2005160404), pestaña `Alimentos`, filas 5–223, columnas B/E/O/P/X/Y/Z/AA. La auditoría histórica marca 103 «Crear icono», 36 «Compartir icono», 3 «Cambiar emoji» y 77 «Mantener». Esta tabla cubre los **142 alimentos con acción pendiente** mediante **106 conceptos visuales**; agrupar variantes no equivale a afirmar que todos los estados se vean idénticos.
 
-Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (52 con boceto seleccionado: 2 recuperados, 49 aprobados por Felipe y 1 variante corregida pendiente de revisión) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
+Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (52 con boceto seleccionado: 2 recuperados y 50 aprobados por Felipe) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
 
 | Boceto visible | Archivo |
 |---|---|
@@ -85,13 +85,13 @@ Los conceptos #31–40 producen once imágenes: el damasco fresco y el seco se r
 
 Método: once generaciones independientes con la herramienta integrada, fondo transparente y vistas de 192 px. Los bocetos son propuestas de identidad, no pruebas de legibilidad final dentro de la aplicación. No se publicaron ni conectaron al catálogo operativo.
 
-### Sexto lote · nueve conceptos aprobados y frambuesa corregida pendiente de revisión
+### Sexto lote · diez conceptos aprobados por Felipe
 
 Se salta el garbanzo (#42), que ya tiene prototipo recuperado. El higo fresco y seco recibe dos versiones para distinguir estados; los bocetos de habas, kale y lechuga representan el alimento crudo, y sus variantes cocidas deben evaluarse antes de integrar.
 
 | # de la tabla | Alimento(s) | Vista de revisión | Original | Observación |
 |---:|---|---|---|---|
-| 41 | Frambuesa cruda | ![Dos frambuesas sin partes verdes](assets/visual_identity_catalog/raspberry-v2-preview.png) | [Variante corregida](assets/visual_identity_catalog/raspberry-v2-prototype.png) · [Original conservado](assets/visual_identity_catalog/raspberry-prototype.png) | Dos frutos sin rama, tallos ni hojas; variante corregida pendiente de revisión. |
+| 41 | Frambuesa cruda | ![Dos frambuesas sin partes verdes](assets/visual_identity_catalog/raspberry-v2-preview.png) | [Versión aprobada](assets/visual_identity_catalog/raspberry-v2-prototype.png) · [Original conservado](assets/visual_identity_catalog/raspberry-prototype.png) · [Variante redondeada descartada](assets/visual_identity_catalog/raspberry-v3-prototype.png) | Dos frutos sin partes verdes, con cavidad y pelitos visibles; Felipe eligió `v2` definitivamente. |
 | 43 | Granada cruda | ![Granada](assets/visual_identity_catalog/pomegranate-preview.png) | [PNG](assets/visual_identity_catalog/pomegranate-prototype.png) | Corona y corte con arilos. |
 | 44 | Grosella roja cruda | ![Grosella roja](assets/visual_identity_catalog/red-currant-preview.png) | [PNG](assets/visual_identity_catalog/red-currant-prototype.png) | Racimo pequeño de bayas translúcidas. |
 | 45 | Guayaba cruda | ![Guayaba](assets/visual_identity_catalog/guava-preview.png) | [PNG](assets/visual_identity_catalog/guava-prototype.png) | Piel verde y mitad de pulpa rosada. |
