@@ -13,5 +13,3 @@ class FoodCreateInput(Schema):
     fiber_g: float | None = Field(default=None, ge=0, le=100)
     sodium_mg: float | None = Field(default=None, ge=0, le=100_000)
     portion_unit: Literal["g", "ml"] = "g"
-
-

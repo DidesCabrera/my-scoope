@@ -34,4 +34,3 @@ class MobileAPIFoodNutrientsTests(PaidMobileAPITestCase):
         )
         self.assertEqual(minimal.status_code, 200)
         self.assertEqual(minimal.json()["data"]["food_nutrition"], {"saturated_fat_g": None, "sugar_g": None, "fiber_g": None, "sodium_mg": None})
-
