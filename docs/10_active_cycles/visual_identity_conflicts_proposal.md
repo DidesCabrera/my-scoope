@@ -1,10 +1,10 @@
 # Propuesta visual para los conflictos del Food Catalog (v0.1)
 
-Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo, los diez del tercero y los diez del cuarto; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. El quinto lote de diez conceptos está pendiente de revisión.
+Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo y los diez conceptos de cada uno de los lotes tercero, cuarto y quinto; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. El sexto lote de diez conceptos está pendiente de revisión.
 
 Fuente: planilla [Food Catalog central — 219 alimentos y porciones](https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit#gid=2005160404), pestaña `Alimentos`, filas 5–223, columnas B/E/O/P/X/Y/Z/AA. La auditoría histórica marca 103 «Crear icono», 36 «Compartir icono», 3 «Cambiar emoji» y 77 «Mantener». Esta tabla cubre los **142 alimentos con acción pendiente** mediante **106 conceptos visuales**; agrupar variantes no equivale a afirmar que todos los estados se vean idénticos.
 
-Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (42 con boceto seleccionado: 2 recuperados, 30 aprobados por Felipe y 10 propuestos en el lote actual) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
+Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (52 con boceto seleccionado: 2 recuperados, 40 aprobados por Felipe y 10 propuestos en el lote actual) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
 
 | Boceto visible | Archivo |
 |---|---|
@@ -66,7 +66,7 @@ Se salta carne molida (#23) y chirimoya (#25), que ya tienen boceto. Hay once im
 
 Método: once generaciones independientes con la herramienta integrada y referencias visuales aprobadas; sujeto aislado, fondo transparente y silueta legible. Se descartaron las primeras versiones de cabra y conejo por bordes/fondo residuales. Las vistas son de 192 px para revisión, no una prueba de producto. No se publicó ni vinculó ninguna imagen al catálogo operativo.
 
-### Quinto lote · diez conceptos en orden, pendiente de revisión
+### Quinto lote · diez conceptos en orden, aprobado por Felipe
 
 Los conceptos #31–40 producen once imágenes: el damasco fresco y el seco se representan por separado. La carne molida de cordero necesita su nombre visible, pues una imagen no prueba la especie. Para crema ácida y crema de leche se diferencian la consistencia y el recipiente, no solo el color.
 
@@ -84,6 +84,25 @@ Los conceptos #31–40 producen once imágenes: el damasco fresco y el seco se r
 | 40 | Espinaca cruda; cocida | ![Espinaca](assets/visual_identity_catalog/spinach-preview.png) | [PNG](assets/visual_identity_catalog/spinach-prototype.png) | Base cruda; decidir variante cocida antes de integrar. |
 
 Método: once generaciones independientes con la herramienta integrada, fondo transparente y vistas de 192 px. Los bocetos son propuestas de identidad, no pruebas de legibilidad final dentro de la aplicación. No se publicaron ni conectaron al catálogo operativo.
+
+### Sexto lote · diez conceptos en orden, pendiente de revisión
+
+Se salta el garbanzo (#42), que ya tiene prototipo recuperado. El higo fresco y seco recibe dos versiones para distinguir estados; los bocetos de habas, kale y lechuga representan el alimento crudo, y sus variantes cocidas deben evaluarse antes de integrar.
+
+| # de la tabla | Alimento(s) | Vista de revisión | Original | Observación |
+|---:|---|---|---|---|
+| 41 | Frambuesa cruda | ![Frambuesa](assets/visual_identity_catalog/raspberry-preview.png) | [PNG](assets/visual_identity_catalog/raspberry-prototype.png) | Drupas y cavidad central visibles. |
+| 43 | Granada cruda | ![Granada](assets/visual_identity_catalog/pomegranate-preview.png) | [PNG](assets/visual_identity_catalog/pomegranate-prototype.png) | Corona y corte con arilos. |
+| 44 | Grosella roja cruda | ![Grosella roja](assets/visual_identity_catalog/red-currant-preview.png) | [PNG](assets/visual_identity_catalog/red-currant-prototype.png) | Racimo pequeño de bayas translúcidas. |
+| 45 | Guayaba cruda | ![Guayaba](assets/visual_identity_catalog/guava-preview.png) | [PNG](assets/visual_identity_catalog/guava-prototype.png) | Piel verde y mitad de pulpa rosada. |
+| 46 | Habas crudas; cocidas | ![Habas](assets/visual_identity_catalog/fava-beans-preview.png) | [PNG](assets/visual_identity_catalog/fava-beans-prototype.png) | Vaina ancha; base cruda. |
+| 47 | Hígado de pollo crudo | ![Hígado de pollo](assets/visual_identity_catalog/chicken-liver-preview.png) | [PNG](assets/visual_identity_catalog/chicken-liver-prototype.png) | Pieza lobulada color burdeos; nombre visible por especie. |
+| 48 | Higo fresco; seco | ![Higo fresco](assets/visual_identity_catalog/fig-fresh-preview.png) ![Higo seco](assets/visual_identity_catalog/fig-dried-preview.png) | [Fresco](assets/visual_identity_catalog/fig-fresh-prototype.png) · [Seco](assets/visual_identity_catalog/fig-dried-prototype.png) | Dos estados visuales explícitos. |
+| 49 | Hinojo bulbo crudo | ![Hinojo](assets/visual_identity_catalog/fennel-preview.png) | [PNG](assets/visual_identity_catalog/fennel-prototype.png) | Bulbo blanco y hojas plumosas. |
+| 50 | Kale crudo; cocido | ![Kale](assets/visual_identity_catalog/kale-preview.png) | [PNG](assets/visual_identity_catalog/kale-prototype.png) | Hoja rizada; base cruda. |
+| 51 | Lechuga costina cruda | ![Lechuga costina](assets/visual_identity_catalog/romaine-preview.png) | [PNG](assets/visual_identity_catalog/romaine-prototype.png) | Cogollo alto y nervaduras claras. |
+
+Método: once generaciones independientes con la herramienta de imágenes integrada; recortes con transparencia y vistas de 192 px. Inspección visual de todas las vistas pequeñas completada. No se integraron en la aplicación ni en el catálogo operativo.
 
 | # | Alimento(s) | Propuesta gráfica | Tratamiento |
 |---:|---|---|---|
@@ -127,17 +146,17 @@ Método: once generaciones independientes con la herramienta integrada, fondo tr
 | 38 | Endivia cruda | Cogollo alargado blanco-verde de hojas apretadas. | Boceto nuevo · `endive` |
 | 39 | Espárrago cocido; Espárrago crudo | Tres espárragos verdes con puntas compactas. | Boceto nuevo · `asparagus` |
 | 40 | Espinaca cocida; Espinaca cruda | Hojas de espinaca ovaladas verde oscuro, nervadura discreta. | Boceto nuevo · `spinach` |
-| 41 | Frambuesa cruda | Frambuesa roja con drupas visibles y cavidad central. | Icono original · `raspberry` |
+| 41 | Frambuesa cruda | Frambuesa roja con drupas visibles y cavidad central. | Boceto nuevo · `raspberry` |
 | 42 | Garbanzos cocidos; Garbanzos secos | Tres garbanzos beige con pico característico; prototipo ya recuperado. | Prototipo existente · `chickpea` |
-| 43 | Granada cruda | Granada roja coronada con corte mostrando arilos. | Icono original · `pomegranate` |
-| 44 | Grosella roja cruda | Racimo colgante de bayas rojas translúcidas. | Icono original · `red_currant` |
-| 45 | Guayaba cruda | Guayaba verde clara con mitad rosada y semillas. | Icono original · `guava` |
-| 46 | Habas cocidas; Habas crudas | Vaina ancha abierta con habas verdes grandes. | Icono original · `fava_beans` |
-| 47 | Hígado de pollo crudo | Hígado de pollo liso color burdeos, lobulado. | Icono original · `chicken_liver` |
-| 48 | Higo fresco; Higo seco | Higo fresco morado abierto con centro rojo; seco en variante parda. | Icono original · `fig` |
-| 49 | Hinojo bulbo crudo | Bulbo blanco de hinojo con tallos y hojas plumosas. | Icono original · `fennel` |
-| 50 | Kale cocido; Kale crudo | Hoja rizada verde oscuro con tallo central. | Icono original · `kale` |
-| 51 | Lechuga costina cruda | Cogollo alto de lechuga costina, hojas largas y nervadura. | Icono original · `romaine_lettuce` |
+| 43 | Granada cruda | Granada roja coronada con corte mostrando arilos. | Boceto nuevo · `pomegranate` |
+| 44 | Grosella roja cruda | Racimo colgante de bayas rojas translúcidas. | Boceto nuevo · `red_currant` |
+| 45 | Guayaba cruda | Guayaba verde clara con mitad rosada y semillas. | Boceto nuevo · `guava` |
+| 46 | Habas cocidas; Habas crudas | Vaina ancha abierta con habas verdes grandes. | Boceto nuevo · `fava_beans` |
+| 47 | Hígado de pollo crudo | Hígado de pollo liso color burdeos, lobulado. | Boceto nuevo · `chicken_liver` |
+| 48 | Higo fresco; Higo seco | Higo fresco morado abierto con centro rojo; seco en variante parda. | Boceto nuevo · `fig` |
+| 49 | Hinojo bulbo crudo | Bulbo blanco de hinojo con tallos y hojas plumosas. | Boceto nuevo · `fennel` |
+| 50 | Kale cocido; Kale crudo | Hoja rizada verde oscuro con tallo central. | Boceto nuevo · `kale` |
+| 51 | Lechuga costina cruda | Cogollo alto de lechuga costina, hojas largas y nervadura. | Boceto nuevo · `romaine_lettuce` |
 | 52 | Lechuga francesa cruda | Lechuga francesa redonda, hojas suaves formando roseta. | Icono original · `butterhead_lettuce` |
 | 53 | Lechuga hoja roja cruda | Hojas de lechuga onduladas con bordes morado rojizo. | Icono original · `red_leaf_lettuce` |
 | 54 | Lenguado crudo | Pez plano ovalado marrón con ambos ojos del mismo lado. | Icono original · `sole` |
