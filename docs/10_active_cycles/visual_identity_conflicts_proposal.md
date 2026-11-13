@@ -1,10 +1,10 @@
 # Propuesta visual para los conflictos del Food Catalog (v0.1)
 
-Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app ni aprobación de activos finales.
+Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote (almeja, chirimoya, tofu, trucha); el segundo lote está pendiente de revisión.
 
 Fuente: planilla [Food Catalog central — 219 alimentos y porciones](https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit#gid=2005160404), pestaña `Alimentos`, filas 5–223, columnas B/E/O/P/X/Y/Z/AA. La auditoría histórica marca 103 «Crear icono», 36 «Compartir icono», 3 «Cambiar emoji» y 77 «Mantener». Esta tabla cubre los **142 alimentos con acción pendiente** mediante **106 conceptos visuales**; agrupar variantes no equivale a afirmar que todos los estados se vean idénticos.
 
-Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (incluyendo 2 prototipos recuperados y 4 bocetos nuevos) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los 6 archivos preliminares se conservan en `assets/visual_identity_catalog/`; los 4 nuevos aún requieren revisión de Felipe. Los demás requieren producir y probar el arte a 20/24/41 px; no se debe usar la descripción de una fila como imagen de producto.
+Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (incluyendo 2 prototipos recuperados, 4 bocetos aprobados y 6 bocetos nuevos pendientes de revisión) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los 12 archivos preliminares se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
 
 | Boceto visible | Archivo |
 |---|---|
@@ -15,22 +15,35 @@ Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo
 | Tofu | [Abrir](assets/visual_identity_catalog/tofu-prototype.png) |
 | Trucha arcoíris | [Abrir](assets/visual_identity_catalog/trout-prototype.png) |
 
+### Segundo lote · pendiente de revisión
+
+| Alimento del catálogo | Vista reducida | Archivo original | Reutilización propuesta |
+|---|---|---|---|
+| Alcachofa cocida | ![Alcachofa](assets/visual_identity_catalog/artichoke-preview.png) | [PNG](assets/visual_identity_catalog/artichoke-prototype.png) | Un concepto para esta ficha. |
+| Alga kelp cruda | ![Kelp](assets/visual_identity_catalog/kelp-preview.png) | [PNG](assets/visual_identity_catalog/kelp-prototype.png) | Un concepto para esta ficha. |
+| Arvejas de ojo negro cocidas; secas | ![Arvejas de ojo negro](assets/visual_identity_catalog/black-eyed-peas-preview.png) | [PNG](assets/visual_identity_catalog/black-eyed-peas-prototype.png) | Base compartida; revisar variante cocida. |
+| Avena tradicional | ![Avena](assets/visual_identity_catalog/oats-preview.png) | [PNG](assets/visual_identity_catalog/oats-prototype.png) | Un concepto para esta ficha. |
+| Carne molida de vacuno magra cruda | ![Carne molida](assets/visual_identity_catalog/ground-beef-preview.png) | [PNG](assets/visual_identity_catalog/ground-beef-prototype.png) | Un concepto para esta ficha. |
+| Yogur griego natural sin azúcar; natural descremado; natural entero | ![Yogur](assets/visual_identity_catalog/yogurt-preview.png) | [PNG](assets/visual_identity_catalog/yogurt-prototype.png) | Base compartida: no inventar diferencias visuales por grasa. |
+
+Método: imagen raster generada con la herramienta integrada, fondo transparente, con almeja y tofu aprobados como referencias de estilo. Las vistas reducidas son muestras de 128 px; queda pendiente la prueba de legibilidad a 20/24/41 px y contraste en temas claro/oscuro. Se descartaron las primeras variantes de kelp, avena y carne molida por resplandor, forma de grano y hebras excesivas, respectivamente.
+
 | # | Alimento(s) | Propuesta gráfica | Tratamiento |
 |---:|---|---|---|
 | 1 | Acelga cocida; Acelga cruda | Tres hojas anchas verde profundo con pencas blancas visibles; prototipo ya recuperado. | Prototipo existente · `chard` |
-| 2 | Alcachofa cocida | Alcachofa cerrada verde oliva, brácteas superpuestas y punta redondeada. | Icono original · `artichoke` |
-| 3 | Alga kelp cruda | Cinta larga de alga pardo-oliva ondulada, sin parecer lechuga. | Icono original · `kelp` |
+| 2 | Alcachofa cocida | Alcachofa cerrada verde oliva, brácteas superpuestas y punta redondeada. | Boceto nuevo · `artichoke` |
+| 3 | Alga kelp cruda | Cinta larga de alga pardo-oliva ondulada, sin parecer lechuga. | Boceto nuevo · `kelp` |
 | 4 | Almejas cocidas | Concha de almeja redondeada abierta con carne beige; no usar 🦪 de ostra como sustituto definitivo. | Boceto nuevo · `clam` |
 | 5 | Almendras | Tres almendras beige, una partida que muestre interior claro. | Icono original · `almond` |
 | 6 | Anchoa cruda | Pez pequeño plateado, cuerpo fino, lomo azul oscuro. | Icono original · `anchovy` |
 | 7 | Apio crudo | Dos tallos verdes acanalados con hojas pequeñas en la punta. | Icono original · `celery` |
 | 8 | Apio nabo crudo | Bulbo nudoso beige con pequeños brotes verdes; no apio en rama. | Icono original · `celeriac` |
 | 9 | Arándanos | 🫐 Sustituir la manzana actual por arándanos azules. | Cambiar emoji · `blueberry` |
-| 10 | Arvejas de ojo negro cocidas; Arvejas de ojo negro secas | Tres granos crema con el ojo negro bien visible. | Icono original · `black_eyed_peas` |
+| 10 | Arvejas de ojo negro cocidas; Arvejas de ojo negro secas | Tres granos crema con el ojo negro bien visible. | Boceto nuevo · `black_eyed_peas` |
 | 11 | Arvejas partidas cocidas | Pequeño montón de medias arvejas verdes partidas. | Icono original · `split_peas` |
 | 12 | Arvejas verdes cocidas | 🫛 Sustituir el símbolo actual por vaina abierta con arvejas. | Cambiar emoji · `green_peas` |
 | 13 | Atún en agua drenado | Porción de atún rosado drenado, hebras compactas; no pez entero. | Icono original · `tuna` |
-| 14 | Avena tradicional | Copos de avena beige en pequeño montón; sin bowl genérico. | Icono original · `oats` |
+| 14 | Avena tradicional | Copos de avena beige en pequeño montón; sin bowl genérico. | Boceto nuevo · `oats` |
 | 15 | Bacalao crudo | Bacalao gris plateado con aleta dorsal marcada. | Icono original · `cod` |
 | 16 | Berro crudo | Ramita de berro con hojas redondas pequeñas. | Icono original · `watercress` |
 | 17 | Betarraga cocida; Betarraga cruda | Betarraga redonda color vino con raíz fina y hojas; base compartida. | Icono original · `beet` |
@@ -39,7 +52,7 @@ Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo
 | 20 | Carambola cruda | Carambola amarilla con una rodaja en estrella. | Icono original · `starfruit` |
 | 21 | Carne de cabra cruda | Corte magro rojo oscuro; distintivo de cabra sin usar animal vivo. | Icono original · `goat_meat` |
 | 22 | Carne de conejo cruda | Corte pálido rosado y pequeño; evitar caricatura de conejo. | Icono original · `rabbit_meat` |
-| 23 | Carne molida de vacuno magra cruda | Montículo de carne molida roja con hebras definidas. | Icono original · `ground_beef` |
+| 23 | Carne molida de vacuno magra cruda | Montículo de carne molida roja con hebras definidas. | Boceto nuevo · `ground_beef` |
 | 24 | Cebollín crudo | Tres cebollines largos, bulbos blancos y tallos verdes. | Icono original · `scallion` |
 | 25 | Chirimoya cruda | Chirimoya verde de escamas suaves, una mitad blanca con semillas negras. | Boceto nuevo · `cherimoya` |
 | 26 | Chirivía cocida; Chirivía cruda | Raíz cónica crema con hojas cortas, distinta de zanahoria. | Icono original · `parsnip` |
@@ -118,7 +131,7 @@ Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo
 | 99 | Tilapia cruda | Tilapia plateada de cuerpo alto con aleta dorsal marcada. | Icono original · `tilapia` |
 | 100 | Tofu blando; Tofu firme | Bloque blanco de tofu; blando con bordes suaves, firme con aristas nítidas. | Boceto nuevo · `tofu` |
 | 101 | Trucha arcoíris cruda | Trucha arcoíris con banda rosada lateral y puntos negros. | Boceto nuevo · `trout` |
-| 102 | Yogur griego natural sin azúcar; Yogur natural descremado sin azúcar; Yogur natural entero sin azúcar | Yogur blanco en cuenco con remolino; no representar diferencias de grasa sin evidencia visible. | Icono original · `yogurt` |
+| 102 | Yogur griego natural sin azúcar; Yogur natural descremado sin azúcar; Yogur natural entero sin azúcar | Yogur blanco en cuenco con remolino; no representar diferencias de grasa sin evidencia visible. | Boceto nuevo · `yogurt` |
 | 103 | Yuca cruda | Raíz de yuca alargada marrón con corte de pulpa blanca. | Icono original · `cassava` |
 | 104 | Zapallo butternut cocido; Zapallo butternut crudo | Zapallo butternut beige en forma de pera con mitad naranja. | Icono original · `butternut_squash` |
 | 105 | Zapallo camote cocido; Zapallo camote crudo | Gajo de zapallo camote de pulpa naranja intensa y corteza verde. | Icono original · `pumpkin_squash` |
