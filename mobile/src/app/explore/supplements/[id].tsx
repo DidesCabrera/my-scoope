@@ -41,7 +41,7 @@ export default function ExploreSupplementDetailScreen() {
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (!item && !error) return <LoadingState label="Cargando suplemento…" />;
-  return <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
+  return <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
     {item ? <>
       <CollectionPageHeader entity="supplement" title={item.name} />
       {item.brand ? <Text style={styles.text}>Marca: {item.brand}</Text> : <Text style={styles.text}>Referencia general, sin marca ni dosis definida.</Text>}

@@ -6,6 +6,7 @@ from typing import Literal
 from ninja import Field, Schema
 
 from mobile_api.schema_domains import library_common
+from mobile_api.schema_domains.food_create import FoodCreateInput
 from mobile_api.schema_domains.preparations import LibraryPreparationPanelItemData
 from mobile_api.schema_domains.meal_creation import MealCreateInput
 
@@ -157,18 +158,6 @@ class LibraryActionData(Schema):
     key: Literal["rename", "duplicate", "share", "delete"]
     label: str
     destructive: bool = False
-
-
-class FoodCreateInput(Schema):
-    name: str = Field(min_length=1, max_length=100)
-    protein: float = Field(ge=0, le=100)
-    carbs: float = Field(ge=0, le=100)
-    fat: float = Field(ge=0, le=100)
-    saturated_fat_g: float | None = Field(default=None, ge=0, le=100)
-    sugar_g: float | None = Field(default=None, ge=0, le=100)
-    fiber_g: float | None = Field(default=None, ge=0, le=100)
-    sodium_mg: float | None = Field(default=None, ge=0, le=100_000)
-    portion_unit: Literal["g", "ml"] = "g"
 
 
 class NamedLibraryCreateInput(Schema):

@@ -43,7 +43,7 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.ok(create.includes("nutritionLabel: { color: tokens.color.textMain") && create.includes("nutritionLabelEmphasis: { fontWeight: tokens.weight.bold }"));
   assert.equal(create.includes("style={styles.nutritionInputSurface}"), true);
   assert.equal(create.includes('<Text style={styles.nutritionUnit}>{unit}</Text>'), true);
-  assert.doesNotMatch(create, /label="Calorías"/);
+  assert.equal(create.includes('label="Calorías"'), false);
   assert.ok(create.includes('<DistributedTabBar<"g" | "ml">') && create.includes("bleed"));
   for (const endpoint of ["foods", "meals", "daily-plans", "programs"]) {
     assert.match(create, new RegExp(`/api/v1/library/${endpoint}`));

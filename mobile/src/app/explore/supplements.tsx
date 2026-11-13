@@ -43,7 +43,7 @@ export default function ExploreSupplementsScreen() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !items.length) return <LoadingState label="Cargando suplementos…" />;
   const visible = items.filter((item) => `${item.name} ${item.brand}`.toLocaleLowerCase("es").includes(query.trim().toLocaleLowerCase("es")));
-  return <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
+  return <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
     <CollectionPageHeader count={items.length} countLabels={{ plural: "Suplementos", singular: "Suplemento" }} entity="supplement" title="Explorar suplementos" />
     <SearchField accessibilityLabel="Buscar suplementos globales" onChangeText={setQuery} onClear={() => setQuery("")} placeholder="Buscar por nombre o marca" value={query} />
     {error ? <View><InlineNotice tone="error">{error}</InlineNotice><Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View> : null}
