@@ -121,6 +121,11 @@ comparaciones pequeñas, fallos de carga/fallback y costo de producir/corregir
 cada concepto. El resultado de VIC02–VIC04 decidirá si se amplía, se ajusta el
 estilo o se mantiene un conjunto reducido de imágenes excelentes.
 
+La [propuesta visual de conflictos](visual_identity_conflicts_proposal.md) cubre
+los 142 alimentos marcados por la auditoría editorial histórica mediante 106
+conceptos, con seis bocetos visibles y reglas de variantes. Es una matriz de
+diseño; no equivale a 106 activos listos ni a cambios publicados.
+
 ## Decisiones pendientes y no objetivos
 
 - Elegir tras el piloto si la biblioteca se distribuye con la app o como activos
