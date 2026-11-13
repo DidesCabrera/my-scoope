@@ -4,7 +4,7 @@ Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe 
 
 Fuente: planilla [Food Catalog central — 219 alimentos y porciones](https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit#gid=2005160404), pestaña `Alimentos`, filas 5–223, columnas B/E/O/P/X/Y/Z/AA. La auditoría histórica marca 103 «Crear icono», 36 «Compartir icono», 3 «Cambiar emoji» y 77 «Mantener». Esta tabla cubre los **142 alimentos con acción pendiente** mediante **106 conceptos visuales**; agrupar variantes no equivale a afirmar que todos los estados se vean idénticos.
 
-Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (52 con boceto seleccionado: 2 recuperados y 50 aprobados por Felipe) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
+Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (62 con boceto seleccionado: 2 recuperados, 50 aprobados por Felipe y 10 propuestos en el lote actual) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
 
 | Boceto visible | Archivo |
 |---|---|
@@ -104,6 +104,25 @@ Se salta el garbanzo (#42), que ya tiene prototipo recuperado. El higo fresco y 
 
 Método: once generaciones independientes con la herramienta de imágenes integrada; recortes con transparencia y vistas de 192 px. Inspección visual de todas las vistas pequeñas completada. No se integraron en la aplicación ni en el catálogo operativo.
 
+### Séptimo lote · diez conceptos en orden, pendiente de revisión
+
+Los conceptos #52–61 producen doce imágenes porque las lentejas se separan en roja seca, marrón seca y marrón cocida. La carne de cerdo representa un corte genérico y debe mostrarse con su nombre; las demás formas se diseñaron para distinguir alimentos parecidos a escala pequeña.
+
+| # de la tabla | Alimento(s) | Vista de revisión | Original | Observación |
+|---:|---|---|---|---|
+| 52 | Lechuga francesa cruda | ![Lechuga francesa](assets/visual_identity_catalog/butterhead-lettuce-preview.png) | [PNG](assets/visual_identity_catalog/butterhead-lettuce-prototype.png) | Roseta redonda de hojas suaves, distinta de costina. |
+| 53 | Lechuga hoja roja cruda | ![Lechuga hoja roja](assets/visual_identity_catalog/red-leaf-lettuce-preview.png) | [PNG](assets/visual_identity_catalog/red-leaf-lettuce-prototype.png) | Bordes rojizos ondulados. |
+| 54 | Lenguado crudo | ![Lenguado](assets/visual_identity_catalog/sole-preview.png) | [PNG](assets/visual_identity_catalog/sole-prototype.png) | Pez plano, ojos en el mismo lado. |
+| 55 | Lenteja roja seca; lenteja marrón seca; lenteja marrón cocida | ![Lenteja roja seca](assets/visual_identity_catalog/lentil-red-dry-preview.png) ![Lenteja marrón seca](assets/visual_identity_catalog/lentil-brown-dry-preview.png) ![Lenteja marrón cocida](assets/visual_identity_catalog/lentil-cooked-preview.png) | [Roja seca](assets/visual_identity_catalog/lentil-red-dry-prototype.png) · [Marrón seca](assets/visual_identity_catalog/lentil-brown-dry-prototype.png) · [Marrón cocida](assets/visual_identity_catalog/lentil-cooked-prototype.png) | Tres estados visuales explícitos; no compartir una sola imagen. |
+| 56 | Lomo de cerdo crudo | ![Lomo de cerdo](assets/visual_identity_catalog/pork-loin-preview.png) | [PNG](assets/visual_identity_catalog/pork-loin-prototype.png) | Corte magro rosado con franja fina de grasa. |
+| 57 | Lupino cocido | ![Lupino](assets/visual_identity_catalog/lupin-preview.png) | [PNG](assets/visual_identity_catalog/lupin-prototype.png) | Legumbres amarillas cocidas. |
+| 58 | Mantequilla de maní natural | ![Mantequilla de maní](assets/visual_identity_catalog/peanut-butter-preview.png) | [PNG](assets/visual_identity_catalog/peanut-butter-prototype.png) | Pasta espesa sobre cuchara, sin envase. |
+| 59 | Maracuyá cruda | ![Maracuyá](assets/visual_identity_catalog/passion-fruit-preview.png) | [PNG](assets/visual_identity_catalog/passion-fruit-prototype.png) | Fruto morado y mitad con semillas. |
+| 60 | Membrillo crudo | ![Membrillo](assets/visual_identity_catalog/quince-preview.png) | [PNG](assets/visual_identity_catalog/quince-prototype.png) | Silueta robusta amarilla, distinta de pera. |
+| 61 | Mora cruda | ![Mora](assets/visual_identity_catalog/blackberry-preview.png) | [PNG](assets/visual_identity_catalog/blackberry-prototype.png) | Dos frutos oscuros con drupas visibles. |
+
+Método: doce generaciones independientes con la herramienta integrada; recortes transparentes y vistas de 192 px. Se inspeccionaron visualmente las doce vistas pequeñas. No se integraron en la aplicación ni en el catálogo operativo.
+
 | # | Alimento(s) | Propuesta gráfica | Tratamiento |
 |---:|---|---|---|
 | 1 | Acelga cocida; Acelga cruda | Tres hojas anchas verde profundo con pencas blancas visibles; prototipo ya recuperado. | Prototipo existente · `chard` |
@@ -157,16 +176,16 @@ Método: once generaciones independientes con la herramienta de imágenes integr
 | 49 | Hinojo bulbo crudo | Bulbo blanco de hinojo con tallos y hojas plumosas. | Boceto nuevo · `fennel` |
 | 50 | Kale cocido; Kale crudo | Hoja rizada verde oscuro con tallo central. | Boceto nuevo · `kale` |
 | 51 | Lechuga costina cruda | Cogollo alto de lechuga costina, hojas largas y nervadura. | Boceto nuevo · `romaine_lettuce` |
-| 52 | Lechuga francesa cruda | Lechuga francesa redonda, hojas suaves formando roseta. | Icono original · `butterhead_lettuce` |
-| 53 | Lechuga hoja roja cruda | Hojas de lechuga onduladas con bordes morado rojizo. | Icono original · `red_leaf_lettuce` |
-| 54 | Lenguado crudo | Pez plano ovalado marrón con ambos ojos del mismo lado. | Icono original · `sole` |
-| 55 | Lenteja roja seca; Lentejas cocidas; Lentejas secas | Lentejas en pequeño montón; variante roja cobriza separada de marrones. | Icono original · `lentil` |
-| 56 | Lomo de cerdo crudo | Lomo de cerdo rosado con franja fina de grasa. | Icono original · `pork_loin` |
-| 57 | Lupino cocido | Granos de lupino amarillos redondos en pequeño grupo. | Icono original · `lupin` |
-| 58 | Mantequilla de maní natural | Untada espesa color maní sobre cuchara, sin confundir con maní entero. | Icono original · `peanut_butter` |
-| 59 | Maracuyá cruda | Maracuyá morada partida con pulpa amarilla y semillas. | Icono original · `passion_fruit` |
-| 60 | Membrillo crudo | Membrillo amarillo en forma de pera robusta con hoja. | Icono original · `quince` |
-| 61 | Mora cruda | Mora negra brillante compuesta por drupas visibles. | Icono original · `blackberry` |
+| 52 | Lechuga francesa cruda | Lechuga francesa redonda, hojas suaves formando roseta. | Boceto nuevo · `butterhead_lettuce` |
+| 53 | Lechuga hoja roja cruda | Hojas de lechuga onduladas con bordes morado rojizo. | Boceto nuevo · `red_leaf_lettuce` |
+| 54 | Lenguado crudo | Pez plano ovalado marrón con ambos ojos del mismo lado. | Boceto nuevo · `sole` |
+| 55 | Lenteja roja seca; Lentejas cocidas; Lentejas secas | Lentejas en pequeño montón; variante roja cobriza separada de marrones. | Boceto nuevo · `lentil` |
+| 56 | Lomo de cerdo crudo | Lomo de cerdo rosado con franja fina de grasa. | Boceto nuevo · `pork_loin` |
+| 57 | Lupino cocido | Granos de lupino amarillos redondos en pequeño grupo. | Boceto nuevo · `lupin` |
+| 58 | Mantequilla de maní natural | Untada espesa color maní sobre cuchara, sin confundir con maní entero. | Boceto nuevo · `peanut_butter` |
+| 59 | Maracuyá cruda | Maracuyá morada partida con pulpa amarilla y semillas. | Boceto nuevo · `passion_fruit` |
+| 60 | Membrillo crudo | Membrillo amarillo en forma de pera robusta con hoja. | Boceto nuevo · `quince` |
+| 61 | Mora cruda | Mora negra brillante compuesta por drupas visibles. | Boceto nuevo · `blackberry` |
 | 62 | Mozzarella fresca | Bola blanca de mozzarella fresca con superficie húmeda. | Icono original · `mozzarella` |
 | 63 | Nabo cocido; Nabo crudo | Nabo blanco con hombros morados y hojas verdes. | Icono original · `turnip` |
 | 64 | Ñame cocido | Ñame de piel marrón rugosa con corte de pulpa clara. | Icono original · `yam` |
