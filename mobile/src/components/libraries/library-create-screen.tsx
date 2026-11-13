@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type { LibraryEntity, LibraryItem } from "@/api/types";
+import type { FoodNutritionFacts } from "@/api/food-nutrition";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { CollectionPageHeader, DistributedTabBar, Field, LoadingState } from "@/components/ui";
@@ -77,21 +78,29 @@ function macroNumber(value: string): number | null {
   return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
 }
 
-function NutritionValueRow({ label, last = false, onChangeText, value }: { label: string; last?: boolean; onChangeText(value: string): void; value: string }) {
+type OptionalNutritionKey = keyof FoodNutritionFacts;
+const blankOptionalNutrition: Record<OptionalNutritionKey, string> = { saturated_fat_g: "", sugar_g: "", fiber_g: "", sodium_mg: "" };
+
+function optionalNutritionNumber(value: string, maximum: number): number | null {
+  if (!value.trim()) return null;
+  const parsed = Number(value.trim().replace(",", "."));
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= maximum ? parsed : NaN;
+}
+
+function NutritionValueRow({ emphasized = false, label, last = false, onChangeText, unit = "g", value }: { emphasized?: boolean; label: string; last?: boolean; onChangeText(value: string): void; unit?: string; value: string }) {
   return (
     <View style={[styles.nutritionRow, last && styles.nutritionRowLast]}>
-      <Text style={styles.nutritionLabel}>{label}</Text>
+      <Text style={[styles.nutritionLabel, emphasized && styles.nutritionLabelEmphasis]}>{label}</Text>
       <View style={styles.nutritionInputSurface}>
         <TextInput
           accessibilityLabel={label}
           keyboardType="decimal-pad"
           onChangeText={onChangeText}
-          placeholder="0"
           selectTextOnFocus
           style={styles.nutritionInput}
           value={value}
         />
-        <Text style={styles.nutritionUnit}>g</Text>
+        <Text style={styles.nutritionUnit}>{unit}</Text>
       </View>
     </View>
   );
@@ -121,6 +130,7 @@ export function LibraryCreateScreen() {
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
   const [fat, setFat] = useState("");
+  const [optionalNutrition, setOptionalNutrition] = useState(blankOptionalNutrition);
   const [portionUnit, setPortionUnit] = useState<"g" | "ml">("g");
   const [submitting, setSubmitting] = useState(false);
   const [initializing, setInitializing] = useState(editingFoodId != null);
@@ -149,6 +159,7 @@ export function LibraryCreateScreen() {
         setProtein(String(food.nutrition.protein.grams));
         setCarbs(String(food.nutrition.carbs.grams));
         setFat(String(food.nutrition.fat.grams));
+        setOptionalNutrition(Object.fromEntries((Object.keys(blankOptionalNutrition) as OptionalNutritionKey[]).map((key) => [key, food.food_nutrition?.[key] == null ? "" : String(food.food_nutrition[key])])) as Record<OptionalNutritionKey, string>);
         setPortionUnit(food.quantity_unit ?? "g");
       })
       .catch((nextError) => active && setError(userFacingError(nextError)))
@@ -162,7 +173,13 @@ export function LibraryCreateScreen() {
     protein: macroNumber(protein),
   }), [carbs, fat, protein]);
   const cleanName = name.trim();
-  const validFood = entity !== "food" || Object.values(macroValues).every((value) => value !== null);
+  const optionalValues = {
+    saturated_fat_g: optionalNutritionNumber(optionalNutrition.saturated_fat_g, 100),
+    sugar_g: optionalNutritionNumber(optionalNutrition.sugar_g, 100),
+    fiber_g: optionalNutritionNumber(optionalNutrition.fiber_g, 100),
+    sodium_mg: optionalNutritionNumber(optionalNutrition.sodium_mg, 100_000),
+  };
+  const validFood = entity !== "food" || (Object.values(macroValues).every((value) => value !== null) && Object.values(optionalValues).every((value) => value === null || Number.isFinite(value)));
   const canSubmit = Boolean(cleanName && cleanName.length <= 100 && validFood && (entity !== "meal" || mealType) && !submitting);
 
   async function submit() {
@@ -171,7 +188,7 @@ export function LibraryCreateScreen() {
     setError(null);
     try {
       const body = entity === "food"
-        ? { name: cleanName, protein: macroValues.protein, carbs: macroValues.carbs, fat: macroValues.fat, portion_unit: portionUnit }
+        ? { name: cleanName, protein: macroValues.protein, carbs: macroValues.carbs, fat: macroValues.fat, ...optionalValues, portion_unit: portionUnit }
         : entity === "meal" ? { name: cleanName, meal_type: mealType } : { name: cleanName };
       const saved = await apiRequest<LibraryItem>(editingFoodId ? `/api/v1/library/foods/${editingFoodId}/edit` : config.endpoint, {
         body: JSON.stringify(body),
@@ -253,12 +270,16 @@ export function LibraryCreateScreen() {
                 </View>
                 <View style={styles.macroHeading}>
                   <Text style={styles.macroTitle}>Valores por 100 {portionUnit}</Text>
-                  <Text style={textStyles.caption}>Ingresa cada macronutriente entre 0 y 100 g.</Text>
+                  <Text style={textStyles.caption}>Proteínas, carbohidratos y grasas son obligatorios. Los demás valores son opcionales.</Text>
                 </View>
                 <View style={styles.nutritionRows}>
-                  <NutritionValueRow label="Proteínas" onChangeText={setProtein} value={protein} />
-                  <NutritionValueRow label="Carbohidratos" onChangeText={setCarbs} value={carbs} />
-                  <NutritionValueRow label="Grasas totales" last onChangeText={setFat} value={fat} />
+                  <NutritionValueRow emphasized label="Proteínas" onChangeText={setProtein} value={protein} />
+                  <NutritionValueRow emphasized label="Grasas totales" onChangeText={setFat} value={fat} />
+                  <NutritionValueRow label="Grasas saturadas" onChangeText={(value) => setOptionalNutrition((current) => ({ ...current, saturated_fat_g: value }))} value={optionalNutrition.saturated_fat_g} />
+                  <NutritionValueRow emphasized label="Carbohidratos" onChangeText={setCarbs} value={carbs} />
+                  <NutritionValueRow label="Azúcares" onChangeText={(value) => setOptionalNutrition((current) => ({ ...current, sugar_g: value }))} value={optionalNutrition.sugar_g} />
+                  <NutritionValueRow label="Fibra" onChangeText={(value) => setOptionalNutrition((current) => ({ ...current, fiber_g: value }))} value={optionalNutrition.fiber_g} />
+                  <NutritionValueRow label="Sodio" last onChangeText={(value) => setOptionalNutrition((current) => ({ ...current, sodium_mg: value }))} unit="mg" value={optionalNutrition.sodium_mg} />
                 </View>
               </View>
             ) : null}
@@ -297,7 +318,8 @@ const styles = StyleSheet.create({
   nutritionRows: { marginTop: -tokens.spacing.xs },
   nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   nutritionRowLast: { borderBottomWidth: 0 },
-  nutritionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontWeight: tokens.weight.bold, lineHeight: 20 },
+  nutritionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 14, lineHeight: 20 },
+  nutritionLabelEmphasis: { fontWeight: tokens.weight.bold },
   nutritionInputSurface: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, flexDirection: "row", height: 32, minWidth: 112, paddingHorizontal: tokens.spacing.sm },
   nutritionInput: { color: tokens.color.textMain, flex: 1, fontSize: 14, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold, height: 30, padding: 0, textAlign: "right" },
   nutritionUnit: { color: tokens.color.textSoft, fontSize: 12, marginLeft: 5 },

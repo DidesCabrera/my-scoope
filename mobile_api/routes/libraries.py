@@ -203,6 +203,10 @@ def create_library_food(request, payload: FoodCreateInput):
         protein=payload.protein,
         carbs=payload.carbs,
         fat=payload.fat,
+        saturated_fat_g=payload.saturated_fat_g,
+        sugar_g=payload.sugar_g,
+        fiber_g=payload.fiber_g,
+        sodium_mg=payload.sodium_mg,
         portion_unit=payload.portion_unit,
     )
     return success(library_item_detail_payload(request.auth.user, "foods", result.food.id))
@@ -219,12 +223,14 @@ def update_library_food(request, food_id: int, payload: FoodCreateInput):
     food = Food.objects.filter(pk=food_id, created_by=request.auth.user, is_active=True).first()
     if food is None:
         raise MobileAPIError("library_item_not_found", "El alimento no está disponible para edición.", 404)
+    optional_nutrition = {field: getattr(payload, field) for field in ("saturated_fat_g", "sugar_g", "fiber_g", "sodium_mg") if field in payload.model_fields_set}
     result = update_food(
         food=food,
         name=_clean_creation_name(payload.name),
         protein=payload.protein,
         carbs=payload.carbs,
         fat=payload.fat,
+        **optional_nutrition,
         portion_unit=payload.portion_unit,
     )
     return success(library_item_detail_payload(request.auth.user, "foods", result.food.id))
