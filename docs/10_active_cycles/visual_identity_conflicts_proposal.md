@@ -1,10 +1,10 @@
 # Propuesta visual para los conflictos del Food Catalog (v0.1)
 
-Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo y los diez del tercero; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. El cuarto lote de diez conceptos está pendiente de revisión.
+Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo, los diez del tercero y los diez del cuarto; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. El quinto lote de diez conceptos está pendiente de revisión.
 
 Fuente: planilla [Food Catalog central — 219 alimentos y porciones](https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit#gid=2005160404), pestaña `Alimentos`, filas 5–223, columnas B/E/O/P/X/Y/Z/AA. La auditoría histórica marca 103 «Crear icono», 36 «Compartir icono», 3 «Cambiar emoji» y 77 «Mantener». Esta tabla cubre los **142 alimentos con acción pendiente** mediante **106 conceptos visuales**; agrupar variantes no equivale a afirmar que todos los estados se vean idénticos.
 
-Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (32 con boceto seleccionado: 2 recuperados, 20 aprobados por Felipe y 10 propuestos en el lote actual) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
+Decisión curatorial: para almejas, la planilla proponía 🦪, pero [Unicode lo denomina «oyster»](https://www.unicode.org/emoji/charts/full-emoji-list.html); se propone en cambio un icono original de almeja. Así, esta propuesta contiene 104 conceptos ilustrados (42 con boceto seleccionado: 2 recuperados, 30 aprobados por Felipe y 10 propuestos en el lote actual) y 2 cambios Unicode. Son direcciones gráficas específicas, no 104 archivos terminados. Los originales y vistas de revisión se conservan en `assets/visual_identity_catalog/`; los demás requieren producir y probar el arte a 20/24/41 px. La aprobación conceptual de un boceto no implica su integración en el producto.
 
 | Boceto visible | Archivo |
 |---|---|
@@ -47,7 +47,7 @@ Se saltan bocetos ya trabajados y los dos cambios Unicode que no requieren ilust
 
 Método: diez llamadas independientes a la generación de imágenes integrada, con los prototipos aprobados como referencias de estilo; recortes de alimento con fondo transparente, silueta compacta y sin marca ni texto. Las vistas de revisión son de 192 px para evitar la pixelación de una muestra reducida a píxeles físicos; no sustituyen una comprobación dentro de la app. El lote no se ha publicado ni conectado al catálogo operativo.
 
-### Cuarto lote · diez conceptos en orden, pendiente de revisión
+### Cuarto lote · diez conceptos en orden, aprobado por Felipe
 
 Se salta carne molida (#23) y chirimoya (#25), que ya tienen boceto. Hay once imágenes para diez conceptos porque la ciruela fresca y la seca reciben versiones propias. Las carnes de cabra y conejo son representaciones de cortes y no pueden probar especie por imagen sola: el nombre debe acompañarlas siempre.
 
@@ -65,6 +65,25 @@ Se salta carne molida (#23) y chirimoya (#25), que ya tienen boceto. Hay once im
 | 30 | Colinabo crudo | ![Colinabo](assets/visual_identity_catalog/kohlrabi-preview.png) | [PNG](assets/visual_identity_catalog/kohlrabi-prototype.png) | Bulbo verde liso con hojas laterales. |
 
 Método: once generaciones independientes con la herramienta integrada y referencias visuales aprobadas; sujeto aislado, fondo transparente y silueta legible. Se descartaron las primeras versiones de cabra y conejo por bordes/fondo residuales. Las vistas son de 192 px para revisión, no una prueba de producto. No se publicó ni vinculó ninguna imagen al catálogo operativo.
+
+### Quinto lote · diez conceptos en orden, pendiente de revisión
+
+Los conceptos #31–40 producen once imágenes: el damasco fresco y el seco se representan por separado. La carne molida de cordero necesita su nombre visible, pues una imagen no prueba la especie. Para crema ácida y crema de leche se diferencian la consistencia y el recipiente, no solo el color.
+
+| # de la tabla | Alimento(s) | Vista de revisión | Original | Observación |
+|---:|---|---|---|---|
+| 31 | Cordero molido crudo | ![Cordero molido](assets/visual_identity_catalog/lamb-mince-preview.png) | [PNG](assets/visual_identity_catalog/lamb-mince-prototype.png) | Hebras de carne cruda; usar siempre con nombre. |
+| 32 | Costilla de cerdo cruda | ![Costilla de cerdo](assets/visual_identity_catalog/pork-rib-preview.png) | [PNG](assets/visual_identity_catalog/pork-rib-prototype.png) | Corte rosado y hueso curvo visible. |
+| 33 | Cranberry crudo | ![Cranberry](assets/visual_identity_catalog/cranberry-preview.png) | [PNG](assets/visual_identity_catalog/cranberry-prototype.png) | Frutos rojos y corte claro; distinguir de cereza. |
+| 34 | Crema ácida | ![Crema ácida](assets/visual_identity_catalog/sour-cream-preview.png) | [PNG](assets/visual_identity_catalog/sour-cream-prototype.png) | Consistencia espesa en cuenco bajo. |
+| 35 | Crema de leche | ![Crema de leche](assets/visual_identity_catalog/milk-cream-preview.png) | [PNG](assets/visual_identity_catalog/milk-cream-prototype.png) | Fluida en jarrita; distinta de crema ácida. |
+| 36 | Damasco crudo; seco | ![Damasco fresco](assets/visual_identity_catalog/apricot-fresh-preview.png) ![Damasco seco](assets/visual_identity_catalog/apricot-dried-preview.png) | [Fresco](assets/visual_identity_catalog/apricot-fresh-prototype.png) · [Seco](assets/visual_identity_catalog/apricot-dried-prototype.png) | Dos estados visuales explícitos. |
+| 37 | Dátil seco | ![Dátil](assets/visual_identity_catalog/date-preview.png) | [PNG](assets/visual_identity_catalog/date-prototype.png) | Fruto abierto con carozo. |
+| 38 | Endivia cruda | ![Endivia](assets/visual_identity_catalog/endive-preview.png) | [PNG](assets/visual_identity_catalog/endive-prototype.png) | Cogollo marfil alargado, no lechuga suelta. |
+| 39 | Espárrago crudo; cocido | ![Espárrago](assets/visual_identity_catalog/asparagus-preview.png) | [PNG](assets/visual_identity_catalog/asparagus-prototype.png) | Base cruda; decidir variante cocida antes de integrar. |
+| 40 | Espinaca cruda; cocida | ![Espinaca](assets/visual_identity_catalog/spinach-preview.png) | [PNG](assets/visual_identity_catalog/spinach-prototype.png) | Base cruda; decidir variante cocida antes de integrar. |
+
+Método: once generaciones independientes con la herramienta integrada, fondo transparente y vistas de 192 px. Los bocetos son propuestas de identidad, no pruebas de legibilidad final dentro de la aplicación. No se publicaron ni conectaron al catálogo operativo.
 
 | # | Alimento(s) | Propuesta gráfica | Tratamiento |
 |---:|---|---|---|
@@ -98,16 +117,16 @@ Método: once generaciones independientes con la herramienta integrada y referen
 | 28 | Clara de huevo | Clara translúcida en plato pequeño, sin yema. | Boceto nuevo · `egg_white` |
 | 29 | Coliflor cocida; Coliflor cruda | Cabeza blanca de coliflor con hojas verdes. | Boceto nuevo · `cauliflower` |
 | 30 | Colinabo crudo | Bulbo verde claro redondo con tallos laterales. | Boceto nuevo · `kohlrabi` |
-| 31 | Cordero molido crudo | Carne de cordero molida roja en hebras; evitar oveja viva. | Icono original · `lamb` |
-| 32 | Costilla de cerdo cruda | Costilla cruda rosada con hueso curvo visible. | Icono original · `pork_rib` |
-| 33 | Cranberry crudo | Tres cranberries rojos pequeños, una cortada para distinguir de cereza. | Icono original · `cranberry` |
-| 34 | Crema ácida | Crema blanca espesa con remolino suave en cuenco bajo. | Icono original · `sour_cream` |
-| 35 | Crema de leche | Crema de leche fluida blanca en jarrita, distinta de crema ácida. | Icono original · `cream` |
-| 36 | Damasco crudo; Damasco seco | Damasco fresco naranja con mitad y carozo; versión seca más oscura y arrugada. | Icono original · `apricot` |
-| 37 | Dátil seco | Dos dátiles marrón ámbar, uno abierto con carozo. | Icono original · `date` |
-| 38 | Endivia cruda | Cogollo alargado blanco-verde de hojas apretadas. | Icono original · `endive` |
-| 39 | Espárrago cocido; Espárrago crudo | Tres espárragos verdes con puntas compactas. | Icono original · `asparagus` |
-| 40 | Espinaca cocida; Espinaca cruda | Hojas de espinaca ovaladas verde oscuro, nervadura discreta. | Icono original · `spinach` |
+| 31 | Cordero molido crudo | Carne de cordero molida roja en hebras; evitar oveja viva. | Boceto nuevo · `lamb` |
+| 32 | Costilla de cerdo cruda | Costilla cruda rosada con hueso curvo visible. | Boceto nuevo · `pork_rib` |
+| 33 | Cranberry crudo | Tres cranberries rojos pequeños, una cortada para distinguir de cereza. | Boceto nuevo · `cranberry` |
+| 34 | Crema ácida | Crema blanca espesa con remolino suave en cuenco bajo. | Boceto nuevo · `sour_cream` |
+| 35 | Crema de leche | Crema de leche fluida blanca en jarrita, distinta de crema ácida. | Boceto nuevo · `cream` |
+| 36 | Damasco crudo; Damasco seco | Damasco fresco naranja con mitad y carozo; versión seca más oscura y arrugada. | Boceto nuevo · `apricot` |
+| 37 | Dátil seco | Dos dátiles marrón ámbar, uno abierto con carozo. | Boceto nuevo · `date` |
+| 38 | Endivia cruda | Cogollo alargado blanco-verde de hojas apretadas. | Boceto nuevo · `endive` |
+| 39 | Espárrago cocido; Espárrago crudo | Tres espárragos verdes con puntas compactas. | Boceto nuevo · `asparagus` |
+| 40 | Espinaca cocida; Espinaca cruda | Hojas de espinaca ovaladas verde oscuro, nervadura discreta. | Boceto nuevo · `spinach` |
 | 41 | Frambuesa cruda | Frambuesa roja con drupas visibles y cavidad central. | Icono original · `raspberry` |
 | 42 | Garbanzos cocidos; Garbanzos secos | Tres garbanzos beige con pico característico; prototipo ya recuperado. | Prototipo existente · `chickpea` |
 | 43 | Granada cruda | Granada roja coronada con corte mostrando arilos. | Icono original · `pomegranate` |
