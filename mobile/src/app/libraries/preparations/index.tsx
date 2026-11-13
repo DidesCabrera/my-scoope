@@ -1,12 +1,13 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { PersonalPreparation } from "@/api/preparations";
 import type { EntitlementsData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { PreparationCardActions } from "@/components/preparations/preparation-card-actions";
 import { PreparationLibraryCard } from "@/components/preparations/preparation-library-card";
 import { pickerHref } from "@/components/pickers/picker-routes";
 import { Button, Card, CollectionEmptyState, CollectionPageHeader, InlineNotice, LoadingState, SearchField } from "@/components/ui";
@@ -22,6 +23,8 @@ export default function PreparationsLibraryScreen() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<PersonalPreparation | null>(null);
+  const [actionsVisible, setActionsVisible] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,15 +64,48 @@ export default function PreparationsLibraryScreen() {
   if (loading && !items.length) return <LoadingState label="Cargando preparaciones…" />;
   const normalized = query.trim().toLocaleLowerCase("es");
   const visible = items.filter((item) => item.name.toLocaleLowerCase("es").includes(normalized));
-  return <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={styles.screen}>
+  const rename = async (name: string) => {
+    if (!selected) return;
+    if (selected.is_draft) {
+      await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${selected.id}/draft`, { method: "PATCH", body: JSON.stringify({ name }) });
+    } else {
+      await apiRequest<PersonalPreparation>(`/api/v1/library/preparations/${selected.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          name,
+          ...(selected.yield_is_manual ? { yield_g: selected.yield_g } : {}),
+          default_portion_g: selected.default_portion_g,
+          ingredients: selected.recipe_ingredients.map(({ food_id, quantity_g }) => ({ food_id, quantity_g })),
+        }),
+      });
+    }
+    setItems((current) => current.map((item) => item.id === selected.id ? { ...item, name } : item));
+    setSelected((current) => current ? { ...current, name } : null);
+  };
+  const remove = () => {
+    if (!selected) return;
+    const { id, name } = selected;
+    Alert.alert("Eliminar preparación", `¿Eliminar ${name} de tu biblioteca? Las comidas existentes conservarán su composición.`, [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Eliminar", style: "destructive", onPress: () => {
+        void apiRequest(`/api/v1/library/preparations/${id}`, { method: "DELETE" })
+          .then(() => { setItems((current) => current.filter((item) => item.id !== id)); setSelected(null); })
+          .catch((failure) => Alert.alert("No pudimos eliminarla", userFacingError(failure)));
+      } },
+    ]);
+  };
+  return <>
+  <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={styles.screen}>
     <CollectionPageHeader count={available && allowed ? items.length : undefined} entity="preparation" title="Mis Preparaciones" />
     {available && allowed ? <View style={styles.search}><SearchField accessibilityLabel="Buscar preparaciones" onChangeText={setQuery} onClear={() => setQuery("")} placeholder="Buscar por nombre" value={query} /></View> : null}
     {error ? <Card><InlineNotice tone="error">{error}</InlineNotice><Button label="Reintentar" onPress={() => void load()} variant="secondary" /></Card> : null}
     {!available ? <Card><InlineNotice tone="info">La biblioteca de preparaciones aún no está disponible.</InlineNotice></Card> : null}
     {available && !allowed ? <Card><InlineNotice tone="info">Las preparaciones personales están disponibles con el plan Pro.</InlineNotice><Button label="Conocer Pro" onPress={() => router.push("/subscription" as Href)} /></Card> : null}
     {available && allowed && !visible.length ? <CollectionEmptyState description={normalized ? "Prueba con otra búsqueda." : "Registra una preparación para reutilizarla en tus comidas."} title={normalized ? "Sin resultados" : "Aún no tienes preparaciones"} /> : null}
-    {available && allowed ? visible.map((item) => <PreparationLibraryCard item={item} key={item.id} onOpen={() => router.push(item.is_draft ? pickerHref("food-to-preparation", { preparationId: item.id, returnTo: `/libraries/preparations/${item.id}` }) : `/libraries/preparations/${item.id}` as Href)} />) : null}
-  </ScrollView>;
+    {available && allowed ? visible.map((item) => <PreparationLibraryCard item={item} key={item.id} onMore={item.is_personal && item.is_active ? () => { setSelected(item); setActionsVisible(true); } : undefined} onOpen={() => router.push(item.is_draft ? pickerHref("food-to-preparation", { preparationId: item.id, returnTo: `/libraries/preparations/${item.id}` }) : `/libraries/preparations/${item.id}` as Href)} />) : null}
+  </ScrollView>
+  {selected ? <PreparationCardActions name={selected.name} onClose={() => setActionsVisible(false)} onDelete={remove} onRename={rename} visible={actionsVisible} /> : null}
+  </>;
 }
 
 const styles = StyleSheet.create({

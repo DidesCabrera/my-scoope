@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { View } from "react-native";
 
 import type { PersonalPreparation } from "@/api/preparations";
@@ -13,12 +13,16 @@ function allocation(grams: number, factor: number, calories: number): number {
   return calories > 0 ? grams * factor / calories * 100 : 0;
 }
 
-export function PreparationLibraryCard({ item, onOpen }: { item: PersonalPreparation; onOpen(): void }) {
+export function PreparationLibraryCard({ item, onMore, onOpen }: { item: PersonalPreparation; onMore?: () => void; onOpen(): void }) {
   const label = item.is_draft ? `Continuar ${item.name}` : `Ver detalle de ${item.name}`;
   const openAction = <EntityCardAction label={label} onPress={onOpen} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>;
+  const actions = <>
+    {onMore ? <EntityCardAction label={`Más acciones para ${item.name}`} onPress={onMore}><MoreHorizontal color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction> : null}
+    {openAction}
+  </>;
   if (item.is_draft) return <EntityCard
     accent={tokens.color.preparation}
-    actions={openAction}
+    actions={actions}
     entity="preparation"
     eyebrow="Preparación pendiente de ingredientes"
     headingLink={{ label, onPress: onOpen }}
@@ -27,7 +31,7 @@ export function PreparationLibraryCard({ item, onOpen }: { item: PersonalPrepara
   const { calories, protein_g, protein_per_kilogram, carbs_g, fat_g } = item.nutrition;
   return <View>
     <NutritionEntityCard
-      actions={openAction}
+      actions={actions}
       collapsiblePanel
       entity="preparation"
       eyebrow="Preparación"
