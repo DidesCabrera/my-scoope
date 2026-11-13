@@ -1479,7 +1479,8 @@ class FoodVisualAsset(models.Model):
     """Remotely replaceable visual for one published master-catalog food.
 
     This is presentation data, deliberately independent of nutritional snapshots.
-    Binary storage keeps small icons durable on ephemeral application hosts.
+    Binary storage retains the normalized 256px master and a 192px mobile variant
+    on ephemeral application hosts. The digest versions the served mobile bytes.
     """
 
     food = models.OneToOneField(CatalogFood, on_delete=models.CASCADE, related_name="visual_asset")
