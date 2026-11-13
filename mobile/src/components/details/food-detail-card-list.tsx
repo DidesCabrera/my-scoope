@@ -72,6 +72,7 @@ export function FoodDetailCardList({ editing, items, onOpenFood, ownerLabel = "e
             entity={isPreparation ? "preparation" : "food"}
             eyebrow={isPreparation ? "Preparación" : "Alimento"}
             foodEmoji={item.emoji}
+            foodId={isPreparation ? undefined : item.detailId}
             foodVisualKey={item.visualKey}
             headingLink={openDetail ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined}
             key={item.id}

@@ -1,4 +1,7 @@
-import { StyleSheet, Text } from "react-native";
+import { useEffect, useState } from "react";
+import { Image, StyleSheet, Text } from "react-native";
+
+import { useRemoteFoodVisual } from "./remote-food-visuals";
 
 type FoodVisual = { emoji: string; visualKey: string };
 
@@ -98,8 +101,26 @@ export function resolveFoodVisual(name: string, emoji?: string | null, visualKey
   };
 }
 
-export function FoodVisualIcon({ emoji, name, size = "compact", visualKey }: { emoji?: string | null; name: string; size?: "compact" | "panel" | "title"; visualKey?: string | null }) {
+export function FoodVisualIcon({ emoji, foodId, name, size = "compact", visualKey }: { emoji?: string | null; foodId?: number | string | null; name: string; size?: "compact" | "panel" | "title"; visualKey?: string | null }) {
   const visual = resolveFoodVisual(name, emoji, visualKey);
+  const remoteUrl = useRemoteFoodVisual(name, foodId);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!failedUrl) return;
+    const retry = setTimeout(() => setFailedUrl(null), 60_000);
+    return () => clearTimeout(retry);
+  }, [failedUrl]);
+  if (remoteUrl && remoteUrl !== failedUrl) {
+    const iconSize = size === "title" ? 41 : size === "panel" ? 20 : 24;
+    return <Image
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      onError={() => setFailedUrl(remoteUrl)}
+      resizeMode="contain"
+      source={{ uri: remoteUrl }}
+      style={{ width: iconSize, height: iconSize, flexShrink: 0 }}
+    />;
+  }
   return (
     <Text
       accessibilityElementsHidden

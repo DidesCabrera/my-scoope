@@ -2,6 +2,24 @@ schema_version: 1
 area: "catalog-operations"
 last_reviewed: "2026-11-09"
 contracts:
+  - id: "food-remote-visual-assets-v1"
+    catalog: "foods"
+    name: "Published food visual asset to mobile fallback"
+    version: "myscoope.food_visual_assets.v1"
+    authority: "docs/00_current/features/food_visual_assets.md"
+    producer: "FoodVisualAsset editorial publication in Django Admin"
+    consumers:
+      - "mobile_api/routes/food_visual_assets.py"
+      - "mobile food cards, panels and detail through FoodVisualIcon"
+    validation:
+      - "mobile_api/tests/test_food_visual_assets_api.py"
+      - "mobile/tests/remote-food-visuals.test.ts"
+    state: "implemented-local-not-deployed"
+    required_semantics:
+      - "A visual asset is independent of nutritional snapshots"
+      - "Only published assets for published and materialized global foods appear in the manifest"
+      - "Versioned same-origin PNG URL changes after replacement"
+      - "Missing, unpublished or failed assets fall back to the existing emoji"
   - id: "supplement-global-to-personal-v1"
     catalog: "supplements"
     name: "Published global supplement template to personal copy"

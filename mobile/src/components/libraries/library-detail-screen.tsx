@@ -418,6 +418,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     completion={isPinnedPlan ? { noteCount: mealExecution.filter((entry) => entry.note.trim()).length } : isPinnedMealContext ? { noteCount: normalizedPinnedMealExecution?.note.trim() ? 1 : 0 } : undefined}
     entity={item.entity}
     foodEmoji={item.emoji}
+    foodId={item.entity === "food" ? item.id : undefined}
     foodVisualKey={item.visual_key}
     eyebrowAccessory={item.entity === "meal" && hasMealTimeContext && contextTime ? <HeaderMetadataChip kind="time" value={contextTime} /> : undefined}
     indicators={detailIndicators}

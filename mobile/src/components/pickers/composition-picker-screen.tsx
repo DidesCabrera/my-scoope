@@ -257,6 +257,7 @@ function PickerOptionCard({ actionLabel, eyebrow, onAction, option, showPanels =
       collapsiblePanel={showPanels && (option.entity === "food" || hasMealContents)}
       entity={option.entity}
       foodEmoji={option.foodEmoji}
+      foodId={option.entity === "food" ? option.id : undefined}
       foodVisualKey={option.foodVisualKey}
       eyebrow={eyebrow}
       indicators={option.indicators}

@@ -8,6 +8,7 @@ from mobile_api.routes.calendarization import router as calendarization_router
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.composition import router as composition_router
 from mobile_api.routes.label_capture import router as label_capture_router
+from mobile_api.routes.food_visual_assets import router as food_visual_assets_router
 from mobile_api.routes.libraries import router as libraries_router
 from mobile_api.routes.proposals import router as proposals_router
 from mobile_api.routes.preparations import router as preparations_router
@@ -58,6 +59,7 @@ api.add_router("", proposals_router)
 api.add_router("", sharing_router)
 api.add_router("", comparisons_router)
 api.add_router("", label_capture_router)
+api.add_router("", food_visual_assets_router)
 api.add_router("", preparations_router)
 api.add_router("", libraries_router)
 api.add_router("", composition_router)

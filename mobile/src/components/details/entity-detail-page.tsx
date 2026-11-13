@@ -34,6 +34,7 @@ export function EntityDetailPage({
   kpiVariant = "regular",
   entity,
   foodEmoji,
+  foodId,
   foodVisualKey,
   eyebrow,
   eyebrowAccessory,
@@ -76,7 +77,7 @@ export function EntityDetailPage({
             identityIcon={identityIcon}
             subtitle={subtitle}
             title={title}
-            titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
+            titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} foodId={foodId} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
             titleIconPosition={entity === "food" ? "trailing" : "leading"}
             variant="page"
           />
