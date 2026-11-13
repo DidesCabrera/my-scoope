@@ -11,6 +11,7 @@ class Migration(migrations.Migration):
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("image_data", models.BinaryField(editable=False)),
+                ("mobile_image_data", models.BinaryField(editable=False)),
                 ("content_sha256", models.CharField(editable=False, max_length=64)),
                 ("is_published", models.BooleanField(default=False)),
                 ("source_note", models.CharField(blank=True, max_length=255)),

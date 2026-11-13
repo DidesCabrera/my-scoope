@@ -67,7 +67,7 @@ class FoodVisualAssetAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         prepared = getattr(form, "prepared_image", None)
         if prepared:
-            obj.image_data, obj.content_sha256 = prepared
+            obj.image_data, obj.mobile_image_data, obj.content_sha256 = prepared
         super().save_model(request, obj, form, change)
 
 

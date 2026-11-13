@@ -1484,6 +1484,7 @@ class FoodVisualAsset(models.Model):
 
     food = models.OneToOneField(CatalogFood, on_delete=models.CASCADE, related_name="visual_asset")
     image_data = models.BinaryField(editable=False)
+    mobile_image_data = models.BinaryField(editable=False)
     content_sha256 = models.CharField(max_length=64, editable=False)
     is_published = models.BooleanField(default=False)
     source_note = models.CharField(max_length=255, blank=True)

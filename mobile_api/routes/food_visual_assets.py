@@ -51,9 +51,9 @@ def food_visual_image(request, catalog_ref: str, digest: str):
         is_published=True,
         content_sha256=digest,
     ).first()
-    if asset is None or not asset.image_data:
+    if asset is None or not asset.mobile_image_data:
         raise Http404
-    response = HttpResponse(bytes(asset.image_data), content_type="image/png")
+    response = HttpResponse(bytes(asset.mobile_image_data), content_type="image/png")
     response["Cache-Control"] = "public, max-age=300"
     response["ETag"] = f'"{digest}"'
     response["X-Content-Type-Options"] = "nosniff"

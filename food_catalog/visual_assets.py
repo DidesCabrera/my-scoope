@@ -9,9 +9,23 @@ from PIL import Image, UnidentifiedImageError
 MAX_SOURCE_BYTES = 5 * 1024 * 1024
 MAX_OUTPUT_BYTES = 512 * 1024
 ICON_SIDE = 256
+MOBILE_ICON_SIDE = 192
 
 
-def prepare_food_visual(upload) -> tuple[bytes, str]:
+def _encode_icon(image: Image.Image, side: int) -> bytes:
+    resized = image.copy()
+    resized.thumbnail((side, side), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    canvas.alpha_composite(resized, ((side - resized.width) // 2, (side - resized.height) // 2))
+    output = BytesIO()
+    canvas.save(output, format="PNG", optimize=True)
+    data = output.getvalue()
+    if len(data) > MAX_OUTPUT_BYTES:
+        raise ValidationError("El icono procesado supera 512 KB; usa una imagen más simple.")
+    return data
+
+
+def prepare_food_visual(upload) -> tuple[bytes, bytes, str]:
     if upload.size > MAX_SOURCE_BYTES:
         raise ValidationError("La imagen debe pesar como máximo 5 MB.")
     if upload.content_type != "image/png":
@@ -25,12 +39,6 @@ def prepare_food_visual(upload) -> tuple[bytes, str]:
         raise ValidationError("El archivo no es un PNG válido.") from exc
 
     image = image.convert("RGBA")
-    image.thumbnail((ICON_SIDE, ICON_SIDE), Image.Resampling.LANCZOS)
-    canvas = Image.new("RGBA", (ICON_SIDE, ICON_SIDE), (0, 0, 0, 0))
-    canvas.alpha_composite(image, ((ICON_SIDE - image.width) // 2, (ICON_SIDE - image.height) // 2))
-    output = BytesIO()
-    canvas.save(output, format="PNG", optimize=True)
-    data = output.getvalue()
-    if len(data) > MAX_OUTPUT_BYTES:
-        raise ValidationError("El icono procesado supera 512 KB; usa una imagen más simple.")
-    return data, hashlib.sha256(data).hexdigest()
+    original_data = _encode_icon(image, ICON_SIDE)
+    mobile_data = _encode_icon(image, MOBILE_ICON_SIDE)
+    return original_data, mobile_data, hashlib.sha256(mobile_data).hexdigest()

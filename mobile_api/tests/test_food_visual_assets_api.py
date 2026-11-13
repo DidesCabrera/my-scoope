@@ -1,4 +1,5 @@
 from io import BytesIO
+import hashlib
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -44,17 +45,22 @@ class FoodVisualAssetAPITests(TestCase):
             files={"upload": png_upload()},
         )
         self.assertTrue(form.is_valid(), form.errors)
-        data, digest = form.prepared_image
-        image = Image.open(BytesIO(data))
-        self.assertEqual(image.size, (256, 256))
-        self.assertEqual(image.getpixel((128, 128))[3], 255)
-        self.assertEqual(image.getpixel((128, 1))[3], 0)
-        self.assertEqual(len(digest), 64)
+        original, mobile, digest = form.prepared_image
+        original_image = Image.open(BytesIO(original))
+        mobile_image = Image.open(BytesIO(mobile))
+        self.assertEqual(original_image.size, (256, 256))
+        self.assertEqual(mobile_image.size, (192, 192))
+        self.assertEqual(original_image.getpixel((128, 128))[3], 255)
+        self.assertEqual(original_image.getpixel((128, 1))[3], 0)
+        self.assertEqual(mobile_image.getpixel((96, 96))[3], 255)
+        self.assertEqual(mobile_image.getpixel((96, 1))[3], 0)
+        self.assertEqual(digest, hashlib.sha256(mobile).hexdigest())
 
     def test_manifest_and_versioned_image_update_without_food_snapshot_change(self):
-        data, digest = prepare_food_visual(png_upload())
+        original, mobile, digest = prepare_food_visual(png_upload())
         asset = FoodVisualAsset.objects.create(
-            food=self.catalog_food, image_data=data, content_sha256=digest,
+            food=self.catalog_food, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest,
             is_published=True, source_note="Boceto aprobado por Felipe",
         )
         manifest = self.client.get("/api/v1/foods/visual-assets/manifest")
@@ -66,11 +72,12 @@ class FoodVisualAssetAPITests(TestCase):
         self.assertEqual(image.status_code, 200)
         self.assertEqual(image["Content-Type"], "image/png")
         self.assertEqual(image["Cache-Control"], "public, max-age=300")
-        self.assertEqual(image.content, data)
+        self.assertEqual(image.content, mobile)
+        self.assertNotEqual(image.content, original)
 
-        replacement, new_digest = prepare_food_visual(png_upload(width=200, height=400))
-        asset.image_data, asset.content_sha256 = replacement, new_digest
-        asset.save(update_fields=["image_data", "content_sha256", "updated_at"])
+        replacement, mobile_replacement, new_digest = prepare_food_visual(png_upload(width=200, height=400))
+        asset.image_data, asset.mobile_image_data, asset.content_sha256 = replacement, mobile_replacement, new_digest
+        asset.save(update_fields=["image_data", "mobile_image_data", "content_sha256", "updated_at"])
         new_path = self.client.get("/api/v1/foods/visual-assets/manifest").json()["images"][self.food.name]
         self.assertNotEqual(path, new_path)
         self.assertEqual(self.client.get(path).status_code, 404)
@@ -78,9 +85,10 @@ class FoodVisualAssetAPITests(TestCase):
         self.assertEqual(self.food.protein, 20)
 
     def test_unpublished_or_unmaterialized_visual_is_not_public(self):
-        data, digest = prepare_food_visual(png_upload())
+        original, mobile, digest = prepare_food_visual(png_upload())
         asset = FoodVisualAsset.objects.create(
-            food=self.catalog_food, image_data=data, content_sha256=digest,
+            food=self.catalog_food, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest,
             is_published=False, source_note="Revisión pendiente",
         )
         self.assertEqual(self.client.get("/api/v1/foods/visual-assets/manifest").json()["images"], {})
@@ -110,5 +118,8 @@ class FoodVisualAssetAPITests(TestCase):
         asset = FoodVisualAsset.objects.get(food=self.catalog_food)
         self.assertTrue(asset.is_published)
         self.assertTrue(asset.image_data)
+        self.assertTrue(asset.mobile_image_data)
+        self.assertEqual(Image.open(BytesIO(asset.image_data)).size, (256, 256))
+        self.assertEqual(Image.open(BytesIO(asset.mobile_image_data)).size, (192, 192))
         self.assertEqual(len(asset.content_sha256), 64)
         self.assertIn(self.food.name, self.client.get("/api/v1/foods/visual-assets/manifest").json()["images"])
