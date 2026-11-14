@@ -184,7 +184,7 @@ test("meal details reuse food entity cards across library and calendarized conte
   const panels = await source("src/components/panels/entity-panels.tsx");
   const identity = await source("src/components/ui/product.tsx");
   assert.ok(!preparationPanel.includes('projectedLabel: "Preparación"'));
-  assert.ok(panels.includes('<Text style={styles.preparationSubtitle}>Preparación</Text>'));
+  assert.ok(!panels.includes('<Text style={styles.preparationSubtitle}>Preparación</Text>'));
   assert.ok(panels.includes('<EntityIcon entity="preparation" size="compact" />'));
   assert.ok(identity.includes("preparation: CookingPot"));
   assert.ok(identity.includes("preparation: tokens.color.preparation"));

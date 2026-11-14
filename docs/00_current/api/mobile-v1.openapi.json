@@ -7283,6 +7283,11 @@
             "title": "Name",
             "type": "string"
           },
+          "order": {
+            "default": 0,
+            "title": "Order",
+            "type": "integer"
+          },
           "portion_display_measure": {
             "default": "",
             "title": "Portion Display Measure",
@@ -8092,6 +8097,11 @@
             "title": "Name",
             "type": "string"
           },
+          "order": {
+            "default": 0,
+            "title": "Order",
+            "type": "integer"
+          },
           "protein_g": {
             "title": "Protein G",
             "type": "number"
@@ -8460,6 +8470,23 @@
           "idempotency_key"
         ],
         "title": "MealCheckInInput",
+        "type": "object"
+      },
+      "MealComponentOrderInput": {
+        "properties": {
+          "ordered_keys": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Ordered Keys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ordered_keys"
+        ],
+        "title": "MealComponentOrderInput",
         "type": "object"
       },
       "MealCreateInput": {
@@ -19195,6 +19222,80 @@
           }
         ],
         "summary": "Create Library Meal"
+      }
+    },
+    "/api/v1/library/meals/{meal_id}/components/order": {
+      "put": {
+        "operationId": "mobile_api_api_meal_component_order",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealComponentOrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Meal Component Order"
       }
     },
     "/api/v1/library/meals/{meal_id}/food-picker/commit": {
