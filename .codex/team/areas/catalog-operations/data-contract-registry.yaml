@@ -1,24 +1,25 @@
 schema_version: 1
 area: "catalog-operations"
-last_reviewed: "2026-11-09"
+last_reviewed: "2026-11-14"
 contracts:
   - id: "food-remote-visual-assets-v1"
     catalog: "foods"
     name: "Published food visual asset to mobile fallback"
-    version: "myscoope.food_visual_assets.v1"
+    version: "myscoope.food_visual_assets.v2"
     authority: "docs/00_current/features/food_visual_assets.md"
-    producer: "FoodVisualAsset or LegacyFoodVisualAsset editorial publication in Django Admin"
+    producer: "Global Food editorial image publication in Django Admin, independent of nutritional source"
     consumers:
       - "mobile_api/routes/food_visual_assets.py"
       - "mobile food cards, panels and detail through FoodVisualIcon"
     validation:
       - "mobile_api/tests/test_food_visual_assets_api.py"
       - "mobile/tests/remote-food-visuals.test.ts"
-    state: "catalog-backed-live; legacy-extension-local-not-deployed"
+    state: "global-assignment-in-code-pending-production-verification"
     required_semantics:
       - "A visual asset is independent of nutritional snapshots"
       - "Only published assets for published and materialized global foods appear in the manifest"
-      - "Legacy assets require an active global Food without a master-catalog link"
+      - "Operational Food assignments may override catalog-backed images regardless of nutritional source"
+      - "All manifest URLs match the installed app's UUID/digest route, including unlinked foods"
       - "Versioned same-origin PNG URL changes after replacement"
       - "Missing, unpublished or failed assets fall back to the existing emoji"
   - id: "supplement-global-to-personal-v1"

@@ -1496,9 +1496,15 @@ class FoodVisualAsset(models.Model):
 
 
 class LegacyFoodVisualAsset(models.Model):
-    """Remote visual for an existing global Food without a master-catalog link."""
+    """Editorial visual override for any active global operational Food.
+
+    The historical model name is retained for existing data and migrations. Its
+    public UUID is independent of the food's nutritional source and uses the
+    same mobile URL contract as master-catalog visuals.
+    """
 
     food = models.OneToOneField("notas.Food", on_delete=models.CASCADE, related_name="legacy_visual_asset")
+    public_ref = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     image_data = models.BinaryField(editable=False)
     mobile_image_data = models.BinaryField(editable=False)
     content_sha256 = models.CharField(max_length=64, editable=False)
@@ -1506,5 +1512,9 @@ class LegacyFoodVisualAsset(models.Model):
     source_note = models.CharField(max_length=255, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "imagen de alimento global"
+        verbose_name_plural = "imágenes de alimentos globales"
+
     def __str__(self):
-        return f"{self.food.name} · imagen legada"
+        return f"{self.food.name} · imagen global"
