@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { normalizeFoodVisualName, parseFoodVisualManifest } from "../src/components/nutrition/remote-food-visuals-core";
+import { foodVisualPresentation, normalizeFoodVisualName, parseFoodVisualManifest } from "../src/components/nutrition/remote-food-visuals-core";
 
 const digest = "a".repeat(64);
 const ref = "93532264-f548-4f81-a0ae-a317015bb6d4";
@@ -20,4 +20,14 @@ test("remote manifest accepts only same-server versioned image paths", () => {
   assert.equal(images.get("name:higado de pollo"), `https://www.myscoope.com${path}`);
   assert.equal(images.get("id:42"), `https://www.myscoope.com${path}`);
   assert.equal(images.size, 2);
+});
+
+test("a remote food image never flashes its emoji while the manifest or image is loading", () => {
+  const url = "https://www.myscoope.com/icon.png";
+  assert.equal(foodVisualPresentation(false, undefined, "pending", false), "placeholder");
+  assert.equal(foodVisualPresentation(true, url, "pending", false), "placeholder");
+  assert.equal(foodVisualPresentation(true, url, "ready", false), "image");
+  assert.equal(foodVisualPresentation(true, undefined, "pending", false), "emoji");
+  assert.equal(foodVisualPresentation(true, url, "failed", false), "emoji");
+  assert.equal(foodVisualPresentation(true, url, "ready", true), "emoji");
 });

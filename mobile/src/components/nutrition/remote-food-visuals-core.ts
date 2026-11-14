@@ -16,3 +16,9 @@ export function parseFoodVisualManifest(payload: Manifest, baseUrl: string): Map
   }
   return result;
 }
+
+export function foodVisualPresentation(manifestResolved: boolean, url: string | undefined, status: "pending" | "ready" | "failed", imageFailed: boolean): "placeholder" | "image" | "emoji" {
+  if (!manifestResolved || url && !imageFailed && status === "pending") return "placeholder";
+  if (url && !imageFailed && status === "ready") return "image";
+  return "emoji";
+}
