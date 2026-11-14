@@ -5,7 +5,7 @@ from uuid import UUID
 from django.http import Http404, HttpResponse, JsonResponse
 from ninja import Router
 
-from food_catalog.models import CatalogFood, FoodVisualAsset
+from food_catalog.models import CatalogFood, FoodVisualAsset, LegacyFoodVisualAsset
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.domain.models import Food
 
@@ -32,6 +32,19 @@ def food_visual_manifest(request):
             food_ids[str(food.pk)] = url
             images[food.name] = url
             images[resolve_food_display_name(food)] = url
+    for asset in LegacyFoodVisualAsset.objects.filter(
+        is_published=True,
+        food__is_global=True,
+        food__is_active=True,
+        food__catalog_food_ref__isnull=True,
+    ).select_related("food").prefetch_related("food__localized_names"):
+        if not asset.content_sha256 or not asset.mobile_image_data:
+            continue
+        food = asset.food
+        url = f"/api/v1/foods/visual-assets/legacy/{food.pk}/{asset.content_sha256}.png"
+        food_ids[str(food.pk)] = url
+        images.setdefault(food.name, url)
+        images.setdefault(resolve_food_display_name(food), url)
     response = JsonResponse({"images": images, "food_ids": food_ids})
     response["Cache-Control"] = "public, max-age=60"
     return response
@@ -48,6 +61,27 @@ def food_visual_image(request, catalog_ref: str, digest: str):
     asset = FoodVisualAsset.objects.filter(
         food__catalog_ref=catalog_ref,
         food__status=CatalogFood.STATUS_PUBLISHED,
+        is_published=True,
+        content_sha256=digest,
+    ).first()
+    if asset is None or not asset.mobile_image_data:
+        raise Http404
+    response = HttpResponse(bytes(asset.mobile_image_data), content_type="image/png")
+    response["Cache-Control"] = "public, max-age=300"
+    response["ETag"] = f'"{digest}"'
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@router.get("/foods/visual-assets/legacy/{food_id}/{digest}.png", auth=None, operation_id="mobile_api_legacy_food_visual_image")
+def legacy_food_visual_image(request, food_id: int, digest: str):
+    if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+        raise Http404
+    asset = LegacyFoodVisualAsset.objects.filter(
+        food_id=food_id,
+        food__is_global=True,
+        food__is_active=True,
+        food__catalog_food_ref__isnull=True,
         is_published=True,
         content_sha256=digest,
     ).first()
