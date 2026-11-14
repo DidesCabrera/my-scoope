@@ -2353,6 +2353,10 @@
             "title": "Days With Plan",
             "type": "integer"
           },
+          "due_meals": {
+            "title": "Due Meals",
+            "type": "integer"
+          },
           "elapsed_meals": {
             "title": "Elapsed Meals",
             "type": "integer"
@@ -2378,6 +2382,10 @@
             "title": "Period Start",
             "type": "string"
           },
+          "scheduled_days_with_plan": {
+            "title": "Scheduled Days With Plan",
+            "type": "integer"
+          },
           "scheduled_meals": {
             "title": "Scheduled Meals",
             "type": "integer"
@@ -2395,7 +2403,9 @@
           "period_start",
           "period_end",
           "days_with_plan",
+          "scheduled_days_with_plan",
           "scheduled_meals",
+          "due_meals",
           "elapsed_meals",
           "completed_meals",
           "skipped_meals",

@@ -129,7 +129,6 @@ export default function TodayScreen() {
   const monthCache = useMemo(() => createCalendarMonthCache(apiRequest), [apiRequest]);
   const [today, setToday] = useState<TodayData | null>(null);
   const [calendarProgress, setCalendarProgress] = useState<CalendarProgressData | null>(null);
-  const [futurePlansCount, setFuturePlansCount] = useState(0);
   const [upcomingOverview, setUpcomingOverview] = useState<CalendarOverviewData | null>(null);
   const [weekDays, setWeekDays] = useState<CalendarDay[]>([]);
   const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
@@ -209,7 +208,6 @@ export default function TodayScreen() {
       ]);
       if (sequence !== loadSequence.current) return;
       setCalendarProgress(nextProgress);
-      setFuturePlansCount(nextOverview?.future_plans_count ?? 0);
       setUpcomingOverview(nextOverview);
       setWeekDays(weekOverview?.days ?? []);
       setTodayCalendarDay(todayCalendar);
@@ -269,8 +267,8 @@ export default function TodayScreen() {
   const todayDayId = today?.day_id;
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? today?.measurements?.latest_weight_kg;
-  const calendarCoverage = calendarProgress && futurePlansCount ? Math.round(calendarProgress.days_with_plan / futurePlansCount * 100) : 0;
-  const mealCoverage = calendarProgress?.scheduled_meals ? Math.round(calendarProgress.completed_meals / calendarProgress.scheduled_meals * 100) : 0;
+  const calendarCoverage = calendarProgress?.scheduled_days_with_plan ? Math.min(100, Math.round(calendarProgress.days_with_plan / calendarProgress.scheduled_days_with_plan * 100)) : 0;
+  const mealCoverage = calendarProgress?.due_meals ? Math.min(100, Math.round(calendarProgress.completed_meals / calendarProgress.due_meals * 100)) : 0;
   const monthDays = monthOverview?.key === visibleMonth ? monthOverview.data.days : [];
   const hasDatedPlan = Boolean(today?.day_id != null && today.has_plan && snapshot);
   const planContext = hasDatedPlan
@@ -552,10 +550,10 @@ export default function TodayScreen() {
           marginHorizontal={-6}
           mealLabel="Comidas cumplidas"
           planLabel={"Minutas\nrecorridas"}
-          plannedAdherenceDays={calendarProgress.scheduled_meals}
+          plannedAdherenceDays={calendarProgress.due_meals}
           progress={calendarCoverage}
           standalone
-          totalDays={futurePlansCount}
+          totalDays={calendarProgress.scheduled_days_with_plan}
         />
         <WeightTrendCard chartMarginLeft={-16} chartMarginRight={-18} currentWeightLabel={currentWeightKg == null ? undefined : `${displayWeight(currentWeightKg)} kg`} items={weightItems} marginHorizontal={-6} onPressCurrentWeight={() => router.push("/weight" as Href)} yAxisLabelInset={6} />
         <Button icon={<Weight color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Registrar peso corporal" onPress={() => router.push("/weight" as Href)} variant="surfaceCard" />
