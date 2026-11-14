@@ -139,6 +139,12 @@ def main():
             "<= element.querySelector('.alloc-bar').getBoundingClientRect().left"
         )
         assert card.locator(".meal-icon").evaluate("element => element.getBoundingClientRect().width <= 20")
+        assert card.locator(".macro-list").evaluate(
+            "element => new Set([...element.querySelectorAll('.macro-row .alloc-bar')].map(bar => Math.round(bar.getBoundingClientRect().left))).size === 1"
+        )
+        assert card.locator(".top-kpis").evaluate(
+            "element => element.querySelector('.kcal-box').getBoundingClientRect().height > element.querySelector('.macro-list').getBoundingClientRect().height"
+        )
 
         hostile = {**SAMPLE_RESULT, "data": {"meal": {
             **SAMPLE_RESULT["data"]["meal"],
