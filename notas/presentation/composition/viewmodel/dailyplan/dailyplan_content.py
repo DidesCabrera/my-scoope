@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from django.urls import reverse
+from django.conf import settings
+
+from accounts.services.entitlements import resolve_account_entitlements
+from notas.domain.models import SupplementIntake
 
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.nutrition.food_aggregation import (
@@ -332,6 +336,21 @@ def build_dailyplan_list_content_data(dailyplans, user, viewmode, list_mode="lis
         )
 
     current_weight = get_current_weight(user)
+    entitlements = resolve_account_entitlements(user) if settings.SUPPLEMENTS_FEATURE_ENABLED else None
+    supplements_allowed = bool(entitlements and entitlements.enabled("can_use_supplements"))
+    dailyplans = list(dailyplans)
+    supplement_intakes_by_plan = {}
+    if supplements_allowed:
+        owned_ids = [plan.id for plan in dailyplans if plan.created_by_id == user.id]
+        for intake in SupplementIntake.objects.filter(dailyplan_id__in=owned_ids).prefetch_related("items"):
+            supplement_intakes_by_plan.setdefault(intake.dailyplan_id, []).append({
+                "label": f"Ingesta {len(supplement_intakes_by_plan.get(intake.dailyplan_id, [])) + 1}",
+                "hour": intake.hour.strftime("%H:%M") if intake.hour else None,
+                "items": [
+                    {"name": item.supplement_snapshot.get("name") or "Suplemento", "quantity": item.quantity, "unit": item.unit}
+                    for item in intake.items.all()
+                ],
+            })
 
     for dailyplan in dailyplans:
         summary = get_dailyplan_summary(dailyplan)
@@ -409,6 +428,8 @@ def build_dailyplan_list_content_data(dailyplans, user, viewmode, list_mode="lis
                 "table_items": [item.get("table_item") for item in summary.get("meals", []) if item.get("table_item")],
                 "menu": {"meals": summary.get("menu", [])},
                 "foods_aggregation": summary.get("foods_aggregation_table", []),
+                "can_use_supplements": supplements_allowed and dailyplan.created_by_id == user.id,
+                "supplement_intakes": supplement_intakes_by_plan.get(dailyplan.id, []),
                 "metadata": {
                     "owner": str(dailyplan.created_by),
                     "author": str(dailyplan.original_author),

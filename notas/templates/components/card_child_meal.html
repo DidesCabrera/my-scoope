@@ -1,69 +1,39 @@
+{% with panel_id=child_card.child_id|default:forloop.counter %}
 <div class="entity-card entity-card--meal card {{ dpm_meal }}">
-
-    <div class="entity-card__main card-main">
-        <div class="entity-card__title card-title">
-            {% include "components//card_child_title.html" with titulo=child_card.titulo meal_number=meal_number %}
-        </div>
-
-        <div class="entity-card__kpi card-kpi">
-            {% include "components/dash_kpi.html" with kpis=child_card.kpis %}
-        </div>
+  <div class="entity-card__main card-main">
+    <div class="entity-card__title card-title">
+      {% include "components/card_child_title.html" with titulo=child_card.titulo meal_number=meal_number %}
     </div>
-
-    {% if meal_checkin %}
-        {% include "components/calendarization_meal_completion.html" with checkin=meal_checkin embedded=True %}
-    {% endif %}
-
-    {% if child_card.id %}
-        {% with panel_id=child_card.id %}
-            <div
-                class="content-panel card-detail-block"
-                {% if default_foods_table %}
-                    data-default-desktop="#card-grid-foods-{{ panel_id }}"
-                    data-default-mobile="#card-grid-qty-{{ panel_id }}"
-                {% elif dpm_meal %}
-                    data-default-desktop="#card-grid-foods-{{ panel_id }}"
-                    {% if default_nutrition %}
-                        data-default-mobile="#card-grid-macros-{{ panel_id }}"
-                    {% else %}
-                        data-default-mobile="#card-grid-qty-{{ panel_id }}"
-                    {% endif %}
-                {% endif %}
-            >
-                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab show_hide_tab=True %}
-                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab %}
-            </div>
-        {% endwith %}
-    {% else %}
-        {% with panel_id=forloop.counter %}
-            <div
-                class="content-panel card-detail-block"
-                {% if default_foods_table %}
-                    data-default-desktop="#card-grid-foods-{{ panel_id }}"
-                    data-default-mobile="#card-grid-qty-{{ panel_id }}"
-                {% elif dpm_meal %}
-                    data-default-desktop="#card-grid-foods-{{ panel_id }}"
-                    {% if default_nutrition %}
-                        data-default-mobile="#card-grid-macros-{{ panel_id }}"
-                    {% else %}
-                        data-default-mobile="#card-grid-qty-{{ panel_id }}"
-                    {% endif %}
-                {% endif %}
-            >
-                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab show_hide_tab=True %}
-                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab %}
-            </div>
-        {% endwith %}
-    {% endif %}
-
-    <div class="entity-card__footer card-bottom">
-        <div class="entity-card__metadata card-metadata">
-            {% include "components//card_child_metadata.html" with metadata=child_card.metadata %}
-        </div>
-
-        <div class="entity-card__actions card-actions">
-            {% include "components/card_actions.html" with actions=child_card.actions hide_overflow=child_card.hide_overflow_actions %}
-        </div>
+    <div class="entity-card__kpi card-kpi">
+      {% include "components/dash_kpi.html" with kpis=child_card.kpis %}
     </div>
+  </div>
 
+  {% if meal_checkin %}
+    {% include "components/calendarization_meal_completion.html" with checkin=meal_checkin embedded=True %}
+  {% endif %}
+
+  <div class="entity-card__toolbar">
+    <div class="entity-card__panel-toggles">
+      <button type="button" class="entity-card__panel-toggle entity-card__panel-toggle--food"
+              data-card-panel-target="meal-foods-{{ panel_id }}"
+              aria-controls="meal-foods-{{ panel_id }}" aria-expanded="false">
+        <i data-lucide="carrot" aria-hidden="true"></i> Alimentos
+      </button>
+    </div>
+    <div class="entity-card__actions card-actions">
+      {% include "components/card_actions.html" with actions=child_card.actions hide_overflow=child_card.hide_overflow_actions %}
+    </div>
+  </div>
+
+  <div id="meal-foods-{{ panel_id }}" class="entity-card__panel" role="region" aria-label="Alimentos de {{ child_card.titulo.name }}" hidden>
+    <div class="content-panel card-detail-block"
+         data-default-desktop="#card-grid-foods-{{ panel_id }}"
+         {% if default_nutrition %}data-default-mobile="#card-grid-macros-{{ panel_id }}"
+         {% else %}data-default-mobile="#card-grid-qty-{{ panel_id }}"{% endif %}>
+      {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab show_hide_tab=True %}
+      {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab %}
+    </div>
+  </div>
 </div>
+{% endwith %}

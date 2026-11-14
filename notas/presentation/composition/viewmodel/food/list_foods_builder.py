@@ -116,6 +116,13 @@ def build_food_list_vm(foods, user, viewmode, page_actions=None, list_mode="list
                 user,
                 viewmode,
             ),
+            nutrition_facts={
+                "portion": food.default_portion_g,
+                "saturated_fat": food.saturated_fat_g_per_100g,
+                "sugar": food.sugar_g_per_100g,
+                "fiber": food.fiber_g_per_100g,
+                "sodium": food.sodium_mg_per_100g,
+            },
         )
 
         child_cards.append(child_card)

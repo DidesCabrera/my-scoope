@@ -60,6 +60,7 @@ class ChildCardUI:
     kpis: KPIUI
     metadata: MetadataUI
     actions: list
+    nutrition_facts: dict = field(default_factory=dict)
 
 
 @dataclass

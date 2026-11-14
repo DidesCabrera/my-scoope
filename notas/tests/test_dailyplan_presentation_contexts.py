@@ -1,8 +1,9 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from notas.domain.models import DailyPlan, Program, ProgramDay
@@ -16,8 +17,39 @@ from notas.presentation.pages.dailyplan_pages import (
     get_dailyplan_detail_page_data,
     get_dailyplan_list_page_data,
 )
+from notas.presentation.pages.home_calendarization import _build_snapshot_dailyplan_card
 
 User = get_user_model()
+
+
+class CalendarizedDailyPlanCardPanelsTests(SimpleTestCase):
+    def test_snapshot_card_exposes_foods_and_supplements_without_changing_nutrition(self):
+        day = SimpleNamespace(id=42, plan_snapshot={
+            "name": "Día guardado",
+            "totals": {"total_kcal": 80, "protein_g": 3, "carbs_g": 12, "fat_g": 1},
+            "meals": [{"name": "Desayuno", "foods": [{
+                "name": "Plátano", "quantity_g": 140, "protein_g": 1,
+                "carbs_g": 30, "fat_g": 0, "total_kcal": 124,
+            }]}],
+            "supplement_intakes": [{"hour": "08:30", "items": [{
+                "supplement": {"name": "Magnesio"}, "quantity": "2", "unit": "cápsulas",
+            }]}],
+        })
+
+        card = _build_snapshot_dailyplan_card(
+            day, current_weight=75, owner_label="usuario", can_use_supplements=True,
+        )
+
+        self.assertEqual(card.kpis.tot_kcal, 80)
+        self.assertEqual(card.foods_aggregation[0]["rel"]["name"], "Plátano")
+        self.assertEqual(card.supplement_intakes[0]["items"][0]["name"], "Magnesio")
+        self.assertTrue(card.can_use_supplements)
+
+        unavailable = _build_snapshot_dailyplan_card(
+            day, current_weight=75, owner_label="usuario", can_use_supplements=False,
+        )
+        self.assertFalse(unavailable.can_use_supplements)
+        self.assertEqual(unavailable.supplement_intakes, [])
 
 
 class DailyPlanPresentationContextTests(TestCase):

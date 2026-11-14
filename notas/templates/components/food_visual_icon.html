@@ -1,0 +1,5 @@
+{% load food_visuals %}
+<span class="food-visual-icon" data-food-visual data-food-id="{{ food_id|default:'' }}" data-food-name="{{ food_name }}" aria-hidden="true">
+  <span class="food-visual-icon__fallback">{{ food_name|food_visual_emoji }}</span>
+  <img class="food-visual-icon__image" alt="" loading="lazy" hidden>
+</span>

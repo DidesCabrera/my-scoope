@@ -1,0 +1,13 @@
+<article class="entity-card entity-card--supplement">
+  <div class="entity-card__main card-main">
+    <div class="entity-card__title card-title">
+      {% include "components/card_child_title.html" with titulo=card.title %}
+      <span class="library-card__chip">{{ card.item_count }} sup{{ card.item_count|pluralize }}</span>
+      {% if card.summary %}<p class="library-card__subtitle">{{ card.summary }}</p>{% endif %}
+    </div>
+  </div>
+  <div class="entity-card__toolbar">
+    <div class="entity-card__panel-toggles"></div>
+    <div class="entity-card__actions card-actions">{% include "components/card_actions.html" with actions=card.actions %}</div>
+  </div>
+</article>

@@ -263,6 +263,28 @@
     reinitAllDetailBlocks();
 
     document.addEventListener("click", function (event) {
+      const toggle = event.target.closest("[data-card-panel-target]");
+      if (!toggle) return;
+
+      const card = toggle.closest(".entity-card");
+      const targetId = toggle.dataset.cardPanelTarget;
+      if (!card || !targetId) return;
+      const panels = Array.from(card.children).filter((child) =>
+        child.classList.contains("entity-card__panel")
+      );
+      const target = panels.find((panel) => panel.id === targetId);
+      if (!target) return;
+
+      const expanding = toggle.getAttribute("aria-expanded") !== "true";
+      card.querySelectorAll(":scope > .entity-card__toolbar [data-card-panel-target]").forEach((button) => {
+        button.setAttribute("aria-expanded", String(button === toggle && expanding));
+      });
+      panels.forEach((panel) => {
+        panel.hidden = panel !== target || !expanding;
+      });
+    });
+
+    document.addEventListener("click", function (event) {
       const button = event.target.closest(TAB_SELECTOR);
       if (!button) return;
 

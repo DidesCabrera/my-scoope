@@ -1,79 +1,87 @@
 {% extends "notas/base.html" %}
-{% load static l10n %}
+{% load static %}
 {% block title %}{{ vm.content.preparation.name }} · Preparación{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
+{% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}?v=20261114-3">{% endblock %}
 {% block content %}
 {% with preparation=vm.content.preparation version=vm.content.version %}
-<div class="page web-parity" data-page="preparation-detail">
-  <a class="web-parity__back" href="{% url 'preparation_list' %}">← Preparaciones</a>
-  <header class="web-parity__heading">
-    <div><p class="web-parity__eyebrow">{% if preparation.is_global %}Catálogo curado{% else %}Mi Preparación{% endif %}</p>
-      <h1>{{ preparation.name }}</h1>
-      {% if version %}<p>Rinde {{ version.yield_g|floatformat:0 }} g · Porción habitual {{ version.default_portion_g|floatformat:0 }} g · Versión {{ version.version }}</p>
-      {% else %}<p>Borrador. Agrega el primer alimento para calcular su composición.</p>{% endif %}
+<div class="page page--detail has-collapsible-panels web-parity library-detail library-detail--preparation" data-page="preparation-detail">
+  <header class="library-detail__header">
+    <div class="library-detail__identity">
+      <div class="card-title main">{% include "components/card_main_title.html" with titulo=vm.content.title %}</div>
+      {% if version %}
+        <p>Rinde {{ version.yield_g|floatformat:"-2" }} g · {{ vm.content.portion_count|floatformat:"-2" }} porciones de {{ version.default_portion_g|floatformat:"-2" }} g</p>
+        <span class="library-detail__indicator">{{ vm.content.ingredients|length }} ingrediente{{ vm.content.ingredients|length|pluralize }}</span>
+      {% else %}<p>Borrador · Agrega los alimentos de la receta para calcular su información nutricional.</p>{% endif %}
     </div>
-  </header>
-  {% if version %}
-  <div class="web-parity__metrics" aria-label="Nutrición de la receta completa">
-    <div><strong>{{ version.protein_g|floatformat:1 }}</strong><span>g proteínas</span></div>
-    <div><strong>{{ version.carbs_g|floatformat:1 }}</strong><span>g carbohidratos</span></div>
-    <div><strong>{{ version.fat_g|floatformat:1 }}</strong><span>g grasas</span></div>
-    <div><strong>{% if version.sodium_mg != None %}{{ version.sodium_mg|floatformat:0 }}{% else %}Sin dato{% endif %}</strong><span>mg sodio</span></div>
-  </div>
-  <p class="web-parity__note">Valores de la receta completa. {% if preparation.is_global %}Alérgenos: {% if version.allergen_status == 'assessed' %}revisados{% else %}sin evaluación completa{% endif %}.{% else %}Los alérgenos de Preparaciones personales no están evaluados.{% endif %}</p>
-  {% endif %}
-  <section class="web-parity__section">
-    <h2>Ingredientes</h2>
-    <div class="web-parity__rows">
-      {% for ingredient in vm.content.ingredients %}
-      <div class="web-parity__row">
-        <span><strong>{{ ingredient.name }}</strong><small>{{ ingredient.quantity_g|floatformat:0 }} g</small></span>
+    <details class="library-detail__actions">
+      <summary aria-label="Más acciones para {{ preparation.name }}" title="Más acciones"><i data-lucide="more-horizontal" aria-hidden="true"></i></summary>
+      <div class="library-detail__action-menu">
+        {% if version %}<a href="#preparation-information"><i data-lucide="info" aria-hidden="true"></i> Ver información del elemento</a>{% endif %}
         {% if vm.content.can_edit %}
-        <div class="web-parity__checkin">
-          <form method="post" action="{% url 'preparation_edit' preparation.pk %}" class="web-parity__checkin">{% csrf_token %}
-            <input type="hidden" name="action" value="update_food"><input type="hidden" name="food_id" value="{{ ingredient.food_id }}">
-            <label>Gramos <input type="number" name="quantity_g" value="{{ ingredient.quantity_g|floatformat:'3u' }}" min="0.001" max="100000" step="0.001" required></label>
-            <button type="submit">Guardar</button>
+          <a href="{% url 'preparation_edit' preparation.pk %}"><i data-lucide="pencil" aria-hidden="true"></i> Editar preparación</a>
+          <form method="post" action="{% url 'preparation_edit' preparation.pk %}" onsubmit="return confirm('¿Eliminar esta preparación de tu biblioteca? Las comidas existentes conservarán su composición.')">
+            {% csrf_token %}<input type="hidden" name="action" value="delete">
+            <button type="submit" class="library-detail__danger"><i data-lucide="trash-2" aria-hidden="true"></i> Eliminar preparación</button>
           </form>
-          <form method="post" action="{% url 'preparation_edit' preparation.pk %}">{% csrf_token %}
-            <input type="hidden" name="action" value="remove_food"><input type="hidden" name="food_id" value="{{ ingredient.food_id }}">
-            <button type="submit" class="web-parity__text-button">Quitar</button>
-          </form>
-        </div>{% endif %}
+        {% endif %}
       </div>
-      {% empty %}<p>Sin ingredientes todavía.</p>{% endfor %}
+    </details>
+  </header>
+
+  {% if version %}
+  <section class="library-detail__nutrition" aria-label="Información nutricional de la preparación" data-preparation-nutrition>
+    <div class="library-detail__section-heading"><h2>Información nutricional</h2></div>
+    <div class="library-detail__tabs" role="tablist" aria-label="Base nutricional">
+      <button type="button" role="tab" id="recipe-tab" aria-controls="recipe-nutrition" aria-selected="true" data-nutrition-tab="recipe">Receta completa</button>
+      <button type="button" role="tab" id="portion-tab" aria-controls="portion-nutrition" aria-selected="false" data-nutrition-tab="portion">Porción ({{ version.default_portion_g|floatformat:"-2" }} g)</button>
+    </div>
+    {% for key, values in vm.content.kpis.items %}
+    <div id="{{ key }}-nutrition" class="library-detail__nutrition-panel" role="tabpanel" aria-labelledby="{{ key }}-tab" {% if key != 'recipe' %}hidden{% endif %}>
+      <div class="card-kpi main">{% include "components/dash_kpi.html" with kpis=values %}</div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <section class="library-detail__section">
+    <div class="library-detail__section-heading"><h2>Composición de la preparación</h2><span>{{ vm.content.ingredients|length }} ingrediente{{ vm.content.ingredients|length|pluralize }}</span></div>
+    {% if vm.content.ingredients %}
+    {% with panel_id=preparation.pk %}
+      <div class="content-panel card-detail-block library-detail__food-panel" data-default-desktop="#card-grid-foods-{{ panel_id }}" data-default-mobile="#card-grid-qty-{{ panel_id }}">
+        {% include "components/detail_tabs_foods_main_detail.html" with panel_id=panel_id %}
+        {% include "components/detail_panels_foods.html" with panel_id=panel_id items=vm.content.food_rows nutrition_grid_template="components/grid_foods.html" %}
+      </div>
+    {% endwith %}
+    {% else %}<p class="web-parity__note">Todavía no hay alimentos en esta preparación.</p>{% endif %}
+    {% if vm.content.can_edit %}<a class="library-detail__add" href="{% url 'preparation_edit' preparation.pk %}?food=">+ Agregar alimento</a>{% endif %}
+  </section>
+
+  {% if vm.content.ingredients %}
+  <section class="library-detail__section">
+    <div class="library-detail__section-heading"><h2>Detalle de cada ingrediente</h2></div>
+    <p class="web-parity__note">Compara el aporte de cada ingrediente y abre su ficha de alimento.</p>
+    <div class="library-detail__food-cards">
+      {% for card in vm.content.ingredient_cards %}
+        {% include "components/card_child_food.html" with child_card=card %}
+      {% endfor %}
     </div>
   </section>
-  {% if vm.content.can_edit %}
-  <section class="web-parity__section">
-    <h2>Ajustar receta</h2>
-    {% if version %}
-    <form method="post" action="{% url 'preparation_edit' preparation.pk %}" class="web-parity__form">
-      {% csrf_token %}<input type="hidden" name="action" value="save">
-      <label>Nombre<input name="name" value="{{ preparation.name }}" maxlength="255" required></label>
-      <label>Rendimiento final en gramos<input name="yield_g" type="number" min="0.001" step="0.001" value="{{ version.yield_g|floatformat:'3u' }}"></label>
-      <label>Porción habitual en gramos<input name="default_portion_g" type="number" min="0.001" step="0.001" value="{{ version.default_portion_g|floatformat:'3u' }}" required></label>
-      <button class="btn-primary" type="submit">Guardar cambios</button>
-    </form>
-    {% endif %}
-    <form method="get" class="web-parity__search"><label for="food-search">Buscar alimento para agregar</label>
-      <div><input id="food-search" name="food" value="{{ vm.content.food_search }}" placeholder="Nombre del alimento"><button type="submit" class="btn-primary">Buscar</button></div>
-    </form>
-    {% if vm.content.food_results %}
-    <div class="web-parity__rows">
-      {% for food in vm.content.food_results %}
-      <form method="post" action="{% url 'preparation_edit' preparation.pk %}" class="web-parity__row">
-        {% csrf_token %}<input type="hidden" name="action" value="add_food"><input type="hidden" name="food_id" value="{{ food.id }}">
-        <strong>{{ food.display_name }}</strong><label>Gramos <input name="quantity_g" type="number" min="0.001" max="100000" step="0.001" required></label>
-        <button type="submit" class="btn-primary">Agregar</button>
-      </form>
-      {% endfor %}
-    </div>{% endif %}
-    <form method="post" action="{% url 'preparation_edit' preparation.pk %}" class="web-parity__danger-form">
-      {% csrf_token %}<input type="hidden" name="action" value="delete"><button type="submit">Retirar de mi biblioteca</button>
-    </form>
+  {% endif %}
+
+  {% if version %}
+  <section class="library-detail__section" id="preparation-information">
+    <div class="library-detail__section-heading"><h2>Información de la preparación</h2></div>
+    <dl class="library-detail__facts">
+      <div><dt>Porción habitual</dt><dd>{{ version.default_portion_g|floatformat:"-2" }} g</dd></div>
+      <div><dt>Rendimiento final</dt><dd>{{ version.yield_g|floatformat:"-2" }} g · {% if version.evidence.yield_is_manual %}Ajustado{% else %}Estimado{% endif %}</dd></div>
+      <div><dt>Sodio</dt><dd>{% if version.sodium_mg != None %}{{ version.sodium_mg|floatformat:0 }} mg{% else %}Sin dato{% endif %}</dd></div>
+      <div><dt>Alérgenos</dt><dd>{% if version.allergen_status == 'unknown' %}Sin evaluación{% elif version.allergens %}{{ version.allergens|join:', ' }}{% else %}Sin alérgenos declarados{% endif %}</dd></div>
+      <div><dt>Origen</dt><dd>{% if preparation.is_global %}Estimación editorial{% else %}Estimación personal{% endif %} · Versión {{ version.version }}</dd></div>
+    </dl>
   </section>
   {% endif %}
 </div>
 {% endwith %}
+<script src="{% static 'notas/js/library_detail.js' %}" defer></script>
 {% endblock %}

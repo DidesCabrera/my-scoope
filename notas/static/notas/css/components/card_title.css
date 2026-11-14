@@ -75,6 +75,66 @@ margin: 0;
 color: var(--text-main);
 }
 
+.food-visual-heading {
+display: flex;
+align-items: center;
+gap: 10px;
+min-width: 0;
+}
+
+.food-visual-heading h3,
+.food-visual-heading h1 {
+min-width: 0;
+margin: 0;
+}
+
+.food-visual-icon {
+width: 28px;
+height: 28px;
+flex: 0 0 28px;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+line-height: 1;
+}
+
+.food-visual-icon__fallback {
+font-size: 23px;
+}
+
+.food-visual-icon__image {
+width: 100%;
+height: 100%;
+object-fit: contain;
+}
+
+.food-visual-icon__image[hidden],
+.food-visual-icon__fallback[hidden] {
+display: none;
+}
+
+.food-visual-heading--main .food-visual-icon {
+width: 41px;
+height: 41px;
+flex-basis: 41px;
+}
+
+.food-visual-heading--main .food-visual-icon__fallback {
+font-size: 31px;
+}
+
+.data-grid-cell--name > .food-visual-icon {
+width: 22px;
+height: 22px;
+flex: 0 0 22px;
+margin-right: 6px;
+vertical-align: middle;
+}
+
+.data-grid-cell--name > .food-visual-icon .food-visual-icon__fallback {
+font-size: 17px;
+}
+
 .card-title-eyebrow {
 display: flex;
 align-items: center;
@@ -118,6 +178,9 @@ background-color: var(--entity-food);
 .card-title-eyebrow__icon.program {
 background-color: var(--entity-program);
 }
+
+.card-title-eyebrow__icon.preparation { background-color: var(--entity-preparation); }
+.card-title-eyebrow__icon.supplement { background-color: var(--entity-supplement); }
 
 .structural-item--time .structural-value {
 font-variant-numeric: tabular-nums;

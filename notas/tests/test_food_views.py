@@ -58,6 +58,9 @@ class FoodViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Egg")
+        self.assertContains(response, f'data-food-id="{food.id}"')
+        self.assertContains(response, 'data-food-name="Egg"')
+        self.assertContains(response, "🍽️")
         self.assertIn("vm", response.context)
 
     def test_food_detail_returns_200(self):
@@ -75,6 +78,8 @@ class FoodViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Rice")
+        self.assertContains(response, f'data-food-id="{food.id}"')
+        self.assertContains(response, "🍽️")
 
     def test_food_create_creates_food(self):
         response = self.client.post(
