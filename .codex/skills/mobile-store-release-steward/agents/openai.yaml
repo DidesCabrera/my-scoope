@@ -1,0 +1,4 @@
+interface:
+  display_name: "Encargado de Publicaciones en Tiendas Móviles"
+  short_description: "Controla versiones y readiness de las tiendas móviles"
+  default_prompt: "Usa $mobile-store-release-steward para decirme qué checklist de producto está pendiente antes de enviar My Scoope a App Review. Separa lo resuelto y vigente, lo que requiere revalidación con una causa concreta, lo pendiente y lo no verificado."

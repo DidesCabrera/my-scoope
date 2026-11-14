@@ -1,6 +1,6 @@
 schema_version: 2
 owner: "Felipe Dides"
-last_reviewed: "2026-11-11"
+last_reviewed: "2026-11-14"
 lifecycle_states:
   - "proposal"
   - "pilot"
@@ -39,6 +39,12 @@ roles:
     status: "pilot"
     path: ".codex/skills/ai-application-platform-steward/SKILL.md"
     purpose: "Implement, evaluate, and maintain the assistant, governed AI capabilities, MCP projection, and AI release gates."
+  - name: "mobile-store-release-steward"
+    area: "product-technology"
+    class: "steward"
+    status: "pilot"
+    path: ".codex/skills/mobile-store-release-steward/SKILL.md"
+    purpose: "Maintain mobile-store release readiness, version identity, reusable evidence, submission state, and App Store Connect operations."
   - name: "observability-lead"
     area: "product-technology"
     class: "coordinator"

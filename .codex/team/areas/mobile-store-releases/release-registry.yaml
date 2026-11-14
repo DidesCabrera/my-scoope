@@ -1,0 +1,34 @@
+schema_version: 1
+owner_role: "mobile-store-release-steward"
+last_reviewed: "2026-11-14"
+allowed_states:
+  - "discovery"
+  - "scope_approved"
+  - "candidate_selected"
+  - "verification_in_progress"
+  - "ready_for_review"
+  - "submitted"
+  - "in_review"
+  - "changes_required"
+  - "approved"
+  - "release_scheduled"
+  - "released"
+  - "monitored"
+  - "closed"
+releases:
+  - id: "ios-first-public-release"
+    platform: "ios"
+    store: "app-store-connect"
+    objective: "Submit the first public My Scoope iOS release to App Review."
+    state: "discovery"
+    product_scope_ref: null
+    version: null
+    build: null
+    commit_sha: null
+    environment: "production"
+    store_submission_id: null
+    historical_evidence:
+      - ".codex/team/memory/projects/app-store-launch-readiness-2026-10-23.md"
+    current_claim: "No exact candidate or current App Store Connect state has yet been attached to this registry."
+    next_action: "Run a product App Review readiness review and select the exact candidate only after its scope is approved."
+    updated_at: "2026-11-14"
