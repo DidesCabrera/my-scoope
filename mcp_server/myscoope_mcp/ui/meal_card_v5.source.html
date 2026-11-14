@@ -10,7 +10,7 @@
     html, body { margin: 0; padding: 0; background: transparent; }
     body { color: var(--text-main); }
     .meal-card { width: 100%; zoom: 80%; margin: 0; overflow: hidden; border: 1px solid var(--border-default); border-top: 3px solid var(--entity-meal); border-radius: var(--meal-card-inline-border-radius); background: var(--surface-card); }
-    .top { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.55fr); align-items: center; gap: var(--space-lg); padding: var(--meal-card-inline-header-padding-y) var(--meal-card-inline-header-padding-x); }
+    .top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; gap: var(--space-lg); padding: var(--meal-card-inline-header-padding-y) var(--meal-card-inline-header-padding-x); }
     .identity { align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: var(--space-sm); padding-right: var(--space-lg); border-right: 1px solid var(--border-soft); min-width: 0; }
     .eyebrow { display: flex; align-items: center; gap: var(--space-sm); margin: 0; color: var(--text-muted); font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: .025em; }
     .meal-icon { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--entity-meal); color: #fff; }
@@ -63,7 +63,7 @@
     .status { padding: var(--space-lg); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-card); color: var(--text-muted); }
     [hidden] { display: none !important; }
     @media (min-width: 601px) and (max-width: 1000px) {
-      .top { grid-template-columns: minmax(170px, .65fr) minmax(0, 1.65fr); gap: var(--space-md); }
+      .top { grid-template-columns: minmax(170px, 2fr) minmax(0, 3fr); gap: var(--space-md); }
       .identity { padding-right: var(--space-md); }
       .top-kpis { gap: var(--space-md); }
       .macro-row { grid-template-columns: 72px 45px 42px minmax(0, 1fr); gap: 5px; font-size: var(--font-size-caption); }
