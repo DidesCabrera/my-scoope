@@ -7,6 +7,7 @@ from mcp.server.auth.provider import AccessToken
 from myscoope_mcp.auth import StaticMCPTokenVerifier, create_external_mcp_auth_settings
 from myscoope_mcp.contracts import MCPToolCallResult
 from myscoope_mcp.protocol_server import (
+    LEGACY_MEAL_CARD_RESOURCE_URI,
     MEAL_CARD_MIME_TYPE,
     MEAL_CARD_RESOURCE_URI,
     create_mcp_server,
@@ -31,9 +32,9 @@ class MCPMealCardUITests(unittest.TestCase):
             tools = {tool.name: tool for tool in await server.list_tools()}
             resources = {str(resource.uri): resource for resource in await server.list_resources()}
             contents = await server.read_resource(MEAL_CARD_RESOURCE_URI)
-            return tools, resources[MEAL_CARD_RESOURCE_URI], contents[0]
+            return tools, resources, contents[0]
 
-        tools, resource, content = asyncio.run(inspect())
+        tools, resources, content = asyncio.run(inspect())
         tool = tools["read_meal"]
         self.assertEqual(tool.meta["ui"]["resourceUri"], MEAL_CARD_RESOURCE_URI)
         self.assertIsNone(tools["search_user_meals"].meta)
@@ -42,8 +43,11 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertTrue(tool.annotations.readOnlyHint)
         self.assertEqual(tool.securitySchemes, [{"type": "oauth2", "scopes": ["myscoope:read"]}])
         self.assertNotIn("user_id", tool.inputSchema.get("properties", {}))
-        self.assertEqual(resource.mimeType, MEAL_CARD_MIME_TYPE)
+        self.assertEqual(resources[MEAL_CARD_RESOURCE_URI].mimeType, MEAL_CARD_MIME_TYPE)
+        self.assertIn(LEGACY_MEAL_CARD_RESOURCE_URI, resources)
         self.assertEqual(content.mime_type, MEAL_CARD_MIME_TYPE)
+        self.assertIn('--entity-meal: #CF34B0', content.content)
+        self.assertIn('--nutrition-protein: #00D0F5', content.content)
         self.assertIn('method: "ui/initialize"', content.content)
         self.assertIn('method: "ui/notifications/initialized"', content.content)
         self.assertIn("ui/notifications/tool-result", content.content)

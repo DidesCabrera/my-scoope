@@ -24,7 +24,7 @@ ChatGPT / cliente MCP Apps
   → dispatch_tool_call
   → Django /app/ai-tools/read-meal/
   → read_meal_tool → get_meal_detail → MealDTO
-  → structuredContent + ui://myscoope/meal-card-v2.html
+  → structuredContent + ui://myscoope/meal-card-v3.html
   → card HTML en iframe
 ```
 
@@ -44,7 +44,16 @@ La card completa `ui/initialize` y `ui/notifications/initialized` antes de recib
 `ui/notifications/tool-result`; también comunica su altura al host con
 `ui/notifications/size-changed`. Alterna localmente entre Nutrición y Alimentos.
 El URI incluye versión porque los clientes pueden cachear recursos. La versión 2
-corrige un timeout de inicialización descubierto en una conversación real.
+corrigió un timeout de inicialización descubierto en una conversación real. La
+versión 3 incorpora tokens y receta del contrato visual común; la versión 2 sigue
+disponible para conversaciones anteriores.
+
+La sección «En conversación» de la galería web (`/app/dev/ui-system/`, solo en
+DEBUG) sirve exactamente `meal_card_v3.html` en un iframe aislado. Su host de prueba
+reproduce el saludo MCP Apps y envía datos sintéticos. Permite revisar claro,
+oscuro, 520/390/320 px, nombres largos, vacío y error. El archivo fuente editable
+es `meal_card_v3.source.html`; `npm run generate:ui` produce el HTML servido tanto
+por la galería como por MCP. `npm run check:ui` detecta desincronización.
 
 ## Validación local reproducible
 
@@ -79,7 +88,7 @@ usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
    servidor MCP personalizado para uso privado y refrescar sus metadatos después
    de desplegar esta versión. Confirmar
    que aparecen `search_user_meals`, `read_meal` y el recurso
-   `ui://myscoope/meal-card-v2.html`. Si el servicio usa
+   `ui://myscoope/meal-card-v3.html`. Si el servicio usa
    `MYSCOOPE_MCP_ALLOWED_TOOLS`, añadir ambos nombres a la lista existente y
    ejecutar **Refresh tools** en la configuración del plugin de ChatGPT.
 3. Con una comida de prueba perteneciente a la cuenta de prueba, pedir “Muestra la

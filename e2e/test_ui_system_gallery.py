@@ -43,3 +43,34 @@ def test_web_ui_system_uses_product_components_and_real_mobile_media_queries(
     assert responsive_state["width"] <= 390
     assert responsive_state["mobileMedia"] is True
     assert responsive_state["hasProgramCard"] is True
+
+
+def test_conversation_gallery_runs_the_mcp_card_with_synthetic_states(
+    anonymous_page,
+    base_url,
+):
+    anonymous_page.goto(f"{base_url}/app/dev/ui-system/#conversation-ui")
+    card = anonymous_page.frame_locator("#mcp-meal-frame")
+
+    expect(card.get_by_role("heading", name="Almuerzo de ejemplo")).to_be_visible()
+    expect(card.get_by_text("614", exact=True)).to_be_visible()
+    assert card.locator(".footnote").evaluate(
+        "element => element.getBoundingClientRect().bottom <= innerHeight"
+    )
+    card.get_by_role("tab", name="Alimentos").click()
+    expect(card.get_by_text("Arroz integral")).to_be_visible()
+
+    anonymous_page.get_by_role("button", name="Oscuro").click()
+    expect(card.locator("#card")).to_have_css("background-color", "rgb(18, 18, 18)")
+
+    anonymous_page.get_by_role("button", name="Estrecho").click()
+    assert anonymous_page.locator("#mcp-meal-frame").evaluate(
+        "element => Math.round(element.getBoundingClientRect().width)"
+    ) == 320
+    assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
+
+    anonymous_page.locator("#mcp-meal-scenario").select_option("long")
+    expect(card.get_by_role("heading", name="Almuerzo con vegetales, arroz integral y proteína para un día de entrenamiento")).to_be_visible()
+    anonymous_page.locator("#mcp-meal-scenario").select_option("error")
+    expect(card.get_by_role("status")).to_contain_text("No se pudo mostrar")
+    expect(card.locator("#card")).to_be_hidden()

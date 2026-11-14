@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Generated from design/ui-contract.json. Edit that contract, not this block. */
+:root {
+  --ui-contract-version: "myscoope.visual-grammar.v2";
+  --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif;
+  --space-xs: 0.25rem;
+  --space-compact: 0.375rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.375rem;
+  --space-xxl: 1.75rem;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-card: 22px;
+  --radius-pill: 999px;
+  --font-size-hero: 34px;
+  --font-size-title: 26px;
+  --font-size-section: 20px;
+  --font-size-body: 16px;
+  --font-size-caption: 13px;
+  --font-size-label: 12px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-eyebrow: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extra-bold: 800;
+  --font-weight-black: 900;
+  --meal-card-inline-max-width: 520px;
+  --meal-card-inline-border-radius: 16px;
+  --meal-card-inline-header-padding-x: 22px;
+  --meal-card-inline-header-padding-y: 20px;
+  --meal-card-inline-panel-padding-x: 22px;
+  --meal-card-inline-panel-padding-y: 18px;
+  --entity-food: #FF8800;
+  --entity-meal: #CF34B0;
+  --entity-preparation: #F46D6A;
+  --entity-dailyplan: #6229CE;
+  --entity-dpm: #0084A2;
+  --entity-program: #1B6491;
+  --entity-supplement: #14A7BE;
+  --entity-proposal: #121212;
+  --entity-inbox: #121212;
+  --entity-comparator: #3057FF;
+  --entity-comparison: #3057FF;
+  --entity-home: #121212;
+  --entity-profile: #121212;
+  --nutrition-protein: #00D0F5;
+  --nutrition-carbs: #01E888;
+  --nutrition-fat: #BBFF00;
+  --nutrition-qty: #FFFB82;
+  --nutrition-ppk: #FFD16E;
+  --nutrition-ppk-muted: #FFB69F;
+  --surface-app: #F5F5F5;
+  --surface-page: #F8F8F8;
+  --surface-card: #FFFFFF;
+  --surface-card-muted: #FAFAFA;
+  --surface-elevated: #FFFFFF;
+  --text-main: #1F2937;
+  --text-muted: #6B7280;
+  --text-soft: #8A8A8A;
+  --text-subtle: #A3A3A3;
+  --text-inverted: #FFFFFF;
+  --text-link: #0054E5;
+  --border-soft: #EBEBEB0B;
+  --border-default: #DFDFDF;
+  --border-strong: #CFCFCF;
+  --interactive-primary: #0054E5;
+  --interactive-primary-hover: #0044BD;
+  --status-danger: #FF4343;
+  --status-success: #01E888;
+  --status-warning: #FFD16E;
+  --nutrition-kcal: #FFF9F5;
+  --nutrition-kcal-border: #FEDDC8;
+  --alloc-bar-bg: #F8F8F8;
+  --alloc-cell-bg: #FFFFFF;
+}
+:root[data-theme="dark"] {
+  --surface-app: #000000;
+  --surface-page: #121212;
+  --surface-card: #121212;
+  --surface-card-muted: #202020;
+  --surface-elevated: #242424;
+  --text-main: #F5F5F5;
+  --text-muted: #B5B5B5;
+  --text-soft: #8F8F8F;
+  --text-subtle: #737373;
+  --text-inverted: #111111;
+  --text-link: #8AB4FF;
+  --border-soft: #AAAAAA11;
+  --border-default: #343434;
+  --border-strong: #4A4A4A;
+  --interactive-primary: #8AB4FF;
+  --interactive-primary-hover: #A9C8FF;
+  --status-danger: #FF6B6B;
+  --status-success: #01E888;
+  --status-warning: #FFD16E;
+  --nutrition-kcal: #26211D;
+  --nutrition-kcal-border: #8d6951;
+  --alloc-bar-bg: #313131;
+  --alloc-cell-bg: #313131;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+  --surface-app: #000000;
+  --surface-page: #121212;
+  --surface-card: #121212;
+  --surface-card-muted: #202020;
+  --surface-elevated: #242424;
+  --text-main: #F5F5F5;
+  --text-muted: #B5B5B5;
+  --text-soft: #8F8F8F;
+  --text-subtle: #737373;
+  --text-inverted: #111111;
+  --text-link: #8AB4FF;
+  --border-soft: #AAAAAA11;
+  --border-default: #343434;
+  --border-strong: #4A4A4A;
+  --interactive-primary: #8AB4FF;
+  --interactive-primary-hover: #A9C8FF;
+  --status-danger: #FF6B6B;
+  --status-success: #01E888;
+  --status-warning: #FFD16E;
+  --nutrition-kcal: #26211D;
+  --nutrition-kcal-border: #8d6951;
+  --alloc-bar-bg: #313131;
+  --alloc-cell-bg: #313131;
+  }
+}
+    :root { color-scheme: light dark; font-family: var(--font-family-sans); }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: var(--space-sm); background: transparent; color: var(--text-main); }
+    .card { width: 100%; max-width: var(--meal-card-inline-max-width); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--meal-card-inline-border-radius); background: var(--surface-card); }
+    .header { padding: var(--meal-card-inline-header-padding-y) var(--meal-card-inline-header-padding-x); border-left: 4px solid var(--entity-meal); }
+    .eyebrow { margin: 0 0 var(--space-compact); color: var(--text-muted); font-size: var(--font-size-label); font-weight: var(--font-weight-semibold); }
+    h1 { margin: 0; overflow-wrap: anywhere; font-size: var(--font-size-section); line-height: 1.25; }
+    .category { margin: var(--space-sm) 0 0; color: var(--text-muted); font-size: var(--font-size-caption); }
+    .energy { display: flex; align-items: baseline; gap: var(--space-xs); margin: var(--space-lg) 0 0; color: var(--entity-meal); }
+    .energy strong { font-size: 29px; line-height: 1; }
+    .energy span { font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
+    .tabs { display: flex; gap: var(--space-xs); padding: var(--space-sm) var(--space-lg) 0; border-bottom: 1px solid var(--border-default); }
+    .tabs button { padding: var(--space-sm) var(--space-md); border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--text-muted); font: inherit; font-size: var(--font-size-caption); cursor: pointer; }
+    .tabs button[aria-selected="true"] { border-color: var(--entity-meal); color: var(--text-main); font-weight: var(--font-weight-bold); }
+    .tabs button:focus-visible { outline: 2px solid var(--entity-meal); outline-offset: -2px; }
+    .panel { padding: var(--meal-card-inline-panel-padding-y) var(--meal-card-inline-panel-padding-x); }
+    .macros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-sm); }
+    .macro { min-width: 0; padding: var(--space-md); border-radius: var(--radius-md); background: var(--surface-card-muted); border-top: 3px solid var(--macro-color); }
+    .macro--protein { --macro-color: var(--nutrition-protein); }
+    .macro--carbs { --macro-color: var(--nutrition-carbs); }
+    .macro--fat { --macro-color: var(--nutrition-fat); }
+    .macro span { display: block; color: var(--text-muted); font-size: var(--font-size-label); }
+    .macro strong { display: block; margin-top: var(--space-xs); font-size: 18px; }
+    .footnote { margin: var(--space-md) 0 0; color: var(--text-soft); font-size: var(--font-size-label); }
+    .foods { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+    .foods li { display: flex; justify-content: space-between; gap: var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--border-default); font-size: var(--font-size-caption); }
+    .foods li:last-child { border-bottom: 0; }
+    .foods li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+    .foods li span:last-child { flex: none; color: var(--text-muted); }
+    .empty { margin: 0; color: var(--text-muted); font-size: var(--font-size-caption); }
+    .status { padding: var(--space-lg); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-card); color: var(--text-muted); font-size: var(--font-size-caption); }
+    [hidden] { display: none !important; }
+    @media (max-width: 360px) {
+      .header { padding: var(--space-lg); }
+      .panel { padding: var(--space-lg); }
+      .macro { padding: var(--space-sm); }
+      .macro strong { font-size: var(--font-size-body); }
+    }
+  </style>
+</head>
+<body>
+  <div id="status" class="status" role="status">Cargando comida…</div>
+  <article id="card" class="card" aria-labelledby="meal-name" hidden>
+    <header class="header">
+      <p class="eyebrow">Comida</p>
+      <h1 id="meal-name"></h1>
+      <p id="meal-category" class="category" hidden></p>
+      <p class="energy"><strong id="meal-kcal"></strong><span>kcal</span></p>
+    </header>
+    <div class="tabs" role="tablist" aria-label="Información de la comida">
+      <button id="tab-summary" type="button" role="tab" aria-selected="true" aria-controls="panel-summary">Nutrición</button>
+      <button id="tab-foods" type="button" role="tab" aria-selected="false" aria-controls="panel-foods">Alimentos</button>
+    </div>
+    <section id="panel-summary" class="panel" role="tabpanel" aria-labelledby="tab-summary">
+      <div class="macros">
+        <div class="macro macro--protein"><span>Proteínas</span><strong id="meal-protein"></strong></div>
+        <div class="macro macro--carbs"><span>Carbohidratos</span><strong id="meal-carbs"></strong></div>
+        <div class="macro macro--fat"><span>Grasas</span><strong id="meal-fat"></strong></div>
+      </div>
+      <p class="footnote">Valores calculados por My Scoope para esta comida.</p>
+    </section>
+    <section id="panel-foods" class="panel" role="tabpanel" aria-labelledby="tab-foods" hidden>
+      <ul id="meal-foods" class="foods"></ul>
+      <p id="foods-empty" class="empty" hidden>Esta comida no tiene alimentos.</p>
+    </section>
+  </article>
+  <script>
+    (() => {
+      const byId = (id) => document.getElementById(id);
+      const number = (value, digits = 0) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed)
+          ? new Intl.NumberFormat(document.documentElement.lang || "es", { maximumFractionDigits: digits }).format(parsed)
+          : "—";
+      };
+      const setText = (id, value) => { byId(id).textContent = String(value ?? ""); };
+      const tabs = ["summary", "foods"];
+      let bridgeReady = false;
+      let queuedToolResult;
+      function applyHostTheme(theme) {
+        if (theme === "light" || theme === "dark") {
+          document.documentElement.dataset.theme = theme;
+        }
+      }
+      function notifySize() {
+        if (!bridgeReady) return;
+        requestAnimationFrame(() => {
+          window.parent.postMessage({
+            jsonrpc: "2.0",
+            method: "ui/notifications/size-changed",
+            params: { height: Math.ceil(document.body.scrollHeight) },
+          }, "*");
+        });
+      }
+      function selectTab(selected) {
+        for (const tab of tabs) {
+          byId(`tab-${tab}`).setAttribute("aria-selected", String(tab === selected));
+          byId(`panel-${tab}`).hidden = tab !== selected;
+        }
+        notifySize();
+      }
+      for (const tab of tabs) {
+        byId(`tab-${tab}`).addEventListener("click", () => selectTab(tab));
+      }
+      function render(result) {
+        const meal = result?.ok === true ? result?.data?.meal : null;
+        if (!meal || typeof meal !== "object" || !meal.kpis || typeof meal.kpis !== "object") {
+          byId("card").hidden = true;
+          byId("status").hidden = false;
+          byId("status").textContent = result?.ok === false
+            ? "No se pudo mostrar esta comida. Comprueba que tengas acceso."
+            : "La comida no está disponible.";
+          notifySize();
+          return;
+        }
+        setText("meal-name", meal.name || "Comida");
+        setText("meal-category", meal.category || "");
+        byId("meal-category").hidden = !meal.category;
+        setText("meal-kcal", number(meal.kpis.total_kcal));
+        setText("meal-protein", `${number(meal.kpis.protein, 1)} g`);
+        setText("meal-carbs", `${number(meal.kpis.carbs, 1)} g`);
+        setText("meal-fat", `${number(meal.kpis.fat, 1)} g`);
+        const list = byId("meal-foods");
+        list.replaceChildren();
+        const foods = Array.isArray(meal.foods) ? meal.foods : [];
+        for (const food of foods) {
+          if (!food || typeof food !== "object") continue;
+          const row = document.createElement("li");
+          const name = document.createElement("span");
+          const quantity = document.createElement("span");
+          name.textContent = String(food.food_name || "Alimento");
+          quantity.textContent = `${number(food.quantity, 1)} g`;
+          row.append(name, quantity);
+          list.append(row);
+        }
+        byId("foods-empty").hidden = list.childElementCount > 0;
+        byId("status").hidden = true;
+        byId("card").hidden = false;
+        selectTab("summary");
+      }
+      window.addEventListener("message", (event) => {
+        if (event.source !== window.parent) return;
+        const message = event.data;
+        if (!message || message.jsonrpc !== "2.0") return;
+        if (message.id === 1) {
+          if (message.result?.protocolVersion) {
+            applyHostTheme(message.result?.hostContext?.theme);
+            bridgeReady = true;
+            window.parent.postMessage({
+              jsonrpc: "2.0",
+              method: "ui/notifications/initialized",
+            }, "*");
+            if (queuedToolResult !== undefined) render(queuedToolResult);
+            notifySize();
+          }
+          return;
+        }
+        if (message.method === "ui/notifications/host-context-changed") {
+          applyHostTheme(message.params?.theme);
+          return;
+        }
+        if (message.method !== "ui/notifications/tool-result") return;
+        if (bridgeReady) render(message.params?.structuredContent);
+        else queuedToolResult = message.params?.structuredContent;
+      });
+      if (window.openai?.toolOutput) render(window.openai.toolOutput);
+      window.parent.postMessage({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "ui/initialize",
+        params: {
+          appInfo: { name: "My Scoope meal card", version: "2.0.0" },
+          appCapabilities: {},
+          protocolVersion: "2026-01-26",
+        },
+      }, "*");
+    })();
+  </script>
+</body>
+</html>

@@ -22,12 +22,13 @@ La opción preferida es siempre extender un patrón existente mediante una varia
 
 ## Plataformas y galerías oficiales
 
-My Scoope mantiene un solo contrato semántico con dos implementaciones reales:
+My Scoope mantiene un solo contrato semántico con tres implementaciones reales:
 
 | Superficie | Implementación autoritativa | Galería |
 |---|---|---|
 | Desktop web y mobile web | Django templates + CSS productivo | `/app/dev/ui-system/` |
 | App iOS/Android | React Native + `StyleSheet` | `/dev/ui-gallery` en Expo |
+| Conversaciones MCP Apps | HTML autónomo dentro de un iframe | Sección «En conversación» de `/app/dev/ui-system/` |
 
 La ruta Expo abierta en un navegador sigue siendo una previsualización de React
 Native mediante `react-native-web`; no representa el CSS Django. La galería Web
@@ -36,6 +37,9 @@ activar los media queries reales de mobile web.
 
 Las galerías son consumidores y superficies de validación. No son fuentes de
 estilos. Los componentes y recetas compartidas viven fuera de ellas.
+La sección conversacional sirve el mismo HTML generado que entrega MCP y usa datos
+sintéticos mediante un host de prueba. Permite alternar tema, ancho y estados sin
+consultar datos personales. El resultado final se comprueba también en ChatGPT.
 
 ### Iconografía de compromisos
 
@@ -76,10 +80,16 @@ Los nuevos estilos deben usar tokens semánticos derivados de
 `notas/static/notas/css/tokens.css` y después la salida autoritativa
 `notas/static/notas/css/ui-contract.generated.css`.
 
-No editar la salida generada. Ejecutar `npm run generate:ui` para actualizar CSS
-y TypeScript, y `npm run check:ui` para comprobar que el repositorio está
+No editar la salida generada. Ejecutar `npm run generate:ui` para actualizar CSS,
+TypeScript y el HTML MCP autónomo, y `npm run check:ui` para comprobar que el repositorio está
 sincronizado. Las diferencias deliberadas entre web y React Native se declaran
 en `platforms` dentro del contrato.
+
+La card MCP se edita en `mcp_server/myscoope_mcp/ui/meal_card_v3.source.html`.
+El generador inserta los tokens semánticos y la receta compacta declarada en
+`platforms.mcp`, y escribe `meal_card_v3.html`. Los colores de superficie y texto
+provienen de los temas web; el iframe adapta su presentación al tema del host.
+Las versiones anteriores del recurso se conservan para conversaciones existentes.
 
 ### Recetas de componentes
 
