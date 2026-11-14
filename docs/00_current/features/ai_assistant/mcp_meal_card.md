@@ -83,12 +83,11 @@ usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
    usada renderiza MCP Apps; la documentación oficial garantiza la UI en ChatGPT,
    pero la compatibilidad de otros clientes depende de su implementación.
 
-La integración local no publica la capacidad en staging o producción. La prueba
-en ChatGPT requiere un endpoint accesible desde ese cliente y una cuenta de prueba
-autorizada. Después de ella, cualquier integración a staging debe refrescar
-`origin/staging`, ejecutar el tier de CI seleccionado por los archivos cambiados
-y verificar el resultado remoto exacto. El cambio de código ordinario apunta a
-`staging-fast`, con costo mayor que las suites focalizadas locales.
+La prueba en ChatGPT requiere el despliegue explícito del servidor MCP de staging,
+un endpoint accesible desde ese cliente y una cuenta de prueba autorizada. La
+presencia del código en `origin/staging` no activa por sí sola el servicio MCP si
+su despliegue automático está deshabilitado. La integración selecciona
+`staging-fast` por los archivos de aplicación cambiados.
 
 Referencias oficiales: [Add UI to your MCP server](https://developers.openai.com/plugins/build/chatgpt-ui),
 [Connect and test your plugin](https://developers.openai.com/plugins/deploy/connect-chatgpt).

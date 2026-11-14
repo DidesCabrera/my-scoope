@@ -230,6 +230,7 @@ def register_mcp_tools(server: FastMCP) -> None:
     API Adapter / Internal AI Tools boundaries.
     """
     annotations = get_protocol_tool_annotations()
+    register_meal_tools(server, annotations)
 
     @server.tool(
         annotations=annotations[TOOL_LIST_USER_PROPOSALS],
@@ -296,36 +297,6 @@ def register_mcp_tools(server: FastMCP) -> None:
             },
         )
 
-        return serialize_tool_result(result)
-
-    @server.tool(
-        annotations=annotations[TOOL_READ_MEAL],
-        meta={"ui": {"resourceUri": MEAL_CARD_RESOURCE_URI}},
-    )
-    def read_meal(meal_id: Annotated[int, Field(ge=1)]) -> MealReadResult:
-        """Read an authorized Meal and show its nutrition card in compatible chats."""
-        client = create_api_client()
-        result = dispatch_tool_call(
-            client=client,
-            tool_name=TOOL_READ_MEAL,
-            arguments={"meal_id": meal_id},
-        )
-        return serialize_tool_result(result)
-
-    @server.tool(
-        annotations=annotations[TOOL_SEARCH_USER_MEALS],
-    )
-    def search_user_meals(
-        query: Annotated[str, Field(min_length=1, max_length=80)],
-        limit: Annotated[int, Field(ge=1, le=10)] = 10,
-    ) -> dict[str, Any]:
-        """Find up to ten readable Meals by name. Ask the user when several match."""
-        client = create_api_client()
-        result = dispatch_tool_call(
-            client=client,
-            tool_name=TOOL_SEARCH_USER_MEALS,
-            arguments={"query": query, "limit": limit},
-        )
         return serialize_tool_result(result)
 
     @server.tool(
@@ -545,6 +516,41 @@ def register_mcp_tools(server: FastMCP) -> None:
         )
 
         return summarize_created_proposal_result(result)
+
+
+def register_meal_tools(
+    server: FastMCP,
+    annotations: dict[str, ToolAnnotations],
+) -> None:
+    @server.tool(
+        annotations=annotations[TOOL_READ_MEAL],
+        meta={"ui": {"resourceUri": MEAL_CARD_RESOURCE_URI}},
+    )
+    def read_meal(meal_id: Annotated[int, Field(ge=1)]) -> MealReadResult:
+        """Read an authorized Meal and show its nutrition card in compatible chats."""
+        client = create_api_client()
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_READ_MEAL,
+            arguments={"meal_id": meal_id},
+        )
+        return serialize_tool_result(result)
+
+    @server.tool(
+        annotations=annotations[TOOL_SEARCH_USER_MEALS],
+    )
+    def search_user_meals(
+        query: Annotated[str, Field(min_length=1, max_length=80)],
+        limit: Annotated[int, Field(ge=1, le=10)] = 10,
+    ) -> dict[str, Any]:
+        """Find up to ten readable Meals by name. Ask the user when several match."""
+        client = create_api_client()
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_SEARCH_USER_MEALS,
+            arguments={"query": query, "limit": limit},
+        )
+        return serialize_tool_result(result)
 
 
 def get_protocol_allowed_tool_names() -> set[str]:

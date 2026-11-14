@@ -5,12 +5,12 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from notas.domain.models import Meal, WeightLog
 from notas.application.services.mcp_user_tokens import (
     MCP_SCOPE_PROPOSALS_CREATE,
     MCP_SCOPE_READ,
     create_mcp_user_token,
 )
+from notas.domain.models import Meal, WeightLog
 
 
 class AIToolsAPIMCPUserAuthTests(TestCase):
