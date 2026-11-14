@@ -6,6 +6,8 @@
 .web-parity__eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .web-parity__section { margin: 24px 0; padding: 22px; border: 1px solid var(--border-color, #303943); border-radius: 18px; background: var(--surface, #171c22); }
 .web-parity__section h2 { margin: 0 0 18px; font-size: 1.25rem; }
+.web-parity__section > p { margin: 0 0 16px; line-height: 1.5; }
+.web-parity__section h3 { margin: 12px 0; }
 .web-parity__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .web-parity__card { display: flex; flex-direction: column; gap: 10px; min-height: 130px; padding: 18px; border: 1px solid var(--border-color, #303943); border-radius: 14px; color: inherit; text-decoration: none; background: var(--surface-raised, #202830); }
 .web-parity__card:hover, .web-parity__card:focus-visible { border-color: #82b69a; }

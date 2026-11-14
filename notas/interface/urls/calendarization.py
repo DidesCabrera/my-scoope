@@ -1,6 +1,6 @@
 from django.urls import path
 
-from notas.interface.views import calendarization
+from notas.interface.views import calendarization, calendarization_review
 
 urlpatterns = [
     path("calendar/preview/", calendarization.calendar_preview, name="calendar_preview"),
@@ -9,6 +9,9 @@ urlpatterns = [
     path("calendar/commitments/foods/", calendarization.calendar_commitment_foods, name="calendar_commitment_foods"),
     path("calendar/commitments/<str:kind>/", calendarization.calendar_commitments, name="calendar_commitments"),
     path("calendarization/", calendarization.dashboard, name="calendarization_dashboard"),
+    path("calendarization/review/", calendarization_review.review_detail, name="calendarization_review"),
+    path("calendarization/reviews/create/", calendarization_review.review_create, name="calendarization_review_create"),
+    path("calendarization/revisions/<int:revision_id>/decision/", calendarization_review.revision_decide, name="calendarization_revision_decide"),
     path("calendarization/history/", calendarization.history, name="calendarization_history"),
     path("calendarization/activate/", calendarization.activate, name="calendarization_activate"),
     path("calendarization/<int:calendarization_id>/pause/", calendarization.pause, name="calendarization_pause"),

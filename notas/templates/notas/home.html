@@ -266,6 +266,7 @@
           </div>
         </div>
         {% include "components/detail_link_row.html" with label="Gestionar programa en curso" url=vm.content.calendarization.dashboard_url accessibility_label="Gestionar programa en curso" standalone=True %}
+        <a href="{% url 'calendarization_review' %}" class="home-active-program__progress-link">Revisar progreso y ajustes</a>
       {% else %}
         <div class="home-active-program__identity">
           <h3 class="home-calendar__program-name">Aún no hay programa activo</h3>

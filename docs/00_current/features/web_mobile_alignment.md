@@ -31,6 +31,7 @@ La implementación se ordena por dependencias del dominio: primero lectura y per
 | Suplementos | Biblioteca privada Pro, copia independiente desde el catálogo publicado, edición de ficha, componentes y nutrición declarada, tomas guardadas con varios suplementos y edición de composición. La información declarada no participa en los macros. |
 | Minutas | Agregar tomas directas o desde una toma guardada, asignar hora, ajustar cantidades y retirar la instancia. Una Minuta con solo suplementos conserva su criterio de completitud del dominio. |
 | Calendario | Día calendarizado muestra tomas y su estado; permite agregar una toma guardada y registrar completada, omitida o restablecida en el día vigente. El detalle de Comida separa Preparaciones de Alimentos y permite agregar, ajustar y quitar una Preparación del snapshot de ese día. |
+| Revisión del programa | Inicio y Programa en curso enlazan a una revisión de los últimos siete días del programa: energía, hambre, rendimiento y nota. La vista muestra un ajuste prospectivo con comparación por fecha y permite aprobarlo o rechazarlo mediante los comandos compartidos. |
 
 La revisión local cubrió las vistas de escritorio y teléfono, incluyó corrección de desbordes y de valores decimales en formularios, y ejecutó pruebas de propiedad de datos, permisos, composición y ausencia de macros de suplementos. La disponibilidad final sigue condicionada por `SUPPLEMENTS_FEATURE_ENABLED` y `PERSONAL_PREPARATIONS_FEATURE_ENABLED`, desactivados por defecto.
 
@@ -39,8 +40,7 @@ La revisión local cubrió las vistas de escritorio y teléfono, incluyó correc
 Estas capacidades móviles todavía necesitan trabajo propio; esta ampliación no declara paridad total:
 
 1. **Digitalizar etiqueta nutricional:** móvil combina cámara o galería, OCR local, análisis con créditos, revisión editable y confirmación. La web aún no tiene adquisición, revisión y confirmación por archivo o cámara del navegador. El contrato y el servicio están en `mobile_api/routes/label_capture.py` y `notas/application/services/nutrition_label_ai.py`.
-2. **Revisión periódica y ajustes de programa:** el móvil presenta propuestas pendientes y decisiones prospectivas. La web conserva la gestión y el historial del programa, pero no esa revisión completa en Inicio. Fuente: `mobile/src/app/today.tsx`, `mobile_api/routes/calendarization.py` y los comandos de revisión.
-3. **Recordatorios:** la web configura push del programa y muestra notificaciones; el móvil también ofrece ajustes de recordatorios nativos. La cuenta web enlaza a los controles que existen, sin representar una configuración inexistente como si fuera equivalente.
-4. **Edición de la Minuta fijada dentro de Inicio:** la web ya permite crearla, fijarla, retirarla, abrirla y registrar Comidas y tomas. La edición de composición y horas se hace desde el detalle de la Minuta, mientras móvil dispone de controles directos en Inicio.
+2. **Recordatorios:** la web configura push del programa y muestra notificaciones; el móvil también ofrece ajustes de recordatorios nativos. La cuenta web enlaza a los controles que existen, sin representar una configuración inexistente como si fuera equivalente.
+3. **Edición de la Minuta fijada dentro de Inicio:** la web ya permite crearla, fijarla, retirarla, abrirla y registrar Comidas y tomas. La edición de composición y horas se hace desde el detalle de la Minuta, mientras móvil dispone de controles directos en Inicio.
 
 Las diferencias anteriores necesitan trabajo funcional propio. La revisión visual de esta rama debe valorar la alineación implementada y priorizar estas capacidades antes de afirmar paridad total.
