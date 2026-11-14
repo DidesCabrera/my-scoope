@@ -65,6 +65,9 @@ staging como ciclo de edición.
 El archivo fuente editable
 es `meal_card_v5.source.html`; `npm run generate:ui` produce el HTML servido tanto
 por la galería como por MCP. `npm run check:ui` detecta desincronización.
+El documento de la card tiene fondo transparente y no añade relleno ni límite de
+ancho exterior: el borde de la card ocupa todo el ancho que entrega el host.
+La separación interior pertenece al diseño de la card, no al iframe.
 
 ## Validación local reproducible
 
