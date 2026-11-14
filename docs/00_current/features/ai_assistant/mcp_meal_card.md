@@ -69,13 +69,15 @@ iframe y comprueba render,
 pestañas, ancho móvil, tema oscuro, error y texto HTML no ejecutable. Este smoke
 usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
 
-## Prueba pendiente en una conversación real
+## Configuración y prueba en una conversación real
 
 1. Conectar un endpoint MCP privado por Secure MCP Tunnel o HTTPS de staging.
    Configurar autenticación por usuario y `MYSCOOPE_MCP_USER_TOKENS_ONLY=true`;
    no usar el token legado de una cuenta compartida para pruebas con datos reales.
-2. En ChatGPT Plugins, añadir el servidor MCP personalizado, instalarlo para uso
-   interno y refrescar sus metadatos después de desplegar esta versión. Confirmar
+2. Registrar en staging un cliente OAuth con el callback exacto mostrado por
+   ChatGPT y únicamente el scope `myscoope:read`. En ChatGPT Plugins, añadir el
+   servidor MCP personalizado para uso privado y refrescar sus metadatos después
+   de desplegar esta versión. Confirmar
    que aparecen `search_user_meals`, `read_meal` y el recurso
    `ui://myscoope/meal-card-v2.html`. Si el servicio usa
    `MYSCOOPE_MCP_ALLOWED_TOOLS`, añadir ambos nombres a la lista existente y
@@ -90,10 +92,26 @@ usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
    pero la compatibilidad de otros clientes depende de su implementación.
 
 La prueba en ChatGPT requiere el despliegue explícito del servidor MCP de staging,
-un endpoint accesible desde ese cliente y una cuenta de prueba autorizada. La
-presencia del código en `origin/staging` no activa por sí sola el servicio MCP si
-su despliegue automático está deshabilitado. La integración selecciona
-`staging-fast` por los archivos de aplicación cambiados.
+un endpoint accesible desde ese cliente y una cuenta autorizada. La presencia del
+código en `origin/staging` no activa por sí sola el servicio MCP si su despliegue
+automático está deshabilitado. La integración selecciona `staging-fast` por los
+archivos de aplicación cambiados.
+
+### Evidencia de staging: 14 de noviembre de 2026
+
+- `origin/staging` publicó `b052f6e87110460f3adf0461a4c6beb22bed937d`; la
+  [ejecución de CI](https://github.com/DidesCabrera/my-scoope/actions/runs/43612250767)
+  terminó correctamente con nivel `staging-fast`. El despliegue manual del MCP
+  `dep-dbs87hjl550s73foegb0` quedó `live` con ese mismo commit.
+- El plugin personal de ChatGPT se conectó por OAuth a staging con
+  `myscoope:read`. El filtro `MYSCOOPE_MCP_ALLOWED_TOOLS` conservó sus cuatro
+  herramientas previas y añadió `search_user_meals` y `read_meal`.
+- En una conversación real, la búsqueda devolvió Meals visibles para la cuenta
+  conectada. `read_meal` mostró la card v2 dentro del chat; las pestañas Nutrición
+  y Alimentos funcionaron. Un ID inexistente devolvió `not_found`, `data: {}` y
+  un estado de error sin datos nutricionales.
+- La separación entre usuarios se verificó en pruebas Django. No se consultó una
+  comida privada de otra cuenta en la conversación real.
 
 El contrato OpenAPI se genera con las versiones fijadas en `requirements.txt`.
 Un aparente desfase local se debió a usar Pydantic 2.13.4 en vez de la versión
