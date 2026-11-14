@@ -1,6 +1,7 @@
 # Vista previa MCP UI en ChatGPT para iPhone
 
-Investigación local del 14 de noviembre de 2026. No se ha publicado ni cambiado el MCP de staging para esta prueba.
+Investigación del 14 de noviembre de 2026. La vista previa local y el MCP alojado
+en staging se verifican por separado.
 
 ## Reproducción
 
@@ -33,6 +34,31 @@ La prueba posterior en un chat nuevo del iPhone siguió mostrando el rectángulo
 
 La [guía de diagnóstico de OpenAI](https://developers.openai.com/plugins/deploy/troubleshooting) pide comprobar descriptor, MIME y recurso y, si persiste la falla, reunir registros y capturas para escalar. La [documentación de plugins](https://learn.chatgpt.com/docs/plugins) declara compatibilidad móvil, y las [pautas de plugins](https://developers.openai.com/plugins/plugin-guidelines) incluyen sus componentes UI.
 
-## Siguiente verificación
+## Verificación con el MCP alojado en staging
 
-Publicar la versión actual de la card en `origin/staging`, desplegar el MCP alojado y comprobar la presentación mediante «My Scoope Staging», que sí funciona en ese iPhone. Esta prueba separa la versión del código de la ruta de entrega del túnel. Conservar las capturas y los registros de `resources/read` para escalar a OpenAI si se necesita la vista previa local en iPhone.
+La card v6 se publicó en `origin/staging` en el commit
+`26be90fd65e942706f5ea62baab925f44dd334b5`. La [ejecución de CI](https://github.com/DidesCabrera/my-scoope/actions/runs/43652667108)
+terminó correctamente con nivel `staging-fast`, y el MCP alojado en Render quedó
+`live` con ese commit. La primera prueba en iPhone mostró una card, pero el
+usuario observó que conservaba la estética antigua. Esa prueba solo confirmó
+que la ruta alojada podía presentar una UI; no verificó la versión nueva.
+
+La configuración del servicio restringía `MYSCOOPE_MCP_ALLOWED_TOOLS` a las seis
+herramientas anteriores. Se conservaron esos seis nombres y se añadieron
+`read_food` y `read_dailyplan`; el despliegue de esa configuración quedó `live`.
+Después se ejecutó **Refresh tools** en el plugin privado «My Scoope Staging» de
+ChatGPT. La ficha del plugin pasó de **Read 5** a **Read 7** y mostró ambas
+herramientas nuevas. El código desplegado anuncia
+`ui://myscoope/meal-card-v6.html` para `read_meal`.
+
+En un chat nuevo de ChatGPT web, `read_meal` con `meal_id=39` presentó la card
+alojada. Con el viewport de Chrome en 424 px, se observaron las cinco pestañas
+**Alimentos, Calorías, Macros, Dist y Alloc** y se verificó que cada una alterna
+su panel. Después, en un chat nuevo de la app ChatGPT para iPhone, el usuario
+confirmó que la card nueva aparece y que las cinco pestañas funcionan. Esta
+observación verifica también la presentación en el cliente móvil real.
+
+La vista previa por túnel privado sigue mostrando un rectángulo gris en iPhone;
+publicar y refrescar el MCP alojado no demuestra que el túnel esté corregido.
+Conservar las capturas y los registros de `resources/read` para escalar a OpenAI
+si se necesita la vista previa local en iPhone.
