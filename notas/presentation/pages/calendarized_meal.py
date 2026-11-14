@@ -101,7 +101,9 @@ def build_calendarized_meal_detail(*, day, meal_snapshot_key: str, user) -> dict
     )
     nutrition = _nutrition_totals(meal.get("totals"))
     current_weight = get_current_weight(user)
-    foods = [item for item in meal.get("foods", []) if isinstance(item, dict)]
+    components = [item for item in meal.get("foods", []) if isinstance(item, dict)]
+    foods = [item for item in components if item.get("component_type") != "preparation"]
+    preparations = [item for item in components if item.get("component_type") == "preparation"]
     completed = execution["status"] == "completed"
     has_note = bool(execution["note"].strip())
     return {
@@ -113,6 +115,7 @@ def build_calendarized_meal_detail(*, day, meal_snapshot_key: str, user) -> dict
         "has_note": has_note,
         "note_count": int(has_note),
         "foods_count": len(foods),
+        "preparations": preparations,
         "titulo": {
             "name": meal.get("name") or "Comida",
             "label": "Meal",

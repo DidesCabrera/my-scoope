@@ -19,7 +19,7 @@ La API móvil ofrece búsqueda y detalle en `GET /api/v1/preparations` y `GET /a
 
 La biblioteca móvil muestra las Preparaciones aparte de los Alimentos y permite agregarlas o ajustar su porción. Las copias de Comida conservan la relación. Las minutas y programas reciben la nutrición actualizada cuando se materializa una revisión nueva; el menú conserva el nombre de la Preparación y el resumen de ingredientes suma las cantidades servidas para compras.
 
-Al calendarizar, cada Preparación queda congelada dentro del snapshot del día con identidad, versión, porción, ingredientes, evidencia, alérgenos y nutrientes propios. La app la presenta como Preparación tanto en la tarjeta de la minuta como en el detalle de la comida en curso. Desde ese detalle se puede abrir su ficha, agregar otra, editar su porción, reemplazarla o quitarla; estas acciones modifican únicamente esa instancia calendarizada y recalculan los totales de su comida y del día. Los comandos heredados de edición de Alimentos siguen rechazando una Preparación para impedir actualizaciones parciales de ingredientes o sodio. El flujo web continúa fuera de alcance.
+Al calendarizar, cada Preparación queda congelada dentro del snapshot del día con identidad, versión, porción, ingredientes, evidencia, alérgenos y nutrientes propios. La app la presenta como Preparación tanto en la tarjeta de la minuta como en el detalle de la comida en curso. Desde ese detalle se puede abrir su ficha, agregar otra, editar su porción, reemplazarla o quitarla; estas acciones modifican únicamente esa instancia calendarizada y recalculan los totales de su comida y del día. Los comandos heredados de edición de Alimentos siguen rechazando una Preparación para impedir actualizaciones parciales de ingredientes o sodio. La web ahora presenta las Preparaciones por separado en el detalle de la Comida calendarizada y permite agregar, ajustar porciones y quitar su instancia. La selección de otra Preparación para reemplazarla continúa disponible en la app móvil.
 
 ## Preparaciones personales Pro
 
@@ -31,4 +31,4 @@ Cada edición crea una versión inmutable y actualiza las Comidas vivas y sus mi
 
 La eliminación de cuenta borra las Preparaciones personales, sus versiones e ingredientes antes de borrar los Alimentos privados que referenciaban. Las copias globales del catálogo permanecen operativas.
 
-Esta primera versión no comparte una Comida que contenga una Preparación personal: el contrato de compartir actual solo admite Preparaciones globales. Tampoco permite Preparaciones anidadas ni edición web.
+Esta primera versión no comparte una Comida que contenga una Preparación personal: el contrato de compartir actual solo admite Preparaciones globales. Tampoco permite Preparaciones anidadas. La edición web personal usa el mismo permiso Pro y los mismos comandos versionados que la app móvil.

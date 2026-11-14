@@ -1,10 +1,11 @@
 {% extends "notas/base.html" %}
-{% load static %}
+{% load static l10n %}
 
 {% block title %}
   My Scoope
 {% endblock %}
 {% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
 
 {% block content %}
 
@@ -69,9 +70,54 @@
     {% endif %}
   </div>
 
+  {% if supplements_access %}
+  <section class="web-parity__section" data-section="supplement-intakes">
+    <h2>Tomas de suplementos</h2>
+    <p class="web-parity__note">Las tomas se planifican junto a las Comidas y no modifican sus totales nutricionales.</p>
+    <div class="web-parity__rows">
+      {% for intake in supplement_intakes %}
+      <div class="web-parity__row"><span><strong>Ingesta {{ forloop.counter }}{% if intake.hour %} · {{ intake.hour|time:"H:i" }}{% endif %}</strong>
+        <small>{% for item in intake.items.all %}{{ item.supplement_snapshot.name }} · {{ item.quantity }} {{ item.unit }}{% if not forloop.last %}, {% endif %}{% endfor %}</small></span>
+        <div><details><summary>Editar toma</summary>
+          <form method="post" action="{% url 'dailyplan_intake_update' intake.dailyplan_id intake.id %}" class="web-parity__form">
+            {% csrf_token %}<label>Hora<input type="time" name="hour" value="{{ intake.hour|time:'H:i' }}"></label>
+            {% for item in intake.items.all %}<div class="web-parity__repeat-row"><strong>{{ item.supplement_snapshot.name }}</strong>
+              <input type="hidden" name="item_id" value="{{ item.id }}">
+              <label>Cantidad<input name="quantity" type="number" min="0.001" step="0.001" value="{{ item.quantity|floatformat:'3u' }}" required></label>
+              <label>Unidad<select name="unit">{% for unit in supplement_units %}<option value="{{ unit }}" {% if item.unit == unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></label></div>{% endfor %}
+            <button type="submit" class="btn-primary">Guardar toma</button>
+          </form></details>
+          <form method="post" action="{% url 'dailyplan_intake_remove' intake.dailyplan_id intake.id %}">{% csrf_token %}<button class="web-parity__text-button" type="submit">Quitar</button></form>
+        </div>
+      </div>
+      {% empty %}<p>Esta Minuta aún no tiene tomas de suplementos.</p>{% endfor %}
+    </div>
+    {% if supplement_options %}
+    <h3>Agregar toma</h3>
+    <form method="post" action="{% url 'dailyplan_intake_add' plan_id %}" class="web-parity__form" data-repeat-form id="direct-intake-form">
+      {% csrf_token %}<label>Hora opcional<input type="time" name="hour"></label>
+      <div data-repeat-list><div class="web-parity__repeat-row">
+        <label>Suplemento<select name="intake_id" required><option value="">Seleccionar</option>{% for item in supplement_options %}<option value="{{ item.id }}">{{ item.name }}</option>{% endfor %}</select></label>
+        <label>Cantidad<input name="intake_quantity" type="number" min="0.001" step="0.001" required></label>
+        <label>Unidad<select name="intake_unit">{% for unit in supplement_units %}<option value="{{ unit }}">{{ unit }}</option>{% endfor %}</select></label><button type="button" class="web-parity__text-button" data-repeat-remove>Quitar</button>
+      </div></div>
+      <button type="button" class="web-parity__text-button" data-repeat-add>+ Otro suplemento</button>
+      <button type="submit" class="btn-primary">Agregar toma</button>
+    </form>
+    {% endif %}
+    {% if supplement_presets %}
+    <h3>Usar una toma guardada</h3>
+    <form method="post" action="{% url 'dailyplan_intake_add' plan_id %}" class="web-parity__inline-form">
+      {% csrf_token %}<label>Toma guardada<select name="preset_id" required><option value="">Seleccionar</option>{% for preset in supplement_presets %}<option value="{{ preset.id }}">{{ preset.name }}</option>{% endfor %}</select></label>
+      <label>Hora<input type="time" name="hour" required></label><button type="submit" class="btn-primary">Agregar</button>
+    </form>
+    {% endif %}
+  </section>
+  {% endif %}
 </div>
 
 <script src="{% static 'notas/js/dpm_sortable.js' %}"></script>
 <script src="{% static 'notas/js/dailyplan_menu_scroll.js' %}"></script>
+<script src="{% static 'notas/js/web_parity.js' %}" defer></script>
 
 {% endblock %}

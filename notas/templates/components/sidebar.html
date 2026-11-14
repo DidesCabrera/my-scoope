@@ -39,7 +39,7 @@
                                             <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
                                             <span class="sidebar-label">{{ group.label }}</span>
                                         </span>
-                                        {% if section.key == 'workspace' %}
+                                        {% if section.key == 'workspace' and group.key != 'preparation' and group.key != 'supplement' %}
                                             <span class="sidebar-library-count" aria-label="{% if group.key == 'program' %}{{ sidebar_library_counts.program }}{% elif group.key == 'dailyplan' %}{{ sidebar_library_counts.dailyplan }}{% elif group.key == 'meal' %}{{ sidebar_library_counts.meal }}{% elif group.key == 'food' %}{{ sidebar_library_counts.food }}{% endif %} elementos">
                                                 {% if group.key == 'program' %}{{ sidebar_library_counts.program }}{% elif group.key == 'dailyplan' %}{{ sidebar_library_counts.dailyplan }}{% elif group.key == 'meal' %}{{ sidebar_library_counts.meal }}{% elif group.key == 'food' %}{{ sidebar_library_counts.food }}{% endif %}
                                             </span>

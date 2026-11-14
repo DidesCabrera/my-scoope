@@ -1,0 +1,67 @@
+{% extends "notas/base.html" %}
+{% load static %}
+{% block title %}Suplementos · My Scoope{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
+{% block content %}
+<div class="page web-parity" data-page="supplements-list">
+  <header class="web-parity__heading"><div><p class="web-parity__eyebrow">Bibliotecas</p><h1>Mis Suplementos</h1>
+    <p>Registra productos y organiza tomas para tus Minutas.</p></div></header>
+  {% if not vm.content.access %}
+  <section class="web-parity__section"><h2>Suplementos Pro</h2><p>Esta sección está disponible con Pro cuando Suplementos está habilitado.</p>
+    <a href="{% url 'billing:overview' %}" class="btn-primary">Ver planes</a></section>
+  {% else %}
+  <form method="get" class="web-parity__search"><label for="supplement-search">Buscar</label>
+    <div><input id="supplement-search" name="q" value="{{ vm.content.search }}" placeholder="Suplemento o toma"><button class="btn-primary" type="submit">Buscar</button></div></form>
+  <section class="web-parity__section"><h2>Mis productos</h2>
+    <form method="post" action="{% url 'supplement_create' %}" class="web-parity__inline-form">
+      {% csrf_token %}<label for="new-supplement-name">Nuevo suplemento</label>
+      <input id="new-supplement-name" name="name" maxlength="100" required placeholder="Nombre del producto">
+      <button class="btn-primary" type="submit">Crear</button>
+    </form>
+    <div class="web-parity__grid">
+    {% for row in vm.content.rows %}
+      <a class="web-parity__card" href="{% url 'supplement_detail' row.id %}"><span class="web-parity__card-icon"><i data-lucide="pill"></i></span>
+        <strong>{{ row.name }}</strong><span>{{ row.brand|default:"Sin marca" }}{% if row.default_quantity %} · {{ row.default_quantity }} {{ row.default_unit }}{% endif %}</span></a>
+    {% empty %}<p>Aún no tienes suplementos.</p>{% endfor %}
+    </div>
+  </section>
+  <section class="web-parity__section"><h2>Mis tomas guardadas</h2>
+    <p class="web-parity__note">Una toma guardada copia sus suplementos al agregarla a una Minuta. Después puedes elegir la hora de esa instancia.</p>
+    {% if vm.content.rows %}
+    <form method="post" action="{% url 'supplement_preset_create' %}" class="web-parity__form" data-repeat-form>
+      {% csrf_token %}<label>Nombre de la toma<input name="name" maxlength="100" required></label>
+      <div data-repeat-list>
+        <div class="web-parity__repeat-row">
+          <label>Suplemento<select name="preset_id" required><option value="">Seleccionar</option>{% for row in vm.content.rows %}<option value="{{ row.id }}">{{ row.name }}</option>{% endfor %}</select></label>
+          <label>Cantidad<input name="preset_quantity" type="number" min="0.001" step="0.001" required></label>
+          <label>Unidad<select name="preset_unit">{% for unit in vm.content.units %}<option value="{{ unit }}">{{ unit }}</option>{% endfor %}</select></label><button type="button" class="web-parity__text-button" data-repeat-remove>Quitar</button>
+        </div>
+      </div>
+      <button type="button" class="web-parity__text-button" data-repeat-add>+ Otro suplemento</button>
+      <button type="submit" class="btn-primary">Guardar toma</button>
+    </form>
+    {% else %}<p>Agrega un suplemento para crear una toma.</p>{% endif %}
+    <div class="web-parity__rows">
+    {% for preset in vm.content.presets %}
+      <div class="web-parity__row"><span><a href="{% url 'supplement_preset_detail' preset.id %}"><strong>{{ preset.name }}</strong></a><small>{% for item in preset.items.all %}{{ item.supplement_snapshot.name }} · {{ item.quantity }} {{ item.unit }}{% if not forloop.last %}, {% endif %}{% endfor %}</small></span>
+        <form method="post" action="{% url 'supplement_preset_remove' preset.id %}">{% csrf_token %}<button class="web-parity__text-button" type="submit">Quitar</button></form></div>
+    {% empty %}<p>Aún no tienes tomas guardadas.</p>{% endfor %}
+    </div>
+  </section>
+  <section class="web-parity__section"><h2>Explorar suplementos</h2>
+    <p class="web-parity__note">Las fichas publicadas sirven como punto de partida. Tu copia personal se puede editar de forma independiente.</p>
+    <div class="web-parity__grid">
+    {% for item in vm.content.catalog %}
+      <article class="web-parity__card"><span class="web-parity__card-icon"><i data-lucide="pill"></i></span><strong>{{ item.name }}</strong>
+        <span>{{ item.brand|default:"Referencia genérica" }}</span><p>{{ item.description }}</p>
+        <small>Fuente: <a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">{{ item.source_name }}</a></small>
+        {% if item.id in vm.content.saved_catalog_ids %}<small>Ya está en tu biblioteca</small>
+        {% else %}<form method="post" action="{% url 'supplement_catalog_save' item.id %}">{% csrf_token %}<button class="btn-primary" type="submit">Guardar en mi biblioteca</button></form>{% endif %}
+      </article>
+    {% empty %}<p>No hay fichas publicadas que coincidan.</p>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+<script src="{% static 'notas/js/web_parity.js' %}" defer></script>
+{% endblock %}

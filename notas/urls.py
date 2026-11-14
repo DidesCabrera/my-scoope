@@ -12,6 +12,8 @@ urlpatterns = [
     path("", include("notas.interface.urls.elemental")),
     path("", include("notas.interface.urls.dailyplans")),
     path("", include("notas.interface.urls.meals")),
+    path("", include("notas.interface.urls.preparations")),
+    path("", include("notas.interface.urls.supplements")),
     path("", include("notas.interface.urls.foods")),
     path("", include("notas.interface.urls.programs")),
     path("", include("notas.interface.urls.calendarization")),

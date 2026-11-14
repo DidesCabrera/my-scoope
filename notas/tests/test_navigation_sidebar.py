@@ -122,6 +122,7 @@ class SidebarBuilderTests(TestCase):
                 "Mis Minutas",
                 "Mis Comidas",
                 "Mis Alimentos",
+                "Preparaciones",
             ],
         )
         self.assertEqual([group["label"] for group in sidebar[2]["groups"]], ["Asistente Nutricional"])
@@ -137,6 +138,12 @@ class SidebarBuilderTests(TestCase):
         self.assertEqual(tool_groups["calendarization"]["url_name"], "calendar_preview")
         self.assertNotIn("explore", tool_groups)
         self.assertNotIn("admin", [section["key"] for section in sidebar])
+
+    @override_settings(SUPPLEMENTS_FEATURE_ENABLED=True)
+    def test_supplements_navigation_follows_rollout_switch(self):
+        sidebar = build_sidebar_vm(PROFILE_VIEWMODE)
+        groups = [group["key"] for section in sidebar for group in section["groups"]]
+        self.assertIn("supplement", groups)
 
     def test_proposals_keep_the_assistant_sidebar_entry_active(self):
         sidebar = build_sidebar_vm(PROPOSAL_VIEWMODE_LIST)

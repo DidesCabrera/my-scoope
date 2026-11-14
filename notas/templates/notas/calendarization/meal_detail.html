@@ -1,7 +1,8 @@
 {% extends "notas/base.html" %}
-{% load static %}
+{% load static l10n %}
 {% block title %}{{ vm.content.meal_detail.meal.name }} · Comida de hoy{% endblock %}
 {% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
 {% block content %}
 {% with detail=vm.content.meal_detail %}
 <div class="page page--detail has-collapsible-panels calendarization-meal-detail-page" data-page="calendarized-meal-detail">
@@ -33,6 +34,35 @@
     </section>
 
     {% include "components/food_detail_cards.html" with food_cards=detail.food_cards %}
+
+    <section class="web-parity__section" data-section="calendarized-preparations">
+      <h3>Preparaciones de esta Comida</h3>
+      <div class="web-parity__rows">
+      {% for preparation in detail.preparations %}
+        <article class="web-parity__row"><span><strong>{{ preparation.name }}</strong>
+          <small>{{ preparation.quantity_g|floatformat:0 }} g · Versión {{ preparation.source_preparation_version }}</small>
+          <small>{% for ingredient in preparation.ingredients %}{{ ingredient.name }} {{ ingredient.quantity_g|floatformat:0 }} g{% if not forloop.last %}, {% endif %}{% endfor %}</small>
+          {% if preparation.source_preparation_id %}<a href="{% url 'preparation_detail' preparation.source_preparation_id %}">Abrir ficha actual</a>{% endif %}
+        </span>
+        <div>
+          <form method="post" action="{% url 'calendarized_preparation_save' detail.day.id detail.meal.key preparation.key %}" class="web-parity__checkin">
+            {% csrf_token %}<input type="hidden" name="preparation_id" value="{{ preparation.source_preparation_id }}">
+            <label>Porciones <input type="number" name="units" value="{{ preparation.portion_display_quantity|floatformat:'1u' }}" min="0.5" max="10" step="0.5" required></label>
+            <button type="submit">Ajustar</button>
+          </form>
+          <form method="post" action="{% url 'calendarized_preparation_remove' detail.day.id detail.meal.key preparation.key %}">{% csrf_token %}<button class="web-parity__text-button" type="submit">Quitar</button></form>
+        </div></article>
+      {% empty %}<p>Esta Comida aún no tiene Preparaciones.</p>{% endfor %}
+      </div>
+      <form method="post" action="{% url 'calendarized_preparation_add' detail.day.id detail.meal.key %}" class="web-parity__inline-form">
+        {% csrf_token %}<label>Agregar Preparación<select name="preparation_id" required><option value="">Seleccionar</option>
+          {% for preparation in detail.preparation_options %}<option value="{{ preparation.id }}">{{ preparation.name }}</option>{% endfor %}
+          {% for preparation in detail.personal_preparation_options %}<option value="{{ preparation.id }}">{{ preparation.name }} · personal</option>{% endfor %}
+        </select></label>
+        <label>Porciones<input type="number" name="units" min="0.5" max="10" step="0.5" value="1" required></label>
+        <button class="btn-primary" type="submit">Agregar</button>
+      </form>
+    </section>
 
     {% if detail.can_check_in %}
       {% include "components/calendarization_meal_note.html" with checkin=detail %}

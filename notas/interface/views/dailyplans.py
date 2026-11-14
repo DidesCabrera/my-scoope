@@ -26,6 +26,7 @@ from notas.application.services.commands.share_commands import (
     dismiss_dailyplan_share,
     remove_dailyplan_share,
 )
+from notas.application.services.commands.supplement_commands import require_supplements_pro
 from notas.application.services.notifications.share_emails import (
     build_normalized_share_invitation_email,
 )
@@ -35,7 +36,16 @@ from notas.application.sharing.services import (
     create_share_invitation,
     mark_share_invitation_delivered,
 )
-from notas.domain.models import DailyPlan, DailyPlanShare, Meal, ShareInvitation, ShareResource
+from notas.domain.models import (
+    DailyPlan,
+    DailyPlanShare,
+    Meal,
+    ShareInvitation,
+    ShareResource,
+    Supplement,
+    SupplementIntake,
+    SupplementIntakePreset,
+)
 from notas.interface.forms.forms import DailyPlanShareForm
 from notas.presentation.config.viewmodel_config import *
 from notas.presentation.pages.dailyplan_contexts import (
@@ -350,15 +360,30 @@ def dailyplan_detail(request, pk):
         request_get=request.GET,
     )
 
+    context = build_dailyplan_detail_context(
+        page=page,
+        user=request.user,
+        program_day_id=request.GET.get("program_day"),
+        include_picker=True,
+    )
+    context["plan_id"] = page.dailyplan.id
+    try:
+        require_supplements_pro(request.user)
+    except PermissionError:
+        context["supplements_access"] = False
+    else:
+        context["supplements_access"] = page.dailyplan.created_by_id == request.user.id
+        if context["supplements_access"]:
+            context["supplement_intakes"] = SupplementIntake.objects.filter(
+                dailyplan=page.dailyplan,
+            ).prefetch_related("items")
+            context["supplement_options"] = Supplement.objects.filter(created_by=request.user)[:100]
+            context["supplement_presets"] = SupplementIntakePreset.objects.filter(created_by=request.user)[:100]
+            context["supplement_units"] = ("capsule", "tablet", "softgel", "gummy", "sachet", "scoop", "drop", "ml", "g", "mg", "mcg", "iu", "tsp")
     return render(
         request,
         "notas/dailyplans/detail.html",
-        build_dailyplan_detail_context(
-            page=page,
-            user=request.user,
-            program_day_id=request.GET.get("program_day"),
-            include_picker=True,
-        ),
+        context,
     )
 
 

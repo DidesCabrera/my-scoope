@@ -20,6 +20,8 @@ urlpatterns = [
         name="calendarization_preferences",
     ),
     path("calendarization/days/<int:day_id>/", calendarization.day_detail, name="calendarization_day_detail"),
+    path("calendarization/days/<int:day_id>/supplement-intakes/from-preset/", calendarization.supplement_intake_from_preset, name="calendarization_supplement_intake_from_preset"),
+    path("calendarization/days/<int:day_id>/supplement-intakes/<str:intake_key>/check-in/", calendarization.supplement_intake_check_in, name="calendarization_supplement_intake_check_in"),
     path(
         "calendarization/days/<int:day_id>/rename/",
         calendarization.day_rename,
@@ -30,6 +32,9 @@ urlpatterns = [
         calendarization.meal_detail,
         name="calendarization_meal_detail",
     ),
+    path("calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/preparations/", calendarization.calendarized_preparation_save, name="calendarized_preparation_add"),
+    path("calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/preparations/<str:component_snapshot_key>/save/", calendarization.calendarized_preparation_save, name="calendarized_preparation_save"),
+    path("calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/preparations/<str:component_snapshot_key>/remove/", calendarization.calendarized_preparation_remove, name="calendarized_preparation_remove"),
     path(
         "calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/check-in/",
         calendarization.meal_check_in,

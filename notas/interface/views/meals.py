@@ -27,12 +27,22 @@ from notas.application.services.commands.meal_commands import (
     save_food_in_meal,
     save_meal,
 )
+from notas.application.services.commands.personal_preparation_commands import can_use_personal_preparations
 from notas.application.services.commands.share_commands import (
     dismiss_meal_share,
     remove_meal_share,
 )
 from notas.application.services.nutrition.nutrition_kpis import build_nutrition_kpis_from_meal
-from notas.domain.models import Food, Meal, MealFood, MealShare, ShareInvitation, ShareResource
+from notas.domain.models import (
+    Food,
+    Meal,
+    MealFood,
+    MealPreparation,
+    MealShare,
+    Preparation,
+    ShareInvitation,
+    ShareResource,
+)
 from notas.interface.forms.forms import MealShareForm
 from notas.interface.views.sharing_delivery import deliver_normalized_entity_invitation
 from notas.presentation.composition.js.food_picker_builder import (
@@ -425,6 +435,19 @@ def meal_detail(request, pk):
     context["can_edit_foods"] = page.can_edit_foods
     context["editing_mealfood_id"] = page.editing_mealfood_id
     context["selected_food_id"] = page.selected_food_id
+    context["meal_id"] = meal.id
+    context["preparation_relations"] = MealPreparation.objects.select_related(
+        "preparation", "version"
+    ).filter(meal=meal).order_by("order", "id")
+    available_preparations = Preparation.objects.select_related("current_version").filter(
+        is_global=True, is_active=True, current_version__isnull=False,
+    )
+    context["available_preparations"] = available_preparations.order_by("name", "id")[:100]
+    context["personal_preparations_available"] = can_use_personal_preparations(request.user)
+    if context["personal_preparations_available"]:
+        context["personal_preparations"] = Preparation.objects.select_related("current_version").filter(
+            is_global=False, is_active=True, created_by=request.user, current_version__isnull=False,
+        ).order_by("name", "id")[:100]
 
     return render(
         request,

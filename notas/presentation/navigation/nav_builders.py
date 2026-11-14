@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import NoReverseMatch, reverse
 
 from notas.presentation.navigation.app_registry import APP_NAVIGATION
@@ -105,6 +106,8 @@ def build_sidebar_vm(viewmode):
 
         for group in section.groups:
             if not group.show_in_sidebar:
+                continue
+            if group.key == "supplement" and not settings.SUPPLEMENTS_FEATURE_ENABLED:
                 continue
 
             items_vm = []

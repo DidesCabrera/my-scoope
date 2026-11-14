@@ -1,8 +1,8 @@
 # Alineación web con la app móvil actual
 
-Estado: implementación local en `codex/web-mobile-alignment-audit`; pendiente de revisión visual y funcional de Felipe antes de integrar.
-Fecha: 2026-11-02.
-Base comprobada al comenzar: `origin/main` = `origin/staging` = `2d72e6cb6e703ff486628dba8c5db3110d812837`.
+Estado: ampliación local en `codex/web-mobile-parity`; pendiente de integración y QA de staging.
+Actualizado: 2026-11-14.
+Base comprobada al comenzar esta ampliación: `origin/staging` = `c75f9e5f53e2c73c37d4935b8d1024f23b9adcc1`.
 
 ## Referencia y criterio
 
@@ -20,9 +20,23 @@ La web usa navegación, formularios y paneles adecuados al navegador. Los nombre
 | Mi cuenta | Plan y créditos, información de acceso, edición de nombre de usuario mediante el mismo servicio de identidad que móvil, enlaces a fichas, suscripción, notificaciones, recordatorios del programa y soporte; salida y eliminación siguen disponibles. |
 | Nombres transversales | Inicio, Mi calendario, Comparaciones, Compartidos, Fundamentos, Mis Programas, Mis Minutas, Mis Comidas, Mis Alimentos y Asistente Nutricional en navegación y recorridos principales. |
 
+## Ampliación de Preparaciones y Suplementos en la web
+
+La implementación se ordena por dependencias del dominio: primero lectura y permisos de biblioteca, luego edición de entidades reutilizables, después composición de Comidas y Minutas, y finalmente snapshots de días calendarizados. La web usa sesiones y formularios con CSRF; el móvil conserva su autenticación por token. Ambos clientes llaman los comandos del dominio que gobiernan versiones, totales y permisos.
+
+| Área | Flujo web agregado |
+| --- | --- |
+| Preparaciones | Biblioteca de Preparaciones curadas y personales, fichas con ingredientes y nutrientes de receta completa, creación de borrador personal, agregar/ajustar/quitar ingredientes, rendimiento, porción habitual y retiro. El acceso personal respeta el interruptor y el permiso Pro. |
+| Comidas | Agregar, ajustar porciones o gramos y quitar Preparaciones propias o curadas. La edición recalcula los totales de la Comida y sus Minutas derivadas. |
+| Suplementos | Biblioteca privada Pro, copia independiente desde el catálogo publicado, edición de ficha, componentes y nutrición declarada, tomas guardadas con varios suplementos y edición de composición. La información declarada no participa en los macros. |
+| Minutas | Agregar tomas directas o desde una toma guardada, asignar hora, ajustar cantidades y retirar la instancia. Una Minuta con solo suplementos conserva su criterio de completitud del dominio. |
+| Calendario | Día calendarizado muestra tomas y su estado; permite agregar una toma guardada y registrar completada, omitida o restablecida en el día vigente. El detalle de Comida separa Preparaciones de Alimentos y permite agregar, ajustar y quitar una Preparación del snapshot de ese día. |
+
+La revisión local cubrió las vistas de escritorio y teléfono, incluyó corrección de desbordes y de valores decimales en formularios, y ejecutó pruebas de propiedad de datos, permisos, composición y ausencia de macros de suplementos. La disponibilidad final sigue condicionada por `SUPPLEMENTS_FEATURE_ENABLED` y `PERSONAL_PREPARATIONS_FEATURE_ENABLED`, desactivados por defecto.
+
 ## Diferencias funcionales aún reales
 
-Estas capacidades móviles no tienen todavía un flujo web equivalente completo; no se anuncia equivalencia hasta implementarlas y verificarlas:
+Estas capacidades móviles todavía necesitan trabajo propio; esta ampliación no declara paridad total:
 
 1. **Digitalizar etiqueta nutricional:** móvil combina cámara o galería, OCR local, análisis con créditos, revisión editable y confirmación. La web aún no tiene adquisición, revisión y confirmación por archivo o cámara del navegador. El contrato y el servicio están en `mobile_api/routes/label_capture.py` y `notas/application/services/nutrition_label_ai.py`.
 2. **Revisión periódica y ajustes de programa:** el móvil presenta propuestas pendientes y decisiones prospectivas. La web conserva la gestión y el historial del programa, pero no esa revisión completa en Inicio. Fuente: `mobile/src/app/today.tsx`, `mobile_api/routes/calendarization.py` y los comandos de revisión.

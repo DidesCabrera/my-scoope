@@ -22,6 +22,11 @@ FOOD_VIEWMODE_IMPORT = vm("food", "list", "import")
 
 FOOD_VIEWMODE_MEAL = vm("food", "meal")
 
+PREPARATION_VIEWMODE_LIST = vm("preparation", "list", "personal")
+PREPARATION_VIEWMODE_DETAIL = vm("preparation", "detail", "personal")
+SUPPLEMENT_VIEWMODE_LIST = vm("supplement", "list", "personal")
+SUPPLEMENT_VIEWMODE_DETAIL = vm("supplement", "detail", "personal")
+
 # MF ---------------------------------------------
 MEAL_FOOD_VIEWMODE_LIST = vm("meal_food", "list", "personal")
 MEAL_FOOD_VIEWMODE_DETAIL = vm("meal_food", "detail", "personal")
