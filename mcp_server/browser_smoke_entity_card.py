@@ -2,6 +2,7 @@
 
 import argparse
 import html
+from copy import deepcopy
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -65,18 +66,40 @@ def main():
                 assert card.locator("#nutrition-tab").get_attribute("aria-selected") == "true"
                 card.locator("#menu-tab").click()
                 assert card.locator("#detail-panel").is_visible()
-            page.locator("iframe").evaluate("element => element.style.width = '320px'")
+            page.locator("iframe").evaluate("element => element.style.width = '390px'")
             assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
             assert card.locator(".macro-list").evaluate("element => new Set([...element.querySelectorAll('.macro-row .alloc-bar')].map(bar => Math.round(bar.getBoundingClientRect().left))).size === 1")
             assert card.locator(".kcal-box").evaluate("element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1")
             if args.output_dir:
                 card.locator("#card").screenshot(path=str(args.output_dir / f"{kind}-mobile.png"))
             if kind == "dailyplan":
-                card.locator("#nutrition-tab").click()
-                assert card.locator("#nutrition-mobile .nutrition-mobile-row").count() == 3
+                assert card.locator(".detail-tabs--desktop").is_hidden()
+                assert card.locator("#menu-tab-mobile").get_attribute("aria-selected") == "true"
+                for mode in ("calories", "macros", "dist", "alloc"):
+                    card.locator(f"#{mode}-tab").click()
+                    assert card.locator(f"#{mode}-tab").get_attribute("aria-selected") == "true"
+                    assert card.locator(f"#{mode}-panel").is_visible()
+                    assert card.locator(f"#{mode}-rows .mobile-grid-row").count() == 3
+                    assert card.locator("#detail-panel").is_hidden()
+                    assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
+                    if args.output_dir:
+                        card.locator("#card").screenshot(path=str(args.output_dir / f"dailyplan-{mode}-mobile.png"))
+                assert card.locator("#macros-rows .mobile-ppk").first.inner_text() == "0,3"
+                assert card.locator("#dist-rows .mobile-dist-protein").first.inner_text() == "24%"
+                card.locator("#menu-tab-mobile").click()
+                assert card.locator("#detail-panel").is_visible()
+                page.locator("iframe").evaluate("element => element.style.width = '320px'")
+                card.locator("#alloc-tab").click()
+                assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
+                long_plan = deepcopy(SAMPLE_DAILYPLAN)
+                long_plan["data"]["dailyplan"]["meals"][0]["meal_name"] = "Yogur con manzana y nueces"
+                long_plan["data"]["dailyplan"]["meals"][1]["meal_name"] = "Garbanzos con camote y espinaca"
+                page.evaluate("result => document.querySelector('iframe').contentWindow.postMessage({jsonrpc:'2.0',method:'ui/notifications/tool-result',params:{structuredContent:result}},'*')", long_plan)
+                card.locator("#macros-tab").click()
+                assert card.locator("#macros-rows .mobile-meal-identity strong").first.inner_text() == "Yogur con manzana y nueces"
                 assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
                 if args.output_dir:
-                    card.locator("#card").screenshot(path=str(args.output_dir / "dailyplan-nutrition-mobile.png"))
+                    card.locator("#card").screenshot(path=str(args.output_dir / "dailyplan-long-names-mobile.png"))
         millilitre_food = {**SAMPLE_FOOD, "data": {"food": {**SAMPLE_FOOD["data"]["food"], "portion_unit": "ml"}}}
         page.evaluate("result => document.querySelector('iframe').contentWindow.postMessage({jsonrpc:'2.0',method:'ui/notifications/tool-result',params:{structuredContent:result}},'*')", millilitre_food)
         card.locator("#badges").get_by_text("Por 100 ml").wait_for()

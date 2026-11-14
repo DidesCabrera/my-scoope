@@ -42,6 +42,9 @@ class MCPEntityCardTests(unittest.TestCase):
         self.assertIn('id="menu-tab"', contents[1][0].content)
         self.assertIn('id="nutrition-tab"', contents[1][0].content)
         self.assertIn('id="nutrition-panel"', contents[1][0].content)
+        for tab in ("calories", "macros", "dist", "alloc"):
+            self.assertIn(f'id="{tab}-tab"', contents[1][0].content)
+            self.assertIn(f'id="{tab}-panel"', contents[1][0].content)
         self.assertIn('method: "ui/initialize"', contents[0][0].content)
 
     def test_read_food_uses_authorized_api_and_preserves_result(self):

@@ -169,6 +169,7 @@
     .detail { margin: 0 var(--meal-card-inline-panel-padding-x) var(--meal-card-inline-panel-padding-y); }
     .detail-tabs { display: flex; gap: 8px; margin-bottom: var(--space-sm); overflow-x: auto; scrollbar-width: none; }
     .detail-tabs::-webkit-scrollbar { display: none; }
+    .detail-tabs--mobile { display: none; }
     .detail-tabs button { flex: none; padding: 7px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: transparent; color: var(--text-muted); font: inherit; font-size: 18px; line-height: 1.15; cursor: pointer; white-space: nowrap; }
     .detail-tabs button[aria-selected="true"] { border-color: var(--text-main); background: var(--text-main); color: var(--surface-card); }
     .detail-tabs button:focus-visible { outline: 2px solid var(--entity-accent); outline-offset: 2px; }
@@ -195,7 +196,7 @@
     .nutrition-table .alloc-bar { grid-column: auto; grid-row: auto; height: 22px; }
     .dist-bar { display: flex; width: 100%; height: 22px; overflow: hidden; border-radius: 5px; background: var(--alloc-cell-bg); }
     .dist-segment { display: block; height: 100%; min-width: 0; }
-    .nutrition-mobile { display: none; }
+    .mobile-panel { display: none; }
     .empty { margin: 0; padding: 16px; color: var(--text-muted); font-size: var(--font-size-caption); }
     .status { padding: var(--space-lg); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-card); color: var(--text-muted); }
     @media (min-width: 601px) and (max-width: 1000px) {
@@ -217,22 +218,37 @@
       .macro-ppk { padding: 3px; font-size: 10px; }
       .macro-row .alloc-bar { height: 21px; }
       h1 { font-size: 25px; }
-      .detail-tabs button { font-size: var(--font-size-caption); }
+      .detail { overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-card); background: var(--surface-card-muted); }
+      .detail-tabs--desktop { display: none; }
+      .detail-tabs--mobile { display: flex; gap: 5px; padding: 8px; margin: 0; border-bottom: 1px solid var(--border-soft); }
+      .detail-tabs--mobile button { padding: 6px 9px; font-size: var(--font-size-caption); }
+      .detail-panel { border: 0; border-radius: 0; background: transparent; }
+      #nutrition-panel { display: none !important; }
       .menu-header { display: none; }
       .detail-row { grid-template-columns: 1fr; gap: 5px; padding: 12px; }
-      .nutrition-scroll { display: none; }
-      .nutrition-mobile { display: block; }
-      .nutrition-mobile-row { padding: 12px; border-top: 1px solid var(--border-soft); font-size: var(--font-size-caption); }
-      .nutrition-mobile-row:first-child { border-top: 0; }
-      .nutrition-mobile-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-      .nutrition-mobile-head span { flex: none; font-variant-numeric: tabular-nums; }
-      .nutrition-mobile-macros { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; color: var(--text-muted); }
-      .nutrition-mobile-dist { display: flex; align-items: center; gap: 8px; margin-top: 9px; color: var(--text-muted); }
-      .nutrition-mobile-dist .dist-bar { flex: 1; height: 15px; }
-      .nutrition-mobile-alloc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
-      .nutrition-mobile-alloc span { min-width: 0; }
-      .nutrition-mobile-alloc .alloc-bar { grid-column: auto; grid-row: auto; height: 17px; margin-top: 3px; }
-      .nutrition-mobile-alloc .alloc-label { font-size: 10px; }
+      .mobile-panel { display: block; }
+      .mobile-grid-header, .mobile-grid-row { display: grid; align-items: center; gap: 5px; padding: 9px 10px; }
+      .mobile-grid-header { min-height: 36px; color: var(--text-muted); font-size: 10px; font-weight: var(--font-weight-semibold); letter-spacing: .04em; text-transform: uppercase; }
+      .mobile-grid-header span:not(:first-child) { text-align: center; }
+      .mobile-grid-row { min-height: 61px; border-top: 1px solid var(--border-soft); font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
+      .mobile-grid-row > span:not(.mobile-meal-identity) { min-width: 0; text-align: center; }
+      .mobile-meal-identity { display: flex; align-items: center; gap: 6px; min-width: 0; }
+      .mobile-meal-identity strong { display: -webkit-box; min-width: 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.22; }
+      .mobile-meal-icon { display: inline-grid; place-items: center; flex: none; width: 21px; height: 21px; border-radius: 5px; background: var(--entity-meal); color: #fff; }
+      .mobile-meal-icon svg { width: 14px; height: 14px; }
+      .mobile-grid--calories .mobile-grid-header, .mobile-grid--calories .mobile-grid-row { grid-template-columns: minmax(0, 42fr) minmax(35px, 12fr) minmax(0, 46fr); }
+      .mobile-grid--macros .mobile-grid-header, .mobile-grid--macros .mobile-grid-row { grid-template-columns: minmax(0, 40fr) minmax(0, 11fr) minmax(0, 16fr) minmax(0, 11fr) minmax(0, 11fr); }
+      .mobile-grid--dist .mobile-grid-header, .mobile-grid--dist .mobile-grid-row { grid-template-columns: minmax(0, 38fr) repeat(3, minmax(0, 10fr)) minmax(0, 25fr); }
+      .mobile-grid--alloc .mobile-grid-header, .mobile-grid--alloc .mobile-grid-row { grid-template-columns: minmax(0, 39fr) repeat(3, minmax(0, 19fr)); }
+      .mobile-grid--alloc .mobile-grid-row { gap: 7px; }
+      .mobile-grid-row .alloc-bar { grid-column: auto; grid-row: auto; height: 23px; }
+      .mobile-grid-row .alloc-label { font-size: 11px; }
+      .mobile-grid-row .dist-bar { height: 23px; }
+      .mobile-ppk { display: inline-block; padding: 4px 2px; border-radius: 5px; background: var(--nutrition-ppk); color: #111; font-weight: var(--font-weight-bold); }
+      .mobile-dist-protein { color: var(--nutrition-protein); font-weight: var(--font-weight-semibold); }
+      .mobile-dist-carbs { color: var(--nutrition-carbs); font-weight: var(--font-weight-semibold); }
+      .mobile-dist-fat { color: var(--nutrition-fat); font-weight: var(--font-weight-semibold); }
+
     }
     @media (max-width: 480px) {
       .macro-row { grid-template-columns: 78px 36px 54px minmax(0, 1fr); }
@@ -262,11 +278,18 @@
       </div>
     </header>
     <section id="detail" class="detail" aria-label="Detalle de la minuta" hidden>
-      <div class="detail-tabs" role="tablist" aria-label="Detalle de la minuta">
+      <div class="detail-tabs detail-tabs--desktop" role="tablist" aria-label="Detalle de la minuta en escritorio">
         <button id="menu-tab" type="button" role="tab" data-detail-mode="menu" aria-selected="true" aria-controls="detail-panel">Menú</button>
         <button id="nutrition-tab" type="button" role="tab" data-detail-mode="nutrition" aria-selected="false" aria-controls="nutrition-panel" tabindex="-1">Tabla Nutricional</button>
       </div>
-      <div id="detail-panel" class="detail-panel" role="tabpanel" aria-labelledby="menu-tab">
+      <div class="detail-tabs detail-tabs--mobile" role="tablist" aria-label="Detalle de la minuta en móvil">
+        <button id="menu-tab-mobile" type="button" role="tab" data-detail-mode="menu" aria-selected="true" aria-controls="detail-panel">Menú</button>
+        <button id="calories-tab" type="button" role="tab" data-detail-mode="calories" aria-selected="false" aria-controls="calories-panel" tabindex="-1">Calorías</button>
+        <button id="macros-tab" type="button" role="tab" data-detail-mode="macros" aria-selected="false" aria-controls="macros-panel" tabindex="-1">Macros</button>
+        <button id="dist-tab" type="button" role="tab" data-detail-mode="dist" aria-selected="false" aria-controls="dist-panel" tabindex="-1">Dist</button>
+        <button id="alloc-tab" type="button" role="tab" data-detail-mode="alloc" aria-selected="false" aria-controls="alloc-panel" tabindex="-1">Alloc</button>
+      </div>
+      <div id="detail-panel" class="detail-panel" role="tabpanel" aria-label="Menú">
         <div class="menu-header"><span>Comidas</span><span>Alimentos</span></div>
         <div id="menu-rows"></div>
       </div>
@@ -277,7 +300,18 @@
             <tbody id="nutrition-rows"></tbody>
           </table>
         </div>
-        <div id="nutrition-mobile" class="nutrition-mobile"></div>
+      </div>
+      <div id="calories-panel" class="detail-panel mobile-panel" role="tabpanel" aria-labelledby="calories-tab" hidden>
+        <div class="mobile-grid mobile-grid--calories"><div class="mobile-grid-header"><span>Comidas</span><span>Cal</span><span>% Cal</span></div><div id="calories-rows"></div></div>
+      </div>
+      <div id="macros-panel" class="detail-panel mobile-panel" role="tabpanel" aria-labelledby="macros-tab" hidden>
+        <div class="mobile-grid mobile-grid--macros"><div class="mobile-grid-header"><span>Comidas</span><span>P</span><span>PpK</span><span>C</span><span>G</span></div><div id="macros-rows"></div></div>
+      </div>
+      <div id="dist-panel" class="detail-panel mobile-panel" role="tabpanel" aria-labelledby="dist-tab" hidden>
+        <div class="mobile-grid mobile-grid--dist"><div class="mobile-grid-header"><span>Comidas</span><span>P%</span><span>C%</span><span>G%</span><span>P|C|G</span></div><div id="dist-rows"></div></div>
+      </div>
+      <div id="alloc-panel" class="detail-panel mobile-panel" role="tabpanel" aria-labelledby="alloc-tab" hidden>
+        <div class="mobile-grid mobile-grid--alloc"><div class="mobile-grid-header"><span>Comidas</span><span>P%</span><span>C%</span><span>G%</span></div><div id="alloc-rows"></div></div>
       </div>
     </section>
   </article>
@@ -319,29 +353,59 @@
         }
         return bar;
       };
+      const mobileQuery = window.matchMedia("(max-width: 600px)");
+      let detailMode = "menu";
       function setDetailMode(mode) {
-        const selected = mode === "nutrition" ? "nutrition" : "menu";
+        const mobileModes = ["menu", "calories", "macros", "dist", "alloc"];
+        const selected = mobileQuery.matches
+          ? (mobileModes.includes(mode) ? mode : "calories")
+          : (mode === "menu" ? "menu" : "nutrition");
+        detailMode = selected;
         for (const tab of document.querySelectorAll(".detail-tabs [role=tab]")) {
-          const active = tab.dataset.detailMode === selected;
+          const target = tab.closest(".detail-tabs--mobile")
+            ? (selected === "nutrition" ? "calories" : selected)
+            : (selected === "menu" ? "menu" : "nutrition");
+          const active = tab.dataset.detailMode === target;
           tab.setAttribute("aria-selected", String(active));
           tab.tabIndex = active ? 0 : -1;
         }
         byId("detail-panel").hidden = selected !== "menu";
         byId("nutrition-panel").hidden = selected !== "nutrition";
+        for (const mode of mobileModes.slice(1)) byId(`${mode}-panel`).hidden = selected !== mode;
         notifySize();
       }
-      const detailTabs = [...document.querySelectorAll(".detail-tabs [role=tab]")];
-      detailTabs.forEach((tab, index) => {
-        tab.addEventListener("click", () => setDetailMode(tab.dataset.detailMode));
-        tab.addEventListener("keydown", event => {
-          const next = event.key === "ArrowRight" ? index + 1 : event.key === "ArrowLeft" ? index - 1 : event.key === "Home" ? 0 : event.key === "End" ? detailTabs.length - 1 : null;
-          if (next === null) return;
-          event.preventDefault();
-          const target = detailTabs[(next + detailTabs.length) % detailTabs.length];
-          setDetailMode(target.dataset.detailMode);
-          target.focus();
+      mobileQuery.addEventListener("change", () => setDetailMode(detailMode));
+      for (const list of document.querySelectorAll(".detail-tabs")) {
+        const tabs = [...list.querySelectorAll("[role=tab]")];
+        tabs.forEach((tab, index) => {
+          tab.addEventListener("click", () => setDetailMode(tab.dataset.detailMode));
+          tab.addEventListener("keydown", event => {
+            const next = event.key === "ArrowRight" ? index + 1 : event.key === "ArrowLeft" ? index - 1 : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : null;
+            if (next === null) return;
+            event.preventDefault();
+            const target = tabs[(next + tabs.length) % tabs.length];
+            setDetailMode(target.dataset.detailMode);
+            target.focus();
+          });
         });
-      });
+      }
+      const makeMealIdentity = name => {
+        const identity = node("span", "mobile-meal-identity");
+        const icon = node("span", "mobile-meal-icon");
+        icon.setAttribute("aria-hidden", "true");
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2");
+        svg.setAttribute("stroke-linecap", "round");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", "M4 2v8a3 3 0 0 0 6 0V2M7 2v20M17 2c-2 3-3 6-3 10h5V2h-2ZM19 12v10");
+        svg.append(path);
+        icon.append(svg);
+        identity.append(icon, node("strong", "", name));
+        return identity;
+      };
       function render(result) {
         const data = result?.ok === true ? result.data : null;
         const food = data?.food;
@@ -393,10 +457,10 @@
         if (kind === "dailyplan") {
           const menuRows = byId("menu-rows");
           const nutritionRows = byId("nutrition-rows");
-          const nutritionMobile = byId("nutrition-mobile");
+          const mobileRows = Object.fromEntries(["calories", "macros", "dist", "alloc"].map(mode => [mode, byId(`${mode}-rows`)]));
           menuRows.replaceChildren();
           nutritionRows.replaceChildren();
-          nutritionMobile.replaceChildren();
+          for (const rows of Object.values(mobileRows)) rows.replaceChildren();
           const meals = Array.isArray(entity.meals) ? entity.meals : [];
           if (meals.length === 0) {
             menuRows.append(node("p", "empty", "Esta minuta no tiene comidas."));
@@ -405,7 +469,7 @@
             emptyCell.colSpan = 10;
             emptyRow.append(emptyCell);
             nutritionRows.append(emptyRow);
-            nutritionMobile.append(node("p", "empty", "Esta minuta no tiene comidas."));
+            for (const rows of Object.values(mobileRows)) rows.append(node("p", "empty", "Esta minuta no tiene comidas."));
           }
           for (const meal of meals) {
             const mealName = meal.meal_name || "Comida";
@@ -436,21 +500,23 @@
             }
             nutritionRows.append(nutritionRow);
 
-            const mobileRow = node("div", "nutrition-mobile-row");
-            const mobileHead = node("div", "nutrition-mobile-head");
-            mobileHead.append(node("strong", "", mealName), node("span", "", `${format(mealKpis.total_kcal)} kcal · ${format(calorieShare)}%`));
-            const mobileMacros = node("div", "nutrition-mobile-macros");
-            for (const [label, key] of [["P", "protein"], ["C", "carbs"], ["G", "fat"]]) mobileMacros.append(node("span", "", `${label}: ${format(mealKpis[key], 1)} g`));
-            const mobileDist = node("div", "nutrition-mobile-dist");
-            mobileDist.append(node("span", "", "P|C|G%"), makeDistribution(mealKpis));
-            const mobileAlloc = node("div", "nutrition-mobile-alloc");
-            for (const [label, key, color] of [["P%", "protein", "var(--nutrition-protein)"], ["C%", "carbs", "var(--nutrition-carbs)"], ["G%", "fat", "var(--nutrition-fat)"]]) {
-              const item = node("span");
-              item.append(node("span", "", label), makeBar(shares[key], color));
-              mobileAlloc.append(item);
-            }
-            mobileRow.append(mobileHead, mobileMacros, mobileDist, mobileAlloc);
-            nutritionMobile.append(mobileRow);
+            const caloriesRow = node("div", "mobile-grid-row");
+            caloriesRow.append(makeMealIdentity(mealName), node("span", "", format(mealKpis.total_kcal)), makeBar(calorieShare, "var(--nutrition-kcal-border)"));
+            mobileRows.calories.append(caloriesRow);
+
+            const macrosRow = node("div", "mobile-grid-row");
+            const ppk = node("span", "mobile-ppk", format(mealKpis.ppk, 1));
+            ppk.setAttribute("aria-label", `${format(mealKpis.ppk, 1)} gramos de proteína por kilogramo`);
+            macrosRow.append(makeMealIdentity(mealName), node("span", "", format(mealKpis.protein, 1)), ppk, node("span", "", format(mealKpis.carbs, 1)), node("span", "", format(mealKpis.fat, 1)));
+            mobileRows.macros.append(macrosRow);
+
+            const distRow = node("div", "mobile-grid-row");
+            distRow.append(makeMealIdentity(mealName), node("span", "mobile-dist-protein", `${format(mealKpis.alloc_protein)}%`), node("span", "mobile-dist-carbs", `${format(mealKpis.alloc_carbs)}%`), node("span", "mobile-dist-fat", `${format(mealKpis.alloc_fat)}%`), makeDistribution(mealKpis));
+            mobileRows.dist.append(distRow);
+
+            const allocRow = node("div", "mobile-grid-row");
+            allocRow.append(makeMealIdentity(mealName), makeBar(shares.protein, "var(--nutrition-protein)"), makeBar(shares.carbs, "var(--nutrition-carbs)"), makeBar(shares.fat, "var(--nutrition-fat)"));
+            mobileRows.alloc.append(allocRow);
           }
           setDetailMode("menu");
         }
