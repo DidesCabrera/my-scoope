@@ -40,8 +40,11 @@ Use this default order:
    The distance is the two-sided ancestry count from
    `git rev-list --left-right --count origin/staging...<branch>`: report commits
    behind staging and commits unique to the branch separately, including for
-   `main`. It measures commit history, not content equivalence. Count changed
-   paths in that branch's checkout using `git status --porcelain=v1 -uall`,
+   `main`. In Spanish reports, label the column
+   `Commits vs. origin/staging (detrás / propios)` and show each value as
+   `N / M`, without repeating those words in the cells. It measures commit
+   history, not content equivalence. Count changed paths in that branch's
+   checkout using `git status --porcelain=v1 -uall`,
    including staged, unstaged, and untracked paths but excluding ignored files.
    Use `0` for a clean checkout, `—` when there is no checkout, and `?` when the
    checkout cannot be inspected. If the remote head cannot be verified, mark
