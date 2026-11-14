@@ -44,3 +44,11 @@ Estas capacidades móviles todavía necesitan trabajo propio; esta ampliación n
 3. **Edición de la Minuta fijada dentro de Inicio:** la web ya permite crearla, fijarla, retirarla, abrirla y registrar Comidas y tomas. La edición de composición y horas se hace desde el detalle de la Minuta, mientras móvil dispone de controles directos en Inicio.
 
 Las diferencias anteriores necesitan trabajo funcional propio. La revisión visual de esta rama debe valorar la alineación implementada y priorizar estas capacidades antes de afirmar paridad total.
+
+## Secuencia de publicación y trabajo restante
+
+1. Integrar esta rama sobre el `origin/staging` vigente. La diferencia de 41 archivos propios clasifica como `staging-fast`; comprobar el CI remoto y luego recorrer en staging las rutas de biblioteca, Comida, Minuta, día calendarizado, Inicio y revisión con cuentas Pro y sin Pro. Confirmar allí los valores de `SUPPLEMENTS_FEATURE_ENABLED` y `PERSONAL_PREPARATIONS_FEATURE_ENABLED` antes de ofrecer ambas capacidades.
+2. Digitalización web de etiquetas: cargar imagen desde el navegador, pedir consentimiento para el análisis, comprobar permiso, límites y créditos, presentar cada dato en revisión editable y confirmar la creación del Alimento. El resultado debe conservar idempotencia y separar claramente la opción de guardar la imagen. Este recorrido necesita pruebas de consumo de créditos, errores de proveedor, seguridad de archivos y confirmación, por lo que constituye un bloque propio.
+3. Evaluar los controles nativos de recordatorios y edición inmediata de la Minuta fijada por resultado de usuario. La web ya cuenta con push del programa y acceso a la edición de la Minuta; cualquier nuevo control de portada debe reutilizar esos comandos y probar que no duplica avisos o cambios de estado.
+
+La disponibilidad en producción requiere el flujo del repositorio: staging verde, PR de staging a main con la compuerta completa y comprobación del despliegue. La rama local por sí sola no hace visibles los cambios en la web publicada.
