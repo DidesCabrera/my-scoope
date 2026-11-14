@@ -58,6 +58,10 @@ La sección «En conversación» de la galería web (`/app/dev/ui-system/`, solo
 DEBUG) sirve exactamente `meal_card_v5.html` en un iframe aislado. Su host de prueba
 reproduce el saludo MCP Apps y envía datos sintéticos. Permite revisar claro,
 oscuro, 1100/760/570/390/320 px, dos comidas de ejemplo, nombres largos, vacío y error.
+Esos anchos son aproximaciones: no equivalen a una medición del iframe de ChatGPT.
+La [decisión 0210](../../../20_decisions/0210-chatgpt-meal-card-live-preview.md)
+incorpora una vista previa privada para ajustar CSS en el host real sin usar
+staging como ciclo de edición.
 El archivo fuente editable
 es `meal_card_v5.source.html`; `npm run generate:ui` produce el HTML servido tanto
 por la galería como por MCP. `npm run check:ui` detecta desincronización.
@@ -87,6 +91,42 @@ ejecutable. Este smoke
 usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
 
 ## Configuración y prueba en una conversación real
+
+### Iteración visual privada (decisión 0210)
+
+Desde un checkout aislado y con las dependencias de `mcp_server/requirements.txt`
+instaladas, iniciar la vista previa sintética:
+
+```bash
+PYTHONPATH=mcp_server python mcp_server/dev_meal_card_preview.py \
+  --host 127.0.0.1 --port 8011
+```
+
+El endpoint local es `http://127.0.0.1:8011/mcp`. Conectarlo a ChatGPT mediante
+un Secure MCP Tunnel privado asociado al espacio de trabajo correcto y crear un
+plugin **de desarrollo separado**. No usar el plugin de staging para este ciclo.
+Pedir `preview_meal_card`: la respuesta usa cuatro alimentos ficticios y ninguna
+cuenta real. Mantener abiertos el servidor y el cliente del túnel.
+
+Editar el bloque CSS de `meal_card_v5.source.html` mientras la card está abierta
+en ChatGPT. La herramienta `preview_card_styles`, visible solo para la app, entrega
+el CSS actualizado aproximadamente cada 1,5 segundos; el iframe lo aplica sin
+perder los datos ni la conversación. El servidor no consulta Django ni usa tokens
+de My Scoope. Para cambiar HTML o JavaScript, ejecutar `npm run generate:ui`,
+reiniciar el servidor y refrescar el plugin de desarrollo; cada inicio anuncia un
+URI de recurso nuevo para evitar el HTML anterior en caché.
+
+La primera conexión real debe confirmar que ChatGPT permite la llamada de la app
+a `preview_card_styles` y que el cambio se ve sin reiniciar. Hasta tener esa
+evidencia, la recarga en vivo está validada solo en el servidor local. Verificar
+web, aplicación de escritorio y panel lateral por separado; la galería no define
+sus dimensiones. Cerrar el túnel y el servidor al terminar la sesión.
+
+La configuración del túnel requiere un `tunnel_id` y una clave de ejecución de
+OpenAI Platform con permisos de túnel. Mantener la clave fuera del repositorio,
+de argumentos de comandos y de capturas. Seguir la
+[guía oficial de Secure MCP Tunnel](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels)
+para instalar el cliente, revisar permisos, ejecutar `doctor` y enlazar el plugin.
 
 1. Conectar un endpoint MCP privado por Secure MCP Tunnel o HTTPS de staging.
    Configurar autenticación por usuario y `MYSCOOPE_MCP_USER_TOKENS_ONLY=true`;
