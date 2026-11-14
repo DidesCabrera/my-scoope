@@ -7,8 +7,8 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const contractPath = path.join(repositoryRoot, "design/ui-contract.json");
 const cssPath = path.join(repositoryRoot, "notas/static/notas/css/ui-contract.generated.css");
 const nativePath = path.join(repositoryRoot, "mobile/src/generated/ui-tokens.ts");
-const mcpCardSourcePath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/meal_card_v3.source.html");
-const mcpCardPath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/meal_card_v3.html");
+const mcpCardSourcePath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/meal_card_v4.source.html");
+const mcpCardPath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/meal_card_v4.html");
 const mcpTokenMarker = "/* MYSCOOPE_GENERATED_UI_TOKENS */";
 
 const contract = JSON.parse(await readFile(contractPath, "utf8"));

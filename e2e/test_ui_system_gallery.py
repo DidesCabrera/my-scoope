@@ -69,6 +69,13 @@ def test_conversation_gallery_runs_the_mcp_card_with_synthetic_states(
     anonymous_page.get_by_role("button", name="Oscuro").click()
     expect(card.locator("#card")).to_have_css("background-color", "rgb(18, 18, 18)")
 
+    anonymous_page.get_by_role("button", name="Chat web").click()
+    expect(card.locator("#meal-food-table")).to_be_visible()
+    expect(card.locator("#meal-foods")).to_be_hidden()
+    assert card.locator("#meal-food-table tr").first.locator("td").last.evaluate(
+        "element => element.getBoundingClientRect().right <= document.querySelector('.food-panel').getBoundingClientRect().right"
+    )
+
     anonymous_page.get_by_role("button", name="Móvil").click()
     anonymous_page.locator("#mcp-meal-scenario").select_option("mobile")
     expect(card.get_by_role("heading", name="Avena con yogur, plátano y arándanos")).to_be_visible()

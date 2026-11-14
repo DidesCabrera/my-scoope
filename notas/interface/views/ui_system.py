@@ -45,7 +45,7 @@ def ui_system_mcp_meal_card_preview(request):
     if not settings.DEBUG:
         raise Http404
 
-    card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v3.html"
+    card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v4.html"
     return HttpResponse(card_path.read_bytes(), content_type="text/html; charset=utf-8")
 
 

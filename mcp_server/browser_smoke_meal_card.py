@@ -6,7 +6,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v3.html"
+CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v4.html"
 SAMPLE_RESULT = {
     "ok": True,
     "data": {
@@ -46,6 +46,7 @@ def send_result(page, result):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--screenshot", type=Path, help="Save a sample card PNG here.")
+    parser.add_argument("--screenshot-web", type=Path, help="Save the 760px ChatGPT web layout PNG here.")
     args = parser.parse_args()
 
     with sync_playwright() as playwright:
@@ -89,6 +90,23 @@ def main():
         if args.screenshot:
             args.screenshot.parent.mkdir(parents=True, exist_ok=True)
             card.locator("#card").screenshot(path=str(args.screenshot))
+
+        page.locator("iframe").evaluate("element => element.style.width = '760px'")
+        assert card.locator("#meal-food-table").is_visible()
+        assert card.locator("#meal-foods").is_hidden()
+        assert card.locator("#meal-food-table tr").first.locator("td").last.evaluate(
+            "element => element.getBoundingClientRect().right <= document.querySelector('.food-panel').getBoundingClientRect().right"
+        )
+        assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
+        if args.screenshot_web:
+            args.screenshot_web.parent.mkdir(parents=True, exist_ok=True)
+            card.locator("#card").screenshot(path=str(args.screenshot_web))
+
+        page.locator("iframe").evaluate("element => element.style.width = '620px'")
+        assert card.locator("#meal-food-table").is_visible()
+        assert card.locator(".food-panel").evaluate(
+            "element => element.scrollWidth > element.clientWidth"
+        )
 
         page.locator("iframe").evaluate("element => element.style.width = '390px'")
         assert card.locator("#meal-food-table").is_hidden()

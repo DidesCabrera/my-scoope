@@ -8,6 +8,7 @@ from myscoope_mcp.auth import StaticMCPTokenVerifier, create_external_mcp_auth_s
 from myscoope_mcp.contracts import MCPToolCallResult
 from myscoope_mcp.protocol_server import (
     LEGACY_MEAL_CARD_RESOURCE_URI,
+    OLDER_MEAL_CARD_RESOURCE_URI,
     MEAL_CARD_MIME_TYPE,
     MEAL_CARD_RESOURCE_URI,
     create_mcp_server,
@@ -45,6 +46,7 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertNotIn("user_id", tool.inputSchema.get("properties", {}))
         self.assertEqual(resources[MEAL_CARD_RESOURCE_URI].mimeType, MEAL_CARD_MIME_TYPE)
         self.assertIn(LEGACY_MEAL_CARD_RESOURCE_URI, resources)
+        self.assertIn(OLDER_MEAL_CARD_RESOURCE_URI, resources)
         self.assertEqual(content.mime_type, MEAL_CARD_MIME_TYPE)
         self.assertIn('--entity-meal: #CF34B0', content.content)
         self.assertIn('--nutrition-protein: #00D0F5', content.content)

@@ -63,7 +63,7 @@ class UISystemGalleryTests(TestCase):
         gallery = self.client.get(self.url)
         preview_url = reverse("ui_system_mcp_meal_card_preview")
         preview = self.client.get(preview_url)
-        card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v3.html"
+        card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v4.html"
 
         self.assertContains(gallery, 'id="conversation-ui"')
         self.assertContains(gallery, preview_url)

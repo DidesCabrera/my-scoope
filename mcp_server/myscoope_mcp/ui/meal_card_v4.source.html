@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* MYSCOOPE_GENERATED_UI_TOKENS */
+    :root { color-scheme: light dark; font-family: var(--font-family-sans); }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: var(--space-sm); background: var(--surface-app); color: var(--text-main); }
+    .meal-card { width: 100%; max-width: var(--meal-card-inline-max-width); margin: 0 auto; overflow: hidden; border: 1px solid var(--border-default); border-top: 3px solid var(--entity-meal); border-radius: var(--meal-card-inline-border-radius); background: var(--surface-card); }
+    .top { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.55fr); align-items: center; gap: var(--space-lg); padding: var(--meal-card-inline-header-padding-y) var(--meal-card-inline-header-padding-x); }
+    .identity { align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: var(--space-sm); padding-right: var(--space-lg); border-right: 1px solid var(--border-soft); min-width: 0; }
+    .eyebrow { display: flex; align-items: center; gap: var(--space-sm); margin: 0; color: var(--text-muted); font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: .025em; }
+    .meal-icon { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--entity-meal); color: #fff; }
+    .meal-icon svg, .food-count svg { width: 16px; height: 16px; }
+    h1 { margin: 0; overflow-wrap: anywhere; font-size: var(--font-size-title); line-height: 1.16; }
+    .food-count { display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; border-radius: 8px; background: var(--entity-food); color: #fff; font-size: var(--font-size-body); font-weight: var(--font-weight-semibold); }
+    .kcal-box { display: flex; flex-direction: column; justify-content: center; align-items: center; width: var(--meal-card-inline-kpi-size); min-height: var(--meal-card-inline-kpi-size); border: var(--meal-card-inline-kpi-border-width) solid var(--nutrition-kcal-border); border-radius: var(--radius-card); background: var(--nutrition-kcal); text-align: center; }
+    .kcal-box span { font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); }
+    .kcal-box strong { font-size: 39px; line-height: 1.08; font-variant-numeric: tabular-nums; }
+    .top-kpis { display: grid; grid-template-columns: var(--meal-card-inline-kpi-size) minmax(0, 1fr); align-items: center; gap: var(--space-lg); }
+    .macro-list { min-width: 0; }
+    .macro-row { display: grid; grid-template-columns: 92px 64px 50px minmax(0, 1fr); align-items: center; gap: var(--space-sm); min-height: 39px; border-bottom: 1px solid var(--border-soft); }
+    .macro-row:last-child { border-bottom: 0; }
+    .macro-name { font-weight: var(--font-weight-semibold); }
+    .macro-ppk { justify-self: start; padding: 4px 6px; border-radius: 6px; background: var(--nutrition-ppk); color: #111; font-size: var(--font-size-label); font-weight: var(--font-weight-bold); white-space: nowrap; }
+    .macro-grams { text-align: right; font-weight: var(--font-weight-medium); font-variant-numeric: tabular-nums; }
+    .alloc-bar { position: relative; min-width: 0; height: var(--meal-card-inline-bar-height); overflow: hidden; border-radius: 6px; background: var(--alloc-bar-bg); font-variant-numeric: tabular-nums; }
+    .alloc-fill { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--bar-color); }
+    .alloc-bar--protein { --bar-color: var(--nutrition-protein); }
+    .alloc-bar--carbs { --bar-color: var(--nutrition-carbs); }
+    .alloc-bar--fat { --bar-color: var(--nutrition-fat); }
+    .alloc-bar--kcal { --bar-color: var(--nutrition-kcal-border); }
+    .alloc-label { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--text-main); font-size: var(--font-size-label); font-weight: var(--font-weight-semibold); text-shadow: 0 1px 2px var(--surface-card); }
+    .food-section { margin: 0 var(--meal-card-inline-panel-padding-x) var(--meal-card-inline-panel-padding-y); }
+    .section-label { margin: 0 0 var(--space-sm); font-size: var(--font-size-caption); }
+    .section-label span { display: inline-block; border-radius: var(--radius-pill); padding: 6px 12px; background: var(--text-main); color: var(--surface-card); font-weight: var(--font-weight-semibold); }
+    .section-label .mobile-label { display: none; }
+    .food-panel { overflow-x: auto; border: 1px solid var(--border-default); border-radius: var(--radius-card); background: var(--surface-card-muted); }
+    .food-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .food-table th { padding: 13px 7px 8px; color: var(--text-soft); font-size: 10px; font-weight: var(--font-weight-semibold); letter-spacing: .055em; text-align: center; text-transform: uppercase; }
+    .food-table th:first-child, .food-table td:first-child { text-align: left; padding-left: 14px; }
+    .food-table td { padding: 11px 7px; border-top: 1px solid var(--border-soft); text-align: center; font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
+    .food-table td:first-child { font-weight: var(--font-weight-semibold); overflow-wrap: anywhere; }
+    .food-table th:nth-child(1) { width: 21%; }
+    .food-table th:nth-child(2) { width: 7%; }
+    .food-table th:nth-child(3) { width: 6%; }
+    .food-table th:nth-child(4) { width: 10%; }
+    .food-table th:nth-child(5), .food-table th:nth-child(6), .food-table th:nth-child(7) { width: 5%; }
+    .food-table th:nth-child(8) { width: 11%; }
+    .food-table th:nth-child(9), .food-table th:nth-child(10), .food-table th:nth-child(11) { width: 10%; }
+    .food-table .alloc-bar { height: 22px; }
+    .food-table .dist-bar { height: 22px; }
+    .dist-bar { display: flex; width: 100%; overflow: hidden; border-radius: 5px; background: var(--alloc-cell-bg); }
+    .dist-segment { height: 100%; min-width: 0; }
+    .dist-segment--protein { background: var(--nutrition-protein); }
+    .dist-segment--carbs { background: var(--nutrition-carbs); }
+    .dist-segment--fat { background: var(--nutrition-fat); }
+    .mobile-tabs, .mobile-foods { display: none; }
+    .empty { margin: 0; padding: var(--space-xl); color: var(--text-muted); font-size: var(--font-size-caption); }
+    .status { padding: var(--space-lg); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-card); color: var(--text-muted); }
+    [hidden] { display: none !important; }
+    @media (min-width: 601px) and (max-width: 1000px) {
+      .top { grid-template-columns: minmax(170px, .65fr) minmax(0, 1.65fr); gap: var(--space-md); }
+      .identity { padding-right: var(--space-md); }
+      .top-kpis { gap: var(--space-md); }
+      .macro-row { grid-template-columns: 72px 45px 42px minmax(0, 1fr); gap: 5px; font-size: var(--font-size-caption); }
+      .macro-ppk { padding: 4px; font-size: 10px; }
+      .food-table { min-width: 690px; }
+      .food-table th, .food-table td { padding-left: 3px; padding-right: 3px; }
+      .food-table th:nth-child(1) { width: 20%; }
+      .food-table th:nth-child(2) { width: 8%; }
+      .food-table td:nth-child(2) { white-space: nowrap; }
+    }
+    @media (max-width: 600px) {
+      .top { grid-template-columns: 1fr; gap: var(--space-lg); }
+      .identity { border-right: 0; padding: 0; }
+      .top-kpis { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: center; gap: var(--space-sm); }
+      .kcal-box { width: 100px; min-height: 100px; }
+      .macro-row { grid-template-columns: 58px 37px 46px minmax(0, 1fr); gap: 4px; min-height: 36px; font-size: var(--font-size-caption); }
+      .macro-row > span:nth-child(2) { grid-column: 3; grid-row: 1; }
+      .macro-row .macro-grams { grid-column: 2; grid-row: 1; }
+      .macro-row .alloc-bar { grid-column: 4; grid-row: 1; }
+      .macro-ppk { padding: 4px; font-size: 10px; }
+      .macro-grams { font-size: var(--font-size-caption); }
+      .food-section { margin-top: var(--space-lg); }
+      .section-label .desktop-label { display: none; }
+      .section-label .mobile-label { display: inline-block; background: var(--entity-food); color: #fff; }
+      .food-table { display: none; }
+      .mobile-tabs { display: flex; gap: 5px; overflow-x: auto; padding: var(--space-sm); border-bottom: 1px solid var(--border-default); scrollbar-width: none; }
+      .mobile-tabs::-webkit-scrollbar { display: none; }
+      .mobile-tabs button { flex: none; padding: 6px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--surface-card); color: var(--text-muted); font: inherit; font-size: var(--font-size-caption); cursor: pointer; }
+      .mobile-tabs button[aria-selected="true"] { border-color: var(--text-main); background: var(--text-main); color: var(--surface-card); }
+      .mobile-tabs button:focus-visible { outline: 2px solid var(--entity-meal); outline-offset: 2px; }
+      .mobile-foods { display: block; margin: 0; padding: 0; list-style: none; }
+      .mobile-foods li { min-height: 82px; padding: 14px; border-bottom: 1px solid var(--border-default); }
+      .mobile-foods li:last-child { border-bottom: 0; }
+      .food-mobile-main { display: flex; justify-content: space-between; align-items: center; gap: 9px; }
+      .food-mobile-name { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); overflow-wrap: anywhere; }
+      .food-mobile-icon { flex: none; color: var(--entity-food); }
+      .food-mobile-qty { flex: none; font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
+      .food-mobile-detail { display: none; margin: var(--space-sm) 0 0; color: var(--text-muted); font-size: var(--font-size-label); }
+      .meal-card[data-mode="foods"] .food-mobile-detail--foods,
+      .meal-card[data-mode="calories"] .food-mobile-detail--calories,
+      .meal-card[data-mode="macros"] .food-mobile-detail--macros,
+      .meal-card[data-mode="distribution"] .food-mobile-detail--distribution,
+      .meal-card[data-mode="allocation"] .food-mobile-detail--allocation { display: block; }
+      .food-mobile-detail--calories, .food-mobile-detail--distribution, .food-mobile-detail--allocation { max-width: 100%; }
+      .food-mobile-detail .alloc-bar, .food-mobile-detail .dist-bar { height: 19px; margin-top: 5px; }
+      .food-mobile-detail--allocation .mini-alloc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+      .mini-alloc > span { display: block; }
+    }
+    @media (max-width: 360px) {
+      body { padding: 4px; }
+      .top { padding: var(--space-md); }
+      h1 { font-size: 23px; }
+      .top-kpis { grid-template-columns: 82px minmax(0, 1fr); gap: var(--space-sm); }
+      .kcal-box { width: 82px; min-height: 88px; border-width: 3px; }
+      .kcal-box strong { font-size: 30px; }
+      .macro-row { grid-template-columns: 48px 28px 40px minmax(0, 1fr); gap: 2px; font-size: 11px; }
+      .macro-grams { font-size: 11px; }
+      .alloc-label { font-size: 10px; }
+      .food-section { margin-left: var(--space-md); margin-right: var(--space-md); }
+    }
+  </style>
+</head>
+<body>
+  <div id="status" class="status" role="status">Cargando comida…</div>
+  <article id="card" class="meal-card" data-mode="foods" aria-labelledby="meal-name" hidden>
+    <header class="top">
+      <div class="identity">
+        <p class="eyebrow"><span class="meal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 2v8a3 3 0 0 0 6 0V2M7 2v20M17 2c-2 3-3 6-3 10h5V2h-2ZM19 12v10"/></svg></span>Comida</p>
+        <h1 id="meal-name"></h1>
+        <span class="food-count" aria-label="Cantidad de alimentos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 17c6-6 9-10 16-11M5 17c-2 2 0 4 2 3l12-11M14 4l6 2-1 6"/></svg><span id="meal-food-count"></span></span>
+      </div>
+      <div class="top-kpis">
+        <div class="kcal-box"><span>Calorías</span><strong id="meal-kcal"></strong></div>
+        <div class="macro-list" aria-label="Macronutrientes de la comida">
+          <div class="macro-row"><span class="macro-name">Proteína</span><span id="meal-ppk" class="macro-ppk" hidden></span><span id="meal-protein" class="macro-grams"></span><div id="meal-protein-bar" class="alloc-bar alloc-bar--protein"></div></div>
+          <div class="macro-row"><span class="macro-name">Carbos</span><span></span><span id="meal-carbs" class="macro-grams"></span><div id="meal-carbs-bar" class="alloc-bar alloc-bar--carbs"></div></div>
+          <div class="macro-row"><span class="macro-name">Grasas</span><span></span><span id="meal-fat" class="macro-grams"></span><div id="meal-fat-bar" class="alloc-bar alloc-bar--fat"></div></div>
+        </div>
+      </div>
+    </header>
+    <section class="food-section" aria-labelledby="food-section-title">
+      <h2 id="food-section-title" class="section-label"><span class="desktop-label">Tabla Alimentos</span><span class="mobile-label">Alimentos</span></h2>
+      <div class="food-panel" role="region" aria-label="Tabla de alimentos; desplazar horizontalmente para ver todas las columnas" tabindex="0">
+        <div class="mobile-tabs" role="tablist" aria-label="Detalle de alimentos">
+          <button type="button" role="tab" data-mode="foods" aria-selected="true" aria-controls="meal-foods">Alimentos</button>
+          <button type="button" role="tab" data-mode="calories" aria-selected="false" aria-controls="meal-foods">Calorías</button>
+          <button type="button" role="tab" data-mode="macros" aria-selected="false" aria-controls="meal-foods">Macros</button>
+          <button type="button" role="tab" data-mode="distribution" aria-selected="false" aria-controls="meal-foods">Dist</button>
+          <button type="button" role="tab" data-mode="allocation" aria-selected="false" aria-controls="meal-foods">Alloc</button>
+        </div>
+        <table class="food-table" aria-label="Alimentos de la comida">
+          <thead><tr><th>Alimentos</th><th>Qty</th><th>Cal</th><th>% Cal</th><th>P</th><th>C</th><th>G</th><th>P|C|G%</th><th>P%</th><th>C%</th><th>G%</th></tr></thead>
+          <tbody id="meal-food-table"></tbody>
+        </table>
+        <ul id="meal-foods" class="mobile-foods" role="tabpanel" aria-label="Detalle de alimentos"></ul>
+        <p id="foods-empty" class="empty" hidden>Esta comida no tiene alimentos.</p>
+      </div>
+    </section>
+  </article>
+  <script>
+    (() => {
+      const byId = (id) => document.getElementById(id);
+      const numeric = (value) => value === null || value === undefined || value === "" ? null : Number(value);
+      const format = (value, digits = 0) => {
+        const parsed = numeric(value);
+        return Number.isFinite(parsed)
+          ? new Intl.NumberFormat("es", { maximumFractionDigits: digits }).format(parsed)
+          : "—";
+      };
+      const pct = (value, total) => {
+        const part = numeric(value);
+        const whole = numeric(total);
+        return Number.isFinite(part) && Number.isFinite(whole) && whole > 0
+          ? Math.max(0, Math.min(100, part / whole * 100)) : 0;
+      };
+      const el = (tag, className, value) => {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (value !== undefined) node.textContent = String(value);
+        return node;
+      };
+      const setText = (id, value) => { byId(id).textContent = String(value ?? ""); };
+      const bar = (value, kind, label) => {
+        const safe = Math.max(0, Math.min(100, Number(value) || 0));
+        const node = el("div", `alloc-bar alloc-bar--${kind}`);
+        node.setAttribute("role", "img");
+        node.setAttribute("aria-label", label || `${format(safe)}%`);
+        const fill = el("span", "alloc-fill");
+        fill.style.width = `${safe}%`;
+        node.append(fill, el("span", "alloc-label", `${format(safe)}%`));
+        return node;
+      };
+      const distribution = (food) => {
+        const node = el("div", "dist-bar");
+        const energy = numeric(food.total_kcal) || 0;
+        const values = [
+          ["protein", numeric(food.kcal_protein) ?? (numeric(food.protein) || 0) * 4],
+          ["carbs", numeric(food.kcal_carbs) ?? (numeric(food.carbs) || 0) * 4],
+          ["fat", numeric(food.kcal_fat) ?? (numeric(food.fat) || 0) * 9],
+        ];
+        const total = energy > 0 ? energy : values.reduce((sum, [, amount]) => sum + amount, 0);
+        node.setAttribute("role", "img");
+        node.setAttribute("aria-label", `Distribución calórica: proteínas ${format(pct(values[0][1], total))}%, carbohidratos ${format(pct(values[1][1], total))}%, grasas ${format(pct(values[2][1], total))}%`);
+        for (const [kind, amount] of values) {
+          const segment = el("span", `dist-segment dist-segment--${kind}`);
+          segment.style.width = `${pct(amount, total)}%`;
+          node.append(segment);
+        }
+        return node;
+      };
+      function setHeaderBar(id, value, kind) {
+        const replacement = bar(value, kind);
+        replacement.id = id;
+        byId(id).replaceWith(replacement);
+      }
+      function selectMode(mode) {
+        byId("card").dataset.mode = mode;
+        document.querySelectorAll(".mobile-tabs [role=tab]").forEach((tab) => {
+          tab.setAttribute("aria-selected", String(tab.dataset.mode === mode));
+        });
+        notifySize();
+      }
+      document.querySelectorAll(".mobile-tabs [role=tab]").forEach((tab) => {
+        tab.addEventListener("click", () => selectMode(tab.dataset.mode));
+      });
+      let bridgeReady = false;
+      let queuedToolResult;
+      function applyHostTheme(theme) {
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      }
+      function notifySize() {
+        if (!bridgeReady) return;
+        window.parent.postMessage({
+          jsonrpc: "2.0", method: "ui/notifications/size-changed",
+          params: { height: Math.ceil(document.body.scrollHeight) },
+        }, "*");
+      }
+      new ResizeObserver(notifySize).observe(document.body);
+      function render(result) {
+        const meal = result?.ok === true ? result?.data?.meal : null;
+        if (!meal || typeof meal !== "object" || !meal.kpis || typeof meal.kpis !== "object") {
+          byId("card").hidden = true;
+          byId("status").hidden = false;
+          byId("status").textContent = result?.ok === false
+            ? "No se pudo mostrar esta comida. Comprueba que tengas acceso."
+            : "La comida no está disponible.";
+          notifySize();
+          return;
+        }
+        const kpis = meal.kpis;
+        const foods = Array.isArray(meal.foods) ? meal.foods.filter((food) => food && typeof food === "object") : [];
+        setText("meal-name", meal.name || "Comida");
+        setText("meal-food-count", foods.length);
+        setText("meal-kcal", format(kpis.total_kcal));
+        setText("meal-protein", `${format(kpis.protein)}g`);
+        setText("meal-carbs", `${format(kpis.carbs)}g`);
+        setText("meal-fat", `${format(kpis.fat)}g`);
+        const ppk = numeric(kpis.ppk);
+        byId("meal-ppk").hidden = !Number.isFinite(ppk) || ppk <= 0;
+        if (!byId("meal-ppk").hidden) setText("meal-ppk", `${format(ppk, 1)}g/kg`);
+        const energy = numeric(kpis.total_kcal) || 0;
+        setHeaderBar("meal-protein-bar", numeric(kpis.alloc_protein) ?? pct(kpis.kcal_protein, energy), "protein");
+        setHeaderBar("meal-carbs-bar", numeric(kpis.alloc_carbs) ?? pct(kpis.kcal_carbs, energy), "carbs");
+        setHeaderBar("meal-fat-bar", numeric(kpis.alloc_fat) ?? pct(kpis.kcal_fat, energy), "fat");
+        const table = byId("meal-food-table");
+        const list = byId("meal-foods");
+        table.replaceChildren();
+        list.replaceChildren();
+        for (const food of foods) {
+          const name = String(food.food_name || "Alimento");
+          const kcal = numeric(food.total_kcal);
+          const share = pct(kcal, energy);
+          const allocations = [
+            ["protein", pct(food.protein, kpis.protein)],
+            ["carbs", pct(food.carbs, kpis.carbs)],
+            ["fat", pct(food.fat, kpis.fat)],
+          ];
+          const tr = el("tr");
+          const cells = [name, `${format(food.quantity)} g`, format(kcal)];
+          for (const value of cells) tr.append(el("td", "", value));
+          const kcalCell = el("td");
+          kcalCell.append(bar(share, "kcal"));
+          tr.append(kcalCell);
+          for (const value of [food.protein, food.carbs, food.fat]) tr.append(el("td", "", format(value, 1)));
+          const distCell = el("td");
+          distCell.append(distribution(food));
+          tr.append(distCell);
+          for (const [kind, value] of allocations) {
+            const cell = el("td");
+            cell.append(bar(value, kind));
+            tr.append(cell);
+          }
+          table.append(tr);
+          const row = el("li");
+          const main = el("div", "food-mobile-main");
+          const nameNode = el("span", "food-mobile-name");
+          nameNode.append(el("span", "food-mobile-icon", food.emoji || "✦"), el("span", "", name));
+          main.append(nameNode, el("span", "food-mobile-qty", `${format(food.quantity)} g`));
+          row.append(main);
+          row.append(el("p", "food-mobile-detail food-mobile-detail--foods", `${format(kcal)} kcal   P:${format(food.protein, 1)}g   C:${format(food.carbs, 1)}g   G:${format(food.fat, 1)}g`));
+          const calories = el("div", "food-mobile-detail food-mobile-detail--calories");
+          calories.append(el("span", "", `${format(kcal)} kcal · ${format(share)}% de la comida`), bar(share, "kcal"));
+          row.append(calories);
+          row.append(el("p", "food-mobile-detail food-mobile-detail--macros", `Proteína ${format(food.protein, 1)}g · Carbos ${format(food.carbs, 1)}g · Grasas ${format(food.fat, 1)}g`));
+          const dist = el("div", "food-mobile-detail food-mobile-detail--distribution");
+          dist.append(el("span", "", "Distribución calórica P | C | G"), distribution(food));
+          row.append(dist);
+          const alloc = el("div", "food-mobile-detail food-mobile-detail--allocation");
+          const grid = el("div", "mini-alloc");
+          for (const [kind, value] of allocations) {
+            const group = el("div");
+            group.append(el("span", "", `${kind === "protein" ? "P" : kind === "carbs" ? "C" : "G"}% de la comida`), bar(value, kind));
+            grid.append(group);
+          }
+          alloc.append(grid);
+          row.append(alloc);
+          list.append(row);
+        }
+        byId("foods-empty").hidden = foods.length > 0;
+        byId("status").hidden = true;
+        byId("card").hidden = false;
+        selectMode("foods");
+      }
+      window.addEventListener("message", (event) => {
+        if (event.source !== window.parent) return;
+        const message = event.data;
+        if (!message || message.jsonrpc !== "2.0") return;
+        if (message.id === 1) {
+          if (message.result?.protocolVersion) {
+            applyHostTheme(message.result?.hostContext?.theme);
+            bridgeReady = true;
+            window.parent.postMessage({ jsonrpc: "2.0", method: "ui/notifications/initialized" }, "*");
+            if (queuedToolResult !== undefined) render(queuedToolResult);
+            notifySize();
+          }
+          return;
+        }
+        if (message.method === "ui/notifications/host-context-changed") {
+          applyHostTheme(message.params?.theme);
+          return;
+        }
+        if (message.method !== "ui/notifications/tool-result") return;
+        if (bridgeReady) render(message.params?.structuredContent);
+        else queuedToolResult = message.params?.structuredContent;
+      });
+      if (window.openai?.toolOutput) render(window.openai.toolOutput);
+      window.parent.postMessage({
+        jsonrpc: "2.0", id: 1, method: "ui/initialize",
+        params: {
+          appInfo: { name: "My Scoope meal card", version: "3.0.0" },
+          appCapabilities: {}, protocolVersion: "2026-01-26",
+        },
+      }, "*");
+    })();
+  </script>
+</body>
+</html>
