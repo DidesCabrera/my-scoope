@@ -129,6 +129,9 @@ def main():
             card.locator("#card").screenshot(path=str(args.screenshot_panel))
 
         page.locator("iframe").evaluate("element => element.style.width = '390px'")
+        assert card.locator(".macro-row").first.evaluate(
+            "element => Math.round(parseFloat(getComputedStyle(element).gridTemplateColumns)) === 78"
+        )
         assert card.locator("#meal-food-table").is_hidden()
         assert card.locator("#meal-foods li").count() == 4
         card.get_by_role("tab", name="Calorías").click()
@@ -162,6 +165,9 @@ def main():
         assert card.locator("#meal-food-table img").count() == 0
 
         page.locator("iframe").evaluate("element => element.style.width = '320px'")
+        assert card.locator(".macro-row").first.evaluate(
+            "element => Math.round(parseFloat(getComputedStyle(element).gridTemplateColumns)) === 50"
+        )
         assert card.locator(".kcal-box").evaluate(
             "element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1"
         )
