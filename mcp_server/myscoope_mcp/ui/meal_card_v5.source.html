@@ -17,7 +17,7 @@
     .meal-icon svg, .food-count svg { width: 16px; height: 16px; }
     h1 { margin: 0; overflow-wrap: anywhere; font-size: var(--font-size-title); line-height: 1.16; }
     .food-count { display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; border-radius: 8px; background: var(--entity-food); color: #fff; font-size: var(--font-size-body); font-weight: var(--font-weight-semibold); }
-    .kcal-box { display: flex; flex-direction: column; justify-content: center; align-items: center; width: var(--meal-card-inline-kpi-size); min-height: var(--meal-card-inline-kpi-size); border: var(--meal-card-inline-kpi-border-width) solid var(--nutrition-kcal-border); border-radius: var(--radius-card); background: var(--nutrition-kcal); text-align: center; }
+    .kcal-box { display: flex; flex-direction: column; justify-content: center; align-items: center; width: var(--meal-card-inline-kpi-size); height: var(--meal-card-inline-kpi-size); border: var(--meal-card-inline-kpi-border-width) solid var(--nutrition-kcal-border); border-radius: var(--radius-card); background: var(--nutrition-kcal); text-align: center; }
     .kcal-box span { font-size: var(--font-size-caption); font-weight: var(--font-weight-medium); }
     .kcal-box strong { font-size: 39px; line-height: 1.08; font-variant-numeric: tabular-nums; }
     .top-kpis { display: grid; grid-template-columns: var(--meal-card-inline-kpi-size) minmax(0, 1fr); align-items: center; gap: var(--space-lg); }
@@ -82,7 +82,7 @@
       .top { grid-template-columns: 1fr; gap: var(--space-lg); }
       .identity { border-right: 0; padding-right: 0; }
       .top-kpis { grid-template-columns: 100px minmax(0, 1fr); gap: var(--space-sm); }
-      .kcal-box { width: 100px; min-height: 100px; }
+      .kcal-box { width: 100px; height: 100px; }
       .macro-row { grid-template-columns: 58px 37px max-content minmax(0, 1fr); gap: 4px; min-height: 36px; font-size: var(--font-size-caption); }
       .macro-row > span:nth-child(2) { grid-column: 3; grid-row: 1; }
       .macro-row .macro-grams { grid-column: 2; grid-row: 1; }
@@ -98,7 +98,7 @@
       .top { grid-template-columns: 1fr; gap: var(--space-sm); }
       .identity { border-right: 0; padding: 0; }
       .top-kpis { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: center; gap: var(--space-sm); }
-      .kcal-box { width: 100px; min-height: 100px; }
+      .kcal-box { width: 100px; height: 100px; }
       .macro-row { grid-template-columns: 78px 34px 54px minmax(0, 1fr); gap: 3px; min-height: 31px; font-size: var(--font-size-caption); }
       .macro-row > span:nth-child(2) { grid-column: 3; grid-row: 1; }
       .macro-row .macro-grams { grid-column: 2; grid-row: 1; }
@@ -138,8 +138,8 @@
       body { padding: 4px; }
       .top { padding: var(--space-md); }
       h1 { font-size: 21px; }
-      .top-kpis { grid-template-columns: 82px minmax(0, 1fr); gap: var(--space-sm); }
-      .kcal-box { width: 82px; min-height: 100px; border-width: 3px; }
+      .top-kpis { grid-template-columns: 100px minmax(0, 1fr); gap: var(--space-sm); }
+      .kcal-box { width: 100px; height: 100px; border-width: 3px; }
       .kcal-box strong { font-size: 30px; }
       .macro-row { grid-template-columns: 78px 34px 54px minmax(0, 1fr); gap: 3px; font-size: 11px; }
       .macro-grams { font-size: 11px; }

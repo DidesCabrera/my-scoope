@@ -82,6 +82,9 @@ def main():
         card.get_by_role("heading", name="Porotos negros con arroz y palta").wait_for()
         page.wait_for_function("window.bridgeMessages.some(message => message.method === 'ui/notifications/size-changed' && message.params.height > 300)")
         assert card.locator("#meal-kcal").inner_text() == "931"
+        assert card.locator(".kcal-box").evaluate(
+            "element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1"
+        )
         assert card.locator("#meal-protein").inner_text() == "40g"
         assert card.locator("#meal-protein-bar").get_attribute("aria-label") == "17%"
         assert card.locator("#meal-carbs-bar").get_attribute("aria-label") == "74%"
@@ -139,6 +142,9 @@ def main():
             "<= element.querySelector('.alloc-bar').getBoundingClientRect().left"
         )
         assert card.locator(".meal-icon").evaluate("element => element.getBoundingClientRect().width <= 20")
+        assert card.locator(".kcal-box").evaluate(
+            "element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1"
+        )
         assert card.locator(".macro-list").evaluate(
             "element => new Set([...element.querySelectorAll('.macro-row .alloc-bar')].map(bar => Math.round(bar.getBoundingClientRect().left))).size === 1"
         )
@@ -156,6 +162,9 @@ def main():
         assert card.locator("#meal-food-table img").count() == 0
 
         page.locator("iframe").evaluate("element => element.style.width = '320px'")
+        assert card.locator(".kcal-box").evaluate(
+            "element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1"
+        )
         assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
         assert card.locator("#card").evaluate(
             "element => getComputedStyle(element).backgroundColor",
