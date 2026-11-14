@@ -22,9 +22,9 @@ ChatGPT / cliente MCP Apps
   → read_meal(meal_id)
   → MCP FastMCP (scope myscoope:read)
   → dispatch_tool_call
-  → Django /ai-tools/read-meal/
+  → Django /app/ai-tools/read-meal/
   → read_meal_tool → get_meal_detail → MealDTO
-  → structuredContent + ui://myscoope/meal-card-v1.html
+  → structuredContent + ui://myscoope/meal-card-v2.html
   → card HTML en iframe
 ```
 
@@ -40,8 +40,11 @@ un resultado fallido.
 El descriptor de `read_meal` anuncia `_meta.ui.resourceUri` y el recurso usa
 `text/html;profile=mcp-app`. El resultado MCP incluye `structuredContent` con el
 contrato `ok/data/error`; así sigue siendo útil en clientes que no renderizan UI.
-La card recibe `ui/notifications/tool-result` y alterna localmente entre Nutrición
-y Alimentos. El URI incluye versión porque los clientes pueden cachear recursos.
+La card completa `ui/initialize` y `ui/notifications/initialized` antes de recibir
+`ui/notifications/tool-result`; también comunica su altura al host con
+`ui/notifications/size-changed`. Alterna localmente entre Nutrición y Alimentos.
+El URI incluye versión porque los clientes pueden cachear recursos. La versión 2
+corrige un timeout de inicialización descubierto en una conversación real.
 
 ## Validación local reproducible
 
@@ -61,7 +64,8 @@ DJANGO_SETTINGS_MODULE=miapp.settings.dev NUTRITION_ONBOARDING_GATE_ENABLED=fals
 La suite MCP comprueba la proyección del catálogo, la búsqueda acotada, el scope de lectura, el URI y
 MIME del recurso, el resultado estructurado, la ruta HTTP autenticada y un fallo
 de lectura sin comida en la respuesta. La suite Django protege la autorización y
-los datos del endpoint existente. El smoke de navegador comprueba render,
+los datos del endpoint existente. El smoke de navegador simula el saludo del
+iframe y comprueba render,
 pestañas, ancho móvil, tema oscuro, error y texto HTML no ejecutable. Este smoke
 usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
 
@@ -73,7 +77,9 @@ usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
 2. En ChatGPT Plugins, añadir el servidor MCP personalizado, instalarlo para uso
    interno y refrescar sus metadatos después de desplegar esta versión. Confirmar
    que aparecen `search_user_meals`, `read_meal` y el recurso
-   `ui://myscoope/meal-card-v1.html`.
+   `ui://myscoope/meal-card-v2.html`. Si el servicio usa
+   `MYSCOOPE_MCP_ALLOWED_TOOLS`, añadir ambos nombres a la lista existente y
+   ejecutar **Refresh tools** en la configuración del plugin de ChatGPT.
 3. Con una comida de prueba perteneciente a la cuenta de prueba, pedir “Muestra la
    comida [nombre]”. Verificar selección de tool, `meal_id`, datos, card visible,
    cambio de pestañas y ausencia de errores de consola. Probar ID inexistente y
@@ -88,6 +94,10 @@ un endpoint accesible desde ese cliente y una cuenta de prueba autorizada. La
 presencia del código en `origin/staging` no activa por sí sola el servicio MCP si
 su despliegue automático está deshabilitado. La integración selecciona
 `staging-fast` por los archivos de aplicación cambiados.
+
+El contrato OpenAPI se genera con las versiones fijadas en `requirements.txt`.
+Un aparente desfase local se debió a usar Pydantic 2.13.4 en vez de la versión
+fijada 2.14.3; con 2.14.3 el contrato publicado coincide con el generado.
 
 Referencias oficiales: [Add UI to your MCP server](https://developers.openai.com/plugins/build/chatgpt-ui),
 [Connect and test your plugin](https://developers.openai.com/plugins/deploy/connect-chatgpt).

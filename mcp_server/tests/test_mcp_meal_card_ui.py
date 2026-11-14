@@ -44,6 +44,8 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertNotIn("user_id", tool.inputSchema.get("properties", {}))
         self.assertEqual(resource.mimeType, MEAL_CARD_MIME_TYPE)
         self.assertEqual(content.mime_type, MEAL_CARD_MIME_TYPE)
+        self.assertIn('method: "ui/initialize"', content.content)
+        self.assertIn('method: "ui/notifications/initialized"', content.content)
         self.assertIn("ui/notifications/tool-result", content.content)
 
     def test_read_meal_delivers_the_authorized_result_as_structured_content(self):
@@ -116,6 +118,7 @@ class MCPMealCardHTTPTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(meal_tool["_meta"]["ui"]["resourceUri"], MEAL_CARD_RESOURCE_URI)
                     resource = await rpc("resources/read", {"uri": MEAL_CARD_RESOURCE_URI}, 2)
                     self.assertEqual(resource["contents"][0]["mimeType"], MEAL_CARD_MIME_TYPE)
+                    self.assertIn("ui/initialize", resource["contents"][0]["text"])
                     self.assertIn("ui/notifications/tool-result", resource["contents"][0]["text"])
                     called = await rpc("tools/call", {"name": "read_meal", "arguments": {"meal_id": 23}}, 3)
                     self.assertEqual(called["structuredContent"]["data"]["meal"]["id"], 23)

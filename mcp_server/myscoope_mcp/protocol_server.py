@@ -36,8 +36,8 @@ from myscoope_mcp.tools import (
 )
 
 SERVER_NAME = "my-scoope-mcp"
-MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v1.html"
-MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v1.html"
+MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v2.html"
+MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v2.html"
 MEAL_CARD_MIME_TYPE = "text/html;profile=mcp-app"
 
 
