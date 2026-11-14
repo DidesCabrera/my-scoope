@@ -39,6 +39,7 @@ class FoodDTO:
     category: str
     created_by_id: int | None
     macros: FoodMacroDTO
+    portion_unit: str = "g"
 
     def as_dict(self) -> dict:
         data = asdict(self)

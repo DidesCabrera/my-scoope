@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import type { PreparationDetail } from "@/api/preparations";
 import { useSession } from "@/auth/session-context";
 import { NutritionEntityCard } from "@/components/nutrition";
+import { FoodVisualIcon } from "@/components/nutrition/food-visual-icon";
 import { ContextCardActions, type ContextCardAction } from "@/components/libraries/context-card-actions";
 import { FoodPanels } from "@/components/panels";
 import { PickerFoodNutritionPanel } from "@/components/pickers/picker-food-nutrition-panel";
@@ -63,7 +64,7 @@ export function FoodDetailCardList({ editing, items, onOpenFood, ownerLabel = "e
         return (
           <NutritionEntityCard
             actions={componentActions.length || openDetail ? <>
-              {componentActions.length ? <ContextCardActions actions={componentActions} label={`Más acciones para ${item.name}`} title={item.name} /> : null}
+              {componentActions.length ? <ContextCardActions actions={componentActions} iconNode={!isPreparation ? <FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} visualKey={item.visualKey} /> : undefined} label={`Más acciones para ${item.name}`} title={item.name} /> : null}
               {openDetail ? <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={openDetail} role="link">
                 <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
               </EntityCardAction> : null}

@@ -14,9 +14,11 @@ CSS global, contexto Django y acciones propias de la web. Esos templates no son
 HTML autónomo para un iframe. La card MCP representa el mismo DTO que ya entrega
 `read_meal_tool`: título, energía, barras de macronutrientes y detalle de cada
 alimento. En escritorio muestra una tabla con aportes calóricos, distribución y
-porcentajes de cada macro; en móvil muestra filas y pestañas para explorar esos
-datos. Las barras de cada alimento se calculan a partir de los valores numéricos
-del DTO. La card no replica las acciones de edición de la web.
+porcentajes de cada macro; en móvil muestra «Alimentos», «Calorías», «Macros»,
+«Dist» y «Alloc» en paneles de columnas y barras como en la web. El contrato
+por alimento incluye unidad g/ml, icono y PpK calculado con la misma regla de
+peso del producto.
+Las barras se calculan a partir de los valores numéricos del DTO. La card no replica las acciones de edición de la web.
 
 ```text
 ChatGPT / cliente MCP Apps
@@ -26,7 +28,7 @@ ChatGPT / cliente MCP Apps
   → dispatch_tool_call
   → Django /app/ai-tools/read-meal/
   → read_meal_tool → get_meal_detail → MealDTO
-  → structuredContent + ui://myscoope/meal-card-v5.html
+  → structuredContent + ui://myscoope/meal-card-v6.html
   → card HTML en iframe
 ```
 
@@ -45,22 +47,31 @@ contrato `ok/data/error`; así sigue siendo útil en clientes que no renderizan 
 La card completa `ui/initialize` y `ui/notifications/initialized` antes de recibir
 `ui/notifications/tool-result`; también comunica su altura al host con
 `ui/notifications/size-changed`. El detalle móvil alterna localmente entre
-Alimentos, Calorías, Macros, Dist y Alloc.
+Alimentos, Calorías, Macros, Dist y Alloc. Si un resultado anterior no incluye
+PpK, la card indica que el dato no está disponible.
 El URI incluye versión porque los clientes pueden cachear recursos. La versión 2
 corrigió un timeout de inicialización descubierto en una conversación real. La
 versión 3 incorpora tokens y receta del contrato visual común. La versión 4
 mantiene la tabla de escritorio en la vista completa de ChatGPT (760 px). La
 versión 5 extiende esa tabla al panel lateral web (570 px), con desplazamiento
-horizontal para las columnas de alimentos; la vista móvil se activa hasta 480 px.
-Las versiones 2, 3 y 4 siguen disponibles para conversaciones anteriores.
+horizontal para las columnas de alimentos. La versión 6 activa los cinco paneles
+móviles hasta 600 px y deja cada vista nutricional en una cuadrícula propia.
+Las versiones 2, 3, 4 y 5 siguen disponibles para conversaciones anteriores.
 
 La sección «En conversación» de la galería web (`/app/dev/ui-system/`, solo en
-DEBUG) sirve exactamente `meal_card_v5.html` en un iframe aislado. Su host de prueba
+DEBUG) sirve exactamente `meal_card_v6.html` en un iframe aislado. Su host de prueba
 reproduce el saludo MCP Apps y envía datos sintéticos. Permite revisar claro,
 oscuro, 1100/760/570/390/320 px, dos comidas de ejemplo, nombres largos, vacío y error.
+Esos anchos son aproximaciones: no equivalen a una medición del iframe de ChatGPT.
+La [decisión 0210](../../../20_decisions/0210-chatgpt-meal-card-live-preview.md)
+incorpora una vista previa privada para ajustar CSS en el host real sin usar
+staging como ciclo de edición.
 El archivo fuente editable
-es `meal_card_v5.source.html`; `npm run generate:ui` produce el HTML servido tanto
+es `meal_card_v6.source.html`; `npm run generate:ui` produce el HTML servido tanto
 por la galería como por MCP. `npm run check:ui` detecta desincronización.
+El documento de la card tiene fondo transparente y no añade relleno ni límite de
+ancho exterior: el borde de la card ocupa todo el ancho que entrega el host.
+La separación interior pertenece al diseño de la card, no al iframe.
 
 ## Validación local reproducible
 
@@ -88,6 +99,68 @@ usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
 
 ## Configuración y prueba en una conversación real
 
+### Iteración visual privada (decisión 0210)
+
+Desde un checkout aislado y con las dependencias de `mcp_server/requirements.txt`
+instaladas, iniciar la vista previa sintética:
+
+```bash
+PYTHONPATH=mcp_server python mcp_server/dev_meal_card_preview.py \
+  --host 127.0.0.1 --port 8011
+```
+
+El endpoint local es `http://127.0.0.1:8011/mcp`. Conectarlo a ChatGPT mediante
+un Secure MCP Tunnel privado asociado al espacio de trabajo correcto y crear un
+plugin **de desarrollo separado**. No usar el plugin de staging para este ciclo.
+Pedir `preview_meal_card`: la respuesta usa cuatro alimentos ficticios y ninguna
+cuenta real. Mantener abiertos el servidor y el cliente del túnel.
+
+Editar el bloque CSS de `meal_card_v6.source.html` mientras la card está abierta
+en ChatGPT. La herramienta `preview_card_styles`, visible solo para la app, entrega
+el CSS actualizado aproximadamente cada 1,5 segundos; el iframe lo aplica sin
+perder los datos ni la conversación. El servidor no consulta Django ni usa tokens
+de My Scoope. Para cambiar HTML o JavaScript, ejecutar `npm run generate:ui`,
+reiniciar el servidor y refrescar el plugin de desarrollo. Los URI de recurso son
+estables entre reinicios; si cambia el contrato del HTML, se aumenta su versión
+deliberadamente y se conserva la lectura de las versiones anteriores. El servidor
+también acepta los URI aleatorios anunciados antes de esta corrección para que los
+chats existentes puedan cargar la tarjeta.
+
+La revisión posterior de la card v6 en un iframe real de ChatGPT reducido a 390 px,
+pero ejecutado en un navegador de escritorio, comprobó los cinco paneles estrechos
+con datos ficticios: cantidades en «Alimentos», calorías y su porcentaje, gramos y
+PpK, distribución P|C|G y barras de asignación. El texto narrativo generado por
+ChatGPT afirmó erróneamente que la card no apareció; la verificación se hizo sobre
+el componente visible e interactivo. Esta prueba no validó la app nativa de iOS.
+Una llamada posterior hecha desde ChatGPT para iPhone devolvió los datos de la
+herramienta, pero dejó un rectángulo gris vacío; la misma conversación conserva
+el iframe en ChatGPT web. Una prueba con el alias de compatibilidad
+`_meta["openai/outputTemplate"]` tampoco corrigió iOS. Una tarjeta mínima con
+contenido fijo y el protocolo básico del iframe aparece en web, pero deja el mismo
+rectángulo gris en un chat nuevo del iPhone. El problema se reproduce sin CSS,
+datos ni lógica de la card de comida. En el mismo iPhone, la tarjeta de comida del
+MCP alojado en staging sí aparece. Los registros del servidor revelaron después
+que ChatGPT seguía solicitando un URI aleatorio de un arranque anterior y recibía
+`Unknown resource`. La vista previa ahora usa URI estables y resuelve los
+anteriores; una prueba nueva en iPhone siguió mostrando el rectángulo gris aunque
+`resources/read` respondió correctamente. Igualar después el formato de respuesta
+HTTP con staging tampoco corrigió la vista móvil. No se debe usar la vista previa
+local como prueba de compatibilidad nativa; la verificación se hará sobre el MCP
+alojado en staging.
+
+La conexión real del 14 de noviembre de 2026 confirmó que ChatGPT permite la
+llamada de la app a `preview_card_styles`: el borde cambió de magenta a rojo y
+volvió a magenta en el mismo iframe, sin recargar el chat. Se observó en el panel
+estrecho del navegador integrado. Verificar web y aplicación de escritorio por
+separado al ajustar sus dimensiones; la galería no define sus medidas. Cerrar el
+túnel y el servidor al terminar la sesión.
+
+La configuración del túnel requiere un `tunnel_id` y una clave de ejecución de
+OpenAI Platform con permisos de túnel. Mantener la clave fuera del repositorio,
+de argumentos de comandos y de capturas. Seguir la
+[guía oficial de Secure MCP Tunnel](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels)
+para instalar el cliente, revisar permisos, ejecutar `doctor` y enlazar el plugin.
+
 1. Conectar un endpoint MCP privado por Secure MCP Tunnel o HTTPS de staging.
    Configurar autenticación por usuario y `MYSCOOPE_MCP_USER_TOKENS_ONLY=true`;
    no usar el token legado de una cuenta compartida para pruebas con datos reales.
@@ -96,7 +169,7 @@ usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
    servidor MCP personalizado para uso privado y refrescar sus metadatos después
    de desplegar esta versión. Confirmar
    que aparecen `search_user_meals`, `read_meal` y el recurso
-   `ui://myscoope/meal-card-v5.html`. Si el servicio usa
+   `ui://myscoope/meal-card-v6.html`. Si el servicio usa
    `MYSCOOPE_MCP_ALLOWED_TOOLS`, añadir ambos nombres a la lista existente y
    ejecutar **Refresh tools** en la configuración del plugin de ChatGPT.
 3. Con una comida de prueba perteneciente a la cuenta de prueba, pedir “Muestra la

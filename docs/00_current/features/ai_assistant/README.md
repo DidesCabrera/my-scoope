@@ -1,8 +1,8 @@
 # AI Assistant
 
 La [card de comidas en conversaciones externas](mcp_meal_card.md) documenta la
-proyección MCP Apps de una Meal, su validación local y la prueba pendiente en
-ChatGPT.
+proyección MCP Apps de una Meal. Las [cartas de alimento y minuta](mcp_entity_cards.md)
+amplían el mismo patrón visual con lecturas autorizadas y vistas previas ficticias.
 
 ## Estado
 

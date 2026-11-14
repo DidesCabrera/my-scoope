@@ -139,6 +139,7 @@ class ReadContractTests(TestCase):
                 "category",
                 "created_by_id",
                 "macros",
+                "portion_unit",
             },
         )
 
@@ -254,8 +255,13 @@ class ReadContractTests(TestCase):
                 "alloc_protein",
                 "alloc_carbs",
                 "alloc_fat",
+                "quantity_unit",
+                "ppk",
+                "emoji",
             },
         )
+        self.assertEqual(data["foods"][0]["quantity_unit"], "g")
+        self.assertAlmostEqual(data["foods"][0]["ppk"], 0.027)
 
         assert_json_serializable(self, data)
 

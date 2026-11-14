@@ -44,12 +44,12 @@ export function LibraryCard({ apiRequest, detailHref: detailHrefOverride, intera
       const preparation = item.panel.preparations?.find((row) => row.relation_id === component.relationId);
       if (!preparation) return;
       router.push({ pathname: "/libraries/preparations/[id]", params: {
-        id: String(component.detailId), mealId: String(item.id), relationId: String(preparation.relation_id),
+        id: String(component.detailId), mealId: String(item.id), relationId: String(preparation.relation_id), mealGrams: String(preparation.quantity_g),
         ...(preparation.selection_mode === "units" ? { units: String(preparation.selected_units ?? 1) } : { grams: String(preparation.quantity_g) }),
       } } as Href);
       return;
     }
-    router.push(`/libraries/foods/${component.detailId}` as Href);
+    router.push({ pathname: "/libraries/foods/[id]", params: { id: String(component.detailId), mealId: String(item.id), mealQuantity: String(component.quantity), mealRelationId: String(component.relationId ?? "") } } as Href);
   };
   const addFood = () => router.push(pickerHref("food-to-meal", { mealId: item.id, returnTo: String(libraryHref) }));
   const addPreparation = () => router.push(`/pickers/preparation-to-meal?mealId=${item.id}` as Href);
