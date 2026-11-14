@@ -15,8 +15,8 @@ from mcp.server.fastmcp import FastMCP
 
 
 UI_DIR = Path(__file__).parent / "myscoope_mcp" / "ui"
-CARD_PATH = UI_DIR / "meal_card_v5.html"
-SOURCE_PATH = UI_DIR / "meal_card_v5.source.html"
+CARD_PATH = UI_DIR / "meal_card_v6.html"
+SOURCE_PATH = UI_DIR / "meal_card_v6.source.html"
 ENTITY_CARD_PATH = UI_DIR / "entity_card_v1.html"
 ENTITY_SOURCE_PATH = UI_DIR / "entity_card_v1.source.html"
 MIME_TYPE = "text/html;profile=mcp-app"
@@ -31,13 +31,13 @@ SAMPLE_MEAL = {
         "kpis": {"total_kcal": 931, "protein": 40, "carbs": 173, "fat": 9.1,
                  "ppk": 0.5, "alloc_protein": 17, "alloc_carbs": 74, "alloc_fat": 9},
         "foods": [
-            {"food_name": "Porotos negros cocidos", "quantity": 340,
+            {"food_name": "Porotos negros cocidos", "quantity": 340, "quantity_unit": "g", "ppk": 0.3, "emoji": "🫘",
              "total_kcal": 459, "protein": 30.1, "carbs": 80.6, "fat": 1.8},
-            {"food_name": "Arroz blanco cocido", "quantity": 300,
+            {"food_name": "Arroz blanco cocido", "quantity": 300, "quantity_unit": "g", "ppk": 0.1, "emoji": "🍚",
              "total_kcal": 378, "protein": 8.1, "carbs": 84.5, "fat": 0.8},
-            {"food_name": "Palta", "quantity": 42,
+            {"food_name": "Palta", "quantity": 42, "quantity_unit": "g", "ppk": 0.0, "emoji": "🥑",
              "total_kcal": 73, "protein": 0.8, "carbs": 3.6, "fat": 6.2},
-            {"food_name": "Tomate", "quantity": 100,
+            {"food_name": "Tomate", "quantity": 100, "quantity_unit": "g", "ppk": 0.0, "emoji": "🍅",
              "total_kcal": 21, "protein": 0.9, "carbs": 3.9, "fat": 0.2},
         ],
     }},
