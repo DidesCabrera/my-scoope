@@ -5,7 +5,7 @@
 {% block body_class %}ui-system-gallery-page{% if gallery.embed %} ui-system-gallery-page--embed{% endif %}{% endblock %}
 {% block feature_css %}
   <link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">
-  <link rel="stylesheet" href="{% static 'notas/css/components/ui_system_gallery.css' %}?v=20261114-mcp-gallery">
+  <link rel="stylesheet" href="{% static 'notas/css/components/ui_system_gallery.css' %}?v=20261114-meal-layout">
   <link rel="stylesheet" href="{% static 'css/onboarding_storyboard.css' %}">
 {% endblock %}
 
@@ -108,25 +108,26 @@
     <p class="ui-system-gallery__help">Esta vista usa el mismo HTML que recibe ChatGPT. El marco simula el saludo MCP y entrega datos de ejemplo; no consulta comidas ni cuentas reales.</p>
     <div class="ui-system-gallery__mcp-controls" aria-label="Opciones de previsualización de la card">
       <div class="ui-system-gallery__mcp-control-group" role="group" aria-label="Tema">
-        <button type="button" data-mcp-theme="light" aria-pressed="true">Claro</button>
-        <button type="button" data-mcp-theme="dark" aria-pressed="false">Oscuro</button>
+        <button type="button" data-mcp-theme="light" aria-pressed="false">Claro</button>
+        <button type="button" data-mcp-theme="dark" aria-pressed="true">Oscuro</button>
       </div>
       <div class="ui-system-gallery__mcp-control-group" role="group" aria-label="Ancho">
-        <button type="button" data-mcp-width="520" aria-pressed="true">Amplio</button>
+        <button type="button" data-mcp-width="1100" aria-pressed="true">Amplio</button>
         <button type="button" data-mcp-width="390" aria-pressed="false">Móvil</button>
         <button type="button" data-mcp-width="320" aria-pressed="false">Estrecho</button>
       </div>
       <label class="ui-system-gallery__mcp-select">Datos
         <select id="mcp-meal-scenario">
-          <option value="standard">Comida de ejemplo</option>
+          <option value="standard">Porotos con arroz y palta</option>
+          <option value="mobile">Avena con yogur y fruta</option>
           <option value="long">Nombre largo</option>
           <option value="empty">Sin alimentos</option>
           <option value="error">No disponible</option>
         </select>
       </label>
     </div>
-    <div class="ui-system-gallery__mcp-stage" id="mcp-meal-stage" data-theme="light">
-      <iframe id="mcp-meal-frame" src="{% url 'ui_system_mcp_meal_card_preview' %}" title="Card de comida MCP en conversación" sandbox="allow-scripts"></iframe>
+    <div class="ui-system-gallery__mcp-stage" id="mcp-meal-stage" data-theme="dark">
+      <iframe id="mcp-meal-frame" src="{% url 'ui_system_mcp_meal_card_preview' %}?v=20261114-meal-layout" title="Card de comida MCP en conversación" sandbox="allow-scripts"></iframe>
     </div>
   </section>
   {% endif %}
@@ -181,5 +182,5 @@
 </main>
 
 <script src="{% static 'notas/js/program_metric_chart.js' %}"></script>
-<script src="{% static 'notas/js/mcp_ui_gallery.js' %}?v=20261114-mcp-gallery"></script>
+<script src="{% static 'notas/js/mcp_ui_gallery.js' %}?v=20261114-meal-layout"></script>
 {% endblock %}

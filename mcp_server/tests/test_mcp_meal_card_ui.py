@@ -51,6 +51,10 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertIn('method: "ui/initialize"', content.content)
         self.assertIn('method: "ui/notifications/initialized"', content.content)
         self.assertIn("ui/notifications/tool-result", content.content)
+        self.assertIn('aria-label="Alimentos de la comida"', content.content)
+        self.assertIn('id="meal-food-table"', content.content)
+        self.assertIn('id="meal-protein-bar"', content.content)
+        self.assertIn('data-mode="allocation"', content.content)
 
     def test_read_meal_delivers_the_authorized_result_as_structured_content(self):
         meal = {

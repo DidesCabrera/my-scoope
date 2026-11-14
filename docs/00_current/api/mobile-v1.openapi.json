@@ -17698,6 +17698,37 @@
         "summary": "Food Label Capture Image"
       }
     },
+    "/api/v1/foods/visual-assets/legacy/{food_id}/{digest}.png": {
+      "get": {
+        "operationId": "mobile_api_legacy_food_visual_image",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "food_id",
+            "required": true,
+            "schema": {
+              "title": "Food Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "digest",
+            "required": true,
+            "schema": {
+              "title": "Digest",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "Legacy Food Visual Image"
+      }
+    },
     "/api/v1/foods/visual-assets/manifest": {
       "get": {
         "operationId": "mobile_api_food_visual_manifest",

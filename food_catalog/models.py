@@ -1493,3 +1493,18 @@ class FoodVisualAsset(models.Model):
 
     def __str__(self):
         return f"{self.food.display_name} · imagen"
+
+
+class LegacyFoodVisualAsset(models.Model):
+    """Remote visual for an existing global Food without a master-catalog link."""
+
+    food = models.OneToOneField("notas.Food", on_delete=models.CASCADE, related_name="legacy_visual_asset")
+    image_data = models.BinaryField(editable=False)
+    mobile_image_data = models.BinaryField(editable=False)
+    content_sha256 = models.CharField(max_length=64, editable=False)
+    is_published = models.BooleanField(default=False)
+    source_note = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.food.name} · imagen legada"
