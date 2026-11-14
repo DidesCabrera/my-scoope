@@ -29,9 +29,11 @@ Establish a trustworthy snapshot before recommending any lifecycle action.
    coordination context, use the current-state dashboard defined there by
    default.
    Present branch status in a table with exactly one independently named branch
-   per row. Put its checkout and remote relationship in that row; do not combine
-   several branches into a single summary row. Report detached checkouts
-   separately because they are not branches.
+   per row. Include its checkout, two-sided commit distance from `origin/staging`,
+   and uncommitted-change count as separate columns. Put its remote relationship
+   in the status, without a remote-branch column. Do not combine several branches
+   into a single summary row. Report detached checkouts separately because they
+   are not branches.
 7. When assessing health or proposing improvements, read
    [references/target-state.md](references/target-state.md) and express the plan
    as gaps from current evidence to the target state.
