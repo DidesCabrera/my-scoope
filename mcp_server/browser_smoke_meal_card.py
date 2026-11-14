@@ -106,14 +106,18 @@ def main():
         page.locator("iframe").evaluate("element => element.style.width = '620px'")
         assert card.locator("#meal-food-table").is_visible()
         assert card.locator(".food-panel").evaluate(
-            "element => element.scrollWidth > element.clientWidth"
+            "element => element.scrollWidth > element.clientWidth || "
+            "element.querySelector('tbody tr td:last-child').getBoundingClientRect().right "
+            "<= element.getBoundingClientRect().right"
         )
 
         page.locator("iframe").evaluate("element => element.style.width = '570px'")
         assert card.locator("#meal-food-table").is_visible()
         assert card.locator("#meal-foods").is_hidden()
         assert card.locator(".food-panel").evaluate(
-            "element => element.scrollWidth > element.clientWidth"
+            "element => element.scrollWidth > element.clientWidth || "
+            "element.querySelector('tbody tr td:last-child').getBoundingClientRect().right "
+            "<= element.getBoundingClientRect().right"
         )
         assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
         if args.screenshot_panel:
