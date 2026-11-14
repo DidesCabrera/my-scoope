@@ -87,8 +87,13 @@ export function LibraryCard({ apiRequest, detailHref: detailHrefOverride, intera
   const foodEditing: FoodPanelEditing | undefined = interactive && item.entity === "meal" ? {
     onDelete: async (food) => { if (food.relationId != null) await mutate(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "DELETE" }, "Alimento eliminado"); },
     onEditPortion: (food) => { if (food.detailId != null && food.relationId != null) router.push(pickerConfigureHref("food-to-meal", { relationId: food.relationId, selectedId: food.detailId, targetId: item.id, weekNumber: 1 })); },
-    onReorder: async (foods: FoodPanelItem[]) => mutate(`/api/v1/library/meals/${item.id}/foods/order`, { body: JSON.stringify({ ordered_ids: foods.map((food) => food.relationId) }), method: "PUT" }, "Orden actualizado", { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" }),
+    onReorder: async (foods: FoodPanelItem[]) => mutate(`/api/v1/library/meals/${item.id}/components/order`, { body: JSON.stringify({ ordered_keys: foods.map((food) => food.id) }), method: "PUT" }, "Orden actualizado", { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" }),
     onReplace: (food) => { if (food.relationId != null) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id })); },
+    preparation: {
+      onDelete: async (preparation) => { if (preparation.relationId != null) await mutate(`/api/v1/library/meals/${item.id}/preparations/${preparation.relationId}`, { method: "DELETE" }, "Preparación eliminada"); },
+      onEditPortion: (preparation) => { if (preparation.detailId != null && preparation.relationId != null) router.push({ pathname: "/pickers/preparation-to-meal", params: { mealId: String(item.id), relationId: String(preparation.relationId), preparationId: String(preparation.detailId) } } as Href); },
+      onReplace: (preparation) => { if (preparation.relationId != null) router.push({ pathname: "/pickers/preparation-to-meal", params: { mealId: String(item.id), relationId: String(preparation.relationId), replace: "1" } } as Href); },
+    },
   } : undefined;
   const openMeal = (meal: MealPanelItem) => {
     if (meal.detailId == null || meal.relationId == null) return;

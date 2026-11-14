@@ -44,6 +44,7 @@ def preparation_panel_item(relation, current_weight=None) -> dict:
     ingredients = sorted(version.ingredients.all(), key=lambda row: (row.order, row.id))
     return {
         "relation_id": relation.id,
+        "order": relation.order,
         "detail_id": relation.preparation_id,
         "name": relation.preparation.name,
         "version": version.version,

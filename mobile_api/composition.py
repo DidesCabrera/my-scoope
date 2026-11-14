@@ -45,7 +45,27 @@ from notas.application.services.commands.program_commands import (
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.application.services.food_portions import proposed_portion_prefetch
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, MealPreparation, Program, ProgramDay
+
+
+@transaction.atomic
+def reorder_components_in_meal(*, user, meal_id: int, ordered_keys: list[str]) -> dict:
+    meal = _owned_meal(user, meal_id)
+    foods = {f"meal-food:{row.id}": row for row in meal.meal_food_set.select_for_update()}
+    preparations = {f"meal-preparation:{row.id}": row for row in meal.meal_preparation_set.select_for_update()}
+    expected = {**foods, **preparations}
+    if len(ordered_keys) != len(expected) or len(set(ordered_keys)) != len(ordered_keys) or set(ordered_keys) != set(expected):
+        raise MobileAPIError("composition_order_invalid", "El orden de componentes no es válido.", 422)
+    food_updates, preparation_updates = [], []
+    for position, key in enumerate(ordered_keys, start=1):
+        row = expected[key]
+        row.order = position
+        (preparation_updates if key in preparations else food_updates).append(row)
+    if food_updates:
+        MealFood.objects.bulk_update(food_updates, ["order"])
+    if preparation_updates:
+        MealPreparation.objects.bulk_update(preparation_updates, ["order"])
+    return {"message": "Orden de componentes guardado.", "target_id": meal.id, "affected_id": meal.id}
 
 DAY_LABELS = {
     1: "Lunes",

@@ -49,7 +49,9 @@ test("owned library cards connect panel gestures to composition mutations", asyn
   const wrappers = await source("src/components/libraries/entity-panels.tsx");
 
   assert.match(card, /item\.entity === "meal" \? \{/);
-  assert.match(card, /\/api\/v1\/library\/meals\/\$\{item\.id\}\/foods\/order/);
+  assert.match(card, /\/api\/v1\/library\/meals\/\$\{item\.id\}\/components\/order/);
+  assert.match(card, /ordered_keys: foods\.map\(\(food\) => food\.id\)/);
+  assert.match(card, /preparation: \{[\s\S]*?\/preparations\/\$\{preparation\.relationId\}/);
   assert.match(card, /item\.entity === "dailyPlan" \? \{/);
   assert.match(card, /\/api\/v1\/library\/daily-plans\/\$\{item\.id\}\/meals\/order/);
   assert.match(card, /onChangeTime: setTimeChangeMeal/);

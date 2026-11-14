@@ -109,6 +109,7 @@ def _food_panel_item(meal_food, current_weight=None) -> dict:
     return {
         "id": f"meal-food:{meal_food.id}",
         "relation_id": meal_food.id,
+        "order": meal_food.order,
         "detail_id": meal_food.food_id,
         **food_visual_payload(meal_food.food),
         "quantity": _safe_number(meal_food.quantity),

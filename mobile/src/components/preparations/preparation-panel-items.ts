@@ -9,6 +9,7 @@ function share(value: number, total: number): number {
 export function preparationPanelItem(preparation: LibraryPreparationPanelItem, meal: LibraryNutrition): FoodPanelItem {
   return {
     id: `meal-preparation:${preparation.relation_id}`,
+    order: preparation.order,
     kind: "preparation",
     detailId: preparation.detail_id,
     relationId: preparation.relation_id,

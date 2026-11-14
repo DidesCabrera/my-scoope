@@ -11,6 +11,37 @@ from notas.domain.models import Food, Meal, MealFood, MealPreparation, Preparati
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class LibraryProjectionPerformanceTests(PaidMobileAPITestCase):
+    def test_mixed_meal_component_order_persists_across_projection_and_rejects_missing_rows(self):
+        food = Food.objects.create(name="Avena", protein=13, carbs=68, fat=7, created_by=self.user)
+        meal = Meal.objects.create(name="Comida mixta", created_by=self.user, is_draft=False)
+        first = MealFood.objects.create(meal=meal, food=food, quantity=100, order=1)
+        second = MealFood.objects.create(meal=meal, food=food, quantity=50, order=2)
+        preparation = Preparation.objects.create(name="Avena preparada")
+        version = PreparationVersion.objects.create(
+            preparation=preparation, version=1, release_version="test", yield_g=Decimal("100"),
+            default_portion_g=Decimal("50"), household_label="taza", protein_g=Decimal("13"),
+            carbs_g=Decimal("68"), fat_g=Decimal("7"), sodium_mg=Decimal("0"),
+            allergens=[], allergen_status="confirmed", ingredients_snapshot=[], content_sha256="test",
+        )
+        served = MealPreparation.objects.create(
+            meal=meal, preparation=preparation, version=version, quantity_g=Decimal("50"),
+            selected_units=Decimal("1"), selection_mode="units", order=3,
+        )
+        endpoint = f"/api/v1/library/meals/{meal.id}/components/order"
+        keys = [f"meal-preparation:{served.id}", f"meal-food:{second.id}", f"meal-food:{first.id}"]
+        invalid = self.client.put(endpoint, data={"ordered_keys": keys[:2]}, content_type="application/json")
+        self.assertEqual(invalid.status_code, 422)
+        result = self.client.put(endpoint, data={"ordered_keys": keys}, content_type="application/json")
+        self.assertEqual(result.status_code, 200)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        served.refresh_from_db()
+        self.assertEqual([served.order, second.order, first.order], [1, 2, 3])
+        detail = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]["panel"]
+        projected = [(row["order"], f"meal-food:{row['relation_id']}") for row in detail["foods"]]
+        projected += [(row["order"], f"meal-preparation:{row['relation_id']}") for row in detail["preparations"]]
+        self.assertEqual([key for _, key in sorted(projected)], keys)
+
     def test_meal_cards_have_a_constant_query_budget(self):
         food = Food.objects.create(name="Avena", protein=13, carbs=68, fat=7, created_by=self.user)
         for index in range(12):

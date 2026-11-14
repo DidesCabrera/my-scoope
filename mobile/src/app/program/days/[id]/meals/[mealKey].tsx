@@ -153,6 +153,7 @@ export default function CalendarizedMealDetailScreen() {
     },
     onReplace: (preparation) => router.push({ pathname: "/pickers/preparation-to-meal", params: { dayId: String(dayId), mealKey, snapshotKey: preparation.id, replace: "1" } } as Href),
   };
+  foodEditing.preparation = preparationEditing;
   return (
     <>
     <NestableScrollContainer

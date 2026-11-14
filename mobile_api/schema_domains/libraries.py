@@ -74,6 +74,7 @@ class LibraryCalorieDistributionData(Schema):
 
 class LibraryFoodPanelItemData(library_common.FoodVisualIdentityData):
     id: str
+    order: int = 0
     relation_id: int | None = None
     detail_id: int | None = None
     name: str

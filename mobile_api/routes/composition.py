@@ -17,6 +17,7 @@ from mobile_api.composition import (
     remove_food_from_meal,
     remove_meal_from_dailyplan,
     remove_program_week,
+    reorder_components_in_meal,
     reorder_foods_in_meal,
     reorder_meals_in_dailyplan,
     reorder_weeks_in_program,
@@ -28,6 +29,7 @@ from mobile_api.routes.program_days import router as program_days_router
 from mobile_api.schema_domains.composition import (
     CompositionMutationEnvelope,
     CompositionOrderInput,
+    MealComponentOrderInput,
     DailyPlanMealUpdateInput,
     DailyPlanPickerInput,
     FoodPickerInput,
@@ -42,6 +44,17 @@ from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 router = Router()
 router.add_router("", program_days_router)
 router.add_router("", composition_saves_router)
+
+
+@router.put(
+    "/library/meals/{meal_id}/components/order",
+    operation_id="mobile_api_api_meal_component_order",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def meal_component_order(request, meal_id: int, payload: MealComponentOrderInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return success(reorder_components_in_meal(user=request.auth.user, meal_id=meal_id, ordered_keys=payload.ordered_keys))
 
 
 @router.put(

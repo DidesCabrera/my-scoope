@@ -1,4 +1,5 @@
 export type LibraryPreparationPanelItem = {
+  order?: number;
   relation_id: number;
   detail_id: number;
   name: string;

@@ -13,6 +13,7 @@ from mobile_api.errors import MobileAPIError
 from mobile_api.preparation_projections import ingredient_payload
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
 from notas.application.services.commands.calendarization_commands import save_calendarized_preparation
+from notas.application.services.commands.meal_commands import next_meal_component_order
 from notas.application.services.commands.personal_preparation_commands import (
     PersonalPreparationError,
     add_personal_preparation_food,
@@ -392,7 +393,7 @@ def _save_selection(meal, preparation, *, units, grams, relation=None):
     version = preparation.current_version
     mode, count, quantity = _portion(version, units=units, grams=grams)
     if relation is None:
-        relation = MealPreparation(meal=meal, preparation=preparation, order=meal.meal_food_set.count() + meal.meal_preparation_set.count() + 1)
+        relation = MealPreparation(meal=meal, preparation=preparation, order=next_meal_component_order(meal))
     relation.preparation = preparation
     relation.version = version
     relation.selection_mode = mode
