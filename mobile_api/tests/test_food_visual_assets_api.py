@@ -6,8 +6,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from PIL import Image
 
-from food_catalog.admin import FoodVisualAssetForm
-from food_catalog.models import CatalogFood, FoodVisualAsset
+from food_catalog.admin import FoodVisualAssetForm, LegacyFoodVisualAssetForm
+from food_catalog.models import CatalogFood, FoodVisualAsset, LegacyFoodVisualAsset
 from food_catalog.visual_assets import prepare_food_visual
 from notas.domain.models import Food
 
@@ -123,3 +123,68 @@ class FoodVisualAssetAPITests(TestCase):
         self.assertEqual(Image.open(BytesIO(asset.mobile_image_data)).size, (192, 192))
         self.assertEqual(len(asset.content_sha256), 64)
         self.assertIn(self.food.name, self.client.get("/api/v1/foods/visual-assets/manifest").json()["images"])
+
+
+class LegacyFoodVisualAssetAPITests(TestCase):
+    def setUp(self):
+        self.food = Food.objects.create(
+            name="Whey Protein", protein=78.5, carbs=5.8, fat=3.8, is_global=True,
+        )
+        self.client = Client()
+
+    def test_legacy_global_visual_uses_stable_id_without_nutrition_change(self):
+        original, mobile, digest = prepare_food_visual(png_upload())
+        asset = LegacyFoodVisualAsset.objects.create(
+            food=self.food, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest, is_published=True,
+            source_note="Ilustración interna aprobada por Felipe",
+        )
+        manifest = self.client.get("/api/v1/foods/visual-assets/manifest").json()
+        path = manifest["food_ids"][str(self.food.id)]
+        self.assertEqual(manifest["images"][self.food.name], path)
+        self.assertIn(f"/legacy/{self.food.id}/", path)
+        self.assertEqual(self.client.get(path).content, mobile)
+        self.assertEqual(self.food.protein, 78.5)
+
+        replacement, mobile_replacement, new_digest = prepare_food_visual(png_upload(width=200, height=400))
+        asset.image_data, asset.mobile_image_data, asset.content_sha256 = replacement, mobile_replacement, new_digest
+        asset.save(update_fields=["image_data", "mobile_image_data", "content_sha256", "updated_at"])
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.assertNotEqual(
+            self.client.get("/api/v1/foods/visual-assets/manifest").json()["food_ids"][str(self.food.id)], path,
+        )
+
+    def test_private_inactive_linked_and_unpublished_foods_are_not_exposed(self):
+        original, mobile, digest = prepare_food_visual(png_upload())
+        asset = LegacyFoodVisualAsset.objects.create(
+            food=self.food, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest, is_published=False, source_note="Revisión pendiente",
+        )
+        path = f"/api/v1/foods/visual-assets/legacy/{self.food.id}/{digest}.png"
+        self.assertNotIn(str(self.food.id), self.client.get("/api/v1/foods/visual-assets/manifest").json()["food_ids"])
+        self.assertEqual(self.client.get(path).status_code, 404)
+        asset.is_published = True
+        asset.save(update_fields=["is_published"])
+        self.food.is_global = False
+        self.food.save(update_fields=["is_global"])
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.food.is_global = True
+        self.food.is_active = False
+        self.food.save(update_fields=["is_global", "is_active"])
+        self.assertEqual(self.client.get(path).status_code, 404)
+
+    def test_admin_rejects_non_global_food_and_requires_provenance(self):
+        form = LegacyFoodVisualAssetForm(
+            data={"food": self.food.pk, "is_published": True, "source_note": ""},
+            files={"upload": png_upload()},
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("source_note", form.errors)
+        self.food.is_global = False
+        self.food.save(update_fields=["is_global"])
+        form = LegacyFoodVisualAssetForm(
+            data={"food": self.food.pk, "is_published": True, "source_note": "Aprobado"},
+            files={"upload": png_upload()},
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("food", form.errors)

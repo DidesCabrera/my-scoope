@@ -137,8 +137,8 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
     return counts;
   }, [overview]);
   const futureCommitmentCounts = overview?.future_commitments_count_by_kind ?? visibleFutureCommitmentCounts;
-  const calendarCoverage = progress && futurePlansCount ? Math.round(progress.days_with_plan / futurePlansCount * 100) : 0;
-  const mealCoverage = progress?.scheduled_meals ? Math.round(progress.completed_meals / progress.scheduled_meals * 100) : 0;
+  const calendarCoverage = progress?.scheduled_days_with_plan ? Math.min(100, Math.round(progress.days_with_plan / progress.scheduled_days_with_plan * 100)) : 0;
+  const mealCoverage = progress?.due_meals ? Math.min(100, Math.round(progress.completed_meals / progress.due_meals * 100)) : 0;
 
   function changeVisibleMonth(delta: number) {
     if (!visibleMonth) return;
@@ -328,10 +328,10 @@ export function CalendarOverviewScreen({ extended = false }: { extended?: boolea
           elapsedDays={progress.days_with_plan}
           mealLabel="Comidas cumplidas"
           planLabel={"Planes\nrecorridos"}
-          plannedAdherenceDays={progress.scheduled_meals}
+          plannedAdherenceDays={progress.due_meals}
           progress={calendarCoverage}
           standalone
-          totalDays={futurePlansCount}
+          totalDays={progress.scheduled_days_with_plan}
         />
         <WeightTrendCard items={weightItems} />
         <Button icon={<Weight color={tokens.color.textMain} size={20} strokeWidth={2} />} label="Registrar peso" onPress={() => router.push("/weight" as Href)} variant="secondary" />

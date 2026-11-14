@@ -10,7 +10,6 @@ from notas.application.queries.calendarization_execution_queries import (
     _meal_has_elapsed,
     meal_execution_state_for_day,
 )
-from notas.application.services.calendarization.scheduling import local_date_for_timezone
 from notas.domain.models import CalendarizedDay, CalendarProgressPeriod
 
 
@@ -45,7 +44,7 @@ def calendar_adherence_summary(
     except ZoneInfoNotFoundError:
         local_zone = ZoneInfo("UTC")
     local_now = (now or timezone.now()).astimezone(local_zone)
-    today = local_date_for_timezone(timezone_name, now=now)
+    today = local_now.date()
     current_period = calendar_progress_period_for_user(user)
     first_day = None
     if current_period is None and period_start is None:
@@ -73,18 +72,21 @@ def calendar_adherence_summary(
         .prefetch_related("meal_execution_events")
         .order_by("calendar_date")
     ) if start <= end else []
+    scheduled_days_with_plan = len(days)
     scheduled = sum(len((day.plan_snapshot or {}).get("meals", [])) for day in days)
-    scheduled += sum(
-        len(snapshot.get("meals", []))
-        for snapshot in planned_days_query.filter(calendar_date__gt=end)
-        .values_list("plan_snapshot", flat=True).iterator(chunk_size=128)
-    )
-    elapsed = completed = skipped = 0
+    for snapshot in planned_days_query.filter(calendar_date__gt=end).values_list(
+        "plan_snapshot", flat=True
+    ).iterator(chunk_size=128):
+        scheduled_days_with_plan += 1
+        scheduled += len(snapshot.get("meals", []))
+    elapsed = due = completed = skipped = 0
     for day in days:
         meals = (day.plan_snapshot or {}).get("meals", [])
         state = {item["meal_key"]: item["status"] for item in meal_execution_state_for_day(day)}
         for meal in meals:
             status = state.get(meal.get("key") or "", "planned")
+            if _meal_has_elapsed(day_date=day.calendar_date, meal=meal, status="planned", local_now=local_now):
+                due += 1
             if not _meal_has_elapsed(day_date=day.calendar_date, meal=meal, status=status, local_now=local_now):
                 continue
             elapsed += 1
@@ -97,7 +99,9 @@ def calendar_adherence_summary(
         "period_start": start,
         "period_end": end,
         "days_with_plan": len(days),
+        "scheduled_days_with_plan": scheduled_days_with_plan,
         "scheduled_meals": scheduled,
+        "due_meals": due,
         "elapsed_meals": elapsed,
         "completed_meals": completed,
         "skipped_meals": skipped,
