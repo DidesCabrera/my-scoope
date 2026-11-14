@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -129,10 +129,7 @@ export function PersonalPreparationFormScreen() {
       <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <CollectionPageHeader entity="preparation" title={creating ? "Crear preparación" : "Editar preparación"} />
         {!available ? <InlineNotice tone="info">La biblioteca de preparaciones aún no está disponible.</InlineNotice> : !allowed ? <Card><InlineNotice tone="info">Las preparaciones personales requieren Pro.</InlineNotice><Button label="Conocer Pro" onPress={() => router.push("/subscription" as Href)} /></Card> : <>
-          <Card style={styles.section}>
-            <Field label="Nombre" onChangeText={setName} placeholder="Ej: Salsa de tomate casera" value={name} />
-            {creating ? <Text style={styles.helper}>Después podrás agregar los alimentos de la receta.</Text> : null}
-          </Card>
+          <Field label="Nombre" onChangeText={setName} placeholder="Ej: Salsa de tomate casera" value={name} />
           {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
           <Button disabled={saving} label={creating ? "Crear y continuar" : "Guardar nombre"} loading={saving} onPress={() => void save()} variant="primary" />
           {isDraft ? <Button label="Eliminar borrador" onPress={removeDraft} variant="danger" /> : null}
@@ -145,7 +142,5 @@ export function PersonalPreparationFormScreen() {
 const styles = StyleSheet.create({
   content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 48, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   flex: { flex: 1 },
-  helper: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 20 },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  section: { gap: tokens.spacing.md },
 });

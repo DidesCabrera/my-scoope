@@ -12,6 +12,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { formatPreparationNumber } from "@/components/preparations/preparation-ingredients-card";
+import { preparationNutritionForGrams } from "@/components/preparations/preparation-nutrition-basis";
 import { PreparationDetailActions } from "@/components/preparations/preparation-detail-actions";
 import { ingredientPanelItem } from "@/components/preparations/preparation-panel-items";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
@@ -24,18 +25,21 @@ function percentage(value: number, total: number): number {
   return total > 0 ? (value / total) * 100 : 0;
 }
 
-type KpiView = "recipe" | "portion";
+type KpiView = "recipe" | "portion" | "meal" | "per100";
 
 export default function PreparationDetailScreen() {
-  const { id, mealId, relationId, units, grams } = useLocalSearchParams<{
-    id: string; mealId?: string; relationId?: string; units?: string; grams?: string;
+  const { id, mealId, relationId, mealGrams, units, grams } = useLocalSearchParams<{
+    id: string; mealId?: string; relationId?: string; mealGrams?: string; units?: string; grams?: string;
   }>();
   const router = useRouter();
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [detail, setDetail] = useState<PersonalPreparation | null>(null);
   const [portionDetail, setPortionDetail] = useState<PersonalPreparation | null>(null);
-  const [kpiView, setKpiView] = useState<KpiView>("recipe");
+  const [kpiSelection, setKpiSelection] = useState<{ id: string; mealGrams?: string; view: KpiView } | null>(null);
+  const selectedMealGrams = mealGrams == null ? null : Number(mealGrams);
+  const hasMealPortion = selectedMealGrams != null && Number.isFinite(selectedMealGrams) && selectedMealGrams > 0;
+  const kpiView = kpiSelection?.id === id && kpiSelection.mealGrams === mealGrams ? kpiSelection.view : hasMealPortion ? "meal" : "recipe";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -159,8 +163,9 @@ export default function PreparationDetailScreen() {
   const ingredients = detail.ingredients.map((ingredient, index) => ingredientPanelItem(ingredient, index, detail));
   const portionCount = detail.yield_g / detail.default_portion_g;
   const subtitle = `Rinde ${formatPreparationNumber(detail.yield_g, 2)} g · ${formatPreparationNumber(portionCount, 2)} ${portionCount === 1 ? "porción" : "porciones"} de ${formatPreparationNumber(detail.default_portion_g, 2)} g`;
-  const displayedDetail = kpiView === "portion" && portionDetail && !portionDetail.is_draft ? portionDetail : detail;
-  const displayedNutrition = displayedDetail.nutrition;
+  const displayedNutrition = hasMealPortion && selectedMealGrams != null
+    ? preparationNutritionForGrams(detail, kpiView === "per100" ? 100 : selectedMealGrams)
+    : kpiView === "portion" && portionDetail && !portionDetail.is_draft ? portionDetail.nutrition : detail.nutrition;
   const nutrition = {
     // Meal components are displayed at one decimal before the KPI rounds to kcal.
     calories: Math.round(displayedNutrition.calories * 10) / 10,
@@ -228,8 +233,10 @@ export default function PreparationDetailScreen() {
         activeTab={kpiView}
         bleed
         density="compact"
-        onChange={setKpiView}
-        tabs={[{ key: "recipe", label: "Receta completa" }, { key: "portion", label: `Porción (${formatPreparationNumber(detail.default_portion_g, 2)}g)` }]}
+        onChange={(view) => setKpiSelection({ id, mealGrams, view })}
+        tabs={hasMealPortion && selectedMealGrams != null
+      ? [{ key: "meal", label: `Porción ${formatPreparationNumber(selectedMealGrams, 2)} g` }, { key: "per100", label: "100 g" }]
+          : [{ key: "recipe", label: "Receta completa" }, { key: "portion", label: `Porción (${formatPreparationNumber(detail.default_portion_g, 2)}g)` }]}
       />
     </View>} entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={subtitle} title={detail.name}>
       <EntityDetailSection title="Composición de la preparación">

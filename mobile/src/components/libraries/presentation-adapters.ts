@@ -15,6 +15,20 @@ export function libraryNutrition(nutrition: LibraryNutrition): NutritionEntityCa
   };
 }
 
+export function foodNutritionForPortion(nutrition: LibraryNutrition, quantity: number): LibraryNutrition {
+  const factor = quantity / 100;
+  return {
+    calories: nutrition.calories * factor,
+    protein: {
+      ...nutrition.protein,
+      grams: nutrition.protein.grams * factor,
+      per_kilogram: nutrition.protein.per_kilogram == null ? null : nutrition.protein.per_kilogram * factor,
+    },
+    carbs: { ...nutrition.carbs, grams: nutrition.carbs.grams * factor },
+    fat: { ...nutrition.fat, grams: nutrition.fat.grams * factor },
+  };
+}
+
 export function libraryFoodNutritionFacts(macros: LibraryNutrition, facts?: FoodNutritionFacts | null): NutritionFacts {
   return {
     proteinG: macros.protein.grams,

@@ -182,7 +182,9 @@ export function DailyPlanMealCards({ dailyPlanId, items, onChanged, onRemove, pi
               fat: nutrition.fat,
             }}
             title={item.name}>
-            <SharedFoodPanels items={item.foods.map(toFoodPanelItem)} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={pinnedTracking ? {
+            <SharedFoodPanels items={item.foods.map(toFoodPanelItem)} onOpenItem={(food) => {
+              if (food.detailId != null) router.push({ pathname: "/libraries/foods/[id]", params: { id: String(food.detailId), mealId: String(mealId ?? ""), mealQuantity: String(food.quantity), mealRelationId: String(food.relationId ?? ""), dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(dailyPlanMealId ?? "") } } as Href);
+            }} preparation={pinnedTracking ? {
               disabled: pinnedTracking.savingMealKey != null,
               isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
               onToggle: (food) => pinnedTracking.onTogglePrepared(item.id, food.id),
