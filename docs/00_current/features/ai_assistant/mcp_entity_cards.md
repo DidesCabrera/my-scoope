@@ -14,4 +14,10 @@ La sección «En conversación» de `/app/dev/ui-system/` ofrece tres entidades 
 
 Pruebas locales: `scripts/test_mcp.sh`, `mcp_server/browser_smoke_entity_card.py`, `notas.tests.test_ui_system_gallery` y las pruebas de autorización de `/ai-tools/read-food/` y `/ai-tools/read-dailyplan/`. La revisión en un iframe de ChatGPT sigue siendo necesaria para confirmar dimensiones del host; las capturas de la galería y Chromium son aproximaciones.
 
+## Verificación en el cliente ChatGPT
+
+El 14 de noviembre de 2026 se abrió el plugin privado de vista previa con datos ficticios. Las tarjetas de alimento y minuta se renderizaron como MCP Apps en ChatGPT, tanto en el ancho normal del cliente como en una ventana de 390 px. La tarjeta de alimento mostró la base de 100 g, 382 kcal y tres barras; la minuta mostró 1.950 kcal, tres comidas y sus alimentos. En ambos casos el fondo exterior fue transparente y el borde inferior quedó visible.
+
+Una solicitud de ambas tarjetas en una sola respuesta mostró visualmente solo el alimento y resumió la minuta en tablas de texto. Una solicitud posterior, exclusiva para la minuta, sí abrió su tarjeta visual. Para una revisión visual confiable en este cliente, solicitar cada entidad por separado. En esa segunda respuesta, el texto generado por ChatGPT afirmó erróneamente que el componente no se había renderizado; la interfaz sí lo mostró. Estas observaciones describen el comportamiento del cliente en esa prueba, no un contrato garantizado por MCP.
+
 Esta fase es una implementación local para revisión visual. No cambia la lista de herramientas permitidas del servicio de staging, no despliega el MCP y no activa capacidades para usuarios.
