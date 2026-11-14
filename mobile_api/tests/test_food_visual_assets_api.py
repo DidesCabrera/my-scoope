@@ -97,6 +97,8 @@ class FoodVisualAssetAPITests(TestCase):
         wide = self.client.get(wide_path)
         self.assertEqual(wide.status_code, 200)
         self.assertEqual(wide["ETag"], f'"{digest}-wide-v1"')
+        self.assertEqual(wide["Cache-Control"], "public, max-age=300")
+        self.assertEqual(wide["Content-Type"], "image/png")
         picture = Image.open(BytesIO(wide.content)).convert("RGBA")
         self.assertEqual(picture.size, (192, 127))
         self.assertEqual(picture.getchannel("A").getbbox()[2] - picture.getchannel("A").getbbox()[0], 192)
