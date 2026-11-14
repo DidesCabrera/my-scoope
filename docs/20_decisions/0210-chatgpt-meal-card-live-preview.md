@@ -1,6 +1,6 @@
 # 0210 — Vista previa de la card MCP dentro de ChatGPT
 
-Status: accepted for local experimentation; review after the first real-host session
+Status: accepted for local experimentation; first real-host session passed; revisit when workflow changes
 Date: 2026-11-14
 
 ## Contexto
@@ -48,12 +48,15 @@ repositorio y una comprobación final en ChatGPT.
 
 ## Verificación
 
-El primer uso debe demostrar que `preview_meal_card` muestra la card con cuatro
-alimentos sintéticos en ChatGPT y que modificar una regla CSS actualiza el iframe
-sin publicar, reiniciar ni perder la conversación. Registrar ancho real y captura
-de las superficies usadas. Si la herramienta exclusiva de la app no puede ser
-invocada por el host, conservar la prueba local y adaptar el mecanismo de recarga
-antes de considerarlo operativo.
+El 14 de noviembre de 2026, el plugin personal **My Scoope Card Preview** se
+conectó mediante un Secure MCP Tunnel privado. En una conversación real de
+ChatGPT, `preview_meal_card` mostró la card con cuatro alimentos ficticios. Un
+cambio temporal del borde superior de magenta a rojo en
+`meal_card_v5.source.html` apareció en el mismo iframe sin recargar el chat,
+reiniciar el servidor ni publicar en staging. Al restaurar el archivo, el borde
+volvió a magenta. La prueba visual se hizo en el panel estrecho del navegador
+integrado; falta registrar medidas de la superficie web de escritorio y de la
+aplicación de escritorio al iterar sus dimensiones.
 
 Referencias: [MCP Apps](https://apps.extensions.modelcontextprotocol.io/api/),
 [conexión y pruebas en ChatGPT](https://developers.openai.com/plugins/deploy/connect-chatgpt).

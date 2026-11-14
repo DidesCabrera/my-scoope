@@ -116,11 +116,12 @@ de My Scoope. Para cambiar HTML o JavaScript, ejecutar `npm run generate:ui`,
 reiniciar el servidor y refrescar el plugin de desarrollo; cada inicio anuncia un
 URI de recurso nuevo para evitar el HTML anterior en caché.
 
-La primera conexión real debe confirmar que ChatGPT permite la llamada de la app
-a `preview_card_styles` y que el cambio se ve sin reiniciar. Hasta tener esa
-evidencia, la recarga en vivo está validada solo en el servidor local. Verificar
-web, aplicación de escritorio y panel lateral por separado; la galería no define
-sus dimensiones. Cerrar el túnel y el servidor al terminar la sesión.
+La conexión real del 14 de noviembre de 2026 confirmó que ChatGPT permite la
+llamada de la app a `preview_card_styles`: el borde cambió de magenta a rojo y
+volvió a magenta en el mismo iframe, sin recargar el chat. Se observó en el panel
+estrecho del navegador integrado. Verificar web y aplicación de escritorio por
+separado al ajustar sus dimensiones; la galería no define sus medidas. Cerrar el
+túnel y el servidor al terminar la sesión.
 
 La configuración del túnel requiere un `tunnel_id` y una clave de ejecución de
 OpenAI Platform con permisos de túnel. Mantener la clave fuera del repositorio,
