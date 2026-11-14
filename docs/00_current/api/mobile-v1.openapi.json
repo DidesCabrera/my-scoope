@@ -2353,6 +2353,10 @@
             "title": "Days With Plan",
             "type": "integer"
           },
+          "due_meals": {
+            "title": "Due Meals",
+            "type": "integer"
+          },
           "elapsed_meals": {
             "title": "Elapsed Meals",
             "type": "integer"
@@ -2378,6 +2382,10 @@
             "title": "Period Start",
             "type": "string"
           },
+          "scheduled_days_with_plan": {
+            "title": "Scheduled Days With Plan",
+            "type": "integer"
+          },
           "scheduled_meals": {
             "title": "Scheduled Meals",
             "type": "integer"
@@ -2395,7 +2403,9 @@
           "period_start",
           "period_end",
           "days_with_plan",
+          "scheduled_days_with_plan",
           "scheduled_meals",
+          "due_meals",
           "elapsed_meals",
           "completed_meals",
           "skipped_meals",
@@ -7283,6 +7293,11 @@
             "title": "Name",
             "type": "string"
           },
+          "order": {
+            "default": 0,
+            "title": "Order",
+            "type": "integer"
+          },
           "portion_display_measure": {
             "default": "",
             "title": "Portion Display Measure",
@@ -8092,6 +8107,11 @@
             "title": "Name",
             "type": "string"
           },
+          "order": {
+            "default": 0,
+            "title": "Order",
+            "type": "integer"
+          },
           "protein_g": {
             "title": "Protein G",
             "type": "number"
@@ -8460,6 +8480,23 @@
           "idempotency_key"
         ],
         "title": "MealCheckInInput",
+        "type": "object"
+      },
+      "MealComponentOrderInput": {
+        "properties": {
+          "ordered_keys": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Ordered Keys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ordered_keys"
+        ],
+        "title": "MealComponentOrderInput",
         "type": "object"
       },
       "MealCreateInput": {
@@ -17661,6 +17698,37 @@
         "summary": "Food Label Capture Image"
       }
     },
+    "/api/v1/foods/visual-assets/legacy/{food_id}/{digest}.png": {
+      "get": {
+        "operationId": "mobile_api_legacy_food_visual_image",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "food_id",
+            "required": true,
+            "schema": {
+              "title": "Food Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "digest",
+            "required": true,
+            "schema": {
+              "title": "Digest",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "Legacy Food Visual Image"
+      }
+    },
     "/api/v1/foods/visual-assets/manifest": {
       "get": {
         "operationId": "mobile_api_food_visual_manifest",
@@ -19195,6 +19263,80 @@
           }
         ],
         "summary": "Create Library Meal"
+      }
+    },
+    "/api/v1/library/meals/{meal_id}/components/order": {
+      "put": {
+        "operationId": "mobile_api_api_meal_component_order",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealComponentOrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Meal Component Order"
       }
     },
     "/api/v1/library/meals/{meal_id}/food-picker/commit": {

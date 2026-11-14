@@ -31,6 +31,7 @@ import { LibraryActions } from "./library-actions";
 
 export function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return {
+    order: item.order,
     detailId: item.detail_id,
     id: item.id,
     relationId: item.relation_id,
@@ -55,10 +56,8 @@ export function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
 }
 
 export function mealFoodPanelItems(panel: LibraryPanel, nutrition: LibraryNutrition): FoodPanelItem[] {
-  return [
-    ...panel.foods.map(toFoodPanelItem),
-    ...(panel.preparations ?? []).map((preparation) => preparationPanelItem(preparation, nutrition)),
-  ];
+  return [...panel.foods.map(toFoodPanelItem), ...(panel.preparations ?? []).map((preparation) => preparationPanelItem(preparation, nutrition))]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 
 function toMealPanelItem(item: LibraryMealPanelItem): MealPanelItem {

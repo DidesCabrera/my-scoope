@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from django.db import transaction
+from django.db.models import Max
 
 from notas.application.commercial.limits import require_new_workspace_item
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
@@ -470,6 +471,13 @@ def delete_meal_food(
 
 
 @transaction.atomic
+def next_meal_component_order(meal: Meal) -> int:
+    return max(
+        meal.meal_food_set.aggregate(value=Max("order"))["value"] or 0,
+        meal.meal_preparation_set.aggregate(value=Max("order"))["value"] or 0,
+    ) + 1
+
+
 def create_meal_food(
     *,
     meal: Meal,
@@ -478,7 +486,7 @@ def create_meal_food(
     portion_display_quantity=None,
     portion_display_measure="",
 ) -> MealFoodCreateResult:
-    next_order = meal.meal_food_set.count() + 1
+    next_order = next_meal_component_order(meal)
 
     meal_food = MealFood.objects.create(
         meal=meal,

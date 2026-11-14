@@ -33,6 +33,7 @@ type NutritionPanelValues = {
 };
 
 export type FoodPanelItem = NutritionPanelValues & {
+  order?: number;
   kind?: "food" | "preparation";
   detailId?: number | null;
   id: string;
@@ -71,6 +72,7 @@ export type FoodPanelEditing = {
   onEditPortion(item: FoodPanelItem): void;
   onReorder(items: FoodPanelItem[]): Promise<void>;
   onReplace(item: FoodPanelItem): void;
+  preparation?: Omit<FoodPanelEditing, "preparation" | "onReorder">;
 };
 
 export type MealPanelEditing = {
@@ -434,10 +436,7 @@ function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteractio
   const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}>
     <View style={[styles.foodIdentityTitleRow, item.projectedLabel === "Por agregar" && styles.foodIdentityTitleRowWithBadge]}>
       {item.kind === "preparation" ? <EntityIcon entity="preparation" size="compact" /> : <FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} size="panel" visualKey={item.visualKey} />}
-      {item.kind === "preparation" ? <View style={styles.preparationIdentityCopy}>
-        <FoodNameAndPortion name={item.name} portion={showFoodPortion ? `${decimal(item.quantity)}${item.quantityUnit}` : null} style={itemNameStyle} />
-        <Text style={styles.preparationSubtitle}>Preparación</Text>
-      </View> : <FoodNameAndPortion name={item.name} portion={showFoodPortion ? `${decimal(item.quantity)}${item.quantityUnit}` : null} style={[item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]} />}
+      <FoodNameAndPortion name={item.name} portion={showFoodPortion ? `${decimal(item.quantity)}${item.quantityUnit}` : null} style={[item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]} />
       {item.projectedLabel === "Por agregar" ? <Text style={[styles.projectedBadge, styles.foodInlineProjectedBadge]}>{item.projectedLabel}</Text> : null}
     </View>
     {showNutritionSummary ? <NutritionSummary item={item} /> : null}
@@ -738,7 +737,7 @@ function FoodEditPanel({ editing, items, ownerLabel }: { editing: FoodPanelEditi
   if (!draftItems.length) return <PanelEmptyState label="Todavía no hay alimentos para editar." />;
   return (
     <PanelBody>
-      <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Alimentos</Text><Text style={[styles.headerText, styles.foodEditActions]}>Acciones</Text></View>
+      <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>{draftItems.some((item) => item.kind === "preparation") ? "Componentes" : "Alimentos"}</Text><Text style={[styles.headerText, styles.foodEditActions]}>Acciones</Text></View>
       <NestableDraggableFlatList
         activationDistance={12}
         data={draftItems}
@@ -755,11 +754,11 @@ function FoodEditPanel({ editing, items, ownerLabel }: { editing: FoodPanelEditi
           <View style={[styles.editItem, isActive && styles.gestureRowActive, index === draftItems.length - 1 && styles.rowLast]}>
           <View style={[styles.row, styles.editRow]}>
             <EditDragHandle disabled={busy} drag={drag} label={`Reordenar ${item.name}`} />
-            <View style={[styles.editIdentity, styles.foodIdentity]}><FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} visualKey={item.visualKey} /><Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}<Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text></Text></View>
+            <View style={[styles.editIdentity, styles.foodIdentity, styles.editFoodIdentity]}>{item.kind === "preparation" ? <EntityIcon entity="preparation" size="compact" /> : <FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} visualKey={item.visualKey} />}<Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}<Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text></Text></View>
             <View style={[styles.editActions, styles.foodEditActions]}>
-              <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
-              <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMain} size={16} /></IconAction>
-              <IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert("Eliminar alimento", `¿Eliminar ${item.name} de ${ownerLabel}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void editing.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
+              <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => (item.kind === "preparation" ? editing.preparation : editing)?.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
+              <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => (item.kind === "preparation" ? editing.preparation : editing)?.onReplace(item)}><RefreshCw color={tokens.color.textMain} size={16} /></IconAction>
+              <IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert(item.kind === "preparation" ? "Eliminar preparación" : "Eliminar alimento", `¿Eliminar ${item.name} de ${ownerLabel}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void (item.kind === "preparation" ? editing.preparation : editing)?.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
             </View>
           </View>
         </View>
@@ -798,16 +797,16 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
 export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, ownerLabel = "esta comida", preparation, preparationFirst = false, quantityOnly = false, showEditTab = true, showPreparationColumn = false }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; ownerLabel?: string; preparation?: FoodPreparation; preparationFirst?: boolean; quantityOnly?: boolean; showEditTab?: boolean; showPreparationColumn?: boolean }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
   const itemsWithPortions = useFoodPanelPortionEquivalences(items);
-  const itemSignature = itemsWithPortions.map(({ id, name, quantity }) => `${id}:${name}:${quantity}`).join("|");
+  const itemSignature = itemsWithPortions.map(({ id, name, quantity, order }) => `${id}:${name}:${quantity}:${order ?? ""}`).join("|");
   const [optimisticOrder, setOptimisticOrder] = useState<{ items: FoodPanelItem[]; sourceSignature: string } | null>(null);
   const orderedItems = optimisticOrder?.sourceSignature === itemSignature ? optimisticOrder.items : itemsWithPortions;
 
-  // Food-only reorder and swipe endpoints cannot safely mutate a preparation.
-  const rowEditing: PanelRowEditing<FoodPanelItem> | undefined = editing && !orderedItems.some((item) => item.kind === "preparation") ? {
-    deleteConfirmation: (item) => ({ message: `¿Eliminar ${item.name} de ${ownerLabel}?`, title: "Eliminar alimento" }),
+  const actionFor = (item: FoodPanelItem) => item.kind === "preparation" ? editing?.preparation : editing;
+  const rowEditing: PanelRowEditing<FoodPanelItem> | undefined = editing && (!orderedItems.some((item) => item.kind === "preparation") || editing.preparation) ? {
+    deleteConfirmation: (item) => ({ message: `¿Eliminar ${item.name} de ${ownerLabel}?`, title: item.kind === "preparation" ? "Eliminar preparación" : "Eliminar alimento" }),
     editLabel: (item) => `Editar porción de ${item.name}`,
-    onDelete: editing.onDelete,
-    onEdit: editing.onEditPortion,
+    onDelete: (item) => actionFor(item)!.onDelete(item),
+    onEdit: (item) => actionFor(item)!.onEditPortion(item),
     onReorder: async (nextItems) => {
       setOptimisticOrder({ items: nextItems, sourceSignature: itemSignature });
       try {
@@ -817,7 +816,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, o
         throw error;
       }
     },
-    onReplace: editing.onReplace,
+    onReplace: (item) => actionFor(item)!.onReplace(item),
   } : undefined;
 
   return (
@@ -828,7 +827,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, o
       {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
       {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" onOpenItem={onOpenItem} /> : null}
-      {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={orderedItems.filter((item) => item.kind !== "preparation")} key={orderedItems.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} ownerLabel={ownerLabel} /> : null}
+      {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={orderedItems} key={orderedItems.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} ownerLabel={ownerLabel} /> : null}
     </PanelSurface></NestedPanelScrollContext.Provider>
   );
 }
@@ -930,8 +929,6 @@ const styles = StyleSheet.create({
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   foodIdentity: { alignItems: "stretch", flex: 1, gap: tokens.spacing.sm, justifyContent: "center", minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   foodIdentityTitleRow: { alignItems: "center", flexDirection: "row", gap: 2, minWidth: 0 },
-  preparationIdentityCopy: { flex: 1, minWidth: 0 },
-  preparationSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.label, lineHeight: 15, paddingHorizontal: tokens.spacing.xs },
   foodIdentityTitleRowWithBadge: { gap: 0 },
   foodNameWithBadge: { flexShrink: 1, minWidth: 0, paddingRight: 0 },
   foodInlineProjectedBadge: { borderColor: tokens.color.food, flexShrink: 0, marginLeft: tokens.spacing.sm },
@@ -982,7 +979,8 @@ const styles = StyleSheet.create({
   editDragHeader: { width: 20 },
   editLeading: { flex: 1, textAlign: "left" },
   editIdentity: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
-  editName: { paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
+  editFoodIdentity: { alignItems: "center", flexDirection: "row", justifyContent: "flex-start" },
+  editName: { flexShrink: 1, textAlign: "left" },
   editValue: { color: tokens.color.textMuted, paddingHorizontal: 2, textAlign: "center", width: 54 },
   editTimeValue: { color: tokens.color.textMain },
   editActions: { flexDirection: "row", justifyContent: "flex-end" },

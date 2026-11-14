@@ -43,3 +43,57 @@ def test_web_ui_system_uses_product_components_and_real_mobile_media_queries(
     assert responsive_state["width"] <= 390
     assert responsive_state["mobileMedia"] is True
     assert responsive_state["hasProgramCard"] is True
+
+
+def test_conversation_gallery_runs_the_mcp_card_with_synthetic_states(
+    anonymous_page,
+    base_url,
+):
+    anonymous_page.set_viewport_size({"width": 1600, "height": 900})
+    anonymous_page.goto(f"{base_url}/app/dev/ui-system/#conversation-ui")
+    card = anonymous_page.frame_locator("#mcp-meal-frame")
+
+    expect(card.get_by_role("heading", name="Porotos negros con arroz y palta")).to_be_visible()
+    expect(card.locator("#meal-kcal")).to_have_text("931")
+    expect(card.locator("#meal-protein-bar")).to_have_attribute("aria-label", "17%")
+    expect(card.locator("#meal-carbs-bar")).to_have_attribute("aria-label", "74%")
+    expect(card.locator("#meal-food-table tr")).to_have_count(4)
+    expect(card.locator("#meal-food-table")).to_be_visible()
+    expect(card.get_by_text("Porotos negros cocidos").first).to_be_visible()
+    assert anonymous_page.locator("#mcp-meal-frame").evaluate(
+        "element => element.clientHeight >= element.contentDocument?.body.scrollHeight || element.clientHeight > 450"
+    )
+
+    anonymous_page.get_by_role("button", name="Claro").click()
+    expect(card.locator("#card")).not_to_have_css("background-color", "rgb(18, 18, 18)")
+    anonymous_page.get_by_role("button", name="Oscuro").click()
+    expect(card.locator("#card")).to_have_css("background-color", "rgb(18, 18, 18)")
+
+    anonymous_page.get_by_role("button", name="Móvil").click()
+    anonymous_page.locator("#mcp-meal-scenario").select_option("mobile")
+    expect(card.get_by_role("heading", name="Avena con yogur, plátano y arándanos")).to_be_visible()
+    expect(card.locator("#meal-kcal")).to_have_text("447")
+    expect(card.locator("#meal-foods li")).to_have_count(4)
+    expect(card.locator("#meal-food-table")).to_be_hidden()
+    card.get_by_role("tab", name="Calorías").click()
+    expect(card.locator("#card")).to_have_attribute("data-mode", "calories")
+    card.get_by_role("tab", name="Macros").click()
+    expect(card.locator("#card")).to_have_attribute("data-mode", "macros")
+    card.get_by_role("tab", name="Dist").click()
+    expect(card.locator("#card")).to_have_attribute("data-mode", "distribution")
+    card.get_by_role("tab", name="Alloc").click()
+    expect(card.locator("#card")).to_have_attribute("data-mode", "allocation")
+
+    anonymous_page.get_by_role("button", name="Estrecho").click()
+    assert anonymous_page.locator("#mcp-meal-frame").evaluate(
+        "element => Math.round(element.getBoundingClientRect().width)"
+    ) == 320
+    assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
+
+    anonymous_page.locator("#mcp-meal-scenario").select_option("long")
+    expect(card.get_by_role("heading", name="Almuerzo con vegetales, arroz integral y proteína para un día de entrenamiento")).to_be_visible()
+    anonymous_page.locator("#mcp-meal-scenario").select_option("empty")
+    expect(card.get_by_text("Esta comida no tiene alimentos.")).to_be_visible()
+    anonymous_page.locator("#mcp-meal-scenario").select_option("error")
+    expect(card.get_by_role("status")).to_contain_text("No se pudo mostrar")
+    expect(card.locator("#card")).to_be_hidden()

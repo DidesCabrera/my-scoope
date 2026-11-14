@@ -165,6 +165,93 @@
   margin: 0;
 }
 
+.ui-system-gallery__mcp-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+#conversation-ui {
+  scroll-margin-top: 90px;
+}
+
+.ui-system-gallery__mcp-control-group {
+  background: var(--surface-card-muted);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+}
+
+.ui-system-gallery__mcp-control-group button {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-caption);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.ui-system-gallery__mcp-control-group button[aria-pressed="true"] {
+  background: var(--surface-card);
+  box-shadow: 0 1px 4px #0002;
+  color: var(--text-main);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ui-system-gallery__mcp-control-group button:focus-visible,
+.ui-system-gallery__mcp-select select:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 2px;
+}
+
+.ui-system-gallery__mcp-select {
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  font-size: var(--font-size-caption);
+  gap: var(--space-sm);
+}
+
+.ui-system-gallery__mcp-select select {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font: inherit;
+  padding: var(--space-sm);
+}
+
+.ui-system-gallery__mcp-stage {
+  background: Canvas;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  color-scheme: light;
+  display: flex;
+  justify-content: center;
+  min-height: 250px;
+  overflow: hidden;
+  padding: var(--space-lg);
+}
+
+.ui-system-gallery__mcp-stage[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+.ui-system-gallery__mcp-stage iframe {
+  border: 0;
+  color-scheme: dark;
+  display: block;
+  height: 300px;
+  max-width: 100%;
+  width: 1100px;
+}
+
 .ui-system-gallery__mobile-frame {
   background: var(--surface-app);
   border: 1px solid var(--border-strong);

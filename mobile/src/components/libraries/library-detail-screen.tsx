@@ -14,7 +14,7 @@ import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
-import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
+import { FoodPanels, GroupedFoodsCard, MealPanels, type FoodPanelEditing, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { preparationPanelItem } from "@/components/preparations/preparation-panel-items";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
@@ -36,7 +36,7 @@ import { MealComponentAddActions } from "./meal-component-add-actions";
 const sectionTitles = { foods: "Composición comida", meals: "Composición de la minuta diaria", weeks: "Semanas del programa" } as const;
 
 function foodPanelItem(item: LibraryItem["panel"]["foods"][number]): FoodPanelItem {
-  return { id: item.id, detailId: item.detail_id, relationId: item.relation_id, name: item.name, emoji: item.emoji, visualKey: item.visual_key, quantity: item.quantity, quantityUnit: item.quantity_unit, portionDisplayQuantity: item.portion_display_quantity, portionDisplayMeasure: item.portion_display_measure, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, order: item.order, detailId: item.detail_id, relationId: item.relation_id, name: item.name, emoji: item.emoji, visualKey: item.visual_key, quantity: item.quantity, quantityUnit: item.quantity_unit, portionDisplayQuantity: item.portion_display_quantity, portionDisplayMeasure: item.portion_display_measure, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelItem {
@@ -373,7 +373,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const foodItems = [
     ...item.panel.foods.map(foodPanelItem),
     ...(item.entity === "meal" ? (item.panel.preparations ?? []).map((preparation) => preparationPanelItem(preparation, item.nutrition)) : []),
-  ];
+  ].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const openFood = (food: FoodPanelItem) => {
     if (food.detailId == null) return;
     if (food.kind === "preparation") {
@@ -393,10 +393,10 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const normalizedPinnedMealExecution = pinnedMealExecution ? normalizeMealExecutionItem(pinnedMealExecution) : null;
   const completedPinnedMealKeys = new Set(mealExecution.filter((entry) => entry.status === "completed").map((entry) => entry.meal_key));
   const mealItems = item.panel.meals.map((meal) => ({ ...mealPanelItem(meal), completed: isPinnedPlan && completedPinnedMealKeys.has(meal.id) }));
-  const foodEditing = item.entity === "meal" ? {
+  const foodEditing: FoodPanelEditing | undefined = item.entity === "meal" ? {
     onDelete: async (food: FoodPanelItem) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "DELETE" }); },
     onEditPortion: (food: FoodPanelItem) => { if (food.relationId && food.detailId) router.push(pickerConfigureHref("food-to-meal", { contextDailyPlanId: hasMealTimeContext ? contextDailyPlanId : undefined, contextDailyPlanMealId: hasMealTimeContext ? contextDailyPlanMealId : undefined, relationId: food.relationId, returnTo: isContextualMealCreation || isLibraryMealCreation ? currentDetailHref : undefined, selectedId: food.detailId, targetId: item.id, weekNumber: 1 })); },
-    onReorder: async (foods: FoodPanelItem[]) => { await mutateComposition(`/api/v1/library/meals/${item.id}/foods/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: foods.map((food) => food.relationId) }) }, { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" }); },
+    onReorder: async (foods: FoodPanelItem[]) => { await mutateComposition(`/api/v1/library/meals/${item.id}/components/order`, { method: "PUT", body: JSON.stringify({ ordered_keys: foods.map((food) => food.id) }) }, { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" }); },
     onReplace: (food: FoodPanelItem) => { if (food.relationId) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation || isLibraryMealCreation ? { returnTo: String(currentDetailHref) } : {}) })); },
   } : undefined;
   const preparationEditing = item.entity === "meal" ? {
@@ -404,6 +404,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     onEditPortion: (preparation: FoodPanelItem) => { if (preparation.relationId && preparation.detailId) router.push({ pathname: "/pickers/preparation-to-meal", params: { mealId: String(item.id), relationId: String(preparation.relationId), preparationId: String(preparation.detailId) } } as Href); },
     onReplace: (preparation: FoodPanelItem) => { if (preparation.relationId) router.push({ pathname: "/pickers/preparation-to-meal", params: { mealId: String(item.id), relationId: String(preparation.relationId), replace: "1" } } as Href); },
   } : undefined;
+  if (foodEditing && preparationEditing) foodEditing.preparation = preparationEditing;
   const mealEditing = item.entity === "dailyPlan" ? {
     onChangeTime: (meal: MealPanelItem) => { if (meal.relationId) setPanelTimeMeal(meal); },
     onDelete: async (meal: MealPanelItem) => { if (meal.relationId) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relationId}`, { method: "DELETE" }); },

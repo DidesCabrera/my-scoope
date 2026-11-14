@@ -270,6 +270,7 @@ export type LibraryIndicator = {
 
 export type LibraryFoodPanelItem = {
   id: string;
+  order?: number;
   relation_id: number | null;
   detail_id?: number | null;
   name: string; emoji?: string; visual_key?: string;

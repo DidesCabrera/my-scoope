@@ -27,6 +27,10 @@ class CompositionOrderInput(Schema):
     ordered_ids: list[int] = Field(min_length=1)
 
 
+class MealComponentOrderInput(Schema):
+    ordered_keys: list[str] = Field(min_length=1)
+
+
 class MealFoodUpdateInput(Schema):
     quantity: float = Field(gt=0, le=100000)
     portion_display_quantity: float | None = Field(default=None, gt=0, le=100000)

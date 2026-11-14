@@ -187,6 +187,10 @@ class AIToolsAPIReadEndpointTests(TestCase):
                 },
             ),
             (
+                "ai_tools_search_user_meals",
+                {"query": "Meal"},
+            ),
+            (
                 "ai_tools_read_dailyplan",
                 {
                     "dailyplan_id": self.dailyplan.id,
@@ -256,6 +260,28 @@ class AIToolsAPIReadEndpointTests(TestCase):
             data["data"]["meal"]["name"],
             "Base Meal",
         )
+
+    def test_search_user_meals_is_bounded_and_hides_other_users_private_meals(self):
+        self.client.force_login(self.user)
+        response = json_post(self.client, "ai_tools_search_user_meals", {
+            "query": "Meal", "limit": 1,
+        })
+        data = self.assert_success_response(response)
+        self.assertEqual([meal["id"] for meal in data["data"]["meals"]], [self.meal.id])
+        private_search = json_post(self.client, "ai_tools_search_user_meals", {
+            "query": "Private Other Meal",
+        })
+        self.assertEqual(self.assert_success_response(private_search)["data"]["meals"], [])
+
+    def test_search_user_meals_rejects_empty_query_and_unbounded_limit(self):
+        self.client.force_login(self.user)
+        for payload, code in [
+            ({"query": "   "}, "invalid_meal_query"),
+            ({"query": "Meal", "limit": 11}, "invalid_meal_limit"),
+        ]:
+            response = json_post(self.client, "ai_tools_search_user_meals", payload)
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()["error"]["code"], code)
 
     def test_read_dailyplan_endpoint_returns_dailyplan(self):
         self.client.force_login(self.user)

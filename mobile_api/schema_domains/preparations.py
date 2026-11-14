@@ -17,6 +17,7 @@ class LibraryPreparationIngredientData(Schema):
 
 
 class LibraryPreparationPanelItemData(Schema):
+    order: int = 0
     relation_id: int
     detail_id: int
     name: str

@@ -68,6 +68,24 @@
     }
   },
   "platforms": {
+    "mcp": {
+      "themeSource": "web",
+      "componentRecipes": {
+        "mealCard": {
+          "inline": {
+            "maxWidth": 1120,
+            "borderRadius": 30,
+            "headerPaddingX": 24,
+            "headerPaddingY": 24,
+            "panelPaddingX": 24,
+            "panelPaddingY": 24,
+            "kpiSize": 112,
+            "kpiBorderWidth": 4,
+            "barHeight": 26
+          }
+        }
+      }
+    },
     "web": {
       "componentRecipes": {
         "nutritionKpi": {

@@ -543,7 +543,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /<Text numberOfLines=\{2\} style=\{\[styles\.cell, styles\.editName\]\}>\{item\.name\}<Text style=\{styles\.foodPortionSuffix\}>/);
   assertSourceDoesNotMatch(sharedEntityPanels, />Porción<|styles\.editPortionValue/);
   assertSourceMatch(sharedEntityPanels, /editIdentity: \{ alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 \}/);
-  assertSourceMatch(sharedEntityPanels, /editName: \{ paddingHorizontal: tokens\.spacing\.xs, textAlign: "left" \}/);
+  assertSourceMatch(sharedEntityPanels, /editFoodIdentity: \{ alignItems: "center", flexDirection: "row", justifyContent: "flex-start" \}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /editValue: \{[^}]*fontSize/);
   assertSourceMatch(sharedEntityPanels, /row: \{[^}]*minHeight: 50/);
   assertSourceMatch(sharedEntityPanels, /header: \{ minHeight: 40 \}/);

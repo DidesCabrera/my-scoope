@@ -318,7 +318,7 @@ test("library details open every composition flow and program days remain editab
   assert.ok(detail.indexOf('label="+ Agregar Comida"') < detail.indexOf('title="Detalle de cada Comida"'));
   matches(detail, /FoodPanels editing=\{foodEditing\}/);
   matches(detail, /MealPanels editing=\{mealEditing\}/);
-  matches(detail, /foods\/order/);
+  matches(detail, /components\/order/);
   matches(detail, /meals\/order/);
   matches(detail, /pickerHref\("food-to-meal", \{ mealFoodId: food\.relationId, mealId: item\.id, \.\.\.\(hasMealTimeContext/);
   matches(detail, /dailyPlanMealId: contextDailyPlanMealId/);
@@ -331,7 +331,7 @@ test("library details open every composition flow and program days remain editab
   matches(panels, /onDragEnd=\{\(\{ data, from, to \}\) => \{[\s\S]*?editing\.onReorder\(data\)/);
   matches(panels, /label=\{`Reemplazar \$\{item\.name\}`\}/);
   matches(panels, /editing\.onReplace\(item\)/);
-  matches(panels, /editing\.onEditPortion\(item\)/);
+  matches(panels, /\(item\.kind === "preparation" \? editing\.preparation : editing\)\?\.onEditPortion\(item\)/);
   omits(panels, /Guardar porción|inlineEdit|inlineInput/);
   matches(detail, /onEditPortion:.*pickerConfigureHref\("food-to-meal"/s);
   matches(mealDetail, /onEditPortion:.*pickerConfigureHref\("food-to-calendarized-meal"/s);

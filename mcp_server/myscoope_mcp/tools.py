@@ -17,7 +17,9 @@ from ai_assistant.application.tools.registry import (
     TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_MEALS,
     normalize_tool_name,
 )
 from ai_assistant.application.tools.registry import (

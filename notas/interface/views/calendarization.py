@@ -255,8 +255,8 @@ def calendar_preview(request, day_date=None):
     progress = calendar_adherence_summary(request.user)
     schedule_summary = calendar_future_schedule_summary(request.user, today=today)
     future_plans_count = schedule_summary["future_plans_count"] or 0
-    calendar_coverage = min(100, round(progress["days_with_plan"] / future_plans_count * 100)) if future_plans_count else 0
-    meal_coverage = min(100, round(progress["completed_meals"] / progress["scheduled_meals"] * 100)) if progress["scheduled_meals"] else 0
+    calendar_coverage = min(100, round(progress["days_with_plan"] / progress["scheduled_days_with_plan"] * 100)) if progress["scheduled_days_with_plan"] else 0
+    meal_coverage = min(100, round(progress["completed_meals"] / progress["due_meals"] * 100)) if progress["due_meals"] else 0
     ordered_weights = list(reversed(weight_history))
     weight_values = [float(item.weight_kg) for item in ordered_weights]
     weight_min = min(weight_values) if weight_values else 0

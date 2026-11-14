@@ -174,20 +174,21 @@ def build_meal_snapshot(
     hour: time | None,
     note: str = "",
 ) -> dict:
-    foods = [
-        build_food_snapshot(
+    foods_with_order = [
+        (meal_food.order, build_food_snapshot(
             food=meal_food.food,
             quantity=meal_food.quantity,
             key=f"source_meal_food:{meal_food.id}",
             portion_display_quantity=meal_food.portion_display_quantity,
             portion_display_measure=meal_food.portion_display_measure,
-        )
+        ))
         for meal_food in meal.meal_food_set.all()
     ]
-    foods.extend(
-        build_preparation_snapshot(row, key=f"source_meal_preparation:{row.id}")
+    foods_with_order.extend(
+        (row.order, build_preparation_snapshot(row, key=f"source_meal_preparation:{row.id}"))
         for row in meal.meal_preparation_set.select_related("preparation", "version").all()
     )
+    foods = [item for _, item in sorted(foods_with_order, key=lambda pair: pair[0])]
     return {
         "key": key,
         "source_meal_id": meal.id,
