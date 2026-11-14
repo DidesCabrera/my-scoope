@@ -11,10 +11,12 @@ nutrientes ni HTML. La UI de My Scoope muestra los valores calculados por el bac
 
 La web usa `card_main_meal.html` y `card_child_meal.html` con múltiples includes,
 CSS global, contexto Django y acciones propias de la web. Esos templates no son
-HTML autónomo para un iframe. La card MCP es un adaptador visual pequeño del mismo
-DTO que ya entrega `read_meal_tool` y conserva la estructura principal: título,
-energía, macronutrientes y alimentos con cantidades. No intenta replicar las
-acciones de edición de la web.
+HTML autónomo para un iframe. La card MCP representa el mismo DTO que ya entrega
+`read_meal_tool`: título, energía, barras de macronutrientes y detalle de cada
+alimento. En escritorio muestra una tabla con aportes calóricos, distribución y
+porcentajes de cada macro; en móvil muestra filas y pestañas para explorar esos
+datos. Las barras de cada alimento se calculan a partir de los valores numéricos
+del DTO. La card no replica las acciones de edición de la web.
 
 ```text
 ChatGPT / cliente MCP Apps
@@ -42,7 +44,8 @@ El descriptor de `read_meal` anuncia `_meta.ui.resourceUri` y el recurso usa
 contrato `ok/data/error`; así sigue siendo útil en clientes que no renderizan UI.
 La card completa `ui/initialize` y `ui/notifications/initialized` antes de recibir
 `ui/notifications/tool-result`; también comunica su altura al host con
-`ui/notifications/size-changed`. Alterna localmente entre Nutrición y Alimentos.
+`ui/notifications/size-changed`. El detalle móvil alterna localmente entre
+Alimentos, Calorías, Macros, Dist y Alloc.
 El URI incluye versión porque los clientes pueden cachear recursos. La versión 2
 corrigió un timeout de inicialización descubierto en una conversación real. La
 versión 3 incorpora tokens y receta del contrato visual común; la versión 2 sigue
@@ -51,7 +54,8 @@ disponible para conversaciones anteriores.
 La sección «En conversación» de la galería web (`/app/dev/ui-system/`, solo en
 DEBUG) sirve exactamente `meal_card_v3.html` en un iframe aislado. Su host de prueba
 reproduce el saludo MCP Apps y envía datos sintéticos. Permite revisar claro,
-oscuro, 520/390/320 px, nombres largos, vacío y error. El archivo fuente editable
+oscuro, 1100/390/320 px, dos comidas de ejemplo, nombres largos, vacío y error.
+El archivo fuente editable
 es `meal_card_v3.source.html`; `npm run generate:ui` produce el HTML servido tanto
 por la galería como por MCP. `npm run check:ui` detecta desincronización.
 
@@ -75,7 +79,8 @@ MIME del recurso, el resultado estructurado, la ruta HTTP autenticada y un fallo
 de lectura sin comida en la respuesta. La suite Django protege la autorización y
 los datos del endpoint existente. El smoke de navegador simula el saludo del
 iframe y comprueba render,
-pestañas, ancho móvil, tema oscuro, error y texto HTML no ejecutable. Este smoke
+tabla, barras, pestañas móviles, ancho móvil, tema oscuro, error y texto HTML no
+ejecutable. Este smoke
 usa datos sintéticos y requiere Playwright Chromium de `e2e/requirements.txt`.
 
 ## Configuración y prueba en una conversación real

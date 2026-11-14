@@ -245,11 +245,11 @@
 
 .ui-system-gallery__mcp-stage iframe {
   border: 0;
-  color-scheme: light;
+  color-scheme: dark;
   display: block;
   height: 300px;
   max-width: 100%;
-  width: 520px;
+  width: 1100px;
 }
 
 .ui-system-gallery__mobile-frame {
