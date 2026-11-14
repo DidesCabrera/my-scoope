@@ -29,9 +29,11 @@ cleanup outside the current task.
 5. Fetch again immediately before publication. If `origin/staging` advanced,
    incorporate it deliberately and rerun only the evidence invalidated by that
    change. The exact commit to publish must be the exact content validated.
-6. Push that commit to `origin/staging`, then wait for and report the required
-   GitHub Actions result for the exact remote commit. A failed or missing required
-   check blocks treating the staging integration as successful.
+6. Push the validated commit from the task branch directly to `origin/staging`,
+   without using local `staging` as an intermediate branch or creating a remote
+   task branch by default. Then wait for and report the required GitHub Actions
+   result for the exact remote commit. A failed or missing required check blocks
+   treating the staging integration as successful.
 7. Stop when the exact published commit and its required CI result are known.
    Updating a local control checkout, archiving a worktree, and deleting an
    integrated branch are separate housekeeping outcomes and require a separate

@@ -35,9 +35,9 @@ Use this default order:
    coordination findings.
 2. **Branches** — one table row for each independent branch, including
    `staging`, `main`, active task branches, and preserved branches without a
-   checkout. Useful columns are branch, checkout (or none), short local and
-   remote HEADs, remote relationship, cleanliness, integration status, and next
-   action. Keep local and remote information for the same branch in one row.
+   checkout. Useful columns are branch, checkout (or none), short local HEAD,
+   cleanliness, integration status, and next action. Do not add a separate
+   remote-branch column; put the relevant remote relationship in the status.
    Never combine multiple branches into a row such as "other branches".
 3. **Detached checkouts** — list separately with path, short HEAD, cleanliness,
    and relationship to `staging` or `main`. They are not branches.
