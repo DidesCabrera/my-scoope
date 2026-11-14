@@ -89,9 +89,9 @@ margin: 0;
 }
 
 .food-visual-icon {
-width: 28px;
+width: 42px;
 height: 28px;
-flex: 0 0 28px;
+flex: 0 0 42px;
 display: inline-flex;
 align-items: center;
 justify-content: center;
@@ -114,9 +114,9 @@ display: none;
 }
 
 .food-visual-heading--main .food-visual-icon {
-width: 41px;
+width: 62px;
 height: 41px;
-flex-basis: 41px;
+flex-basis: 62px;
 }
 
 .food-visual-heading--main .food-visual-icon__fallback {
@@ -124,9 +124,9 @@ font-size: 31px;
 }
 
 .data-grid-cell--name > .food-visual-icon {
-width: 22px;
-height: 22px;
-flex: 0 0 22px;
+width: 30px;
+height: 20px;
+flex: 0 0 30px;
 margin-right: 6px;
 vertical-align: middle;
 }

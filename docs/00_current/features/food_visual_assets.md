@@ -10,6 +10,8 @@ La API pública `/api/v1/foods/visual-assets/manifest` expone únicamente recurs
 
 La variante de visualización ancha es optativa: `manifest?layout=wide-v1` entrega URLs `/api/v1/foods/visual-assets/{uuid}/{digest}/wide-v1.png`. El servidor deriva un PNG transparente de 192 × 127 px desde los bytes móviles ya aprobados, recortando solo márgenes alfa exteriores y escalando proporcionalmente. No sobrescribe ni vuelve a aprobar el original, no cambia nutrientes ni snapshots, y usa el mismo digest de contenido más el identificador `wide-v1` para invalidar caché si cambia la fuente o el algoritmo. El manifiesto sin parámetro y las URLs cuadradas anteriores permanecen disponibles para versiones ya instaladas. La app nueva reserva 62 × 41 pt en títulos, 36 × 24 pt en compactos y 30 × 20 pt en paneles. La sustitución remota conserva la misma identidad editorial y puede revisarse por separado para ajustes particulares.
 
+La web también consulta `manifest?layout=wide-v1` para tarjetas y detalles de alimentos, y para sus filas dentro de comidas y preparaciones. Usa el ID operacional cuando está disponible; solo los snapshots sin ID recurren al nombre. Ante ausencia o fallo de la imagen muestra el emoji resuelto por la identidad visual compartida. El navegador valida que la URL pertenezca a la ruta versionada antes de cargarla y actualiza el manifiesto como máximo una vez por minuto.
+
 ## Salida coordinada de la variante ancha
 
 1. Integrar y desplegar el backend primero. Verificar en staging que el manifiesto sin parámetro y los PNG cuadrados no cambien, y que `?layout=wide-v1` y sus PNG respondan para imágenes centrales y asignaciones globales directas. Revisar visualmente la grilla completa antes de producción.

@@ -1,6 +1,6 @@
 (() => {
-  const manifestUrl = "/api/v1/foods/visual-assets/manifest";
-  const imagePath = /^\/api\/v1\/foods\/visual-assets\/[0-9a-f-]{36}\/[0-9a-f]{64}\.png$/;
+  const manifestUrl = "/api/v1/foods/visual-assets/manifest?layout=wide-v1";
+  const imagePath = /^\/api\/v1\/foods\/visual-assets\/[0-9a-f-]{36}\/[0-9a-f]{64}(?:\.png|\/wide-v1\.png)$/;
   const refreshMs = 60_000;
   let images = new Map();
   let loadedAt = 0;
