@@ -72,6 +72,12 @@ La calendarización también es la autoridad del programa vivido:
   idempotencia hacen seguros los reintentos;
 - la adherencia compara comidas planificadas contra completadas, omitidas y aún
   no registradas dentro de un periodo fechado;
+- en el progreso del calendario, las minutas recorridas son las fechas con minuta
+  desde el inicio del periodo hasta hoy, sobre todas las minutas vigentes
+  programadas desde ese inicio, incluidas las futuras;
+- las comidas cumplidas son las comidas con estado completado en esas fechas,
+  sobre las comidas programadas desde el inicio cuya hora ya llegó en la zona
+  horaria del usuario; las comidas de fechas futuras no entran al divisor;
 - `WeightLog` sigue siendo la medición personal canónica y
   `CalendarizationMeasurementContext` sólo la relaciona con una agenda/día;
 - una `CalendarizationReview` congela el resumen de adherencia y mediciones junto

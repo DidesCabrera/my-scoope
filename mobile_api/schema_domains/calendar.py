@@ -190,7 +190,9 @@ class CalendarProgressData(Schema):
     period_start: date
     period_end: date
     days_with_plan: int
+    scheduled_days_with_plan: int
     scheduled_meals: int
+    due_meals: int
     elapsed_meals: int
     completed_meals: int
     skipped_meals: int

@@ -1,10 +1,12 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 
 from django.contrib.auth.models import User
 from django.test import override_settings
 
 from mobile_api.selectors import local_date_for_user
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
+from notas.application.queries.calendar_metrics import calendar_adherence_summary
 from notas.domain.models import (
     CalendarCommitment,
     CalendarizedDay,
@@ -716,6 +718,7 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(before["adherence_percent"], 50)
         self.assertEqual(before["scheduled_meals"], 2)
         self.assertEqual(before["days_with_plan"], 2)
+        self.assertEqual(before["scheduled_days_with_plan"], 2)
         self.assertEqual(before["completed_meals"], 1)
         self.assertEqual(before["elapsed_meals"], 2)
 
@@ -725,6 +728,7 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(reset.json()["data"]["period_start"], self.today.isoformat())
         self.assertEqual(reset.json()["data"]["scheduled_meals"], 1)
         self.assertEqual(reset.json()["data"]["days_with_plan"], 1)
+        self.assertEqual(reset.json()["data"]["scheduled_days_with_plan"], 1)
         self.assertEqual(reset.json()["data"]["completed_meals"], 1)
         self.assertEqual(reset.json()["data"]["elapsed_meals"], 1)
         periods = list(CalendarProgressPeriod.objects.filter(user=self.user).order_by("starts_on"))
@@ -762,8 +766,47 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
 
         progress = self.client.get("/api/v1/calendar/progress").json()["data"]
         self.assertEqual(progress["days_with_plan"], 1)
+        self.assertEqual(progress["scheduled_days_with_plan"], 2)
         self.assertEqual(progress["scheduled_meals"], 3)
+        self.assertEqual(progress["due_meals"], 1)
         self.assertEqual(progress["elapsed_meals"], 1)
+
+    def test_progress_uses_period_plans_and_only_meals_due_by_local_hour(self):
+        today = datetime(2026, 7, 15, 12, tzinfo=dt_timezone.utc)
+        self.user.profile.timezone_name = "UTC"
+        self.user.profile.save(update_fields=["timezone_name"])
+        CalendarProgressPeriod.objects.create(user=self.user, starts_on=today.date())
+        for day_date, meals in (
+            (today.date() - timedelta(days=1), [{"key": "before-period", "hour": "08:00"}]),
+            (today.date(), [
+                {"key": "breakfast", "hour": "08:00"},
+                {"key": "lunch", "hour": "12:00"},
+                {"key": "dinner", "hour": "13:00"},
+            ]),
+            (today.date() + timedelta(days=1), [{"key": "tomorrow", "hour": "08:00"}]),
+        ):
+            day = CalendarizedDay.objects.create(
+                user=self.user,
+                calendar_date=day_date,
+                source_kind=CalendarizedDay.SOURCE_MANUAL,
+                plan_snapshot={"name": "Plan", "meals": meals},
+            )
+            if day_date == today.date():
+                for meal_key in ("breakfast", "dinner"):
+                    CalendarizedMealExecution.objects.create(
+                        calendarized_day=day,
+                        meal_snapshot_key=meal_key,
+                        action="completed",
+                        idempotency_key=f"progress-{meal_key}-completed",
+                    )
+
+        progress = calendar_adherence_summary(self.user, now=today)
+        self.assertEqual(progress["days_with_plan"], 1)
+        self.assertEqual(progress["scheduled_days_with_plan"], 2)
+        self.assertEqual(progress["scheduled_meals"], 4)
+        self.assertEqual(progress["due_meals"], 2)
+        self.assertEqual(progress["completed_meals"], 2)
+        self.assertEqual(progress["elapsed_meals"], 3)
 
     def test_adjust_progress_start_recalculates_range_and_keeps_prior_period(self):
         yesterday = self.today - timedelta(days=1)
@@ -789,6 +832,7 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["data"]["period_start"], yesterday.isoformat())
         self.assertEqual(response.json()["data"]["days_with_plan"], 2)
+        self.assertEqual(response.json()["data"]["scheduled_days_with_plan"], 2)
         self.assertEqual(response.json()["data"]["scheduled_meals"], 2)
         previous_period.refresh_from_db()
         self.assertIsNotNone(previous_period.closed_at)
@@ -809,6 +853,7 @@ class CalendarAPITests(AuthenticatedMobileAPITestCase):
         )
         self.assertEqual(narrower.status_code, 200)
         self.assertEqual(narrower.json()["data"]["days_with_plan"], 1)
+        self.assertEqual(narrower.json()["data"]["scheduled_days_with_plan"], 1)
         self.assertEqual(narrower.json()["data"]["scheduled_meals"], 1)
         self.assertEqual(CalendarProgressPeriod.objects.filter(user=self.user).count(), 3)
 

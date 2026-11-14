@@ -1,9 +1,10 @@
 from dataclasses import asdict
+from pathlib import Path
 from types import SimpleNamespace
 
 from allauth.account.forms import ResetPasswordForm, ResetPasswordKeyForm
 from django.conf import settings
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
@@ -37,6 +38,15 @@ def ui_system_gallery(request):
             "gallery": examples,
         },
     )
+
+
+@xframe_options_sameorigin
+def ui_system_mcp_meal_card_preview(request):
+    if not settings.DEBUG:
+        raise Http404
+
+    card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v3.html"
+    return HttpResponse(card_path.read_bytes(), content_type="text/html; charset=utf-8")
 
 
 @xframe_options_sameorigin

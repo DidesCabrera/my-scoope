@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -55,6 +58,21 @@ class UISystemGalleryTests(TestCase):
         self.assertEqual(response.content.count(b'data-onboarding-story="'), 14)
         self.assertContains(response, "?embed=1#components")
         self.assertEqual(response["X-Frame-Options"], "SAMEORIGIN")
+
+    def test_conversation_gallery_serves_the_exact_generated_mcp_card(self):
+        gallery = self.client.get(self.url)
+        preview_url = reverse("ui_system_mcp_meal_card_preview")
+        preview = self.client.get(preview_url)
+        card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v3.html"
+
+        self.assertContains(gallery, 'id="conversation-ui"')
+        self.assertContains(gallery, preview_url)
+        self.assertContains(gallery, 'id="mcp-meal-frame"')
+        self.assertContains(gallery, 'sandbox="allow-scripts"')
+        self.assertContains(gallery, "mcp_ui_gallery.js")
+        self.assertEqual(preview.status_code, 200)
+        self.assertEqual(preview.content, card_path.read_bytes())
+        self.assertEqual(preview["X-Frame-Options"], "SAMEORIGIN")
 
     def test_auth_previews_render_product_templates(self):
         sent_response = self.client.get(
@@ -117,3 +135,7 @@ class UISystemGalleryTests(TestCase):
             reverse("ui_system_auth_preview", args=["verification-sent"])
         )
         self.assertEqual(preview_response.status_code, 404)
+        self.assertEqual(
+            self.client.get(reverse("ui_system_mcp_meal_card_preview")).status_code,
+            404,
+        )

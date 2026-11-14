@@ -6,8 +6,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-
-CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v2.html"
+CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v3.html"
 SAMPLE_RESULT = {
     "ok": True,
     "data": {
@@ -97,7 +96,7 @@ def main():
         page.emulate_media(color_scheme="dark")
         assert card.locator("#card").evaluate(
             "element => getComputedStyle(element).backgroundColor",
-        ) == "rgb(36, 26, 42)"
+        ) == "rgb(18, 18, 18)"
 
         send_result(page, {"ok": False, "data": {}, "error": {"code": "not_found"}})
         assert card.get_by_role("status").is_visible()

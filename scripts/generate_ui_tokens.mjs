@@ -7,6 +7,9 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const contractPath = path.join(repositoryRoot, "design/ui-contract.json");
 const cssPath = path.join(repositoryRoot, "notas/static/notas/css/ui-contract.generated.css");
 const nativePath = path.join(repositoryRoot, "mobile/src/generated/ui-tokens.ts");
+const mcpCardSourcePath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/meal_card_v3.source.html");
+const mcpCardPath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/meal_card_v3.html");
+const mcpTokenMarker = "/* MYSCOOPE_GENERATED_UI_TOKENS */";
 
 const contract = JSON.parse(await readFile(contractPath, "utf8"));
 const { shared, platforms } = contract;
@@ -129,12 +132,43 @@ const native = [
   "",
 ].join("\n");
 
+const mcpTheme = platforms[platforms.mcp.themeSource].themes;
+const mcpTokens = [
+  "/* Generated from design/ui-contract.json. Edit that contract, not this block. */",
+  ":root {",
+  `  --ui-contract-version: "${contract.contract}";`,
+  `  --font-family-sans: ${platforms.web.fontFamily};`,
+  ...cssLines(shared.spacing, "space-", (value) => `${value / 16}rem`),
+  ...cssLines(shared.radius, "radius-", px),
+  ...cssLines(shared.typography, "font-size-", px),
+  ...cssLines(shared.fontWeight, "font-weight-"),
+  ...componentRecipeCssLines(platforms.mcp.componentRecipes),
+  ...entityLines,
+  ...nutritionLines,
+  ...themeCss(mcpTheme.light),
+  "}",
+  ':root[data-theme="dark"] {',
+  ...themeCss(mcpTheme.dark),
+  "}",
+  "@media (prefers-color-scheme: dark) {",
+  "  :root:not([data-theme]) {",
+  ...themeCss(mcpTheme.dark),
+  "  }",
+  "}",
+].join("\n");
+const mcpCardSource = await readFile(mcpCardSourcePath, "utf8");
+if (mcpCardSource.split(mcpTokenMarker).length !== 2) {
+  throw new Error(`Expected exactly one ${mcpTokenMarker} in ${mcpCardSourcePath}`);
+}
+const mcpCard = mcpCardSource.replace(mcpTokenMarker, mcpTokens);
+
 if (process.argv.includes("--check")) {
-  const [currentCss, currentNative] = await Promise.all([
+  const [currentCss, currentNative, currentMcpCard] = await Promise.all([
     readFile(cssPath, "utf8").catch(() => ""),
     readFile(nativePath, "utf8").catch(() => ""),
+    readFile(mcpCardPath, "utf8").catch(() => ""),
   ]);
-  if (currentCss !== css || currentNative !== native) {
+  if (currentCss !== css || currentNative !== native || currentMcpCard !== mcpCard) {
     console.error("Generated UI tokens are stale. Run: npm run generate:ui");
     process.exitCode = 1;
   }
@@ -143,6 +177,6 @@ if (process.argv.includes("--check")) {
     mkdir(path.dirname(cssPath), { recursive: true }),
     mkdir(path.dirname(nativePath), { recursive: true }),
   ]);
-  await Promise.all([writeFile(cssPath, css), writeFile(nativePath, native)]);
-  console.log(`Generated ${path.relative(repositoryRoot, cssPath)} and ${path.relative(repositoryRoot, nativePath)}`);
+  await Promise.all([writeFile(cssPath, css), writeFile(nativePath, native), writeFile(mcpCardPath, mcpCard)]);
+  console.log(`Generated UI assets, including ${path.relative(repositoryRoot, mcpCardPath)}`);
 }

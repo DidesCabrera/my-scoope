@@ -83,7 +83,9 @@ export type CalendarProgressData = {
   period_start: string;
   period_end: string;
   days_with_plan: number;
+  scheduled_days_with_plan: number;
   scheduled_meals: number;
+  due_meals: number;
   elapsed_meals: number;
   completed_meals: number;
   skipped_meals: number;

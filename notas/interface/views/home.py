@@ -193,8 +193,8 @@ def home_view(request):
         next_month_key=(month_start + timedelta(days=32)).replace(day=1).strftime("%Y-%m"),
         month_days=month_days,
         future_plans_count=future_plans_count,
-        calendar_coverage=min(100, round(progress["days_with_plan"] / future_plans_count * 100)) if future_plans_count else 0,
-        meal_coverage=min(100, round(progress["completed_meals"] / progress["scheduled_meals"] * 100)) if progress["scheduled_meals"] else 0,
+        calendar_coverage=min(100, round(progress["days_with_plan"] / progress["scheduled_days_with_plan"] * 100)) if progress["scheduled_days_with_plan"] else 0,
+        meal_coverage=min(100, round(progress["completed_meals"] / progress["due_meals"] * 100)) if progress["due_meals"] else 0,
         weight_history=weight_history,
         weight_chart_points=weight_chart_points,
     )
