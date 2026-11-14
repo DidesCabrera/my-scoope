@@ -1,0 +1,193 @@
+from zoneinfo import ZoneInfo
+
+from django.contrib.auth.models import User
+from django.test import TestCase, override_settings
+from django.urls import reverse
+from django.utils import timezone
+
+from accounts.models import AccountPlan, AccountSubscription
+from accounts.seed_plans import seed_account_plans
+from notas.domain.models import (
+    CalendarizedDay,
+    CalendarizedSupplementIntakeExecution,
+    DailyPlan,
+    Food,
+    Meal,
+    MealPreparation,
+    Preparation,
+    ProgramCalendarization,
+    Supplement,
+    SupplementIntake,
+    SupplementIntakePreset,
+)
+
+
+@override_settings(
+    NUTRITION_ONBOARDING_GATE_ENABLED=False,
+    PERSONAL_PREPARATIONS_FEATURE_ENABLED=True,
+    SUPPLEMENTS_FEATURE_ENABLED=True,
+)
+class WebPreparationsAndSupplementsTests(TestCase):
+    def setUp(self):
+        seed_account_plans()
+        self.user = User.objects.create_user(username="web-parity", password="test-password")
+        AccountSubscription.objects.update_or_create(
+            user=self.user, defaults={"plan": AccountPlan.objects.get(slug="pro")},
+        )
+        self.client.force_login(self.user)
+        self.food = Food.objects.create(
+            name="Avena", protein=10, carbs=60, fat=5, is_global=True,
+            preparation_state="dry", sodium_mg_per_100g=2,
+        )
+
+    def test_personal_preparation_flows_from_library_into_meal(self):
+        meal = Meal.objects.create(name="Desayuno", created_by=self.user)
+        created = self.client.post(reverse("preparation_create"), {"name": "Avena casera"})
+        self.assertEqual(created.status_code, 302)
+        preparation = Preparation.objects.get(created_by=self.user, name="Avena casera")
+        self.assertIsNone(preparation.current_version)
+        self.assertContains(self.client.get(reverse("preparation_detail", args=[preparation.pk])), "Borrador")
+        self.assertContains(self.client.get(reverse("preparation_detail", args=[preparation.pk]) + "?food=Avena"), "Avena")
+        added = self.client.post(reverse("preparation_edit", args=[preparation.pk]), {
+            "action": "add_food", "food_id": self.food.pk, "quantity_g": "80",
+        })
+        self.assertEqual(added.status_code, 302)
+        preparation.refresh_from_db()
+        self.assertIsNotNone(preparation.current_version)
+        self.assertContains(self.client.get(reverse("preparation_detail", args=[preparation.pk])), "Avena")
+        relation = self.client.post(reverse("meal_preparation_add", args=[meal.pk]), {
+            "preparation_id": preparation.pk, "units": "1.5",
+        })
+        self.assertEqual(relation.status_code, 302)
+        self.assertEqual(MealPreparation.objects.get(meal=meal).quantity_g, 150)
+        self.assertContains(self.client.get(reverse("meal_detail", args=[meal.pk])), "Avena casera")
+        relation = MealPreparation.objects.get(meal=meal)
+        self.assertEqual(self.client.post(reverse("meal_preparation_update", args=[meal.pk, relation.pk]), {
+            "mode": "grams", "quantity": "60",
+        }).status_code, 302)
+        relation.refresh_from_db()
+        self.assertEqual(relation.quantity_g, 60)
+        self.client.post(reverse("preparation_edit", args=[preparation.pk]), {
+            "action": "update_food", "food_id": self.food.pk, "quantity_g": "120",
+        })
+        preparation.refresh_from_db()
+        self.assertEqual(preparation.current_version.ingredients.get().quantity_g, 120)
+
+    def test_supplement_intake_does_not_change_plan_nutrition(self):
+        plan = DailyPlan.objects.create(name="Minuta", created_by=self.user)
+        response = self.client.post(reverse("supplement_create"), {"name": "Vitamina D"})
+        self.assertEqual(response.status_code, 302)
+        supplement = Supplement.objects.get(created_by=self.user)
+        self.assertContains(self.client.get(reverse("supplement_detail", args=[supplement.pk])), "Vitamina D")
+        response = self.client.post(reverse("dailyplan_intake_add", args=[plan.pk]), {
+            "intake_id": [str(supplement.pk)], "intake_quantity": ["1"],
+            "intake_unit": ["capsule"], "hour": "08:30",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(SupplementIntake.objects.filter(dailyplan=plan).count(), 1)
+        plan.refresh_from_db()
+        self.assertEqual(plan.total_kcal, 0)
+        self.assertContains(self.client.get(reverse("dailyplan_detail", args=[plan.pk])), "Vitamina D")
+        intake = SupplementIntake.objects.get(dailyplan=plan)
+        self.assertEqual(self.client.post(reverse("dailyplan_intake_update", args=[plan.pk, intake.pk]), {
+            "item_id": [str(intake.items.get().pk)], "quantity": ["2"],
+            "unit": ["capsule"], "hour": "09:00",
+        }).status_code, 302)
+        self.assertEqual(intake.items.get().quantity, 2)
+        self.assertEqual(self.client.post(reverse("supplement_preset_create"), {
+            "name": "Mañana", "preset_id": [str(supplement.pk)],
+            "preset_quantity": ["2"], "preset_unit": ["capsule"],
+        }).status_code, 302)
+        preset = SupplementIntakePreset.objects.get(created_by=self.user)
+        self.assertContains(self.client.get(reverse("supplement_preset_detail", args=[preset.pk])), "Mañana")
+
+    def test_supplement_form_keeps_decimal_values_and_rejects_incomplete_intake(self):
+        plan = DailyPlan.objects.create(name="Minuta", created_by=self.user)
+        supplement = Supplement.objects.create(
+            created_by=self.user, name="Magnesio", default_quantity="1.5",
+            default_unit="capsule", nutrition={"protein_g": 1.25},
+        )
+        detail = self.client.get(reverse("supplement_detail", args=[supplement.pk]))
+        self.assertContains(detail, 'name="default_quantity" value="1.500"')
+        self.assertContains(detail, 'name="protein_g" type="number" min="0" step="0.001" value="1.25"')
+        response = self.client.post(reverse("dailyplan_intake_add", args=[plan.pk]), {
+            "intake_id": [str(supplement.pk), ""],
+            "intake_quantity": ["1", "2"],
+            "intake_unit": ["capsule", "capsule"],
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SupplementIntake.objects.filter(dailyplan=plan).exists())
+
+    def test_other_user_cannot_read_or_change_private_entities(self):
+        supplement = Supplement.objects.create(created_by=self.user, name="Privado")
+        preparation = Preparation.objects.create(name="Privada", is_global=False, created_by=self.user)
+        other = User.objects.create_user(username="other-web", password="test-password")
+        AccountSubscription.objects.update_or_create(
+            user=other, defaults={"plan": AccountPlan.objects.get(slug="pro")},
+        )
+        self.client.force_login(other)
+        self.assertEqual(self.client.get(reverse("supplement_detail", args=[supplement.pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("preparation_detail", args=[preparation.pk])).status_code, 404)
+        self.assertEqual(self.client.post(reverse("supplement_remove", args=[supplement.pk])).status_code, 404)
+
+    @override_settings(SUPPLEMENTS_FEATURE_ENABLED=False, PERSONAL_PREPARATIONS_FEATURE_ENABLED=False)
+    def test_disabled_features_keep_curated_preparations_visible_and_block_writes(self):
+        self.assertContains(self.client.get(reverse("preparation_list")), "Preparaciones del catálogo")
+        self.assertEqual(self.client.post(reverse("preparation_create"), {"name": "Privada"}).status_code, 403)
+        self.assertContains(self.client.get(reverse("supplement_list")), "Suplementos Pro")
+        self.assertEqual(self.client.post(reverse("supplement_create"), {"name": "Vitamina"}).status_code, 403)
+
+    def test_calendarized_preparation_is_distinct_and_only_changes_that_day(self):
+        self.client.post(reverse("preparation_create"), {"name": "Avena casera"})
+        preparation = Preparation.objects.get(created_by=self.user, name="Avena casera")
+        self.client.post(reverse("preparation_edit", args=[preparation.pk]), {
+            "action": "add_food", "food_id": self.food.pk, "quantity_g": "80",
+        })
+        today = timezone.now().astimezone(ZoneInfo("UTC")).date()
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user, program_name_snapshot="Programa",
+            start_date=today, end_date=today, timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization, calendar_date=today,
+            week_number=1, day_number=1,
+            plan_snapshot={"name": "Minuta", "meals": [{"key": "meal-1", "name": "Desayuno", "foods": [], "totals": {}}], "totals": {}},
+        )
+        response = self.client.post(reverse("calendarized_preparation_add", args=[day.pk, "meal-1"]), {
+            "preparation_id": preparation.pk, "units": "1",
+        })
+        self.assertEqual(response.status_code, 302)
+        day.refresh_from_db()
+        component = day.plan_snapshot["meals"][0]["foods"][0]
+        self.assertEqual(component["component_type"], "preparation")
+        self.assertEqual(component["name"], "Avena casera")
+        self.assertEqual(component["ingredients"][0]["quantity_g"], 100)
+        self.assertContains(self.client.get(reverse("calendarization_meal_detail", args=[day.pk, "meal-1"])), "Preparaciones de esta Comida")
+        removed = self.client.post(reverse("calendarized_preparation_remove", args=[day.pk, "meal-1", component["key"]]))
+        self.assertEqual(removed.status_code, 302)
+        day.refresh_from_db()
+        self.assertEqual(day.plan_snapshot["meals"][0]["foods"], [])
+
+    def test_calendarized_supplement_check_in_is_owner_scoped(self):
+        today = timezone.now().astimezone(ZoneInfo("UTC")).date()
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user, program_name_snapshot="Programa",
+            start_date=today, end_date=today, timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization, calendar_date=today,
+            week_number=1, day_number=1,
+            plan_snapshot={"name": "Minuta", "meals": [], "totals": {}, "supplement_intakes": [
+                {"key": "supplement_intake:1", "label": "Ingesta 1", "items": [{"supplement": {"name": "Vitamina D"}, "quantity": "1", "unit": "capsule"}]},
+            ]},
+        )
+        response = self.client.post(reverse("calendarization_supplement_intake_check_in", args=[day.pk, "supplement_intake:1"]), {
+            "action": "completed", "idempotency_key": "web-test-intake-completed",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(CalendarizedSupplementIntakeExecution.objects.get().action, "completed")
+        self.assertEqual(self.client.post(reverse("calendarization_supplement_intake_check_in", args=[day.pk, "other"]), {
+            "action": "completed", "idempotency_key": "web-test-other",
+        }).status_code, 404)

@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import asdict
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -28,6 +29,7 @@ from notas.application.queries.calendarization_queries import (
     owned_programs_for_calendarization,
     today_for_calendarization,
 )
+from notas.application.services.calendarization.preparation_snapshots import build_calendarized_preparation_snapshot
 from notas.application.services.calendarization.scheduling import local_date_for_timezone
 from notas.application.services.commands.calendar_commitment_commands import register_calendar_commitments
 from notas.application.services.commands.calendar_day_commands import (
@@ -45,21 +47,39 @@ from notas.application.services.commands.calendarization_commands import (
     deactivate_web_push_subscription,
     pause_calendarization,
     register_web_push_subscription,
+    remove_calendarized_food,
     rename_calendarized_day_plan,
     rename_calendarized_meal,
     resume_calendarization,
+    save_calendarized_preparation,
     update_calendarization_preferences,
     update_calendarized_meal_hour,
 )
 from notas.application.services.commands.calendarization_execution_commands import (
     record_meal_execution,
 )
-from notas.domain.models import CalendarCommitment, CalendarizedDay, DailyPlan, Program, WebPushSubscription, WeightLog
+from notas.application.services.commands.personal_preparation_commands import can_use_personal_preparations
+from notas.application.services.commands.supplement_commands import (
+    create_calendarized_supplement_intake_from_preset,
+    require_supplements_pro,
+)
+from notas.domain.models import (
+    CalendarCommitment,
+    CalendarizedDay,
+    CalendarizedSupplementIntakeExecution,
+    DailyPlan,
+    Preparation,
+    Program,
+    SupplementIntakePreset,
+    WebPushSubscription,
+    WeightLog,
+)
 from notas.interface.forms.calendarization_forms import (
     CalendarizationActivationForm,
     CalendarizationPreferencesForm,
 )
 from notas.interface.forms.meal_time_forms import MealTimeChangeForm
+from notas.interface.views.preparations import _visible_preparation
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
@@ -679,6 +699,23 @@ def day_detail(request, day_id):
             "total_count": len(completion_items),
             "items": completion_items,
         }
+        try:
+            require_supplements_pro(request.user)
+        except PermissionError:
+            content["supplements_access"] = False
+        else:
+            content["supplements_access"] = True
+            rows = (day.plan_snapshot or {}).get("supplement_intakes") or []
+            states = {row.get("key"): "planned" for row in rows}
+            for event in day.supplement_execution_events.all():
+                if event.intake_key in states:
+                    states[event.intake_key] = "planned" if event.action == "reset" else event.action
+            content["supplement_intakes"] = [
+                {**row, "status": states.get(row.get("key"), "planned"),
+                 "idempotency_key": f"web-day-supplement-{uuid.uuid4()}"}
+                for row in rows
+            ]
+            content["supplement_presets"] = SupplementIntakePreset.objects.filter(created_by=request.user)[:100]
 
     return render(
         request,
@@ -688,6 +725,56 @@ def day_detail(request, day_id):
             content,
         ),
     )
+
+
+@login_required
+@require_POST
+def supplement_intake_from_preset(request, day_id):
+    day = calendarized_day_for_user(request.user, day_id)
+    if day is None or not day.has_plan:
+        raise Http404("Día calendarizado no encontrado")
+    try:
+        require_supplements_pro(request.user)
+    except PermissionError:
+        return HttpResponseBadRequest("Suplementos no disponibles")
+    try:
+        hour = time.fromisoformat(request.POST.get("hour", ""))
+        create_calendarized_supplement_intake_from_preset(
+            user=request.user, day_id=day_id,
+            preset_id=int(request.POST.get("preset_id", "")), hour=hour,
+        )
+    except (ValueError, TypeError):
+        messages.error(request, "Revisa la toma guardada y su hora.")
+    return redirect("calendarization_day_detail", day_id=day_id)
+
+
+@login_required
+@require_POST
+def supplement_intake_check_in(request, day_id, intake_key):
+    day = calendarized_day_for_user(request.user, day_id)
+    if day is None or not _can_check_in_today(day):
+        raise Http404("Día calendarizado no disponible")
+    try:
+        require_supplements_pro(request.user)
+    except PermissionError:
+        return HttpResponseBadRequest("Suplementos no disponibles")
+    rows = (day.plan_snapshot or {}).get("supplement_intakes") or []
+    if intake_key not in {row.get("key") for row in rows}:
+        raise Http404("Toma no encontrada")
+    action = request.POST.get("action")
+    if action not in {"completed", "skipped", "reset"}:
+        return HttpResponseBadRequest("Estado inválido")
+    idempotency_key = request.POST.get("idempotency_key", "")
+    if not idempotency_key or len(idempotency_key) > 120:
+        return HttpResponseBadRequest("Solicitud inválida")
+    try:
+        CalendarizedSupplementIntakeExecution.objects.create(
+            calendarized_day=day, intake_key=intake_key, action=action,
+            idempotency_key=idempotency_key,
+        )
+    except IntegrityError:
+        pass
+    return redirect("calendarization_day_detail", day_id=day_id)
 
 
 @login_required
@@ -707,6 +794,13 @@ def meal_detail(request, day_id, meal_snapshot_key):
     detail["status_idempotency_key"] = f"web-meal-status-{uuid.uuid4()}"
     detail["note_idempotency_key"] = f"web-meal-note-{uuid.uuid4()}"
     detail["instance_id"] = f"{day.id}-detail"
+    detail["preparation_options"] = Preparation.objects.select_related("current_version").filter(
+        is_global=True, is_active=True, current_version__isnull=False,
+    ).order_by("name", "id")[:100]
+    if can_use_personal_preparations(request.user):
+        detail["personal_preparation_options"] = Preparation.objects.select_related("current_version").filter(
+            is_global=False, is_active=True, created_by=request.user, current_version__isnull=False,
+        ).order_by("name", "id")[:100]
     change_time_action = {
         "key": "change_time",
         "label": "Cambiar hora",
@@ -742,6 +836,46 @@ def meal_detail(request, day_id, meal_snapshot_key):
             },
         ),
     )
+
+
+@login_required
+@require_POST
+def calendarized_preparation_save(request, day_id, meal_snapshot_key, component_snapshot_key=None):
+    day = calendarized_day_for_user(request.user, day_id)
+    if day is None:
+        raise Http404("Día calendarizado no encontrado")
+    try:
+        preparation = _visible_preparation(request.user, int(request.POST.get("preparation_id", "")))
+        snapshot = build_calendarized_preparation_snapshot(
+            preparation, units=request.POST.get("units"),
+        )
+        save_calendarized_preparation(
+            user=request.user, day_id=day_id, meal_snapshot_key=meal_snapshot_key,
+            component_snapshot_key=component_snapshot_key, preparation_snapshot=snapshot,
+        )
+    except (ValueError, TypeError, Http404):
+        messages.error(request, "Revisa la Preparación y su porción.")
+    return redirect("calendarization_meal_detail", day_id=day_id, meal_snapshot_key=meal_snapshot_key)
+
+
+@login_required
+@require_POST
+def calendarized_preparation_remove(request, day_id, meal_snapshot_key, component_snapshot_key):
+    day = calendarized_day_for_user(request.user, day_id)
+    if day is None:
+        raise Http404("Día calendarizado no encontrado")
+    meal = next((item for item in (day.plan_snapshot or {}).get("meals", []) if item.get("key") == meal_snapshot_key), None)
+    component = next((item for item in (meal or {}).get("foods", []) if item.get("key") == component_snapshot_key), None)
+    if component is None or component.get("component_type") != "preparation":
+        raise Http404("Preparación calendarizada no encontrada")
+    try:
+        remove_calendarized_food(
+            user=request.user, day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key, food_snapshot_key=component_snapshot_key,
+        )
+    except ValueError:
+        messages.error(request, "No se pudo quitar la Preparación de este día.")
+    return redirect("calendarization_meal_detail", day_id=day_id, meal_snapshot_key=meal_snapshot_key)
 
 
 @login_required

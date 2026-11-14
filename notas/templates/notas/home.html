@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}">
 <link rel="stylesheet" href="{% static 'notas/css/calendar_preview.css' %}?v=20261102-2">
 <link rel="stylesheet" href="{% static 'notas/css/home_alignment.css' %}?v=20261102-2">
+<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -147,10 +148,48 @@
         <div id="{{ day.panel_id }}" class="home-calendar__plan-panel">
           {% if day.dailyplan_card %}
             {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True calendarized_day=day %}
+          {% elif vm.content.pinned_dailyplan %}
+            <div class="web-parity__section home-pinned-plan" data-section="pinned-dailyplan">
+              <p class="web-parity__eyebrow">Minuta fijada</p>
+              <h3><a href="{% url 'dailyplan_detail' vm.content.pinned_dailyplan.id %}">{{ vm.content.pinned_dailyplan.name }}</a></h3>
+              <p>Organiza esta Minuta desde Mis Minutas. La Comida marcada se registra para hoy.</p>
+              <div class="web-parity__rows">
+                {% for item in vm.content.pinned_meals %}
+                  <div class="web-parity__row"><span><a href="{% url 'meal_detail' item.relation.meal_id %}"><strong>{{ item.relation.meal.name }}</strong></a>
+                    <small>{% if item.relation.hour %}{{ item.relation.hour|time:'H:i' }} · {% endif %}{% if item.status == 'completed' %}completada{% elif item.status == 'skipped' %}omitida{% else %}planificada{% endif %}</small></span>
+                    <form method="post" action="{% url 'home_pinned_meal_check_in' item.relation.id %}" class="web-parity__checkin">{% csrf_token %}
+                      <input type="hidden" name="idempotency_key" value="{{ item.idempotency_key }}">
+                      <button type="submit" name="action" value="completed">Completar</button>
+                      <button type="submit" name="action" value="skipped">Omitir</button>
+                      <button type="submit" name="action" value="reset">Restablecer</button></form></div>
+                {% empty %}<p>Aún no has agregado Comidas a esta Minuta.</p>{% endfor %}
+              </div>
+              {% if vm.content.pinned_supplement_intakes %}
+                <h4>Tomas de suplementos</h4>
+                <div class="web-parity__rows">{% for item in vm.content.pinned_supplement_intakes %}
+                  <div class="web-parity__row"><span><strong>{% if item.intake.hour %}{{ item.intake.hour|time:'H:i' }} · {% endif %}{% for component in item.intake.items.all %}{{ component.supplement_snapshot.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</strong>
+                    <small>{% if item.status == 'completed' %}completada{% elif item.status == 'skipped' %}omitida{% else %}planificada{% endif %}</small></span>
+                    <form method="post" action="{% url 'home_pinned_supplement_check_in' item.intake.id %}" class="web-parity__checkin">{% csrf_token %}
+                      <input type="hidden" name="idempotency_key" value="{{ item.idempotency_key }}">
+                      <button type="submit" name="action" value="completed">Completar</button>
+                      <button type="submit" name="action" value="skipped">Omitir</button>
+                      <button type="submit" name="action" value="reset">Restablecer</button></form></div>
+                {% endfor %}</div>
+              {% endif %}
+              <form method="post" action="{% url 'home_unpin_dailyplan' %}">{% csrf_token %}<button class="web-parity__text-button" type="submit">Dejar de fijar</button></form>
+            </div>
           {% else %}
             <div class="home-calendar__empty-card">
               <p>Hoy no tienes una minuta programada.</p>
               <a href="{{ calendar_preview_url }}?date={{ vm.content.today_date|date:'Y-m-d' }}#plan-editor">Asignar una minuta</a>
+              {% if vm.content.can_pin_dailyplan %}
+                <form method="post" action="{% url 'home_create_pinned_dailyplan' %}">{% csrf_token %}<button class="btn-primary" type="submit">Crear un plan para hoy</button></form>
+                {% if vm.content.pinnable_dailyplans %}
+                  <form method="post" action="{% url 'home_pin_dailyplan' %}" class="web-parity__inline-form">{% csrf_token %}
+                    <label>Elegir desde Mis Minutas<select name="dailyplan_id" required><option value="">Seleccionar</option>{% for plan in vm.content.pinnable_dailyplans %}<option value="{{ plan.id }}">{{ plan.name }}</option>{% endfor %}</select></label>
+                    <button class="btn-primary" type="submit">Fijar en Inicio</button></form>
+                {% endif %}
+              {% endif %}
             </div>
           {% endif %}
         </div>
@@ -227,6 +266,7 @@
           </div>
         </div>
         {% include "components/detail_link_row.html" with label="Gestionar programa en curso" url=vm.content.calendarization.dashboard_url accessibility_label="Gestionar programa en curso" standalone=True %}
+        <a href="{% url 'calendarization_review' %}" class="home-active-program__progress-link">Revisar progreso y ajustes</a>
       {% else %}
         <div class="home-active-program__identity">
           <h3 class="home-calendar__program-name">Aún no hay programa activo</h3>
@@ -250,7 +290,7 @@
           <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
           <div class="home-section-help__copy">
             <h3>Mis librerías</h3>
-            <p>Resume tus programas, minutas diarias, comidas y alimentos para acceder rápido a tus recursos principales.</p>
+            <p>Accede a programas, minutas, comidas, alimentos, preparaciones y suplementos desde un solo lugar.</p>
           </div>
           <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
             <i data-lucide="x" aria-hidden="true"></i>
@@ -343,6 +383,22 @@
         </div>
   
       </div>
+      <div class="home-stat-card">
+        <a href="{% url 'preparation_list' %}" class="home-stat-card__surface-link" aria-label="Ir a Preparaciones"></a>
+        <div class="home-stat-top"><i data-lucide="cooking-pot" class="home-stat-icon food"></i><span class="home-stat-label">Preparaciones</span></div>
+        <p class="home-stat-description">Explora recetas curadas y organiza tus Preparaciones personales.</p>
+        <div class="home-stat-value-row"><i data-lucide="bookmark" class="home-stat-kpi-icon"></i><div class="home-stat-value">{{ vm.content.preparations_count }}</div></div>
+        {% if vm.content.personal_preparations_access %}<div class="home-stat-actions"><a href="{% url 'preparation_list' %}" class="home-cta home-cta--primary"><i data-lucide="plus" class="btn-card-home-icon white"></i><span class="home-cta-text">Crear</span></a></div>{% endif %}
+      </div>
+      {% if vm.content.supplements_visible %}
+      <div class="home-stat-card">
+        <a href="{% url 'supplement_list' %}" class="home-stat-card__surface-link" aria-label="Ir a Mis Suplementos"></a>
+        <div class="home-stat-top"><i data-lucide="pill" class="home-stat-icon food"></i><span class="home-stat-label">Mis Suplementos</span></div>
+        <p class="home-stat-description">Registra productos y prepara tomas para tus Minutas.</p>
+        <div class="home-stat-value-row"><i data-lucide="bookmark" class="home-stat-kpi-icon"></i><div class="home-stat-value">{{ vm.content.supplements_count }}</div></div>
+        <div class="home-stat-actions"><a href="{% url 'supplement_list' %}" class="home-cta home-cta--primary"><i data-lucide="arrow-right" class="btn-card-home-icon white"></i><span class="home-cta-text">Abrir</span></a></div>
+      </div>
+      {% endif %}
     </div>
   </section>
 

@@ -1,21 +1,43 @@
+import uuid
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import List
 
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 from django.db.models import Q
-from django.shortcuts import render
+from django.http import Http404, HttpResponseBadRequest
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
+from notas.application.commercial.limits import CommercialLimitReached
 from notas.application.queries.calendar_metrics import calendar_adherence_summary, calendar_future_schedule_summary
+from notas.application.queries.calendarization_execution_queries import pinned_dailyplan_execution_state
+from notas.application.queries.calendarization_queries import current_calendarization_for_user
 from notas.application.services.calendarization.scheduling import local_date_for_timezone
+from notas.application.services.commands.personal_preparation_commands import can_use_personal_preparations
+from notas.application.services.commands.pinned_dailyplan_commands import (
+    create_and_pin_empty_dailyplan,
+    pin_dailyplan,
+    record_pinned_meal_execution,
+    unpin_dailyplan,
+)
+from notas.application.services.commands.supplement_commands import require_supplements_pro
 from notas.domain.models import (
     CalendarCommitment,
     CalendarizedDay,
     DailyPlan,
     Food,
     Meal,
+    PinnedDailyPlan,
+    PinnedSupplementIntakeExecution,
+    Preparation,
     Program,
+    Supplement,
+    SupplementIntake,
     WeightLog,
 )
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
@@ -63,6 +85,57 @@ class HomeContentVM:
     meal_coverage: int
     weight_history: list[WeightLog]
     weight_chart_points: str
+    can_pin_dailyplan: bool
+    pinned_dailyplan: DailyPlan | None
+    pinned_meals: list[dict]
+    pinned_supplement_intakes: list[dict]
+    pinnable_dailyplans: list[DailyPlan]
+    preparations_count: int
+    supplements_count: int
+    personal_preparations_access: bool
+    supplements_visible: bool
+
+
+def _pinned_context(user, *, today_date, has_dated_plan):
+    if current_calendarization_for_user(user) is not None or has_dated_plan:
+        return None, [], [], []
+    pinned = PinnedDailyPlan.objects.select_related("dailyplan").filter(user=user, is_active=True).first()
+    plans = list(DailyPlan.objects.filter(created_by=user).exclude(
+        source=DailyPlan.SOURCE_PROGRAM,
+    ).order_by("-created_at")[:100])
+    if pinned is None:
+        return None, [], [], plans
+    states = {item["meal_key"]: item for item in pinned_dailyplan_execution_state(pinned, today_date)}
+    meals = []
+    for relation in pinned.dailyplan.dailyplan_meals.select_related("meal").order_by("order", "id"):
+        key = f"dailyplan-meal:{relation.id}"
+        meals.append({
+            "relation": relation, "key": key,
+            "status": states.get(key, {}).get("status", "planned"),
+            "idempotency_key": f"web-pinned-meal-{uuid.uuid4()}",
+        })
+    intakes = []
+    try:
+        require_supplements_pro(user)
+    except PermissionError:
+        pass
+    else:
+        states = {}
+        for event in PinnedSupplementIntakeExecution.objects.filter(
+            pinned_dailyplan=pinned, local_date=today_date,
+        ).order_by("created_at", "id"):
+            states[event.intake_key] = "planned" if event.action == "reset" else event.action
+        for intake in SupplementIntake.objects.filter(dailyplan=pinned.dailyplan).prefetch_related("items"):
+            intakes.append({
+                "intake": intake, "status": states.get(f"supplement_intake:{intake.id}", "planned"),
+                "idempotency_key": f"web-pinned-supplement-{uuid.uuid4()}",
+            })
+    return pinned.dailyplan, meals, intakes, plans
+
+
+def _require_unprogrammed_home(user):
+    if current_calendarization_for_user(user) is not None:
+        raise Http404("El programa vigente tiene prioridad sobre una Minuta fijada")
 
 
 @login_required
@@ -135,6 +208,14 @@ def home_view(request):
     dailyplans_count = dailyplans_qs.count()
     meals_count = meals_qs.count()
     foods_count = foods_qs.count()
+    personal_preparations_access = can_use_personal_preparations(user)
+    preparations_count = Preparation.objects.filter(created_by=user, is_active=True).count() if personal_preparations_access else 0
+    supplements_visible = bool(settings.SUPPLEMENTS_FEATURE_ENABLED)
+    supplements_count = Supplement.objects.filter(created_by=user).count() if supplements_visible else 0
+    today_plan = month_plans.get(today_date)
+    pinned_dailyplan, pinned_meals, pinned_supplement_intakes, pinnable_dailyplans = _pinned_context(
+        user, today_date=today_date, has_dated_plan=bool(today_plan and today_plan.has_plan),
+    )
 
     content_vm = HomeContentVM(
         header=build_page_header(
@@ -197,6 +278,15 @@ def home_view(request):
         meal_coverage=min(100, round(progress["completed_meals"] / progress["due_meals"] * 100)) if progress["due_meals"] else 0,
         weight_history=weight_history,
         weight_chart_points=weight_chart_points,
+        can_pin_dailyplan=not bool(today_plan and today_plan.has_plan) and current_calendarization_for_user(user) is None,
+        pinned_dailyplan=pinned_dailyplan,
+        pinned_meals=pinned_meals,
+        pinned_supplement_intakes=pinned_supplement_intakes,
+        pinnable_dailyplans=pinnable_dailyplans,
+        preparations_count=preparations_count,
+        supplements_count=supplements_count,
+        personal_preparations_access=personal_preparations_access,
+        supplements_visible=supplements_visible,
     )
 
     ui_vm = build_ui_vm(HOME_VIEWMODE)
@@ -211,3 +301,81 @@ def home_view(request):
         "notas/home.html",
         base_vm.as_context(),
     )
+
+
+@login_required
+@require_POST
+def home_create_pinned_dailyplan(request):
+    _require_unprogrammed_home(request.user)
+    today = local_date_for_timezone(request.user.profile.timezone_name or "UTC")
+    try:
+        pinned = create_and_pin_empty_dailyplan(user=request.user, local_date=today)
+    except CommercialLimitReached:
+        messages.error(request, "Llegaste al límite de Minutas de tu plan.")
+        return redirect("home_view")
+    return redirect("dailyplan_detail", pk=pinned.dailyplan_id)
+
+
+@login_required
+@require_POST
+def home_pin_dailyplan(request):
+    _require_unprogrammed_home(request.user)
+    try:
+        pin_dailyplan(user=request.user, dailyplan_id=int(request.POST.get("dailyplan_id", "")))
+    except (ValueError, TypeError):
+        messages.error(request, "Elige una Minuta propia para fijarla en Inicio.")
+    return redirect("home_view")
+
+
+@login_required
+@require_POST
+def home_unpin_dailyplan(request):
+    unpin_dailyplan(user=request.user)
+    return redirect("home_view")
+
+
+@login_required
+@require_POST
+def home_pinned_meal_check_in(request, relation_id):
+    _require_unprogrammed_home(request.user)
+    action = request.POST.get("action")
+    if action not in {"completed", "skipped", "reset"}:
+        return HttpResponseBadRequest("Estado inválido")
+    try:
+        record_pinned_meal_execution(
+            user=request.user,
+            local_date=local_date_for_timezone(request.user.profile.timezone_name or "UTC"),
+            meal_key=f"dailyplan-meal:{relation_id}", action=action,
+            idempotency_key=request.POST.get("idempotency_key", ""),
+        )
+    except ValueError:
+        messages.error(request, "No se pudo registrar esa Comida.")
+    return redirect("home_view")
+
+
+@login_required
+@require_POST
+def home_pinned_supplement_check_in(request, intake_id):
+    _require_unprogrammed_home(request.user)
+    try:
+        require_supplements_pro(request.user)
+    except PermissionError:
+        raise Http404("Suplementos no disponibles") from None
+    pinned = PinnedDailyPlan.objects.filter(user=request.user, is_active=True).first()
+    if pinned is None or not SupplementIntake.objects.filter(pk=intake_id, dailyplan_id=pinned.dailyplan_id).exists():
+        raise Http404("Toma no encontrada")
+    action = request.POST.get("action")
+    if action not in {"completed", "skipped", "reset"}:
+        return HttpResponseBadRequest("Estado inválido")
+    key = request.POST.get("idempotency_key", "")
+    if not 8 <= len(key) <= 120:
+        return HttpResponseBadRequest("Solicitud inválida")
+    try:
+        PinnedSupplementIntakeExecution.objects.create(
+            pinned_dailyplan=pinned,
+            local_date=local_date_for_timezone(request.user.profile.timezone_name or "UTC"),
+            intake_key=f"supplement_intake:{intake_id}", action=action, idempotency_key=key,
+        )
+    except IntegrityError:
+        messages.error(request, "La toma ya fue registrada.")
+    return redirect("home_view")

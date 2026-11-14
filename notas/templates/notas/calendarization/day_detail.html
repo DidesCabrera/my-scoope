@@ -3,6 +3,7 @@
 
 {% block title %}{{ vm.content.day.calendar_date|date:"d M" }} · Plan de hoy{% endblock %}
 {% block body_class %}{% if vm.content.day.plan_snapshot %}page-detail page-header-meta-deferred{% endif %}{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
 
 {% block content %}
 <div
@@ -48,7 +49,7 @@
         <div class="detail-section-header dailyplan-detail__children-header">
           <div class="detail-section-heading home-section-title detail-dp">
             <i data-lucide="carrot" class="home-section-header-icon food" aria-hidden="true"></i>
-            <h2>Información de Alimentos</h2>
+            <h2>Alimentos y Preparaciones</h2>
           </div>
           <div class="structural-indicators">
             <span class="structural-item">
@@ -64,6 +65,32 @@
         </div>
       {% endif %}
     </div>
+    {% if vm.content.supplements_access %}
+    <section class="web-parity__section" data-section="calendarized-supplement-intakes">
+      <h2>Tomas de suplementos</h2>
+      <div class="web-parity__rows">
+      {% for intake in vm.content.supplement_intakes %}
+        <div class="web-parity__row"><span><strong>{{ intake.label }}{% if intake.hour %} · {{ intake.hour }}{% endif %}</strong>
+          <small>{% for item in intake.items %}{{ item.supplement.name }} · {{ item.quantity }} {{ item.unit }}{% if not forloop.last %}, {% endif %}{% endfor %}</small>
+          <small>Estado: {% if intake.status == 'completed' %}completada{% elif intake.status == 'skipped' %}omitida{% else %}planificada{% endif %}</small></span>
+          {% if vm.content.can_check_in %}
+          <form method="post" action="{% url 'calendarization_supplement_intake_check_in' vm.content.day.id intake.key %}" class="web-parity__checkin">
+            {% csrf_token %}<input type="hidden" name="idempotency_key" value="{{ intake.idempotency_key }}">
+            <button name="action" value="completed" type="submit">Completar</button>
+            <button name="action" value="skipped" type="submit">Omitir</button>
+            <button name="action" value="reset" type="submit">Restablecer</button>
+          </form>{% endif %}
+        </div>
+      {% empty %}<p>Este día no tiene tomas de suplementos.</p>{% endfor %}
+      </div>
+      {% if vm.content.supplement_presets %}
+      <form method="post" action="{% url 'calendarization_supplement_intake_from_preset' vm.content.day.id %}" class="web-parity__inline-form">
+        {% csrf_token %}<label>Toma guardada<select name="preset_id" required><option value="">Seleccionar</option>{% for preset in vm.content.supplement_presets %}<option value="{{ preset.id }}">{{ preset.name }}</option>{% endfor %}</select></label>
+        <label>Hora<input name="hour" type="time" required></label>
+        <button class="btn-primary" type="submit">Agregar al día</button>
+      </form>{% endif %}
+    </section>
+    {% endif %}
   {% else %}
     <section class="calendarization-card calendarization-empty">
       <h2>Día sin plan</h2>

@@ -58,6 +58,11 @@
     font-weight: inherit;
 }
 
+@media (max-width: 768px) {
+    .title-section-panels h3 { white-space: normal; }
+    .title-section-panels .add-title h4.add-title__label { display: none; }
+}
+
 .title-section-panels .add-title svg,
 .title-section-panels .add-title i {
     color: currentColor;

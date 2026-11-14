@@ -1,10 +1,11 @@
 {% extends "notas/base.html" %}
-{% load static %}
+{% load static l10n %}
 
 {% block title %}
 My Scoope
 {% endblock %}
 {% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
 
 {% block content %}
 
@@ -16,6 +17,36 @@ My Scoope
       {% include "components/card_main_meal.html" with main_card=vm.content.main_card %}
     {% endif %}
     {% include "components/food_detail_cards.html" with food_cards=vm.content.child_cards %}
+    <section class="web-parity__section">
+      <h2>Preparaciones</h2>
+      <div class="web-parity__rows">
+        {% for relation in preparation_relations %}
+        <div class="web-parity__row"><span><a href="{% url 'preparation_detail' relation.preparation_id %}">{{ relation.preparation.name }}</a>
+          <small>{{ relation.quantity_g|floatformat:0 }} g · {% if relation.selected_units %}{{ relation.selected_units|floatformat:1 }} porciones{% else %}porción en gramos{% endif %}</small></span>
+          {% if can_edit_foods %}<div class="web-parity__checkin">
+            <form method="post" action="{% url 'meal_preparation_update' relation.meal_id relation.id %}" class="web-parity__checkin">{% csrf_token %}
+              <label>Cantidad <input type="number" name="quantity" min="0.001" step="0.001" value="{% if relation.selection_mode == 'units' %}{{ relation.selected_units|floatformat:'1u' }}{% else %}{{ relation.quantity_g|floatformat:'3u' }}{% endif %}" required></label>
+              <label>Unidad <select name="mode"><option value="units" {% if relation.selection_mode == 'units' %}selected{% endif %}>Porciones</option><option value="grams" {% if relation.selection_mode == 'grams' %}selected{% endif %}>Gramos</option></select></label>
+              <button type="submit">Guardar</button></form>
+            <form method="post" action="{% url 'meal_preparation_remove' relation.meal_id relation.id %}">{% csrf_token %}<button class="web-parity__text-button" type="submit">Quitar</button></form>
+          </div>{% endif %}
+        </div>
+        {% empty %}<p>Esta Comida aún no tiene Preparaciones.</p>{% endfor %}
+      </div>
+      {% if can_edit_foods %}
+      <form method="post" action="{% url 'meal_preparation_add' meal_id %}" class="web-parity__inline-form">
+        {% csrf_token %}<label for="meal-preparation">Agregar preparación</label>
+        <select id="meal-preparation" name="preparation_id" required>
+          <option value="">Seleccionar</option>
+          {% for preparation in available_preparations %}<option value="{{ preparation.id }}">{{ preparation.name }}</option>{% endfor %}
+          {% for preparation in personal_preparations %}<option value="{{ preparation.id }}">{{ preparation.name }} · personal</option>{% endfor %}
+        </select>
+        <label>Cantidad <input type="number" name="quantity" min="0.001" step="0.001" value="1" required></label>
+        <label>Unidad <select name="mode"><option value="units">Porciones</option><option value="grams">Gramos</option></select></label>
+        <button class="btn-primary" type="submit">Agregar</button>
+      </form>
+      {% endif %}
+    </section>
   
 </div>
 

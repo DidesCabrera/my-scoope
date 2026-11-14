@@ -1,0 +1,49 @@
+{% extends "notas/base.html" %}
+{% load static %}
+{% block title %}Revisión del programa · My Scoope{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
+{% block content %}
+<div class="page web-parity" data-page="calendarization-review">
+  <a class="web-parity__back" href="{% url 'calendarization_dashboard' %}">← Programa en curso</a>
+  <header class="web-parity__heading"><div><p class="web-parity__eyebrow">Programa vivido</p><h1>Revisión de progreso</h1>
+    <p>Registra cómo te fue y revisa cualquier propuesta antes de cambiar fechas futuras.</p></div></header>
+  {% if vm.content.current %}
+    <section class="web-parity__section"><h2>Registrar revisión</h2>
+      {% if vm.content.can_review %}
+      <p>Periodo: {{ vm.content.review_start|date:"j F Y" }} al {{ vm.content.today|date:"j F Y" }}. La revisión congela la evidencia; no cambia el programa automáticamente.</p>
+      <form method="post" action="{% url 'calendarization_review_create' %}" class="web-parity__form">{% csrf_token %}
+        <input type="hidden" name="idempotency_key" value="{{ vm.content.review_idempotency_key }}">
+        <label>Energía general · 1 baja, 5 alta<select name="energy_score" required>{% for score in '12345' %}<option value="{{ score }}" {% if score == '3' %}selected{% endif %}>{{ score }}</option>{% endfor %}</select></label>
+        <label>Hambre · 1 baja, 5 alta<select name="hunger_score" required>{% for score in '12345' %}<option value="{{ score }}" {% if score == '3' %}selected{% endif %}>{{ score }}</option>{% endfor %}</select></label>
+        <label>Rendimiento al entrenar<select name="training_performance_score" required>{% for score in '12345' %}<option value="{{ score }}" {% if score == '3' %}selected{% endif %}>{{ score }}</option>{% endfor %}</select></label>
+        <label>Nota opcional<textarea name="note" rows="3" maxlength="1000" placeholder="Sueño, entrenamiento o contexto relevante"></textarea></label>
+        <button class="btn-primary" type="submit">Guardar revisión</button>
+      </form>
+      {% else %}<p>Podrás registrar la primera revisión cuando comience el programa.</p>{% endif %}
+    </section>
+    <section class="web-parity__section"><h2>Ajuste prospectivo</h2>
+      <p>El pasado y el día actual permanecen intactos. Solo se aplicarán las fechas futuras que aparecen aquí.</p>
+      {% if vm.content.pending %}
+        <h3>Desde {{ vm.content.pending.effective_from|date:"j F Y" }}</h3>
+        <p>{{ vm.content.pending.rationale }}</p>
+        <div class="web-parity__rows">{% for row in vm.content.comparison_days %}
+          <div class="web-parity__row"><span><strong>{{ row.date }}</strong><small>Actual: {{ row.before_name }} · {{ row.before_kcal|floatformat:0 }} kcal</small>
+            <small>Propuesto: {{ row.after_name }} · {{ row.after_kcal|floatformat:0 }} kcal</small></span></div>
+        {% endfor %}</div>
+        <form method="post" action="{% url 'calendarization_revision_decide' vm.content.pending.id %}" class="web-parity__checkin">{% csrf_token %}
+          <button type="submit" name="decision" value="approve">Aprobar fechas futuras</button>
+          <button type="submit" name="decision" value="reject">Rechazar ajuste</button>
+        </form>
+      {% else %}<p>No tienes ajustes pendientes de revisión.</p>{% endif %}
+    </section>
+  {% else %}
+    <section class="web-parity__section"><p>Necesitas un programa calendarizado para registrar una revisión.</p></section>
+  {% endif %}
+  <section class="web-parity__section"><h2>Revisiones recientes</h2><div class="web-parity__rows">
+    {% for review in vm.content.reviews %}<div class="web-parity__row"><span><strong>{{ review.period_start|date:"j M" }}–{{ review.period_end|date:"j M Y" }}</strong>
+      <small>Energía {{ review.energy_score|default:"—" }} · Hambre {{ review.hunger_score|default:"—" }} · Rendimiento {{ review.training_performance_score|default:"—" }}</small>
+      {% if review.note %}<small>{{ review.note }}</small>{% endif %}</span></div>
+    {% empty %}<p>Aún no hay revisiones registradas.</p>{% endfor %}
+  </div></section>
+</div>
+{% endblock %}

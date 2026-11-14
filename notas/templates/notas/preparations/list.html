@@ -1,0 +1,47 @@
+{% extends "notas/base.html" %}
+{% load static %}
+{% block title %}Preparaciones · My Scoope{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
+{% block content %}
+<div class="page web-parity" data-page="preparations-list">
+  <header class="web-parity__heading">
+    <div><p class="web-parity__eyebrow">Bibliotecas</p><h1>Preparaciones</h1>
+      <p>Recetas con ingredientes y porciones propias para agregar a tus Comidas.</p></div>
+  </header>
+  <form method="get" class="web-parity__search">
+    <label for="preparation-search">Buscar preparación</label>
+    <div><input id="preparation-search" name="q" value="{{ vm.content.search }}" placeholder="Nombre de la preparación"><button class="btn-primary" type="submit">Buscar</button></div>
+  </form>
+  {% if vm.content.personal_access %}
+    <section class="web-parity__section">
+      <h2>Mis Preparaciones</h2>
+      <form method="post" action="{% url 'preparation_create' %}" class="web-parity__inline-form">
+        {% csrf_token %}<label for="new-preparation-name">Nueva preparación</label>
+        <input id="new-preparation-name" name="name" maxlength="255" required placeholder="Nombre de la receta">
+        <button class="btn-primary" type="submit">Crear</button>
+      </form>
+      <div class="web-parity__grid">
+      {% for preparation in vm.content.personal_rows %}
+        <a class="web-parity__card" href="{% url 'preparation_detail' preparation.pk %}">
+          <span class="web-parity__card-icon"><i data-lucide="cooking-pot"></i></span>
+          <strong>{{ preparation.name }}</strong>
+          <span>{% if preparation.current_version %}{{ preparation.current_version.default_portion_g|floatformat:0 }} g por porción · {{ preparation.current_version.ingredients_snapshot|length }} ingredientes{% else %}Borrador · agrega alimentos{% endif %}</span>
+        </a>
+      {% empty %}<p>Aún no tienes Preparaciones personales.</p>{% endfor %}
+      </div>
+    </section>
+  {% endif %}
+  <section class="web-parity__section">
+    <h2>Preparaciones del catálogo</h2>
+    <div class="web-parity__grid">
+    {% for preparation in vm.content.global_rows %}
+      <a class="web-parity__card" href="{% url 'preparation_detail' preparation.pk %}">
+        <span class="web-parity__card-icon"><i data-lucide="cooking-pot"></i></span>
+        <strong>{{ preparation.name }}</strong>
+        <span>{{ preparation.current_version.default_portion_g|floatformat:0 }} g por porción · {{ preparation.current_version.ingredients_snapshot|length }} ingredientes</span>
+      </a>
+    {% empty %}<p>No hay Preparaciones publicadas que coincidan.</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

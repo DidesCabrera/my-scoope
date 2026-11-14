@@ -969,7 +969,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, 'class="dash-kpi-comp"', count=2)
         self.assertContains(response, "Composición de la minuta diaria")
         self.assertContains(response, "Detalle de cada Comida")
-        self.assertContains(response, "Información de Alimentos")
+        self.assertContains(response, "Alimentos y Preparaciones")
         self.assertContains(response, "data-grid--calendarized-menu")
         self.assertContains(response, "Almuerzo snapshot")
         self.assertContains(response, "Arroz integral")

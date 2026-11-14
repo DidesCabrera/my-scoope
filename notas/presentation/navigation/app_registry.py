@@ -286,6 +286,22 @@ APP_NAVIGATION = (
                 action_icon="plus",
                 action_label="Nuevo alimento",
             ),
+            NavGroupSpec(
+                key="preparation",
+                label="Preparaciones",
+                icon="cooking-pot",
+                url_name="preparation_list",
+                nav_root="preparation",
+                scope="personal",
+            ),
+            NavGroupSpec(
+                key="supplement",
+                label="Mis Suplementos",
+                icon="pill",
+                url_name="supplement_list",
+                nav_root="supplement",
+                scope="personal",
+            ),
         ),
     ),
 

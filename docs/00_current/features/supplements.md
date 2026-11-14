@@ -1,6 +1,6 @@
 # Suplementos
 
-Status: local implementation, pending staging integration
+Status: mobile and web implementation local; web expansion pending staging integration
 
 ## Catálogo global inicial
 
