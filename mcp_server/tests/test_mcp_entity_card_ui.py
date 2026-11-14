@@ -39,6 +39,9 @@ class MCPEntityCardTests(unittest.TestCase):
             self.assertEqual(set(tools[name].outputSchema["required"]), {"ok", "data", "error"})
         self.assertIn('id="entity-name"', contents[0][0].content)
         self.assertIn('id="detail-panel"', contents[1][0].content)
+        self.assertIn('id="menu-tab"', contents[1][0].content)
+        self.assertIn('id="nutrition-tab"', contents[1][0].content)
+        self.assertIn('id="nutrition-panel"', contents[1][0].content)
         self.assertIn('method: "ui/initialize"', contents[0][0].content)
 
     def test_read_food_uses_authorized_api_and_preserves_result(self):

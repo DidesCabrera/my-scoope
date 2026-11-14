@@ -47,15 +47,36 @@ def main():
             assert card.locator("#detail").is_visible() == (kind == "dailyplan")
             if kind == "dailyplan":
                 assert card.locator(".detail-row").count() == 3
+                assert card.locator("#menu-tab").get_attribute("aria-selected") == "true"
+                assert card.locator("#nutrition-panel").is_hidden()
             if args.output_dir:
                 args.output_dir.mkdir(parents=True, exist_ok=True)
                 card.locator("#card").screenshot(path=str(args.output_dir / f"{kind}-desktop.png"))
+            if kind == "dailyplan":
+                card.locator("#nutrition-tab").click()
+                assert card.locator("#detail-panel").is_hidden()
+                assert card.locator("#nutrition-tab").get_attribute("aria-selected") == "true"
+                assert card.locator("#nutrition-rows tr").count() == 3
+                assert card.locator("#nutrition-rows tr").first.inner_text().startswith("Desayuno\t447")
+                if args.output_dir:
+                    card.locator("#card").screenshot(path=str(args.output_dir / "dailyplan-nutrition-desktop.png"))
+                card.locator("#menu-tab").focus()
+                card.locator("#menu-tab").press("ArrowRight")
+                assert card.locator("#nutrition-tab").get_attribute("aria-selected") == "true"
+                card.locator("#menu-tab").click()
+                assert card.locator("#detail-panel").is_visible()
             page.locator("iframe").evaluate("element => element.style.width = '320px'")
             assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
             assert card.locator(".macro-list").evaluate("element => new Set([...element.querySelectorAll('.macro-row .alloc-bar')].map(bar => Math.round(bar.getBoundingClientRect().left))).size === 1")
             assert card.locator(".kcal-box").evaluate("element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1")
             if args.output_dir:
                 card.locator("#card").screenshot(path=str(args.output_dir / f"{kind}-mobile.png"))
+            if kind == "dailyplan":
+                card.locator("#nutrition-tab").click()
+                assert card.locator("#nutrition-mobile .nutrition-mobile-row").count() == 3
+                assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
+                if args.output_dir:
+                    card.locator("#card").screenshot(path=str(args.output_dir / "dailyplan-nutrition-mobile.png"))
         millilitre_food = {**SAMPLE_FOOD, "data": {"food": {**SAMPLE_FOOD["data"]["food"], "portion_unit": "ml"}}}
         page.evaluate("result => document.querySelector('iframe').contentWindow.postMessage({jsonrpc:'2.0',method:'ui/notifications/tool-result',params:{structuredContent:result}},'*')", millilitre_food)
         card.locator("#badges").get_by_text("Por 100 ml").wait_for()
