@@ -60,6 +60,7 @@ def build_food_detail_vm(food, user, viewmode):
             name=resolve_food_display_name(food),
             label=main_entity_label,
             icon=main_entity_icon,
+            nutrition_basis_unit=food.portion_unit,
             category=getattr(food, "category", None),
             category_badge=resolve_category_badge(getattr(food, "category", None)),
             badges=_build_food_badges(food, user, include_unit=False),

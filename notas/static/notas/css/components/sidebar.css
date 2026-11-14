@@ -2,8 +2,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 16px;
-    margin-bottom: 20px;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+@media (min-width: 981px) {
+    .block-logo-sidebar {
+        flex: 0 0 var(--header-height);
+    }
+}
+
+@media (max-width: 980px) {
+    .block-logo-sidebar {
+        margin-top: 16px;
+    }
 }
 
 .sidebar-scroll-region {
@@ -668,8 +680,10 @@
 
     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .block-logo-sidebar {
         flex-direction: column;
+        flex: 0 0 auto;
         justify-content: flex-start;
         gap: 8px;
+        margin-top: 10px;
         margin-bottom: 16px;
     }
 

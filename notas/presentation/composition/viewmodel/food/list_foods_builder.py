@@ -77,6 +77,7 @@ def build_food_list_vm(foods, user, viewmode, page_actions=None, list_mode="list
                 name=resolve_food_display_name(food),
                 label="Food",
                 icon=CONTENT_ICON_REGISTRY.get("food"),
+                nutrition_basis_unit=food.portion_unit,
                 category=getattr(food, "category", None),
                 category_badge=resolve_category_badge(getattr(food, "category", None)),
                 badges=_build_food_badges(food, user),

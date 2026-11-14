@@ -69,6 +69,10 @@ order: 3;
 order: 4;
 }
 
+.main-title.main-card > .food-nutrition-basis {
+order: 3;
+}
+
 .main-title h3 {
 width: 100%;
 margin: 0;
@@ -86,6 +90,19 @@ min-width: 0;
 .food-visual-heading h1 {
 min-width: 0;
 margin: 0;
+}
+
+.food-visual-heading h3 {
+width: auto;
+margin-bottom: 0;
+}
+
+.food-nutrition-basis {
+margin: 6px 0 0;
+color: var(--text-soft);
+font-size: var(--font-size-caption);
+font-weight: 400;
+line-height: 1.4;
 }
 
 .food-visual-icon {
