@@ -12,6 +12,7 @@ from notas.application.ai_tools.read_tools import (
     read_food_tool,
     read_meal_tool,
     read_proposal_tool,
+    search_meals_tool,
 )
 from notas.application.ai_tools.results import (
     tool_error,
@@ -78,6 +79,24 @@ def ai_tools_read_meal(request):
     )
 
     return ai_tool_json_response(result)
+
+
+@ai_tool_api_view(required_scopes=[MCP_SCOPE_READ])
+def ai_tools_search_user_meals(request):
+    payload = request.ai_tool_payload
+    query = payload.get("query")
+    limit = payload.get("limit", 10)
+    if not isinstance(query, str) or not query.strip() or len(query) > 80:
+        return ai_tool_json_response(
+            tool_error(code="invalid_meal_query", message="Query must contain 1 to 80 characters."),
+            status=400,
+        )
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 10:
+        return ai_tool_json_response(
+            tool_error(code="invalid_meal_limit", message="Limit must be between 1 and 10."),
+            status=400,
+        )
+    return ai_tool_json_response(search_meals_tool(request.user, query.strip(), limit=limit))
 
 
 @ai_tool_api_view(required_scopes=[MCP_SCOPE_READ])

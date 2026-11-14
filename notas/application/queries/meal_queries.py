@@ -202,7 +202,7 @@ def list_available_meals(user) -> list[MealListItemDTO]:
     ]
 
 
-def search_meals(user, query: str) -> list[MealListItemDTO]:
+def search_meals(user, query: str, limit: int | None = None) -> list[MealListItemDTO]:
     clean_query = (query or "").strip()
 
     meals = get_available_meal_queryset(user)
@@ -213,6 +213,9 @@ def search_meals(user, query: str) -> list[MealListItemDTO]:
         )
 
     meals = meals.prefetch_related("meal_food_set")
+
+    if limit is not None:
+        meals = meals[:limit]
 
     return [
         build_meal_list_item_dto(meal, user)

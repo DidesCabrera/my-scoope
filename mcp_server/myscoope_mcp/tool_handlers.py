@@ -12,7 +12,9 @@ from myscoope_mcp.tools import (
     TOOL_LIST_FOOD_CATALOG,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_MEALS,
     get_tool_spec,
 )
 
@@ -29,6 +31,23 @@ def read_dailyplan(
             "dailyplan_id": dailyplan_id,
         },
     )
+
+
+def read_meal(
+    client: MyscoopeAPIClient,
+    meal_id: int,
+) -> MCPToolCallResult:
+    spec = get_tool_spec(TOOL_READ_MEAL)
+    return client.call_ai_tool_api(spec.api_path, {"meal_id": meal_id})
+
+
+def search_user_meals(
+    client: MyscoopeAPIClient,
+    query: str,
+    limit: int = 10,
+) -> MCPToolCallResult:
+    spec = get_tool_spec(TOOL_SEARCH_USER_MEALS)
+    return client.call_ai_tool_api(spec.api_path, {"query": query, "limit": limit})
 
 
 def read_proposal(
@@ -217,6 +236,8 @@ def iterate_nutrition_engine_dailyplan_proposal(
 
 READ_TOOL_HANDLERS = {
     TOOL_READ_DAILYPLAN: read_dailyplan,
+    TOOL_READ_MEAL: read_meal,
+    TOOL_SEARCH_USER_MEALS: search_user_meals,
     TOOL_READ_PROPOSAL: read_proposal,
     TOOL_LIST_USER_PROPOSALS: list_user_proposals,
     TOOL_LIST_FOOD_CATALOG: list_food_catalog,
@@ -269,6 +290,18 @@ def call_read_tool(
         return read_dailyplan(
             client=client,
             dailyplan_id=arguments["dailyplan_id"],
+        )
+
+    if tool_name == TOOL_READ_MEAL:
+        if "meal_id" not in arguments:
+            return _missing_required_argument("meal_id")
+        return read_meal(client=client, meal_id=arguments["meal_id"])
+
+    if tool_name == TOOL_SEARCH_USER_MEALS:
+        if "query" not in arguments:
+            return _missing_required_argument("query")
+        return search_user_meals(
+            client=client, query=arguments["query"], limit=arguments.get("limit", 10),
         )
 
     if tool_name == TOOL_READ_PROPOSAL:

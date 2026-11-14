@@ -6,6 +6,9 @@ The MCP server is intentionally separate from the Django app.
 
 ## Architecture
 
+The [Meal card MCP Apps integration](../docs/00_current/features/ai_assistant/mcp_meal_card.md)
+adds a bounded meal search and a read-only `read_meal` card for compatible chats.
+
 ```text
 MCP Client / External AI
   → FastMCP Protocol Wrapper

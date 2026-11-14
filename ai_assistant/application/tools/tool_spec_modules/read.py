@@ -100,6 +100,8 @@ READ_TOOL_SPECS = {
         risk_level=AssistantToolRiskLevel.LOW,
         requires_human_review=False,
         allowed_intents=("read_context", "answer_question"),
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/read-meal/",
         input_schema={
             "type": "object",
             "required": ["meal_id"],
@@ -107,6 +109,7 @@ READ_TOOL_SPECS = {
                 "meal_id": {
                     "type": "integer",
                     "description": "Operational Meal ID to read.",
+                    "minimum": 1,
                 },
             },
         },
@@ -163,17 +166,22 @@ READ_TOOL_SPECS = {
     ),
     TOOL_SEARCH_USER_MEALS: AssistantToolSpec(
         name=TOOL_SEARCH_USER_MEALS,
-        description="Resolve a reusable Meal by name among Meals visible to the authenticated user.",
+        description=(
+            "Resolve a reusable Meal by name among Meals visible to the authenticated user. "
+            "If several Meals match, ask which one to show instead of guessing an ID."
+        ),
         category=AssistantToolCategory.READ,
         risk_level=AssistantToolRiskLevel.LOW,
         requires_human_review=False,
         allowed_intents=("read_context", "answer_question"),
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/search-user-meals/",
         input_schema={
             "type": "object",
             "required": ["query"],
             "properties": {
-                "query": {"type": "string", "description": "Meal name or partial name."},
-                "limit": {"type": "integer", "description": "Optional maximum result count."},
+                "query": {"type": "string", "description": "Meal name or partial name.", "minLength": 1, "maxLength": 80},
+                "limit": {"type": "integer", "description": "Optional maximum result count, 1 to 10.", "minimum": 1, "maximum": 10},
             },
         },
     ),

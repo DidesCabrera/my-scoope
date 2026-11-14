@@ -1,9 +1,11 @@
 import json
+from datetime import date
 
 from django.contrib.auth.models import User
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
+from notas.domain.models import Meal, WeightLog
 from notas.application.services.mcp_user_tokens import (
     MCP_SCOPE_PROPOSALS_CREATE,
     MCP_SCOPE_READ,
@@ -52,6 +54,30 @@ class AIToolsAPIMCPUserAuthTests(TestCase):
         self.assertIsNone(
             data["error"],
         )
+
+    def test_meal_lookup_and_card_read_keep_user_token_scope(self):
+        other = User.objects.create_user(username="other", password="pass123")
+        WeightLog.objects.create(user=self.user, date=date.today(), weight_kg=80)
+        own = Meal.objects.create(name="Mi almuerzo", created_by=self.user, is_public=False, is_draft=False)
+        private = Meal.objects.create(name="Almuerzo privado", created_by=other, is_public=False, is_draft=False)
+        token = create_mcp_user_token(
+            user=self.user, name="Read token", scopes=[MCP_SCOPE_READ],
+        ).raw_token
+
+        def post(name, payload):
+            return self.client.post(
+                reverse(name), data=json.dumps(payload), content_type="application/json",
+                HTTP_AUTHORIZATION=f"Bearer {token}",
+            ).json()
+
+        found = post("ai_tools_search_user_meals", {"query": "almuerzo"})
+        self.assertTrue(found["ok"])
+        self.assertEqual([row["id"] for row in found["data"]["meals"]], [own.id])
+        visible = post("ai_tools_read_meal", {"meal_id": own.id})
+        self.assertEqual(visible["data"]["meal"]["id"], own.id)
+        denied = post("ai_tools_read_meal", {"meal_id": private.id})
+        self.assertFalse(denied["ok"])
+        self.assertNotIn("meal", denied["data"])
 
     def test_create_endpoint_rejects_mcp_user_token_without_create_scope(self):
         created = create_mcp_user_token(

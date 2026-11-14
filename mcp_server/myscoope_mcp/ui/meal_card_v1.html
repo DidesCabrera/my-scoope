@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, -apple-system, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 8px; background: transparent; color: #261b2c; }
+    .card { width: 100%; max-width: 520px; overflow: hidden; border: 1px solid #e8ddec; border-radius: 18px; background: #fff; box-shadow: 0 8px 25px #3c214014; }
+    .header { padding: 20px 22px 16px; background: linear-gradient(125deg, #f7effa, #fff 72%); }
+    .eyebrow { margin: 0 0 6px; color: #765582; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    h1 { margin: 0; overflow-wrap: anywhere; font-size: 21px; line-height: 1.2; }
+    .category { margin: 7px 0 0; color: #6b5d70; font-size: 13px; }
+    .energy { display: flex; align-items: baseline; gap: 5px; margin: 17px 0 0; color: #673476; }
+    .energy strong { font-size: 29px; line-height: 1; }
+    .energy span { font-size: 13px; font-weight: 600; }
+    .tabs { display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: 1px solid #eee7f0; }
+    .tabs button { padding: 9px 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #6b5d70; font: inherit; font-size: 13px; cursor: pointer; }
+    .tabs button[aria-selected="true"] { border-color: #87469a; color: #673476; font-weight: 700; }
+    .tabs button:focus-visible { outline: 2px solid #87469a; outline-offset: -2px; }
+    .panel { padding: 18px 22px 21px; }
+    .macros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .macro { min-width: 0; padding: 12px; border-radius: 12px; background: #f8f4fa; }
+    .macro span { display: block; color: #6b5d70; font-size: 11px; }
+    .macro strong { display: block; margin-top: 5px; font-size: 18px; }
+    .footnote { margin: 14px 0 0; color: #776b7c; font-size: 11px; }
+    .foods { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+    .foods li { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid #f0ebf2; font-size: 13px; }
+    .foods li:last-child { border-bottom: 0; }
+    .foods li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+    .foods li span:last-child { flex: none; color: #6b5d70; }
+    .empty { margin: 0; color: #6b5d70; font-size: 13px; }
+    .status { padding: 18px; border: 1px solid #e8ddec; border-radius: 14px; background: #fff; color: #6b5d70; font-size: 13px; }
+    [hidden] { display: none !important; }
+    @media (prefers-color-scheme: dark) {
+      body { color: #f8f2fa; }
+      .card, .status { border-color: #49364f; background: #241a2a; color: #f8f2fa; box-shadow: none; }
+      .header { background: linear-gradient(125deg, #3d2947, #241a2a 72%); }
+      .eyebrow, .energy, .tabs button[aria-selected="true"] { color: #ddb3ee; }
+      .category, .tabs button, .macro span, .foods li span:last-child, .footnote, .empty, .status { color: #cdbed2; }
+      .tabs, .foods li { border-color: #49364f; }
+      .macro { background: #35263c; }
+    }
+  </style>
+</head>
+<body>
+  <div id="status" class="status" role="status">Cargando comida…</div>
+  <article id="card" class="card" aria-labelledby="meal-name" hidden>
+    <header class="header">
+      <p class="eyebrow">My Scoope · Comida</p>
+      <h1 id="meal-name"></h1>
+      <p id="meal-category" class="category" hidden></p>
+      <p class="energy"><strong id="meal-kcal"></strong><span>kcal</span></p>
+    </header>
+    <div class="tabs" role="tablist" aria-label="Información de la comida">
+      <button id="tab-summary" type="button" role="tab" aria-selected="true" aria-controls="panel-summary">Nutrición</button>
+      <button id="tab-foods" type="button" role="tab" aria-selected="false" aria-controls="panel-foods">Alimentos</button>
+    </div>
+    <section id="panel-summary" class="panel" role="tabpanel" aria-labelledby="tab-summary">
+      <div class="macros">
+        <div class="macro"><span>Proteínas</span><strong id="meal-protein"></strong></div>
+        <div class="macro"><span>Carbohidratos</span><strong id="meal-carbs"></strong></div>
+        <div class="macro"><span>Grasas</span><strong id="meal-fat"></strong></div>
+      </div>
+      <p class="footnote">Valores calculados por My Scoope para esta comida.</p>
+    </section>
+    <section id="panel-foods" class="panel" role="tabpanel" aria-labelledby="tab-foods" hidden>
+      <ul id="meal-foods" class="foods"></ul>
+      <p id="foods-empty" class="empty" hidden>Esta comida no tiene alimentos.</p>
+    </section>
+  </article>
+  <script>
+    (() => {
+      const byId = (id) => document.getElementById(id);
+      const number = (value, digits = 0) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed)
+          ? new Intl.NumberFormat(document.documentElement.lang || "es", { maximumFractionDigits: digits }).format(parsed)
+          : "—";
+      };
+      const setText = (id, value) => { byId(id).textContent = String(value ?? ""); };
+      const tabs = ["summary", "foods"];
+      function selectTab(selected) {
+        for (const tab of tabs) {
+          byId(`tab-${tab}`).setAttribute("aria-selected", String(tab === selected));
+          byId(`panel-${tab}`).hidden = tab !== selected;
+        }
+      }
+      for (const tab of tabs) {
+        byId(`tab-${tab}`).addEventListener("click", () => selectTab(tab));
+      }
+      function render(result) {
+        const meal = result?.ok === true ? result?.data?.meal : null;
+        if (!meal || typeof meal !== "object" || !meal.kpis || typeof meal.kpis !== "object") {
+          byId("card").hidden = true;
+          byId("status").hidden = false;
+          byId("status").textContent = result?.ok === false
+            ? "No se pudo mostrar esta comida. Comprueba que tengas acceso."
+            : "La comida no está disponible.";
+          return;
+        }
+        setText("meal-name", meal.name || "Comida");
+        setText("meal-category", meal.category || "");
+        byId("meal-category").hidden = !meal.category;
+        setText("meal-kcal", number(meal.kpis.total_kcal));
+        setText("meal-protein", `${number(meal.kpis.protein, 1)} g`);
+        setText("meal-carbs", `${number(meal.kpis.carbs, 1)} g`);
+        setText("meal-fat", `${number(meal.kpis.fat, 1)} g`);
+        const list = byId("meal-foods");
+        list.replaceChildren();
+        const foods = Array.isArray(meal.foods) ? meal.foods : [];
+        for (const food of foods) {
+          if (!food || typeof food !== "object") continue;
+          const row = document.createElement("li");
+          const name = document.createElement("span");
+          const quantity = document.createElement("span");
+          name.textContent = String(food.food_name || "Alimento");
+          quantity.textContent = `${number(food.quantity, 1)} g`;
+          row.append(name, quantity);
+          list.append(row);
+        }
+        byId("foods-empty").hidden = list.childElementCount > 0;
+        byId("status").hidden = true;
+        byId("card").hidden = false;
+        selectTab("summary");
+      }
+      window.addEventListener("message", (event) => {
+        if (event.source !== window.parent) return;
+        const message = event.data;
+        if (!message || message.jsonrpc !== "2.0" || message.method !== "ui/notifications/tool-result") return;
+        render(message.params?.structuredContent);
+      });
+      if (window.openai?.toolOutput) render(window.openai.toolOutput);
+    })();
+  </script>
+</body>
+</html>

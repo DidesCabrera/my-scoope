@@ -1,12 +1,14 @@
 import os
 from dataclasses import replace
-from typing import Any
+from pathlib import Path
+from typing import Annotated, Any, TypedDict
 
 from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.server.auth.provider import TokenVerifier
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from myscoope_mcp.auth import (
     MCP_SCOPE_PROPOSALS_CREATE,
@@ -28,10 +30,21 @@ from myscoope_mcp.tools import (
     TOOL_LIST_FOOD_CATALOG,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_MEALS,
 )
 
 SERVER_NAME = "my-scoope-mcp"
+MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v1.html"
+MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v1.html"
+MEAL_CARD_MIME_TYPE = "text/html;profile=mcp-app"
+
+
+class MealReadResult(TypedDict):
+    ok: bool
+    data: dict[str, Any]
+    error: dict[str, Any] | None
 
 
 class MyScoopeFastMCP(FastMCP):
@@ -68,6 +81,8 @@ def get_protocol_tool_annotations() -> dict[str, ToolAnnotations]:
         TOOL_LIST_USER_PROPOSALS: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_LIST_FOOD_CATALOG: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_READ_DAILYPLAN: READ_ONLY_TOOL_ANNOTATIONS,
+        TOOL_READ_MEAL: READ_ONLY_TOOL_ANNOTATIONS,
+        TOOL_SEARCH_USER_MEALS: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_READ_PROPOSAL: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_COMPARE_DAILYPLAN_TO_TARGETS: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: PROPOSAL_CREATE_TOOL_ANNOTATIONS,
@@ -198,6 +213,7 @@ def create_mcp_server(
     )
 
     register_mcp_tools(server)
+    register_mcp_resources(server)
 
     for tool_name in get_protocol_allowed_tool_names() - get_configured_allowed_tool_names():
         server.remove_tool(tool_name)
@@ -280,6 +296,36 @@ def register_mcp_tools(server: FastMCP) -> None:
             },
         )
 
+        return serialize_tool_result(result)
+
+    @server.tool(
+        annotations=annotations[TOOL_READ_MEAL],
+        meta={"ui": {"resourceUri": MEAL_CARD_RESOURCE_URI}},
+    )
+    def read_meal(meal_id: Annotated[int, Field(ge=1)]) -> MealReadResult:
+        """Read an authorized Meal and show its nutrition card in compatible chats."""
+        client = create_api_client()
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_READ_MEAL,
+            arguments={"meal_id": meal_id},
+        )
+        return serialize_tool_result(result)
+
+    @server.tool(
+        annotations=annotations[TOOL_SEARCH_USER_MEALS],
+    )
+    def search_user_meals(
+        query: Annotated[str, Field(min_length=1, max_length=80)],
+        limit: Annotated[int, Field(ge=1, le=10)] = 10,
+    ) -> dict[str, Any]:
+        """Find up to ten readable Meals by name. Ask the user when several match."""
+        client = create_api_client()
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_SEARCH_USER_MEALS,
+            arguments={"query": query, "limit": limit},
+        )
         return serialize_tool_result(result)
 
     @server.tool(
@@ -507,6 +553,8 @@ def get_protocol_allowed_tool_names() -> set[str]:
     """
     return {
         TOOL_READ_DAILYPLAN,
+        TOOL_READ_MEAL,
+        TOOL_SEARCH_USER_MEALS,
         TOOL_READ_PROPOSAL,
         TOOL_LIST_USER_PROPOSALS,
         TOOL_LIST_FOOD_CATALOG,
@@ -559,3 +607,13 @@ def protocol_dispatch_placeholder():
     dispatch_tool_call as the routing boundary.
     """
     return dispatch_tool_call
+
+
+def register_mcp_resources(server: FastMCP) -> None:
+    @server.resource(
+        MEAL_CARD_RESOURCE_URI,
+        name="My Scoope meal card",
+        mime_type=MEAL_CARD_MIME_TYPE,
+    )
+    def meal_card_resource() -> str:
+        return MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8")

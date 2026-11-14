@@ -5,12 +5,16 @@ from myscoope_mcp.tool_handlers import (
     call_read_tool,
     list_user_proposals,
     read_dailyplan,
+    read_meal,
     read_proposal,
+    search_user_meals,
 )
 from myscoope_mcp.tools import (
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_MEALS,
 )
 
 
@@ -81,6 +85,34 @@ class MCPReadToolHandlerTests(unittest.TestCase):
                 }
             ],
         )
+
+    def test_read_meal_calls_existing_authorized_api_adapter(self):
+        result = read_meal(self.client, meal_id=23)
+        self.assertTrue(result.ok)
+        self.assertEqual(self.client.calls, [{
+            "api_path": "/ai-tools/read-meal/",
+            "payload": {"meal_id": 23},
+        }])
+
+    def test_read_meal_requires_id_before_api_call(self):
+        result = call_read_tool(self.client, TOOL_READ_MEAL, {})
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error["code"], "missing_required_argument:meal_id")
+        self.assertEqual(self.client.calls, [])
+
+    def test_search_user_meals_uses_bounded_api_adapter(self):
+        result = search_user_meals(self.client, query="almuerzo", limit=3)
+        self.assertTrue(result.ok)
+        self.assertEqual(self.client.calls, [{
+            "api_path": "/ai-tools/search-user-meals/",
+            "payload": {"query": "almuerzo", "limit": 3},
+        }])
+
+    def test_search_user_meals_requires_query_before_api_call(self):
+        result = call_read_tool(self.client, TOOL_SEARCH_USER_MEALS, {})
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error["code"], "missing_required_argument:query")
+        self.assertEqual(self.client.calls, [])
 
     def test_list_user_proposals_calls_api_adapter(self):
         result = list_user_proposals(
@@ -209,4 +241,3 @@ class MCPReadToolHandlerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    
