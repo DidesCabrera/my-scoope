@@ -1,19 +1,19 @@
 schema_version: 1
 area: "catalog-operations"
-last_reviewed: "2026-11-09"
+last_reviewed: "2026-11-14"
 sources:
   - id: "myscoope-food-visual-assets"
     name: "My Scoope — curated food visual assets"
     type: "internal-editorial-asset"
     catalog: "foods"
     location: "food_catalog.models.FoodVisualAsset; food_catalog.models.LegacyFoodVisualAsset"
-    scope: "One remotely replaceable PNG per published global CatalogFood or active global legacy Food without a catalog link; no nutrition changes."
+    scope: "Remotely replaceable editorial PNG for any active global operational Food, with existing CatalogFood images as fallback; no nutrition changes."
     authority: "Approved editorial image with source_note and explicit publication state."
     license_status: "per-asset-provenance-required"
-    state: "catalog-backed-live; legacy-extension-local-not-deployed"
+    state: "global-assignment-in-code-pending-production-verification"
     last_evidence: "docs/00_current/features/food_visual_assets.md"
     gaps:
-      - "Pilot images require editorial approval and device review before production publication."
+      - "New images require editorial approval and device review before production publication."
       - "Same-name foods need identity-bearing mobile payloads before independent image selection."
   - id: "nih-ods-vitamin-d-generic-supplement"
     name: "NIH ODS — Vitamin D consumer fact sheet"

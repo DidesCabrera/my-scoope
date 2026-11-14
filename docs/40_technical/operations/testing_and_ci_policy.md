@@ -37,6 +37,15 @@ staging commit in an isolated task branch. Staging may receive patches and
 corrective commits, but it must return to green before it becomes the source of a
 production pull request.
 
+The normal team practice is to keep task branches local. At integration, refresh
+`origin/staging`, incorporate any new commits into the task branch, validate the
+resulting content, and push that validated commit directly to `origin/staging`.
+The local `staging` branch is a control checkout and need not be an intermediate
+step; updating it is separate housekeeping. Do not publish task branches to
+`origin` by default. A remote task branch is an exception for a specific agreed
+workflow, not a requirement of ordinary staging integration. This is a team
+practice, not a GitHub restriction on creating branches.
+
 `main` should only receive code from a green `staging` branch.
 
 ### Mandatory production workflow

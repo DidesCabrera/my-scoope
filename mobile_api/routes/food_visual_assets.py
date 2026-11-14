@@ -3,6 +3,7 @@
 from uuid import UUID
 
 from django.http import Http404, HttpResponse, JsonResponse
+from django.db.models import Q
 from ninja import Router
 
 from food_catalog.models import CatalogFood, FoodVisualAsset, LegacyFoodVisualAsset
@@ -10,6 +11,21 @@ from notas.application.services.food_imports.localized_names import resolve_food
 from notas.domain.models import Food
 
 router = Router()
+
+
+def _global_visual_overrides():
+    """Published editorial images for visible foods, regardless of nutrition source."""
+    published_refs = CatalogFood.objects.filter(
+        status=CatalogFood.STATUS_PUBLISHED
+    ).values("catalog_ref")
+    return LegacyFoodVisualAsset.objects.filter(
+        is_published=True,
+        food__is_global=True,
+        food__is_active=True,
+    ).filter(
+        Q(food__catalog_food_ref__isnull=True)
+        | Q(food__catalog_food_ref__in=published_refs)
+    )
 
 
 @router.get("/foods/visual-assets/manifest", auth=None, operation_id="mobile_api_food_visual_manifest")
@@ -32,19 +48,14 @@ def food_visual_manifest(request):
             food_ids[str(food.pk)] = url
             images[food.name] = url
             images[resolve_food_display_name(food)] = url
-    for asset in LegacyFoodVisualAsset.objects.filter(
-        is_published=True,
-        food__is_global=True,
-        food__is_active=True,
-        food__catalog_food_ref__isnull=True,
-    ).select_related("food").prefetch_related("food__localized_names"):
+    for asset in _global_visual_overrides().select_related("food").prefetch_related("food__localized_names"):
         if not asset.content_sha256 or not asset.mobile_image_data:
             continue
         food = asset.food
-        url = f"/api/v1/foods/visual-assets/legacy/{food.pk}/{asset.content_sha256}.png"
+        url = f"/api/v1/foods/visual-assets/{asset.public_ref}/{asset.content_sha256}.png"
         food_ids[str(food.pk)] = url
-        images.setdefault(food.name, url)
-        images.setdefault(resolve_food_display_name(food), url)
+        images[food.name] = url
+        images[resolve_food_display_name(food)] = url
     response = JsonResponse({"images": images, "food_ids": food_ids})
     response["Cache-Control"] = "public, max-age=60"
     return response
@@ -64,6 +75,10 @@ def food_visual_image(request, catalog_ref: str, digest: str):
         is_published=True,
         content_sha256=digest,
     ).first()
+    if asset is None:
+        asset = _global_visual_overrides().filter(
+            public_ref=catalog_ref, content_sha256=digest
+        ).first()
     if asset is None or not asset.mobile_image_data:
         raise Http404
     response = HttpResponse(bytes(asset.mobile_image_data), content_type="image/png")

@@ -36,10 +36,14 @@ from myscoope_mcp.tools import (
 )
 
 SERVER_NAME = "my-scoope-mcp"
-MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v3.html"
-MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v3.html"
-LEGACY_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v2.html"
-LEGACY_MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v2.html"
+MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v5.html"
+MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v5.html"
+LEGACY_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v4.html"
+LEGACY_MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v4.html"
+OLDER_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v3.html"
+OLDER_MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v3.html"
+OLDEST_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v2.html"
+OLDEST_MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v2.html"
 MEAL_CARD_MIME_TYPE = "text/html;profile=mcp-app"
 
 
@@ -628,8 +632,24 @@ def register_mcp_resources(server: FastMCP) -> None:
 
     @server.resource(
         LEGACY_MEAL_CARD_RESOURCE_URI,
-        name="My Scoope meal card v2",
+        name="My Scoope meal card v4",
         mime_type=MEAL_CARD_MIME_TYPE,
     )
     def legacy_meal_card_resource() -> str:
         return LEGACY_MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
+
+    @server.resource(
+        OLDER_MEAL_CARD_RESOURCE_URI,
+        name="My Scoope meal card v3",
+        mime_type=MEAL_CARD_MIME_TYPE,
+    )
+    def older_meal_card_resource() -> str:
+        return OLDER_MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
+
+    @server.resource(
+        OLDEST_MEAL_CARD_RESOURCE_URI,
+        name="My Scoope meal card v2",
+        mime_type=MEAL_CARD_MIME_TYPE,
+    )
+    def oldest_meal_card_resource() -> str:
+        return OLDEST_MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8")

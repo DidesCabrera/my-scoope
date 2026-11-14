@@ -103,7 +103,7 @@
   <section class="ui-system-gallery__section" id="conversation-ui">
     <div class="ui-system-gallery__section-heading">
       <div><p>MCP Apps · Card real</p><h2>En conversación</h2></div>
-      <code>meal_card_v3.html · design/ui-contract.json</code>
+      <code>meal_card_v5.html · design/ui-contract.json</code>
     </div>
     <p class="ui-system-gallery__help">Esta vista usa el mismo HTML que recibe ChatGPT. El marco simula el saludo MCP y entrega datos de ejemplo; no consulta comidas ni cuentas reales.</p>
     <div class="ui-system-gallery__mcp-controls" aria-label="Opciones de previsualización de la card">
@@ -113,6 +113,8 @@
       </div>
       <div class="ui-system-gallery__mcp-control-group" role="group" aria-label="Ancho">
         <button type="button" data-mcp-width="1100" aria-pressed="true">Amplio</button>
+        <button type="button" data-mcp-width="760" aria-pressed="false">Chat web</button>
+        <button type="button" data-mcp-width="570" aria-pressed="false">Panel web</button>
         <button type="button" data-mcp-width="390" aria-pressed="false">Móvil</button>
         <button type="button" data-mcp-width="320" aria-pressed="false">Estrecho</button>
       </div>
@@ -127,7 +129,7 @@
       </label>
     </div>
     <div class="ui-system-gallery__mcp-stage" id="mcp-meal-stage" data-theme="dark">
-      <iframe id="mcp-meal-frame" src="{% url 'ui_system_mcp_meal_card_preview' %}?v=20261114-meal-layout" title="Card de comida MCP en conversación" sandbox="allow-scripts"></iframe>
+      <iframe id="mcp-meal-frame" src="{% url 'ui_system_mcp_meal_card_preview' %}?v=20261114-web-panel-layout" title="Card de comida MCP en conversación" sandbox="allow-scripts"></iframe>
     </div>
   </section>
   {% endif %}

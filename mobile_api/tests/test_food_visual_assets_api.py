@@ -142,7 +142,8 @@ class LegacyFoodVisualAssetAPITests(TestCase):
         manifest = self.client.get("/api/v1/foods/visual-assets/manifest").json()
         path = manifest["food_ids"][str(self.food.id)]
         self.assertEqual(manifest["images"][self.food.name], path)
-        self.assertIn(f"/legacy/{self.food.id}/", path)
+        self.assertRegex(path, r"^/api/v1/foods/visual-assets/[0-9a-f-]{36}/[0-9a-f]{64}\.png$")
+        self.assertIn(str(asset.public_ref), path)
         self.assertEqual(self.client.get(path).content, mobile)
         self.assertEqual(self.food.protein, 78.5)
 
@@ -153,6 +154,62 @@ class LegacyFoodVisualAssetAPITests(TestCase):
         self.assertNotEqual(
             self.client.get("/api/v1/foods/visual-assets/manifest").json()["food_ids"][str(self.food.id)], path,
         )
+
+    def test_one_editorial_override_applies_to_catalog_linked_food_too(self):
+        catalog_food = CatalogFood.objects.create(
+            display_name="Whey Protein", status=CatalogFood.STATUS_PUBLISHED,
+            protein_g_per_100g=78.5, carbs_g_per_100g=5.8, fat_g_per_100g=3.8,
+        )
+        self.food.catalog_food_id = catalog_food.pk
+        self.food.catalog_food_ref = catalog_food.catalog_ref
+        self.food.save(update_fields=["catalog_food_id", "catalog_food_ref"])
+        original, mobile, digest = prepare_food_visual(png_upload())
+        FoodVisualAsset.objects.create(
+            food=catalog_food, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest, is_published=True, source_note="Imagen central aprobada",
+        )
+        override_original, override_mobile, override_digest = prepare_food_visual(
+            png_upload(width=200, height=400)
+        )
+        override = LegacyFoodVisualAsset.objects.create(
+            food=self.food, image_data=override_original,
+            mobile_image_data=override_mobile, content_sha256=override_digest,
+            is_published=True, source_note="Imagen operacional aprobada",
+        )
+        path = self.client.get("/api/v1/foods/visual-assets/manifest").json()["food_ids"][str(self.food.pk)]
+        self.assertIn(str(override.public_ref), path)
+        self.assertEqual(self.client.get(path).content, override_mobile)
+        self.assertEqual(self.food.protein, 78.5)
+
+        override.is_published = False
+        override.save(update_fields=["is_published"])
+        fallback = self.client.get("/api/v1/foods/visual-assets/manifest").json()["food_ids"][str(self.food.pk)]
+        self.assertIn(str(catalog_food.catalog_ref), fallback)
+        self.assertEqual(self.client.get(path).status_code, 404)
+
+    def test_catalog_linked_override_requires_published_catalog_food(self):
+        catalog_food = CatalogFood.objects.create(
+            display_name="Whey Protein", protein_g_per_100g=78.5,
+            carbs_g_per_100g=5.8, fat_g_per_100g=3.8,
+        )
+        self.food.catalog_food_id = catalog_food.pk
+        self.food.catalog_food_ref = catalog_food.catalog_ref
+        self.food.save(update_fields=["catalog_food_id", "catalog_food_ref"])
+        form = LegacyFoodVisualAssetForm(
+            data={"food": self.food.pk, "is_published": True, "source_note": "Aprobada"},
+            files={"upload": png_upload()},
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("is_published", form.errors)
+
+        original, mobile, digest = prepare_food_visual(png_upload())
+        override = LegacyFoodVisualAsset.objects.create(
+            food=self.food, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest, is_published=True, source_note="Imagen aprobada",
+        )
+        self.assertNotIn(str(self.food.pk), self.client.get("/api/v1/foods/visual-assets/manifest").json()["food_ids"])
+        path = f"/api/v1/foods/visual-assets/{override.public_ref}/{digest}.png"
+        self.assertEqual(self.client.get(path).status_code, 404)
 
     def test_private_inactive_linked_and_unpublished_foods_are_not_exposed(self):
         original, mobile, digest = prepare_food_visual(png_upload())

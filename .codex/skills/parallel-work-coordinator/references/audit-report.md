@@ -8,10 +8,10 @@ The audit must make evidence easy to verify and uncertainty hard to overlook.
    `staging`/`main` heads, corresponding cached refs, equality status, and an
    explicit statement that no fetch occurred.
 2. **Branches and checkouts** — a branch-centered table with one branch per
-   row. Include its checkout path (or none), HEAD, cleanliness, upstream, local
-   ancestry against `staging` and `main` when those refs exist, divergence,
-   and missing-path errors. Show detached worktrees separately; they have no
-   branch to occupy a row.
+   row using the current-state columns below. Explain material details such as
+   HEAD, upstream, integration relationship, or missing-path errors below the
+   table when relevant. Show detached worktrees separately; they have no branch
+   to occupy a row.
 3. **Metro/Expo processes** — PID, command summary, working directory when
    discoverable, and listening ports when discoverable.
 4. **Findings** — observations with severity and evidence.
@@ -35,9 +35,22 @@ Use this default order:
    coordination findings.
 2. **Branches** — one table row for each independent branch, including
    `staging`, `main`, active task branches, and preserved branches without a
-   checkout. Useful columns are branch, checkout (or none), short local and
-   remote HEADs, remote relationship, cleanliness, integration status, and next
-   action. Keep local and remote information for the same branch in one row.
+   checkout. Include columns for branch, checkout (or none), distance in commits
+   from `origin/staging`, and count of uncommitted changes.
+   The distance is the two-sided ancestry count from
+   `git rev-list --left-right --count origin/staging...<branch>`: report commits
+   behind staging and commits unique to the branch separately, including for
+   `main`. In Spanish reports, label the column
+   `Commits vs. origin/staging (detrás / propios)` and show each value as
+   `N / M`, without repeating those words in the cells. It measures commit
+   history, not content equivalence. Count changed paths in that branch's
+   checkout using `git status --porcelain=v1 -uall`,
+   including staged, unstaged, and untracked paths but excluding ignored files.
+   Use `0` for a clean checkout, `—` when there is no checkout, and `?` when the
+   checkout cannot be inspected. If the remote head cannot be verified, mark
+   distance as unverified rather than presenting cached refs as current.
+   Do not add status or remote-branch columns. Explain any material integration
+   finding below the table.
    Never combine multiple branches into a row such as "other branches".
 3. **Detached checkouts** — list separately with path, short HEAD, cleanliness,
    and relationship to `staging` or `main`. They are not branches.

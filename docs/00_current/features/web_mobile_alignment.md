@@ -1,6 +1,6 @@
 # Alineación web con la app móvil actual
 
-Estado: ampliación local en `codex/web-mobile-parity`; pendiente de integración y QA de staging.
+Estado: ampliación publicada en staging y producción; las diferencias funcionales del final siguen pendientes.
 Actualizado: 2026-11-14.
 Base comprobada al comenzar esta ampliación: `origin/staging` = `c75f9e5f53e2c73c37d4935b8d1024f23b9adcc1`.
 
@@ -33,7 +33,7 @@ La implementación se ordena por dependencias del dominio: primero lectura y per
 | Calendario | Día calendarizado muestra tomas y su estado; permite agregar una toma guardada y registrar completada, omitida o restablecida en el día vigente. El detalle de Comida separa Preparaciones de Alimentos y permite agregar, ajustar y quitar una Preparación del snapshot de ese día. |
 | Revisión del programa | Inicio y Programa en curso enlazan a una revisión de los últimos siete días del programa: energía, hambre, rendimiento y nota. La vista muestra un ajuste prospectivo con comparación por fecha y permite aprobarlo o rechazarlo mediante los comandos compartidos. |
 
-La revisión local cubrió las vistas de escritorio y teléfono, incluyó corrección de desbordes y de valores decimales en formularios, y ejecutó pruebas de propiedad de datos, permisos, composición y ausencia de macros de suplementos. La disponibilidad final sigue condicionada por `SUPPLEMENTS_FEATURE_ENABLED` y `PERSONAL_PREPARATIONS_FEATURE_ENABLED`, desactivados por defecto.
+La revisión local cubrió las vistas de escritorio y teléfono, incluyó corrección de desbordes y de valores decimales en formularios, y ejecutó pruebas de propiedad de datos, permisos, composición y ausencia de macros de suplementos. `SUPPLEMENTS_FEATURE_ENABLED` y `PERSONAL_PREPARATIONS_FEATURE_ENABLED` permanecen desactivados por defecto en código; ambos se activaron en los servicios web de staging y producción de Render para esta publicación.
 
 ## Diferencias funcionales aún reales
 
@@ -45,10 +45,10 @@ Estas capacidades móviles todavía necesitan trabajo propio; esta ampliación n
 
 Las diferencias anteriores necesitan trabajo funcional propio. La revisión visual de esta rama debe valorar la alineación implementada y priorizar estas capacidades antes de afirmar paridad total.
 
-## Secuencia de publicación y trabajo restante
+## Publicación verificada y trabajo restante
 
-1. Integrar esta rama sobre el `origin/staging` vigente. La diferencia de 41 archivos propios clasifica como `staging-fast`; comprobar el CI remoto y luego recorrer en staging las rutas de biblioteca, Comida, Minuta, día calendarizado, Inicio y revisión con cuentas Pro y sin Pro. Confirmar allí los valores de `SUPPLEMENTS_FEATURE_ENABLED` y `PERSONAL_PREPARATIONS_FEATURE_ENABLED` antes de ofrecer ambas capacidades.
+1. Publicación: `staging` recibió `edc5d3ca5377c4222e903e2ed793c5b9056b6744`, con `staging-fast` exitoso en [GitHub Actions](https://github.com/DidesCabrera/my-scoope/actions/runs/43622319137). Una sesión Pro recorrió Inicio, bibliotecas, Minutas, calendario y día calendarizado en staging; la revisión sin Pro está cubierta por pruebas de permisos, no por una sesión remota. El [PR #146](https://github.com/DidesCabrera/my-scoope/pull/146) pasó el control `full` [#43623098605](https://github.com/DidesCabrera/my-scoope/actions/runs/43623098605) y se fusionó en `main` como `df95c60e00f001747c33e86a6e9f047ab9f4a7bb`. Render marcó ese commit como `live` en producción; el dominio público y el servicio respondieron `healthz` correctamente. Las rutas privadas redirigieron al inicio de sesión; no se ejecutó una revisión autenticada en producción porque el navegador no tenía una sesión allí.
 2. Digitalización web de etiquetas: cargar imagen desde el navegador, pedir consentimiento para el análisis, comprobar permiso, límites y créditos, presentar cada dato en revisión editable y confirmar la creación del Alimento. El resultado debe conservar idempotencia y separar claramente la opción de guardar la imagen. Este recorrido necesita pruebas de consumo de créditos, errores de proveedor, seguridad de archivos y confirmación, por lo que constituye un bloque propio.
 3. Evaluar los controles nativos de recordatorios y edición inmediata de la Minuta fijada por resultado de usuario. La web ya cuenta con push del programa y acceso a la edición de la Minuta; cualquier nuevo control de portada debe reutilizar esos comandos y probar que no duplica avisos o cambios de estado.
 
-La disponibilidad en producción requiere el flujo del repositorio: staging verde, PR de staging a main con la compuerta completa y comprobación del despliegue. La rama local por sí sola no hace visibles los cambios en la web publicada.
+Las funciones publicadas están disponibles en la web con las banderas del servicio activas. Las diferencias enumeradas arriba siguen siendo iniciativas independientes antes de afirmar paridad funcional total con móvil.
