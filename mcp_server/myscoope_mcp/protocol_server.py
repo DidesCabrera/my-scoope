@@ -244,6 +244,7 @@ def register_mcp_tools(server: FastMCP) -> None:
     """
     annotations = get_protocol_tool_annotations()
     register_meal_tools(server, annotations)
+    register_entity_read_tools(server, annotations)
 
     @server.tool(
         annotations=annotations[TOOL_LIST_USER_PROPOSALS],
@@ -289,36 +290,6 @@ def register_mcp_tools(server: FastMCP) -> None:
             client=client,
             tool_name=TOOL_LIST_FOOD_CATALOG,
             arguments=arguments,
-        )
-
-        return serialize_tool_result(result)
-
-    @server.tool(
-        annotations=annotations[TOOL_READ_FOOD],
-        meta={"ui": {"resourceUri": FOOD_CARD_RESOURCE_URI}},
-    )
-    def read_food(food_id: Annotated[int, Field(ge=1)]) -> MealReadResult:
-        """Read an authorized Food and show its nutrition card in compatible chats."""
-        client = create_api_client()
-        result = dispatch_tool_call(client=client, tool_name=TOOL_READ_FOOD, arguments={"food_id": food_id})
-        return serialize_tool_result(result)
-
-    @server.tool(
-        annotations=annotations[TOOL_READ_DAILYPLAN],
-        meta={"ui": {"resourceUri": DAILYPLAN_CARD_RESOURCE_URI}},
-    )
-    def read_dailyplan(dailyplan_id: int) -> MealReadResult:
-        """
-        Read a DailyPlan available to the authenticated My Scoope API context.
-        """
-        client = create_api_client()
-
-        result = dispatch_tool_call(
-            client=client,
-            tool_name=TOOL_READ_DAILYPLAN,
-            arguments={
-                "dailyplan_id": dailyplan_id,
-            },
         )
 
         return serialize_tool_result(result)
@@ -540,6 +511,35 @@ def register_mcp_tools(server: FastMCP) -> None:
         )
 
         return summarize_created_proposal_result(result)
+
+
+def register_entity_read_tools(
+    server: FastMCP,
+    annotations: dict[str, ToolAnnotations],
+) -> None:
+    @server.tool(
+        annotations=annotations[TOOL_READ_FOOD],
+        meta={"ui": {"resourceUri": FOOD_CARD_RESOURCE_URI}},
+    )
+    def read_food(food_id: Annotated[int, Field(ge=1)]) -> MealReadResult:
+        """Read an authorized Food and show its nutrition card in compatible chats."""
+        client = create_api_client()
+        result = dispatch_tool_call(client=client, tool_name=TOOL_READ_FOOD, arguments={"food_id": food_id})
+        return serialize_tool_result(result)
+
+    @server.tool(
+        annotations=annotations[TOOL_READ_DAILYPLAN],
+        meta={"ui": {"resourceUri": DAILYPLAN_CARD_RESOURCE_URI}},
+    )
+    def read_dailyplan(dailyplan_id: int) -> MealReadResult:
+        """Read a DailyPlan available to the authenticated My Scoope API context."""
+        client = create_api_client()
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_READ_DAILYPLAN,
+            arguments={"dailyplan_id": dailyplan_id},
+        )
+        return serialize_tool_result(result)
 
 
 def register_meal_tools(
