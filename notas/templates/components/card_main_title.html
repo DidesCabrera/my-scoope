@@ -16,13 +16,17 @@
     <div class="block-title-card-edit">
       {% if titulo.label|lower == "food" %}
         <div class="food-visual-heading food-visual-heading--main">
-          {% include "components/food_visual_icon.html" with food_id=titulo.food_id|default:main_card.main_id food_name=titulo.name %}
           <h1>{{ titulo.name }}</h1>
+          {% include "components/food_visual_icon.html" with food_id=titulo.food_id|default:main_card.main_id food_name=titulo.name %}
         </div>
       {% else %}
         <h1>{{ titulo.name }}</h1>
       {% endif %}
     </div>
+
+    {% if titulo.label|lower == "food" and titulo.nutrition_basis_unit %}
+      {% include "components/food_nutrition_basis.html" with quantity=100 unit=titulo.nutrition_basis_unit %}
+    {% endif %}
 
     {% if show_completion %}<div class="entity-heading__indicator-row">{% endif %}
     {% if titulo.structural_indicators %}
@@ -69,7 +73,7 @@
       </div>
     {% endif %}
 
-    {% if titulo.badges %}
+    {% if titulo.badges and not titulo.nutrition_basis_unit %}
       <div class="card-title-badges" aria-label="Características">
         {% for badge in titulo.badges %}
           <span class="picker-result-badge picker-result-badge--{{ badge.modifier }}">
