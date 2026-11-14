@@ -3,18 +3,17 @@
 from dataclasses import dataclass
 from typing import Any
 
-from django.urls import reverse
 from django.conf import settings
+from django.urls import reverse
 
 from accounts.services.entitlements import resolve_account_entitlements
-from notas.domain.models import SupplementIntake
-
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.nutrition.food_aggregation import (
     build_dailyplan_foods_aggregation,
     build_meal_foods_aggregation,
 )
 from notas.application.services.nutrition.weight import get_current_weight
+from notas.domain.models import SupplementIntake
 from notas.presentation.actions.dailyplan_meal_resolvers import (
     resolve_dailyplan_meal_actions,
 )

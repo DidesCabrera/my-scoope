@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from notas.application.queries.food_picker_queries import list_food_picker_page
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
@@ -30,7 +30,12 @@ from notas.domain.models import Meal, MealPreparation, Preparation
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import PREPARATION_VIEWMODE_DETAIL, PREPARATION_VIEWMODE_LIST
-from notas.presentation.pages.library_entity_cards import preparation_card, preparation_food_rows, preparation_ingredient_cards, preparation_kpis
+from notas.presentation.pages.library_entity_cards import (
+    preparation_card,
+    preparation_food_rows,
+    preparation_ingredient_cards,
+    preparation_kpis,
+)
 
 
 def _context(viewmode, **content):

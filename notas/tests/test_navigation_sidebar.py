@@ -1,12 +1,13 @@
-from django.contrib.auth import get_user_model
 from dataclasses import replace
 from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from notas.domain.models import Profile
 from accounts.services.profile import build_account_credit_display
+from notas.domain.models import Profile
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_MEAL_VIEWMODE_DETAIL,
