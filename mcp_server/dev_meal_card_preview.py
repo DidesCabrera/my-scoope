@@ -5,8 +5,8 @@ no My Scoope API access and serves no account data.
 """
 
 import argparse
+import logging
 import re
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +21,22 @@ ENTITY_CARD_PATH = UI_DIR / "entity_card_v1.html"
 ENTITY_SOURCE_PATH = UI_DIR / "entity_card_v1.source.html"
 MIME_TYPE = "text/html;profile=mcp-app"
 STYLE_PATTERN = re.compile(r"<style>(.*?)</style>", re.DOTALL)
+LEGACY_VERSION_PATTERN = re.compile(r"[0-9a-f]{32}")
+MEAL_CARD_URI = "ui://myscoope-dev/meal-card-v6.html"
+ENTITY_CARD_URI = "ui://myscoope-dev/entity-card-v1.html"
+PROBE_CARD_URI = "ui://myscoope-dev/probe-card-v1.html"
+logger = logging.getLogger(__name__)
+
+
+class PreviewFastMCP(FastMCP):
+    async def read_resource(self, uri: Any) -> Any:
+        try:
+            result = await super().read_resource(uri)
+        except Exception as exc:
+            logger.warning("Preview UI resource read failed: %s (%s)", uri, exc)
+            raise
+        logger.info("Preview UI resource read succeeded: %s", uri)
+        return result
 
 SAMPLE_MEAL = {
     "ok": True,
@@ -127,16 +143,17 @@ def preview_html(card: str = "meal") -> str:
 
 
 def create_preview_server() -> FastMCP:
-    # A new URI per process avoids a stale cached resource when HTML changes.
-    version = uuid.uuid4().hex
-    uri = f"ui://myscoope-dev/meal-card-{version}.html"
-    entity_uri = f"ui://myscoope-dev/entity-card-{version}.html"
-    server = FastMCP("My Scoope meal card preview", stateless_http=True)
+    # Stable URIs survive restarts. Legacy templates keep previously advertised
+    # random URIs readable in conversations whose tool metadata is cached.
+    uri = MEAL_CARD_URI
+    entity_uri = ENTITY_CARD_URI
+    probe_uri = PROBE_CARD_URI
+    server = PreviewFastMCP("My Scoope meal card preview", stateless_http=True, json_response=True)
 
     @server.tool(
         name="preview_meal_card",
         description="Show a synthetic My Scoope meal for visual preview.",
-        meta={"ui": {"resourceUri": uri}},
+        meta={"ui": {"resourceUri": uri}, "openai/outputTemplate": uri},
         structured_output=True,
     )
     def preview_meal_card() -> dict[str, Any]:
@@ -145,7 +162,7 @@ def create_preview_server() -> FastMCP:
     @server.tool(
         name="preview_food_card",
         description="Show a synthetic My Scoope food for visual preview.",
-        meta={"ui": {"resourceUri": entity_uri}},
+        meta={"ui": {"resourceUri": entity_uri}, "openai/outputTemplate": entity_uri},
         structured_output=True,
     )
     def preview_food_card() -> dict[str, Any]:
@@ -154,11 +171,29 @@ def create_preview_server() -> FastMCP:
     @server.tool(
         name="preview_dailyplan_card",
         description="Show a synthetic My Scoope daily plan for visual preview.",
-        meta={"ui": {"resourceUri": entity_uri}},
+        meta={"ui": {"resourceUri": entity_uri}, "openai/outputTemplate": entity_uri},
         structured_output=True,
     )
     def preview_dailyplan_card() -> dict[str, Any]:
         return SAMPLE_DAILYPLAN
+
+    @server.tool(
+        name="preview_minimal_card",
+        description="Show a minimal synthetic card to diagnose whether this ChatGPT client loads MCP UI resources.",
+        meta={"ui": {"resourceUri": probe_uri}, "openai/outputTemplate": probe_uri},
+        structured_output=True,
+    )
+    def preview_minimal_card() -> dict[str, Any]:
+        return {"ok": True, "data": {"message": "Vista mínima MCP"}, "error": None}
+
+    @server.tool(
+        name="preview_minimal_card_v2",
+        description="Show the second minimal MCP UI probe with a fresh tool identity to diagnose mobile resource caching.",
+        meta={"ui": {"resourceUri": probe_uri}, "openai/outputTemplate": probe_uri},
+        structured_output=True,
+    )
+    def preview_minimal_card_v2() -> dict[str, Any]:
+        return {"ok": True, "data": {"message": "Vista mínima MCP v2"}, "error": None}
 
     @server.tool(
         name="preview_card_styles",
@@ -176,6 +211,37 @@ def create_preview_server() -> FastMCP:
     @server.resource(entity_uri, name="My Scoope entity card development preview", mime_type=MIME_TYPE)
     def entity_resource() -> str:
         return preview_html("entity")
+
+    @server.resource(probe_uri, name="My Scoope minimal UI diagnostic", mime_type=MIME_TYPE)
+    def probe_resource() -> str:
+        return """<!doctype html><html lang="es"><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#c523a7;color:white;font:20px system-ui;padding:24px">Vista mínima MCP visible<script>
+window.addEventListener("message", (event) => {
+  if (event.source !== window.parent || event.data?.jsonrpc !== "2.0") return;
+  if (event.data.id === 1 && event.data.result?.protocolVersion) {
+    window.parent.postMessage({jsonrpc:"2.0",method:"ui/notifications/initialized"},"*");
+    window.parent.postMessage({jsonrpc:"2.0",method:"ui/notifications/size-changed",params:{height:document.body.scrollHeight}},"*");
+  }
+});
+window.parent.postMessage({jsonrpc:"2.0",id:1,method:"ui/initialize",params:{appInfo:{name:"My Scoope diagnostic card",version:"1.0.0"},appCapabilities:{},protocolVersion:"2026-01-26"}},"*");
+</script></body></html>"""
+
+    @server.resource("ui://myscoope-dev/meal-card-{version}.html", name="Legacy meal card preview", mime_type=MIME_TYPE)
+    def legacy_meal_resource(version: str) -> str:
+        if not LEGACY_VERSION_PATTERN.fullmatch(version):
+            raise ValueError("Invalid legacy meal card version")
+        return card_resource()
+
+    @server.resource("ui://myscoope-dev/entity-card-{version}.html", name="Legacy entity card preview", mime_type=MIME_TYPE)
+    def legacy_entity_resource(version: str) -> str:
+        if not LEGACY_VERSION_PATTERN.fullmatch(version):
+            raise ValueError("Invalid legacy entity card version")
+        return entity_resource()
+
+    @server.resource("ui://myscoope-dev/probe-card-{version}.html", name="Legacy diagnostic card preview", mime_type=MIME_TYPE)
+    def legacy_probe_resource(version: str) -> str:
+        if not LEGACY_VERSION_PATTERN.fullmatch(version):
+            raise ValueError("Invalid legacy diagnostic card version")
+        return probe_resource()
 
     return server
 
