@@ -1,5 +1,9 @@
 # AI Assistant
 
+La [card de comidas en conversaciones externas](mcp_meal_card.md) documenta la
+proyección MCP Apps de una Meal, su validación local y la prueba pendiente en
+ChatGPT.
+
 ## Estado
 
 Baseline vigente y operativa. CM00-CM24, PT00-PT06 y BA00-BA07 están cerrados. El AI Assistant usa runtime LLM-native, tools allowlisted, estado temporal sincronizado, cards explícitas, function calling nativo y validación conductual con proveedor fake y real. La frontera final pasó Django checks, 2 regresiones núcleo y 1.446 tests mediante `scripts/ci_django_checks.sh`.

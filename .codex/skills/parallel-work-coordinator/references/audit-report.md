@@ -7,16 +7,17 @@ The audit must make evidence easy to verify and uncertainty hard to overlook.
 1. **Scope and freshness** — repository, timestamp, current checkout, remote
    `staging`/`main` heads, corresponding cached refs, equality status, and an
    explicit statement that no fetch occurred.
-2. **Worktrees** — path, branch or detached state, HEAD, cleanliness, upstream,
-   divergence, and missing-path errors.
-3. **Branches** — local branch, upstream, checkout ownership, local ancestry
-   against `staging` and `main` when those refs exist, and divergence.
-4. **Metro/Expo processes** — PID, command summary, working directory when
+2. **Branches and checkouts** — a branch-centered table with one branch per
+   row. Include its checkout path (or none), HEAD, cleanliness, upstream, local
+   ancestry against `staging` and `main` when those refs exist, divergence,
+   and missing-path errors. Show detached worktrees separately; they have no
+   branch to occupy a row.
+3. **Metro/Expo processes** — PID, command summary, working directory when
    discoverable, and listening ports when discoverable.
-5. **Findings** — observations with severity and evidence.
-6. **Limits and next steps** — what cannot be concluded from local read-only
+4. **Findings** — observations with severity and evidence.
+5. **Limits and next steps** — what cannot be concluded from local read-only
    evidence and which additional read-only evidence would resolve it.
-7. **Target-state gap** — when requested, compare evidence with
+6. **Target-state gap** — when requested, compare evidence with
    `target-state.md`; do not convert recommendations into authorized mutations.
 
 ## Current-state dashboard
@@ -32,12 +33,16 @@ Use this default order:
 1. **Indicators** — counts for active checkouts, dirty checkouts, Metro/Expo
    processes, remote task branches, unresolved preserved work, and high-risk
    coordination findings.
-2. **Active checkouts** — health, concise checkout name or path, branch, short
-   HEAD, remote relationship, cleanliness, Metro state, and operational role.
-3. **Remote bases** — local and directly queried remote heads for `staging` and
-   `main`, with freshness status.
-4. **Preserved work without a checkout** — status, branch or work ID, owner,
-   unique-commit count when established, and the next decision required.
+2. **Branches** — one table row for each independent branch, including
+   `staging`, `main`, active task branches, and preserved branches without a
+   checkout. Useful columns are branch, checkout (or none), short local and
+   remote HEADs, remote relationship, cleanliness, integration status, and next
+   action. Keep local and remote information for the same branch in one row.
+   Never combine multiple branches into a row such as "other branches".
+3. **Detached checkouts** — list separately with path, short HEAD, cleanliness,
+   and relationship to `staging` or `main`. They are not branches.
+4. **Metro/Expo processes and findings** — include when relevant to the user's
+   requested scope and explain any material coordination risk.
 
 Use compact traffic-light markers consistently:
 

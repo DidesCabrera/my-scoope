@@ -213,23 +213,25 @@ def list_available_meals_tool(user):
     )
 
 
-def _search_meals_data(user, query: str) -> dict:
+def _search_meals_data(user, query: str, limit: int | None = None) -> dict:
     return {
         "meals": _serialize_dto_list(
             search_meals(
                 user,
                 query,
+                limit=limit,
             ),
         ),
         "query": query,
     }
 
 
-def search_meals_tool(user, query: str):
+def search_meals_tool(user, query: str, limit: int | None = None):
     return run_ai_tool(
         _search_meals_data,
         user,
         query,
+        limit=limit,
         user=user,
     )
 
