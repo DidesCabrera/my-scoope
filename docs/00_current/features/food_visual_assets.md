@@ -21,6 +21,12 @@ La web también consulta `manifest?layout=wide-v1` para tarjetas y detalles de a
 
 El cliente refresca el manifiesto como máximo una vez por minuto mientras haya iconos montados. Un cambio de PNG modifica su URL por hash y se ve sin reinstalar la app **después de que el usuario haya instalado una versión que incluya el componente remoto**. El recurso antiguo puede dejar de estar disponible tras un reemplazo; el fallback es el emoji hasta el siguiente manifiesto. No se usa el almacenamiento efímero del servidor ni URLs externas arbitrarias.
 
+## Revisión de escala visual
+
+La **Grilla de escala visual** es la revisión comparativa recurrente de las imágenes remotas publicadas: 15 alimentos identificados por fila, una vista con el marco actual y otra con el marco rectangular propuesto. El procedimiento reproducible está en `.codex/skills/food-icon-scale-audit/`. No incluye automáticamente alimentos sin imagen remota ni candidatos sin publicar.
+
+Felipe prefirió visualmente la simulación de **62 × 41 px** frente al marco cuadrado de título actual de 41 × 41 px. Esta es una dirección de diseño para estudiar, **no** un tamaño implementado ni autorización para cambiar la app o republicar imágenes. La simulación también recorta margen transparente y escala el dibujo sin deformarlo; agrandar solo el contenedor no produciría el mismo resultado. Quedan pendientes revisiones individuales de tamaño antes de cualquier cambio de producto.
+
 ## Operación editorial
 
 1. En Django Admin, seleccionar «Imágenes de alimentos globales» y buscar el `notas.Food` global activo, cualquiera sea su fuente. El modelo central anterior permanece disponible para mantener las imágenes existentes, pero una asignación operacional publicada tiene prioridad.

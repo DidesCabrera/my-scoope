@@ -141,6 +141,16 @@ roles:
     path: ".codex/skills/revenue-operations-agent/SKILL.md"
     purpose: "Maintain a traceable commercial pipeline and revenue operating rhythm."
 shared_skills:
+  - name: "food-icon-scale-audit"
+    area: "catalog-operations"
+    status: "pilot"
+    path: ".codex/skills/food-icon-scale-audit/SKILL.md"
+    purpose: "Compare published food images in a named 15-column grid at current and proposed display frames without changing catalog or app state."
+    available_to: "all-roles"
+    typical_users:
+      - "catalog-curation-steward"
+      - "strategic-product-advisor"
+      - "mobile-incident-specialist"
   - name: "fresh-task-checkout"
     area: "product-technology"
     status: "pilot"
