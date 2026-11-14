@@ -8,10 +8,10 @@ The audit must make evidence easy to verify and uncertainty hard to overlook.
    `staging`/`main` heads, corresponding cached refs, equality status, and an
    explicit statement that no fetch occurred.
 2. **Branches and checkouts** — a branch-centered table with one branch per
-   row. Include its checkout path (or none), HEAD, cleanliness, upstream, local
-   ancestry against `staging` and `main` when those refs exist, divergence,
-   uncommitted-change count, and missing-path errors. Show detached worktrees
-   separately; they have no branch to occupy a row.
+   row using the current-state columns below. Explain material details such as
+   HEAD, upstream, integration relationship, or missing-path errors below the
+   table when relevant. Show detached worktrees separately; they have no branch
+   to occupy a row.
 3. **Metro/Expo processes** — PID, command summary, working directory when
    discoverable, and listening ports when discoverable.
 4. **Findings** — observations with severity and evidence.
@@ -36,7 +36,7 @@ Use this default order:
 2. **Branches** — one table row for each independent branch, including
    `staging`, `main`, active task branches, and preserved branches without a
    checkout. Include columns for branch, checkout (or none), distance in commits
-   from `origin/staging`, count of uncommitted changes, and integration status.
+   from `origin/staging`, and count of uncommitted changes.
    The distance is the two-sided ancestry count from
    `git rev-list --left-right --count origin/staging...<branch>`: report commits
    behind staging and commits unique to the branch separately, including for
@@ -49,8 +49,8 @@ Use this default order:
    Use `0` for a clean checkout, `—` when there is no checkout, and `?` when the
    checkout cannot be inspected. If the remote head cannot be verified, mark
    distance as unverified rather than presenting cached refs as current.
-   Do not add a separate remote-branch column; put the relevant remote
-   relationship in the status.
+   Do not add status or remote-branch columns. Explain any material integration
+   finding below the table.
    Never combine multiple branches into a row such as "other branches".
 3. **Detached checkouts** — list separately with path, short HEAD, cleanliness,
    and relationship to `staging` or `main`. They are not branches.
