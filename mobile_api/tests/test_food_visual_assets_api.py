@@ -84,6 +84,24 @@ class FoodVisualAssetAPITests(TestCase):
         self.food.refresh_from_db()
         self.assertEqual(self.food.protein, 20)
 
+    def test_wide_variant_crops_transparency_without_changing_square_asset(self):
+        original, mobile, digest = prepare_food_visual(png_upload())
+        FoodVisualAsset.objects.create(
+            food=self.catalog_food, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest, is_published=True, source_note="Boceto aprobado por Felipe",
+        )
+        square_path = self.client.get("/api/v1/foods/visual-assets/manifest").json()["food_ids"][str(self.food.id)]
+        wide_path = self.client.get("/api/v1/foods/visual-assets/manifest?layout=wide-v1").json()["food_ids"][str(self.food.id)]
+        self.assertEqual(wide_path, square_path.replace(".png", "/wide-v1.png"))
+        self.assertEqual(self.client.get(square_path).content, mobile)
+        wide = self.client.get(wide_path)
+        self.assertEqual(wide.status_code, 200)
+        self.assertEqual(wide["ETag"], f'"{digest}-wide-v1"')
+        picture = Image.open(BytesIO(wide.content)).convert("RGBA")
+        self.assertEqual(picture.size, (192, 127))
+        self.assertEqual(picture.getchannel("A").getbbox()[2] - picture.getchannel("A").getbbox()[0], 192)
+        self.assertEqual(self.client.get(wide_path.replace(digest, "a" * 64)).status_code, 404)
+
     def test_unpublished_or_unmaterialized_visual_is_not_public(self):
         original, mobile, digest = prepare_food_visual(png_upload())
         asset = FoodVisualAsset.objects.create(
@@ -154,6 +172,19 @@ class LegacyFoodVisualAssetAPITests(TestCase):
         self.assertNotEqual(
             self.client.get("/api/v1/foods/visual-assets/manifest").json()["food_ids"][str(self.food.id)], path,
         )
+
+    def test_wide_variant_covers_operational_food_assignments(self):
+        original, mobile, digest = prepare_food_visual(png_upload(width=200, height=400))
+        asset = LegacyFoodVisualAsset.objects.create(
+            food=self.food, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest, is_published=True, source_note="Ilustración interna aprobada",
+        )
+        path = self.client.get("/api/v1/foods/visual-assets/manifest?layout=wide-v1").json()["food_ids"][str(self.food.id)]
+        self.assertIn(str(asset.public_ref), path)
+        self.assertEqual(Image.open(BytesIO(self.client.get(path).content)).size, (192, 127))
+        asset.is_published = False
+        asset.save(update_fields=["is_published"])
+        self.assertEqual(self.client.get(path).status_code, 404)
 
     def test_one_editorial_override_applies_to_catalog_linked_food_too(self):
         catalog_food = CatalogFood.objects.create(

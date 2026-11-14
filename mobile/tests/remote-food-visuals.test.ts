@@ -12,14 +12,17 @@ test("remote food visual names match localized accents and whitespace", () => {
 
 test("remote manifest accepts only same-server versioned image paths", () => {
   const path = `/api/v1/foods/visual-assets/${ref}/${digest}.png`;
+  const widePath = `/api/v1/foods/visual-assets/${ref}/${digest}/wide-v1.png`;
   const images = parseFoodVisualManifest({ images: {
     "Hígado de pollo": path,
+    "Dextrosa": widePath,
     "Imagen externa": "https://untrusted.example/icon.png",
     "Otra ruta": "/admin/logout/",
   }, food_ids: { "42": path, "not-an-id": path } }, "https://www.myscoope.com");
   assert.equal(images.get("name:higado de pollo"), `https://www.myscoope.com${path}`);
   assert.equal(images.get("id:42"), `https://www.myscoope.com${path}`);
-  assert.equal(images.size, 2);
+  assert.equal(images.get("name:dextrosa"), `https://www.myscoope.com${widePath}`);
+  assert.equal(images.size, 3);
 });
 
 test("a remote food image never flashes its emoji while the manifest or image is loading", () => {

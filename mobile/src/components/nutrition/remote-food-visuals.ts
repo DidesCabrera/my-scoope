@@ -7,7 +7,7 @@ import { normalizeFoodVisualName, parseFoodVisualManifest } from "./remote-food-
 
 type Manifest = { images?: Record<string, string>; food_ids?: Record<string, string> };
 
-const MANIFEST_URL = `${appConfig.apiBaseUrl}/api/v1/foods/visual-assets/manifest`;
+const MANIFEST_URL = `${appConfig.apiBaseUrl}/api/v1/foods/visual-assets/manifest?layout=wide-v1`;
 const REFRESH_MS = 60_000;
 
 let images = new Map<string, string>();
@@ -20,7 +20,7 @@ const listeners = new Set<() => void>();
 const readyImages = new Set<string>();
 const failedImages = new Set<string>();
 const pendingImages = new Set<string>();
-const cacheFile = Platform.OS === "web" ? null : new File(Paths.document, "food-visual-manifest-v1.json");
+const cacheFile = Platform.OS === "web" ? null : new File(Paths.document, "food-visual-manifest-wide-v1.json");
 
 function notify() {
   listeners.forEach((listener) => listener());
