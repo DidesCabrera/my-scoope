@@ -48,6 +48,7 @@ def main():
     parser.add_argument("--screenshot", type=Path, help="Save a sample card PNG here.")
     parser.add_argument("--screenshot-web", type=Path, help="Save the 760px ChatGPT web layout PNG here.")
     parser.add_argument("--screenshot-panel", type=Path, help="Save the 570px ChatGPT panel layout PNG here.")
+    parser.add_argument("--screenshot-mobile", type=Path, help="Save the 320px ChatGPT mobile layout PNG here.")
     args = parser.parse_args()
 
     with sync_playwright() as playwright:
@@ -133,6 +134,12 @@ def main():
         card.get_by_role("tab", name="Alloc").click()
         assert card.locator("#meal-foods li").nth(2).get_by_text("68%").is_visible()
 
+        assert card.locator(".macro-row").first.evaluate(
+            "element => element.querySelector('.macro-ppk').getBoundingClientRect().right "
+            "<= element.querySelector('.alloc-bar').getBoundingClientRect().left"
+        )
+        assert card.locator(".meal-icon").evaluate("element => element.getBoundingClientRect().width <= 20")
+
         hostile = {**SAMPLE_RESULT, "data": {"meal": {
             **SAMPLE_RESULT["data"]["meal"],
             "foods": [{"food_name": '<img src=x onerror=alert(1)>', "quantity": 1}],
@@ -147,6 +154,16 @@ def main():
         assert card.locator("#card").evaluate(
             "element => getComputedStyle(element).backgroundColor",
         ) == "rgb(18, 18, 18)"
+        assert card.locator(".macro-row").first.evaluate(
+            "element => element.querySelector('.macro-ppk').getBoundingClientRect().right "
+            "<= element.querySelector('.alloc-bar').getBoundingClientRect().left"
+        )
+        if args.screenshot_mobile:
+            send_result(page, SAMPLE_RESULT)
+            card.locator("#meal-foods li").first.get_by_text("Porotos negros cocidos").wait_for()
+            card.get_by_role("tab", name="Alimentos").click()
+            args.screenshot_mobile.parent.mkdir(parents=True, exist_ok=True)
+            card.locator("#card").screenshot(path=str(args.screenshot_mobile))
 
         send_result(page, {"ok": False, "data": {}, "error": {"code": "not_found"}})
         assert card.get_by_role("status").is_visible()
