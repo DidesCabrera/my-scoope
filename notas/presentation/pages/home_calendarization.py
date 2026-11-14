@@ -6,16 +6,19 @@ from math import ceil
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.conf import settings
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.services.entitlements import resolve_account_entitlements
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_progress_summary,
     meal_execution_state_for_day,
 )
 from notas.application.queries.calendarization_projection_queries import (
     build_calendarization_snapshot_projection,
+    snapshot_food_aggregation_rows,
     snapshot_nutrition_totals,
 )
 from notas.application.queries.calendarization_queries import (
@@ -29,7 +32,6 @@ from notas.presentation.resolvers.title_resolvers import resolve_category_badge
 from notas.presentation.viewmodels.content.dailyplan.list_vm import (
     KPIUI,
     ChildCardUI,
-    FoodsAggregationUI,
     MenuUI,
     MetadataUI,
     StructuralIndicatorsUI,
@@ -245,6 +247,8 @@ def build_home_calendarization_vm(
     )
     current_weight = get_current_weight(user) if calendarization or calendarized_days else None
     owner_label = str(user)
+    entitlements = resolve_account_entitlements(user) if settings.SUPPLEMENTS_FEATURE_ENABLED else None
+    can_use_supplements = bool(entitlements and entitlements.enabled("can_use_supplements"))
 
     weeks = [
         _build_week_vm(
@@ -255,6 +259,7 @@ def build_home_calendarization_vm(
             calendarized_days=calendarized_days,
             current_weight=current_weight,
             owner_label=owner_label,
+            can_use_supplements=can_use_supplements,
             navigation_view_name=navigation_view_name,
         )
         for week_monday in week_starts
@@ -332,6 +337,7 @@ def _build_week_vm(
     calendarized_days,
     current_weight,
     owner_label: str,
+    can_use_supplements: bool,
     navigation_view_name: str,
 ) -> HomeCalendarWeekVM:
     is_active_week = week_monday == active_monday
@@ -345,6 +351,7 @@ def _build_week_vm(
                 calendarized_day,
                 current_weight=current_weight,
                 owner_label=owner_label,
+                can_use_supplements=can_use_supplements,
             )
             if is_active_week and has_plan
             else None
@@ -461,7 +468,7 @@ def _snapshot_meal_table_items(snapshot: dict, plan_totals: dict) -> list[dict]:
     return items
 
 
-def _build_snapshot_dailyplan_card(day, *, current_weight, owner_label: str) -> ChildCardUI:
+def _build_snapshot_dailyplan_card(day, *, current_weight, owner_label: str, can_use_supplements: bool) -> ChildCardUI:
     snapshot = day.plan_snapshot
     totals = snapshot_nutrition_totals(snapshot)
     meals = [meal for meal in snapshot.get("meals", []) if isinstance(meal, dict)]
@@ -501,7 +508,24 @@ def _build_snapshot_dailyplan_card(day, *, current_weight, owner_label: str) -> 
         ),
         table={"items": _snapshot_meal_table_items(snapshot, totals)},
         menu=MenuUI(meals=[]),
-        foods_aggregation=FoodsAggregationUI(foods_aggregation=[]),
+        foods_aggregation=snapshot_food_aggregation_rows([snapshot], totals),
+        can_use_supplements=can_use_supplements,
+        supplement_intakes=[
+            {
+                "label": intake.get("label") or f"Ingesta {index}",
+                "hour": intake.get("hour"),
+                "items": [
+                    {
+                        "name": (item.get("supplement") or {}).get("name") or "Suplemento",
+                        "quantity": item.get("quantity"),
+                        "unit": item.get("unit") or "",
+                    }
+                    for item in intake.get("items", []) if isinstance(item, dict)
+                ],
+            }
+            for index, intake in enumerate(snapshot.get("supplement_intakes", []), 1)
+            if isinstance(intake, dict)
+        ] if can_use_supplements else [],
         metadata=MetadataUI(
             owner=owner_label,
             author=owner_label,

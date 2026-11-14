@@ -1,8 +1,12 @@
+from dataclasses import replace
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.services.profile import build_account_credit_display
 from notas.domain.models import Profile
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
@@ -98,6 +102,23 @@ class SidebarBuilderTests(TestCase):
 
         self.assertIn("min-height: 50px", css)
         self.assertIn("font-size: 22px", css)
+
+    @override_settings(SUPPLEMENTS_FEATURE_ENABLED=True)
+    def test_sidebar_pro_chips_follow_effective_plan(self):
+        user = User.objects.create_user(username="sidebar-plan-user", password="secret")
+        user.profile.onboarding_completed_at = timezone.now()
+        user.profile.onboarding_version = Profile.ONBOARDING_VERSION_NUTRITION_V1
+        user.profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
+        self.client.force_login(user)
+        display = build_account_credit_display(user)
+
+        for plan_slug, expected_count in (("free", 2), ("basic", 2), ("pro", 0)):
+            with self.subTest(plan_slug=plan_slug), patch(
+                "notas.context_processors.build_account_credit_display",
+                return_value=replace(display, plan_slug=plan_slug),
+            ):
+                response = self.client.get(reverse("home_view"))
+                self.assertEqual(response.content.count(b'class="sidebar-pro-chip">Pro</span>'), expected_count)
 
     def test_build_sidebar_vm_uses_reorganized_section_order(self):
         sidebar = build_sidebar_vm(PROFILE_VIEWMODE)

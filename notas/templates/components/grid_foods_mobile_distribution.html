@@ -8,7 +8,7 @@
   </div>
   {% for row in items %}
     <div class="data-grid-row data-grid-row--mobile-foods-distribution">
-      <div class="data-grid-cell data-grid-cell--name">{{ row.rel.name }}</div>
+      <div class="data-grid-cell data-grid-cell--name">{% include "components/food_visual_icon.html" with food_id=row.child.id food_name=row.rel.name %}{{ row.rel.name }}</div>
       <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-protein">{{ row.rel.kcal_distribution.protein|floatformat:0 }}%</div>
       <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-carbs">{{ row.rel.kcal_distribution.carbs|floatformat:0 }}%</div>
       <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-fat">{{ row.rel.kcal_distribution.fat|floatformat:0 }}%</div>

@@ -1,21 +1,44 @@
+{% with panel_id=child_card.child_id|default:forloop.counter %}
 <div class="entity-card entity-card--food card food-child-card {{ food_card_class }}">
   <div class="entity-card__main card-main">
     <div class="entity-card__title card-title">
       {% include "components/card_child_title.html" with titulo=child_card.titulo portion_quantity=child_card.related_data.quantity portion_unit=child_card.related_data.unit %}
     </div>
-
     <div class="entity-card__kpi card-kpi">
       {% include "components/dash_kpi.html" with kpis=child_card.kpis %}
     </div>
   </div>
 
-  {% if child_card.metadata or child_card.actions %}<div class="entity-card__footer card-bottom">
-    <div class="entity-card__metadata card-metadata">
-      {% include "components/card_child_metadata.html" with metadata=child_card.metadata %}
+  <div class="entity-card__toolbar">
+    <div class="entity-card__panel-toggles">
+      <button type="button" class="entity-card__panel-toggle entity-card__panel-toggle--food"
+              data-card-panel-target="food-info-{{ panel_id }}"
+              aria-controls="food-info-{{ panel_id }}" aria-expanded="false">
+        <i data-lucide="info" aria-hidden="true"></i> Más información
+      </button>
     </div>
-
     <div class="entity-card__actions card-actions">
-      {% include "components/card_actions.html" with actions=child_card.actions %}
+      {% include "components/card_actions.html" with actions=child_card.actions hide_overflow=child_card.hide_overflow_actions %}
     </div>
-  </div>{% endif %}
+  </div>
+
+  <div id="food-info-{{ panel_id }}" class="entity-card__panel" role="region" aria-label="Información nutricional de {{ child_card.titulo.name }}" hidden>
+    <div class="content-panel entity-card__nutrition-facts">
+      <div class="entity-card__facts-heading">
+        <strong>Información nutricional</strong>
+        <span>{{ child_card.nutrition_facts.basis_label|default:"Por 100 g" }}{% if child_card.nutrition_facts.portion %} · Porción aprox.: {{ child_card.nutrition_facts.portion|floatformat:"-1" }} g{% endif %}</span>
+      </div>
+      <dl>
+        <div><dt>Calorías</dt><dd>{{ child_card.kpis.tot_kcal|floatformat:0 }} kcal</dd></div>
+        <div><dt>Proteínas</dt><dd>{{ child_card.kpis.g_protein|floatformat:1 }} g</dd></div>
+        <div><dt>Carbohidratos</dt><dd>{{ child_card.kpis.g_carbs|floatformat:1 }} g</dd></div>
+        <div><dt>Grasas</dt><dd>{{ child_card.kpis.g_fat|floatformat:1 }} g</dd></div>
+        {% if child_card.nutrition_facts.saturated_fat != None %}<div><dt>Grasas saturadas</dt><dd>{{ child_card.nutrition_facts.saturated_fat|floatformat:1 }} g</dd></div>{% endif %}
+        {% if child_card.nutrition_facts.sugar != None %}<div><dt>Azúcares</dt><dd>{{ child_card.nutrition_facts.sugar|floatformat:1 }} g</dd></div>{% endif %}
+        {% if child_card.nutrition_facts.fiber != None %}<div><dt>Fibra</dt><dd>{{ child_card.nutrition_facts.fiber|floatformat:1 }} g</dd></div>{% endif %}
+        {% if child_card.nutrition_facts.sodium != None %}<div><dt>Sodio</dt><dd>{{ child_card.nutrition_facts.sodium|floatformat:1 }} mg</dd></div>{% endif %}
+      </dl>
+    </div>
+  </div>
 </div>
+{% endwith %}

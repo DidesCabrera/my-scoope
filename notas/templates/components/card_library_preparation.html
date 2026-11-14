@@ -1,0 +1,33 @@
+{% with panel_id=card.id %}
+<article class="entity-card entity-card--preparation">
+  <div class="entity-card__main card-main">
+    <div class="entity-card__title card-title">
+      {% include "components/card_child_title.html" with titulo=card.title %}
+      <p class="library-card__subtitle">{{ card.subtitle }}</p>
+      {% if card.kpis %}<span class="library-card__chip">{{ card.ingredient_count }} ingrediente{{ card.ingredient_count|pluralize }}</span>{% endif %}
+    </div>
+    {% if card.kpis %}<div class="entity-card__kpi card-kpi">
+      {% include "components/dash_kpi.html" with kpis=card.kpis %}
+    </div>{% endif %}
+  </div>
+  <div class="entity-card__toolbar">
+    <div class="entity-card__panel-toggles">
+      {% if card.kpis %}<button type="button" class="entity-card__panel-toggle entity-card__panel-toggle--preparation"
+        data-card-panel-target="preparation-foods-{{ panel_id }}"
+        aria-controls="preparation-foods-{{ panel_id }}" aria-expanded="false">
+        <i data-lucide="carrot" aria-hidden="true"></i> Alimentos
+      </button>{% endif %}
+    </div>
+    <div class="entity-card__actions card-actions">
+      {% include "components/card_actions.html" with actions=card.actions hide_overflow=card.hide_overflow %}
+    </div>
+  </div>
+  {% if card.kpis %}<div id="preparation-foods-{{ panel_id }}" class="entity-card__panel" role="region" aria-label="Alimentos de {{ card.title.name }}" hidden>
+    <div class="content-panel library-card__panel">
+      {% for ingredient in card.ingredients %}
+      <div class="library-card__ingredient"><span>{{ ingredient.name }}</span><strong>{{ ingredient.quantity_g|floatformat:"-2" }} g</strong></div>
+      {% empty %}<p class="entity-card__panel-empty">Sin ingredientes.</p>{% endfor %}
+    </div>
+  </div>{% endif %}
+</article>
+{% endwith %}

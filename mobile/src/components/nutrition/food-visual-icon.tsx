@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Image, StyleSheet, Text } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
-import { useRemoteFoodVisual } from "./remote-food-visuals";
+import { useFoodVisualManifestResolved, useRemoteFoodVisual, useRemoteFoodVisualStatus } from "./remote-food-visuals";
+import { foodVisualPresentation } from "./remote-food-visuals-core";
 
 type FoodVisual = { emoji: string; visualKey: string };
 
@@ -78,6 +79,11 @@ const nameRules: readonly [readonly string[], FoodVisual][] = [
 ];
 
 const genericVisual: FoodVisual = { emoji: "🍽️", visualKey: "food_generic" };
+const iconFrames = {
+  title: { width: 62, height: 41 },
+  compact: { width: 36, height: 24 },
+  panel: { width: 30, height: 20 },
+} as const;
 
 function normalizeFoodName(value: string): string {
   return value
@@ -104,21 +110,27 @@ export function resolveFoodVisual(name: string, emoji?: string | null, visualKey
 export function FoodVisualIcon({ emoji, foodId, name, size = "compact", visualKey }: { emoji?: string | null; foodId?: number | string | null; name: string; size?: "compact" | "panel" | "title"; visualKey?: string | null }) {
   const visual = resolveFoodVisual(name, emoji, visualKey);
   const remoteUrl = useRemoteFoodVisual(name, foodId);
+  const manifestResolved = useFoodVisualManifestResolved();
+  const remoteStatus = useRemoteFoodVisualStatus(remoteUrl);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!failedUrl) return;
     const retry = setTimeout(() => setFailedUrl(null), 60_000);
     return () => clearTimeout(retry);
   }, [failedUrl]);
-  if (remoteUrl && remoteUrl !== failedUrl) {
-    const iconSize = size === "title" ? 41 : size === "panel" ? 20 : 24;
+  const frame = iconFrames[size];
+  const presentation = foodVisualPresentation(manifestResolved, remoteUrl, remoteStatus, remoteUrl === failedUrl);
+  if (presentation === "placeholder") {
+    return <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ ...frame, flexShrink: 0 }} />;
+  }
+  if (presentation === "image" && remoteUrl) {
     return <Image
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       onError={() => setFailedUrl(remoteUrl)}
       resizeMode="contain"
       source={{ uri: remoteUrl }}
-      style={{ width: iconSize, height: iconSize, flexShrink: 0 }}
+      style={{ ...frame, flexShrink: 0 }}
     />;
   }
   return (
@@ -132,7 +144,7 @@ export function FoodVisualIcon({ emoji, foodId, name, size = "compact", visualKe
 }
 
 const styles = StyleSheet.create({
-  icon: { flexShrink: 0, fontSize: 18, lineHeight: 22, textAlign: "center", width: 24 },
-  panelIcon: { fontSize: 14, lineHeight: 18, width: 20 },
-  titleIcon: { fontSize: 31, lineHeight: 39, width: 41 },
+  icon: { flexShrink: 0, fontSize: 18, lineHeight: 22, textAlign: "center", width: 36 },
+  panelIcon: { fontSize: 14, lineHeight: 18, width: 30 },
+  titleIcon: { fontSize: 31, lineHeight: 39, width: 62 },
 });

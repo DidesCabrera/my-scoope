@@ -89,9 +89,11 @@ class ChildCardUI:
     kpis: KPIUI
     table: dict
     menu: MenuUI
-    foods_aggregation: FoodsAggregationUI
+    foods_aggregation: List[Dict[str, Any]]
     metadata: MetadataUI
     actions: list
+    can_use_supplements: bool = False
+    supplement_intakes: list = field(default_factory=list)
     if_shared: Optional[IfShared] = None
 
 

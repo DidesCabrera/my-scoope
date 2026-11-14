@@ -21,6 +21,7 @@ contracts:
       - "Operational Food assignments may override catalog-backed images regardless of nutritional source"
       - "All manifest URLs match the installed app's UUID/digest route, including unlinked foods"
       - "Versioned same-origin PNG URL changes after replacement"
+      - "Opt-in wide-v1 manifest derives a 192x127 transparent PNG without mutating the approved square source or breaking square clients"
       - "Missing, unpublished or failed assets fall back to the existing emoji"
   - id: "supplement-global-to-personal-v1"
     catalog: "supplements"

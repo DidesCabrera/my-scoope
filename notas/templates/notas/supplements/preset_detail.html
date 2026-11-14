@@ -1,30 +1,52 @@
 {% extends "notas/base.html" %}
-{% load static l10n %}
-{% block title %}{{ vm.content.preset.name }} · Toma guardada{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
+{% load static %}
+{% block title %}{{ vm.content.preset.name }} · Ingesta de suplementos{% endblock %}
+{% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}?v=20261114-3">{% endblock %}
 {% block content %}
 {% with preset=vm.content.preset %}
-<div class="page web-parity" data-page="supplement-preset-detail">
-  <a class="web-parity__back" href="{% url 'supplement_list' %}">← Mis Suplementos</a>
-  <header class="web-parity__heading"><div><p class="web-parity__eyebrow">Toma guardada</p><h1>{{ preset.name }}</h1>
-    <p>La composición se copia al agregarla a una Minuta. Las Minutas anteriores conservan su propia copia.</p></div></header>
-  <section class="web-parity__section"><h2>Editar toma</h2>
-    <form method="post" action="{% url 'supplement_preset_save' preset.id %}" class="web-parity__form" data-repeat-form>
-      {% csrf_token %}<label>Nombre<input name="name" value="{{ preset.name }}" maxlength="100" required></label>
-      <div data-repeat-list>
-      {% for item in preset.items.all %}
-        <div class="web-parity__repeat-row"><label>Suplemento<select name="preset_id" required>
-          {% for supplement in vm.content.supplements %}<option value="{{ supplement.id }}" {% if supplement.id == item.supplement_id %}selected{% endif %}>{{ supplement.name }}</option>{% endfor %}
-        </select></label>
-          <label>Cantidad<input name="preset_quantity" value="{{ item.quantity|floatformat:'3u' }}" type="number" min="0.001" step="0.001" required></label>
-          <label>Unidad<select name="preset_unit">{% for unit in vm.content.units %}<option value="{{ unit }}" {% if unit == item.unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></label><button type="button" class="web-parity__text-button" data-repeat-remove>Quitar</button></div>
-      {% endfor %}
+<div class="page web-parity library-detail library-detail--supplement" data-page="supplement-preset-detail">
+  <header class="library-detail__header">
+    <div class="library-detail__identity">
+      <div class="card-title main">{% include "components/card_main_title.html" with titulo=vm.content.title %}</div>
+      <span class="library-detail__indicator">{{ vm.content.items|length }} sup{{ vm.content.items|length|pluralize }}</span>
+    </div>
+    <details class="library-detail__actions">
+      <summary aria-label="Más acciones para {{ preset.name }}" title="Más acciones"><i data-lucide="more-horizontal" aria-hidden="true"></i></summary>
+      <div class="library-detail__action-menu">
+        <a href="{% url 'supplement_preset_edit' preset.pk %}"><i data-lucide="pencil" aria-hidden="true"></i> Editar ingesta</a>
+        <form method="post" action="{% url 'supplement_preset_remove' preset.pk %}" onsubmit="return confirm('¿Eliminar esta ingesta guardada? Las Minutas que ya la usan no cambiarán.')">
+          {% csrf_token %}<button type="submit" class="library-detail__danger"><i data-lucide="trash-2" aria-hidden="true"></i> Eliminar ingesta</button>
+        </form>
       </div>
-      <button type="button" class="web-parity__text-button" data-repeat-add>+ Otro suplemento</button>
-      <button class="btn-primary" type="submit">Guardar toma</button>
-    </form>
+    </details>
+  </header>
+  <section class="library-detail__section">
+    <div class="library-detail__section-heading"><h2>Composición de la ingesta</h2><span>{{ vm.content.items|length }} suplemento{{ vm.content.items|length|pluralize }}</span></div>
+    <div class="library-detail__table">
+      {% for item in vm.content.items %}
+        {% if item.supplement_id %}
+        <a class="library-detail__table-row" href="{% url 'supplement_detail' item.supplement_id %}"><span><i data-lucide="pill" aria-hidden="true"></i>{{ item.name }}</span><strong>{{ item.quantity_label }}</strong><i data-lucide="chevron-right" aria-hidden="true"></i></a>
+        {% else %}
+        <div class="library-detail__table-row"><span><i data-lucide="pill" aria-hidden="true"></i>{{ item.name }}</span><strong>{{ item.quantity_label }}</strong></div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  <section class="library-detail__section">
+    <div class="library-detail__section-heading"><h2>Detalle de cada suplemento</h2></div>
+    <p class="web-parity__note">Revisa la información de cada suplemento incluido en esta ingesta.</p>
+    <div class="library-detail__ingredient-grid">
+      {% for item in vm.content.items %}
+        {% if item.supplement_id %}<a class="library-detail__ingredient-card" href="{% url 'supplement_detail' item.supplement_id %}">
+        {% else %}<div class="library-detail__ingredient-card">{% endif %}
+          <span class="library-detail__eyebrow"><i data-lucide="pill" aria-hidden="true"></i> Suplemento · {{ item.quantity_label }}</span>
+          <strong>{{ item.name }}</strong>
+          {% if item.brand %}<span>{{ item.brand }}</span>{% endif %}
+        {% if item.supplement_id %}</a>{% else %}</div>{% endif %}
+      {% endfor %}
+    </div>
   </section>
 </div>
 {% endwith %}
-<script src="{% static 'notas/js/web_parity.js' %}" defer></script>
 {% endblock %}

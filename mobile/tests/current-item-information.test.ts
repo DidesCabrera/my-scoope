@@ -42,6 +42,6 @@ test("foods opened from an in-progress meal inherit the library information acti
   const meal = await readTestFile(path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"), "utf8");
   const libraryDetail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
 
-  assert.match(meal, /food\.kind === "preparation" \? `\/libraries\/preparations\/\$\{food\.detailId\}` : `\/libraries\/foods\/\$\{food\.detailId\}`/);
+  assert.match(meal, /pathname: "\/libraries\/foods\/\[id\]"[^\n]*snapshotDayId: String\(dayId\), snapshotMealKey: mealKey, snapshotFoodKey: food\.id/);
   assert.match(libraryDetail, /onOpenInformation=\{\(\) => router\.push\(`\/libraries\/\$\{entitySlug\}\/\$\{item\.id\}\/information` as Href\)\}/);
 });
