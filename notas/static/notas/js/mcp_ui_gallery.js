@@ -2,7 +2,8 @@
   const frame = document.getElementById("mcp-meal-frame");
   const stage = document.getElementById("mcp-meal-stage");
   const scenario = document.getElementById("mcp-meal-scenario");
-  if (!frame || !stage || !scenario) return;
+  const entity = document.getElementById("mcp-entity");
+  if (!frame || !stage || !scenario || !entity) return;
 
   const desktopMeal = {
     id: 23,
@@ -36,11 +37,44 @@
       { food_name: "Arándanos", quantity: 80, total_kcal: 51, protein: 1, carbs: 12, fat: 0, emoji: "🫐" },
     ],
   };
+  const sampleFood = {
+    id: 0, name: "Avena tradicional", category: "Cereal", portion_unit: "g",
+    macros: { total_kcal: 382, protein: 13, carbs: 67, fat: 7,
+      alloc_protein: 14, alloc_carbs: 70, alloc_fat: 16 },
+  };
+  const sampleDailyplan = {
+    id: 0, name: "Minuta de un día equilibrado", category: "Diaria",
+    meals_count: 3, foods_count: 9,
+    kpis: { total_kcal: 1950, protein: 120, carbs: 225, fat: 63,
+      ppk: 1.5, alloc_protein: 25, alloc_carbs: 46, alloc_fat: 29 },
+    meals: [
+      { meal_name: "Desayuno", hour: "08:00", kpis: { total_kcal: 447 }, foods: [
+        { food_name: "Avena tradicional" }, { food_name: "Yogur natural" }, { food_name: "Plátano" },
+      ] },
+      { meal_name: "Almuerzo", hour: "13:30", kpis: { total_kcal: 931 }, foods: [
+        { food_name: "Porotos negros" }, { food_name: "Arroz blanco" }, { food_name: "Palta" }, { food_name: "Tomate" },
+      ] },
+      { meal_name: "Cena", hour: "20:00", kpis: { total_kcal: 572 }, foods: [
+        { food_name: "Salmón" }, { food_name: "Papas cocidas" },
+      ] },
+    ],
+  };
   let ready = false;
 
   function resultForScenario() {
     if (scenario.value === "error") {
       return { ok: false, data: {}, error: { code: "not_found" } };
+    }
+    if (entity.value === "food") {
+      const food = { ...sampleFood };
+      if (scenario.value === "long") food.name = "Avena tradicional integral de grano entero";
+      return { ok: true, data: { food }, error: null };
+    }
+    if (entity.value === "dailyplan") {
+      const dailyplan = { ...sampleDailyplan };
+      if (scenario.value === "long") dailyplan.name = "Minuta equilibrada para un día completo de entrenamiento";
+      if (scenario.value === "empty") dailyplan.meals = [];
+      return { ok: true, data: { dailyplan }, error: null };
     }
     const source = scenario.value === "mobile" ? mobileMeal : desktopMeal;
     const sample = { ...source, foods: source.foods };
@@ -87,7 +121,7 @@
     }
     if (message.method === "ui/notifications/size-changed") {
       const height = Number(message.params?.height);
-      if (Number.isFinite(height) && height > 0) frame.style.height = `${Math.max(340, Math.ceil(height))}px`;
+      if (Number.isFinite(height) && height > 0) frame.style.height = `${Math.ceil(height)}px`;
     }
   });
   frame.addEventListener("load", () => respondToInitialize());
@@ -117,6 +151,27 @@
       frame.style.width = `${width}px`;
       select("[data-mcp-width]", width, "mcpWidth");
     });
+  });
+  const scenarioLabels = {
+    meal: ["Porotos con arroz y palta", "Avena con yogur y fruta", "Nombre largo", "Sin alimentos", "Error de lectura"],
+    food: ["Avena tradicional", "Avena tradicional", "Nombre largo", "Sin detalle", "Error de lectura"],
+    dailyplan: ["Minuta de un día", "Minuta de un día", "Nombre largo", "Sin comidas", "Error de lectura"],
+  };
+  function updateScenarioLabels() {
+    if (entity.value !== "meal" && scenario.value === "mobile") scenario.value = "standard";
+    [...scenario.options].forEach((option, index) => {
+      option.textContent = scenarioLabels[entity.value][index];
+      option.hidden = option.value === "mobile" && entity.value !== "meal";
+    });
+  }
+  updateScenarioLabels();
+  entity.addEventListener("change", () => {
+    ready = false;
+    updateScenarioLabels();
+    const url = new URL(frame.src, window.location.href);
+    url.searchParams.set("entity", entity.value);
+    frame.src = url.toString();
+    frame.title = `Card de ${entity.value === "food" ? "alimento" : entity.value === "dailyplan" ? "minuta" : "comida"} MCP en conversación`;
   });
   scenario.addEventListener("change", sendResult);
 })();

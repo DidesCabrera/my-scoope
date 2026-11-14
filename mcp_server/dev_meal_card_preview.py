@@ -17,6 +17,8 @@ from mcp.server.fastmcp import FastMCP
 UI_DIR = Path(__file__).parent / "myscoope_mcp" / "ui"
 CARD_PATH = UI_DIR / "meal_card_v5.html"
 SOURCE_PATH = UI_DIR / "meal_card_v5.source.html"
+ENTITY_CARD_PATH = UI_DIR / "entity_card_v1.html"
+ENTITY_SOURCE_PATH = UI_DIR / "entity_card_v1.source.html"
 MIME_TYPE = "text/html;profile=mcp-app"
 STYLE_PATTERN = re.compile(r"<style>(.*?)</style>", re.DOTALL)
 
@@ -43,15 +45,46 @@ SAMPLE_MEAL = {
 }
 
 
-def current_css() -> str:
-    match = STYLE_PATTERN.search(SOURCE_PATH.read_text(encoding="utf-8"))
+
+SAMPLE_FOOD = {
+    "ok": True,
+    "data": {"food": {
+        "id": 0, "name": "Avena tradicional", "category": "Cereal", "portion_unit": "g",
+        "macros": {"total_kcal": 382, "protein": 13, "carbs": 67, "fat": 7,
+                   "alloc_protein": 14, "alloc_carbs": 70, "alloc_fat": 16},
+    }},
+    "error": None,
+}
+
+SAMPLE_DAILYPLAN = {
+    "ok": True,
+    "data": {"dailyplan": {
+        "id": 0, "name": "Minuta de un día equilibrado", "category": "Diaria",
+        "meals_count": 3, "foods_count": 9,
+        "kpis": {"total_kcal": 1950, "protein": 120, "carbs": 225, "fat": 63,
+                 "ppk": 1.5, "alloc_protein": 25, "alloc_carbs": 46, "alloc_fat": 29},
+        "meals": [
+            {"meal_name": "Desayuno", "hour": "08:00", "kpis": {"total_kcal": 447},
+             "foods": [{"food_name": "Avena tradicional"}, {"food_name": "Yogur natural"}, {"food_name": "Plátano"}]},
+            {"meal_name": "Almuerzo", "hour": "13:30", "kpis": {"total_kcal": 931},
+             "foods": [{"food_name": "Porotos negros"}, {"food_name": "Arroz blanco"}, {"food_name": "Palta"}, {"food_name": "Tomate"}]},
+            {"meal_name": "Cena", "hour": "20:00", "kpis": {"total_kcal": 572},
+             "foods": [{"food_name": "Salmón"}, {"food_name": "Papas cocidas"}]},
+        ],
+    }},
+    "error": None,
+}
+
+def current_css(card: str = "meal") -> str:
+    source = SOURCE_PATH if card == "meal" else ENTITY_SOURCE_PATH
+    match = STYLE_PATTERN.search(source.read_text(encoding="utf-8"))
     if not match:
         raise ValueError("Meal card source has no style block")
     return match.group(1)
 
 
-def preview_html() -> str:
-    html = CARD_PATH.read_text(encoding="utf-8")
+def preview_html(card: str = "meal") -> str:
+    html = (CARD_PATH if card == "meal" else ENTITY_CARD_PATH).read_text(encoding="utf-8")
     live_script = """
 <script>
 (() => {
@@ -60,7 +93,7 @@ def preview_html() -> str:
   function refreshStyles() {
     window.parent.postMessage({
       jsonrpc: "2.0", id: ++requestId, method: "tools/call",
-      params: {name: "preview_card_styles", arguments: {}}
+      params: {name: "preview_card_styles", arguments: {card: "__CARD__"}}
     }, "*");
   }
   window.addEventListener("message", event => {
@@ -86,13 +119,15 @@ def preview_html() -> str:
 </script>
 """
     if "</body>" not in html:
-        raise ValueError("Meal card HTML has no body closing tag")
-    return html.replace("</body>", live_script + "</body>", 1)
+        raise ValueError("Card HTML has no body closing tag")
+    return html.replace("</body>", live_script.replace("__CARD__", card) + "</body>", 1)
 
 
 def create_preview_server() -> FastMCP:
     # A new URI per process avoids a stale cached resource when HTML changes.
-    uri = f"ui://myscoope-dev/meal-card-{uuid.uuid4().hex}.html"
+    version = uuid.uuid4().hex
+    uri = f"ui://myscoope-dev/meal-card-{version}.html"
+    entity_uri = f"ui://myscoope-dev/entity-card-{version}.html"
     server = FastMCP("My Scoope meal card preview", stateless_http=True)
 
     @server.tool(
@@ -105,17 +140,39 @@ def create_preview_server() -> FastMCP:
         return SAMPLE_MEAL
 
     @server.tool(
+        name="preview_food_card",
+        description="Show a synthetic My Scoope food for visual preview.",
+        meta={"ui": {"resourceUri": entity_uri}},
+        structured_output=True,
+    )
+    def preview_food_card() -> dict[str, Any]:
+        return SAMPLE_FOOD
+
+    @server.tool(
+        name="preview_dailyplan_card",
+        description="Show a synthetic My Scoope daily plan for visual preview.",
+        meta={"ui": {"resourceUri": entity_uri}},
+        structured_output=True,
+    )
+    def preview_dailyplan_card() -> dict[str, Any]:
+        return SAMPLE_DAILYPLAN
+
+    @server.tool(
         name="preview_card_styles",
-        description="Read local meal card CSS for the preview iframe.",
+        description="Read local card CSS for the preview iframe.",
         meta={"ui": {"visibility": ["app"]}},
         structured_output=True,
     )
-    def preview_card_styles() -> dict[str, str]:
-        return {"css": current_css()}
+    def preview_card_styles(card: str = "meal") -> dict[str, str]:
+        return {"css": current_css(card)}
 
     @server.resource(uri, name="My Scoope meal card development preview", mime_type=MIME_TYPE)
     def card_resource() -> str:
         return preview_html()
+
+    @server.resource(entity_uri, name="My Scoope entity card development preview", mime_type=MIME_TYPE)
+    def entity_resource() -> str:
+        return preview_html("entity")
 
     return server
 

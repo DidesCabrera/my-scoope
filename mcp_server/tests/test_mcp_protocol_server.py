@@ -27,6 +27,7 @@ from myscoope_mcp.tools import (
     TOOL_LIST_FOOD_CATALOG,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
     TOOL_SEARCH_USER_MEALS,
@@ -46,6 +47,7 @@ class MCPProtocolServerTests(unittest.TestCase):
             get_protocol_allowed_tool_names(),
             {
                 TOOL_READ_DAILYPLAN,
+                TOOL_READ_FOOD,
                 TOOL_READ_MEAL,
                 TOOL_READ_PROPOSAL,
                 TOOL_SEARCH_USER_MEALS,

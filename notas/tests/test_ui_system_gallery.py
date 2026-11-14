@@ -68,11 +68,20 @@ class UISystemGalleryTests(TestCase):
         self.assertContains(gallery, 'id="conversation-ui"')
         self.assertContains(gallery, preview_url)
         self.assertContains(gallery, 'id="mcp-meal-frame"')
+        self.assertContains(gallery, 'id="mcp-entity"')
         self.assertContains(gallery, 'sandbox="allow-scripts"')
         self.assertContains(gallery, "mcp_ui_gallery.js")
         self.assertEqual(preview.status_code, 200)
         self.assertEqual(preview.content, card_path.read_bytes())
         self.assertEqual(preview["X-Frame-Options"], "SAMEORIGIN")
+        for entity in ("food", "dailyplan"):
+            with self.subTest(entity=entity):
+                candidate = self.client.get(f"{preview_url}?entity={entity}")
+                entity_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/entity_card_v1.html"
+                self.assertEqual(candidate.status_code, 200)
+                self.assertEqual(candidate.content, entity_path.read_bytes())
+        self.assertEqual(self.client.get(f"{preview_url}?entity=unknown").status_code, 404)
+
 
     def test_auth_previews_render_product_templates(self):
         sent_response = self.client.get(
