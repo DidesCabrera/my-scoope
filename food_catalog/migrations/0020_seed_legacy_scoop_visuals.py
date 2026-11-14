@@ -7,7 +7,6 @@ from django.db import migrations
 
 from food_catalog.visual_assets import prepare_food_visual
 
-
 APPROVED_FOODS = (
     (1, "Dextrosa", "dextrosa.png"),
     (7, "Maca Andina", "maca_andina.png"),
