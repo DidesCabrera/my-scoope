@@ -12,22 +12,23 @@
   {% else %}
   <form method="get" class="web-parity__search"><label for="supplement-search">Buscar</label>
     <div><input id="supplement-search" name="q" value="{{ vm.content.search }}" placeholder="Suplemento o toma"><button class="btn-primary" type="submit">Buscar</button></div></form>
-  <section class="web-parity__section"><h2>Mis productos</h2>
+  <section class="library-list__section"><h2>Mis productos</h2>
+    <details class="library-list__create"><summary>+ Crear suplemento</summary>
     <form method="post" action="{% url 'supplement_create' %}" class="web-parity__inline-form">
       {% csrf_token %}<label for="new-supplement-name">Nuevo suplemento</label>
       <input id="new-supplement-name" name="name" maxlength="100" required placeholder="Nombre del producto">
       <button class="btn-primary" type="submit">Crear</button>
-    </form>
-    <div class="web-parity__grid">
-    {% for row in vm.content.rows %}
-      <a class="web-parity__card" href="{% url 'supplement_detail' row.id %}"><span class="web-parity__card-icon"><i data-lucide="pill"></i></span>
-        <strong>{{ row.name }}</strong><span>{{ row.brand|default:"Sin marca" }}{% if row.default_quantity %} · {{ row.default_quantity }} {{ row.default_unit }}{% endif %}</span></a>
+    </form></details>
+    <div class="library-list__cards">
+    {% for card in vm.content.supplement_cards %}
+      {% include "components/card_library_supplement.html" with card=card %}
     {% empty %}<p>Aún no tienes suplementos.</p>{% endfor %}
     </div>
   </section>
-  <section class="web-parity__section"><h2>Mis tomas guardadas</h2>
+  <section class="library-list__section"><h2>Mis tomas guardadas</h2>
     <p class="web-parity__note">Una toma guardada copia sus suplementos al agregarla a una Minuta. Después puedes elegir la hora de esa instancia.</p>
     {% if vm.content.rows %}
+    <details class="library-list__create"><summary>+ Crear ingesta</summary>
     <form method="post" action="{% url 'supplement_preset_create' %}" class="web-parity__form" data-repeat-form>
       {% csrf_token %}<label>Nombre de la toma<input name="name" maxlength="100" required></label>
       <div data-repeat-list>
@@ -39,12 +40,11 @@
       </div>
       <button type="button" class="web-parity__text-button" data-repeat-add>+ Otro suplemento</button>
       <button type="submit" class="btn-primary">Guardar toma</button>
-    </form>
+    </form></details>
     {% else %}<p>Agrega un suplemento para crear una toma.</p>{% endif %}
-    <div class="web-parity__rows">
-    {% for preset in vm.content.presets %}
-      <div class="web-parity__row"><span><a href="{% url 'supplement_preset_detail' preset.id %}"><strong>{{ preset.name }}</strong></a><small>{% for item in preset.items.all %}{{ item.supplement_snapshot.name }} · {{ item.quantity }} {{ item.unit }}{% if not forloop.last %}, {% endif %}{% endfor %}</small></span>
-        <form method="post" action="{% url 'supplement_preset_remove' preset.id %}">{% csrf_token %}<button class="web-parity__text-button" type="submit">Quitar</button></form></div>
+    <div class="library-list__cards">
+    {% for card in vm.content.preset_cards %}
+      {% include "components/card_library_supplement_preset.html" with card=card %}
     {% empty %}<p>Aún no tienes tomas guardadas.</p>{% endfor %}
     </div>
   </section>

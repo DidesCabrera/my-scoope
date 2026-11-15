@@ -4,6 +4,7 @@ import json
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.utils import translation
 from openpyxl import Workbook
 
 from notas.domain.models import Food, Meal
@@ -58,6 +59,12 @@ class FoodViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Egg")
+        self.assertContains(response, f'data-food-id="{food.id}"')
+        self.assertContains(response, 'data-food-name="Egg"')
+        self.assertContains(response, "🍽️")
+        self.assertContains(response, "Información nutricional: 100 g")
+        self.assertNotContains(response, 'picker-result-badge--unit')
+        self.assertNotContains(response, ">Tu alimento<")
         self.assertIn("vm", response.context)
 
     def test_food_detail_returns_200(self):
@@ -75,6 +82,43 @@ class FoodViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Rice")
+        self.assertContains(response, f'data-food-id="{food.id}"')
+        self.assertContains(response, "🍽️")
+        self.assertContains(response, "Información nutricional: 100 g")
+        self.assertNotContains(response, ">Tu alimento<")
+
+    def test_food_nutrition_subtitle_uses_milliliters_on_card_and_detail(self):
+        food = Food.objects.create(
+            name="Leche",
+            protein=3,
+            carbs=5,
+            fat=2,
+            portion_unit=Food.PORTION_UNIT_MILLILITERS,
+            created_by=self.user,
+        )
+
+        list_response = self.client.get(reverse("food_list"))
+        detail_response = self.client.get(reverse("food_detail", args=[food.id]))
+
+        self.assertContains(list_response, "Información nutricional: 100 ml")
+        self.assertContains(detail_response, "Información nutricional: 100 ml")
+        self.assertContains(detail_response, 'data-base-unit="ml"')
+
+    def test_food_detail_nutrition_data_uses_js_numeric_format_in_spanish(self):
+        food = Food.objects.create(
+            name="Alimento de prueba",
+            protein=2.5,
+            carbs=4,
+            fat=1,
+            created_by=self.user,
+        )
+
+        with translation.override("es"):
+            response = self.client.get(reverse("food_detail", args=[food.id]))
+
+        self.assertContains(response, 'data-base-protein="2.5"')
+        self.assertContains(response, 'data-base-carbs="4.0"')
+        self.assertContains(response, 'data-base-fat="1.0"')
 
     def test_food_create_creates_food(self):
         response = self.client.post(

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { householdAmounts, householdMeasures } from "../src/components/libraries/household-equivalence-picker.types";
 
 test("mobile libraries expose native creation for all four entities", async () => {
   const list = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-list-screen.tsx"), "utf8");
@@ -47,6 +48,15 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.ok(create.includes('<DistributedTabBar<"g" | "ml">') && create.includes("bleed"));
   for (const endpoint of ["foods", "meals", "daily-plans", "programs"]) {
     assert.match(create, new RegExp(`/api/v1/library/${endpoint}`));
+  }
+});
+
+test("food equivalence offers quarter increments and daily measures", () => {
+  assert.equal(householdAmounts[0], 0.25);
+  assert.equal(householdAmounts.at(-1), 100);
+  assert.ok(householdAmounts.includes(1.5));
+  for (const measure of ["unit", "cup", "tablespoon", "scoop", "other"]) {
+    assert.ok(householdMeasures.some((option) => option.value === measure));
   }
 });
 

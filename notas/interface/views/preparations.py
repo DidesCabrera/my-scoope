@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from notas.application.queries.food_picker_queries import list_food_picker_page
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
@@ -25,10 +25,17 @@ from notas.application.services.commands.personal_preparation_commands import (
     save_personal_preparation,
 )
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import Meal, MealPreparation, Preparation
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import PREPARATION_VIEWMODE_DETAIL, PREPARATION_VIEWMODE_LIST
+from notas.presentation.pages.library_entity_cards import (
+    preparation_card,
+    preparation_food_rows,
+    preparation_ingredient_cards,
+    preparation_kpis,
+)
 
 
 def _context(viewmode, **content):
@@ -85,38 +92,80 @@ def preparation_list(request):
         )
         if search:
             personal_rows = personal_rows.filter(name__icontains=search)
+    personal_rows = list(personal_rows.order_by("name", "id")[:100])
+    global_rows = list(global_rows.order_by("name", "id")[:100])
+    weight = get_current_weight(request.user)
     return render(request, "notas/preparations/list.html", _context(
         PREPARATION_VIEWMODE_LIST,
         search=search,
-        global_rows=global_rows.order_by("name", "id")[:100],
-        personal_rows=personal_rows.order_by("name", "id")[:100],
+        global_rows=global_rows,
+        personal_rows=personal_rows,
+        global_cards=[preparation_card(item, weight=weight) for item in global_rows],
+        personal_cards=[preparation_card(item, weight=weight) for item in personal_rows],
         personal_access=personal_access,
     ))
 
 
 @login_required
 @require_GET
-def preparation_detail(request, pk):
+def _preparation_page_context(request, pk):
     preparation = _visible_preparation(request.user, pk)
     version = preparation.current_version
     food_search = request.GET.get("food", "").strip()[:100]
     food_results = None
     if food_search and not preparation.is_global and preparation.is_active:
         food_results = list_food_picker_page(user=request.user, search=food_search, limit=20).foods
-    ingredients = [
-        {"food_id": row.food_id, "name": snapshot.get("name", row.food.name),
-         "quantity_g": snapshot.get("quantity_g", row.quantity_g)}
+    ingredients = []
+    if version:
         for row, snapshot in zip(
             version.ingredients.select_related("food").order_by("order", "id"),
             version.ingredients_snapshot,
-        )
-    ] if version else []
-    return render(request, "notas/preparations/detail.html", _context(
+        ):
+            quantity = Decimal(str(snapshot.get("quantity_g", row.quantity_g)))
+            base = snapshot.get("nutrition_per_100g") or {}
+            ingredient = {
+                "food_id": row.food_id, "name": snapshot.get("name", row.food.name),
+                "quantity_g": quantity,
+            }
+            if all(base.get(key) is not None for key in ("protein_g", "carbs_g", "fat_g")):
+                factor = quantity / 100
+                ingredient["protein"] = Decimal(str(base["protein_g"])) * factor
+                ingredient["carbs"] = Decimal(str(base["carbs_g"])) * factor
+                ingredient["fat"] = Decimal(str(base["fat_g"])) * factor
+                ingredient["calories"] = (
+                    ingredient["protein"] * 4 + ingredient["carbs"] * 4 + ingredient["fat"] * 9
+                )
+            ingredients.append(ingredient)
+    weight = get_current_weight(request.user)
+    kpis = {"recipe": preparation_kpis(version, weight=weight), "portion": preparation_kpis(version, portion=True, weight=weight)} if version else None
+    return _context(
         PREPARATION_VIEWMODE_DETAIL,
         preparation=preparation, version=version, ingredients=ingredients,
         food_search=food_search, food_results=food_results,
         can_edit=not preparation.is_global and preparation.is_active,
-    ))
+        kpis=kpis,
+        food_rows=preparation_food_rows(ingredients, kpis["recipe"], weight=weight) if version else [],
+        ingredient_cards=preparation_ingredient_cards(ingredients, weight=weight) if version else [],
+        title={"name": preparation.name, "label": "preparation", "icon": "cooking-pot"},
+        portion_count=version.yield_g / version.default_portion_g if version else None,
+    )
+
+
+@login_required
+@require_GET
+def preparation_detail(request, pk):
+    return render(request, "notas/preparations/detail.html", _preparation_page_context(request, pk))
+
+
+@login_required
+@require_GET
+def _preparation_edit_page(request, pk):
+    if not can_use_personal_preparations(request.user):
+        raise Http404
+    context = _preparation_page_context(request, pk)
+    if not context["vm"]["content"]["can_edit"]:
+        raise Http404
+    return render(request, "notas/preparations/edit.html", context)
 
 
 @login_required
@@ -133,8 +182,10 @@ def preparation_create(request):
 
 
 @login_required
-@require_POST
+@require_http_methods(["GET", "POST"])
 def preparation_edit(request, pk):
+    if request.method == "GET":
+        return _preparation_edit_page(request, pk)
     if not can_use_personal_preparations(request.user):
         return HttpResponseForbidden()
     preparation = get_object_or_404(
@@ -176,7 +227,9 @@ def preparation_edit(request, pk):
                     user=request.user, preparation_id=pk,
                     name=request.POST.get("name", preparation.name) if action == "save" else preparation.name,
                     ingredients=ingredients,
-                    yield_g=_positive_decimal(request.POST.get("yield_g")) if action == "save" and request.POST.get("yield_g") else (
+                    yield_g=(
+                        _positive_decimal(request.POST.get("yield_g")) if request.POST.get("manual_yield") == "1" else None
+                    ) if action == "save" else (
                         version.yield_g if version and version.evidence.get("yield_is_manual") else None
                     ),
                     default_portion_g=_positive_decimal(request.POST.get("default_portion_g")) if action == "save" else (

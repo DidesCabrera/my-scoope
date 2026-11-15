@@ -1,7 +1,9 @@
+import json
 import os
 from dataclasses import replace
 from pathlib import Path
 from typing import Annotated, Any, TypedDict
+from urllib.parse import urlsplit
 
 from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.server.auth.provider import TokenVerifier
@@ -30,14 +32,22 @@ from myscoope_mcp.tools import (
     TOOL_LIST_FOOD_CATALOG,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
     TOOL_SEARCH_USER_MEALS,
 )
 
 SERVER_NAME = "my-scoope-mcp"
-MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v5.html"
-MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v5.html"
+FOOD_CARD_RESOURCE_URI = "ui://myscoope/food-card-v1.html"
+DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v2.html"
+PREVIOUS_DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v1.html"
+ENTITY_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "entity_card_v1.html"
+DAILYPLAN_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "entity_card_v2.html"
+MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v6.html"
+MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v6.html"
+PREVIOUS_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v5.html"
+PREVIOUS_MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v5.html"
 LEGACY_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v4.html"
 LEGACY_MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v4.html"
 OLDER_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v3.html"
@@ -58,13 +68,7 @@ class MyScoopeFastMCP(FastMCP):
         tools = await super().list_tools()
         for tool in tools:
             scopes = [MCP_SCOPE_READ]
-            if tool.name in {
-                TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
-                TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
-                TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
-                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
-                TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
-            }:
+            if tool.name in get_proposal_tool_names():
                 scopes.append(MCP_SCOPE_PROPOSALS_CREATE)
             tool.securitySchemes = [{"type": "oauth2", "scopes": scopes}]
         return tools
@@ -87,6 +91,7 @@ def get_protocol_tool_annotations() -> dict[str, ToolAnnotations]:
         TOOL_LIST_USER_PROPOSALS: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_LIST_FOOD_CATALOG: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_READ_DAILYPLAN: READ_ONLY_TOOL_ANNOTATIONS,
+        TOOL_READ_FOOD: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_READ_MEAL: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_SEARCH_USER_MEALS: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_READ_PROPOSAL: READ_ONLY_TOOL_ANNOTATIONS,
@@ -237,6 +242,7 @@ def register_mcp_tools(server: FastMCP) -> None:
     """
     annotations = get_protocol_tool_annotations()
     register_meal_tools(server, annotations)
+    register_entity_read_tools(server, annotations)
 
     @server.tool(
         annotations=annotations[TOOL_LIST_USER_PROPOSALS],
@@ -282,25 +288,6 @@ def register_mcp_tools(server: FastMCP) -> None:
             client=client,
             tool_name=TOOL_LIST_FOOD_CATALOG,
             arguments=arguments,
-        )
-
-        return serialize_tool_result(result)
-
-    @server.tool(
-        annotations=annotations[TOOL_READ_DAILYPLAN],
-    )
-    def read_dailyplan(dailyplan_id: int) -> dict[str, Any]:
-        """
-        Read a DailyPlan available to the authenticated My Scoope API context.
-        """
-        client = create_api_client()
-
-        result = dispatch_tool_call(
-            client=client,
-            tool_name=TOOL_READ_DAILYPLAN,
-            arguments={
-                "dailyplan_id": dailyplan_id,
-            },
         )
 
         return serialize_tool_result(result)
@@ -524,6 +511,35 @@ def register_mcp_tools(server: FastMCP) -> None:
         return summarize_created_proposal_result(result)
 
 
+def register_entity_read_tools(
+    server: FastMCP,
+    annotations: dict[str, ToolAnnotations],
+) -> None:
+    @server.tool(
+        annotations=annotations[TOOL_READ_FOOD],
+        meta={"ui": {"resourceUri": FOOD_CARD_RESOURCE_URI}},
+    )
+    def read_food(food_id: Annotated[int, Field(ge=1)]) -> MealReadResult:
+        """Read an authorized Food and show its nutrition card in compatible chats."""
+        client = create_api_client()
+        result = dispatch_tool_call(client=client, tool_name=TOOL_READ_FOOD, arguments={"food_id": food_id})
+        return serialize_tool_result(result)
+
+    @server.tool(
+        annotations=annotations[TOOL_READ_DAILYPLAN],
+        meta={"ui": {"resourceUri": DAILYPLAN_CARD_RESOURCE_URI}},
+    )
+    def read_dailyplan(dailyplan_id: int) -> MealReadResult:
+        """Read a DailyPlan available to the authenticated My Scoope API context."""
+        client = create_api_client()
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_READ_DAILYPLAN,
+            arguments={"dailyplan_id": dailyplan_id},
+        )
+        return serialize_tool_result(result)
+
+
 def register_meal_tools(
     server: FastMCP,
     annotations: dict[str, ToolAnnotations],
@@ -565,12 +581,24 @@ def get_protocol_allowed_tool_names() -> set[str]:
     """
     return {
         TOOL_READ_DAILYPLAN,
+        TOOL_READ_FOOD,
         TOOL_READ_MEAL,
         TOOL_SEARCH_USER_MEALS,
         TOOL_READ_PROPOSAL,
         TOOL_LIST_USER_PROPOSALS,
         TOOL_LIST_FOOD_CATALOG,
         TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
+        TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+        TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
+        TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+        TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+        TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    }
+
+
+def get_proposal_tool_names() -> set[str]:
+    """Tools that require the proposal-creation OAuth scope."""
+    return {
         TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
         TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
         TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
@@ -621,7 +649,49 @@ def protocol_dispatch_placeholder():
     return dispatch_tool_call
 
 
+def _card_web_app_base_url() -> str:
+    configured = (
+        os.getenv("MYSCOOPE_CARD_WEB_APP_BASE_URL")
+        or load_config_from_env().normalized_api_base_url
+    )
+    parsed = urlsplit(configured.rstrip("/"))
+    if (
+        parsed.scheme not in {"http", "https"}
+        or (parsed.scheme == "http" and parsed.hostname not in {"localhost", "127.0.0.1"})
+        or not parsed.netloc
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+        or parsed.path.rstrip("/") != "/app"
+    ):
+        raise ValueError("The MCP card web app base URL must be an absolute /app URL.")
+    return f"{parsed.scheme}://{parsed.netloc}/app"
+
+
 def register_mcp_resources(server: FastMCP) -> None:
+    card_app_base_url = _card_web_app_base_url()
+    parsed_app_url = urlsplit(card_app_base_url)
+    redirect_origin = f"{parsed_app_url.scheme}://{parsed_app_url.netloc}"
+    @server.resource(FOOD_CARD_RESOURCE_URI, name="My Scoope food card", mime_type=MEAL_CARD_MIME_TYPE)
+    def food_card_resource() -> str:
+        return ENTITY_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
+
+    @server.resource(
+        DAILYPLAN_CARD_RESOURCE_URI,
+        name="My Scoope daily plan card",
+        mime_type=MEAL_CARD_MIME_TYPE,
+        meta={"openai/widgetCSP": {"redirect_domains": [redirect_origin]}},
+    )
+    def dailyplan_card_resource() -> str:
+        return DAILYPLAN_CARD_RESOURCE_PATH.read_text(encoding="utf-8").replace(
+            '"__MYSCOOPE_APP_BASE_URL__"', json.dumps(card_app_base_url)
+        )
+
+    @server.resource(PREVIOUS_DAILYPLAN_CARD_RESOURCE_URI, name="My Scoope daily plan card v1", mime_type=MEAL_CARD_MIME_TYPE)
+    def previous_dailyplan_card_resource() -> str:
+        return ENTITY_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
+
     @server.resource(
         MEAL_CARD_RESOURCE_URI,
         name="My Scoope meal card",
@@ -629,6 +699,14 @@ def register_mcp_resources(server: FastMCP) -> None:
     )
     def meal_card_resource() -> str:
         return MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
+
+    @server.resource(
+        PREVIOUS_MEAL_CARD_RESOURCE_URI,
+        name="My Scoope meal card v5",
+        mime_type=MEAL_CARD_MIME_TYPE,
+    )
+    def previous_meal_card_resource() -> str:
+        return PREVIOUS_MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
 
     @server.resource(
         LEGACY_MEAL_CARD_RESOURCE_URI,

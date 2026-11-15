@@ -45,6 +45,10 @@
                                             </span>
                                         {% elif group.key == 'personal_records' and current_weight %}
                                             <span class="sidebar-weight-chip">{{ current_weight_label }} kg</span>
+                                        {% elif section.key == 'workspace' and group.key == 'preparation' or section.key == 'workspace' and group.key == 'supplement' %}
+                                            {% if sidebar_credits.plan_slug == 'free' or sidebar_credits.plan_slug == 'basic' %}
+                                                <span class="sidebar-pro-chip">Pro</span>
+                                            {% endif %}
                                         {% endif %}
                                     </a>
                             {% else %}

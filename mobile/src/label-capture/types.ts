@@ -8,6 +8,10 @@ export type FoodLabelCaptureInput = {
   fiber_g?: number;
   sodium_mg?: number;
   serving_size_g?: number;
+  default_portion?: number;
+  household_amount?: number;
+  household_measure?: string;
+  household_detail?: string;
   volume_weight_g_per_100ml?: number;
   declared_energy_kcal_per_100g?: number;
   detected_basis: "per_100g" | "per_serving" | "per_100ml" | "manual";
@@ -18,6 +22,7 @@ export type FoodLabelCaptureInput = {
   idempotency_key: string;
   analysis_id?: string;
   retain_label_image?: boolean;
+  share_for_curation?: boolean;
   label_image_base64?: string;
   label_image_content_type?: "image/jpeg" | "image/png" | "image/webp";
 };
@@ -36,6 +41,10 @@ export type FoodLabelAIAnalysis = {
   basis: "per_100g" | "per_serving" | "per_100ml" | "unknown";
   source_basis: "per_100g" | "per_serving" | "per_100ml" | "unknown";
   serving_size_g: number | null;
+  serving_size_ml: number | null;
+  household_amount: number | null;
+  household_measure: string | null;
+  household_detail: string;
   source_values: Record<string, number>;
   values: Record<string, number>;
   field_confidence: Record<string, number>;
@@ -67,6 +76,7 @@ export type FoodLabelCaptureResult = {
   portion_unit: "g" | "ml";
   ocr_engine: string;
   label_image_retained: boolean;
+  shared_for_curation: boolean;
   created_at: string;
 };
 

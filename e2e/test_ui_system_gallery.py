@@ -60,8 +60,10 @@ def test_conversation_gallery_runs_the_mcp_card_with_synthetic_states(
     expect(card.locator("#meal-food-table tr")).to_have_count(4)
     expect(card.locator("#meal-food-table")).to_be_visible()
     expect(card.get_by_text("Porotos negros cocidos").first).to_be_visible()
-    assert anonymous_page.locator("#mcp-meal-frame").evaluate(
-        "element => element.clientHeight >= element.contentDocument?.body.scrollHeight || element.clientHeight > 450"
+    card_height = card.locator("body").evaluate("element => element.scrollHeight")
+    anonymous_page.wait_for_function(
+        "height => document.querySelector('#mcp-meal-frame').clientHeight >= height",
+        arg=card_height,
     )
 
     anonymous_page.get_by_role("button", name="Claro").click()
@@ -82,6 +84,7 @@ def test_conversation_gallery_runs_the_mcp_card_with_synthetic_states(
     assert card.locator(".food-panel").evaluate(
         "element => element.scrollWidth > element.clientWidth"
     )
+    assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
 
     anonymous_page.get_by_role("button", name="Móvil").click()
     anonymous_page.locator("#mcp-meal-scenario").select_option("mobile")

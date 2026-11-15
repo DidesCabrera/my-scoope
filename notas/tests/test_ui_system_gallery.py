@@ -63,16 +63,32 @@ class UISystemGalleryTests(TestCase):
         gallery = self.client.get(self.url)
         preview_url = reverse("ui_system_mcp_meal_card_preview")
         preview = self.client.get(preview_url)
-        card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v5.html"
+        card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v6.html"
 
         self.assertContains(gallery, 'id="conversation-ui"')
         self.assertContains(gallery, preview_url)
         self.assertContains(gallery, 'id="mcp-meal-frame"')
+        self.assertContains(gallery, 'id="mcp-entity"')
         self.assertContains(gallery, 'sandbox="allow-scripts"')
         self.assertContains(gallery, "mcp_ui_gallery.js")
         self.assertEqual(preview.status_code, 200)
         self.assertEqual(preview.content, card_path.read_bytes())
         self.assertEqual(preview["X-Frame-Options"], "SAMEORIGIN")
+        for entity in ("food", "dailyplan"):
+            with self.subTest(entity=entity):
+                candidate = self.client.get(f"{preview_url}?entity={entity}")
+                filename = "entity_card_v2.html" if entity == "dailyplan" else "entity_card_v1.html"
+                entity_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui" / filename
+                self.assertEqual(candidate.status_code, 200)
+                expected = entity_path.read_text(encoding="utf-8")
+                if entity == "dailyplan":
+                    expected = expected.replace(
+                        '"__MYSCOOPE_APP_BASE_URL__"',
+                        '"http://testserver/app"',
+                    )
+                self.assertEqual(candidate.content.decode("utf-8"), expected)
+        self.assertEqual(self.client.get(f"{preview_url}?entity=unknown").status_code, 404)
+
 
     def test_auth_previews_render_product_templates(self):
         sent_response = self.client.get(

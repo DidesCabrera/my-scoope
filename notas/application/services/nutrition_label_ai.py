@@ -78,6 +78,10 @@ LABEL_RESPONSE_SCHEMA: dict[str, Any] = {
         "product_name",
         "basis",
         "serving_size_g",
+        "serving_size_ml",
+        "household_amount",
+        "household_measure",
+        "household_detail",
         "energy_value",
         "energy_unit",
         "protein_g",
@@ -95,6 +99,10 @@ LABEL_RESPONSE_SCHEMA: dict[str, Any] = {
         "product_name": {"type": ["string", "null"]},
         "basis": {"type": "string", "enum": ["per_100g", "per_serving", "per_100ml", "unknown"]},
         "serving_size_g": {"type": ["number", "null"]},
+        "serving_size_ml": {"type": ["number", "null"]},
+        "household_amount": {"type": ["number", "null"]},
+        "household_measure": {"type": ["string", "null"], "enum": ["unit", "cup", "tablespoon", "scoop", "slice", "can", "fillet", "leaf", "strip", "other", None]},
+        "household_detail": {"type": ["string", "null"]},
         "energy_value": {"type": ["number", "null"]},
         "energy_unit": {"type": ["string", "null"], "enum": ["kcal", "kJ", None]},
         "protein_g": {"type": ["number", "null"]},
@@ -113,6 +121,12 @@ LABEL_PROMPT = """You extract printed nutrition facts from a package photo.
 Return only the strict JSON result. Never infer values that are not visible. Ignore daily-value percentages.
 Prefer the column explicitly headed per 100 g. Use per_100ml when that exact volumetric basis is printed.
 Otherwise use the per-serving column and its printed serving weight in grams.
+Read the printed suggested serving independently of the nutrition column. Put its metric quantity in
+serving_size_g or serving_size_ml according to the printed unit. If the label says e.g. "2 cucharadas (30 g)",
+return household_amount=2, household_measure="tablespoon", and serving_size_g=30. Recognize unidad/unit,
+taza/cup, cucharada/tablespoon, scoop, rodaja/slice, lata/can, filete/fillet, hoja/leaf, tira/strip.
+Use other with a short household_detail only for a clearly printed measure outside that list.
+Leave any serving or household field null if absent or unclear; never derive it from nutrient values.
 Keep decimal separators and units semantically correct. Sodium may be printed as salt: do not convert salt to sodium.
 Set status to resolved when protein, carbohydrates and fat are clearly legible. If those values are legible but
 their basis is cropped or genuinely uncertain, keep status resolved and set basis to unknown so the user can confirm it.
@@ -552,6 +566,14 @@ def _normalize_provider_payload(payload: Any) -> tuple[dict[str, Any] | None, st
     if basis not in {"per_100g", "per_serving", "per_100ml", "unknown"}:
         return None, "unsupported_basis"
     serving_size = _number(payload.get("serving_size_g"), maximum=10_000)
+    serving_size_ml = _number(payload.get("serving_size_ml"), maximum=10_000)
+    household_amount = _number(payload.get("household_amount"), maximum=100)
+    household_measure = payload.get("household_measure")
+    if household_measure not in {"unit", "cup", "tablespoon", "scoop", "slice", "can", "fillet", "leaf", "strip", "other"} or not household_amount:
+        household_amount, household_measure = None, None
+    household_detail = str(payload.get("household_detail") or "").strip()[:100] if household_measure == "other" else ""
+    if household_measure == "other" and not household_detail:
+        household_amount, household_measure = None, None
     source_values = _provider_nutrient_values(payload)
     if any(source_values[key] is None for key in ("protein_g", "carbs_g", "fat_g")):
         return None, "core_macros_missing"
@@ -578,6 +600,10 @@ def _normalize_provider_payload(payload: Any) -> tuple[dict[str, Any] | None, st
         "basis": basis,
         "source_basis": basis,
         "serving_size_g": serving_size,
+        "serving_size_ml": serving_size_ml,
+        "household_amount": household_amount,
+        "household_measure": household_measure,
+        "household_detail": household_detail,
         "source_values": present_source_values,
         "values": values,
         "field_confidence": {key: round(confidence, 3) for key in present_source_values},

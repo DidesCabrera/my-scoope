@@ -22,7 +22,9 @@ export function PreparationMealPreviewCard({ meal, selected, relationId }: { mea
     title={preview.name}>
     <FoodPanels items={preview.items} onOpenItem={(item) => {
       if (item.detailId == null) return;
-      router.push((item.kind === "preparation" ? `/libraries/preparations/${item.detailId}` : `/libraries/foods/${item.detailId}`) as Href);
+      router.push(item.kind === "preparation"
+        ? { pathname: "/libraries/preparations/[id]", params: { id: String(item.detailId), mealGrams: String(item.portionDisplayQuantity ?? item.quantity) } } as Href
+        : { pathname: "/libraries/foods/[id]", params: { id: String(item.detailId), mealQuantity: String(item.quantity) } } as Href);
     }} showEditTab={false} />
   </NutritionEntityCard>;
 }

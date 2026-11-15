@@ -12,11 +12,17 @@ from myscoope_mcp.tools import (
     TOOL_LIST_FOOD_CATALOG,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
     TOOL_SEARCH_USER_MEALS,
     get_tool_spec,
 )
+
+
+def read_food(client: MyscoopeAPIClient, food_id: int) -> MCPToolCallResult:
+    spec = get_tool_spec(TOOL_READ_FOOD)
+    return client.call_ai_tool_api(spec.api_path, {"food_id": food_id})
 
 
 def read_dailyplan(
@@ -236,6 +242,7 @@ def iterate_nutrition_engine_dailyplan_proposal(
 
 READ_TOOL_HANDLERS = {
     TOOL_READ_DAILYPLAN: read_dailyplan,
+    TOOL_READ_FOOD: read_food,
     TOOL_READ_MEAL: read_meal,
     TOOL_SEARCH_USER_MEALS: search_user_meals,
     TOOL_READ_PROPOSAL: read_proposal,
@@ -282,6 +289,11 @@ def call_read_tool(
     arguments: dict[str, Any] | None = None,
 ) -> MCPToolCallResult:
     arguments = arguments or {}
+
+    if tool_name == TOOL_READ_FOOD:
+        if "food_id" not in arguments:
+            return _missing_required_argument("food_id")
+        return read_food(client=client, food_id=arguments["food_id"])
 
     if tool_name == TOOL_READ_DAILYPLAN:
         if "dailyplan_id" not in arguments:

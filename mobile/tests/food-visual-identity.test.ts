@@ -20,8 +20,9 @@ test("food cards use a larger visual on the right while panel rows remain compac
   assert.ok(panel.includes('<FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} size="panel" visualKey={item.visualKey} />'));
   assert.ok(icon.includes('const remoteUrl = useRemoteFoodVisual(name, foodId)'));
   assert.ok(icon.includes('onError={() => setFailedUrl(remoteUrl)}'));
-  assert.ok(icon.includes('panelIcon: { fontSize: 14, lineHeight: 18, width: 20 }'));
-  assert.ok(icon.includes('titleIcon: { fontSize: 31, lineHeight: 39, width: 41 }'));
+  assert.ok(icon.includes('title: { width: 62, height: 41 }'));
+  assert.ok(icon.includes('compact: { width: 36, height: 24 }'));
+  assert.ok(icon.includes('panel: { width: 30, height: 20 }'));
 });
 
 test("food visual metadata travels through picker and library contracts", async () => {
@@ -42,7 +43,7 @@ test("food cards and details both place the visual after the title", async () =>
   assert.ok(detail.includes('titleIconPosition={entity === "food" ? "trailing" : "leading"}'));
   assert.ok(heading.includes('titleIconPosition = "leading"'));
   assert.ok(heading.includes('titleIconPosition === "leading" ? titleIcon : null'));
-  assert.ok(heading.includes('titleIconPosition === "trailing" ? titleIcon : null'));
+  assert.ok(heading.includes('titleIconPosition === "trailing" ? page ? titleIcon : <View style={styles.headingTitleCardIcon}>{titleIcon}</View> : null'));
   assert.ok(card.includes('titleIcon={entity === "food" ? <FoodVisualIcon'));
   assert.ok(card.includes('titleIconPosition={entity === "food" ? "trailing" : "leading"}'));
   assert.ok(heading.includes('titleIconPosition={titleIconPosition}'));

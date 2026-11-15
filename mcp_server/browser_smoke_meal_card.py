@@ -2,11 +2,12 @@
 
 import argparse
 import html
+from copy import deepcopy
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v5.html"
+CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v6.html"
 SAMPLE_RESULT = {
     "ok": True,
     "data": {
@@ -17,13 +18,13 @@ SAMPLE_RESULT = {
             "kpis": {"total_kcal": 931, "protein": 40, "carbs": 173, "fat": 9.1,
                      "ppk": 0.5, "alloc_protein": 17, "alloc_carbs": 74, "alloc_fat": 9},
             "foods": [
-                {"food_name": "Porotos negros cocidos", "quantity": 340,
+                {"food_name": "Porotos negros cocidos", "quantity": 340, "quantity_unit": "g", "ppk": 0.3, "emoji": "🫘",
                  "total_kcal": 459, "protein": 30.1, "carbs": 80.6, "fat": 1.8},
-                {"food_name": "Arroz blanco cocido", "quantity": 300,
+                {"food_name": "Arroz blanco cocido", "quantity": 300, "quantity_unit": "g", "ppk": 0.1, "emoji": "🍚",
                  "total_kcal": 378, "protein": 8.1, "carbs": 84.5, "fat": 0.8},
-                {"food_name": "Palta", "quantity": 42,
+                {"food_name": "Palta", "quantity": 42, "quantity_unit": "g", "ppk": 0.0, "emoji": "🥑",
                  "total_kcal": 73, "protein": 0.8, "carbs": 3.6, "fat": 6.2},
-                {"food_name": "Tomate", "quantity": 100,
+                {"food_name": "Tomate", "quantity": 100, "quantity_unit": "g", "ppk": 0.0, "emoji": "🍅",
                  "total_kcal": 21, "protein": 0.9, "carbs": 3.9, "fat": 0.2},
             ],
         },
@@ -48,6 +49,8 @@ def main():
     parser.add_argument("--screenshot", type=Path, help="Save a sample card PNG here.")
     parser.add_argument("--screenshot-web", type=Path, help="Save the 760px ChatGPT web layout PNG here.")
     parser.add_argument("--screenshot-panel", type=Path, help="Save the 570px ChatGPT panel layout PNG here.")
+    parser.add_argument("--screenshot-mobile", type=Path, help="Save the 320px ChatGPT mobile layout PNG here.")
+    parser.add_argument("--output-dir", type=Path, help="Save each mobile tab PNG here.")
     args = parser.parse_args()
 
     with sync_playwright() as playwright:
@@ -81,6 +84,9 @@ def main():
         card.get_by_role("heading", name="Porotos negros con arroz y palta").wait_for()
         page.wait_for_function("window.bridgeMessages.some(message => message.method === 'ui/notifications/size-changed' && message.params.height > 300)")
         assert card.locator("#meal-kcal").inner_text() == "931"
+        assert card.locator(".kcal-box").evaluate(
+            "element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1"
+        )
         assert card.locator("#meal-protein").inner_text() == "40g"
         assert card.locator("#meal-protein-bar").get_attribute("aria-label") == "17%"
         assert card.locator("#meal-carbs-bar").get_attribute("aria-label") == "74%"
@@ -106,28 +112,70 @@ def main():
         page.locator("iframe").evaluate("element => element.style.width = '620px'")
         assert card.locator("#meal-food-table").is_visible()
         assert card.locator(".food-panel").evaluate(
-            "element => element.scrollWidth > element.clientWidth"
+            "element => element.scrollWidth > element.clientWidth || "
+            "element.querySelector('tbody tr td:last-child').getBoundingClientRect().right "
+            "<= element.getBoundingClientRect().right"
         )
 
         page.locator("iframe").evaluate("element => element.style.width = '570px'")
-        assert card.locator("#meal-food-table").is_visible()
-        assert card.locator("#meal-foods").is_hidden()
-        assert card.locator(".food-panel").evaluate(
-            "element => element.scrollWidth > element.clientWidth"
-        )
+        assert card.locator("#meal-food-table").is_hidden()
+        assert card.locator("#meal-foods").is_visible()
+        assert card.locator(".mobile-tabs").is_visible()
         assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
         if args.screenshot_panel:
             args.screenshot_panel.parent.mkdir(parents=True, exist_ok=True)
             card.locator("#card").screenshot(path=str(args.screenshot_panel))
 
         page.locator("iframe").evaluate("element => element.style.width = '390px'")
+        assert card.locator(".macro-row").first.evaluate(
+            "element => Math.round(parseFloat(getComputedStyle(element).gridTemplateColumns)) === 78"
+        )
         assert card.locator("#meal-food-table").is_hidden()
         assert card.locator("#meal-foods li").count() == 4
-        card.get_by_role("tab", name="Calorías").click()
-        assert card.locator("#card").get_attribute("data-mode") == "calories"
-        assert card.locator("#meal-foods li").first.get_by_text("49% de la comida").is_visible()
-        card.get_by_role("tab", name="Alloc").click()
-        assert card.locator("#meal-foods li").nth(2).get_by_text("68%").is_visible()
+        for label, mode in (("Calorías", "calories"), ("Macros", "macros"), ("Dist", "distribution"), ("Alloc", "allocation")):
+            tab = card.get_by_role("tab", name=label)
+            tab.click()
+            assert tab.get_attribute("aria-selected") == "true"
+            assert card.locator("#card").get_attribute("data-mode") == mode
+            assert card.locator(f"#meal-{mode}").is_visible()
+            assert card.locator(f"#{mode}-rows .mobile-grid-row").count() == 4
+            assert card.locator("#meal-foods").is_hidden()
+            assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
+            if args.output_dir:
+                args.output_dir.mkdir(parents=True, exist_ok=True)
+                card.locator("#card").screenshot(path=str(args.output_dir / f"meal-{mode}-mobile.png"))
+        assert card.locator("#calories-rows .alloc-bar").first.get_attribute("aria-label") == "49%"
+        assert card.locator("#macros-rows .mobile-ppk").first.inner_text() == "0,3"
+        assert card.locator("#allocation-rows .mobile-grid-row").nth(2).get_by_role("img").last.get_attribute("aria-label") == "68%"
+        card.get_by_role("tab", name="Alimentos").click()
+        assert card.locator("#meal-foods").is_visible()
+        card.get_by_role("tab", name="Calorías").focus()
+        card.get_by_role("tab", name="Calorías").press("ArrowRight")
+        assert card.get_by_role("tab", name="Macros").get_attribute("aria-selected") == "true"
+        legacy = deepcopy(SAMPLE_RESULT)
+        legacy_food = legacy["data"]["meal"]["foods"][0]
+        legacy_food.pop("ppk")
+        legacy_food["quantity_unit"] = "ml"
+        send_result(page, legacy)
+        card.get_by_role("tab", name="Macros").click()
+        assert card.locator("#macros-rows .mobile-unavailable").first.inner_text() == "—"
+        card.get_by_role("tab", name="Alimentos").click()
+        assert card.locator("#meal-foods li").first.get_by_text("340 ml").is_visible()
+
+        assert card.locator(".macro-row").first.evaluate(
+            "element => element.querySelector('.macro-ppk').getBoundingClientRect().right "
+            "<= element.querySelector('.alloc-bar').getBoundingClientRect().left"
+        )
+        assert card.locator(".meal-icon").evaluate("element => element.getBoundingClientRect().width <= 20")
+        assert card.locator(".kcal-box").evaluate(
+            "element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1"
+        )
+        assert card.locator(".macro-list").evaluate(
+            "element => new Set([...element.querySelectorAll('.macro-row .alloc-bar')].map(bar => Math.round(bar.getBoundingClientRect().left))).size === 1"
+        )
+        assert card.locator(".top-kpis").evaluate(
+            "element => element.querySelector('.kcal-box').getBoundingClientRect().height > element.querySelector('.macro-list').getBoundingClientRect().height"
+        )
 
         hostile = {**SAMPLE_RESULT, "data": {"meal": {
             **SAMPLE_RESULT["data"]["meal"],
@@ -139,10 +187,29 @@ def main():
         assert card.locator("#meal-food-table img").count() == 0
 
         page.locator("iframe").evaluate("element => element.style.width = '320px'")
+        for label in ("Alimentos", "Calorías", "Macros", "Dist", "Alloc"):
+            card.get_by_role("tab", name=label).click()
+            assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
+        assert card.locator(".macro-row").first.evaluate(
+            "element => Math.round(parseFloat(getComputedStyle(element).gridTemplateColumns)) === 50"
+        )
+        assert card.locator(".kcal-box").evaluate(
+            "element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1"
+        )
         assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
         assert card.locator("#card").evaluate(
             "element => getComputedStyle(element).backgroundColor",
         ) == "rgb(18, 18, 18)"
+        assert card.locator(".macro-row").first.evaluate(
+            "element => element.querySelector('.macro-ppk').getBoundingClientRect().right "
+            "<= element.querySelector('.alloc-bar').getBoundingClientRect().left"
+        )
+        if args.screenshot_mobile:
+            send_result(page, SAMPLE_RESULT)
+            card.locator("#meal-foods li").first.get_by_text("Porotos negros cocidos").wait_for()
+            card.get_by_role("tab", name="Alimentos").click()
+            args.screenshot_mobile.parent.mkdir(parents=True, exist_ok=True)
+            card.locator("#card").screenshot(path=str(args.screenshot_mobile))
 
         send_result(page, {"ok": False, "data": {}, "error": {"code": "not_found"}})
         assert card.get_by_role("status").is_visible()

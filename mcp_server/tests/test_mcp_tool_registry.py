@@ -13,6 +13,7 @@ from myscoope_mcp.tools import (
     TOOL_LIST_USER_PROPOSALS,
     TOOL_LIST_FOOD_CATALOG,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
     TOOL_SEARCH_USER_MEALS,
@@ -47,6 +48,7 @@ class MCPToolRegistryTests(unittest.TestCase):
             tool_names,
             {
                 TOOL_READ_DAILYPLAN,
+                TOOL_READ_FOOD,
                 TOOL_READ_MEAL,
                 TOOL_READ_PROPOSAL,
                 TOOL_SEARCH_USER_MEALS,
@@ -64,6 +66,7 @@ class MCPToolRegistryTests(unittest.TestCase):
     def test_allowed_tools_map_to_api_adapter_paths(self):
         checks = {
             TOOL_READ_DAILYPLAN: "/ai-tools/read-dailyplan/",
+            TOOL_READ_FOOD: "/ai-tools/read-food/",
             TOOL_READ_MEAL: "/ai-tools/read-meal/",
             TOOL_READ_PROPOSAL: "/ai-tools/read-proposal/",
             TOOL_SEARCH_USER_MEALS: "/ai-tools/search-user-meals/",

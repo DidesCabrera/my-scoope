@@ -1,3 +1,4 @@
+<div class="data-grid-scroll data-grid-scroll--foods" role="region" aria-label="Tabla nutricional de alimentos" tabindex="0">
 <div class="data-grid data-grid--foods">
 
     <div class="data-grid-header data-grid-header--foods">
@@ -20,6 +21,7 @@
         <div class="data-grid-row data-grid-row--foods">
 
             <div class="data-grid-cell data-grid-cell--name">
+                {% include "components/food_visual_icon.html" with food_id=row.child.id food_name=row.rel.name %}
                 {% if program_context_query %}
                     <a
                         href="{% url 'food_detail' row.child.id %}?{{ program_context_query }}&mealfood={{ row.rel.id }}"
@@ -71,4 +73,5 @@
         </div>
     {% endfor %}
 
+</div>
 </div>

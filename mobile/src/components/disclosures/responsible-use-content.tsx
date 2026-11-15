@@ -33,7 +33,7 @@ export function ResponsibleUseContent({ policyActions }: { policyActions?: React
           title="No es atención médica"
         />
         <ResponsibleUsePanel
-          body="Tú decides qué datos compartes y puedes eliminar tu cuenta. Las etiquetas se procesan temporalmente y no guardamos la foto salvo que actives “Guardar copia procesada”."
+          body="Tú decides qué datos compartes y puedes eliminar tu cuenta. Las etiquetas se procesan temporalmente y no guardamos la foto salvo que actives “Guardar fotografía alimento”."
           icon={LockKeyhole}
           title="Privacidad y control"
         >

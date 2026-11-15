@@ -1,7 +1,7 @@
 # AI Team Organization
 
 Status: active
-Last reviewed: 2026-11-11
+Last reviewed: 2026-11-14
 
 ```mermaid
 flowchart TD
@@ -15,6 +15,7 @@ flowchart TD
     PT --> NSS[Nutrition Solver Steward]
     PT --> ACS[AI Architecture and Context Steward]
     PT --> AAPS[AI Application Platform Steward]
+    PT --> MSRS[Mobile Store Release Steward]
     PT --> OL[Observability Lead]
     PT --> PWC[Parallel Work Coordinator]
     OL --> MIS[Mobile Incident Specialist]
@@ -33,6 +34,10 @@ flowchart TD
     ACS -. governs AI architecture .-> AAPS
     NSS -. supplies solver quality contracts .-> AAPS
     AAPS -. supplies AI diagnostics .-> OL
+    SPA -. defines release scope .-> MSRS
+    OL -. supplies health evidence .-> MSRS
+    MSRS -. routes release incidents .-> RIS
+    MSRS -. requests independent evidence .-> IV
 
     F --> FIN[Finance]
     FIN --> AIR[Accounting Intake and Recordkeeping Agent]
@@ -72,6 +77,12 @@ flowchart TD
   assistant, governed action mechanisms, model integration, MCP projection, and
   AI release evidence. Architecture protects the wider system boundaries, while
   domain roles retain their calculation, data, and product authorities.
+- The Mobile Store Release Steward owns release identity, reusable readiness
+  evidence, submission coordination, App Store Connect operating state, and the
+  recommendation to submit or hold. Product owns release scope, technical roles
+  own implementation, Observability supplies health evidence, Release Incident
+  Specialist investigates delivery failures, and Incident Verifier supplies
+  independent final evidence when required.
 
 ## Role classes
 

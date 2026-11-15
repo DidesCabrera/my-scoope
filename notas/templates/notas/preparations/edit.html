@@ -1,0 +1,77 @@
+{% extends "notas/base.html" %}
+{% load static l10n %}
+{% block title %}Editar {{ vm.content.preparation.name }} · Preparación{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}?v=20261114-3">{% endblock %}
+{% block content %}
+{% with preparation=vm.content.preparation version=vm.content.version %}
+<div class="page web-parity" data-page="preparation-edit">
+  <header class="web-parity__heading">
+    <div><p class="web-parity__eyebrow">{% if preparation.is_global %}Catálogo curado{% else %}Mi Preparación{% endif %}</p>
+      <h1>Editar {{ preparation.name }}</h1>
+      {% if version %}<p>Rinde {{ version.yield_g|floatformat:0 }} g · Porción habitual {{ version.default_portion_g|floatformat:0 }} g · Versión {{ version.version }}</p>
+      {% else %}<p>Borrador. Agrega el primer alimento para calcular su composición.</p>{% endif %}
+    </div>
+  </header>
+  {% if version %}
+  <div class="web-parity__metrics" aria-label="Nutrición de la receta completa">
+    <div><strong>{{ version.protein_g|floatformat:1 }}</strong><span>g proteínas</span></div>
+    <div><strong>{{ version.carbs_g|floatformat:1 }}</strong><span>g carbohidratos</span></div>
+    <div><strong>{{ version.fat_g|floatformat:1 }}</strong><span>g grasas</span></div>
+    <div><strong>{% if version.sodium_mg != None %}{{ version.sodium_mg|floatformat:0 }}{% else %}Sin dato{% endif %}</strong><span>mg sodio</span></div>
+  </div>
+  <p class="web-parity__note">Valores de la receta completa. {% if preparation.is_global %}Alérgenos: {% if version.allergen_status == 'assessed' %}revisados{% else %}sin evaluación completa{% endif %}.{% else %}Los alérgenos de Preparaciones personales no están evaluados.{% endif %}</p>
+  {% endif %}
+  <section class="web-parity__section">
+    <h2>Ingredientes</h2>
+    <div class="web-parity__rows">
+      {% for ingredient in vm.content.ingredients %}
+      <div class="web-parity__row">
+        <span><strong>{{ ingredient.name }}</strong><small>{{ ingredient.quantity_g|floatformat:0 }} g</small></span>
+        {% if vm.content.can_edit %}
+        <div class="web-parity__checkin">
+          <form method="post" action="{% url 'preparation_edit' preparation.pk %}" class="web-parity__checkin">{% csrf_token %}
+            <input type="hidden" name="action" value="update_food"><input type="hidden" name="food_id" value="{{ ingredient.food_id }}">
+            <label>Gramos <input type="number" name="quantity_g" value="{{ ingredient.quantity_g|floatformat:'3u' }}" min="0.001" max="100000" step="0.001" required></label>
+            <button type="submit">Guardar</button>
+          </form>
+          <form method="post" action="{% url 'preparation_edit' preparation.pk %}">{% csrf_token %}
+            <input type="hidden" name="action" value="remove_food"><input type="hidden" name="food_id" value="{{ ingredient.food_id }}">
+            <button type="submit" class="web-parity__text-button">Quitar</button>
+          </form>
+        </div>{% endif %}
+      </div>
+      {% empty %}<p>Sin ingredientes todavía.</p>{% endfor %}
+    </div>
+  </section>
+  {% if vm.content.can_edit %}
+  <section class="web-parity__section">
+    <h2>Ajustar receta</h2>
+    {% if version %}
+    <form method="post" action="{% url 'preparation_edit' preparation.pk %}" class="web-parity__form">
+      {% csrf_token %}<input type="hidden" name="action" value="save">
+      <label>Nombre<input name="name" value="{{ preparation.name }}" maxlength="255" required></label>
+      <label class="web-parity__checkbox"><input name="manual_yield" type="checkbox" value="1" {% if version.evidence.yield_is_manual %}checked{% endif %}> Corregir rendimiento final manualmente</label>
+      <label>Rendimiento final en gramos<input name="yield_g" type="number" min="0.001" step="0.001" value="{{ version.yield_g|floatformat:'3u' }}"></label>
+      <p class="web-parity__note">Si desmarcas la corrección, el rendimiento se calculará a partir de los alimentos de la receta.</p>
+      <label>Porción habitual en gramos<input name="default_portion_g" type="number" min="0.001" step="0.001" value="{{ version.default_portion_g|floatformat:'3u' }}" required></label>
+      <button class="btn-primary" type="submit">Guardar cambios</button>
+    </form>
+    {% endif %}
+    <form method="get" class="web-parity__search"><label for="food-search">Buscar alimento para agregar</label>
+      <div><input id="food-search" name="food" value="{{ vm.content.food_search }}" placeholder="Nombre del alimento"><button type="submit" class="btn-primary">Buscar</button></div>
+    </form>
+    {% if vm.content.food_results %}
+    <div class="web-parity__rows">
+      {% for food in vm.content.food_results %}
+      <form method="post" action="{% url 'preparation_edit' preparation.pk %}" class="web-parity__row">
+        {% csrf_token %}<input type="hidden" name="action" value="add_food"><input type="hidden" name="food_id" value="{{ food.id }}">
+        <strong>{{ food.display_name }}</strong><label>Gramos <input name="quantity_g" type="number" min="0.001" max="100000" step="0.001" required></label>
+        <button type="submit" class="btn-primary">Agregar</button>
+      </form>
+      {% endfor %}
+    </div>{% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endwith %}
+{% endblock %}

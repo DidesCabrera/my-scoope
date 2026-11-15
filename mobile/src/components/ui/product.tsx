@@ -327,7 +327,7 @@ export function EntityHeading({
       <View style={[styles.headingTitleRow, titleIconPosition === "trailing" && styles.headingTitleRowTrailing]}>
         {titleIconPosition === "leading" ? titleIcon : null}
         <Text style={[styles.headingTitle, page && pageTitle]}>{title}</Text>
-        {titleIconPosition === "trailing" ? titleIcon : null}
+        {titleIconPosition === "trailing" ? page ? titleIcon : <View style={styles.headingTitleCardIcon}>{titleIcon}</View> : null}
       </View>
       {subtitle ? entity === "preparation" || entity === "food" && isFoodQuantity(subtitle) ? <NutritionBasisSubtitle entity={entity === "preparation" ? "preparation" : "food"} value={subtitle} /> : <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
       {indicators || completion ? (
@@ -578,8 +578,8 @@ const styles = StyleSheet.create({
   entityCardInPressable: { marginHorizontal: 0 },
   entityCardWithActions: { paddingBottom: tokens.card.innerPadding },
   entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginHorizontal: -6, marginTop: 6 },
-  entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, marginLeft: "auto" },
-  entityCardAction: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 },
+  entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact + 4, marginLeft: "auto", marginRight: 4 },
+  entityCardAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 32, justifyContent: "center", width: 32 },
   entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 2, height: 32, justifyContent: "center", paddingHorizontal: tokens.spacing.compact },
   entityCardPanelToggleIcon: { marginLeft: 1 },
   entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, marginRight: 2 },
@@ -603,6 +603,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.component.eyebrow.fontWeight, letterSpacing: 0, textTransform: "uppercase" },
   headingTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.component.entityHeading.card.fontSize, fontWeight: tokens.weight.bold, letterSpacing: 0, lineHeight: tokens.component.entityHeading.card.lineHeight, marginTop: tokens.component.entityHeading.card.marginTop, minWidth: 0 },
   headingTitleRow: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0 },
+  headingTitleCardIcon: { marginVertical: -5 },
   headingTitleRowTrailing: { justifyContent: "space-between" },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },

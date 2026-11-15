@@ -89,6 +89,10 @@ header {
 }
 
 @media (min-width: 981px) {
+  .sidebar {
+    padding-top: var(--pwa-safe-area-top);
+  }
+
   :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar {
     width: var(--sidebar-collapsed-width);
     padding-left: 14px;

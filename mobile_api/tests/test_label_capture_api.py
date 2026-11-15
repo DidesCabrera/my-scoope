@@ -1,6 +1,9 @@
 import base64
 import json
+from io import BytesIO
 from unittest.mock import patch
+
+from PIL import Image
 
 from django.test import override_settings
 
@@ -8,7 +11,7 @@ from accounts.models import AccountPlan, AccountSubscription, CreditWallet
 from accounts.services.credits import get_or_create_current_wallet
 from ai_assistant.models import AIUsageEvent
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
-from notas.domain.models import Food, FoodLabelAIAnalysis, FoodLabelCaptureReceipt
+from notas.domain.models import Food, FoodLabelAIAnalysis, FoodLabelCaptureReceipt, FoodPortion
 
 
 def _provider_response(
@@ -18,12 +21,19 @@ def _provider_response(
     model="gpt-5.6-luna",
     basis="per_100g",
     serving_size=150,
+    serving_size_ml=None,
+    household_amount=None,
+    household_measure=None,
 ):
     output = {
         "status": status,
         "product_name": "Yogur IA" if status == "resolved" else None,
         "basis": basis if status == "resolved" else "unknown",
         "serving_size_g": serving_size if status == "resolved" else None,
+        "serving_size_ml": serving_size_ml if status == "resolved" else None,
+        "household_amount": household_amount if status == "resolved" else None,
+        "household_measure": household_measure if status == "resolved" else None,
+        "household_detail": None,
         "energy_value": 165 if status == "resolved" else None,
         "energy_unit": "kcal" if status == "resolved" else None,
         "protein_g": 10 if status == "resolved" else None,
@@ -75,7 +85,7 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
     @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
     @patch("notas.application.services.nutrition_label_ai._call_openai")
     def test_ai_analysis_charges_one_fixed_price_and_replays_without_new_provider_call(self, provider):
-        provider.return_value = _provider_response()
+        provider.return_value = _provider_response(household_amount=2, household_measure="tablespoon")
 
         first = self.client.post(
             "/api/v1/foods/label-captures/analyze",
@@ -92,6 +102,9 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(second.status_code, 200)
         self.assertEqual(first.json()["data"]["credits_charged"], 2)
         self.assertEqual(first.json()["data"]["available_credits"], 148)
+        self.assertEqual(first.json()["data"]["serving_size_g"], 150)
+        self.assertEqual(first.json()["data"]["household_amount"], 2)
+        self.assertEqual(first.json()["data"]["household_measure"], "tablespoon")
         self.assertEqual(provider.call_count, 1)
         self.assertEqual(FoodLabelAIAnalysis.objects.count(), 1)
         self.assertFalse(FoodLabelAIAnalysis.objects.get().escalated)
@@ -124,7 +137,7 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
     @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
     @patch("notas.application.services.nutrition_label_ai._call_openai")
     def test_per_100ml_analysis_preserves_extracted_values_in_volume_basis(self, provider):
-        provider.return_value = _provider_response(basis="per_100ml", serving_size=None)
+        provider.return_value = _provider_response(basis="per_100ml", serving_size=None, serving_size_ml=200, household_amount=1, household_measure="cup")
 
         response = self.client.post(
             "/api/v1/foods/label-captures/analyze",
@@ -136,6 +149,9 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
         data = response.json()["data"]
         self.assertEqual(data["basis"], "per_100ml")
         self.assertEqual(data["source_basis"], "per_100ml")
+        self.assertEqual(data["serving_size_ml"], 200)
+        self.assertEqual(data["household_amount"], 1)
+        self.assertEqual(data["household_measure"], "cup")
         self.assertEqual(data["normalization_status"], "ready")
         self.assertEqual(data["ocr_engine_version"], "nutrition_label_ai.v2")
         self.assertEqual(data["values"]["protein_g"], 10)
@@ -258,6 +274,9 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
             "fiber_g": 0,
             "sodium_mg": 48,
             "serving_size_g": 150,
+            "default_portion": 150,
+            "household_amount": 2,
+            "household_measure": "tablespoon",
             "declared_energy_kcal_per_100g": 61,
             "detected_basis": "per_serving",
             "ocr_engine": "apple_vision",
@@ -278,10 +297,49 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
         self.assertFalse(food.is_global)
         self.assertFalse(food.is_verified)
         self.assertFalse(food.solver_enabled)
+        self.assertEqual(food.default_portion_g, 150)
+        portion = FoodPortion.objects.get(food=food, is_default=True)
+        self.assertEqual(portion.household_amount, 2)
+        self.assertEqual(portion.household_measure, "tablespoon")
         self.assertEqual(FoodLabelCaptureReceipt.objects.count(), 1)
         receipt = food.label_capture_receipt
         self.assertEqual(receipt.ocr_engine, "apple_vision")
         self.assertNotIn("raw_text", receipt.field_confidence)
+        self.assertFalse(receipt.shared_for_curation)
+        self.assertFalse(receipt.curation_label_image)
+
+    def test_sharing_requires_a_verified_analysis_image(self):
+        response = self.client.post("/api/v1/foods/label-captures", data={
+            "name": "Alimento manual", "protein_g": 1, "carbs_g": 2, "fat_g": 3,
+            "detected_basis": "manual", "ocr_engine": "manual_entry",
+            "idempotency_key": "manual-share-rejected", "share_for_curation": True,
+        }, content_type="application/json")
+        self.assertEqual(response.status_code, 422)
+        self.assertFalse(Food.objects.filter(name="Alimento manual").exists())
+
+    def test_volume_label_saves_suggested_milliliters_and_household_equivalence(self):
+        payload = {
+            "name": "Leche de prueba",
+            "protein_g": 3,
+            "carbs_g": 5,
+            "fat_g": 2,
+            "default_portion": 200,
+            "household_amount": 1,
+            "household_measure": "cup",
+            "detected_basis": "per_100ml",
+            "ocr_engine": "openai_responses",
+            "idempotency_key": "label-volume-portion-0001",
+        }
+        response = self.client.post("/api/v1/foods/label-captures", data=payload, content_type="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        food = Food.objects.get(pk=response.json()["data"]["id"])
+        self.assertEqual(food.portion_unit, "ml")
+        self.assertEqual(food.default_portion_g, 200)
+        self.assertIsNone(food.label_capture_receipt.serving_size_g)
+        portion = FoodPortion.objects.get(food=food, is_default=True)
+        self.assertEqual(portion.household_measure, "cup")
+        self.assertEqual(portion.household_amount, 1)
 
     @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
     @patch("notas.application.services.nutrition_label_ai._call_openai")
@@ -321,6 +379,33 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
         deleted = self.client.delete(f"/api/v1/foods/label-captures/{receipt_id}/image")
         self.assertEqual(deleted.status_code, 200)
         self.assertTrue(deleted.json()["data"]["deleted"])
+
+    @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
+    @patch("notas.application.services.nutrition_label_ai._call_openai")
+    def test_shared_label_is_separate_from_private_photo_and_not_published(self, provider):
+        provider.return_value = _provider_response()
+        image = self._analysis_payload("label-analysis-curation")
+        processed = BytesIO()
+        Image.effect_noise((1600, 1200), 25).convert("RGB").save(processed, format="JPEG", exif=b"example-metadata")
+        image["image_base64"] = base64.b64encode(processed.getvalue()).decode("ascii")
+        analysis = self.client.post("/api/v1/foods/label-captures/analyze", data=image, content_type="application/json").json()["data"]
+        saved = self.client.post("/api/v1/foods/label-captures", data={
+            "name": analysis["name"], "protein_g": 10, "carbs_g": 20, "fat_g": 5,
+            "detected_basis": "per_100g", "ocr_engine": analysis["ocr_engine"],
+            "idempotency_key": "label-confirm-curation", "analysis_id": analysis["analysis_id"],
+            "share_for_curation": True, "label_image_base64": image["image_base64"],
+            "label_image_content_type": "image/jpeg",
+        }, content_type="application/json")
+        self.assertEqual(saved.status_code, 200)
+        self.assertTrue(saved.json()["data"]["shared_for_curation"])
+        self.assertFalse(saved.json()["data"]["label_image_retained"])
+        receipt = FoodLabelCaptureReceipt.objects.get(pk=saved.json()["data"]["capture_receipt_id"])
+        self.assertTrue(receipt.curation_label_image)
+        self.assertNotIn(b"example-metadata", bytes(receipt.curation_label_image))
+        self.assertFalse(receipt.retained_label_image)
+        self.assertEqual(receipt.curation_payload["name"], analysis["name"])
+        self.assertFalse(receipt.food.is_global)
+        self.assertFalse(receipt.food.is_verified)
 
     @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
     @patch("notas.application.services.nutrition_label_ai._call_openai")

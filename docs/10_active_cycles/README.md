@@ -36,6 +36,10 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `visual_identity_catalog_cycle.md`: iniciativa exploratoria VIC00–VIC06 para
+  gobernar ilustraciones de alimentos, preparaciones y, tras resolver su autoridad,
+  comidas. Parte con 13 alimentos publicados y pruebas de composición; no implica
+  generación masiva ni publicación visual automática.
 - `mcp_mvp_validation_cycle.md`: MCP00-MCP04 valida una conexión privada desde
   Codex hacia un MCP de staging limitado a cuatro tools, con acceso PRO,
   identidad de usuario y propuesta nutricional revisable.
@@ -92,6 +96,7 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
   el fast gate de 95 pruebas, 1.770 pruebas Django completas, 24 pruebas móviles y
   35 rutas Expo. Sólo permanece como gate externo el smoke físico en iPhone.
 - `catalog_enrichment_cycle.md`: CE01–CE10 implementa enriquecimiento asistido por Codex, por campo, gobernado y reversible, con clasificación multidimensional de capacidades. Las ejecuciones con datos reales en staging y producción permanecen como gates operacionales.
+- `user_contributed_food_labels_cycle.md`: proyecto propuesto para que Catalog Operations convierta etiquetas compartidas voluntariamente en candidatos revisables, mediante un puente gobernado hacia la autoridad central; la fuente existe solo en trabajo local pendiente de integración.
 - `consumer_mobile_launch_cycle.md`: ciclo activo CML00-CML08. Reorienta el primer
   cliente móvil hacia consumidores que siguen su propio programa; separa seguridad,
   API, React Native, calendarización ejecutable, OCR de etiquetas, IAP y review de

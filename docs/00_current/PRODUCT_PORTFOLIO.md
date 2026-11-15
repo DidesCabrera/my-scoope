@@ -1,7 +1,7 @@
 # Product Portfolio - My Scoope
 
 Status: current
-Last updated: 2026-10-30
+Last updated: 2026-11-12
 
 ## Purpose
 
@@ -28,6 +28,7 @@ python manage.py project_portfolio --json
 
 | Bet | Stage | Next evidence |
 | --- | --- | --- |
+| Visual identity catalog | Explore | Review a 13-food gallery, one preparation and a composed meal at real UI sizes; settle the visual assignment rules before scaling |
 | Generic food coverage for Chile | Validate | Review Chile v0.1 matrix, curate first governed batch and run dry-run |
 | AI-assisted first useful plan | Validate | Complete staging journeys and behavioral/product evidence |
 | Solver V2 controlled quality | Validate | Shadow comparison over real solver-ready snapshots |

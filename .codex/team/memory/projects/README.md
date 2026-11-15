@@ -6,6 +6,7 @@ whose context will materially improve future work. Use
 
 Current projects:
 
+- `user-contributed-food-labels.md`: evaluar aportes voluntarios de etiquetas como fuente de candidatos para Food Catalog.
 - `ai-team-development.md`: establish and evaluate My Scoope's role-based AI team.
 - `app-store-launch-readiness-2026-10-23.md`: dated cross-functional readiness
   review for the first public iOS release.

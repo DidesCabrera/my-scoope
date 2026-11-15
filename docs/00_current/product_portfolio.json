@@ -1,7 +1,20 @@
 {
   "contract": "myscoope.product_portfolio.v1",
-  "last_updated": "2026-10-30",
+  "last_updated": "2026-11-12",
   "bets": [
+    {
+      "id": "visual-identity-catalog",
+      "title": "Identidad visual coherente de alimentos, preparaciones y comidas",
+      "stage": "explore",
+      "problem": "La aplicación usa emojis y claves visuales genéricas que a veces representan otra categoría de alimento; no existe una biblioteca gobernada de ilustraciones específicas ni una asignación equivalente para preparaciones y comidas.",
+      "hypothesis": "Una biblioteca versionada de conceptos visuales, probada primero con 13 alimentos diversos y una preparación, mejorará el reconocimiento y la confianza sin exigir una imagen única por cada ficha.",
+      "evidence": ["222 alimentos publicados en Food Catalog y 49 globales heredados adicionales visibles en producción al 2026-11-12", "219 de 222 maestros publicados tienen emoji y visual_key persistidos, pero la app móvil renderiza emoji y no activos ilustrados", "48 fichas usan vegetable_generic, 26 legume_generic y 20 fruit_generic", "Arándanos muestra manzana, almejas muestran pez y tofu firme muestra porotos", "Una preparación global activa carece de asignación visual específica"],
+      "next_experiment": "Aprobar una guía de estilo con ejemplos de acelga y otros conceptos contrastantes; producir y revisar una galería de 13 alimentos publicados más Completo italiano y una comida compuesta a tamaños reales, antes de diseñar publicación masiva.",
+      "continue_signals": ["Los usuarios distinguen conceptos que hoy se confunden sin depender solo del emoji", "Asignaciones y variantes se pueden revisar, versionar y corregir sin modificar nutrición", "Carga y fallback mantienen las superficies legibles"],
+      "reformulate_signals": ["Las imágenes siguen siendo ambiguas a tamaños reales", "El costo de curación por concepto no justifica su uso", "Una biblioteca remota o empaquetada degrada carga, accesibilidad u operación"],
+      "dependencies": ["Food Catalog", "CatalogPreparation", "Mobile visual identity", "Visual asset governance", "docs/10_active_cycles/visual_identity_catalog_cycle.md"],
+      "reversibility": "high"
+    },
     {
       "id": "generic-food-coverage-cl",
       "title": "Cobertura útil de alimentos genéricos para Chile",

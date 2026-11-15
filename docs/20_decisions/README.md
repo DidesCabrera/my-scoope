@@ -258,3 +258,6 @@ Consequences
   la estimación y traslada la primera generación gratuita a una invitación de Inicio.
 - `0209-personal-preparations-pro.md`: habilita la librería personal Pro de
   Preparaciones con cálculo y versiones operacionales separadas del catálogo curado.
+- `0210-chatgpt-meal-card-live-preview.md`: adopta una vista previa MCP privada con
+  datos sintéticos y recarga de CSS dentro de ChatGPT para iterar la card sin
+  publicar cada ajuste; la decisión se revisa tras la primera sesión real.

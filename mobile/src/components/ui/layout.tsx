@@ -8,8 +8,8 @@ import { NestableScrollContainer } from "react-native-draggable-flatlist";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { nextHeaderIdentityVisibility } from "@/components/navigation/header-scroll";
 import { tokens } from "@/design/tokens";
+import { useScreenBottomSpacing } from "./screen-bottom-spacing";
 
-const BOTTOM_SPACING = 96;
 
 type ScreenProps = PropsWithChildren<{
   contentStyle?: StyleProp<ViewStyle>;
@@ -32,6 +32,7 @@ export function useScreenScrollControl() {
 }
 
 export function Screen({ children, scroll = true, contentStyle, fixedHeader, fixedHeaderStyle, headerMode = "automatic", onHeaderVisibilityChange, refreshControl, scrollHeader, scrollToTopSignal = 0, stickyHeader, stickyHeaderStyle }: ScreenProps) {
+  const bottomSpacing = useScreenBottomSpacing();
   const setHeaderPresentation = useHeaderPresentation();
   const scrollRef = useRef<ElementRef<typeof NestableScrollContainer>>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -54,7 +55,7 @@ export function Screen({ children, scroll = true, contentStyle, fixedHeader, fix
       setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });
     }
   }, [compactHeaderVisible, headerMode, isFocused, setHeaderPresentation]);
-  const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
+  const content = <View style={[styles.screenContent, { paddingBottom: bottomSpacing }, contentStyle]}>{children}</View>;
   const stickyHeaderIndex = stickyHeader ? (scrollHeader ? 1 : 0) : undefined;
   const setCompactIdentityVisible = useCallback((visible: boolean) => {
     if (compactHeaderVisibleRef.current === visible) return;
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },
-  screenContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: BOTTOM_SPACING },
+  screenContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   scrollHeader: { paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.md, paddingBottom: tokens.spacing.md, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, zIndex: 2 },
   fixedHeader: { backgroundColor: tokens.color.surfaceApp, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, zIndex: 2 },

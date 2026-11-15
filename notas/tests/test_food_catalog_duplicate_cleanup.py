@@ -4,7 +4,6 @@ from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
-from food_catalog.models import CatalogFood
 from notas.application.services.food_catalog_duplicate_cleanup import audit_food_catalog_duplicates
 from notas.domain.models import Food
 
@@ -12,12 +11,17 @@ from notas.domain.models import Food
 class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
     def test_audit_apply_and_migration_retire_duplicates_without_deleting_food_ids(self):
         executor = MigrationExecutor(connection)
+        latest_targets = executor.loader.graph.leaf_nodes()
         executor.migrate([("notas", "0078_calendar_commitment_nutritionist")])
-        HistoricalFood = executor.loader.project_state(
+        historical_apps = executor.loader.project_state(
             [("notas", "0078_calendar_commitment_nutritionist")]
-        ).apps.get_model("notas", "Food")
+        ).apps
+        HistoricalFood = historical_apps.get_model("notas", "Food")
+        HistoricalCatalogFood = executor.loader.project_state(
+            [("food_catalog", "0021_global_food_visual_refs")]
+        ).apps.get_model("food_catalog", "CatalogFood")
         try:
-            first_catalog = self._catalog("Primer alimento")
+            first_catalog = self._catalog("Primer alimento", HistoricalCatalogFood)
             first = self._food(first_catalog, HistoricalFood)
             first_duplicate = self._food(first_catalog, HistoricalFood)
 
@@ -34,7 +38,7 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
             self.assertIsNone(first_duplicate.catalog_food_ref)
             self.assertEqual(first_duplicate.protein, 10.0)
 
-            second_catalog = self._catalog("Segundo alimento")
+            second_catalog = self._catalog("Segundo alimento", HistoricalCatalogFood)
             second = self._food(second_catalog, HistoricalFood)
             second_duplicate = self._food(second_catalog, HistoricalFood)
             MigrationExecutor(connection).migrate([("notas", "0079_unique_global_catalog_snapshots")])
@@ -46,10 +50,11 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
             self.assertIsNone(second_duplicate.catalog_food_id)
             self.assertEqual(audit_food_catalog_duplicates().groups, ())
         finally:
-            MigrationExecutor(connection).migrate([("notas", "0083_apply_myscoope_food_portions_v1")])
+            MigrationExecutor(connection).migrate(latest_targets)
 
     def test_name_migration_hides_legacy_public_duplicates_without_deleting_history(self):
         executor = MigrationExecutor(connection)
+        latest_targets = executor.loader.graph.leaf_nodes()
         executor.migrate([("notas", "0079_unique_global_catalog_snapshots")])
         historical_apps = executor.loader.project_state(
             [("notas", "0079_unique_global_catalog_snapshots")]
@@ -58,8 +63,11 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
         HistoricalMeal = historical_apps.get_model("notas", "Meal")
         HistoricalMealFood = historical_apps.get_model("notas", "MealFood")
         HistoricalUser = historical_apps.get_model("auth", "User")
+        HistoricalCatalogFood = executor.loader.project_state(
+            [("food_catalog", "0021_global_food_visual_refs")]
+        ).apps.get_model("food_catalog", "CatalogFood")
         try:
-            catalog = self._catalog("Arroz blanco cocido")
+            catalog = self._catalog("Arroz blanco cocido", HistoricalCatalogFood)
             snapshot = self._food(catalog, HistoricalFood)
             legacy = HistoricalFood.objects.create(
                 name=" ARROZ BLANCO COCIDO ",
@@ -111,16 +119,16 @@ class FoodCatalogDuplicateCleanupTests(TransactionTestCase):
             HistoricalFood.objects.create(name="Miel", protein=0, carbs=83, fat=0, is_global=False)
             HistoricalFood.objects.create(name="Miel", protein=0, carbs=83, fat=0, is_global=False)
         finally:
-            MigrationExecutor(connection).migrate([("notas", "0083_apply_myscoope_food_portions_v1")])
+            MigrationExecutor(connection).migrate(latest_targets)
 
-    def _catalog(self, name):
-        return CatalogFood.objects.create(
+    def _catalog(self, name, CatalogModel):
+        return CatalogModel.objects.create(
             display_name=name,
             canonical_name=name.lower(),
             protein_g_per_100g=Decimal("10.000"),
             carbs_g_per_100g=Decimal("20.000"),
             fat_g_per_100g=Decimal("3.000"),
-            status=CatalogFood.STATUS_PUBLISHED,
+            status="published",
         )
 
     def _food(self, catalog, FoodModel=Food):

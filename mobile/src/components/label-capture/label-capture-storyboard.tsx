@@ -3,28 +3,35 @@ import {
   Check,
   CheckCheck,
   ChevronLeft,
+  ChevronsDown,
+  ChevronsUp,
   ScanLine,
-  ShieldCheck,
+  Settings,
 } from "lucide-react-native";
 import { useState, type ReactNode } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { Button, DistributedTabBar, EntityIcon, Field, InlineNotice, MacroLoadingIndicator, NutritionFactsCard, Pill, SectionHeading } from "@/components/ui";
+import { Button, DistributedTabBar, Field, InlineNotice, MacroLoadingIndicator, NutritionFactsCard, SectionHeading, StatusFeedbackCard, SystemSwitch } from "@/components/ui";
 import { CreditDashboardGrid } from "@/components/assistant/credit-dashboard-grid";
 import { AnimatedScanBeam } from "@/components/label-capture/animated-scan-beam";
+import { HalfHeightScrollablePhoto } from "@/components/label-capture/half-height-scrollable-photo";
+import { HouseholdEquivalencePicker } from "@/components/libraries/household-equivalence-picker";
+import { householdMeasures, type HouseholdMeasure } from "@/components/libraries/household-equivalence-picker.types";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { tokens } from "@/design/tokens";
 
 export const labelCaptureStoryboardSteps = [
-  { key: "intro", label: "Inicio y consentimiento" },
+  { key: "intro", label: "Inicio" },
   { key: "camera", label: "Encuadre y captura" },
+  { key: "captured", label: "Fotografía capturada" },
   { key: "preview", label: "Control de legibilidad" },
   { key: "processing", label: "Digitalización" },
   { key: "review", label: "Revisión de valores" },
   { key: "confirmation", label: "Confirmación final" },
   { key: "saved", label: "Alimento creado" },
-  { key: "qualityWarnings", label: "Advertencias de calidad" },
+  { key: "qualityWarnings", label: "Imagen no apta" },
+  { key: "qualityOptimal", label: "Imagen óptima" },
 ] as const;
 
 export type LabelCaptureStoryboardStep = (typeof labelCaptureStoryboardSteps)[number]["key"];
@@ -34,26 +41,30 @@ const noop = () => undefined;
 const navigationTitles: Record<LabelCaptureStoryboardStep, string> = {
   intro: "",
   camera: "Tomar foto",
+  captured: "Fotografía capturada",
   preview: "Confirmación calidad",
   processing: "Analizando información",
   review: "Revisión de información",
   confirmation: "Crear Alimento",
   saved: "",
-  qualityWarnings: "Confirmación calidad",
+  qualityWarnings: "Tomar foto",
+  qualityOptimal: "Analizando información",
 };
 
 const navigationActions: Record<LabelCaptureStoryboardStep, { leading: "back" | null; trailing: "Cancelar" | "Listo" | null }> = {
   intro: { leading: "back", trailing: null },
   camera: { leading: "back", trailing: "Cancelar" },
+  captured: { leading: "back", trailing: null },
   preview: { leading: "back", trailing: "Cancelar" },
   processing: { leading: null, trailing: null },
   review: { leading: null, trailing: "Cancelar" },
   confirmation: { leading: "back", trailing: "Cancelar" },
   saved: { leading: null, trailing: "Listo" },
   qualityWarnings: { leading: "back", trailing: "Cancelar" },
+  qualityOptimal: { leading: null, trailing: null },
 };
 
-function StoryboardNavigationHeader({ step }: { step: LabelCaptureStoryboardStep }) {
+function StoryboardNavigationHeader({ onSettingsPress, step }: { onSettingsPress(): void; step: LabelCaptureStoryboardStep }) {
   const title = navigationTitles[step];
   const actions = navigationActions[step];
 
@@ -70,6 +81,7 @@ function StoryboardNavigationHeader({ step }: { step: LabelCaptureStoryboardStep
         {title ? <Text numberOfLines={1} style={styles.navigationTitle}>{title}</Text> : null}
       </View>
       <View style={styles.navigationSide}>
+        {step === "intro" || step === "captured" ? <Pressable accessibilityLabel="Configuración de digitalización" accessibilityRole="button" onPress={onSettingsPress}><Settings color={tokens.color.textMuted} size={24} /></Pressable> : null}
         {actions.trailing ? (
           <Pressable
             accessibilityHint={actions.trailing === "Listo" ? "Regresa a la pantalla que abrió Digitalizar" : "Regresa al inicio de Digitalizar etiqueta"}
@@ -86,11 +98,11 @@ function StoryboardNavigationHeader({ step }: { step: LabelCaptureStoryboardStep
   );
 }
 
-function StoryboardHeader({ detail, hideEyebrow = false, icon, title }: { detail?: string; hideEyebrow?: boolean; icon?: ReactNode; title: string }) {
+function StoryboardHeader({ detail, eyebrow = "DIGITALIZAR ETIQUETA", hideEyebrow = false, icon, title }: { detail?: string; eyebrow?: string; hideEyebrow?: boolean; icon?: ReactNode; title: string }) {
   return (
     <View style={styles.headerBlock}>
       {icon ? <View style={styles.headerIcon}>{icon}</View> : null}
-      {!hideEyebrow ? <Text style={styles.eyebrow}>DIGITALIZAR ETIQUETA</Text> : null}
+      {!hideEyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
       <Text style={styles.title}>{title}</Text>
       {detail ? <Text style={styles.description}>{detail}</Text> : null}
     </View>
@@ -187,15 +199,8 @@ function NutritionLabelMock({ compact = false, edgeToEdge = false }: { compact?:
 function IntroView() {
   return (
     <>
-      <StoryboardHeader detail="Fotografía la tabla nutricional y crea un alimento privado sin transcribir cada dato." icon={<Camera color={tokens.color.textMain} size={34} strokeWidth={1.8} />} title="Enriquece tu librería de alimentos" />
-      <View style={styles.introInfo}>
-        <View style={styles.assuranceList}>
-          <View style={styles.assuranceRow}><Camera color={tokens.color.textMuted} size={17} /><Text style={styles.assuranceText}>Captura o elige una foto clara.</Text></View>
-          <View style={styles.assuranceRow}><ShieldCheck color={tokens.color.textMuted} size={17} /><Text style={styles.assuranceText}>Validamos nitidez antes de usar créditos.</Text></View>
-          <View style={styles.assuranceRow}><Check color={tokens.color.textMuted} size={17} /><Text style={styles.assuranceText}>Tú confirmas cada valor antes de guardar.</Text></View>
-        </View>
-      </View>
-      <InlineNotice>Enviaremos una copia reducida y sin metadatos para extraer los valores. La fotografía original no se guarda.</InlineNotice>
+      <StoryboardHeader detail="Fotografía la tabla nutricional y crea un alimento privado sin transcribir cada dato." eyebrow="DIGITALIZAR INFORMACIÓN NUTRICIONAL" icon={<Camera color={tokens.color.textMain} size={34} strokeWidth={1.8} />} title="Enriquece tu librería personal de alimentos" />
+      <Image accessible={false} resizeMode="contain" source={require("../../../assets/images/nutrition-label-illustration-450.png")} style={styles.introIllustration} />
       <View style={styles.introBottom}>
         <CreditDashboardGrid availableCredits={12} />
         <View style={styles.actionGroup}>
@@ -203,6 +208,20 @@ function IntroView() {
           <Button label="Elegir desde galería" onPress={noop} variant="secondary" />
           <Button label="Ingresar manualmente" onPress={noop} variant="secondary" />
         </View>
+      </View>
+    </>
+  );
+}
+
+function CapturedView({ onDigitalize = noop }: { onDigitalize?: () => void } = {}) {
+  return (
+    <>
+      <FullBleedSquare><NutritionLabelMock edgeToEdge /></FullBleedSquare>
+      <Text style={styles.sampleDialogTitle}>Revisa la fotografía</Text>
+      <Text style={styles.qualityDetail}>Comprueba que la tabla nutricional esté completa y se pueda leer.</Text>
+      <View style={styles.bottomActions}>
+        <Button label="Digitalizar información" onPress={onDigitalize} />
+        <Button label="Tomar otra foto" onPress={noop} variant="secondary" />
       </View>
     </>
   );
@@ -216,9 +235,8 @@ function CameraView() {
         <CreditFocusGuide />
         <View style={styles.focusBadge}><ScanLine color={tokens.color.textMain} size={15} /><Text style={styles.focusText}>Enfoque listo</Text></View>
       </FullBleedSquare>
-      <View style={[styles.confidenceNotice, styles.cameraHintNotice]}>
-        <Text style={styles.confidenceNoticeText}>Intenta tomar la foto con buena iluminación y sin movimiento. Una mejor calidad de la foto facilitará un mejor resultado.</Text>
-      </View>
+      <Text style={styles.sampleDialogTitle}>Para un mejor resultado</Text>
+      <Text style={styles.qualityDetail}>Intenta tomar la fotografía con buena iluminación y sin movimiento.</Text>
       <View style={[styles.bottomActions, styles.cameraBottomActions]}>
         <Button label="Capturar foto" onPress={noop} />
         <Button label="Encender luz" onPress={noop} variant="secondary" />
@@ -231,59 +249,27 @@ function PreviewView() {
   return (
     <>
       <FullBleedSquare><NutritionLabelMock edgeToEdge /></FullBleedSquare>
-      <View style={styles.qualityPanel}>
-        <View style={styles.qualityRow}>
-          <View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Lista para digitalizar</Text><Text style={styles.qualityDetail}>La fotografía superó las comprobaciones de nitidez, encuadre y perspectiva. El encabezado y todas las filas están visibles.</Text></View>
-          <Pill color={tokens.color.success} label="Óptima" />
-        </View>
-      </View>
-      <View style={styles.bottomActions}>
-        <View style={styles.retentionPanel}>
-          <View style={styles.retentionRow}>
-            <View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Autorizar análisis con OpenAI</Text><Text style={styles.qualityDetail}>Se enviará temporalmente esta copia reducida y sin metadatos para extraer los valores.</Text></View>
-            <View style={styles.toggle}><View style={styles.toggleKnob} /></View>
-          </View>
-        </View>
-        <Button label="Enviar a OpenAI y digitalizar · 1 crédito" onPress={noop} />
-        <Button label="Tomar otra foto" onPress={noop} variant="secondary" />
-      </View>
+      <Text style={styles.sampleDialogTitle}>Comprueba la fotografía</Text>
+      <Text style={styles.qualityDetail}>La foto podría leerse, pero conviene revisar nitidez y encuadre.</Text>
+      <View style={styles.bottomActions}><Button label="Continuar y digitalizar" onPress={noop} /><Button label="Tomar otra foto" onPress={noop} variant="secondary" /></View>
     </>
   );
 }
 
-const qualityWarningIssues = [
-  "Hay muy poca luz. Busca un lugar más iluminado o enciende la luz de la cámara.",
-  "La etiqueta tiene reflejos o zonas demasiado iluminadas. Inclina ligeramente el envase o apaga la luz.",
-  "El texto está desenfocado. Aléjate un poco, mantén el teléfono firme y usa zoom.",
-  "El texto ocupa muy poco espacio. Acerca con zoom sin aproximar demasiado el teléfono.",
-  "No detectamos texto legible. Encuadra únicamente la tabla nutricional.",
-  "La lectura local tiene baja confianza. Revisa la nitidez y el encuadre antes de continuar.",
-] as const;
-
-function QualityWarningsView() {
+function QualityResultView({ optimal }: { optimal: boolean }) {
   return (
     <>
-      <FullBleedSquare><NutritionLabelMock edgeToEdge /></FullBleedSquare>
-      <View style={styles.qualityPanel}>
-        <View style={styles.qualityRow}>
-          <View style={styles.qualityCopy}>
-            <Text style={styles.qualityTitle}>Comprueba la fotografía</Text>
-            <Text style={styles.qualityDetail}>La imagen puede usarse, pero revisa los puntos detectados antes de continuar.</Text>
-            {qualityWarningIssues.map((issue) => <Text key={issue} style={styles.qualityIssue}>• {issue}</Text>)}
-          </View>
-          <Pill color={tokens.color.warning} label="Revisar" />
-        </View>
-      </View>
-      <InlineNotice tone="error">No pudimos leer esta etiqueta con suficiente seguridad. Prueba otra foto. Puedes completar los valores manualmente sin consumir una digitalización fallida.</InlineNotice>
-      <View style={styles.retentionPanel}>
-        <View style={styles.retentionRow}>
-          <View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Autorizar análisis con OpenAI</Text><Text style={styles.qualityDetail}>Se enviará temporalmente esta copia reducida y sin metadatos para extraer los valores.</Text></View>
-          <View style={styles.toggle}><View style={styles.toggleKnob} /></View>
-        </View>
+      {optimal ? <ProcessingView /> : <CameraView />}
+      <View pointerEvents="none" style={styles.qualityResultBackdrop}>
+        <StatusFeedbackCard label={optimal ? "Esta imagen es óptima para digitalización" : "Esta imagen no es apta"} tone={optimal ? "success" : "error"} />
       </View>
     </>
   );
 }
+
+function QualityWarningsView() { return <QualityResultView optimal={false} />; }
+
+function QualityOptimalView() { return <QualityResultView optimal />; }
 
 function ProcessingView() {
   return (
@@ -294,7 +280,7 @@ function ProcessingView() {
       </FullBleedSquare>
       <View style={styles.processingDetails}>
         <View style={styles.processingHeader}>
-          <View style={styles.qualityCopy}><Text style={styles.processingTitle}>Analizando valores</Text><Text style={styles.qualityDetail}>Normalizando la información a 100 g.</Text></View>
+          <Text style={styles.processingTitle}>Analizando valores</Text>
           <MacroLoadingIndicator accessibilityLabel="Analizando los valores nutricionales" style={styles.processingLoading} />
         </View>
         <View style={styles.taskList}>
@@ -303,7 +289,6 @@ function ProcessingView() {
           <View style={styles.taskRow}><CreditTaskIcon complete={false} id="credit-task-nutrients" /><Text style={styles.taskActive}>Comprobando nutrientes…</Text></View>
         </View>
       </View>
-      <Text style={styles.quietCenter}>No cierres esta pantalla. Suele tardar pocos segundos.</Text>
     </>
   );
 }
@@ -319,25 +304,41 @@ const values = [
 ] as const;
 
 function ReviewView() {
+  const [photoCollapsed, setPhotoCollapsed] = useState(false);
+  const [unit, setUnit] = useState<"g" | "ml">("g");
+  const [householdAmount, setHouseholdAmount] = useState("1");
+  const [householdMeasure, setHouseholdMeasure] = useState<HouseholdMeasure>("unit");
+
   return (
-    <>
-      <View style={styles.reviewEvidenceGroup}>
-        <View accessibilityLabel="Fotografía fija con zoom y desplazamiento" style={styles.reviewEvidence}>
+    <View style={styles.reviewViewport}>
+      <View style={styles.reviewPhotoExpanded}>
+        {photoCollapsed ? (
+          <HalfHeightScrollablePhoto surfaceStyle={styles.reviewPhoto}>
+            <NutritionLabelMock compact edgeToEdge />
+          </HalfHeightScrollablePhoto>
+        ) : (
           <FullBleedSquare surfaceStyle={styles.reviewPhoto}>
             <NutritionLabelMock compact edgeToEdge />
           </FullBleedSquare>
-        </View>
-        <View style={styles.confidenceNotice}><Text style={styles.confidenceNoticeText}>La foto permanece fija mientras desplazas los valores. Confianza alta.</Text></View>
+        )}
+        <Pressable accessibilityLabel={photoCollapsed ? "Expandir imagen de la etiqueta" : "Contraer imagen de la etiqueta"} accessibilityRole="button" hitSlop={4} onPress={() => setPhotoCollapsed((current) => !current)} style={[styles.reviewPhotoAction, styles.reviewPhotoCollapseAction]} testID={photoCollapsed ? "gallery-label-photo-expand" : "gallery-label-photo-collapse"}>
+          {photoCollapsed ? <ChevronsDown color={tokens.color.textMain} size={18} /> : <ChevronsUp color={tokens.color.textMain} size={18} />}
+        </Pressable>
       </View>
-      <View style={styles.reviewForm}>
-        <DistributedTabBar<"g" | "ml">
-          accessibilityLabel="Unidad de porción"
-          activeTab="g"
-          bleed
-          onChange={noop}
-          tabs={[{ key: "g", label: "Gramos" }, { key: "ml", label: "Mililitros" }]}
-        />
-        <View style={styles.reviewTitleRow}><Text style={styles.reviewTitle}>Valores por 100 g</Text></View>
+      <ScrollView contentContainerStyle={styles.reviewScrollContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false}>
+        <View style={[styles.confidenceNotice, styles.reviewConfidenceNotice]}><Text style={styles.confidenceNoticeText}>Confianza alta. La lectura pasó las comprobaciones automáticas.</Text></View>
+        <View style={styles.reviewForm}>
+        <View style={styles.measurementTabs}>
+          <Text style={styles.measurementLabel}>Métrica de medición del alimento</Text>
+          <DistributedTabBar<"g" | "ml">
+            accessibilityLabel="Unidad de porción"
+            activeTab={unit}
+            bleed
+            onChange={setUnit}
+            tabs={[{ key: "g", label: "Gramos" }, { key: "ml", label: "Mililitros" }]}
+          />
+        </View>
+        <Text style={styles.reviewTitle}>Valores por 100 {unit}</Text>
         <View style={styles.nutritionRows}>
           {values.map((item) => (
             <View key={item.label} style={styles.nutritionRow}>
@@ -348,18 +349,24 @@ function ReviewView() {
               </View>
             </View>
           ))}
-          <View style={[styles.nutritionRow, styles.nutritionRowLast, styles.portionRow]}>
-            <Text style={[styles.nutritionLabel, styles.nutritionLabelEmphasis]}>Tamaño de la porción</Text>
-            <View style={styles.nutritionInputSurface}>
-              <TextInput accessibilityLabel="Tamaño de la porción" defaultValue="160" keyboardType="decimal-pad" selectTextOnFocus style={styles.nutritionInput} />
-              <Text style={styles.nutritionUnit}>g</Text>
-            </View>
-          </View>
         </View>
-        <Field autoCapitalize="words" label="Nombre del producto" labelIcon={<EntityIcon entity="food" size="compact" />} labelStyle={styles.fieldLabel} onChangeText={noop} value="Yogur griego natural" />
-      </View>
-      <View style={styles.reviewContinue}><Button label="Continuar" onPress={noop} /></View>
-    </>
+        <View style={styles.suggestedPortionSection}>
+          <Text style={styles.reviewTitle}>Porción sugerida</Text>
+          <Text style={styles.reviewHint}>El selector de comidas usará esta cantidad como punto de partida.</Text>
+          <View style={styles.suggestedPortionAmount}>
+            <Field keyboardType="decimal-pad" label={`Cantidad en ${unit}`} labelStyle={styles.fieldLabel} onChangeText={noop} value="160" />
+          </View>
+          <Text style={styles.equivalenceLabel}>Equivalencia cotidiana (opcional)</Text>
+          <HouseholdEquivalencePicker amount={householdAmount} measure={householdMeasure} onAmountChange={setHouseholdAmount} onMeasureChange={setHouseholdMeasure} />
+          {householdMeasure ? <Text style={styles.reviewHint}>{householdAmount} {householdMeasures.find(({ value }) => value === householdMeasure)?.label.toLowerCase()} = 160 {unit}</Text> : null}
+        </View>
+        <View style={styles.productNameField}>
+          <Field autoCapitalize="words" label="Nombre del producto" labelStyle={styles.fieldLabel} onChangeText={noop} value="Yogur griego natural" />
+        </View>
+        </View>
+        <View style={styles.reviewContinue}><Button label="Continuar" onPress={noop} /></View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -368,9 +375,9 @@ function ConfirmationView() {
     <>
       <View style={styles.confirmationHeading}>
         <SectionHeading icon={<CheckCheck color={tokens.color.entityIconForeground} size={18} />} title="Confirma el alimento" />
-        <Text style={styles.confirmationSubtitle}>Al guardar confirmas que comparaste los valores con la etiqueta.</Text>
       </View>
       <NutritionEntityCard
+        collapsiblePanel
         entity="food"
         indicators={[{ label: "base nutricional", value: "100 g" }]}
         nutrition={{
@@ -385,11 +392,8 @@ function ConfirmationView() {
           portion={{ quantity: 160, unit: "g" }}
         />
       </NutritionEntityCard>
-      <View style={styles.retentionPanel}>
-        <View style={styles.retentionRow}><View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Guardar copia procesada</Text><Text style={styles.qualityDetail}>Opcional, privada y eliminable después.</Text></View><View style={styles.toggle}><View style={styles.toggleKnob} /></View></View>
-      </View>
       <View style={styles.bottomActions}>
-        <Button label="Confirmar y crear alimento" onPress={noop} />
+        <Button label="Confirmar creación" onPress={noop} />
         <Button label="Volver a revisar" onPress={noop} variant="secondary" />
       </View>
     </>
@@ -438,21 +442,51 @@ function SavedView() {
 const views: Record<LabelCaptureStoryboardStep, () => ReactNode> = {
   intro: IntroView,
   camera: CameraView,
+  captured: CapturedView,
   preview: PreviewView,
   processing: ProcessingView,
   review: ReviewView,
   confirmation: ConfirmationView,
   saved: SavedView,
   qualityWarnings: QualityWarningsView,
+  qualityOptimal: QualityOptimalView,
 };
 
 export function LabelCaptureStoryboardView({ step }: { step: LabelCaptureStoryboardStep }) {
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [consentVisible, setConsentVisible] = useState(false);
+  const [consent, setConsent] = useState<boolean | null>(null);
+  const [validation, setValidation] = useState(true);
+  const [savePhotographs, setSavePhotographs] = useState(false);
+  const [shareForCuration, setShareForCuration] = useState(false);
   const ViewComponent = views[step];
-  return <View style={styles.screen}><StoryboardNavigationHeader step={step} /><ViewComponent /></View>;
+  return <View style={[styles.screen, step === "review" && styles.reviewScreen]}>
+    <StoryboardNavigationHeader onSettingsPress={() => setSettingsVisible(true)} step={step} />
+    {step === "captured" ? <CapturedView onDigitalize={() => { if (consent === null) setConsentVisible(true); else if (!consent) setSettingsVisible(true); }} /> : <ViewComponent />}
+    <Modal animationType="fade" onRequestClose={() => setSettingsVisible(false)} transparent visible={settingsVisible}>
+      <View style={styles.sampleModalBackdrop}><View style={styles.sampleModalCard}>
+        <Text style={styles.sampleDialogTitle}>Configuración de digitalización</Text>
+        <View style={styles.retentionRow}><View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Validación previa de fotografía</Text><Text style={styles.qualityDetail}>Revisa la calidad en el iPhone antes de enviarla.</Text></View><SystemSwitch accessibilityLabel="Validación previa de fotografía, vista de muestra" onValueChange={setValidation} value={validation} /></View>
+        <View style={styles.retentionRow}><View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Autorizar análisis con OpenAI</Text><Text style={styles.qualityDetail}>Se enviará una copia reducida y sin metadatos para extraer los valores.</Text></View><SystemSwitch accessibilityLabel="Autorizar análisis con OpenAI, vista de muestra" onValueChange={setConsent} value={consent === true} /></View>
+        <View style={styles.retentionRow}><View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Guardar fotografías</Text><Text style={styles.qualityDetail}>Guarda una copia procesada junto a cada alimento digitalizado.</Text></View><SystemSwitch accessibilityLabel="Guardar fotografías, vista de muestra" onValueChange={setSavePhotographs} value={savePhotographs} /></View>
+        <View style={styles.retentionRow}><View style={styles.qualityCopy}><Text style={styles.qualityTitle}>Compartir información para mejorar la base de datos de My Scoope</Text><Text style={styles.qualityDetail}>Foto sin metadatos y valores confirmados para revisión. No se publican automáticamente.</Text></View><SystemSwitch accessibilityLabel="Compartir información para mejorar la base de datos, vista de muestra" onValueChange={setShareForCuration} value={shareForCuration} /></View>
+        <Button label="Cerrar" onPress={() => setSettingsVisible(false)} variant="secondary" />
+      </View></View>
+    </Modal>
+    <Modal animationType="fade" onRequestClose={() => setConsentVisible(false)} transparent visible={consentVisible}>
+      <View style={styles.sampleModalBackdrop}><View style={styles.sampleModalCard}>
+        <Text style={styles.sampleDialogTitle}>Autorizar análisis con OpenAI</Text>
+        <Text style={styles.qualityDetail}>Enviaremos una copia reducida y sin metadatos para extraer los valores. Puedes cambiar esta decisión en Configuración de digitalización.</Text>
+        <Button label="Autorizar y continuar" onPress={() => { setConsent(true); setConsentVisible(false); }} />
+        <Button label="Ahora no" onPress={() => { setConsent(false); setConsentVisible(false); }} variant="secondary" />
+      </View></View>
+    </Modal>
+  </View>;
 }
 
 const styles = StyleSheet.create({
-  screen: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.lg, minHeight: 760, paddingBottom: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  screen: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.lg, minHeight: 760, paddingBottom: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, position: "relative" },
+  reviewScreen: { height: 760, minHeight: 0, paddingBottom: 0 },
   navigationHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", height: 48, justifyContent: "space-between", marginHorizontal: -tokens.spacing.screen, marginTop: -tokens.spacing.lg },
   navigationSide: { alignItems: "center", height: 48, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 92 },
   navigationLeadingSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg },
@@ -465,11 +499,12 @@ const styles = StyleSheet.create({
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 1.2 },
   title: { color: tokens.color.textMain, fontSize: 27, fontWeight: tokens.weight.extraBold, letterSpacing: -0.7, lineHeight: 32 },
   description: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 22, marginTop: tokens.spacing.sm },
-  introInfo: { gap: tokens.card.gap },
-  assuranceList: { gap: tokens.spacing.sm, marginTop: tokens.spacing.xs },
-  assuranceRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
-  assuranceText: { color: tokens.color.textMuted, flex: 1, fontSize: tokens.type.caption, lineHeight: 19 },
   introBottom: { gap: tokens.spacing.sm, marginTop: "auto" },
+  introIllustration: { alignSelf: "center", height: 200, marginTop: tokens.spacing.md, width: "100%" },
+  sampleModalBackdrop: { alignItems: "center", backgroundColor: "rgba(0,0,0,0.7)", flex: 1, justifyContent: "center", padding: tokens.spacing.screen },
+  sampleModalCard: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.panel, gap: tokens.spacing.lg, padding: tokens.card.outerPadding, width: "100%" },
+  qualityResultBackdrop: { alignItems: "center", backgroundColor: "rgba(0,0,0,0.56)", bottom: 0, justifyContent: "center", left: 0, padding: tokens.spacing.screen, position: "absolute", right: 0, top: 0 },
+  sampleDialogTitle: { color: tokens.color.textMain, fontSize: 22, fontWeight: tokens.weight.bold },
   actionGroup: { gap: tokens.spacing.sm },
   bottomActions: { gap: tokens.spacing.sm, marginTop: "auto" },
   cameraBottomActions: { marginBottom: 74 },
@@ -494,36 +529,41 @@ const styles = StyleSheet.create({
   cameraGuide: { aspectRatio: 1, borderRadius: tokens.radius.lg, left: 22, overflow: "hidden", position: "absolute", right: 22, top: 22 },
   focusBadge: { alignItems: "center", alignSelf: "center", backgroundColor: "rgba(5,10,15,0.86)", borderRadius: tokens.radius.pill, flexDirection: "row", gap: 6, paddingHorizontal: 12, paddingVertical: 7, position: "absolute", top: 46 },
   focusText: { color: tokens.color.textMain, fontSize: 11, fontWeight: tokens.weight.bold },
-  cameraHintNotice: { marginTop: -tokens.spacing.lg },
   qualityPanel: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen, marginTop: -tokens.spacing.lg, padding: tokens.card.outerPadding },
   qualityRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   qualityCopy: { flex: 1, gap: 2 },
   qualityTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   qualityDetail: { color: tokens.color.textMuted, fontSize: 11, lineHeight: 16 },
-  qualityIssue: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16 },
   processingVisual: { position: "relative" },
   processingDetails: { gap: tokens.spacing.sm },
-  processingHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
+  processingHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.sm },
   processingLoading: { flexShrink: 0, marginLeft: -16, marginRight: 2, transform: [{ translateX: 16 }, { scale: 0.6 }] },
-  processingTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.bold, lineHeight: 25 },
-  taskList: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.md },
+  processingTitle: { color: tokens.color.textMain, flex: 1, fontSize: 22, fontWeight: tokens.weight.bold },
+  taskList: { gap: tokens.spacing.sm },
   taskRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   taskDone: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
   taskActive: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
-  quietCenter: { color: tokens.color.textSoft, fontSize: 11, lineHeight: 16, marginTop: 20, textAlign: "center" },
-  reviewEvidence: { gap: 0 },
-  reviewEvidenceGroup: { gap: 0 },
+  reviewViewport: { flex: 1, minHeight: 0 },
+  reviewScrollContent: { paddingBottom: tokens.spacing.xl },
   reviewForm: { gap: tokens.card.gap, marginTop: tokens.spacing.sm },
+  measurementTabs: { gap: tokens.spacing.sm },
+  measurementLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   reviewContinue: { marginTop: tokens.spacing.lg },
   reviewPhoto: { position: "relative" },
+  reviewPhotoExpanded: { position: "relative" },
+  reviewPhotoAction: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.pill, height: 36, justifyContent: "center", width: 36 },
+  reviewPhotoCollapseAction: { backgroundColor: "rgba(10, 10, 10, 0.82)", bottom: 12, position: "absolute", right: 12 - tokens.spacing.screen },
   confidenceNotice: { backgroundColor: tokens.color.surfaceCard, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
+  reviewConfidenceNotice: { backgroundColor: tokens.color.surfaceApp },
   confidenceNoticeText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 19 },
-  reviewTitleRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   reviewTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
+  reviewHint: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 19 },
+  suggestedPortionSection: { gap: tokens.spacing.sm, marginTop: 12 },
+  suggestedPortionAmount: { marginTop: 4 },
+  equivalenceLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", marginTop: 8 },
+  productNameField: { marginTop: 4 },
   nutritionRows: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, marginTop: -tokens.spacing.xs },
   nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
-  nutritionRowLast: { borderBottomWidth: 0 },
-  portionRow: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, marginTop: tokens.spacing.sm, paddingBottom: tokens.spacing.md, paddingTop: tokens.spacing.md },
   fieldLabel: { color: tokens.color.textMain },
   nutritionLabel: { color: tokens.color.textMain, flex: 1, fontSize: 14, lineHeight: 20 },
   nutritionLabelEmphasis: { fontWeight: tokens.weight.bold },

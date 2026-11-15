@@ -1,3 +1,4 @@
+import json
 from dataclasses import asdict
 from pathlib import Path
 from types import SimpleNamespace
@@ -45,8 +46,15 @@ def ui_system_mcp_meal_card_preview(request):
     if not settings.DEBUG:
         raise Http404
 
-    card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v5.html"
-    return HttpResponse(card_path.read_bytes(), content_type="text/html; charset=utf-8")
+    entity = request.GET.get("entity", "meal")
+    if entity not in {"meal", "food", "dailyplan"}:
+        raise Http404
+    filename = "meal_card_v6.html" if entity == "meal" else "entity_card_v2.html" if entity == "dailyplan" else "entity_card_v1.html"
+    card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui" / filename
+    card_html = card_path.read_text(encoding="utf-8")
+    if entity == "dailyplan":
+        card_html = card_html.replace('"__MYSCOOPE_APP_BASE_URL__"', json.dumps(request.build_absolute_uri("/app")))
+    return HttpResponse(card_html, content_type="text/html; charset=utf-8")
 
 
 @xframe_options_sameorigin

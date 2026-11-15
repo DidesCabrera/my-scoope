@@ -3,7 +3,6 @@ import * as Crypto from "expo-crypto";
 import { Carrot, ChevronRight, Utensils } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarDayDetailData, CalendarOverviewData, CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
@@ -21,7 +20,7 @@ import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
-import { Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, textStyles, useMutationStatus } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
 import { MealComponentAddActions } from "@/components/libraries/meal-component-add-actions";
@@ -78,7 +77,12 @@ function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecuti
               }}
               afterNutrition={mealKey ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={completionError?.mealKey === mealKey ? completionError.message : null} onToggle={(completed) => onToggleCompleted(mealKey, completed)} saving={savingMealKey != null} /> : null}
               title={meal.name ?? "Comida"}>
-              <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }} preparation={mealKey ? {
+              <FoodPanels items={foods} onOpenItem={(food) => {
+                if (food.detailId == null || !Number.isFinite(food.quantity) || food.quantity <= 0) return;
+                router.push(food.kind === "preparation"
+                  ? { pathname: "/libraries/preparations/[id]", params: { id: String(food.detailId), mealGrams: String(food.quantity) } } as Href
+                  : { pathname: "/libraries/foods/[id]", params: { id: String(food.detailId), mealQuantity: String(food.quantity), snapshotDayId: String(dayId), snapshotMealKey: mealKey, snapshotFoodKey: food.id } } as Href);
+              }} preparation={mealKey ? {
                 disabled: savingMealKey != null,
                 isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
                 onToggle: (food) => onTogglePrepared(mealKey, food.id),
@@ -236,7 +240,7 @@ export default function ProgramDayScreen() {
 
   return (
     <>
-    <NestableScrollContainer
+    <AdaptiveNestableScrollContainer
       contentContainerStyle={styles.content}
       onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
       scrollEventThrottle={16}
@@ -301,7 +305,7 @@ export default function ProgramDayScreen() {
         </ContentPanel>
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    </NestableScrollContainer>
+    </AdaptiveNestableScrollContainer>
     <ContextualLibraryActions
       apiRequest={apiRequest}
       calendarActionsDisabled={!localToday || day.calendar_date < localToday || Boolean(calendarDay?.has_execution)}
@@ -352,7 +356,7 @@ export default function ProgramDayScreen() {
 
 const styles = StyleSheet.create({
   addAction: { marginTop: tokens.spacing.md },
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },

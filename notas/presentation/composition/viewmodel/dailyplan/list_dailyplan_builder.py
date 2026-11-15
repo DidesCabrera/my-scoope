@@ -85,6 +85,8 @@ def build_dailyplan_list_vm(content_data, page_actions=None, list_mode="list"):
             ),
 
             actions=child_data["actions"],
+            can_use_supplements=child_data.get("can_use_supplements", False),
+            supplement_intakes=child_data.get("supplement_intakes", []),
 
             if_shared=IfShared(
                 child_id=child_data["if_shared"]["child_id"],

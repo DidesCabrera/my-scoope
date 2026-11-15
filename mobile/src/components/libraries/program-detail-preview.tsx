@@ -3,14 +3,13 @@ import { Calendar1, Carrot, ClipboardList, Copy, MoreHorizontal, Trash2 } from "
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { EntityPanelTabs, GroupedFoodsCard, PanelSurface, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
-import { EntityHeading, layoutStyles, StructuralIndicators } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, EntityHeading, layoutStyles, StructuralIndicators } from "@/components/ui";
 import { Button } from "@/components/ui/controls";
 import { ProgramMetricPreview, programDailyMetricData, WeekMetricPreview, type WeekMetricFilter } from "./program-child-card";
 import { ProgramDailyPlanPreview } from "./program-daily-plan-preview";
@@ -246,7 +245,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
 
   if (scrollable) {
     return (
-      <NestableScrollContainer
+      <AdaptiveNestableScrollContainer
         contentContainerStyle={styles.screenContent}
         onScroll={({ nativeEvent }) => onHeaderVisibilityChange?.(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
         scrollEventThrottle={16}
@@ -259,7 +258,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
         {renderWeekContext?.(displayedActiveWeek)}
         <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onOpenDailyPlan={onOpenDailyPlan} onOpenFood={onOpenFood} onOpenMeal={onOpenMeal} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} onSaveDailyPlan={onSaveDailyPlan} showWeekAnalytics={showWeekAnalytics} week={displayedActiveWeek} weekData={selectedWeek} />
         {bottomActions}
-      </NestableScrollContainer>
+      </AdaptiveNestableScrollContainer>
     );
   }
 
@@ -279,7 +278,7 @@ export function ProgramDetailPreview({ fallbackWeeksCount = 2, footer, footerTop
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  screenContent: { flexGrow: 1, paddingBottom: 96, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  screenContent: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   page: { gap: tokens.spacing.xl, minWidth: 0, width: "100%" },
   overview: { gap: tokens.spacing.lg, minWidth: 0 },
   planningSection: { gap: 0, minWidth: 0 },

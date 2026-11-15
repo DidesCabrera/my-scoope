@@ -9,13 +9,27 @@
         <p class="card-title-eyebrow">
           <i data-lucide="{{ titulo.icon }}" class="card-title-eyebrow__icon {{ entity_class }}" aria-hidden="true"></i>
           <span>
-            {% if entity_class == "dailyplan" %}Minuta diaria{% elif entity_class == "meal" and meal_number %}Comida {{ meal_number }}{% elif entity_class == "meal" %}Comida{% elif entity_class == "food" %}Alimento{% else %}{{ titulo.label }}{% endif %}
+            {% if titulo.eyebrow %}{{ titulo.eyebrow }}{% elif entity_class == "dailyplan" %}Minuta diaria{% elif entity_class == "meal" and meal_number %}Comida {{ meal_number }}{% elif entity_class == "meal" %}Comida{% elif entity_class == "food" %}Alimento{% elif entity_class == "preparation" %}Preparación{% elif entity_class == "supplement" %}Suplemento{% else %}{{ titulo.label }}{% endif %}
           </span>
         </p>
       {% endwith %}
     {% endif %}
 
-    <h3>{{ titulo.name }}</h3>
+    {% if titulo.label|lower == "food" %}
+      <div class="food-visual-heading">
+        <h3>{{ titulo.name }}</h3>
+        {% if child_card %}
+          {% include "components/food_visual_icon.html" with food_id=child_card.child_id food_name=titulo.name %}
+        {% else %}
+          {% include "components/food_visual_icon.html" with food_id=titulo.food_id food_name=titulo.name %}
+        {% endif %}
+      </div>
+    {% else %}
+      <h3>{{ titulo.name }}</h3>
+    {% endif %}
+    {% if titulo.label|lower == "food" and titulo.nutrition_basis_unit %}
+      {% include "components/food_nutrition_basis.html" with quantity=100 unit=titulo.nutrition_basis_unit %}
+    {% endif %}
     {% if titulo.classes %}
       <div class="label-class">
         {% for class in titulo.classes %}
@@ -23,6 +37,7 @@
         {% endfor %}
       </div>
     {% endif %}
+    {% if not titulo.nutrition_basis_unit %}
     {% if titulo.badges or portion_quantity != None %}
       <div class="card-title-badges" aria-label="Características">
         {% if portion_quantity != None %}
@@ -36,6 +51,7 @@
           </span>
         {% endfor %}
       </div>
+    {% endif %}
     {% endif %}
 
     {% if completion_summarized %}<div class="entity-heading__indicator-row">{% endif %}

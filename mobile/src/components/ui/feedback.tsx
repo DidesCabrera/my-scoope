@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2 } from "lucide-react-native";
+import { CheckCircle2, CircleX } from "lucide-react-native";
 import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -51,6 +51,28 @@ export type MutationStatus = {
   successLabel: string;
 };
 
+export function StatusFeedbackCard({ label, tone = "success" }: { label: string; tone?: "success" | "error" }) {
+  return (
+    <View style={styles.statusCard}>
+      {tone === "success"
+        ? <CheckCircle2 color={tokens.color.success} size={36} strokeWidth={2.2} />
+        : <CircleX color={tokens.color.danger} size={36} strokeWidth={2.2} />}
+      <Text style={styles.statusLabel}>{label}</Text>
+    </View>
+  );
+}
+
+export function StatusFeedbackModal({ label, tone, visible }: { label: string; tone: "success" | "error"; visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <Modal animationType="fade" navigationBarTranslucent onRequestClose={() => undefined} presentationStyle="overFullScreen" statusBarTranslucent transparent visible>
+      <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.statusScrim}>
+        <StatusFeedbackCard label={label} tone={tone} />
+      </View>
+    </Modal>
+  );
+}
+
 type MutationStatusLabels = Pick<MutationStatus, "loadingLabel" | "successLabel">;
 
 export function useMutationStatus() {
@@ -89,12 +111,9 @@ export function MutationStatusModal({ onFinished, status }: { onFinished(): void
       transparent
       visible>
       <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.statusScrim}>
-        <View style={styles.statusCard}>
-          {loading
-            ? <ActivityIndicator color={tokens.color.interactivePrimary} size="large" />
-            : <CheckCircle2 color={tokens.color.success} size={36} strokeWidth={2.2} />}
-          <Text style={styles.statusLabel}>{loading ? status.loadingLabel : status.successLabel}</Text>
-        </View>
+        {loading
+          ? <View style={styles.statusCard}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={styles.statusLabel}>{status.loadingLabel}</Text></View>
+          : <StatusFeedbackCard label={status.successLabel} />}
       </View>
     </Modal>
   );
@@ -108,7 +127,7 @@ const styles = StyleSheet.create({
   loadingContent: { alignItems: "center", flex: 1, justifyContent: "center" },
   loadingContentIndicator: { transform: [{ scale: 0.7 }] },
   loadingState: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, justifyContent: "center", paddingBottom: 0, paddingTop: 0 },
-  statusCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.card, gap: tokens.spacing.md, minWidth: 240, paddingHorizontal: tokens.spacing.xl, paddingVertical: tokens.spacing.xl },
+  statusCard: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.card, gap: tokens.spacing.md, maxWidth: "100%", minWidth: 240, paddingHorizontal: tokens.spacing.xl, paddingVertical: tokens.spacing.xl },
   statusLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, textAlign: "center" },
   statusScrim: { alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.56)", flex: 1, justifyContent: "center", padding: tokens.spacing.screen },
 });

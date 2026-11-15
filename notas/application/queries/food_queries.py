@@ -45,6 +45,7 @@ def build_food_dto(food: Food) -> FoodDTO:
         category=food.category,
         created_by_id=food.created_by_id,
         macros=build_food_macro_dto(food),
+        portion_unit=food.portion_unit,
     )
 
 

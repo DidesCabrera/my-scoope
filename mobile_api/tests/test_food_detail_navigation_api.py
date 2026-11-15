@@ -1,4 +1,5 @@
 from decimal import Decimal
+from uuid import UUID
 
 from django.contrib.auth.models import User
 from django.test import override_settings
@@ -9,6 +10,23 @@ from notas.domain.models import DailyPlan, DailyPlanMeal, Food, FoodPortion, Mea
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class FoodDetailNavigationAPITests(AuthenticatedMobileAPITestCase):
+    def test_curated_description_has_its_own_detail_field_and_legacy_subtitle(self):
+        catalog_food = Food.objects.create(
+            name="Aceite de oliva", description="Aceite vegetal para aliñar.", protein=0, carbs=0, fat=100,
+            is_global=True, catalog_food_ref=UUID("b806c80e-0ea2-4b9f-aa41-4607fec28269"),
+        )
+        personal_food = Food.objects.create(
+            name="Aceite de oliva", protein=0, carbs=0, fat=100, created_by=self.user,
+        )
+
+        catalog_data = self.client.get(f"/api/v1/library/foods/{catalog_food.id}").json()["data"]
+        personal_data = self.client.get(f"/api/v1/library/foods/{personal_food.id}").json()["data"]
+
+        self.assertEqual(catalog_data["description"], "Aceite vegetal para aliñar.")
+        self.assertEqual(catalog_data["subtitle"], catalog_data["description"])
+        self.assertEqual(personal_data["description"], "")
+        self.assertEqual(personal_data["subtitle"], "")
+
     def test_food_detail_exposes_optional_nutrition_without_conflating_zero_and_missing(self):
         food = Food.objects.create(
             name="Alimento con nutrición extendida",

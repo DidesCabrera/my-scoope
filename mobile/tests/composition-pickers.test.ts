@@ -78,7 +78,7 @@ test("composition pickers use independent native routes and one shared flow", as
   const selectedCard = picker.indexOf("option={configuredSelection}");
   const impactPreview = picker.indexOf("<PickerResultCard preview={preview}");
   assert.ok(selectedCard < impactPreview);
-  matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView[\s\S]*\{selectedCard\}[\s\S]*\{isMealPicker \? mealNoteCard : null\}[\s\S]*\{configurationAction \? <View style=\{styles\.scrollableAction\}>\{configurationAction\}<\/View> : null\}/);
+  matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<AdaptiveScrollView[\s\S]*\{selectedCard\}[\s\S]*\{isMealPicker \? mealNoteCard : null\}[\s\S]*\{configurationAction \? <View style=\{styles\.scrollableAction\}>\{configurationAction\}<\/View> : null\}/);
   matches(picker, /<NativeDateTimeField[^>]*confirmationColor=\{tokens\.color\.meal\}[^>]*iconInLabel[^>]*initiallyExpanded[^>]*inlineLabel[^>]*mode="time"/);
   matches(picker, /compactControlField: \{[^}]*marginHorizontal: 0[^}]*marginRight: tokens\.layout\.reducedInset - tokens\.card\.outerPadding[^}]*minHeight: 36[^}]*width: 120/);
   matches(picker, /<NotebookPen color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
@@ -107,7 +107,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(dateTimeField, /const \[internalExpanded, setInternalExpanded\] = useState\(Platform\.OS === "ios" && initiallyExpanded\)[\s\S]*const expanded = controlledExpanded \?\? internalExpanded[\s\S]*<Check color=\{confirmationColor\}/);
   matches(dateTimeField, /inlinePicker: \{[^}]*marginBottom: tokens\.layout\.reducedInset - 6[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   matches(picker, /quantity: isFoodPicker \? String\(metricQuantity\) : quantity/);
-  matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<ScrollView/);
+  matches(picker, /\{isFoodPicker \? foodPortionCard : mealTimeCard\}[\s\S]*<AdaptiveScrollView/);
   matches(picker, /foodFixedPortion: \{[^}]*paddingBottom: 8[^}]*paddingHorizontal: tokens\.spacing\.screen[^}]*zIndex: 2/);
   omits(picker, /setQuantity\(value\); setPreview\(null\)/);
   matches(picker, /mode="time" onChange=\{\(value\) => \{ setHour\(value\); setHourConfirmed\(true\); \}\} onExpandedChange=\{\(expanded\) => \{ setHourPickerExpanded\(expanded\)/);
@@ -156,7 +156,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /pickerConfigureHref\(kind, \{ contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo/);
   matches(payload, /food_snapshot_key: relationKey/);
   matches(payload, /meal_snapshot_key: relationKey/);
-  matches(picker, /\? isFoodPicker \? "Reemplazar alimento" : "Reemplazar comida"/);
+  matches(picker, /isFoodPicker \? selectedId \? "Editar porción" : "Reemplazar alimento" : "Reemplazar comida"/);
   matches(picker, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{targetId\}`\)/);
   matches(payload, /dailyplan_id: contextDailyPlanId/);
   matches(payload, /dailyplan_meal_id: contextDailyPlanMealId/);

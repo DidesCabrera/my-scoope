@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { KeyboardAvoidingView, type NativeScrollEvent, type NativeSyntheticEvent, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, type NativeScrollEvent, type NativeSyntheticEvent, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -12,7 +12,7 @@ import { SupplementProSheet } from "@/components/supplements/supplement-pro-shee
 import { SupplementChoiceGrid } from "@/components/supplements/supplement-choice-grid";
 import { SupplementFormPicker } from "@/components/supplements/supplement-form-picker";
 import { defaultUnitForSupplementForm, editableSupplementForm, supplementForms } from "@/components/supplements/supplement-form-units";
-import { Button, CollectionPageHeader, InlineNotice, LoadingState } from "@/components/ui";
+import { AdaptiveScrollView, Button, CollectionPageHeader, InlineNotice, LoadingState } from "@/components/ui";
 import { Field } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
@@ -121,7 +121,7 @@ export function SupplementFormScreen() {
   return <>
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.flex}>
-        <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" onScroll={handleScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false}>
+        <AdaptiveScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" onScroll={handleScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false}>
           <CollectionPageHeader entity="supplement" title={creating ? "Crear nuevo suplemento" : "Editar suplemento"} />
           {!available ? <InlineNotice tone="info">La biblioteca de suplementos aún no está disponible.</InlineNotice> : !pro ? <Button label="Abrir Suplementos Pro" onPress={() => setUpsell(true)} variant="primary" /> : <View style={styles.formBody}>
             <View style={styles.section}>
@@ -177,7 +177,7 @@ export function SupplementFormScreen() {
             </View>
           </View>}
           {!pro && error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-        </ScrollView>
+        </AdaptiveScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
     <SupplementProSheet onClose={() => setUpsell(false)} visible={upsell} />
@@ -187,7 +187,7 @@ export function SupplementFormScreen() {
 const styles = StyleSheet.create({
   component: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.panel, borderWidth: 1, gap: tokens.spacing.md, padding: tokens.card.outerPadding },
   componentTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
-  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   flex: { flex: 1 },
   formBody: { gap: tokens.spacing.xl },
   formSubmit: { gap: tokens.spacing.md, marginTop: tokens.spacing.md },

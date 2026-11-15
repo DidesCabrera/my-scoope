@@ -4,6 +4,7 @@ Status: pilot
 Owner: `catalog-curation-steward`
 Sponsor and final authority: Felipe Dides
 Current project: `PRJ-PROD-003 — Curación de Catálogos`
+Proposed source initiative: `docs/10_active_cycles/user_contributed_food_labels_cycle.md`
 
 ## Mission
 

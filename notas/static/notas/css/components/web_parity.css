@@ -31,6 +31,8 @@
 .web-parity .btn-primary:hover, .web-parity__section .btn-primary:hover { background: #a6e2b9; }
 .web-parity__inline-form > input:not([type="hidden"]) { width: 100%; }
 .web-parity__form > button.btn-primary { justify-self: start; }
+.web-parity__form .web-parity__checkbox { display: flex; align-items: center; gap: 9px; }
+.web-parity__checkbox input { width: auto; }
 .web-parity__text-button, .web-parity__danger-form button { border: 0; background: none; color: #e8a79f; cursor: pointer; }
 .web-parity__danger-form { margin-top: 28px; }
 .web-parity__metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
@@ -47,3 +49,84 @@
 @media (max-width: 680px) { .web-parity__heading, .web-parity__row { align-items: stretch; flex-direction: column; } .web-parity__inline-form { grid-template-columns: 1fr; } .web-parity__row form { align-self: flex-start; } }
 @media (max-width: 680px) { .web-parity__repeat-row { grid-template-columns: 1fr; } }
 @media (max-width: 680px) { .web-parity__search > div { display: grid; grid-template-columns: minmax(0, 1fr); } .web-parity__search > div .btn-primary { justify-self: start; } }
+
+/* Shared read-only detail structure for Preparaciones and Suplementos. */
+.library-list__section { margin-top: 28px; }
+.library-list__section > h2 { margin: 0 0 16px; font-size: 1.2rem; }
+.library-list__section > .web-parity__inline-form,
+.library-list__section > .web-parity__form { margin-bottom: 22px; }
+.library-list__create { margin: 0 0 16px; }
+.library-list__create summary { display: inline-flex; align-items: center; min-height: 34px; padding: 6px 12px; border: 1px solid var(--border-default); border-radius: 999px; color: var(--text-main); font-size: 13px; font-weight: 600; cursor: pointer; list-style: none; }
+.library-list__create summary::-webkit-details-marker { display: none; }
+.library-list__create summary:hover, .library-list__create[open] summary { border-color: var(--text-muted); }
+.library-list__create > form { margin-top: 14px; }
+.library-list__cards { display: grid; gap: 14px; }
+.library-list__cards > .entity-card { margin-bottom: 0; }
+.library-card__subtitle { margin: 0 4px 8px; color: var(--text-muted); font-size: 13px; }
+.library-card__chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.library-card__chip { display: inline-flex; align-items: center; width: max-content; min-height: 26px; padding: 4px 9px; border: 1px solid var(--border-default); border-radius: 999px; background: var(--surface-card-muted); color: var(--text-main); font-size: 12px; font-weight: 600; }
+.library-card__panel { padding: 6px 16px; }
+.library-card__ingredient { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; }
+.library-card__ingredient + .library-card__ingredient { border-top: 1px solid var(--border-soft); }
+.library-card__ingredient strong { white-space: nowrap; }
+.library-list__cards .entity-card__title { min-width: 0; align-self: flex-start; }
+.library-list__cards .entity-heading { height: fit-content; }
+.library-list__cards .entity-card__main:has(.entity-card__kpi) .entity-card__title { flex: 0 0 300px; }
+.library-list__cards .entity-card__main:not(:has(.entity-card__kpi)) .entity-card__title { width: 100%; }
+.library-detail { --library-accent: var(--entity-preparation, #ff6b6b); }
+.library-detail--supplement { --library-accent: var(--entity-supplement, #13a9bc); }
+.library-detail__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 28px; border: 1px solid var(--border-soft); border-top: 3px solid var(--library-accent); border-radius: 22px; background: var(--surface-card); }
+.library-detail__identity { min-width: 0; }
+.library-detail__eyebrow { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; color: var(--text-muted); font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.library-detail__eyebrow svg { width: 18px; height: 18px; color: var(--library-accent); }
+.library-detail__identity h1 { margin: 0 0 8px; font-size: clamp(1.6rem, 3vw, 2.4rem); }
+.library-detail__identity > p:not(.library-detail__eyebrow) { margin: 0 0 10px; color: var(--text-muted); }
+.library-detail__indicator { display: inline-flex; padding: 4px 9px; border-radius: 999px; background: var(--surface-card-muted); color: var(--text-main); font-size: 12px; font-weight: 700; }
+.library-detail__actions { position: relative; flex: none; }
+.library-detail__actions summary { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border-default); border-radius: 50%; color: var(--text-muted); cursor: pointer; list-style: none; }
+.library-detail__actions summary::-webkit-details-marker { display: none; }
+.library-detail__actions summary svg { width: 18px; height: 18px; }
+.library-detail__actions[open] summary, .library-detail__actions summary:hover { color: var(--text-main); border-color: var(--text-muted); }
+.library-detail__action-menu { position: absolute; z-index: 30; right: 0; top: 42px; width: max-content; min-width: 230px; padding: 6px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--surface-elevated); box-shadow: var(--shadow-elevated); }
+.library-detail__action-menu a, .library-detail__action-menu button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text-main); font: inherit; font-size: 13px; text-align: left; text-decoration: none; cursor: pointer; }
+.library-detail__action-menu a:hover, .library-detail__action-menu button:hover { background: var(--surface-card-muted); }
+.library-detail__action-menu svg { width: 16px; height: 16px; }
+.library-detail__action-menu .library-detail__danger { color: #e8a79f; }
+.library-detail__section, .library-detail__nutrition { margin-top: 20px; padding: 22px 26px; border: 1px solid var(--border-soft); border-radius: 20px; background: var(--surface-card); }
+.library-detail__section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.library-detail__section-heading h2 { margin: 0; font-size: 20px; }
+.library-detail__section-heading > span { color: var(--text-muted); font-size: 13px; }
+.library-detail__tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+.library-detail__tabs button { padding: 7px 13px; border: 1px solid var(--border-default); border-radius: 999px; background: transparent; color: var(--text-muted); font: inherit; cursor: pointer; }
+.library-detail__tabs button[aria-selected="true"] { border-color: var(--library-accent); background: var(--library-accent); color: #fff; }
+.library-detail__nutrition-panel:not([hidden]) { display: flex; align-items: stretch; gap: 20px; }
+.library-detail__nutrition-panel[hidden] { display: none; }
+.library-detail__nutrition-panel .card-kpi.main { width: 100%; }
+.library-detail__table { overflow: hidden; border: 1px solid var(--border-soft); border-radius: 14px; background: var(--surface-card-muted); }
+.library-detail__table-head, .library-detail__table-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 16px; }
+.library-detail__table-head { color: var(--text-muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.library-detail__table-row + .library-detail__table-row { border-top: 1px solid var(--border-soft); }
+.library-detail__table-row { color: var(--text-main); text-decoration: none; }
+.library-detail__table-row > span { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
+.library-detail__table-row svg { flex: none; width: 18px; height: 18px; }
+.library-detail__table-row span svg { color: var(--entity-food, #ff8a00); }
+a.library-detail__table-row:hover { background: var(--surface-card); }
+.library-detail__add { display: inline-flex; margin-top: 14px; padding: 8px 12px; border-radius: 999px; background: var(--library-accent); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; }
+.library-detail__facts { margin: 0; }
+.library-detail__facts div { display: flex; justify-content: space-between; gap: 24px; padding: 12px 0; border-bottom: 1px solid var(--border-soft); }
+.library-detail__facts dt { color: var(--text-muted); }
+.library-detail__facts dd { margin: 0; text-align: right; font-weight: 600; }
+.library-detail__description { color: var(--text-muted); line-height: 1.6; white-space: pre-line; }
+.library-detail__food-cards > .entity-card { margin-bottom: 0; }
+.library-detail__food-cards { display: grid; gap: 12px; }
+.library-detail__ingredient-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.library-detail__ingredient-card { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--border-soft); border-radius: 14px; background: var(--surface-card-muted); color: var(--text-main); text-decoration: none; }
+.library-detail__ingredient-card:hover { border-color: var(--entity-food, #ff8a00); }
+.library-detail__ingredient-card > strong { font-size: 17px; }
+.library-detail__ingredient-card > span:last-child { color: var(--text-muted); font-size: 13px; }
+@media (max-width: 680px) {
+  .library-detail__header, .library-detail__section, .library-detail__nutrition { padding: 18px; }
+  .library-list__cards .entity-card__main:has(.entity-card__kpi) .entity-card__title { flex: auto; }
+  .library-detail__section-heading { align-items: flex-start; }
+  .library-detail__section-heading h2 { font-size: 17px; }
+}

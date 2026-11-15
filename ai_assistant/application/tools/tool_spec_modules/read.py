@@ -82,6 +82,8 @@ READ_TOOL_SPECS = {
         risk_level=AssistantToolRiskLevel.LOW,
         requires_human_review=False,
         allowed_intents=("read_context", "answer_question"),
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/read-food/",
         input_schema={
             "type": "object",
             "required": ["food_id"],
@@ -89,6 +91,7 @@ READ_TOOL_SPECS = {
                 "food_id": {
                     "type": "integer",
                     "description": "Operational Food ID to read.",
+                    "minimum": 1,
                 },
             },
         },

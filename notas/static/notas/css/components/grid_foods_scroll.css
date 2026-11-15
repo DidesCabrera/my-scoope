@@ -1,0 +1,26 @@
+.data-grid-scroll--foods {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.data-grid-scroll--foods .data-grid--foods {
+    box-sizing: border-box;
+    min-width: 1120px;
+}
+
+.data-grid-scroll--foods .data-grid-header--foods > .data-grid-col--name,
+.data-grid-scroll--foods .data-grid-row--foods > .data-grid-cell--name {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--surface-card-muted);
+    box-shadow: 1px 0 0 var(--panel-row-separator);
+}
+
+.data-grid-scroll--foods .data-grid-header--foods > .data-grid-col--name {
+    z-index: 2;
+}

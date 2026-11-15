@@ -22,6 +22,7 @@ class TitleUI:
     name: str
     label: Optional[str] = None
     icon: Optional[str] = None
+    nutrition_basis_unit: Optional[str] = None
     category: Optional[str] = None
     category_badge: Optional[CategoryBadgeUI] = None
     structural_indicators: Optional[StructuralIndicatorsUI] = None
@@ -60,6 +61,7 @@ class ChildCardUI:
     kpis: KPIUI
     metadata: MetadataUI
     actions: list
+    nutrition_facts: dict = field(default_factory=dict)
 
 
 @dataclass

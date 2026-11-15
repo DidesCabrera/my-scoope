@@ -3,7 +3,6 @@ import * as Crypto from "expo-crypto";
 import { Carrot } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
@@ -20,7 +19,7 @@ import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { FoodPanels, type FoodPanelEditing, type FoodPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
-import { Button, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, useMutationStatus } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, Button, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -131,6 +130,14 @@ export default function CalendarizedMealDetailScreen() {
 
   const totals = meal.totals;
   const foods = snapshotFoodPanelItems(meal);
+  const openComponent = (food: FoodPanelItem) => {
+    if (food.detailId == null || !Number.isFinite(food.quantity) || food.quantity <= 0) return;
+    if (food.kind === "preparation") {
+      router.push({ pathname: "/libraries/preparations/[id]", params: { id: String(food.detailId), mealGrams: String(food.quantity) } } as Href);
+    } else {
+      router.push({ pathname: "/libraries/foods/[id]", params: { id: String(food.detailId), mealQuantity: String(food.quantity), snapshotDayId: String(dayId), snapshotMealKey: mealKey, snapshotFoodKey: food.id } } as Href);
+    }
+  };
   const foodEditing: FoodPanelEditing = {
     onDelete: async (food) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { method: "DELETE" }),
     onEditPortion: (food) => {
@@ -156,7 +163,7 @@ export default function CalendarizedMealDetailScreen() {
   foodEditing.preparation = preparationEditing;
   return (
     <>
-    <NestableScrollContainer
+    <AdaptiveNestableScrollContainer
       contentContainerStyle={styles.content}
       onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
       scrollEventThrottle={16}
@@ -182,7 +189,7 @@ export default function CalendarizedMealDetailScreen() {
             editing={foodEditing}
             items={foods}
             nestedScroll
-            onOpenItem={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }}
+            onOpenItem={openComponent}
             preparation={adherence.available ? {
               disabled: savingPreparedFood,
               isPrepared: (food) => execution ? normalizeMealExecutionItem(execution).prepared_food_keys.includes(food.id) : false,
@@ -191,10 +198,10 @@ export default function CalendarizedMealDetailScreen() {
           />
         </EntityDetailSection>
         <Button label="+ Agregar alimento o preparación" onPress={() => setAddComponentVisible(true)} variant="chipPrimary" />
-        {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Revisa el aporte de cada alimento y preparación a esta comida en curso." title="Detalle de cada componente" /><FoodDetailCardList editing={(component) => component.kind === "preparation" ? preparationEditing : foodEditing} items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }} /></> : null}
+        {foods.length ? <><ProgramSectionHeader icon={Carrot} subtitle="Revisa el aporte de cada alimento y preparación a esta comida en curso." title="Detalle de cada componente" /><FoodDetailCardList editing={(component) => component.kind === "preparation" ? preparationEditing : foodEditing} items={foods} onOpenFood={openComponent} /></> : null}
         <View style={styles.noteSpacing}><MealNoteCard controller={adherence} /></View>
       </EntityDetailPage>
-    </NestableScrollContainer>
+    </AdaptiveNestableScrollContainer>
     <CalendarizedEntityActions
       entityName={meal.name ?? "Comida"}
       initialAction={actionSheet === "change-time" ? "change-time" : undefined}
@@ -243,7 +250,7 @@ export default function CalendarizedMealDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   noteSpacing: { marginTop: 12 },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },

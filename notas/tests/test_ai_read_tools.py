@@ -215,6 +215,14 @@ class AIReadToolTests(TestCase):
             self.food.id,
         )
 
+    def test_food_read_exposes_its_nutrition_base_unit(self):
+        self.food.portion_unit = "ml"
+        self.food.save(update_fields=["portion_unit"])
+
+        data = self.assert_tool_success(read_food_tool(self.user, self.food.id))
+
+        self.assertEqual(data["data"]["food"]["portion_unit"], "ml")
+
     def test_food_read_tool_blocks_private_other_food(self):
         result = read_food_tool(
             self.user,
