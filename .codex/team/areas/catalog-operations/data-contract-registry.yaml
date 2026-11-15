@@ -1,7 +1,25 @@
 schema_version: 1
 area: "catalog-operations"
-last_reviewed: "2026-11-14"
+last_reviewed: "2026-11-15"
 contracts:
+  - id: "food-editorial-description-to-mobile-detail-v1"
+    catalog: "foods"
+    name: "Reviewed food editorial copy to mobile detail subtitle"
+    version: "myscoope.food_descriptions.v1"
+    authority: "food_catalog/data/food_descriptions_v1.json"
+    producer: "Catalog Operations reviewed versioned editorial copy"
+    consumers:
+      - "mobile_api/selectors.py library_item_detail_payload"
+      - "mobile EntityDetailPage subtitle in installed clients"
+    validation:
+      - "food_catalog/tests/test_editorial_descriptions.py"
+      - "mobile_api/tests/test_food_detail_navigation_api.py"
+    state: "implemented-versioned-contract"
+    required_semantics:
+      - "Only exact active global food identities with approved copy receive a description"
+      - "Published master foods match on catalog_ref and exact name"
+      - "Unverified legacy foods match on operational ID and exact name and use limited claims"
+      - "Editorial copy does not mutate nutrition or operational snapshots"
   - id: "food-remote-visual-assets-v1"
     catalog: "foods"
     name: "Published food visual asset to mobile fallback"
