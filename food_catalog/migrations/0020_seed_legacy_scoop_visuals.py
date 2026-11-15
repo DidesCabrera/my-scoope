@@ -2,10 +2,13 @@
 
 from pathlib import Path
 
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import migrations
 
 from food_catalog.visual_assets import prepare_food_visual
+
+NOTAS_INSTALLED = any(app == "notas" or app.startswith("notas.apps.") for app in settings.INSTALLED_APPS)
 
 APPROVED_FOODS = (
     (1, "Dextrosa", "dextrosa.png"),
@@ -47,4 +50,7 @@ def publish_approved_visuals(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [("food_catalog", "0019_legacyfoodvisualasset")]
 
-    operations = [migrations.RunPython(publish_approved_visuals, migrations.RunPython.noop)]
+    operations = (
+        [migrations.RunPython(publish_approved_visuals, migrations.RunPython.noop)]
+        if NOTAS_INSTALLED else []
+    )

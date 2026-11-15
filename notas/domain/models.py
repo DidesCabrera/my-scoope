@@ -40,6 +40,7 @@ from notas.domain.model_modules.food import (
     FoodLocalizedName,
     FoodPortion,
     FoodSourceMetadata,
+    LegacyFoodVisualAsset,
 )
 from notas.domain.model_modules.identity import (
     NutritionistMemberRelationship,

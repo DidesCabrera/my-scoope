@@ -807,3 +807,28 @@ class FoodImportBatch(models.Model):
 
     def __str__(self):
         return f"{self.source} · {self.source_version or 'sin versión'} · {self.status}"
+
+
+class LegacyFoodVisualAsset(models.Model):
+    """Editorial visual override for any active global operational Food.
+
+    Keep the historical table name so existing images and public URLs survive
+    the change of Django app ownership.
+    """
+
+    food = models.OneToOneField("notas.Food", on_delete=models.CASCADE, related_name="legacy_visual_asset")
+    public_ref = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    image_data = models.BinaryField(editable=False)
+    mobile_image_data = models.BinaryField(editable=False)
+    content_sha256 = models.CharField(max_length=64, editable=False)
+    is_published = models.BooleanField(default=False)
+    source_note = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "food_catalog_legacyfoodvisualasset"
+        verbose_name = "imagen de alimento global"
+        verbose_name_plural = "imágenes de alimentos globales"
+
+    def __str__(self):
+        return f"{self.food.name} · imagen global"

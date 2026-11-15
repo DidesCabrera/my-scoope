@@ -2,7 +2,10 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from . import admin_culinary  # noqa: F401
+from . import (
+    admin_culinary,  # noqa: F401
+    admin_food_visual_assets,  # noqa: F401
+)
 from .admin_food_actions import (
     mark_foods_as_active,
     mark_foods_as_core,

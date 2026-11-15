@@ -2,7 +2,10 @@
 
 import uuid
 
+from django.conf import settings
 from django.db import migrations, models
+
+NOTAS_INSTALLED = any(app == "notas" or app.startswith("notas.apps.") for app in settings.INSTALLED_APPS)
 
 
 def assign_public_refs(apps, schema_editor):
@@ -34,4 +37,4 @@ class Migration(migrations.Migration):
                 "verbose_name_plural": "imágenes de alimentos globales",
             },
         ),
-    ]
+    ] if NOTAS_INSTALLED else []

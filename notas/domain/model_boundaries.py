@@ -79,6 +79,7 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
             "FoodImportBatch",
             "FoodLabelAIAnalysis",
             "FoodLabelCaptureReceipt",
+            "LegacyFoodVisualAsset",
         ),
         responsibility=(
             "Operational food snapshots, portions, aliases, localized names, "

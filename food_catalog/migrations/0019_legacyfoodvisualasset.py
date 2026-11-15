@@ -1,12 +1,17 @@
 import django.db.models.deletion
+from django.conf import settings
 from django.db import migrations, models
+
+NOTAS_INSTALLED = any(app == "notas" or app.startswith("notas.apps.") for app in settings.INSTALLED_APPS)
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("food_catalog", "0018_foodvisualasset"),
-        ("notas", "0100_supplement_catalog"),
-    ]
+    # The authority deploys food_catalog without the operational notas app.
+    # Keep the historical migration identity, but only create this operational
+    # table in consumer databases where its Food dependency exists.
+    dependencies = [("food_catalog", "0018_foodvisualasset")]
+    if NOTAS_INSTALLED:
+        dependencies.append(("notas", "0100_supplement_catalog"))
 
     operations = [
         migrations.CreateModel(
@@ -22,4 +27,4 @@ class Migration(migrations.Migration):
                 ("food", models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name="legacy_visual_asset", to="notas.food")),
             ],
         ),
-    ]
+    ] if NOTAS_INSTALLED else []
