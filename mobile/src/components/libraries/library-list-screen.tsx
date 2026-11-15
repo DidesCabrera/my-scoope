@@ -1,7 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { EntitlementsData, LibraryEntity, LibraryListActionResult, LibraryPageData } from "@/api/types";
@@ -10,7 +9,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { reachedCommercialLimit } from "@/components/subscriptions/commercial-limit";
 import { CommercialLimitSheet, type CommercialLimitState } from "@/components/subscriptions/commercial-limit-sheet";
-import { CollectionPageHeader, LoadingState, MacroLoadingIndicator, MutationStatusModal, SearchField, useMutationStatus } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, CollectionPageHeader, LoadingState, MacroLoadingIndicator, MutationStatusModal, SearchField, useMutationStatus } from "@/components/ui";
 import { visibleSearchSuggestions } from "@/components/ui/search-suggestion-state";
 import { SearchSuggestions } from "@/components/ui/search-suggestions";
 import { Button, Card, InlineNotice } from "@/components/ui/primitives";
@@ -274,7 +273,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   if (loading && mode === "list" && !page) return <LoadingState label="Cargando tu librería…" />;
 
   return (
-    <NestableScrollContainer
+    <AdaptiveNestableScrollContainer
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
       onContentSizeChange={(_width, height) => { contentHeightRef.current = height; }}
@@ -324,13 +323,13 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       {entity === "food" ? <FoodAddActions onClose={() => setFoodAddActionsVisible(false)} onManualAdd={() => void openCreate()} onScanLabel={() => router.push("/label-capture" as Href)} visible={foodAddActionsVisible} /> : null}
       {commercialLimit ? <CommercialLimitSheet {...commercialLimit} onClose={() => setCommercialLimit(null)} onUpgrade={() => { setCommercialLimit(null); router.push("/subscription"); }} visible /> : null}
       <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
-    </NestableScrollContainer>
+    </AdaptiveNestableScrollContainer>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   stickySearch: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, marginTop: -8, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.layout.reducedInset, paddingTop: tokens.spacing.xs, zIndex: 3 },
   managedItem: { gap: tokens.spacing.sm },
   loading: { alignItems: "center", flex: 1, gap: tokens.spacing.md, justifyContent: "center", minHeight: 240 },

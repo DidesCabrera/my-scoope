@@ -6,20 +6,20 @@ from datetime import timedelta
 from django.conf import settings
 from django.db.models import Count, Prefetch
 from django.utils import timezone
-from accounts.services.entitlements import resolve_account_entitlements
 
+from accounts.services.entitlements import resolve_account_entitlements
 from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
 from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
 from mobile_api import library_projections
-from mobile_api.preparation_projections import meal_preparations_prefetch, preparation_panel_item
 from mobile_api.calendar_today import current_dated_day, standalone_today_payload
 from mobile_api.calendarized_snapshot_foods import index_snapshot_food
 from mobile_api.errors import MobileAPIError
 from mobile_api.food_visuals import food_visual_payload
 from mobile_api.identity_selectors import local_date_for_user, profile_payload, session_payload
 from mobile_api.library_actions import library_actions_payload, library_list_actions_projector
+from mobile_api.preparation_projections import meal_preparations_prefetch, preparation_panel_item
 from notas.application.queries.calendar_foods import calendar_foods_for_period
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_measurement_summary,
@@ -46,6 +46,7 @@ from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
     Food,
+    FoodPortion,
     Meal,
     MealFood,
     PinnedDailyPlan,
@@ -664,12 +665,16 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
         )
         if item:
             receipt = getattr(item, "label_capture_receipt", None)
+            household_portion = FoodPortion.objects.filter(food=item, is_default=True, household_amount__isnull=False).first()
             return {
                 "id": item.id,
                 "entity": "food",
                 **food_visual_payload(item),
                 "quantity_unit": item.portion_unit,
                 "default_portion": round(float(item.default_portion_g), 1) if item.default_portion_g is not None else None,
+                "household_amount": float(household_portion.household_amount) if household_portion else None,
+                "household_measure": household_portion.household_measure if household_portion else "",
+                "household_detail": household_portion.household_detail if household_portion else "",
                 "subtitle": "",
                 "nutrition": _library_nutrition_payload(item, current_weight),
                 "food_nutrition": library_projections.food_nutrition_payload(item),
@@ -1037,6 +1042,7 @@ def food_label_capture_payload(result) -> dict:
         "portion_unit": food.portion_unit,
         "ocr_engine": receipt.ocr_engine,
         "label_image_retained": bool(receipt.retained_label_image),
+        "shared_for_curation": receipt.shared_for_curation,
         "created_at": receipt.created_at,
     }
 

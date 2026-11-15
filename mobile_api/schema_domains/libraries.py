@@ -7,8 +7,8 @@ from ninja import Field, Schema
 
 from mobile_api.schema_domains import library_common
 from mobile_api.schema_domains.food_create import FoodCreateInput
-from mobile_api.schema_domains.preparations import LibraryPreparationPanelItemData
 from mobile_api.schema_domains.meal_creation import MealCreateInput
+from mobile_api.schema_domains.preparations import LibraryPreparationPanelItemData
 
 OptionalPortionUnitData = library_common.OptionalPortionUnitData
 LibraryMacroData = library_common.LibraryMacroData
@@ -173,6 +173,9 @@ class LibraryItemData(library_common.OptionalFoodVisualIdentityData, library_com
     subtitle: str
     quantity_unit: Literal["g", "ml"] | None = None
     default_portion: float | None = None
+    household_amount: float | None = None
+    household_measure: str = ""
+    household_detail: str = ""
     nutrition: LibraryNutritionData
     food_nutrition: library_common.FoodNutritionFactsData | None = None
     indicators: list[LibraryIndicatorData]

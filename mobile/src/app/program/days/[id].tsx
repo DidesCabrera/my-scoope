@@ -3,7 +3,6 @@ import * as Crypto from "expo-crypto";
 import { Carrot, ChevronRight, Utensils } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarDayDetailData, CalendarOverviewData, CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
@@ -21,7 +20,7 @@ import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, GroupedFoodsCard, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
-import { Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, textStyles, useMutationStatus } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, Button, ContentPanel, EntityCardAction, HeaderMetadataChip, InlineNotice, LoadingState, MutationStatusModal, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { ContextualLibraryActions } from "@/components/libraries/contextual-library-actions";
 import { MealComponentAddActions } from "@/components/libraries/meal-component-add-actions";
@@ -241,7 +240,7 @@ export default function ProgramDayScreen() {
 
   return (
     <>
-    <NestableScrollContainer
+    <AdaptiveNestableScrollContainer
       contentContainerStyle={styles.content}
       onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
       scrollEventThrottle={16}
@@ -306,7 +305,7 @@ export default function ProgramDayScreen() {
         </ContentPanel>
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    </NestableScrollContainer>
+    </AdaptiveNestableScrollContainer>
     <ContextualLibraryActions
       apiRequest={apiRequest}
       calendarActionsDisabled={!localToday || day.calendar_date < localToday || Boolean(calendarDay?.has_execution)}
@@ -357,7 +356,7 @@ export default function ProgramDayScreen() {
 
 const styles = StyleSheet.create({
   addAction: { marginTop: tokens.spacing.md },
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },

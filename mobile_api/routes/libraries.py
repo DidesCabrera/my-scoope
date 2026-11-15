@@ -189,6 +189,15 @@ def _clean_creation_name(name: str) -> str:
     return clean_name
 
 
+def _validate_food_portion_input(payload: FoodCreateInput):
+    if (payload.household_amount is None) != (not payload.household_measure):
+        raise MobileAPIError("food_household_portion_incomplete", "Completa la cantidad y la medida de la equivalencia.", 422)
+    if payload.household_amount is not None and payload.default_portion is None:
+        raise MobileAPIError("food_household_portion_incomplete", "Ingresa la porción sugerida antes de agregar una equivalencia.", 422)
+    if payload.household_measure == "other" and not 1 <= len(payload.household_detail.strip()) <= 100:
+        raise MobileAPIError("food_household_label_required", "Escribe una medida cotidiana de hasta 100 caracteres.", 422)
+
+
 @router.post(
     "/library/foods",
     operation_id="mobile_api_api_create_library_food",
@@ -197,6 +206,7 @@ def _clean_creation_name(name: str) -> str:
 )
 def create_library_food(request, payload: FoodCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    _validate_food_portion_input(payload)
     result = create_food(
         user=request.auth.user,
         name=_clean_creation_name(payload.name),
@@ -208,6 +218,10 @@ def create_library_food(request, payload: FoodCreateInput):
         fiber_g=payload.fiber_g,
         sodium_mg=payload.sodium_mg,
         portion_unit=payload.portion_unit,
+        default_portion=payload.default_portion,
+        household_amount=payload.household_amount,
+        household_measure=payload.household_measure,
+        household_detail=payload.household_detail,
     )
     return success(library_item_detail_payload(request.auth.user, "foods", result.food.id))
 
@@ -223,6 +237,12 @@ def update_library_food(request, food_id: int, payload: FoodCreateInput):
     food = Food.objects.filter(pk=food_id, created_by=request.auth.user, is_active=True).first()
     if food is None:
         raise MobileAPIError("library_item_not_found", "El alimento no está disponible para edición.", 404)
+    portion_fields = {"default_portion", "household_amount", "household_measure", "household_detail"}
+    update_portion = bool(portion_fields & payload.model_fields_set)
+    if update_portion and not portion_fields <= payload.model_fields_set:
+        raise MobileAPIError("food_household_portion_incomplete", "Envía todos los datos de la porción sugerida.", 422)
+    if update_portion:
+        _validate_food_portion_input(payload)
     optional_nutrition = {field: getattr(payload, field) for field in ("saturated_fat_g", "sugar_g", "fiber_g", "sodium_mg") if field in payload.model_fields_set}
     result = update_food(
         food=food,
@@ -232,6 +252,11 @@ def update_library_food(request, food_id: int, payload: FoodCreateInput):
         fat=payload.fat,
         **optional_nutrition,
         portion_unit=payload.portion_unit,
+        default_portion=payload.default_portion,
+        household_amount=payload.household_amount,
+        household_measure=payload.household_measure,
+        household_detail=payload.household_detail,
+        update_portion=update_portion,
     )
     return success(library_item_detail_payload(request.auth.user, "foods", result.food.id))
 

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import base64
+from io import BytesIO
+
+from PIL import Image, UnidentifiedImageError
 
 from ninja import Router
 
@@ -124,7 +127,7 @@ def confirm_food_label_capture(request, payload: FoodLabelCaptureInput):
     retained_content_type = ""
     retained_sha256 = ""
     try:
-        if payload.retain_label_image:
+        if payload.retain_label_image or payload.share_for_curation:
             if not payload.analysis_id or not payload.label_image_base64 or not payload.label_image_content_type:
                 raise NutritionLabelAIError(
                     "nutrition_label_retained_image_required",
@@ -136,6 +139,17 @@ def confirm_food_label_capture(request, payload: FoodLabelCaptureInput):
                 image_base64=payload.label_image_base64,
                 image_content_type=payload.label_image_content_type,
             )
+        curation_image = None
+        if payload.share_for_curation:
+            try:
+                with Image.open(BytesIO(retained_image)) as source:
+                    output = BytesIO()
+                    source.convert("RGB").save(output, format="JPEG", quality=82, optimize=True)
+                    curation_image = output.getvalue()
+            except (UnidentifiedImageError, OSError, ValueError) as exc:
+                raise NutritionLabelAIError("nutrition_label_image_invalid", "La fotografía no se pudo preparar para compartir.") from exc
+            if len(curation_image) > 1_500_000:
+                raise NutritionLabelAIError("nutrition_label_image_too_large", "La fotografía procesada supera el tamaño permitido.")
         result = create_food_from_label_capture(
             user=request.auth.user,
             name=payload.name,
@@ -147,6 +161,10 @@ def confirm_food_label_capture(request, payload: FoodLabelCaptureInput):
             fiber_g=payload.fiber_g,
             sodium_mg=payload.sodium_mg,
             serving_size_g=payload.serving_size_g,
+            default_portion=payload.default_portion if "default_portion" in payload.model_fields_set else payload.serving_size_g,
+            household_amount=payload.household_amount,
+            household_measure=payload.household_measure,
+            household_detail=payload.household_detail,
             volume_weight_g_per_100ml=payload.volume_weight_g_per_100ml,
             declared_energy_kcal_per_100g=payload.declared_energy_kcal_per_100g,
             detected_basis=payload.detected_basis,
@@ -155,9 +173,10 @@ def confirm_food_label_capture(request, payload: FoodLabelCaptureInput):
             field_confidence=payload.field_confidence,
             warnings=payload.warnings,
             idempotency_key=payload.idempotency_key,
-            retained_label_image=retained_image,
-            retained_label_image_content_type=retained_content_type,
-            retained_label_image_sha256=retained_sha256,
+            retained_label_image=retained_image if payload.retain_label_image else None,
+            retained_label_image_content_type=retained_content_type if payload.retain_label_image else "",
+            retained_label_image_sha256=retained_sha256 if payload.retain_label_image else "",
+            curation_label_image=curation_image,
         )
     except NutritionLabelAIError as exc:
         raise MobileAPIError(exc.code, exc.message, exc.status_code) from exc

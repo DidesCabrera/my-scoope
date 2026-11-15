@@ -10,11 +10,13 @@ const householdMeasureLabels: Record<string, string> = {
   slice: "rodaja",
   strip: "tira",
   tablespoon: "cucharada",
+  scoop: "scoop",
   unit: "unidad",
 };
 
 const householdMeasurePlurals: Record<string, string> = {
   cucharada: "cucharadas",
+  scoop: "scoops",
   filete: "filetes",
   hoja: "hojas",
   lata: "latas",

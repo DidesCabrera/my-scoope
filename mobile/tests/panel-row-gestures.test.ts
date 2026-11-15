@@ -59,7 +59,7 @@ test("owned library cards connect panel gestures to composition mutations", asyn
   assert.match(card, /<MealPanels[^>]*editing=\{mealEditing\}/);
   assert.match(card, /items=\{item\.panel\.foods\} nestedScroll/);
   assert.match(card, /items=\{item\.panel\.meals\} nestedScroll/);
-  assert.match(list, /<NestableScrollContainer/);
+  assert.match(list, /<AdaptiveNestableScrollContainer/);
   assert.match(wrappers, /<SharedFoodPanels editing=\{editing\}/);
   assert.match(wrappers, /<SharedMealPanels editing=\{editing\}/);
 });
@@ -202,7 +202,7 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   assert.match(panels.match(/function FoodEditPanel[\s\S]*?function MealEditPanel/)?.[0] ?? "", /<NestableDraggableFlatList/);
   assert.match(panels.match(/function MealEditPanel[\s\S]*?export function FoodPanels/)?.[0] ?? "", /<NestableDraggableFlatList/);
   assert.match(libraryDetail, /NestableScrollContainer/);
-  assert.match(activeProgram, /<NestableScrollContainer/);
+  assert.match(activeProgram, /<AdaptiveNestableScrollContainer/);
   assert.doesNotMatch(activeProgram, /<ScrollView/);
   assert.match(calendarizedDay, /NestableScrollContainer/);
   assert.match(calendarizedMeal, /NestableScrollContainer/);

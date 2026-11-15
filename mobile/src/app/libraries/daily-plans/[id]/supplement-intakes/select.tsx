@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -10,7 +10,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { stageSupplementIntakeSelection } from "@/components/supplements/supplement-intake-selection-handoff";
-import { InlineNotice, LoadingState, SearchField, SupplementCard, textStyles } from "@/components/ui";
+import { AdaptiveScrollView, InlineNotice, LoadingState, SearchField, SupplementCard, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export default function SupplementIntakeSelectionScreen() {
@@ -59,7 +59,7 @@ export default function SupplementIntakeSelectionScreen() {
   };
 
   return <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-    <ScrollView
+    <AdaptiveScrollView
       automaticallyAdjustKeyboardInsets
       contentContainerStyle={styles.content}
       keyboardDismissMode="on-drag"
@@ -77,13 +77,13 @@ export default function SupplementIntakeSelectionScreen() {
         {!loading && !visible.length ? <Text style={textStyles.muted}>{normalizedQuery ? "No encontramos resultados." : "No quedan suplementos por agregar."}</Text> : null}
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       </View>
-    </ScrollView>
+    </AdaptiveScrollView>
   </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
   cardAction: { marginHorizontal: -6 },
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen },
   options: { gap: tokens.spacing.lg, paddingTop: tokens.spacing.md },
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   sticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingBottom: tokens.spacing.sm, zIndex: 2 },

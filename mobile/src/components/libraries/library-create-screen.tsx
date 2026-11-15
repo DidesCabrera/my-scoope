@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -8,15 +8,17 @@ import type { LibraryEntity, LibraryItem } from "@/api/types";
 import type { FoodNutritionFacts } from "@/api/food-nutrition";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { CollectionPageHeader, DistributedTabBar, Field, LoadingState } from "@/components/ui";
+import { AdaptiveScrollView, CollectionPageHeader, DistributedTabBar, Field, LoadingState } from "@/components/ui";
 import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { pickerHref } from "@/components/pickers/picker-routes";
+import { householdMeasureDisplayLabel } from "@/components/pickers/food-portion-nutrition";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
+import { HouseholdEquivalencePicker } from "./household-equivalence-picker";
+import { householdMeasures, type HouseholdMeasure } from "./household-equivalence-picker.types";
 
 type CreatableEntity = LibraryEntity;
 type MealType = "breakfast" | "snack" | "lunch" | "shake" | "dinner";
-
 const mealTypes: { value: MealType; label: string }[] = [
   { value: "breakfast", label: "Desayuno" },
   { value: "snack", label: "Snack" },
@@ -78,6 +80,11 @@ function macroNumber(value: string): number | null {
   return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
 }
 
+function positivePortionNumber(value: string): number | null {
+  const parsed = Number(value.trim().replace(",", "."));
+  return Number.isFinite(parsed) && parsed > 0 && parsed <= 99999 && Math.abs(parsed * 1000 - Math.round(parsed * 1000)) < 1e-7 ? parsed : null;
+}
+
 type OptionalNutritionKey = keyof FoodNutritionFacts;
 const blankOptionalNutrition: Record<OptionalNutritionKey, string> = { saturated_fat_g: "", sugar_g: "", fiber_g: "", sodium_mg: "" };
 
@@ -132,6 +139,10 @@ export function LibraryCreateScreen() {
   const [fat, setFat] = useState("");
   const [optionalNutrition, setOptionalNutrition] = useState(blankOptionalNutrition);
   const [portionUnit, setPortionUnit] = useState<"g" | "ml">("g");
+  const [suggestedPortion, setSuggestedPortion] = useState("");
+  const [householdAmount, setHouseholdAmount] = useState("1");
+  const [householdMeasure, setHouseholdMeasure] = useState<HouseholdMeasure>("");
+  const [householdLabel, setHouseholdLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [initializing, setInitializing] = useState(editingFoodId != null);
   const [error, setError] = useState<string | null>(null);
@@ -161,6 +172,10 @@ export function LibraryCreateScreen() {
         setFat(String(food.nutrition.fat.grams));
         setOptionalNutrition(Object.fromEntries((Object.keys(blankOptionalNutrition) as OptionalNutritionKey[]).map((key) => [key, food.food_nutrition?.[key] == null ? "" : String(food.food_nutrition[key])])) as Record<OptionalNutritionKey, string>);
         setPortionUnit(food.quantity_unit ?? "g");
+        setSuggestedPortion(food.default_portion == null ? "" : String(food.default_portion));
+        setHouseholdAmount(food.household_amount == null ? "1" : String(food.household_amount));
+        setHouseholdMeasure(householdMeasures.some(({ value }) => value === food.household_measure) ? food.household_measure as HouseholdMeasure : "");
+        setHouseholdLabel(food.household_measure === "other" ? food.household_detail ?? "" : "");
       })
       .catch((nextError) => active && setError(userFacingError(nextError)))
       .finally(() => active && setInitializing(false));
@@ -179,7 +194,12 @@ export function LibraryCreateScreen() {
     fiber_g: optionalNutritionNumber(optionalNutrition.fiber_g, 100),
     sodium_mg: optionalNutritionNumber(optionalNutrition.sodium_mg, 100_000),
   };
-  const validFood = entity !== "food" || (Object.values(macroValues).every((value) => value !== null) && Object.values(optionalValues).every((value) => value === null || Number.isFinite(value)));
+  const portionNumber = suggestedPortion.trim() ? positivePortionNumber(suggestedPortion) : null;
+  const householdNumber = householdMeasure ? positivePortionNumber(householdAmount) : null;
+  const validPortion = (!suggestedPortion.trim() || portionNumber !== null)
+    && (!householdMeasure || (portionNumber !== null && householdNumber !== null))
+    && (householdMeasure !== "other" || Boolean(householdLabel.trim()) && householdLabel.trim().length <= 100);
+  const validFood = entity !== "food" || (Object.values(macroValues).every((value) => value !== null) && Object.values(optionalValues).every((value) => value === null || Number.isFinite(value)) && validPortion);
   const canSubmit = Boolean(cleanName && cleanName.length <= 100 && validFood && (entity !== "meal" || mealType) && !submitting);
 
   async function submit() {
@@ -188,7 +208,7 @@ export function LibraryCreateScreen() {
     setError(null);
     try {
       const body = entity === "food"
-        ? { name: cleanName, protein: macroValues.protein, carbs: macroValues.carbs, fat: macroValues.fat, ...optionalValues, portion_unit: portionUnit }
+        ? { name: cleanName, protein: macroValues.protein, carbs: macroValues.carbs, fat: macroValues.fat, ...optionalValues, portion_unit: portionUnit, default_portion: portionNumber, household_amount: householdNumber, household_measure: householdMeasure, household_detail: householdMeasure === "other" ? householdLabel.trim() : "" }
         : entity === "meal" ? { name: cleanName, meal_type: mealType } : { name: cleanName };
       const saved = await apiRequest<LibraryItem>(editingFoodId ? `/api/v1/library/foods/${editingFoodId}/edit` : config.endpoint, {
         body: JSON.stringify(body),
@@ -228,7 +248,7 @@ export function LibraryCreateScreen() {
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.flex}>
-        <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <AdaptiveScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <CollectionPageHeader entity={entity} title={editingFoodId ? "Editar alimento" : config.pageTitle} />
           <View style={styles.formBody}>
             <Field autoCapitalize="sentences" label="Nombre" labelStyle={entity === "food" ? styles.foodFieldLabel : undefined} onChangeText={setName} placeholder={config.namePlaceholder} value={name} />
@@ -260,6 +280,7 @@ export function LibraryCreateScreen() {
             {entity === "food" ? (
               <View style={styles.macroFields}>
                 <View style={styles.portionTabs}>
+                  <Text style={styles.mealTypeLabel}>Métrica de medición del alimento</Text>
                   <DistributedTabBar<"g" | "ml">
                     accessibilityLabel="Unidad de porción"
                     activeTab={portionUnit}
@@ -281,13 +302,26 @@ export function LibraryCreateScreen() {
                   <NutritionValueRow label="Fibra" onChangeText={(value) => setOptionalNutrition((current) => ({ ...current, fiber_g: value }))} value={optionalNutrition.fiber_g} />
                   <NutritionValueRow label="Sodio" last onChangeText={(value) => setOptionalNutrition((current) => ({ ...current, sodium_mg: value }))} unit="mg" value={optionalNutrition.sodium_mg} />
                 </View>
+                <View style={styles.suggestedPortionSection}>
+                  <Text style={styles.macroTitle}>Porción sugerida</Text>
+                  <Text style={textStyles.caption}>El selector de comidas usará esta cantidad como punto de partida.</Text>
+                  <View style={styles.suggestedPortionAmount}>
+                    <Field keyboardType="decimal-pad" label={`Cantidad en ${portionUnit}`} onChangeText={setSuggestedPortion} placeholder={`Ej: 150 ${portionUnit}`} value={suggestedPortion} />
+                  </View>
+                  <Text style={[styles.mealTypeLabel, styles.equivalenceLabel]}>Equivalencia cotidiana (opcional)</Text>
+                  <HouseholdEquivalencePicker amount={householdAmount} measure={householdMeasure} onAmountChange={setHouseholdAmount} onMeasureChange={setHouseholdMeasure} />
+                  {householdMeasure ? <>
+                    {householdMeasure === "other" ? <Field label="Nombre de la medida" maxLength={100} onChangeText={setHouseholdLabel} placeholder="Ej: cucharón" value={householdLabel} /> : null}
+                    {portionNumber && householdNumber ? <Text style={textStyles.caption}>{householdNumber.toLocaleString("es-CL")} {householdMeasureDisplayLabel(householdMeasure === "other" ? householdLabel.trim() || "medida" : householdMeasures.find(({ value }) => value === householdMeasure)?.label ?? "medida", householdNumber)} = {portionNumber.toLocaleString("es-CL")} {portionUnit}</Text> : null}
+                  </> : null}
+                </View>
               </View>
             ) : null}
             {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
             <View style={[styles.formSubmit, entity === "food" && styles.foodFormSubmit]}>{submitButton}</View>
           </View>
           {config.guidance ? <Text style={styles.guidance}>{config.guidance}</Text> : null}
-        </ScrollView>
+        </AdaptiveScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -296,7 +330,7 @@ export function LibraryCreateScreen() {
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   flex: { flex: 1 },
-  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   formBody: { gap: tokens.spacing.lg },
   guidance: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   formSubmit: { marginTop: tokens.spacing.md },
@@ -312,8 +346,11 @@ const styles = StyleSheet.create({
   mealTypeChipTextSelected: { color: tokens.color.textMain },
   foodFieldLabel: { color: tokens.color.textMuted },
   macroFields: { gap: tokens.spacing.md },
-  portionTabs: { marginBottom: tokens.spacing.md, marginTop: tokens.spacing.md },
-  macroHeading: { gap: tokens.spacing.xs },
+  suggestedPortionSection: { gap: tokens.spacing.sm, marginTop: 12 },
+  suggestedPortionAmount: { marginTop: 4 },
+  equivalenceLabel: { marginTop: 8 },
+  portionTabs: { gap: tokens.spacing.sm, marginBottom: tokens.spacing.md, marginTop: tokens.spacing.md },
+  macroHeading: { gap: tokens.spacing.xs, marginTop: 6 },
   macroTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: tokens.weight.extraBold },
   nutritionRows: { marginTop: -tokens.spacing.xs },
   nutritionRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 46, paddingLeft: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },

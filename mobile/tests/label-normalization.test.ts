@@ -10,7 +10,35 @@ import {
   convertServingDraftTo100g,
   normalizeNutritionLabel,
 } from "../src/label-capture/normalize";
-import { classifyLabelImageQuality, labelImageQualityMessage } from "../src/label-capture/quality";
+import { classifyLabelImageQuality, labelImageQualityMessage, nextLabelCaptureStep, recognizeLabelWithOneRetry } from "../src/label-capture/quality";
+
+test("capture routing respects the validation setting and quality result", () => {
+  assert.equal(nextLabelCaptureStep(false, "unavailable"), "analyze");
+  assert.equal(nextLabelCaptureStep(true, "suitable"), "analyze");
+  assert.equal(nextLabelCaptureStep(true, "reviewable"), "review");
+  assert.equal(nextLabelCaptureStep(true, "unavailable"), "review");
+  assert.equal(nextLabelCaptureStep(true, "unsuitable"), "retake");
+});
+
+test("local recognition retries once after a transient failure", async () => {
+  let attempts = 0;
+  const result = await recognizeLabelWithOneRetry(async () => {
+    attempts += 1;
+    if (attempts === 1) throw new Error("temporary_vision_failure");
+    return "recognized";
+  });
+  assert.equal(result, "recognized");
+  assert.equal(attempts, 2);
+});
+
+test("local recognition stops after two failed attempts", async () => {
+  let attempts = 0;
+  await assert.rejects(recognizeLabelWithOneRetry(async () => {
+    attempts += 1;
+    throw new Error("vision_failure");
+  }), /vision_failure/);
+  assert.equal(attempts, 2);
+});
 
 function recognition(lines: string[], confidence = 0.96): NutritionLabelRecognition {
   return {
@@ -229,15 +257,22 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
 
   for (const expected of [
     "autofocus={LABEL_CAMERA_AUTOFOCUS}",
-    'type Phase = "intro" | "camera" | "preview" | "processing" | "review" | "confirmation" | "saved"',
-    "Enriquece tu librería de alimentos",
-    'imageQuality.status === "unsuitable"',
+    'type Phase = "intro" | "camera" | "captured" | "preview" | "processing" | "review" | "confirmation" | "saved"',
+    "Enriquece tu librería personal de alimentos",
+    'source={require("../../assets/images/nutrition-label-illustration-450.png")}',
+    'nextStep === "retake"',
     "captureInFlightRef.current = true",
     "analysisInFlightRef.current = true",
     "setCapturing(true)",
-    'label={`Enviar a OpenAI y digitalizar',
+    'label="Continuar y digitalizar"',
     'accessibilityLabel="Autorizar análisis con OpenAI"',
-    "disabled={!aiConsentGranted",
+    'if (aiConsentGranted === null) { setConsentDialog(true); return; }',
+    'label="Digitalizar información"',
+    'if (!aiConsentGranted) { setSettingsVisible(true); return; }',
+    'setPhase("captured")',
+    'visible={consentDialog}',
+    'label="Autorizar y continuar"',
+    'icon: "settings", label: "Configuración de digitalización"',
     'label="Tomar otra foto"',
     "Gesture.Pinch()",
     'fallback: "/today", mode: "back", title: "Digitalizar etiqueta"',
@@ -248,8 +283,9 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
     "enableTorch={torchEnabled}",
     "launchImageLibraryAsync",
     "prepareLabelImage",
-    "consent_to_ai_processing: aiConsentGranted",
-    'retain_label_image: Boolean(retainImage && prepared && analysisId)',
+    "consent_to_ai_processing: true",
+    'retain_label_image: Boolean(savePhotographs && prepared && analysisId)',
+    'share_for_curation: Boolean(shareForCuration && prepared && analysisId)',
     '"/api/v1/foods/label-captures/analyze"',
     'loading={openingCamera}',
     'confirmBasis("per_100ml")',
@@ -274,10 +310,16 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
   const cameraView = screen.match(/if \(phase === "camera"\)[\s\S]*?if \(phase === "preview" && prepared\)/)?.[0] ?? "";
   const previewView = screen.match(/if \(phase === "preview" && prepared\)[\s\S]*?if \(phase === "processing" && prepared\)/)?.[0] ?? "";
   assert.ok(cameraView.includes('scroll={false}'));
+  assert.ok(cameraView.includes('Para un mejor resultado'));
+  assert.ok(cameraView.includes('Intenta tomar la fotografía con buena iluminación y sin movimiento.'));
   assert.ok(cameraView.includes('style={styles.bottomActions}'));
   assert.ok(!screen.includes('cameraBottomActions'));
   assert.ok(previewView.includes('scroll={false}'));
-  assert.ok(previewView.indexOf('<View style={styles.qualityPanel}>') < previewView.indexOf('{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}'));
+  assert.ok(!previewView.includes('<Modal'));
+  assert.ok(previewView.includes('style={styles.bottomActions}'));
+  assert.ok(previewView.includes('label="Continuar y digitalizar"'));
+  assert.ok(previewView.includes('<Text style={styles.capturedTitle}>Comprueba la fotografía</Text>'));
+  assert.ok(!previewView.includes('Sin validar'));
   assert.ok(processingView.includes('scroll={false}'));
   assert.ok(!screen.includes("convertVolumeDraftTo100g"));
   assert.ok(!screen.includes("development build iOS de CML05"));
@@ -307,7 +349,7 @@ test("rejects locally unreadable images before AI analysis", () => {
   );
 });
 
-test("allows borderline images only with an explicit review warning", () => {
+test("flags borderline images for review before AI analysis", () => {
   const quality = classifyLabelImageQuality({
     brightness: 0.15,
     sharpness: 0.03,

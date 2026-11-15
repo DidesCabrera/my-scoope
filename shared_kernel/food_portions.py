@@ -57,6 +57,8 @@ class HouseholdMeasure(StrEnum):
     UNIT = "unit"
     CUP = "cup"
     TABLESPOON = "tablespoon"
+    SCOOP = "scoop"
+    OTHER = "other"
     SLICE = "slice"
     CAN = "can"
     FILLET = "fillet"
@@ -70,6 +72,8 @@ HOUSEHOLD_MEASURE_LABELS = {
     HouseholdMeasure.UNIT: "unidad",
     HouseholdMeasure.CUP: "taza",
     HouseholdMeasure.TABLESPOON: "cucharada",
+    HouseholdMeasure.SCOOP: "scoop",
+    HouseholdMeasure.OTHER: "otro",
     HouseholdMeasure.SLICE: "rodaja",
     HouseholdMeasure.CAN: "lata",
     HouseholdMeasure.FILLET: "filete",

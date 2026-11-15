@@ -1,7 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -10,7 +9,7 @@ import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { SupplementIntakeItemsTable, type SupplementIntakeTableItem } from "@/components/supplements/supplement-intake-items-table";
 import { consumePresetSupplementSelection } from "@/components/supplements/supplement-intake-preset-selection-handoff";
-import { Button, CollectionPageHeader, InlineNotice, LoadingState } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, Button, CollectionPageHeader, InlineNotice, LoadingState } from "@/components/ui";
 import { Field } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
@@ -105,7 +104,7 @@ export function SupplementIntakePresetFormScreen({ presetId }: { presetId: strin
   if (loading && !ready) return <LoadingState label="Cargando ingesta…" />;
   return <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.flex}>
-      <NestableScrollContainer automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <AdaptiveNestableScrollContainer automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <CollectionPageHeader entity="supplement" title={creating ? "Crear nueva ingesta" : "Editar ingesta"} />
         <View style={styles.section}>
           <Field autoCapitalize="sentences" label="Nombre" onChangeText={setName} placeholder="Ej: Suplementos de la mañana" value={name} />
@@ -126,14 +125,14 @@ export function SupplementIntakePresetFormScreen({ presetId }: { presetId: strin
         </View>
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         <Button disabled={!name.trim() || !selected.length || saving} label={creating ? "Crear ingesta" : "Guardar cambios"} loading={saving} onPress={() => void save()} variant="primary" />
-      </NestableScrollContainer>
+      </AdaptiveNestableScrollContainer>
     </KeyboardAvoidingView>
   </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
   addAction: { marginTop: tokens.spacing.sm },
-  content: { flexGrow: 1, gap: tokens.spacing.xl, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, gap: tokens.spacing.xl, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   flex: { flex: 1 },
   heading: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold },
   helper: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 20 },

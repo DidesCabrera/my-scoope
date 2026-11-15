@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -8,7 +8,7 @@ import type { SupplementIntakePreset } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { SupplementIntakePresetCard } from "@/components/supplements/supplement-intake-preset-card";
-import { Button, Card, InlineNotice, LoadingState, NativeDateTimeField } from "@/components/ui";
+import { AdaptiveScrollView, Button, Card, InlineNotice, LoadingState, NativeDateTimeField } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
 
@@ -69,7 +69,7 @@ export default function ConfigureSupplementIntakeScreen() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !item) return <LoadingState label="Preparando la ingesta…" />;
   return <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <AdaptiveScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Card style={styles.timeCard}>
         <NativeDateTimeField
           confirmationColor={tokens.color.supplement}
@@ -91,14 +91,14 @@ export default function ConfigureSupplementIntakeScreen() {
       {item ? <SupplementIntakePresetCard contained item={item} /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       <View style={styles.action}><Button disabled={!item || saving || !timeConfirmed || timePickerExpanded} label="Agregar ingesta" loading={saving} onPress={() => void add()} variant="primary" /></View>
-    </ScrollView>
+    </AdaptiveScrollView>
   </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
   action: { marginTop: tokens.spacing.sm },
   compactControlField: { borderRadius: tokens.radius.md, marginHorizontal: 0, marginRight: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 36, width: 120 },
-  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   timeCard: { borderRadius: 18, minHeight: 52, paddingVertical: 6 },
   timeLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold },

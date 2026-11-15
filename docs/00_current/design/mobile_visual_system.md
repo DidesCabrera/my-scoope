@@ -47,6 +47,15 @@ meaning; it is never the only state indicator. Press targets have a minimum
 height near 44 points, text uses the system font and controls expose native
 accessibility roles and states.
 
+## Full-screen bottom spacing
+
+Scrollable full-screen content leaves 96 pt after its final element when the
+keyboard is closed. `Screen`, `AdaptiveScrollView` and
+`AdaptiveNestableScrollContainer` share this rule. While the keyboard is visible,
+the space becomes the larger of 16 pt and the device's bottom safe-area inset
+plus 8 pt. Action sheets, fixed footers, nested lists and other constrained
+surfaces retain their own spacing because they do not end at the screen edge.
+
 ## Product application
 
 - Login uses a sparse black canvas and one high-priority action card.

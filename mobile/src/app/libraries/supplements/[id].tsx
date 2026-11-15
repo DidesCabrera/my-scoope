@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
+import { Alert, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { Supplement } from "@/api/types";
@@ -10,7 +10,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { SupplementActionsSheet } from "@/components/supplements/supplement-actions-sheet";
 import { SupplementInformationTable } from "@/components/supplements/supplement-information-table";
-import { Button, InlineNotice, LoadingState } from "@/components/ui";
+import { AdaptiveScrollView, Button, InlineNotice, LoadingState } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 const formLabels: Record<string, string> = {
@@ -127,7 +127,7 @@ export default function SupplementDetailScreen() {
   const hasInformation = Boolean(item.brand || item.form || item.description);
   const hasDose = Boolean(item.default_quantity && item.default_unit);
   return <>
-    <ScrollView contentContainerStyle={styles.content} onScroll={handleScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
+    <AdaptiveScrollView contentContainerStyle={styles.content} onScroll={handleScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
       <EntityDetailPage
         entity="supplement"
         eyebrow="Suplemento"
@@ -164,7 +164,7 @@ export default function SupplementDetailScreen() {
         {item.user_information ? <EntityDetailSection title="Notas personales"><Text style={styles.description}>{item.user_information}</Text></EntityDetailSection> : null}
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       </EntityDetailPage>
-    </ScrollView>
+    </AdaptiveScrollView>
     <SupplementActionsSheet name={item.name} onClose={() => setActionsVisible(false)} onDelete={remove} onEdit={() => {
       setActionsVisible(false);
       router.push(`/libraries/supplements/${item.id}/edit` as Href);
@@ -173,7 +173,7 @@ export default function SupplementDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   description: { color: tokens.color.textMuted, fontSize: tokens.type.body, lineHeight: 24 },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },

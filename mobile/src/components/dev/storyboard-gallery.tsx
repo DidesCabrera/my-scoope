@@ -17,6 +17,7 @@ type PreviewWidth = (typeof previewWidths)[number]["width"];
 function StoryboardGallery<K extends string>({
   accessibilityLabel,
   detail,
+  featuredStep,
   notice,
   renderStep,
   steps,
@@ -24,12 +25,16 @@ function StoryboardGallery<K extends string>({
 }: {
   accessibilityLabel: string;
   detail: string;
+  featuredStep?: K;
   notice: string;
   renderStep(step: K): ReactNode;
   steps: readonly { key: K; label: string }[];
   title: string;
 }) {
   const [previewWidth, setPreviewWidth] = useState<PreviewWidth>(414);
+  const orderedSteps = featuredStep
+    ? [...steps.filter((step) => step.key === featuredStep), ...steps.filter((step) => step.key !== featuredStep)]
+    : steps;
 
   return (
     <>
@@ -42,10 +47,10 @@ function StoryboardGallery<K extends string>({
         tabs={previewWidths.map((preview) => ({ key: preview.width, label: preview.label }))}
       />
       <InlineNotice>{notice}</InlineNotice>
-      {steps.map((step, index) => (
+      {orderedSteps.map((step) => (
         <View key={`${title}-${previewWidth}-${step.key}`} style={[styles.preview, { width: previewWidth }]}>
           <View style={styles.previewMeta}>
-            <Text style={styles.previewName}>{String(index + 1).padStart(2, "0")}. {step.label}</Text>
+            <Text style={styles.previewName}>{String(steps.findIndex((item) => item.key === step.key) + 1).padStart(2, "0")}. {step.label}</Text>
             <Text style={styles.previewWidth}>{previewWidth} pt</Text>
           </View>
           <View style={styles.devicePreview}>{renderStep(step.key)}</View>
@@ -75,7 +80,8 @@ export function LabelCaptureStoryboardGallery() {
     <StoryboardGallery
       accessibilityLabel="Formatos de la digitalización de etiquetas"
       detail="Storyboard visual · datos fijos, sin cámara, créditos ni persistencia"
-      notice="El recorrido reproduce el camino exitoso completo. Cada pantalla queda aislada para iterar su jerarquía, textos y acciones antes de modificar el producto."
+      featuredStep="review"
+      notice="Prueba primero la revisión: reduce la foto a media altura, desplázala verticalmente y recorre el formulario por separado. Debajo está el recorrido completo con datos de ejemplo."
       renderStep={(step) => <LabelCaptureStoryboardView step={step} />}
       steps={labelCaptureStoryboardSteps}
       title="Digitalización de etiquetas"

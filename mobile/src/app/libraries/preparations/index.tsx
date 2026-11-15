@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { PersonalPreparation } from "@/api/preparations";
@@ -10,7 +10,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PreparationCardActions } from "@/components/preparations/preparation-card-actions";
 import { PreparationLibraryCard } from "@/components/preparations/preparation-library-card";
 import { pickerHref } from "@/components/pickers/picker-routes";
-import { Button, Card, CollectionEmptyState, CollectionPageHeader, InlineNotice, LoadingState, SearchField } from "@/components/ui";
+import { AdaptiveScrollView, Button, Card, CollectionEmptyState, CollectionPageHeader, InlineNotice, LoadingState, SearchField } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export default function PreparationsLibraryScreen() {
@@ -95,7 +95,7 @@ export default function PreparationsLibraryScreen() {
     ]);
   };
   return <>
-  <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={styles.screen}>
+  <AdaptiveScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={styles.screen}>
     <CollectionPageHeader count={available && allowed ? items.length : undefined} entity="preparation" title="Mis Preparaciones" />
     {available && allowed ? <View style={styles.search}><SearchField accessibilityLabel="Buscar preparaciones" onChangeText={setQuery} onClear={() => setQuery("")} placeholder="Buscar por nombre" value={query} /></View> : null}
     {error ? <Card><InlineNotice tone="error">{error}</InlineNotice><Button label="Reintentar" onPress={() => void load()} variant="secondary" /></Card> : null}
@@ -103,13 +103,13 @@ export default function PreparationsLibraryScreen() {
     {available && !allowed ? <Card><InlineNotice tone="info">Las preparaciones personales están disponibles con el plan Pro.</InlineNotice><Button label="Conocer Pro" onPress={() => router.push("/subscription" as Href)} /></Card> : null}
     {available && allowed && !visible.length ? <CollectionEmptyState description={normalized ? "Prueba con otra búsqueda." : "Registra una preparación para reutilizarla en tus comidas."} title={normalized ? "Sin resultados" : "Aún no tienes preparaciones"} /> : null}
     {available && allowed ? visible.map((item) => <PreparationLibraryCard item={item} key={item.id} onMore={item.is_personal && item.is_active ? () => { setSelected(item); setActionsVisible(true); } : undefined} onOpen={() => router.push(item.is_draft ? pickerHref("food-to-preparation", { preparationId: item.id, returnTo: `/libraries/preparations/${item.id}` }) : `/libraries/preparations/${item.id}` as Href)} />) : null}
-  </ScrollView>
+  </AdaptiveScrollView>
   {selected ? <PreparationCardActions name={selected.name} onClose={() => setActionsVisible(false)} onDelete={remove} onRename={rename} visible={actionsVisible} /> : null}
   </>;
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   search: { marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.layout.reducedInset },
 });

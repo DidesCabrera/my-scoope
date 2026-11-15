@@ -1,7 +1,25 @@
 schema_version: 1
 area: "catalog-operations"
-last_reviewed: "2026-11-14"
+last_reviewed: "2026-11-15"
 contracts:
+  - id: "user-label-contribution-to-food-catalog-candidate-v1"
+    catalog: "foods"
+    name: "Aporte voluntario de etiqueta hacia candidato de curación"
+    version: "proposed-v1"
+    authority: "docs/10_active_cycles/user_contributed_food_labels_cycle.md"
+    producer: "notas.FoodLabelCaptureReceipt en la aplicación de consumo, con consentimiento explícito al confirmar la digitalización"
+    consumers:
+      - "future staff-only intake and review queue in the central Food Catalog authority"
+    validation:
+      - "mobile_api/tests/test_label_capture_api.py for local receipt creation and private-food boundary"
+    state: "intake-not-implemented; local source pending integration"
+    required_semantics:
+      - "Only receipts with shared_for_curation=true and a verified analysis image are eligible"
+      - "The confirmed payload and metadata-stripped curation image remain separate from the user's personal retained image"
+      - "No direct promotion of a private notas.Food or automatic CatalogFood publication"
+      - "Transfer must be access-controlled, idempotent, auditable and reconciled against source receipts"
+      - "Curators compare the photo with user-edited values, resolve identity and duplicates, and record provenance and review decisions"
+      - "Stopping sharing affects future submissions only; existing contributions follow the documented retention policy"
   - id: "food-remote-visual-assets-v1"
     catalog: "foods"
     name: "Published food visual asset to mobile fallback"

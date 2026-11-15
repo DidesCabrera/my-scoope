@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -13,7 +13,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { LoadingState, SearchField, textStyles } from "@/components/ui";
+import { AdaptiveScrollView, LoadingState, SearchField, textStyles } from "@/components/ui";
 import { visibleSearchSuggestions } from "@/components/ui/search-suggestion-state";
 import { SearchSuggestions } from "@/components/ui/search-suggestions";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
@@ -104,7 +104,7 @@ export default function ComparatorSelectScreen() {
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-      <ScrollView
+      <AdaptiveScrollView
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.scrollContent}
         keyboardDismissMode="on-drag"
@@ -139,7 +139,7 @@ export default function ComparatorSelectScreen() {
           {!searching && !options.length && !error ? <Text style={textStyles.muted}>No encontramos resultados.</Text> : null}
           {error ? <RecoverableErrorState message={error} onRetry={() => setRetryNonce((value) => value + 1)} /> : null}
         </View>
-      </ScrollView>
+      </AdaptiveScrollView>
     </SafeAreaView>
   );
 }
@@ -147,7 +147,7 @@ export default function ComparatorSelectScreen() {
 const styles = StyleSheet.create({
   options: { gap: tokens.spacing.lg, marginHorizontal: -6, paddingHorizontal: tokens.spacing.screen },
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  scrollContent: { flexGrow: 1, paddingBottom: 42 },
+  scrollContent: { flexGrow: 1 },
   searchWrap: { position: "relative", zIndex: 2 },
   stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

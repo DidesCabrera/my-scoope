@@ -38,6 +38,12 @@ test("mobile libraries expose native creation for all four entities", async () =
     assert.match(create, new RegExp(field.replace(/[()]/g, "\\$&")));
   }
   assert.equal(create.includes("Valores por 100 {portionUnit}"), true);
+  assert.match(create, /label=\{`Cantidad en \$\{portionUnit\}`\}/);
+  assert.match(create, /default_portion: portionNumber, household_amount: householdNumber, household_measure: householdMeasure/);
+  assert.match(create, /setSuggestedPortion\(food\.default_portion/);
+  assert.match(create, /setHouseholdMeasure\(householdMeasures/);
+  assert.match(create, /<HouseholdEquivalencePicker amount=\{householdAmount\} measure=\{householdMeasure\}/);
+  assert.doesNotMatch(create, /label="Cantidad de medidas equivalente"/);
   assert.equal(create.includes('labelStyle={entity === "food" ? styles.foodFieldLabel : undefined}'), true);
   assert.equal(create.includes("foodFieldLabel: { color: tokens.color.textMuted }"), true);
   assert.ok(create.includes("nutritionLabel: { color: tokens.color.textMain") && create.includes("nutritionLabelEmphasis: { fontWeight: tokens.weight.bold }"));
@@ -47,6 +53,19 @@ test("mobile libraries expose native creation for all four entities", async () =
   assert.ok(create.includes('<DistributedTabBar<"g" | "ml">') && create.includes("bleed"));
   for (const endpoint of ["foods", "meals", "daily-plans", "programs"]) {
     assert.match(create, new RegExp(`/api/v1/library/${endpoint}`));
+  }
+});
+
+test("food equivalence uses two native wheel columns for amount and household measure", async () => {
+  const picker = await readFile(path.resolve(process.cwd(), "src/components/libraries/household-equivalence-picker.native.tsx"), "utf8");
+  const options = await readFile(path.resolve(process.cwd(), "src/components/libraries/household-equivalence-picker.types.ts"), "utf8");
+
+  assert.match(picker, /selectedValue=\{selectedAmount\}/);
+  assert.match(picker, /selectedValue=\{measure\}/);
+  assert.match(picker, /\[\.\.\.householdAmounts, selectedAmount\]\.sort/);
+  assert.match(options, /\(index \+ 1\) \/ 4/);
+  for (const measure of ["unit", "cup", "tablespoon", "scoop", "other"]) {
+    assert.match(options, new RegExp(`value: "${measure}"`));
   }
 });
 

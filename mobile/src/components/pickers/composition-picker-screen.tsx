@@ -2,7 +2,7 @@ import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { ClipboardList, NotebookPen, Pencil, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
@@ -27,7 +27,7 @@ import { FoodPanels, MealPanels, mealFoodPanelItems } from "@/components/librari
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels as SharedFoodPanels, type FoodPanelItem } from "@/components/panels";
-import { Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
+import { AdaptiveScrollView, Button, Card, InlineNotice, LoadingState, MacroLoadingIndicator, NativeDateTimeField, SearchField, textStyles, useWeekDayLayout, WeekDayCell, WeekDayGrid } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { SearchSuggestions } from "@/components/ui/search-suggestions";
 import { useSearchSuggestions } from "@/components/ui/use-search-suggestions";
@@ -558,7 +558,7 @@ export function CompositionPickerScreen({
   if (!selectedId) {
     return (
       <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
-        <ScrollView
+        <AdaptiveScrollView
           automaticallyAdjustKeyboardInsets
           contentContainerStyle={styles.selectionScrollContent}
           keyboardDismissMode="on-drag"
@@ -600,7 +600,7 @@ export function CompositionPickerScreen({
             {!searching && options.length === 0 ? <Text style={textStyles.muted}>No encontramos resultados.</Text> : null}
             {error ? <RecoverableErrorState message={error} onRetry={() => { setError(null); setRetryNonce((value) => value + 1); }} /> : null}
           </View>
-        </ScrollView>
+        </AdaptiveScrollView>
       </SafeAreaView>
     );
   }
@@ -696,7 +696,7 @@ export function CompositionPickerScreen({
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.configurationSafeArea}>
       {isFoodPicker ? foodPortionCard : mealTimeCard}
-      <ScrollView
+      <AdaptiveScrollView
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={[styles.configurationScrollContent, (isMealPicker || isFoodPicker || kind === "dailyplan-to-program") && styles.scrollableActionContent, kind === "dailyplan-to-program" && styles.programConfigurationScrollContent]}
         keyboardDismissMode="on-drag"
@@ -718,7 +718,7 @@ export function CompositionPickerScreen({
 
       {isMealPicker ? mealNoteCard : null}
       {configurationAction ? <View style={styles.scrollableAction}>{configurationAction}</View> : null}
-      </ScrollView>
+      </AdaptiveScrollView>
     </SafeAreaView>
   );
 }
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
   compactFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   configurationLabel: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   configurationSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  configurationScrollContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  configurationScrollContent: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   configurationSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
   assignmentDay: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderStyle: "dashed", borderWidth: 1, height: 44, justifyContent: "center", overflow: "hidden", width: 44 },
   assignmentDayCompact: { height: 40, width: 40 },
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
   scrollableActionContent: { paddingBottom: 96 },
   programConfigurationScrollContent: { paddingTop: 0 },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
+  selectionScrollContent: { flexGrow: 1 },
   searchWrap: { position: "relative", zIndex: 2 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs + 4, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

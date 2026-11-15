@@ -1,4 +1,5 @@
 export * from "./collection-page-header";
+export * from "./adaptive-screen-scroll";
 export * from "./assistant-gradient-icon";
 export * from "./chip";
 export * from "./controls";

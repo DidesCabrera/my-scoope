@@ -2,7 +2,7 @@ import * as Crypto from "expo-crypto";
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronLeft, ChevronRight, Pin } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -20,7 +20,7 @@ import { internalHref } from "@/navigation/internal-href";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { MealPanels as SnapshotMealPanels } from "@/components/panels";
-import { Button, InlineNotice, LoadingState, Screen, SearchField, SectionHeading } from "@/components/ui";
+import { AdaptiveScrollView, Button, InlineNotice, LoadingState, Screen, SearchField, SectionHeading } from "@/components/ui";
 import { ConfirmationState } from "@/components/ui/screen-states";
 import { SearchSuggestions } from "@/components/ui/search-suggestions";
 import { useSearchSuggestions } from "@/components/ui/use-search-suggestions";
@@ -366,7 +366,7 @@ export default function SelectCalendarPlansScreen() {
     : <LoadingState label="Abriendo minuta para calendarizar…" />;
 
   return <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
-    <ScrollView
+    <AdaptiveScrollView
       automaticallyAdjustKeyboardInsets
       contentContainerStyle={styles.selectionScrollContent}
       keyboardDismissMode="on-drag"
@@ -387,7 +387,7 @@ export default function SelectCalendarPlansScreen() {
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         {loading && !plans.length ? <LoadingState label="Buscando tus planes…" /> : null}
       </View>
-    </ScrollView>
+    </AdaptiveScrollView>
   </SafeAreaView>;
 }
 
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   options: { gap: tokens.spacing.lg, marginHorizontal: -6, paddingHorizontal: tokens.spacing.screen },
   replacementSection: { gap: tokens.spacing.lg },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
+  selectionScrollContent: { flexGrow: 1 },
   searchWrap: { position: "relative", zIndex: 2 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

@@ -496,6 +496,12 @@ class FoodLabelCaptureReceipt(models.Model):
     retained_label_image_content_type = models.CharField(max_length=40, blank=True)
     retained_label_image_sha256 = models.CharField(max_length=64, blank=True)
     retained_label_image_size = models.PositiveIntegerField(default=0)
+    shared_for_curation = models.BooleanField(default=False)
+    curation_payload = models.JSONField(default=dict, blank=True)
+    curation_label_image = models.BinaryField(null=True, blank=True, editable=False)
+    curation_label_image_sha256 = models.CharField(max_length=64, blank=True)
+    curation_label_image_size = models.PositiveIntegerField(default=0)
+    curation_shared_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

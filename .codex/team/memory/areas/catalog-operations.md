@@ -1,7 +1,7 @@
 # Catalog Operations Memory
 
 Status: pilot
-Last reviewed: 2026-11-11
+Last reviewed: 2026-11-15
 Owner role: `catalog-curation-steward`
 
 ## Objective
@@ -11,6 +11,7 @@ Maintain Foods, Meals, and Daily Plans as trustworthy operational assets through
 ## Current initiative
 
 - `PRJ-PROD-003 — Curación de Catálogos` owns the first baseline and operating model.
+- `user-contributed-food-labels.md` plantea una fuente nueva de etiquetas opt-in para candidatos de Food Catalog; el recibo existe solo en el trabajo local pendiente de integración y todavía no hay puente ni datos reales verificados en la autoridad central.
 - Foods has a curated source in `CatalogFood` and an explicit snapshot boundary into `notas.Food`.
 - Meals and Daily Plans require baseline evidence, quality criteria, and explicit operational ownership.
 - Adoption depends on covering foods used in Chile. No single trustworthy and readily usable national dataset has yet been established, so source discovery, licensing, reconciliation, and progressive validation are strategic work for the area.

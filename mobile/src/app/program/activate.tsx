@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MobileApiError, userFacingError } from "@/api/errors";
@@ -10,7 +10,7 @@ import { ProgramChildCard, programDailyMetricData } from "@/components/libraries
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, Card, LoadingState, NativeDateTimeField, Screen, SearchField, SectionHeading, SystemSwitch } from "@/components/ui";
+import { AdaptiveScrollView, Button, Card, LoadingState, NativeDateTimeField, Screen, SearchField, SectionHeading, SystemSwitch } from "@/components/ui";
 import { nextExclusivePicker } from "@/components/ui/exclusive-picker-state";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
@@ -126,7 +126,7 @@ export default function ActivateProgramScreen() {
   if (programs.length && !selected) {
     return (
       <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
-        <ScrollView
+        <AdaptiveScrollView
           automaticallyAdjustKeyboardInsets
           contentContainerStyle={styles.selectionScrollContent}
           keyboardDismissMode="on-drag"
@@ -158,7 +158,7 @@ export default function ActivateProgramScreen() {
             ))}
             {!filteredPrograms.length ? <Text style={styles.emptyText}>No encontramos programas con ese nombre.</Text> : null}
           </View>
-        </ScrollView>
+        </AdaptiveScrollView>
       </SafeAreaView>
     );
   }
@@ -262,6 +262,6 @@ const styles = StyleSheet.create({
   notificationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minHeight: 44 },
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
+  selectionScrollContent: { flexGrow: 1 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },
 });

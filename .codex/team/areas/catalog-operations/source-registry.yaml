@@ -1,7 +1,22 @@
 schema_version: 1
 area: "catalog-operations"
-last_reviewed: "2026-11-14"
+last_reviewed: "2026-11-15"
 sources:
+  - id: "myscoope-opt-in-nutrition-label-contributions"
+    name: "My Scoope — etiquetas nutricionales compartidas voluntariamente"
+    type: "user-contributed-product-label-evidence"
+    catalog: "foods"
+    location: "notas.FoodLabelCaptureReceipt: curation_payload, curation_label_image, shared_for_curation"
+    scope: "Foto recodificada sin metadatos y valores nutricionales/porción confirmados por el usuario, solo cuando activa Compartir información en la configuración de digitalización."
+    authority: "Evidencia candidata de una etiqueta concreta; los valores editables por el usuario y la foto requieren cotejo humano. No es un CatalogFood verificado ni autoriza publicación."
+    license_status: "internal-opt-in-use-needs-curation-policy"
+    state: "implemented-in-local-task-worktree-not-integrated-or-live-verified"
+    last_evidence: "notas/domain/model_modules/food.py; notas/application/services/commands/food_commands.py; mobile_api/routes/label_capture.py; notas/migrations/0102_food_label_capture_curation.py; docs/00_current/features/nutrition_label_capture.md"
+    gaps:
+      - "No se ha comprobado despliegue ni volumen de contribuciones reales en staging o producción."
+      - "No existe aún intake gobernado desde la base operacional hacia la autoridad central de Food Catalog."
+      - "Faltan cola de revisión, deduplicación, trazabilidad de consentimiento, política de retención y presentación segura de la foto al curador."
+      - "El apagado del switch detiene solo aportes futuros; no retira contribuciones anteriores."
   - id: "myscoope-food-visual-assets"
     name: "My Scoope — curated food visual assets"
     type: "internal-editorial-asset"

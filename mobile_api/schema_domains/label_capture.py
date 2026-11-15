@@ -16,6 +16,10 @@ class FoodLabelCaptureInput(Schema):
     fiber_g: float | None = Field(default=None, ge=0, le=100)
     sodium_mg: float | None = Field(default=None, ge=0, le=100_000)
     serving_size_g: float | None = Field(default=None, gt=0, le=10_000)
+    default_portion: float | None = Field(default=None, gt=0, le=10_000)
+    household_amount: float | None = Field(default=None, gt=0, le=100)
+    household_measure: str = Field(default="", max_length=24)
+    household_detail: str = Field(default="", max_length=100)
     volume_weight_g_per_100ml: float | None = Field(default=None, gt=0, le=10_000)
     declared_energy_kcal_per_100g: float | None = Field(default=None, ge=0, le=10_000)
     detected_basis: Literal["per_100g", "per_serving", "per_100ml", "manual"]
@@ -26,6 +30,7 @@ class FoodLabelCaptureInput(Schema):
     idempotency_key: str = Field(min_length=8, max_length=120)
     analysis_id: str | None = Field(default=None, max_length=36)
     retain_label_image: bool = False
+    share_for_curation: bool = False
     label_image_base64: str | None = Field(default=None, max_length=2_100_000)
     label_image_content_type: Literal["image/jpeg", "image/png", "image/webp"] | None = None
 
@@ -51,6 +56,10 @@ class FoodLabelAIAnalysisData(Schema):
     basis: Literal["per_100g", "per_serving", "per_100ml", "unknown"]
     source_basis: Literal["per_100g", "per_serving", "per_100ml", "unknown"]
     serving_size_g: float | None = None
+    serving_size_ml: float | None = None
+    household_amount: float | None = None
+    household_measure: str | None = None
+    household_detail: str = ""
     source_values: dict[str, float]
     values: dict[str, float]
     field_confidence: dict[str, float]
@@ -128,9 +137,14 @@ class FoodLabelCaptureData(Schema):
     capture_receipt_id: int
     detected_basis: str
     serving_size_g: float | None = None
+    default_portion: float | None = None
+    household_amount: float | None = None
+    household_measure: str = ""
+    household_detail: str = ""
     portion_unit: Literal["g", "ml"] = "g"
     ocr_engine: str
     label_image_retained: bool
+    shared_for_curation: bool
     created_at: datetime
 
 

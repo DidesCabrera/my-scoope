@@ -147,8 +147,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(storyboardGallery, /Storyboard visual · sin sesión, API ni persistencia/);
   assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos del onboarding"/);
   assertSourceMatch(storyboardGallery, /tabs=\{previewWidths\.map\(\(preview\) => \(\{ key: preview\.width, label: preview\.label \}\)\)\}/);
-  assertSourceMatch(storyboardGallery, /steps\.map\(\(step, index\) =>/);
-  assertSourceMatch(storyboardGallery, /String\(index \+ 1\)\.padStart\(2, "0"\).*step\.label/);
+  assertSourceMatch(storyboardGallery, /orderedSteps\.map\(\(step\) =>/);
+  assertSourceMatch(storyboardGallery, /String\(steps\.findIndex\(\(item\) => item\.key === step\.key\) \+ 1\)\.padStart\(2, "0"\).*step\.label/);
   assertSourceDoesNotMatch(storyboardGallery, /accessibilityLabel="Vistas del onboarding"|setOnboardingStep/);
   assertSourceMatch(gallery, /Card-child de programa/);
   assertSourceMatch(gallery, /ProgramChildCard/);
@@ -500,6 +500,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
   assertSourceMatch(mealAdherence, /<MealCompletionSurface color=\{color\}>/);
   assertSourceMatch(mealAdherence, /checkbox: \{[^}]*borderRadius: tokens\.radius\.pill/);
+  assertSourceMatch(mealAdherence, /checkbox: \{[^}]*backgroundColor: tokens\.color\.surfaceCard/);
+  assertSourceMatch(mealAdherence, /style=\{\[styles\.checkbox, \{ borderColor: `\$\{color\}4D` \}, completed && \{ backgroundColor: color, borderColor: color \}\]\}/);
   assertSourceMatch(mealAdherence, /completionLabel: \{[^}]*fontSize: 15/);
   assertSourceMatch(mealAdherence, /<View style=\{\[styles\.completionIcon, \{ backgroundColor: color \}\]\}>/);
   assertSourceMatch(mealAdherence, /completionIcon: \{[^}]*borderRadius: tokens\.radius\.sm[^}]*height: 22[^}]*width: 22/);
@@ -569,9 +571,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealCompletionSummary, /<CheckCheck color=\{tokens\.color\.entityIconForeground\} size=\{16\}/);
   assertSourceMatch(mealCompletionSummary, /completionIcon: \{[^}]*borderRadius: tokens\.radius\.sm[^}]*height: 22[^}]*width: 22/);
   assertSourceMatch(mealCompletionSummary, /isCompleted \? tokens\.color\.entityIconForeground : tokens\.color\.textMuted/);
-  assertSourceMatch(mealCompletionSummary, /backgroundColor: `\$\{color\}1A`, borderColor: `\$\{color\}B3`/);
+  assertSourceMatch(mealCompletionSummary, /surface: \{ backgroundColor: tokens\.color\.surfaceCard/);
+  assertSourceMatch(mealCompletionSummary, /<View style=\{\[styles\.surfaceTint, \{ backgroundColor: `\$\{color\}1A` \}\]\}>\{children\}<\/View>/);
+  assertSourceMatch(mealCompletionSummary, /surfaceTint: \{[^}]*minHeight: 54[^}]*paddingHorizontal: 14/);
   assertSourceMatch(mealCompletionSummary, /<MealCompletionSurface color=\{tokens\.color\.supplement\}>/);
-  assertSourceMatch(mealCompletionSummary, /surface: \{ borderRadius: tokens\.radius\.lg \+ 4, borderWidth: 1/);
+  assertSourceMatch(mealCompletionSummary, /<View style=\{\[styles\.surface, \{ borderColor: `\$\{color\}4D` \}\]\}>/);
+  assertSourceMatch(mealCompletionSummary, /surface: \{[^}]*borderWidth: 1/);
   assertSourceMatch(mealCompletionSummary, /checks: \{[^}]*gap: tokens\.spacing\.xs/);
   assertSourceMatch(mealCompletionSummary, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceMatch(mealCompletionSummary, /minHeight: 54/);
@@ -795,6 +800,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"),
     "utf8",
   );
+  assertSourceMatch(libraryDetail, /\? item\.default_portion : 100;/);
+  assertSourceMatch(libraryDetail, /\[\{ key: "base", label: `100 \$\{foodUnit\}` \}, \{ key: "portion", label: `Porción \$\{selectedFoodQuantity/);
   assertSourceMatch(libraryDetail, /<ProgramDetailPreview[\s\S]*?scrollable\s*\/>/);
   assertSourceMatch(libraryDetail, /FoodPanels, GroupedFoodsCard, MealPanels.*from "@\/components\/panels"/);
   assertSourceMatch(libraryDetail, /<ProgramSectionHeader icon=\{Utensils\}[^>]*title="Detalle de cada Comida" \/><DailyPlanMealCards/);
@@ -945,8 +952,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(productUiSource, /hasFooter \? styles\.entityCardWithActions : null/);
   assertSourceMatch(productUiSource, /entityCardWithActions: \{ paddingBottom: tokens\.card\.innerPadding \}/);
   assertSourceMatch(productUiSource, /entityCardActions: \{[^\n]*marginTop: 6/);
-  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderColor: tokens\.color\.borderSoft[^}]*borderRadius: tokens\.radius\.pill/);
-  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderWidth: 1[^}]*height: 32[^}]*width: 32/);
+  assertSourceMatch(productUiSource, /entityCardActionGroup: \{[^}]*gap: tokens\.spacing\.compact \+ 4[^}]*marginRight: 4/);
+  assertSourceMatch(productUiSource, /entityCardAction: \{[^}]*borderRadius: tokens\.radius\.pill[^}]*height: 32[^}]*width: 32/);
+  assertSourceDoesNotMatch(productUiSource, /entityCardAction: \{[^}]*border(Color|Width):/);
   assertSourceMatch(productUiSource, /entityCardPanelSlot: \{ minWidth: 0 \}/);
 
   const panelSurface = await readTestFile(
@@ -1365,18 +1373,26 @@ test("the label capture gallery exposes the complete happy-path storyboard witho
   assertSourceMatch(gallery, /<LabelCaptureStoryboardGallery \/>/);
   assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos de la digitalización de etiquetas"/);
   assertSourceMatch(storyboardGallery, /steps=\{labelCaptureStoryboardSteps\}/);
-  for (const step of ["intro", "camera", "preview", "processing", "review", "confirmation", "saved", "qualityWarnings"]) {
+  assertSourceMatch(storyboardGallery, /featuredStep="review"/);
+  assertSourceMatch(storyboard, /testID=\{photoCollapsed \? "gallery-label-photo-expand" : "gallery-label-photo-collapse"\}/);
+  assertSourceMatch(storyboard, /<HalfHeightScrollablePhoto surfaceStyle=\{styles\.reviewPhoto\}>/);
+  for (const step of ["intro", "camera", "captured", "preview", "processing", "review", "confirmation", "saved", "qualityWarnings", "qualityOptimal"]) {
     assertSourceMatch(storyboard, new RegExp(`key: "${step}"`));
   }
   assertSourceMatch(storyboard, /datos fijos|Yogur griego natural/);
-  assertSourceMatch(storyboard, /title="Enriquece tu librería de alimentos"/);
-  assertSourceMatch(storyboard, /Validamos nitidez antes de usar créditos/);
-  assertSourceMatch(storyboard, /Confirmar y crear alimento/);
+  assertSourceMatch(storyboard, /title="Enriquece tu librería personal de alimentos"/);
+  assertSourceMatch(storyboard, /source=\{require\("\.\.\/\.\.\/\.\.\/assets\/images\/nutrition-label-illustration-450\.png"\)\}/);
+  assertSourceMatch(storyboard, /accessibilityLabel="Configuración de digitalización"/);
+  assertSourceMatch(storyboard, /function CapturedView[\s\S]*label="Digitalizar información"/);
+  assertSourceMatch(storyboard, /visible=\{consentVisible\}[\s\S]*label="Autorizar y continuar"/);
+  assert.doesNotMatch(storyboard, /Puedes validar la nitidez antes de usar créditos/);
+  assertSourceMatch(storyboard, /Confirmar creación/);
   assertSourceMatch(storyboard, /<NutritionFactsCard[\s\S]*portion=\{\{ quantity: 160, unit: "g" \}\}/);
-  assertSourceMatch(storyboard, /key: "qualityWarnings", label: "Advertencias de calidad"/);
-  assertSourceMatch(storyboard, /function QualityWarningsView/);
-  assertSourceMatch(storyboard, /qualityWarningIssues\.map/);
-  assertSourceMatch(storyboard, /function QualityWarningsView[\s\S]*<View style=\{styles\.qualityPanel\}>\s*<View style=\{styles\.qualityRow\}>[\s\S]*<Pill color=\{tokens\.color\.warning\} label="Revisar" \/>/);
+  assertSourceMatch(storyboard, /Esta imagen no es apta/);
+  assertSourceMatch(storyboard, /Esta imagen es óptima para digitalización/);
+  assertSourceMatch(storyboard, /<StatusFeedbackCard label=\{optimal/);
+  assertSourceDoesNotMatch(storyboard, /key: "unvalidated"|function UnvalidatedView|Sin validar/);
+  assert.doesNotMatch(storyboard, /qualityWarningIssues\.map/);
   assertSourceMatch(storyboard, /<AnimatedScanBeam gradientId="label-capture-credit-scan" \/>/);
   assertSourceMatch(storyboard, /<View style=\{\[styles\.bottomActions, styles\.cameraBottomActions\]\}>/);
   assertSourceMatch(storyboard, /cameraBottomActions: \{ marginBottom: 74 \}/);
