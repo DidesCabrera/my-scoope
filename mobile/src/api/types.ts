@@ -364,6 +364,7 @@ export type LibraryItem = {
   entity: LibraryEntity;
   name: string; emoji?: string | null; visual_key?: string | null; meal_type?: "breakfast" | "snack" | "lunch" | "shake" | "dinner" | null;
   subtitle: string;
+  description?: string;
   quantity_unit?: "g" | "ml" | null;
   default_portion?: number | null;
   nutrition: LibraryNutrition;

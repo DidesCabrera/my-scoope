@@ -4750,6 +4750,11 @@
             ],
             "title": "Default Portion"
           },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
           "dietary_style": {
             "enum": [
               "omnivore",
@@ -5096,6 +5101,11 @@
               }
             ],
             "title": "Default Portion"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "dietary_style": {
             "enum": [
@@ -7470,6 +7480,11 @@
               }
             ],
             "title": "Default Portion"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "emoji": {
             "anyOf": [

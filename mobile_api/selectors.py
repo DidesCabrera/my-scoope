@@ -12,7 +12,6 @@ from billing.application.services.apple_app_store import get_or_create_apple_app
 from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
-from food_catalog.application.editorial_descriptions import description_for_food
 from mobile_api import library_projections
 from mobile_api.calendar_today import current_dated_day, standalone_today_payload
 from mobile_api.calendarized_snapshot_foods import index_snapshot_food
@@ -671,7 +670,8 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 **food_visual_payload(item),
                 "quantity_unit": item.portion_unit,
                 "default_portion": round(float(item.default_portion_g), 1) if item.default_portion_g is not None else None,
-                "subtitle": description_for_food(item),
+                "subtitle": item.description,
+                "description": item.description,
                 "nutrition": _library_nutrition_payload(item, current_weight),
                 "food_nutrition": library_projections.food_nutrition_payload(item),
                 "indicators": [{"label": "base nutricional", "value": f"100 {item.portion_unit}"}],

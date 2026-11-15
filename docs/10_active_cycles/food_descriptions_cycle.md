@@ -37,6 +37,12 @@ Los 49 heredados están activos, visibles como `extended` y marcados `is_verifie
 
 El lote se vincula por `catalog_ref` y nombre exacto para los 222 registros maestros. Los 49 heredados se vinculan por ID operacional y nombre exacto; esta combinación evita que el texto se aplique por accidente a otro alimento tras una reasignación. No se muestran textos en alimentos personales ni en registros inactivos. Los textos se entregan mediante el `subtitle` del detalle móvil vigente, por lo que no se necesita una versión nueva de la app para que la pantalla actual los muestre.
 
+## Segunda fase: sección dedicada en staging
+
+El contrato nuevo conserva `description` en `CatalogFood` y en `notas.Food`, con copia solo en la creación o actualización explícita del snapshot. La migración inicial carga el lote revisado en las identidades exactas de ambos modelos y en los alimentos globales heredados elegibles. La API añade `description` al detalle y mantiene `subtitle` para versiones anteriores de la app. La app nueva presenta **Descripción** al final de la ficha de alimento y usa el subtítulo como respaldo si consulta un servidor anterior. Esta fase se integra únicamente en `origin/staging`; la producción conserva la experiencia anterior hasta una promoción y una publicación móvil posteriores.
+
+La reversión de esta fase consiste en revertir el código de API y app y, si fuera necesario, la migración de esquema. La operación inversa de carga de datos no borra correcciones editoriales realizadas después de la migración. Ningún valor nutricional ni dato personal se modifica.
+
 La reversión es retirar el lote y la consulta editorial del servidor mediante un despliegue del commit anterior; no hay migración ni escritura de datos nutricionales. Antes de cerrar se debe comprobar el despliegue de producción y una muestra de fichas reales de ambos grupos.
 
 ## Fuentes marco

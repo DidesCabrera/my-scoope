@@ -8,10 +8,10 @@ sources:
     catalog: "foods"
     location: "food_catalog/data/food_descriptions_v1.json"
     scope: "271 alimentos globales activos visibles en producción al 2026-11-15: 222 vinculados a CatalogFood y 49 heredados sin fuente nutricional verificada."
-    authority: "Texto editorial revisado por identidad exacta; no reemplaza la fuente de composición ni valida los registros heredados."
+    authority: "Lote inicial revisado por identidad exacta; la descripción publicada reside en CatalogFood y su copia operacional en notas.Food. No valida la composición heredada."
     license_status: "original-editorial-copy-with-linked-factual-references"
-    state: "versioned-reviewable-dataset"
-    last_evidence: "docs/10_active_cycles/food_descriptions_cycle.md"
+    state: "versioned-batch-with-persisted-contract"
+    last_evidence: "docs/10_active_cycles/food_descriptions_cycle.md; notas/migrations/0101_food_description.py"
     gaps:
       - "Los 49 registros heredados necesitan fuente, identidad y revisión nutricional antes de atribuir beneficios específicos."
       - "Reconciliar altas, bajas y cambios de nombre con producción antes de cada nueva versión del lote."

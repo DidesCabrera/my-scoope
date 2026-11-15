@@ -1,5 +1,7 @@
 # Catálogo visual aprobado · completo, papaya y aves · 2026-11-15
 
+Status: active
+
 Estado: **todas las propuestas de la grilla aprobadas visualmente por Felipe el 2026-11-15; ninguna nueva imagen asignada ni publicada**. Felipe confirmó explícitamente que la similitud entre pollo y pavo molidos es aceptable porque refleja su apariencia real. El lote anterior de choclo, clara, verduras, hongos, mayonesa y melón también quedó aprobado visualmente, pero sigue sin asignarse ni publicarse. Comparación de este lote a escala de la app: [grilla 62 × 41 px](visual_identity_poultry_completo_papaya_2026-11-15.html).
 
 Se revisaron las fichas globales activas de producción mediante consulta de solo lectura. El pan de completo usa `🍞`, la papaya cruda `🍎`, y diez de las once fichas de pollo/pavo todavía usan `🍗` sin imagen propia. **Hígado de pollo crudo** ya tiene imagen de catálogo publicada; no debe reemplazarse por un genérico. La ficha operacional heredada `Pechuga Pollo Cocida` no tiene vínculo a `CatalogFood` y también necesita asignación explícita para no quedar atrás. Los `id` indicados son operacionales de producción y deben reconfirmarse antes de cualquier publicación.

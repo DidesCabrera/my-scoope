@@ -109,6 +109,7 @@ class FoodCatalogContractTests(TestCase):
             catalog_ref="catalog-food:chicken-breast-cooked",
             catalog_version="v1",
             display_name="Pechuga de pollo cocida",
+            description="Carne de ave cocida y lista para usar.",
             emoji="🍗",
             visual_key="chicken_breast",
             canonical_name="pechuga pollo cocida",
@@ -139,6 +140,7 @@ class FoodCatalogContractTests(TestCase):
             payload.food_defaults(),
             {
                 "name": "Pechuga de pollo cocida",
+                "description": "Carne de ave cocida y lista para usar.",
                 "emoji": "🍗",
                 "visual_key": "chicken_breast",
                 "protein": 31.0,

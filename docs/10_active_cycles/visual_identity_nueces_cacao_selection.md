@@ -1,5 +1,7 @@
 # Selección visual aprobada: nueces y cacao
 
+Status: active
+
 Fecha: 2026-11-15. Estado: imágenes conservadas en el catálogo de trabajo; no asignadas ni publicadas en la aplicación.
 
 | Alimento | Selección | Archivo original conservado |

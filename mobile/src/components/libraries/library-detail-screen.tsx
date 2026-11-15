@@ -448,6 +448,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const selectedFoodQuantity = hasMealQuantity ? selectedMealQuantity : foodPortion;
   const displayedNutrition = item.entity === "food" && foodNutritionView === "portion" && selectedFoodQuantity != null
     ? foodNutritionForPortion(item.nutrition, selectedFoodQuantity) : item.nutrition;
+  const foodDescription = item.entity === "food" ? item.description || item.subtitle : "";
   return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}><EntityDetailPage
     afterNutrition={isPinnedPlan && item.panel.meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={item.panel.meals.map((meal) => meal.id)} mealNutrition={item.panel.meals.map((meal) => ({ calories: meal.calories, carbsGrams: meal.carbs_grams, fatGrams: meal.fat_grams, key: meal.id, proteinGrams: meal.protein_grams }))} /> : isPinnedMealContext ? <MealCompletionCard controller={pinnedMealAdherence} /> : undefined}
     completion={isPinnedPlan ? { noteCount: mealExecution.filter((entry) => entry.note.trim()).length } : isPinnedMealContext ? { noteCount: normalizedPinnedMealExecution?.note.trim() ? 1 : 0 } : undefined}
@@ -472,7 +473,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     indicators={item.entity === "food" ? undefined : detailIndicators}
     nutrition={libraryNutrition(displayedNutrition)}
     showNutrition={!isEmptyDraft}
-    subtitle={item.subtitle || undefined}
+    subtitle={item.entity === "food" ? undefined : item.subtitle || undefined}
     title={item.name}>
     {item.entity === "food" && item.food_nutrition ? <NutritionFactsCard facts={libraryFoodNutritionFacts(item.nutrition, item.food_nutrition)} portion={{ quantity: item.default_portion ?? null, unit: item.quantity_unit ?? "g" }} /> : null}
     {item.entity === "food" && item.label_image_available ? <><SectionDivider /><EntityDetailSection title="Etiqueta guardada">
@@ -490,6 +491,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><ProgramSectionHeader icon={Utensils} subtitle="Revisa el detalle de comida en esta minuta diaria. Conoce sus alimentos, compáralos, y ve su impacto real en la comida." title="Detalle de cada Comida" /><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onChanged={load} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></> : null}
     {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><ProgramSectionHeader icon={Carrot} subtitle="Aquí puedes revisar el aporte nutricional diario de cada alimento, y evaluar su impacto contextual" title="Alimentos en esta minuta diaria" /><GroupedFoodsCard items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} title="Alimentos de la minuta diaria" /></> : null}
     {item.entity === "dailyPlan" && !item.is_draft ? <Button bleed label="Asignar al calendario" onPress={openCalendarAssignment} variant="primary" /> : null}
+    {foodDescription ? <EntityDetailSection title="Descripción"><Text style={styles.foodDescription}>{foodDescription}</Text></EntityDetailSection> : null}
   </EntityDetailPage></NestableScrollContainer>{actionsModal}{mutationStatusModal}<MealComponentAddActions onClose={() => setAddComponentVisible(false)} onFood={addFood} onPreparation={addPreparation} visible={addComponentVisible && item.entity === "meal"} /><CalendarizedEntityActions
     entityName={panelTimeMeal?.name ?? "Comida"}
     initialAction="change-time"
@@ -515,6 +517,7 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   labelImage: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 320, width: "100%" },
+  foodDescription: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 24 },
   kpiViewSelector: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
   kpiViewTitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
 });

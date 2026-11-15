@@ -1,5 +1,7 @@
 # Correcciones visuales propuestas · lote 2026-11-15
 
+Status: active
+
 Estado: **propuestas aprobadas visualmente por Felipe el 15-11-2026; no publicadas**. Los PNG originales están en `assets/visual_identity_catalog/`. La primera propuesta de pechuga se conserva como `chicken-breast-roasted-v1-approved.png`; la segunda permanece como `chicken-breast-roasted-candidate.png` solo para referencia y **no fue elegida**. Las distintas imágenes de bok choy y champiñones corresponden a fichas diferentes, no a opciones por elegir. No modificar nutrientes ni inferir equivalencia de fichas por el nombre.
 
 ## Asignaciones propuestas para fichas globales

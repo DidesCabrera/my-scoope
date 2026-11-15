@@ -310,6 +310,7 @@ class CatalogFoodAdmin(admin.ModelAdmin):
                     "catalog_ref",
                     "catalog_version",
                     "display_name",
+                    "description",
                     "emoji",
                     "visual_key",
                     "canonical_name",

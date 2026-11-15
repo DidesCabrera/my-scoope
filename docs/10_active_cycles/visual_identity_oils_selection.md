@@ -1,5 +1,7 @@
 # Selección visual aprobada: aceites
 
+Status: active
+
 Fecha: 2026-11-15. Estado: originales guardados en el catálogo visual de trabajo; aún no asignados a fichas ni publicados en la aplicación.
 
 | Alimento | Imagen aprobada | Archivo original |

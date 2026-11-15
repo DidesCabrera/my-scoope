@@ -158,6 +158,11 @@ class CatalogFood(models.Model):
         help_text="Human-friendly name for curators and eventual publication.",
     )
 
+    description = models.TextField(
+        blank=True,
+        help_text="Reviewed editorial description for the food detail; independent of nutritional values.",
+    )
+
     emoji = models.CharField(
         max_length=32,
         blank=True,

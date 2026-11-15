@@ -1,5 +1,7 @@
 # Propuestas visuales · alimentos cocidos y hongos · 2026-11-15
 
+Status: active
+
 Estado: **lote visual aprobado por Felipe el 2026-11-15; ninguna imagen asignada ni publicada**. Son imágenes editoriales generadas con la herramienta integrada, no evidencia nutricional. Vista comparativa a escala de la app: [grilla de revisión](visual_identity_food_icon_followup_2026-11-15.html).
 
 La generación utilizó un prompt individual por alimento: ícono 3D tipo emoji, sujeto centrado, silueta reconocible a ~41 px, fondo transparente real, sin texto, marcas, decorado, halo ni apariencia de fotografía. Se especificó además la anatomía y el estado de preparación indicados abajo. Los originales se guardaron sin sobrescribir los íconos existentes. Antes de cualquier publicación se debe revisar legibilidad y bordes a escala, derivar los PNG móviles, reconciliar la identidad exacta de cada `notas.Food`, registrar procedencia y verificar en dispositivo.
