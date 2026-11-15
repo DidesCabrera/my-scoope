@@ -1,7 +1,7 @@
 import { Redirect, useFocusEffect } from "expo-router";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { WeightInput, WeightItem, WeightListData } from "@/api/types";
@@ -196,21 +196,24 @@ export default function WeightScreen() {
     <Screen headerMode="preserve" onHeaderVisibilityChange={setCompactHeaderVisible}>
       <SectionPageHeader countLabel="mediciones" section="weight" subtitle="El registro de peso te permitirá visualizar su variación. Esto revelará tendencias en el mediano y largo plazo." title="Registra tu peso" />
       <Card accent={tokens.color.protein}>
-        <CardHeader title="Registro de peso actual" />
-        <Text style={textStyles.muted}>Mídete en condiciones similares para que la tendencia sea comparable.</Text>
+        <View style={styles.currentWeightHeading}>
+          <Text accessibilityRole="header" style={styles.currentWeightTitle}>Registro de peso actual</Text>
+          <Image accessible={false} resizeMode="contain" source={require("../../assets/images/weight-body-scale-small.png")} style={styles.headerIllustration} />
+        </View>
         <NativeMeasurementField expanded={expandedPicker === "current-weight"} kind="weight" label={`Peso actual · ${formatDate(localDateValue())}`} onChange={(next) => { setValue(next); setCurrentWeightConfirmed(true); }} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "current-weight", expanded))} value={value} />
-        <NativeDateTimeField expanded={expandedPicker === "current-time"} label="Hora de medición (Opcional)" mode="time" onChange={setMeasuredTime} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "current-time", expanded))} value={measuredTime} />
-        <Field autoCapitalize="sentences" label="Comentario (Opcional)" maxLength={500} onChangeText={setComment} placeholder="Agrega contexto sobre esta medición" value={comment} />
+        <Text style={textStyles.muted}>Mídete en condiciones similares para que la tendencia sea comparable.</Text>
+        <View style={styles.fieldSpacing}>
+          <NativeDateTimeField expanded={expandedPicker === "current-time"} label="Hora de medición (Opcional)" mode="time" onChange={setMeasuredTime} onExpandedChange={(expanded) => setExpandedPicker((current) => nextExclusivePicker(current, "current-time", expanded))} value={measuredTime} />
+        </View>
+        <View style={styles.fieldSpacing}>
+          <Field autoCapitalize="sentences" label="Comentario (Opcional)" maxLength={500} onChangeText={setComment} placeholder="Agrega contexto sobre esta medición" value={comment} />
+        </View>
         <View style={styles.saveButtonSpacing}>
           <Button disabled={!currentWeightConfirmed || expandedPicker != null} label="Guardar medición" loading={saving} onPress={save} />
         </View>
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
         {saved ? <InlineNotice>Medición guardada. Tu Today ya usa el peso actualizado.</InlineNotice> : null}
       </Card>
-      <InlineNotice>
-        La variación de peso puede deberse a diferentes factores, destacando la variación de agua en el cuerpo, la cual puede cambiar en un corto lapso de tiempo.{"\n\n"}
-        Por eso te aconsejamos evaluar la tendencia en el mediano plazo, más que dentro de uno o pocos días.
-      </InlineNotice>
       <WeightTrendCard items={items} />
       <Card>
         <CardHeader
@@ -267,6 +270,10 @@ export default function WeightScreen() {
           }))} />
         ) : <Text style={textStyles.muted}>Tu primera medición aparecerá aquí.</Text>}
       </Card>
+      <InlineNotice>
+        La variación de peso puede deberse a diferentes factores, destacando la variación de agua en el cuerpo, la cual puede cambiar en un corto lapso de tiempo.{"\n\n"}
+        Por eso te aconsejamos evaluar la tendencia en el mediano plazo, más que dentro de uno o pocos días.
+      </InlineNotice>
       <ActionSheetModal onRequestClose={closeEdit} visible={historyFormMode != null}>
         <ActionSheetHeader icon={historyFormMode === "create" ? Plus : Pencil} onClose={closeEdit} title={historyFormMode === "create" ? "Agregar medición anterior" : "Editar peso"} />
         <ScrollView
@@ -289,12 +296,16 @@ export default function WeightScreen() {
 }
 
 const styles = StyleSheet.create({
+  currentWeightHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "space-between", marginBottom: 12, paddingTop: 8 },
+  currentWeightTitle: { color: tokens.color.textMain, flex: 1, fontSize: 23, fontWeight: tokens.weight.semibold, lineHeight: 29 },
   editForm: { gap: tokens.spacing.md, paddingBottom: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   editFormScroll: { flexGrow: 0, flexShrink: 1 },
+  fieldSpacing: { marginTop: 8 },
+  headerIllustration: { height: 29, marginRight: 8, width: 45 },
   historyActions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   historyEditToggle: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   pressed: { opacity: 0.65 },
   rowEditAction: { alignItems: "center", height: 36, justifyContent: "center", width: 36 },
   rowEditActions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
-  saveButtonSpacing: { marginTop: 24 - tokens.card.gap },
+  saveButtonSpacing: { marginBottom: 8, marginTop: 24 - tokens.card.gap },
 });
