@@ -1,7 +1,9 @@
+import json
 import os
 from dataclasses import replace
 from pathlib import Path
 from typing import Annotated, Any, TypedDict
+from urllib.parse import urlsplit
 
 from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.server.auth.provider import TokenVerifier
@@ -38,8 +40,10 @@ from myscoope_mcp.tools import (
 
 SERVER_NAME = "my-scoope-mcp"
 FOOD_CARD_RESOURCE_URI = "ui://myscoope/food-card-v1.html"
-DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v1.html"
+DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v2.html"
+PREVIOUS_DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v1.html"
 ENTITY_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "entity_card_v1.html"
+DAILYPLAN_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "entity_card_v2.html"
 MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v6.html"
 MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v6.html"
 PREVIOUS_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v5.html"
@@ -640,13 +644,47 @@ def protocol_dispatch_placeholder():
     return dispatch_tool_call
 
 
+def _card_web_app_base_url() -> str:
+    configured = (
+        os.getenv("MYSCOOPE_CARD_WEB_APP_BASE_URL")
+        or load_config_from_env().normalized_api_base_url
+    )
+    parsed = urlsplit(configured.rstrip("/"))
+    if (
+        parsed.scheme not in {"http", "https"}
+        or (parsed.scheme == "http" and parsed.hostname not in {"localhost", "127.0.0.1"})
+        or not parsed.netloc
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+        or parsed.path.rstrip("/") != "/app"
+    ):
+        raise ValueError("The MCP card web app base URL must be an absolute /app URL.")
+    return f"{parsed.scheme}://{parsed.netloc}/app"
+
+
 def register_mcp_resources(server: FastMCP) -> None:
+    card_app_base_url = _card_web_app_base_url()
+    parsed_app_url = urlsplit(card_app_base_url)
+    redirect_origin = f"{parsed_app_url.scheme}://{parsed_app_url.netloc}"
     @server.resource(FOOD_CARD_RESOURCE_URI, name="My Scoope food card", mime_type=MEAL_CARD_MIME_TYPE)
     def food_card_resource() -> str:
         return ENTITY_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
 
-    @server.resource(DAILYPLAN_CARD_RESOURCE_URI, name="My Scoope daily plan card", mime_type=MEAL_CARD_MIME_TYPE)
+    @server.resource(
+        DAILYPLAN_CARD_RESOURCE_URI,
+        name="My Scoope daily plan card",
+        mime_type=MEAL_CARD_MIME_TYPE,
+        meta={"openai/widgetCSP": {"redirect_domains": [redirect_origin]}},
+    )
     def dailyplan_card_resource() -> str:
+        return DAILYPLAN_CARD_RESOURCE_PATH.read_text(encoding="utf-8").replace(
+            '"__MYSCOOPE_APP_BASE_URL__"', json.dumps(card_app_base_url)
+        )
+
+    @server.resource(PREVIOUS_DAILYPLAN_CARD_RESOURCE_URI, name="My Scoope daily plan card v1", mime_type=MEAL_CARD_MIME_TYPE)
+    def previous_dailyplan_card_resource() -> str:
         return ENTITY_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
 
     @server.resource(
