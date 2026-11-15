@@ -171,6 +171,7 @@ class LibraryItemData(library_common.OptionalFoodVisualIdentityData, library_com
     name: str
     meal_type: Literal["breakfast", "snack", "lunch", "shake", "dinner"] | None = None
     subtitle: str
+    description: str = ""
     quantity_unit: Literal["g", "ml"] | None = None
     default_portion: float | None = None
     household_amount: float | None = None

@@ -5,6 +5,7 @@ from unittest.mock import patch
 from myscoope_mcp.well_known import (
     get_mcp_resource_url,
     get_oauth_issuer_url,
+    get_protected_resource_scopes,
     oauth_protected_resource_metadata,
     openai_apps_challenge,
 )
@@ -131,6 +132,34 @@ class MCPWellKnownTests(unittest.TestCase):
         self.assertEqual(
             data["resource_documentation"],
             "https://www.myscoope.com/support/",
+        )
+
+    @patch.dict(
+        "os.environ",
+        {
+            "MYSCOOPE_MCP_ALLOWED_TOOLS": "read_dailyplan,read_meal",
+        },
+        clear=True,
+    )
+    def test_read_only_tool_surface_advertises_only_read_scope(self):
+        self.assertEqual(
+            get_protected_resource_scopes(),
+            ["myscoope:read"],
+        )
+
+    @patch.dict(
+        "os.environ",
+        {
+            "MYSCOOPE_MCP_ALLOWED_TOOLS": (
+                "read_dailyplan,create_nutrition_engine_dailyplan_proposal"
+            ),
+        },
+        clear=True,
+    )
+    def test_proposal_tool_surface_advertises_proposal_scope(self):
+        self.assertEqual(
+            get_protected_resource_scopes(),
+            ["myscoope:read", "myscoope:proposals:create"],
         )
 
 

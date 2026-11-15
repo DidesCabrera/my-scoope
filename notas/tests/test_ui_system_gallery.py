@@ -77,9 +77,16 @@ class UISystemGalleryTests(TestCase):
         for entity in ("food", "dailyplan"):
             with self.subTest(entity=entity):
                 candidate = self.client.get(f"{preview_url}?entity={entity}")
-                entity_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/entity_card_v1.html"
+                filename = "entity_card_v2.html" if entity == "dailyplan" else "entity_card_v1.html"
+                entity_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui" / filename
                 self.assertEqual(candidate.status_code, 200)
-                self.assertEqual(candidate.content, entity_path.read_bytes())
+                expected = entity_path.read_text(encoding="utf-8")
+                if entity == "dailyplan":
+                    expected = expected.replace(
+                        '"__MYSCOOPE_APP_BASE_URL__"',
+                        '"http://testserver/app"',
+                    )
+                self.assertEqual(candidate.content.decode("utf-8"), expected)
         self.assertEqual(self.client.get(f"{preview_url}?entity=unknown").status_code, 404)
 
 

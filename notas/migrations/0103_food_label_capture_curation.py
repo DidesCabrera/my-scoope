@@ -2,7 +2,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [("notas", "0101_alter_foodportion_household_measure")]
+    dependencies = [("notas", "0102_alter_foodportion_household_measure")]
 
     operations = [
         migrations.AddField(model_name="foodlabelcapturereceipt", name="shared_for_curation", field=models.BooleanField(default=False)),

@@ -43,7 +43,7 @@
       alloc_protein: 14, alloc_carbs: 70, alloc_fat: 16 },
   };
   const sampleDailyplan = {
-    id: 0, name: "Minuta de un día equilibrado", category: "Diaria",
+    id: 42, name: "Minuta de un día equilibrado", category: "Diaria",
     meals_count: 3, foods_count: 9,
     kpis: { total_kcal: 1950, protein: 120, carbs: 225, fat: 63,
       ppk: 1.5, alloc_protein: 25, alloc_carbs: 46, alloc_fat: 29 },

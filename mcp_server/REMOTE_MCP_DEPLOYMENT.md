@@ -187,6 +187,7 @@ MYSCOOPE_MCP_HOST=0.0.0.0
 MYSCOOPE_MCP_PUBLIC_URL=https://myscoope-mcp.onrender.com
 MYSCOOPE_MCP_EXTERNAL_AUTH_TOKEN=<token-externo-largo-y-seguro>
 MYSCOOPE_API_BASE_URL=https://www.myscoope.com/app
+MYSCOOPE_CARD_WEB_APP_BASE_URL=https://www.myscoope.com/app  # opcional si coincide con API_BASE_URL
 MYSCOOPE_API_AUTH_TOKEN=<token-interno-mcp-a-django>
 PYTHON_VERSION=3.13.5
 ```

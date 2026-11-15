@@ -87,6 +87,14 @@ Deben depender de notas.Food para preservar estabilidad operativa e histórica.
 
 Esta decisión evita que una actualización del catálogo maestro cambie automáticamente los cálculos de planes ya creados. Cuando un `Food` operativo se origine desde Food Catalog, debe conservar los valores nutricionales necesarios como snapshot y, opcionalmente, una referencia trazable al alimento maestro.
 
+### Descripción editorial en el detalle móvil
+
+`CatalogFood.description` conserva el texto editorial revisado de un alimento maestro. El protocolo explícito de creación o actualización copia ese texto a `notas.Food.description`, junto con el resto del payload operacional. Un cambio posterior en el catálogo maestro no altera una ficha operativa hasta que se refresca su snapshot. La descripción no participa en nutrientes, porciones ni elegibilidad del solver.
+
+La migración inicial toma el lote versionado `food_descriptions_v1.json`. Exige `catalog_ref` y nombre exacto para las fichas vinculadas. Los registros heredados sin catálogo se asignan solo por ID y nombre exacto, si siguen globales, activos y no verificados. La migración no sobrescribe una descripción editada y no toca alimentos personales. Los 49 registros heredados mantienen textos limitados por falta de fuente de composición registrada.
+
+El detalle de biblioteca `/api/v1/library/foods/{id}` entrega `description` como campo separado. Conserva temporalmente el mismo texto en `subtitle` para las apps anteriores. La app nueva omite ese subtítulo en alimentos y muestra una sección final **Descripción** cuando hay contenido; si habla con un servidor anterior usa `subtitle` como respaldo. Las demás entidades de biblioteca no muestran esa sección.
+
 Si un alimento existe solo como `CatalogFood` y todavía no fue materializado como `notas.Food`, no existe para MCP ni para los flujos operativos de planificación.
 
 Ninguna entidad de gestión nutricional debe alimentarse directamente desde:

@@ -68,6 +68,11 @@ class Food(models.Model):
 
     name = models.CharField(max_length=100)
 
+    description = models.TextField(
+        blank=True,
+        help_text="Editorial description copied from Food Catalog or approved for this operational food.",
+    )
+
     emoji = models.CharField(
         max_length=32,
         blank=True,
