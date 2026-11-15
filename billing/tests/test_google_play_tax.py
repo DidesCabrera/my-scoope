@@ -9,7 +9,6 @@ from billing.application.services.google_play_tax import (
 )
 from billing.infrastructure.providers.google_play import GooglePlayClient
 
-
 ORDER = {
     "orderId": "GPA.1234-5678-9012-34567..0",
     "purchaseToken": "purchase-secret",
