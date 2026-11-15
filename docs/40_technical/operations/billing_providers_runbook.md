@@ -91,7 +91,25 @@ Browser return parameters never grant access. Only verified provider state proje
 
 ## OpenFactura activation
 
-1. Have a Chilean tax professional approve DTE type, issuer fields, IVA treatment, service indicator, glosa and credit-note procedure.
+Google Play Chile/CLP preparation (2026-11-14):
+`GooglePlayClient.get_order` reads an order through the Android Publisher API.
+`prepare_google_play_tax_order` accepts only a processed, positive, single-line
+CLP charge with confirmed Chilean buyer country, matching order/product/token,
+and a subscription accounting period when applicable. It returns a minimal
+normalized record without the raw token or buyer address. Neither function
+creates a `BillingPayment` or `TaxDocument`, calls OpenFactura, or enables
+issuance. A sandbox purchase or zero-price trial must never become a DTE.
+
+Before connecting this preparation to the outbox, implement and verify a
+per-`orderId` ledger for initial purchases and each renewal, protected
+idempotency, refund/credit-note linking, and the DTE 39 mapping for periodic
+subscriptions (`IndServicio=1`, nominative recipient and period) versus credit
+packs (`IndServicio=3`). Confirm the exact periodic fields in OpenFactura's
+development API, then with an SII-accepted DTE. Keep
+`BILLING_OPENFACTURA_ENABLED=false` until the issuer, folios, API key, emission
+model, delivery, and Chile-only commercial availability are verified.
+
+1. Apply the documented Chile/CLP tax decision and confirm the actual SII authorization, issuer fields, service indicators, glosas and credit-note procedure with the responsible tax owner before production issuance.
 2. Configure the sandbox API key and approved `BILLING_OPENFACTURA_ISSUER_JSON`.
 3. Enable OpenFactura and run `.venv/bin/python manage.py issue_tax_documents --limit 1`.
 4. Confirm token, folio and SII state with `.venv/bin/python manage.py reconcile_billing --limit 10`.
