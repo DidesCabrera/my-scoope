@@ -1,6 +1,7 @@
 # Descripciones editoriales de alimentos
 
-Estado: primer lote editorial versionado. Responsable: Catálogos. Alcance: alimentos globales activos con visibilidad `core` o `extended` disponibles para usuarios en producción. El estado de despliegue se confirma con GitHub Actions y Render.
+Status: active
+Estado de ejecución: primer lote editorial versionado. Responsable: Catálogos. Alcance: alimentos globales activos con visibilidad `core` o `extended` disponibles para usuarios en producción. El estado de despliegue se confirma con GitHub Actions y Render.
 
 ## Resultado buscado
 

@@ -46,6 +46,8 @@ def description_for_food(food) -> str:
     if food.catalog_food_ref is not None:
         record = catalog.get(str(food.catalog_food_ref))
     else:
+        if food.is_verified:
+            return ""
         record = legacy.get(food.id)
     if record is None or record["name"] != food.name:
         return ""

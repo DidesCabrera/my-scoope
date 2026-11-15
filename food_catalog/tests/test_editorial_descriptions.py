@@ -31,12 +31,13 @@ class FoodDescriptionDatasetTests(SimpleTestCase):
     def test_description_requires_exact_identity_and_active_global_status(self):
         food = SimpleNamespace(
             id=123, name="Aceite de oliva", is_global=True, is_active=True,
-            catalog_food_ref=UUID("b806c80e-0ea2-4b9f-aa41-4607fec28269"),
+            is_verified=True, catalog_food_ref=UUID("b806c80e-0ea2-4b9f-aa41-4607fec28269"),
         )
         self.assertIn("Aceite vegetal", description_for_food(food))
         self.assertEqual(description_for_food(SimpleNamespace(**{**vars(food), "name": "Otro aceite"})), "")
         self.assertEqual(description_for_food(SimpleNamespace(**{**vars(food), "is_global": False})), "")
         self.assertEqual(description_for_food(SimpleNamespace(**{**vars(food), "is_active": False})), "")
-        legacy = SimpleNamespace(id=63, name="Alimento", is_global=True, is_active=True, catalog_food_ref=None)
+        legacy = SimpleNamespace(id=63, name="Alimento", is_global=True, is_active=True, is_verified=False, catalog_food_ref=None)
         self.assertIn("no identifica", description_for_food(legacy))
         self.assertEqual(description_for_food(SimpleNamespace(**{**vars(legacy), "name": "Otro"})), "")
+        self.assertEqual(description_for_food(SimpleNamespace(**{**vars(legacy), "is_verified": True})), "")
