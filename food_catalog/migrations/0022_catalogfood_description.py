@@ -5,6 +5,7 @@ from pathlib import Path
 
 from django.db import migrations, models
 
+# Keep this versioned batch available for fresh databases that replay the migration.
 DESCRIPTION_BATCH = Path(__file__).resolve().parents[2] / "food_catalog/data/food_descriptions_v1.json"
 
 
