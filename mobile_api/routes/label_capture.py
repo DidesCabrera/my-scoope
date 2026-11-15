@@ -22,7 +22,7 @@ from mobile_api.schema_domains.label_capture import (
     FoodLabelImageEnvelope,
 )
 from mobile_api.schemas import ErrorEnvelope
-from mobile_api.selectors import food_label_capture_payload
+from mobile_api.presenters.label_capture import food_label_capture_payload
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.food_commands import create_food_from_label_capture
 from notas.application.services.nutrition_label_ai import (

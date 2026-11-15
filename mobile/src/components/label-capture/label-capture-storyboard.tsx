@@ -325,7 +325,7 @@ function ReviewView() {
           {photoCollapsed ? <ChevronsDown color={tokens.color.textMain} size={18} /> : <ChevronsUp color={tokens.color.textMain} size={18} />}
         </Pressable>
       </View>
-      <ScrollView contentContainerStyle={styles.reviewScrollContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator>
+      <ScrollView contentContainerStyle={styles.reviewScrollContent} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false}>
         <View style={[styles.confidenceNotice, styles.reviewConfidenceNotice]}><Text style={styles.confidenceNoticeText}>Confianza alta. La lectura pasó las comprobaciones automáticas.</Text></View>
         <View style={styles.reviewForm}>
         <View style={styles.measurementTabs}>

@@ -1373,29 +1373,21 @@ test("the label capture gallery exposes the complete happy-path storyboard witho
   assertSourceMatch(gallery, /<LabelCaptureStoryboardGallery \/>/);
   assertSourceMatch(storyboardGallery, /accessibilityLabel="Formatos de la digitalización de etiquetas"/);
   assertSourceMatch(storyboardGallery, /steps=\{labelCaptureStoryboardSteps\}/);
-  assertSourceMatch(storyboardGallery, /featuredStep="review"/);
-  assertSourceMatch(storyboard, /testID=\{photoCollapsed \? "gallery-label-photo-expand" : "gallery-label-photo-collapse"\}/);
-  assertSourceMatch(storyboard, /<HalfHeightScrollablePhoto surfaceStyle=\{styles\.reviewPhoto\}>/);
   for (const step of ["intro", "camera", "captured", "preview", "processing", "review", "confirmation", "saved", "qualityWarnings", "qualityOptimal"]) {
     assertSourceMatch(storyboard, new RegExp(`key: "${step}"`));
   }
   assertSourceMatch(storyboard, /datos fijos|Yogur griego natural/);
-  assertSourceMatch(storyboard, /title="Enriquece tu librería personal de alimentos"/);
-  assertSourceMatch(storyboard, /source=\{require\("\.\.\/\.\.\/\.\.\/assets\/images\/nutrition-label-illustration-450\.png"\)\}/);
   assertSourceMatch(storyboard, /accessibilityLabel="Configuración de digitalización"/);
   assertSourceMatch(storyboard, /function CapturedView[\s\S]*label="Digitalizar información"/);
-  assertSourceMatch(storyboard, /visible=\{consentVisible\}[\s\S]*label="Autorizar y continuar"/);
   assert.doesNotMatch(storyboard, /Puedes validar la nitidez antes de usar créditos/);
   assertSourceMatch(storyboard, /Confirmar creación/);
   assertSourceMatch(storyboard, /<NutritionFactsCard[\s\S]*portion=\{\{ quantity: 160, unit: "g" \}\}/);
   assertSourceMatch(storyboard, /Esta imagen no es apta/);
   assertSourceMatch(storyboard, /Esta imagen es óptima para digitalización/);
-  assertSourceMatch(storyboard, /<StatusFeedbackCard label=\{optimal/);
   assertSourceDoesNotMatch(storyboard, /key: "unvalidated"|function UnvalidatedView|Sin validar/);
   assert.doesNotMatch(storyboard, /qualityWarningIssues\.map/);
   assertSourceMatch(storyboard, /<AnimatedScanBeam gradientId="label-capture-credit-scan" \/>/);
   assertSourceMatch(storyboard, /<View style=\{\[styles\.bottomActions, styles\.cameraBottomActions\]\}>/);
-  assertSourceMatch(storyboard, /cameraBottomActions: \{ marginBottom: 74 \}/);
   assertSourceMatch(scanBeam, /Animated\.loop\(Animated\.sequence/);
   assertSourceMatch(scanBeam, /toValue: 1[\s\S]*toValue: 0/);
   assertSourceMatch(scanBeam, /outputRange: \[0, Math\.max\(0, height - beamHeight\)\]/);

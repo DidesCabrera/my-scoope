@@ -4800,6 +4800,27 @@
               }
             ]
           },
+          "household_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Amount"
+          },
+          "household_detail": {
+            "default": "",
+            "title": "Household Detail",
+            "type": "string"
+          },
+          "household_measure": {
+            "default": "",
+            "title": "Household Measure",
+            "type": "string"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -5152,6 +5173,27 @@
               }
             ]
           },
+          "household_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Amount"
+          },
+          "household_detail": {
+            "default": "",
+            "title": "Household Detail",
+            "type": "string"
+          },
+          "household_measure": {
+            "default": "",
+            "title": "Household Measure",
+            "type": "string"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -5432,6 +5474,19 @@
             "title": "Carbs",
             "type": "number"
           },
+          "default_portion": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 99999,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Portion"
+          },
           "fat": {
             "maximum": 100,
             "minimum": 0,
@@ -5450,6 +5505,45 @@
               }
             ],
             "title": "Fiber G"
+          },
+          "household_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 99999,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Amount"
+          },
+          "household_detail": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Household Detail",
+            "type": "string"
+          },
+          "household_measure": {
+            "default": "",
+            "enum": [
+              "",
+              "unit",
+              "cup",
+              "tablespoon",
+              "scoop",
+              "other",
+              "slice",
+              "can",
+              "fillet",
+              "leaf",
+              "strip",
+              "g",
+              "ml"
+            ],
+            "title": "Household Measure",
+            "type": "string"
           },
           "name": {
             "maxLength": 100,
@@ -5718,6 +5812,33 @@
             "title": "Field Confidence",
             "type": "object"
           },
+          "household_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Amount"
+          },
+          "household_detail": {
+            "default": "",
+            "title": "Household Detail",
+            "type": "string"
+          },
+          "household_measure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Measure"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -5754,6 +5875,17 @@
               }
             ],
             "title": "Serving Size G"
+          },
+          "serving_size_ml": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serving Size Ml"
           },
           "source_basis": {
             "enum": [
@@ -5959,6 +6091,17 @@
             "title": "Created At",
             "type": "string"
           },
+          "default_portion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Portion"
+          },
           "detected_basis": {
             "title": "Detected Basis",
             "type": "string"
@@ -5977,6 +6120,27 @@
               }
             ],
             "title": "Fiber G"
+          },
+          "household_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Amount"
+          },
+          "household_detail": {
+            "default": "",
+            "title": "Household Detail",
+            "type": "string"
+          },
+          "household_measure": {
+            "default": "",
+            "title": "Household Measure",
+            "type": "string"
           },
           "id": {
             "title": "Id",
@@ -6037,6 +6201,10 @@
             ],
             "title": "Serving Size G"
           },
+          "shared_for_curation": {
+            "title": "Shared For Curation",
+            "type": "boolean"
+          },
           "sodium_mg": {
             "anyOf": [
               {
@@ -6077,6 +6245,7 @@
           "detected_basis",
           "ocr_engine",
           "label_image_retained",
+          "shared_for_curation",
           "created_at"
         ],
         "title": "FoodLabelCaptureData",
@@ -6137,6 +6306,19 @@
             ],
             "title": "Declared Energy Kcal Per 100G"
           },
+          "default_portion": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 10000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Portion"
+          },
           "detected_basis": {
             "enum": [
               "per_100g",
@@ -6172,6 +6354,31 @@
             },
             "title": "Field Confidence",
             "type": "object"
+          },
+          "household_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Amount"
+          },
+          "household_detail": {
+            "default": "",
+            "maxLength": 100,
+            "title": "Household Detail",
+            "type": "string"
+          },
+          "household_measure": {
+            "default": "",
+            "maxLength": 24,
+            "title": "Household Measure",
+            "type": "string"
           },
           "idempotency_key": {
             "maxLength": 120,
@@ -6261,6 +6468,11 @@
               }
             ],
             "title": "Serving Size G"
+          },
+          "share_for_curation": {
+            "default": false,
+            "title": "Share For Curation",
+            "type": "boolean"
           },
           "sodium_mg": {
             "anyOf": [
@@ -6923,6 +7135,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -7516,6 +7729,27 @@
                 "type": "null"
               }
             ]
+          },
+          "household_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Household Amount"
+          },
+          "household_detail": {
+            "default": "",
+            "title": "Household Detail",
+            "type": "string"
+          },
+          "household_measure": {
+            "default": "",
+            "title": "Household Measure",
+            "type": "string"
           },
           "id": {
             "title": "Id",
@@ -9894,6 +10128,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -12391,6 +12626,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -12438,6 +12674,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12524,6 +12761,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12540,6 +12778,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12556,6 +12795,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12572,6 +12812,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12588,6 +12829,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12604,6 +12846,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12620,6 +12863,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12636,6 +12880,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {

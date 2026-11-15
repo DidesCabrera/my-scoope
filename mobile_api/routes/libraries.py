@@ -5,6 +5,7 @@ from ninja import Router
 from mobile_api.api_support import require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
+from mobile_api.food_portion_validation import validate_food_portion_input, validate_food_portion_update
 from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
 from mobile_api.presenters.library_foods import food_picker_item_payload
 from mobile_api.schema_domains.libraries import (
@@ -189,15 +190,6 @@ def _clean_creation_name(name: str) -> str:
     return clean_name
 
 
-def _validate_food_portion_input(payload: FoodCreateInput):
-    if (payload.household_amount is None) != (not payload.household_measure):
-        raise MobileAPIError("food_household_portion_incomplete", "Completa la cantidad y la medida de la equivalencia.", 422)
-    if payload.household_amount is not None and payload.default_portion is None:
-        raise MobileAPIError("food_household_portion_incomplete", "Ingresa la porción sugerida antes de agregar una equivalencia.", 422)
-    if payload.household_measure == "other" and not 1 <= len(payload.household_detail.strip()) <= 100:
-        raise MobileAPIError("food_household_label_required", "Escribe una medida cotidiana de hasta 100 caracteres.", 422)
-
-
 @router.post(
     "/library/foods",
     operation_id="mobile_api_api_create_library_food",
@@ -206,7 +198,7 @@ def _validate_food_portion_input(payload: FoodCreateInput):
 )
 def create_library_food(request, payload: FoodCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    _validate_food_portion_input(payload)
+    validate_food_portion_input(payload)
     result = create_food(
         user=request.auth.user,
         name=_clean_creation_name(payload.name),
@@ -237,12 +229,7 @@ def update_library_food(request, food_id: int, payload: FoodCreateInput):
     food = Food.objects.filter(pk=food_id, created_by=request.auth.user, is_active=True).first()
     if food is None:
         raise MobileAPIError("library_item_not_found", "El alimento no está disponible para edición.", 404)
-    portion_fields = {"default_portion", "household_amount", "household_measure", "household_detail"}
-    update_portion = bool(portion_fields & payload.model_fields_set)
-    if update_portion and not portion_fields <= payload.model_fields_set:
-        raise MobileAPIError("food_household_portion_incomplete", "Envía todos los datos de la porción sugerida.", 422)
-    if update_portion:
-        _validate_food_portion_input(payload)
+    update_portion = validate_food_portion_update(payload)
     optional_nutrition = {field: getattr(payload, field) for field in ("saturated_fat_g", "sugar_g", "fiber_g", "sodium_mg") if field in payload.model_fields_set}
     result = update_food(
         food=food,

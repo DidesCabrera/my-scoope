@@ -1,6 +1,6 @@
 # Aportes voluntarios de etiquetas para Food Catalog
 
-Estado: propuesto para `catalog-curation-steward` · 2026-11-15
+Status: planned · propuesto para `catalog-curation-steward` · 2026-11-15
 Patrocinador: Felipe Dides
 Proyecto relacionado: `PRJ-PROD-003 — Curación de Catálogos`
 
@@ -10,7 +10,7 @@ Convertir fotografías de etiquetas y valores confirmados que los usuarios decid
 
 ## Punto de partida y frontera
 
-La captura guarda un alimento privado `notas.Food`. En el trabajo local de digitalización, la opción de compartir, apagada por defecto, añade al `FoodLabelCaptureReceipt` un `curation_payload` de valores confirmados, una copia JPEG recodificada sin metadatos, un hash y la fecha del aporte. La foto personal que el usuario decide guardar es independiente. Desactivar la opción detiene solo aportes futuros. El código y la migración están **pendientes de integración**; no se ha verificado que haya contribuciones reales en staging o producción.
+La captura guarda un alimento privado `notas.Food`. La opción de compartir, apagada por defecto, añade al `FoodLabelCaptureReceipt` un `curation_payload` de valores confirmados, una copia JPEG recodificada sin metadatos, un hash y la fecha del aporte. La foto personal que el usuario decide guardar es independiente. Desactivar la opción detiene solo aportes futuros. No se ha verificado que haya contribuciones reales en staging o producción.
 
 La autoridad de Food Catalog vive en otra base de datos. Hoy no hay extracción ni cola que lleve estos recibos a esa autoridad. `CatalogCurationCandidate` atiende referencias de búsqueda externa y no debe recibir estos aportes por una adaptación implícita. El tipo `user_created` existente tampoco convierte un alimento privado en fuente aprobada.
 

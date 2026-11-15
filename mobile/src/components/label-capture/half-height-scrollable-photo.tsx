@@ -18,7 +18,7 @@ export function HalfHeightScrollablePhoto({ children, surfaceStyle }: { children
           contentContainerStyle={{ height: photoSize }}
           directionalLockEnabled
           nestedScrollEnabled
-          showsVerticalScrollIndicator
+          showsVerticalScrollIndicator={false}
           style={[styles.viewport, { height: photoSize / 2, width: photoSize }]}>
           <View style={[styles.surface, surfaceStyle, { height: photoSize, width: photoSize }]}>{children}</View>
         </ScrollView>
