@@ -1,0 +1,47 @@
+{% extends "notas/base.html" %}
+{% load static l10n %}
+{% block title %}Editar {{ vm.content.supplement.name }} · Suplemento{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}?v=20261114-3">{% endblock %}
+{% block content %}
+{% with supplement=vm.content.supplement %}
+<div class="page web-parity" data-page="supplement-edit">
+  <header class="web-parity__heading"><div><p class="web-parity__eyebrow">Mi Suplemento</p><h1>Editar {{ supplement.name }}</h1>
+    <p>{{ supplement.brand|default:"Sin marca" }}{% if supplement.default_quantity %} · Dosis habitual {{ supplement.default_quantity }} {{ supplement.default_unit }}{% endif %}</p></div></header>
+  <section class="web-parity__section"><h2>Ficha del producto</h2>
+    <form method="post" action="{% url 'supplement_save' supplement.id %}" class="web-parity__form" data-repeat-form>
+      {% csrf_token %}
+      <label>Nombre<input name="name" value="{{ supplement.name }}" maxlength="100" required></label>
+      <label>Marca<input name="brand" value="{{ supplement.brand }}" maxlength="100"></label>
+      <label>Forma<select name="form"><option value="">Sin especificar</option>{% for form in vm.content.forms %}<option value="{{ form }}" {% if supplement.form == form %}selected{% endif %}>{{ form }}</option>{% endfor %}</select></label>
+      <label>Cantidad habitual<input name="default_quantity" value="{{ supplement.default_quantity|default_if_none:''|floatformat:'3u' }}" type="number" min="0.001" step="0.001"></label>
+      <label>Unidad habitual<select name="default_unit"><option value="">Sin especificar</option>{% for unit in vm.content.units %}<option value="{{ unit }}" {% if supplement.default_unit == unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></label>
+      <label>Descripción<textarea name="description" rows="3">{{ supplement.description }}</textarea></label>
+      <label>Información personal<textarea name="user_information" rows="3">{{ supplement.user_information }}</textarea></label>
+      <h3>Componentes de la etiqueta</h3>
+      <div data-repeat-list>
+        {% for component in supplement.components %}
+        <div class="web-parity__repeat-row"><label>Componente<input name="component_name" value="{{ component.name }}"></label>
+          <label>Cantidad<input name="component_quantity" value="{{ component.quantity|floatformat:'3u' }}" type="number" min="0.001" step="0.001"></label>
+          <label>Unidad<select name="component_unit">{% for unit in vm.content.component_units %}<option value="{{ unit }}" {% if component.unit == unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></label><button type="button" class="web-parity__text-button" data-repeat-remove>Quitar</button></div>
+        {% empty %}<div class="web-parity__repeat-row"><label>Componente<input name="component_name"></label>
+          <label>Cantidad<input name="component_quantity" type="number" min="0.001" step="0.001"></label>
+          <label>Unidad<select name="component_unit">{% for unit in vm.content.component_units %}<option value="{{ unit }}">{{ unit }}</option>{% endfor %}</select></label><button type="button" class="web-parity__text-button" data-repeat-remove>Quitar</button></div>{% endfor %}
+      </div>
+      <button type="button" class="web-parity__text-button" data-repeat-add>+ Otro componente</button>
+      <h3>Nutrición declarada por dosis habitual</h3>
+      <p class="web-parity__note">Esta información es descriptiva y nunca se suma a los totales de Comidas o Minutas.</p>
+      <label>Energía (kcal)<input name="energy_kcal" type="number" min="0" step="0.001" value="{{ supplement.nutrition.energy_kcal|unlocalize }}"></label>
+      <label>Proteínas (g)<input name="protein_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.protein_g|unlocalize }}"></label>
+      <label>Carbohidratos (g)<input name="carbs_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.carbs_g|unlocalize }}"></label>
+      <label>Grasas (g)<input name="fat_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.fat_g|unlocalize }}"></label>
+      <label>Grasas saturadas (g)<input name="saturated_fat_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.saturated_fat_g|unlocalize }}"></label>
+      <label>Azúcares (g)<input name="sugar_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.sugar_g|unlocalize }}"></label>
+      <label>Fibra (g)<input name="fiber_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.fiber_g|unlocalize }}"></label>
+      <label>Sodio (mg)<input name="sodium_mg" type="number" min="0" step="0.001" value="{{ supplement.nutrition.sodium_mg|unlocalize }}"></label>
+      <button class="btn-primary" type="submit">Guardar suplemento</button>
+    </form>
+  </section>
+</div>
+{% endwith %}
+<script src="{% static 'notas/js/web_parity.js' %}" defer></script>
+{% endblock %}

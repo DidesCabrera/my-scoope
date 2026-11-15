@@ -24,7 +24,7 @@ function setAlloc(row, value) {
   if (!row) return;
 
   const safeValue = Math.max(0, toNumber(value));
-  const pctText = row.querySelector(".alloc-pct p");
+  const pctText = row.querySelector(".alloc-bar-text");
   const bar = row.querySelector(".alloc-bar-comp");
 
   if (pctText) {
@@ -58,6 +58,9 @@ function renderFoodDetailPortion(root, grams) {
   const portion = portionFromFood(baseFood, grams);
   const alloc = computeAlloc(portion);
   const rows = getRows(root);
+
+  const quantityLabel = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 3 }).format(grams);
+  setText(root, "[data-food-nutrition-basis]", `Información nutricional: ${quantityLabel} ${root.dataset.baseUnit || "g"}`);
 
   setText(root, ".tot h2", formatNumber(portion.total_kcal, 0));
   setText(rows.protein, ".kpi-grams", `${formatNumber(portion.protein, 0)}g`);

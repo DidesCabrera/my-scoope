@@ -26,11 +26,24 @@ from notas.domain.models import DailyPlan, Supplement, SupplementCatalogEntry, S
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import SUPPLEMENT_VIEWMODE_DETAIL, SUPPLEMENT_VIEWMODE_LIST
+from notas.presentation.pages.library_entity_cards import supplement_card, supplement_preset_card
 
 UNITS = ("capsule", "tablet", "softgel", "gummy", "sachet", "scoop", "drop", "ml", "g", "mg", "mcg", "iu", "tsp")
 FORMS = ("capsule", "tablet", "softgel", "gummy", "sachet", "powder", "liquid", "drop")
 COMPONENT_UNITS = ("g", "mg", "mcg", "ml", "iu")
 NUTRITION_FIELDS = ("energy_kcal", "protein_g", "carbs_g", "fat_g", "saturated_fat_g", "sugar_g", "fiber_g", "sodium_mg")
+FORM_LABELS = {
+    "capsule": "Cápsula", "tablet": "Comprimido", "softgel": "Cápsula blanda",
+    "gummy": "Gomita", "sachet": "Sobre", "powder": "Polvo",
+    "liquid": "Líquido", "drop": "Gota",
+}
+UNIT_LABELS = {
+    "capsule": ("cápsula", "cápsulas"), "tablet": ("comprimido", "comprimidos"),
+    "softgel": ("cápsula blanda", "cápsulas blandas"), "gummy": ("gomita", "gomitas"),
+    "sachet": ("sobre", "sobres"), "scoop": ("medida", "medidas"),
+    "drop": ("gota", "gotas"), "tsp": ("cucharadita", "cucharaditas"),
+    "iu": ("UI", "UI"),
+}
 
 
 def _access(user):
@@ -100,9 +113,13 @@ def supplement_list(request):
         saved_catalog_ids = set(Supplement.objects.filter(
             created_by=request.user, catalog_entry__isnull=False,
         ).values_list("catalog_entry_id", flat=True))
+    rows = list(rows[:100])
+    presets = list(presets[:100])
     return render(request, "notas/supplements/list.html", _context(
         SUPPLEMENT_VIEWMODE_LIST, access=access, search=search,
-        rows=rows[:100], presets=presets[:100], catalog=catalog[:100],
+        rows=rows, presets=presets, catalog=catalog[:100],
+        supplement_cards=[supplement_card(item) for item in rows],
+        preset_cards=[supplement_preset_card(item) for item in presets],
         saved_catalog_ids=saved_catalog_ids, units=UNITS,
     ))
 
@@ -113,7 +130,26 @@ def supplement_detail(request, pk):
     if not _access(request.user):
         raise Http404
     supplement = get_object_or_404(Supplement, pk=pk, created_by=request.user)
+    quantity = supplement.default_quantity
+    unit = supplement.default_unit
+    unit_labels = UNIT_LABELS.get(unit, (unit, unit))
+    dose_label = f"{quantity.normalize()} {unit_labels[0] if quantity == 1 else unit_labels[1]}" if quantity and unit else ""
     return render(request, "notas/supplements/detail.html", _context(
+        SUPPLEMENT_VIEWMODE_DETAIL, supplement=supplement, units=UNITS,
+        forms=FORMS, component_units=COMPONENT_UNITS, nutrition_fields=NUTRITION_FIELDS,
+        form_label=FORM_LABELS.get(supplement.form, supplement.form),
+        dose_label=dose_label,
+        title={"name": supplement.name, "label": "supplement", "icon": "pill"},
+    ))
+
+
+@login_required
+@require_GET
+def supplement_edit(request, pk):
+    if not _access(request.user):
+        raise Http404
+    supplement = get_object_or_404(Supplement, pk=pk, created_by=request.user)
+    return render(request, "notas/supplements/edit.html", _context(
         SUPPLEMENT_VIEWMODE_DETAIL, supplement=supplement, units=UNITS,
         forms=FORMS, component_units=COMPONENT_UNITS, nutrition_fields=NUTRITION_FIELDS,
     ))
@@ -202,7 +238,7 @@ def supplement_preset_save(request, pk=None):
         messages.error(request, "Revisa la toma, las cantidades y las unidades.")
         return redirect("supplement_list")
     messages.success(request, f"Toma {preset.name} guardada.")
-    return redirect("supplement_list")
+    return redirect("supplement_preset_detail", pk=preset.pk)
 
 
 @login_required
@@ -213,7 +249,33 @@ def supplement_preset_detail(request, pk):
     preset = get_object_or_404(
         SupplementIntakePreset.objects.prefetch_related("items"), pk=pk, created_by=request.user,
     )
+    items = []
+    for item in preset.items.all():
+        labels = UNIT_LABELS.get(item.unit, (item.unit, item.unit))
+        unit = labels[0] if item.quantity == 1 else labels[1]
+        snapshot = item.supplement_snapshot or {}
+        items.append({
+            "supplement_id": item.supplement_id,
+            "name": snapshot.get("name") or "Suplemento guardado",
+            "brand": snapshot.get("brand") or "",
+            "quantity_label": f"{item.quantity.normalize()} {unit}",
+        })
     return render(request, "notas/supplements/preset_detail.html", _context(
+        SUPPLEMENT_VIEWMODE_DETAIL, preset=preset, items=items,
+        title={"name": preset.name, "label": "supplement", "eyebrow": "Ingesta de suplementos", "icon": "pill-bottle"},
+        supplements=Supplement.objects.filter(created_by=request.user)[:100], units=UNITS,
+    ))
+
+
+@login_required
+@require_GET
+def supplement_preset_edit(request, pk):
+    if not _access(request.user):
+        raise Http404
+    preset = get_object_or_404(
+        SupplementIntakePreset.objects.prefetch_related("items"), pk=pk, created_by=request.user,
+    )
+    return render(request, "notas/supplements/preset_edit.html", _context(
         SUPPLEMENT_VIEWMODE_DETAIL, preset=preset,
         supplements=Supplement.objects.filter(created_by=request.user)[:100], units=UNITS,
     ))

@@ -1,12 +1,14 @@
 """Public, versioned food images; no nutrition snapshot is changed."""
 
 from uuid import UUID
+from typing import Literal
 
 from django.http import Http404, HttpResponse, JsonResponse
 from django.db.models import Q
 from ninja import Router
 
 from food_catalog.models import CatalogFood, FoodVisualAsset, LegacyFoodVisualAsset
+from food_catalog.visual_assets import render_wide_food_visual
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.domain.models import Food
 
@@ -29,7 +31,7 @@ def _global_visual_overrides():
 
 
 @router.get("/foods/visual-assets/manifest", auth=None, operation_id="mobile_api_food_visual_manifest")
-def food_visual_manifest(request):
+def food_visual_manifest(request, layout: Literal["square", "wide-v1"] = "square"):
     assets = list(
         FoodVisualAsset.objects.filter(
             is_published=True,
@@ -44,7 +46,7 @@ def food_visual_manifest(request):
             is_global=True, is_active=True, catalog_food_ref__in=by_ref
         ).prefetch_related("localized_names").only("name", "catalog_food_ref"):
             asset = by_ref[food.catalog_food_ref]
-            url = f"/api/v1/foods/visual-assets/{food.catalog_food_ref}/{asset.content_sha256}.png"
+            url = _visual_url(food.catalog_food_ref, asset.content_sha256, layout)
             food_ids[str(food.pk)] = url
             images[food.name] = url
             images[resolve_food_display_name(food)] = url
@@ -52,7 +54,7 @@ def food_visual_manifest(request):
         if not asset.content_sha256 or not asset.mobile_image_data:
             continue
         food = asset.food
-        url = f"/api/v1/foods/visual-assets/{asset.public_ref}/{asset.content_sha256}.png"
+        url = _visual_url(asset.public_ref, asset.content_sha256, layout)
         food_ids[str(food.pk)] = url
         images[food.name] = url
         images[resolve_food_display_name(food)] = url
@@ -61,8 +63,12 @@ def food_visual_manifest(request):
     return response
 
 
-@router.get("/foods/visual-assets/{catalog_ref}/{digest}.png", auth=None, operation_id="mobile_api_food_visual_image")
-def food_visual_image(request, catalog_ref: str, digest: str):
+def _visual_url(ref, digest: str, layout: str) -> str:
+    suffix = "/wide-v1.png" if layout == "wide-v1" else ".png"
+    return f"/api/v1/foods/visual-assets/{ref}/{digest}{suffix}"
+
+
+def _find_visual(catalog_ref: str, digest: str):
     if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
         raise Http404
     try:
@@ -81,9 +87,25 @@ def food_visual_image(request, catalog_ref: str, digest: str):
         ).first()
     if asset is None or not asset.mobile_image_data:
         raise Http404
+    return asset
+
+
+@router.get("/foods/visual-assets/{catalog_ref}/{digest}.png", auth=None, operation_id="mobile_api_food_visual_image")
+def food_visual_image(request, catalog_ref: str, digest: str):
+    asset = _find_visual(catalog_ref, digest)
     response = HttpResponse(bytes(asset.mobile_image_data), content_type="image/png")
     response["Cache-Control"] = "public, max-age=300"
     response["ETag"] = f'"{digest}"'
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@router.get("/foods/visual-assets/{catalog_ref}/{digest}/wide-v1.png", auth=None, operation_id="mobile_api_food_visual_wide_image")
+def food_visual_wide_image(request, catalog_ref: str, digest: str):
+    asset = _find_visual(catalog_ref, digest)
+    response = HttpResponse(render_wide_food_visual(bytes(asset.mobile_image_data)), content_type="image/png")
+    response["Cache-Control"] = "public, max-age=300"
+    response["ETag"] = f'"{digest}-wide-v1"'
     response["X-Content-Type-Options"] = "nosniff"
     return response
 

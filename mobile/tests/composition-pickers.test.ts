@@ -156,7 +156,7 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /pickerConfigureHref\(kind, \{ contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo/);
   matches(payload, /food_snapshot_key: relationKey/);
   matches(payload, /meal_snapshot_key: relationKey/);
-  matches(picker, /\? isFoodPicker \? "Reemplazar alimento" : "Reemplazar comida"/);
+  matches(picker, /isFoodPicker \? selectedId \? "Editar porción" : "Reemplazar alimento" : "Reemplazar comida"/);
   matches(picker, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{targetId\}`\)/);
   matches(payload, /dailyplan_id: contextDailyPlanId/);
   matches(payload, /dailyplan_meal_id: contextDailyPlanMealId/);

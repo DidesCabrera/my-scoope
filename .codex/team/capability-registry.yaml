@@ -1,6 +1,6 @@
 schema_version: 2
 owner: "Felipe Dides"
-last_reviewed: "2026-11-11"
+last_reviewed: "2026-11-14"
 lifecycle_states:
   - "proposal"
   - "pilot"
@@ -39,6 +39,12 @@ roles:
     status: "pilot"
     path: ".codex/skills/ai-application-platform-steward/SKILL.md"
     purpose: "Implement, evaluate, and maintain the assistant, governed AI capabilities, MCP projection, and AI release gates."
+  - name: "mobile-store-release-steward"
+    area: "product-technology"
+    class: "steward"
+    status: "pilot"
+    path: ".codex/skills/mobile-store-release-steward/SKILL.md"
+    purpose: "Maintain mobile-store release readiness, version identity, reusable evidence, submission state, and App Store Connect operations."
   - name: "observability-lead"
     area: "product-technology"
     class: "coordinator"
@@ -135,6 +141,16 @@ roles:
     path: ".codex/skills/revenue-operations-agent/SKILL.md"
     purpose: "Maintain a traceable commercial pipeline and revenue operating rhythm."
 shared_skills:
+  - name: "food-icon-scale-audit"
+    area: "catalog-operations"
+    status: "pilot"
+    path: ".codex/skills/food-icon-scale-audit/SKILL.md"
+    purpose: "Compare published food images in a named 15-column grid at current and proposed display frames without changing catalog or app state."
+    available_to: "all-roles"
+    typical_users:
+      - "catalog-curation-steward"
+      - "strategic-product-advisor"
+      - "mobile-incident-specialist"
   - name: "fresh-task-checkout"
     area: "product-technology"
     status: "pilot"

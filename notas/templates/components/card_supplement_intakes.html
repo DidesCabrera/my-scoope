@@ -1,0 +1,11 @@
+<div class="content-panel entity-card__supplements">
+  {% for intake in intakes %}
+    <div class="entity-card__supplement-intake">
+      <strong>{{ intake.label }}</strong>
+      {% if intake.hour %}<span>{{ intake.hour }}</span>{% endif %}
+      <p>{% for item in intake.items %}{{ item.name }} · {{ item.quantity|floatformat:"-3" }} {{ item.unit }}{% if not forloop.last %}, {% endif %}{% empty %}Sin suplementos en esta toma.{% endfor %}</p>
+    </div>
+  {% empty %}
+    <p class="entity-card__panel-empty">Esta Minuta aún no tiene tomas de suplementos.</p>
+  {% endfor %}
+</div>

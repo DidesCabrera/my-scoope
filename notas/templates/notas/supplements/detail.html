@@ -1,50 +1,72 @@
 {% extends "notas/base.html" %}
-{% load static l10n %}
+{% load static %}
 {% block title %}{{ vm.content.supplement.name }} · Suplemento{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}">{% endblock %}
+{% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/web_parity.css' %}?v=20261114-3">{% endblock %}
 {% block content %}
 {% with supplement=vm.content.supplement %}
-<div class="page web-parity" data-page="supplement-detail">
-  <a class="web-parity__back" href="{% url 'supplement_list' %}">← Mis Suplementos</a>
-  <header class="web-parity__heading"><div><p class="web-parity__eyebrow">Mi Suplemento</p><h1>{{ supplement.name }}</h1>
-    <p>{{ supplement.brand|default:"Sin marca" }}{% if supplement.default_quantity %} · Dosis habitual {{ supplement.default_quantity }} {{ supplement.default_unit }}{% endif %}</p></div></header>
-  <section class="web-parity__section"><h2>Ficha del producto</h2>
-    <form method="post" action="{% url 'supplement_save' supplement.id %}" class="web-parity__form" data-repeat-form>
-      {% csrf_token %}
-      <label>Nombre<input name="name" value="{{ supplement.name }}" maxlength="100" required></label>
-      <label>Marca<input name="brand" value="{{ supplement.brand }}" maxlength="100"></label>
-      <label>Forma<select name="form"><option value="">Sin especificar</option>{% for form in vm.content.forms %}<option value="{{ form }}" {% if supplement.form == form %}selected{% endif %}>{{ form }}</option>{% endfor %}</select></label>
-      <label>Cantidad habitual<input name="default_quantity" value="{{ supplement.default_quantity|default_if_none:''|floatformat:'3u' }}" type="number" min="0.001" step="0.001"></label>
-      <label>Unidad habitual<select name="default_unit"><option value="">Sin especificar</option>{% for unit in vm.content.units %}<option value="{{ unit }}" {% if supplement.default_unit == unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></label>
-      <label>Descripción<textarea name="description" rows="3">{{ supplement.description }}</textarea></label>
-      <label>Información personal<textarea name="user_information" rows="3">{{ supplement.user_information }}</textarea></label>
-      <h3>Componentes de la etiqueta</h3>
-      <div data-repeat-list>
-        {% for component in supplement.components %}
-        <div class="web-parity__repeat-row"><label>Componente<input name="component_name" value="{{ component.name }}"></label>
-          <label>Cantidad<input name="component_quantity" value="{{ component.quantity|floatformat:'3u' }}" type="number" min="0.001" step="0.001"></label>
-          <label>Unidad<select name="component_unit">{% for unit in vm.content.component_units %}<option value="{{ unit }}" {% if component.unit == unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></label><button type="button" class="web-parity__text-button" data-repeat-remove>Quitar</button></div>
-        {% empty %}<div class="web-parity__repeat-row"><label>Componente<input name="component_name"></label>
-          <label>Cantidad<input name="component_quantity" type="number" min="0.001" step="0.001"></label>
-          <label>Unidad<select name="component_unit">{% for unit in vm.content.component_units %}<option value="{{ unit }}">{{ unit }}</option>{% endfor %}</select></label><button type="button" class="web-parity__text-button" data-repeat-remove>Quitar</button></div>{% endfor %}
+<div class="page web-parity library-detail library-detail--supplement" data-page="supplement-detail">
+  <header class="library-detail__header">
+    <div class="library-detail__identity">
+      <div class="card-title main">{% include "components/card_main_title.html" with titulo=vm.content.title %}</div>
+      {% if supplement.brand %}<p>{{ supplement.brand }}</p>{% endif %}
+      {% if supplement.components %}<span class="library-detail__indicator">{{ supplement.components|length }} componente{{ supplement.components|length|pluralize }}</span>{% endif %}
+    </div>
+    <details class="library-detail__actions">
+      <summary aria-label="Más acciones para {{ supplement.name }}" title="Más acciones"><i data-lucide="more-horizontal" aria-hidden="true"></i></summary>
+      <div class="library-detail__action-menu">
+        <a href="{% url 'supplement_edit' supplement.pk %}"><i data-lucide="pencil" aria-hidden="true"></i> Editar suplemento</a>
+        <form method="post" action="{% url 'supplement_remove' supplement.pk %}" onsubmit="return confirm('¿Eliminar este suplemento de tu biblioteca? Las ingestas guardadas conservarán su descripción.')">
+          {% csrf_token %}<button type="submit" class="library-detail__danger"><i data-lucide="trash-2" aria-hidden="true"></i> Eliminar suplemento</button>
+        </form>
       </div>
-      <button type="button" class="web-parity__text-button" data-repeat-add>+ Otro componente</button>
-      <h3>Nutrición declarada por dosis habitual</h3>
-      <p class="web-parity__note">Esta información es descriptiva y nunca se suma a los totales de Comidas o Minutas.</p>
-      <label>Energía (kcal)<input name="energy_kcal" type="number" min="0" step="0.001" value="{{ supplement.nutrition.energy_kcal|unlocalize }}"></label>
-      <label>Proteínas (g)<input name="protein_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.protein_g|unlocalize }}"></label>
-      <label>Carbohidratos (g)<input name="carbs_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.carbs_g|unlocalize }}"></label>
-      <label>Grasas (g)<input name="fat_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.fat_g|unlocalize }}"></label>
-      <label>Grasas saturadas (g)<input name="saturated_fat_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.saturated_fat_g|unlocalize }}"></label>
-      <label>Azúcares (g)<input name="sugar_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.sugar_g|unlocalize }}"></label>
-      <label>Fibra (g)<input name="fiber_g" type="number" min="0" step="0.001" value="{{ supplement.nutrition.fiber_g|unlocalize }}"></label>
-      <label>Sodio (mg)<input name="sodium_mg" type="number" min="0" step="0.001" value="{{ supplement.nutrition.sodium_mg|unlocalize }}"></label>
-      <button class="btn-primary" type="submit">Guardar suplemento</button>
-    </form>
-    <form method="post" action="{% url 'supplement_remove' supplement.id %}" class="web-parity__danger-form">{% csrf_token %}
-      <button type="submit">Quitar de mi biblioteca</button></form>
+    </details>
+  </header>
+
+  {% if supplement.brand or supplement.form or supplement.default_quantity or supplement.description %}
+  <section class="library-detail__section">
+    <div class="library-detail__section-heading"><h2>Información del suplemento</h2></div>
+    {% if supplement.brand or supplement.form or supplement.default_quantity %}
+    <dl class="library-detail__facts">
+      {% if supplement.brand %}<div><dt>Marca</dt><dd>{{ supplement.brand }}</dd></div>{% endif %}
+      {% if supplement.form %}<div><dt>Forma</dt><dd>{{ vm.content.form_label }}</dd></div>{% endif %}
+      {% if supplement.default_quantity %}<div><dt>Dosis predeterminada</dt><dd>{{ vm.content.dose_label }}</dd></div>{% endif %}
+    </dl>
+    {% endif %}
+    {% if supplement.description %}<p class="library-detail__description">{{ supplement.description }}</p>{% endif %}
   </section>
+  {% endif %}
+
+  {% if supplement.components %}
+  <section class="library-detail__section">
+    <div class="library-detail__section-heading"><h2>Componentes</h2><span>{{ supplement.components|length }} componente{{ supplement.components|length|pluralize }}</span></div>
+    <div class="library-detail__table">
+      <div class="library-detail__table-head"><span>Componente</span><span>Cantidad</span></div>
+      {% for component in supplement.components %}
+      <div class="library-detail__table-row"><span>{{ component.name }}</span><strong>{{ component.quantity|floatformat:"-3" }} {{ component.unit }}</strong></div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="library-detail__section">
+    <div class="library-detail__section-heading"><h2>Información nutricional</h2><span>Por dosis predeterminada</span></div>
+    <div class="library-detail__table">
+      <div class="library-detail__table-head"><span>Nutriente</span><span>Por dosis</span></div>
+      <div class="library-detail__table-row"><span>Calorías</span><strong>{% if supplement.nutrition.energy_kcal != None %}{{ supplement.nutrition.energy_kcal|floatformat:1 }} kcal{% else %}—{% endif %}</strong></div>
+      <div class="library-detail__table-row"><span>Proteínas</span><strong>{% if supplement.nutrition.protein_g != None %}{{ supplement.nutrition.protein_g|floatformat:1 }} g{% else %}—{% endif %}</strong></div>
+      <div class="library-detail__table-row"><span>Grasas totales</span><strong>{% if supplement.nutrition.fat_g != None %}{{ supplement.nutrition.fat_g|floatformat:1 }} g{% else %}—{% endif %}</strong></div>
+      <div class="library-detail__table-row"><span>Grasas saturadas</span><strong>{% if supplement.nutrition.saturated_fat_g != None %}{{ supplement.nutrition.saturated_fat_g|floatformat:1 }} g{% else %}—{% endif %}</strong></div>
+      <div class="library-detail__table-row"><span>Carbohidratos</span><strong>{% if supplement.nutrition.carbs_g != None %}{{ supplement.nutrition.carbs_g|floatformat:1 }} g{% else %}—{% endif %}</strong></div>
+      <div class="library-detail__table-row"><span>Azúcares</span><strong>{% if supplement.nutrition.sugar_g != None %}{{ supplement.nutrition.sugar_g|floatformat:1 }} g{% else %}—{% endif %}</strong></div>
+      <div class="library-detail__table-row"><span>Fibra</span><strong>{% if supplement.nutrition.fiber_g != None %}{{ supplement.nutrition.fiber_g|floatformat:1 }} g{% else %}—{% endif %}</strong></div>
+      <div class="library-detail__table-row"><span>Sodio</span><strong>{% if supplement.nutrition.sodium_mg != None %}{{ supplement.nutrition.sodium_mg|floatformat:1 }} mg{% else %}—{% endif %}</strong></div>
+    </div>
+    <p class="web-parity__note">Estos valores son informativos y no se suman a los totales de Comidas o Minutas.</p>
+  </section>
+  {% if supplement.user_information %}
+  <section class="library-detail__section"><div class="library-detail__section-heading"><h2>Notas personales</h2></div><p class="library-detail__description">{{ supplement.user_information }}</p></section>
+  {% endif %}
 </div>
 {% endwith %}
-<script src="{% static 'notas/js/web_parity.js' %}" defer></script>
 {% endblock %}

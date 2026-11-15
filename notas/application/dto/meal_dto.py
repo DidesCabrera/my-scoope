@@ -35,6 +35,9 @@ class MealFoodDTO:
     alloc_protein: float
     alloc_carbs: float
     alloc_fat: float
+    quantity_unit: str = "g"
+    ppk: float | None = None
+    emoji: str = ""
 
     def as_dict(self) -> dict:
         return asdict(self)

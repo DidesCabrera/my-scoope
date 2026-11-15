@@ -25,12 +25,13 @@ export type ContextCardAction = {
 
 type ContextCardActionsProps = {
   actions: ContextCardAction[];
+  iconNode?: ReactNode;
   label: string;
   renderTrigger?: (open: () => void) => ReactNode;
   title: string;
 };
 
-export function ContextCardActions({ actions, label, renderTrigger, title }: ContextCardActionsProps) {
+export function ContextCardActions({ actions, iconNode, label, renderTrigger, title }: ContextCardActionsProps) {
   const [visible, setVisible] = useState(false);
   const [selected, setSelected] = useState<ContextCardAction | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -82,7 +83,7 @@ export function ContextCardActions({ actions, label, renderTrigger, title }: Con
       )}
       <ActionSheetModal onRequestClose={close} visible={visible}>
           <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
-            <ActionSheetHeader icon={MoreHorizontal} onClose={close} title={selected?.confirmation?.title ?? title} />
+            <ActionSheetHeader icon={MoreHorizontal} iconNode={iconNode} onClose={close} title={selected?.confirmation?.title ?? title} />
 
             <ScrollView
               contentContainerStyle={styles.sheetContent}

@@ -14,11 +14,11 @@
     <div class="kpi-row">
       <div class="kpi-label">Proteína</div>
 
-      <div class="kpi-ppk">
+      {% if kpis.ppk != None %}<div class="kpi-ppk">
         <span class="proteins_per_kilo">
           {{ kpis.ppk|floatformat:1 }}g/kg
         </span>
-      </div>
+      </div>{% else %}<div></div>{% endif %}
 
       <div class="kpi-grams">
         {{ kpis.g_protein|floatformat:0 }}g

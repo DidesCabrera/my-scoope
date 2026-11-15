@@ -239,13 +239,13 @@ function PickerOptionCard({ actionLabel, eyebrow, onAction, option, showPanels =
   const openMealComponent = (component: FoodPanelItem) => {
     if (component.detailId == null) return;
     if (component.kind !== "preparation") {
-      router.push(`/libraries/foods/${component.detailId}` as Href);
+      router.push({ pathname: "/libraries/foods/[id]", params: { id: String(component.detailId), mealId: String(option.id), mealQuantity: String(component.quantity), mealRelationId: String(component.relationId ?? "") } } as Href);
       return;
     }
     const preparation = option.panel?.preparations?.find((row) => row.relation_id === component.relationId);
     if (!preparation) return;
     router.push({ pathname: "/libraries/preparations/[id]", params: {
-      id: String(component.detailId), mealId: String(option.id), relationId: String(preparation.relation_id),
+      id: String(component.detailId), mealId: String(option.id), relationId: String(preparation.relation_id), mealGrams: String(preparation.quantity_g),
       ...(preparation.selection_mode === "units" ? { units: String(preparation.selected_units ?? 1) } : { grams: String(preparation.quantity_g) }),
     } } as Href);
   };
@@ -302,7 +302,7 @@ export function CompositionPickerScreen({
   const isMealPicker = kind === "meal-to-dailyplan" || kind === "meal-to-calendarized-day";
   const isCalendarizedPicker = kind === "dailyplan-to-calendarized-day" || kind === "meal-to-calendarized-day" || kind === "food-to-calendarized-meal";
   const title = relationId || relationKey
-    ? isFoodPicker ? "Reemplazar alimento" : "Reemplazar comida"
+    ? isFoodPicker ? selectedId ? "Editar porción" : "Reemplazar alimento" : "Reemplazar comida"
     : config.title;
   const router = useRouter();
   const detailHref = returnTo ?? (

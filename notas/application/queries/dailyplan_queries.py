@@ -18,6 +18,7 @@ from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
 from notas.application.services.nutrition.nutrition_kpis import get_ppk_dailyplan
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import DailyPlan
 
 
@@ -56,8 +57,9 @@ def build_dailyplan_meal_dto(dailyplan_meal, user) -> DailyPlanMealDTO:
         .order_by("order", "id")
     )
 
+    body_weight = get_current_weight(user)
     foods = [
-        build_meal_food_dto(meal_food)
+        build_meal_food_dto(meal_food, body_weight=body_weight)
         for meal_food in meal_foods
     ]
 

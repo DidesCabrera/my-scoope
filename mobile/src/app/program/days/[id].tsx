@@ -78,7 +78,12 @@ function CalendarizedMealCards({ apiRequest, completionError, dayId, mealExecuti
               }}
               afterNutrition={mealKey ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={completionError?.mealKey === mealKey ? completionError.message : null} onToggle={(completed) => onToggleCompleted(mealKey, completed)} saving={savingMealKey != null} /> : null}
               title={meal.name ?? "Comida"}>
-              <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push((food.kind === "preparation" ? `/libraries/preparations/${food.detailId}` : `/libraries/foods/${food.detailId}`) as Href); }} preparation={mealKey ? {
+              <FoodPanels items={foods} onOpenItem={(food) => {
+                if (food.detailId == null || !Number.isFinite(food.quantity) || food.quantity <= 0) return;
+                router.push(food.kind === "preparation"
+                  ? { pathname: "/libraries/preparations/[id]", params: { id: String(food.detailId), mealGrams: String(food.quantity) } } as Href
+                  : { pathname: "/libraries/foods/[id]", params: { id: String(food.detailId), mealQuantity: String(food.quantity), snapshotDayId: String(dayId), snapshotMealKey: mealKey, snapshotFoodKey: food.id } } as Href);
+              }} preparation={mealKey ? {
                 disabled: savingMealKey != null,
                 isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
                 onToggle: (food) => onTogglePrepared(mealKey, food.id),

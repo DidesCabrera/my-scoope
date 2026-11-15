@@ -166,7 +166,7 @@ class ProgramNutritionProposalTests(TestCase):
         proposal_html = response.content.decode()
         self.assertLess(proposal_html.index("</header>"), proposal_html.index("proposal-program-objectives"))
         self.assertLess(proposal_html.index("proposal-program-objectives"), proposal_html.index("proposal-attachment--program"))
-        self.assertLess(proposal_html.index("proposal-attachment--program"), proposal_html.index('class="card card--program program-card"'))
+        self.assertLess(proposal_html.index("proposal-attachment--program"), proposal_html.index('class="entity-card card card--program program-card"'))
         self.assertContains(program_response, "Semana 8")
         self.assertContains(program_response, "program-chart-panel")
         self.assertContains(program_response, "program-week-tabs")

@@ -13,6 +13,7 @@ from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
 from notas.application.services.nutrition.nutrition_kpis import get_ppk_meal
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import Meal
 
 
@@ -89,7 +90,7 @@ def build_meal_kpi_dto(meal: Meal, user) -> MealKpiDTO:
     )
 
 
-def build_meal_food_dto(meal_food) -> MealFoodDTO:
+def build_meal_food_dto(meal_food, *, body_weight=None) -> MealFoodDTO:
     food = meal_food.food
     quantity = float(meal_food.quantity)
     factor = quantity / 100.0
@@ -120,6 +121,9 @@ def build_meal_food_dto(meal_food) -> MealFoodDTO:
         alloc_protein=float(food_alloc["protein"]),
         alloc_carbs=float(food_alloc["carbs"]),
         alloc_fat=float(food_alloc["fat"]),
+        quantity_unit=food.portion_unit,
+        ppk=protein / body_weight if body_weight and protein else None,
+        emoji=food.emoji,
     )
 
 
@@ -149,8 +153,9 @@ def build_meal_dto(meal: Meal, user) -> MealDTO:
         .order_by("order", "id")
     )
 
+    body_weight = get_current_weight(user)
     foods = [
-        build_meal_food_dto(meal_food)
+        build_meal_food_dto(meal_food, body_weight=body_weight)
         for meal_food in meal_foods
     ]
 
