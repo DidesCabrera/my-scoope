@@ -193,6 +193,8 @@ por publicados a partir de esta exploración.
 
 ## Fuentes internas de evidencia
 
+- Selecciones aprobadas posteriores: [nueces y cacao](visual_identity_nueces_cacao_selection.md) y [aceites](visual_identity_oils_selection.md). Se conservan como propuestas editoriales, no como publicación automática.
+
 - `core/food_visual_identity.py`
 - `food_catalog/models.py` (`CatalogFood`, `CatalogPreparation`)
 - `mobile/src/components/nutrition/food-visual-icon.tsx`
