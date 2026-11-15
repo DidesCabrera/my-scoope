@@ -1,4 +1,4 @@
-{% with panel_id=child_card.child_id|default:forloop.counter %}
+{% with panel_id=child_card.child_id|default:child_card.id %}
 <div
   {% if dailyplan_card_id %}id="{{ dailyplan_card_id }}"{% endif %}
   class="entity-card entity-card--dailyplan card {{ dailyplan_card_class }}"

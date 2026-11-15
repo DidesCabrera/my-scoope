@@ -1,4 +1,4 @@
-{% with panel_id=child_card.child_id|default:forloop.counter %}
+{% with panel_id=child_card.child_id|default:child_card.id %}
 <div class="entity-card entity-card--food card food-child-card {{ food_card_class }}">
   <div class="entity-card__main card-main">
     <div class="entity-card__title card-title">

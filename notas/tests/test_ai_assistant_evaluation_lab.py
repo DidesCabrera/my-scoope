@@ -50,7 +50,7 @@ class AIAssistantEvaluationLabTests(TestCase):
         self.assertEqual(report.status, "preflight_ready")
         self.assertEqual(EVALUATION_LAB_VERSION, "ai_assistant.evaluation_lab.v2")
         self.assertEqual(report.contract_manifest["task_dataset_version"], "ai_assistant.task_dataset.v2")
-        self.assertEqual(report.contract_manifest["mcp_tool_count"], 12)
+        self.assertEqual(report.contract_manifest["mcp_tool_count"], 13)
         self.assertEqual(len(report.contract_manifest["provider_tool_sha256"]), 64)
         self.assertTrue(report.passed)
         self.assertEqual(report.ground_truth["libraries"]["foods"], 1)
