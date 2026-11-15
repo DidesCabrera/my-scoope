@@ -1,4 +1,6 @@
-{% with panel_id=child_card.child_id|default:child_card.id %}
+{% with loop_id=forloop.counter|default:"child" %}
+{% with card_id=child_card.id|default:loop_id %}
+{% with panel_id=child_card.child_id|default:card_id %}
 <div class="entity-card entity-card--meal card {{ dpm_meal }}">
   <div class="entity-card__main card-main">
     <div class="entity-card__title card-title">
@@ -36,4 +38,6 @@
     </div>
   </div>
 </div>
+{% endwith %}
+{% endwith %}
 {% endwith %}

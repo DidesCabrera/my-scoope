@@ -1,4 +1,6 @@
-{% with panel_id=child_card.child_id|default:child_card.id %}
+{% with loop_id=forloop.counter|default:"child" %}
+{% with card_id=child_card.id|default:loop_id %}
+{% with panel_id=child_card.child_id|default:card_id %}
 <div
   {% if dailyplan_card_id %}id="{{ dailyplan_card_id }}"{% endif %}
   class="entity-card entity-card--dailyplan card {{ dailyplan_card_class }}"
@@ -71,4 +73,6 @@
     </div>
   </div>
 </div>
+{% endwith %}
+{% endwith %}
 {% endwith %}
