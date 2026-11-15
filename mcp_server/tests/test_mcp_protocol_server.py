@@ -10,6 +10,7 @@ from myscoope_mcp.protocol_server import (
     assert_protocol_tool_surface_is_safe,
     create_mcp_server,
     get_configured_allowed_tool_names,
+    get_proposal_tool_names,
     get_protocol_allowed_tool_names,
     get_protocol_forbidden_tool_names,
     get_protocol_tool_annotations,
@@ -68,6 +69,11 @@ class MCPProtocolServerTests(unittest.TestCase):
         self.assertIn("apply_approved_proposal", forbidden)
         self.assertIn("apply_proposal", forbidden)
         self.assertIn("apply_validated_proposal", forbidden)
+
+    def test_proposal_tool_names_are_part_of_allowed_surface(self):
+        self.assertTrue(
+            get_proposal_tool_names().issubset(get_protocol_allowed_tool_names())
+        )
 
     def test_protocol_tool_surface_has_no_forbidden_overlap(self):
         assert_protocol_tool_surface_is_safe()

@@ -68,13 +68,7 @@ class MyScoopeFastMCP(FastMCP):
         tools = await super().list_tools()
         for tool in tools:
             scopes = [MCP_SCOPE_READ]
-            if tool.name in {
-                TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
-                TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
-                TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
-                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
-                TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
-            }:
+            if tool.name in get_proposal_tool_names():
                 scopes.append(MCP_SCOPE_PROPOSALS_CREATE)
             tool.securitySchemes = [{"type": "oauth2", "scopes": scopes}]
         return tools
@@ -594,6 +588,17 @@ def get_protocol_allowed_tool_names() -> set[str]:
         TOOL_LIST_USER_PROPOSALS,
         TOOL_LIST_FOOD_CATALOG,
         TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
+        TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+        TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
+        TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+        TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+        TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    }
+
+
+def get_proposal_tool_names() -> set[str]:
+    """Tools that require the proposal-creation OAuth scope."""
+    return {
         TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
         TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
         TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
