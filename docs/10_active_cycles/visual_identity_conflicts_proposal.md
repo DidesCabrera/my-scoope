@@ -1,6 +1,8 @@
 # Propuesta visual para los conflictos del Food Catalog (v0.1)
 
-Fecha: 2026-11-12. Estado: propuesta editorial, sin integración en app. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo y los diez conceptos de cada uno de los lotes tercero, cuarto, quinto y sexto; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. Para frambuesa eligió definitivamente la variante de dos frutos sin partes verdes y con cavidad visible (`raspberry-v2`).
+Status: active — propuesta editorial; sin integración en la app
+
+Fecha: 2026-11-12. Felipe aprobó los cuatro bocetos del primer lote, los seis conceptos del segundo y los diez conceptos de cada uno de los lotes tercero, cuarto, quinto y sexto; el yogur aprobado es la versión en pote, mientras que el cuenco se conserva como referencia para salsas/cremas. Para frambuesa eligió definitivamente la variante de dos frutos sin partes verdes y con cavidad visible (`raspberry-v2`).
 
 Fuente: planilla [Food Catalog central — 219 alimentos y porciones](https://docs.google.com/spreadsheets/d/13hEtHnxwfsPI0j0BuTfloPqoqaVRRSGVXAjFjNuKOoE/edit#gid=2005160404), pestaña `Alimentos`, filas 5–223, columnas B/E/O/P/X/Y/Z/AA. La auditoría histórica marca 103 «Crear icono», 36 «Compartir icono», 3 «Cambiar emoji» y 77 «Mantener». Esta tabla cubre los **142 alimentos con acción pendiente** mediante **106 conceptos visuales**; agrupar variantes no equivale a afirmar que todos los estados se vean idénticos.
 
