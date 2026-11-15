@@ -6,20 +6,21 @@ from datetime import timedelta
 from django.conf import settings
 from django.db.models import Count, Prefetch
 from django.utils import timezone
-from accounts.services.entitlements import resolve_account_entitlements
 
+from accounts.services.entitlements import resolve_account_entitlements
 from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
 from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
+from food_catalog.application.editorial_descriptions import description_for_food
 from mobile_api import library_projections
-from mobile_api.preparation_projections import meal_preparations_prefetch, preparation_panel_item
 from mobile_api.calendar_today import current_dated_day, standalone_today_payload
 from mobile_api.calendarized_snapshot_foods import index_snapshot_food
 from mobile_api.errors import MobileAPIError
 from mobile_api.food_visuals import food_visual_payload
 from mobile_api.identity_selectors import local_date_for_user, profile_payload, session_payload
 from mobile_api.library_actions import library_actions_payload, library_list_actions_projector
+from mobile_api.preparation_projections import meal_preparations_prefetch, preparation_panel_item
 from notas.application.queries.calendar_foods import calendar_foods_for_period
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_measurement_summary,
@@ -670,7 +671,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 **food_visual_payload(item),
                 "quantity_unit": item.portion_unit,
                 "default_portion": round(float(item.default_portion_g), 1) if item.default_portion_g is not None else None,
-                "subtitle": "",
+                "subtitle": description_for_food(item),
                 "nutrition": _library_nutrition_payload(item, current_weight),
                 "food_nutrition": library_projections.food_nutrition_payload(item),
                 "indicators": [{"label": "base nutricional", "value": f"100 {item.portion_unit}"}],

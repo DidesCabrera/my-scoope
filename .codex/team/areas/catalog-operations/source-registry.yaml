@@ -1,7 +1,20 @@
 schema_version: 1
 area: "catalog-operations"
-last_reviewed: "2026-11-14"
+last_reviewed: "2026-11-15"
 sources:
+  - id: "myscoope-food-descriptions-v1"
+    name: "My Scoope — descripciones editoriales de alimentos"
+    type: "versioned-editorial-dataset"
+    catalog: "foods"
+    location: "food_catalog/data/food_descriptions_v1.json"
+    scope: "271 alimentos globales activos visibles en producción al 2026-11-15: 222 vinculados a CatalogFood y 49 heredados sin fuente nutricional verificada."
+    authority: "Texto editorial revisado por identidad exacta; no reemplaza la fuente de composición ni valida los registros heredados."
+    license_status: "original-editorial-copy-with-linked-factual-references"
+    state: "versioned-reviewable-dataset"
+    last_evidence: "docs/10_active_cycles/food_descriptions_cycle.md"
+    gaps:
+      - "Los 49 registros heredados necesitan fuente, identidad y revisión nutricional antes de atribuir beneficios específicos."
+      - "Reconciliar altas, bajas y cambios de nombre con producción antes de cada nueva versión del lote."
   - id: "myscoope-food-visual-assets"
     name: "My Scoope — curated food visual assets"
     type: "internal-editorial-asset"
