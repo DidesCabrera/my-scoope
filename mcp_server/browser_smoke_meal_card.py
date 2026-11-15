@@ -133,6 +133,9 @@ def main():
         assert card.locator("#meal-food-table").is_visible()
         assert card.locator("#meal-foods").is_hidden()
         assert card.locator(".mobile-tabs").is_hidden()
+        assert card.locator(".food-panel").evaluate(
+            "element => element.scrollWidth > element.clientWidth"
+        )
         assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
         if args.screenshot_panel:
             args.screenshot_panel.parent.mkdir(parents=True, exist_ok=True)
@@ -140,6 +143,9 @@ def main():
 
         page.locator("iframe").evaluate("element => element.style.width = '390px'")
         assert card.locator("#card").evaluate("element => getComputedStyle(element).zoom") == "1"
+        assert card.locator("#meal-food-table").is_hidden()
+        assert card.locator("#meal-foods").is_visible()
+        assert card.locator(".mobile-tabs").is_visible()
         assert card.locator(".macro-row").first.evaluate(
             "element => Math.round(parseFloat(getComputedStyle(element).gridTemplateColumns)) === 78"
         )

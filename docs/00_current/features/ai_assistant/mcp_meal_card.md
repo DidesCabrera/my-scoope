@@ -54,8 +54,9 @@ corrigió un timeout de inicialización descubierto en una conversación real. L
 versión 3 incorpora tokens y receta del contrato visual común. La versión 4
 mantiene la tabla de escritorio en la vista completa de ChatGPT (760 px). La
 versión 5 extiende esa tabla al panel lateral web (570 px), con desplazamiento
-horizontal para las columnas de alimentos. La versión 6 activa los cinco paneles
-móviles hasta 600 px y deja cada vista nutricional en una cuadrícula propia.
+horizontal para las columnas de alimentos. La versión 6 mantiene la tabla en
+anchos intermedios, incluido 570 px, y activa los cinco paneles móviles hasta
+480 px; cada vista nutricional móvil usa una cuadrícula propia.
 La versión 7 conserva el tamaño al 100 % en el ancho de teléfono (hasta 480 px) y aplica el 80 % en anchos mayores, incluido el panel estrecho de escritorio.
 La versión 8 mantiene intacto ese diseño y agrega «Abrir en My Scoope» solo para comidas propias. Usa el ID validado del resultado autorizado y el origen HTTPS configurado, sin tokens ni datos nutricionales en la URL. `window.openai.openExternal({href, redirectUrl: false})` abre `/libraries/meals/<id>` desde ChatGPT; fuera de ese host funciona el enlace normal. iOS y Android asocian esa ruta a la ficha nativa. Si la app no está instalada, el servidor redirige a `/app/meals/<id>/`, donde se exige sesión y se vuelve a comprobar acceso. Las comidas públicas de terceros siguen visibles en la card, pero no ofrecen el botón porque el detalle nativo de biblioteca solo admite comidas propias. Las versiones 2 a 7 siguen disponibles para conversaciones anteriores. El destino abre el ambiente configurado en la instalación móvil; staging requiere una instalación móvil configurada para staging.
 
