@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from ninja import Router
 
-from billing.application.services.apple_app_store import AppleEvidenceError, sync_apple_transaction
+from billing.application.services.apple_app_store import AppleEvidenceError, UnknownAppleAccountToken, sync_apple_transaction
 from billing.infrastructure.providers.apple_app_store import (
     AppleAppStoreConfigurationError,
     InvalidAppleSignedData,
 )
 from mobile_api.api_support import require_scope, success
-from mobile_api.apple_billing import apple_purchases_enabled_for_user, verify_apple_transaction_for_user
+from mobile_api.apple_billing import apple_purchases_enabled_for_user, recover_unbound_sandbox_subscription, verify_apple_transaction_for_user
 from mobile_api.auth import mobile_bearer
 from mobile_api.billing_selector import subscription_payload
 from mobile_api.entitlements_selector import entitlements_payload
@@ -23,7 +23,6 @@ from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()
-
 
 @router.get(
     "/entitlements",
@@ -65,7 +64,10 @@ def apple_transaction(request, payload: AppleTransactionInput):
         evidence = verify_apple_transaction_for_user(payload.signed_transaction, user=request.auth.user)
         if payload.product_id and payload.product_id != evidence.product_id:
             raise AppleEvidenceError("The submitted product differs from the signed Apple product.")
-        provider = sync_apple_transaction(evidence, expected_user=request.auth.user, source="mobile_storekit")
+        try:
+            provider = sync_apple_transaction(evidence, expected_user=request.auth.user, source="mobile_storekit")
+        except UnknownAppleAccountToken:
+            provider = recover_unbound_sandbox_subscription(evidence, user=request.auth.user)
     except InvalidAppleSignedData as exc:
         raise MobileAPIError(
             code="apple_transaction_invalid",
