@@ -4,6 +4,7 @@ from notas.application.ai_tools.comparison_tools import (
     list_saved_comparisons_tool,
     read_saved_comparison_tool,
 )
+from notas.application.ai_tools.preparation_read_tools import query_meal_preparations_tool, query_preparations_tool
 from notas.application.ai_tools.read_tools import (
     list_user_proposals_tool,
     read_dailyplan_tool,
@@ -150,6 +151,15 @@ def query_workspace_tool(
 
     normalized_resource = str(resource or "").strip().lower()
     normalized_search = str(search or "").strip()
+
+    if normalized_resource == "preparations":
+        return query_preparations_tool(
+            user, object_id=object_id, search=normalized_search, limit=limit, offset=offset,
+        )
+    if normalized_resource == "meal_preparations":
+        if object_id is None:
+            return tool_error(code="meal_id_required", message="Selecciona una comida para consultar sus preparaciones.")
+        return query_meal_preparations_tool(user, meal_id=object_id)
 
     if normalized_resource in {"supplements", "supplement_presets", "supplement_intakes"}:
         return query_supplements_tool(

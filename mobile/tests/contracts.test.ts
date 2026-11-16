@@ -1530,6 +1530,8 @@ test("the iOS release contract declares only approved capabilities and privacy c
   assert.equal(app.android.intentFilters[0].autoVerify, true);
   assert.deepEqual(app.android.intentFilters[0].data, [
     { scheme: "https", host: "www.myscoope.com", pathPrefix: "/s/" },
+    { scheme: "https", host: "www.myscoope.com", pathPrefix: "/libraries/meals/" },
+    { scheme: "https", host: "myscoope-staging.onrender.com", pathPrefix: "/libraries/meals/" },
   ]);
   const collected = new Set(
     app.ios.privacyManifests.NSPrivacyCollectedDataTypes.map((item) => item.NSPrivacyCollectedDataType),

@@ -218,21 +218,7 @@ def home_view(request):
     )
 
     content_vm = HomeContentVM(
-        header=build_page_header(
-            title="",
-            actions=[
-                {
-                    "key": "profile",
-                    "label": "Perfil",
-                    "url": reverse("profile_detail"),
-                    "method": "get",
-                    "icon": "circle-user-round",
-                    "order": 10,
-                    "desktop_position": "inline",
-                    "mobile_position": "inline",
-                }
-            ],
-        ),
+        header=build_page_header(title="", actions=[]),
         hero=HomeHeroVM(
             title=f"Bienvenido {user.username}!",
             subtitle=(

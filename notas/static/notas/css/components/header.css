@@ -260,6 +260,32 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
   position: relative;
 }
 
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-header-actions .overflow-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--text-main);
+}
+
+.home-header-actions .overflow-btn:hover,
+.home-header-actions .overflow-btn:focus-visible {
+  background: var(--interactive-hover);
+}
+
+.home-header-actions .overflow-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
 .overflow-btn {
   background: none;
   border: none;

@@ -7,6 +7,7 @@ from pathlib import Path
 from appstoreserverlibrary.api_client import AppStoreServerAPIClient
 from appstoreserverlibrary.models.Environment import Environment
 from appstoreserverlibrary.models.Status import Status
+from appstoreserverlibrary.models.UpdateAppAccountTokenRequest import UpdateAppAccountTokenRequest
 from appstoreserverlibrary.signed_data_verifier import SignedDataVerifier, VerificationException, VerificationStatus
 
 from billing.application.contracts import (
@@ -139,6 +140,13 @@ class AppleAppStoreClient:
                 transaction = self._with_renewal(transaction, getattr(latest, "signedRenewalInfo", None))
                 results.append(AppleSubscriptionStatusEvidence(status=status, transaction=transaction))
         return tuple(results)
+
+    def set_app_account_token(self, original_transaction_id: str, token: str) -> None:
+        if self.api_client is None:
+            raise AppleAppStoreConfigurationError("App Store Server API credentials are not configured.")
+        self.api_client.set_app_account_token(
+            original_transaction_id, UpdateAppAccountTokenRequest(appAccountToken=token),
+        )
 
     def _with_renewal(self, transaction, signed_renewal):
         if not signed_renewal:

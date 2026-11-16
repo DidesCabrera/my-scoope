@@ -57,9 +57,14 @@ en kcal/macros de comidas o minutas. Los cambios se derivan a la UI de Suplement
 no existe patch genérico ni proyección MCP para esta capacidad. La calidad de la
 respuesta y del handoff requiere evaluación live antes de declararla cubierta.
 
-Preparaciones sigue como módulo en evolución paralela. El asistente no debe
-tratarla como Food ni prometer edición hasta fijar el contrato final de porción,
-versión, permisos y snapshots.
+La lectura operacional local de Preparaciones está en `query_workspace` y distingue
+receta curada, personal y borrador. Los patches deterministas de composición de
+Comidas de biblioteca agregan, ajustan o quitan la instancia servida; la versión
+y porción se validan en producto. Suplementos admite agregar o quitar tomas de
+Minutas de biblioteca con composición exacta y confirmación confiable. Esta
+implementación requiere evaluación live y revisión humana antes de declararse
+cobertura completa; recetas personales, cumplimiento fechado y snapshots
+calendarizados conservan su UI especializada.
 
 El inventario vivo de solicitudes posibles, su clasificación entre lectura, patch,
 propuesta, aclaración y handoff, y las brechas actuales está en

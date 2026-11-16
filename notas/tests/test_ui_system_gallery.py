@@ -63,7 +63,7 @@ class UISystemGalleryTests(TestCase):
         gallery = self.client.get(self.url)
         preview_url = reverse("ui_system_mcp_meal_card_preview")
         preview = self.client.get(preview_url)
-        card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v7.html"
+        card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui/meal_card_v8.html"
 
         self.assertContains(gallery, 'id="conversation-ui"')
         self.assertContains(gallery, preview_url)
@@ -72,7 +72,9 @@ class UISystemGalleryTests(TestCase):
         self.assertContains(gallery, 'sandbox="allow-scripts"')
         self.assertContains(gallery, "mcp_ui_gallery.js")
         self.assertEqual(preview.status_code, 200)
-        self.assertEqual(preview.content, card_path.read_bytes())
+        self.assertEqual(preview.content.decode(), card_path.read_text().replace(
+            '"__MYSCOOPE_APP_LINK_ORIGIN__"', '"http://testserver"'
+        ))
         self.assertEqual(preview["X-Frame-Options"], "SAMEORIGIN")
         for entity in ("food", "dailyplan"):
             with self.subTest(entity=entity):

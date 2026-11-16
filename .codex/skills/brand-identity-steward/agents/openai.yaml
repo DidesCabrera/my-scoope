@@ -1,0 +1,4 @@
+interface:
+  display_name: "Encargado de Identidad de Marca"
+  short_description: "Organiza la identidad y los activos visuales de My Scoope"
+  default_prompt: "Usa $brand-identity-steward para revisar la identidad visual de My Scoope y proponer el manual de marca a partir de las fuentes existentes."

@@ -17,6 +17,13 @@ test("food rows expose a consistent detail navigation affordance", async () => {
   assertSourceMatch(activeMeal, /<FoodDetailCardList editing=\{\(component\) => component\.kind === "preparation" \? preparationEditing : foodEditing\} items=\{foods\} onOpenFood=/);
 });
 
+test("meal detail preserves its deep link through login", async () => {
+  const detail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
+  const rootLayout = await readTestFile(path.resolve(process.cwd(), "src/app/_layout.tsx"), "utf8");
+  assertSourceMatch(detail, /status === "anonymous"\) return <Redirect href=\{\{ pathname: "\/login", params: \{ returnTo: String\(currentDetailHref\) \} \}\} \/>/);
+  assertSourceMatch(rootLayout, /const returnTo = .*libraries.*meals.*\? pathname : undefined/);
+});
+
 test("meal component cards offer portion, replacement, and scoped removal before detail navigation", async () => {
   const cards = await readTestFile(path.resolve(process.cwd(), "src/components/details/food-detail-card-list.tsx"), "utf8");
   const detail = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");

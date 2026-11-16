@@ -1,0 +1,24 @@
+<div class="home-header-actions">
+    <div class="overflow-menu">
+        <button class="overflow-btn" type="button" aria-label="Calendarizar" title="Calendarizar">
+            <i data-lucide="plus" aria-hidden="true"></i>
+        </button>
+        <div class="overflow-dropdown" aria-label="Calendarizar">
+            <a class="overflow-action" href="{% url 'calendar_date_detail' vm.content.today_date|date:'Y-m-d' %}#plan-editor"><i data-lucide="clipboard-list" aria-hidden="true"></i><span>Minutas</span></a>
+            <a class="overflow-action" href="{% url 'program_list' %}"><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i><span>Programas</span></a>
+            <a class="overflow-action" href="{% url 'calendar_commitments' 'shopping' %}"><i data-lucide="shopping-basket" aria-hidden="true"></i><span>Días de compras</span></a>
+            <a class="overflow-action" href="{% url 'calendar_commitments' 'cooking' %}"><i data-lucide="chef-hat" aria-hidden="true"></i><span>Días de cocinar</span></a>
+            <a class="overflow-action" href="{% url 'calendar_commitments' 'training' %}"><i data-lucide="dumbbell" aria-hidden="true"></i><span>Días de entrenamiento</span></a>
+            <a class="overflow-action" href="{% url 'calendar_commitments' 'nutritionist' %}"><i data-lucide="stethoscope" aria-hidden="true"></i><span>Evaluación</span></a>
+        </div>
+    </div>
+    <div class="overflow-menu">
+        <button class="overflow-btn" type="button" aria-label="Acciones de inicio" title="Acciones de inicio">
+            <i data-lucide="ellipsis" aria-hidden="true"></i>
+        </button>
+        <div class="overflow-dropdown" aria-label="Acciones de inicio">
+            <button class="overflow-action" type="button" onclick="openWeightModal()"><i data-lucide="weight" aria-hidden="true"></i><span>Registrar peso corporal</span></button>
+            <a class="overflow-action" href="{% url 'comparator_index' %}"><i data-lucide="scale" aria-hidden="true"></i><span>Comparar</span></a>
+        </div>
+    </div>
+</div>

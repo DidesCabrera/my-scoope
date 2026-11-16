@@ -10,6 +10,7 @@ from ai_assistant.application.personal_record_intent import parse_personal_recor
 ACTIVE_WORK_VERSION = "ai_assistant.active_work.v1"
 
 _RESOURCE_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("preparations", r"\b(?:preparacion\w*|recetas?)\b"),
     ("supplement_intakes", r"\b(?:tomas?|ingestas?)\s+(?:de\s+)?suplement\w*\b"),
     ("supplement_presets", r"\b(?:presets?|composiciones?)\s+(?:de\s+)?suplement\w*\b"),
     ("supplements", r"\b(?:suplement\w*|supplement\w*)\b"),
@@ -152,7 +153,12 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
 
     resource = _resource(text)
     mutation_action = _mutation_action(text)
-    if _requests_supplement_mutation(text, mutation_action):
+    plan_intake_change = bool(
+        re.search(r"\b(?:suplement\w*|tomas?|ingestas?)\b", text)
+        and re.search(r"\b(?:minutas?|plan(?:es)?)\b", text)
+        and mutation_action in {"add", "remove"}
+    )
+    if _requests_supplement_mutation(text, mutation_action) and not plan_intake_change:
         return {
             "objective": "handoff_to_supplements_ui",
             "expected_outcome": "response_only",
@@ -163,7 +169,7 @@ def _classify_objective(value: Any) -> dict[str, str] | None:
         return {
             "objective": "prepare_reviewable_workspace_patch",
             "expected_outcome": "prepared_patch",
-            "resource": resource,
+            "resource": "supplement_intakes" if plan_intake_change else resource,
             "action": mutation_action,
         }
 

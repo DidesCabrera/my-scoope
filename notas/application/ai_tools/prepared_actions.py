@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
 from django.db import transaction
@@ -20,10 +21,14 @@ from notas.domain.models import (
     Food,
     Meal,
     MealFood,
+    MealPreparation,
     NutritionProposal,
+    Preparation,
     Program,
     ProgramCalendarization,
     SavedComparison,
+    Supplement,
+    SupplementIntake,
 )
 
 WORKSPACE_PATCH_ACTION_KEY = "workspace.patch"
@@ -40,12 +45,17 @@ _WORKSPACE_PATCH_ACTIONS = {
     ("meal", "add_food"): "meal.add_food",
     ("meal", "update_food"): "meal.update_food",
     ("meal", "remove_food"): "meal.remove_food",
+    ("meal", "add_preparation"): "meal.add_preparation",
+    ("meal", "update_preparation"): "meal.update_preparation",
+    ("meal", "remove_preparation"): "meal.remove_preparation",
     ("dailyplan", "create"): "dailyplan.create",
     ("dailyplan", "rename"): "dailyplan.rename",
     ("dailyplan", "delete"): "dailyplan.delete",
     ("dailyplan", "add_meal"): "dailyplan.add_meal",
     ("dailyplan", "update_meal"): "dailyplan.update_meal",
     ("dailyplan", "remove_meal"): "dailyplan.remove_meal",
+    ("dailyplan", "add_supplement_intake"): "dailyplan.add_supplement_intake",
+    ("dailyplan", "remove_supplement_intake"): "dailyplan.remove_supplement_intake",
     ("program", "create"): "program.create",
     ("program", "rename"): "program.rename",
     ("program", "delete"): "program.delete",
@@ -81,10 +91,15 @@ _ALLOWED_ACTION_ARGUMENTS = {
     # the food that appears in it. The join-row id is an implementation detail
     # and must not leak into assistant or MCP requests.
     "meal.remove_food": {"food_id"},
+    "meal.add_preparation": {"preparation_id", "grams", "units"},
+    "meal.update_preparation": {"preparation_id", "grams", "units"},
+    "meal.remove_preparation": {},
     "dailyplan.create": {"name"},
     "dailyplan.rename": {"name"},
     "dailyplan.add_meal": {"meal_id", "hour", "note"},
     "dailyplan.update_meal": {"meal_id", "hour", "note"},
+    "dailyplan.add_supplement_intake": {"items", "hour"},
+    "dailyplan.remove_supplement_intake": {},
     "program.create": {"name", "duration_weeks"},
     "program.rename": {"name"},
     "program.duplicate_week": {"week_number"},
@@ -116,6 +131,11 @@ def prepare_product_action(
     ]
     if missing:
         raise ValueError(f"prepared_action_missing_arguments:{','.join(missing)}")
+
+    if action_key in {"meal.add_preparation", "meal.update_preparation"}:
+        _validate_preparation_selection(user, parameters)
+    if action_key == "dailyplan.add_supplement_intake":
+        _validate_supplement_selection(user, parameters)
 
     target = None
     before = {}
@@ -336,7 +356,8 @@ def _normalize_workspace_patch_operation(
         "_".join(str(raw_operation.get("operation_id") or fallback_operation_id).strip().split())[:80]
         or fallback_operation_id
     )
-    parameters = dict(raw_operation.get("parameters") or {})
+    # Strict provider schemas require every optional field as null. Null means absent.
+    parameters = {key: value for key, value in dict(raw_operation.get("parameters") or {}).items() if value is not None}
     raw_references = raw_operation.get("references") or {}
     if not isinstance(raw_references, Mapping):
         raise ValueError("workspace_patch_references_invalid")
@@ -377,36 +398,19 @@ def _normalize_workspace_patch_operation(
     if missing:
         raise ValueError(f"prepared_action_missing_arguments:{','.join(missing)}")
 
-    target = None
-    before = {}
-    target_version = ""
     target_id = raw_operation.get("target_id")
+    if action_key in {"meal.add_preparation", "meal.update_preparation"}:
+        _validate_preparation_selection(user, parameters)
+    if action_key == "dailyplan.add_supplement_intake":
+        _validate_supplement_selection(user, parameters)
+    if action_key == "dailyplan.remove_supplement_intake":
+        from notas.application.services.commands.supplement_commands import require_supplements_pro
+        require_supplements_pro(user)
     target_reference = references.get("target_id")
-    if not spec.creates_entity:
-        if target_id is not None and target_reference:
-            raise ValueError("workspace_patch_target_reference_conflict")
-        if target_id is None and not target_reference:
-            raise ValueError("prepared_action_target_required")
-        if target_reference:
-            before = {
-                "target_type": spec.target_type,
-                "pending_operation_reference": target_reference,
-            }
-        else:
-            if action_key == "meal.remove_food":
-                target = _resolve_owned_meal_food(
-                    user=user,
-                    meal_id=int(target_id),
-                    food_id=parameters.get("food_id"),
-                )
-            else:
-                target = _resolve_owned_target(
-                    user=user,
-                    target_type=spec.target_type,
-                    target_id=int(target_id),
-                )
-            before = _target_snapshot(spec.target_type, target)
-            target_version = _snapshot_version(before)
+    target, before, target_version = _workspace_patch_target(
+        user=user, spec=spec, action_key=action_key, target_id=target_id,
+        target_reference=target_reference, parameters=parameters,
+    )
 
     preview_arguments = dict(parameters)
     preview_arguments.update(
@@ -416,6 +420,24 @@ def _normalize_workspace_patch_operation(
             if key != "target_id"
         }
     )
+
+    after = _preview_after(spec, before=before, arguments=preview_arguments)
+    if action_key in {"meal.add_preparation", "meal.update_preparation"}:
+        selected_id = parameters.get("preparation_id") or getattr(target, "preparation_id", None)
+        if selected_id:
+            selected = _available_preparation(user, selected_id)
+            after["selected_preparation"] = {
+                "id": selected.id, "name": selected.name,
+                "version_id": selected.current_version_id,
+                "default_portion_g": str(selected.current_version.default_portion_g),
+            }
+    if action_key == "dailyplan.add_supplement_intake":
+        names = dict(Supplement.objects.filter(created_by=user, id__in=[item["supplement_id"] for item in parameters["items"]]).values_list("id", "name"))
+        after["supplements"] = [
+            {"id": item["supplement_id"], "name": names[item["supplement_id"]],
+             "quantity": item["quantity"], "unit": item["unit"]}
+            for item in parameters["items"]
+        ]
 
     return {
         "operation_id": operation_id,
@@ -429,9 +451,33 @@ def _normalize_workspace_patch_operation(
         "parameters": parameters,
         "references": references,
         "before": before,
-        "after": _preview_after(spec, before=before, arguments=preview_arguments),
+        "after": after,
         "risk_level": _workspace_patch_risk(spec),
     }
+
+
+def _workspace_patch_target(*, user, spec, action_key, target_id, target_reference, parameters):
+    if spec.creates_entity:
+        return None, {}, ""
+    if target_id is not None and target_reference:
+        raise ValueError("workspace_patch_target_reference_conflict")
+    if target_id is None and not target_reference:
+        raise ValueError("prepared_action_target_required")
+    if target_reference:
+        return None, {
+            "target_type": spec.target_type,
+            "pending_operation_reference": target_reference,
+        }, ""
+    if action_key == "meal.remove_food":
+        target = _resolve_owned_meal_food(
+            user=user, meal_id=int(target_id), food_id=parameters.get("food_id"),
+        )
+    else:
+        target = _resolve_owned_target(
+            user=user, target_type=spec.target_type, target_id=int(target_id),
+        )
+    before = _target_snapshot(spec.target_type, target)
+    return target, before, _snapshot_version(before)
 
 
 def _validate_workspace_patch_references(
@@ -481,6 +527,10 @@ def _commit_workspace_patch_action(*, action: AIPreparedAction, user) -> AIPrepa
             references=references,
             prior_operations=prior_operations,
         )
+        if spec.action_key in {"meal.add_preparation", "meal.update_preparation"}:
+            selected = (operation.get("after") or {}).get("selected_preparation") or {}
+            if selected and _available_preparation(user, selected["id"]).current_version_id != selected["version_id"]:
+                raise ValueError("prepared_action_preparation_changed")
         target = None
         if not spec.creates_entity and "target_id" not in references:
             target = _resolve_owned_target(
@@ -593,8 +643,10 @@ def _resolve_owned_target(*, user, target_type: str, target_id: int, for_update:
         "food": Food.objects.filter(created_by=user, is_active=True),
         "meal": Meal.objects.filter(created_by=user),
         "meal_food": MealFood.objects.filter(meal__created_by=user).select_related("meal", "food"),
+        "meal_preparation": MealPreparation.objects.filter(meal__created_by=user).select_related("meal", "preparation", "version"),
         "dailyplan": DailyPlan.objects.filter(created_by=user),
         "dailyplan_meal": DailyPlanMeal.objects.filter(dailyplan__created_by=user).select_related("dailyplan", "meal"),
+        "supplement_intake": SupplementIntake.objects.filter(dailyplan__created_by=user).select_related("dailyplan"),
         "program": Program.objects.filter(created_by=user),
         "calendarization": ProgramCalendarization.objects.filter(user=user),
         "saved_comparison": SavedComparison.objects.filter(owner=user),
@@ -642,6 +694,19 @@ def _target_snapshot(target_type: str, target) -> dict:
         }
     if target_type in {"meal", "dailyplan", "program"}:
         payload = {"id": target.id, "name": target.name, "is_draft": target.is_draft}
+        if target_type == "meal":
+            payload["preparations"] = [
+                {"id": row.id, "preparation_id": row.preparation_id,
+                 "version_id": row.version_id, "grams": str(row.quantity_g)}
+                for row in target.meal_preparation_set.all()
+            ]
+        if target_type == "dailyplan":
+            payload["supplement_intakes"] = [
+                {"id": row.id, "hour": row.hour.isoformat() if row.hour else None,
+                 "items": [(item.supplement_id, str(item.quantity), item.unit)
+                           for item in row.items.all()]}
+                for row in target.supplement_intakes.all()
+            ]
         if target_type == "program":
             payload["duration_weeks"] = target.normalized_duration_weeks
         if target_type == "dailyplan":
@@ -654,6 +719,22 @@ def _target_snapshot(target_type: str, target) -> dict:
             "food_id": target.food_id,
             "food_name": target.food.name,
             "quantity": float(target.quantity),
+        }
+    if target_type == "meal_preparation":
+        return {
+            "id": target.id, "meal_id": target.meal_id,
+            "preparation_id": target.preparation_id, "version": target.version.version,
+            "grams": str(target.quantity_g), "units": str(target.selected_units) if target.selected_units else None,
+        }
+    if target_type == "supplement_intake":
+        return {
+            "id": target.id, "dailyplan_id": target.dailyplan_id,
+            "hour": target.hour.isoformat() if target.hour else None,
+            "items": [
+                {"id": item.id, "name": item.supplement_snapshot.get("name", ""),
+                 "quantity": str(item.quantity), "unit": item.unit}
+                for item in target.items.all()
+            ],
         }
     if target_type == "dailyplan_meal":
         return {
@@ -691,13 +772,15 @@ def _preview_after(spec: PreparedActionSpec, *, before: dict, arguments: dict) -
     if spec.action_key.endswith(".rename"):
         return {**before, "name": str(arguments["name"]).strip()}
     if spec.action_key == "food.update":
-        allowed = {"name", "protein", "carbs", "fat", "portion_unit"}
-        updates = {key: arguments[key] for key in allowed if key in arguments}
-        if not updates:
-            raise ValueError("prepared_action_update_requires_changes")
-        return {**before, **updates}
+        return _preview_food_update(before=before, arguments=arguments)
     if spec.action_key == "meal.add_food":
         return {**before, "will_add_food": dict(arguments)}
+    if spec.action_key == "meal.add_preparation":
+        return {**before, "will_add_preparation": dict(arguments)}
+    if spec.action_key == "meal.update_preparation":
+        return {**before, "will_update_preparation": dict(arguments)}
+    if spec.action_key == "dailyplan.add_supplement_intake":
+        return {**before, "will_add_supplement_intake": dict(arguments), "nutrition_totals_unchanged": True}
     if spec.action_key == "meal.update_food":
         return {
             **before,
@@ -711,20 +794,8 @@ def _preview_after(spec: PreparedActionSpec, *, before: dict, arguments: dict) -
         if not updates:
             raise ValueError("prepared_action_update_requires_changes")
         return {**before, **updates}
-    if spec.action_key == "program.add_week":
-        return {**before, "duration_weeks": int(before["duration_weeks"]) + 1}
-    if spec.action_key == "program.duplicate_week":
-        return {
-            **before,
-            "duration_weeks": int(before["duration_weeks"]) + 1,
-            "duplicates_week": int(arguments["week_number"]),
-        }
-    if spec.action_key == "program.remove_week":
-        return {
-            **before,
-            "duration_weeks": max(int(before["duration_weeks"]) - 1, 1),
-            "removes_week": int(arguments["week_number"]),
-        }
+    if spec.action_key in {"program.add_week", "program.duplicate_week", "program.remove_week"}:
+        return _preview_program_week(spec.action_key, before=before, arguments=arguments)
     status_updates = {
         "calendar.pause": "paused",
         "calendar.resume": "active_or_scheduled",
@@ -739,6 +810,30 @@ def _preview_after(spec: PreparedActionSpec, *, before: dict, arguments: dict) -
     if spec.destructive:
         return {**before, "will_be_deleted": True}
     return dict(before)
+
+
+def _preview_food_update(*, before: dict, arguments: dict) -> dict:
+    allowed = {"name", "protein", "carbs", "fat", "portion_unit"}
+    updates = {key: arguments[key] for key in allowed if key in arguments}
+    if not updates:
+        raise ValueError("prepared_action_update_requires_changes")
+    return {**before, **updates}
+
+
+def _preview_program_week(action_key: str, *, before: dict, arguments: dict) -> dict:
+    if action_key == "program.add_week":
+        return {**before, "duration_weeks": int(before["duration_weeks"]) + 1}
+    if action_key == "program.duplicate_week":
+        return {
+            **before,
+            "duration_weeks": int(before["duration_weeks"]) + 1,
+            "duplicates_week": int(arguments["week_number"]),
+        }
+    return {
+        **before,
+        "duration_weeks": max(int(before["duration_weeks"]) - 1, 1),
+        "removes_week": int(arguments["week_number"]),
+    }
 
 
 def _build_summary(spec: PreparedActionSpec, *, before: dict, after: dict) -> str:
@@ -757,6 +852,10 @@ def _snapshot_version(snapshot: dict) -> str:
 
 def _dispatch_commit(spec: PreparedActionSpec, *, user, target, arguments: dict) -> dict:
     key = spec.action_key
+    if key in {"meal.add_preparation", "meal.update_preparation", "meal.remove_preparation"}:
+        return _dispatch_preparation_commit(key=key, user=user, target=target, arguments=arguments)
+    if key in {"dailyplan.add_supplement_intake", "dailyplan.remove_supplement_intake"}:
+        return _dispatch_supplement_commit(key=key, user=user, target=target, arguments=arguments)
     if key.startswith("food."):
         return _dispatch_food_commit(key=key, user=user, target=target, arguments=arguments)
 
@@ -842,6 +941,110 @@ def _dispatch_meal_commit(*, key: str, user, target, arguments: dict) -> dict:
         return {"meal_id": result.meal.id, "meal_food_id": result.meal_food_id}
     result = delete_meal(meal=target)
     return {"meal_id": result.meal_id}
+
+
+def _available_preparation(user, preparation_id):
+    from notas.application.services.commands.personal_preparation_commands import can_use_personal_preparations
+    preparation = Preparation.objects.select_related("current_version").filter(
+        pk=preparation_id, is_active=True, current_version__isnull=False,
+    ).first()
+    if preparation is None or (not preparation.is_global and (
+        preparation.created_by_id != user.id or not can_use_personal_preparations(user)
+    )):
+        raise ValueError("prepared_action_preparation_not_available")
+    return preparation
+
+
+def _validate_preparation_selection(user, arguments):
+    preparation_id = arguments.get("preparation_id")
+    if preparation_id is not None:
+        preparation = _available_preparation(user, preparation_id)
+    else:
+        preparation = None
+    if (arguments.get("grams") is None) == (arguments.get("units") is None):
+        raise ValueError("prepared_action_preparation_portion_invalid")
+    try:
+        if arguments.get("units") is not None:
+            quantity = Decimal(str(arguments["units"]))
+            valid = quantity.is_finite() and Decimal("0.5") <= quantity <= 10 and quantity * 2 == (quantity * 2).to_integral_value()
+        else:
+            quantity = Decimal(str(arguments["grams"]))
+            valid = quantity.is_finite() and quantity > 0 and (preparation is None or quantity <= preparation.current_version.default_portion_g * 10)
+    except (InvalidOperation, ValueError, TypeError):
+        valid = False
+    if not valid:
+        raise ValueError("prepared_action_preparation_portion_invalid")
+
+
+def _dispatch_preparation_commit(*, key, user, target, arguments):
+    from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
+    from notas.application.services.commands.meal_commands import next_meal_component_order
+    from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
+    if key == "meal.remove_preparation":
+        meal = target.meal
+        relation_id = target.id
+        target.delete()
+        rebuild_meal_cached_state(meal)
+        refresh_dailyplans_for_meal(meal)
+        meal.update_draft_status()
+        return {"meal_id": meal.id, "meal_preparation_id": relation_id}
+    preparation = _available_preparation(user, arguments.get("preparation_id") or target.preparation_id)
+    _validate_preparation_selection(user, {**arguments, "preparation_id": preparation.id})
+    version = preparation.current_version
+    units = arguments.get("units")
+    count = Decimal(str(units)) if units is not None else None
+    quantity = count * version.default_portion_g if count is not None else Decimal(str(arguments["grams"]))
+    meal = target if key == "meal.add_preparation" else target.meal
+    relation = target if key == "meal.update_preparation" else MealPreparation(
+        meal=meal, preparation=preparation, order=next_meal_component_order(meal),
+    )
+    relation.preparation = preparation
+    relation.version = version
+    relation.selection_mode = "units" if count is not None else "grams"
+    relation.selected_units = count
+    relation.quantity_g = quantity
+    relation.save()
+    meal.update_draft_status()
+    rebuild_meal_cached_state(meal)
+    refresh_dailyplans_for_meal(meal)
+    return {"meal_id": relation.meal_id, "meal_preparation_id": relation.id}
+
+
+def _validate_supplement_selection(user, arguments):
+    from notas.application.services.commands.supplement_commands import SUPPLEMENT_UNITS, require_supplements_pro
+    require_supplements_pro(user)
+    items = arguments.get("items")
+    if not isinstance(items, list) or not 1 <= len(items) <= 30:
+        raise ValueError("supplement_intake_items_invalid")
+    ids = []
+    for item in items:
+        if not isinstance(item, dict) or set(item) != {"supplement_id", "quantity", "unit"}:
+            raise ValueError("supplement_intake_item_invalid")
+        try:
+            identifier = int(item["supplement_id"])
+            quantity = Decimal(str(item["quantity"]))
+        except (ValueError, TypeError, InvalidOperation) as exc:
+            raise ValueError("supplement_intake_item_invalid") from exc
+        if not quantity.is_finite() or quantity <= 0 or quantity >= 1000000 or item["unit"] not in SUPPLEMENT_UNITS:
+            raise ValueError("supplement_intake_quantity_invalid")
+        ids.append(identifier)
+    if len(set(ids)) != len(ids) or Supplement.objects.filter(created_by=user, id__in=ids).count() != len(ids):
+        raise ValueError("supplement_not_found")
+
+
+def _dispatch_supplement_commit(*, key, user, target, arguments):
+    from notas.application.services.commands.supplement_commands import (
+        create_supplement_intake,
+        delete_supplement_intake,
+    )
+    if key == "dailyplan.add_supplement_intake":
+        _validate_supplement_selection(user, arguments)
+        intake = create_supplement_intake(
+            user=user, dailyplan_id=target.id, items=arguments["items"], hour=arguments.get("hour"),
+        )
+        return {"dailyplan_id": target.id, "supplement_intake_id": intake.id}
+    delete_supplement_intake(user=user, dailyplan_id=target.dailyplan_id, intake_id=target.id)
+    return {"dailyplan_id": target.dailyplan_id, "supplement_intake_id": target.id}
 
 
 def _dispatch_dailyplan_commit(*, key: str, user, target, arguments: dict) -> dict:

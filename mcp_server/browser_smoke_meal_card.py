@@ -7,10 +7,11 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v7.html"
+CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v8.html"
 SAMPLE_RESULT = {
     "ok": True,
     "data": {
+        "viewer_owns_meal": True,
         "meal": {
             "id": 23,
             "name": "Porotos negros con arroz y palta",
@@ -56,7 +57,9 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1160, "height": 900})
-        card_html = html.escape(CARD_PATH.read_text(encoding="utf-8"), quote=True)
+        card_html = html.escape(CARD_PATH.read_text(encoding="utf-8").replace(
+            '"__MYSCOOPE_APP_LINK_ORIGIN__"', '"https://myscoope-staging.onrender.com"'
+        ), quote=True)
         page.set_content(f"""
             <script>
               window.bridgeMessages = [];
@@ -82,6 +85,13 @@ def main():
         card = page.frame_locator("iframe")
         send_result(page, SAMPLE_RESULT)
         card.get_by_role("heading", name="Porotos negros con arroz y palta").wait_for()
+        app_link = card.get_by_role("link", name="Abrir esta comida en la app My Scoope")
+        assert app_link.get_attribute("href") == "https://myscoope-staging.onrender.com/libraries/meals/23"
+        page.locator("iframe").evaluate("element => { element.contentWindow.openai = {openExternal: options => { element.contentWindow.lastOpened = options; }}; }")
+        app_link.click()
+        assert page.locator("iframe").evaluate("element => element.contentWindow.lastOpened") == {
+            "href": "https://myscoope-staging.onrender.com/libraries/meals/23", "redirectUrl": False,
+        }
         page.wait_for_function("window.bridgeMessages.some(message => message.method === 'ui/notifications/size-changed' && message.params.height > 300)")
         assert card.locator("#meal-kcal").inner_text() == "931"
         assert card.locator(".kcal-box").evaluate(
@@ -123,6 +133,9 @@ def main():
         assert card.locator("#meal-food-table").is_visible()
         assert card.locator("#meal-foods").is_hidden()
         assert card.locator(".mobile-tabs").is_hidden()
+        assert card.locator(".food-panel").evaluate(
+            "element => element.scrollWidth > element.clientWidth"
+        )
         assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
         if args.screenshot_panel:
             args.screenshot_panel.parent.mkdir(parents=True, exist_ok=True)
@@ -130,6 +143,9 @@ def main():
 
         page.locator("iframe").evaluate("element => element.style.width = '390px'")
         assert card.locator("#card").evaluate("element => getComputedStyle(element).zoom") == "1"
+        assert card.locator("#meal-food-table").is_hidden()
+        assert card.locator("#meal-foods").is_visible()
+        assert card.locator(".mobile-tabs").is_visible()
         assert card.locator(".macro-row").first.evaluate(
             "element => Math.round(parseFloat(getComputedStyle(element).gridTemplateColumns)) === 78"
         )
@@ -188,6 +204,16 @@ def main():
         card.locator("#meal-foods").get_by_text("<img src=x onerror=alert(1)>").wait_for()
         assert card.locator("#meal-foods img").count() == 0
         assert card.locator("#meal-food-table img").count() == 0
+        not_owned = deepcopy(SAMPLE_RESULT)
+        not_owned["data"]["viewer_owns_meal"] = False
+        send_result(page, not_owned)
+        assert app_link.is_hidden()
+        invalid_id = deepcopy(SAMPLE_RESULT)
+        invalid_id["data"]["meal"]["id"] = "23/path"
+        send_result(page, invalid_id)
+        assert app_link.is_hidden()
+        send_result(page, SAMPLE_RESULT)
+        assert app_link.is_visible()
 
         page.locator("iframe").evaluate("element => element.style.width = '320px'")
         for label in ("Alimentos", "Calorías", "Macros", "Dist", "Alloc"):
@@ -217,6 +243,7 @@ def main():
         send_result(page, {"ok": False, "data": {}, "error": {"code": "not_found"}})
         assert card.get_by_role("status").is_visible()
         assert not card.locator("#card").is_visible()
+        assert app_link.is_hidden()
         browser.close()
     print("Meal card browser smoke passed.")
 

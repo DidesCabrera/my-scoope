@@ -1,7 +1,7 @@
 # AI Team Organization
 
 Status: active
-Last reviewed: 2026-11-14
+Last reviewed: 2026-11-16
 
 ```mermaid
 flowchart TD
@@ -47,9 +47,14 @@ flowchart TD
 
     F --> CM[Commercial and marketing]
     CM --> CSA[Commercial Strategy Advisor]
+    CM --> BR[Brand Identity Steward]
     CM --> CMR[Customer and Market Researcher]
     CM --> GMO[Growth and Marketing Operator]
     CM --> ROA[Revenue Operations Agent]
+    CSA -. positioning .-> BR
+    BR -. visual guidance .-> SPA
+    BR -. store assets .-> MSRS
+    BR -. catalog image style .-> CCS
 
     C -. designs and reviews .-> PT
     C -. designs and reviews .-> FIN

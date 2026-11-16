@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET
 
 from core.mobile_association import (
@@ -32,6 +32,17 @@ def apple_app_site_association(request):
 @require_GET
 def android_asset_links(request):
     return _association_response(android_asset_links_payload())
+
+
+@require_GET
+def meal_app_link(request, meal_id: int):
+    """Web fallback for the same URL opened by native universal/app links."""
+    if request.user.is_authenticated:
+        from notas.application.queries.read_boundaries import get_readable_meal_queryset
+
+        if not get_readable_meal_queryset(request.user).filter(pk=meal_id).exists():
+            return render(request, "core/meal_link_unavailable.html", status=404)
+    return redirect("meal_detail", pk=meal_id)
 
 
 def landing(request):

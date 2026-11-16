@@ -108,10 +108,15 @@ header {
 
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: none;
 
   padding-right: 0px;
 
   -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-scroll-region::-webkit-scrollbar {
+  display: none;
 }
 
 /* ===== SIDEBAR NAV ===== */

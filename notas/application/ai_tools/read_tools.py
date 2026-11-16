@@ -237,11 +237,10 @@ def search_meals_tool(user, query: str, limit: int | None = None):
 
 
 def _read_meal_data(user, meal_id: int) -> dict:
+    meal = get_meal_detail(user, meal_id)
     return {
-        "meal": get_meal_detail(
-            user,
-            meal_id,
-        ).as_dict(),
+        "meal": meal.as_dict(),
+        "viewer_owns_meal": meal.created_by_id == user.id,
     }
 
 

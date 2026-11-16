@@ -274,6 +274,21 @@
     stroke-width: 2;
 }
 
+.list-page-header--library.list-page-header--dailyplan { --library-chip-color: var(--entity-dailyplan); }
+.list-page-header--library.list-page-header--meal { --library-chip-color: var(--entity-meal); }
+.list-page-header--library.list-page-header--food { --library-chip-color: var(--entity-food); }
+.list-page-header--library.list-page-header--program { --library-chip-color: var(--entity-program); }
+
+.list-page-header--library .list-page-header__indicator--library {
+    padding: 5px 10px;
+    border: 0;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--library-chip-color) 30%, transparent);
+    color: var(--text-main);
+    font-weight: 600;
+    letter-spacing: 0.4px;
+}
+
 @media (max-width: 768px) {
     .list-page-header {
         gap: 10px;

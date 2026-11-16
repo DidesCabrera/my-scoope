@@ -183,6 +183,15 @@
 .entity-card--dailyplan,
 .card--dailyplan {
   border-top: 2px solid var(--entity-dailyplan);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.entity-card--dailyplan .entity-card__panel,
+.entity-card--dailyplan .entity-card__panel > .content-panel,
+.entity-card--dailyplan .card-table-dailyplan-foods {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .entity-card--program,

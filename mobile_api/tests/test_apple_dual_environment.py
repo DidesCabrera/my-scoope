@@ -1,7 +1,8 @@
 from datetime import timedelta
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
+from django.contrib.auth.models import User
 from django.test import override_settings
 from django.utils import timezone
 
@@ -15,13 +16,110 @@ from billing.models import (
 )
 from accounts.models import AccountPlan, AccountSubscription
 from billing.application.contracts import AppleSubscriptionStatusEvidence
-from billing.infrastructure.providers.apple_app_store import AppleAppStoreClient
+from billing.infrastructure.providers.apple_app_store import AppleAppStoreClient, AppleAppStoreConfigurationError
 from appstoreserverlibrary.signed_data_verifier import VerificationException, VerificationStatus
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPIAppleDualEnvironmentTests(AuthenticatedMobileAPITestCase):
+    @override_settings(
+        BILLING_APPLE_PURCHASES_ENABLED=False,
+        BILLING_APPLE_SANDBOX_PURCHASES_ENABLED=True,
+        BILLING_APPLE_ENVIRONMENT="production",
+    )
+    def test_restore_recovers_unbound_sandbox_chain_from_current_apple_status(self):
+        product = BillingProduct.objects.create(
+            provider=PaymentProvider.APPLE_APP_STORE, environment=BillingProduct.Environment.SANDBOX,
+            external_product_id="basic.sandbox-recovery", account_plan=AccountPlan.objects.get(slug="basic"), amount_minor=0,
+        )
+        AppleSandboxAccess.objects.create(user=self.user, purpose=AppleSandboxAccess.Purpose.INTERNAL)
+        old = AppleTransactionEvidence(
+            original_transaction_id="new-sandbox-chain", transaction_id="new-sandbox-transaction",
+            product_id=product.external_product_id, environment="Sandbox", ownership_type="PURCHASED",
+            expires_date=timezone.now() + timedelta(minutes=5),
+        )
+        token = AppleAppAccountToken.objects.create(user=self.user)
+        gateway = SimpleNamespace(
+            verify_transaction=lambda value: old,
+            get_subscription_statuses=Mock(return_value=(AppleSubscriptionStatusEvidence(status="active", transaction=old),)),
+            set_app_account_token=Mock(),
+        )
+
+        with patch("mobile_api.apple_billing.build_apple_app_store_gateway", return_value=gateway):
+            response = self.client.post("/api/v1/subscriptions/apple/transactions",
+                data={"signed_transaction": "header.payload.signature"}, content_type="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        gateway.set_app_account_token.assert_called_once_with("new-sandbox-chain", str(token.token))
+        provider = ProviderSubscription.objects.get(external_subscription_id="new-sandbox-chain")
+        self.assertEqual(provider.user_id, self.user.pk)
+        self.assertEqual(provider.metadata["apple_evidence_source"], "app_store_server_api_token_recovery")
+        self.assertEqual(AccountSubscription.objects.get(user=self.user).plan.slug, "basic")
+
+    @override_settings(
+        BILLING_APPLE_PURCHASES_ENABLED=False,
+        BILLING_APPLE_SANDBOX_PURCHASES_ENABLED=True,
+        BILLING_APPLE_ENVIRONMENT="production",
+    )
+    def test_sandbox_recovery_never_reassigns_a_known_other_account_token(self):
+        product = BillingProduct.objects.create(
+            provider=PaymentProvider.APPLE_APP_STORE, environment=BillingProduct.Environment.SANDBOX,
+            external_product_id="basic.sandbox-other-account", account_plan=AccountPlan.objects.get(slug="basic"), amount_minor=0,
+        )
+        AppleSandboxAccess.objects.create(user=self.user, purpose=AppleSandboxAccess.Purpose.INTERNAL)
+        other = User.objects.create_user(username="other-sandbox-user")
+        other_token = AppleAppAccountToken.objects.create(user=other)
+        evidence = AppleTransactionEvidence(
+            original_transaction_id="other-sandbox-chain", transaction_id="other-sandbox-transaction",
+            product_id=product.external_product_id, app_account_token=str(other_token.token),
+            environment="Sandbox", ownership_type="PURCHASED", expires_date=timezone.now() + timedelta(minutes=5),
+        )
+        gateway = SimpleNamespace(
+            verify_transaction=lambda value: evidence,
+            get_subscription_statuses=lambda value: (AppleSubscriptionStatusEvidence(status="active", transaction=evidence),),
+            set_app_account_token=Mock(),
+        )
+
+        with patch("mobile_api.apple_billing.build_apple_app_store_gateway", return_value=gateway):
+            response = self.client.post("/api/v1/subscriptions/apple/transactions",
+                data={"signed_transaction": "header.payload.signature"}, content_type="application/json")
+
+        self.assertEqual(response.status_code, 409)
+        gateway.set_app_account_token.assert_not_called()
+        self.assertFalse(ProviderSubscription.objects.filter(external_subscription_id="other-sandbox-chain").exists())
+
+    @override_settings(
+        BILLING_APPLE_PURCHASES_ENABLED=False,
+        BILLING_APPLE_SANDBOX_PURCHASES_ENABLED=True,
+        BILLING_APPLE_ENVIRONMENT="production",
+    )
+    def test_sandbox_recovery_requires_apple_to_accept_token_before_granting_access(self):
+        product = BillingProduct.objects.create(
+            provider=PaymentProvider.APPLE_APP_STORE, environment=BillingProduct.Environment.SANDBOX,
+            external_product_id="basic.sandbox-pending-token", account_plan=AccountPlan.objects.get(slug="basic"), amount_minor=0,
+        )
+        AppleSandboxAccess.objects.create(user=self.user, purpose=AppleSandboxAccess.Purpose.INTERNAL)
+        evidence = AppleTransactionEvidence(
+            original_transaction_id="pending-token-chain", transaction_id="pending-token-transaction",
+            product_id=product.external_product_id, environment="Sandbox", ownership_type="PURCHASED",
+            expires_date=timezone.now() + timedelta(minutes=5),
+        )
+        gateway = SimpleNamespace(
+            verify_transaction=lambda value: evidence,
+            get_subscription_statuses=Mock(return_value=(AppleSubscriptionStatusEvidence(status="active", transaction=evidence),)),
+            set_app_account_token=Mock(side_effect=AppleAppStoreConfigurationError("Apple unavailable")),
+        )
+
+        with patch("mobile_api.apple_billing.build_apple_app_store_gateway", return_value=gateway):
+            response = self.client.post("/api/v1/subscriptions/apple/transactions",
+                data={"signed_transaction": "header.payload.signature"}, content_type="application/json")
+
+        self.assertEqual(response.status_code, 503)
+        gateway.set_app_account_token.assert_called_once()
+        self.assertFalse(ProviderSubscription.objects.filter(external_subscription_id="pending-token-chain").exists())
+        self.assertEqual(AccountSubscription.objects.get(user=self.user).plan.slug, "free")
+
     @override_settings(BILLING_APPLE_PURCHASES_ENABLED=True)
     def test_temporary_signature_verification_failure_is_retryable_for_both_product_kinds(self):
         from unittest.mock import Mock

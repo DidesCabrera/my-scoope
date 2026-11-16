@@ -270,6 +270,13 @@ class AIReadToolTests(TestCase):
             detail_data["data"]["meal"]["id"],
             self.meal.id,
         )
+        self.assertTrue(detail_data["data"]["viewer_owns_meal"])
+
+    def test_public_other_meal_read_does_not_offer_owned_app_detail(self):
+        self.other_meal.is_public = True
+        self.other_meal.save(update_fields=["is_public"])
+        result = self.assert_tool_success(read_meal_tool(self.user, self.other_meal.id))
+        self.assertFalse(result["data"]["viewer_owns_meal"])
 
     def test_meal_read_tool_blocks_private_other_meal(self):
         result = read_meal_tool(

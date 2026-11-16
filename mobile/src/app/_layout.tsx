@@ -52,7 +52,7 @@ function AuthenticatedRouteGate() {
 
   useEffect(() => {
     if (status !== "authenticated" || !profile) return;
-    const returnTo = pathname.startsWith("/share/") || pathname.startsWith("/s/") ? pathname : undefined;
+    const returnTo = pathname.startsWith("/share/") || pathname.startsWith("/s/") || /^\/libraries\/meals\/[1-9]\d*\/?$/.test(pathname) ? pathname : undefined;
     if (profile.review_disclosure_required && pathname !== "/disclosures" && pathname !== "/onboarding") {
       recordNavigationRedirect(routeTemplate, "/disclosures", "disclosure_required");
       router.replace(returnTo ? { pathname: "/disclosures", params: { returnTo } } : "/disclosures" as Href);

@@ -125,6 +125,16 @@
               "scheme": "https",
               "host": "www.myscoope.com",
               "pathPrefix": "/s/"
+            },
+            {
+              "scheme": "https",
+              "host": "www.myscoope.com",
+              "pathPrefix": "/libraries/meals/"
+            },
+            {
+              "scheme": "https",
+              "host": "myscoope-staging.onrender.com",
+              "pathPrefix": "/libraries/meals/"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]

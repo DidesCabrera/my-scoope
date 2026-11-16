@@ -23,6 +23,14 @@ class MealViewTests(TestCase):
             password="12345678",
         )
 
+    def test_meal_detail_for_another_account_returns_404(self):
+        other = User.objects.create_user(username="other", password="12345678")
+        meal = Meal.objects.create(name="Private meal", created_by=other, is_draft=False)
+
+        response = self.client.get(reverse("meal_detail", args=[meal.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
     def test_meal_create_creates_draft_meal(self):
         response = self.client.post(
             reverse("meal_create"),

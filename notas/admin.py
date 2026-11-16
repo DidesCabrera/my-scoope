@@ -275,6 +275,9 @@ class FoodAdmin(admin.ModelAdmin):
         "food_group",
         "food_subgroup",
         "myscoope_group",
+        "caloric_density_kcal_per_unit",
+        "caloric_density_segment",
+        "portioning_mode",
         "preparation_state",
         "solver_enabled",
         "protein",
@@ -303,6 +306,8 @@ class FoodAdmin(admin.ModelAdmin):
         "food_group",
         "food_subgroup",
         "myscoope_group",
+        "caloric_density_segment",
+        "portioning_mode",
         "created_at",
     )
 
@@ -322,6 +327,12 @@ class FoodAdmin(admin.ModelAdmin):
         "created_at",
         "total_kcal_display",
         "catalog_snapshot_created_at",
+        "caloric_density_kcal_per_unit",
+        "caloric_density_segment",
+        "caloric_density_source",
+        "caloric_density_estimated",
+        "caloric_density_version",
+        "portioning_mode_version",
     )
 
     fieldsets = (
@@ -351,6 +362,8 @@ class FoodAdmin(admin.ModelAdmin):
                     "myscoope_group",
                     "preparation_state",
                     "solver_enabled",
+                    "portioning_mode",
+                    "portioning_mode_version",
                 )
             },
         ),
@@ -361,7 +374,13 @@ class FoodAdmin(admin.ModelAdmin):
                     "protein",
                     "carbs",
                     "fat",
+                    "declared_energy_kcal_per_100_unit",
                     "total_kcal_display",
+                    "caloric_density_kcal_per_unit",
+                    "caloric_density_segment",
+                    "caloric_density_source",
+                    "caloric_density_estimated",
+                    "caloric_density_version",
                 )
             },
         ),

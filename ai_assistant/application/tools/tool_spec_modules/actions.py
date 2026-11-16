@@ -56,7 +56,9 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
                                 "enum": [
                                     "create", "update", "rename", "delete", "add_food",
                                     "update_food", "remove_food", "add_meal", "update_meal",
-                                    "remove_meal", "add_week",
+                                    "remove_meal", "add_preparation", "update_preparation",
+                                    "remove_preparation", "add_supplement_intake",
+                                    "remove_supplement_intake", "add_week",
                                     "duplicate_week", "remove_week", "pause", "resume",
                                     "cancel", "approve", "reject", "apply",
                                 ],

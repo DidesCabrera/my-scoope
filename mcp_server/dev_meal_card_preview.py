@@ -14,8 +14,8 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 
 UI_DIR = Path(__file__).parent / "myscoope_mcp" / "ui"
-CARD_PATH = UI_DIR / "meal_card_v7.html"
-SOURCE_PATH = UI_DIR / "meal_card_v7.source.html"
+CARD_PATH = UI_DIR / "meal_card_v8.html"
+SOURCE_PATH = UI_DIR / "meal_card_v8.source.html"
 ENTITY_CARD_PATH = UI_DIR / "entity_card_v1.html"
 ENTITY_SOURCE_PATH = UI_DIR / "entity_card_v1.source.html"
 DAILYPLAN_CARD_PATH = UI_DIR / "entity_card_v2.html"
@@ -23,7 +23,9 @@ DAILYPLAN_SOURCE_PATH = UI_DIR / "entity_card_v2.source.html"
 MIME_TYPE = "text/html;profile=mcp-app"
 STYLE_PATTERN = re.compile(r"<style>(.*?)</style>", re.DOTALL)
 LEGACY_VERSION_PATTERN = re.compile(r"[0-9a-f]{32}")
-MEAL_CARD_URI = "ui://myscoope-dev/meal-card-v7.html"
+MEAL_CARD_URI = "ui://myscoope-dev/meal-card-v8.html"
+RECENT_MEAL_CARD_URI = "ui://myscoope-dev/meal-card-v7.html"
+PREVIOUS_MEAL_CARD_URI = "ui://myscoope-dev/meal-card-v6.html"
 ENTITY_CARD_URI = "ui://myscoope-dev/entity-card-v1.html"
 DAILYPLAN_CARD_URI = "ui://myscoope-dev/dailyplan-card-v2.html"
 PROBE_CARD_URI = "ui://myscoope-dev/probe-card-v1.html"
@@ -213,6 +215,14 @@ def create_preview_server() -> FastMCP:
     @server.resource(uri, name="My Scoope meal card development preview", mime_type=MIME_TYPE)
     def card_resource() -> str:
         return preview_html()
+
+    @server.resource(RECENT_MEAL_CARD_URI, name="Meal card v7 development preview", mime_type=MIME_TYPE)
+    def recent_card_resource() -> str:
+        return (UI_DIR / "meal_card_v7.html").read_text(encoding="utf-8")
+
+    @server.resource(PREVIOUS_MEAL_CARD_URI, name="Previous meal card development preview", mime_type=MIME_TYPE)
+    def previous_card_resource() -> str:
+        return (UI_DIR / "meal_card_v6.html").read_text(encoding="utf-8")
 
     @server.resource(entity_uri, name="My Scoope entity card development preview", mime_type=MIME_TYPE)
     def entity_resource() -> str:

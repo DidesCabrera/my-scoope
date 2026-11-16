@@ -46,7 +46,9 @@
     </div>
 
     <div class="page-header-right">
-        {% if header.actions %}
+        {% if request.resolver_match.url_name == 'home_view' %}
+            {% include "components/home_header_actions.html" %}
+        {% elif header.actions %}
             {% include "components/header_actions.html" with header=header %}
         {% else %}
             <div class="btn-list-header">

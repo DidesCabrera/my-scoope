@@ -22,6 +22,7 @@ import {
 import { ProgramChildCard } from "@/components/libraries/program-child-card";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
+import { HomeFirstMinutasGallery } from "@/components/dev/home-first-minutas-gallery";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { DisclosureGallery } from "@/components/dev/disclosure-gallery";
 import { PersonalRecordCardGallery } from "@/components/dev/personal-record-card-gallery";
@@ -193,7 +194,7 @@ const activeProgramDayExamples = [
 ];
 export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
-  const [tab, setTab] = useState<GalleryTab>("components");
+  const [tab, setTab] = useState<GalleryTab>("home");
   const [choice, setChoice] = useState<Choice>("daily");
   const [distributedExample, setDistributedExample] = useState<"chats" | "proposals">("chats");
   const [scrollableExample, setScrollableExample] = useState<"week1" | "week2" | "week3" | "week4">("week1");
@@ -210,15 +211,14 @@ export default function UiGalleryScreen() {
       <View style={[styles.galleryLayout, width >= 700 && styles.galleryLayoutWide]}>
         <GalleryNavigation activeTab={tab} onChange={setTab} wide={width >= 700} />
         <View style={styles.galleryContent}>
+      {tab === "home" ? <HomeFirstMinutasGallery /> : null}
       {tab === "onboarding" ? (
         <OnboardingStoryboardGallery />
       ) : null}
       {tab === "disclosures" ? <DisclosureGallery /> : null}
       {tab === "subscriptions" ? <SubscriptionGallery /> : null}
       {tab === "salesMoments" ? <SalesMomentsGallery /> : null}
-
       {tab === "labelCapture" ? <LabelCaptureStoryboardGallery /> : null}
-
       {tab === "components" ? (
         <>
           <SectionTitle detail="Pantallas principales y navegación" title="Dashboards de créditos" />

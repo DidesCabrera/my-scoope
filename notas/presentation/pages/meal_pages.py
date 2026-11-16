@@ -7,7 +7,7 @@ from django.db.models import BooleanField, Prefetch, Value
 
 from notas.application.queries.food_picker_queries import list_food_picker_items
 from notas.application.queries.library_queries import meal_library_queryset
-from notas.application.services.access.access import get_meal_for_user
+from notas.application.queries.read_boundaries import get_readable_meal_queryset
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_meal,
 )
@@ -100,15 +100,14 @@ def get_meal_detail_page_data(
 ) -> MealDetailPageData:
     request_get = request_get or {}
 
-    meal = (
-        Meal.objects
-        .prefetch_related(
+    meal = get_page_object_or_404(
+        get_readable_meal_queryset(user).prefetch_related(
             Prefetch(
                 "meal_food_set",
                 queryset=_meal_foods_for_card_rendering(),
             ),
-        )
-        .get(pk=meal_id)
+        ),
+        pk=meal_id,
     )
 
     meal_foods = list(meal.meal_food_set.all())
@@ -167,9 +166,6 @@ def get_meal_detail_page_data(
             effective_viewmode = MEAL_VIEWMODE_PERSONAL_EDIT_FROM_DAILYPLAN
         else:
             effective_viewmode = MEAL_VIEWMODE_PERSONAL_DETAIL
-
-    else:
-        meal = get_meal_for_user(user, meal_id)
 
     detail_content_data = build_meal_detail_content_data(
         meal=meal,

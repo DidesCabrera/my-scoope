@@ -1,0 +1,13 @@
+schema_version: 1
+owner_role: brand-identity-steward
+last_reviewed: '2026-11-16'
+status_note: 'Rutas descubiertas; aprobación editorial y uso actual pendientes de auditoría.'
+sources:
+  - {id: ui-system, kind: design-guidance, path: docs/00_current/design/ui_system.md, status: discovered}
+  - {id: mobile-visual-system, kind: design-guidance, path: docs/00_current/design/mobile_visual_system.md, status: discovered}
+  - {id: ui-contract, kind: design-tokens, path: design/ui-contract.json, status: discovered}
+  - {id: mobile-tokens, kind: design-tokens, path: mobile/src/design/tokens.ts, status: discovered}
+  - {id: web-logos, kind: logo-collection, path: static/img/, status: discovered}
+  - {id: mobile-commercial-logo, kind: logo, path: mobile/assets/images/commercial-logo.png, status: discovered}
+  - {id: mobile-launch-logo, kind: logo, path: mobile/assets/images/launch-logo.png, status: discovered}
+  - {id: email-branding, kind: implementation, path: email_delivery/branding.py, status: discovered}
