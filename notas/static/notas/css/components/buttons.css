@@ -108,3 +108,13 @@
   outline-offset: 3px;
   border-radius: 8px;
 }
+
+:where(
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"]
+):focus-visible {
+  outline-color: var(--text-muted);
+}

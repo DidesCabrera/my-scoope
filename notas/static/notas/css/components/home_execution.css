@@ -1,7 +1,12 @@
 /* Home execution flow: today's plan, commitments, calendar and progress. */
 .page-home .home-calendar {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
+}
+
+.page-home .home-calendar__plan-panel {
+  min-width: 0;
 }
 
 .home-calendar__welcome-row {
