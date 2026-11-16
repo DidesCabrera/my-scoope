@@ -13,7 +13,7 @@ READ_TOOL_SPECS = {
         description=(
             "Query the authenticated user's My Scoope workspace. This is the primary read capability for "
             "foods, meals, daily meal plans, programs, calendarization, proposals, saved comparisons "
-            "and Pro supplements, supplement presets or planned intakes. Supplement label nutrition "
+            "and preparations, Pro supplements, supplement presets or planned intakes. Supplement label nutrition "
             "is informational and never contributes to meal or plan totals. "
             "Use it before saying stored product data is unavailable. Omit object_id to list or search; "
             "include object_id to read one object. For count questions, always report total_count "
@@ -42,6 +42,8 @@ READ_TOOL_SPECS = {
                         "calendarization",
                         "proposals",
                         "saved_comparisons",
+                        "preparations",
+                        "meal_preparations",
                         "supplements",
                         "supplement_presets",
                         "supplement_intakes",

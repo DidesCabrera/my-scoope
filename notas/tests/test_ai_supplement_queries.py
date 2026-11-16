@@ -86,14 +86,15 @@ class AISupplementQueryTests(TestCase):
         self.assertTrue(first_page.data["has_more"])
         self.assertFalse(foreign.ok)
 
-    def test_provider_can_query_supplements_but_mutations_go_to_ui(self):
+    def test_provider_reads_supplements_and_routes_plan_composition_to_review(self):
         spec = get_tool_spec("query_workspace")
         self.assertIn("supplements", spec.input_schema["properties"]["resource"]["enum"])
         read = infer_active_work(None, current_user_message="Muéstrame mis suplementos")
         change = infer_active_work(None, current_user_message="Agrega un suplemento a mi plan")
         self.assertEqual(read["expected_outcome"], "workspace_query")
         self.assertEqual(read["resource"], "supplements")
-        self.assertEqual(change["action"], "handoff")
-        self.assertEqual(change["expected_outcome"], "response_only")
+        self.assertEqual(change["action"], "add")
+        self.assertEqual(change["resource"], "supplement_intakes")
+        self.assertEqual(change["expected_outcome"], "prepared_patch")
         mixed = infer_active_work(None, current_user_message="Crea una comida con un suplemento")
         self.assertEqual(mixed["action"], "handoff")

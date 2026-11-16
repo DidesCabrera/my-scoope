@@ -235,7 +235,7 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
         ("Busca el suplemento Omega 3.", "workspace_query", "supplements", "read", "query_workspace"),
         ("Lista mis presets de suplementos.", "workspace_query", "supplement_presets", "read", "query_workspace"),
         ("Muéstrame las tomas de suplementos.", "workspace_query", "supplement_intakes", "read", "query_workspace"),
-        ("Agrega un suplemento a mi plan.", "response_only", "supplements", "handoff", "natural_response"),
+        ("Agrega un suplemento a mi plan.", "prepared_patch", "supplement_intakes", "add", "propose_workspace_patch"),
         ("Cambia la toma de suplementos de mi plan.", "response_only", "supplement_intakes", "handoff", "natural_response"),
         ("Crea un preset de suplementos.", "response_only", "supplement_presets", "handoff", "natural_response"),
     )
@@ -245,7 +245,9 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
                 key=f"supplements_{index:02d}",
                 family="supplements",
                 message=message,
-                objective="query_workspace" if outcome == "workspace_query" else "handoff_to_supplements_ui",
+                objective=("query_workspace" if outcome == "workspace_query" else
+                           "prepare_reviewable_workspace_patch" if outcome == "prepared_patch" else
+                           "handoff_to_supplements_ui"),
                 expected_outcome=outcome,
                 resource=resource,
                 action=action,
