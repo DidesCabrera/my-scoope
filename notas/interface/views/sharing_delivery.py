@@ -40,7 +40,7 @@ def deliver_normalized_entity_invitation(
         if str(exc) != "share_self_recipient_not_allowed":
             raise
         return resource, None, EmailDeliveryResult(status="suppressed", sent=False, reason="self_recipient")
-    email_subject, email_message = build_normalized_share_invitation_email(
+    email_subject, email_message, email_html = build_normalized_share_invitation_email(
         request=request,
         invitation=invitation,
     )
@@ -48,6 +48,7 @@ def deliver_normalized_entity_invitation(
         share=invitation,
         subject=email_subject,
         message=email_message,
+        html_message=email_html,
         from_email=settings.DEFAULT_FROM_EMAIL,
     )
     if delivery.sent:

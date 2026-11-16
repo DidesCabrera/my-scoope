@@ -1,0 +1,18 @@
+{% autoescape off %}{{ email_title }}
+
+Hola,
+
+{{ email_intro }}
+{% if email_item_title %}
+{{ email_item_label }}: {{ email_item_title }}
+{% endif %}{% if email_custom_message %}
+Mensaje: {{ email_custom_message }}
+{% endif %}
+{{ email_action_label }}:
+{{ email_action_url }}
+
+{{ email_note }}
+
+MyScoope
+{{ email_footer }}
+{% endautoescape %}
