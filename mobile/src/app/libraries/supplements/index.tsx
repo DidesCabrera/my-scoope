@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Pill, PillBottle } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { EntitlementsData, Supplement, SupplementIntakePreset } from "@/api/types";
@@ -12,6 +12,7 @@ import { SupplementProSheet } from "@/components/supplements/supplement-pro-shee
 import { SupplementActionsSheet } from "@/components/supplements/supplement-actions-sheet";
 import { SupplementIntakePresetCard } from "@/components/supplements/supplement-intake-preset-card";
 import {
+  AdaptiveScrollView,
   Button,
   Card,
   CollectionEmptyState,
@@ -110,7 +111,7 @@ export default function SupplementsLibraryScreen() {
   };
 
   return <>
-    <ScrollView
+    <AdaptiveScrollView
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
       onScroll={handleScroll}
@@ -155,7 +156,7 @@ export default function SupplementsLibraryScreen() {
       {available && pro && activeTab === "intakes" && !visiblePresets.length ? <CollectionEmptyState description={normalizedQuery ? "Prueba con otra búsqueda." : "Crea una ingesta para reutilizar la misma combinación en distintas minutas."} title={normalizedQuery ? "Sin resultados" : "Aún no tienes ingestas"} /> : null}
       {available && pro && activeTab === "supplements" ? visible.map((item) => <SupplementLibraryCard item={item} key={item.id} onMore={() => { setSelectedSupplement(item); setSupplementActionsVisible(true); }} onOpen={() => router.push(`/libraries/supplements/${item.id}` as Href)} />) : null}
       {available && pro && activeTab === "intakes" ? visiblePresets.map((item) => <SupplementIntakePresetCard item={item} key={item.id} onOpen={() => router.push(`/libraries/supplements/intakes/${item.id}` as Href)} />) : null}
-    </ScrollView>
+    </AdaptiveScrollView>
     {selectedSupplement ? <SupplementActionsSheet name={selectedSupplement.name} onClose={() => setSupplementActionsVisible(false)} onDelete={removeSupplement} onEdit={() => {
       setSupplementActionsVisible(false);
       router.push(`/libraries/supplements/${selectedSupplement.id}/edit` as Href);
@@ -165,7 +166,7 @@ export default function SupplementsLibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   searchSpacer: { height: 12 },
   stickySearch: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, marginTop: -8, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.layout.reducedInset, paddingTop: tokens.spacing.xs, zIndex: 3 },

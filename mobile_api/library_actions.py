@@ -292,13 +292,14 @@ def _share(request, item, *, recipient_email: str, subject: str, message: str) -
             message="No puedes compartir contenido contigo mismo.",
             status_code=422,
         ) from exc
-    email_subject, email_message = build_normalized_share_invitation_email(
+    email_subject, email_message, email_html = build_normalized_share_invitation_email(
         request=request, invitation=invitation
     )
     delivery = deliver_share_invitation(
         share=invitation,
         subject=email_subject,
         message=email_message,
+        html_message=email_html,
         from_email=settings.DEFAULT_FROM_EMAIL,
     )
 

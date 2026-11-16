@@ -23,6 +23,14 @@ the protected flows.
   processes and restarts. Local development intentionally uses local-memory cache.
 - Account verification and password-reset deliveries are recorded as
   `EmailDeliveryAttempt` rows.
+- Account verification, existing-account notice and password recovery use a shared
+  branded HTML email with a plain-text alternative. Share invitations use the
+  same layout and add the corresponding entity color. The sender display name
+  defaults to `MyScoope`; deployment configuration can override it.
+- The email header uses the official commercial logo copied to
+  `static/img/myscoope-email-logo.png`. The asset has a `#131313` background, so
+  its header uses that same color. If images are blocked by the mail client,
+  the alternative text still identifies MyScoope.
 - Password-reset requests for unknown addresses keep a generic response but send no
   email, preventing account enumeration without consuming provider quota.
 - Share invitations require a verified sender, are globally and per-user/per-recipient

@@ -12,7 +12,6 @@ from billing.application.services.apple_app_store import get_or_create_apple_app
 from billing.application.services.credit_packs import may_buy_credit_packs
 from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderCreditPack, ProviderSubscription
-from food_catalog.application.editorial_descriptions import description_for_food
 from mobile_api import library_projections
 from mobile_api.calendar_today import current_dated_day, standalone_today_payload
 from mobile_api.calendarized_snapshot_foods import index_snapshot_food
@@ -47,6 +46,7 @@ from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
     Food,
+    FoodPortion,
     Meal,
     MealFood,
     PinnedDailyPlan,
@@ -665,13 +665,18 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
         )
         if item:
             receipt = getattr(item, "label_capture_receipt", None)
+            household_portion = FoodPortion.objects.filter(food=item, is_default=True, household_amount__isnull=False).first()
             return {
                 "id": item.id,
                 "entity": "food",
                 **food_visual_payload(item),
                 "quantity_unit": item.portion_unit,
                 "default_portion": round(float(item.default_portion_g), 1) if item.default_portion_g is not None else None,
-                "subtitle": description_for_food(item),
+                "household_amount": float(household_portion.household_amount) if household_portion else None,
+                "household_measure": household_portion.household_measure if household_portion else "",
+                "household_detail": household_portion.household_detail if household_portion else "",
+                "subtitle": item.description,
+                "description": item.description,
                 "nutrition": _library_nutrition_payload(item, current_weight),
                 "food_nutrition": library_projections.food_nutrition_payload(item),
                 "indicators": [{"label": "base nutricional", "value": f"100 {item.portion_unit}"}],
@@ -1013,32 +1018,6 @@ def review_payload(review) -> dict:
         "note": review.note,
         "summary_snapshot": review.summary_snapshot,
         "created_at": review.created_at,
-    }
-
-
-def food_label_capture_payload(result) -> dict:
-    food = result.food
-    receipt = result.receipt
-    return {
-        "id": food.id,
-        "name": food.name,
-        "protein_g": food.protein,
-        "carbs_g": food.carbs,
-        "fat_g": food.fat,
-        "saturated_fat_g": float(food.saturated_fat_g_per_100g) if food.saturated_fat_g_per_100g is not None else None,
-        "sugar_g": float(food.sugar_g_per_100g) if food.sugar_g_per_100g is not None else None,
-        "fiber_g": float(food.fiber_g_per_100g) if food.fiber_g_per_100g is not None else None,
-        "sodium_mg": float(food.sodium_mg_per_100g) if food.sodium_mg_per_100g is not None else None,
-        "total_kcal": food.total_kcal,
-        "is_user_food": food.created_by_id is not None and not food.is_global,
-        "is_verified": food.is_verified,
-        "capture_receipt_id": receipt.id,
-        "detected_basis": receipt.detected_basis,
-        "serving_size_g": float(receipt.serving_size_g) if receipt.serving_size_g is not None else None,
-        "portion_unit": food.portion_unit,
-        "ocr_engine": receipt.ocr_engine,
-        "label_image_retained": bool(receipt.retained_label_image),
-        "created_at": receipt.created_at,
     }
 
 

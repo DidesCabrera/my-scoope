@@ -96,6 +96,7 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
   el fast gate de 95 pruebas, 1.770 pruebas Django completas, 24 pruebas móviles y
   35 rutas Expo. Sólo permanece como gate externo el smoke físico en iPhone.
 - `catalog_enrichment_cycle.md`: CE01–CE10 implementa enriquecimiento asistido por Codex, por campo, gobernado y reversible, con clasificación multidimensional de capacidades. Las ejecuciones con datos reales en staging y producción permanecen como gates operacionales.
+- `user_contributed_food_labels_cycle.md`: proyecto propuesto para que Catalog Operations convierta etiquetas compartidas voluntariamente en candidatos revisables, mediante un puente gobernado hacia la autoridad central; la fuente existe solo en trabajo local pendiente de integración.
 - `consumer_mobile_launch_cycle.md`: ciclo activo CML00-CML08. Reorienta el primer
   cliente móvil hacia consumidores que siguen su propio programa; separa seguridad,
   API, React Native, calendarización ejecutable, OCR de etiquetas, IAP y review de

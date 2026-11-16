@@ -16,6 +16,11 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.functions import Lower, Trim
 
+from shared_kernel.food_macro_segments import (
+    MACRO_SEGMENT_CHOICES,
+    MACRO_SEGMENT_VERSION,
+    classify_food_macro_segment,
+)
 from shared_kernel.food_portions import (
     HOUSEHOLD_MEASURE_CHOICES,
     MY_SCOOPE_FOOD_GROUP_CHOICES,
@@ -156,6 +161,11 @@ class CatalogFood(models.Model):
     display_name = models.CharField(
         max_length=255,
         help_text="Human-friendly name for curators and eventual publication.",
+    )
+
+    description = models.TextField(
+        blank=True,
+        help_text="Reviewed editorial description for the food detail; independent of nutritional values.",
     )
 
     emoji = models.CharField(
@@ -329,6 +339,22 @@ class CatalogFood(models.Model):
         validators=[MinValueValidator(Decimal("0"))],
     )
 
+    macro_segment = models.CharField(
+        max_length=1,
+        choices=MACRO_SEGMENT_CHOICES,
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Derived 4/4/9 calorie-composition segment; blank when macros are unusable.",
+    )
+    macro_segment_version = models.CharField(
+        max_length=40,
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Version of the calorie-composition rule used for macro_segment.",
+    )
+
     calories_kcal_per_100g = models.DecimalField(
         max_digits=10,
         decimal_places=3,
@@ -455,6 +481,23 @@ class CatalogFood(models.Model):
                 name="unique_catalog_food_normalized_identity",
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            kwargs["update_fields"] = update_fields
+        macro_fields = {"protein_g_per_100g", "carbs_g_per_100g", "fat_g_per_100g"}
+        if update_fields is None or macro_fields.intersection(update_fields):
+            self.macro_segment = classify_food_macro_segment(
+                self.protein_g_per_100g, self.carbs_g_per_100g, self.fat_g_per_100g
+            )
+            self.macro_segment_version = MACRO_SEGMENT_VERSION
+            if update_fields is not None:
+                kwargs["update_fields"] = set(update_fields) | {
+                    "macro_segment", "macro_segment_version"
+                }
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         if self.brand_name:
@@ -1493,28 +1536,3 @@ class FoodVisualAsset(models.Model):
 
     def __str__(self):
         return f"{self.food.display_name} · imagen"
-
-
-class LegacyFoodVisualAsset(models.Model):
-    """Editorial visual override for any active global operational Food.
-
-    The historical model name is retained for existing data and migrations. Its
-    public UUID is independent of the food's nutritional source and uses the
-    same mobile URL contract as master-catalog visuals.
-    """
-
-    food = models.OneToOneField("notas.Food", on_delete=models.CASCADE, related_name="legacy_visual_asset")
-    public_ref = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    image_data = models.BinaryField(editable=False)
-    mobile_image_data = models.BinaryField(editable=False)
-    content_sha256 = models.CharField(max_length=64, editable=False)
-    is_published = models.BooleanField(default=False)
-    source_note = models.CharField(max_length=255, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "imagen de alimento global"
-        verbose_name_plural = "imágenes de alimentos globales"
-
-    def __str__(self):
-        return f"{self.food.name} · imagen global"

@@ -2,7 +2,10 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from . import admin_culinary  # noqa: F401
+from . import (
+    admin_culinary,  # noqa: F401
+    admin_food_visual_assets,  # noqa: F401
+)
 from .admin_food_actions import (
     mark_foods_as_active,
     mark_foods_as_core,
@@ -462,10 +465,10 @@ class FoodSourceMetadataAdmin(admin.ModelAdmin):
 
 @admin.register(FoodLabelCaptureReceipt)
 class FoodLabelCaptureReceiptAdmin(admin.ModelAdmin):
-    list_display = ("food", "ocr_engine", "detected_basis", "serving_size_g", "created_at")
-    list_filter = ("ocr_engine", "detected_basis", "created_at")
+    list_display = ("food", "ocr_engine", "detected_basis", "serving_size_g", "shared_for_curation", "created_at")
+    list_filter = ("shared_for_curation", "ocr_engine", "detected_basis", "created_at")
     search_fields = ("food__name", "food__created_by__username", "idempotency_key")
-    readonly_fields = tuple(field.name for field in FoodLabelCaptureReceipt._meta.fields)
+    readonly_fields = tuple(field.name for field in FoodLabelCaptureReceipt._meta.fields if field.name not in {"retained_label_image", "curation_label_image"})
 
     def has_add_permission(self, request):
         return False

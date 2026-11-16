@@ -343,11 +343,11 @@ def build_food_picker_item_dto(
         ),
         household_measure=default_portion.household_measure if default_portion else "",
         household_measure_label=(
-            household_measure_label(default_portion.household_measure)
+            (default_portion.household_detail if default_portion.household_measure == "other" else household_measure_label(default_portion.household_measure))
             if default_portion
             else ""
         ),
-        household_detail=default_portion.household_detail if default_portion else "",
+        household_detail=default_portion.household_detail if default_portion and default_portion.household_measure != "other" else "",
         myscoope_group=food.myscoope_group,
         myscoope_group_label=myscoope_food_group_label(food.myscoope_group),
         emoji=visual.emoji,

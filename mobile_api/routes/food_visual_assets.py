@@ -1,16 +1,16 @@
 """Public, versioned food images; no nutrition snapshot is changed."""
 
-from uuid import UUID
 from typing import Literal
+from uuid import UUID
 
-from django.http import Http404, HttpResponse, JsonResponse
 from django.db.models import Q
+from django.http import Http404, HttpResponse, JsonResponse
 from ninja import Router
 
-from food_catalog.models import CatalogFood, FoodVisualAsset, LegacyFoodVisualAsset
+from food_catalog.models import CatalogFood, FoodVisualAsset
 from food_catalog.visual_assets import render_wide_food_visual
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
-from notas.domain.models import Food
+from notas.domain.models import Food, LegacyFoodVisualAsset
 
 router = Router()
 

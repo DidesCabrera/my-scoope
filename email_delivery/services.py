@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
-from django.core.mail import EmailMessage, send_mail
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -112,6 +112,7 @@ def deliver_share_invitation(
     subject: str,
     message: str,
     from_email: str,
+    html_message: str | None = None,
 ) -> EmailDeliveryResult:
     actor = getattr(share, "sender", None) or share.resource.sender
     recipient_email = _normalized_email(share.recipient_email)
@@ -192,15 +193,12 @@ def deliver_share_invitation(
         )
 
         try:
-            sent = bool(
-                send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=from_email,
-                    recipient_list=[recipient_email],
-                    fail_silently=False,
-                )
+            email = EmailMultiAlternatives(
+                subject, message, from_email, [recipient_email]
             )
+            if html_message:
+                email.attach_alternative(html_message, "text/html")
+            sent = bool(email.send(fail_silently=False))
         except Exception as exc:
             attempt.status = EmailDeliveryAttempt.STATUS_FAILED
             attempt.error_code = type(exc).__name__[:120]

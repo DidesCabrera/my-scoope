@@ -143,7 +143,7 @@ Este bridge vive en `notas` porque lee modelos operativos. `food_catalog` sigue 
 |---|---|---|
 | Identity & User State | `Plan`, `Profile`, `Subscription`, `WeightLog` | Perfil, suscripción y estado personal del usuario. |
 | Auth Integration | `MCPUserToken`, `OAuthClient`, `OAuthAuthorizationCode` | Estado de integración externa, tokens MCP y OAuth. |
-| Operational Food Snapshot | `Food`, `FoodSourceMetadata`, `FoodPortion`, `FoodAlias`, `FoodLocalizedName`, `FoodImportBatch` | Modelos actuales de alimento operativo y metadata alimentaria dentro de `notas`; deben evolucionar hacia snapshots operativos alimentados por Food Catalog App. |
+| Operational Food Snapshot | `Food`, `FoodSourceMetadata`, `FoodPortion`, `FoodAlias`, `FoodLocalizedName`, `FoodImportBatch`, `LegacyFoodVisualAsset` | Modelos actuales de alimento operativo, metadata alimentaria e imagen editorial por alimento global dentro de `notas`; deben evolucionar hacia snapshots operativos alimentados por Food Catalog App. |
 | Meals | `Meal`, `MealFood`, `MealAccess` | Meals reutilizables, composición meal-food y metadata de acceso de meals. |
 | Daily Plans | `DailyPlan`, `DailyPlanMeal` | Planes diarios y comidas adjuntas. |
 | Programs | `Program`, `ProgramDay` | Programas semanales y días copiados desde DailyPlans. |

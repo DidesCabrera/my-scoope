@@ -59,6 +59,14 @@ raw OCR text are not stored. Only the normalized candidate, image SHA-256 digest
 models used, resolution status, credits and cost metadata remain in the analysis
 audit record.
 
+The digitalization settings independently control whether future captures keep
+the processed photo with the private food and whether they contribute the
+confirmed food data and a metadata-stripped JPEG for later catalog curation.
+Both switches default to off. Turning contribution off stops future submissions;
+it does not withdraw earlier submissions. A contribution never publishes a
+global food automatically. The curation copy and confirmed values are stored
+separately from the user's private photo in the capture receipt.
+
 After a successful analysis, the user may opt in to retain the processed image.
 The server verifies that its digest matches the completed analysis and stores at
 most 1.5 MB in the private capture receipt. The owner can view and delete it from
@@ -117,7 +125,8 @@ volume and mass as interchangeable.
 - `POST /api/v1/foods/label-captures/analyze` accepts the processed image,
   consent, dimensions, idempotency key and optional local candidate.
 - `POST /api/v1/foods/label-captures` persists only user-confirmed normalized
-  values and, when explicitly selected, the verified processed image.
+  values and, when explicitly selected, the verified processed image and/or a
+  separate curation contribution.
 - `GET|DELETE /api/v1/foods/label-captures/{receipt_id}/image` is owner-scoped.
 
 Both AI analysis and food creation are idempotent. The image API requires the

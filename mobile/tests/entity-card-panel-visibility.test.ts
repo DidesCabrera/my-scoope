@@ -28,10 +28,10 @@ test("entity cards expose a shared left-aligned panel visibility control", async
   expectSource(product, 'entityCardPanelToggle: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: 2, height: 32, justifyContent: "center", paddingHorizontal: tokens.spacing.compact }');
   expectSource(product, "entityCardPanelToggleIcon: { marginLeft: 1 }");
   expectSource(product, "entityCardPanelToggleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, marginRight: 2 }");
-  expectSource(product, 'entityCardAction: { alignItems: "center", borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 }');
+  expectSource(product, 'entityCardAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 32, justifyContent: "center", width: 32 }');
   expectSource(product, "<EntityCardActions leading={panelToggle ? <EntityCardPanelToggle");
   expectSource(product, 'entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginHorizontal: -6, marginTop: 6 }');
-  expectSource(product, 'entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, marginLeft: "auto" }');
+  expectSource(product, 'entityCardActionGroup: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact + 4, marginLeft: "auto", marginRight: 4 }');
   expectSource(nutritionCard, "initialPanelExpanded = false");
   expectSource(nutritionCard, "const [panelExpanded, setPanelExpanded] = useState(initialPanelExpanded)");
   expectSource(nutritionCard, "const [foodsPanelExpanded, setFoodsPanelExpanded] = useState(false)");

@@ -31,6 +31,7 @@ test("vertical scroll containers hide their system indicator", async () => {
 
 test("Screen has one implementation and never overrides externally owned headers", async () => {
   const layout = await source("src/components/ui/layout.tsx");
+  const spacing = await source("src/components/ui/screen-bottom-spacing-values.ts");
   const primitives = await source("src/components/ui/primitives.tsx");
   const feedback = await source("src/components/ui/feedback.tsx");
 
@@ -38,8 +39,8 @@ test("Screen has one implementation and never overrides externally owned headers
   assertSourceMatch(layout, /if \(headerMode === "preserve"\) return undefined;[\s\S]*setHeaderPresentation/);
   assertSourceMatch(layout, /onScroll=\{\(event\) => setCompactIdentityVisible\(nextHeaderIdentityVisibility\(event\.nativeEvent\.contentOffset\.y, compactHeaderVisibleRef\.current\)\)\}/);
   assertSourceMatch(layout, /if \(compactHeaderVisibleRef\.current === visible\) return/);
-  assertSourceMatch(layout, /BOTTOM_SPACING = 96/);
-  assertSourceMatch(layout, /paddingBottom: BOTTOM_SPACING/);
+  assertSourceMatch(spacing, /SCREEN_BOTTOM_SPACING = 96/);
+  assertSourceMatch(layout, /paddingBottom: bottomSpacing/);
   assertSourceMatch(layout, /scroll\?: boolean \| "auto"/);
   assertSourceMatch(layout, /automaticallyAdjustKeyboardInsets/);
   assertSourceMatch(layout, /keyboardDismissMode=\{Platform\.OS === "ios" \? "interactive" : "on-drag"\}/);
@@ -160,7 +161,7 @@ test("screens that own global navigation preserve their header through content a
   assertSourceMatch(libraryList, /isHeaderIdentityVisible\(nativeEvent\.contentOffset\.y\)/);
 
   const navigation = await source("src/components/navigation/app-navigation.tsx");
-  assertSourceMatch(navigation, /\(headerPresentation\.action\?\.icon === "more" \|\| headerPresentation\.action\?\.icon === "plus"\) && styles\.backHeaderIconAction/);
+  assertSourceMatch(navigation, /\(headerPresentation\.action\?\.icon === "more" \|\| headerPresentation\.action\?\.icon === "plus" \|\| headerPresentation\.action\?\.icon === "settings"\) && styles\.backHeaderIconAction/);
   assertSourceMatch(navigation, /backHeaderIconAction: \{ paddingHorizontal: 0, width: 44 \}/);
 
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");

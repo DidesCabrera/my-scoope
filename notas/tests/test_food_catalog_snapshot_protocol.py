@@ -21,6 +21,7 @@ from notas.application.services.food_catalog_snapshots import (
     refresh_operational_food_snapshot_from_catalog,
 )
 from notas.domain.models import Food
+from shared_kernel.food_macro_segments import MACRO_SEGMENT_VERSION
 
 
 class FoodCatalogSnapshotProtocolTests(TestCase):
@@ -46,11 +47,14 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
 
         self.assertIsInstance(food, Food)
         self.assertEqual(food.name, "Pechuga de pollo cocida")
+        self.assertEqual(food.description, "Carne de ave cocida y lista para usar.")
         self.assertEqual(food.emoji, "🍗")
         self.assertEqual(food.visual_key, "chicken_breast")
         self.assertEqual(food.protein, 31.0)
         self.assertEqual(food.carbs, 0.0)
         self.assertEqual(food.fat, 3.6)
+        self.assertEqual(food.macro_segment, "D")
+        self.assertEqual(food.macro_segment_version, MACRO_SEGMENT_VERSION)
         self.assertEqual(food.food_group, "meats")
         self.assertEqual(food.food_subgroup, "poultry")
         self.assertEqual(food.myscoope_group, "poultry")
@@ -70,6 +74,7 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(food.catalog_snapshot_payload["catalog_food_id"], catalog_food.id)
         self.assertEqual(food.catalog_snapshot_payload["contract"]["food_defaults"]["preparation_state"], "cooked")
         self.assertEqual(food.catalog_snapshot_payload["contract"]["food_defaults"]["emoji"], "🍗")
+        self.assertEqual(food.catalog_snapshot_payload["contract"]["food_defaults"]["description"], food.description)
         self.assertTrue(food.catalog_snapshot_payload["contract"]["food_defaults"]["solver_enabled"])
         self.assertNotIn("food_id", food.catalog_snapshot_payload)
         self.assertAlmostEqual(food.total_kcal, 156.4)
@@ -222,14 +227,18 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         catalog_food.protein_g_per_100g = Decimal("32.000")
         catalog_food.fat_g_per_100g = Decimal("4.000")
         catalog_food.catalog_version = "v2"
-        catalog_food.save(update_fields=["display_name", "protein_g_per_100g", "fat_g_per_100g", "catalog_version"])
+        catalog_food.description = "Nueva descripción revisada."
+        catalog_food.save(update_fields=["display_name", "description", "protein_g_per_100g", "fat_g_per_100g", "catalog_version"])
 
         refreshed = refresh_operational_food_snapshot_from_catalog(food).food
 
         self.assertEqual(refreshed.id, original_food_id)
         self.assertEqual(refreshed.name, "Pechuga de pollo cocida actualizada")
+        self.assertEqual(refreshed.description, "Nueva descripción revisada.")
         self.assertEqual(refreshed.protein, 32.0)
         self.assertEqual(refreshed.fat, 4.0)
+        self.assertEqual(refreshed.macro_segment, catalog_food.macro_segment)
+        self.assertEqual(refreshed.macro_segment_version, MACRO_SEGMENT_VERSION)
         self.assertEqual(refreshed.catalog_snapshot_version, "v2")
         self.assertEqual(refreshed.catalog_sync_status, Food.CATALOG_SYNC_SNAPSHOT)
         self.assertEqual(refreshed.catalog_snapshot_payload["catalog_version"], "v2")
@@ -262,6 +271,7 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
     def _create_published_catalog_food(self) -> CatalogFood:
         catalog_food = CatalogFood.objects.create(
             display_name="Pechuga de pollo cocida",
+            description="Carne de ave cocida y lista para usar.",
             canonical_name="pechuga pollo cocida",
             catalog_version="v1",
             food_group="meats",

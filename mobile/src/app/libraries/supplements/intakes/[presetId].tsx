@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Pencil, Pill, PillBottle, Trash2 } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -12,7 +12,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { SupplementIntakeItemsTable, type SupplementIntakeTableItem } from "@/components/supplements/supplement-intake-items-table";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
-import { Button, InlineNotice, LoadingState, SupplementCard } from "@/components/ui";
+import { AdaptiveScrollView, Button, InlineNotice, LoadingState, SupplementCard } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export default function SupplementIntakePresetDetailScreen() {
@@ -62,7 +62,7 @@ export default function SupplementIntakePresetDetailScreen() {
   }));
 
   return <>
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
+    <AdaptiveScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
       <EntityDetailPage
         entity="supplement"
         eyebrow="Ingesta de suplementos"
@@ -89,7 +89,7 @@ export default function SupplementIntakePresetDetailScreen() {
         />)}</View>
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       </EntityDetailPage>
-    </ScrollView>
+    </AdaptiveScrollView>
     <ActionSheetModal onRequestClose={() => setActionsVisible(false)} visible={actionsVisible}>
       <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
         <ActionSheetHeader icon={PillBottle} iconColor={tokens.color.supplement} onClose={() => setActionsVisible(false)} title={item.name} />
@@ -106,7 +106,7 @@ export default function SupplementIntakePresetDetailScreen() {
 
 const styles = StyleSheet.create({
   cardList: { gap: tokens.spacing.lg },
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },

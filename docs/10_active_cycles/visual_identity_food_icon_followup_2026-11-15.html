@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grilla de revisión · íconos de alimentos</title>
+  <style>
+    :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #090909; color: #f5f5f5; }
+    main { padding: 28px; }
+    h1 { margin: 0 0 8px; font-size: 25px; }
+    p { margin: 0 0 24px; color: #aaa; font-size: 14px; }
+    h2 { color: #ddd; font-size: 16px; margin: 26px 0 12px; }
+    .scroll { overflow-x: auto; padding-bottom: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(15, 92px); gap: 8px; width: max-content; }
+    .tile { box-sizing: border-box; width: 92px; height: 114px; border: 1px solid #292929; border-radius: 12px; background: #151515; padding: 8px 5px; text-align: center; }
+    .frame { display: flex; align-items: center; justify-content: center; width: 76px; height: 54px; margin: auto; }
+    .frame img { display: block; width: 62px; height: 41px; object-fit: contain; }
+    .square img { width: 41px; height: 41px; }
+    .name { font-size: 11px; line-height: 1.2; color: #d6d6d6; margin-top: 6px; overflow-wrap: anywhere; }
+    .note { margin-top: 5px; color: #999; font-size: 10px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Propuestas de íconos · revisión a tamaño real</h1>
+  <p>13 imágenes aprobadas visualmente el 2026-11-15, aún sin asignar ni publicar. Comparación con marcos de 62 × 41 y 41 × 41 px; cada fila admite 15 alimentos.</p>
+  <h2>Marco ancho · 62 × 41 px</h2>
+  <div class="scroll"><div id="wide" class="grid"></div></div>
+  <h2>Marco cuadrado · 41 × 41 px</h2>
+  <div class="scroll"><div id="square" class="grid"></div></div>
+</main>
+<script>
+  const assets = [
+    ["Choclo cocido", "cooked-yellow-corn-bowl-followup-candidate.png"],
+    ["Clara de huevo", "egg-white-glass-plate-followup-candidate.png"],
+    ["Coliflor cocida", "cooked-cauliflower-followup-candidate.png"],
+    ["Espinaca cocida", "cooked-spinach-followup-candidate.png"],
+    ["Garbanzos cocidos", "cooked-chickpeas-followup-candidate.png"],
+    ["Habas cocidas", "cooked-fava-beans-followup-candidate.png"],
+    ["Kale cocida", "cooked-kale-followup-candidate.png"],
+    ["Morchela cruda", "raw-morel-followup-candidate.png"],
+    ["Hongo ostra crudo", "raw-oyster-mushroom-followup-candidate.png"],
+    ["Shiitake crudo", "raw-shiitake-followup-candidate.png"],
+    ["Shiitake seco", "dried-shiitake-followup-candidate.png"],
+    ["Mayonesa regular", "regular-mayonnaise-followup-candidate.png"],
+    ["Melón tuna crudo", "raw-melon-tuna-followup-candidate.png"]
+  ];
+  for (const [name, file] of assets) {
+    for (const [id, square] of [["wide", false], ["square", true]]) {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      const frame = document.createElement("div");
+      frame.className = square ? "frame square" : "frame";
+      const img = document.createElement("img");
+      img.src = `assets/visual_identity_catalog/${file}`;
+      img.alt = name;
+      frame.append(img);
+      const label = document.createElement("div");
+      label.className = "name";
+      label.textContent = name;
+      tile.append(frame, label);
+      document.getElementById(id).append(tile);
+    }
+  }
+</script>
+</body>
+</html>

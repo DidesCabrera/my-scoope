@@ -28,6 +28,7 @@ PUBLIC_MODEL_NAMES = [
     "FoodShare",
     "InboxItem",
     "FoodSourceMetadata",
+    "LegacyFoodVisualAsset",
     "MCPUserToken",
     "Meal",
     "MealAccess",

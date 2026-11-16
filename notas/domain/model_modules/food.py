@@ -9,6 +9,11 @@ from notas.domain.constants.nutrition import (
     FAT_KCAL_PER_GRAM,
     PROTEIN_KCAL_PER_GRAM,
 )
+from shared_kernel.food_macro_segments import (
+    MACRO_SEGMENT_CHOICES,
+    MACRO_SEGMENT_VERSION,
+    classify_food_macro_segment,
+)
 from shared_kernel.food_portions import (
     HOUSEHOLD_MEASURE_CHOICES,
     MY_SCOOPE_FOOD_GROUP_CHOICES,
@@ -68,6 +73,11 @@ class Food(models.Model):
 
     name = models.CharField(max_length=100)
 
+    description = models.TextField(
+        blank=True,
+        help_text="Editorial description copied from Food Catalog or approved for this operational food.",
+    )
+
     emoji = models.CharField(
         max_length=32,
         blank=True,
@@ -90,6 +100,22 @@ class Food(models.Model):
     protein = models.FloatField()
     carbs = models.FloatField()
     fat = models.FloatField()
+
+    macro_segment = models.CharField(
+        max_length=1,
+        choices=MACRO_SEGMENT_CHOICES,
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Derived 4/4/9 calorie-composition segment; blank when macros are unusable.",
+    )
+    macro_segment_version = models.CharField(
+        max_length=40,
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Version of the calorie-composition rule used for macro_segment.",
+    )
 
     created_by = models.ForeignKey(
         User,
@@ -322,6 +348,23 @@ class Food(models.Model):
         help_text="Internal sync state for the optional Food Catalog trace.",
     )
 
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            kwargs["update_fields"] = update_fields
+        macro_fields = {"protein", "carbs", "fat"}
+        if update_fields is None or macro_fields.intersection(update_fields):
+            self.macro_segment = classify_food_macro_segment(
+                self.protein, self.carbs, self.fat
+            )
+            self.macro_segment_version = MACRO_SEGMENT_VERSION
+            if update_fields is not None:
+                kwargs["update_fields"] = set(update_fields) | {
+                    "macro_segment", "macro_segment_version"
+                }
+        return super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -496,6 +539,12 @@ class FoodLabelCaptureReceipt(models.Model):
     retained_label_image_content_type = models.CharField(max_length=40, blank=True)
     retained_label_image_sha256 = models.CharField(max_length=64, blank=True)
     retained_label_image_size = models.PositiveIntegerField(default=0)
+    shared_for_curation = models.BooleanField(default=False)
+    curation_payload = models.JSONField(default=dict, blank=True)
+    curation_label_image = models.BinaryField(null=True, blank=True, editable=False)
+    curation_label_image_sha256 = models.CharField(max_length=64, blank=True)
+    curation_label_image_size = models.PositiveIntegerField(default=0)
+    curation_shared_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -796,3 +845,28 @@ class FoodImportBatch(models.Model):
 
     def __str__(self):
         return f"{self.source} · {self.source_version or 'sin versión'} · {self.status}"
+
+
+class LegacyFoodVisualAsset(models.Model):
+    """Editorial visual override for any active global operational Food.
+
+    Keep the historical table name so existing images and public URLs survive
+    the change of Django app ownership.
+    """
+
+    food = models.OneToOneField("notas.Food", on_delete=models.CASCADE, related_name="legacy_visual_asset")
+    public_ref = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    image_data = models.BinaryField(editable=False)
+    mobile_image_data = models.BinaryField(editable=False)
+    content_sha256 = models.CharField(max_length=64, editable=False)
+    is_published = models.BooleanField(default=False)
+    source_note = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "food_catalog_legacyfoodvisualasset"
+        verbose_name = "imagen de alimento global"
+        verbose_name_plural = "imágenes de alimentos globales"
+
+    def __str__(self):
+        return f"{self.food.name} · imagen global"

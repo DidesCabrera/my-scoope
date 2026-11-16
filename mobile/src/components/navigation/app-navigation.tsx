@@ -57,7 +57,7 @@ import { PRODUCT_VOCABULARY_ES } from "@/copy/product-vocabulary";
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData, SidebarProBadge } from "./sidebar-items";
 
-type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus" | "search"; label: string; onPress(): void };
+type HeaderAction = { disabled?: boolean; icon?: "back" | "calendar-clock" | "clock" | "more" | "none" | "pin" | "plus" | "search" | "settings"; label: string; onPress(): void };
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; createAction?: HeaderAction; identityVisible?: boolean; secondaryAction?: HeaderAction; title?: string }
@@ -284,11 +284,13 @@ export function AppNavigationHeader() {
             disabled={headerPresentation.action.disabled}
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.backHeaderAction, (headerPresentation.action?.icon === "more" || headerPresentation.action?.icon === "plus") && styles.backHeaderIconAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.backHeaderAction, (headerPresentation.action?.icon === "more" || headerPresentation.action?.icon === "plus" || headerPresentation.action?.icon === "settings") && styles.backHeaderIconAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.action.icon === "more"
               ? <MoreHorizontal color={tokens.color.textMuted} size={26} strokeWidth={2.2} />
               : headerPresentation.action.icon === "plus"
                 ? <Plus color={tokens.color.textMuted} size={25} strokeWidth={2.2} />
+                : headerPresentation.action.icon === "settings"
+                  ? <SettingsIcon color={tokens.color.textMuted} size={24} strokeWidth={2.2} />
                 : <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>}
           </Pressable> : null}
           </View>

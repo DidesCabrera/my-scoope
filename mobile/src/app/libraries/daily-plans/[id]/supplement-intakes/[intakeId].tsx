@@ -3,7 +3,6 @@ import * as Crypto from "expo-crypto";
 import { Pill, PillBottle, Trash2 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -17,7 +16,7 @@ import { ProgramSectionHeader } from "@/components/programs/program-section-head
 import { SupplementIntakeItemsTable, type SupplementIntakeTableItem } from "@/components/supplements/supplement-intake-items-table";
 import { consumeSupplementIntakeSelection } from "@/components/supplements/supplement-intake-selection-handoff";
 import { SupplementProSheet } from "@/components/supplements/supplement-pro-sheet";
-import { Button, HeaderMetadataChip, InlineNotice, LoadingState, NativeDateTimeField, SupplementCard } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, Button, HeaderMetadataChip, InlineNotice, LoadingState, NativeDateTimeField, SupplementCard } from "@/components/ui";
 import { ActionSheetAction, ActionSheetActions, ActionSheetHeader, ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
@@ -211,7 +210,7 @@ export default function SupplementIntakeDetailScreen() {
     };
   });
   const selectedIndex = (item: SupplementIntakeTableItem) => tableItems.findIndex((row) => row.id === item.id);
-  return <><NestableScrollContainer contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
+  return <><AdaptiveNestableScrollContainer contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
     <EntityDetailPage
       entity="supplement"
       eyebrow="Ingesta de suplementos"
@@ -271,7 +270,7 @@ export default function SupplementIntakeDetailScreen() {
     </>}
     {!pro && error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     </EntityDetailPage>
-  </NestableScrollContainer>
+  </AdaptiveNestableScrollContainer>
   <SupplementProSheet onClose={() => setUpsell(false)} visible={upsell} />
   <ActionSheetModal onRequestClose={() => setActionSheet(null)} visible={actionSheet === "menu"}>
     <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
@@ -298,7 +297,7 @@ export default function SupplementIntakeDetailScreen() {
 const styles = StyleSheet.create({
   addAction: { marginTop: tokens.spacing.md },
   cardList: { gap: tokens.spacing.lg, minWidth: 0 },
-  content: { flexGrow: 1, paddingBottom: 60, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   sheetContent: { padding: tokens.spacing.screen, paddingBottom: tokens.spacing.xl },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard },

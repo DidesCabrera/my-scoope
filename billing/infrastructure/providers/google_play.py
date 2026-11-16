@@ -97,6 +97,29 @@ class GooglePlayClient:
             metadata=data,
         )
 
+    def get_order(self, order_id: str) -> dict[str, Any]:
+        """Read financial truth from Google; purchase tokens and catalog prices are not amounts."""
+        if not self.package_name or not self.service_account:
+            raise GooglePlayConfigurationError("Google Play verification is not configured.")
+        order_id = order_id.strip()
+        if not order_id:
+            raise InvalidGooglePlayPurchase("A Google Play order ID is required.")
+        url = (
+            "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/"
+            f"{quote(self.package_name, safe='')}/orders/{quote(order_id, safe='')}"
+        )
+        response = requests.get(
+            url, headers={"Authorization": f"Bearer {self._access_token()}"}, timeout=self.timeout_seconds
+        )
+        if response.status_code in {400, 404}:
+            raise InvalidGooglePlayPurchase("Google Play did not recognize the order.")
+        if response.status_code >= 400:
+            raise GooglePlayConfigurationError(f"Google Play order lookup failed with HTTP {response.status_code}.")
+        data = response.json()
+        if not isinstance(data, dict) or data.get("orderId") != order_id:
+            raise GooglePlayConfigurationError("Google Play returned a mismatched order.")
+        return data
+
     def list_voided_products(self, *, start_time_ms: int) -> list[dict[str, Any]]:
         """Read every page of revoked one-time purchases from Google's server API.
 

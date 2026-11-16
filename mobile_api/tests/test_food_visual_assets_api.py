@@ -1,15 +1,16 @@
-from io import BytesIO
 import hashlib
+from io import BytesIO
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from PIL import Image
 
-from food_catalog.admin import FoodVisualAssetForm, LegacyFoodVisualAssetForm
-from food_catalog.models import CatalogFood, FoodVisualAsset, LegacyFoodVisualAsset
+from food_catalog.admin import FoodVisualAssetForm
+from food_catalog.models import CatalogFood, FoodVisualAsset
 from food_catalog.visual_assets import prepare_food_visual
-from notas.domain.models import Food
+from notas.admin_food_visual_assets import LegacyFoodVisualAssetForm
+from notas.domain.models import Food, LegacyFoodVisualAsset
 
 
 def png_upload(*, width=400, height=200):

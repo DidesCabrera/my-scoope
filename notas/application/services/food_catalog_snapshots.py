@@ -89,6 +89,7 @@ def build_operational_food_snapshot_payload(
         catalog_ref=str(catalog_food.catalog_ref),
         catalog_version=catalog_food.catalog_version,
         display_name=catalog_food.display_name,
+        description=catalog_food.description,
         emoji=visual.emoji,
         visual_key=visual.visual_key,
         canonical_name=catalog_food.canonical_name,

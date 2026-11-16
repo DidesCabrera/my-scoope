@@ -47,7 +47,7 @@ test("weight trend ignores an earlier through date and still includes the latest
 
 test("weight trend and history use the standard card surface", async () => {
   const screen = await readFile(path.resolve(process.cwd(), "src/app/weight.tsx"), "utf8");
-  assert.match(screen, /<Card accent=\{tokens\.color\.protein\}>\s*<CardHeader title="Registro de peso actual" \/>/);
+  assert.match(screen, /<Card accent=\{tokens\.color\.protein\}>\s*<View style=\{styles\.currentWeightHeading\}>[\s\S]*Registro de peso actual[\s\S]*weight-body-scale-small\.png[\s\S]*<\/View>\s*<NativeMeasurementField[\s\S]*<Text style=\{textStyles\.muted\}>Mídete en condiciones similares para que la tendencia sea comparable\.<\/Text>/);
   assert.match(screen, /Mídete en condiciones similares para que la tendencia sea comparable\./);
   assert.match(screen, /El registro de peso te permitirá visualizar su variación\./);
   assert.match(screen, /La variación de peso puede deberse a diferentes factores/);
@@ -57,7 +57,7 @@ test("weight trend and history use the standard card surface", async () => {
   assert.doesNotMatch(screen, /eyebrow="Mediciones"/);
   assert.match(screen, /setHeaderPresentation\(\{ fallback: "\/today", identityVisible: compactHeaderVisible, mode: "back", title: "Registra tu peso" \}\)/);
   assert.match(screen, /<Screen headerMode="preserve" onHeaderVisibilityChange=\{setCompactHeaderVisible\}>/);
-  assert.match(screen, /<Card accent=\{tokens\.color\.protein\}>[\s\S]*?<\/Card>\s*<InlineNotice>\s*La variación de peso/);
+  assert.match(screen, /<WeightTrendCard items=\{items\} \/>\s*<Card>[\s\S]*title="Pesos históricos"[\s\S]*<\/Card>\s*<InlineNotice>\s*La variación de peso/);
   assert.doesNotMatch(screen, /weightIntroduction/);
   assert.doesNotMatch(screen, /Una cifra aislada no define tu progreso/);
   assert.match(screen, /<WeightTrendCard items=\{items\} \/>/);

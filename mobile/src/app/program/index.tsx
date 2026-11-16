@@ -2,7 +2,6 @@ import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Calendar1 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData } from "@/api/types";
@@ -16,7 +15,7 @@ import { ProgramActiveActions } from "@/components/programs/program-active-actio
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Button, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, Button, LoadingState, Screen, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -135,7 +134,7 @@ export default function ProgramScreen() {
 
   return (
     <>
-      <NestableScrollContainer
+      <AdaptiveNestableScrollContainer
         contentContainerStyle={styles.screenContent}
         keyboardShouldPersistTaps="handled"
         onScroll={({ nativeEvent }) => {
@@ -161,7 +160,7 @@ export default function ProgramScreen() {
         <View style={styles.cancelAction}>
           <Button label="Cancelar programa" onPress={requestCancel} variant="danger" />
         </View>
-      </NestableScrollContainer>
+      </AdaptiveNestableScrollContainer>
       {actionsModal}
     </>
   );
@@ -171,6 +170,6 @@ const styles = StyleSheet.create({
   beforePlanning: { gap: tokens.spacing.lg },
   cancelAction: { marginTop: 28 },
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  screenContent: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  screenContent: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
 });

@@ -19,7 +19,9 @@ function rounded(value: number): string {
 }
 
 export function MealCompletionSurface({ children, color = tokens.color.meal }: PropsWithChildren<{ color?: string }>) {
-  return <View style={[styles.surface, { backgroundColor: `${color}1A`, borderColor: `${color}B3` }]}>{children}</View>;
+  return <View style={[styles.surface, { borderColor: `${color}4D` }]}>
+    <View style={[styles.surfaceTint, { backgroundColor: `${color}1A` }]}>{children}</View>
+  </View>;
 }
 
 function CompletionSummaryRow({ accessibilityLabel, color, completed, keys, label }: { accessibilityLabel: string; color: string; completed: boolean[]; keys: string[]; label: string }) {
@@ -120,5 +122,6 @@ const styles = StyleSheet.create({
   completionIcon: { alignItems: "center", borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
   label: { color: tokens.color.textMain, flex: 1, fontSize: 15, fontWeight: tokens.weight.bold, minWidth: 0 },
   row: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52 },
-  surface: { borderRadius: tokens.radius.lg + 4, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 54, paddingHorizontal: 14 },
+  surface: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.lg + 4, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, overflow: "hidden" },
+  surfaceTint: { gap: tokens.card.gap, minHeight: 54, paddingHorizontal: 14 },
 });

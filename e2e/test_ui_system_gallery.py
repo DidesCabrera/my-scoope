@@ -79,8 +79,11 @@ def test_conversation_gallery_runs_the_mcp_card_with_synthetic_states(
     )
 
     anonymous_page.get_by_role("button", name="Panel web").click()
-    expect(card.locator("#meal-food-table")).to_be_hidden()
-    expect(card.locator("#meal-foods")).to_be_visible()
+    expect(card.locator("#meal-food-table")).to_be_visible()
+    expect(card.locator("#meal-foods")).to_be_hidden()
+    assert card.locator(".food-panel").evaluate(
+        "element => element.scrollWidth > element.clientWidth"
+    )
     assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
 
     anonymous_page.get_by_role("button", name="Móvil").click()

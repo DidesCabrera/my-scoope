@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
@@ -10,7 +10,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { PickerCardAction } from "@/components/pickers/picker-card-action";
 import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { SupplementIntakePresetCard } from "@/components/supplements/supplement-intake-preset-card";
-import { InlineNotice, LoadingState, SearchField, textStyles } from "@/components/ui";
+import { AdaptiveScrollView, InlineNotice, LoadingState, SearchField, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { internalHref } from "@/navigation/internal-href";
 
@@ -51,7 +51,7 @@ export default function AddSupplementIntakeScreen() {
   if (loading && !items.length) return <LoadingState label="Cargando tus ingestas…" />;
 
   return <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-    <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} stickyHeaderIndices={[0]}>
+    <AdaptiveScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} stickyHeaderIndices={[0]}>
       <View style={styles.sticky}>
         <PickerEntryTabs createLabel="Crear ingesta" onCreate={() => router.push({ pathname: "/libraries/supplements/intakes/new", params: { returnTo: String(addHref) } })} />
         <SearchField accessibilityLabel="Buscar ingesta" autoCapitalize="words" bleed onChangeText={setQuery} placeholder="Escribe el nombre de una ingesta" value={query} />
@@ -63,13 +63,13 @@ export default function AddSupplementIntakeScreen() {
         {!loading && !visible.length ? <Text style={textStyles.muted}>{normalizedQuery ? "No encontramos resultados." : "Aún no tienes ingestas guardadas. Puedes crear una nueva para esta minuta."}</Text> : null}
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       </View>
-    </ScrollView>
+    </AdaptiveScrollView>
   </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
   cardAction: { marginHorizontal: -6 },
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen },
   options: { gap: tokens.spacing.lg, paddingTop: tokens.spacing.md },
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   sticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.screen, zIndex: 2 },

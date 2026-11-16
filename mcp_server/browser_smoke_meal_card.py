@@ -7,7 +7,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v6.html"
+CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v7.html"
 SAMPLE_RESULT = {
     "ok": True,
     "data": {
@@ -99,6 +99,7 @@ def main():
             card.locator("#card").screenshot(path=str(args.screenshot))
 
         page.locator("iframe").evaluate("element => element.style.width = '760px'")
+        assert card.locator("#card").evaluate("element => getComputedStyle(element).zoom") == "0.8"
         assert card.locator("#meal-food-table").is_visible()
         assert card.locator("#meal-foods").is_hidden()
         assert card.locator("#meal-food-table tr").first.locator("td").last.evaluate(
@@ -118,15 +119,17 @@ def main():
         )
 
         page.locator("iframe").evaluate("element => element.style.width = '570px'")
-        assert card.locator("#meal-food-table").is_hidden()
-        assert card.locator("#meal-foods").is_visible()
-        assert card.locator(".mobile-tabs").is_visible()
+        assert card.locator("#card").evaluate("element => getComputedStyle(element).zoom") == "0.8"
+        assert card.locator("#meal-food-table").is_visible()
+        assert card.locator("#meal-foods").is_hidden()
+        assert card.locator(".mobile-tabs").is_hidden()
         assert card.locator("html").evaluate("element => element.scrollWidth <= innerWidth")
         if args.screenshot_panel:
             args.screenshot_panel.parent.mkdir(parents=True, exist_ok=True)
             card.locator("#card").screenshot(path=str(args.screenshot_panel))
 
         page.locator("iframe").evaluate("element => element.style.width = '390px'")
+        assert card.locator("#card").evaluate("element => getComputedStyle(element).zoom") == "1"
         assert card.locator(".macro-row").first.evaluate(
             "element => Math.round(parseFloat(getComputedStyle(element).gridTemplateColumns)) === 78"
         )

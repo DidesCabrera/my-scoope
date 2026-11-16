@@ -20,6 +20,21 @@ export const unavailableLabelImageQuality: LabelImageQuality = {
   metrics: null,
 };
 
+export function nextLabelCaptureStep(validationEnabled: boolean, status: LabelImageQuality["status"]): "analyze" | "review" | "retake" {
+  if (!validationEnabled) return "analyze";
+  if (status === "unsuitable") return "retake";
+  if (status === "reviewable" || status === "unavailable") return "review";
+  return "analyze";
+}
+
+export async function recognizeLabelWithOneRetry<T>(recognize: () => Promise<T>): Promise<T> {
+  try {
+    return await recognize();
+  } catch {
+    return recognize();
+  }
+}
+
 export function classifyLabelImageQuality(
   metrics: NutritionLabelImageQualityMetrics,
 ): LabelImageQuality {

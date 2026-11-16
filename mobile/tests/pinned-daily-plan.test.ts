@@ -117,7 +117,7 @@ test("Home creates a dated snapshot while retaining legacy pinned-plan fallback"
   assertSourceMatch(supplementIntakeDetail, /<SafeAreaView edges=\{\["left", "right"\]\} style=\{styles\.sheetSafeArea\}>[\s\S]*<View style=\{styles\.sheetContent\}>[\s\S]*<ActionSheetActions>/);
   assertSourceMatch(configureSupplementIntake, /supplement-intakes\/from-preset[\s\S]*preset_id: item\.id, hour/);
   assertSourceMatch(supplementPresetForm, /Esta combinación podrá agregarse a distintas minutas\.[\s\S]*SupplementIntakeItemsTable[\s\S]*label="\+ Agregar suplemento"/);
-  assertSourceMatch(supplementPresetForm, /<NestableScrollContainer[\s\S]*<SupplementIntakeItemsTable/);
+  assertSourceMatch(supplementPresetForm, /<AdaptiveNestableScrollContainer[\s\S]*<SupplementIntakeItemsTable/);
   assertSourceDoesNotMatch(supplementPresetForm, /<ScrollView/);
   assertSourceMatch(supplementPresetDetail, /identityIcon=\{PillBottle\}[\s\S]*<SupplementIntakeItemsTable editable=\{false\}/);
   assertSourceDoesNotMatch(supplementIntakeDetail, /SectionDivider/);

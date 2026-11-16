@@ -329,6 +329,7 @@ class PublishedFoodSnapshot:
     catalog_version: str
     display_name: str
     nutrients_per_100g: NutrientProfilePer100g
+    description: str = ""
     emoji: str = ""
     visual_key: str = ""
     portion_unit: PortionUnit | str = PortionUnit.GRAMS
@@ -354,6 +355,7 @@ class PublishedFoodSnapshot:
         _require_text(self.catalog_ref, field_name="catalog_ref")
         _require_text(self.catalog_version, field_name="catalog_version")
         _require_text(self.display_name, field_name="display_name")
+        object.__setattr__(self, "description", self.description.strip())
         if not 0 <= self.data_quality_score <= 100:
             raise FoodCatalogContractError("data_quality_score must be between 0 and 100.")
         object.__setattr__(self, "visibility", OperationalVisibility(self.visibility))
@@ -378,6 +380,7 @@ class PublishedFoodSnapshot:
             source_catalog_ref=self.catalog_ref,
             source_catalog_version=self.catalog_version,
             name=self.display_name.strip(),
+            description=self.description,
             emoji=self.emoji.strip(),
             visual_key=self.visual_key.strip(),
             canonical_name=self.canonical_name.strip(),
@@ -413,6 +416,7 @@ class OperationalFoodSnapshotPayload:
     food_group: str
     food_subgroup: str
     nutrients_per_100g: NutrientProfilePer100g
+    description: str = ""
     myscoope_group: MyScoopeFoodGroup | str | None = None
     emoji: str = ""
     visual_key: str = ""
@@ -435,6 +439,7 @@ class OperationalFoodSnapshotPayload:
         _require_text(self.source_catalog_ref, field_name="source_catalog_ref")
         _require_text(self.source_catalog_version, field_name="source_catalog_version")
         _require_text(self.name, field_name="name")
+        object.__setattr__(self, "description", self.description.strip())
         if not 0 <= self.data_quality_score <= 100:
             raise FoodCatalogContractError("data_quality_score must be between 0 and 100.")
         object.__setattr__(self, "visibility", OperationalVisibility(self.visibility))
@@ -457,6 +462,7 @@ class OperationalFoodSnapshotPayload:
 
         return {
             "name": self.name.strip(),
+            "description": self.description,
             "emoji": self.emoji.strip(),
             "visual_key": self.visual_key.strip(),
             **self.nutrients_per_100g.operational_macro_defaults(),

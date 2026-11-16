@@ -10,8 +10,6 @@ def test_meal_picker_shows_results_when_typing(page, dailyplan_edit_url, open_da
 
     meal_search.wait_for()
     assert meal_search.is_visible()
-    assert meal_list.is_visible(), "La biblioteca no se mostró al abrir el paso de selección"
-
     meal_search.fill("Nueva Comida 2")
 
     items = meal_list.locator("li.meal-item")

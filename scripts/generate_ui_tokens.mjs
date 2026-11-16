@@ -7,7 +7,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const contractPath = path.join(repositoryRoot, "design/ui-contract.json");
 const cssPath = path.join(repositoryRoot, "notas/static/notas/css/ui-contract.generated.css");
 const nativePath = path.join(repositoryRoot, "mobile/src/generated/ui-tokens.ts");
-const mcpCardSources = ["meal_card_v6", "entity_card_v1"].map((name) => ({
+const mcpCardSources = ["meal_card_v6", "meal_card_v7", "entity_card_v1", "entity_card_v2"].map((name) => ({
   sourcePath: path.join(repositoryRoot, `mcp_server/myscoope_mcp/ui/${name}.source.html`),
   outputPath: path.join(repositoryRoot, `mcp_server/myscoope_mcp/ui/${name}.html`),
 }));

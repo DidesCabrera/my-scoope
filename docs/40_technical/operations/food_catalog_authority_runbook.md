@@ -39,6 +39,14 @@ FOOD_CATALOG_RELEASE_URL=https://myscoope-food-catalog.onrender.com
 FOOD_CATALOG_RELEASE_TOKEN=<same shared random secret>
 ```
 
+El servidor de autoridad no instala `notas`. Las migraciones históricas
+`food_catalog.0019` a `0021` crean y pueblan imágenes operacionales solo en
+consumidores que instalan esa app; en la autoridad conservan su identidad pero
+no ejecutan operaciones. `food_catalog.0024` y `notas.0104` transfieren
+únicamente el estado Django del modelo operacional. La tabla y los PNG
+existentes permanecen intactos. Para verificar un despliegue, comprobar
+`manage.py check`, la aplicación de migraciones y `/healthz/` en la autoridad.
+
 Do not distribute the token to unrelated workers. Rotate it by updating authority
 and consumers before the next release import. Never place it in Git or command logs.
 

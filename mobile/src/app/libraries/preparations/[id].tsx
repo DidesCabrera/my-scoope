@@ -2,7 +2,6 @@ import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } 
 import { Carrot } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
-import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { PersonalPreparation } from "@/api/preparations";
@@ -16,7 +15,7 @@ import { preparationNutritionForGrams } from "@/components/preparations/preparat
 import { PreparationDetailActions } from "@/components/preparations/preparation-detail-actions";
 import { ingredientPanelItem } from "@/components/preparations/preparation-panel-items";
 import { ProgramSectionHeader } from "@/components/programs/program-section-header";
-import { Button, DistributedTabBar, LoadingState } from "@/components/ui";
+import { AdaptiveNestableScrollContainer, Button, DistributedTabBar, LoadingState } from "@/components/ui";
 import { InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { pickerHref } from "@/components/pickers/picker-routes";
@@ -151,12 +150,12 @@ export default function PreparationDetailScreen() {
   />;
 
   if (detail.is_draft) return <>
-    <NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
+    <AdaptiveNestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
       <EntityDetailPage entity="preparation" showNutrition={false} title={detail.name}>
         <InlineNotice tone="info">Agrega los alimentos de la receta para calcular su información nutricional.</InlineNotice>
         <Button label="+ Agregar alimento" onPress={addFood} variant="chipPrimary" />
       </EntityDetailPage>
-    </NestableScrollContainer>
+    </AdaptiveNestableScrollContainer>
     {actions}
   </>;
 
@@ -225,7 +224,7 @@ export default function PreparationDetailScreen() {
     },
   } : undefined;
 
-  return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
+  return <><AdaptiveNestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
     <EntityDetailPage beforeNutrition={<View style={styles.kpiViewSelector}>
       <Text style={styles.kpiViewTitle}>Información nutricional</Text>
       <DistributedTabBar<KpiView>
@@ -249,12 +248,12 @@ export default function PreparationDetailScreen() {
       </> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     </EntityDetailPage>
-  </NestableScrollContainer>{actions}</>;
+  </AdaptiveNestableScrollContainer>{actions}</>;
 }
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   feedback: { padding: tokens.spacing.screen },
   kpiViewSelector: { gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
   kpiViewTitle: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },

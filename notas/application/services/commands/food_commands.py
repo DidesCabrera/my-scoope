@@ -5,11 +5,13 @@ from dataclasses import dataclass
 
 from django.db import IntegrityError, transaction
 from django.db.models import Max
+from django.utils import timezone
 
 from core.food_visual_identity import infer_food_visual_identity
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
-from notas.domain.models import Food, FoodLabelCaptureReceipt, Meal, MealFood
+from notas.domain.models import Food, FoodLabelCaptureReceipt, FoodPortion, Meal, MealFood
+from shared_kernel.food_portions import HOUSEHOLD_MEASURE_CHOICES, household_measure_label
 
 
 def refresh_meal_and_parent_caches_for_food(food):
@@ -136,6 +138,10 @@ def create_food_from_label_capture(
     ocr_engine_version="",
     detected_basis=FoodLabelCaptureReceipt.BASIS_MANUAL,
     serving_size_g=None,
+    default_portion=None,
+    household_amount=None,
+    household_measure="",
+    household_detail="",
     volume_weight_g_per_100ml=None,
     declared_energy_kcal_per_100g=None,
     saturated_fat_g=None,
@@ -147,6 +153,7 @@ def create_food_from_label_capture(
     retained_label_image=None,
     retained_label_image_content_type="",
     retained_label_image_sha256="",
+    curation_label_image=None,
 ) -> FoodLabelCaptureResult:
     clean_name = str(name or "").strip()
     if not clean_name or len(clean_name) > 100:
@@ -187,6 +194,7 @@ def create_food_from_label_capture(
         "field_confidence": _label_confidence(field_confidence or {}),
         "warnings": _label_warnings(warnings or []),
         "retained_label_image_sha256": str(retained_label_image_sha256 or ""),
+        "curation_label_image_sha256": hashlib.sha256(curation_label_image).hexdigest() if curation_label_image else "",
     }
     image_bytes = bytes(retained_label_image) if retained_label_image else None
     image_content_type = str(retained_label_image_content_type or "").strip()
@@ -197,7 +205,14 @@ def create_food_from_label_capture(
             raise ValueError("food_label_retained_image_invalid")
     elif image_content_type or confirmed["retained_label_image_sha256"]:
         raise ValueError("food_label_retained_image_invalid")
+    if curation_label_image and len(curation_label_image) > 1_500_000:
+        raise ValueError("food_label_curation_image_invalid")
     _validate_label_basis_evidence(detected_basis=detected_basis, confirmed=confirmed)
+    confirmed["default_portion"] = _label_number(default_portion, field="default_portion", maximum=10_000)
+    confirmed["household_amount"] = _label_number(household_amount, field="household_amount", maximum=100)
+    confirmed["household_measure"] = str(household_measure or "")
+    confirmed["household_detail"] = str(household_detail or "").strip()
+    _validate_personal_portion(confirmed["default_portion"], confirmed["household_amount"], confirmed["household_measure"], confirmed["household_detail"])
     payload_hash = _label_payload_hash(confirmed)
     existing = _existing_label_capture(user=user, idempotency_key=clean_key, payload_hash=payload_hash)
     if existing:
@@ -217,7 +232,7 @@ def create_food_from_label_capture(
                 sugar_g_per_100g=confirmed["sugar_g"],
                 fiber_g_per_100g=confirmed["fiber_g"],
                 sodium_mg_per_100g=confirmed["sodium_mg"],
-                default_portion_g=confirmed["serving_size_g"],
+                default_portion_g=confirmed["default_portion"],
                 portion_unit=(
                     Food.PORTION_UNIT_MILLILITERS
                     if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_100ML
@@ -229,6 +244,7 @@ def create_food_from_label_capture(
                 solver_enabled=False,
                 list_order=_next_food_list_order(user),
             )
+            _save_personal_portion(food, confirmed["default_portion"], confirmed["household_amount"], confirmed["household_measure"], confirmed["household_detail"])
             receipt = FoodLabelCaptureReceipt.objects.create(
                 food=food,
                 idempotency_key=clean_key,
@@ -245,6 +261,12 @@ def create_food_from_label_capture(
                 retained_label_image_content_type=image_content_type,
                 retained_label_image_sha256=confirmed["retained_label_image_sha256"],
                 retained_label_image_size=len(image_bytes or b""),
+                shared_for_curation=bool(curation_label_image),
+                curation_payload={key: value for key, value in confirmed.items() if key in {"name", "protein_g", "carbs_g", "fat_g", "saturated_fat_g", "sugar_g", "fiber_g", "sodium_mg", "serving_size_g", "default_portion", "household_amount", "household_measure", "household_detail", "detected_basis"}} if curation_label_image else {},
+                curation_label_image=curation_label_image,
+                curation_label_image_sha256=confirmed["curation_label_image_sha256"],
+                curation_label_image_size=len(curation_label_image or b""),
+                curation_shared_at=timezone.now() if curation_label_image else None,
             )
     except IntegrityError:
         existing = _existing_label_capture(user=user, idempotency_key=clean_key, payload_hash=payload_hash)
@@ -278,9 +300,14 @@ def create_food(
     fiber_g=None,
     sodium_mg=None,
     portion_unit=Food.PORTION_UNIT_GRAMS,
+    default_portion=None,
+    household_amount=None,
+    household_measure="",
+    household_detail="",
 ) -> FoodCreateResult:
     if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
         raise ValueError("food_portion_unit_invalid")
+    _validate_personal_portion(default_portion, household_amount, household_measure, household_detail)
     clean_name = (name or "").strip()
     visual = infer_food_visual_identity(clean_name)
     food = Food.objects.create(
@@ -295,9 +322,11 @@ def create_food(
         fiber_g_per_100g=fiber_g,
         sodium_mg_per_100g=sodium_mg,
         portion_unit=portion_unit,
+        default_portion_g=default_portion,
         created_by=user,
         list_order=_next_food_list_order(user),
     )
+    _save_personal_portion(food, default_portion, household_amount, household_measure, household_detail)
 
     return FoodCreateResult(
         food=food,
@@ -305,6 +334,34 @@ def create_food(
 
 
 _UNSET_NUTRIENT = object()
+
+
+def _validate_personal_portion(default_portion, household_amount, household_measure, household_detail):
+    has_household = household_amount is not None or bool(household_measure)
+    if has_household and (default_portion is None or household_amount is None or not household_measure):
+        raise ValueError("food_household_portion_incomplete")
+    if household_measure and household_measure not in dict(HOUSEHOLD_MEASURE_CHOICES):
+        raise ValueError("food_household_measure_invalid")
+    if household_measure == "other" and not 1 <= len(str(household_detail or "").strip()) <= 100:
+        raise ValueError("food_household_label_required")
+
+
+def _save_personal_portion(food, default_portion, household_amount, household_measure, household_detail):
+    FoodPortion.objects.filter(food=food, source="manual", is_default=True).delete()
+    FoodPortion.objects.filter(food=food, is_default=True).update(is_default=False)
+    if household_amount is None:
+        return
+    label = str(household_detail).strip() if household_measure == "other" else household_measure_label(household_measure)
+    FoodPortion.objects.create(
+        food=food,
+        label=f"{household_amount:g} {label}",
+        grams=default_portion,
+        household_amount=household_amount,
+        household_measure=household_measure,
+        household_detail=household_detail,
+        source="manual",
+        is_default=True,
+    )
 
 
 @transaction.atomic
@@ -320,10 +377,17 @@ def update_food(
     fiber_g=_UNSET_NUTRIENT,
     sodium_mg=_UNSET_NUTRIENT,
     portion_unit=None,
+    default_portion=None,
+    household_amount=None,
+    household_measure="",
+    household_detail="",
+    update_portion=False,
 ) -> FoodUpdateResult:
     portion_unit = portion_unit or food.portion_unit
     if portion_unit not in dict(Food.PORTION_UNIT_CHOICES):
         raise ValueError("food_portion_unit_invalid")
+    if update_portion:
+        _validate_personal_portion(default_portion, household_amount, household_measure, household_detail)
     food.name = (name or "").strip()
     visual = infer_food_visual_identity(food.name)
     food.emoji = visual.emoji
@@ -343,6 +407,8 @@ def update_food(
             setattr(food, field, value)
             changed_optional_fields.append(field)
     food.portion_unit = portion_unit
+    if update_portion:
+        food.default_portion_g = default_portion
 
     food.save(
         update_fields=[
@@ -353,9 +419,12 @@ def update_food(
             "carbs",
             "fat",
             "portion_unit",
+            *(["default_portion_g"] if update_portion else []),
             *changed_optional_fields,
         ]
     )
+    if update_portion:
+        _save_personal_portion(food, default_portion, household_amount, household_measure, household_detail)
     refresh_meal_and_parent_caches_for_food(food)
 
     return FoodUpdateResult(

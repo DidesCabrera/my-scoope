@@ -43,7 +43,7 @@ test("food cards and details both place the visual after the title", async () =>
   assert.ok(detail.includes('titleIconPosition={entity === "food" ? "trailing" : "leading"}'));
   assert.ok(heading.includes('titleIconPosition = "leading"'));
   assert.ok(heading.includes('titleIconPosition === "leading" ? titleIcon : null'));
-  assert.ok(heading.includes('titleIconPosition === "trailing" ? titleIcon : null'));
+  assert.ok(heading.includes('titleIconPosition === "trailing" ? page ? titleIcon : <View style={styles.headingTitleCardIcon}>{titleIcon}</View> : null'));
   assert.ok(card.includes('titleIcon={entity === "food" ? <FoodVisualIcon'));
   assert.ok(card.includes('titleIconPosition={entity === "food" ? "trailing" : "leading"}'));
   assert.ok(heading.includes('titleIconPosition={titleIconPosition}'));

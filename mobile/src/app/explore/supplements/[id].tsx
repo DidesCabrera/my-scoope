@@ -1,11 +1,11 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { Button, CollectionPageHeader, InlineNotice, LoadingState } from "@/components/ui";
+import { AdaptiveScrollView, Button, CollectionPageHeader, InlineNotice, LoadingState } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import type { CatalogSupplement } from "../supplements";
 
@@ -41,7 +41,7 @@ export default function ExploreSupplementDetailScreen() {
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (!item && !error) return <LoadingState label="Cargando suplemento…" />;
-  return <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
+  return <AdaptiveScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.screen}>
     {item ? <>
       <CollectionPageHeader entity="supplement" title={item.name} />
       {item.brand ? <Text style={styles.text}>Marca: {item.brand}</Text> : <Text style={styles.text}>Referencia general, sin marca ni dosis definida.</Text>}
@@ -52,12 +52,12 @@ export default function ExploreSupplementDetailScreen() {
       {item.saved_supplement_id ? <Button label="Ver en mi biblioteca" onPress={() => router.push(`/libraries/supplements/${item.saved_supplement_id}` as Href)} variant="primary" /> : <Button label="Guardar en mi biblioteca" loading={saving} onPress={() => void save()} variant="primary" />}
     </> : null}
     {error ? <View><InlineNotice tone="error">{error}</InlineNotice><Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View> : null}
-  </ScrollView>;
+  </AdaptiveScrollView>;
 }
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  content: { gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  content: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   text: { color: tokens.color.textMain, fontSize: 16 },
   source: { color: tokens.color.textMuted, fontSize: 14 },
 });

@@ -9,7 +9,7 @@ from playwright.sync_api import sync_playwright
 
 from mcp_server.dev_meal_card_preview import SAMPLE_DAILYPLAN, SAMPLE_FOOD
 
-CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "entity_card_v1.html"
+CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "entity_card_v2.html"
 
 
 def main():
@@ -19,7 +19,15 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1200, "height": 1000})
-        card_html = html.escape(CARD_PATH.read_text(encoding="utf-8"), quote=True)
+        card_source = CARD_PATH.read_text(encoding="utf-8").replace(
+            '"__MYSCOOPE_APP_BASE_URL__"', '"https://myscoope-staging.onrender.com/app"'
+        )
+        card_source = card_source.replace(
+            "</head>",
+            '<script>window.openai={openExternal: options => window.parent.postMessage({method:"mock/openExternal", options},"*")};</script></head>',
+            1,
+        )
+        card_html = html.escape(card_source, quote=True)
         page.set_content(f"""
           <script>
             window.bridgeReady = false;
@@ -31,6 +39,7 @@ def main():
                   hostInfo: {{name: "smoke", version: "1.0"}}, hostContext: {{theme: "dark"}}}}
               }}, "*");
               if (event.data.method === "ui/notifications/initialized") window.bridgeReady = true;
+              if (event.data.method === "mock/openExternal") window.externalOpen = event.data.options;
             }});
           </script>
           <iframe srcdoc="{card_html}" style="width:1100px;height:850px;border:0"></iframe>
@@ -46,7 +55,13 @@ def main():
             assert card.locator(".macro-row").count() == 3
             assert card.locator(".kcal-box").evaluate("element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1")
             assert card.locator("#detail").is_visible() == (kind == "dailyplan")
+            assert card.locator("#detail-link").is_visible() == (kind == "dailyplan")
             if kind == "dailyplan":
+                assert card.locator("#detail-link").get_attribute("href") == "https://myscoope-staging.onrender.com/app/dailyplans/42/"
+                assert card.locator("#detail-link span").is_visible()
+                card.locator("#detail-link").click()
+                page.wait_for_function("window.externalOpen?.href === 'https://myscoope-staging.onrender.com/app/dailyplans/42/'")
+                assert page.evaluate("window.externalOpen.redirectUrl") is False
                 assert card.locator(".detail-row").count() == 3
                 assert card.locator("#menu-tab").get_attribute("aria-selected") == "true"
                 assert card.locator("#nutrition-panel").is_hidden()
@@ -73,6 +88,8 @@ def main():
             if args.output_dir:
                 card.locator("#card").screenshot(path=str(args.output_dir / f"{kind}-mobile.png"))
             if kind == "dailyplan":
+                assert card.locator("#detail-link span").is_hidden()
+                assert card.locator("#detail-link").get_attribute("aria-label") == "Ver minuta en My Scoope"
                 assert card.locator(".detail-tabs--desktop").is_hidden()
                 assert card.locator("#menu-tab-mobile").get_attribute("aria-selected") == "true"
                 for mode in ("calories", "macros", "dist", "alloc"):

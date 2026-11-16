@@ -13,17 +13,19 @@ from typing import Any
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 
-
 UI_DIR = Path(__file__).parent / "myscoope_mcp" / "ui"
-CARD_PATH = UI_DIR / "meal_card_v6.html"
-SOURCE_PATH = UI_DIR / "meal_card_v6.source.html"
+CARD_PATH = UI_DIR / "meal_card_v7.html"
+SOURCE_PATH = UI_DIR / "meal_card_v7.source.html"
 ENTITY_CARD_PATH = UI_DIR / "entity_card_v1.html"
 ENTITY_SOURCE_PATH = UI_DIR / "entity_card_v1.source.html"
+DAILYPLAN_CARD_PATH = UI_DIR / "entity_card_v2.html"
+DAILYPLAN_SOURCE_PATH = UI_DIR / "entity_card_v2.source.html"
 MIME_TYPE = "text/html;profile=mcp-app"
 STYLE_PATTERN = re.compile(r"<style>(.*?)</style>", re.DOTALL)
 LEGACY_VERSION_PATTERN = re.compile(r"[0-9a-f]{32}")
-MEAL_CARD_URI = "ui://myscoope-dev/meal-card-v6.html"
+MEAL_CARD_URI = "ui://myscoope-dev/meal-card-v7.html"
 ENTITY_CARD_URI = "ui://myscoope-dev/entity-card-v1.html"
+DAILYPLAN_CARD_URI = "ui://myscoope-dev/dailyplan-card-v2.html"
 PROBE_CARD_URI = "ui://myscoope-dev/probe-card-v1.html"
 logger = logging.getLogger(__name__)
 
@@ -75,7 +77,7 @@ SAMPLE_FOOD = {
 SAMPLE_DAILYPLAN = {
     "ok": True,
     "data": {"dailyplan": {
-        "id": 0, "name": "Minuta de un día equilibrado", "category": "Diaria",
+        "id": 42, "name": "Minuta de un día equilibrado", "category": "Diaria",
         "meals_count": 3, "foods_count": 9,
         "kpis": {"total_kcal": 1950, "protein": 120, "carbs": 225, "fat": 63,
                  "ppk": 1.5, "alloc_protein": 25, "alloc_carbs": 46, "alloc_fat": 29},
@@ -95,7 +97,7 @@ SAMPLE_DAILYPLAN = {
 }
 
 def current_css(card: str = "meal") -> str:
-    source = SOURCE_PATH if card == "meal" else ENTITY_SOURCE_PATH
+    source = SOURCE_PATH if card == "meal" else DAILYPLAN_SOURCE_PATH if card == "dailyplan" else ENTITY_SOURCE_PATH
     match = STYLE_PATTERN.search(source.read_text(encoding="utf-8"))
     if not match:
         raise ValueError("Meal card source has no style block")
@@ -103,7 +105,10 @@ def current_css(card: str = "meal") -> str:
 
 
 def preview_html(card: str = "meal") -> str:
-    html = (CARD_PATH if card == "meal" else ENTITY_CARD_PATH).read_text(encoding="utf-8")
+    path = CARD_PATH if card == "meal" else DAILYPLAN_CARD_PATH if card == "dailyplan" else ENTITY_CARD_PATH
+    html = path.read_text(encoding="utf-8")
+    if card == "dailyplan":
+        html = html.replace('"__MYSCOOPE_APP_BASE_URL__"', '"http://127.0.0.1:8000/app"')
     live_script = """
 <script>
 (() => {
@@ -147,6 +152,7 @@ def create_preview_server() -> FastMCP:
     # random URIs readable in conversations whose tool metadata is cached.
     uri = MEAL_CARD_URI
     entity_uri = ENTITY_CARD_URI
+    dailyplan_uri = DAILYPLAN_CARD_URI
     probe_uri = PROBE_CARD_URI
     server = PreviewFastMCP("My Scoope meal card preview", stateless_http=True, json_response=True)
 
@@ -171,7 +177,7 @@ def create_preview_server() -> FastMCP:
     @server.tool(
         name="preview_dailyplan_card",
         description="Show a synthetic My Scoope daily plan for visual preview.",
-        meta={"ui": {"resourceUri": entity_uri}, "openai/outputTemplate": entity_uri},
+        meta={"ui": {"resourceUri": dailyplan_uri}, "openai/outputTemplate": dailyplan_uri},
         structured_output=True,
     )
     def preview_dailyplan_card() -> dict[str, Any]:
@@ -211,6 +217,10 @@ def create_preview_server() -> FastMCP:
     @server.resource(entity_uri, name="My Scoope entity card development preview", mime_type=MIME_TYPE)
     def entity_resource() -> str:
         return preview_html("entity")
+
+    @server.resource(dailyplan_uri, name="My Scoope daily plan card development preview", mime_type=MIME_TYPE)
+    def dailyplan_resource() -> str:
+        return preview_html("dailyplan")
 
     @server.resource(probe_uri, name="My Scoope minimal UI diagnostic", mime_type=MIME_TYPE)
     def probe_resource() -> str:

@@ -709,7 +709,7 @@ BILLING_OPENFACTURA_ISSUER_JSON = _env_json_object("BILLING_OPENFACTURA_ISSUER_J
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
-    "My Scoope <no-reply@myscoope.com>",
+    "MyScoope <no-reply@myscoope.com>",
 )
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 

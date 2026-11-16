@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MobileApiError, userFacingError } from "@/api/errors";
@@ -10,7 +10,7 @@ import { EntityDetailPage } from "@/components/details";
 import { ProgramWeekDetail } from "@/components/libraries/program-detail-preview";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { LoadingState } from "@/components/ui";
+import { AdaptiveScrollView, LoadingState } from "@/components/ui";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
 
@@ -99,7 +99,7 @@ export default function WeekToProgramPickerRoute() {
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-      <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <AdaptiveScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {week ? (
           <EntityDetailPage
             entity="program"
@@ -119,12 +119,12 @@ export default function WeekToProgramPickerRoute() {
         ) : (
           <RecoverableErrorState message={error ?? "La nueva semana no está disponible."} onRetry={() => void load({ showLoading: true })} />
         )}
-      </ScrollView>
+      </AdaptiveScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.sm },
+  content: { flexGrow: 1, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.sm },
 });

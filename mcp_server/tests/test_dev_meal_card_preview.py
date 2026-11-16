@@ -8,11 +8,11 @@ from mcp_server.dev_meal_card_preview import (
     ENTITY_CARD_URI,
     MEAL_CARD_URI,
     PROBE_CARD_URI,
+    SAMPLE_DAILYPLAN,
+    SAMPLE_FOOD,
     create_preview_server,
     current_css,
     preview_html,
-    SAMPLE_FOOD,
-    SAMPLE_DAILYPLAN,
 )
 
 
@@ -37,26 +37,30 @@ class DevMealCardPreviewTests(unittest.TestCase):
         self.assertEqual(len(result["data"]["meal"]["foods"]), 4)
         self.assertEqual(result["data"]["meal"]["id"], 0)
 
-    def test_entity_previews_are_synthetic_and_share_the_card(self):
+    def test_entity_previews_are_synthetic_and_versioned_separately(self):
         async def inspect():
             server = create_preview_server()
             tools = {tool.name: tool for tool in await server.list_tools()}
             food_uri = tools["preview_food_card"].meta["ui"]["resourceUri"]
             plan_uri = tools["preview_dailyplan_card"].meta["ui"]["resourceUri"]
             resource = (await server.read_resource(food_uri))[0]
+            plan_resource = (await server.read_resource(plan_uri))[0]
             _, food_result = await server.call_tool("preview_food_card", {})
             _, plan_result = await server.call_tool("preview_dailyplan_card", {})
-            return tools, food_uri, plan_uri, resource, food_result, plan_result
+            return tools, food_uri, plan_uri, resource, plan_resource, food_result, plan_result
 
-        tools, food_uri, plan_uri, resource, food_result, plan_result = asyncio.run(inspect())
-        self.assertEqual(food_uri, plan_uri)
+        tools, food_uri, plan_uri, resource, plan_resource, food_result, plan_result = asyncio.run(inspect())
+        self.assertEqual(food_uri, ENTITY_CARD_URI)
+        self.assertNotEqual(food_uri, plan_uri)
         self.assertEqual(tools["preview_food_card"].meta["openai/outputTemplate"], food_uri)
         self.assertEqual(tools["preview_dailyplan_card"].meta["openai/outputTemplate"], plan_uri)
         self.assertIn('name: "preview_card_styles"', resource.content)
+        self.assertIn('id="detail-link"', plan_resource.content)
+        self.assertIn('"http://127.0.0.1:8000/app"', plan_resource.content)
         self.assertEqual(food_result, SAMPLE_FOOD)
         self.assertEqual(plan_result, SAMPLE_DAILYPLAN)
         self.assertEqual(food_result["data"]["food"]["id"], 0)
-        self.assertEqual(plan_result["data"]["dailyplan"]["id"], 0)
+        self.assertEqual(plan_result["data"]["dailyplan"]["id"], 42)
 
     def test_css_reads_editable_source_each_time(self):
         with tempfile.TemporaryDirectory() as directory:
