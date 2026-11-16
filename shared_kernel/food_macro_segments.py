@@ -10,7 +10,6 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable
 
-
 MACRO_SEGMENT_VERSION = "macro_kcal_7centers_2026_11_v1"
 MACRO_SEGMENT_CENTERS = (
     ("A", (0.081319701022, 0.877903911913, 0.040776387065)),

@@ -344,6 +344,8 @@ class PublishedFoodSnapshot:
     min_portion_g: Decimal | int | float | str | None = None
     max_portion_g: Decimal | int | float | str | None = None
     portion_step_g: Decimal | int | float | str | None = None
+    portioning_mode: str = ""
+    portioning_mode_version: str = ""
     preparation_state: PreparationState | str = PreparationState.UNKNOWN
     solver_enabled: bool = False
     serving_options: tuple[CatalogServingOption, ...] = field(default_factory=tuple)
@@ -398,6 +400,8 @@ class PublishedFoodSnapshot:
             min_portion_g=self.min_portion_g,
             max_portion_g=self.max_portion_g,
             portion_step_g=self.portion_step_g,
+            portioning_mode=self.portioning_mode,
+            portioning_mode_version=self.portioning_mode_version,
             serving_options=self.serving_options,
             aliases=self.aliases,
             evidence=self.evidence,
@@ -430,6 +434,8 @@ class OperationalFoodSnapshotPayload:
     min_portion_g: Decimal | None = None
     max_portion_g: Decimal | None = None
     portion_step_g: Decimal | None = None
+    portioning_mode: str = ""
+    portioning_mode_version: str = ""
     serving_options: tuple[CatalogServingOption, ...] = field(default_factory=tuple)
     aliases: tuple[str, ...] = field(default_factory=tuple)
     evidence: tuple[CatalogEvidenceItem, ...] = field(default_factory=tuple)
@@ -466,6 +472,7 @@ class OperationalFoodSnapshotPayload:
             "emoji": self.emoji.strip(),
             "visual_key": self.visual_key.strip(),
             **self.nutrients_per_100g.operational_macro_defaults(),
+            "declared_energy_kcal_per_100_unit": self.nutrients_per_100g.calories_kcal,
             "canonical_name": self.canonical_name.strip(),
             "is_verified": self.is_verified,
             "is_active": True,
@@ -480,6 +487,8 @@ class OperationalFoodSnapshotPayload:
             "min_portion_g": self.min_portion_g,
             "max_portion_g": self.max_portion_g,
             "portion_step_g": self.portion_step_g,
+            "portioning_mode": self.portioning_mode,
+            "portioning_mode_version": self.portioning_mode_version,
             "data_quality_score": self.data_quality_score,
             "visibility": self.visibility.value,
             "solver_capabilities_version": str(

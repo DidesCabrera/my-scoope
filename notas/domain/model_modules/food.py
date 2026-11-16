@@ -9,11 +9,17 @@ from notas.domain.constants.nutrition import (
     FAT_KCAL_PER_GRAM,
     PROTEIN_KCAL_PER_GRAM,
 )
+from shared_kernel.food_caloric_density import (
+    CALORIC_DENSITY_CHOICES,
+    CALORIC_DENSITY_VERSION,
+    calculate_caloric_density,
+)
 from shared_kernel.food_macro_segments import (
     MACRO_SEGMENT_CHOICES,
     MACRO_SEGMENT_VERSION,
     classify_food_macro_segment,
 )
+from shared_kernel.food_portioning import PORTIONING_MODE_CHOICES, PORTIONING_VERSION
 from shared_kernel.food_portions import (
     HOUSEHOLD_MEASURE_CHOICES,
     MY_SCOOPE_FOOD_GROUP_CHOICES,
@@ -116,6 +122,23 @@ class Food(models.Model):
         editable=False,
         help_text="Version of the calorie-composition rule used for macro_segment.",
     )
+    declared_energy_kcal_per_100_unit = models.DecimalField(
+        max_digits=10, decimal_places=3, null=True, blank=True,
+        help_text="Declared catalog or label kcal per 100 g or 100 ml, when available.",
+    )
+    caloric_density_kcal_per_unit = models.DecimalField(
+        max_digits=9, decimal_places=4, null=True, blank=True, editable=False,
+        help_text="Derived kcal per g or approximate kcal per ml when portion_unit is ml.",
+    )
+    caloric_density_segment = models.CharField(
+        max_length=2, choices=CALORIC_DENSITY_CHOICES, blank=True, default="", editable=False,
+    )
+    caloric_density_source = models.CharField(
+        max_length=16, blank=True, default="", editable=False,
+        help_text="declared or macro_4_4_9; blank when unavailable.",
+    )
+    caloric_density_estimated = models.BooleanField(default=False, editable=False)
+    caloric_density_version = models.CharField(max_length=40, blank=True, default="", editable=False)
 
     created_by = models.ForeignKey(
         User,
@@ -294,6 +317,12 @@ class Food(models.Model):
         help_text="Suggested portion increment step.",
     )
 
+    portioning_mode = models.CharField(
+        max_length=12, choices=PORTIONING_MODE_CHOICES, blank=True, default="",
+        help_text="Reviewed serving form; exact unit or pack size is separately curated.",
+    )
+    portioning_mode_version = models.CharField(max_length=40, blank=True, default="")
+
     data_quality_score = models.PositiveSmallIntegerField(
         default=0,
         help_text="Internal data quality score from 0 to 100.",
@@ -353,6 +382,10 @@ class Food(models.Model):
         if update_fields is not None:
             update_fields = set(update_fields)
             kwargs["update_fields"] = update_fields
+        if update_fields is None or "portioning_mode" in update_fields:
+            self.portioning_mode_version = PORTIONING_VERSION if self.portioning_mode else ""
+            if update_fields is not None:
+                kwargs["update_fields"] = set(kwargs["update_fields"]) | {"portioning_mode_version"}
         macro_fields = {"protein", "carbs", "fat"}
         if update_fields is None or macro_fields.intersection(update_fields):
             self.macro_segment = classify_food_macro_segment(
@@ -362,6 +395,24 @@ class Food(models.Model):
             if update_fields is not None:
                 kwargs["update_fields"] = set(update_fields) | {
                     "macro_segment", "macro_segment_version"
+                }
+        density_inputs = macro_fields | {"declared_energy_kcal_per_100_unit", "portion_unit"}
+        if update_fields is None or density_inputs.intersection(update_fields):
+            (
+                self.caloric_density_kcal_per_unit,
+                self.caloric_density_segment,
+                self.caloric_density_source,
+                self.caloric_density_estimated,
+            ) = calculate_caloric_density(
+                self.declared_energy_kcal_per_100_unit,
+                self.protein, self.carbs, self.fat, self.portion_unit,
+            )
+            self.caloric_density_version = CALORIC_DENSITY_VERSION
+            if update_fields is not None:
+                kwargs["update_fields"] = set(kwargs["update_fields"]) | {
+                    "caloric_density_kcal_per_unit", "caloric_density_segment",
+                    "caloric_density_source", "caloric_density_estimated",
+                    "caloric_density_version",
                 }
         return super().save(*args, **kwargs)
 

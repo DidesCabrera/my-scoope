@@ -112,6 +112,8 @@ def build_operational_food_snapshot_payload(
         preparation_state=solver_profile.preparation_state,
         solver_enabled=solver_profile.solver_enabled,
         default_portion_g=solver_profile.default_portion_g,
+        portioning_mode=catalog_food.portioning_mode,
+        portioning_mode_version=catalog_food.portioning_mode_version,
         min_portion_g=solver_profile.min_portion_g,
         max_portion_g=solver_profile.max_portion_g,
         portion_step_g=solver_profile.portion_step_g,
