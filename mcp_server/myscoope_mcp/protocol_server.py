@@ -44,8 +44,10 @@ DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v2.html"
 PREVIOUS_DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v1.html"
 ENTITY_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "entity_card_v1.html"
 DAILYPLAN_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "entity_card_v2.html"
-MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v6.html"
-MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v6.html"
+MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v7.html"
+MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v7.html"
+RECENT_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v6.html"
+RECENT_MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v6.html"
 PREVIOUS_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v5.html"
 PREVIOUS_MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v5.html"
 LEGACY_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v4.html"
@@ -699,6 +701,14 @@ def register_mcp_resources(server: FastMCP) -> None:
     )
     def meal_card_resource() -> str:
         return MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
+
+    @server.resource(
+        RECENT_MEAL_CARD_RESOURCE_URI,
+        name="My Scoope meal card v6",
+        mime_type=MEAL_CARD_MIME_TYPE,
+    )
+    def recent_meal_card_resource() -> str:
+        return RECENT_MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
 
     @server.resource(
         PREVIOUS_MEAL_CARD_RESOURCE_URI,

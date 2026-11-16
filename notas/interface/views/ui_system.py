@@ -49,7 +49,7 @@ def ui_system_mcp_meal_card_preview(request):
     entity = request.GET.get("entity", "meal")
     if entity not in {"meal", "food", "dailyplan"}:
         raise Http404
-    filename = "meal_card_v6.html" if entity == "meal" else "entity_card_v2.html" if entity == "dailyplan" else "entity_card_v1.html"
+    filename = "meal_card_v7.html" if entity == "meal" else "entity_card_v2.html" if entity == "dailyplan" else "entity_card_v1.html"
     card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui" / filename
     card_html = card_path.read_text(encoding="utf-8")
     if entity == "dailyplan":

@@ -85,9 +85,9 @@ TypeScript y el HTML MCP autónomo, y `npm run check:ui` para comprobar que el r
 sincronizado. Las diferencias deliberadas entre web y React Native se declaran
 en `platforms` dentro del contrato.
 
-La card MCP se edita en `mcp_server/myscoope_mcp/ui/meal_card_v6.source.html`.
+La card MCP se edita en `mcp_server/myscoope_mcp/ui/meal_card_v7.source.html`.
 El generador inserta los tokens semánticos y la receta adaptable declarada en
-`platforms.mcp`, y escribe `meal_card_v6.html`. La card muestra una tabla con
+`platforms.mcp`, y escribe `meal_card_v7.html`. La card muestra una tabla con
 alimentos y barras de distribución en escritorio, y cinco paneles móviles
 con cuadrículas de cantidades, calorías, macros, distribución y asignación. Los colores de superficie y texto
 provienen de los temas web; el iframe adapta su presentación al tema del host.

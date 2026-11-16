@@ -28,7 +28,7 @@ ChatGPT / cliente MCP Apps
   → dispatch_tool_call
   → Django /app/ai-tools/read-meal/
   → read_meal_tool → get_meal_detail → MealDTO
-  → structuredContent + ui://myscoope/meal-card-v6.html
+  → structuredContent + ui://myscoope/meal-card-v7.html
   → card HTML en iframe
 ```
 
@@ -56,10 +56,10 @@ mantiene la tabla de escritorio en la vista completa de ChatGPT (760 px). La
 versión 5 extiende esa tabla al panel lateral web (570 px), con desplazamiento
 horizontal para las columnas de alimentos. La versión 6 activa los cinco paneles
 móviles hasta 600 px y deja cada vista nutricional en una cuadrícula propia.
-Las versiones 2, 3, 4 y 5 siguen disponibles para conversaciones anteriores.
+La versión 7 conserva el tamaño al 100 % en el ancho de teléfono (hasta 480 px) y aplica el 80 % en anchos mayores, incluido el panel estrecho de escritorio. Las versiones 2 a 6 siguen disponibles para conversaciones anteriores.
 
 La sección «En conversación» de la galería web (`/app/dev/ui-system/`, solo en
-DEBUG) sirve exactamente `meal_card_v6.html` en un iframe aislado. Su host de prueba
+DEBUG) sirve exactamente `meal_card_v7.html` en un iframe aislado. Su host de prueba
 reproduce el saludo MCP Apps y envía datos sintéticos. Permite revisar claro,
 oscuro, 1100/760/570/390/320 px, dos comidas de ejemplo, nombres largos, vacío y error.
 Esos anchos son aproximaciones: no equivalen a una medición del iframe de ChatGPT.
@@ -67,7 +67,7 @@ La [decisión 0210](../../../20_decisions/0210-chatgpt-meal-card-live-preview.md
 incorpora una vista previa privada para ajustar CSS en el host real sin usar
 staging como ciclo de edición.
 El archivo fuente editable
-es `meal_card_v6.source.html`; `npm run generate:ui` produce el HTML servido tanto
+es `meal_card_v7.source.html`; `npm run generate:ui` produce el HTML servido tanto
 por la galería como por MCP. `npm run check:ui` detecta desincronización.
 El documento de la card tiene fondo transparente y no añade relleno ni límite de
 ancho exterior: el borde de la card ocupa todo el ancho que entrega el host.
@@ -115,7 +115,7 @@ plugin **de desarrollo separado**. No usar el plugin de staging para este ciclo.
 Pedir `preview_meal_card`: la respuesta usa cuatro alimentos ficticios y ninguna
 cuenta real. Mantener abiertos el servidor y el cliente del túnel.
 
-Editar el bloque CSS de `meal_card_v6.source.html` mientras la card está abierta
+Editar el bloque CSS de `meal_card_v7.source.html` mientras la card está abierta
 en ChatGPT. La herramienta `preview_card_styles`, visible solo para la app, entrega
 el CSS actualizado aproximadamente cada 1,5 segundos; el iframe lo aplica sin
 perder los datos ni la conversación. El servidor no consulta Django ni usa tokens
@@ -169,7 +169,7 @@ para instalar el cliente, revisar permisos, ejecutar `doctor` y enlazar el plugi
    servidor MCP personalizado para uso privado y refrescar sus metadatos después
    de desplegar esta versión. Confirmar
    que aparecen `search_user_meals`, `read_meal` y el recurso
-   `ui://myscoope/meal-card-v6.html`. Si el servicio usa
+   `ui://myscoope/meal-card-v7.html`. Si el servicio usa
    `MYSCOOPE_MCP_ALLOWED_TOOLS`, añadir ambos nombres a la lista existente y
    ejecutar **Refresh tools** en la configuración del plugin de ChatGPT.
 3. Con una comida de prueba perteneciente a la cuenta de prueba, pedir “Muestra la

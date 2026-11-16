@@ -12,6 +12,7 @@ from myscoope_mcp.protocol_server import (
     OLDEST_MEAL_CARD_RESOURCE_URI,
     MEAL_CARD_MIME_TYPE,
     MEAL_CARD_RESOURCE_URI,
+    RECENT_MEAL_CARD_RESOURCE_URI,
     PREVIOUS_MEAL_CARD_RESOURCE_URI,
     create_mcp_server,
 )
@@ -47,6 +48,7 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertEqual(tool.securitySchemes, [{"type": "oauth2", "scopes": ["myscoope:read"]}])
         self.assertNotIn("user_id", tool.inputSchema.get("properties", {}))
         self.assertEqual(resources[MEAL_CARD_RESOURCE_URI].mimeType, MEAL_CARD_MIME_TYPE)
+        self.assertIn(RECENT_MEAL_CARD_RESOURCE_URI, resources)
         self.assertIn(PREVIOUS_MEAL_CARD_RESOURCE_URI, resources)
         self.assertIn(LEGACY_MEAL_CARD_RESOURCE_URI, resources)
         self.assertIn(OLDER_MEAL_CARD_RESOURCE_URI, resources)
