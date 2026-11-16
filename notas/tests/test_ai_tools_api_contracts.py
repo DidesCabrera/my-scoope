@@ -454,6 +454,7 @@ class AIToolsAPIContractTests(TestCase):
                 },
                 {
                     "meal",
+                    "viewer_owns_meal",
                 },
             ),
             (
