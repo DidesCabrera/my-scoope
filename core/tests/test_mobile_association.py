@@ -1,5 +1,8 @@
-from django.test import SimpleTestCase, override_settings
+from django.contrib.auth import get_user_model
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+
+from notas.domain.models import Meal
 
 
 class MobileAssociationTests(SimpleTestCase):
@@ -34,3 +37,19 @@ class MobileAssociationTests(SimpleTestCase):
         target = response.json()[0]["target"]
         self.assertEqual(target["package_name"], "com.myscoope.app")
         self.assertEqual(target["sha256_cert_fingerprints"], [":".join(["AA"] * 32)])
+
+
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
+class MealAppLinkAccountTests(TestCase):
+    def test_other_account_sees_helpful_page_without_meal_details(self):
+        user_model = get_user_model()
+        owner = user_model.objects.create_user(username="meal_owner", password="testpass123")
+        visitor = user_model.objects.create_user(username="other_account", password="testpass123")
+        meal = Meal.objects.create(name="Private meal", created_by=owner, is_draft=False)
+        self.client.force_login(visitor)
+
+        response = self.client.get(reverse("meal_app_link", args=[meal.pk]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "misma cuenta que conectaste a ChatGPT", status_code=404)
+        self.assertNotContains(response, meal.name, status_code=404)

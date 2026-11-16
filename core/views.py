@@ -37,6 +37,11 @@ def android_asset_links(request):
 @require_GET
 def meal_app_link(request, meal_id: int):
     """Web fallback for the same URL opened by native universal/app links."""
+    if request.user.is_authenticated:
+        from notas.application.queries.read_boundaries import get_readable_meal_queryset
+
+        if not get_readable_meal_queryset(request.user).filter(pk=meal_id).exists():
+            return render(request, "core/meal_link_unavailable.html", status=404)
     return redirect("meal_detail", pk=meal_id)
 
 

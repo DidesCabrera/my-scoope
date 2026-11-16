@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comida no disponible · My Scoope</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #111; color: #f8f8f8; font: 16px/1.5 system-ui, sans-serif; }
+    main { box-sizing: border-box; width: min(100% - 32px, 480px); padding: 32px; border: 1px solid #444; border-radius: 24px; background: #202020; }
+    h1 { margin: 0 0 12px; font-size: 26px; line-height: 1.2; }
+    p { margin: 0 0 20px; color: #c7c7c7; }
+    button { padding: 10px 16px; border: 0; border-radius: 12px; background: #df2ab4; color: #fff; font: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Esta comida no está disponible en esta cuenta</h1>
+    <p>Abre My Scoope con la misma cuenta que conectaste a ChatGPT y vuelve a pulsar el botón de la tarjeta.</p>
+    <form method="post" action="{% url 'account_logout' %}">
+      {% csrf_token %}
+      <button type="submit">Cambiar de cuenta</button>
+    </form>
+  </main>
+</body>
+</html>
