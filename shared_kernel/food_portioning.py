@@ -12,6 +12,12 @@ PORTIONING_MODE_CHOICES = (
     ("fixed_pack", "Envase fijo"),
 )
 
+
+def validate_portioning_mode(mode: str) -> None:
+    """Reject unknown curated labels before they reach either food model."""
+    if mode and mode not in {choice[0] for choice in PORTIONING_MODE_CHOICES}:
+        raise ValueError(f"Unknown portioning mode: {mode!r}")
+
 # (operational_id, name_sha256, is_global, catalog_ref, mode)
 APPROVED_PORTIONING_ASSIGNMENTS = (
     (1, "9bfa62656bf77286a8e86bc68d894952c6fab169912321b4b49e640ed42be61f", True, "", "by_weight"),

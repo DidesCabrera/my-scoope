@@ -19,7 +19,11 @@ from shared_kernel.food_macro_segments import (
     MACRO_SEGMENT_VERSION,
     classify_food_macro_segment,
 )
-from shared_kernel.food_portioning import PORTIONING_MODE_CHOICES, PORTIONING_VERSION
+from shared_kernel.food_portioning import (
+    PORTIONING_MODE_CHOICES,
+    PORTIONING_VERSION,
+    validate_portioning_mode,
+)
 from shared_kernel.food_portions import (
     HOUSEHOLD_MEASURE_CHOICES,
     MY_SCOOPE_FOOD_GROUP_CHOICES,
@@ -383,6 +387,7 @@ class Food(models.Model):
             update_fields = set(update_fields)
             kwargs["update_fields"] = update_fields
         if update_fields is None or "portioning_mode" in update_fields:
+            validate_portioning_mode(self.portioning_mode)
             self.portioning_mode_version = PORTIONING_VERSION if self.portioning_mode else ""
             if update_fields is not None:
                 kwargs["update_fields"] = set(kwargs["update_fields"]) | {"portioning_mode_version"}

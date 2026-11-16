@@ -19,6 +19,19 @@ from shared_kernel.food_portioning import (
 
 
 class FoodPortioningTests(TestCase):
+    def test_unknown_mode_cannot_be_saved(self):
+        with self.assertRaises(ValueError):
+            Food.objects.create(
+                name="Invalid mode", protein=1, carbs=1, fat=1,
+                portioning_mode="unsupported",
+            )
+        with self.assertRaises(ValueError):
+            CatalogFood.objects.create(
+                display_name="Invalid mode", protein_g_per_100g=Decimal("1"),
+                carbs_g_per_100g=Decimal("1"), fat_g_per_100g=Decimal("1"),
+                portioning_mode="unsupported",
+            )
+
     def test_assignment_set_covers_329_unique_foods_and_222_catalog_refs(self):
         self.assertEqual(len(APPROVED_PORTIONING_ASSIGNMENTS), 329)
         self.assertEqual(len({row[0] for row in APPROVED_PORTIONING_ASSIGNMENTS}), 329)
