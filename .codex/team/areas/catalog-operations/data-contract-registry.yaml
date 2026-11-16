@@ -2,6 +2,26 @@ schema_version: 1
 area: "catalog-operations"
 last_reviewed: "2026-11-15"
 contracts:
+  - id: "food-macro-composition-segment-v1"
+    catalog: "foods"
+    name: "Versioned 4/4/9 calorie-composition segment"
+    version: "macro_kcal_7centers_2026_11_v1"
+    authority: "docs/00_current/features/food_macro_segments.md"
+    producer: "Shared immutable centroid rule, applied independently to CatalogFood and notas.Food"
+    consumers:
+      - "Future solver features through operational notas.Food only"
+      - "Food Catalog curation and audit"
+    validation:
+      - "notas/tests/test_macro_segments.py"
+      - "notas/tests/test_food_catalog_snapshot_protocol.py"
+    state: "implemented"
+    required_semantics:
+      - "Normalize 4P/4C/9F kcal to 100 percent; use the nearest frozen v1 center with alphabetical ties"
+      - "Persist the segment and derivation version in both authorities; existing rows backfill through migrations"
+      - "Unknown, invalid or zero-energy macros yield a blank segment, never a fabricated class"
+      - "Catalog changes reach operational Food only through explicit snapshot refresh"
+      - "The segment does not itself change solver eligibility, objectives or clinical nutrition policy"
+      - "Future solver use must evaluate boundary margin and out-of-sample coverage"
   - id: "user-label-contribution-to-food-catalog-candidate-v1"
     catalog: "foods"
     name: "Aporte voluntario de etiqueta hacia candidato de curación"

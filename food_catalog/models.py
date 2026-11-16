@@ -16,6 +16,11 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.functions import Lower, Trim
 
+from shared_kernel.food_macro_segments import (
+    MACRO_SEGMENT_CHOICES,
+    MACRO_SEGMENT_VERSION,
+    classify_food_macro_segment,
+)
 from shared_kernel.food_portions import (
     HOUSEHOLD_MEASURE_CHOICES,
     MY_SCOOPE_FOOD_GROUP_CHOICES,
@@ -334,6 +339,22 @@ class CatalogFood(models.Model):
         validators=[MinValueValidator(Decimal("0"))],
     )
 
+    macro_segment = models.CharField(
+        max_length=1,
+        choices=MACRO_SEGMENT_CHOICES,
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Derived 4/4/9 calorie-composition segment; blank when macros are unusable.",
+    )
+    macro_segment_version = models.CharField(
+        max_length=40,
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Version of the calorie-composition rule used for macro_segment.",
+    )
+
     calories_kcal_per_100g = models.DecimalField(
         max_digits=10,
         decimal_places=3,
@@ -460,6 +481,23 @@ class CatalogFood(models.Model):
                 name="unique_catalog_food_normalized_identity",
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            kwargs["update_fields"] = update_fields
+        macro_fields = {"protein_g_per_100g", "carbs_g_per_100g", "fat_g_per_100g"}
+        if update_fields is None or macro_fields.intersection(update_fields):
+            self.macro_segment = classify_food_macro_segment(
+                self.protein_g_per_100g, self.carbs_g_per_100g, self.fat_g_per_100g
+            )
+            self.macro_segment_version = MACRO_SEGMENT_VERSION
+            if update_fields is not None:
+                kwargs["update_fields"] = set(update_fields) | {
+                    "macro_segment", "macro_segment_version"
+                }
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         if self.brand_name:

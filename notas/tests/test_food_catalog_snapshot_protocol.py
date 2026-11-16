@@ -21,6 +21,7 @@ from notas.application.services.food_catalog_snapshots import (
     refresh_operational_food_snapshot_from_catalog,
 )
 from notas.domain.models import Food
+from shared_kernel.food_macro_segments import MACRO_SEGMENT_VERSION
 
 
 class FoodCatalogSnapshotProtocolTests(TestCase):
@@ -52,6 +53,8 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(food.protein, 31.0)
         self.assertEqual(food.carbs, 0.0)
         self.assertEqual(food.fat, 3.6)
+        self.assertEqual(food.macro_segment, "D")
+        self.assertEqual(food.macro_segment_version, MACRO_SEGMENT_VERSION)
         self.assertEqual(food.food_group, "meats")
         self.assertEqual(food.food_subgroup, "poultry")
         self.assertEqual(food.myscoope_group, "poultry")
@@ -234,6 +237,8 @@ class FoodCatalogSnapshotProtocolTests(TestCase):
         self.assertEqual(refreshed.description, "Nueva descripción revisada.")
         self.assertEqual(refreshed.protein, 32.0)
         self.assertEqual(refreshed.fat, 4.0)
+        self.assertEqual(refreshed.macro_segment, catalog_food.macro_segment)
+        self.assertEqual(refreshed.macro_segment_version, MACRO_SEGMENT_VERSION)
         self.assertEqual(refreshed.catalog_snapshot_version, "v2")
         self.assertEqual(refreshed.catalog_sync_status, Food.CATALOG_SYNC_SNAPSHOT)
         self.assertEqual(refreshed.catalog_snapshot_payload["catalog_version"], "v2")

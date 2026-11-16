@@ -26,6 +26,8 @@ La operación y el bootstrap se documentan en
 Para corregir nutrientes, evaluar propagación a composiciones y preservar
 históricos, seguir
 `docs/40_technical/operations/food_nutrition_correction_protocol.md`.
+La clasificación interna A–G por composición calórica se define en
+`docs/00_current/features/food_macro_segments.md`.
 
 ## Concepto
 
