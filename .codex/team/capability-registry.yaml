@@ -1,6 +1,6 @@
 schema_version: 2
 owner: "Felipe Dides"
-last_reviewed: "2026-11-14"
+last_reviewed: "2026-11-16"
 lifecycle_states:
   - "proposal"
   - "pilot"
@@ -122,6 +122,12 @@ roles:
     status: "pilot"
     path: ".codex/skills/commercial-strategy-advisor/SKILL.md"
     purpose: "Guide segments, positioning, pricing, channels, and commercial experiments."
+  - name: "brand-identity-steward"
+    area: "commercial-marketing"
+    class: "steward"
+    status: "pilot"
+    path: ".codex/skills/brand-identity-steward/SKILL.md"
+    purpose: "Maintain approved brand identity, visual guidelines, logo variants, and asset provenance."
   - name: "customer-market-researcher"
     area: "commercial-marketing"
     class: "specialist"
