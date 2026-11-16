@@ -398,9 +398,6 @@ def _normalize_workspace_patch_operation(
     if missing:
         raise ValueError(f"prepared_action_missing_arguments:{','.join(missing)}")
 
-    target = None
-    before = {}
-    target_version = ""
     target_id = raw_operation.get("target_id")
     if action_key in {"meal.add_preparation", "meal.update_preparation"}:
         _validate_preparation_selection(user, parameters)
@@ -410,31 +407,10 @@ def _normalize_workspace_patch_operation(
         from notas.application.services.commands.supplement_commands import require_supplements_pro
         require_supplements_pro(user)
     target_reference = references.get("target_id")
-    if not spec.creates_entity:
-        if target_id is not None and target_reference:
-            raise ValueError("workspace_patch_target_reference_conflict")
-        if target_id is None and not target_reference:
-            raise ValueError("prepared_action_target_required")
-        if target_reference:
-            before = {
-                "target_type": spec.target_type,
-                "pending_operation_reference": target_reference,
-            }
-        else:
-            if action_key == "meal.remove_food":
-                target = _resolve_owned_meal_food(
-                    user=user,
-                    meal_id=int(target_id),
-                    food_id=parameters.get("food_id"),
-                )
-            else:
-                target = _resolve_owned_target(
-                    user=user,
-                    target_type=spec.target_type,
-                    target_id=int(target_id),
-                )
-            before = _target_snapshot(spec.target_type, target)
-            target_version = _snapshot_version(before)
+    target, before, target_version = _workspace_patch_target(
+        user=user, spec=spec, action_key=action_key, target_id=target_id,
+        target_reference=target_reference, parameters=parameters,
+    )
 
     preview_arguments = dict(parameters)
     preview_arguments.update(
@@ -478,6 +454,30 @@ def _normalize_workspace_patch_operation(
         "after": after,
         "risk_level": _workspace_patch_risk(spec),
     }
+
+
+def _workspace_patch_target(*, user, spec, action_key, target_id, target_reference, parameters):
+    if spec.creates_entity:
+        return None, {}, ""
+    if target_id is not None and target_reference:
+        raise ValueError("workspace_patch_target_reference_conflict")
+    if target_id is None and not target_reference:
+        raise ValueError("prepared_action_target_required")
+    if target_reference:
+        return None, {
+            "target_type": spec.target_type,
+            "pending_operation_reference": target_reference,
+        }, ""
+    if action_key == "meal.remove_food":
+        target = _resolve_owned_meal_food(
+            user=user, meal_id=int(target_id), food_id=parameters.get("food_id"),
+        )
+    else:
+        target = _resolve_owned_target(
+            user=user, target_type=spec.target_type, target_id=int(target_id),
+        )
+    before = _target_snapshot(spec.target_type, target)
+    return target, before, _snapshot_version(before)
 
 
 def _validate_workspace_patch_references(
@@ -772,11 +772,7 @@ def _preview_after(spec: PreparedActionSpec, *, before: dict, arguments: dict) -
     if spec.action_key.endswith(".rename"):
         return {**before, "name": str(arguments["name"]).strip()}
     if spec.action_key == "food.update":
-        allowed = {"name", "protein", "carbs", "fat", "portion_unit"}
-        updates = {key: arguments[key] for key in allowed if key in arguments}
-        if not updates:
-            raise ValueError("prepared_action_update_requires_changes")
-        return {**before, **updates}
+        return _preview_food_update(before=before, arguments=arguments)
     if spec.action_key == "meal.add_food":
         return {**before, "will_add_food": dict(arguments)}
     if spec.action_key == "meal.add_preparation":
@@ -798,20 +794,8 @@ def _preview_after(spec: PreparedActionSpec, *, before: dict, arguments: dict) -
         if not updates:
             raise ValueError("prepared_action_update_requires_changes")
         return {**before, **updates}
-    if spec.action_key == "program.add_week":
-        return {**before, "duration_weeks": int(before["duration_weeks"]) + 1}
-    if spec.action_key == "program.duplicate_week":
-        return {
-            **before,
-            "duration_weeks": int(before["duration_weeks"]) + 1,
-            "duplicates_week": int(arguments["week_number"]),
-        }
-    if spec.action_key == "program.remove_week":
-        return {
-            **before,
-            "duration_weeks": max(int(before["duration_weeks"]) - 1, 1),
-            "removes_week": int(arguments["week_number"]),
-        }
+    if spec.action_key in {"program.add_week", "program.duplicate_week", "program.remove_week"}:
+        return _preview_program_week(spec.action_key, before=before, arguments=arguments)
     status_updates = {
         "calendar.pause": "paused",
         "calendar.resume": "active_or_scheduled",
@@ -826,6 +810,30 @@ def _preview_after(spec: PreparedActionSpec, *, before: dict, arguments: dict) -
     if spec.destructive:
         return {**before, "will_be_deleted": True}
     return dict(before)
+
+
+def _preview_food_update(*, before: dict, arguments: dict) -> dict:
+    allowed = {"name", "protein", "carbs", "fat", "portion_unit"}
+    updates = {key: arguments[key] for key in allowed if key in arguments}
+    if not updates:
+        raise ValueError("prepared_action_update_requires_changes")
+    return {**before, **updates}
+
+
+def _preview_program_week(action_key: str, *, before: dict, arguments: dict) -> dict:
+    if action_key == "program.add_week":
+        return {**before, "duration_weeks": int(before["duration_weeks"]) + 1}
+    if action_key == "program.duplicate_week":
+        return {
+            **before,
+            "duration_weeks": int(before["duration_weeks"]) + 1,
+            "duplicates_week": int(arguments["week_number"]),
+        }
+    return {
+        **before,
+        "duration_weeks": max(int(before["duration_weeks"]) - 1, 1),
+        "removes_week": int(arguments["week_number"]),
+    }
 
 
 def _build_summary(spec: PreparedActionSpec, *, before: dict, after: dict) -> str:
