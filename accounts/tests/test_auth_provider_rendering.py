@@ -205,6 +205,9 @@ class PasswordResetRenderingTests(TestCase):
         self.assertEqual(request_response.status_code, 200)
         self.assertContains(request_response, "Revisa tu correo")
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Crea una nueva contraseña", mail.outbox[0].body)
+        self.assertEqual(len(mail.outbox[0].alternatives), 1)
+        self.assertIn("myscoope-email-logo.png", mail.outbox[0].alternatives[0].content)
 
         reset_url = re.search(r"https?://[^\s]+", mail.outbox[0].body).group(0)
         reset_response = self.client.get(reset_url, follow=True)

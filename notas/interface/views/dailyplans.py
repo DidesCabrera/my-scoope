@@ -111,7 +111,7 @@ def dailyplan_share(request, pk):
                 raise
             messages.error(request, "No puedes compartir una minuta diaria contigo mismo.")
             return redirect("dailyplan_share", pk=dailyplan.pk)
-        subject, email_message = build_normalized_share_invitation_email(
+        subject, email_message, email_html = build_normalized_share_invitation_email(
             request=request,
             invitation=invitation,
         )
@@ -119,6 +119,7 @@ def dailyplan_share(request, pk):
             share=invitation,
             subject=subject,
             message=email_message,
+            html_message=email_html,
             from_email=settings.DEFAULT_FROM_EMAIL,
         )
         if delivery.sent:

@@ -79,6 +79,12 @@ class DailyPlanSharingWebTests(TestCase):
         self.assertEqual(DailyPlanShare.objects.count(), 0)
         invitation_url = reverse("share_invitation_preview", args=[invitation.public_id])
         self.assertIn(invitation_url, mail.outbox[0].body)
+        self.assertEqual(len(mail.outbox[0].alternatives), 1)
+        html = mail.outbox[0].alternatives[0].content
+        self.assertIn("myscoope-email-logo.png", html)
+        self.assertIn("#6229CE", html)
+        self.assertIn("Revisar invitación", html)
+        self.assertIn(invitation_url, html)
 
         self.client.logout()
         preview = self.client.get(invitation_url)

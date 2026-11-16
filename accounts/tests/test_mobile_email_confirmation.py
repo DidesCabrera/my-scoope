@@ -13,6 +13,29 @@ from django.urls import reverse
     TURNSTILE_ENABLED=False,
 )
 class MobileEmailConfirmationTests(TestCase):
+    def test_existing_email_signup_uses_branded_account_notice(self):
+        user = get_user_model().objects.create_user(
+            username="existing@example.com",
+            email="existing@example.com",
+            password="Strong-passphrase-2026",
+        )
+        EmailAddress.objects.create(
+            user=user, email=user.email, primary=True, verified=True
+        )
+
+        self.client.post(
+            reverse("account_signup"),
+            {
+                "email": user.email,
+                "password1": "Another-passphrase-2026",
+                "password2": "Another-passphrase-2026",
+            },
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Ya tienes una cuenta en MyScoope", mail.outbox[0].body)
+        self.assertEqual(len(mail.outbox[0].alternatives), 1)
+
     def test_mobile_signup_marks_confirmation_link(self):
         mobile_return = (
             f'{reverse("oauth_authorize")}?client_id=myscoope-ios'
@@ -32,6 +55,10 @@ class MobileEmailConfirmationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn("/mobile/confirm-email/", mail.outbox[0].body)
+        self.assertIn("Confirma tu correo electrónico", mail.outbox[0].body)
+        self.assertEqual(len(mail.outbox[0].alternatives), 1)
+        self.assertIn("myscoope-email-logo.png", mail.outbox[0].alternatives[0].content)
+        self.assertIn("/mobile/confirm-email/", mail.outbox[0].alternatives[0].content)
 
     def test_web_signup_keeps_web_confirmation_link(self):
         response = self.client.post(
