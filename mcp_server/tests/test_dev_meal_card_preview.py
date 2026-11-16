@@ -7,6 +7,8 @@ from unittest.mock import patch
 from mcp_server.dev_meal_card_preview import (
     ENTITY_CARD_URI,
     MEAL_CARD_URI,
+    RECENT_MEAL_CARD_URI,
+    PREVIOUS_MEAL_CARD_URI,
     PROBE_CARD_URI,
     SAMPLE_DAILYPLAN,
     SAMPLE_FOOD,
@@ -36,6 +38,10 @@ class DevMealCardPreviewTests(unittest.TestCase):
         self.assertIn('name: "preview_card_styles"', resource.content)
         self.assertEqual(len(result["data"]["meal"]["foods"]), 4)
         self.assertEqual(result["data"]["meal"]["id"], 0)
+        recent = asyncio.run(create_preview_server().read_resource(RECENT_MEAL_CARD_URI))[0]
+        self.assertIn('version: "7.0.0"', recent.content)
+        previous = asyncio.run(create_preview_server().read_resource(PREVIOUS_MEAL_CARD_URI))[0]
+        self.assertIn('version: "6.0.0"', previous.content)
 
     def test_entity_previews_are_synthetic_and_versioned_separately(self):
         async def inspect():

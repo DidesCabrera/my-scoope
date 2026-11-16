@@ -331,7 +331,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     ]);
   }, [apiRequest, item]);
   useFocusEffect(useCallback(() => { if (status === "authenticated" && id) void load(); }, [id, load, status]));
-  if (status === "anonymous") return <Redirect href="/login" />;
+  if (status === "anonymous") return <Redirect href={{ pathname: "/login", params: { returnTo: String(currentDetailHref) } }} />;
   if (loading && !item) return <LoadingState label="Cargando detalle…" />;
   if (!item) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
   const actionsModal = <LibraryActions apiRequest={apiRequest} entitySlug={entitySlug} initialAction={actionSheet === "change-time" ? "change-time" : undefined} item={item} key={actionSheet ?? "closed"} mealFoodActions={hasMealFoodActions ? {

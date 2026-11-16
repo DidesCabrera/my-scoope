@@ -14,6 +14,7 @@ from myscoope_mcp.protocol_server import (
     MEAL_CARD_RESOURCE_URI,
     RECENT_MEAL_CARD_RESOURCE_URI,
     PREVIOUS_MEAL_CARD_RESOURCE_URI,
+    V5_MEAL_CARD_RESOURCE_URI,
     create_mcp_server,
 )
 from myscoope_mcp.run_protocol_server import _create_http_app
@@ -49,7 +50,9 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertNotIn("user_id", tool.inputSchema.get("properties", {}))
         self.assertEqual(resources[MEAL_CARD_RESOURCE_URI].mimeType, MEAL_CARD_MIME_TYPE)
         self.assertIn(RECENT_MEAL_CARD_RESOURCE_URI, resources)
+        self.assertEqual(resources[MEAL_CARD_RESOURCE_URI].meta["openai/widgetCSP"]["redirect_domains"], ["http://127.0.0.1:8000"])
         self.assertIn(PREVIOUS_MEAL_CARD_RESOURCE_URI, resources)
+        self.assertIn(V5_MEAL_CARD_RESOURCE_URI, resources)
         self.assertIn(LEGACY_MEAL_CARD_RESOURCE_URI, resources)
         self.assertIn(OLDER_MEAL_CARD_RESOURCE_URI, resources)
         self.assertIn(OLDEST_MEAL_CARD_RESOURCE_URI, resources)
@@ -67,6 +70,22 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertIn('id="meal-macros"', content.content)
         self.assertIn('id="meal-distribution"', content.content)
         self.assertIn('id="meal-allocation"', content.content)
+        self.assertIn('id="meal-app-link"', content.content)
+        self.assertIn('"http://127.0.0.1:8000"', content.content)
+
+    def test_meal_link_uses_configured_public_origin(self):
+        async def inspect():
+            with patch.dict("os.environ", {
+                "MYSCOOPE_API_BASE_URL": "https://internal.example.test/app",
+                "MYSCOOPE_CARD_WEB_APP_BASE_URL": "https://myscoope-staging.onrender.com/app",
+            }):
+                server = create_mcp_server()
+                resource = (await server.read_resource(MEAL_CARD_RESOURCE_URI))[0]
+                return resource
+
+        resource = asyncio.run(inspect())
+        self.assertIn('"https://myscoope-staging.onrender.com"', resource.content)
+        self.assertEqual(resource.meta["openai/widgetCSP"]["redirect_domains"], ["https://myscoope-staging.onrender.com"])
 
     def test_read_meal_delivers_the_authorized_result_as_structured_content(self):
         meal = {
