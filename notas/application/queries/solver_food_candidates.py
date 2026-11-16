@@ -263,7 +263,11 @@ def build_solver_food_profile(
         food=candidate,
         features=tuple(features),
         schema_version=version,
-        metadata={"operational_food_id": food.id},
+        metadata={
+            "operational_food_id": food.id,
+            "portioning_mode": food.portioning_mode,
+            "portioning_mode_version": food.portioning_mode_version,
+        },
     )
 
 

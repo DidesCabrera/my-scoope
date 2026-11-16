@@ -241,12 +241,20 @@ class CatalogFoodAdmin(admin.ModelAdmin):
         "solver_enabled",
         "preparation_state",
         "myscoope_group",
+        "caloric_density_kcal_per_unit",
+        "caloric_density_segment",
+        "portioning_mode",
         "country",
         "updated_at",
     )
-    list_filter = ("status", "source_type", "myscoope_group", "portion_unit", "solver_enabled", "preparation_state", "is_branded", "country", "language")
+    list_filter = ("status", "source_type", "myscoope_group", "caloric_density_segment", "portioning_mode", "portion_unit", "solver_enabled", "preparation_state", "is_branded", "country", "language")
     search_fields = ("display_name", "canonical_name", "brand_name", "aliases__name")
-    readonly_fields = ("catalog_ref", "created_at", "updated_at")
+    readonly_fields = (
+        "catalog_ref", "created_at", "updated_at", "caloric_density_kcal_per_unit",
+        "caloric_density_segment", "caloric_density_source",
+        "caloric_density_estimated", "caloric_density_version",
+        "portioning_mode_version",
+    )
     inlines = (CatalogFoodPortionInline, CatalogFoodAliasInline, CatalogFoodSourceInline)
     fieldsets = (
         (
@@ -281,6 +289,8 @@ class CatalogFoodAdmin(admin.ModelAdmin):
                     "solver_min_portion_g",
                     "solver_max_portion_g",
                     "solver_portion_step_g",
+                    "portioning_mode",
+                    "portioning_mode_version",
                     "functional_roles",
                     "meal_affinities",
                     "dietary_tags",
@@ -300,6 +310,11 @@ class CatalogFoodAdmin(admin.ModelAdmin):
                     "carbs_g_per_100g",
                     "fat_g_per_100g",
                     "calories_kcal_per_100g",
+                    "caloric_density_kcal_per_unit",
+                    "caloric_density_segment",
+                    "caloric_density_source",
+                    "caloric_density_estimated",
+                    "caloric_density_version",
                     "fiber_g_per_100g",
                     "sugar_g_per_100g",
                     "saturated_fat_g_per_100g",
