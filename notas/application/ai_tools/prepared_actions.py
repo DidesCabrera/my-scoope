@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Mapping
 from decimal import Decimal, InvalidOperation
+from typing import Any, Mapping
 
 from django.db import transaction
 from django.db.models import Q, Subquery
@@ -22,13 +22,13 @@ from notas.domain.models import (
     Meal,
     MealFood,
     MealPreparation,
-    Preparation,
-    SupplementIntake,
-    Supplement,
     NutritionProposal,
+    Preparation,
     Program,
     ProgramCalendarization,
     SavedComparison,
+    Supplement,
+    SupplementIntake,
 )
 
 WORKSPACE_PATCH_ACTION_KEY = "workspace.patch"
@@ -1025,7 +1025,10 @@ def _validate_supplement_selection(user, arguments):
 
 
 def _dispatch_supplement_commit(*, key, user, target, arguments):
-    from notas.application.services.commands.supplement_commands import create_supplement_intake, delete_supplement_intake
+    from notas.application.services.commands.supplement_commands import (
+        create_supplement_intake,
+        delete_supplement_intake,
+    )
     if key == "dailyplan.add_supplement_intake":
         _validate_supplement_selection(user, arguments)
         intake = create_supplement_intake(

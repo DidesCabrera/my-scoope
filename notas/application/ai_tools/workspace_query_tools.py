@@ -4,6 +4,7 @@ from notas.application.ai_tools.comparison_tools import (
     list_saved_comparisons_tool,
     read_saved_comparison_tool,
 )
+from notas.application.ai_tools.preparation_read_tools import query_meal_preparations_tool, query_preparations_tool
 from notas.application.ai_tools.read_tools import (
     list_user_proposals_tool,
     read_dailyplan_tool,
@@ -13,7 +14,6 @@ from notas.application.ai_tools.read_tools import (
     search_proposals_tool,
 )
 from notas.application.ai_tools.results import tool_error
-from notas.application.ai_tools.preparation_read_tools import query_meal_preparations_tool, query_preparations_tool
 from notas.application.ai_tools.runtime import run_ai_tool
 from notas.application.ai_tools.supplement_read_tools import query_supplements_tool
 from notas.application.ai_tools.workspace_tools import (

@@ -3,10 +3,10 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from ai_assistant.application.tools.registry import list_provider_tool_specs
 from notas.application.ai_tools.prepared_actions import commit_prepared_action, prepare_workspace_patch
 from notas.application.ai_tools.workspace_query_tools import query_workspace_tool
 from notas.domain.models import DailyPlan, Meal, MealPreparation, Preparation, PreparationVersion, Supplement
-from ai_assistant.application.tools.registry import list_provider_tool_specs
 
 
 class CompositionAssistantTests(TestCase):
