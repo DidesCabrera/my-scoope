@@ -4,9 +4,10 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
-export type GalleryTab = "onboarding" | "disclosures" | "subscriptions" | "salesMoments" | "labelCapture" | "components" | "selectors" | "calendars" | "program" | "details" | "shareable" | "proposals" | "comparisons" | "personalRecords" | "states" | "tokens";
+export type GalleryTab = "home" | "onboarding" | "disclosures" | "subscriptions" | "salesMoments" | "labelCapture" | "components" | "selectors" | "calendars" | "program" | "details" | "shareable" | "proposals" | "comparisons" | "personalRecords" | "states" | "tokens";
 
 const tabs: { key: GalleryTab; label: string }[] = [
+  { key: "home", label: "Inicio" },
   { key: "onboarding", label: "Onboarding" },
   { key: "disclosures", label: "Responsabilidad" },
   { key: "subscriptions", label: "Suscripciones" },

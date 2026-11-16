@@ -22,6 +22,7 @@ import {
 import { ProgramChildCard } from "@/components/libraries/program-child-card";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
+import { HomeFirstMinutasOffer } from "@/components/home/home-first-minutas-offer";
 import { ProposalGallery } from "@/components/dev/proposal-gallery";
 import { DisclosureGallery } from "@/components/dev/disclosure-gallery";
 import { PersonalRecordCardGallery } from "@/components/dev/personal-record-card-gallery";
@@ -193,7 +194,7 @@ const activeProgramDayExamples = [
 ];
 export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
-  const [tab, setTab] = useState<GalleryTab>("components");
+  const [tab, setTab] = useState<GalleryTab>("home");
   const [choice, setChoice] = useState<Choice>("daily");
   const [distributedExample, setDistributedExample] = useState<"chats" | "proposals">("chats");
   const [scrollableExample, setScrollableExample] = useState<"week1" | "week2" | "week3" | "week4">("week1");
@@ -210,6 +211,14 @@ export default function UiGalleryScreen() {
       <View style={[styles.galleryLayout, width >= 700 && styles.galleryLayoutWide]}>
         <GalleryNavigation activeTab={tab} onChange={setTab} wide={width >= 700} />
         <View style={styles.galleryContent}>
+      {tab === "home" ? (
+        <>
+          <SectionTitle detail="Componente productivo · invitación posterior al onboarding" title="Inicio · invitación para 2 minutas" />
+          <View style={[styles.homeOfferPreview, width >= 700 && styles.homeOfferPreviewWide]}>
+            <HomeFirstMinutasOffer onPress={() => undefined} />
+          </View>
+        </>
+      ) : null}
       {tab === "onboarding" ? (
         <OnboardingStoryboardGallery />
       ) : null}
@@ -792,6 +801,8 @@ const styles = StyleSheet.create({
   galleryLayout: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   galleryLayoutWide: { alignItems: "flex-start", flexDirection: "row" },
   galleryContent: { flex: 1, gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
+  homeOfferPreview: { alignSelf: "stretch" },
+  homeOfferPreviewWide: { alignSelf: "center", width: 414 },
   chipGallery: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   calendarExampleLabel: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.bold, letterSpacing: 0.8 },
   devicePreview: { alignSelf: "center", backgroundColor: tokens.color.surfacePage, borderColor: tokens.color.borderStrong, borderRadius: 30, borderWidth: 1, maxWidth: "100%", overflow: "hidden" },
