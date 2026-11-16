@@ -12,7 +12,8 @@ READ_TOOL_SPECS = {
         name=TOOL_QUERY_WORKSPACE,
         description=(
             "Query the authenticated user's My Scoope workspace. This is the primary read capability for "
-            "foods, meals, daily meal plans, programs, calendarization, proposals, saved comparisons "
+            "foods, meals, daily meal plans, Program templates, dated calendar days and commitments, "
+            "program projection history, proposals, saved comparisons "
             "and preparations, Pro supplements, supplement presets or planned intakes. Supplement label nutrition "
             "is informational and never contributes to meal or plan totals. "
             "Use it before saying stored product data is unavailable. Omit object_id to list or search; "
@@ -40,6 +41,10 @@ READ_TOOL_SPECS = {
                         "dailyplans",
                         "programs",
                         "calendarization",
+                        "calendar",
+                        "calendar_day",
+                        "calendar_commitments",
+                        "program_projections",
                         "proposals",
                         "saved_comparisons",
                         "preparations",
@@ -59,13 +64,15 @@ READ_TOOL_SPECS = {
                 },
                 "kind": {
                     "type": "string",
-                    "enum": ["foods", "meals", "dailyplans"],
+                    "enum": ["foods", "meals", "dailyplans", "shopping", "cooking", "training", "nutritionist"],
                     "description": (
                         "Optional saved comparison kind filter. Use foods for alimentos, "
                         "meals for comidas and dailyplans for planes. Only applies when "
-                        "resource is saved_comparisons."
+                        "resource is saved_comparisons; commitment kinds apply to calendar_commitments."
                     ),
                 },
+                "date_from": {"type": "string", "description": "ISO local date, required for a specific calendar_day; defaults to today for calendar ranges."},
+                "date_to": {"type": "string", "description": "Inclusive ISO local end date; calendar ranges are limited to 42 days."},
                 "limit": {
                     "type": "integer",
                     "description": "Optional maximum result count, from 1 to 50.",
@@ -562,3 +569,4 @@ READ_TOOL_SPECS = {
 }
 
 __all__ = ["READ_TOOL_SPECS"]
+

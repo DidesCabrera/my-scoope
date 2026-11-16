@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import date, time
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
@@ -15,7 +16,15 @@ from ai_assistant.application.prepared_action_contracts import (
     PreparedActionSpec,
 )
 from ai_assistant.models import AIPreparedAction
+from notas.application.ai_tools.calendar_patch_tools import (
+    calendar_target_snapshot,
+    commit_calendar_patch,
+    preview_calendar_patch,
+    validate_calendar_patch,
+)
 from notas.domain.models import (
+    CalendarCommitment,
+    CalendarizedDay,
     DailyPlan,
     DailyPlanMeal,
     Food,
@@ -65,6 +74,13 @@ _WORKSPACE_PATCH_ACTIONS = {
     ("calendarization", "pause"): "calendar.pause",
     ("calendarization", "resume"): "calendar.resume",
     ("calendarization", "cancel"): "calendar.cancel",
+    ("calendar_day", "assign_plan"): "calendar_day.assign_plan",
+    ("calendar_day", "remove_plan"): "calendar_day.remove_plan",
+    ("calendar_day", "move_plan"): "calendar_day.move_plan",
+    ("calendar_commitment", "create"): "calendar_commitment.create",
+    ("calendar_commitment", "update"): "calendar_commitment.update",
+    ("calendar_commitment", "delete"): "calendar_commitment.delete",
+    ("program_projection", "project"): "program_projection.project",
     ("saved_comparison", "rename"): "comparison.rename",
     ("proposal", "approve"): "proposal.approve",
     ("proposal", "reject"): "proposal.reject",
@@ -76,6 +92,11 @@ _WORKSPACE_PATCH_ACTIONS = {
 _MEDIUM_RISK_ACTIONS = {
     "calendar.pause",
     "calendar.resume",
+    "calendar_day.assign_plan",
+    "calendar_day.move_plan",
+    "calendar_commitment.create",
+    "calendar_commitment.update",
+    "program_projection.project",
     "proposal.approve",
     "proposal.apply",
 }
@@ -100,6 +121,13 @@ _ALLOWED_ACTION_ARGUMENTS = {
     "dailyplan.update_meal": {"meal_id", "hour", "note"},
     "dailyplan.add_supplement_intake": {"items", "hour"},
     "dailyplan.remove_supplement_intake": {},
+    "calendar_day.assign_plan": {"dailyplan_id", "date", "replace_existing", "assignment_key"},
+    "calendar_day.move_plan": {"date", "replace_existing", "assignment_key"},
+    "calendar_day.remove_plan": set(),
+    "calendar_commitment.create": {"kind", "dates", "note", "food_period_start", "food_period_end"},
+    "calendar_commitment.update": {"date", "note", "hour", "food_period_start", "food_period_end"},
+    "calendar_commitment.delete": set(),
+    "program_projection.project": {"program_id", "start_date", "timezone_name", "confirm_incomplete", "replace_current"},
     "program.create": {"name", "duration_weeks"},
     "program.rename": {"name"},
     "program.duplicate_week": {"week_number"},
@@ -110,6 +138,17 @@ _REFERENCEABLE_ARGUMENTS = {
     "meal.add_food": {"food_id": "food"},
     "dailyplan.add_meal": {"meal_id": "meal"},
 }
+
+
+def _validate_calendar_action(user, action_key, arguments):
+    if action_key.startswith(("calendar_day.", "calendar_commitment.", "program_projection.")):
+        validate_calendar_patch(user, action_key, arguments)
+
+
+def _preview_calendar_action(user, action_key, arguments, target, before, after):
+    if action_key.startswith(("calendar_day.", "calendar_commitment.", "program_projection.")):
+        return preview_calendar_patch(user, action_key, arguments, target, before, after)
+    return after
 
 
 def prepare_product_action(
@@ -136,6 +175,7 @@ def prepare_product_action(
         _validate_preparation_selection(user, parameters)
     if action_key == "dailyplan.add_supplement_intake":
         _validate_supplement_selection(user, parameters)
+    _validate_calendar_action(user, normalized_key, arguments)
 
     target = None
     before = {}
@@ -399,6 +439,7 @@ def _normalize_workspace_patch_operation(
         raise ValueError(f"prepared_action_missing_arguments:{','.join(missing)}")
 
     target_id = raw_operation.get("target_id")
+    _validate_calendar_action(user, action_key, parameters)
     if action_key in {"meal.add_preparation", "meal.update_preparation"}:
         _validate_preparation_selection(user, parameters)
     if action_key == "dailyplan.add_supplement_intake":
@@ -422,6 +463,7 @@ def _normalize_workspace_patch_operation(
     )
 
     after = _preview_after(spec, before=before, arguments=preview_arguments)
+    after = _preview_calendar_action(user, action_key, parameters, target, before, after)
     if action_key in {"meal.add_preparation", "meal.update_preparation"}:
         selected_id = parameters.get("preparation_id") or getattr(target, "preparation_id", None)
         if selected_id:
@@ -649,6 +691,8 @@ def _resolve_owned_target(*, user, target_type: str, target_id: int, for_update:
         "supplement_intake": SupplementIntake.objects.filter(dailyplan__created_by=user).select_related("dailyplan"),
         "program": Program.objects.filter(created_by=user),
         "calendarization": ProgramCalendarization.objects.filter(user=user),
+        "calendar_day": CalendarizedDay.objects.filter(user=user, assignment_state=CalendarizedDay.STATE_CURRENT),
+        "calendar_commitment": CalendarCommitment.objects.filter(user=user),
         "saved_comparison": SavedComparison.objects.filter(owner=user),
         "proposal": NutritionProposal.objects.filter(pk__in=Subquery(owned_proposal_ids)),
     }
@@ -682,6 +726,8 @@ def _resolve_owned_meal_food(*, user, meal_id: int, food_id: Any):
 
 
 def _target_snapshot(target_type: str, target) -> dict:
+    if target_type in {"calendar_day", "calendar_commitment"}:
+        return calendar_target_snapshot(target)
     if target_type == "food":
         return {
             "id": target.id,
@@ -852,6 +898,8 @@ def _snapshot_version(snapshot: dict) -> str:
 
 def _dispatch_commit(spec: PreparedActionSpec, *, user, target, arguments: dict) -> dict:
     key = spec.action_key
+    if key.startswith(("calendar_day.", "calendar_commitment.", "program_projection.")):
+        return commit_calendar_patch(user, key, target, arguments)
     if key in {"meal.add_preparation", "meal.update_preparation", "meal.remove_preparation"}:
         return _dispatch_preparation_commit(key=key, user=user, target=target, arguments=arguments)
     if key in {"dailyplan.add_supplement_intake", "dailyplan.remove_supplement_intake"}:
@@ -1172,3 +1220,4 @@ def _dispatch_proposal_commit(*, key: str, user, target) -> dict:
     else:
         result = apply_approved_proposal(user=user, proposal=target)
     return result.as_dict()
+

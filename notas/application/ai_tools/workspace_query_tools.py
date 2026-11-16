@@ -1,5 +1,6 @@
 """Capability-oriented read access to the authenticated user's workspace."""
 
+from notas.application.ai_tools.calendar_read_tools import query_calendar_tool
 from notas.application.ai_tools.comparison_tools import (
     list_saved_comparisons_tool,
     read_saved_comparison_tool,
@@ -146,11 +147,19 @@ def query_workspace_tool(
     kind: str | None = None,
     limit: int = 20,
     offset: int = 0,
+    date_from: str | None = None,
+    date_to: str | None = None,
 ):
     """Translate one provider-facing query into existing owner-scoped read tools."""
 
     normalized_resource = str(resource or "").strip().lower()
     normalized_search = str(search or "").strip()
+
+    if normalized_resource in {"calendar", "calendar_day", "calendar_commitments"}:
+        return query_calendar_tool(
+            user, resource=normalized_resource, date_from=date_from,
+            date_to=date_to, kind=kind, limit=limit, offset=offset,
+        )
 
     if normalized_resource == "preparations":
         return query_preparations_tool(
@@ -171,7 +180,7 @@ def query_workspace_tool(
             offset=offset,
         )
 
-    if normalized_resource == "calendarization":
+    if normalized_resource in {"calendarization", "program_projections"}:
         return read_calendarization_tool(user, history_limit=limit)
 
     detail_tools = {
@@ -213,3 +222,4 @@ def query_workspace_tool(
         message="El recurso solicitado no está disponible para consulta.",
         details={"resource": normalized_resource},
     )
+

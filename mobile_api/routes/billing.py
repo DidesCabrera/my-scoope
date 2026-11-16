@@ -23,7 +23,6 @@ from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()
-
 @router.get(
     "/entitlements",
     operation_id="mobile_api_api_entitlements",
@@ -91,3 +90,4 @@ def apple_transaction(request, payload: AppleTransactionInput):
     )
     return success({**subscription_payload(request.auth.user), "entitlements": entitlements_payload(request.auth.user),
                     "transaction_status": transaction_status})
+

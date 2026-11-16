@@ -48,7 +48,7 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
                                 "type": "string",
                                 "enum": [
                                     "food", "meal", "dailyplan", "program",
-                                    "calendarization", "saved_comparison", "proposal",
+                                    "calendarization", "calendar_day", "calendar_commitment", "program_projection", "saved_comparison", "proposal",
                                 ],
                             },
                             "action": {
@@ -60,7 +60,8 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
                                     "remove_preparation", "add_supplement_intake",
                                     "remove_supplement_intake", "add_week",
                                     "duplicate_week", "remove_week", "pause", "resume",
-                                    "cancel", "approve", "reject", "apply",
+                                    "cancel", "assign_plan", "remove_plan", "move_plan", "project",
+                                    "approve", "reject", "apply",
                                 ],
                             },
                             "target_id": {"type": "integer"},
@@ -162,3 +163,4 @@ TOOL_COMMIT_PREPARED_ACTION: AssistantToolSpec(
 }
 
 __all__ = ["ACTIONS_TOOL_SPECS"]
+
