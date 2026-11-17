@@ -48,6 +48,13 @@ PREPARED_ACTION_SPECS = {
         PreparedActionSpec("calendar.pause", "calendarization", "Pausar calendarización"),
         PreparedActionSpec("calendar.resume", "calendarization", "Reanudar calendarización"),
         PreparedActionSpec("calendar.cancel", "calendarization", "Cancelar calendarización", destructive=True),
+        PreparedActionSpec("calendar_day.assign_plan", "calendar_day", "Asignar minuta a fecha", ("dailyplan_id", "date"), creates_entity=True),
+        PreparedActionSpec("calendar_day.remove_plan", "calendar_day", "Quitar minuta de fecha", destructive=True),
+        PreparedActionSpec("calendar_day.move_plan", "calendar_day", "Mover minuta fechada", ("date",)),
+        PreparedActionSpec("calendar_commitment.create", "calendar_commitment", "Crear compromiso", ("kind", "dates"), creates_entity=True),
+        PreparedActionSpec("calendar_commitment.update", "calendar_commitment", "Editar compromiso"),
+        PreparedActionSpec("calendar_commitment.delete", "calendar_commitment", "Eliminar compromiso", destructive=True),
+        PreparedActionSpec("program_projection.project", "program_projection", "Proyectar programa en calendario", ("program_id", "start_date", "timezone_name"), creates_entity=True),
         PreparedActionSpec("comparison.rename", "saved_comparison", "Renombrar comparación", ("name",)),
         PreparedActionSpec("proposal.approve", "proposal", "Aprobar propuesta"),
         PreparedActionSpec("proposal.reject", "proposal", "Rechazar propuesta", destructive=True),
@@ -56,3 +63,4 @@ PREPARED_ACTION_SPECS = {
         PreparedActionSpec("proposal.apply", "proposal", "Aplicar propuesta aprobada"),
     )
 }
+

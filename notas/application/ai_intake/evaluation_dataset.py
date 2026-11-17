@@ -127,8 +127,8 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
         ("Renombra mi comida a Almuerzo rápido.", "meal", "rename"),
         ("Elimina este alimento de mi biblioteca.", "food", "delete"),
         ("Cambia mi minuta diaria a 2300 kcal.", "dailyplan", "update"),
-        ("Pausa mi calendario activo.", "calendarization", "pause"),
-        ("Reanuda el calendario del programa.", "calendarization", "resume"),
+        ("Pausa la proyección de mi programa activo.", "program_projections", "pause"),
+        ("Reanuda el calendario del programa.", "program_projections", "resume"),
         ("Aprueba esta propuesta.", "proposal", "approve"),
         ("Rechaza la propuesta actual.", "proposal", "reject"),
         ("Duplica la última semana del programa.", "program", "duplicate"),
@@ -152,7 +152,7 @@ def assistant_task_dataset() -> tuple[AssistantTaskCase, ...]:
         ("Lista mis alimentos.", "food"),
         ("Busca una minuta diaria de 2200 kcal.", "dailyplan"),
         ("¿Cuántas propuestas tengo?", "proposal"),
-        ("Revisa mi calendario actual.", "calendarization"),
+        ("Revisa mi calendario actual.", "calendar"),
         ("Dime qué comparaciones guardé.", "saved_comparison"),
         ("¿Tengo alguna dieta reciente?", "dailyplan"),
     )
@@ -379,3 +379,4 @@ __all__ = [
     "assistant_task_dataset",
     "evaluate_assistant_task_dataset",
 ]
+

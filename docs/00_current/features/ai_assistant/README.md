@@ -66,6 +66,17 @@ implementación requiere evaluación live y revisión humana antes de declararse
 cobertura completa; recetas personales, cumplimiento fechado y snapshots
 calendarizados conservan su UI especializada.
 
+El calendario es la autoridad para fechas. `query_workspace` consulta días fijados
+manualmente, días proyectados y compromisos, incluso sin programa vigente. La
+plantilla `Program` conserva semanas y días relativos; una proyección
+`ProgramCalendarization` tiene la fecha de inicio. El patch confirmable asigna,
+mueve o quita minutas fechadas, crea o edita compromisos y proyecta programas.
+El preview muestra colisiones, días vacíos y efectos de reemplazo; los commands
+validan nuevamente propiedad, fechas y evidencia de ejecución al confirmar.
+Pausar o reanudar requiere identificar la proyección, no el calendario completo.
+La edición de contenido dentro del snapshot fechado y los reemplazos masivos
+siguen pendientes de adapters especializados.
+
 El inventario vivo de solicitudes posibles, su clasificación entre lectura, patch,
 propuesta, aclaración y handoff, y las brechas actuales está en
 [`user_request_capability_catalog.md`](user_request_capability_catalog.md). Ese catálogo
@@ -769,3 +780,4 @@ AI_ASSISTANT_LLM_ROLLOUT_MODE=staff|allowlist|percentage|all
 El modo productivo no reemplaza la UI del chat. Usa la superficie existente de AI Nutrition Intake, mantiene observabilidad, guardrails, créditos y routing por `action_type`, y vuelve a `deterministic` si el usuario no pasa el gate de rollout.
 
 - [0042 · AI Assistant gradual production rollout](../../../20_decisions/0042-ai-assistant-gradual-production-rollout.md)
+

@@ -167,13 +167,13 @@ Leyenda de cobertura actual:
 | PG-07 | Rellenar días vacíos con planes existentes | Patch compuesto o propuesta | Brecha | Determinista si el usuario indica el mapeo; propuesta si AI decide. |
 | PG-08 | Generar/optimizar un programa completo | Propuesta revisable | Parcial | Genera 1–8 semanas completas con objetivos diarios constantes y rotación explícita de menús. Falta periodización y optimización global de variedad; validar escenarios live de 1 y 8 semanas. |
 | PG-09 | Copiar, guardar o compartir programa | Handoff | UI | Sharing opera sobre snapshots portables. |
-| PG-10 | Activar/calendarizar programa | Handoff confirmable | UI | Requiere fecha, timezone, revisión de días vacíos y posible reemplazo del activo. |
+| PG-10 | Proyectar programa en el calendario | Patch confirmable | Cubierta | La fecha de inicio pertenece a ProgramCalendarization, nunca a la plantilla Program. El preview muestra días vacíos, fechas ocupadas y proyección vigente; el command valida colisiones y reemplazos al confirmar. |
 
 ### Calendario, ejecución y progreso
 
 | ID | Solicitud o ejemplos | Resolución | Cobertura actual | Observación |
 | --- | --- | --- | --- | --- |
-| C-01 | Consultar calendario, plan de una fecha, progreso o historial | Lectura | Cubierta parcial | La consulta debe distinguir plantilla Program, procedencia y snapshot fechado. |
+| C-01 | Consultar calendario, plan de una fecha, compromisos o historial de proyecciones | Lectura | Cubierta parcial | `calendar`/`calendar_day` consultan CalendarizedDay por fecha, incluidos días manuales y vacíos; `calendar_commitments` consulta eventos independientes; `program_projections` conserva el historial. El progreso de ejecución aún requiere lecturas especializadas. |
 | C-02 | Pausar, reanudar o cancelar una proyección de programa | Patch de ciclo de vida | Cubierta | No equivale a borrar los días históricos; cancelar es destructivo. |
 | C-03 | Cambiar notificaciones, hora general o zona horaria | Handoff | UI | Afecta eventos y dispositivos; conserva formulario especializado. |
 | C-04 | Cambiar nombre/hora de una comida en un día futuro | Patch sobre snapshot | UI | Existen commands de snapshot; faltan adapters AI y política temporal. |
@@ -183,8 +183,8 @@ Leyenda de cobertura actual:
 | C-08 | Registrar comida completada/omitida, alimento preparado o nota | Evento de ejecución | UI | Es evidencia append-only, no edición de la plantilla. |
 | C-09 | Registrar peso o revisión de periodo | Evento/revisión | UI | Debe preservar fecha y contexto de calendarización. |
 | C-10 | Reoptimizar el resto del programa según progreso | Propuesta + revisión futura | Brecha | No puede alterar pasado/presente; requiere métricas y alternativas. |
-| C-11 | Asignar, mover o quitar un plan en una fecha | Patch determinista | UI | Calendar es la autoridad y debe conservar historial y colisiones explícitas. |
-| C-12 | Registrar compras, cocina, entrenamiento o lista alimentaria por periodo | Handoff | UI | Los compromisos son fechados y la lista guardada es un snapshot. |
+| C-11 | Asignar, mover o quitar un plan en una fecha | Patch determinista | Cubierta | Se confirma sobre el command fechado, con propietario, colisiones, evidencia de ejecución e historial. Los días proyectados no se mueven como asignación manual. |
+| C-12 | Registrar, editar o eliminar compras, cocina, entrenamiento u otros compromisos | Patch determinista | Cubierta | Los compromisos son fechados y la lista alimentaria guardada se recalcula como snapshot al confirmar el periodo. |
 
 ### Propuestas, comparaciones, Inbox, sharing y cuenta
 
@@ -350,3 +350,4 @@ python manage.py evaluate_ai_assistant_lab \
   --live --user-email usuario@example.com \
   --fail-on-regression
 ```
+

@@ -63,9 +63,13 @@ CAPABILITIES = (
     AssistantCapability("programs.read", "programs", "Listar, buscar y consultar programas semanales.", AssistantCapabilityMode.AUTONOMOUS_READ, ("list_user_programs", "read_program")),
     AssistantCapability("programs.manage", "programs", "Crear, renombrar, eliminar o gestionar semanas.", AssistantCapabilityMode.PREPARED_ACTION, ("propose_workspace_patch",), ("program.create", "program.rename", "program.delete", "program.add_week", "program.duplicate_week", "program.remove_week")),
     AssistantCapability("programs.compose_share", "programs", "Asignar minutas a días, copiar o compartir programas.", AssistantCapabilityMode.TRUSTED_UI_HANDOFF),
-    AssistantCapability("calendar.read", "calendar", "Consultar calendarización actual e historial.", AssistantCapabilityMode.AUTONOMOUS_READ, ("read_calendarization",)),
-    AssistantCapability("calendar.lifecycle", "calendar", "Pausar, reanudar o cancelar una calendarización.", AssistantCapabilityMode.PREPARED_ACTION, ("propose_workspace_patch",), ("calendar.pause", "calendar.resume", "calendar.cancel")),
-    AssistantCapability("calendar.activate_preferences", "calendar", "Activar un programa o cambiar notificaciones y zona horaria.", AssistantCapabilityMode.TRUSTED_UI_HANDOFF),
+    AssistantCapability("calendar.read", "calendar", "Consultar agenda fechada, minutas asignadas y compromisos.", AssistantCapabilityMode.AUTONOMOUS_READ, ("query_workspace",)),
+    AssistantCapability("calendar.day.manage", "calendar", "Asignar, mover o quitar una minuta de una fecha.", AssistantCapabilityMode.PREPARED_ACTION, ("propose_workspace_patch",), ("calendar_day.assign_plan", "calendar_day.move_plan", "calendar_day.remove_plan")),
+    AssistantCapability("calendar.commitments.manage", "calendar", "Crear, editar o eliminar compromisos fechados.", AssistantCapabilityMode.PREPARED_ACTION, ("propose_workspace_patch",), ("calendar_commitment.create", "calendar_commitment.update", "calendar_commitment.delete")),
+    AssistantCapability("calendar.projections.read", "calendar", "Consultar proyecciones vigentes e históricas de programas.", AssistantCapabilityMode.AUTONOMOUS_READ, ("query_workspace", "read_calendarization")),
+    AssistantCapability("calendar.projections.project", "calendar", "Proyectar una plantilla de programa desde una fecha.", AssistantCapabilityMode.PREPARED_ACTION, ("propose_workspace_patch",), ("program_projection.project",)),
+    AssistantCapability("calendar.lifecycle", "calendar", "Pausar, reanudar o cancelar una proyección de programa.", AssistantCapabilityMode.PREPARED_ACTION, ("propose_workspace_patch",), ("calendar.pause", "calendar.resume", "calendar.cancel")),
+    AssistantCapability("calendar.activate_preferences", "calendar", "Cambiar notificaciones y zona horaria.", AssistantCapabilityMode.TRUSTED_UI_HANDOFF),
     AssistantCapability("comparisons.read", "comparisons", "Listar y consultar comparaciones guardadas.", AssistantCapabilityMode.AUTONOMOUS_READ, ("list_saved_comparisons", "read_saved_comparison")),
     AssistantCapability("comparisons.manage", "comparisons", "Renombrar comparaciones guardadas.", AssistantCapabilityMode.PREPARED_ACTION, ("propose_workspace_patch",), ("comparison.rename",)),
     AssistantCapability("comparisons.create", "comparisons", "Crear y actualizar comparaciones de alimentos, comidas o minutas diarias.", AssistantCapabilityMode.TRUSTED_UI_HANDOFF),
@@ -96,3 +100,4 @@ def get_capability(code: str) -> AssistantCapability:
         return CAPABILITY_BY_CODE[normalized]
     except KeyError as exc:
         raise ValueError(f"unsupported_assistant_capability:{normalized}") from exc
+
