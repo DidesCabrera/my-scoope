@@ -79,6 +79,7 @@ MODEL_RETENTION_POLICY = {
     "food_catalog.CatalogFoodPortion": RetentionAction.FOLLOW_PARENT,
     "food_catalog.CatalogFoodSource": RetentionAction.FOLLOW_PARENT,
     "food_catalog.FoodVisualAsset": RetentionAction.RETAIN_OPERATIONAL,
+    "food_catalog.PreparationVisualAsset": RetentionAction.RETAIN_OPERATIONAL,
     "notas.LegacyFoodVisualAsset": RetentionAction.RETAIN_OPERATIONAL,
     "food_catalog.CatalogPreparation": RetentionAction.RETAIN_OPERATIONAL,
     "food_catalog.CatalogPreparationIngredient": RetentionAction.FOLLOW_PARENT,

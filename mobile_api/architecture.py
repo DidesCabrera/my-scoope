@@ -14,6 +14,7 @@ ROUTE_DOMAIN_PREFIXES = (
     ("/shares", "sharing"),
     ("/explore", "libraries"),
     ("/library", "libraries"),
+    ("/catalog/visual-assets", "food_catalog"),
     ("/foods", "food_catalog"),
     ("/preparations", "food_catalog"),
     ("/food-picker-options", "food_catalog"),
