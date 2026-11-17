@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
-import { useFoodVisualManifestResolved, useRemoteFoodVisual, useRemoteFoodVisualStatus } from "./remote-food-visuals";
+import { useFoodVisualManifestResolved, useRemoteFoodVisual, useRemoteFoodVisualStatus, useRemotePreparationVisual } from "./remote-food-visuals";
 import { foodVisualPresentation } from "./remote-food-visuals-core";
+import { EntityIcon } from "@/components/ui";
 
 type FoodVisual = { emoji: string; visualKey: string };
 
@@ -110,6 +111,16 @@ export function resolveFoodVisual(name: string, emoji?: string | null, visualKey
 export function FoodVisualIcon({ emoji, foodId, name, size = "compact", visualKey }: { emoji?: string | null; foodId?: number | string | null; name: string; size?: "compact" | "panel" | "title"; visualKey?: string | null }) {
   const visual = resolveFoodVisual(name, emoji, visualKey);
   const remoteUrl = useRemoteFoodVisual(name, foodId);
+  return <RemoteVisualFrame fallback={<Text accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.icon, size === "panel" && styles.panelIcon, size === "title" && styles.titleIcon]}>{visual.emoji}</Text>} size={size} url={remoteUrl} />;
+}
+
+export function PreparationVisualIcon({ name, preparationId, size = "compact" }: { name: string; preparationId?: number | string | null; size?: "compact" | "panel" | "title" }) {
+  const remoteUrl = useRemotePreparationVisual(name, preparationId);
+  const fallback = size === "title" ? null : <EntityIcon entity="preparation" size="compact" />;
+  return <RemoteVisualFrame fallback={fallback} size={size} url={remoteUrl} />;
+}
+
+function RemoteVisualFrame({ fallback, size, url: remoteUrl }: { fallback: ReactNode; size: "compact" | "panel" | "title"; url: string | undefined }) {
   const manifestResolved = useFoodVisualManifestResolved();
   const remoteStatus = useRemoteFoodVisualStatus(remoteUrl);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -133,14 +144,7 @@ export function FoodVisualIcon({ emoji, foodId, name, size = "compact", visualKe
       style={{ ...frame, flexShrink: 0 }}
     />;
   }
-  return (
-    <Text
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={[styles.icon, size === "panel" && styles.panelIcon, size === "title" && styles.titleIcon]}>
-      {visual.emoji}
-    </Text>
-  );
+  return fallback;
 }
 
 const styles = StyleSheet.create({

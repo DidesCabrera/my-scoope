@@ -75,6 +75,7 @@ export function FoodDetailCardList({ editing, items, onOpenFood, ownerLabel = "e
             foodEmoji={item.emoji}
             foodId={isPreparation ? undefined : item.detailId}
             foodVisualKey={item.visualKey}
+            preparationId={isPreparation ? item.detailId : undefined}
             headingLink={openDetail ? { label: `Ver detalle de ${item.name}`, onPress: openDetail } : undefined}
             key={item.id}
             nutrition={{

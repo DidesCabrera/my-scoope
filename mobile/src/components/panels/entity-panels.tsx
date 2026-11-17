@@ -10,7 +10,7 @@ import Animated, { type SharedValue, useAnimatedStyle, useSharedValue } from "re
 import type { FoodPickerOption } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
-import { FoodVisualIcon } from "@/components/nutrition/food-visual-icon";
+import { FoodVisualIcon, PreparationVisualIcon } from "@/components/nutrition/food-visual-icon";
 import { foodPortionHouseholdAmount, householdMeasureDisplayLabel } from "@/components/pickers/food-portion-nutrition";
 import { EntityIcon, type EntityKind } from "@/components/ui";
 import { useScreenScrollControl } from "@/components/ui/layout";
@@ -435,7 +435,7 @@ function FoodNameAndPortion({ name, portion, style }: { name: string; portion: s
 function PanelItemName<T extends FoodPanelItem | MealPanelItem>({ dragInteraction, item, itemNameStyle, onOpenItem, showFoodPortion = false, showNutritionSummary = false, style = styles.gridLeadingCell }: { dragInteraction?: PanelRowDragInteraction; item: T; itemNameStyle?: StyleProp<TextStyle>; onOpenItem?: (item: T) => void; showFoodPortion?: boolean; showNutritionSummary?: boolean; style?: StyleProp<ViewStyle> }) {
   const content = isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.foodIdentity}>
     <View style={[styles.foodIdentityTitleRow, item.projectedLabel === "Por agregar" && styles.foodIdentityTitleRowWithBadge]}>
-      {item.kind === "preparation" ? <EntityIcon entity="preparation" size="compact" /> : <FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} size="panel" visualKey={item.visualKey} />}
+      {item.kind === "preparation" ? <PreparationVisualIcon name={item.name} preparationId={item.detailId} size="panel" /> : <FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} size="panel" visualKey={item.visualKey} />}
       <FoodNameAndPortion name={item.name} portion={showFoodPortion ? `${decimal(item.quantity)}${item.quantityUnit}` : null} style={[item.projectedLabel === "Por agregar" && styles.foodNameWithBadge, itemNameStyle]} />
       {item.projectedLabel === "Por agregar" ? <Text style={[styles.projectedBadge, styles.foodInlineProjectedBadge]}>{item.projectedLabel}</Text> : null}
     </View>
@@ -754,7 +754,7 @@ function FoodEditPanel({ editing, items, ownerLabel }: { editing: FoodPanelEditi
           <View style={[styles.editItem, isActive && styles.gestureRowActive, index === draftItems.length - 1 && styles.rowLast]}>
           <View style={[styles.row, styles.editRow]}>
             <EditDragHandle disabled={busy} drag={drag} label={`Reordenar ${item.name}`} />
-            <View style={[styles.editIdentity, styles.foodIdentity, styles.editFoodIdentity]}>{item.kind === "preparation" ? <EntityIcon entity="preparation" size="compact" /> : <FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} visualKey={item.visualKey} />}<Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}<Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text></Text></View>
+            <View style={[styles.editIdentity, styles.foodIdentity, styles.editFoodIdentity]}>{item.kind === "preparation" ? <PreparationVisualIcon name={item.name} preparationId={item.detailId} /> : <FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} visualKey={item.visualKey} />}<Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}<Text style={styles.foodPortionSuffix}> {`(${decimal(item.quantity)}${item.quantityUnit})`}</Text></Text></View>
             <View style={[styles.editActions, styles.foodEditActions]}>
               <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => (item.kind === "preparation" ? editing.preparation : editing)?.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
               <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => (item.kind === "preparation" ? editing.preparation : editing)?.onReplace(item)}><RefreshCw color={tokens.color.textMain} size={16} /></IconAction>

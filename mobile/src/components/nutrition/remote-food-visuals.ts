@@ -5,9 +5,9 @@ import { Image, Platform } from "react-native";
 import { appConfig } from "@/config/app-config";
 import { normalizeFoodVisualName, parseFoodVisualManifest } from "./remote-food-visuals-core";
 
-type Manifest = { images?: Record<string, string>; food_ids?: Record<string, string> };
+type Manifest = { images?: Record<string, string>; food_ids?: Record<string, string>; preparation_images?: Record<string, string>; preparation_ids?: Record<string, string> };
 
-const MANIFEST_URL = `${appConfig.apiBaseUrl}/api/v1/foods/visual-assets/manifest?layout=wide-v1`;
+const MANIFEST_URL = `${appConfig.apiBaseUrl}/api/v1/catalog/visual-assets/manifest?layout=wide-v1`;
 const REFRESH_MS = 60_000;
 
 let images = new Map<string, string>();
@@ -20,7 +20,7 @@ const listeners = new Set<() => void>();
 const readyImages = new Set<string>();
 const failedImages = new Set<string>();
 const pendingImages = new Set<string>();
-const cacheFile = Platform.OS === "web" ? null : new File(Paths.document, "food-visual-manifest-wide-v1.json");
+const cacheFile = Platform.OS === "web" ? null : new File(Paths.document, "catalog-visual-manifest-wide-v2.json");
 
 function notify() {
   listeners.forEach((listener) => listener());
@@ -93,6 +93,13 @@ function subscribe(listener: () => void): () => void {
 
 export function useRemoteFoodVisual(name: string, foodId?: number | string | null): string | undefined {
   const key = foodId == null ? `name:${normalizeFoodVisualName(name)}` : `id:${foodId}`;
+  const url = useSyncExternalStore(subscribe, () => images.get(key), () => undefined);
+  useEffect(() => { void refreshFoodVisualManifest(); }, []);
+  return url;
+}
+
+export function useRemotePreparationVisual(name: string, preparationId?: number | string | null): string | undefined {
+  const key = preparationId == null ? `preparation-name:${normalizeFoodVisualName(name)}` : `preparation-id:${preparationId}`;
   const url = useSyncExternalStore(subscribe, () => images.get(key), () => undefined);
   useEffect(() => { void refreshFoodVisualManifest(); }, []);
   return url;

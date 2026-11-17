@@ -1,6 +1,7 @@
-type Manifest = { images?: Record<string, string>; food_ids?: Record<string, string> };
+type Manifest = { images?: Record<string, string>; food_ids?: Record<string, string>; preparation_images?: Record<string, string>; preparation_ids?: Record<string, string> };
 
 const IMAGE_PATH = /^\/api\/v1\/foods\/visual-assets\/[0-9a-f-]{36}\/[0-9a-f]{64}(?:\.png|\/wide-v1\.png)$/;
+const PREPARATION_IMAGE_PATH = /^\/api\/v1\/preparations\/visual-assets\/[0-9a-f-]{36}\/[0-9a-f]{64}(?:\.png|\/wide-v1\.png)$/;
 
 export function normalizeFoodVisualName(name: string): string {
   return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("es").replace(/\s+/g, " ");
@@ -13,6 +14,12 @@ export function parseFoodVisualManifest(payload: Manifest, baseUrl: string): Map
   }
   for (const [id, path] of Object.entries(payload.food_ids ?? {})) {
     if (/^[1-9]\d*$/.test(id) && IMAGE_PATH.test(path)) result.set(`id:${id}`, `${baseUrl}${path}`);
+  }
+  for (const [name, path] of Object.entries(payload.preparation_images ?? {})) {
+    if (PREPARATION_IMAGE_PATH.test(path)) result.set(`preparation-name:${normalizeFoodVisualName(name)}`, `${baseUrl}${path}`);
+  }
+  for (const [id, path] of Object.entries(payload.preparation_ids ?? {})) {
+    if (/^[1-9]\d*$/.test(id) && PREPARATION_IMAGE_PATH.test(path)) result.set(`preparation-id:${id}`, `${baseUrl}${path}`);
   }
   return result;
 }

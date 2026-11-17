@@ -25,6 +25,17 @@ test("remote manifest accepts only same-server versioned image paths", () => {
   assert.equal(images.size, 3);
 });
 
+test("preparation visuals use a separate identity and reject external paths", () => {
+  const path = `/api/v1/preparations/visual-assets/${ref}/${digest}/wide-v1.png`;
+  const images = parseFoodVisualManifest({
+    preparation_images: { "Completo italiano": path, "Falsa": "https://untrusted.example/icon.png" },
+    preparation_ids: { "7": path, "bad": path },
+  }, "https://www.myscoope.com");
+  assert.equal(images.get("preparation-id:7"), `https://www.myscoope.com${path}`);
+  assert.equal(images.get("preparation-name:completo italiano"), `https://www.myscoope.com${path}`);
+  assert.equal(images.size, 2);
+});
+
 test("a remote food image never flashes its emoji while the manifest or image is loading", () => {
   const url = "https://www.myscoope.com/icon.png";
   assert.equal(foodVisualPresentation(false, undefined, "pending", false), "placeholder");

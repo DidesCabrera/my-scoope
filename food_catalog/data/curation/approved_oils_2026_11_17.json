@@ -1,0 +1,36 @@
+{
+  "source": "USDA FoodData Central SR Legacy",
+  "retrieved_at": "2026-11-17",
+  "foods": [
+    {
+      "name": "Aceite de maravilla",
+      "canonical_name": "aceite de maravilla linoleico",
+      "description": "Aceite de girasol linoleico (aproximadamente 65 %), usado como referencia para aceite de maravilla. Otras variedades de girasol pueden tener distinta composición de ácidos grasos.",
+      "fdc_id": "171025",
+      "fdc_description": "Oil, sunflower, linoleic, (approx. 65%)",
+      "protein_g_per_100g": "0",
+      "carbs_g_per_100g": "0",
+      "fat_g_per_100g": "100",
+      "calories_kcal_per_100g": "884",
+      "saturated_fat_g_per_100g": "10.3",
+      "sodium_mg_per_100g": "0",
+      "tablespoon_g": "13.6",
+      "image": "sunflower-oil-bottle-approved.png"
+    },
+    {
+      "name": "Aceite de coco",
+      "canonical_name": "aceite de coco",
+      "description": "Aceite de coco alimentario. Valores por 100 g según USDA FoodData Central SR Legacy.",
+      "fdc_id": "171412",
+      "fdc_description": "Oil, coconut",
+      "protein_g_per_100g": "0",
+      "carbs_g_per_100g": "0",
+      "fat_g_per_100g": "99.06",
+      "calories_kcal_per_100g": "892",
+      "saturated_fat_g_per_100g": "82.475",
+      "sodium_mg_per_100g": "0",
+      "tablespoon_g": "13.6",
+      "image": "coconut-oil-jar-approved.png"
+    }
+  ]
+}
