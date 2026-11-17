@@ -1590,3 +1590,20 @@ class FoodVisualAsset(models.Model):
 
     def __str__(self):
         return f"{self.food.display_name} · imagen"
+
+
+class PreparationVisualAsset(models.Model):
+    """Remotely replaceable visual for a published central preparation."""
+
+    preparation = models.OneToOneField(
+        CatalogPreparation, on_delete=models.CASCADE, related_name="visual_asset"
+    )
+    image_data = models.BinaryField(editable=False)
+    mobile_image_data = models.BinaryField(editable=False)
+    content_sha256 = models.CharField(max_length=64, editable=False)
+    is_published = models.BooleanField(default=False)
+    source_note = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.preparation.display_name} · imagen"

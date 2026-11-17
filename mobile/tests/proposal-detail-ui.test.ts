@@ -185,7 +185,7 @@ test("meal details reuse food entity cards across library and calendarized conte
   const identity = await source("src/components/ui/product.tsx");
   assert.ok(!preparationPanel.includes('projectedLabel: "Preparación"'));
   assert.ok(!panels.includes('<Text style={styles.preparationSubtitle}>Preparación</Text>'));
-  assert.ok(panels.includes('<EntityIcon entity="preparation" size="compact" />'));
+  assert.ok(panels.includes('<PreparationVisualIcon name={item.name} preparationId={item.detailId} size="panel" />'));
   assert.ok(identity.includes("preparation: CookingPot"));
   assert.ok(identity.includes("preparation: tokens.color.preparation"));
   assert.ok(identity.includes('indicator.label === "preparaciones" ? "preparation"'));
@@ -210,7 +210,7 @@ test("meal details reuse food entity cards across library and calendarized conte
   assert.ok(pickerCard.includes('allocation(fat_g, 9, calories)'));
   assert.ok(library.includes('pathname: "/libraries/preparations/[id]"'));
   const preparation = await source("src/app/libraries/preparations/[id].tsx");
-  assert.ok(preparation.includes('entity="preparation" indicators='));
+  assert.ok(preparation.includes('entity="preparation" preparationId={detail.id} indicators='));
   assert.ok(preparation.includes("<FoodPanels editing={editing} items={ingredients}"));
   assert.ok(preparation.includes("<FoodDetailCardList editing={() => editing} items={ingredients}"));
   assert.ok(preparation.includes("Math.round(displayedNutrition.calories * 10) / 10"));

@@ -34,6 +34,7 @@ export function PreparationLibraryCard({ item, onMore, onOpen }: { item: Persona
       actions={actions}
       collapsiblePanel
       entity="preparation"
+      preparationId={item.id}
       eyebrow="Preparación"
       headingLink={{ label, onPress: onOpen }}
       nutrition={{

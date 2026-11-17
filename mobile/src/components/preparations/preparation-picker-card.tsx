@@ -32,6 +32,7 @@ export function PreparationPickerCard({ actionLabel, detail, onAction, onOpenIte
     actions={actionLabel && onAction ? <PickerCardAction label={actionLabel} onPress={onAction} subject={detail.name} /> : undefined}
     collapsiblePanel
     entity="preparation"
+    preparationId={detail.id}
     eyebrow={selected ? "PREPARACIÓN SELECCIONADA" : "PREPARACIÓN"}
     subtitle={preparationPortionLabel(detail)}
     nutrition={{

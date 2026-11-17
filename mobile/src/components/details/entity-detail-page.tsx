@@ -6,7 +6,7 @@ import {
   type NutritionEntityCardProps,
   NutritionKpiSection,
 } from "@/components/nutrition";
-import { FoodVisualIcon } from "@/components/nutrition/food-visual-icon";
+import { FoodVisualIcon, PreparationVisualIcon } from "@/components/nutrition/food-visual-icon";
 import { ContentPanel, EntityHeading, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -36,6 +36,7 @@ export function EntityDetailPage({
   foodEmoji,
   foodId,
   foodVisualKey,
+  preparationId,
   eyebrow,
   eyebrowAccessory,
   indicators,
@@ -77,8 +78,8 @@ export function EntityDetailPage({
             identityIcon={identityIcon}
             subtitle={subtitle}
             title={title}
-            titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} foodId={foodId} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
-            titleIconPosition={entity === "food" ? "trailing" : "leading"}
+            titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} foodId={foodId} name={title} size="title" visualKey={foodVisualKey} /> : entity === "preparation" ? <PreparationVisualIcon name={title} preparationId={preparationId} size="title" /> : undefined}
+            titleIconPosition={entity === "food" || entity === "preparation" ? "trailing" : "leading"}
             variant="page"
           />
           {beforeNutrition}

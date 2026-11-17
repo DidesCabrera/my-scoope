@@ -4,13 +4,20 @@ from io import BytesIO
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
+from django.utils import timezone
 from PIL import Image
 
-from food_catalog.admin import FoodVisualAssetForm
-from food_catalog.models import CatalogFood, FoodVisualAsset
+from food_catalog.admin import FoodVisualAssetForm, PreparationVisualAssetForm
+from food_catalog.models import (
+    CatalogFood,
+    CatalogPreparation,
+    CatalogPreparationVersion,
+    FoodVisualAsset,
+    PreparationVisualAsset,
+)
 from food_catalog.visual_assets import prepare_food_visual
 from notas.admin_food_visual_assets import LegacyFoodVisualAssetForm
-from notas.domain.models import Food, LegacyFoodVisualAsset
+from notas.domain.models import Food, LegacyFoodVisualAsset, Preparation, PreparationVersion
 
 
 def png_upload(*, width=400, height=200):
@@ -144,6 +151,76 @@ class FoodVisualAssetAPITests(TestCase):
         self.assertEqual(Image.open(BytesIO(asset.mobile_image_data)).size, (192, 192))
         self.assertEqual(len(asset.content_sha256), 64)
         self.assertIn(self.food.name, self.client.get("/api/v1/foods/visual-assets/manifest").json()["images"])
+
+
+class PreparationVisualAssetAPITests(TestCase):
+    def setUp(self):
+        self.catalog = CatalogPreparation.objects.create(display_name="Completo italiano")
+        version = CatalogPreparationVersion.objects.create(
+            preparation=self.catalog, version=1, yield_g=179, default_portion_g=179,
+            household_label="completo mediano", source_name="Receta revisada",
+            yield_evidence="Porción medida", published_at=timezone.now(),
+        )
+        self.catalog.current_version = version
+        self.catalog.save(update_fields=["current_version"])
+        self.preparation = Preparation.objects.create(
+            name="Completo italiano", catalog_ref=self.catalog.catalog_ref, is_global=True,
+        )
+        operational = PreparationVersion.objects.create(
+            preparation=self.preparation, version=1, release_version="test", yield_g=179,
+            default_portion_g=179, household_label="completo mediano",
+            protein_g=12, carbs_g=28, fat_g=26, content_sha256="test",
+        )
+        self.preparation.current_version = operational
+        self.preparation.save(update_fields=["current_version"])
+        self.client = Client()
+
+    def test_published_preparation_visual_is_versioned_and_independent_of_recipe(self):
+        form = PreparationVisualAssetForm(
+            data={"preparation": self.catalog.pk, "is_published": True, "source_note": ""},
+            files={"upload": png_upload()},
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("source_note", form.errors)
+
+        original, mobile, digest = prepare_food_visual(png_upload())
+        asset = PreparationVisualAsset.objects.create(
+            preparation=self.catalog, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest, is_published=True, source_note="Ilustración aprobada",
+        )
+        manifest = self.client.get("/api/v1/catalog/visual-assets/manifest?layout=wide-v1").json()
+        self.assertEqual(manifest, self.client.get("/api/v1/foods/visual-assets/manifest?layout=wide-v1").json())
+        path = manifest["preparation_ids"][str(self.preparation.id)]
+        self.assertEqual(manifest["preparation_images"][self.preparation.name], path)
+        self.assertIn(digest, path)
+        wide = self.client.get(path)
+        self.assertEqual(wide.status_code, 200)
+        self.assertEqual(Image.open(BytesIO(wide.content)).size, (192, 127))
+        square = self.client.get(path.replace("/wide-v1.png", ".png"))
+        self.assertEqual(square.content, mobile)
+
+        replacement, new_mobile, new_digest = prepare_food_visual(png_upload(width=200, height=400))
+        asset.image_data, asset.mobile_image_data, asset.content_sha256 = replacement, new_mobile, new_digest
+        asset.save(update_fields=["image_data", "mobile_image_data", "content_sha256", "updated_at"])
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.assertIn(new_digest, self.client.get("/api/v1/foods/visual-assets/manifest").json()["preparation_ids"][str(self.preparation.id)])
+        self.preparation.current_version.refresh_from_db()
+        self.assertEqual(self.preparation.current_version.protein_g, 12)
+
+    def test_unpublished_or_inactive_preparation_is_not_delivered(self):
+        original, mobile, digest = prepare_food_visual(png_upload())
+        asset = PreparationVisualAsset.objects.create(
+            preparation=self.catalog, image_data=original, mobile_image_data=mobile,
+            content_sha256=digest, is_published=False, source_note="En revisión",
+        )
+        path = f"/api/v1/preparations/visual-assets/{self.catalog.catalog_ref}/{digest}.png"
+        self.assertEqual(self.client.get(path).status_code, 404)
+        asset.is_published = True
+        asset.save(update_fields=["is_published"])
+        self.preparation.is_active = False
+        self.preparation.save(update_fields=["is_active"])
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.assertEqual(self.client.get("/api/v1/foods/visual-assets/manifest").json()["preparation_ids"], {})
 
 
 class LegacyFoodVisualAssetAPITests(TestCase):

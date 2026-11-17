@@ -16,7 +16,7 @@ test("food cards use a larger visual on the right while panel rows remain compac
   assert.ok(icon.includes('[["pechuga", "pollo"], { emoji: "🍗", visualKey: "chicken_breast" }]'));
   assert.ok(icon.includes('const genericVisual: FoodVisual = { emoji: "🍽️", visualKey: "food_generic" }'));
   assert.ok(card.includes('titleIcon={entity === "food" ? <FoodVisualIcon'));
-  assert.ok(card.includes('titleIconPosition={entity === "food" ? "trailing" : "leading"}'));
+  assert.ok(card.includes('titleIconPosition={entity === "food" || entity === "preparation" ? "trailing" : "leading"}'));
   assert.ok(panel.includes('<FoodVisualIcon emoji={item.emoji} foodId={item.detailId} name={item.name} size="panel" visualKey={item.visualKey} />'));
   assert.ok(icon.includes('const remoteUrl = useRemoteFoodVisual(name, foodId)'));
   assert.ok(icon.includes('onError={() => setFailedUrl(remoteUrl)}'));
@@ -40,11 +40,11 @@ test("food cards and details both place the visual after the title", async () =>
   const heading = await source("src/components/ui/product.tsx");
   const card = await source("src/components/nutrition/nutrition-entity-card.tsx");
 
-  assert.ok(detail.includes('titleIconPosition={entity === "food" ? "trailing" : "leading"}'));
+  assert.ok(detail.includes('titleIconPosition={entity === "food" || entity === "preparation" ? "trailing" : "leading"}'));
   assert.ok(heading.includes('titleIconPosition = "leading"'));
   assert.ok(heading.includes('titleIconPosition === "leading" ? titleIcon : null'));
   assert.ok(heading.includes('titleIconPosition === "trailing" ? page ? titleIcon : <View style={styles.headingTitleCardIcon}>{titleIcon}</View> : null'));
   assert.ok(card.includes('titleIcon={entity === "food" ? <FoodVisualIcon'));
-  assert.ok(card.includes('titleIconPosition={entity === "food" ? "trailing" : "leading"}'));
+  assert.ok(card.includes('titleIconPosition={entity === "food" || entity === "preparation" ? "trailing" : "leading"}'));
   assert.ok(heading.includes('titleIconPosition={titleIconPosition}'));
 });

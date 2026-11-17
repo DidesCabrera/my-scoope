@@ -151,7 +151,7 @@ export default function PreparationDetailScreen() {
 
   if (detail.is_draft) return <>
     <AdaptiveNestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}>
-      <EntityDetailPage entity="preparation" showNutrition={false} title={detail.name}>
+      <EntityDetailPage entity="preparation" preparationId={detail.id} showNutrition={false} title={detail.name}>
         <InlineNotice tone="info">Agrega los alimentos de la receta para calcular su información nutricional.</InlineNotice>
         <Button label="+ Agregar alimento" onPress={addFood} variant="chipPrimary" />
       </EntityDetailPage>
@@ -237,7 +237,7 @@ export default function PreparationDetailScreen() {
       ? [{ key: "meal", label: `Porción ${formatPreparationNumber(selectedMealGrams, 2)} g` }, { key: "per100", label: "100 g" }]
           : [{ key: "recipe", label: "Receta completa" }, { key: "portion", label: `Porción (${formatPreparationNumber(detail.default_portion_g, 2)}g)` }]}
       />
-    </View>} entity="preparation" indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={subtitle} title={detail.name}>
+    </View>} entity="preparation" preparationId={detail.id} indicators={[{ icon: "food", label: ingredients.length === 1 ? "ingrediente" : "ingredientes", value: ingredients.length }]} nutrition={nutrition} subtitle={subtitle} title={detail.name}>
       <EntityDetailSection title="Composición de la preparación">
         <FoodPanels editing={editing} items={ingredients} nestedScroll onOpenItem={openIngredient} ownerLabel="esta preparación" />
       </EntityDetailSection>

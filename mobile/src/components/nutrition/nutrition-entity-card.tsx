@@ -15,7 +15,7 @@ import {
   NutritionKpiSection,
   type NutritionKpiSectionProps,
 } from "./nutrition-kpi-section";
-import { FoodVisualIcon } from "./food-visual-icon";
+import { FoodVisualIcon, PreparationVisualIcon } from "./food-visual-icon";
 import { tokens } from "@/design/tokens";
 
 export type NutritionEntityCardProps = {
@@ -33,6 +33,7 @@ export type NutritionEntityCardProps = {
   foodEmoji?: string | null;
   foodId?: number | string | null;
   foodVisualKey?: string | null;
+  preparationId?: number | string | null;
   initialPanelExpanded?: boolean;
   eyebrow?: string;
   eyebrowAccessory?: ReactNode;
@@ -61,6 +62,7 @@ export function NutritionEntityCard({
   foodEmoji,
   foodId,
   foodVisualKey,
+  preparationId,
   initialPanelExpanded = false,
   eyebrow,
   eyebrowAccessory,
@@ -123,8 +125,8 @@ export function NutritionEntityCard({
       style={[style, hasCollapsiblePanel && anyPanelExpanded && styles.expandedCard]}
       subtitle={subtitle}
       title={title}
-      titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} foodId={foodId} name={title} size="title" visualKey={foodVisualKey} /> : undefined}
-      titleIconPosition={entity === "food" ? "trailing" : "leading"}>
+      titleIcon={entity === "food" ? <FoodVisualIcon emoji={foodEmoji} foodId={foodId} name={title} size="title" visualKey={foodVisualKey} /> : entity === "preparation" ? <PreparationVisualIcon name={title} preparationId={preparationId} size="title" /> : undefined}
+      titleIconPosition={entity === "food" || entity === "preparation" ? "trailing" : "leading"}>
       {showNutrition ? <View style={hasEntityIndicatorSpacing ? styles.nutritionAfterIndicators : undefined}>
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />
       </View> : null}
