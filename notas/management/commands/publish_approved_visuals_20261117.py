@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from food_catalog.models import CatalogFood, CatalogPreparation, FoodVisualAsset, PreparationVisualAsset
+from food_catalog.models import CatalogFood, CatalogPreparation, PreparationVisualAsset
 from food_catalog.visual_assets import prepare_food_visual
 from notas.domain.models import Food, LegacyFoodVisualAsset, Preparation
 
@@ -66,7 +66,7 @@ class Command(BaseCommand):
                 if food.name != name:
                     raise CommandError(f"Unexpected operational identity for {name}: {food.name}")
                 asset, state = _publish(
-                    FoodVisualAsset, "food", catalog, filename,
+                    LegacyFoodVisualAsset, "food", food, filename,
                     f"Aprobación visual Felipe 2026-11-15/17; {filename}.",
                 )
                 results.append((name, food.pk, asset.pk, state))

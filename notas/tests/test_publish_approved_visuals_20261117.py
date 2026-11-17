@@ -6,7 +6,6 @@ from food_catalog.models import (
     CatalogFood,
     CatalogPreparation,
     CatalogPreparationVersion,
-    FoodVisualAsset,
     PreparationVisualAsset,
 )
 from notas.application.services.food_catalog_snapshots import create_operational_food_snapshot_from_catalog
@@ -49,9 +48,9 @@ class ApprovedVisualPublicationTests(TestCase):
         call_command("publish_approved_visuals_20261117")
         call_command("publish_approved_visuals_20261117")
         self.assertEqual(LegacyFoodVisualAsset.objects.filter(food__name="Cacao", is_published=True).count(), 1)
-        self.assertEqual(FoodVisualAsset.objects.filter(food__display_name__in=[
-            "Ají verde crudo", "Aceite de maravilla", "Aceite de coco",
-        ], is_published=True).count(), 3)
+        self.assertEqual(LegacyFoodVisualAsset.objects.filter(food__name__in=[
+            "Cacao", "Ají verde crudo", "Aceite de maravilla", "Aceite de coco",
+        ], is_published=True).count(), 4)
         self.assertEqual(PreparationVisualAsset.objects.filter(preparation__display_name="Completo italiano", is_published=True).count(), 1)
         self.assertEqual(Food.objects.get(name="Cacao").protein, before)
         manifest = self.client.get("/api/v1/foods/visual-assets/manifest?layout=wide-v1").json()
