@@ -7135,6 +7135,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -10127,6 +10128,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -12624,6 +12626,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               }
             ],
@@ -12671,6 +12674,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12757,6 +12761,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12773,6 +12778,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12789,6 +12795,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12805,6 +12812,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12821,6 +12829,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12837,6 +12846,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12853,6 +12863,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -12869,6 +12880,7 @@
                 "type": "number"
               },
               {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
               },
               {
@@ -15295,6 +15307,33 @@
           }
         ],
         "summary": "Reorder Calendar Plans"
+      }
+    },
+    "/api/v1/catalog/visual-assets/manifest": {
+      "get": {
+        "operationId": "mobile_api_catalog_visual_manifest",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "layout",
+            "required": false,
+            "schema": {
+              "default": "square",
+              "enum": [
+                "square",
+                "wide-v1"
+              ],
+              "title": "Layout",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "Catalog Visual Manifest"
       }
     },
     "/api/v1/comparisons/compare": {
@@ -17979,6 +18018,7 @@
     },
     "/api/v1/foods/visual-assets/manifest": {
       "get": {
+        "description": "Compatibility endpoint for installed mobile builds.",
         "operationId": "mobile_api_food_visual_manifest",
         "parameters": [
           {
@@ -23508,6 +23548,68 @@
           }
         ],
         "summary": "Preparations"
+      }
+    },
+    "/api/v1/preparations/visual-assets/{catalog_ref}/{digest}.png": {
+      "get": {
+        "operationId": "mobile_api_preparation_visual_image",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "catalog_ref",
+            "required": true,
+            "schema": {
+              "title": "Catalog Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "digest",
+            "required": true,
+            "schema": {
+              "title": "Digest",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "Preparation Visual Image"
+      }
+    },
+    "/api/v1/preparations/visual-assets/{catalog_ref}/{digest}/wide-v1.png": {
+      "get": {
+        "operationId": "mobile_api_preparation_visual_wide_image",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "catalog_ref",
+            "required": true,
+            "schema": {
+              "title": "Catalog Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "digest",
+            "required": true,
+            "schema": {
+              "title": "Digest",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "Preparation Visual Wide Image"
       }
     },
     "/api/v1/preparations/{preparation_id}": {

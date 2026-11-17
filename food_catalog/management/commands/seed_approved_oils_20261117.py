@@ -11,7 +11,6 @@ from django.db import transaction
 from food_catalog.application.curation import transition_catalog_food_status
 from food_catalog.models import CatalogFood, CatalogFoodAlias, CatalogFoodPortion, CatalogFoodSource
 
-
 DATA_PATH = Path(__file__).resolve().parents[2] / "data/curation/approved_oils_2026_11_17.json"
 
 

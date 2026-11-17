@@ -8,7 +8,13 @@ from django.utils import timezone
 from PIL import Image
 
 from food_catalog.admin import FoodVisualAssetForm, PreparationVisualAssetForm
-from food_catalog.models import CatalogFood, CatalogPreparation, CatalogPreparationVersion, FoodVisualAsset, PreparationVisualAsset
+from food_catalog.models import (
+    CatalogFood,
+    CatalogPreparation,
+    CatalogPreparationVersion,
+    FoodVisualAsset,
+    PreparationVisualAsset,
+)
 from food_catalog.visual_assets import prepare_food_visual
 from notas.admin_food_visual_assets import LegacyFoodVisualAssetForm
 from notas.domain.models import Food, LegacyFoodVisualAsset, Preparation, PreparationVersion

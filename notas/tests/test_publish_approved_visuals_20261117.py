@@ -2,7 +2,13 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
 
-from food_catalog.models import CatalogFood, CatalogPreparation, CatalogPreparationVersion, FoodVisualAsset, PreparationVisualAsset
+from food_catalog.models import (
+    CatalogFood,
+    CatalogPreparation,
+    CatalogPreparationVersion,
+    FoodVisualAsset,
+    PreparationVisualAsset,
+)
 from notas.application.services.food_catalog_snapshots import create_operational_food_snapshot_from_catalog
 from notas.domain.models import Food, LegacyFoodVisualAsset, Preparation, PreparationVersion
 

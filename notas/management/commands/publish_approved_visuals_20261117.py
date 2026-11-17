@@ -10,7 +10,6 @@ from food_catalog.models import CatalogFood, CatalogPreparation, FoodVisualAsset
 from food_catalog.visual_assets import prepare_food_visual
 from notas.domain.models import Food, LegacyFoodVisualAsset, Preparation
 
-
 ASSETS = Path(__file__).resolve().parents[3] / "docs/10_active_cycles/assets/visual_identity_catalog"
 FOODS = (
     ("Ají verde crudo", "green-chili-raw-approved.png"),
