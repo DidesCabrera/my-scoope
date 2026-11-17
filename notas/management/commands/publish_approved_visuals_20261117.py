@@ -50,8 +50,6 @@ class Command(BaseCommand):
         results = []
         with transaction.atomic():
             cacao = Food.objects.select_for_update().get(name="Cacao", is_global=True, is_active=True)
-            if cacao.catalog_food_id is not None:
-                raise CommandError("Cacao identity changed; review before publication")
             asset, state = _publish(
                 LegacyFoodVisualAsset, "food", cacao, "cacao-beans-approved.png",
                 "Aprobación visual Felipe 2026-11-15 y confirmación 2026-11-17; cacao-beans-approved.png.",

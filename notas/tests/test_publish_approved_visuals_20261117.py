@@ -57,3 +57,18 @@ class ApprovedVisualPublicationTests(TestCase):
         self.assertEqual(len(manifest["preparation_ids"]), 1)
         self.assertIn("Cacao", manifest["images"])
         self.assertIn("Aceite de coco", manifest["images"])
+
+    def test_cacao_uses_the_same_image_path_when_it_is_catalog_linked(self):
+        catalog = CatalogFood.objects.create(
+            display_name="Cacao", status=CatalogFood.STATUS_PUBLISHED,
+            protein_g_per_100g=19.6, carbs_g_per_100g=20.9, fat_g_per_100g=13.7,
+        )
+        cacao = Food.objects.get(name="Cacao")
+        cacao.catalog_food_id = catalog.pk
+        cacao.catalog_food_ref = catalog.catalog_ref
+        cacao.save(update_fields=["catalog_food_id", "catalog_food_ref"])
+
+        call_command("publish_approved_visuals_20261117")
+
+        self.assertTrue(LegacyFoodVisualAsset.objects.filter(food=cacao, is_published=True).exists())
+        self.assertIn("Cacao", self.client.get("/api/v1/catalog/visual-assets/manifest").json()["images"])
