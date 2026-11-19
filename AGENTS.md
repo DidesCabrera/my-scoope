@@ -40,8 +40,13 @@ code. Use the `fresh-task-checkout` workflow for edit tasks.
   prepare new work.
 - Use `origin/main` only when the task is explicitly scoped to the production line
   or the user names that base.
-- If fetching fails, report that freshness is unverified. If `origin/main` has
-  commits absent from `origin/staging`, report the history divergence and compare
+- If a required Git, local server, or simulator command is denied by the
+  sandbox, request approval for that specific operation and retry once before
+  treating it as unavailable. Do not request unrestricted access or bypass a
+  denial. If approval is unavailable, denied, or the retry fails, report the
+  blocker and leave freshness or local validation unverified.
+- If fetching still fails, report that freshness is unverified. If `origin/main`
+  has commits absent from `origin/staging`, report the history divergence and compare
   main-side content with `git diff origin/staging...origin/main`. A content-empty
   promotion merge does not block work; non-empty main-side content requires
   reconciliation before ordinary work begins.

@@ -26,7 +26,9 @@ chooses an existing clean checkout whose identity has been verified.
 ## Resolve the authoritative base
 
 1. Run `git fetch origin --prune`. A stale local remote-tracking ref is not proof of
-   the current remote state. If fetching fails, report that freshness is unverified
+   the current remote state. If the sandbox blocks network access or writing to
+   `.git/FETCH_HEAD`, request approval for this fetch and retry once. If approval
+   is unavailable, denied, or the retry fails, report that freshness is unverified
    and do not describe the checkout as current.
 2. Use `origin/staging` for ordinary feature, fix, refactor, documentation, and
    integration work. A local branch named `staging` is not the base authority.
