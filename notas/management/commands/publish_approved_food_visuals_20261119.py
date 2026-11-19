@@ -10,7 +10,6 @@ from food_catalog.models import CatalogFood
 from food_catalog.visual_assets import prepare_food_visual
 from notas.domain.models import Food, LegacyFoodVisualAsset
 
-
 ASSETS = Path(__file__).resolve().parents[3] / "docs/10_active_cycles/assets/visual_identity_catalog"
 APPROVED = (
     ("Coliflor cocida", "cauliflower-cooked-bowl-approved.png"),
