@@ -1,7 +1,8 @@
 # MCP público v1 · biblioteca y propuesta revisable
 
 Status: active
-Estado de implementación: local; sin despliegue ni postulación pública.
+Estado de implementación: v1 integrada en `main` y desplegada en producción;
+postulación pública pendiente de requisitos de cuenta y revisión de OpenAI.
 Fecha: 2026-11-19.
 
 ## Resultado y corte de producto
@@ -51,10 +52,10 @@ MYSCOOPE_MCP_ALLOWED_TOOLS=list_food_catalog,read_food,search_user_meals,read_me
 
 | Hito | Estado al 19-11-2026 | Cierre verificable |
 | --- | --- | --- |
-| 1. Fijar v1 | Definido: seis lecturas, tres entidades y creación de propuesta revisable. Falta validar el corte con usuarios. | Contrato y allowlist exactos, ejemplos representativos. |
-| 2. Robustecer el producto | Búsqueda de minutas y proyección MCP implementadas localmente; 206 pruebas MCP, 29 pruebas Django relevantes y lint pasan. Fichas y OAuth ya existen. | Datos de demo, revisión de privacidad y servicio remoto con el perfil v1. |
-| 3. Validar el recorrido | Pendiente para esta versión. Hay evidencia previa de cards con datos ficticios y de comidas en staging, no del recorrido completo de v1. | Conexión real ChatGPT/Codex, siete tools descubiertas, búsqueda → ficha → propuesta, pruebas de permisos y revisión visual en web y móvil. |
-| 4. Presentar a OpenAI | Antecedente de envío en mayo de 2026; estado actual sin verificar. Esta versión no se ha enviado. | Resolver el estado del envío anterior; identidad empresarial verificada, URL pública estable, materiales de listing, video real, acceso de revisor, casos ejecutados, scan y envío a revisión. |
+| 1. Fijar v1 | Cerrado: seis lecturas, tres entidades y creación de propuesta revisable, con allowlist exacta de siete tools. | Mantener el contrato público en la siguiente versión. |
+| 2. Robustecer el producto | Código integrado mediante PR #155; gate `full` de la PR aprobado, servicios Django y MCP de producción en el merge `f9d46e112c2aadfef00c2e02f288c1845f6874f6` y perfil de siete tools configurado. Página pública de la integración disponible. | Cuenta demo PRO, datos reproducibles y revisión final de privacidad. |
+| 3. Validar el recorrido | Parcial: OAuth público anuncia ambos scopes, el backend ya reconoce el recurso MCP, el servidor exige token y la página pública responde. El escaneo del portal se detiene porque la cuenta conectada no tiene PRO. | Reconectar una cuenta de prueba PRO, descubrir las siete tools, ejecutar búsqueda → ficha → propuesta y los casos de permisos. |
+| 4. Presentar a OpenAI | El plugin existente está `Not published` y `Review status Unavailable`; todavía no se ha enviado esta versión. La verificación individual está aprobada y Felipe inició la verificación empresarial de My Scoope SpA; Persona muestra «Application in review» el 19-11-2026. | Esperar aprobación empresarial, preparar cuenta de revisor, video real, países, ejecución de casos, ZIP definitivo y envío a revisión. |
 
 En la cuenta de correo personal hay confirmación de recepción de una postulación
 «My Scoope» del 13-05-2026 y un caso de soporte por verificación (08802667).
@@ -65,7 +66,7 @@ revisión anterior. Ese envío histórico no acredita esta v1 MCP.
 
 ## Casos de revisión propuestos
 
-Estos casos son borradores; requieren una cuenta de demostración con alimentos,
+Estos casos son borradores; requieren una cuenta de demostración PRO con alimentos,
 dos comidas y dos minutas de nombres distinguibles. Registrar IDs y resultados
 esperados desde esos datos reales antes de ejecutar. Estado de los ocho: **no
 ejecutados** en un cliente externo para esta versión.
@@ -83,19 +84,24 @@ ejecutados** en un cliente externo para esta versión.
 
 ## Bloqueos concretos para la postulación
 
-1. Integrar el cambio local en staging con el gate que seleccione CI, y desplegar
-   backend y MCP con allowlist v1 explícita. Después comprobar OAuth, PRO, scopes,
-   revocación, visibilidad y las siete tools desde un cliente real. El cliente OAuth
-   debe autorizar `myscoope:read` y `myscoope:proposals:create`, y la conexión debe
-   renovarse con ambos permisos antes del recorrido.
-2. Preparar una cuenta demo PRO, con datos propios reproducibles y acceso para
-   revisión sin pasos adicionales. No guardar credenciales en el repositorio.
-3. Verificar en la web pública los enlaces de sitio, soporte, privacidad y
-   términos, la cobertura de datos que devuelven las tools y el origen HTTPS
-   definitivo del servidor MCP.
-4. Grabar y alojar una demostración real del recorrido, completar listing,
-   icono, países y declaración comercial; ejecutar cinco casos positivos y tres
-   negativos con el mismo artefacto que se enviará a revisión.
+1. Preparar y conectar una cuenta demo PRO, con datos propios reproducibles y
+   acceso para revisión sin pasos adicionales. La reconexión del plugin en el
+   portal solicitó ambos scopes, pero la cuenta conectada recibió
+   `mcp_pro_required`; no se debe desactivar la exigencia PRO para superar el
+   escaneo. No guardar credenciales en el repositorio.
+2. Verificar desde esa cuenta las siete tools descubiertas, búsqueda → ficha →
+   propuesta, visibilidad, revocación y permisos. La URL pública de la ficha es
+   <https://www.myscoope.com/integrations/mcp/>; sitio, soporte, privacidad y
+   términos responden públicamente.
+3. Esperar la decisión de la verificación empresarial iniciada en OpenAI para
+   publicar bajo My Scoope SpA. La pantalla de Persona muestra la solicitud en
+   revisión; todavía no acredita aprobación empresarial. La identidad pública
+   no se puede atribuir a la empresa hasta verificarla.
+4. Grabar y alojar una demostración real del recorrido, confirmar países y
+   declaración comercial, ejecutar cinco casos positivos y tres negativos,
+   finalizar el ZIP y enviarlo a revisión. El borrador local de paquete tiene
+   manifest, endpoint OAuth, logo y ocho casos; no contiene video ni credenciales
+   de revisión y no es apto todavía para envío.
 
 OpenAI exige una URL MCP real y estable, verificación del publicador, materiales
 de listing, acceso de revisor y pruebas. La aprobación y la publicación son pasos

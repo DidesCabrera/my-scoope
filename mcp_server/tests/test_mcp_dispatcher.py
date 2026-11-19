@@ -10,6 +10,7 @@ from myscoope_mcp.tools import (
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_DAILYPLANS,
 )
 
 
@@ -61,6 +62,22 @@ class MCPDispatcherTests(unittest.TestCase):
                     },
                 }
             ],
+        )
+
+    def test_dispatch_search_user_dailyplans(self):
+        result = dispatch_tool_call(
+            client=self.client,
+            tool_name=TOOL_SEARCH_USER_DAILYPLANS,
+            arguments={"query": "Día de entrenamiento de prueba MCP", "limit": 10},
+        )
+
+        self.assertTrue(result.as_dict()["ok"])
+        self.assertEqual(
+            self.client.calls,
+            [{
+                "api_path": "/ai-tools/search-user-dailyplans/",
+                "payload": {"query": "Día de entrenamiento de prueba MCP", "limit": 10},
+            }],
         )
 
     def test_dispatch_read_proposal(self):
